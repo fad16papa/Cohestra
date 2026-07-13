@@ -1,0 +1,23 @@
+{
+  "schema_version": "0.1.0",
+  "evaluated_at": "2026-06-16T00:00:00.000Z",
+  "repo": "lead-generation-crm",
+  "target": {
+    "type": "epic",
+    "id": "epic-7",
+    "label": "Epic 7 — Platform Hardening (7.2–7.3 complete)"
+  },
+  "collection_status": "COLLECTED",
+  "gate_basis": "priority_thresholds",
+  "gate_status": "PASS",
+  "platform_release_gate_status": "CONCERNS",
+  "rationale": "Epic 7.2–7.3 acceptance criteria are fully traced to passing automated tests and CI workflow evidence (P0 100%, P1 100%, overall 100% for epic scope). Full-platform release remains CONCERNS: P0 platform criteria at 63% FULL coverage (auth negative paths, rate limit, idempotency untested) and no E2E journey coverage.",
+  "p0_status": "MET",
+  "p1_status": "MET",
+  "overall_status": "MET",
+  "critical_open": 2,
+  "links": {
+    "trace_report_path": "_bmad-output/test-artifacts/traceability/traceability-matrix.md",
+    "nfr_assessment_path": "_bmad-output/test-artifacts/nfr-assessment.md"
+  }
+}

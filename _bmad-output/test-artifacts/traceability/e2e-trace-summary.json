@@ -1,0 +1,102 @@
+{
+  "schema_version": "0.1.0",
+  "snapshot_at": "2026-06-16T00:00:00.000Z",
+  "repo": "lead-generation-crm",
+  "collection_mode": "contract_static",
+  "collection_status": "COLLECTED",
+  "inventory_basis": "acceptance_criteria",
+  "gate_basis": "priority_thresholds",
+  "source_sha": "b222d7d",
+  "target": {
+    "type": "epic",
+    "id": "epic-7",
+    "label": "Epic 7 — Platform Hardening (7.2–7.3 complete)"
+  },
+  "decision_mode": "deterministic",
+  "evaluator": "fadthegreat!",
+  "confidence": "high",
+  "oracle": {
+    "resolution_mode": "formal_requirements",
+    "confidence": "high",
+    "sources": [
+      "_bmad-output/planning-artifacts/epics.md",
+      "_bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md",
+      "_bmad-output/test-artifacts/nfr-assessment.md"
+    ],
+    "external_pointer_status": "not_used",
+    "synthetic": false
+  },
+  "coverage": {
+    "inventory": {
+      "covered": 6,
+      "total": 6,
+      "pct": 100
+    },
+    "priority_breakdown": {
+      "P0": { "total": 5, "covered": 5, "pct": 100 },
+      "P1": { "total": 1, "covered": 1, "pct": 100 },
+      "P2": { "total": 0, "covered": 0, "pct": 100 },
+      "P3": { "total": 0, "covered": 0, "pct": 100 }
+    },
+    "by_level": {
+      "e2e": { "tests": 0, "criteria_covered": 0 },
+      "api": { "tests": 4, "criteria_covered": 4 },
+      "component": { "tests": 0, "criteria_covered": 0 },
+      "unit": { "tests": 22, "criteria_covered": 5 },
+      "other": { "tests": 0, "criteria_covered": 0 }
+    },
+    "platform_scope": {
+      "covered_full_or_partial": 11,
+      "total": 24,
+      "pct": 46,
+      "p0_pct": 63,
+      "p1_pct": 36
+    }
+  },
+  "tests": {
+    "files": 8,
+    "cases": 26,
+    "skipped_cases": 0,
+    "fixme_cases": 0,
+    "pending_cases": 0
+  },
+  "risk_summary": {
+    "critical_open": 2,
+    "high_open": 6,
+    "medium_open": 8,
+    "low_open": 5
+  },
+  "heuristics": {
+    "endpoint_gaps": 18,
+    "auth_negative_path_status": "none",
+    "error_path_status": "partial",
+    "ui_journey_status": "none",
+    "ui_state_status": "none"
+  },
+  "blockers": [],
+  "recommendations": [
+    "Add Playwright smoke for UJ-1 public registration and UJ-3 admin login guard",
+    "Add integration tests for registration idempotency and 429 rate limit",
+    "Add admin 401/403 negative-path API tests",
+    "Complete Epic 7.4–7.6 before full-platform release gate"
+  ],
+  "gate_status": "PASS",
+  "gate_criteria": {
+    "p0_coverage_required": "100%",
+    "p0_coverage_actual": "100%",
+    "p0_status": "MET",
+    "p1_coverage_target": "90%",
+    "p1_coverage_minimum": "80%",
+    "p1_coverage_actual": "100%",
+    "p1_status": "MET",
+    "overall_coverage_minimum": "80%",
+    "overall_coverage_actual": "100%",
+    "overall_status": "MET"
+  },
+  "links": {
+    "trace_report_path": "_bmad-output/test-artifacts/traceability/traceability-matrix.md",
+    "trace_report_url": "",
+    "artifact_url": "",
+    "journey_evidence_url": ""
+  }
+}

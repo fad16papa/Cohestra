@@ -1,0 +1,286 @@
+@Api_HostAddress = http://localhost:8080
+@OperatorEmail = operator@leadgenerationcrm.local
+@OperatorPassword = ChangeMe123!
+
+GET {{Api_HostAddress}}/health
+Accept: application/json
+
+###
+
+GET {{Api_HostAddress}}/ready
+Accept: application/json
+
+###
+
+GET {{Api_HostAddress}}/api/v1/system/info
+Accept: application/json
+
+###
+
+# @name login
+POST {{Api_HostAddress}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{OperatorEmail}}",
+  "password": "{{OperatorPassword}}"
+}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/me
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/dashboard/metrics
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/reports?preset=weekly
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/reports?preset=monthly
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/reports?preset=custom&from=2026-06-01&to=2026-06-16&community=Ikigai&leadStatus=new
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/reports/export?preset=monthly
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+PATCH {{Api_HostAddress}}/api/v1/admin/me/appearance
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "themePreference": "dark",
+  "brandAccentColor": "#2563eb"
+}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/me
+
+###
+
+# @name refresh
+POST {{Api_HostAddress}}/api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.refreshToken}}"
+}
+
+###
+
+GET {{Api_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
+
+# @name createActivity
+POST {{Api_HostAddress}}/api/v1/admin/activities
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Weekend Tennis Clinic",
+  "category": "tennis",
+  "schedule": "Sat 10:00–12:00",
+  "location": "Courts 3–4, TGH Club",
+  "communityLabel": "The Golden Hour Club",
+  "status": "draft"
+}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/activities?status=draft&category=tennis&page=1&pageSize=25
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/activities/{{createActivity.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+PUT {{Api_HostAddress}}/api/v1/admin/activities/{{createActivity.response.body.id}}/form-schema
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "formSchema": {
+    "version": 1,
+    "fields": [
+      {
+        "id": "full_name",
+        "type": "text",
+        "label": "Full name",
+        "required": true,
+        "placeholder": null,
+        "options": null,
+        "consentText": null
+      },
+      {
+        "id": "email",
+        "type": "email",
+        "label": "Email",
+        "required": true,
+        "placeholder": null,
+        "options": null,
+        "consentText": null
+      }
+    ]
+  }
+}
+
+###
+
+POST {{Api_HostAddress}}/api/v1/admin/activities/{{createActivity.response.body.id}}/publish
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/activities/{{createActivity.response.body.id}}/registrations
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/activities/{{createActivity.response.body.id}}/registration-link
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/activities/{{createActivity.response.body.id}}/qr-code.png
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/public/activities/{{createActivity.response.body.slug}}
+Accept: application/json
+
+###
+
+# @name submitPublicRegistration
+POST {{Api_HostAddress}}/api/v1/public/registrations
+Content-Type: application/json
+Idempotency-Key: {{$guid}}
+
+{
+  "activitySlug": "{{createActivity.response.body.slug}}",
+  "answers": {
+    "full_name": "Elena Santos",
+    "email": "elena@example.com"
+  }
+}
+
+###
+
+# @name replayPublicRegistration
+POST {{Api_HostAddress}}/api/v1/public/registrations
+Content-Type: application/json
+Idempotency-Key: {{submitPublicRegistration.request.headers.Idempotency-Key}}
+
+{
+  "activitySlug": "{{createActivity.response.body.slug}}",
+  "answers": {
+    "full_name": "Elena Santos",
+    "email": "elena@example.com"
+  }
+}
+
+###
+
+POST {{Api_HostAddress}}/api/v1/public/registrations
+Content-Type: application/json
+
+{
+  "activitySlug": "",
+  "answers": {}
+}
+
+###
+
+POST {{Api_HostAddress}}/api/v1/admin/activities/{{createActivity.response.body.id}}/archive
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/clients?page=1&pageSize=25&sortBy=lastRegistrationDate&sortDirection=desc
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/clients?page=1&pageSize=25&mergeSuspect=true
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/clients?page=1&pageSize=25&search=filipino&nationality=Filipino
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/clients/nationalities
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/clients/00000000-0000-0000-0000-000000000001
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+PATCH {{Api_HostAddress}}/api/v1/admin/clients/00000000-0000-0000-0000-000000000001/lead-status
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "leadStatus": "contacted"
+}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/email-templates
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+POST {{Api_HostAddress}}/api/v1/admin/campaigns/segment/preview
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "leadStatus": "new"
+}
+
+###
+
+POST {{Api_HostAddress}}/api/v1/admin/campaigns/send
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "subject": "Welcome follow-up",
+  "body": "Thanks for registering. We will be in touch soon.",
+  "segment": {
+    "leadStatus": "new"
+  }
+}
+
+###
+
+GET {{Api_HostAddress}}/api/v1/admin/campaigns?page=1&pageSize=25
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###

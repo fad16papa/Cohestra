@@ -1,0 +1,191 @@
+# generated: 2026-06-16
+# last_updated: 2026-07-07T14:45:00Z
+# project: lead-generation-crm
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-06-16
+last_updated: 2026-07-07T14:45:00Z
+project: lead-generation-crm
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: done
+  1-1-solution-scaffold-and-docker-compose: done
+  1-2-database-bootstrap-and-openapi-foundation: done
+  1-3-operator-identity-and-jwt-authentication: done
+  1-4-next-js-web-scaffold-with-shadcn-ui: done
+  1-5-brand-design-token-system: done
+  1-6-theme-system-with-no-flash-loading: done
+  1-7-theme-toggle-component: done
+  1-8-dashboard-layout-admin-shell: done
+  1-9-public-form-layout-shell: done
+  1-10-login-page-and-admin-route-protection: done
+  1-11-empty-dashboard-and-settings-appearance: done
+  epic-1-retrospective: done
+
+  epic-2: done
+  2-1-activity-entity-and-admin-crud-api: done
+  2-2-activity-list-and-create-wizard-ui: done
+  2-3-form-schema-storage-and-field-type-contract: done
+  2-4-form-field-editor-and-form-preview: done
+  2-5-launch-form-template-seeds: done
+  2-6-activity-publish-status-machine: done
+  2-7-publish-gate-form-validation: done
+  2-8-qr-code-generation-and-qr-panel: done
+  2-9-public-registration-page-shell-and-unavailable-states: done
+  2-10-stub-registration-endpoint: done
+  2-11-redis-cache-for-published-activities: done
+  epic-2-retrospective: done
+
+  epic-3: done
+  3-1-client-entity-and-registration-ingestion-api: done
+  3-2-public-registration-rate-limiting-and-idempotency: done
+  3-3-client-deduplication-logic: done
+  3-4-registration-form-public-component: done
+  3-5-activity-hero-and-per-activity-branding: done
+  3-6-clients-list-with-client-row: done
+  3-7-client-profile-master-fields-and-lead-status: done
+  3-8-client-relationship-timeline: done
+  3-9-merge-suspect-flag-banner: done
+  3-10-activity-detail-registrations-tab: done
+  epic-3-retrospective: done
+
+  epic-4: done
+  4-1-dashboard-metrics-api-with-redis-cache: done
+  4-2-dashboard-metric-tile-ui-with-polling: done
+  4-3-activity-performance-ranking: done
+  4-4-reports-aggregation-api: done
+  4-5-report-filter-bar-and-report-ui: done
+  4-6-csv-export: done
+  epic-4-retrospective: done
+
+  epic-5: done
+  5-1-sendgrid-integration-and-email-infrastructure: done
+  5-2-email-template-crud: done
+  5-3-client-segment-api-and-segment-picker: done
+  5-4-campaign-compose-and-send: done
+  5-5-campaign-history-on-client-profile: done
+  5-6-whatsapp-click-to-message: done
+  5-7-whatsapp-follow-up-status-tracking: done
+  epic-5-retrospective: done
+
+  epic-6: done
+  6-1-communities-and-categories-catalog: done
+  6-2-activities-catalog-filter-dropdowns: done
+  6-3-form-field-editor-responsive-layout: done
+  6-4-client-outreach-and-timeline-ux: done
+  6-5-campaign-consent-and-delivery-hardening: done
+  epic-6-retrospective: done
+
+  epic-7: done
+  7-1-planning-artifact-sync: done
+  7-2-ci-pipeline-and-sendgrid-sandbox-gate: done
+  7-3-integration-test-matrix-core-paths: done
+  7-4-list-pagination-and-catalog-aligned-filters: done
+  7-5-server-outreach-dedup: done
+  7-6-operator-delivery-checklist: done
+  epic-7-retrospective: optional
+
+  # UAT polish (post–Epic 7, pre–client handoff) — see uat-polish-implementation-log.md
+  uat-polish: in-progress
+  uat-ui-dashboard-clients: done
+  uat-ui-client-profile-multi-activity: done
+  uat-settings-brand-accent: done
+  uat-form-phone-country-sg: done
+  uat-deploy-digitalocean: done
+  uat-deploy-nginx-docker: done
+  uat-deploy-github-actions-cd: done
+  uat-deploy-temporary-https: done
+  uat-auth-operator-self-service: done
+  uat-fix-hero-image-urls: done
+  uat-fix-otp-sendgrid: done
+  uat-fix-http-public-compat: done
+  uat-ui-activity-created-datetime: done
+  uat-registration-numbers: done
+  uat-demo-seed-v2: done
+  uat-activity-registration-count: done
+  uat-confirm-dialogs: done
+  uat-form-drag-reorder: done
+  uat-archive-delete-modals: done
+  uat-toast-theme-reports-polish: done
+  uat-handoff-checklist: backlog
+
+  epic-8: backlog
+  epic-8-retrospective: optional
+
+  epic-9: done
+  9-1-sitepage-entity-and-admin-api: done
+  9-2-public-site-api-and-redis-cache: done
+  9-3-site-page-seed-and-migration: done
+  9-4-public-homepage-runtime-render: done
+  9-5-website-builder-admin-ui: done
+  9-6-site-branding-and-activity-homepage-toggle: done
+  9-7-seo-metadata-and-login-branding: done
+  9-8-website-builder-polish: done
+  epic-9-retrospective: done
+
+  epic-10: done
+  9-9-public-landing-visitor-polish: done
+  10-1-section-registry-and-add-remove: done
+  10-2-shared-list-item-editor: done
+  10-3-carousel-section: done
+  10-4-testimonials-and-faq-sections: done
+  10-5-stats-and-cta-band-sections: done
+  10-6-section-variants-and-preset-refresh: done
+  10-7-integration-tests-and-builder-smoke: done
+  epic-10-retrospective: optional
+
+action_items:
+  - epic: 9
+    action: "Commit Epic 9 changes (migrations, API, web builder, docs) in reviewable chunks"
+    owner: Dev
+    status: open
+  - epic: 9
+    action: "Deploy to UAT droplet with SitePage migrations and verify seed + public homepage"
+    owner: Dev
+    status: open
+  - epic: 9
+    action: "Run operator UAT checklist for website builder (draft, preview, publish, preset, revert, branding)"
+    owner: Operator
+    status: open
+  - epic: 9
+    action: "Add CI job for AdminSite and PublicSite integration tests (Postgres/Redis stack)"
+    owner: Dev
+    status: open
+  - epic: 9
+    action: "Triage Epic 9 deferred-work — prioritize router unsaved guard, login ISR lag, preview token hardening"
+    owner: Product
+    status: open
