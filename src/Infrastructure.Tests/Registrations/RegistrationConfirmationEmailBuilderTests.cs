@@ -79,6 +79,6 @@ public sealed class RegistrationConfirmationEmailBuilderTests
             new EmailBrandingSettings(),
             new PublicWebOptions { BaseUrl = "http://localhost:3000" });
 
-        Assert.Equal("http://localhost:3000/brand/creativorare-logo.png", url);
+        Assert.Equal("http://localhost:3000/brand/cohestra-logo.svg", url);
     }
 }

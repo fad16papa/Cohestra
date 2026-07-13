@@ -21,11 +21,11 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
           aria-hidden
           className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-sm font-bold text-primary-foreground shadow-sm"
         >
-          AL
+          CO
         </span>
         <div className="hidden min-w-0 lg:block">
-          <p className="truncate text-sm font-semibold text-text-warm">Activity Lead</p>
-          <p className="truncate text-xs text-text-muted-warm">by CreativoRare</p>
+          <p className="truncate text-sm font-semibold text-text-warm">Cohestra</p>
+          <p className="truncate text-xs text-text-muted-warm">Community platform</p>
         </div>
       </div>
 

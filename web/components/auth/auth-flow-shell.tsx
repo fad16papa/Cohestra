@@ -5,6 +5,7 @@ import { LoginAmbientBackground } from "@/components/auth/login-ambient-backgrou
 import { LoginBrandPanel } from "@/components/auth/login-brand-panel";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import type { PublishedSiteBranding } from "@/lib/site-seo-metadata";
+import { PLATFORM_LOGO_PATH, PLATFORM_NAME } from "@/lib/brand-assets";
 import { cn } from "@/lib/utils";
 
 type AuthFlowShellProps = {
@@ -26,8 +27,8 @@ export function AuthFlowShell({
   className,
   siteBranding = null,
 }: AuthFlowShellProps) {
-  const mobileLogoUrl = siteBranding?.logoUrl ?? "/brand/creativorare-logo.png";
-  const mobileSiteName = siteBranding?.siteName?.trim() || "Activity Lead";
+  const mobileLogoUrl = siteBranding?.logoUrl ?? PLATFORM_LOGO_PATH;
+  const mobileSiteName = siteBranding?.siteName?.trim() || PLATFORM_NAME;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col lg:grid lg:min-h-dvh lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">

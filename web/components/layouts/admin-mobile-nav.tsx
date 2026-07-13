@@ -36,7 +36,7 @@ export function AdminMobileNav() {
             <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-xs font-bold text-primary-foreground">
               AL
             </span>
-            Activity Lead
+            Cohestra
           </SheetTitle>
         </SheetHeader>
         <div className="p-3">

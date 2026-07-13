@@ -46,7 +46,7 @@ public sealed class AdminSiteIntegrationTests(IntegrationTestFixture fixture)
         var saved = await putResponse.Content.ReadFromJsonAsync<SitePageAdminResponse>(
             IntegrationTestHelpers.JsonOptions);
         Assert.NotNull(saved);
-        Assert.Equal("The Social Collective", saved.Draft.SiteName);
+        Assert.Equal("Cohestra", saved.Draft.SiteName);
         Assert.True(saved.HasUnpublishedChanges);
 
         var publishResponse = await client.PostAsync("/api/v1/admin/site/publish", content: null);
@@ -264,7 +264,7 @@ public sealed class AdminSiteIntegrationTests(IntegrationTestFixture fixture)
 
         return new SiteSectionsDocumentDto(
             SchemaVersion: 1,
-            SiteName: "The Social Collective",
+            SiteName: "Cohestra",
             AccentColor: "#c45c26",
             LogoAssetId: null,
             PresetId: "community",
@@ -302,7 +302,7 @@ public sealed class AdminSiteIntegrationTests(IntegrationTestFixture fixture)
 
         return new SiteSectionsDocumentDto(
             SchemaVersion: 1,
-            SiteName: "The Social Collective",
+            SiteName: "Cohestra",
             AccentColor: "#c45c26",
             LogoAssetId: null,
             PresetId: "community",

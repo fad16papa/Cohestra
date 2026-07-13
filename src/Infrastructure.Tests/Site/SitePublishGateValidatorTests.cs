@@ -269,7 +269,7 @@ public sealed class SitePublishGateValidatorTests
         return new SiteSectionsDocument
         {
             SchemaVersion = 1,
-            SiteName = "The Social Collective",
+            SiteName = "Cohestra",
             Sections =
             [
                 new SiteSection
@@ -303,7 +303,7 @@ public sealed class SitePublishGateValidatorTests
         new()
         {
             SchemaVersion = 1,
-            SiteName = "The Social Collective",
+            SiteName = "Cohestra",
             Sections =
             [
                 new SiteSection
@@ -330,7 +330,7 @@ public sealed class SitePublishGateValidatorTests
         return new SiteSectionsDocument
         {
             SchemaVersion = 1,
-            SiteName = "The Social Collective",
+            SiteName = "Cohestra",
             Sections =
             [
                 new SiteSection

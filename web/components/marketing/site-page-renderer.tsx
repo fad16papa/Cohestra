@@ -55,6 +55,7 @@ import {
   useSitePreviewLayout,
   type SitePreviewLayoutMode,
 } from "@/lib/site-preview-layout";
+import { PLATFORM_LOGO_PATH } from "@/lib/brand-assets";
 import { cn } from "@/lib/utils";
 
 const HIGHLIGHT_ICONS: Record<string, LucideIcon> = {
@@ -546,7 +547,7 @@ function FooterSection({
   const poweredByLabel =
     typeof section.props.poweredByLabel === "string"
       ? section.props.poweredByLabel
-      : "Powered by CreativoRare";
+      : "Cohestra";
 
   return (
     <footer
@@ -668,12 +669,12 @@ export function SitePageRenderer({
   const siteLogoUrl = useMemo(() => {
     const assetId = published.logoAssetId?.trim();
     if (!assetId) {
-      return "/brand/creativorare-logo.png";
+      return PLATFORM_LOGO_PATH;
     }
 
     return (
       resolveHeroImageUrl(`/api/v1/public/campaign-assets/${assetId}`) ??
-      "/brand/creativorare-logo.png"
+      PLATFORM_LOGO_PATH
     );
   }, [published.logoAssetId]);
 

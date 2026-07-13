@@ -26,7 +26,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Cohestra",
-  description: "Activity Lead Engine — web client",
+  description: "Cohestra — community events web client",
 };
 
 export default function RootLayout({

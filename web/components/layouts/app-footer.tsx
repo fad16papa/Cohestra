@@ -27,7 +27,7 @@ export function AppFooter({ className }: AppFooterProps) {
     >
       <p className="text-center text-xs leading-relaxed text-muted-foreground sm:text-sm">
         Powered by{" "}
-        <span className="font-medium text-foreground/80">CreativoRare</span>
+        <span className="font-medium text-foreground/80">Cohestra</span>
         <span aria-hidden="true"> · </span>
         <span>{year}</span>
       </p>

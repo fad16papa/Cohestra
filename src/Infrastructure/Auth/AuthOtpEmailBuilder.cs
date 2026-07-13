@@ -21,7 +21,7 @@ public static class AuthOtpEmailBuilder
             .AppendLine($"This code expires in {expiryMinutes} minutes.")
             .AppendLine("If you did not create an account, you can ignore this email.")
             .AppendLine()
-            .AppendLine("— CreativoRare")
+            .AppendLine("— Cohestra")
             .ToString();
 
         var html = $"""
@@ -65,7 +65,7 @@ public static class AuthOtpEmailBuilder
             .AppendLine($"This code expires in {expiryMinutes} minutes.")
             .AppendLine("If you did not request a reset, you can ignore this email.")
             .AppendLine()
-            .AppendLine("— CreativoRare")
+            .AppendLine("— Cohestra")
             .ToString();
 
         var html = $"""

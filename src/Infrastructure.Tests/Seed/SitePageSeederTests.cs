@@ -28,10 +28,10 @@ public sealed class SitePageSeederTests
 
         Assert.NotNull(page.PublishedSections);
         Assert.NotNull(page.PublishedAt);
-        Assert.Equal("The Social Collective", page.PublishedSections!.SiteName);
+        Assert.Equal("Cohestra", page.PublishedSections!.SiteName);
         Assert.Equal(5, page.PublishedSections.Sections.Count);
         Assert.NotNull(cache.LastEntry);
-        Assert.Equal("The Social Collective", cache.LastEntry!.Published.SiteName);
+        Assert.Equal("Cohestra", cache.LastEntry!.Published.SiteName);
     }
 
     [Fact]
@@ -127,8 +127,8 @@ public sealed class SitePageSeederTests
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var page = await verifyDb.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
 
-        Assert.Equal("The Social Collective", page.DraftSections!.SiteName);
-        Assert.Equal("The Social Collective", page.PublishedSections!.SiteName);
+        Assert.Equal("Cohestra", page.DraftSections!.SiteName);
+        Assert.Equal("Cohestra", page.PublishedSections!.SiteName);
         Assert.NotNull(page.PublishedAt);
         Assert.NotNull(cache.LastEntry);
     }
@@ -145,7 +145,7 @@ public sealed class SitePageSeederTests
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var page = await dbContext.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
 
-        Assert.Equal("The Social Collective", page.PublishedSections!.SiteName);
+        Assert.Equal("Cohestra", page.PublishedSections!.SiteName);
         Assert.NotNull(page.PublishedAt);
     }
 

@@ -61,20 +61,20 @@ services:
       CampaignAssets__PublicApiBaseUrl: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
       Cors__AllowedOrigins__0: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
       SendGrid__ApiKey: ${SendGrid__ApiKey:?Set SendGrid__ApiKey in .env (live Mail Send key)}
-      SendGrid__FromEmail: ${SendGrid__FromEmail:-noreply@creativorare.com}
-      SendGrid__FromName: ${SendGrid__FromName:-Creativorare}
-      SendGrid__RegistrationFromEmail: ${SendGrid__RegistrationFromEmail:-noreply@creativorare.com}
-      SendGrid__RegistrationFromName: ${SendGrid__RegistrationFromName:-Creativorare}
+      SendGrid__FromEmail: ${SendGrid__FromEmail:-noreply@cohestra.app}
+      SendGrid__FromName: ${SendGrid__FromName:-Cohestra}
+      SendGrid__RegistrationFromEmail: ${SendGrid__RegistrationFromEmail:-noreply@cohestra.app}
+      SendGrid__RegistrationFromName: ${SendGrid__RegistrationFromName:-Cohestra}
       SendGrid__UseSandbox: "false"
-      EmailBranding__WebsiteUrl: ${EmailBranding__WebsiteUrl:-https://creativorare.com}
-      EmailBranding__FooterLegalName: ${EmailBranding__FooterLegalName:-Creativorare}
-      SiteLanding__SiteName: ${LANDING_SITE_NAME:-The Social Collective}
-      SiteLanding__Tagline: ${LANDING_TAGLINE:-Community activities. Meaningful connections.}
-      SiteLanding__Description: ${LANDING_DESCRIPTION:-Join our events, register in seconds, and stay connected with the communities you care about.}
-      SiteLanding__Eyebrow: ${LANDING_EYEBROW:-Singapore · Community events}
+      EmailBranding__WebsiteUrl: ${EmailBranding__WebsiteUrl:-https://cohestra.app}
+      EmailBranding__FooterLegalName: ${EmailBranding__FooterLegalName:-Cohestra}
+      SiteLanding__SiteName: ${LANDING_SITE_NAME:-Cohestra}
+      SiteLanding__Tagline: ${LANDING_TAGLINE:-Community events. Meaningful connections.}
+      SiteLanding__Description: ${LANDING_DESCRIPTION:-Discover events, register in seconds, and stay connected with the communities you care about.}
+      SiteLanding__Eyebrow: ${LANDING_EYEBROW:-Community events platform}
       SiteLanding__OperatorCtaLabel: ${LANDING_OPERATOR_CTA:-Operator sign in}
-      SiteLanding__PoweredByLabel: Powered by CreativoRare
-      SiteLanding__AccentColor: "#c45c26"
+      SiteLanding__PoweredByLabel: Cohestra
+      SiteLanding__AccentColor: "#2563eb"
     depends_on:
       postgres:
         condition: service_healthy
@@ -93,10 +93,10 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
-        NEXT_PUBLIC_LANDING_SITE_NAME: ${LANDING_SITE_NAME:-The Social Collective}
-        NEXT_PUBLIC_LANDING_TAGLINE: ${LANDING_TAGLINE:-Community activities. Meaningful connections.}
-        NEXT_PUBLIC_LANDING_DESCRIPTION: ${LANDING_DESCRIPTION:-Join our events, register in seconds, and stay connected with the communities you care about.}
-        NEXT_PUBLIC_LANDING_EYEBROW: ${LANDING_EYEBROW:-Singapore · Community events}
+        NEXT_PUBLIC_LANDING_SITE_NAME: ${LANDING_SITE_NAME:-Cohestra}
+        NEXT_PUBLIC_LANDING_TAGLINE: ${LANDING_TAGLINE:-Community events. Meaningful connections.}
+        NEXT_PUBLIC_LANDING_DESCRIPTION: ${LANDING_DESCRIPTION:-Discover events, register in seconds, and stay connected with the communities you care about.}
+        NEXT_PUBLIC_LANDING_EYEBROW: ${LANDING_EYEBROW:-Community events platform}
         NEXT_PUBLIC_LANDING_OPERATOR_CTA: ${LANDING_OPERATOR_CTA:-Operator sign in}
     restart: unless-stopped
     expose:

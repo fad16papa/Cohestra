@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 
 import { getPublicApiBaseUrl } from "@/lib/api";
+import { PLATFORM_NAME } from "@/lib/brand-assets";
 import { getSiteLandingConfig } from "@/lib/site-landing-config";
 import {
   fetchPublicSiteServer,
@@ -105,11 +106,11 @@ export function buildEnvLandingMetadata(): Metadata {
 export function buildLoginMetadata(branding: PublishedSiteBranding | null): Metadata {
   if (!branding) {
     return {
-      title: "Sign in | Activity Lead",
+      title: `Sign in | ${PLATFORM_NAME}`,
       description:
-        "Sign in to Activity Lead — the modern community operator workspace for activities, registrations, client follow-up, and campaigns.",
+        "Sign in to Cohestra — the community operator workspace for activities, registrations, client follow-up, and campaigns.",
       openGraph: {
-        title: "Activity Lead by CreativoRare",
+        title: PLATFORM_NAME,
         description: "Turn every community activity into a measurable lead engine.",
         type: "website",
       },

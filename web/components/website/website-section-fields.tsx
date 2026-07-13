@@ -532,7 +532,7 @@ export function WebsiteSectionFields({
   if (type === "footer") {
     return (
       <p className="text-sm text-text-muted-warm">
-        Footer shows &ldquo;Powered by CreativoRare&rdquo; by default. This label is not
+        Footer shows &ldquo;Cohestra&rdquo; by default. This label is not
         editable in v1.
       </p>
     );

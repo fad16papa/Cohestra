@@ -89,7 +89,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
             IntegrationTestHelpers.JsonOptions);
         Assert.NotNull(site);
         Assert.NotNull(site.PublishedAt);
-        Assert.Equal("The Social Collective", site.Published.SiteName);
+        Assert.Equal("Cohestra", site.Published.SiteName);
         Assert.Contains(site.UpcomingActivities, activity => activity.Slug == visibleSlug);
         Assert.DoesNotContain(site.UpcomingActivities, activity => activity.Slug == hiddenSlug);
     }
@@ -122,7 +122,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
         var cache = Factory.Services.GetRequiredService<RedisPublishedSiteCache>();
         var cached = await cache.GetAsync();
         Assert.NotNull(cached);
-        Assert.Equal("The Social Collective", cached.Published.SiteName);
+        Assert.Equal("Cohestra", cached.Published.SiteName);
 
         var secondResponse = await publicClient.GetAsync("/api/v1/public/site");
         secondResponse.EnsureSuccessStatusCode();
@@ -164,7 +164,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
 
         return new SiteSectionsDocumentDto(
             SchemaVersion: 1,
-            SiteName: "The Social Collective",
+            SiteName: "Cohestra",
             AccentColor: "#c45c26",
             LogoAssetId: null,
             PresetId: "community",

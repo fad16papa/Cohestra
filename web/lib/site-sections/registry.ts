@@ -131,7 +131,7 @@ export function getDefaultSectionProps(type: string): Record<string, unknown> {
       };
     case "footer":
       return {
-        poweredByLabel: "Powered by CreativoRare",
+        poweredByLabel: "Cohestra",
         variant: "default",
       };
     default:

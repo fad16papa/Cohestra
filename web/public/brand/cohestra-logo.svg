@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Cohestra">
+  <defs>
+    <linearGradient id="cohestra-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#cohestra-gradient)" />
+  <path
+    fill="#ffffff"
+    d="M36 44c0-8.837 7.163-16 16-16h24c8.837 0 16 7.163 16 16v8H36v-8zm0 16h56v28c0 8.837-7.163 16-16 16H52c-8.837 0-16-7.163-16-16V60z"
+  />
+</svg>

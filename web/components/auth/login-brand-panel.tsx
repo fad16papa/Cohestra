@@ -58,7 +58,7 @@ type LoginBrandPanelProps = {
   siteBranding?: PublishedSiteBranding | null;
 };
 
-const PLATFORM_LOGO = "/brand/creativorare-logo.png";
+import { PLATFORM_LOGO_PATH, PLATFORM_NAME } from "@/lib/brand-assets";
 
 function BrandLockup({ siteBranding }: { siteBranding?: PublishedSiteBranding | null }) {
   const siteName = siteBranding?.siteName?.trim();
@@ -69,7 +69,7 @@ function BrandLockup({ siteBranding }: { siteBranding?: PublishedSiteBranding | 
     <div className="flex items-center gap-3">
       <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-2 shadow-lg shadow-black/10 ring-1 ring-white/40">
         <Image
-          src={logoUrl ?? PLATFORM_LOGO}
+          src={logoUrl ?? PLATFORM_LOGO_PATH}
           alt=""
           width={40}
           height={40}
@@ -80,10 +80,10 @@ function BrandLockup({ siteBranding }: { siteBranding?: PublishedSiteBranding | 
       </span>
       <div>
         <p className="text-base font-semibold tracking-tight text-primary-foreground">
-          {useClientBranding ? siteName : "Activity Lead"}
+          {useClientBranding ? siteName : PLATFORM_NAME}
         </p>
         <p className="text-xs text-primary-foreground/75">
-          {useClientBranding ? "Activity Lead by CreativoRare" : "by CreativoRare"}
+          {useClientBranding ? "Operator workspace" : "Community event platform"}
         </p>
       </div>
     </div>
@@ -146,7 +146,7 @@ export function LoginBrandPanel({
           : "flex flex-col justify-between p-8 sm:p-10 lg:p-12 xl:p-14",
         className
       )}
-      aria-label="Activity Lead product overview"
+      aria-label="Cohestra product overview"
     >
       <div
         aria-hidden

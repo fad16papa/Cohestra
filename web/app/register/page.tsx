@@ -8,7 +8,7 @@ export default function RegisterPage() {
     <AuthFlowShell
       eyebrow="First-time setup"
       title="Create your operator account"
-      description="One workspace, one operator — set up Activity Lead with your email, nickname, and password."
+      description="One workspace, one operator — set up Cohestra with your email, nickname, and password."
       footer={
         <p className="text-xs leading-relaxed text-text-muted-warm">
           By continuing, you agree to secure this workspace for authorized use only.

@@ -6,9 +6,9 @@ public sealed class EmailBrandingSettings
 
     public string? LogoUrl { get; set; }
 
-    public string WebsiteUrl { get; set; } = "https://creativorare.com";
+    public string WebsiteUrl { get; set; } = "https://cohestra.app";
 
     public string FooterLegalName { get; set; } = "Creativorare";
 
-    public const string DefaultLogoPath = "/brand/creativorare-logo.png";
+    public const string DefaultLogoPath = "/brand/cohestra-logo.svg";
 }

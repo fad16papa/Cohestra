@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
 import { fetchOnboardingStatus } from "@/lib/auth-api";
 import { getSiteLandingConfig } from "@/lib/site-landing-config";
+import { PLATFORM_LOGO_PATH } from "@/lib/brand-assets";
 import { cn } from "@/lib/utils";
 
 const highlights = [
@@ -56,7 +57,7 @@ export function SiteLandingPage() {
         <div className="flex items-center gap-3">
           <span className="flex size-11 items-center justify-center overflow-hidden rounded-xl bg-card/90 p-2 shadow-sm ring-1 ring-border-warm backdrop-blur-sm">
             <Image
-              src="/brand/creativorare-logo.png"
+              src={PLATFORM_LOGO_PATH}
               alt=""
               width={28}
               height={28}

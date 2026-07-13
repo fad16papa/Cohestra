@@ -34,7 +34,7 @@ export function AppearanceSection() {
       <div>
         <h2 className="text-section text-text-warm">Appearance</h2>
         <p className="mt-1 text-sm text-text-muted-warm">
-          Choose how Activity Lead looks on this device. Changes sync with the
+          Choose how Cohestra looks on this device. Changes sync with the
           top-bar theme control instantly.
         </p>
       </div>
