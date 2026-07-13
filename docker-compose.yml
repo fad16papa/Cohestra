@@ -4,13 +4,13 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-leadgenerationcrm}
+      POSTGRES_DB: ${POSTGRES_DB:-cohestra}
       POSTGRES_USER: ${POSTGRES_USER:-crm}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crm}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm} -d ${POSTGRES_DB:-leadgenerationcrm}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm} -d ${POSTGRES_DB:-cohestra}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -37,7 +37,7 @@ services:
       - campaign_assets_data:/app/data/campaign-assets
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-leadgenerationcrm};Username=${POSTGRES_USER:-crm};Password=${POSTGRES_PASSWORD:-crm}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-cohestra};Username=${POSTGRES_USER:-crm};Password=${POSTGRES_PASSWORD:-crm}
       ConnectionStrings__Redis: redis:6379
       Jwt__SigningKey: dev-compose-jwt-signing-key-min-32-chars!!
       OperatorSeed__Enabled: ${OperatorSeed__Enabled:-false}

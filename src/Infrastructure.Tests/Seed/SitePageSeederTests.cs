@@ -1,16 +1,16 @@
 using System.Text.Json;
-using LeadGenerationCrm.Contracts.Site;
-using LeadGenerationCrm.Domain.Site;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Seed;
-using LeadGenerationCrm.Infrastructure.Site;
+using Cohestra.Contracts.Site;
+using Cohestra.Domain.Site;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Seed;
+using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Seed;
+namespace Cohestra.Infrastructure.Tests.Seed;
 
 public sealed class SitePageSeederTests
 {
@@ -23,7 +23,7 @@ public sealed class SitePageSeederTests
         await SitePageSeeder.SeedAsync(provider);
 
         await using var scope = provider.CreateAsyncScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var page = await dbContext.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
 
         Assert.NotNull(page.PublishedSections);
@@ -42,7 +42,7 @@ public sealed class SitePageSeederTests
 
         await using (var scope = provider.CreateAsyncScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
             dbContext.SitePages.Add(new SitePage
             {
                 Id = SitePage.SingletonId,
@@ -58,7 +58,7 @@ public sealed class SitePageSeederTests
         await SitePageSeeder.SeedAsync(provider);
 
         await using var verifyScope = provider.CreateAsyncScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var page = await verifyDb.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
 
         Assert.Equal("Existing published", page.PublishedSections!.SiteName);
@@ -73,7 +73,7 @@ public sealed class SitePageSeederTests
 
         await using (var scope = provider.CreateAsyncScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
             dbContext.SitePages.Add(new SitePage
             {
                 Id = SitePage.SingletonId,
@@ -88,7 +88,7 @@ public sealed class SitePageSeederTests
         await SitePageSeeder.SeedAsync(provider);
 
         await using var verifyScope = provider.CreateAsyncScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var page = await verifyDb.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
 
         Assert.Equal("Operator edited", page.DraftSections!.SiteName);
@@ -104,7 +104,7 @@ public sealed class SitePageSeederTests
 
         await using (var scope = provider.CreateAsyncScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
             dbContext.SitePages.Add(new SitePage
             {
                 Id = SitePage.SingletonId,
@@ -124,7 +124,7 @@ public sealed class SitePageSeederTests
         await SitePageSeeder.SeedAsync(provider);
 
         await using var verifyScope = provider.CreateAsyncScope();
-        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var verifyDb = verifyScope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var page = await verifyDb.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
 
         Assert.Equal("The Social Collective", page.DraftSections!.SiteName);
@@ -142,7 +142,7 @@ public sealed class SitePageSeederTests
         await SitePageSeeder.SeedAsync(provider);
 
         await using var scope = provider.CreateAsyncScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var page = await dbContext.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
 
         Assert.Equal("The Social Collective", page.PublishedSections!.SiteName);
@@ -177,7 +177,7 @@ public sealed class SitePageSeederTests
     {
         var services = new ServiceCollection();
         var databaseName = Guid.NewGuid().ToString();
-        services.AddDbContext<LeadGenerationCrmDbContext>(options =>
+        services.AddDbContext<CohestraDbContext>(options =>
             options.UseInMemoryDatabase(databaseName));
         services.AddSingleton<IOptions<SiteLandingSeedSettings>>(
             Options.Create(new SiteLandingSeedSettings()));

@@ -1,11 +1,11 @@
 using System.Text.Json;
-using LeadGenerationCrm.Contracts.Site;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Site;
+using Cohestra.Contracts.Site;
+using Cohestra.Domain.Activities;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Site;
+namespace Cohestra.Infrastructure.Tests.Site;
 
 public sealed class SiteUpcomingActivitiesResolverTests
 {
@@ -146,12 +146,12 @@ public sealed class SiteUpcomingActivitiesResolverTests
             UpdatedAt = updatedAt,
         };
 
-    private static LeadGenerationCrmDbContext CreateDbContext()
+    private static CohestraDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<LeadGenerationCrmDbContext>()
+        var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new LeadGenerationCrmDbContext(options);
+        return new CohestraDbContext(options);
     }
 }

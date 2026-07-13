@@ -55,8 +55,8 @@ SSH into the droplet:
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y git curl
 
-git clone <your-repo-url> lead-generation-crm
-cd lead-generation-crm
+git clone <your-repo-url> cohestra
+cd cohestra
 bash deploy/uat-bootstrap.sh
 ```
 
@@ -199,7 +199,7 @@ Migrations apply automatically on API startup.
 
 ```bash
 docker compose -f docker-compose.uat.yml exec postgres \
-  pg_dump -U crm leadgenerationcrm > backup-$(date +%F).sql
+  pg_dump -U crm cohestra > backup-$(date +%F).sql
 ```
 
 ## 11. Security checklist

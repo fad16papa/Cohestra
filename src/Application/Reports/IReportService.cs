@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Contracts.Reports;
+using Cohestra.Contracts.Reports;
 
-namespace LeadGenerationCrm.Application.Reports;
+namespace Cohestra.Application.Reports;
 
 public interface IReportService
 {

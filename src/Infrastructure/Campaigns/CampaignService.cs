@@ -1,17 +1,17 @@
-using LeadGenerationCrm.Application.Campaigns;
-using LeadGenerationCrm.Application.Email;
-using LeadGenerationCrm.Contracts.Campaigns;
-using LeadGenerationCrm.Domain.Campaigns;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Infrastructure.Email;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Application.Campaigns;
+using Cohestra.Application.Email;
+using Cohestra.Contracts.Campaigns;
+using Cohestra.Domain.Campaigns;
+using Cohestra.Domain.Clients;
+using Cohestra.Infrastructure.Email;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace LeadGenerationCrm.Infrastructure.Campaigns;
+namespace Cohestra.Infrastructure.Campaigns;
 
 public sealed class CampaignService(
-    LeadGenerationCrmDbContext dbContext,
+    CohestraDbContext dbContext,
     IClientSegmentService segmentService,
     IEmailSender emailSender,
     IOptions<SendGridSettings> sendGridOptions) : ICampaignService

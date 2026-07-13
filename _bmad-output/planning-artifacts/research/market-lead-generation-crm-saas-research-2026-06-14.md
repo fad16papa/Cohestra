@@ -5,7 +5,7 @@ inputDocuments:
 workflowType: 'research'
 lastStep: 1
 research_type: 'market'
-research_topic: 'Lead Generation CRM SaaS — Activity-Based Community Lead Capture (Creativorare Client Proposal)'
+research_topic: 'Cohestra SaaS — Activity-Based Community Lead Capture (Creativorare Client Proposal)'
 research_goals: 'Validate the Creativorare client proposal against market demand, competitive alternatives, customer pain points, and positioning for community/activity-led businesses migrating from Google Forms to a unified CRM'
 user_name: 'fadthegreat!'
 date: '2026-06-14'
@@ -26,19 +26,19 @@ proposal_type: 'Client-facing business proposal (12 pages)'
 
 ## Research Overview
 
-This research combines BMad market research with analysis of the Creativorare **Lead Generation CRM Web Application** client proposal. The proposal targets a community/activity-led business currently running separate Google Forms (TGH Tennis Club, Ikigai Pickleball, Ikigai Board Game Night) and manual WhatsApp/email follow-up. The recommended product is a custom activity-engine CRM — not a generic horizontal SaaS launch.
+This research combines BMad market research with analysis of the Creativorare **Cohestra Web Application** client proposal. The proposal targets a community/activity-led business currently running separate Google Forms (TGH Tennis Club, Ikigai Pickleball, Ikigai Board Game Night) and manual WhatsApp/email follow-up. The recommended product is a custom activity-engine CRM — not a generic horizontal SaaS launch.
 
 **Methodology:** Web search with source verification (June 2026), cross-referenced against proposal claims, MVP scope, and phased roadmap.
 
 ---
 
-# Market Research: Lead Generation CRM SaaS — Activity-Based Community Lead Capture
+# Market Research: Cohestra SaaS — Activity-Based Community Lead Capture
 
 ## Research Initialization
 
 ### Research Understanding Confirmed (Modified Scope)
 
-**Topic**: Lead Generation CRM SaaS — Activity-Based Community Lead Capture (Creativorare Client Proposal)  
+**Topic**: Cohestra SaaS — Activity-Based Community Lead Capture (Creativorare Client Proposal)  
 **Goals**: Validate the Creativorare client proposal against market demand, competitive alternatives, customer pain points, and positioning for community/activity-led businesses migrating from Google Forms to a unified CRM  
 **Research Type**: Market Research  
 **Date**: 2026-06-14  
@@ -274,7 +274,7 @@ Useful if the client thinks about long-term productization — not required for 
 
 ### 11. Strategic Recommendations for Creativorare
 
-1. **Reposition headline slightly:** From "Lead Generation CRM Web Application" → **"Activity Lead Engine & Client Growth Platform"** to differentiate from generic CRM in client minds.
+1. **Reposition headline slightly:** From "Cohestra Web Application" → **"Activity Lead Engine & Client Growth Platform"** to differentiate from generic CRM in client minds.
 2. **Add a "Why not keep Google Forms?" slide** using market-validated pain points (manual export, no attribution, duplicate blindness).
 3. **Strengthen commercial close:** Page 12 asks to confirm scope — add investment summary and what happens after Week 8 (support, hosting, Phase 2 trigger criteria).
 4. **If productizing later:** This vertical (community clubs + WhatsApp-first APAC markets) is a viable niche SaaS — SME CRM segment growth supports it, but competition from configurable platforms exists; custom-field activity engine remains the moat.

@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using LeadGenerationCrm.Domain.Site;
+using Cohestra.Domain.Site;
 
-namespace LeadGenerationCrm.Infrastructure.Site;
+namespace Cohestra.Infrastructure.Site;
 
 internal static class SiteSectionsDocumentJson
 {

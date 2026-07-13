@@ -1,3 +1,3 @@
-namespace LeadGenerationCrm.Contracts;
+namespace Cohestra.Contracts;
 
 public static class ContractsAssembly;

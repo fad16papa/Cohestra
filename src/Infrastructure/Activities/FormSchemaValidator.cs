@@ -1,9 +1,9 @@
 using System.Text.RegularExpressions;
-using LeadGenerationCrm.Contracts.Activities;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Contracts.Activities;
+using Cohestra.Domain.Activities;
+using Cohestra.Infrastructure.Registrations;
 
-namespace LeadGenerationCrm.Infrastructure.Activities;
+namespace Cohestra.Infrastructure.Activities;
 
 internal static partial class FormSchemaValidator
 {

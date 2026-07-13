@@ -42,7 +42,7 @@ So that the product feels warm, trustworthy, and community-grounded in both ligh
 
 ## Dev Notes
 
-- Token source: `_bmad-output/planning-artifacts/ux-designs/ux-lead-generation-crm-2026-06-14/DESIGN.md`
+- Token source: `_bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-06-14/DESIGN.md`
 - Hex values live in `web/styles/brand-tokens.css` only — components use semantic Tailwind classes
 - Theme switching (next-themes, no-flash) is Story 1.6 — `.dark` tokens are defined here for that story
 

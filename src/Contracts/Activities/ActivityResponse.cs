@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Contracts.Activities;
+namespace Cohestra.Contracts.Activities;
 
 public sealed record ActivityResponse(
     Guid Id,

@@ -1,11 +1,11 @@
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Domain.Registrations;
-using LeadGenerationCrm.Infrastructure.Clients;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Clients;
+using Cohestra.Domain.Registrations;
+using Cohestra.Infrastructure.Clients;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Clients;
+namespace Cohestra.Infrastructure.Tests.Clients;
 
 public sealed class ClientServiceListFilterTests
 {
@@ -120,7 +120,7 @@ public sealed class ClientServiceListFilterTests
         Assert.Empty(result.Items);
     }
 
-    private static Activity SeedActivity(LeadGenerationCrmDbContext dbContext, DateTimeOffset createdAt)
+    private static Activity SeedActivity(CohestraDbContext dbContext, DateTimeOffset createdAt)
     {
         var activity = new Activity
         {
@@ -140,12 +140,12 @@ public sealed class ClientServiceListFilterTests
         return activity;
     }
 
-    private static LeadGenerationCrmDbContext CreateDbContext()
+    private static CohestraDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<LeadGenerationCrmDbContext>()
+        var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new LeadGenerationCrmDbContext(options);
+        return new CohestraDbContext(options);
     }
 }

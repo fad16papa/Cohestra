@@ -1,10 +1,10 @@
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Domain.Clients;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Registrations;
+namespace Cohestra.Infrastructure.Registrations;
 
-public sealed class ClientDeduplicationService(LeadGenerationCrmDbContext dbContext)
+public sealed class ClientDeduplicationService(CohestraDbContext dbContext)
 {
     public async Task<(Client Client, bool Created)> FindOrCreateAsync(
         ExtractedClientProfile profile,

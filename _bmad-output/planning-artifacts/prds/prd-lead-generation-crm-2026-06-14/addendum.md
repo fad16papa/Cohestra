@@ -1,4 +1,4 @@
-# PRD Addendum — Lead Generation CRM
+# PRD Addendum — Cohestra
 
 Overflow and technical context that supports the PRD but does not belong in the main requirements narrative.
 

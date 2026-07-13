@@ -1,6 +1,6 @@
 ---
 generated: 2026-06-22
-project: lead-generation-crm
+project: cohestra
 author: Correct Course workflow
 status: approved
 approved: 2026-06-22
@@ -108,7 +108,7 @@ MVP (Epics 1–5) and post-MVP enhancements (Epic 6) are **implemented and shipp
 
 ## Section 4: Detailed Change Proposals
 
-### 4.1 PRD — `prd-lead-generation-crm-2026-06-14/prd.md`
+### 4.1 PRD — `prd-cohestra-2026-06-14/prd.md`
 
 #### Add §6.3 Shipped Post-MVP Enhancements (after §6.2)
 

@@ -1,3 +1,3 @@
-namespace LeadGenerationCrm.Domain;
+namespace Cohestra.Domain;
 
 public static class DomainAssembly;

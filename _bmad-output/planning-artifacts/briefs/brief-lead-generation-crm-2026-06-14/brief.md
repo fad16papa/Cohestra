@@ -6,13 +6,13 @@ updated: 2026-06-14
 type: retrospective
 sources:
   - Creativorare Business Proposal (Lead_Generation_CRM_Business_Proposal.pdf)
-  - market-lead-generation-crm-saas-research-2026-06-14.md
-  - prd-lead-generation-crm-2026-06-14/prd.md
+  - market-cohestra-saas-research-2026-06-14.md
+  - prd-cohestra-2026-06-14/prd.md
 ---
 
 # Product Brief: Activity Lead Engine & Client Growth Platform
 
-*Working title — confirm with client. Replaces generic "Lead Generation CRM" positioning.*
+*Working title — confirm with client. Replaces generic "Cohestra" positioning.*
 
 ## Executive Summary
 

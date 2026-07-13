@@ -1,17 +1,17 @@
-using LeadGenerationCrm.Application.Email;
-using LeadGenerationCrm.Application.Registrations;
-using LeadGenerationCrm.Infrastructure.Activities;
-using LeadGenerationCrm.Infrastructure.Campaigns;
-using LeadGenerationCrm.Infrastructure.Email;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Application.Email;
+using Cohestra.Application.Registrations;
+using Cohestra.Infrastructure.Activities;
+using Cohestra.Infrastructure.Campaigns;
+using Cohestra.Infrastructure.Email;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace LeadGenerationCrm.Infrastructure.Registrations;
+namespace Cohestra.Infrastructure.Registrations;
 
 public sealed class RegistrationNotificationService(
-    LeadGenerationCrmDbContext dbContext,
+    CohestraDbContext dbContext,
     IEmailSender emailSender,
     IOptions<SendGridSettings> sendGridOptions,
     IOptions<EmailBrandingSettings> brandingOptions,

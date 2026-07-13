@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace LeadGenerationCrm.Infrastructure.Identity;
+namespace Cohestra.Infrastructure.Identity;
 
 public class ApplicationUser : IdentityUser<Guid>
 {

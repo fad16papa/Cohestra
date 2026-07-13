@@ -1,12 +1,12 @@
-using LeadGenerationCrm.Application.Campaigns;
-using LeadGenerationCrm.Contracts.Campaigns;
-using LeadGenerationCrm.Domain.Campaigns;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Application.Campaigns;
+using Cohestra.Contracts.Campaigns;
+using Cohestra.Domain.Campaigns;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Campaigns;
+namespace Cohestra.Infrastructure.Campaigns;
 
-public sealed class EmailTemplateService(LeadGenerationCrmDbContext dbContext) : IEmailTemplateService
+public sealed class EmailTemplateService(CohestraDbContext dbContext) : IEmailTemplateService
 {
     public async Task<EmailTemplateListResponse> ListAsync(
         CancellationToken cancellationToken = default)

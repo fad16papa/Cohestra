@@ -1,14 +1,14 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using LeadGenerationCrm.Contracts.Auth;
-using LeadGenerationCrm.Contracts.Registrations;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Contracts.Auth;
+using Cohestra.Contracts.Registrations;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Clients;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LeadGenerationCrm.Api.IntegrationTests.Infrastructure;
+namespace Cohestra.Api.IntegrationTests.Infrastructure;
 
 internal static class IntegrationTestHelpers
 {
@@ -23,7 +23,7 @@ internal static class IntegrationTestHelpers
     {
         var response = await client.PostAsJsonAsync(
             "/api/v1/auth/login",
-            new LoginRequest("operator@leadgenerationcrm.local", "ChangeMe123!"),
+            new LoginRequest("operator@cohestra.local", "ChangeMe123!"),
             JsonOptions);
 
         response.EnsureSuccessStatusCode();
@@ -44,7 +44,7 @@ internal static class IntegrationTestHelpers
         CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var now = DateTimeOffset.UtcNow;
 
         var activity = new Activity
@@ -109,7 +109,7 @@ internal static class IntegrationTestHelpers
         CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var now = DateTimeOffset.UtcNow;
 
         var client = new Client

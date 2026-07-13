@@ -1,12 +1,12 @@
-using LeadGenerationCrm.Application.Activities;
-using LeadGenerationCrm.Contracts.Activities;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Application.Activities;
+using Cohestra.Contracts.Activities;
+using Cohestra.Domain.Activities;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Activities;
+namespace Cohestra.Infrastructure.Activities;
 
-public sealed class CategoryService(LeadGenerationCrmDbContext dbContext) : ICategoryService
+public sealed class CategoryService(CohestraDbContext dbContext) : ICategoryService
 {
     public async Task<CategoryListResponse> ListAsync(CancellationToken cancellationToken = default)
     {

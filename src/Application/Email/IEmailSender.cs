@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Application.Email;
+namespace Cohestra.Application.Email;
 
 public sealed record EmailMessage(
     string ToEmail,

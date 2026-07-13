@@ -1,6 +1,6 @@
-# Lead Generation CRM
+# Cohestra
 
-Activity Lead Engine — API-first lead generation platform.
+Cohestra — API-first community events and lead generation platform.
 
 ## Prerequisites
 
@@ -52,7 +52,7 @@ Seeded on first API startup when no operator exists:
 
 | Setting | Default |
 |---------|---------|
-| Email | `operator@leadgenerationcrm.local` |
+| Email | `operator@cohestra.local` |
 | Password | `ChangeMe123!` |
 
 Override via `OperatorSeed__Email` and `OperatorSeed__Password` in `.env` or `docker-compose.yml`. JWT signing key must be at least 32 characters (`Jwt__SigningKey`).
@@ -68,7 +68,7 @@ When `DemoDataSeed:Enabled` is `true`, the API **wipes all business data** (clie
 | Clients (leads) | 100 |
 | Registrations | 6,000 (each client registered for every activity) |
 
-Demo clients use emails like `demo.user001@demo.leadgenerationcrm.local` and appear under **Clients**, **Communities**, and campaign segment filters. Each registration has a unique ID like `REG20260616000001`.
+Demo clients use emails like `demo.user001@demo.cohestra.local` and appear under **Clients**, **Communities**, and campaign segment filters. Each registration has a unique ID like `REG20260616000001`.
 
 Enabled by default in `appsettings.Development.json` and Docker Compose (`DemoDataSeed__Enabled`). Set to `false` in production.
 
@@ -77,7 +77,7 @@ Example login:
 ```bash
 curl -s -X POST http://localhost/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"operator@leadgenerationcrm.local","password":"ChangeMe123!"}'
+  -d '{"email":"operator@cohestra.local","password":"ChangeMe123!"}'
 ```
 
 Use the returned `accessToken` as `Authorization: Bearer {token}` on admin endpoints. Refresh via `POST /api/v1/auth/refresh` with the `refreshToken` (24h TTL in Redis).
@@ -119,7 +119,7 @@ docker compose -f docker-compose.uat.yml up -d --build
 ## Solution structure
 
 ```
-LeadGenerationCrm.sln
+Cohestra.sln
 src/
   Api/              # ASP.NET Core Web API (controllers, health, JWT auth)
   Application/      # Use cases (Activities, Clients, Campaigns, Reports stubs)

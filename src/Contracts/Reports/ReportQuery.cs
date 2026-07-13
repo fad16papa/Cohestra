@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Contracts.Reports;
+namespace Cohestra.Contracts.Reports;
 
 public sealed record ReportQuery(
     string Preset,

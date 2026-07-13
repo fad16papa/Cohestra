@@ -1,7 +1,7 @@
 using System.Text.Json;
-using LeadGenerationCrm.Infrastructure.Seed;
+using Cohestra.Infrastructure.Seed;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Seed;
+namespace Cohestra.Infrastructure.Tests.Seed;
 
 public sealed class SitePageSeedDocumentBuilderTests
 {

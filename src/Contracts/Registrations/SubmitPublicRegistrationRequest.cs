@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Contracts.Registrations;
+namespace Cohestra.Contracts.Registrations;
 
 /// <summary>
 /// Public registration submit request (v1). See docs/contracts/public-registration-v1.md.

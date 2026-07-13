@@ -1,7 +1,7 @@
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Registrations;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Registrations;
 
-namespace LeadGenerationCrm.Infrastructure.Registrations;
+namespace Cohestra.Infrastructure.Registrations;
 
 internal static class RegistrationRegistrantDisplayName
 {

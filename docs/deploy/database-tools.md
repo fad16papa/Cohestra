@@ -28,7 +28,7 @@ Use your droplet user if not `root`. `-N` means no remote shell — only forward
 |-------|-------|
 | Host | `localhost` |
 | Port | `15432` (local tunnel port) |
-| Maintenance database | `leadgenerationcrm` |
+| Maintenance database | `cohestra` |
 | Username | `crm` (or `POSTGRES_USER` from `.env`) |
 | Password | `POSTGRES_PASSWORD` from server `.env` |
 
@@ -67,7 +67,7 @@ ssh -N \
 |-------|-------|
 | Host | `127.0.0.1` |
 | Port | `16379` |
-| Database alias | `lead-generation-crm-uat` |
+| Database alias | `cohestra-uat` |
 
 No password is configured on the default Redis container (internal Docker network only). The tunnel is your access control.
 

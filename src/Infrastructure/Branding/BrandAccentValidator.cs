@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace LeadGenerationCrm.Infrastructure.Branding;
+namespace Cohestra.Infrastructure.Branding;
 
 public static partial class BrandAccentValidator
 {

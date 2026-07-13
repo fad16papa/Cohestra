@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Domain.Campaigns;
+namespace Cohestra.Domain.Campaigns;
 
 public enum CampaignStatus
 {

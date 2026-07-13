@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Api.IntegrationTests.Infrastructure;
+namespace Cohestra.Api.IntegrationTests.Infrastructure;
 
 [CollectionDefinition(Name)]
 public sealed class IntegrationTestCollection : ICollectionFixture<IntegrationTestFixture>

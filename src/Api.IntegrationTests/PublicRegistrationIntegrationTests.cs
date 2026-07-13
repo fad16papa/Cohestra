@@ -1,9 +1,9 @@
-using LeadGenerationCrm.Api.IntegrationTests.Infrastructure;
-using LeadGenerationCrm.Contracts.Registrations;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Api.IntegrationTests.Infrastructure;
+using Cohestra.Contracts.Registrations;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LeadGenerationCrm.Api.IntegrationTests;
+namespace Cohestra.Api.IntegrationTests;
 
 [Trait("Category", "Integration")]
 [Collection(IntegrationTestCollection.Name)]
@@ -38,7 +38,7 @@ public sealed class PublicRegistrationIntegrationTests(IntegrationTestFixture fi
         Assert.NotEqual(Guid.Empty, response.ClientId);
 
         await using var scope = Factory.Services.CreateAsyncScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
 
         Assert.Equal(1, dbContext.Registrations.Count(registration => registration.Id == response.RegistrationId));
         Assert.Equal(1, dbContext.Clients.Count(item => item.Id == response.ClientId));

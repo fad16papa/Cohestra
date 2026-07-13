@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 
-namespace LeadGenerationCrm.Infrastructure.Auth;
+namespace Cohestra.Infrastructure.Auth;
 
 public sealed record AuthOtpEmailContent(string Subject, string PlainTextBody, string HtmlBody);
 

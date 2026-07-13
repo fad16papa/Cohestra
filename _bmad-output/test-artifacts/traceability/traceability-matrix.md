@@ -10,7 +10,7 @@ lastSaved: '2026-06-16'
 workflowType: testarch-trace
 inputDocuments:
   - _bmad-output/planning-artifacts/epics.md
-  - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md
+  - _bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/prd.md
   - _bmad-output/test-artifacts/nfr-assessment.md
   - _bmad-output/implementation-artifacts/7-2-ci-pipeline-and-sendgrid-sandbox-gate.md
   - _bmad-output/implementation-artifacts/7-3-integration-test-matrix-core-paths.md
@@ -238,7 +238,7 @@ baseline_commit: b222d7d
 **INFO:**
 
 - Integration tests skip when Postgres/Redis unavailable — correct for local dev; CI always runs with services  
-- Shared test DB (`leadgenerationcrm_test`) — tests use unique GUIDs per run ✅  
+- Shared test DB (`cohestra_test`) — tests use unique GUIDs per run ✅  
 
 ---
 

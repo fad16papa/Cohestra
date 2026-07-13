@@ -1,8 +1,8 @@
-using LeadGenerationCrm.Application.Registrations;
+using Cohestra.Application.Registrations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LeadGenerationCrm.Api.Infrastructure;
+namespace Cohestra.Api.Infrastructure;
 
 public sealed class PublicRegistrationRateLimitMiddleware(
     RequestDelegate next,

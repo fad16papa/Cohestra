@@ -1,11 +1,11 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Domain.Activities;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Activities;
+namespace Cohestra.Infrastructure.Activities;
 
 internal static partial class ActivitySlugGenerator
 {
@@ -29,7 +29,7 @@ internal static partial class ActivitySlugGenerator
     }
 
     public static async Task<string> EnsureUniqueSlugAsync(
-        LeadGenerationCrmDbContext dbContext,
+        CohestraDbContext dbContext,
         string baseSlug,
         Guid? excludeActivityId,
         CancellationToken cancellationToken)

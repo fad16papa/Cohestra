@@ -5,13 +5,13 @@ created: 2026-07-06
 updated: 2026-07-06
 sources:
   - {planning_artifacts}/prds/prd-website-builder-2026-07-06/prd.md
-  - {planning_artifacts}/ux-designs/ux-lead-generation-crm-2026-06-14/EXPERIENCE.md
+  - {planning_artifacts}/ux-designs/ux-cohestra-2026-06-14/EXPERIENCE.md
 design: "{planning_artifacts}/ux-designs/ux-website-builder-2026-07-06/DESIGN.md"
 ---
 
 # Activity Lead — Website Builder (EXPERIENCE.md)
 
-> Behavioral contract for Epic 9. Visual specs in paired `DESIGN.md`. Parent CRM UX in `ux-lead-generation-crm-2026-06-14/EXPERIENCE.md`.
+> Behavioral contract for Epic 9. Visual specs in paired `DESIGN.md`. Parent CRM UX in `ux-cohestra-2026-06-14/EXPERIENCE.md`.
 
 ## Foundation
 

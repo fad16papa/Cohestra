@@ -1,11 +1,11 @@
 using System.Text.Json;
-using LeadGenerationCrm.Application.Email;
+using Cohestra.Application.Email;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 
-namespace LeadGenerationCrm.Infrastructure.Email;
+namespace Cohestra.Infrastructure.Email;
 
 public sealed class SendGridEmailSender(
     IOptions<SendGridSettings> options,

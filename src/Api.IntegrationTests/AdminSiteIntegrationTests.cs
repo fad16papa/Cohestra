@@ -1,13 +1,13 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using LeadGenerationCrm.Api.IntegrationTests.Infrastructure;
-using LeadGenerationCrm.Contracts.Site;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Api.IntegrationTests.Infrastructure;
+using Cohestra.Contracts.Site;
+using Cohestra.Domain.Activities;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LeadGenerationCrm.Api.IntegrationTests;
+namespace Cohestra.Api.IntegrationTests;
 
 [Trait("Category", "Integration")]
 [Collection(IntegrationTestCollection.Name)]
@@ -196,7 +196,7 @@ public sealed class AdminSiteIntegrationTests(IntegrationTestFixture fixture)
 
         await using (var scope = Factory.Services.CreateAsyncScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
             var now = DateTimeOffset.UtcNow;
             dbContext.Activities.Add(new Activity
             {

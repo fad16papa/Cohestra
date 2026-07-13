@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Infrastructure.Site;
+namespace Cohestra.Infrastructure.Site;
 
 public interface IPublishedSiteCache
 {

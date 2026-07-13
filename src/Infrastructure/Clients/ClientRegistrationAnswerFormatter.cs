@@ -1,8 +1,8 @@
-using LeadGenerationCrm.Contracts.Clients;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Contracts.Clients;
+using Cohestra.Domain.Activities;
+using Cohestra.Infrastructure.Registrations;
 
-namespace LeadGenerationCrm.Infrastructure.Clients;
+namespace Cohestra.Infrastructure.Clients;
 
 internal static class ClientRegistrationAnswerFormatter
 {

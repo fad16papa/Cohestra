@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Contracts.Dashboard;
+namespace Cohestra.Contracts.Dashboard;
 
 public sealed record ActivityPerformanceItemResponse(
     Guid ActivityId,

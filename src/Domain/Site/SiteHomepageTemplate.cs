@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Domain.Site;
+namespace Cohestra.Domain.Site;
 
 public sealed class SiteHomepageTemplate
 {

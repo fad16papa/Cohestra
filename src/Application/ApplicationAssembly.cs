@@ -1,3 +1,3 @@
-namespace LeadGenerationCrm.Application;
+namespace Cohestra.Application;
 
 public static class ApplicationAssembly;

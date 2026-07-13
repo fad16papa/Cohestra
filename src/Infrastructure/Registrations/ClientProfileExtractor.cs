@@ -1,7 +1,7 @@
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Clients;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Clients;
 
-namespace LeadGenerationCrm.Infrastructure.Registrations;
+namespace Cohestra.Infrastructure.Registrations;
 
 public sealed record ExtractedClientProfile(
     string? NameFromForm,

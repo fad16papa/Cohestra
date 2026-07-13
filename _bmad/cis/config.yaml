@@ -7,7 +7,7 @@ visual_tools: intermediate
 
 # Core Configuration Values
 user_name: Admin
-project_name: lead-generation-crm
+project_name: cohestra
 communication_language: English
 document_output_language: English
 output_folder: _bmad-output

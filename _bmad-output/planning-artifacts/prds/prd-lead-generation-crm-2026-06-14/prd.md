@@ -1,5 +1,5 @@
 ---
-title: Lead Generation CRM — Product Requirements Document
+title: Cohestra — Product Requirements Document
 status: draft
 created: 2026-06-14
 updated: 2026-06-14
@@ -7,13 +7,13 @@ sources:
   - Creativorare Business Proposal (Lead_Generation_CRM_Business_Proposal.pdf)
 ---
 
-# PRD: Lead Generation CRM
+# PRD: Cohestra
 
 *Working title — confirm with client.*
 
 ## 0. Document Purpose
 
-This PRD defines the product requirements for a **Lead Generation CRM** — a centralized web platform that turns activity-based lead capture (events, clubs, campaigns) into a measurable client-growth system. It is written for product stakeholders, the delivery team (Creativorare), and downstream workflows (UX, architecture, epics).
+This PRD defines the product requirements for a **Cohestra** — a centralized web platform that turns activity-based lead capture (events, clubs, campaigns) into a measurable client-growth system. It is written for product stakeholders, the delivery team (Creativorare), and downstream workflows (UX, architecture, epics).
 
 The document is structured around a **Glossary** of domain terms, **Features** with globally numbered **Functional Requirements (FRs)**, and **User Journeys (UJs)** referenced inline. Assumptions inferred from the business proposal are tagged `[ASSUMPTION]` and indexed in §9. Technical mechanism choices live in `addendum.md`.
 
@@ -25,7 +25,7 @@ The document is structured around a **Glossary** of domain terms, **Features** w
 
 Community and activity-driven businesses capture leads through registration forms, QR codes at events, and referral-driven sign-ups — but when each activity runs on its own Google Form, lead data fragments. Operators manually copy contact details, send one-off WhatsApp or email follow-ups, and stitch together reports by hand. Duplicate and inactive leads are hard to spot, and there is no reliable view of which activities actually grow the pipeline.
 
-The Lead Generation CRM replaces that fragmented process with a single platform: every **Activity** gets a branded registration page and **QR Code**; every submission flows into a **Master Client List** with full **Activity** and **Referral Source** context; follow-ups become structured and trackable; and **Reports** show which activities create the strongest pipeline.
+The Cohestra replaces that fragmented process with a single platform: every **Activity** gets a branded registration page and **QR Code**; every submission flows into a **Master Client List** with full **Activity** and **Referral Source** context; follow-ups become structured and trackable; and **Reports** show which activities create the strongest pipeline.
 
 The platform promise from the proposal holds for v1: **every activity becomes a measurable lead-generation engine, with no lost context after registration.**
 

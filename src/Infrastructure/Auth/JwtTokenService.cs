@@ -1,11 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using LeadGenerationCrm.Infrastructure.Identity;
+using Cohestra.Infrastructure.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace LeadGenerationCrm.Infrastructure.Auth;
+namespace Cohestra.Infrastructure.Auth;
 
 public interface IJwtTokenService
 {

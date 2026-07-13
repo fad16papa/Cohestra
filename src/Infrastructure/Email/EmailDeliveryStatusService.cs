@@ -1,12 +1,12 @@
 using System.Text.Json;
-using LeadGenerationCrm.Application.Email;
-using LeadGenerationCrm.Contracts.Email;
-using LeadGenerationCrm.Infrastructure.Email;
+using Cohestra.Application.Email;
+using Cohestra.Contracts.Email;
+using Cohestra.Infrastructure.Email;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SendGrid;
 
-namespace LeadGenerationCrm.Infrastructure.Email;
+namespace Cohestra.Infrastructure.Email;
 
 public sealed class EmailDeliveryStatusService(
     IOptions<SendGridSettings> options,

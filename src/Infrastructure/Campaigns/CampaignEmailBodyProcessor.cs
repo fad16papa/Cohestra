@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using Ganss.Xss;
 
-namespace LeadGenerationCrm.Infrastructure.Campaigns;
+namespace Cohestra.Infrastructure.Campaigns;
 
 public sealed record ProcessedCampaignBody(
     string StoredBody,

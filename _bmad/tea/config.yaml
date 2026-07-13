@@ -20,7 +20,7 @@ trace_output: _bmad-output/test-artifacts/traceability
 
 # Core Configuration Values
 user_name: Admin
-project_name: lead-generation-crm
+project_name: cohestra
 communication_language: English
 document_output_language: English
 output_folder: _bmad-output

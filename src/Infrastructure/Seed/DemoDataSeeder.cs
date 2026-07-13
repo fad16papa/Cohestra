@@ -1,19 +1,19 @@
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Domain.Registrations;
-using LeadGenerationCrm.Infrastructure.Activities;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Clients;
+using Cohestra.Domain.Registrations;
+using Cohestra.Infrastructure.Activities;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Registrations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace LeadGenerationCrm.Infrastructure.Seed;
+namespace Cohestra.Infrastructure.Seed;
 
 public static class DemoDataSeeder
 {
-    public const string DemoEmailDomain = "demo.leadgenerationcrm.local";
+    public const string DemoEmailDomain = "demo.cohestra.local";
 
     private static readonly string[] CommunityNames =
     [
@@ -79,7 +79,7 @@ public static class DemoDataSeeder
     {
         await using var scope = services.CreateAsyncScope();
         var settings = scope.ServiceProvider.GetRequiredService<IOptions<DemoDataSeedSettings>>().Value;
-        var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var logger = scope.ServiceProvider
             .GetRequiredService<ILoggerFactory>()
             .CreateLogger("DemoDataSeeder");
@@ -88,7 +88,7 @@ public static class DemoDataSeeder
     }
 
     internal static async Task SeedDatabaseAsync(
-        LeadGenerationCrmDbContext dbContext,
+        CohestraDbContext dbContext,
         DemoDataSeedSettings settings,
         ILogger logger,
         CancellationToken cancellationToken = default)
@@ -224,7 +224,7 @@ public static class DemoDataSeeder
     }
 
     internal static async Task WipeBusinessDataAsync(
-        LeadGenerationCrmDbContext dbContext,
+        CohestraDbContext dbContext,
         CancellationToken cancellationToken = default)
     {
         dbContext.CampaignRecipients.RemoveRange(await dbContext.CampaignRecipients.ToListAsync(cancellationToken));

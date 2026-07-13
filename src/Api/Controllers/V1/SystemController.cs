@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace LeadGenerationCrm.Api.Controllers.V1;
+namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/system")]
@@ -11,7 +11,7 @@ public class SystemController : ControllerBase
     [ProducesResponseType(typeof(SystemInfoResponse), StatusCodes.Status200OK)]
     public ActionResult<SystemInfoResponse> GetInfo()
     {
-        return Ok(new SystemInfoResponse("Lead Generation CRM", "v1"));
+        return Ok(new SystemInfoResponse("Cohestra", "v1"));
     }
 }
 

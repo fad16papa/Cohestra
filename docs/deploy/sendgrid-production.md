@@ -44,7 +44,7 @@ The in-app checklist (**Settings → Email delivery**) confirms verification via
 ## 3. Create a restricted API key
 
 1. **Settings → API Keys → Create API Key**
-2. Name: e.g. `Lead Generation CRM Production`
+2. Name: e.g. `Cohestra Production`
 3. Permissions: **Restricted Access** with:
    - **Mail Send → Full Access** (required to send campaigns)
    - **Sender Authentication → Read Access** (required for in-app delivery checklist)

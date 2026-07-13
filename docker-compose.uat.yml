@@ -13,13 +13,13 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-leadgenerationcrm}
+      POSTGRES_DB: ${POSTGRES_DB:-cohestra}
       POSTGRES_USER: ${POSTGRES_USER:-crm}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm} -d ${POSTGRES_DB:-leadgenerationcrm}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm} -d ${POSTGRES_DB:-cohestra}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -49,11 +49,11 @@ services:
       - campaign_assets_data:/app/data/campaign-assets
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-leadgenerationcrm};Username=${POSTGRES_USER:-crm};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-cohestra};Username=${POSTGRES_USER:-crm};Password=${POSTGRES_PASSWORD}
       ConnectionStrings__Redis: redis:6379
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env (min 32 chars)}
-      Jwt__Issuer: ${JWT_ISSUER:-lead-generation-crm}
-      Jwt__Audience: ${JWT_AUDIENCE:-lead-generation-crm-api}
+      Jwt__Issuer: ${JWT_ISSUER:-cohestra}
+      Jwt__Audience: ${JWT_AUDIENCE:-cohestra-api}
       OperatorSeed__Enabled: "false"
       DemoDataSeed__Enabled: "false"
       PublicWeb__BaseUrl: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}

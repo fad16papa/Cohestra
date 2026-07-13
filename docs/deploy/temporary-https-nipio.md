@@ -26,7 +26,7 @@ Browser → https://129-212-235-2.nip.io
 ## One-time setup (on droplet)
 
 ```bash
-cd ~/lead-generation-crm
+cd ~/cohestra
 git pull
 
 # Fix CRLF on Windows-edited scripts if smoke/deploy fails:
@@ -73,10 +73,10 @@ Let's Encrypt certs expire every ~90 days. Renew manually or add a weekly cron:
 bash deploy/renew-letsencrypt.sh
 
 # Cron (root crontab on droplet) — Sundays 03:00
-0 3 * * 0 cd /root/lead-generation-crm && bash deploy/renew-letsencrypt.sh >> /var/log/letsencrypt-renew.log 2>&1
+0 3 * * 0 cd /root/cohestra && bash deploy/renew-letsencrypt.sh >> /var/log/letsencrypt-renew.log 2>&1
 ```
 
-Adjust path if the repo lives elsewhere (e.g. `/home/deploy/lead-generation-crm`).
+Adjust path if the repo lives elsewhere (e.g. `/home/deploy/cohestra`).
 
 ## Switch to client domain later
 
@@ -96,7 +96,7 @@ bash deploy/switch-https-domain.sh uat.client.com you@client.com
 If HTTPS misbehaves and you need the app back on HTTP quickly:
 
 ```bash
-cd ~/lead-generation-crm
+cd ~/cohestra
 sed -i 's|^NGINX_CONFIG_PATH=.*|NGINX_CONFIG_PATH=./deploy/nginx/app.conf|' .env
 sed -i 's|^PUBLIC_BASE_URL=.*|PUBLIC_BASE_URL=http://YOUR_DROPLET_IP|' .env
 docker compose -f docker-compose.uat.yml up -d --build web api nginx
@@ -111,7 +111,7 @@ Replace `YOUR_DROPLET_IP` with the droplet public IP. Data volumes are untouched
 **Recovery:**
 
 ```bash
-cd ~/lead-generation-crm
+cd ~/cohestra
 
 # 1. HTTP nginx first (fixes restart loop)
 sed -i 's|^NGINX_CONFIG_PATH=.*|NGINX_CONFIG_PATH=./deploy/nginx/app.conf|' .env

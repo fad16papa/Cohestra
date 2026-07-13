@@ -1,9 +1,9 @@
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Domain.Clients;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Registrations;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Registrations;
+namespace Cohestra.Infrastructure.Tests.Registrations;
 
 /// <summary>
 /// ATDD red-phase matrix for Story 3.3 — client deduplication and merge-suspect rules.
@@ -245,12 +245,12 @@ public sealed class ClientDeduplicationServiceTests
             ReferralSource: null);
     }
 
-    private static LeadGenerationCrmDbContext CreateDbContext()
+    private static CohestraDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<LeadGenerationCrmDbContext>()
+        var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new LeadGenerationCrmDbContext(options);
+        return new CohestraDbContext(options);
     }
 }

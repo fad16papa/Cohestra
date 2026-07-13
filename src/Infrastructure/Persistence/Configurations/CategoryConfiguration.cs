@@ -1,8 +1,8 @@
-using LeadGenerationCrm.Domain.Activities;
+using Cohestra.Domain.Activities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace LeadGenerationCrm.Infrastructure.Persistence.Configurations;
+namespace Cohestra.Infrastructure.Persistence.Configurations;
 
 public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
 {

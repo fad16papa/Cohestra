@@ -77,7 +77,7 @@ Composer
 - `src/Infrastructure.Tests/Infrastructure.Tests.csproj`
 - `src/Infrastructure.Tests/Registrations/ClientContactNormalizerTests.cs`
 - `src/Infrastructure.Tests/Registrations/ClientDeduplicationServiceTests.cs`
-- `LeadGenerationCrm.sln`
+- `Cohestra.sln`
 
 ### Change Log
 

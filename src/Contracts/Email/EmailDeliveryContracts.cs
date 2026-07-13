@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Contracts.Email;
+namespace Cohestra.Contracts.Email;
 
 public sealed record EmailDeliveryChecklistItemResponse(
     string Id,

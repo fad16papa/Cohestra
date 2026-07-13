@@ -1,16 +1,16 @@
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Campaigns;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Domain.Registrations;
-using LeadGenerationCrm.Domain.Site;
-using LeadGenerationCrm.Infrastructure.Identity;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Campaigns;
+using Cohestra.Domain.Clients;
+using Cohestra.Domain.Registrations;
+using Cohestra.Domain.Site;
+using Cohestra.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Persistence;
+namespace Cohestra.Infrastructure.Persistence;
 
-public class LeadGenerationCrmDbContext(DbContextOptions<LeadGenerationCrmDbContext> options)
+public class CohestraDbContext(DbContextOptions<CohestraDbContext> options)
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
     public DbSet<Activity> Activities => Set<Activity>();
@@ -40,7 +40,7 @@ public class LeadGenerationCrmDbContext(DbContextOptions<LeadGenerationCrmDbCont
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(LeadGenerationCrmDbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CohestraDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }
 }

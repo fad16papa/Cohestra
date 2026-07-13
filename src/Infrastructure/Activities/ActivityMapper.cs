@@ -1,7 +1,7 @@
-using LeadGenerationCrm.Contracts.Activities;
-using LeadGenerationCrm.Domain.Activities;
+using Cohestra.Contracts.Activities;
+using Cohestra.Domain.Activities;
 
-namespace LeadGenerationCrm.Infrastructure.Activities;
+namespace Cohestra.Infrastructure.Activities;
 
 internal static class ActivityMapper
 {

@@ -76,7 +76,7 @@ Composer
 - `src/Infrastructure/Clients/ClientDetailMapper.cs`
 - `src/Infrastructure/Clients/ClientRegistrationAnswerFormatter.cs`
 - `src/Infrastructure/Persistence/Configurations/ClientTimelineEventConfiguration.cs`
-- `src/Infrastructure/Persistence/LeadGenerationCrmDbContext.cs`
+- `src/Infrastructure/Persistence/CohestraDbContext.cs`
 - `src/Infrastructure/Persistence/Migrations/*AddClientTimelineEvents*`
 - `src/Api/Controllers/V1/ClientsController.cs`
 - `src/Api/Api.http`

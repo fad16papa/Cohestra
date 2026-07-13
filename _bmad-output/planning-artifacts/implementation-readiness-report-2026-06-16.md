@@ -1,37 +1,37 @@
 ---
 stepsCompleted: [1, 2, 3, 4, 5, 6]
 assessmentDate: '2026-06-16'
-project_name: lead-generation-crm
+project_name: cohestra
 assessor: BMad Implementation Readiness Workflow
 overallStatus: READY_WITH_CONDITIONS
 documentsIncluded:
   prd:
-    - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md
+    - _bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/prd.md
   architecture:
     - _bmad-output/planning-artifacts/architecture.md
   epics:
     - _bmad-output/planning-artifacts/epics.md
   ux:
-    - _bmad-output/planning-artifacts/ux-designs/ux-lead-generation-crm-2026-06-14/DESIGN.md
-    - _bmad-output/planning-artifacts/ux-designs/ux-lead-generation-crm-2026-06-14/EXPERIENCE.md
+    - _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-06-14/DESIGN.md
+    - _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-06-14/EXPERIENCE.md
 documentsExcluded:
-  - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/addendum.md
-  - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/reconcile-business-proposal.md
-  - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/.decision-log.md
-  - _bmad-output/planning-artifacts/ux-designs/ux-lead-generation-crm-2026-06-14/.decision-log.md
+  - _bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/addendum.md
+  - _bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/reconcile-business-proposal.md
+  - _bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/.decision-log.md
+  - _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-06-14/.decision-log.md
 ---
 
 # Implementation Readiness Assessment Report
 
 **Date:** 2026-06-16
-**Project:** lead-generation-crm
+**Project:** cohestra
 
 ## Document Inventory (Step 1)
 
 ### PRD Files Found
 
 **Primary document:**
-- `prds/prd-lead-generation-crm-2026-06-14/prd.md` (25 KB, modified 2026-06-14)
+- `prds/prd-cohestra-2026-06-14/prd.md` (25 KB, modified 2026-06-14)
 
 **Companion files (same folder, not primary for assessment):**
 - `addendum.md` (2 KB) — technical mechanism choices
@@ -57,7 +57,7 @@ documentsExcluded:
 ### UX Design Files Found
 
 **Paired documents (folder, not sharded index):**
-- Folder: `ux-designs/ux-lead-generation-crm-2026-06-14/`
+- Folder: `ux-designs/ux-cohestra-2026-06-14/`
   - `DESIGN.md` (14 KB, modified 2026-06-15) — visual identity, tokens, components
   - `EXPERIENCE.md` (19 KB, modified 2026-06-15) — IA, flows, behavioral patterns
   - `.decision-log.md` (4 KB)

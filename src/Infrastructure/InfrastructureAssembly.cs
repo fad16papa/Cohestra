@@ -1,3 +1,3 @@
-namespace LeadGenerationCrm.Infrastructure;
+namespace Cohestra.Infrastructure;
 
 public static class InfrastructureAssembly;

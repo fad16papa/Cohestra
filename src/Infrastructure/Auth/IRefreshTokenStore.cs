@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Infrastructure.Auth;
+namespace Cohestra.Infrastructure.Auth;
 
 public interface IRefreshTokenStore
 {

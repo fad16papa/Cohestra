@@ -1,8 +1,8 @@
-using LeadGenerationCrm.Infrastructure.Auth;
-using LeadGenerationCrm.Infrastructure.Site;
+using Cohestra.Infrastructure.Auth;
+using Cohestra.Infrastructure.Site;
 using Microsoft.Extensions.Options;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Site;
+namespace Cohestra.Infrastructure.Tests.Site;
 
 public sealed class SitePreviewTokenServiceTests
 {

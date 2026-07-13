@@ -1,14 +1,14 @@
-using LeadGenerationCrm.Application.Registrations;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Registrations;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Application.Registrations;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Registrations;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace LeadGenerationCrm.Infrastructure.Registrations;
+namespace Cohestra.Infrastructure.Registrations;
 
 public sealed class RegistrationService(
-    LeadGenerationCrmDbContext dbContext,
+    CohestraDbContext dbContext,
     IRegistrationIdempotencyStore idempotencyStore,
     ClientDeduplicationService clientDeduplicationService,
     RegistrationNumberGenerator registrationNumberGenerator,

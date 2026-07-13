@@ -1,9 +1,9 @@
-using LeadGenerationCrm.Api.IntegrationTests.Infrastructure;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Api.IntegrationTests.Infrastructure;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LeadGenerationCrm.Api.IntegrationTests;
+namespace Cohestra.Api.IntegrationTests;
 
 [Trait("Category", "Integration")]
 [Collection(IntegrationTestCollection.Name)]
@@ -50,7 +50,7 @@ public sealed class ClientDedupIntegrationTests(IntegrationTestFixture fixture)
         Assert.NotEqual(first.RegistrationId, second.RegistrationId);
 
         await using var scope = Factory.Services.CreateAsyncScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
 
         var matchingClient = await dbContext.Clients
             .SingleAsync(item => item.Id == first.ClientId);

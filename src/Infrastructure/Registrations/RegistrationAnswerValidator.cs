@@ -1,7 +1,7 @@
 using System.Text.Json;
-using LeadGenerationCrm.Domain.Activities;
+using Cohestra.Domain.Activities;
 
-namespace LeadGenerationCrm.Infrastructure.Registrations;
+namespace Cohestra.Infrastructure.Registrations;
 
 internal static class RegistrationAnswerValidator
 {

@@ -2,11 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
-namespace LeadGenerationCrm.Infrastructure.Persistence;
+namespace Cohestra.Infrastructure.Persistence;
 
-public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<LeadGenerationCrmDbContext>
+public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<CohestraDbContext>
 {
-    public LeadGenerationCrmDbContext CreateDbContext(string[] args)
+    public CohestraDbContext CreateDbContext(string[] args)
     {
         var configuration = new ConfigurationBuilder()
             .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../Api"))
@@ -14,9 +14,9 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<LeadGenera
             .AddJsonFile("appsettings.Development.json", optional: true)
             .Build();
 
-        var optionsBuilder = new DbContextOptionsBuilder<LeadGenerationCrmDbContext>();
+        var optionsBuilder = new DbContextOptionsBuilder<CohestraDbContext>();
         optionsBuilder.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
 
-        return new LeadGenerationCrmDbContext(optionsBuilder.Options);
+        return new CohestraDbContext(optionsBuilder.Options);
     }
 }

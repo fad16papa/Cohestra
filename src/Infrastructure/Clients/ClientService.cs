@@ -1,13 +1,13 @@
-using LeadGenerationCrm.Application.Clients;
-using LeadGenerationCrm.Contracts.Clients;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Application.Clients;
+using Cohestra.Contracts.Clients;
+using Cohestra.Domain.Clients;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Registrations;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Clients;
+namespace Cohestra.Infrastructure.Clients;
 
-public sealed class ClientService(LeadGenerationCrmDbContext dbContext) : IClientService
+public sealed class ClientService(CohestraDbContext dbContext) : IClientService
 {
     private const int DefaultPageSize = 25;
     private const int MaxPageSize = 100;

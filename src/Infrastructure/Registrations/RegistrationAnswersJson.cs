@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using LeadGenerationCrm.Domain.Registrations;
+using Cohestra.Domain.Registrations;
 
-namespace LeadGenerationCrm.Infrastructure.Registrations;
+namespace Cohestra.Infrastructure.Registrations;
 
 internal static class RegistrationAnswersJson
 {

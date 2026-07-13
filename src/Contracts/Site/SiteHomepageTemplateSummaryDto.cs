@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Contracts.Site;
+namespace Cohestra.Contracts.Site;
 
 public sealed record SiteHomepageTemplateSummaryDto(
     string Id,

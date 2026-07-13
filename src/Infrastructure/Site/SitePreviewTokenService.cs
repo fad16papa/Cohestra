@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
-using LeadGenerationCrm.Infrastructure.Auth;
+using Cohestra.Infrastructure.Auth;
 using Microsoft.Extensions.Options;
 
-namespace LeadGenerationCrm.Infrastructure.Site;
+namespace Cohestra.Infrastructure.Site;
 
 public sealed class SitePreviewTokenService(
     IOptions<JwtSettings> jwtSettings,

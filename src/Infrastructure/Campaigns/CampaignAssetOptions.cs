@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Infrastructure.Campaigns;
+namespace Cohestra.Infrastructure.Campaigns;
 
 public sealed class CampaignAssetOptions
 {

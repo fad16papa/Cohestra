@@ -9,7 +9,7 @@ lastStep: step-05-generate-report
 lastSaved: '2026-06-16'
 workflowType: testarch-nfr-assess
 inputDocuments:
-  - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md
+  - _bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/prd.md
   - _bmad-output/planning-artifacts/architecture.md
   - _bmad-output/planning-artifacts/epics.md
   - _bmad-output/planning-artifacts/sprint-change-proposal-2026-06-22.md
@@ -24,7 +24,7 @@ assessor: Murat (Master Test Architect)
 reassessment_trigger: Epic 7.2 and 7.3 complete
 ---
 
-# NFR Evidence Audit — lead-generation-crm (Full Platform)
+# NFR Evidence Audit — cohestra (Full Platform)
 
 **Date:** 2026-06-16 (re-audit)  
 **Scope:** MVP Epics 1–5 + Epic 6 post-MVP + Epic 7 hardening (7.1–7.3)  
@@ -341,7 +341,7 @@ reassessment_trigger: Epic 7.2 and 7.3 complete
 ```yaml
 nfr_assessment:
   date: '2026-06-16'
-  feature_name: 'lead-generation-crm-full-platform'
+  feature_name: 'cohestra-full-platform'
   baseline_commit: 'b222d7d'
   previous_assessment_date: '2026-06-22'
   adr_checklist_score: '18/29'

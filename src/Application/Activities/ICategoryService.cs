@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Contracts.Activities;
+using Cohestra.Contracts.Activities;
 
-namespace LeadGenerationCrm.Application.Activities;
+namespace Cohestra.Application.Activities;
 
 public interface ICategoryService
 {

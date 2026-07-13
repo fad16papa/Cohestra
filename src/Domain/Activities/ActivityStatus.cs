@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Domain.Activities;
+namespace Cohestra.Domain.Activities;
 
 public enum ActivityStatus
 {

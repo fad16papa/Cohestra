@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Infrastructure.Campaigns;
+using Cohestra.Infrastructure.Campaigns;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Campaigns;
+namespace Cohestra.Infrastructure.Tests.Campaigns;
 
 public sealed class CampaignEmailBodyProcessorTests
 {

@@ -55,7 +55,7 @@ Composer
 
 ### Completion Notes List
 
-- Identity migration `AddIdentity` applied; operator seeded as `operator@leadgenerationcrm.local`
+- Identity migration `AddIdentity` applied; operator seeded as `operator@cohestra.local`
 - Access tokens expire in 15 minutes; refresh tokens stored in Redis for 24 hours
 - Fixed admin 404 bug: `AddIdentity` cookie auth redirected challenges to `/Account/Login`; replaced with `AddIdentityCore` + JWT default policy
 - Code review patches applied (refresh race, validation, claim fallbacks, JWT TTL guards)
@@ -65,7 +65,7 @@ Composer
 
 - `src/Infrastructure/Identity/ApplicationUser.cs`
 - `src/Infrastructure/Auth/` (AuthService, JwtTokenService, RedisRefreshTokenStore, OperatorSeeder, settings)
-- `src/Infrastructure/Persistence/LeadGenerationCrmDbContext.cs`
+- `src/Infrastructure/Persistence/CohestraDbContext.cs`
 - `src/Infrastructure/Persistence/Migrations/20260617155722_AddIdentity.cs`
 - `src/Infrastructure/DependencyInjection.cs`
 - `src/Application/Auth/IAuthService.cs`

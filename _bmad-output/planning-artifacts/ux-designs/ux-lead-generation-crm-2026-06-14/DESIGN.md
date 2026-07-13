@@ -13,9 +13,9 @@ theme:
     public: localStorage per browser
   no-flash: inline script resolves theme before first paint
 sources:
-  - {planning_artifacts}/prds/prd-lead-generation-crm-2026-06-14/prd.md
-  - {planning_artifacts}/briefs/brief-lead-generation-crm-2026-06-14/brief.md
-  - {planning_artifacts}/ux-designs/ux-lead-generation-crm-2026-06-14/.decision-log.md
+  - {planning_artifacts}/prds/prd-cohestra-2026-06-14/prd.md
+  - {planning_artifacts}/briefs/brief-cohestra-2026-06-14/brief.md
+  - {planning_artifacts}/ux-designs/ux-cohestra-2026-06-14/.decision-log.md
 colors:
   # Brand overrides on shadcn defaults. Unlisted tokens inherit shadcn (background,
   # foreground, muted, card, popover, border, input, ring, destructive).

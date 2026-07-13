@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace LeadGenerationCrm.Domain.Site;
+namespace Cohestra.Domain.Site;
 
 public sealed class SiteSectionsDocument
 {

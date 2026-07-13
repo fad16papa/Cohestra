@@ -1,11 +1,11 @@
 using System.Text.Json;
-using LeadGenerationCrm.Contracts.Site;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Infrastructure.Activities;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Contracts.Site;
+using Cohestra.Domain.Activities;
+using Cohestra.Infrastructure.Activities;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Site;
+namespace Cohestra.Infrastructure.Site;
 
 internal static class SiteUpcomingActivitiesResolver
 {
@@ -31,7 +31,7 @@ internal static class SiteUpcomingActivitiesResolver
     }
 
     internal static async Task<IReadOnlyList<PublicHomepageActivityDto>> LoadAsync(
-        LeadGenerationCrmDbContext dbContext,
+        CohestraDbContext dbContext,
         SiteSectionsDocumentDto published,
         string publicApiBaseUrl,
         CancellationToken cancellationToken = default)

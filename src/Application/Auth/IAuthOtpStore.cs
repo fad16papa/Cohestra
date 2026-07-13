@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Application.Auth;
+namespace Cohestra.Application.Auth;
 
 public interface IAuthOtpStore
 {

@@ -1,14 +1,14 @@
 using System.Text.Json;
 
-using LeadGenerationCrm.Contracts.Site;
+using Cohestra.Contracts.Site;
 
-using LeadGenerationCrm.Domain.Site;
+using Cohestra.Domain.Site;
 
-using LeadGenerationCrm.Infrastructure.Site;
+using Cohestra.Infrastructure.Site;
 
 
 
-namespace LeadGenerationCrm.Infrastructure.Seed;
+namespace Cohestra.Infrastructure.Seed;
 
 
 

@@ -1,13 +1,13 @@
 using System.Text.Json;
-using LeadGenerationCrm.Domain.Site;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Site;
+using Cohestra.Domain.Site;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace LeadGenerationCrm.Infrastructure.Seed;
+namespace Cohestra.Infrastructure.Seed;
 
 public static class SitePageSeeder
 {
@@ -15,7 +15,7 @@ public static class SitePageSeeder
     {
         await using var scope = services.CreateAsyncScope();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(SitePageSeeder));
-        var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var settings = scope.ServiceProvider.GetRequiredService<IOptions<SiteLandingSeedSettings>>().Value;
         var publishedSiteCache = scope.ServiceProvider.GetRequiredService<IPublishedSiteCache>();
 

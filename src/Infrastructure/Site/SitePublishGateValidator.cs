@@ -1,12 +1,12 @@
 using System.Text.Json;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Site;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Site;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Site;
+namespace Cohestra.Infrastructure.Site;
 
-public sealed class SitePublishGateValidator(LeadGenerationCrmDbContext dbContext)
+public sealed class SitePublishGateValidator(CohestraDbContext dbContext)
 {
     public async Task<string?> ValidateForPublishAsync(
         SiteSectionsDocument? draft,

@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Contracts.Site;
+using Cohestra.Contracts.Site;
 
-namespace LeadGenerationCrm.Application.Site;
+namespace Cohestra.Application.Site;
 
 public interface ISitePageService
 {

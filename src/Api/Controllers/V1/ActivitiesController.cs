@@ -1,10 +1,10 @@
-using LeadGenerationCrm.Application.Activities;
-using LeadGenerationCrm.Contracts.Activities;
-using LeadGenerationCrm.Infrastructure.Auth;
+using Cohestra.Application.Activities;
+using Cohestra.Contracts.Activities;
+using Cohestra.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LeadGenerationCrm.Api.Controllers.V1;
+namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/activities")]

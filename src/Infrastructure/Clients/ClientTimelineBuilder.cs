@@ -1,10 +1,10 @@
-using LeadGenerationCrm.Contracts.Clients;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Domain.Registrations;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Contracts.Clients;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Clients;
+using Cohestra.Domain.Registrations;
+using Cohestra.Infrastructure.Registrations;
 
-namespace LeadGenerationCrm.Infrastructure.Clients;
+namespace Cohestra.Infrastructure.Clients;
 
 internal static class ClientTimelineBuilder
 {

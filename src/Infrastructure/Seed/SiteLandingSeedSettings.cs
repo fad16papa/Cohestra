@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Infrastructure.Seed;
+namespace Cohestra.Infrastructure.Seed;
 
 public sealed class SiteLandingSeedSettings
 {

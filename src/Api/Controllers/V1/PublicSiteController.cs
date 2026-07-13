@@ -1,9 +1,9 @@
-using LeadGenerationCrm.Application.Site;
-using LeadGenerationCrm.Contracts.Site;
+using Cohestra.Application.Site;
+using Cohestra.Contracts.Site;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LeadGenerationCrm.Api.Controllers.V1;
+namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/public/site")]

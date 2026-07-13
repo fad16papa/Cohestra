@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Contracts.Campaigns;
+using Cohestra.Contracts.Campaigns;
 
-namespace LeadGenerationCrm.Infrastructure.Campaigns;
+namespace Cohestra.Infrastructure.Campaigns;
 
 internal static class ClientSegmentQueryValidator
 {

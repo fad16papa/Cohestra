@@ -1,10 +1,10 @@
-using LeadGenerationCrm.Application.Email;
-using LeadGenerationCrm.Contracts.Email;
-using LeadGenerationCrm.Infrastructure.Auth;
+using Cohestra.Application.Email;
+using Cohestra.Contracts.Email;
+using Cohestra.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LeadGenerationCrm.Api.Controllers.V1;
+namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/email-delivery")]

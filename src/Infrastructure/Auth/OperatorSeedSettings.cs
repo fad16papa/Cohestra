@@ -1,10 +1,10 @@
-namespace LeadGenerationCrm.Infrastructure.Auth;
+namespace Cohestra.Infrastructure.Auth;
 
 public sealed class OperatorSeedSettings
 {
     public const string SectionName = "OperatorSeed";
 
-    public string Email { get; set; } = "operator@leadgenerationcrm.local";
+    public string Email { get; set; } = "operator@cohestra.local";
 
     public string Password { get; set; } = "ChangeMe123!";
 

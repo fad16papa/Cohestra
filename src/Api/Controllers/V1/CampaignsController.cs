@@ -1,13 +1,13 @@
-using LeadGenerationCrm.Application.Campaigns;
-using LeadGenerationCrm.Contracts.Campaigns;
-using LeadGenerationCrm.Infrastructure.Auth;
-using LeadGenerationCrm.Infrastructure.Identity;
+using Cohestra.Application.Campaigns;
+using Cohestra.Contracts.Campaigns;
+using Cohestra.Infrastructure.Auth;
+using Cohestra.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace LeadGenerationCrm.Api.Controllers.V1;
+namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/campaigns")]

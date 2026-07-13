@@ -4,10 +4,10 @@ status: final
 created: 2026-06-14
 updated: 2026-06-14
 sources:
-  - {planning_artifacts}/prds/prd-lead-generation-crm-2026-06-14/prd.md
-  - {planning_artifacts}/prds/prd-lead-generation-crm-2026-06-14/addendum.md
-  - {planning_artifacts}/briefs/brief-lead-generation-crm-2026-06-14/brief.md
-  - {planning_artifacts}/ux-designs/ux-lead-generation-crm-2026-06-14/DESIGN.md
+  - {planning_artifacts}/prds/prd-cohestra-2026-06-14/prd.md
+  - {planning_artifacts}/prds/prd-cohestra-2026-06-14/addendum.md
+  - {planning_artifacts}/briefs/brief-cohestra-2026-06-14/brief.md
+  - {planning_artifacts}/ux-designs/ux-cohestra-2026-06-14/DESIGN.md
 ---
 
 # Activity Lead Engine — Experience Spine

@@ -1,11 +1,11 @@
-using LeadGenerationCrm.Application.Email;
+using Cohestra.Application.Email;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace LeadGenerationCrm.Api.IntegrationTests.Infrastructure;
+namespace Cohestra.Api.IntegrationTests.Infrastructure;
 
 public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -18,19 +18,19 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
         builder.UseEnvironment("Development");
 
         var postgresConnection = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-            ?? "Host=localhost;Port=5432;Database=leadgenerationcrm_test;Username=crm;Password=crm";
+            ?? "Host=localhost;Port=5432;Database=cohestra_test;Username=crm;Password=crm";
         var redisConnection = Environment.GetEnvironmentVariable("ConnectionStrings__Redis")
             ?? "localhost:6379";
 
         builder.UseSetting("ConnectionStrings:DefaultConnection", postgresConnection);
         builder.UseSetting("ConnectionStrings:Redis", redisConnection);
         builder.UseSetting("Jwt:SigningKey", "integration-test-jwt-signing-key-min-32-chars!");
-        builder.UseSetting("OperatorSeed:Email", "operator@leadgenerationcrm.local");
+        builder.UseSetting("OperatorSeed:Email", "operator@cohestra.local");
         builder.UseSetting("OperatorSeed:Password", "ChangeMe123!");
         builder.UseSetting("OperatorSeed:Enabled", "true");
         builder.UseSetting("DemoDataSeed:Enabled", "false");
         builder.UseSetting("SendGrid:ApiKey", "SG.integration-test-key");
-        builder.UseSetting("SendGrid:FromEmail", "operator@leadgenerationcrm.local");
+        builder.UseSetting("SendGrid:FromEmail", "operator@cohestra.local");
         builder.UseSetting("SendGrid:FromName", "Integration Tests");
         builder.UseSetting("SendGrid:UseSandbox", "true");
         builder.UseSetting("PublicRegistrationRateLimit:MaxRequests", "1000");

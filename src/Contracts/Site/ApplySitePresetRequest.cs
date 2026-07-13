@@ -1,3 +1,3 @@
-namespace LeadGenerationCrm.Contracts.Site;
+namespace Cohestra.Contracts.Site;
 
 public sealed record ApplySitePresetRequest(string PresetId);

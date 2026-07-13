@@ -1,14 +1,14 @@
 using System.Globalization;
 using System.Text;
-using LeadGenerationCrm.Application.Reports;
-using LeadGenerationCrm.Contracts.Reports;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Application.Reports;
+using Cohestra.Contracts.Reports;
+using Cohestra.Domain.Clients;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Reports;
+namespace Cohestra.Infrastructure.Reports;
 
-public sealed class ReportService(LeadGenerationCrmDbContext dbContext) : IReportService
+public sealed class ReportService(CohestraDbContext dbContext) : IReportService
 {
     public async Task<ReportResponse> GetReportAsync(
         ReportQuery query,

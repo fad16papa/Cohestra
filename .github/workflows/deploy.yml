@@ -34,7 +34,7 @@ jobs:
             set -euo pipefail
             DEPLOY_PATH="${{ secrets.DROPLET_DEPLOY_PATH }}"
             if [[ -z "$DEPLOY_PATH" ]]; then
-              DEPLOY_PATH="$HOME/lead-generation-crm"
+              DEPLOY_PATH="$HOME/cohestra"
             fi
             cd "$DEPLOY_PATH"
             bash deploy/remote-deploy.sh

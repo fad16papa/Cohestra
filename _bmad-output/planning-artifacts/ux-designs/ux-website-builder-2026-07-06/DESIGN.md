@@ -8,10 +8,10 @@ theme:
   modes: [light, dark, system]
   default: system
   implementation: class-based (.dark on html) via next-themes
-  inheritance: "{planning_artifacts}/ux-designs/ux-lead-generation-crm-2026-06-14/DESIGN.md"
+  inheritance: "{planning_artifacts}/ux-designs/ux-cohestra-2026-06-14/DESIGN.md"
 sources:
   - {planning_artifacts}/prds/prd-website-builder-2026-07-06/prd.md
-  - {planning_artifacts}/ux-designs/ux-lead-generation-crm-2026-07-06/EXPERIENCE.md
+  - {planning_artifacts}/ux-designs/ux-cohestra-2026-07-06/EXPERIENCE.md
 colors:
   primary: '#2D6A4F'
   accent: '#40916C'
@@ -54,7 +54,7 @@ components:
 
 # Activity Lead — Website Builder (DESIGN.md)
 
-Inherits all tokens from Activity Lead (`ux-lead-generation-crm-2026-06-14/DESIGN.md`) unless overridden below. Typography and spacing on public homepage sections remain platform-owned (UX-DR26).
+Inherits all tokens from Activity Lead (`ux-cohestra-2026-06-14/DESIGN.md`) unless overridden below. Typography and spacing on public homepage sections remain platform-owned (UX-DR26).
 
 ## Brand & Style
 

@@ -10,7 +10,7 @@ set -euo pipefail
 #   - LETSENCRYPT_EMAIL set in .env
 #
 # Usage (on droplet):
-#   cd ~/lead-generation-crm
+#   cd ~/cohestra
 #   # Add to .env: LETSENCRYPT_EMAIL=you@example.com
 #   bash deploy/setup-temporary-https.sh
 #

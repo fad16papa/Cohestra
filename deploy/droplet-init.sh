@@ -3,14 +3,14 @@ set -euo pipefail
 
 # One-time droplet setup before GitHub Actions CD can deploy.
 # Run on the droplet over SSH:
-#   REPO_URL=https://github.com/YOUR_ORG/lead-generation-crm.git bash deploy/droplet-init.sh
+#   REPO_URL=https://github.com/YOUR_ORG/cohestra.git bash deploy/droplet-init.sh
 #
 # For a private repo, configure git access first (deploy key or SSH remote).
 
-DEPLOY_PATH="${DEPLOY_PATH:-$HOME/lead-generation-crm}"
+DEPLOY_PATH="${DEPLOY_PATH:-$HOME/cohestra}"
 REPO_URL="${REPO_URL:-}"
 
-echo "== Lead Generation CRM — droplet init =="
+echo "== Cohestra — droplet init =="
 echo "Deploy path: $DEPLOY_PATH"
 
 if ! command -v git >/dev/null 2>&1; then
@@ -35,7 +35,7 @@ fi
 
 if [[ -z "$REPO_URL" ]]; then
   echo "ERROR: Set REPO_URL to your GitHub repository clone URL."
-  echo 'Example: REPO_URL=https://github.com/your-org/lead-generation-crm.git bash deploy/droplet-init.sh'
+  echo 'Example: REPO_URL=https://github.com/your-org/cohestra.git bash deploy/droplet-init.sh'
   exit 1
 fi
 

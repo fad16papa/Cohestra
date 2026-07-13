@@ -1,10 +1,10 @@
 using System.Globalization;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Registrations;
+namespace Cohestra.Infrastructure.Registrations;
 
-public sealed class RegistrationNumberGenerator(LeadGenerationCrmDbContext dbContext)
+public sealed class RegistrationNumberGenerator(CohestraDbContext dbContext)
 {
     public const int SequenceDigits = 6;
 

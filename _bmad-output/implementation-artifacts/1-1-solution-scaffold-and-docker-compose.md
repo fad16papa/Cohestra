@@ -21,7 +21,7 @@ so that all subsequent stories deploy and run consistently in local and producti
 2. **AC-1.1.2 — .NET solution structure**
    - **Given** the repository is scaffolded
    - **When** I inspect the backend
-   - **Then** `LeadGenerationCrm.sln` exists at repo root with projects: `Api`, `Application`, `Domain`, `Infrastructure`, `Contracts`
+   - **Then** `Cohestra.sln` exists at repo root with projects: `Api`, `Application`, `Domain`, `Infrastructure`, `Contracts`
    - **And** project references follow clean architecture: `Api → Application, Infrastructure, Contracts`; `Application → Domain, Contracts`; `Infrastructure → Application, Domain`; `Domain` has no upstream deps
    - **And** bounded-context folder stubs exist under `Application/` and `Domain/`: `Activities/`, `Clients/`, `Campaigns/`, `Reports/` (empty placeholder namespaces or README per folder is acceptable)
 
@@ -44,7 +44,7 @@ so that all subsequent stories deploy and run consistently in local and producti
 ## Tasks / Subtasks
 
 - [x] **Task 1: Backend solution scaffold** (AC: 1.1.2)
-  - [x] Create `LeadGenerationCrm.sln` with five projects using `dotnet new` templates
+  - [x] Create `Cohestra.sln` with five projects using `dotnet new` templates
   - [x] Wire project references per clean architecture layering
   - [x] Add bounded-context folder stubs in `Application/` and `Domain/`
   - [x] Configure `Api` as ASP.NET Core Web API targeting Linux containers
@@ -143,8 +143,8 @@ so that all subsequent stories deploy and run consistently in local and producti
 ### Target Repository Structure
 
 ```
-lead-generation-crm/
-├── LeadGenerationCrm.sln
+cohestra/
+├── Cohestra.sln
 ├── docker-compose.yml
 ├── .env.example
 ├── README.md
@@ -231,7 +231,7 @@ Composer
 
 ### Debug Log References
 
-- `dotnet build LeadGenerationCrm.sln` — succeeded (0 warnings, 0 errors)
+- `dotnet build Cohestra.sln` — succeeded (0 warnings, 0 errors)
 - `docker compose up --build` — all four services healthy (api, postgres, redis, web); verified after round-2 web bind fix
 - Smoke tests: `GET /health` → `{"status":"healthy"}`; `GET /ready` → postgres + redis Healthy; web → HTTP 200
 
@@ -248,7 +248,7 @@ Composer
 - `.dockerignore`
 - `.env.example`
 - `.gitignore`
-- `LeadGenerationCrm.sln`
+- `Cohestra.sln`
 - `README.md`
 - `docker-compose.yml`
 - `src/Api/` (Api.csproj, Dockerfile, Program.cs, appsettings*.json, launchSettings.json, Api.http)

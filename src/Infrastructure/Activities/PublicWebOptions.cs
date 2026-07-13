@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Infrastructure.Activities;
+namespace Cohestra.Infrastructure.Activities;
 
 public sealed class PublicWebOptions
 {

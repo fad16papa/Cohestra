@@ -1,14 +1,14 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using LeadGenerationCrm.Contracts.Admin;
-using LeadGenerationCrm.Infrastructure.Auth;
-using LeadGenerationCrm.Infrastructure.Branding;
-using LeadGenerationCrm.Infrastructure.Identity;
+using Cohestra.Contracts.Admin;
+using Cohestra.Infrastructure.Auth;
+using Cohestra.Infrastructure.Branding;
+using Cohestra.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LeadGenerationCrm.Api.Controllers.V1;
+namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin")]

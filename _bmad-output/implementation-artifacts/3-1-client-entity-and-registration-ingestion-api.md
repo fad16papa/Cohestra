@@ -77,7 +77,7 @@ Composer
 - `src/Infrastructure/Registrations/RegistrationAnswersJson.cs`
 - `src/Infrastructure/Persistence/Configurations/ClientConfiguration.cs`
 - `src/Infrastructure/Persistence/Configurations/RegistrationConfiguration.cs`
-- `src/Infrastructure/Persistence/LeadGenerationCrmDbContext.cs`
+- `src/Infrastructure/Persistence/CohestraDbContext.cs`
 - `src/Infrastructure/Persistence/Migrations/*AddClientsAndRegistrations*`
 - `src/Infrastructure/DependencyInjection.cs`
 - `src/Contracts/Registrations/SubmitPublicRegistrationRequest.cs`

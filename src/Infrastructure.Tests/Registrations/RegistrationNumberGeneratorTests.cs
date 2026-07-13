@@ -1,8 +1,8 @@
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Registrations;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Registrations;
+namespace Cohestra.Infrastructure.Tests.Registrations;
 
 public sealed class RegistrationNumberGeneratorTests
 {
@@ -37,12 +37,12 @@ public sealed class RegistrationNumberGeneratorTests
         Assert.Equal("REG20260616000008", next);
     }
 
-    private static LeadGenerationCrmDbContext CreateDbContext()
+    private static CohestraDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<LeadGenerationCrmDbContext>()
+        var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new LeadGenerationCrmDbContext(options);
+        return new CohestraDbContext(options);
     }
 }

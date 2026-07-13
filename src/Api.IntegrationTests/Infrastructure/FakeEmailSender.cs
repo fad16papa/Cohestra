@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Application.Email;
+using Cohestra.Application.Email;
 
-namespace LeadGenerationCrm.Api.IntegrationTests.Infrastructure;
+namespace Cohestra.Api.IntegrationTests.Infrastructure;
 
 public sealed class FakeEmailSender : IEmailSender
 {

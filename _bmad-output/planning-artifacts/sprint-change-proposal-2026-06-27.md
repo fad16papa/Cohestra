@@ -1,6 +1,6 @@
 ---
 generated: 2026-06-27
-project: lead-generation-crm
+project: cohestra
 author: Correct Course workflow
 status: approved
 approved: 2026-06-27
@@ -121,7 +121,7 @@ During **UAT polish** (post–Epic 7), Francis identified gaps between **operato
 
 ## Section 4: Detailed Change Proposals
 
-### 4.1 PRD — `prd-lead-generation-crm-2026-06-14/prd.md`
+### 4.1 PRD — `prd-cohestra-2026-06-14/prd.md`
 
 #### Extend FR-4 consequences (§4.1)
 

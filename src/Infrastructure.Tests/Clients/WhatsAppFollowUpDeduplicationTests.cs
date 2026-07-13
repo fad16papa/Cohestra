@@ -1,8 +1,8 @@
-using LeadGenerationCrm.Application.Clients;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Infrastructure.Clients;
+using Cohestra.Application.Clients;
+using Cohestra.Domain.Clients;
+using Cohestra.Infrastructure.Clients;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Clients;
+namespace Cohestra.Infrastructure.Tests.Clients;
 
 public sealed class WhatsAppFollowUpDeduplicationTests
 {

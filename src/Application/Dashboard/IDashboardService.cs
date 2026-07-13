@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Contracts.Dashboard;
+using Cohestra.Contracts.Dashboard;
 
-namespace LeadGenerationCrm.Application.Dashboard;
+namespace Cohestra.Application.Dashboard;
 
 public interface IDashboardService
 {

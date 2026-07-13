@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 
-namespace LeadGenerationCrm.Infrastructure.Registrations;
+namespace Cohestra.Infrastructure.Registrations;
 
 public sealed record RegistrationConfirmationEmailContent(
     string Subject,

@@ -94,7 +94,7 @@ flowchart LR
 
 | Concern | Convention |
 | --- | --- |
-| Naming | `SitePage`, `ISitePageService`, `SitePageController`, contracts in `LeadGenerationCrm.Contracts.Site` |
+| Naming | `SitePage`, `ISitePageService`, `SitePageController`, contracts in `Cohestra.Contracts.Site` |
 | Routes | Public: `api/v1/public/site`; Admin: `api/v1/admin/site`, `POST .../publish` |
 | JSON | camelCase API; JSONB in postgres; asset refs as GUID strings |
 | Errors | `InvalidOperationException` → 400 ProblemDetails with message |

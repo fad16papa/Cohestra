@@ -1,16 +1,16 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using LeadGenerationCrm.Api.IntegrationTests.Infrastructure;
-using LeadGenerationCrm.Contracts.Site;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Site;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Site;
+using Cohestra.Api.IntegrationTests.Infrastructure;
+using Cohestra.Contracts.Site;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Site;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LeadGenerationCrm.Api.IntegrationTests;
+namespace Cohestra.Api.IntegrationTests;
 
 [Trait("Category", "Integration")]
 [Collection(IntegrationTestCollection.Name)]
@@ -43,7 +43,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
 
         await using (var scope = Factory.Services.CreateAsyncScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
             var now = DateTimeOffset.UtcNow;
             dbContext.Activities.Add(new Activity
             {
@@ -131,7 +131,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
     private static async Task ClearPublishedSiteAsync(IServiceProvider services)
     {
         await using var scope = services.CreateAsyncScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var cache = scope.ServiceProvider.GetRequiredService<RedisPublishedSiteCache>();
 
         var page = await dbContext.SitePages

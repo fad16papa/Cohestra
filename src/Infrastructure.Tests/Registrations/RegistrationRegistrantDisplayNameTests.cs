@@ -1,9 +1,9 @@
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Domain.Registrations;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Clients;
+using Cohestra.Domain.Registrations;
+using Cohestra.Infrastructure.Registrations;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Registrations;
+namespace Cohestra.Infrastructure.Tests.Registrations;
 
 public sealed class RegistrationRegistrantDisplayNameTests
 {

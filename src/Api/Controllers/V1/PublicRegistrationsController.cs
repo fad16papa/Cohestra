@@ -1,10 +1,10 @@
-using LeadGenerationCrm.Application.Registrations;
-using LeadGenerationCrm.Contracts.Registrations;
+using Cohestra.Application.Registrations;
+using Cohestra.Contracts.Registrations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LeadGenerationCrm.Api.Controllers.V1;
+namespace Cohestra.Api.Controllers.V1;
 
 /// <summary>Anonymous public registration endpoints.</summary>
 [ApiController]

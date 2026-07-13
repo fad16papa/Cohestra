@@ -1,8 +1,8 @@
-using LeadGenerationCrm.Api.Infrastructure;
-using LeadGenerationCrm.Infrastructure;
-using LeadGenerationCrm.Infrastructure.Auth;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Seed;
+using Cohestra.Api.Infrastructure;
+using Cohestra.Infrastructure;
+using Cohestra.Infrastructure.Auth;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
@@ -103,7 +103,7 @@ builder.Services.AddOpenApi("v1", options =>
     {
         document.Info = new OpenApiInfo
         {
-            Title = "Lead Generation CRM API",
+            Title = "Cohestra API",
             Version = "v1",
             Description =
                 "Activity Lead Engine — REST API v1. " +
@@ -225,7 +225,7 @@ app.Run();
 static async Task ApplyMigrationsAsync(WebApplication app)
 {
     await using var scope = app.Services.CreateAsyncScope();
-    var db = scope.ServiceProvider.GetRequiredService<LeadGenerationCrmDbContext>();
+    var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
     await db.Database.MigrateAsync();
     app.Logger.LogInformation("Database migrations applied successfully.");
 }

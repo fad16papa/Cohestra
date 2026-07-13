@@ -1,10 +1,10 @@
 using System.Text.Json;
-using LeadGenerationCrm.Domain.Site;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Site;
+using Cohestra.Domain.Site;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Site;
+namespace Cohestra.Infrastructure.Tests.Site;
 
 public sealed class SitePublishGateValidatorTests
 {
@@ -345,12 +345,12 @@ public sealed class SitePublishGateValidatorTests
         };
     }
 
-    private static LeadGenerationCrmDbContext CreateDbContext()
+    private static CohestraDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<LeadGenerationCrmDbContext>()
+        var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new LeadGenerationCrmDbContext(options);
+        return new CohestraDbContext(options);
     }
 }

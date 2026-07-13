@@ -1,10 +1,10 @@
-using LeadGenerationCrm.Infrastructure.Identity;
+using Cohestra.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace LeadGenerationCrm.Infrastructure.Auth;
+namespace Cohestra.Infrastructure.Auth;
 
 public static class OperatorSeeder
 {

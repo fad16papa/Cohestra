@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Contracts.Campaigns;
+using Cohestra.Contracts.Campaigns;
 
-namespace LeadGenerationCrm.Application.Campaigns;
+namespace Cohestra.Application.Campaigns;
 
 public interface ICampaignAssetService
 {

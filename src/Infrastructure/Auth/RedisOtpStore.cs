@@ -1,10 +1,10 @@
 using System.Security.Cryptography;
 using System.Text;
-using LeadGenerationCrm.Application.Auth;
+using Cohestra.Application.Auth;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
-namespace LeadGenerationCrm.Infrastructure.Auth;
+namespace Cohestra.Infrastructure.Auth;
 
 public sealed class RedisOtpStore(
     IConnectionMultiplexer redis,

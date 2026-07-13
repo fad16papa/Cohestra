@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Application.Clients;
+namespace Cohestra.Application.Clients;
 
 public sealed class DuplicateWhatsAppFollowUpException : Exception
 {

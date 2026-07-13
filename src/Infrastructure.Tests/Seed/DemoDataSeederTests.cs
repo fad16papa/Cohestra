@@ -1,9 +1,9 @@
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Seed;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Seed;
+namespace Cohestra.Infrastructure.Tests.Seed;
 
 public sealed class DemoDataSeederTests
 {
@@ -92,12 +92,12 @@ public sealed class DemoDataSeederTests
         Assert.Equal(0, await dbContext.Clients.CountAsync());
     }
 
-    private static LeadGenerationCrmDbContext CreateDbContext()
+    private static CohestraDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<LeadGenerationCrmDbContext>()
+        var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new LeadGenerationCrmDbContext(options);
+        return new CohestraDbContext(options);
     }
 }

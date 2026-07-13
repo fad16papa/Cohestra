@@ -4,7 +4,7 @@ status: final
 created: 2026-07-06
 updated: 2026-07-06
 resolved: 2026-07-06
-parent_prd: prd-lead-generation-crm-2026-06-14
+parent_prd: prd-cohestra-2026-06-14
 sources:
   - Party mode competitive tear-down (Jul 2026)
   - canvases/website-builder-competitive.canvas.tsx
@@ -20,7 +20,7 @@ sources:
 
 This PRD defines requirements for a **Website Builder** — an operator-facing capability to customize the public marketing homepage at `/` on a single deployment domain (e.g. `https://thesocialcollectivesg.com/`), with **draft and publish** workflow, live preview, and an **upcoming Activities** section fed automatically from the CRM.
 
-It is written for product stakeholders, UX, architecture, and implementation workflows. It **extends** the core Lead Generation CRM PRD (`prd-lead-generation-crm-2026-06-14`) and does not replace Activity Engine, registration, or campaign requirements.
+It is written for product stakeholders, UX, architecture, and implementation workflows. It **extends** the core Cohestra PRD (`prd-cohestra-2026-06-14`) and does not replace Activity Engine, registration, or campaign requirements.
 
 Technical mechanism choices (API shapes, JSON schema, caching) live in `addendum.md`. Competitive positioning and sprint backlog trace to the party-mode tear-down and competitive canvas.
 

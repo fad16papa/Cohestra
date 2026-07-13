@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Infrastructure.Email;
+namespace Cohestra.Infrastructure.Email;
 
 public sealed class EmailBrandingSettings
 {

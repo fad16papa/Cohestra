@@ -1,12 +1,12 @@
-using LeadGenerationCrm.Application.Campaigns;
-using LeadGenerationCrm.Contracts.Campaigns;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Application.Campaigns;
+using Cohestra.Contracts.Campaigns;
+using Cohestra.Domain.Clients;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Campaigns;
+namespace Cohestra.Infrastructure.Campaigns;
 
-public sealed class ClientSegmentService(LeadGenerationCrmDbContext dbContext) : IClientSegmentService
+public sealed class ClientSegmentService(CohestraDbContext dbContext) : IClientSegmentService
 {
     public async Task<ClientSegmentPreviewResponse> PreviewAsync(
         ClientSegmentQueryRequest query,

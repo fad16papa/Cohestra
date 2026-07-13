@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Domain.Clients;
+namespace Cohestra.Domain.Clients;
 
 public enum LeadStatus
 {

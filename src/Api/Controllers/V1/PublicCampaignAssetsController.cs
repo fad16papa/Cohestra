@@ -1,8 +1,8 @@
-using LeadGenerationCrm.Application.Campaigns;
+using Cohestra.Application.Campaigns;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LeadGenerationCrm.Api.Controllers.V1;
+namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/public/campaign-assets")]

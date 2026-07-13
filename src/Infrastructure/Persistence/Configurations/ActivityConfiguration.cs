@@ -1,10 +1,10 @@
 using System.Text.Json;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Infrastructure.Activities;
+using Cohestra.Domain.Activities;
+using Cohestra.Infrastructure.Activities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace LeadGenerationCrm.Infrastructure.Persistence.Configurations;
+namespace Cohestra.Infrastructure.Persistence.Configurations;
 
 internal sealed class ActivityConfiguration : IEntityTypeConfiguration<Activity>
 {

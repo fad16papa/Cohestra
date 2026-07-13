@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace LeadGenerationCrm.Contracts.Site;
+namespace Cohestra.Contracts.Site;
 
 /// <summary>
 /// Site Page JSON document (schema version 1). Section <c>type</c> values:

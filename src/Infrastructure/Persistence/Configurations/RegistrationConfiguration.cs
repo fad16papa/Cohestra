@@ -1,9 +1,9 @@
-using LeadGenerationCrm.Domain.Registrations;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Domain.Registrations;
+using Cohestra.Infrastructure.Registrations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace LeadGenerationCrm.Infrastructure.Persistence.Configurations;
+namespace Cohestra.Infrastructure.Persistence.Configurations;
 
 internal sealed class RegistrationConfiguration : IEntityTypeConfiguration<Registration>
 {

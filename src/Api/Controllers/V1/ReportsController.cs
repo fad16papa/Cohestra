@@ -1,10 +1,10 @@
-using LeadGenerationCrm.Application.Reports;
-using LeadGenerationCrm.Contracts.Reports;
-using LeadGenerationCrm.Infrastructure.Auth;
+using Cohestra.Application.Reports;
+using Cohestra.Contracts.Reports;
+using Cohestra.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LeadGenerationCrm.Api.Controllers.V1;
+namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/reports")]

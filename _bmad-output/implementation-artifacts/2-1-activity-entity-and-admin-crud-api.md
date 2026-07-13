@@ -73,7 +73,7 @@ Composer
 - `src/Infrastructure/Activities/ActivitySlugGenerator.cs`
 - `src/Infrastructure/Activities/ActivityMapper.cs`
 - `src/Infrastructure/Persistence/Configurations/ActivityConfiguration.cs`
-- `src/Infrastructure/Persistence/LeadGenerationCrmDbContext.cs`
+- `src/Infrastructure/Persistence/CohestraDbContext.cs`
 - `src/Infrastructure/Persistence/Migrations/*AddActivities*`
 - `src/Infrastructure/DependencyInjection.cs`
 - `src/Api/Controllers/V1/ActivitiesController.cs`

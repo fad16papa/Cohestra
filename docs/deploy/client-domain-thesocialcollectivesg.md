@@ -45,7 +45,7 @@ nslookup thesocialcollectivesg.com
 SSH to the droplet:
 
 ```bash
-cd ~/lead-generation-crm
+cd ~/cohestra
 git pull
 sed -i 's/\r$//' deploy/*.sh
 nano .env
@@ -82,7 +82,7 @@ NGINX_CONFIG_PATH=./deploy/nginx/app.conf
 **Do not run** `docker compose down -v`.
 
 ```bash
-cd ~/lead-generation-crm
+cd ~/cohestra
 
 # HTTPS + domain (after DNS propagates)
 bash deploy/switch-https-domain.sh thesocialcollectivesg.com you@example.com

@@ -1,10 +1,10 @@
-using LeadGenerationCrm.Contracts.Clients;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Infrastructure.Clients;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Contracts.Clients;
+using Cohestra.Domain.Clients;
+using Cohestra.Infrastructure.Clients;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Clients;
+namespace Cohestra.Infrastructure.Tests.Clients;
 
 public sealed class ClientServiceUpdateMasterProfileTests
 {
@@ -98,12 +98,12 @@ public sealed class ClientServiceUpdateMasterProfileTests
         Assert.Contains("phone", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static LeadGenerationCrmDbContext CreateDbContext()
+    private static CohestraDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<LeadGenerationCrmDbContext>()
+        var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new LeadGenerationCrmDbContext(options);
+        return new CohestraDbContext(options);
     }
 }

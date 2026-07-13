@@ -1,8 +1,8 @@
-using LeadGenerationCrm.Infrastructure.Activities;
-using LeadGenerationCrm.Infrastructure.Email;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Infrastructure.Activities;
+using Cohestra.Infrastructure.Email;
+using Cohestra.Infrastructure.Registrations;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Registrations;
+namespace Cohestra.Infrastructure.Tests.Registrations;
 
 public sealed class RegistrationConfirmationEmailBuilderTests
 {

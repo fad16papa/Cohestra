@@ -1,17 +1,17 @@
-using LeadGenerationCrm.Application.Site;
-using LeadGenerationCrm.Contracts.Site;
-using LeadGenerationCrm.Domain.Site;
-using LeadGenerationCrm.Infrastructure.Activities;
-using LeadGenerationCrm.Infrastructure.Campaigns;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Seed;
+using Cohestra.Application.Site;
+using Cohestra.Contracts.Site;
+using Cohestra.Domain.Site;
+using Cohestra.Infrastructure.Activities;
+using Cohestra.Infrastructure.Campaigns;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace LeadGenerationCrm.Infrastructure.Site;
+namespace Cohestra.Infrastructure.Site;
 
 public sealed class SitePageService(
-    LeadGenerationCrmDbContext dbContext,
+    CohestraDbContext dbContext,
     SitePublishGateValidator publishGateValidator,
     IPublishedSiteCache publishedSiteCache,
     SitePreviewTokenService previewTokenService,

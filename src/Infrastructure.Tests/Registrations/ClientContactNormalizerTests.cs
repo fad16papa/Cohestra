@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Infrastructure.Registrations;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Registrations;
+namespace Cohestra.Infrastructure.Tests.Registrations;
 
 /// <summary>
 /// ATDD red-phase matrix for Story 3.3 — E.164 phone normalization (+63 default).

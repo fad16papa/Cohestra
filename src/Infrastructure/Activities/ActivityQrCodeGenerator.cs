@@ -1,7 +1,7 @@
 using System.Drawing;
 using QRCoder;
 
-namespace LeadGenerationCrm.Infrastructure.Activities;
+namespace Cohestra.Infrastructure.Activities;
 
 internal static class ActivityQrCodeGenerator
 {

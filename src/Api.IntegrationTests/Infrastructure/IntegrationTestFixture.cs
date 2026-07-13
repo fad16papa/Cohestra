@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Api.IntegrationTests.Infrastructure;
+namespace Cohestra.Api.IntegrationTests.Infrastructure;
 
 public sealed class IntegrationTestFixture : IAsyncLifetime
 {

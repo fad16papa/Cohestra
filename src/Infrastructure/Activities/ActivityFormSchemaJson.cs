@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using LeadGenerationCrm.Domain.Activities;
+using Cohestra.Domain.Activities;
 
-namespace LeadGenerationCrm.Infrastructure.Activities;
+namespace Cohestra.Infrastructure.Activities;
 
 internal static class ActivityFormSchemaJson
 {

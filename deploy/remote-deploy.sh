@@ -20,7 +20,7 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "== Deploy lead-generation-crm =="
+echo "== Deploy cohestra =="
 echo "Path:   $ROOT_DIR"
 echo "Branch: $DEPLOY_BRANCH"
 echo "Commit before pull: $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"

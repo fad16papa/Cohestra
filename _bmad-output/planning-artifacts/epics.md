@@ -1,18 +1,18 @@
 ---
 stepsCompleted: [1, 2, 3, 4]
 inputDocuments:
-  - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md
+  - _bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/prd.md
   - _bmad-output/planning-artifacts/prds/prd-website-builder-2026-07-06/prd.md
   - _bmad-output/planning-artifacts/architecture.md
-  - _bmad-output/planning-artifacts/ux-designs/ux-lead-generation-crm-2026-06-14/DESIGN.md
-  - _bmad-output/planning-artifacts/ux-designs/ux-lead-generation-crm-2026-06-14/EXPERIENCE.md
+  - _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-06-14/DESIGN.md
+  - _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-06-14/EXPERIENCE.md
 ---
 
-# lead-generation-crm - Epic Breakdown
+# cohestra - Epic Breakdown
 
 ## Overview
 
-This document provides the complete epic and story breakdown for lead-generation-crm, decomposing the requirements from the PRD, UX Design if it exists, and Architecture requirements into implementable stories.
+This document provides the complete epic and story breakdown for cohestra, decomposing the requirements from the PRD, UX Design if it exists, and Architecture requirements into implementable stories.
 
 ## Requirements Inventory
 
@@ -78,7 +78,7 @@ NFR-12: All form fields must have visible labels and accessible error descriptio
 
 ### Additional Requirements
 
-- **Starter / project scaffold (Epic 1 Story 1):** API-first solution with `LeadGenerationCrm.sln` containing Api, Application, Domain, Infrastructure, and Contracts layers. Docker Compose services: api (ASP.NET Core), postgres, redis, web (Next.js). Local development and production deployment via Docker Compose on DigitalOcean Ubuntu.
+- **Starter / project scaffold (Epic 1 Story 1):** API-first solution with `Cohestra.sln` containing Api, Application, Domain, Infrastructure, and Contracts layers. Docker Compose services: api (ASP.NET Core), postgres, redis, web (Next.js). Local development and production deployment via Docker Compose on DigitalOcean Ubuntu.
 
 - **Backend stack:** ASP.NET Core Web API, Entity Framework Core, PostgreSQL (relational core + JSONB for dynamic form schemas and registration answers), Redis (required for MVP — not deferred).
 

@@ -1,8 +1,8 @@
-using LeadGenerationCrm.Contracts.Clients;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Domain.Registrations;
+using Cohestra.Contracts.Clients;
+using Cohestra.Domain.Clients;
+using Cohestra.Domain.Registrations;
 
-namespace LeadGenerationCrm.Infrastructure.Clients;
+namespace Cohestra.Infrastructure.Clients;
 
 internal static class ClientDetailMapper
 {

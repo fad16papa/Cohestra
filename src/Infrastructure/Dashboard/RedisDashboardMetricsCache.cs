@@ -1,8 +1,8 @@
 using System.Text.Json;
-using LeadGenerationCrm.Contracts.Dashboard;
+using Cohestra.Contracts.Dashboard;
 using StackExchange.Redis;
 
-namespace LeadGenerationCrm.Infrastructure.Dashboard;
+namespace Cohestra.Infrastructure.Dashboard;
 
 public sealed class RedisDashboardMetricsCache(IConnectionMultiplexer redis)
 {

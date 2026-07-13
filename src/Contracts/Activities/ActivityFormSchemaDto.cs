@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Contracts.Activities;
+namespace Cohestra.Contracts.Activities;
 
 /// <summary>
 /// Activity registration form schema (v1). See docs/contracts/activity-form-schema-v1.md.

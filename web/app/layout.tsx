@@ -25,7 +25,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Lead Generation CRM",
+  title: "Cohestra",
   description: "Activity Lead Engine — web client",
 };
 

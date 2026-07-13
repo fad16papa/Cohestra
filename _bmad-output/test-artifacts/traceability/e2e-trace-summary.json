@@ -1,7 +1,7 @@
 {
   "schema_version": "0.1.0",
   "snapshot_at": "2026-06-16T00:00:00.000Z",
-  "repo": "lead-generation-crm",
+  "repo": "cohestra",
   "collection_mode": "contract_static",
   "collection_status": "COLLECTED",
   "inventory_basis": "acceptance_criteria",
@@ -20,7 +20,7 @@
     "confidence": "high",
     "sources": [
       "_bmad-output/planning-artifacts/epics.md",
-      "_bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md",
+      "_bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/prd.md",
       "_bmad-output/test-artifacts/nfr-assessment.md"
     ],
     "external_pointer_status": "not_used",

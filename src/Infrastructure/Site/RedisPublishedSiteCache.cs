@@ -1,7 +1,7 @@
 using System.Text.Json;
 using StackExchange.Redis;
 
-namespace LeadGenerationCrm.Infrastructure.Site;
+namespace Cohestra.Infrastructure.Site;
 
 public sealed class RedisPublishedSiteCache(IConnectionMultiplexer redis) : IPublishedSiteCache
 {

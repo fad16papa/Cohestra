@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Contracts.Email;
+using Cohestra.Contracts.Email;
 
-namespace LeadGenerationCrm.Application.Email;
+namespace Cohestra.Application.Email;
 
 public interface IEmailDeliveryStatusService
 {

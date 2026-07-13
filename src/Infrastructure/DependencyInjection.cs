@@ -1,31 +1,31 @@
-using LeadGenerationCrm.Application.Activities;
-using LeadGenerationCrm.Application.Auth;
-using LeadGenerationCrm.Application.Campaigns;
-using LeadGenerationCrm.Application.Clients;
-using LeadGenerationCrm.Application.Dashboard;
-using LeadGenerationCrm.Application.Email;
-using LeadGenerationCrm.Application.Registrations;
-using LeadGenerationCrm.Application.Reports;
-using LeadGenerationCrm.Application.Site;
-using LeadGenerationCrm.Infrastructure.Activities;
-using LeadGenerationCrm.Infrastructure.Auth;
-using LeadGenerationCrm.Infrastructure.Seed;
-using LeadGenerationCrm.Infrastructure.Campaigns;
-using LeadGenerationCrm.Infrastructure.Clients;
-using LeadGenerationCrm.Infrastructure.Dashboard;
-using LeadGenerationCrm.Infrastructure.Email;
-using LeadGenerationCrm.Infrastructure.Identity;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Registrations;
-using LeadGenerationCrm.Infrastructure.Reports;
-using LeadGenerationCrm.Infrastructure.Site;
+using Cohestra.Application.Activities;
+using Cohestra.Application.Auth;
+using Cohestra.Application.Campaigns;
+using Cohestra.Application.Clients;
+using Cohestra.Application.Dashboard;
+using Cohestra.Application.Email;
+using Cohestra.Application.Registrations;
+using Cohestra.Application.Reports;
+using Cohestra.Application.Site;
+using Cohestra.Infrastructure.Activities;
+using Cohestra.Infrastructure.Auth;
+using Cohestra.Infrastructure.Seed;
+using Cohestra.Infrastructure.Campaigns;
+using Cohestra.Infrastructure.Clients;
+using Cohestra.Infrastructure.Dashboard;
+using Cohestra.Infrastructure.Email;
+using Cohestra.Infrastructure.Identity;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Registrations;
+using Cohestra.Infrastructure.Reports;
+using Cohestra.Infrastructure.Site;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 
-namespace LeadGenerationCrm.Infrastructure;
+namespace Cohestra.Infrastructure;
 
 public static class DependencyInjection
 {
@@ -37,7 +37,7 @@ public static class DependencyInjection
         var redisConnection = configuration.GetConnectionString("Redis")
             ?? throw new InvalidOperationException("Connection string 'Redis' is not configured.");
 
-        services.AddDbContext<LeadGenerationCrmDbContext>(options =>
+        services.AddDbContext<CohestraDbContext>(options =>
             options.UseNpgsql(postgresConnection));
 
         services
@@ -55,7 +55,7 @@ public static class DependencyInjection
             })
             .AddRoles<IdentityRole<Guid>>()
             .AddSignInManager()
-            .AddEntityFrameworkStores<LeadGenerationCrmDbContext>()
+            .AddEntityFrameworkStores<CohestraDbContext>()
             .AddDefaultTokenProviders();
 
         services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnection));

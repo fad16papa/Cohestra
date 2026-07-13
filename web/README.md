@@ -1,6 +1,6 @@
 ## Design tokens
 
-Brand colors and typography are defined in `styles/brand-tokens.css` (sourced from `_bmad-output/planning-artifacts/ux-designs/ux-lead-generation-crm-2026-06-14/DESIGN.md`).
+Brand colors and typography are defined in `styles/brand-tokens.css` (sourced from `_bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-06-14/DESIGN.md`).
 
 - Use semantic Tailwind classes (`bg-primary`, `bg-status-new`, `text-text-warm`, etc.)
 - Do not hard-code hex values in components — CSS variables only
@@ -20,7 +20,7 @@ Brand colors and typography are defined in `styles/brand-tokens.css` (sourced fr
 - JWT access + refresh tokens stored in `localStorage` key `auth_session`
 - Admin routes under `app/(admin)/` redirect to `/login` when unauthenticated
 - Use `useAuth().authFetch()` for authenticated API calls; expired sessions redirect to login with toast
-- Dev operator: `operator@leadgenerationcrm.local` / `ChangeMe123!`
+- Dev operator: `operator@cohestra.local` / `ChangeMe123!`
 - Settings → Appearance saves to operator profile via `PATCH /api/v1/admin/me/appearance`; `ThemePreferenceSync` applies profile theme after login
 
 

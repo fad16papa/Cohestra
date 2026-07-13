@@ -1,7 +1,7 @@
-using LeadGenerationCrm.Application.Email;
+using Cohestra.Application.Email;
 using Microsoft.Extensions.Logging;
 
-namespace LeadGenerationCrm.Infrastructure.Email;
+namespace Cohestra.Infrastructure.Email;
 
 public sealed class NullEmailSender(ILogger<NullEmailSender> logger) : IEmailSender
 {

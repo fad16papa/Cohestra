@@ -28,7 +28,7 @@ So that the API has a reproducible database baseline and a wire contract for web
 ## Tasks / Subtasks
 
 - [x] **Task 1: EF Core infrastructure** (AC: 1.2.1)
-  - [x] Add `LeadGenerationCrmDbContext` in Infrastructure
+  - [x] Add `CohestraDbContext` in Infrastructure
   - [x] Add `InitialCreate` migration
   - [x] Register DbContext and apply migrations on startup
   - [x] Document manual `dotnet ef database update` command
@@ -49,7 +49,7 @@ Composer
 
 ### Completion Notes List
 
-- `LeadGenerationCrmDbContext` with empty baseline schema; `InitialCreate` migration creates `__EFMigrationsHistory`
+- `CohestraDbContext` with empty baseline schema; `InitialCreate` migration creates `__EFMigrationsHistory`
 - Migrations auto-applied on API startup; verified in Docker logs
 - OpenAPI at `/openapi/v1.json`; sample endpoint `GET /api/v1/system/info`
 - 404 responses return `application/problem+json` with `title`, `status`, `instance`, `traceId`
@@ -57,7 +57,7 @@ Composer
 ### File List
 
 - `src/Infrastructure/DependencyInjection.cs`
-- `src/Infrastructure/Persistence/LeadGenerationCrmDbContext.cs`
+- `src/Infrastructure/Persistence/CohestraDbContext.cs`
 - `src/Infrastructure/Persistence/DesignTimeDbContextFactory.cs`
 - `src/Infrastructure/Persistence/Migrations/`
 - `src/Infrastructure/Infrastructure.csproj`

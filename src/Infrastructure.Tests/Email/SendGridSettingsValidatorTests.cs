@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Infrastructure.Email;
+using Cohestra.Infrastructure.Email;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Email;
+namespace Cohestra.Infrastructure.Tests.Email;
 
 public class SendGridSettingsValidatorTests
 {

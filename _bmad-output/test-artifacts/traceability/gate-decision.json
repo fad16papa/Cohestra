@@ -1,7 +1,7 @@
 {
   "schema_version": "0.1.0",
   "evaluated_at": "2026-06-16T00:00:00.000Z",
-  "repo": "lead-generation-crm",
+  "repo": "cohestra",
   "target": {
     "type": "epic",
     "id": "epic-7",

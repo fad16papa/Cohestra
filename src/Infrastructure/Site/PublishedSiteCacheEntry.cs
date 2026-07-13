@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Contracts.Site;
+using Cohestra.Contracts.Site;
 
-namespace LeadGenerationCrm.Infrastructure.Site;
+namespace Cohestra.Infrastructure.Site;
 
 public sealed record PublishedSiteCacheEntry(
     SiteSectionsDocumentDto Published,

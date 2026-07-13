@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Contracts.Campaigns;
+namespace Cohestra.Contracts.Campaigns;
 
 public sealed record CampaignAssetResponse(
     Guid Id,

@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Contracts.Clients;
+using Cohestra.Contracts.Clients;
 
-namespace LeadGenerationCrm.Application.Clients;
+namespace Cohestra.Application.Clients;
 
 public interface IClientService
 {

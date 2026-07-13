@@ -28,13 +28,13 @@ jobs:
           dotnet-version: 9.0.x
 
       - name: Restore
-        run: dotnet restore LeadGenerationCrm.sln
+        run: dotnet restore Cohestra.sln
 
       - name: Build
-        run: dotnet build LeadGenerationCrm.sln --no-restore -c Release
+        run: dotnet build Cohestra.sln --no-restore -c Release
 
       - name: Test
-        run: dotnet test LeadGenerationCrm.sln --no-build -c Release --filter "Category!=Integration" --verbosity normal
+        run: dotnet test Cohestra.sln --no-build -c Release --filter "Category!=Integration" --verbosity normal
 
       - name: SendGrid sandbox gate
         run: dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --no-build -c Release --filter "FullyQualifiedName~SendGridSettingsValidatorTests" --verbosity normal
@@ -44,19 +44,19 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI: true
-      ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=leadgenerationcrm_test;Username=crm;Password=crm
+      ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=cohestra_test;Username=crm;Password=crm
       ConnectionStrings__Redis: localhost:6379
     services:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: leadgenerationcrm_test
+          POSTGRES_DB: cohestra_test
           POSTGRES_USER: crm
           POSTGRES_PASSWORD: crm
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U crm -d leadgenerationcrm_test"
+          --health-cmd "pg_isready -U crm -d cohestra_test"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -79,10 +79,10 @@ jobs:
           dotnet-version: 9.0.x
 
       - name: Restore
-        run: dotnet restore LeadGenerationCrm.sln
+        run: dotnet restore Cohestra.sln
 
       - name: Build
-        run: dotnet build LeadGenerationCrm.sln --no-restore -c Release
+        run: dotnet build Cohestra.sln --no-restore -c Release
 
       - name: Integration tests
         run: dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release --filter "Category=Integration" --verbosity normal

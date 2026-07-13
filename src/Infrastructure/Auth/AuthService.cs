@@ -1,16 +1,16 @@
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using LeadGenerationCrm.Application.Auth;
-using LeadGenerationCrm.Application.Email;
-using LeadGenerationCrm.Contracts.Auth;
-using LeadGenerationCrm.Infrastructure.Email;
-using LeadGenerationCrm.Infrastructure.Identity;
+using Cohestra.Application.Auth;
+using Cohestra.Application.Email;
+using Cohestra.Contracts.Auth;
+using Cohestra.Infrastructure.Email;
+using Cohestra.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace LeadGenerationCrm.Infrastructure.Auth;
+namespace Cohestra.Infrastructure.Auth;
 
 public sealed class AuthService(
     UserManager<ApplicationUser> userManager,

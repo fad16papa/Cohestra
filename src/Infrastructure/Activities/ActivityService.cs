@@ -1,17 +1,17 @@
-using LeadGenerationCrm.Application.Activities;
-using LeadGenerationCrm.Contracts.Activities;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Infrastructure.Campaigns;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Application.Activities;
+using Cohestra.Contracts.Activities;
+using Cohestra.Domain.Activities;
+using Cohestra.Infrastructure.Campaigns;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Registrations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Npgsql;
 
-namespace LeadGenerationCrm.Infrastructure.Activities;
+namespace Cohestra.Infrastructure.Activities;
 
 public sealed class ActivityService(
-    LeadGenerationCrmDbContext dbContext,
+    CohestraDbContext dbContext,
     IOptions<PublicWebOptions> publicWebOptions,
     IOptions<CampaignAssetOptions> campaignAssetOptions,
     RedisPublicActivityCache publicActivityCache) : IActivityService

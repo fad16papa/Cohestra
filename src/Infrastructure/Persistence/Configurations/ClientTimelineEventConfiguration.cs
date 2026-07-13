@@ -1,8 +1,8 @@
-using LeadGenerationCrm.Domain.Clients;
+using Cohestra.Domain.Clients;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace LeadGenerationCrm.Infrastructure.Persistence.Configurations;
+namespace Cohestra.Infrastructure.Persistence.Configurations;
 
 internal sealed class ClientTimelineEventConfiguration : IEntityTypeConfiguration<ClientTimelineEvent>
 {

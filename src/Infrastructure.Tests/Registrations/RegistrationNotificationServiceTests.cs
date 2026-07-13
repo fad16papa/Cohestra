@@ -1,18 +1,18 @@
-using LeadGenerationCrm.Application.Email;
-using LeadGenerationCrm.Application.Registrations;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Domain.Registrations;
-using LeadGenerationCrm.Infrastructure.Activities;
-using LeadGenerationCrm.Infrastructure.Campaigns;
-using LeadGenerationCrm.Infrastructure.Email;
-using LeadGenerationCrm.Infrastructure.Persistence;
-using LeadGenerationCrm.Infrastructure.Registrations;
+using Cohestra.Application.Email;
+using Cohestra.Application.Registrations;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Clients;
+using Cohestra.Domain.Registrations;
+using Cohestra.Infrastructure.Activities;
+using Cohestra.Infrastructure.Campaigns;
+using Cohestra.Infrastructure.Email;
+using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Registrations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Registrations;
+namespace Cohestra.Infrastructure.Tests.Registrations;
 
 public sealed class RegistrationNotificationServiceTests
 {
@@ -51,7 +51,7 @@ public sealed class RegistrationNotificationServiceTests
     }
 
     private static RegistrationNotificationService CreateService(
-        LeadGenerationCrmDbContext dbContext,
+        CohestraDbContext dbContext,
         IEmailSender sender) =>
         new(
             dbContext,
@@ -68,17 +68,17 @@ public sealed class RegistrationNotificationServiceTests
             Options.Create(new CampaignAssetOptions { PublicApiBaseUrl = "https://uat.creativorare.com" }),
             NullLogger<RegistrationNotificationService>.Instance);
 
-    private static LeadGenerationCrmDbContext CreateDbContext()
+    private static CohestraDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<LeadGenerationCrmDbContext>()
+        var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new LeadGenerationCrmDbContext(options);
+        return new CohestraDbContext(options);
     }
 
     private static async Task<(Guid RegistrationId, Guid ClientId)> SeedRegistrationAsync(
-        LeadGenerationCrmDbContext dbContext,
+        CohestraDbContext dbContext,
         string? email)
     {
         var activityId = Guid.NewGuid();

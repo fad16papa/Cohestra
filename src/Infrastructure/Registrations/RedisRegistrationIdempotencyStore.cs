@@ -1,11 +1,11 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using LeadGenerationCrm.Application.Registrations;
+using Cohestra.Application.Registrations;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
-namespace LeadGenerationCrm.Infrastructure.Registrations;
+namespace Cohestra.Infrastructure.Registrations;
 
 public sealed class RedisRegistrationIdempotencyStore(
     IConnectionMultiplexer redis,

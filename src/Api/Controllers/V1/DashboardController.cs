@@ -1,10 +1,10 @@
-using LeadGenerationCrm.Application.Dashboard;
-using LeadGenerationCrm.Contracts.Dashboard;
-using LeadGenerationCrm.Infrastructure.Auth;
+using Cohestra.Application.Dashboard;
+using Cohestra.Contracts.Dashboard;
+using Cohestra.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace LeadGenerationCrm.Api.Controllers.V1;
+namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/dashboard")]

@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace LeadGenerationCrm.Infrastructure.Activities;
+namespace Cohestra.Infrastructure.Activities;
 
 internal static partial class ActivityBrandingValidator
 {

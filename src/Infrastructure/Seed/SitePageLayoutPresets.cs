@@ -1,8 +1,8 @@
 using System.Text.Json;
-using LeadGenerationCrm.Domain.Site;
-using LeadGenerationCrm.Infrastructure.Site;
+using Cohestra.Domain.Site;
+using Cohestra.Infrastructure.Site;
 
-namespace LeadGenerationCrm.Infrastructure.Seed;
+namespace Cohestra.Infrastructure.Seed;
 
 /// <summary>Built-in homepage layouts that showcase Epic 10 marketing sections.</summary>
 public static class SitePageLayoutPresets

@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Contracts.Auth;
+using Cohestra.Contracts.Auth;
 
-namespace LeadGenerationCrm.Application.Auth;
+namespace Cohestra.Application.Auth;
 
 public interface IAuthService
 {

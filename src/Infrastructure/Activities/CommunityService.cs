@@ -1,12 +1,12 @@
-using LeadGenerationCrm.Application.Activities;
-using LeadGenerationCrm.Contracts.Activities;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Application.Activities;
+using Cohestra.Contracts.Activities;
+using Cohestra.Domain.Activities;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Activities;
+namespace Cohestra.Infrastructure.Activities;
 
-public sealed class CommunityService(LeadGenerationCrmDbContext dbContext) : ICommunityService
+public sealed class CommunityService(CohestraDbContext dbContext) : ICommunityService
 {
     public async Task<CommunityListResponse> ListAsync(CancellationToken cancellationToken = default)
     {

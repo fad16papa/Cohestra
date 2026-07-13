@@ -1,3 +1,3 @@
-namespace LeadGenerationCrm.Contracts.Auth;
+namespace Cohestra.Contracts.Auth;
 
 public sealed record MessageResponse(string Message);

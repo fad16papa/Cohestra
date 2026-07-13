@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Contracts.Clients;
+namespace Cohestra.Contracts.Clients;
 
 public sealed record ClientListItemResponse(
     Guid Id,

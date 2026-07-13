@@ -1,4 +1,4 @@
-# Input Reconciliation — Lead Generation CRM Business Proposal
+# Input Reconciliation — Cohestra Business Proposal
 
 **Source:** `/Users/francisdecena/Downloads/Lead_Generation_CRM_Business_Proposal.pdf` (Creativorare, 12 pages)
 

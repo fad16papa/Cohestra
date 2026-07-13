@@ -124,7 +124,7 @@ So that homepage content can be stored in the database and published without Doc
 
   - [x] Extend `ActivityConfiguration` for `ShowOnHomepage` default true
 
-  - [x] Add migration; update `LeadGenerationCrmDbContext`
+  - [x] Add migration; update `CohestraDbContext`
 
 
 
@@ -240,7 +240,7 @@ Hero CTA targets: `scroll-upcoming`, `/login`, `activity:{slug}`.
 
 - `src/Infrastructure/Persistence/Configurations/ActivityConfiguration.cs`
 
-- `src/Infrastructure/Persistence/LeadGenerationCrmDbContext.cs`
+- `src/Infrastructure/Persistence/CohestraDbContext.cs`
 
 - `src/Infrastructure/DependencyInjection.cs`
 
@@ -352,13 +352,13 @@ Composer
 
 - src/Infrastructure/Persistence/Configurations/ActivityConfiguration.cs
 
-- src/Infrastructure/Persistence/LeadGenerationCrmDbContext.cs
+- src/Infrastructure/Persistence/CohestraDbContext.cs
 
 - src/Infrastructure/Persistence/Migrations/20260705164126_AddSitePageAndShowOnHomepage.cs
 
 - src/Infrastructure/Persistence/Migrations/20260705164126_AddSitePageAndShowOnHomepage.Designer.cs
 
-- src/Infrastructure/Persistence/Migrations/LeadGenerationCrmDbContextModelSnapshot.cs
+- src/Infrastructure/Persistence/Migrations/CohestraDbContextModelSnapshot.cs
 
 - src/Infrastructure/DependencyInjection.cs
 

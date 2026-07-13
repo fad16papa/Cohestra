@@ -27,7 +27,7 @@ On your droplet:
 
 ```bash
 # Replace with your GitHub repo URL
-REPO_URL=https://github.com/YOUR_ORG/lead-generation-crm.git bash deploy/droplet-init.sh
+REPO_URL=https://github.com/YOUR_ORG/cohestra.git bash deploy/droplet-init.sh
 ```
 
 If Docker was just installed, **log out and back in**, then run init again.
@@ -35,7 +35,7 @@ If Docker was just installed, **log out and back in**, then run init again.
 ### Edit `.env` on the server
 
 ```bash
-nano ~/lead-generation-crm/.env
+nano ~/cohestra/.env
 ```
 
 Minimum required:
@@ -53,7 +53,7 @@ See [sendgrid-production.md](./sendgrid-production.md) for SendGrid setup.
 ### Test first deploy manually
 
 ```bash
-cd ~/lead-generation-crm
+cd ~/cohestra
 bash deploy/remote-deploy.sh
 ```
 
@@ -68,8 +68,8 @@ The deploy script runs `git fetch` on the server. For a **private** repo:
 3. Configure git:
 
 ```bash
-cd ~/lead-generation-crm
-git remote set-url origin git@github.com:YOUR_ORG/lead-generation-crm.git
+cd ~/cohestra
+git remote set-url origin git@github.com:YOUR_ORG/cohestra.git
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_ed25519_deploy
 ssh -T git@github.com
@@ -86,7 +86,7 @@ In GitHub: **Settings → Secrets and variables → Actions → New repository s
 | `DROPLET_HOST` | Yes | `157.230.12.34` |
 | `DROPLET_USER` | Yes | `root` or `ubuntu` |
 | `DROPLET_SSH_KEY` | Yes | Private key PEM (full contents) |
-| `DROPLET_DEPLOY_PATH` | No | Default: `~/lead-generation-crm` |
+| `DROPLET_DEPLOY_PATH` | No | Default: `~/cohestra` |
 | `DROPLET_SSH_PORT` | No | Default: `22` if omitted |
 
 ### Create a deploy SSH key (recommended)
@@ -141,7 +141,7 @@ DigitalOcean cloud firewall — inbound only:
 ### Logs on droplet
 
 ```bash
-cd ~/lead-generation-crm
+cd ~/cohestra
 docker compose -f docker-compose.uat.yml logs -f nginx api web
 ```
 
@@ -150,7 +150,7 @@ docker compose -f docker-compose.uat.yml logs -f nginx api web
 Shell scripts edited on Windows may have CRLF line endings. On the droplet:
 
 ```bash
-cd ~/lead-generation-crm
+cd ~/cohestra
 sed -i 's/\r$//' deploy/*.sh
 bash deploy/uat-smoke.sh
 ```

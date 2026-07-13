@@ -13,7 +13,7 @@
 | Ticket           | N/A (operator report during UAT polish)                                    |
 | Date opened      | 2026-06-16                                                                 |
 | Status           | Concluded                                                                  |
-| System           | lead-generation-crm — Next.js admin + .NET API + PostgreSQL                |
+| System           | cohestra — Next.js admin + .NET API + PostgreSQL                |
 | Evidence sources | Source code, sprint/UAT docs, integration test attempt, prior chat context |
 
 ## Problem Statement

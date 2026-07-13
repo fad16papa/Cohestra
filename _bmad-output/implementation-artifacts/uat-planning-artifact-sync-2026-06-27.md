@@ -23,9 +23,9 @@ So that future work and AI agents use accurate planning context.
 
 ## Files changed
 
-- `_bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md`
+- `_bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/prd.md`
 - `_bmad-output/planning-artifacts/architecture.md`
-- `_bmad-output/planning-artifacts/ux-designs/ux-lead-generation-crm-2026-06-14/EXPERIENCE.md`
+- `_bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-06-14/EXPERIENCE.md`
 - `_bmad-output/planning-artifacts/epics.md`
 - `_bmad-output/planning-artifacts/sprint-change-proposal-2026-06-27.md` (approved)
 

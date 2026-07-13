@@ -1,11 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
-using LeadGenerationCrm.Api.IntegrationTests.Infrastructure;
+using Cohestra.Api.IntegrationTests.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
-using LeadGenerationCrm.Contracts.Clients;
-using LeadGenerationCrm.Domain.Clients;
+using Cohestra.Contracts.Clients;
+using Cohestra.Domain.Clients;
 
-namespace LeadGenerationCrm.Api.IntegrationTests;
+namespace Cohestra.Api.IntegrationTests;
 
 [Trait("Category", "Integration")]
 [Collection(IntegrationTestCollection.Name)]

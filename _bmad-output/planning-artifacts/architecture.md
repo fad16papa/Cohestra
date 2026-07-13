@@ -1,15 +1,15 @@
 ---
 stepsCompleted: [1, 2]
 inputDocuments:
-  - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md
-  - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/addendum.md
-  - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/reconcile-business-proposal.md
-  - _bmad-output/planning-artifacts/briefs/brief-lead-generation-crm-2026-06-14/brief.md
-  - _bmad-output/planning-artifacts/ux-designs/ux-lead-generation-crm-2026-06-14/DESIGN.md
-  - _bmad-output/planning-artifacts/ux-designs/ux-lead-generation-crm-2026-06-14/EXPERIENCE.md
-  - _bmad-output/planning-artifacts/research/market-lead-generation-crm-saas-research-2026-06-14.md
+  - _bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/prd.md
+  - _bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/addendum.md
+  - _bmad-output/planning-artifacts/prds/prd-cohestra-2026-06-14/reconcile-business-proposal.md
+  - _bmad-output/planning-artifacts/briefs/brief-cohestra-2026-06-14/brief.md
+  - _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-06-14/DESIGN.md
+  - _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-06-14/EXPERIENCE.md
+  - _bmad-output/planning-artifacts/research/market-cohestra-saas-research-2026-06-14.md
 workflowType: architecture
-project_name: lead-generation-crm
+project_name: cohestra
 user_name: fadthegreat!
 date: '2026-06-15'
 techStackStatus: official
@@ -87,7 +87,7 @@ All business logic, persistence, and domain rules live in the **.NET API**. Web 
 ### Backend solution structure (target)
 
 ```
-LeadGenerationCrm.sln
+Cohestra.sln
 ├── Api/                 # Controllers, auth middleware, OpenAPI
 ├── Application/         # Use cases (RegisterClient, SendCampaign, ExportReport)
 ├── Domain/              # Entities, enums, dedup rules

@@ -1,12 +1,12 @@
-using LeadGenerationCrm.Contracts.Campaigns;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Domain.Registrations;
-using LeadGenerationCrm.Infrastructure.Campaigns;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Contracts.Campaigns;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Clients;
+using Cohestra.Domain.Registrations;
+using Cohestra.Infrastructure.Campaigns;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Campaigns;
+namespace Cohestra.Infrastructure.Tests.Campaigns;
 
 public sealed class ClientSegmentServiceTests
 {
@@ -211,7 +211,7 @@ public sealed class ClientSegmentServiceTests
         Assert.Equal(1, preview.TotalCount);
     }
 
-    private static Activity SeedActivity(LeadGenerationCrmDbContext dbContext, string community)
+    private static Activity SeedActivity(CohestraDbContext dbContext, string community)
     {
         var activity = new Activity
         {
@@ -232,7 +232,7 @@ public sealed class ClientSegmentServiceTests
     }
 
     private static Client SeedClient(
-        LeadGenerationCrmDbContext dbContext,
+        CohestraDbContext dbContext,
         string fullName,
         bool consentGiven,
         string email)
@@ -253,12 +253,12 @@ public sealed class ClientSegmentServiceTests
         return client;
     }
 
-    private static LeadGenerationCrmDbContext CreateDbContext()
+    private static CohestraDbContext CreateDbContext()
     {
-        var options = new DbContextOptionsBuilder<LeadGenerationCrmDbContext>()
+        var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new LeadGenerationCrmDbContext(options);
+        return new CohestraDbContext(options);
     }
 }

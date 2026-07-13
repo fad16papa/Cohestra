@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Infrastructure.Registrations;
+namespace Cohestra.Infrastructure.Registrations;
 
 public sealed class PublicRegistrationRateLimitOptions
 {

@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using StackExchange.Redis;
 
-namespace LeadGenerationCrm.Infrastructure.Auth;
+namespace Cohestra.Infrastructure.Auth;
 
 public sealed class RedisRefreshTokenStore(IConnectionMultiplexer redis) : IRefreshTokenStore
 {

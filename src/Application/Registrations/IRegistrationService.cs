@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Application.Registrations;
+namespace Cohestra.Application.Registrations;
 
 public interface IRegistrationService
 {

@@ -1,4 +1,4 @@
-namespace LeadGenerationCrm.Infrastructure.Email;
+namespace Cohestra.Infrastructure.Email;
 
 public sealed class SendGridSettings
 {
@@ -8,7 +8,7 @@ public sealed class SendGridSettings
 
     public string FromEmail { get; set; } = string.Empty;
 
-    public string FromName { get; set; } = "Lead Generation CRM";
+    public string FromName { get; set; } = "Cohestra";
 
     public string? RegistrationFromEmail { get; set; }
 

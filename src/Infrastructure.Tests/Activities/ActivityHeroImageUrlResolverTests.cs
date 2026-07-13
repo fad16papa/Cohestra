@@ -1,6 +1,6 @@
-using LeadGenerationCrm.Infrastructure.Activities;
+using Cohestra.Infrastructure.Activities;
 
-namespace LeadGenerationCrm.Infrastructure.Tests.Activities;
+namespace Cohestra.Infrastructure.Tests.Activities;
 
 public sealed class ActivityHeroImageUrlResolverTests
 {

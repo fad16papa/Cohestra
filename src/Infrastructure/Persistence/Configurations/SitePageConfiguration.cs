@@ -1,10 +1,10 @@
 using System.Text.Json;
-using LeadGenerationCrm.Domain.Site;
-using LeadGenerationCrm.Infrastructure.Site;
+using Cohestra.Domain.Site;
+using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace LeadGenerationCrm.Infrastructure.Persistence.Configurations;
+namespace Cohestra.Infrastructure.Persistence.Configurations;
 
 internal sealed class SitePageConfiguration : IEntityTypeConfiguration<SitePage>
 {

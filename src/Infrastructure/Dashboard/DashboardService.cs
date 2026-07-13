@@ -1,14 +1,14 @@
-using LeadGenerationCrm.Application.Dashboard;
-using LeadGenerationCrm.Contracts.Dashboard;
-using LeadGenerationCrm.Domain.Activities;
-using LeadGenerationCrm.Domain.Clients;
-using LeadGenerationCrm.Infrastructure.Persistence;
+using Cohestra.Application.Dashboard;
+using Cohestra.Contracts.Dashboard;
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Clients;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace LeadGenerationCrm.Infrastructure.Dashboard;
+namespace Cohestra.Infrastructure.Dashboard;
 
 public sealed class DashboardService(
-    LeadGenerationCrmDbContext dbContext,
+    CohestraDbContext dbContext,
     RedisDashboardMetricsCache metricsCache) : IDashboardService
 {
     private const int NewLeadsPeriodDays = 7;
