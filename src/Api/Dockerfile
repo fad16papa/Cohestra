@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-COPY LeadGenerationCrm.sln ./
+COPY Cohestra.sln ./
 COPY src/Domain/Domain.csproj src/Domain/
 COPY src/Contracts/Contracts.csproj src/Contracts/
 COPY src/Application/Application.csproj src/Application/
