@@ -16,9 +16,9 @@ public sealed class RegistrationConfirmationEmailBuilderTests
             Location: "Ikigai Studio, Makati",
             CommunityLabel: "Ikigai",
             RegistrationNumber: "REG20260616000042",
-            BrandName: "Creativorare",
-            FooterLegalName: "Creativorare",
-            WebsiteUrl: "https://creativorare.com",
+            BrandName: "Cohestra",
+            FooterLegalName: "Cohestra",
+            WebsiteUrl: "https://cohestra.app",
             LogoUrl: logoUrl,
             HeroImageUrl: heroImageUrl);
 
@@ -40,7 +40,7 @@ public sealed class RegistrationConfirmationEmailBuilderTests
         var content = RegistrationConfirmationEmailBuilder.Build(CreateModel());
 
         Assert.Contains("https://example.com/brand/logo.png", content.HtmlBody);
-        Assert.Contains("alt=\"Creativorare\"", content.HtmlBody);
+        Assert.Contains("alt=\"Cohestra\"", content.HtmlBody);
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public sealed class RegistrationConfirmationEmailBuilderTests
         var content = RegistrationConfirmationEmailBuilder.Build(CreateModel(logoUrl: null));
 
         Assert.DoesNotContain("<img", content.HtmlBody);
-        Assert.Contains("Creativorare", content.HtmlBody);
+        Assert.Contains("Cohestra", content.HtmlBody);
     }
 
     [Fact]

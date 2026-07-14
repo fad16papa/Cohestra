@@ -78,8 +78,8 @@ Required values:
 | `POSTGRES_PASSWORD` | Strong random password |
 | `JWT_SIGNING_KEY` | At least 32 characters (`openssl rand -base64 48`) |
 | `SendGrid__ApiKey` | Live Mail Send API key ([setup guide](./sendgrid-production.md)) |
-| `SendGrid__FromEmail` | Verified sender — campaigns (default: `noreply@creativorare.com`) |
-| `SendGrid__FromName` | Display name (default: Creativorare) |
+| `SendGrid__FromEmail` | Verified sender — campaigns (default: `noreply@cohestra.app`) |
+| `SendGrid__FromName` | Display name (default: Cohestra) |
 
 Optional:
 
