@@ -10,10 +10,21 @@ Cohestra — API-first community events and lead generation platform.
 
 ## Quick start (Docker Compose)
 
+The local stack runs as Docker project **`cohestra-infra`** (visible in Docker Desktop). This replaces the old `lead-generation-crm` project name from the pre-rebrand folder.
+
 ```bash
 cp .env.example .env   # optional — defaults work for local dev
 docker compose up --build
 ```
+
+If you still have the old stack running, stop it first so ports 80/5432/6379 are free:
+
+```bash
+docker compose -p lead-generation-crm down
+# or remove the old project in Docker Desktop
+```
+
+Fresh volumes are created automatically (`cohestra-infra_postgres_data`, etc.) — no data carries over from the old project unless you migrate volumes manually.
 
 After pulling changes or adding web routes (e.g. `/login`), rebuild the web container:
 

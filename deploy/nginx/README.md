@@ -13,6 +13,8 @@ The stack exposes **one public entry point** through an nginx container — the 
 
 ## Local development
 
+Docker project: **`cohestra-infra`** (set in `docker-compose.yml`).
+
 ```bash
 docker compose up --build
 ```

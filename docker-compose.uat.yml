@@ -1,3 +1,5 @@
+name: cohestra-infra-uat
+
 # UAT / production-style Compose for a single Ubuntu droplet (DigitalOcean).
 # nginx in Docker is the public entry point (see deploy/nginx/app.conf).
 # Postgres and Redis bind to 127.0.0.1 on the droplet for SSH tunnel access (pgAdmin, RedisInsight).
