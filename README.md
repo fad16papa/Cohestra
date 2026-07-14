@@ -1,6 +1,8 @@
 # Cohestra
 
-Cohestra — API-first community events and lead generation platform.
+Cohestra — multi-tenant enterprise SaaS for community events and lead generation.
+
+> **Product boundary:** Cohestra (this repo) targets multi-tenant enterprise deployments. The separate **lead-generation-crm** product is single-operator only — keep its codebase and Docker stack independent.
 
 ## Prerequisites
 
@@ -10,21 +12,23 @@ Cohestra — API-first community events and lead generation platform.
 
 ## Quick start (Docker Compose)
 
-The local stack runs as Docker project **`cohestra-infra`** (visible in Docker Desktop). This replaces the old `lead-generation-crm` project name from the pre-rebrand folder.
+Cohestra is a **separate product** from single-operator **lead-generation-crm**. Local Docker runs as project **`cohestra-infra`** (visible in Docker Desktop) so it does not share containers or volumes with other products.
 
 ```bash
 cp .env.example .env   # optional — defaults work for local dev
 docker compose up --build
 ```
 
-If you still have the old stack running, stop it first so ports 80/5432/6379 are free:
+If **lead-generation-crm** (or another stack) is already using ports 80, 5432, or 6379 on your machine, assign different host ports in `.env` instead of stopping the other product:
 
 ```bash
-docker compose -p lead-generation-crm down
-# or remove the old project in Docker Desktop
+NGINX_HTTP_PORT=8088
+PUBLIC_BASE_URL=http://localhost:8088
+POSTGRES_HOST_PORT=5433
+REDIS_HOST_PORT=6380
 ```
 
-Fresh volumes are created automatically (`cohestra-infra_postgres_data`, etc.) — no data carries over from the old project unless you migrate volumes manually.
+Then open **http://localhost:8088** (or your chosen nginx port).
 
 After pulling changes or adding web routes (e.g. `/login`), rebuild the web container:
 

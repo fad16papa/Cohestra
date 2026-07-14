@@ -13,7 +13,7 @@ The stack exposes **one public entry point** through an nginx container — the 
 
 ## Local development
 
-Docker project: **`cohestra-infra`** (set in `docker-compose.yml`).
+Cohestra Docker project: **`cohestra-infra`** (set in `docker-compose.yml`). Independent from **lead-generation-crm**.
 
 ```bash
 docker compose up --build
