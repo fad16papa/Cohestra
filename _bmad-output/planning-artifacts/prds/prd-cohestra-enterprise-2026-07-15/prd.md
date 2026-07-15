@@ -3,6 +3,7 @@ title: Cohestra Enterprise — Multi-Tenant SaaS
 status: draft
 created: 2026-07-15
 updated: 2026-07-15
+gtm_pricing: section-13
 sources:
   - _bmad-output/planning-artifacts/sprint-change-proposal-2026-07-14.md
   - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md
@@ -456,17 +457,139 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-7:** v1 scale: 100 tenants, 100k clients — §8
 - **A-8:** Default tenant backfill for existing dev data — §6.1
 - **A-9:** lead-generation-crm remains separate product — §0, §5
+- **A-10:** Core tier monetization before tenant-scoped website builder ships — §13
+- **A-11:** Pilot pricing uses manual invoicing until Stripe integration — §13.3
 
 ---
 
-## 13. Downstream Handoff
+## 13. Go-to-Market & Monetization Strategy
 
-| Next skill | Deliverable |
-|------------|-------------|
-| `bmad-architecture` | Tenancy spine — isolation model, routing, identity, migration |
-| `bmad-ux` | Enterprise journeys — signup, team invite, platform admin |
-| `bmad-create-epics-and-stories` | Epic 11–15 breakdown from this PRD |
-| `bmad-check-implementation-readiness` | Align PRD + architecture + UX before dev |
-| `bmad-sprint-planning` | Enterprise sprint status |
+### 13.1 Positioning
+
+**One-line:** Cohestra turns community events and QR registrations into one client list with follow-up — without Google Forms chaos.
+
+**Primary audience (v1):** Community clubs, fitness studios, and hobby groups running multiple activities per month with 1–5 operators.
+
+**Competitive frame:**
+
+| Alternative | Cohestra advantage |
+|-------------|-------------------|
+| Google Forms + spreadsheet | Unified client list, dedup, timeline, campaigns |
+| Peatix / Luma | CRM pipeline after registration, not just event pages |
+| Generic CRM (HubSpot, etc.) | Activity-led capture built-in; no deal-desk complexity |
+
+**Product boundary in all marketing:** Cohestra Enterprise (this product) is multi-tenant SaaS. **lead-generation-crm** is a separate single-operator product — never conflated in copy or demos.
+
+### 13.2 Phased route (stable → market → monetize)
+
+```mermaid
+flowchart LR
+  P1[Phase 1 Stable] --> P2[Phase 2 Market]
+  P2 --> P3[Phase 3 Monetize]
+  P1 --> T[Tenancy + isolation tests]
+  P1 --> S[Subdomain + signup]
+  P2 --> M[cohestra.app marketing]
+  P2 --> D[2-3 pilot tenants]
+  P3 --> C[Core tier manual billing]
+  P3 --> Pro[Pro + website builder]
+  P3 --> Stripe[Stripe self-serve]
+```
+
+| Phase | Goal | Exit criteria |
+|-------|------|---------------|
+| **1 — Stable** | Safe multi-tenant platform | Cross-tenant tests pass; signup → activity → registration E2E per tenant |
+| **2 — Market** | Discoverable online funnel | cohestra.app live; demo video; 2–3 pilot testimonials |
+| **3 — Monetize** | Revenue before feature-complete | ≥1 paying Core tenant; Pro upsell path defined |
+
+### 13.3 Pricing tiers
+
+| Tier | Monthly anchor (USD) | Target buyer | Website builder |
+|------|---------------------|--------------|-----------------|
+| **Core** | $39 / tenant | Solo operator or small club starting digital capture | No — auto public activity list only |
+| **Pro** | $99 / tenant | Club with marketing + follow-up needs | Yes — full Site Page composer |
+| **Enterprise** | Custom | Multi-location or sales-led deals | Yes + custom domain (v1.1) |
+
+**Seat add-ons:** +$15 / month per additional operator beyond tier limit (Core: 1 admin; Pro: 3 included).
+
+**Registration soft caps (Core):** 500 registrations / month included; Pro unlimited `[ASSUMPTION: enforce as plan flag, not hard block in v1]`.
+
+### 13.4 Feature gates by tier
+
+| Capability | Core | Pro | Enterprise |
+|------------|:----:|:---:|:----------:|
+| Activities + QR + public registration | ✓ | ✓ | ✓ |
+| Client dedup + timeline | ✓ | ✓ | ✓ |
+| Dashboard + reports + CSV | ✓ | ✓ | ✓ |
+| Email campaigns | — | ✓ | ✓ |
+| Team invites (RBAC) | 1 admin | 3 seats | Custom |
+| Public `{slug}.cohestra.app/events` list | ✓ | ✓ | ✓ |
+| Website builder + publish homepage | — | ✓ | ✓ |
+| Custom domain | — | — | ✓ (v1.1) |
+| SSO / SLA | — | — | ✓ |
+
+Implementation: `Tenant.Plan` enum (`Core`, `Pro`, `Enterprise`) checked server-side on gated endpoints and web routes.
+
+### 13.5 Billing rollout
+
+| Stage | Mechanism | Trigger |
+|-------|-----------|---------|
+| Pilots 1–5 | Manual invoice (bank / GCash) | First stable prod URL + 2 pilots |
+| 5–20 tenants | Stripe Checkout + plan flags | First paid Core conversion |
+| 20+ | Stripe subscriptions + seat metering | Ops burden on manual billing |
+
+Stripe integration is **out of MVP scope** but plan gates and `Tenant.Plan` ship in Epic 14.
+
+### 13.6 Marketing funnel
+
+```
+cohestra.app (apex marketing)
+  → Start free trial / Book demo
+  → Self-serve tenant signup (or sales calendar)
+  → Onboard: first activity + QR in <15 min (SM-2)
+  → Email tips: campaigns, reports
+  → Upgrade prompt at builder gate or seat limit
+```
+
+**Minimum marketing assets:**
+
+- Landing page: problem, demo (90s), pricing (§13.3), signup CTA
+- Comparison: vs Google Forms + spreadsheet
+- Case study: 1 pilot tenant (post Phase 2)
+- SEO targets: "event registration CRM", "community lead capture", "QR event registration"
+
+### 13.7 Launch sequencing (product + GTM)
+
+1. Tenancy spine + isolation (Epic 11–13) — **blocks everything**
+2. Subdomain signup + simple public events page
+3. cohestra.app marketing site + waitlist or signup
+4. 2–3 pilot tenants (discounted or free)
+5. **Charge Core** via manual invoice
+6. Tenant-scoped website builder → **Pro upsell**
+7. Stripe self-serve
+8. Scale content + outbound with case studies
+
+### 13.8 GTM success metrics
+
+- **SM-G1:** 3 pilot tenants complete 2+ activities without platform support intervention
+- **SM-G2:** First paid Core tenant within 30 days of manual billing offer
+- **SM-G3:** ≥1 Pro upgrade driven by website-builder gate
+- **SM-CG1:** Do not optimize signup volume over SM-1 (isolation)
+
+Full pricing page copy: `docs/marketing/pricing-tiers.md`
+
+---
+
+## 14. Downstream Handoff
+
+| Next skill | Deliverable | Status |
+|------------|-------------|--------|
+| `bmad-architecture` | Tenancy spine — isolation, routing, identity, migration | **Done** — `architecture/architecture-cohestra-enterprise-2026-07-15/` |
+| `bmad-ux` | Enterprise journeys — signup, team invite, platform admin | Pending |
+| `bmad-create-epics-and-stories` | Epic 11–15 breakdown from this PRD | Pending |
+| `bmad-check-implementation-readiness` | Align PRD + architecture + UX before dev | After UX |
+| `bmad-sprint-planning` | Enterprise sprint status | After epics |
+| Pricing page | `docs/marketing/pricing-tiers.md` | **Done** — cohestra.app copy draft |
 
 **Inherited PRD reference:** Platform 0 domain FRs remain authoritative for feature behavior inside tenant scope: `_bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md`.
+
+**Architecture companion:** `_bmad-output/planning-artifacts/architecture/architecture-cohestra-enterprise-2026-07-15/ARCHITECTURE-SPINE.md` (AD-1–AD-10).
