@@ -137,7 +137,9 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
 
 - **Platform 0** — Inherited single-operator feature set (Epics 1–10) implemented in the brownfield codebase before enterprise tenancy. Becomes **tenant-scoped modules** under this PRD.
 
-- **Activity**, **Client**, **Registration**, **Campaign**, **Report**, **Community**, **Category**, **Form**, **QR Code**, **Lead Status**, **Registration number**, **Site Page** — Domain terms as defined in Platform 0 PRD, with the constraint that all instances are scoped to exactly one **Tenant**. A **Community** is a business grouping within a tenant, not a tenant itself.
+- **Activity**, **Client**, **Registration**, **Campaign**, **Report**, **Community**, **Category**, **Form**, **QR Code**, **Lead Status**, **Registration number**, **Site Page** — Domain terms as defined in Platform 0 PRD, with the constraint that all instances are scoped to exactly one **Tenant**.
+
+- **Community** — An operator-defined program or brand **within one Tenant** (e.g., "Running Club", "Youth Program", "Pickleball"). Managed in **Activities → Communities**; activities store a `CommunityLabel`; used for filters, reports, and campaigns. **Not** a separate tenant, subdomain, login, or billing account. **Terminology policy (Option A):** **Community** is the official product term in UI, PRD, pricing limits, and support. Marketing may say "club" or "program" in prose; those words always refer to a **Community** in the app.
 
 - **Data isolation** — Guarantee that no API query, cache key, or export returns another **Tenant**'s records.
 
@@ -513,13 +515,14 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | Q9 | Post-trial / failed payment | **8-week lifecycle** — see FR-23 and §13.5 |
 | Q10 | Billing intervals | **Monthly + annual**; annual discounted |
 | Q6–8 | Slugs, SendGrid, droplet | Confirmed per addendum / deferred deploy |
+| **Terminology** | **Community** vs club | **Option A ratified** — **Community** official in product/pricing; "club" only as example community name in marketing |
 
 **Deferred — pricing & packaging study (before scale, not blocking MVP build):**
 
 | # | Topic | Plan |
 |---|-------|------|
 | **Q2** | **Intro vs list price & grandfathering** | **Research draft done** — launch at $29/$79 and $290/$790; pilot WTP interviews + grandfather rules before list-price increase. See `research/market-cohestra-pricing-penetration-research-2026-07-16.md`. |
-| **Q5** | **Core registration limits** | Study usage patterns + infra cost per registration; define caps that justify tier split and architecture (Redis, SendGrid, DB). No hard cap enforced until study recommends thresholds. |
+| **Q5** | **Communities, activities, registration caps** | **Proposed:** Core 3 communities / 12 activities / 500 reg·mo; Pro 10 / 50 / 5,000 — confirm Option A/B/C in §13.10 |
 
 **Pricing study deliverable:** `bmad-market-research` or focused pricing memo — competitor matrix, unit economics, recommended intro/list/annual discount, grandfather rules. Target: before Phase 3 scale (§13.2).
 
@@ -547,7 +550,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-17:** Monthly + annual billing; annual ≈ 2 months free — FR-22
 - **A-18:** Delinquency: week 5 daily collection → weeks 6–8 hold + weekly nudge → delete after week 8 — FR-23
 - **A-19:** Open self-serve signup at launch — §13.7
-- **A-20:** Core registration caps deferred pending usage/cost study — §11 Q5
+- **A-21:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
 
 ---
 
@@ -602,7 +605,7 @@ flowchart LR
 
 **Seat add-ons:** +$15 / month USD per additional operator beyond tier limit (Core: up to 3; Pro: up to 10).
 
-**Communities (clubs) & activity limits:** Strategic caps required on both tiers — see §13.4 and §13.10 (discussion).
+**Communities & activity limits:** Strategic caps required on both tiers — see §13.4 and §13.10 (discussion).
 
 ### 13.4 Feature gates by tier
 
@@ -614,7 +617,7 @@ flowchart LR
 | **Registration email notifications** | ✓ | ✓ | ✓ |
 | **Email campaigns** (templates, segments, bulk send) | — | ✓ | ✓ |
 | **Operator seats** | Up to **3** | Up to **10** | Custom |
-| **Communities (clubs)** | Up to **3** `[PROPOSED]` | Up to **10** `[PROPOSED]` | Custom |
+| **Communities** | Up to **3** `[PROPOSED]` | Up to **10** `[PROPOSED]` | Custom |
 | **Active published activities** | Up to **12** `[PROPOSED]` | Up to **50** `[PROPOSED]` | Custom |
 | **Registrations / month** | Up to **500** `[PROPOSED]` | Up to **5,000** `[PROPOSED]` | Custom |
 | Public site — **fixed template** | ✓ | — | ✓ |
@@ -734,12 +737,12 @@ cohestra.app (apex marketing)
 
 ### 13.10 Communities & usage limits (Q5 — discussion)
 
-**Terminology (Cohestra domain):**
+**Terminology (Option A — ratified):** Use **Community** / **Communities** in product UI, PRD, pricing limits, and plan gates. Marketing may use "club" or "program" only as plain-language examples of community **names** (e.g., a community named "Running Club").
 
 | Term | Meaning | Example |
 |------|---------|---------|
 | **Tenant organization** | One paying customer workspace | "IKIGAI Sports Association" |
-| **Community (club)** | Brand/group within tenant — maps to `Community` entity + activity labels | Running Club, Cycling Club, Youth Program |
+| **Community** | Program or brand within tenant — `Community` entity + activity labels | Names: "Running Club", "Youth Program", "Pickleball" |
 | **Activity** | One event/session with QR + registration | "Saturday 5K", "Beginner Yoga Mar 12" |
 
 **Principle:** Neither tier gets unlimited communities, activities, or registrations — caps protect infra cost (SendGrid, DB, support) and create Pro upsell triggers.
@@ -748,7 +751,7 @@ cohestra.app (apex marketing)
 
 | Limit | Core | Pro | Rationale |
 |-------|------|-----|-----------|
-| **Communities (clubs)** | **3** | **10** | Matches team size story; multi-program small org vs multi-club operator |
+| **Communities** | **3** | **10** | Matches team size story; multi-program small org vs multi-community operator |
 | **Published activities (concurrent)** | **12** | **50** | ~4 active events per community on Core; [Eventually Growth](https://www.eventuallyticketing.com/pricing) uses 50 events as mid tier |
 | **Registrations / month** | **500** | **5,000** | SendGrid + storage cost driver; soft warn then upgrade prompt |
 
@@ -756,7 +759,7 @@ cohestra.app (apex marketing)
 
 **Alternatives to confirm:**
 
-| Option | Core clubs | Pro clubs | When to use |
+| Option | Core communities | Pro communities | When to use |
 |--------|------------|-----------|-------------|
 | **A (recommended)** | 3 | 10 | Default — mirrors seats |
 | **B (generous Core)** | 5 | 15 | If pilots run many sub-brands on one tenant |

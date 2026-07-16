@@ -6,7 +6,7 @@
 
 ## Turn events into clients — without spreadsheet chaos
 
-Cohestra helps community clubs, fitness studios, and event organizers capture registrations from QR codes and links, deduplicate contacts, and follow up with email campaigns — all in one workspace.
+Cohestra helps community operators — clubs, fitness studios, and event organizers — capture registrations from QR codes and links, deduplicate contacts, and follow up with email campaigns, all in one workspace.
 
 **Not sure?** Start with Core. Upgrade when you need marketing campaigns or a custom homepage.
 
@@ -20,11 +20,11 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 
 **Or $29 / month** — cancel anytime.
 
-**For:** Solo operators and small clubs getting off Google Forms.
+**For:** Solo operators and small organizations getting off Google Forms.
 
 **Includes:**
 - Up to **3 operator seats**
-- Up to **3 communities (clubs)** `[proposed]`
+- Up to **3 communities** `[proposed]`
 - Up to **12 published activities** `[proposed]`
 - Up to **500 registrations / month** `[proposed]`
 - QR codes + public registration pages
@@ -43,16 +43,16 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 
 **Or $79 / month** — cancel anytime.
 
-**For:** Growing communities that market events and run email follow-up.
+**For:** Growing organizations that market events and run email follow-up.
 
 **Everything in Core, plus:**
 - Up to **10 operator seats**
-- Up to **10 communities (clubs)** `[proposed]`
+- Up to **10 communities** `[proposed]`
 - Up to **50 published activities** `[proposed]`
 - Up to **5,000 registrations / month** `[proposed]`
 - **Email campaigns** — templates, segments, bulk sends
 - **Website builder** — wide component library, branded homepage
-- **Fixed → custom public site** (full Site Page composer)
+- Full **Site Page composer** (vs Core fixed template)
 
 **Annual plan:** 2 months free — **$790/year** (save $158 vs monthly).  
 **Compared to stacking tools:** ~$1,200+/year for event pages + email alone.
@@ -99,7 +99,7 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 | Feature | Core | Pro | Enterprise |
 |---------|:----:|:---:|:----------:|
 | Operator seats | Up to 3 | Up to 10 | Custom |
-| Communities (clubs) | Up to 3 `[proposed]` | Up to 10 `[proposed]` | Custom |
+| **Communities** | Up to 3 `[proposed]` | Up to 10 `[proposed]` | Custom |
 | Published activities | Up to 12 `[proposed]` | Up to 50 `[proposed]` | Custom |
 | Registrations / month | Up to 500 `[proposed]` | Up to 5,000 `[proposed]` | Custom |
 | Activities + QR registration | ✓ | ✓ | ✓ |
@@ -122,11 +122,11 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 **What's the difference between fixed public site and website builder?**  
 **Core** gets a standard `{your-org}.cohestra.app` page (your name, colors, upcoming activities). **Pro** unlocks the full builder with many section types and full layout control.
 
-**How is Cohestra different from Peatix or Luma?**  
-Peatix and Luma focus on event discovery. Cohestra focuses on what happens *after* registration — one client list, follow-up, and reports across all your clubs and activities.
+**What is a Community?**  
+A **Community** is a program or brand inside your organization — for example communities named "Running Club", "Youth Program", or "Pickleball". You manage them under **Activities → Communities**. One Cohestra account (organization) can have several communities; each activity belongs to one community. A community is not a separate login or website.
 
-**What counts as a community (club)?**  
-A brand or program under your organization — e.g. Running Club, Yoga Club, Youth Program — not your whole Cohestra account.
+**How is Cohestra different from Peatix or Luma?**  
+Peatix and Luma focus on event discovery. Cohestra focuses on what happens *after* registration — one client list, follow-up, and reports across all your communities and activities.
 
 **What currency do you charge in?**  
 All prices are in **US dollars (USD)**.
