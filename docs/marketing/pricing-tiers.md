@@ -16,7 +16,9 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 
 *Launch offer — subject to market review before standard list pricing.*
 
-### Core — $29 / month or $290 / year
+### Core — $24 / mo billed annually ($290 / year)
+
+**Or $29 / month** — cancel anytime.
 
 **For:** Solo operators and small clubs getting off Google Forms.
 
@@ -28,13 +30,15 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 - 1 admin seat
 - Public activity directory at `{your-org}.cohestra.app`
 
-**Annual plan:** Pay for 10 months, get 12 (~2 months free).
+**Annual plan:** 2 months free — **$290/year** (save $58 vs monthly).
 
 [Start 30-day free trial →](#)
 
 ---
 
-### Pro — $79 / month or $790 / year
+### Pro — $66 / mo billed annually ($790 / year)
+
+**Or $79 / month** — cancel anytime.
 
 **For:** Growing communities that market events and run email follow-up.
 
@@ -44,7 +48,8 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 - **3 operator seats** included
 - Unlimited registrations
 
-**Annual plan:** Pay for 10 months, get 12 (~2 months free).
+**Annual plan:** 2 months free — **$790/year** (save $158 vs monthly).  
+**Compared to stacking tools:** ~$1,200+/year for event pages + email alone — Pro bundles CRM, campaigns, and site in one workspace.
 
 [Start 30-day free trial →](#)
 

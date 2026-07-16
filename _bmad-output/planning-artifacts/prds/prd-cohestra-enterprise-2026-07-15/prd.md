@@ -518,7 +518,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 
 | # | Topic | Plan |
 |---|-------|------|
-| **Q2** | **Intro vs list price & grandfathering** | Run market-penetration pricing study: pilot WTP, competitor anchors, intro→list transition rules, grandfather policy. Launch intro **$29 / $79**; list target **$39 / $99** remains hypothesis until study completes. |
+| **Q2** | **Intro vs list price & grandfathering** | **Research draft done** — launch at $29/$79 and $290/$790; pilot WTP interviews + grandfather rules before list-price increase. See `research/market-cohestra-pricing-penetration-research-2026-07-16.md`. |
 | **Q5** | **Core registration limits** | Study usage patterns + infra cost per registration; define caps that justify tier split and architecture (Redis, SendGrid, DB). No hard cap enforced until study recommends thresholds. |
 
 **Pricing study deliverable:** `bmad-market-research` or focused pricing memo — competitor matrix, unit economics, recommended intro/list/annual discount, grandfather rules. Target: before Phase 3 scale (§13.2).
@@ -704,14 +704,21 @@ cohestra.app (apex marketing)
 
 ### 13.9 Pricing & packaging study (Q2, Q5)
 
-**Not blocking MVP build.** Run in parallel with pilots before Phase 3 scale.
+**Status:** Initial market research complete — `research/market-cohestra-pricing-penetration-research-2026-07-16.md`
 
-| Workstream | Questions | Outputs |
-|------------|-----------|---------|
-| **Market penetration pricing (Q2)** | WTP vs Peatix/Luma/Forms stack; intro→list transition; grandfather policy | Recommended intro/list/annual discount; rollout playbook |
-| **Registration economics (Q5)** | Cost per registration (DB, email, cache); typical club volume | Core vs Pro limits; plan-flag thresholds; upsell triggers |
+| Workstream | Status | Key finding |
+|------------|--------|-------------|
+| **Market penetration pricing (Q2)** | **Draft complete** | Launch **$29/$79** and **$290/$790** annual (2 mo free) is **reasonable**; grandfather policy still needs pilot WTP interviews |
+| **Registration economics (Q5)** | **Preview only** | Defer hard Core caps until pilot volume data; architecture ready for plan flags |
 
-**Suggested skill:** `bmad-market-research` with competitor pricing matrix + 3–5 pilot interviews.
+**Annual pricing verdict ($290 Core / $790 Pro):**
+
+- **Annual math is correct** — both tiers use the same **16.7% discount** (2 months free); industry standard.
+- The **“huge difference”** is the **Core→Pro gap ($500/yr)**, not broken annual pricing.
+- **Market with monthly equivalents:** Core **$24/mo** billed annually; Pro **$66/mo** billed annually.
+- **Pro $790** is ~**37% below** a Luma + Mailchimp stack (~$1,248/yr); **Core $290** is above free Peatix — sell CRM ROI, not event pages.
+
+**If Pro upgrade &lt; 15% after 10 tenants:** test Pro intro at **$69/mo ($690/yr)** before adding a middle tier.
 
 Full pricing page copy: `docs/marketing/pricing-tiers.md`
 
@@ -724,7 +731,7 @@ Full pricing page copy: `docs/marketing/pricing-tiers.md`
 | `bmad-architecture` | Tenancy spine — isolation, routing, identity, migration | **Done** — `architecture/architecture-cohestra-enterprise-2026-07-15/` |
 | `bmad-ux` | Enterprise journeys — signup, team invite, platform admin | Pending |
 | `bmad-create-epics-and-stories` | Epic 11–15 breakdown from this PRD | Pending |
-| `bmad-market-research` | Pricing penetration + registration economics (§13.9) | Pending — parallel with pilots |
+| `bmad-market-research` | Pricing penetration + registration economics (§13.9) | **Draft done** — `research/market-cohestra-pricing-penetration-research-2026-07-16.md`; pilot WTP interviews pending |
 | `bmad-check-implementation-readiness` | Align PRD + architecture + UX before dev | After UX |
 | `bmad-sprint-planning` | Enterprise sprint status | After epics |
 | Pricing page | `docs/marketing/pricing-tiers.md` | **Done** — cohestra.app copy draft |
