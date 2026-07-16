@@ -7,8 +7,8 @@ paradigm: layered (Api · Application · Domain · Infrastructure · Contracts) 
 scope: Tenancy spine, identity, routing, isolation — Epics 11–15 foundation
 status: final
 created: 2026-07-15
-updated: 2026-07-15
-binds: [FR-1, FR-2, FR-4, FR-5, FR-6, FR-7, FR-8, FR-9, FR-10, FR-11, FR-12, FR-13, FR-14]
+updated: 2026-07-16
+binds: [FR-1, FR-2, FR-4, FR-5, FR-6, FR-7, FR-8, FR-9, FR-10, FR-11, FR-12, FR-13, FR-14, FR-19, FR-20, FR-21]
 sources:
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
@@ -116,7 +116,13 @@ flowchart TB
 
 - **Binds:** Website builder, campaigns, seats, FR-12, §13.4 PRD
 - **Prevents:** UI-only tier enforcement bypass
-- **Rule:** `Tenant.Plan` ∈ `Core`, `Pro`, `Enterprise`. `AdminSiteController` and campaign endpoints return 403 with upgrade hint when plan insufficient. Core tenants receive auto-generated public events list only (read-only template).
+- **Rule:** `Tenant.Plan` ∈ `Core`, `Pro`, `Enterprise`. `AdminSiteController` and campaign endpoints return 403 with upgrade hint when plan insufficient. Core tenants receive auto-generated public events list only (read-only template). Plan synced from Stripe subscription via webhooks (FR-19).
+
+### AD-11 — Stripe billing with test/live environment split
+
+- **Binds:** FR-19, FR-20, FR-21, §13.5–13.6 PRD
+- **Prevents:** Accidental live charges in dev; plan drift from Stripe state
+- **Rule:** `BillingService` creates Checkout Sessions with `trial_period_days: 30`. Webhook handler is idempotent on `event.id`. `Tenant` stores `StripeCustomerId`, `StripeSubscriptionId`, `BillingCurrency`, `BillingStatus`, `TrialEndsAt`. **Test keys** in local/CI/staging; **live keys** production only. `StripeWebhookController` verifies signature. Trial reminder job queries `Trialing` tenants with `TrialEndsAt` within 7 days.
 
 ### AD-9 — Migration via default tenant backfill
 
@@ -159,17 +165,23 @@ flowchart TB
 ```text
 src/
   Domain/
-    Tenants/Tenant.cs
+    Tenants/Tenant.cs          # + StripeCustomerId, BillingCurrency, TrialEndsAt
     Tenants/TenantMembership.cs
     Tenants/TenantPlan.cs
+    Billing/BillingStatus.cs
     Site/SitePage.cs          # + TenantId
     ...                       # all business entities + TenantId
   Infrastructure/
     Tenancy/TenantResolutionMiddleware.cs
     Tenancy/TenantQueryFilterExtensions.cs
+    Billing/BillingService.cs
+    Billing/StripeWebhookHandler.cs
+    Billing/TrialReminderJob.cs
     Site/SitePageService.cs   # tenant-scoped
   Api/
     Controllers/V1/PlatformTenantsController.cs   # platform admin
+    Controllers/V1/BillingController.cs
+    Controllers/V1/StripeWebhookController.cs
 web/
   middleware.ts               # forward Host to API
   app/page.tsx                # tenant homepage when subdomain
@@ -214,6 +226,8 @@ erDiagram
 | Per-tenant SitePage FR-12–13 | `SitePageService` | AD-4, AD-6, AD-8 |
 | Platform 0 features FR-14–16 | Existing services + `TenantId` | AD-1, AD-5 |
 | Plan gates §13.4 | `PlanGateFilter` or service checks | AD-8 |
+| Stripe billing FR-19–21 | `BillingService`, `StripeWebhookController` | AD-11 |
+| Trial reminders FR-21 | `TrialReminderJob` (daily) | AD-11 |
 
 ## Deployment & Environments
 
@@ -230,7 +244,6 @@ erDiagram
 | Custom domain per tenant (`events.client.com`) | DNS + cert automation; Enterprise v1.1 |
 | Schema-per-tenant | AD-1 sufficient for 100-tenant target |
 | Tenant switcher (multi-membership UI) | One session = one tenant in v1 |
-| Stripe webhooks + subscription sync | Manual billing until 5+ paying tenants |
 | Platform Admin impersonation / break-glass | Audit complexity; metadata-only admin in v1 |
 | Per-tenant SendGrid API keys | Shared platform key + per-tenant sender auth first |
 | Event sourcing / tenant audit export | Append-only logs sufficient for MVP |

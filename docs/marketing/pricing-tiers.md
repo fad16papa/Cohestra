@@ -1,6 +1,6 @@
 # Cohestra — Pricing
 
-*Draft for [cohestra.app](https://cohestra.app) pricing page. Anchors in USD; adjust for local market.*
+*Draft for [cohestra.app](https://cohestra.app) pricing page. **Introductory launch pricing** — localized to your country at signup.*
 
 ---
 
@@ -12,9 +12,11 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 
 ---
 
-## Plans
+## Introductory pricing
 
-### Core — $39 / month per organization
+*Launch offer. Prices shown in your local currency at signup. Early adopters keep this rate for 12 months from first payment.*
+
+### Core — from $29 / month per organization
 
 **For:** Solo operators and small clubs getting off Google Forms.
 
@@ -28,11 +30,11 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 
 **Best for:** Replacing scattered forms with one client list.
 
-[Start free trial →](#)
+[Start 30-day free trial →](#)
 
 ---
 
-### Pro — $99 / month per organization
+### Pro — from $79 / month per organization
 
 **For:** Growing communities that market events and run email follow-up.
 
@@ -42,9 +44,9 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 - **3 operator seats** included
 - Unlimited registrations
 
-**Best for:** Clubs promoting on Instagram/WhatsApp who want a Peatix-style storefront tied to their CRM.
+**Best for:** Clubs promoting on Instagram/WhatsApp who want a storefront tied to their CRM.
 
-[Start free trial →](#)
+[Start 30-day free trial →](#)
 
 ---
 
@@ -61,12 +63,24 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 
 ---
 
+## Free trial
+
+**30 days free** on Core or Pro.
+
+- **Card required at signup** — you will **not be charged** while your trial is active
+- Billing starts on your trial end date unless you cancel before then
+- We'll email you and show an in-app reminder **every day during the last 7 days** before your trial ends, including the exact date
+
+[Start 30-day free trial →](#)
+
+---
+
 ## Add-ons
 
 | Add-on | Price |
 |--------|-------|
-| Extra operator seat | +$15 / seat / month |
-| Additional admin beyond Pro (4+) | +$15 / seat / month |
+| Extra operator seat | +$15 / seat / month (localized) |
+| Additional admin beyond Pro (4+) | +$15 / seat / month (localized) |
 
 ---
 
@@ -98,7 +112,13 @@ Forms capture answers once. Cohestra keeps every person in a master client list,
 Yes. Start on Core and upgrade to Pro when you need the website builder or campaigns.
 
 **Is there a free trial?**  
-Yes — 14-day trial on Core or Pro `[ASSUMPTION: confirm trial length before launch]`.
+Yes — **30 days** on Core or Pro. A card is required at signup, but **you won't be charged until the trial ends** unless you cancel first.
+
+**Will you remind me before the trial ends?**  
+Yes. During the last 7 days of your trial, you'll receive a daily email and an in-app notification with your exact trial end date.
+
+**What currency will I be charged in?**  
+The currency for your country at signup (e.g. USD, SGD, MYR, PHP). Prices are shown in that currency before you confirm.
 
 **Do participants need an account?**  
 No. Public registration works from any phone browser via QR or link.
@@ -109,7 +129,7 @@ No. Public registration works from any phone browser via QR or link.
 
 Replace your next Google Form with Cohestra in under 15 minutes.
 
-[Start free trial →](#) · [Watch 90-second demo →](#)
+[Start 30-day free trial →](#) · [Watch 90-second demo →](#)
 
 ---
 

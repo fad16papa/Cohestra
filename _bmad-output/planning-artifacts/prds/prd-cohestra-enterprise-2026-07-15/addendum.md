@@ -69,3 +69,56 @@ Platform 0 Docker project name: `cohestra-infra` (local).
 ## Cloud development workflow
 
 No droplet deployment required for enterprise v1 development. Build via Cursor Cloud Agents; verify with `dotnet test` and `docker compose` in agent VM or developer machine.
+
+## Billing & Stripe (ratified 2026-07-16)
+
+### Stripe environments
+
+| Environment | Stripe mode | Keys |
+|-------------|-------------|------|
+| Local dev | **Test mode (sandbox)** | `sk_test_…` / `pk_test_…` in `.env` |
+| CI / integration tests | **Test mode** | Stripe CLI or test webhook fixtures |
+| Staging / UAT | **Test mode** | Separate Stripe test account recommended |
+| Production | **Live mode** | `sk_live_…` / `pk_live_…` in secrets only |
+
+Use [Stripe test cards](https://docs.stripe.com/testing) (e.g. `4242 4242 4242 4242`) for dev. No real charges in test mode.
+
+### Subscription flow
+
+1. Signup → detect country → select Core or Pro Stripe Price (currency-specific)
+2. Stripe Checkout: `mode: subscription`, `trial_period_days: 30`, payment method required
+3. Webhooks: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`
+4. Map to `Tenant.Plan`, `Tenant.BillingStatus`, `Tenant.TrialEndsAt`, `Tenant.BillingCurrency`
+5. Customer Portal link for upgrade / cancel / payment method
+
+### Trial reminders (FR-21)
+
+- Background job (daily): find tenants where `BillingStatus = Trialing` and `TrialEndsAt` within 7 days
+- Send transactional email to all Tenant Admins
+- Create in-app notification record (banner until dismissed or trial ends)
+- Include `TrialEndsAt` formatted in tenant timezone `[ASSUMPTION: UTC stored, display in admin locale]`
+
+### Localized currency (FR-20)
+
+- **v1 approach:** Pre-created Stripe Prices per currency (not live FX conversion)
+- Intro amounts (example — finalize at Stripe dashboard setup):
+
+| Currency | Core (intro) | Pro (intro) |
+|----------|-------------|-------------|
+| USD | $29 | $79 |
+| SGD | ~$39 SGD | ~$105 SGD |
+| MYR | ~RM 130 | ~RM 350 |
+| PHP | ~₱1,650 | ~₱4,500 |
+
+Exact local amounts set when creating Stripe Prices; marketing page shows "from $29 USD" with geo-localized equivalent.
+
+### Config
+
+```
+STRIPE_SECRET_KEY=sk_test_…
+STRIPE_PUBLISHABLE_KEY=pk_test_…
+STRIPE_WEBHOOK_SECRET=whsec_…
+STRIPE_PRICE_CORE_USD=price_…
+STRIPE_PRICE_PRO_USD=price_…
+# … per currency
+```
