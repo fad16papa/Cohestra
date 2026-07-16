@@ -600,25 +600,37 @@ flowchart LR
 
 **Price scaling policy:** Launch at intro rates above. **Grandfathering and list-price transition** deferred to **pricing study (§13.10 / Q2)** — optimize for market penetration before raising prices.
 
-**Seat add-ons:** +$15 / month USD per additional operator beyond tier limit (Core: 1 admin; Pro: 3 included).
+**Seat add-ons:** +$15 / month USD per additional operator beyond tier limit (Core: up to 3; Pro: up to 10).
 
-**Registration limits (Core):** TBD — pending usage/cost study (Q5). Architecture supports plan-flag enforcement when thresholds are set; **no hard cap at launch** until study justifies limits.
+**Communities (clubs) & activity limits:** Strategic caps required on both tiers — see §13.4 and §13.10 (discussion).
 
 ### 13.4 Feature gates by tier
 
 | Capability | Core | Pro | Enterprise |
 |------------|:----:|:---:|:----------:|
-| Activities + QR + public registration | ✓ | ✓ | ✓ |
+| Activities + QR + public registration | ✓ (within limits) | ✓ (within limits) | Custom |
 | Client dedup + timeline | ✓ | ✓ | ✓ |
 | Dashboard + reports + CSV | ✓ | ✓ | ✓ |
-| Email campaigns | — | ✓ | ✓ |
-| Team invites (RBAC) | 1 admin | 3 seats | Custom |
-| Public `{slug}.cohestra.app/events` list | ✓ | ✓ | ✓ |
-| Website builder + publish homepage | — | ✓ | ✓ |
+| **Registration email notifications** | ✓ | ✓ | ✓ |
+| **Email campaigns** (templates, segments, bulk send) | — | ✓ | ✓ |
+| **Operator seats** | Up to **3** | Up to **10** | Custom |
+| **Communities (clubs)** | Up to **3** `[PROPOSED]` | Up to **10** `[PROPOSED]` | Custom |
+| **Active published activities** | Up to **12** `[PROPOSED]` | Up to **50** `[PROPOSED]` | Custom |
+| **Registrations / month** | Up to **500** `[PROPOSED]` | Up to **5,000** `[PROPOSED]` | Custom |
+| Public site — **fixed template** | ✓ | — | ✓ |
+| Public site — **website builder** (wide component library) | — | ✓ | ✓ |
 | Custom domain | — | — | ✓ (v1.1) |
 | SSO / SLA | — | — | ✓ |
 
-Implementation: `Tenant.Plan` enum (`Core`, `Pro`, `Enterprise`) synced from Stripe subscription; checked server-side on gated endpoints and web routes.
+**Email (clarified):**
+- **Both tiers:** Transactional **registration notifications** per new lead (confirmation / operator alert) — not gated.
+- **Pro only:** **Email campaigns** — templates, audience segments, campaign history on client profile, bulk marketing sends.
+
+**Public site (clarified):**
+- **Core:** **Fixed public site** — predetermined layout at `{slug}.cohestra.app` (org name, accent, upcoming activities list). No section composer; not the Epic 9 Site Page editor.
+- **Pro:** **Full website builder** — Site Page composer with wide component range (hero, sections, upcoming events, publish workflow).
+
+Implementation: `Tenant.Plan` enum synced from Stripe; server-side plan gates on campaigns, builder, seat invites, community/activity/registration counts.
 
 ### 13.5 Billing & trial (Stripe)
 
@@ -719,6 +731,38 @@ cohestra.app (apex marketing)
 - **Pro $790** is ~**37% below** a Luma + Mailchimp stack (~$1,248/yr); **Core $290** is above free Peatix — sell CRM ROI, not event pages.
 
 **If Pro upgrade &lt; 15% after 10 tenants:** test Pro intro at **$69/mo ($690/yr)** before adding a middle tier.
+
+### 13.10 Communities & usage limits (Q5 — discussion)
+
+**Terminology (Cohestra domain):**
+
+| Term | Meaning | Example |
+|------|---------|---------|
+| **Tenant organization** | One paying customer workspace | "IKIGAI Sports Association" |
+| **Community (club)** | Brand/group within tenant — maps to `Community` entity + activity labels | Running Club, Cycling Club, Youth Program |
+| **Activity** | One event/session with QR + registration | "Saturday 5K", "Beginner Yoga Mar 12" |
+
+**Principle:** Neither tier gets unlimited communities, activities, or registrations — caps protect infra cost (SendGrid, DB, support) and create Pro upsell triggers.
+
+**Proposed limits (align with 3 / 10 seats):**
+
+| Limit | Core | Pro | Rationale |
+|-------|------|-----|-----------|
+| **Communities (clubs)** | **3** | **10** | Matches team size story; multi-program small org vs multi-club operator |
+| **Published activities (concurrent)** | **12** | **50** | ~4 active events per community on Core; [Eventually Growth](https://www.eventuallyticketing.com/pricing) uses 50 events as mid tier |
+| **Registrations / month** | **500** | **5,000** | SendGrid + storage cost driver; soft warn then upgrade prompt |
+
+**Enforcement (v1):** Soft gate — allow overage during trial/pilot with banner; hard block at create-community / publish-activity / registration ingest when over limit `[ASSUMPTION]`.
+
+**Alternatives to confirm:**
+
+| Option | Core clubs | Pro clubs | When to use |
+|--------|------------|-----------|-------------|
+| **A (recommended)** | 3 | 10 | Default — mirrors seats |
+| **B (generous Core)** | 5 | 15 | If pilots run many sub-brands on one tenant |
+| **C (strict Core)** | 1 | 5 | Maximum Pro pressure — likely too tight for 3 operators |
+
+**Open:** Confirm Option A/B/C and whether **activities** limit is concurrent published vs created per month.
 
 Full pricing page copy: `docs/marketing/pricing-tiers.md`
 

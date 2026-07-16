@@ -8,13 +8,13 @@
 
 Cohestra helps community clubs, fitness studios, and event organizers capture registrations from QR codes and links, deduplicate contacts, and follow up with email campaigns — all in one workspace.
 
-**Not sure?** Start with Core. Upgrade when you need campaigns or a branded homepage.
+**Not sure?** Start with Core. Upgrade when you need marketing campaigns or a custom homepage.
 
 ---
 
 ## Introductory pricing (USD)
 
-*Launch offer — subject to market review before standard list pricing.*
+*Launch offer — limits marked `[proposed]` pending final confirmation.*
 
 ### Core — $24 / mo billed annually ($290 / year)
 
@@ -23,12 +23,15 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 **For:** Solo operators and small clubs getting off Google Forms.
 
 **Includes:**
-- Unlimited activities
+- Up to **3 operator seats**
+- Up to **3 communities (clubs)** `[proposed]`
+- Up to **12 published activities** `[proposed]`
+- Up to **500 registrations / month** `[proposed]`
 - QR codes + public registration pages
+- **Registration email notifications** for each new lead
 - Client list with dedup + timeline
 - Dashboard + reports + CSV export
-- 1 admin seat
-- Public activity directory at `{your-org}.cohestra.app`
+- **Fixed public site** at `{your-org}.cohestra.app` (standard layout — not the full builder)
 
 **Annual plan:** 2 months free — **$290/year** (save $58 vs monthly).
 
@@ -43,13 +46,16 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 **For:** Growing communities that market events and run email follow-up.
 
 **Everything in Core, plus:**
-- **Website builder** — branded homepage with upcoming events
-- Email campaigns + templates
-- **3 operator seats** included
-- Unlimited registrations
+- Up to **10 operator seats**
+- Up to **10 communities (clubs)** `[proposed]`
+- Up to **50 published activities** `[proposed]`
+- Up to **5,000 registrations / month** `[proposed]`
+- **Email campaigns** — templates, segments, bulk sends
+- **Website builder** — wide component library, branded homepage
+- **Fixed → custom public site** (full Site Page composer)
 
 **Annual plan:** 2 months free — **$790/year** (save $158 vs monthly).  
-**Compared to stacking tools:** ~$1,200+/year for event pages + email alone — Pro bundles CRM, campaigns, and site in one workspace.
+**Compared to stacking tools:** ~$1,200+/year for event pages + email alone.
 
 [Start 30-day free trial →](#)
 
@@ -60,9 +66,9 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 **For:** Multi-location organizations and sales-led deployments.
 
 **Everything in Pro, plus:**
+- Custom community / activity / registration limits
 - Custom domain (e.g. `events.yourclub.com`)
-- Additional seats and SSO (roadmap)
-- SLA + dedicated onboarding
+- SSO + SLA + dedicated onboarding
 
 [Book a demo →](#)
 
@@ -74,7 +80,7 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 
 - **Card required at signup** — you will **not be charged** while your trial is active
 - Billing starts on your trial end date unless you cancel before then
-- We'll email you and show an in-app reminder **every day during the last 7 days** before your trial ends
+- Daily email + in-app reminder during the **last 7 days** before trial ends
 
 [Start 30-day free trial →](#)
 
@@ -84,8 +90,7 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 
 | Add-on | Price (USD) |
 |--------|-------------|
-| Extra operator seat | +$15 / seat / month |
-| Additional admin beyond Pro (4+) | +$15 / seat / month |
+| Extra operator seat (beyond tier limit) | +$15 / seat / month |
 
 ---
 
@@ -93,13 +98,17 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 
 | Feature | Core | Pro | Enterprise |
 |---------|:----:|:---:|:----------:|
+| Operator seats | Up to 3 | Up to 10 | Custom |
+| Communities (clubs) | Up to 3 `[proposed]` | Up to 10 `[proposed]` | Custom |
+| Published activities | Up to 12 `[proposed]` | Up to 50 `[proposed]` | Custom |
+| Registrations / month | Up to 500 `[proposed]` | Up to 5,000 `[proposed]` | Custom |
 | Activities + QR registration | ✓ | ✓ | ✓ |
 | Client dedup + profile timeline | ✓ | ✓ | ✓ |
 | Dashboard + reports + CSV | ✓ | ✓ | ✓ |
-| Public activity directory | ✓ | ✓ | ✓ |
-| Email campaigns | — | ✓ | ✓ |
-| Website builder + homepage publish | — | ✓ | ✓ |
-| Operator seats | 1 | 3 | Custom |
+| Registration email notifications | ✓ | ✓ | ✓ |
+| Email campaigns (marketing) | — | ✓ | ✓ |
+| Fixed public site | ✓ | — | ✓ |
+| Website builder + publish | — | ✓ | ✓ |
 | Custom domain | — | — | ✓ |
 | Priority support | — | — | ✓ |
 
@@ -107,29 +116,20 @@ Cohestra helps community clubs, fitness studios, and event organizers capture re
 
 ## FAQ
 
+**What's the difference between registration emails and email campaigns?**  
+**Registration emails** go out automatically when someone signs up (confirmation to participant, alert to operator) — included on Core and Pro. **Email campaigns** are marketing sends you compose — templates, segments, follow-up blasts — Pro only.
+
+**What's the difference between fixed public site and website builder?**  
+**Core** gets a standard `{your-org}.cohestra.app` page (your name, colors, upcoming activities). **Pro** unlocks the full builder with many section types and full layout control.
+
 **How is Cohestra different from Peatix or Luma?**  
-Peatix and Luma focus on event discovery and ticketing-style pages. Cohestra focuses on what happens *after* someone registers — one client list, follow-up, campaigns, and reports across all your activities.
+Peatix and Luma focus on event discovery. Cohestra focuses on what happens *after* registration — one client list, follow-up, and reports across all your clubs and activities.
 
-**How is Cohestra different from Google Forms?**  
-Forms capture answers once. Cohestra keeps every person in a master client list, deduplicates by phone, tracks activity history, and powers email follow-up.
-
-**Can I upgrade later?**  
-Yes. Start on Core and upgrade to Pro when you need the website builder or campaigns.
-
-**Is there a free trial?**  
-Yes — **30 days** on Core or Pro. A card is required at signup, but **you won't be charged until the trial ends** unless you cancel first.
-
-**Will you remind me before the trial ends?**  
-Yes. During the last 7 days of your trial, you'll receive a daily email and an in-app notification with your exact trial end date.
-
-**What if my payment fails after the trial?**  
-We'll give you time to settle: **daily reminders in week 5**, then your account moves to **read-only hold** with **weekly reminders for 3 more weeks**. If payment isn't received within **8 weeks from trial start**, your account and data will be deleted.
+**What counts as a community (club)?**  
+A brand or program under your organization — e.g. Running Club, Yoga Club, Youth Program — not your whole Cohestra account.
 
 **What currency do you charge in?**  
 All prices are in **US dollars (USD)**.
-
-**Do participants need an account?**  
-No. Public registration works from any phone browser via QR or link.
 
 ---
 
