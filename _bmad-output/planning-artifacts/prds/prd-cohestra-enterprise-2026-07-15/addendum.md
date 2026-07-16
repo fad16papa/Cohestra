@@ -47,12 +47,7 @@ Remove: `AuthService` single-operator gate (`GetExistingOperatorAsync` block).
 
 Platform 0 Docker project name: `cohestra-infra` (local).
 
-## SendGrid (open — decide in architecture)
-
-| Option | Pros | Cons |
-|--------|------|------|
-| Shared platform API key + per-tenant sender auth | Simpler ops | Blast radius if key leaked |
-| Per-tenant API key | Isolation | Tenant onboarding friction |
+## SendGrid (ratified)
 
 **PRD default:** Shared platform key with per-tenant verified sender identity (From email/name per tenant).
 
@@ -63,14 +58,14 @@ Platform 0 Docker project name: `cohestra-infra` (local).
 | 11 Tenant foundation | FR-1–3, FR-8 |
 | 12 Identity & RBAC | FR-4–7 |
 | 13 API scoping | FR-9–10 |
-| 14 Onboarding | FR-1, FR-6, UJ-1–2 |
+| 14 Onboarding + billing | FR-1, FR-6, FR-19–23, UJ-1–2 |
 | 15 Public surfaces | FR-11–13, FR-14 |
 
 ## Cloud development workflow
 
 No droplet deployment required for enterprise v1 development. Build via Cursor Cloud Agents; verify with `dotnet test` and `docker compose` in agent VM or developer machine.
 
-## Billing & Stripe (ratified 2026-07-16)
+## Billing & Stripe (ratified 2026-07-16, updated 2026-07-16)
 
 ### Stripe environments
 
@@ -83,34 +78,41 @@ No droplet deployment required for enterprise v1 development. Build via Cursor C
 
 Use [Stripe test cards](https://docs.stripe.com/testing) (e.g. `4242 4242 4242 4242`) for dev. No real charges in test mode.
 
+### Currency
+
+**USD only.** All Stripe Prices use `currency: usd`. No geo-based currency conversion or multi-currency Prices in v1.
+
 ### Subscription flow
 
-1. Signup → detect country → select Core or Pro Stripe Price (currency-specific)
-2. Stripe Checkout: `mode: subscription`, `trial_period_days: 30`, payment method required
+1. Open self-serve signup → select Core or Pro, **monthly or annual**
+2. Stripe Checkout: `mode: subscription`, `trial_period_days: 30`, payment method required, USD
 3. Webhooks: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`
-4. Map to `Tenant.Plan`, `Tenant.BillingStatus`, `Tenant.TrialEndsAt`, `Tenant.BillingCurrency`
-5. Customer Portal link for upgrade / cancel / payment method
+4. Map to `Tenant.Plan`, `Tenant.BillingStatus`, `Tenant.BillingInterval`, `Tenant.TrialEndsAt`
+5. Customer Portal link for upgrade / cancel / payment method / interval change
+
+### Intro USD Prices (Stripe dashboard)
+
+| Plan | Monthly | Annual (2 mo free) |
+|------|---------|-------------------|
+| Core | $29 | $290 |
+| Pro | $79 | $790 |
+
+Annual discount subject to pricing study (§13.9).
 
 ### Trial reminders (FR-21)
 
-- Background job (daily): find tenants where `BillingStatus = Trialing` and `TrialEndsAt` within 7 days
-- Send transactional email to all Tenant Admins
-- Create in-app notification record (banner until dismissed or trial ends)
-- Include `TrialEndsAt` formatted in tenant timezone `[ASSUMPTION: UTC stored, display in admin locale]`
+- Background job (daily): tenants `Trialing` with `TrialEndsAt` within 7 days
+- Daily email + in-app notification to all Tenant Admins until trial ends
 
-### Localized currency (FR-20)
+### Delinquency jobs (FR-23)
 
-- **v1 approach:** Pre-created Stripe Prices per currency (not live FX conversion)
-- Intro amounts (example — finalize at Stripe dashboard setup):
+| Job | Schedule | Action |
+|-----|----------|--------|
+| `PastDueNotifier` | Daily | Week 5 (`PastDue`): daily email + in-app |
+| `OnHoldNotifier` | Weekly | Weeks 6–8 (`OnHold`): weekly email + in-app; enforce read-only |
+| `DelinquencyEnforcer` | Daily | Transition `PastDue` → `OnHold` at week 5 end; `OnHold` → `Deleted` after week 8 |
 
-| Currency | Core (intro) | Pro (intro) |
-|----------|-------------|-------------|
-| USD | $29 | $79 |
-| SGD | ~$39 SGD | ~$105 SGD |
-| MYR | ~RM 130 | ~RM 350 |
-| PHP | ~₱1,650 | ~₱4,500 |
-
-Exact local amounts set when creating Stripe Prices; marketing page shows "from $29 USD" with geo-localized equivalent.
+Week boundaries computed from `TrialEndsAt` (trial start ≈ `TrialEndsAt - 30 days`).
 
 ### Config
 
@@ -118,7 +120,8 @@ Exact local amounts set when creating Stripe Prices; marketing page shows "from 
 STRIPE_SECRET_KEY=sk_test_…
 STRIPE_PUBLISHABLE_KEY=pk_test_…
 STRIPE_WEBHOOK_SECRET=whsec_…
-STRIPE_PRICE_CORE_USD=price_…
-STRIPE_PRICE_PRO_USD=price_…
-# … per currency
+STRIPE_PRICE_CORE_MONTHLY=price_…
+STRIPE_PRICE_CORE_ANNUAL=price_…
+STRIPE_PRICE_PRO_MONTHLY=price_…
+STRIPE_PRICE_PRO_ANNUAL=price_…
 ```

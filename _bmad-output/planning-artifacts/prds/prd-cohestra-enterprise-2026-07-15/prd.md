@@ -353,14 +353,14 @@ A new **Tenant Organization** can start a **30-day trial** on Core or Pro by com
 - `Tenant.StripeCustomerId` and `Tenant.StripeSubscriptionId` stored; plan synced from Stripe webhooks.
 - Stripe **test mode** (sandbox) used in local dev and CI; live mode only in production.
 
-#### FR-20: Localized currency at signup
+#### FR-20: USD-only billing
 
-Subscription price is presented and charged in the currency matching the tenant admin's **detected country at signup** (login geo / locale).
+All subscription prices, Checkout, invoices, and billing UI are denominated in **USD**, regardless of tenant admin location.
 
 **Consequences (testable):**
-- `Tenant.BillingCurrency` set at signup (e.g. `USD`, `SGD`, `MYR`, `PHP`).
-- Checkout Session uses Stripe Price for that currency (introductory Core/Pro amounts per §13.3).
-- Admin UI displays plan price in `Tenant.BillingCurrency` on billing settings.
+- Stripe Prices use `currency: usd` only (Core/Pro monthly and annual).
+- Marketing and signup display USD; no geo-based currency conversion in v1.
+- `Tenant.BillingCurrency` fixed to `USD` (or omitted; USD implied).
 
 #### FR-21: Trial expiration reminders
 
@@ -369,7 +369,33 @@ During the **last 7 days** of trial (`trial_end` − 7 days through `trial_end`)
 **Consequences (testable):**
 - Day 7, 6, 5, 4, 3, 2, 1 before `trial_end`: email + in-app banner for tenant admins.
 - Notification copy includes `{trial_end_date}` and link to billing portal (Stripe Customer Portal).
-- After trial end without cancel: subscription moves to `Active` and first charge succeeds via Stripe.
+- After trial end without cancel: Stripe attempts first charge; success → `Active`.
+
+#### FR-22: Monthly and annual billing
+
+Tenants choose **monthly** or **annual** billing at signup or via Customer Portal. Annual plans receive a **discount** vs 12× monthly `[ASSUMPTION: 2 months free — pay 10 months, get 12; confirm in pricing study §13.10]`.
+
+**Consequences (testable):**
+- Stripe Prices exist for Core/Pro × monthly/annual.
+- Checkout and Portal expose both intervals; webhook syncs `BillingInterval` on `Tenant`.
+- Annual renewal date = subscription `current_period_end`.
+
+#### FR-23: Delinquency lifecycle (8-week window)
+
+If payment fails at trial end or on renewal, the tenant enters a structured **4-week follow-up** after the **~4-week trial**, for **8 weeks total** from trial start:
+
+| Week (from trial start) | `BillingStatus` | Operator experience | Notifications |
+|-------------------------|-----------------|---------------------|---------------|
+| **1–4** | `Trialing` | Full access | Daily email + in-app in **last 7 days** of trial (FR-21) |
+| **5** | `PastDue` | Full access — last chance to pay | **Daily** email + in-app: settle bill to continue |
+| **6–8** | `OnHold` | **Read-only** — account on hold | **Once per week** email + in-app: settle to restore |
+| **After week 8** | `Deleted` | Account removed | Final notice; tenant data deleted per §9 |
+
+**Consequences (testable):**
+- End of week 5: transition to `OnHold`; admin UI shows hold banner with link to Customer Portal.
+- Successful payment during `PastDue` or `OnHold` → `Active`; full access restored.
+- After week 8 without payment: soft-delete tenant; subdomain returns 404; data purged per retention policy.
+- All state transitions logged in audit trail.
 
 ---
 
@@ -400,7 +426,7 @@ During the **last 7 days** of trial (`trial_end` − 7 days through `trial_end`)
 - **All Platform 0 operational modules** tenant-scoped (FR-14–FR-16)
 - **Migration path:** default tenant backfill for existing dev/staging data
 - **Cohestra cloud development** workflow (Cursor Cloud Agents + GitHub); no droplet deployment required for v1 dev
-- **Stripe subscriptions** with 30-day trial, localized currency, trial reminders (FR-19–FR-21)
+- **Stripe subscriptions** with 30-day trial, USD billing, monthly/annual intervals, delinquency lifecycle (FR-19–FR-23)
 - **Plan gates** (`Tenant.Plan`) wired to Stripe subscription state
 
 ### 6.2 Out of Scope for MVP
@@ -455,7 +481,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 ## 9. Data Governance
 
 - **Residency:** Single region deployment (Singapore-adjacent) for v1 `[ASSUMPTION: DigitalOcean Singapore when deployed]`.
-- **Retention:** Archived tenants soft-deleted 30 days; registrations immutable per Platform 0 rules.
+- **Retention:** Voluntary cancel → soft-delete 30 days then purge. **Billing delinquency** → delete after **8 weeks** from trial start per FR-23. Registrations immutable per Platform 0 rules until tenant purge.
 - **Classification:** Client contact data = confidential per tenant; platform audit logs = internal.
 - **Export:** Tenant Admin can export own tenant CSV reports; cross-tenant export prohibited.
 
@@ -471,29 +497,33 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | Single-operator code paths remain | Medium | Remove `AuthService` single-operator gate in Epic 12 |
 | Scope creep into billing/SSO | Medium | Stripe MVP scope locked in FR-19–21; Enterprise manual only |
 | Stripe webhook mis-sync | Medium | Idempotent handlers; reconcile job; test mode in CI |
+| Delinquency job misfire deletes active tenant | High | State machine tests; manual Platform Admin override before delete |
 
 ---
 
-## 11. Open Questions
+## 11. Open Questions & Research
 
-**Resolved in this revision (§13):**
-- Introductory pricing: **$29 Core / $79 Pro** — scale to target list price later
-- Stripe: **test mode (sandbox)** for dev/CI; live keys in production only
-- Trial: **30 days**, card required, no charge during trial; **daily email + in-app notice** in last 7 days
-- Currency: **localized to signup country**
+**Resolved:**
 
-**Still open — need your input:**
+| # | Topic | Decision |
+|---|-------|----------|
+| Q1 | Signup | **Open self-serve** at launch |
+| Q3 | Currency | **USD only** — all prices and charges in USD globally |
+| Q4 | Country detection | **Dropped** — no geo currency logic |
+| Q9 | Post-trial / failed payment | **8-week lifecycle** — see FR-23 and §13.5 |
+| Q10 | Billing intervals | **Monthly + annual**; annual discounted |
+| Q6–8 | Slugs, SendGrid, droplet | Confirmed per addendum / deferred deploy |
 
-1. **Self-serve vs invite-only on launch:** Open signup, waitlist only, or feature-flag both? `[ASSUMPTION: self-serve open with platform feature flag]`
-2. **Grandfathering intro price:** Do early tenants keep $29/$79 forever, for 12 months, or until we notify + 30-day notice? `[ASSUMPTION: grandfather 12 months from first paid invoice]`
-3. **Launch currencies:** Which countries at v1? Suggested: **US (USD), SG (SGD), MY (MYR), PH (PHP)** — confirm or trim.
-4. **Country detection:** IP geolocation at signup, browser locale, or explicit country picker? `[ASSUMPTION: IP geo with manual override on billing page]`
-5. **Core registration cap:** Keep **500/mo soft cap** on Core as Pro upsell, or unlimited on Core? `[ASSUMPTION: keep 500 soft cap with upgrade prompt]`
-6. **Tenant slug rules:** Unicode slugs allowed? Reserved list beyond `www`, `api`, `admin`?
-7. **SendGrid:** Shared platform key + per-tenant sender auth (addendum default) — confirm?
-8. **Production deploy:** Droplet timing still deferred until Francis approves?
-9. **Post-trial without payment method update:** Auto-suspend tenant on failed charge, or grace period days? `[ASSUMPTION: 3-day grace, then read-only suspend]`
-10. **Annual billing:** Offer intro annual discount at launch, or monthly only for v1? `[ASSUMPTION: monthly only at launch]`
+**Deferred — pricing & packaging study (before scale, not blocking MVP build):**
+
+| # | Topic | Plan |
+|---|-------|------|
+| **Q2** | **Intro vs list price & grandfathering** | Run market-penetration pricing study: pilot WTP, competitor anchors, intro→list transition rules, grandfather policy. Launch intro **$29 / $79**; list target **$39 / $99** remains hypothesis until study completes. |
+| **Q5** | **Core registration limits** | Study usage patterns + infra cost per registration; define caps that justify tier split and architecture (Redis, SendGrid, DB). No hard cap enforced until study recommends thresholds. |
+
+**Pricing study deliverable:** `bmad-market-research` or focused pricing memo — competitor matrix, unit economics, recommended intro/list/annual discount, grandfather rules. Target: before Phase 3 scale (§13.2).
+
+**Registration cap study deliverable:** Per-tenant registration volume model vs plan gates; output updates §13.3 soft caps and `Tenant.Plan` flags.
 
 ---
 
@@ -509,12 +539,15 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-8:** Default tenant backfill for existing dev data — §6.1
 - **A-9:** lead-generation-crm remains separate product — §0, §5
 - **A-10:** Core tier monetization before tenant-scoped website builder ships — §13
-- **A-11:** Introductory pricing $29 Core / $79 Pro; target list $39 / $99 scales later — §13.3
+- **A-11:** Introductory pricing $29 Core / $79 Pro (USD); list price TBD via pricing study — §13.3, §13.10
 - **A-12:** 30-day trial, card on file, no charge until trial ends — §13.5, FR-19
 - **A-13:** Trial expiration: daily email + in-app notice in last 7 days — FR-21
-- **A-14:** Billing currency from signup country detection — FR-20
+- **A-14:** All billing in **USD only** — FR-20
 - **A-15:** Stripe test mode for dev/CI; live mode production only — FR-19, addendum
-- **A-16:** Grandfather intro price 12 months from first paid invoice — §11 Q2
+- **A-17:** Monthly + annual billing; annual ≈ 2 months free — FR-22
+- **A-18:** Delinquency: week 5 daily collection → weeks 6–8 hold + weekly nudge → delete after week 8 — FR-23
+- **A-19:** Open self-serve signup at launch — §13.7
+- **A-20:** Core registration caps deferred pending usage/cost study — §11 Q5
 
 ---
 
@@ -557,19 +590,19 @@ flowchart LR
 
 ### 13.3 Pricing tiers
 
-**Introductory launch pricing** (USD anchor; localized per §13.6):
+**Introductory launch pricing (USD only):**
 
-| Tier | Intro price (USD/mo) | Target list price (later) | Target buyer | Website builder |
-|------|---------------------|---------------------------|--------------|-----------------|
-| **Core** | **$29** / tenant | $39 / tenant | Solo operator or small club starting digital capture | No — auto public activity list only |
-| **Pro** | **$79** / tenant | $99 / tenant | Club with marketing + follow-up needs | Yes — full Site Page composer |
-| **Enterprise** | Custom (manual invoice) | Custom | Multi-location or sales-led deals | Yes + custom domain (v1.1) |
+| Tier | Monthly (intro) | Annual (intro) | Target list (study TBD) | Target buyer | Website builder |
+|------|-----------------|----------------|-------------------------|--------------|-----------------|
+| **Core** | **$29** / mo | **$290** / yr `[ASSUMPTION: 2 mo free]` | $39 / mo | Solo operator or small club | No — auto public activity list |
+| **Pro** | **$79** / mo | **$790** / yr `[ASSUMPTION: 2 mo free]` | $99 / mo | Club with marketing + follow-up | Yes — Site Page composer |
+| **Enterprise** | Custom (manual invoice) | Custom | Custom | Multi-location / sales-led | Yes + custom domain (v1.1) |
 
-**Price scaling policy:** Introductory rates apply at launch. Target list prices ($39 / $99 USD equivalent) roll out when conversion, churn, and pilot feedback justify increase. Early tenants grandfathered at intro rate for **12 months from first paid invoice** `[ASSUMPTION: A-16]`.
+**Price scaling policy:** Launch at intro rates above. **Grandfathering and list-price transition** deferred to **pricing study (§13.10 / Q2)** — optimize for market penetration before raising prices.
 
-**Seat add-ons:** +$15 / month per additional operator beyond tier limit (Core: 1 admin; Pro: 3 included). Localized per currency.
+**Seat add-ons:** +$15 / month USD per additional operator beyond tier limit (Core: 1 admin; Pro: 3 included).
 
-**Registration soft caps (Core):** 500 registrations / month included; Pro unlimited `[ASSUMPTION: enforce as plan flag, not hard block in v1]`.
+**Registration limits (Core):** TBD — pending usage/cost study (Q5). Architecture supports plan-flag enforcement when thresholds are set; **no hard cap at launch** until study justifies limits.
 
 ### 13.4 Feature gates by tier
 
@@ -592,35 +625,53 @@ Implementation: `Tenant.Plan` enum (`Core`, `Pro`, `Enterprise`) synced from Str
 | Concern | Decision |
 |---------|----------|
 | **Provider** | Stripe Checkout + Customer Portal + webhooks |
-| **Dev / test** | Stripe **test mode** (sandbox keys) in local, CI, and staging; live keys production only |
-| **Trial length** | **30 days** minimum on Core or Pro |
-| **Payment method** | **Card required at signup** (collected via Checkout); no charge while trial active |
+| **Currency** | **USD only** globally (FR-20) |
+| **Intervals** | **Monthly** and **annual** (annual discounted — FR-22) |
+| **Dev / test** | Stripe **test mode** in local, CI, staging; live keys production only |
+| **Trial length** | **30 days** (~4 weeks) on Core or Pro |
+| **Payment method** | **Card required at signup**; no charge while trial active |
 | **Signup disclaimer** | *"You will not be charged while your trial is active. Your card will be billed on {date} unless you cancel before then."* |
-| **Trial reminders** | **Daily** email + in-app notification to Tenant Admins during **last 7 days** before `trial_end`, including exact expiration date |
-| **Post-trial** | Auto-charge at `trial_end`; failed payment → 3-day grace `[ASSUMPTION]` → tenant suspend (read-only) |
-| **Enterprise** | Manual invoice / contract outside Stripe self-serve |
+| **Trial reminders** | **Daily** email + in-app during **last 7 days** before `trial_end` |
+| **Post-trial success** | Auto-charge at `trial_end` → `Active` |
+| **Post-trial failure** | **8-week lifecycle** (FR-23): see below |
+| **Enterprise** | Manual invoice outside Stripe self-serve |
 
-**Stripe objects (v1):** Products `cohestra_core`, `cohestra_pro`; Prices per supported currency at intro amounts; Subscription with `trial_period_days: 30`.
+**Delinquency timeline (from trial start):**
 
-### 13.6 Localized currency
+```mermaid
+gantt
+  title Tenant billing lifecycle (weeks from trial start)
+  dateFormat X
+  axisFormat Week %s
+  section Access
+  Full access (trial)           :0, 4
+  Full access (past due)        :4, 5
+  Read-only hold                :5, 8
+  section Notify
+  Daily (trial last 7 days)     :3, 4
+  Daily (week 5 collect)        :4, 5
+  Weekly (weeks 6-8 hold)       :5, 8
+  Delete after week 8           :milestone, 8, 0
+```
 
-| Concern | Decision |
-|---------|----------|
-| **When set** | At tenant signup / first Checkout — from admin's detected country |
-| **Detection** | IP geolocation with manual country override on billing settings `[ASSUMPTION]` |
-| **Launch currencies** | USD, SGD, MYR, PHP `[ASSUMPTION: confirm in §11 Q3]` |
-| **Display** | Marketing page, signup, billing settings, and Checkout present prices in detected currency |
-| **Anchor** | USD intro prices ($29 / $79); other currencies set at Stripe Price creation time (fixed local amounts, not daily FX float in v1) |
+| Week | Status | Access | Notifications |
+|------|--------|--------|---------------|
+| 1–4 | `Trialing` | Full | Daily in last 7 days of trial |
+| 5 | `PastDue` | Full | **Daily** — settle bill to continue |
+| 6–8 | `OnHold` | Read-only | **Weekly** — account on hold, settle to restore |
+| 8+ | `Deleted` | None | Final notice; tenant data deleted |
 
-### 13.7 Marketing funnel
+**Stripe objects (v1):** Products `cohestra_core`, `cohestra_pro`; USD Prices for monthly + annual at intro amounts; Subscription with `trial_period_days: 30`.
+
+### 13.6 Marketing funnel
 
 ```
 cohestra.app (apex marketing)
   → Start 30-day free trial (card required — no charge during trial)
-  → Self-serve tenant signup + Stripe Checkout
+  → Open self-serve signup + Stripe Checkout (USD, monthly or annual)
   → Onboard: first activity + QR in <15 min (SM-2)
   → Trial reminders (last 7 days: daily email + in-app)
-  → Auto-convert to paid or cancel via Customer Portal
+  → Auto-convert to paid or delinquency lifecycle (FR-23)
   → Upgrade prompt at builder gate or seat limit
 ```
 
@@ -631,23 +682,36 @@ cohestra.app (apex marketing)
 - Case study: 1 pilot tenant (post Phase 2)
 - SEO targets: "event registration CRM", "community lead capture", "QR event registration"
 
-### 13.8 Launch sequencing (product + GTM)
+### 13.7 Launch sequencing (product + GTM)
 
 1. Tenancy spine + isolation (Epic 11–13) — **blocks everything**
-2. **Stripe sandbox** integration + webhooks + plan sync (FR-19–21)
-3. Subdomain signup + localized Checkout + 30-day trial
-4. cohestra.app marketing site + pricing (intro $29 / $79)
-5. 2–3 pilot tenants on trial (discounted N/A — intro price is the offer)
-6. Tenant-scoped website builder → **Pro upsell** at plan gate
-7. Scale content + outbound; review intro → list price transition
+2. **Stripe sandbox** + webhooks + plan sync + delinquency jobs (FR-19–23)
+3. Open self-serve signup + USD Checkout (monthly/annual) + 30-day trial
+4. cohestra.app marketing + pricing (intro $29 / $79 USD)
+5. 2–3 pilot tenants on trial
+6. Tenant-scoped website builder → **Pro upsell**
+7. **Pricing study (§13.9)** before list-price / grandfather rollout
+8. Scale content + outbound
 
-### 13.9 GTM success metrics
+### 13.8 GTM success metrics
 
 - **SM-G1:** 3 pilot tenants complete 2+ activities without platform support intervention
-- **SM-G2:** First paid conversion within 30 days of trial end (Stripe `invoice.paid`)
+- **SM-G2:** First paid conversion after trial (`invoice.paid`)
 - **SM-G3:** ≥1 Pro upgrade driven by website-builder gate
 - **SM-G4:** Trial reminder emails delivered on days 7–1 before expiration (100% for active trials)
+- **SM-G5:** Delinquency notifications fire on schedule (daily week 5; weekly weeks 6–8)
 - **SM-CG1:** Do not optimize signup volume over SM-1 (isolation)
+
+### 13.9 Pricing & packaging study (Q2, Q5)
+
+**Not blocking MVP build.** Run in parallel with pilots before Phase 3 scale.
+
+| Workstream | Questions | Outputs |
+|------------|-----------|---------|
+| **Market penetration pricing (Q2)** | WTP vs Peatix/Luma/Forms stack; intro→list transition; grandfather policy | Recommended intro/list/annual discount; rollout playbook |
+| **Registration economics (Q5)** | Cost per registration (DB, email, cache); typical club volume | Core vs Pro limits; plan-flag thresholds; upsell triggers |
+
+**Suggested skill:** `bmad-market-research` with competitor pricing matrix + 3–5 pilot interviews.
 
 Full pricing page copy: `docs/marketing/pricing-tiers.md`
 
@@ -660,10 +724,11 @@ Full pricing page copy: `docs/marketing/pricing-tiers.md`
 | `bmad-architecture` | Tenancy spine — isolation, routing, identity, migration | **Done** — `architecture/architecture-cohestra-enterprise-2026-07-15/` |
 | `bmad-ux` | Enterprise journeys — signup, team invite, platform admin | Pending |
 | `bmad-create-epics-and-stories` | Epic 11–15 breakdown from this PRD | Pending |
+| `bmad-market-research` | Pricing penetration + registration economics (§13.9) | Pending — parallel with pilots |
 | `bmad-check-implementation-readiness` | Align PRD + architecture + UX before dev | After UX |
 | `bmad-sprint-planning` | Enterprise sprint status | After epics |
 | Pricing page | `docs/marketing/pricing-tiers.md` | **Done** — cohestra.app copy draft |
 
 **Inherited PRD reference:** Platform 0 domain FRs remain authoritative for feature behavior inside tenant scope: `_bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md`.
 
-**Architecture companion:** `_bmad-output/planning-artifacts/architecture/architecture-cohestra-enterprise-2026-07-15/ARCHITECTURE-SPINE.md` (AD-1–AD-10).
+**Architecture companion:** `_bmad-output/planning-artifacts/architecture/architecture-cohestra-enterprise-2026-07-15/ARCHITECTURE-SPINE.md` (AD-1–AD-11).
