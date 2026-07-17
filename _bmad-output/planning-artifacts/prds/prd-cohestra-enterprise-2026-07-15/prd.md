@@ -281,14 +281,21 @@ Public and admin web surfaces resolve **Tenant** from subdomain `{tenant-slug}.c
 - `https://ikigai.cohestra.app/register/{activity-slug}` scopes activity lookup to Ikigai.
 - Local dev supports `{slug}.localhost` or `?tenant=` override documented in addendum.
 
-#### FR-12: Per-tenant Site Page
+#### FR-12: Public site by plan (P2 Option D)
 
-Each **Tenant** has its own **Site Page** draft/publish lifecycle (inherited Website Builder behavior, tenant-scoped).
+Public homepage capability depends on `Tenant.Plan`:
+
+| Plan | Public `/` | SitePage entity |
+|------|------------|-----------------|
+| **Basic** | **No Site Page** — minimal **stub** (org display name + list of published activities linking to register) | Not created |
+| **Core** | **Fixed Site Page** — branded home (name, accent, upcoming activities); **no** section composer | Created on upgrade to Core (or Core signup); not editable via builder |
+| **Pro** | **Full Site Page builder** — draft/publish, wide components (Platform 0 Website Builder, tenant-scoped) | Unlocked composer on existing SitePage |
 
 **Consequences (testable):**
-- Publishing Ikigai site does not affect TGH tenant homepage.
-- Preview token is scoped to tenant site draft.
-- Seed on tenant creation produces default Cohestra-branded starter content overridable by tenant admin.
+- Basic tenant: no `SitePage` row; `/` renders stub; `/register/{slug}` works; admin Website builder routes return upgrade CTA.
+- Basic → Core: creates seeded fixed SitePage; `/` uses fixed template.
+- Core → Pro: same SitePage; composer unlocked; publish is tenant-scoped (Ikigai publish does not affect TGH).
+- Preview token (Pro) scoped to tenant site draft.
 
 #### FR-13: Per-tenant email branding
 
@@ -315,13 +322,21 @@ All Activity Engine capabilities (create activity, form schema, QR, public regis
 - Registration dedup matches clients within tenant only.
 - All Platform 0 registration ingestion tests pass with `TenantId` injected.
 
-#### FR-15: Tenant-scoped operations dashboard and reports
+#### FR-15: Tenant-scoped dashboard and plan-gated reports
 
-Dashboard metrics, reports, and CSV export reflect only the current **Tenant** data.
+Dashboard metrics and reports reflect only the current **Tenant** data. **Report depth is plan-gated:**
+
+| Plan | Reports |
+|------|---------|
+| **Basic** | **Fixed simple report** — who registered, registration count, date/time (and registration number); **CSV export** of that list. No filter builder, rankings, or campaign stats. |
+| **Core** | **Queryable ops reports** — Platform 0 filters (date range, community, activity, lead status, referral) + aggregates/rankings + full CSV export of filtered results. |
+| **Pro** | Everything in Core **+ campaign analytics** + **saved report views** `[ASSUMPTION: saved views in v1]`. |
 
 **Consequences (testable):**
 - Dashboard totals for tenant A unchanged when tenant B receives registrations.
-- Inherited 60s polling and cache TTL behavior preserved per tenant cache namespace.
+- Basic admin cannot open Core filter UI; API rejects advanced report query params with upgrade hint.
+- Core CSV respects filters; Basic CSV matches fixed columns only.
+- Cache TTL / polling preserved per tenant namespace.
 
 #### FR-16: Tenant-scoped campaigns and templates
 
@@ -426,7 +441,7 @@ If payment fails at trial end or on renewal, the tenant enters a structured **4-
 - **Participant login / member portals** — public registration only.
 - **WhatsApp Business API** — deferred; click-to-message retained from Platform 0.
 - **Automated email drip sequences** — deferred to enterprise v2.
-- **Custom report builder** — deferred; inherited filters + CSV sufficient for v1.
+- **Arbitrary custom report builder** (drag-and-drop widgets / ad-hoc SQL) — deferred; Core/Pro use defined query dimensions + filters (FR-15).
 - **Enterprise custom contracts in-app** — sales-led deals use manual invoice; self-serve **Basic is free**; **Core / Pro** via Stripe.
 - **Tenant custom domains** (`events.ikigai.com`) — deferred to v1.1; subdomain only in v1.
 - **Fine-grained custom RBAC** (per-module permissions builder) — Admin vs Member only in v1.
@@ -442,7 +457,8 @@ If payment fails at trial end or on renewal, the tenant enters a structured **4-
 - **Subdomain routing** per tenant (FR-11)
 - **Multi-user RBAC:** Tenant Admin + Tenant Member (FR-4–FR-6)
 - **Platform Admin** minimal tenant directory + suspend/reactivate (FR-2, FR-17)
-- **Per-tenant Site Page** and public registration (FR-12, FR-14)
+- **Plan-gated public site** — Basic stub / Core fixed SitePage / Pro builder (FR-12); public registration (FR-14)
+- **Plan-gated reports** — Basic fixed + CSV / Core queryable / Pro + campaigns (FR-15)
 - **All Platform 0 operational modules** tenant-scoped (FR-14–FR-16)
 - **Migration path:** default tenant backfill for existing dev/staging data
 - **Cohestra cloud development** workflow (Cursor Cloud Agents + GitHub); no droplet deployment required for v1 dev
@@ -529,6 +545,8 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 |---|-------|----------|
 | Q1 | Signup | **Open self-serve** at launch |
 | **P1** | Tenant status vs BillingStatus | **Option A ratified** — two dials + access matrix (FR-3); Platform `Suspended` always wins; `OnHold` keeps Status=`Active` |
+| **P2** | Public site by tier | **Option D ratified** — Basic: no SitePage (stub); Core: fixed SitePage; Pro: full builder (FR-12) |
+| **P2b** | Reports by tier | **Ratified** — Basic: fixed + CSV; Core: queryable ops; Pro: Core + campaigns + saved views (FR-15) |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 | Post-trial / failed payment | **8-week lifecycle** — see FR-23 and §13.5 |
@@ -569,6 +587,8 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-17:** Monthly + annual billing; annual ≈ 2 months free — FR-22
 - **A-18:** Delinquency: week 5 daily collection → weeks 6–8 hold + weekly nudge → delete after week 8 — FR-23
 - **A-22:** Dual status model (P1 Option A): `Tenant.Status` ops + `BillingStatus` money; access matrix in FR-3
+- **A-23:** Public site (P2 Option D): Basic stub / Core fixed SitePage / Pro builder — FR-12
+- **A-24:** Reports: Basic fixed+CSV / Core queryable / Pro + campaigns + saved views — FR-15
 - **A-19:** Open self-serve signup at launch — §13.7
 - **A-20:** Usage limits: Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
 - **A-21:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
@@ -645,15 +665,21 @@ flowchart LR
 | **Communities** | **1** | **3** | **10** |
 | **Published activities (concurrent)** | **3** | **12** | **50** |
 | **Registrations / month (public)** | **150** | **500** | **5,000** |
-| Public site — **fixed template** | ✓ | ✓ | — |
+| Public site — **stub** (no SitePage) | ✓ | — | — |
+| Public site — **fixed Site Page** | — | ✓ | — |
 | Public site — **website builder** | — | — | ✓ |
+| Reports — **fixed** (who / count / datetime) + CSV | ✓ | — | — |
+| Reports — **queryable** (filters + export) | — | ✓ | ✓ |
+| Reports — **+ campaign analytics + saved views** | — | — | ✓ |
 | Custom domain / SSO / SLA | — | — | Enterprise |
 
-**Basic tier purpose:** Let potential users **test the real product** — real QR, real client list, real registration emails, fixed public site — at the **smallest safe footprint** without payment friction.
+**Basic tier purpose:** Let potential users **test the real product** — QR, client list, registration emails, simple registration report, public stub — at the **smallest safe footprint** without payment friction. No Site Page, no advanced reports.
 
 **Email:** Registration notifications on **all tiers**. Campaigns **Pro only**.
 
-**Public site:** Fixed template on **Basic & Core**. Website builder **Pro only**.
+**Public site (P2 Option D):** Basic = stub only; Core = fixed Site Page; Pro = full builder.
+
+**Reports:** Basic = fixed + CSV; Core = queryable ops; Pro = Core + campaigns + saved views.
 
 Implementation: `Tenant.Plan` ∈ `Basic`, `Core`, `Pro`, `Enterprise`. **Basic** has no Stripe subscription; **Core/Pro** synced from Stripe webhooks.
 

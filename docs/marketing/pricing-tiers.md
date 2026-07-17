@@ -6,7 +6,7 @@
 
 ## Turn events into clients — without spreadsheet chaos
 
-Start **free** on Basic. Upgrade when you need more communities, team seats, or Pro marketing tools.
+Start **free** on Basic. Upgrade when you need a public homepage, richer reports, a team, or Pro marketing tools.
 
 ---
 
@@ -14,18 +14,15 @@ Start **free** on Basic. Upgrade when you need more communities, team seats, or 
 
 ### Basic — Free forever
 
-**For:** Trying Cohestra with the smallest real setup — one operator, one community, a few live events.
+**For:** Trying Cohestra with the smallest real setup.
 
 **Includes:**
-- **1** operator seat
-- **1** community
-- **3** published activities (live at once)
-- **150** registrations / month
+- **1** operator seat · **1** community · **3** published activities · **150** registrations / month
 - QR codes + public registration
-- **Registration email notifications**
+- Registration email notifications
 - Client list with dedup + timeline
-- Dashboard + reports + CSV
-- Fixed public site at `{your-org}.cohestra.app`
+- **Simple registration report** — who signed up, counts, date/time — **CSV export**
+- Public **stub** page (org name + activity links) — not a full website
 - No credit card required
 
 [Start free →](#)
@@ -36,14 +33,13 @@ Start **free** on Basic. Upgrade when you need more communities, team seats, or 
 
 **Or $29 / month**
 
-**For:** Small organizations with a team and multiple communities.
+**For:** Small organizations ready to run day-to-day.
 
 **Includes:**
-- **3** operator seats
-- **3** communities
-- **12** published activities
-- **500** registrations / month
-- Everything in Basic
+- **3** seats · **3** communities · **12** activities · **500** regs/mo
+- Everything in Basic, plus:
+- **Fixed public Site Page** at `{your-org}.cohestra.app`
+- **Queryable reports** — filter by date, community, activity, status; full CSV export
 
 **30-day free trial** · card required · not charged until trial ends
 
@@ -55,12 +51,14 @@ Start **free** on Basic. Upgrade when you need more communities, team seats, or 
 
 **Or $79 / month**
 
-**For:** Marketing, email campaigns, and a custom public site.
+**For:** Marketing, campaigns, and a custom public site.
 
 **Includes:**
-- **10** operator seats · **10** communities · **50** activities · **5,000** regs/mo
+- **10** seats · **10** communities · **50** activities · **5,000** regs/mo
+- Everything in Core, plus:
 - **Email campaigns**
-- **Website builder**
+- **Website builder** — fully customizable homepage
+- **Campaign analytics** in reports + saved report views
 
 **30-day free trial** · card required
 
@@ -84,22 +82,22 @@ Custom limits, domain, SSO. [Book a demo →](#)
 | Published activities | 3 | 12 | 50 |
 | Registrations / month | 150 | 500 | 5,000 |
 | Registration email notifications | ✓ | ✓ | ✓ |
+| Reports | Simple + CSV | Queryable + export | + Campaigns + saved views |
+| Public site | Stub only | Fixed Site Page | Full website builder |
 | Email campaigns | — | — | ✓ |
-| Fixed public site | ✓ | ✓ | — |
-| Website builder | — | — | ✓ |
 
 ---
 
 ## FAQ
 
 **Is Basic really free?**  
-Yes — free forever at the limits above. No card. Upgrade anytime to Core or Pro.
+Yes — free forever at the limits above. No card.
 
-**What's the difference between Basic and a trial?**  
-Basic is a **permanent free tier** to test the product. Core and Pro include a **30-day trial** before billing starts.
+**What's the difference between Basic stub and Core Site Page?**  
+Basic gives a simple public list so QR testing works. Core gives a branded fixed homepage. Pro lets you fully design it.
 
-**What counts as a Community?**  
-A program or brand inside your organization — e.g. "Running Club" — under **Activities → Communities**.
+**What reports do I get on Basic?**  
+A straightforward list: who registered, how many, date and time — exportable as CSV. Upgrade to Core for filters and deeper ops reports.
 
 ---
 

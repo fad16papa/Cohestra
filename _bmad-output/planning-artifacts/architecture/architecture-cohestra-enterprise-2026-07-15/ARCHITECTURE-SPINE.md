@@ -116,7 +116,7 @@ flowchart TB
 
 - **Binds:** Website builder, campaigns, seats, FR-12, §13.4 PRD
 - **Prevents:** UI-only tier enforcement bypass
-- **Rule:** `Tenant.Plan` ∈ `Basic`, `Core`, `Pro`, `Enterprise`. **Basic:** `BillingStatus = Free`, no Stripe. **Core/Pro:** Stripe sync. Campaigns and website builder **Pro+** only. Registration notifications on all tiers. Basic & Core: fixed public site. Enforce limits per §13.4.
+- **Rule:** `Tenant.Plan` ∈ `Basic`, `Core`, `Pro`, `Enterprise`. **Basic:** `BillingStatus = Free`, no Stripe, **no SitePage** (public stub), fixed simple reports + CSV. **Core:** fixed SitePage (no composer), queryable reports. **Pro:** SitePage builder + campaigns + campaign report analytics. Registration notifications on all tiers. Enforce limits per §13.4.
 
 ### AD-11 — Stripe billing with test/live environment split
 
