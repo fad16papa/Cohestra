@@ -345,22 +345,26 @@ Platform exposes health endpoints and immutable audit log for tenant lifecycle a
 
 **Description:** Self-serve subscription lifecycle via Stripe. Realizes monetization in §13.
 
-#### FR-19: Stripe subscription with trial
+#### FR-19: Free Basic signup and paid Core/Pro subscriptions
 
-A new **Tenant Organization** can start a **30-day trial** on Basic, Core, or Pro by completing Stripe Checkout with a payment method on file. No charge is applied until the trial ends.
+**Basic (free):** A prospective **Tenant Admin** can self-serve signup on **Basic** with **no payment method** and **no Stripe subscription**. `Tenant.Plan = Basic`, `BillingStatus = Free`.
+
+**Core / Pro (paid):** Upgrade or direct signup on Core or Pro completes **Stripe Checkout** with a **30-day trial** and payment method on file. No charge until trial ends.
 
 **Consequences (testable):**
-- Signup flow shows disclaimer: *"You will not be charged while your trial is active. Billing starts on {trial_end_date} unless you cancel."*
-- `Tenant.BillingStatus` ∈ `Trialing`, `Active`, `PastDue`, `Canceled`.
-- `Tenant.StripeCustomerId` and `Tenant.StripeSubscriptionId` stored; plan synced from Stripe webhooks.
-- Stripe **test mode** (sandbox) used in local dev and CI; live mode only in production.
+- Basic signup: email verification only; no Stripe Customer created until first paid upgrade.
+- Paid signup disclaimer: *"You will not be charged while your trial is active. Billing starts on {trial_end_date} unless you cancel."*
+- `Tenant.BillingStatus` ∈ `Free` (Basic), `Trialing`, `Active`, `PastDue`, `OnHold`, `Canceled`.
+- Paid tiers: `StripeCustomerId` and `StripeSubscriptionId` stored; plan synced from Stripe webhooks.
+- Stripe **test mode** (sandbox) in local dev and CI; live mode production only.
+- Basic → Core/Pro upgrade initiates Stripe Checkout; limits lift per new plan on successful subscription.
 
 #### FR-20: USD-only billing
 
 All subscription prices, Checkout, invoices, and billing UI are denominated in **USD**, regardless of tenant admin location.
 
 **Consequences (testable):**
-- Stripe Prices use `currency: usd` only (Basic/Core/Pro monthly and annual).
+- Stripe Prices use `currency: usd` only for **Core and Pro** (monthly and annual).
 - Marketing and signup display USD; no geo-based currency conversion in v1.
 - `Tenant.BillingCurrency` fixed to `USD` (or omitted; USD implied).
 
@@ -378,7 +382,7 @@ During the **last 7 days** of trial (`trial_end` − 7 days through `trial_end`)
 Tenants choose **monthly** or **annual** billing at signup or via Customer Portal. Annual plans receive a **discount** vs 12× monthly `[ASSUMPTION: 2 months free — pay 10 months, get 12; confirm in pricing study §13.10]`.
 
 **Consequences (testable):**
-- Stripe Prices exist for Basic/Core/Pro × monthly/annual.
+- Stripe Prices exist for **Core/Pro** × monthly/annual only. **Basic has no Stripe Price.**
 - Checkout and Portal expose both intervals; webhook syncs `BillingInterval` on `Tenant`.
 - Annual renewal date = subscription `current_period_end`.
 
@@ -409,7 +413,7 @@ If payment fails at trial end or on renewal, the tenant enters a structured **4-
 - **WhatsApp Business API** — deferred; click-to-message retained from Platform 0.
 - **Automated email drip sequences** — deferred to enterprise v2.
 - **Custom report builder** — deferred; inherited filters + CSV sufficient for v1.
-- **Enterprise custom contracts in-app** — sales-led deals (custom limits, domain, SSO) use manual invoice; self-serve is **Basic / Core / Pro** via Stripe only in v1.
+- **Enterprise custom contracts in-app** — sales-led deals use manual invoice; self-serve **Basic is free**; **Core / Pro** via Stripe.
 - **Tenant custom domains** (`events.ikigai.com`) — deferred to v1.1; subdomain only in v1.
 - **Fine-grained custom RBAC** (per-module permissions builder) — Admin vs Member only in v1.
 
@@ -428,7 +432,7 @@ If payment fails at trial end or on renewal, the tenant enters a structured **4-
 - **All Platform 0 operational modules** tenant-scoped (FR-14–FR-16)
 - **Migration path:** default tenant backfill for existing dev/staging data
 - **Cohestra cloud development** workflow (Cursor Cloud Agents + GitHub); no droplet deployment required for v1 dev
-- **Stripe subscriptions** with 30-day trial, USD billing, monthly/annual intervals, delinquency lifecycle (FR-19–FR-23)
+- **Free Basic tier** signup without Stripe (FR-19)
 - **Plan gates** (`Tenant.Plan`) wired to Stripe subscription state
 
 ### 6.2 Out of Scope for MVP
@@ -594,67 +598,62 @@ flowchart LR
 
 ### 13.3 Pricing tiers
 
-**Three self-serve tiers** (USD only) + optional sales-led **Enterprise** for custom contracts.
+**Freemium + paid ladder** (USD for paid tiers) + optional sales-led **Enterprise**.
 
-**Introductory launch pricing:**
+| Tier | Price | Target buyer |
+|------|-------|--------------|
+| **Basic** | **Free forever** | Prospects testing Cohestra at minimum viable footprint — one person, one community, a few live events |
+| **Core** | **$29** / mo · **$290** / yr (2 mo free) | Small org ready to commit; 3 communities, small team |
+| **Pro** | **$79** / mo · **$790** / yr (2 mo free) | Marketing, campaigns, custom site, high volume |
+| **Enterprise** | Custom (manual invoice) | Custom limits, domain, SSO |
 
-| Tier | Monthly (intro) | Annual (intro) | Target list (TBD) | Target buyer |
-|------|-----------------|----------------|-------------------|--------------|
-| **Basic** | **$15** / mo | **$150** / yr (2 mo free) | $19 / mo | Solo operator, one community, replacing one Google Form |
-| **Core** | **$29** / mo | **$290** / yr (2 mo free) | $39 / mo | Small org, up to 3 communities, small team |
-| **Pro** | **$79** / mo | **$790** / yr (2 mo free) | $99 / mo | Marketing + campaigns + custom site + larger team |
-| **Enterprise** | Custom (manual invoice) | Custom | Custom | Custom limits, domain, SSO — contact sales |
+**Default signup:** **Basic (free)** — lowest friction to test product. Upgrade prompts when limits hit or operator needs Core/Pro features.
 
-**Tier ladder (upgrade path):** Basic → Core → Pro. Default signup recommendation: **Core** (best fit for Marco-style 3-community operators); **Basic** for true solo single-community use.
+**Upgrade path:** Basic (free) → Core (trial + paid) → Pro (trial + paid).
 
-**Seat add-ons:** +$15 / month USD per operator beyond tier limit (Basic: 1; Core: 3; Pro: 10).
+**Seat add-ons:** +$15 / month per operator beyond tier limit (**Core:** 3; **Pro:** 10). Basic cannot purchase extra seats — must upgrade to Core.
 
 ### 13.4 Feature gates by tier
 
-**Usage limits (Option 1 — ratified):** Published activities = **concurrent Published status**. Registrations = **public registrations per calendar month (UTC)**. Warn at **80%**, block at **100%** `[ASSUMPTION]`. Trial: soft warn; enforce after trial ends.
+**Usage limits (ratified):** Published activities = **concurrent Published status**. Registrations = **public registrations per calendar month (UTC)**. Warn at **80%**, block at **100%**. **Basic:** enforce immediately. **Paid tiers:** soft warn during trial, enforce after trial ends.
 
 | Capability | Basic | Core | Pro |
 |------------|:-----:|:----:|:---:|
+| **Price** | **Free** | $29/mo | $79/mo |
 | Activities + QR + public registration | ✓ | ✓ | ✓ |
 | Client dedup + timeline | ✓ | ✓ | ✓ |
 | Dashboard + reports + CSV | ✓ | ✓ | ✓ |
 | **Registration email notifications** | ✓ | ✓ | ✓ |
-| **Email campaigns** (templates, segments, bulk send) | — | — | ✓ |
+| **Email campaigns** | — | — | ✓ |
 | **Operator seats** | **1** | **3** | **10** |
 | **Communities** | **1** | **3** | **10** |
-| **Published activities (concurrent)** | **4** | **12** | **50** |
+| **Published activities (concurrent)** | **3** | **12** | **50** |
 | **Registrations / month (public)** | **150** | **500** | **5,000** |
 | Public site — **fixed template** | ✓ | ✓ | — |
 | Public site — **website builder** | — | — | ✓ |
 | Custom domain / SSO / SLA | — | — | Enterprise |
 
-**Email:**
-- **Basic, Core, Pro:** Transactional **registration notifications** per new lead — included on all tiers.
-- **Pro only:** **Email campaigns** — templates, segments, bulk marketing sends.
+**Basic tier purpose:** Let potential users **test the real product** — real QR, real client list, real registration emails, fixed public site — at the **smallest safe footprint** without payment friction.
 
-**Public site:**
-- **Basic & Core:** **Fixed public site** at `{slug}.cohestra.app` — standard layout (org name, accent, upcoming activities). No Site Page composer.
-- **Pro:** **Full website builder** — wide component library, publish workflow.
+**Email:** Registration notifications on **all tiers**. Campaigns **Pro only**.
 
-**Enterprise (sales-led):** Custom limits above Pro; custom domain (v1.1); manual invoice.
+**Public site:** Fixed template on **Basic & Core**. Website builder **Pro only**.
 
-Implementation: `Tenant.Plan` ∈ `Basic`, `Core`, `Pro`, `Enterprise`; synced from Stripe; server-side gates on campaigns, builder, seats, communities, activities, registrations.
+Implementation: `Tenant.Plan` ∈ `Basic`, `Core`, `Pro`, `Enterprise`. **Basic** has no Stripe subscription; **Core/Pro** synced from Stripe webhooks.
 
 ### 13.5 Billing & trial (Stripe)
 
 | Concern | Decision |
 |---------|----------|
-| **Provider** | Stripe Checkout + Customer Portal + webhooks |
-| **Currency** | **USD only** globally (FR-20) |
-| **Intervals** | **Monthly** and **annual** (annual discounted — FR-22) |
-| **Dev / test** | Stripe **test mode** in local, CI, staging; live keys production only |
-| **Trial length** | **30 days** on Basic, Core, or Pro |
-| **Payment method** | **Card required at signup**; no charge while trial active |
-| **Signup disclaimer** | *"You will not be charged while your trial is active. Your card will be billed on {date} unless you cancel before then."* |
-| **Trial reminders** | **Daily** email + in-app during **last 7 days** before `trial_end` |
-| **Post-trial success** | Auto-charge at `trial_end` → `Active` |
-| **Post-trial failure** | **8-week lifecycle** (FR-23): see below |
-| **Enterprise** | Manual invoice outside Stripe self-serve |
+| **Basic** | **Free forever** — signup without card or Stripe; `BillingStatus = Free` |
+| **Core / Pro** | Stripe Checkout + Customer Portal + webhooks |
+| **Currency** | **USD only** for paid tiers (FR-20) |
+| **Intervals** | Monthly and annual on Core/Pro (FR-22) |
+| **Trial length** | **30 days** on **Core or Pro** signup/upgrade only |
+| **Payment method** | **Required for Core/Pro**; not required for Basic |
+| **Trial reminders** | Daily email + in-app last 7 days (FR-21) — paid tiers only |
+| **Post-trial failure** | 8-week delinquency lifecycle (FR-23) — paid tiers only |
+| **Enterprise** | Manual invoice |
 
 **Delinquency timeline (from trial start):**
 
@@ -681,18 +680,16 @@ gantt
 | 6–8 | `OnHold` | Read-only | **Weekly** — account on hold, settle to restore |
 | 8+ | `Deleted` | None | Final notice; tenant data deleted |
 
-**Stripe objects (v1):** Products `cohestra_basic`, `cohestra_core`, `cohestra_pro`; USD Prices monthly + annual; Subscription with `trial_period_days: 30`.
+**Stripe objects (v1):** Products `cohestra_core`, `cohestra_pro` only; USD Prices monthly + annual; Subscription with `trial_period_days: 30`. **Basic:** no Stripe product.
 
 ### 13.6 Marketing funnel
 
 ```
 cohestra.app (apex marketing)
-  → Start 30-day free trial (card required — no charge during trial)
-  → Open self-serve signup + Stripe Checkout (USD, monthly or annual)
-  → Onboard: first activity + QR in <15 min (SM-2)
-  → Trial reminders (last 7 days: daily email + in-app)
-  → Auto-convert to paid or delinquency lifecycle (FR-23)
-  → Upgrade prompt at builder gate or seat limit
+  → Start free on Basic (no card)
+  → Self-serve signup → first activity + QR in <15 min (SM-2)
+  → Hit limit or need team/campaigns → Upgrade to Core/Pro (30-day trial + card)
+  → Trial reminders (last 7 days) on paid tiers
 ```
 
 **Minimum marketing assets:**
@@ -707,7 +704,7 @@ cohestra.app (apex marketing)
 1. Tenancy spine + isolation (Epic 11–13) — **blocks everything**
 2. **Stripe sandbox** + webhooks + plan sync + delinquency jobs (FR-19–23)
 3. Open self-serve signup + USD Checkout (monthly/annual) + 30-day trial
-4. cohestra.app marketing + pricing (Basic $15 / Core $29 / Pro $79 USD)
+4. cohestra.app marketing + pricing (Free Basic / Core $29 / Pro $79)
 5. 2–3 pilot tenants on trial
 6. Tenant-scoped website builder → **Pro upsell**
 7. **Pricing study (§13.9)** before list-price / grandfather rollout
@@ -742,20 +739,14 @@ cohestra.app (apex marketing)
 
 ### 13.10 Usage limits reference (Option 1 — ratified)
 
-| Limit | Basic | Core | Pro |
-|-------|:-----:|:----:|:---:|
+| Limit | Basic (free) | Core | Pro |
+|-------|:------------:|:----:|:---:|
 | Operator seats | 1 | 3 | 10 |
 | Communities | 1 | 3 | 10 |
-| Published activities (concurrent) | 4 | 12 | 50 |
+| Published activities (concurrent) | **3** | 12 | 50 |
 | Registrations / month (public) | 150 | 500 | 5,000 |
 
-**Basic rationale:** One community, ~4 live events, ~150 regs/mo — solo operator replacing a single Form workflow.
-
-**Core rationale:** Matches pilot (3 communities), 3 seats, production-ready small org.
-
-**Pro rationale:** Campaigns + website builder + 10× registration headroom vs Core.
-
-**Enforcement:** 80% warning banner + email; 100% block create-community / publish / public registration with upgrade path to next tier.
+**Basic rationale:** Minimum real product test — one operator, one community, three live events, 150 regs/mo, registration emails, fixed site. No card required.
 
 Full pricing page copy: `docs/marketing/pricing-tiers.md`
 
