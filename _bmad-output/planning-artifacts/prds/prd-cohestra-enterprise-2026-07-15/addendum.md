@@ -84,7 +84,7 @@ Use [Stripe test cards](https://docs.stripe.com/testing) (e.g. `4242 4242 4242 4
 
 ### Subscription flow
 
-1. Open self-serve signup → select Core or Pro, **monthly or annual**
+1. Open self-serve signup → select Basic, Core, or Pro, **monthly or annual**
 2. Stripe Checkout: `mode: subscription`, `trial_period_days: 30`, payment method required, USD
 3. Webhooks: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`
 4. Map to `Tenant.Plan`, `Tenant.BillingStatus`, `Tenant.BillingInterval`, `Tenant.TrialEndsAt`
@@ -94,6 +94,7 @@ Use [Stripe test cards](https://docs.stripe.com/testing) (e.g. `4242 4242 4242 4
 
 | Plan | Monthly | Annual (2 mo free) |
 |------|---------|-------------------|
+| Basic | $15 | $150 |
 | Core | $29 | $290 |
 | Pro | $79 | $790 |
 
