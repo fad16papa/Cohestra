@@ -546,15 +546,15 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-8:** Default tenant backfill for existing dev data — §6.1
 - **A-9:** lead-generation-crm remains separate product — §0, §5
 - **A-10:** Three self-serve tiers Basic / Core / Pro; website builder Pro-only — §13
-- **A-11:** Introductory pricing Basic **$15** / Core **$29** / Pro **$79** (USD); list price TBD — §13.3
-- **A-12:** 30-day trial, card on file, no charge until trial ends — §13.5, FR-19
+- **A-11:** **Basic free forever**; paid intro Core **$29** / Pro **$79** (USD) — §13.3
+- **A-12:** 30-day trial, card on file, no charge until trial ends — **Core/Pro only** — §13.5, FR-19
 - **A-13:** Trial expiration: daily email + in-app notice in last 7 days — FR-21
 - **A-14:** All billing in **USD only** — FR-20
 - **A-15:** Stripe test mode for dev/CI; live mode production only — FR-19, addendum
 - **A-17:** Monthly + annual billing; annual ≈ 2 months free — FR-22
 - **A-18:** Delinquency: week 5 daily collection → weeks 6–8 hold + weekly nudge → delete after week 8 — FR-23
 - **A-19:** Open self-serve signup at launch — §13.7
-- **A-20:** Usage limits (Option 1): Basic 1 comm / 4 activities / 150 reg·mo · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
+- **A-20:** Usage limits: Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
 - **A-21:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
 
 ---
