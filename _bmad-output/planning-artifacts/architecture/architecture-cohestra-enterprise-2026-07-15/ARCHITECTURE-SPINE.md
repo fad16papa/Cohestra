@@ -116,7 +116,7 @@ flowchart TB
 
 - **Binds:** Website builder, campaigns, seats, FR-12, §13.4 PRD
 - **Prevents:** UI-only tier enforcement bypass
-- **Rule:** `Tenant.Plan` ∈ `Core`, `Pro`, `Enterprise`. Campaign endpoints and Site Page composer return 403 when plan insufficient. **Registration notification emails** (transactional per lead) allowed on all tiers. Core tenants get **fixed-template public site** only; Pro gets full builder. Enforce seat cap (Core 3 / Pro 10), community cap, published-activity cap, and monthly registration cap per §13.4.
+- **Rule:** `Tenant.Plan` ∈ `Basic`, `Core`, `Pro`, `Enterprise`. Campaign endpoints and Site Page composer return 403 unless **Pro** or **Enterprise**. **Registration notification emails** on all self-serve tiers. **Basic & Core:** fixed-template public site; **Pro:** full builder. Enforce limits per §13.4 (seats, communities, published activities, monthly registrations).
 
 ### AD-11 — Stripe billing with test/live environment split
 

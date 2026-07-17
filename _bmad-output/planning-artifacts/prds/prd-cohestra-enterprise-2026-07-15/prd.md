@@ -347,7 +347,7 @@ Platform exposes health endpoints and immutable audit log for tenant lifecycle a
 
 #### FR-19: Stripe subscription with trial
 
-A new **Tenant Organization** can start a **30-day trial** on Core or Pro by completing Stripe Checkout with a payment method on file. No charge is applied until the trial ends.
+A new **Tenant Organization** can start a **30-day trial** on Basic, Core, or Pro by completing Stripe Checkout with a payment method on file. No charge is applied until the trial ends.
 
 **Consequences (testable):**
 - Signup flow shows disclaimer: *"You will not be charged while your trial is active. Billing starts on {trial_end_date} unless you cancel."*
@@ -360,7 +360,7 @@ A new **Tenant Organization** can start a **30-day trial** on Core or Pro by com
 All subscription prices, Checkout, invoices, and billing UI are denominated in **USD**, regardless of tenant admin location.
 
 **Consequences (testable):**
-- Stripe Prices use `currency: usd` only (Core/Pro monthly and annual).
+- Stripe Prices use `currency: usd` only (Basic/Core/Pro monthly and annual).
 - Marketing and signup display USD; no geo-based currency conversion in v1.
 - `Tenant.BillingCurrency` fixed to `USD` (or omitted; USD implied).
 
@@ -378,7 +378,7 @@ During the **last 7 days** of trial (`trial_end` − 7 days through `trial_end`)
 Tenants choose **monthly** or **annual** billing at signup or via Customer Portal. Annual plans receive a **discount** vs 12× monthly `[ASSUMPTION: 2 months free — pay 10 months, get 12; confirm in pricing study §13.10]`.
 
 **Consequences (testable):**
-- Stripe Prices exist for Core/Pro × monthly/annual.
+- Stripe Prices exist for Basic/Core/Pro × monthly/annual.
 - Checkout and Portal expose both intervals; webhook syncs `BillingInterval` on `Tenant`.
 - Annual renewal date = subscription `current_period_end`.
 
@@ -409,7 +409,7 @@ If payment fails at trial end or on renewal, the tenant enters a structured **4-
 - **WhatsApp Business API** — deferred; click-to-message retained from Platform 0.
 - **Automated email drip sequences** — deferred to enterprise v2.
 - **Custom report builder** — deferred; inherited filters + CSV sufficient for v1.
-- **Enterprise custom contracts in-app** — sales-led Enterprise deals use manual invoice; self-serve is Core/Pro via Stripe only in v1.
+- **Enterprise custom contracts in-app** — sales-led deals (custom limits, domain, SSO) use manual invoice; self-serve is **Basic / Core / Pro** via Stripe only in v1.
 - **Tenant custom domains** (`events.ikigai.com`) — deferred to v1.1; subdomain only in v1.
 - **Fine-grained custom RBAC** (per-module permissions builder) — Admin vs Member only in v1.
 
@@ -522,7 +522,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | # | Topic | Plan |
 |---|-------|------|
 | **Q2** | **Intro vs list price & grandfathering** | **Research draft done** — launch at $29/$79 and $290/$790; pilot WTP interviews + grandfather rules before list-price increase. See `research/market-cohestra-pricing-penetration-research-2026-07-16.md`. |
-| **Q5** | **Communities, activities, registration caps** | **Proposed:** Core 3 communities / 12 activities / 500 reg·mo; Pro 10 / 50 / 5,000 — confirm Option A/B/C in §13.10 |
+| **Q5** | **Communities, activities, registration caps** | **Ratified Option 1** — see §13.4; Basic / Core / Pro ladder |
 
 **Pricing study deliverable:** `bmad-market-research` or focused pricing memo — competitor matrix, unit economics, recommended intro/list/annual discount, grandfather rules. Target: before Phase 3 scale (§13.2).
 
@@ -541,8 +541,8 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-7:** v1 scale: 100 tenants, 100k clients — §8
 - **A-8:** Default tenant backfill for existing dev data — §6.1
 - **A-9:** lead-generation-crm remains separate product — §0, §5
-- **A-10:** Core tier monetization before tenant-scoped website builder ships — §13
-- **A-11:** Introductory pricing $29 Core / $79 Pro (USD); list price TBD via pricing study — §13.3, §13.10
+- **A-10:** Three self-serve tiers Basic / Core / Pro; website builder Pro-only — §13
+- **A-11:** Introductory pricing Basic **$15** / Core **$29** / Pro **$79** (USD); list price TBD — §13.3
 - **A-12:** 30-day trial, card on file, no charge until trial ends — §13.5, FR-19
 - **A-13:** Trial expiration: daily email + in-app notice in last 7 days — FR-21
 - **A-14:** All billing in **USD only** — FR-20
@@ -550,6 +550,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-17:** Monthly + annual billing; annual ≈ 2 months free — FR-22
 - **A-18:** Delinquency: week 5 daily collection → weeks 6–8 hold + weekly nudge → delete after week 8 — FR-23
 - **A-19:** Open self-serve signup at launch — §13.7
+- **A-20:** Usage limits (Option 1): Basic 1 comm / 4 activities / 150 reg·mo · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
 - **A-21:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
 
 ---
@@ -593,47 +594,51 @@ flowchart LR
 
 ### 13.3 Pricing tiers
 
-**Introductory launch pricing (USD only):**
+**Three self-serve tiers** (USD only) + optional sales-led **Enterprise** for custom contracts.
 
-| Tier | Monthly (intro) | Annual (intro) | Target list (study TBD) | Target buyer | Website builder |
-|------|-----------------|----------------|-------------------------|--------------|-----------------|
-| **Core** | **$29** / mo | **$290** / yr `[ASSUMPTION: 2 mo free]` | $39 / mo | Solo operator or small club | No — auto public activity list |
-| **Pro** | **$79** / mo | **$790** / yr `[ASSUMPTION: 2 mo free]` | $99 / mo | Club with marketing + follow-up | Yes — Site Page composer |
-| **Enterprise** | Custom (manual invoice) | Custom | Custom | Multi-location / sales-led | Yes + custom domain (v1.1) |
+**Introductory launch pricing:**
 
-**Price scaling policy:** Launch at intro rates above. **Grandfathering and list-price transition** deferred to **pricing study (§13.10 / Q2)** — optimize for market penetration before raising prices.
+| Tier | Monthly (intro) | Annual (intro) | Target list (TBD) | Target buyer |
+|------|-----------------|----------------|-------------------|--------------|
+| **Basic** | **$15** / mo | **$150** / yr (2 mo free) | $19 / mo | Solo operator, one community, replacing one Google Form |
+| **Core** | **$29** / mo | **$290** / yr (2 mo free) | $39 / mo | Small org, up to 3 communities, small team |
+| **Pro** | **$79** / mo | **$790** / yr (2 mo free) | $99 / mo | Marketing + campaigns + custom site + larger team |
+| **Enterprise** | Custom (manual invoice) | Custom | Custom | Custom limits, domain, SSO — contact sales |
 
-**Seat add-ons:** +$15 / month USD per additional operator beyond tier limit (Core: up to 3; Pro: up to 10).
+**Tier ladder (upgrade path):** Basic → Core → Pro. Default signup recommendation: **Core** (best fit for Marco-style 3-community operators); **Basic** for true solo single-community use.
 
-**Communities & activity limits:** Strategic caps required on both tiers — see §13.4 and §13.10 (discussion).
+**Seat add-ons:** +$15 / month USD per operator beyond tier limit (Basic: 1; Core: 3; Pro: 10).
 
 ### 13.4 Feature gates by tier
 
-| Capability | Core | Pro | Enterprise |
-|------------|:----:|:---:|:----------:|
-| Activities + QR + public registration | ✓ (within limits) | ✓ (within limits) | Custom |
+**Usage limits (Option 1 — ratified):** Published activities = **concurrent Published status**. Registrations = **public registrations per calendar month (UTC)**. Warn at **80%**, block at **100%** `[ASSUMPTION]`. Trial: soft warn; enforce after trial ends.
+
+| Capability | Basic | Core | Pro |
+|------------|:-----:|:----:|:---:|
+| Activities + QR + public registration | ✓ | ✓ | ✓ |
 | Client dedup + timeline | ✓ | ✓ | ✓ |
 | Dashboard + reports + CSV | ✓ | ✓ | ✓ |
 | **Registration email notifications** | ✓ | ✓ | ✓ |
-| **Email campaigns** (templates, segments, bulk send) | — | ✓ | ✓ |
-| **Operator seats** | Up to **3** | Up to **10** | Custom |
-| **Communities** | Up to **3** `[PROPOSED]` | Up to **10** `[PROPOSED]` | Custom |
-| **Active published activities** | Up to **12** `[PROPOSED]` | Up to **50** `[PROPOSED]` | Custom |
-| **Registrations / month** | Up to **500** `[PROPOSED]` | Up to **5,000** `[PROPOSED]` | Custom |
-| Public site — **fixed template** | ✓ | — | ✓ |
-| Public site — **website builder** (wide component library) | — | ✓ | ✓ |
-| Custom domain | — | — | ✓ (v1.1) |
-| SSO / SLA | — | — | ✓ |
+| **Email campaigns** (templates, segments, bulk send) | — | — | ✓ |
+| **Operator seats** | **1** | **3** | **10** |
+| **Communities** | **1** | **3** | **10** |
+| **Published activities (concurrent)** | **4** | **12** | **50** |
+| **Registrations / month (public)** | **150** | **500** | **5,000** |
+| Public site — **fixed template** | ✓ | ✓ | — |
+| Public site — **website builder** | — | — | ✓ |
+| Custom domain / SSO / SLA | — | — | Enterprise |
 
-**Email (clarified):**
-- **Both tiers:** Transactional **registration notifications** per new lead (confirmation / operator alert) — not gated.
-- **Pro only:** **Email campaigns** — templates, audience segments, campaign history on client profile, bulk marketing sends.
+**Email:**
+- **Basic, Core, Pro:** Transactional **registration notifications** per new lead — included on all tiers.
+- **Pro only:** **Email campaigns** — templates, segments, bulk marketing sends.
 
-**Public site (clarified):**
-- **Core:** **Fixed public site** — predetermined layout at `{slug}.cohestra.app` (org name, accent, upcoming activities list). No section composer; not the Epic 9 Site Page editor.
-- **Pro:** **Full website builder** — Site Page composer with wide component range (hero, sections, upcoming events, publish workflow).
+**Public site:**
+- **Basic & Core:** **Fixed public site** at `{slug}.cohestra.app` — standard layout (org name, accent, upcoming activities). No Site Page composer.
+- **Pro:** **Full website builder** — wide component library, publish workflow.
 
-Implementation: `Tenant.Plan` enum synced from Stripe; server-side plan gates on campaigns, builder, seat invites, community/activity/registration counts.
+**Enterprise (sales-led):** Custom limits above Pro; custom domain (v1.1); manual invoice.
+
+Implementation: `Tenant.Plan` ∈ `Basic`, `Core`, `Pro`, `Enterprise`; synced from Stripe; server-side gates on campaigns, builder, seats, communities, activities, registrations.
 
 ### 13.5 Billing & trial (Stripe)
 
@@ -643,7 +648,7 @@ Implementation: `Tenant.Plan` enum synced from Stripe; server-side plan gates on
 | **Currency** | **USD only** globally (FR-20) |
 | **Intervals** | **Monthly** and **annual** (annual discounted — FR-22) |
 | **Dev / test** | Stripe **test mode** in local, CI, staging; live keys production only |
-| **Trial length** | **30 days** (~4 weeks) on Core or Pro |
+| **Trial length** | **30 days** on Basic, Core, or Pro |
 | **Payment method** | **Card required at signup**; no charge while trial active |
 | **Signup disclaimer** | *"You will not be charged while your trial is active. Your card will be billed on {date} unless you cancel before then."* |
 | **Trial reminders** | **Daily** email + in-app during **last 7 days** before `trial_end` |
@@ -676,7 +681,7 @@ gantt
 | 6–8 | `OnHold` | Read-only | **Weekly** — account on hold, settle to restore |
 | 8+ | `Deleted` | None | Final notice; tenant data deleted |
 
-**Stripe objects (v1):** Products `cohestra_core`, `cohestra_pro`; USD Prices for monthly + annual at intro amounts; Subscription with `trial_period_days: 30`.
+**Stripe objects (v1):** Products `cohestra_basic`, `cohestra_core`, `cohestra_pro`; USD Prices monthly + annual; Subscription with `trial_period_days: 30`.
 
 ### 13.6 Marketing funnel
 
@@ -702,7 +707,7 @@ cohestra.app (apex marketing)
 1. Tenancy spine + isolation (Epic 11–13) — **blocks everything**
 2. **Stripe sandbox** + webhooks + plan sync + delinquency jobs (FR-19–23)
 3. Open self-serve signup + USD Checkout (monthly/annual) + 30-day trial
-4. cohestra.app marketing + pricing (intro $29 / $79 USD)
+4. cohestra.app marketing + pricing (Basic $15 / Core $29 / Pro $79 USD)
 5. 2–3 pilot tenants on trial
 6. Tenant-scoped website builder → **Pro upsell**
 7. **Pricing study (§13.9)** before list-price / grandfather rollout
@@ -724,7 +729,7 @@ cohestra.app (apex marketing)
 | Workstream | Status | Key finding |
 |------------|--------|-------------|
 | **Market penetration pricing (Q2)** | **Draft complete** | Launch **$29/$79** and **$290/$790** annual (2 mo free) is **reasonable**; grandfather policy still needs pilot WTP interviews |
-| **Registration economics (Q5)** | **Preview only** | Defer hard Core caps until pilot volume data; architecture ready for plan flags |
+| **Registration economics (Q5)** | **Ratified** | Option 1 limits; Basic / Core / Pro ladder — §13.4, §13.10 |
 
 **Annual pricing verdict ($290 Core / $790 Pro):**
 
@@ -735,37 +740,22 @@ cohestra.app (apex marketing)
 
 **If Pro upgrade &lt; 15% after 10 tenants:** test Pro intro at **$69/mo ($690/yr)** before adding a middle tier.
 
-### 13.10 Communities & usage limits (Q5 — discussion)
+### 13.10 Usage limits reference (Option 1 — ratified)
 
-**Terminology (Option A — ratified):** Use **Community** / **Communities** in product UI, PRD, pricing limits, and plan gates. Marketing may use "club" or "program" only as plain-language examples of community **names** (e.g., a community named "Running Club").
+| Limit | Basic | Core | Pro |
+|-------|:-----:|:----:|:---:|
+| Operator seats | 1 | 3 | 10 |
+| Communities | 1 | 3 | 10 |
+| Published activities (concurrent) | 4 | 12 | 50 |
+| Registrations / month (public) | 150 | 500 | 5,000 |
 
-| Term | Meaning | Example |
-|------|---------|---------|
-| **Tenant organization** | One paying customer workspace | "IKIGAI Sports Association" |
-| **Community** | Program or brand within tenant — `Community` entity + activity labels | Names: "Running Club", "Youth Program", "Pickleball" |
-| **Activity** | One event/session with QR + registration | "Saturday 5K", "Beginner Yoga Mar 12" |
+**Basic rationale:** One community, ~4 live events, ~150 regs/mo — solo operator replacing a single Form workflow.
 
-**Principle:** Neither tier gets unlimited communities, activities, or registrations — caps protect infra cost (SendGrid, DB, support) and create Pro upsell triggers.
+**Core rationale:** Matches pilot (3 communities), 3 seats, production-ready small org.
 
-**Proposed limits (align with 3 / 10 seats):**
+**Pro rationale:** Campaigns + website builder + 10× registration headroom vs Core.
 
-| Limit | Core | Pro | Rationale |
-|-------|------|-----|-----------|
-| **Communities** | **3** | **10** | Matches team size story; multi-program small org vs multi-community operator |
-| **Published activities (concurrent)** | **12** | **50** | ~4 active events per community on Core; [Eventually Growth](https://www.eventuallyticketing.com/pricing) uses 50 events as mid tier |
-| **Registrations / month** | **500** | **5,000** | SendGrid + storage cost driver; soft warn then upgrade prompt |
-
-**Enforcement (v1):** Soft gate — allow overage during trial/pilot with banner; hard block at create-community / publish-activity / registration ingest when over limit `[ASSUMPTION]`.
-
-**Alternatives to confirm:**
-
-| Option | Core communities | Pro communities | When to use |
-|--------|------------|-----------|-------------|
-| **A (recommended)** | 3 | 10 | Default — mirrors seats |
-| **B (generous Core)** | 5 | 15 | If pilots run many sub-brands on one tenant |
-| **C (strict Core)** | 1 | 5 | Maximum Pro pressure — likely too tight for 3 operators |
-
-**Open:** Confirm Option A/B/C and whether **activities** limit is concurrent published vs created per month.
+**Enforcement:** 80% warning banner + email; 100% block create-community / publish / public registration with upgrade path to next tier.
 
 Full pricing page copy: `docs/marketing/pricing-tiers.md`
 
