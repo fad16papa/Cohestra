@@ -1,102 +1,76 @@
 # Cohestra — Pricing
 
-*Draft for [cohestra.app](https://cohestra.app). All prices in **USD**.*
+*Draft for [cohestra.app](https://cohestra.app). Paid tiers in **USD**.*
 
 ---
 
 ## Turn events into clients — without spreadsheet chaos
 
-Cohestra helps community operators capture registrations from QR codes and links, deduplicate contacts, and follow up — all in one workspace.
-
-**Not sure?** Most organizations start on **Core**. Choose **Basic** if you’re solo with one community.
+Start **free** on Basic. Upgrade when you need more communities, team seats, or Pro marketing tools.
 
 ---
 
-## Introductory pricing (USD)
+## Plans
 
-*Launch offer — subject to market review.*
+### Basic — Free forever
 
-### Basic — $13 / mo billed annually ($150 / year)
-
-**Or $15 / month** — cancel anytime.
-
-**For:** Solo operators replacing a single Google Form.
+**For:** Trying Cohestra with the smallest real setup — one operator, one community, a few live events.
 
 **Includes:**
 - **1** operator seat
 - **1** community
-- **4** published activities (live at once)
+- **3** published activities (live at once)
 - **150** registrations / month
 - QR codes + public registration
-- Registration email notifications
+- **Registration email notifications**
 - Client list with dedup + timeline
 - Dashboard + reports + CSV
 - Fixed public site at `{your-org}.cohestra.app`
+- No credit card required
 
-[Start 30-day free trial →](#)
+[Start free →](#)
 
 ---
 
 ### Core — $24 / mo billed annually ($290 / year)
 
-**Or $29 / month** — cancel anytime.
+**Or $29 / month**
 
-**Recommended** for small organizations.
+**For:** Small organizations with a team and multiple communities.
 
 **Includes:**
 - **3** operator seats
 - **3** communities
-- **12** published activities (live at once)
+- **12** published activities
 - **500** registrations / month
 - Everything in Basic
 
-[Start 30-day free trial →](#)
+**30-day free trial** · card required · not charged until trial ends
+
+[Start trial →](#)
 
 ---
 
 ### Pro — $66 / mo billed annually ($790 / year)
 
-**Or $79 / month** — cancel anytime.
+**Or $79 / month**
 
-**For:** Organizations that market events and run email follow-up.
+**For:** Marketing, email campaigns, and a custom public site.
 
 **Includes:**
-- **10** operator seats
-- **10** communities
-- **50** published activities (live at once)
-- **5,000** registrations / month
-- Everything in Core, plus:
-- **Email campaigns** — templates, segments, bulk sends
-- **Website builder** — wide component library, branded homepage
+- **10** operator seats · **10** communities · **50** activities · **5,000** regs/mo
+- **Email campaigns**
+- **Website builder**
 
-**Compared to stacking tools:** ~$1,200+/year for event pages + email alone.
+**30-day free trial** · card required
 
-[Start 30-day free trial →](#)
+[Start trial →](#)
 
 ---
 
 ### Enterprise — Custom
 
-Custom limits, custom domain, SSO, SLA. Contact sales.
-
-[Book a demo →](#)
-
----
-
-## Free trial
-
-**30 days free** on Basic, Core, or Pro.
-
-- Card required at signup — **no charge** during trial
-- Daily reminders during the last 7 days before trial ends
-
----
-
-## Add-ons
-
-| Add-on | Price (USD) |
-|--------|-------------|
-| Extra operator seat (beyond tier limit) | +$15 / seat / month |
+Custom limits, domain, SSO. [Book a demo →](#)
 
 ---
 
@@ -104,13 +78,11 @@ Custom limits, custom domain, SSO, SLA. Contact sales.
 
 | Feature | Basic | Core | Pro |
 |---------|:-----:|:----:|:---:|
+| Price | **Free** | $29/mo | $79/mo |
 | Operator seats | 1 | 3 | 10 |
 | Communities | 1 | 3 | 10 |
-| Published activities (concurrent) | 4 | 12 | 50 |
+| Published activities | 3 | 12 | 50 |
 | Registrations / month | 150 | 500 | 5,000 |
-| Activities + QR registration | ✓ | ✓ | ✓ |
-| Client dedup + timeline | ✓ | ✓ | ✓ |
-| Dashboard + reports + CSV | ✓ | ✓ | ✓ |
 | Registration email notifications | ✓ | ✓ | ✓ |
 | Email campaigns | — | — | ✓ |
 | Fixed public site | ✓ | ✓ | — |
@@ -120,22 +92,19 @@ Custom limits, custom domain, SSO, SLA. Contact sales.
 
 ## FAQ
 
-**Which plan should I pick?**  
-**Basic** — solo, one community. **Core** — small team, up to 3 communities (most common). **Pro** — campaigns, custom site, high volume.
+**Is Basic really free?**  
+Yes — free forever at the limits above. No card. Upgrade anytime to Core or Pro.
 
-**What's a Community?**  
-A program or brand inside your organization (e.g. communities named "Running Club", "Youth Program"). Managed under **Activities → Communities**.
+**What's the difference between Basic and a trial?**  
+Basic is a **permanent free tier** to test the product. Core and Pro include a **30-day trial** before billing starts.
 
-**Registration emails vs campaigns?**  
-**Notifications** fire automatically on each signup — all tiers. **Campaigns** are marketing blasts you compose — Pro only.
-
-**Fixed site vs website builder?**  
-Basic and Core get a standard public page. Pro gets the full layout editor.
+**What counts as a Community?**  
+A program or brand inside your organization — e.g. "Running Club" — under **Activities → Communities**.
 
 ---
 
-[Start 30-day free trial →](#)
+[Start free on Basic →](#)
 
 ---
 
-*Cohestra Enterprise is multi-tenant SaaS. **lead-generation-crm** is a separate single-operator product.*
+*Cohestra Enterprise is multi-tenant SaaS. **lead-generation-crm** is a separate product.*
