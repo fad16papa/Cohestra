@@ -170,14 +170,28 @@ A **Platform Admin** can create, suspend, reactivate, and archive **Tenants** wi
 - Archived tenant is read-only for 30 days then hard-deleted per retention policy `[ASSUMPTION: 30-day soft archive]`.
 - All lifecycle changes append to platform audit log with actor, timestamp, reason.
 
-#### FR-3: Tenant status machine
+#### FR-3: Tenant status machine (operational)
 
-Each **Tenant** has status: `Active`, `Suspended`, `Archived`.
+Each **Tenant** has operational status: `Active`, `Suspended`, `Archived`.
+
+**Separate from billing:** Money lifecycle uses `BillingStatus` (FR-19, FR-23). **P1 ratified — Option A:** keep both fields; access is the intersection of both dials.
 
 **Consequences (testable):**
-- Only `Active` tenants accept public registrations and admin writes.
-- `Suspended` allows Platform Admin read-only inspection.
+- Only `Active` + non-blocking billing allows full admin writes and public registrations (see matrix below).
+- `Suspended` **always wins** over billing: blocks tenant admin login and shows maintenance on public routes, regardless of `BillingStatus`.
+- `Suspended` allows Platform Admin metadata inspection (no break-glass impersonation in MVP).
 - Status transitions are idempotent and audited.
+- Billing `OnHold` does **not** change `Tenant.Status` (stays `Active`); only access mode changes.
+- End of FR-23 unpaid path: `Tenant.Status → Archived` and billing terminal state (`Deleted` / `Canceled`).
+
+**Access matrix (P1):**
+
+| Tenant.Status | BillingStatus | Admin | Public registration |
+|---------------|---------------|-------|---------------------|
+| `Active` | `Free` / `Trialing` / `Active` / `PastDue` | Full (plan limits; PastDue = settle banner) | Yes (within limits) |
+| `Active` | `OnHold` | Read-only | No |
+| `Suspended` | any | Blocked | Maintenance |
+| `Archived` | any | Blocked | 404 |
 
 ---
 
@@ -514,6 +528,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | # | Topic | Decision |
 |---|-------|----------|
 | Q1 | Signup | **Open self-serve** at launch |
+| **P1** | Tenant status vs BillingStatus | **Option A ratified** — two dials + access matrix (FR-3); Platform `Suspended` always wins; `OnHold` keeps Status=`Active` |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 | Post-trial / failed payment | **8-week lifecycle** — see FR-23 and §13.5 |
@@ -553,6 +568,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-15:** Stripe test mode for dev/CI; live mode production only — FR-19, addendum
 - **A-17:** Monthly + annual billing; annual ≈ 2 months free — FR-22
 - **A-18:** Delinquency: week 5 daily collection → weeks 6–8 hold + weekly nudge → delete after week 8 — FR-23
+- **A-22:** Dual status model (P1 Option A): `Tenant.Status` ops + `BillingStatus` money; access matrix in FR-3
 - **A-19:** Open self-serve signup at launch — §13.7
 - **A-20:** Usage limits: Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
 - **A-21:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
