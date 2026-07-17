@@ -415,22 +415,24 @@ Tenants choose **monthly** or **annual** billing at signup or via Customer Porta
 - Checkout and Portal expose both intervals; webhook syncs `BillingInterval` on `Tenant`.
 - Annual renewal date = subscription `current_period_end`.
 
-#### FR-23: Delinquency lifecycle (8-week window)
+#### FR-23: Delinquency lifecycle (P3 Option A)
 
-If payment fails at trial end or on renewal, the tenant enters a structured **4-week follow-up** after the **~4-week trial**, for **8 weeks total** from trial start:
+**Trigger:** Any failed subscription charge — **trial end** or **renewal** — via Stripe `invoice.payment_failed`. The delinquency clock starts at that failure (`DelinquencyStartedAt`), **not** at trial start.
 
-| Week (from trial start) | `BillingStatus` | Operator experience | Notifications |
-|-------------------------|-----------------|---------------------|---------------|
-| **1–4** | `Trialing` | Full access | Daily email + in-app in **last 7 days** of trial (FR-21) |
-| **5** | `PastDue` | Full access — last chance to pay | **Daily** email + in-app: settle bill to continue |
-| **6–8** | `OnHold` | **Read-only** — account on hold | **Once per week** email + in-app: settle to restore |
-| **After week 8** | `Deleted` | Account removed | Final notice; tenant data deleted per §9 |
+| Phase | Duration from failure | `BillingStatus` | Operator experience | Notifications |
+|-------|----------------------|-----------------|---------------------|---------------|
+| **Collect** | Days **1–7** | `PastDue` | Full access (plan limits) | **Daily** email + in-app: settle bill |
+| **Hold** | Days **8–28** | `OnHold` | **Read-only** admin; public registration blocked | **Weekly** email + in-app |
+| **Terminal** | After day **28** unpaid | Terminal billing + `Tenant.Status → Archived` | Account removed from service | Final notice; purge per §9 |
+
+**Trial reminders (FR-21)** remain separate: daily notices in the **last 7 days before `trial_end`**, while still `Trialing`. After failed first charge, FR-23 Collect begins.
 
 **Consequences (testable):**
-- End of week 5: transition to `OnHold`; admin UI shows hold banner with link to Customer Portal.
-- Successful payment during `PastDue` or `OnHold` → `Active`; full access restored.
-- After week 8 without payment: soft-delete tenant; subdomain returns 404; data purged per retention policy.
-- All state transitions logged in audit trail.
+- Day 8 after `payment_failed`: `PastDue` → `OnHold`; hold banner + Customer Portal link.
+- Successful payment during `PastDue` or `OnHold` → `Active`; `Tenant.Status` stays `Active`; full access restored.
+- Day 29 unpaid: archive tenant; subdomain 404; purge per retention.
+- Renewal failure and trial-end failure use the **same** job + state machine.
+- All state transitions audited.
 
 ---
 
@@ -517,7 +519,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 ## 9. Data Governance
 
 - **Residency:** Single region deployment (Singapore-adjacent) for v1 `[ASSUMPTION: DigitalOcean Singapore when deployed]`.
-- **Retention:** Voluntary cancel → soft-delete 30 days then purge. **Billing delinquency** → delete after **8 weeks** from trial start per FR-23. Registrations immutable per Platform 0 rules until tenant purge.
+- **Retention:** Voluntary cancel → soft-delete 30 days then purge. **Billing delinquency** → archive after **28 days** unpaid from `payment_failed` (FR-23), then purge. Registrations immutable per Platform 0 rules until tenant purge.
 - **Classification:** Client contact data = confidential per tenant; platform audit logs = internal.
 - **Export:** Tenant Admin can export own tenant CSV reports; cross-tenant export prohibited.
 
@@ -549,7 +551,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P2b** | Reports by tier | **Ratified** — Basic: fixed + CSV; Core: queryable ops; Pro: Core + campaigns + saved views (FR-15) |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
-| Q9 | Post-trial / failed payment | **8-week lifecycle** — see FR-23 and §13.5 |
+| Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
 | Q10 | Billing intervals | **Monthly + annual**; annual discounted |
 | Q6–8 | Slugs, SendGrid, droplet | Confirmed per addendum / deferred deploy |
 | **Terminology** | **Community** vs club | **Option A ratified** — **Community** official in product/pricing; "club" only as example community name in marketing |
@@ -585,7 +587,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-14:** All billing in **USD only** — FR-20
 - **A-15:** Stripe test mode for dev/CI; live mode production only — FR-19, addendum
 - **A-17:** Monthly + annual billing; annual ≈ 2 months free — FR-22
-- **A-18:** Delinquency: week 5 daily collection → weeks 6–8 hold + weekly nudge → delete after week 8 — FR-23
+- **A-18:** Delinquency (P3): 7d PastDue daily → 21d OnHold weekly → archive; starts at `payment_failed` (trial or renewal) — FR-23
 - **A-22:** Dual status model (P1 Option A): `Tenant.Status` ops + `BillingStatus` money; access matrix in FR-3
 - **A-23:** Public site (P2 Option D): Basic stub / Core fixed SitePage / Pro builder — FR-12
 - **A-24:** Reports: Basic fixed+CSV / Core queryable / Pro + campaigns + saved views — FR-15
@@ -694,33 +696,18 @@ Implementation: `Tenant.Plan` ∈ `Basic`, `Core`, `Pro`, `Enterprise`. **Basic*
 | **Trial length** | **30 days** on **Core or Pro** signup/upgrade only |
 | **Payment method** | **Required for Core/Pro**; not required for Basic |
 | **Trial reminders** | Daily email + in-app last 7 days (FR-21) — paid tiers only |
-| **Post-trial failure** | 8-week delinquency lifecycle (FR-23) — paid tiers only |
+| **Payment failure** | FR-23 from `invoice.payment_failed` (trial end **or** renewal) — paid tiers only |
 | **Enterprise** | Manual invoice |
 
-**Delinquency timeline (from trial start):**
+**Delinquency timeline (from payment failure — P3 Option A):**
 
-```mermaid
-gantt
-  title Tenant billing lifecycle (weeks from trial start)
-  dateFormat X
-  axisFormat Week %s
-  section Access
-  Full access (trial)           :0, 4
-  Full access (past due)        :4, 5
-  Read-only hold                :5, 8
-  section Notify
-  Daily (trial last 7 days)     :3, 4
-  Daily (week 5 collect)        :4, 5
-  Weekly (weeks 6-8 hold)       :5, 8
-  Delete after week 8           :milestone, 8, 0
-```
+| Days after failure | BillingStatus | Access | Notifications |
+|--------------------|---------------|--------|---------------|
+| 1–7 | `PastDue` | Full | Daily — settle bill |
+| 8–28 | `OnHold` | Read-only; public blocked | Weekly |
+| 29+ | Archive | None | Final notice → purge |
 
-| Week | Status | Access | Notifications |
-|------|--------|--------|---------------|
-| 1–4 | `Trialing` | Full | Daily in last 7 days of trial |
-| 5 | `PastDue` | Full | **Daily** — settle bill to continue |
-| 6–8 | `OnHold` | Read-only | **Weekly** — account on hold, settle to restore |
-| 8+ | `Deleted` | None | Final notice; tenant data deleted |
+**Trial (before first charge):** FR-21 daily reminders in last 7 days of `Trialing` only.
 
 **Stripe objects (v1):** Products `cohestra_core`, `cohestra_pro` only; USD Prices monthly + annual; Subscription with `trial_period_days: 30`. **Basic:** no Stripe product.
 

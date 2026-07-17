@@ -105,15 +105,15 @@ Annual discount subject to pricing study (§13.9).
 - Background job (daily): tenants `Trialing` with `TrialEndsAt` within 7 days
 - Daily email + in-app notification to all Tenant Admins until trial ends
 
-### Delinquency jobs (FR-23)
+### Delinquency jobs (FR-23 — P3 Option A)
+
+Clock starts at `DelinquencyStartedAt` = time of `invoice.payment_failed` (trial end or renewal).
 
 | Job | Schedule | Action |
 |-----|----------|--------|
-| `PastDueNotifier` | Daily | Week 5 (`PastDue`): daily email + in-app |
-| `OnHoldNotifier` | Weekly | Weeks 6–8 (`OnHold`): weekly email + in-app; enforce read-only |
-| `DelinquencyEnforcer` | Daily | Transition `PastDue` → `OnHold` at week 5 end; `OnHold` → `Deleted` after week 8 |
-
-Week boundaries computed from `TrialEndsAt` (trial start ≈ `TrialEndsAt - 30 days`).
+| `PastDueNotifier` | Daily | Days 1–7 (`PastDue`): daily email + in-app |
+| `OnHoldNotifier` | Weekly | Days 8–28 (`OnHold`): weekly email + in-app; enforce read-only |
+| `DelinquencyEnforcer` | Daily | Day 8: `PastDue` → `OnHold`; Day 29: archive tenant (`Tenant.Status=Archived`) |
 
 ### Config
 

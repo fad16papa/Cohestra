@@ -122,7 +122,7 @@ flowchart TB
 
 - **Binds:** FR-19–FR-23, §13.5 PRD
 - **Prevents:** Accidental live charges in dev; plan drift from Stripe state; silent account deletion
-- **Rule:** `BillingService` creates Checkout Sessions with `trial_period_days: 30`, **USD only**, monthly or annual Price. Webhook handler idempotent on `event.id`. `Tenant` stores `StripeCustomerId`, `StripeSubscriptionId`, `BillingStatus`, `BillingInterval`, `TrialEndsAt`. **Test keys** in local/CI/staging; **live keys** production only. `BillingStatus` state machine: `Trialing` → `Active` | `PastDue` (week 5, daily notify) → `OnHold` (weeks 6–8, read-only, weekly notify) → `Deleted` (after week 8). Jobs: `TrialReminderJob`, `PastDueNotifier`, `OnHoldNotifier`, `DelinquencyEnforcer`.
+- **Rule:** `BillingService` creates Checkout Sessions with `trial_period_days: 30`, **USD only**, monthly or annual Price. Webhook handler idempotent on `event.id`. `Tenant` stores `StripeCustomerId`, `StripeSubscriptionId`, `BillingStatus`, `BillingInterval`, `TrialEndsAt`, `DelinquencyStartedAt`. **Test keys** in local/CI/staging; **live keys** production only. On `invoice.payment_failed` (trial or renewal): `PastDue` for 7 days (daily notify) → `OnHold` for days 8–28 (weekly notify, read-only) → `Tenant.Status=Archived`. Jobs: `TrialReminderJob`, `PastDueNotifier`, `OnHoldNotifier`, `DelinquencyEnforcer`.
 
 ### AD-9 — Migration via default tenant backfill
 
