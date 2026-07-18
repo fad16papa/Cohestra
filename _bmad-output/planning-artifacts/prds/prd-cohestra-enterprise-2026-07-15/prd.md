@@ -618,6 +618,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P6** | Signup paths | **Option A ratified** — Basic-first primary CTA; direct Core/Pro trial also allowed (FR-19) |
 | **P7** | Basic dormancy | **Option A ratified** — 90 days idle → warn day 83 → archive day 90 (FR-25) |
 | **P8** | Abuse controls | **Option A + CAPTCHA A1 ratified** — always CAPTCHA on signup; email verify; IP + register rate limits (FR-26) |
+| **P9** | Grandfathering / list price | **Option D ratified** — defer lock until list raise; **hypothesis A** = 12 mo intro then 30-day notice |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -629,7 +630,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 
 | # | Topic | Plan |
 |---|-------|------|
-| **Q2** | **Intro vs list price & grandfathering** | **Research draft done** — launch at $29/$79 and $290/$790; pilot WTP interviews + grandfather rules before list-price increase. See `research/market-cohestra-pricing-penetration-research-2026-07-16.md`. |
+| **Q2 / P9** | **Intro vs list price & grandfathering** | **Option D ratified** — do not lock grandfather policy until list-price raise; **working hypothesis = Option A** (12 months from first paid invoice at intro, then 30-day notice to list). Launch engineering on intro Prices only. Research: `research/market-cohestra-pricing-penetration-research-2026-07-16.md`. |
 | **Q5** | **Communities, activities, registration caps** | **Ratified Option 1** — see §13.4; Basic / Core / Pro ladder |
 
 **Pricing study deliverable:** `bmad-market-research` or focused pricing memo — competitor matrix, unit economics, recommended intro/list/annual discount, grandfather rules. Target: before Phase 3 scale (§13.2).
@@ -668,6 +669,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-27:** Signup paths (P6): Start free primary; direct Core/Pro trial secondary — FR-19
 - **A-28:** Basic dormancy (P7): 90 days no login and no registrations → archive (FR-25)
 - **A-29:** Abuse controls (P8): CAPTCHA always on signup; IP signup limits; per-tenant register rate limit — FR-26
+- **A-30:** Grandfathering (P9 Option D): policy unlocked until list raise; working hypothesis A (12 mo intro) — §11 Q2
 
 ---
 
@@ -828,7 +830,7 @@ cohestra.app (apex marketing)
 
 | Workstream | Status | Key finding |
 |------------|--------|-------------|
-| **Market penetration pricing (Q2)** | **Draft complete** | Launch **$29/$79** and **$290/$790** annual (2 mo free) is **reasonable**; grandfather policy still needs pilot WTP interviews |
+| **Market penetration pricing (Q2 / P9)** | **Draft complete; policy deferred** | Launch intro **$29/$79**; grandfather **not locked** (P9-D); hypothesis **12 mo intro** (A) after pilots |
 | **Registration economics (Q5)** | **Ratified** | Option 1 limits; Basic / Core / Pro ladder — §13.4, §13.10 |
 
 **Annual pricing verdict ($290 Core / $790 Pro):**
