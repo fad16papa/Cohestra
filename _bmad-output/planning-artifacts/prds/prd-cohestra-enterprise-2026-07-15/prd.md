@@ -109,12 +109,12 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
   - **Resolution:** Priya sees Elena on Ikigai dashboard.
   - **Edge case:** Same phone registered at a *different tenant* creates a separate **Client** — cross-tenant dedup is intentionally not performed.
 
-- **UJ-4. Platform admin suspends a tenant for non-payment.**
-  - **Persona + context:** Cohestra platform operator handling billing exception.
-  - **Entry state:** Platform admin console.
-  - **Path:** Locates tenant → sets status **Suspended** → public pages show maintenance message; tenant admins cannot log in.
-  - **Climax:** Other tenants unaffected; audit log records suspension actor and reason.
-  - **Resolution:** Reactivation restores access without data loss.
+- **UJ-4. Platform Admin break-glass Suspend (abuse / ToS / support freeze).**
+  - **Persona + context:** Cohestra platform operator acting on confirmed abuse, ToS violation, or support freeze — **not** ordinary unpaid invoices (those follow FR-23 PastDue → OnHold → archive).
+  - **Entry state:** Platform admin console; target tenant may still be `BillingStatus=Active` / `Trialing` / etc.
+  - **Path:** Locates tenant → sets `Tenant.Status=Suspended` with reason → public pages show maintenance; tenant admins cannot log in (**Suspended always wins** over billing — FR-3).
+  - **Climax:** Other tenants unaffected; audit log records actor, reason, timestamp.
+  - **Resolution:** Platform Admin reactivates (`Status=Active`); prior `BillingStatus` unchanged unless separately adjusted. Unpaid collections remain automated (FR-23), not this journey.
 
 ---
 
@@ -669,6 +669,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **H3** | UJ-2 vs Basic 1 seat | **Option A ratified** — Basic stays 1 seat; soft-block Team invite + upgrade CTA; UJ-2 is Core+ (FR-6) |
 | **H4** | UJ-1 vs Basic stub | **Option A ratified** — rewrite UJ-1 as Basic-first Start free → stub + register; SitePage is Core+ CTA |
 | **H5** | Role × plan matrix | **Option A ratified** — FR-5 matrix: Admin = money/team/settings; Member = plan-allowed ops; upgrade CTAs Admin-only |
+| **H6** | UJ-4 vs billing automation | **Option A ratified** — UJ-4 = break-glass Suspend (abuse/ToS); unpaid = FR-23 only |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -728,6 +729,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-33:** Basic stays 1 seat; Team invite soft-blocked with upgrade CTA; UJ-2 is Core+ (H3) — FR-6
 - **A-34:** UJ-1 is Basic-first Start free → stub public site (H4); SitePage/composer are Core+ — FR-12, FR-19
 - **A-35:** Role × plan (H5 Option A): Admin-only billing/team/settings; Member gets plan-allowed ops; upgrade CTAs Admin-only — FR-5
+- **A-36:** UJ-4 is break-glass Suspend only (H6); ordinary non-payment is FR-23 automation — FR-2, FR-3
 
 ---
 
