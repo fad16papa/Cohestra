@@ -281,15 +281,15 @@ CSV exports and reports include only records for the authenticated **Tenant**.
 
 ### 4.4 Tenant Routing & Public Surfaces
 
-**Description:** Each **Tenant** has branded public entry points. Replaces deployment-wide singleton SitePage. Realizes UJ-1, UJ-3.
+**Description:** Each **Tenant** has plan-gated public entry points (stub / fixed SitePage / builder). Replaces deployment-wide singleton SitePage. Realizes UJ-1, UJ-3.
 
 #### FR-11: Subdomain tenant routing
 
 Public and admin web surfaces resolve **Tenant** from subdomain `{tenant-slug}.cohestra.app`. `[ASSUMPTION: apex domain hosts marketing + signup only]`
 
 **Consequences (testable):**
-- `https://ikigai.cohestra.app/` renders Ikigai **Site Page**.
-- `https://ikigai.cohestra.app/register/{activity-slug}` scopes activity lookup to Ikigai.
+- `https://ikigai.cohestra.app/` renders Ikigai public home per plan (Basic **stub**, Core fixed SitePage, Pro builder — FR-12).
+- `https://ikigai.cohestra.app/register/{activity-slug}` scopes activity lookup to Ikigai on all plans.
 - Local dev supports `{slug}.localhost` or `?tenant=` override documented in addendum.
 
 #### FR-12: Public site by plan (P2 Option D)
@@ -577,7 +577,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 
 **Primary**
 - **SM-1:** Zero cross-tenant data leakage in integration test matrix — 100% pass on negative cross-tenant cases. Validates FR-8, FR-9.
-- **SM-2:** Tenant signup → first published activity → public registration E2E completes in &lt; 15 minutes for a prepared admin. Validates FR-1, FR-11, FR-14.
+- **SM-2:** **Basic** Start free → first published activity → stub home + public registration E2E completes in &lt; 15 minutes for a prepared admin. Validates FR-1, FR-11, FR-12, FR-14 (UJ-1).
 - **SM-3:** Two tenants on same deployment with 100+ clients each; dashboard p95 &lt; 3s. Validates FR-15, NFR performance.
 
 **Secondary**
