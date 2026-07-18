@@ -674,6 +674,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **H6** | UJ-4 vs billing automation | **Option A ratified** — UJ-4 = break-glass Suspend (abuse/ToS); unpaid = FR-23 only |
 | **H7** | Signup path wording | **Closed via P6** — Start free primary; Core/Pro trial secondary (FR-19, UJ-1); no further change |
 | **M1** | §0 assumptions section pointer | **Option A ratified** — index is §12 (not §9 Data Governance) |
+| **M2** | Missing A-16 in §12 | **Option B ratified** — renumber former A-17…A-36 → A-16…A-35 (contiguous) |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -714,26 +715,26 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-13:** Trial expiration: daily email + in-app notice in last 7 days — FR-21
 - **A-14:** All billing in **USD only** — FR-20
 - **A-15:** Stripe test mode for dev/CI; live mode production only — FR-19, addendum
-- **A-17:** Monthly + annual billing; annual ≈ 2 months free — FR-22
-- **A-18:** Delinquency (P3): 7d PastDue daily → 21d OnHold weekly → archive; starts at `payment_failed` (trial or renewal) — FR-23
-- **A-19:** Open self-serve signup at launch — §13.7
-- **A-20:** Usage limits: Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
-- **A-21:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
-- **A-22:** Dual status model (P1 Option A): `Tenant.Status` ops + `BillingStatus` money; access matrix in FR-3
-- **A-23:** Public site (P2 Option D): Basic stub / Core fixed SitePage / Pro builder — FR-12
-- **A-24:** Reports: Basic fixed+CSV / Core queryable / Pro + campaigns + saved views — FR-15
-- **A-25:** Cancel/downgrade at period end; over-limit read-only until compliant (P4) — FR-24
-- **A-26:** No seat add-ons in v1 (P5); more seats via tier upgrade only
-- **A-27:** Signup paths (P6): Start free primary; direct Core/Pro trial secondary — FR-19
-- **A-28:** Basic dormancy (P7): 90 days no login and no registrations → archive (FR-25)
-- **A-29:** Abuse controls (P8): CAPTCHA always on signup; IP signup limits; per-tenant register rate limit — FR-26
-- **A-30:** Grandfathering (P9 Option D): policy unlocked until list raise; working hypothesis A (12 mo intro) — §11 Q2
-- **A-31:** Legal (P11 Option A): ToS/Privacy + acceptance log at signup; Stripe Tax deferred until verified — FR-26a
-- **A-32:** Complimentary tenants (P12 Option A): Platform Admin only; BillingStatus=Free; no FR-23 — FR-2
-- **A-33:** Basic stays 1 seat; Team invite soft-blocked with upgrade CTA; UJ-2 is Core+ (H3) — FR-6
-- **A-34:** UJ-1 is Basic-first Start free → stub public site (H4); SitePage/composer are Core+ — FR-12, FR-19
-- **A-35:** Role × plan (H5 Option A): Admin-only billing/team/settings; Member gets plan-allowed ops; upgrade CTAs Admin-only — FR-5
-- **A-36:** UJ-4 is break-glass Suspend only (H6); ordinary non-payment is FR-23 automation — FR-2, FR-3
+- **A-16:** Monthly + annual billing; annual ≈ 2 months free — FR-22
+- **A-17:** Delinquency (P3): 7d PastDue daily → 21d OnHold weekly → archive; starts at `payment_failed` (trial or renewal) — FR-23
+- **A-18:** Open self-serve signup at launch — §13.7
+- **A-19:** Usage limits: Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
+- **A-20:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
+- **A-21:** Dual status model (P1 Option A): `Tenant.Status` ops + `BillingStatus` money; access matrix in FR-3
+- **A-22:** Public site (P2 Option D): Basic stub / Core fixed SitePage / Pro builder — FR-12
+- **A-23:** Reports: Basic fixed+CSV / Core queryable / Pro + campaigns + saved views — FR-15
+- **A-24:** Cancel/downgrade at period end; over-limit read-only until compliant (P4) — FR-24
+- **A-25:** No seat add-ons in v1 (P5); more seats via tier upgrade only
+- **A-26:** Signup paths (P6): Start free primary; direct Core/Pro trial secondary — FR-19
+- **A-27:** Basic dormancy (P7): 90 days no login and no registrations → archive (FR-25)
+- **A-28:** Abuse controls (P8): CAPTCHA always on signup; IP signup limits; per-tenant register rate limit — FR-26
+- **A-29:** Grandfathering (P9 Option D): policy unlocked until list raise; working hypothesis A (12 mo intro) — §11 Q2
+- **A-30:** Legal (P11 Option A): ToS/Privacy + acceptance log at signup; Stripe Tax deferred until verified — FR-26a
+- **A-31:** Complimentary tenants (P12 Option A): Platform Admin only; BillingStatus=Free; no FR-23 — FR-2
+- **A-32:** Basic stays 1 seat; Team invite soft-blocked with upgrade CTA; UJ-2 is Core+ (H3) — FR-6
+- **A-33:** UJ-1 is Basic-first Start free → stub public site (H4); SitePage/composer are Core+ — FR-12, FR-19
+- **A-34:** Role × plan (H5 Option A): Admin-only billing/team/settings; Member gets plan-allowed ops; upgrade CTAs Admin-only — FR-5
+- **A-35:** UJ-4 is break-glass Suspend only (H6); ordinary non-payment is FR-23 automation — FR-2, FR-3
 
 ---
 
