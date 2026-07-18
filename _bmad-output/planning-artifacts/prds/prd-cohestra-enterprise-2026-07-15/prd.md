@@ -378,15 +378,20 @@ Platform exposes health endpoints and immutable audit log for tenant lifecycle a
 
 **Basic (free):** A prospective **Tenant Admin** can self-serve signup on **Basic** with **no payment method** and **no Stripe subscription**. `Tenant.Plan = Basic`, `BillingStatus = Free`.
 
-**Core / Pro (paid):** Upgrade or direct signup on Core or Pro completes **Stripe Checkout** with a **30-day trial** and payment method on file. No charge until trial ends.
+**Core / Pro (paid) — P6 Option A:** Two entry paths are supported:
+1. **Direct signup** — choose Core or Pro on marketing/pricing → Stripe Checkout + 30-day trial + card.
+2. **Upgrade from Basic** — in-app upgrade → same Checkout + trial (or immediate paid if already trialed — product rule: one trial per tenant `[ASSUMPTION]`).
+
+**Primary CTA:** Start free (Basic). **Secondary CTA:** Start Core/Pro trial.
 
 **Consequences (testable):**
-- Basic signup: email verification only; no Stripe Customer created until first paid upgrade.
+- Basic signup: email verification only; no Stripe Customer until first paid path.
+- Direct Core/Pro signup creates tenant + Stripe subscription in one flow; disclaimer shown.
 - Paid signup disclaimer: *"You will not be charged while your trial is active. Billing starts on {trial_end_date} unless you cancel."*
 - `Tenant.BillingStatus` ∈ `Free` (Basic), `Trialing`, `Active`, `PastDue`, `OnHold`, `Canceled`.
 - Paid tiers: `StripeCustomerId` and `StripeSubscriptionId` stored; plan synced from Stripe webhooks.
-- Stripe **test mode** (sandbox) in local dev and CI; live mode production only.
-- Basic → Core/Pro upgrade initiates Stripe Checkout; limits lift per new plan on successful subscription.
+- Stripe **test mode** in local/CI; live mode production only.
+- Upgrade from Basic lifts limits when Checkout completes / subscription becomes `Trialing` or `Active`.
 
 #### FR-20: USD-only billing
 
@@ -571,6 +576,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P3** | Failed payment lifecycle | **Option A ratified** — see Q9 / FR-23 |
 | **P4** | Cancel / downgrade | **Option A ratified** — apply at **period end**; over-limit → `ReadOnly_OverLimit` until under caps (FR-24) |
 | **P5** | Seat add-ons in v1 | **Option A ratified** — no +$15 seats in v1; upgrade tier; add-ons v1.1 |
+| **P6** | Signup paths | **Option A ratified** — Basic-first primary CTA; direct Core/Pro trial also allowed (FR-19) |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -618,6 +624,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-24:** Reports: Basic fixed+CSV / Core queryable / Pro + campaigns + saved views — FR-15
 - **A-25:** Cancel/downgrade at period end; over-limit read-only until compliant (P4) — FR-24
 - **A-26:** No seat add-ons in v1 (P5); more seats via tier upgrade only
+- **A-27:** Signup paths (P6): Start free primary; direct Core/Pro trial secondary — FR-19
 
 ---
 
@@ -669,9 +676,9 @@ flowchart LR
 | **Pro** | **$79** / mo · **$790** / yr (2 mo free) | Marketing, campaigns, custom site, high volume |
 | **Enterprise** | Custom (manual invoice) | Custom limits, domain, SSO |
 
-**Default signup:** **Basic (free)** — lowest friction to test product. Upgrade prompts when limits hit or operator needs Core/Pro features.
+**Default signup (P6):** Primary CTA **Start free** (Basic). Secondary CTA **Start Core/Pro trial** (direct paid path). Upgrade prompts in-app when limits hit or features gated.
 
-**Upgrade path:** Basic (free) → Core (trial + paid) → Pro (trial + paid).
+**Upgrade path:** Basic (free) → Core (trial + paid) → Pro (trial + paid); or land directly on Core/Pro trial.
 
 **Seats (P5 Option A):** No per-seat add-ons in v1. Need more seats → **upgrade tier** (Basic→Core for 2nd seat; Core→Pro for 4th+). Seat add-ons (+$15) deferred to **v1.1**.
 
