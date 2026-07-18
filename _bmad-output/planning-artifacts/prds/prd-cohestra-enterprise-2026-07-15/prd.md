@@ -457,6 +457,24 @@ Tenants choose **monthly** or **annual** billing at signup or via Customer Porta
 - Tenant with 8 communities canceling to Basic → read-only until ≤1 community (and other Basic caps).
 - Over-limit lock distinct from billing `OnHold` (different banner copy; same read-only public-block behavior).
 
+#### FR-25: Basic dormancy archive (P7 Option A)
+
+Free **Basic** tenants (`Plan=Basic`, `BillingStatus=Free`) that are **inactive for 90 days** are archived.
+
+**Inactive means:** no **Tenant Admin/Member login** and **zero new public registrations** in the rolling 90-day window. Any login or registration **resets** the timer.
+
+| Day in idle window | Action |
+|--------------------|--------|
+| **83** | Email + in-app warning to Tenant Admins: archive in 7 days unless they sign in |
+| **90** | `Tenant.Status → Archived`; public 404; soft-delete then purge per §9 |
+
+Does **not** apply to Core/Pro (paid/trialing/past-due use FR-23). Platform Admin may restore within soft-delete window.
+
+**Consequences (testable):**
+- Job selects only Basic+Free with `LastActivityAt` (max of last login, last registration) older than 90 days.
+- Warning sent once at day 83; archive at day 90 if still idle.
+- Login on day 85 clears pending archive.
+
 ---
 
 ## 5. Non-Goals (Explicit)
@@ -490,6 +508,7 @@ Tenants choose **monthly** or **annual** billing at signup or via Customer Porta
 - **Free Basic tier** signup without Stripe (FR-19)
 - **Plan gates** (`Tenant.Plan`) wired to Stripe subscription state
 - **Cancel/downgrade at period end** + over-limit lock (FR-24)
+- **Basic dormancy archive** after 90 days idle (FR-25)
 
 ### 6.2 Out of Scope for MVP
 
@@ -543,7 +562,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 ## 9. Data Governance
 
 - **Residency:** Single region deployment (Singapore-adjacent) for v1 `[ASSUMPTION: DigitalOcean Singapore when deployed]`.
-- **Retention:** Voluntary cancel → soft-delete 30 days then purge. **Billing delinquency** → archive after **28 days** unpaid from `payment_failed` (FR-23), then purge. Registrations immutable per Platform 0 rules until tenant purge.
+- **Retention:** Voluntary cancel → soft-delete 30 days then purge. **Billing delinquency** → archive after **28 days** unpaid from `payment_failed` (FR-23), then purge. **Basic dormancy** → archive after **90 days** idle (FR-25), then purge. Registrations immutable per Platform 0 rules until tenant purge.
 - **Classification:** Client contact data = confidential per tenant; platform audit logs = internal.
 - **Export:** Tenant Admin can export own tenant CSV reports; cross-tenant export prohibited.
 
@@ -577,6 +596,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P4** | Cancel / downgrade | **Option A ratified** — apply at **period end**; over-limit → `ReadOnly_OverLimit` until under caps (FR-24) |
 | **P5** | Seat add-ons in v1 | **Option A ratified** — no +$15 seats in v1; upgrade tier; add-ons v1.1 |
 | **P6** | Signup paths | **Option A ratified** — Basic-first primary CTA; direct Core/Pro trial also allowed (FR-19) |
+| **P7** | Basic dormancy | **Option A ratified** — 90 days idle → warn day 83 → archive day 90 (FR-25) |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -625,6 +645,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-25:** Cancel/downgrade at period end; over-limit read-only until compliant (P4) — FR-24
 - **A-26:** No seat add-ons in v1 (P5); more seats via tier upgrade only
 - **A-27:** Signup paths (P6): Start free primary; direct Core/Pro trial secondary — FR-19
+- **A-28:** Basic dormancy (P7): 90 days no login and no registrations → archive (FR-25)
 
 ---
 
