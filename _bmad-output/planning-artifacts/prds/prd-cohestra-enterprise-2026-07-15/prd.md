@@ -167,10 +167,14 @@ A prospective **Tenant Admin** can register a new **Tenant Organization** with o
 
 A **Platform Admin** can create, suspend, reactivate, and archive **Tenants** without using self-serve signup. Realizes UJ-4.
 
+**Complimentary plans (P12 Option A):** Platform Admin may set `IsComplimentary=true` and assign `Plan` ∈ Basic/Core/Pro without Stripe. `BillingStatus=Free`. No FR-23 delinquency. FR-25 Basic dormancy applies only when Plan=Basic; complimentary Core/Pro are exempt. Converting to paid: clear complimentary flag → tenant completes Checkout (FR-19).
+
 **Consequences (testable):**
 - Suspended tenant blocks tenant admin login and returns maintenance state on public routes.
 - Archived tenant is read-only for 30 days then hard-deleted per retention policy `[ASSUMPTION: 30-day soft archive]`.
 - All lifecycle changes append to platform audit log with actor, timestamp, reason.
+- Only Platform Admin can set/clear `IsComplimentary`; self-serve cannot grant Core/Pro without Stripe (unless Checkout).
+- Complimentary Pro tenant has Pro limits and no `StripeSubscriptionId`.
 
 #### FR-3: Tenant status machine (operational)
 
@@ -633,12 +637,13 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P9** | Grandfathering / list price | **Option D ratified** — defer lock until list raise; **hypothesis A** = 12 mo intro then 30-day notice |
 | **P10** | Tenant slug rules | **Option A ratified** — see FR-1 |
 | **P11** | Legal & tax | **Option A ratified** — ToS + Privacy + signup checkbox + logged versions; **Stripe Tax later** when setup verified (FR-26a) |
+| **P12** | Comp / pilot plans | **Option A ratified** — Platform Admin `IsComplimentary` + manual Plan; no Stripe; FR-2 |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
 | Q10 | Billing intervals | **Monthly + annual**; annual discounted |
 | Q6 / **P10** | Tenant slug rules | **Option A ratified** — `[a-z0-9-]`, 3–48, reserved list (FR-1) |
-| Q7 | SendGrid | Shared platform key + per-tenant sender (addendum) — confirm in P11/P12 pass if needed |
+| Q7 | SendGrid | **Ratified** — shared platform key + per-tenant sender auth (addendum) |
 | Q8 | Droplet | Deferred until Francis approves production deploy |
 | **Terminology** | **Community** vs club | **Option A ratified** — **Community** official in product/pricing; "club" only as example community name in marketing |
 
@@ -688,6 +693,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-29:** Abuse controls (P8): CAPTCHA always on signup; IP signup limits; per-tenant register rate limit — FR-26
 - **A-30:** Grandfathering (P9 Option D): policy unlocked until list raise; working hypothesis A (12 mo intro) — §11 Q2
 - **A-31:** Legal (P11 Option A): ToS/Privacy + acceptance log at signup; Stripe Tax deferred until verified — FR-26a
+- **A-32:** Complimentary tenants (P12 Option A): Platform Admin only; BillingStatus=Free; no FR-23 — FR-2
 
 ---
 
