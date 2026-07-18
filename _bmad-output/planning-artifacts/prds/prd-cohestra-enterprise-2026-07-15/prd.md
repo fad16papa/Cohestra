@@ -85,13 +85,13 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
 
 ### 2.3 Key User Journeys
 
-- **UJ-1. Priya provisions Ikigai Sports as a new tenant.**
-  - **Persona + context:** Priya, operations lead at Ikigai Sports, signing up after a sales demo.
-  - **Entry state:** Unauthenticated; marketing site → tenant signup.
-  - **Path:** Completes organization name, admin email, password → verifies email OTP → lands in empty tenant dashboard → completes brand accent and site name in settings → creates first **Activity**.
-  - **Climax:** Public URL `https://ikigai.cohestra.app/` (or assigned subdomain) shows Ikigai branding; Priya is **Tenant Admin**.
-  - **Resolution:** Tenant workspace ready; Platform 0 features available inside tenant scope.
-  - **Edge case:** Subdomain slug collision — system suggests alternatives before commit.
+- **UJ-1. Priya starts free on Basic (primary signup).**
+  - **Persona + context:** Priya, operations lead at Ikigai Sports, trying Cohestra without a card (P6 **Start free**).
+  - **Entry state:** Unauthenticated; marketing site → **Start free** signup (CAPTCHA + ToS/Privacy acceptance — FR-26 / FR-26a).
+  - **Path:** Organization name, **Tenant Slug**, admin email, password → email OTP verify → lands in empty **Basic** tenant dashboard (Plan=Basic, BillingStatus=Free, no Stripe, no SitePage) → creates first **Community** (within 1-community cap) and first **Activity** → publishes (within 3 published cap) → copies QR / register link.
+  - **Climax:** Public stub at `https://ikigai.cohestra.app/` shows org display name + published activities; `/register/{activity-slug}` accepts participants; Priya is sole **Tenant Admin** (1 seat).
+  - **Resolution:** Workspace ready for real ops on Basic footprint (activities, clients, registration emails, fixed report + CSV). Site Page builder / fixed SitePage and Team invites are Core+ upgrade CTAs (FR-12, FR-6).
+  - **Edge cases:** Slug collision — system suggests alternatives before commit. Direct Core/Pro trial is a secondary path (FR-19), not this journey.
 
 - **UJ-2. Priya invites Marco as a second operator (Core+).**
   - **Persona + context:** Priya (on **Core** or higher — Basic is **1 seat** and cannot invite) needs help running weekend clinics.
@@ -648,6 +648,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P12** | Comp / pilot plans | **Option A ratified** — Platform Admin `IsComplimentary` + manual Plan; no Stripe; FR-2 |
 | **C5** | Billing self-management wording | **Option A ratified** — Tenant Admin Portal in scope; custom finance back-office out; §2.2/§6 fixed |
 | **H3** | UJ-2 vs Basic 1 seat | **Option A ratified** — Basic stays 1 seat; soft-block Team invite + upgrade CTA; UJ-2 is Core+ (FR-6) |
+| **H4** | UJ-1 vs Basic stub | **Option A ratified** — rewrite UJ-1 as Basic-first Start free → stub + register; SitePage is Core+ CTA |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -705,6 +706,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-31:** Legal (P11 Option A): ToS/Privacy + acceptance log at signup; Stripe Tax deferred until verified — FR-26a
 - **A-32:** Complimentary tenants (P12 Option A): Platform Admin only; BillingStatus=Free; no FR-23 — FR-2
 - **A-33:** Basic stays 1 seat; Team invite soft-blocked with upgrade CTA; UJ-2 is Core+ (H3) — FR-6
+- **A-34:** UJ-1 is Basic-first Start free → stub public site (H4); SitePage/composer are Core+ — FR-12, FR-19
 
 ---
 
