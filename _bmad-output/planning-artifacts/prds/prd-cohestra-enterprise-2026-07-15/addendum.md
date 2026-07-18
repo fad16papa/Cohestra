@@ -1,6 +1,6 @@
 # Cohestra Enterprise PRD — Addendum
 
-Technical mechanism decisions referenced by the PRD. Architecture workflow (`bmad-architecture`) may supersede or ratify these.
+Technical mechanism decisions referenced by the PRD. Canonical architecture decisions live in `architecture/architecture-cohestra-enterprise-2026-07-15/ARCHITECTURE-SPINE.md` (status: **final**).
 
 ## Product boundary
 
@@ -9,7 +9,7 @@ Technical mechanism decisions referenced by the PRD. Architecture workflow (`bma
 | **Cohestra Enterprise** | `fad16papa/Cohestra` | Multi-tenant SaaS | This PRD |
 | **lead-generation-crm** | Separate repo | Single operator | Unchanged |
 
-## Tenancy model (proposed — ratify in architecture)
+## Tenancy model (ratified — AD-1)
 
 **Selected for v1:** Shared PostgreSQL database, shared schema, `TenantId` column on all business tables.
 
@@ -25,9 +25,9 @@ Technical mechanism decisions referenced by the PRD. Architecture workflow (`bma
 **Local development options:**
 1. `/etc/hosts` entries: `ikigai.localhost`, `tgh.localhost`
 2. Env override: `DEV_TENANT_SLUG=ikigai` when using plain `localhost`
-3. Document in README when architecture locks choice
+3. Document in README (spine AD-4 / local-dev convention)
 
-## Identity model (proposed)
+## Identity model (ratified — AD-7)
 
 Extend ASP.NET Identity:
 - `ApplicationUser` (global identity)
