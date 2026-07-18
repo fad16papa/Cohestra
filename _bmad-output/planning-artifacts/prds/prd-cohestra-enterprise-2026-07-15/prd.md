@@ -128,9 +128,9 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
 
 - **Tenant Organization** — The business entity represented by a **Tenant** (e.g., Ikigai Sports, TGH Tennis Club). Synonym: **Organization** in UI copy maps to **Tenant**.
 
-- **Tenant Admin** — Authenticated user with full administrative rights within one **Tenant** (settings, team, branding, all operational modules).
+- **Tenant Admin** — Authenticated user with full administrative rights within one **Tenant** (settings, team, billing, plan upgrades, SendGrid sender, plus all operational modules the plan allows). See FR-5.
 
-- **Tenant Member** — Authenticated user with operational rights within one **Tenant** (activities, clients, campaigns, reports) but not tenant administration.
+- **Tenant Member** — Authenticated user with operational rights within one **Tenant** for modules the **plan allows** (activities, clients, reports; campaigns if Pro; SitePage/builder if Core/Pro). No team, billing, or tenant settings. See FR-5.
 
 - **Tenant Slug** — URL-safe unique identifier for a **Tenant** (e.g., `ikigai-sports`). Used for subdomain routing `[ASSUMPTION: {slug}.cohestra.app]`.
 
@@ -217,12 +217,31 @@ An authenticated user session is bound to exactly one **Tenant** via JWT `tenant
 
 #### FR-5: Tenant roles
 
-**Tenant Admin** and **Tenant Member** roles govern access within a tenant.
+**Tenant Admin** and **Tenant Member** roles govern access within a tenant. Effective access = **role ∩ plan gates** (H5 Option A). BillingStatus / Suspended gates still apply (FR-3).
+
+**Admin-only (all plans where the capability exists):**
+- Team invite/remove (seat-gated — FR-6); tenant settings; SendGrid sender config
+- Billing / Stripe Customer Portal; plan upgrade / Checkout CTAs
+- Destructive tenant actions (archive resources to clear over-limit, etc.)
+
+**Member (Core+ seats):** ops modules the **plan allows** — activities, clients, registration reports/CSV; **campaigns** if Pro; **fixed SitePage settings** if Core; **Site Page builder** if Pro. Member does **not** get billing controls. On plan-locked features, Member sees a feature-locked message (not billing CTA); Admin sees upgrade CTA.
+
+| Capability | Tenant Admin | Tenant Member |
+|------------|:------------:|:-------------:|
+| Activities / clients / dashboard | ✓ (plan limits) | ✓ (plan limits) |
+| Reports per plan (FR-15) | ✓ | ✓ |
+| Email campaigns | Pro only | Pro only |
+| Public site admin (FR-12) | Core+ (fixed / builder) | Core+ (same as plan) |
+| Team management | ✓ (seat gate) | — |
+| Tenant settings / SendGrid sender | ✓ | — |
+| Billing / Customer Portal / upgrade Checkout | ✓ | — |
+| Plan-locked feature UI | Upgrade CTA | Feature-locked (no billing) |
 
 **Consequences (testable):**
-- **Tenant Admin** can invite/remove members, change tenant settings, manage SendGrid sender config.
-- **Tenant Member** cannot access team management or destructive tenant settings.
 - Role checks enforced server-side on every admin endpoint (not UI-only).
+- Member API calls to billing, team, or tenant settings return 403.
+- Member on Core cannot access campaign APIs; Member on Pro can.
+- Basic has no Member seats (H3); matrix applies when seats exist (Core/Pro).
 
 #### FR-6: Team invitation
 
@@ -649,6 +668,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **C5** | Billing self-management wording | **Option A ratified** — Tenant Admin Portal in scope; custom finance back-office out; §2.2/§6 fixed |
 | **H3** | UJ-2 vs Basic 1 seat | **Option A ratified** — Basic stays 1 seat; soft-block Team invite + upgrade CTA; UJ-2 is Core+ (FR-6) |
 | **H4** | UJ-1 vs Basic stub | **Option A ratified** — rewrite UJ-1 as Basic-first Start free → stub + register; SitePage is Core+ CTA |
+| **H5** | Role × plan matrix | **Option A ratified** — FR-5 matrix: Admin = money/team/settings; Member = plan-allowed ops; upgrade CTAs Admin-only |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -707,6 +727,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-32:** Complimentary tenants (P12 Option A): Platform Admin only; BillingStatus=Free; no FR-23 — FR-2
 - **A-33:** Basic stays 1 seat; Team invite soft-blocked with upgrade CTA; UJ-2 is Core+ (H3) — FR-6
 - **A-34:** UJ-1 is Basic-first Start free → stub public site (H4); SitePage/composer are Core+ — FR-12, FR-19
+- **A-35:** Role × plan (H5 Option A): Admin-only billing/team/settings; Member gets plan-allowed ops; upgrade CTAs Admin-only — FR-5
 
 ---
 
