@@ -689,6 +689,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **L5** | Spine break-glass deferred | **Option A ratified** — deferred = impersonation only; Suspend stays in v1 |
 | **L6** | Addendum FR-19–23 / cancel | **Option A ratified** — Epic 14 → FR-19–24; Portal cancel at period end |
 | **L7** | Addendum “proposed” models | **Option A ratified** — tenancy AD-1 / identity AD-7 marked ratified |
+| **L8** | A-19 unlabeled limit triad | **Option A ratified** — labeled communities / published / regs; seats called out |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -730,7 +731,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-16:** Monthly + annual billing; annual ≈ 2 months free — FR-22
 - **A-17:** Delinquency (P3): 7d PastDue daily → 21d OnHold weekly → archive; starts at `payment_failed` (trial or renewal) — FR-23
 - **A-18:** Open self-serve signup at launch — §13.7
-- **A-19:** Usage limits: Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
+- **A-19:** Usage limits (communities / published activities / regs per month): Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — seats separate (1 / 3 / 10); full table §13.4 / §13.10
 - **A-20:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
 - **A-21:** Dual status model (P1 Option A): `Tenant.Status` ops + `BillingStatus` money; access matrix in FR-3
 - **A-22:** Public site (P2 Option D): Basic stub / Core fixed SitePage / Pro builder — FR-12
