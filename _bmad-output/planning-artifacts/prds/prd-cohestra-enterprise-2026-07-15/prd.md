@@ -158,6 +158,7 @@ A prospective **Tenant Admin** can register a new **Tenant Organization** with o
 **Consequences (testable):**
 - Successful signup creates **Tenant** row, first **Tenant Admin** user, and plan per path (Basic free, or Core/Pro via Checkout — FR-19). SitePage seeded only for Core+ (FR-12).
 - **Tenant Slug** is globally unique; collision returns validation error with suggestions.
+- Slug rules **(P10 Option A):** lowercase `[a-z0-9-]`; length **3–48**; must start and end with alphanumeric; no unicode. Reserved: `www`, `api`, `admin`, `app`, `platform`, `mail`, `ftp`, `cdn`, `static`, `status`, `support`, `help`, `billing`, `cohestra`.
 - Email verification required before admin dashboard access.
 - Signup is disabled when Platform sets `registrationClosed=true` `[ASSUMPTION: sales-led tenants created by Platform Admin when self-serve disabled]`.
 - Abuse controls per FR-26 apply to all self-serve signups.
@@ -619,11 +620,14 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P7** | Basic dormancy | **Option A ratified** — 90 days idle → warn day 83 → archive day 90 (FR-25) |
 | **P8** | Abuse controls | **Option A + CAPTCHA A1 ratified** — always CAPTCHA on signup; email verify; IP + register rate limits (FR-26) |
 | **P9** | Grandfathering / list price | **Option D ratified** — defer lock until list raise; **hypothesis A** = 12 mo intro then 30-day notice |
+| **P10** | Tenant slug rules | **Option A ratified** — see FR-1 |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
 | Q10 | Billing intervals | **Monthly + annual**; annual discounted |
-| Q6–8 | Slugs, SendGrid, droplet | Confirmed per addendum / deferred deploy |
+| Q6 / **P10** | Tenant slug rules | **Option A ratified** — `[a-z0-9-]`, 3–48, reserved list (FR-1) |
+| Q7 | SendGrid | Shared platform key + per-tenant sender (addendum) — confirm in P11/P12 pass if needed |
+| Q8 | Droplet | Deferred until Francis approves production deploy |
 | **Terminology** | **Community** vs club | **Option A ratified** — **Community** official in product/pricing; "club" only as example community name in marketing |
 
 **Deferred — pricing & packaging study (before scale, not blocking MVP build):**
@@ -642,6 +646,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 ## 12. Assumptions Index
 
 - **A-1:** Subdomain routing `{slug}.cohestra.app` — §4.4 FR-11
+- **A-1b:** Slug rules (P10): lowercase `[a-z0-9-]`, 3–48, reserved list — FR-1
 - **A-2:** Shared database + `TenantId` row isolation — §4.3 FR-8
 - **A-3:** Stripe self-serve billing in MVP; Enterprise tier manual invoice — §4.7, §6.1
 - **A-4:** Tenant switcher deferred; one tenant per session — §4.2 FR-4

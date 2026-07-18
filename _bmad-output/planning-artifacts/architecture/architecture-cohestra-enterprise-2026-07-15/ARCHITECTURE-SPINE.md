@@ -141,7 +141,7 @@ flowchart TB
 | Concern | Convention |
 | --- | --- |
 | Entity naming | `Tenant`, `TenantMembership`; FK column `TenantId` (Pascal in C#, snake in DB optional per existing EF config) |
-| Slug format | Lowercase `[a-z0-9-]`, 3–48 chars; reserved: `www`, `api`, `admin`, `app`, `platform` |
+| Slug format | Lowercase `[a-z0-9-]`, 3–48 chars; start/end alphanumeric; reserved: `www`, `api`, `admin`, `app`, `platform`, `mail`, `ftp`, `cdn`, `static`, `status`, `support`, `help`, `billing`, `cohestra` |
 | JWT claims | `sub`, `tenant_id`, `role`, optional `platform_admin=true` |
 | Public API | No auth; tenant from Host only |
 | Admin API | JWT required; tenant from claim + Host alignment |
