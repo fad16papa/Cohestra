@@ -691,6 +691,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **L7** | Addendum “proposed” models | **Option A ratified** — tenancy AD-1 / identity AD-7 marked ratified |
 | **L8** | A-19 unlabeled limit triad | **Option A ratified** — labeled communities / published / regs; seats called out |
 | **L9** | Coarse reports row overstates Basic | **Option A ratified** — Basic = Fixed report + CSV; Core/Pro = Queryable + CSV |
+| **L10** | Spine missing dual dials | **Option A ratified** — AD-11: Status ∩ BillingStatus; Suspended always wins; FR-3 bound |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |

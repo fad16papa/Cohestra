@@ -8,7 +8,7 @@ scope: Tenancy spine, identity, routing, isolation — Epics 11–15 foundation
 status: final
 created: 2026-07-15
 updated: 2026-07-18
-binds: [FR-1, FR-2, FR-4, FR-5, FR-6, FR-7, FR-8, FR-9, FR-10, FR-11, FR-12, FR-13, FR-14, FR-19, FR-20, FR-21, FR-22, FR-23, FR-24]
+binds: [FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7, FR-8, FR-9, FR-10, FR-11, FR-12, FR-13, FR-14, FR-19, FR-20, FR-21, FR-22, FR-23, FR-24]
 sources:
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
@@ -120,9 +120,9 @@ flowchart TB
 
 ### AD-11 — Stripe billing with test/live environment split
 
-- **Binds:** FR-19–FR-24, §13.5 PRD
+- **Binds:** FR-3, FR-19–FR-24, §13.5 PRD
 - **Prevents:** Accidental live charges in dev; plan drift from Stripe state; silent account deletion
-- **Rule:** `BillingService` creates Checkout Sessions with `trial_period_days: 30`, **USD only**, monthly or annual Price. **Tenant Admin** manages payment method / plan / cancel via **Stripe Customer Portal** (no custom finance UI). **Cancel and downgrade apply at Stripe `current_period_end`** (FR-24); over-limit after change → `ReadOnly_OverLimit` until under caps. Webhook handler idempotent on `event.id`. `Tenant` stores `StripeCustomerId`, `StripeSubscriptionId`, `BillingStatus`, `BillingInterval`, `TrialEndsAt`, `DelinquencyStartedAt`. **Test keys** in local/CI/staging; **live keys** production only. On `invoice.payment_failed` (trial or renewal): `PastDue` for 7 days (daily notify) → `OnHold` for days 8–28 (weekly notify, read-only) → `Tenant.Status=Archived`. Jobs: `TrialReminderJob`, `PastDueNotifier`, `OnHoldNotifier`, `DelinquencyEnforcer`.
+- **Rule:** Dual dials — effective access = `Tenant.Status` ∩ `BillingStatus` (FR-3); **`Suspended` always wins** over billing. `OnHold` keeps `Status=Active` with read-only access. `BillingService` creates Checkout Sessions with `trial_period_days: 30`, **USD only**, monthly or annual Price. **Tenant Admin** manages payment method / plan / cancel via **Stripe Customer Portal** (no custom finance UI). **Cancel and downgrade apply at Stripe `current_period_end`** (FR-24); over-limit after change → `ReadOnly_OverLimit` until under caps. Webhook handler idempotent on `event.id`. `Tenant` stores `StripeCustomerId`, `StripeSubscriptionId`, `BillingStatus`, `BillingInterval`, `TrialEndsAt`, `DelinquencyStartedAt`. **Test keys** in local/CI/staging; **live keys** production only. On `invoice.payment_failed` (trial or renewal): `PastDue` for 7 days (daily notify) → `OnHold` for days 8–28 (weekly notify, read-only) → `Tenant.Status=Archived`. Jobs: `TrialReminderJob`, `PastDueNotifier`, `OnHoldNotifier`, `DelinquencyEnforcer`.
 
 ### AD-9 — Migration via default tenant backfill
 
@@ -229,7 +229,8 @@ erDiagram
 | Per-tenant SitePage FR-12–13 | `SitePageService` | AD-4, AD-6, AD-8 |
 | Platform 0 features FR-14–16 | Existing services + `TenantId` | AD-1, AD-5 |
 | Plan gates §13.4 | `PlanGateFilter` or service checks | AD-8 |
-| Stripe billing FR-19–23 | `BillingService`, `StripeWebhookController`, delinquency jobs | AD-11 |
+| Stripe billing FR-19–24 | `BillingService`, `StripeWebhookController`, Customer Portal, delinquency jobs | AD-11 |
+| Dual status / access FR-3 | Access gate = Status ∩ BillingStatus | AD-11 |
 | Trial reminders FR-21 | `TrialReminderJob` (daily) | AD-11 |
 | Delinquency lifecycle FR-23 | `PastDueNotifier`, `OnHoldNotifier`, `DelinquencyEnforcer` | AD-11 |
 
