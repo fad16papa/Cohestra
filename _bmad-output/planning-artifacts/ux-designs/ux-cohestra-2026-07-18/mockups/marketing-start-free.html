@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cohestra — Marketing Start free</title>
+  <!-- Spine: DESIGN Brand & Style, MarketingHero; EXPERIENCE Flow A step 1; IA Marketing -->
+  <style>
+    :root {
+      --primary: #143D4A;
+      --accent: #0D9488;
+      --accent-fg: #042F2E;
+      --mist: #F0F4F7;
+      --mist-deep: #E2EAF0;
+      --ink: #0C1B24;
+      --ink-muted: #5A6B75;
+      --line: #C5D0D8;
+      --surface: #FFFFFF;
+      --display: "Sora", "Avenir Next", "Nunito Sans", sans-serif;
+      --body: "Source Sans 3", "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--body);
+      color: var(--ink);
+      background: linear-gradient(145deg, var(--mist) 0%, var(--mist-deep) 55%, #D5E4EC 100%);
+      min-height: 100vh;
+    }
+    .chrome {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 20px 24px 64px;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 72px;
+    }
+    .wordmark {
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: -0.03em;
+      color: var(--primary);
+    }
+    nav a { color: var(--ink-muted); text-decoration: none; margin-left: 20px; font-size: 15px; }
+    .hero { max-width: 640px; padding-top: 24px; }
+    .brand-hero {
+      font-family: var(--display);
+      font-size: clamp(40px, 7vw, 56px);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      color: var(--primary);
+      margin: 0 0 16px;
+    }
+    .lede {
+      font-size: 18px;
+      line-height: 1.5;
+      color: var(--ink-muted);
+      max-width: 36ch;
+      margin: 0 0 28px;
+    }
+    .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-family: var(--body);
+      font-weight: 600;
+      font-size: 16px;
+      text-decoration: none;
+      border: 1px solid transparent;
+    }
+    .btn-primary { background: var(--accent); color: var(--accent-fg); }
+    .btn-secondary { background: transparent; color: var(--primary); border-color: var(--line); }
+    .note { margin-top: 16px; font-size: 14px; color: var(--ink-muted); }
+    .atmosphere {
+      position: fixed;
+      inset: auto -10% -20% 40%;
+      height: 55vh;
+      background: radial-gradient(ellipse at center, rgba(13,148,136,0.12), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .chrome > * { position: relative; z-index: 1; }
+  </style>
+</head>
+<body>
+  <div class="atmosphere" aria-hidden="true"></div>
+  <div class="chrome">
+    <nav>
+      <div class="wordmark">Cohestra</div>
+      <div>
+        <a href="#">Pricing</a>
+        <a href="#">Log in</a>
+      </div>
+    </nav>
+    <section class="hero">
+      <h1 class="brand-hero">Cohestra</h1>
+      <p class="lede">Turn community events into one client list — without spreadsheet chaos.</p>
+      <div class="ctas">
+        <a class="btn btn-primary" href="#">Start free</a>
+        <a class="btn btn-secondary" href="#">Start Core trial</a>
+      </div>
+      <p class="note">Basic is free forever. No card required.</p>
+    </section>
+  </div>
+</body>
+</html>

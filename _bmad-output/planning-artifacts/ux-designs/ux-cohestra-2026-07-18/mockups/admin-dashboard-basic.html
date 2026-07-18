@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cohestra — Admin dashboard (Basic)</title>
+  <!-- Spine: DESIGN PlanBadge; EXPERIENCE Flow A step 3; State Basic empty / dashboard -->
+  <style>
+    :root {
+      --primary: #143D4A;
+      --accent: #0D9488;
+      --accent-fg: #042F2E;
+      --mist: #F0F4F7;
+      --ink: #0C1B24;
+      --ink-muted: #5A6B75;
+      --line: #C5D0D8;
+      --surface: #FFFFFF;
+      --plan-basic: #64748B;
+      --display: "Sora", "Avenir Next", "Nunito Sans", sans-serif;
+      --body: "Source Sans 3", "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--mist); }
+    .app { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
+    aside {
+      background: var(--surface);
+      border-right: 1px solid var(--line);
+      padding: 20px 16px;
+    }
+    .wordmark {
+      font-family: var(--display);
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -0.03em;
+      margin-bottom: 24px;
+    }
+    .nav a {
+      display: block;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: var(--ink-muted);
+      text-decoration: none;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+    .nav a.active { background: #E6F6F4; color: var(--primary); font-weight: 600; }
+    .nav a.locked { opacity: 0.55; }
+    main { display: flex; flex-direction: column; }
+    .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .tenant { font-weight: 600; color: var(--primary); }
+    .badges { display: flex; gap: 8px; align-items: center; }
+    .badge {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: var(--plan-basic);
+      color: #fff;
+      text-transform: uppercase;
+    }
+    .content { padding: 28px 24px; }
+    h1 {
+      font-family: var(--display);
+      font-size: 24px;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+      color: var(--primary);
+    }
+    .muted { color: var(--ink-muted); margin: 0 0 24px; }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 520px;
+    }
+    .panel h2 { font-family: var(--display); font-size: 18px; margin: 0 0 8px; }
+    .btn {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: var(--accent);
+      color: var(--accent-fg);
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .upgrade {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      font-size: 14px;
+      color: var(--ink-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="wordmark">Cohestra</div>
+      <nav class="nav">
+        <a class="active" href="#">Dashboard</a>
+        <a href="#">Activities</a>
+        <a href="#">Clients</a>
+        <a href="#">Reports</a>
+        <a class="locked" href="#">Campaigns</a>
+        <a href="#">Site</a>
+        <a href="#">Settings</a>
+      </nav>
+    </aside>
+    <main>
+      <header class="top">
+        <div class="tenant">Ikigai Sports</div>
+        <div class="badges">
+          <span class="badge">Basic</span>
+          <span style="color:var(--ink-muted);font-size:14px;">Priya · Admin</span>
+        </div>
+      </header>
+      <div class="content">
+        <h1>Welcome, Priya</h1>
+        <p class="muted">Your Basic workspace is ready. Create a community and publish an activity to go live on your stub page.</p>
+        <div class="panel">
+          <h2>Get your first registration</h2>
+          <p class="muted" style="margin:0">1 community · up to 3 published activities · 150 regs/mo</p>
+          <a class="btn" href="#">Create activity</a>
+          <div class="upgrade">Need a teammate or a branded Site Page? Upgrade to Core.</div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

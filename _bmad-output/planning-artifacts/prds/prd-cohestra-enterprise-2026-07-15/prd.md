@@ -524,7 +524,7 @@ All **self-serve** tenant signups (Basic and direct Core/Pro) require:
 
 | Control | Rule |
 |---------|------|
-| **CAPTCHA** | **Always** on signup form (e.g. Cloudflare Turnstile / hCaptcha) — A1 |
+| **CAPTCHA** | **Always** on signup form — **Google reCAPTCHA** (standard, widely used, secured) with accessible challenge path — UX ratified 2026-07-18 |
 | **Email verification** | Before dashboard access (FR-1) |
 | **Signup rate limit** | Max **5** successful signups per IP per hour; **20** per IP per day `[ASSUMPTION: tunable]` |
 | **Public registration rate limit** | Per-tenant burst limit on `/register` (e.g. 60/min) → HTTP 429 `[ASSUMPTION: tunable]` |
@@ -742,7 +742,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-25:** No seat add-ons in v1 (P5); more seats via tier upgrade only
 - **A-26:** Signup paths (P6): Start free primary; direct Core/Pro trial secondary — FR-19
 - **A-27:** Basic dormancy (P7): 90 days no login and no registrations → archive (FR-25)
-- **A-28:** Abuse controls (P8): CAPTCHA always on signup; IP signup limits; per-tenant register rate limit — FR-26
+- **A-28:** Abuse controls (P8): Google reCAPTCHA always on signup (accessible path); IP signup limits; per-tenant register rate limit — FR-26
 - **A-29:** Grandfathering (P9 Option D): policy unlocked until list raise; working hypothesis A (12 mo intro) — §11 Q2
 - **A-30:** Legal (P11 Option A): ToS/Privacy + acceptance log at signup; Stripe Tax deferred until verified — FR-26a
 - **A-31:** Complimentary tenants (P12 Option A): Platform Admin only; BillingStatus=Free; no FR-23 — FR-2
@@ -943,7 +943,7 @@ Full pricing page copy: `docs/marketing/pricing-tiers.md`
 | Next skill | Deliverable | Status |
 |------------|-------------|--------|
 | `bmad-architecture` | Tenancy spine — isolation, routing, identity, migration | **Done** — `architecture/architecture-cohestra-enterprise-2026-07-15/` |
-| `bmad-ux` | Enterprise journeys — signup, team invite, platform admin | **Draft** — `ux-designs/ux-cohestra-2026-07-18/` (DESIGN + EXPERIENCE); brand open questions remain |
+| `bmad-ux` | Enterprise journeys — signup, team invite, platform admin | **Final** — `ux-designs/ux-cohestra-2026-07-18/` (Gathered Clarity brand + EXPERIENCE + `mockups/`) |
 | `bmad-create-epics-and-stories` | Epic 11–15 breakdown from this PRD | Pending |
 | `bmad-market-research` | List price / grandfathering (Q2/P9 — §13.9) | **Draft done** — research note; pilot WTP + list lock pending. Q5 limits ratified separately. |
 | `bmad-check-implementation-readiness` | Align PRD + architecture + UX before dev | After UX |

@@ -1,20 +1,21 @@
 ---
 name: Cohestra Enterprise
-status: draft
+status: final
 created: 2026-07-18
 updated: 2026-07-18
 sources:
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
   - {planning_artifacts}/architecture/architecture-cohestra-enterprise-2026-07-15/ARCHITECTURE-SPINE.md
-  - {planning_artifacts}/ux-designs/ux-lead-generation-crm-2026-06-14/EXPERIENCE.md
   - docs/marketing/pricing-tiers.md
 design: ./DESIGN.md
 ---
 
 # Cohestra Enterprise — Experience Spine
 
-> Multi-tenant SaaS UX. Behavioral delta over Platform 0 (`ux-lead-generation-crm-2026-06-14`). Visual tokens → `{DESIGN.md}`. Spines win on conflict.
+> Multi-tenant SaaS UX. Visual identity → `DESIGN.md` (**Gathered Clarity** brand kit). Platform 0 supplies inherited *ops module behaviors* only — not brand. Spines win on conflict with mocks.
+
+→ Key screens: `mockups/marketing-start-free.html` · `mockups/basic-stub-home.html` · `mockups/admin-dashboard-basic.html` · `mockups/team-seat-gate.html` · `mockups/platform-admin-suspend.html`
 
 ## Foundation
 
@@ -28,13 +29,15 @@ design: ./DESIGN.md
 | Public registration | Participant (Elena) | Mobile-first `/register/{activity-slug}` |
 | Platform Admin | Cohestra operator | Sparse console — lifecycle + audit |
 
-**UI system:** shadcn/ui + Tailwind + next-themes. Brand layer in `DESIGN.md` (inherits Platform 0 Warm Utility).
+**UI system:** shadcn/ui + Tailwind + next-themes. Brand layer = Cohestra **Gathered Clarity** in `DESIGN.md` (not Platform 0 forest green).
 
 **Tenancy:** Session bound to one tenant (`tenant_id` JWT). No tenant switcher in v1. Subdomain resolves public + admin context.
 
 **Roles:** Tenant Admin · Tenant Member · Platform Admin — effective access = **role ∩ plan ∩ Status ∩ BillingStatus** (PRD FR-3, FR-5).
 
-**Refresh model:** Inherit Platform 0 dashboard polling. Billing banners refresh on navigation + webhook-driven soft refresh `[ASSUMPTION]`.
+**Abuse / signup:** Google **reCAPTCHA** on all self-serve signups (widely used, secured); accessible challenge path required (FR-26).
+
+**Refresh model:** Inherit Platform 0 dashboard polling. Billing banners refresh on navigation + webhook-driven soft refresh.
 
 ## Information Architecture
 
@@ -138,14 +141,15 @@ Behavioral. Visuals in `DESIGN.md`.
 
 | Component | Behavioral rules |
 |-----------|------------------|
-| **PlanBadge** | Always visible to Tenant Admin in top bar; Members may see plan name read-only `[ASSUMPTION]` |
-| **BillingBanner** | PastDue: daily settle CTA. OnHold: read-only mode + Portal. Trial last 7 days: daily reminder + trial end date. Suspended: login blocked (not a banner inside app). |
+| **PlanBadge** | Visible to **Tenant Admin and Tenant Member** in top bar; Member view is **read-only** (no billing affordance) |
+| **SponsoredBadge** | When `IsComplimentary=true`, show **Sponsored** beside PlanBadge (Admin + Member) |
+| **BillingBanner** | PastDue: daily settle CTA. OnHold: read-only mode + Portal. Trial last 7 days: daily reminder + trial end date. Suspended: login blocked (not a banner inside app). Admin-only Portal CTA. |
 | **UpgradePanel** | Replaces locked module body. Admin → Checkout/upgrade. Member → feature-locked, no billing. |
 | **SeatGate** | Soft-block invite when `active + pending ≥ seat cap`. Basic: disable + upgrade Core. |
 | **StubHome** | No SitePage entity; list published activities only; empty state: "No published activities yet." |
 | **LimitMeter** | Communities / published / regs — warn ≥80%, block at 100% with clear which dial |
 | **ToSCheckbox** | Signup blocked until checked; versions logged (FR-26a) |
-| **CaptchaGate** | Always on self-serve signup (FR-26) |
+| **CaptchaGate** | Google reCAPTCHA always on self-serve signup (FR-26); must expose accessible challenge path |
 
 Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless gated above.
 
@@ -163,7 +167,7 @@ Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless 
 | Suspended | Login blocked; public maintenance |
 | Archived | Public 404; admin blocked |
 | Plan-locked module | UpgradePanel (not empty table) |
-| Complimentary (P12) | No delinquency banners; PlanBadge may show plan without Stripe `[ASSUMPTION: "Sponsored" label optional]` |
+| Complimentary (P12) | No delinquency banners; **SponsoredBadge** + PlanBadge (plan without Stripe) |
 
 ## Interaction Primitives
 
@@ -179,7 +183,7 @@ Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless 
 - BillingBanner is not color-only — text + icon + link.
 - PlanBadge has text label, not color alone.
 - Focus order: banner → main; Esc closes dialogs.
-- CAPTCHA must offer accessible alternative path per provider `[ASSUMPTION: provider choice in implementation]`.
+- Google reCAPTCHA must offer an accessible challenge path (not invisible-only).
 
 ## Responsive & Platform
 
@@ -234,14 +238,16 @@ Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless 
 
 ## Inspiration & Anti-patterns
 
-**Borrow posture from:** calm ops tools (Linear density discipline without purple glow); Stripe-hosted money UI rather than reinventing invoices.
+**Borrow posture from:** calm ops density without purple glow; Stripe-hosted money UI rather than reinventing invoices; mist/atmosphere over flat white.
 
-**Anti-patterns:** Dashboard-first marketing hero; Basic stub with stats/promos; Member upgrade Checkout; Suspend-as-collections; card walls for activity lists on stub.
+**Anti-patterns:** Dashboard-first marketing hero; Basic stub with stats/promos; Member upgrade Checkout; Suspend-as-collections; card walls for activity lists on stub; Platform 0 forest green as Cohestra brand.
 
-## Open questions (for stakeholder)
+## Ratified UX decisions (2026-07-18)
 
-1. Confirm keep Platform 0 forest-green brand for Enterprise vs new Cohestra marketing identity.
-2. Should Members see PlanBadge read-only?
-3. Complimentary tenants: show "Sponsored" badge?
-4. CAPTCHA provider (hCaptcha / Turnstile / other) for accessible path.
-5. Key-screen HTML mocks needed before epics? (spine-only default)
+| # | Decision |
+|---|----------|
+| Brand | **New Cohestra kit** — Gathered Clarity (DESIGN.md) |
+| PlanBadge | Members see it **read-only** |
+| Complimentary | **Sponsored** badge yes |
+| CAPTCHA | **Google reCAPTCHA** (standard, widely used, secured) + accessible path |
+| Key screens | **Original HTML mocks** in `mockups/` (this workspace) |

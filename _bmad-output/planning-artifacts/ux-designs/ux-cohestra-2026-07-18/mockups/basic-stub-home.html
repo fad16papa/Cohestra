@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ikigai — Basic stub home</title>
+  <!-- Spine: DESIGN StubShell; EXPERIENCE Flow A climax; Public stub IA -->
+  <style>
+    :root {
+      --primary: #143D4A;
+      --accent: #0D9488;
+      --stub: #F4F7F9;
+      --ink: #0C1B24;
+      --ink-muted: #5A6B75;
+      --line: #C5D0D8;
+      --display: "Sora", "Avenir Next", "Nunito Sans", sans-serif;
+      --body: "Source Sans 3", "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--body);
+      color: var(--ink);
+      background: var(--stub);
+    }
+    .phone {
+      max-width: 390px;
+      margin: 24px auto;
+      min-height: 720px;
+      background: var(--stub);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 28px 22px 40px;
+    }
+    h1 {
+      font-family: var(--display);
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px;
+      color: var(--primary);
+    }
+    .sub { color: var(--ink-muted); font-size: 15px; margin: 0 0 28px; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { border-top: 1px solid var(--line); }
+    li:last-child { border-bottom: 1px solid var(--line); }
+    a {
+      display: block;
+      padding: 16px 0;
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 17px;
+    }
+    a span { display: block; font-weight: 400; color: var(--ink-muted); font-size: 14px; margin-top: 4px; }
+    .foot { margin-top: 32px; font-size: 12px; color: var(--ink-muted); }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <h1>Ikigai Sports</h1>
+    <p class="sub">Upcoming activities</p>
+    <ul>
+      <li>
+        <a href="#">Sunday clinic
+          <span>Register →</span>
+        </a>
+      </li>
+      <li>
+        <a href="#">Youth open play
+          <span>Register →</span>
+        </a>
+      </li>
+    </ul>
+    <p class="foot">Powered by Cohestra</p>
+  </div>
+</body>
+</html>

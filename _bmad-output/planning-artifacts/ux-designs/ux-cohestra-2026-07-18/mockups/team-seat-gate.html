@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cohestra — Team SeatGate (Basic)</title>
+  <!-- Spine: DESIGN SeatGate UpgradePanel; EXPERIENCE Flow B edge; FR-6 H3 -->
+  <style>
+    :root {
+      --primary: #143D4A;
+      --accent: #0D9488;
+      --accent-fg: #042F2E;
+      --mist: #F0F4F7;
+      --ink: #0C1B24;
+      --ink-muted: #5A6B75;
+      --line: #C5D0D8;
+      --surface: #FFFFFF;
+      --raised: #F7FAFB;
+      --plan-basic: #64748B;
+      --display: "Sora", "Avenir Next", "Nunito Sans", sans-serif;
+      --body: "Source Sans 3", "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--mist); }
+    .shell { max-width: 720px; margin: 40px auto; padding: 0 20px; }
+    .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    h1 { font-family: var(--display); font-size: 24px; margin: 0; color: var(--primary); letter-spacing: -0.02em; }
+    .badge { font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 4px; background: var(--plan-basic); color: #fff; text-transform: uppercase; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--ink-muted); }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 16px;
+      margin-bottom: 14px;
+      background: #f3f5f7;
+      color: var(--ink-muted);
+    }
+    button.disabled {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #cbd5e1;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: not-allowed;
+    }
+    .gate {
+      margin-top: 20px;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .gate h2 { font-family: var(--display); font-size: 18px; margin: 0 0 8px; color: var(--primary); }
+    .gate p { margin: 0 0 14px; color: var(--ink-muted); line-height: 1.45; }
+    .btn {
+      display: inline-block;
+      padding: 10px 16px;
+      background: var(--accent);
+      color: var(--accent-fg);
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .member { margin-top: 24px; font-size: 14px; color: var(--ink-muted); }
+    .member strong { color: var(--ink); }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="top">
+      <h1>Team</h1>
+      <span class="badge">Basic</span>
+    </div>
+    <div class="card">
+      <label>Email</label>
+      <input type="email" value="marco@example.com" disabled />
+      <label>Role</label>
+      <select disabled>
+        <option>Tenant Member</option>
+      </select>
+      <button class="disabled" type="button" disabled>Send invite</button>
+      <div class="gate">
+        <h2>Upgrade to Core for a second seat</h2>
+        <p>Basic includes 1 operator seat. Invite teammates on Core (3 seats) or Pro (10).</p>
+        <a class="btn" href="#">Upgrade to Core</a>
+      </div>
+      <p class="member"><strong>Priya</strong> — Tenant Admin (you)</p>
+    </div>
+  </div>
+</body>
+</html>

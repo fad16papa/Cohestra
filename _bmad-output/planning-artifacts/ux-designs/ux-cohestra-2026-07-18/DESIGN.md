@@ -1,49 +1,53 @@
 ---
 name: Cohestra Enterprise
-description: Multi-tenant enterprise visual identity — extends Platform 0 Warm Utility (sage/shadcn) with plan, billing, and platform-admin chrome.
-status: draft
+description: Gathered Clarity — Cohestra multi-tenant brand kit (ink lagoon, teal signal, cool mist). Distinct from Platform 0 forest green.
+status: final
 created: 2026-07-18
 updated: 2026-07-18
 theme:
   modes: [light, dark, system]
-  default: system
+  default: light
   implementation: class-based (.dark on html) via next-themes
 sources:
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - {planning_artifacts}/architecture/architecture-cohestra-enterprise-2026-07-15/ARCHITECTURE-SPINE.md
-  - {planning_artifacts}/ux-designs/ux-lead-generation-crm-2026-06-14/DESIGN.md
   - docs/marketing/pricing-tiers.md
-inherits_visual:
-  - {planning_artifacts}/ux-designs/ux-lead-generation-crm-2026-06-14/DESIGN.md
 colors:
-  # Inherited Platform 0 brand layer (Warm Utility). Unlisted tokens inherit shadcn.
-  primary: '#2D6A4F'
-  primary-foreground: '#FFFFFF'
-  accent: '#40916C'
-  accent-foreground: '#FFFFFF'
-  primary-dark: '#52B788'
-  primary-foreground-dark: '#081C15'
-  accent-dark: '#74C69D'
-  accent-foreground-dark: '#081C15'
-  surface-warm: '#FAFAF8'
-  surface-warm-dark: '#1A1F1C'
-  border-warm: '#E8E4DF'
-  border-warm-dark: '#2D3330'
-  text-warm: '#1A1714'
-  text-warm-dark: '#F2F0EC'
-  text-muted-warm: '#6B6560'
-  text-muted-warm-dark: '#A8A29E'
-  background-light: '#FFFFFF'
-  background-dark: '#121816'
-  card-light: '#FAFAF8'
-  card-dark: '#1E2421'
-  # Enterprise additions
-  plan-basic: '#78716C'
+  # Gathered Clarity — Cohestra brand kit (v1)
+  primary: '#143D4A'
+  primary-foreground: '#F7FBFC'
+  accent: '#0D9488'
+  accent-foreground: '#042F2E'
+  signal: '#0F766E'
+  signal-foreground: '#F0FDFA'
+  mist: '#F0F4F7'
+  mist-deep: '#E2EAF0'
+  ink: '#0C1B24'
+  ink-muted: '#5A6B75'
+  line: '#C5D0D8'
+  surface: '#FFFFFF'
+  surface-raised: '#F7FAFB'
+  # Dark mode paired tokens
+  primary-dark: '#5EEAD4'
+  primary-foreground-dark: '#042F2E'
+  accent-dark: '#2DD4BF'
+  accent-foreground-dark: '#042F2E'
+  mist-dark: '#0C1B24'
+  mist-deep-dark: '#12263A'
+  ink-dark: '#E8F1F5'
+  ink-muted-dark: '#94A8B4'
+  line-dark: '#2A3F4D'
+  surface-dark: '#102029'
+  surface-raised-dark: '#163040'
+  # Plan + status
+  plan-basic: '#64748B'
   plan-basic-foreground: '#FFFFFF'
-  plan-core: '#2563EB'
+  plan-core: '#0284C7'
   plan-core-foreground: '#FFFFFF'
-  plan-pro: '#2D6A4F'
-  plan-pro-foreground: '#FFFFFF'
+  plan-pro: '#0D9488'
+  plan-pro-foreground: '#042F2E'
+  sponsored: '#7C3AED'
+  sponsored-foreground: '#FFFFFF'
   banner-warn: '#FEF3C7'
   banner-warn-foreground: '#92400E'
   banner-warn-dark: '#422006'
@@ -52,55 +56,82 @@ colors:
   banner-danger-foreground: '#991B1B'
   banner-danger-dark: '#450A0A'
   banner-danger-foreground-dark: '#FECACA'
-  stub-surface: '#F5F4F1'
-  stub-surface-dark: '#1A1F1C'
+  stub-surface: '#F4F7F9'
+  stub-surface-dark: '#12263A'
+  # Lead status (ops semantics — keep distinct from brand accent)
+  status-new: '#0284C7'
+  status-new-foreground: '#FFFFFF'
+  status-contacted: '#D97706'
+  status-contacted-foreground: '#FFFFFF'
+  status-active: '#0D9488'
+  status-active-foreground: '#042F2E'
+  status-inactive: '#64748B'
+  status-inactive-foreground: '#FFFFFF'
+  whatsapp: '#25D366'
+  whatsapp-foreground: '#FFFFFF'
 typography:
   display:
-    fontFamily: 'Geist Sans'
-    fontSize: 32px
-    fontWeight: '600'
-    lineHeight: '1.2'
-    letterSpacing: -0.02em
+    fontFamily: 'Sora'
+    fontSize: 36px
+    fontWeight: '700'
+    lineHeight: '1.15'
+    letterSpacing: -0.03em
   display-sm:
-    fontFamily: 'Geist Sans'
+    fontFamily: 'Sora'
     fontSize: 24px
-    fontWeight: '600'
+    fontWeight: '650'
     lineHeight: '1.25'
-    letterSpacing: -0.01em
+    letterSpacing: -0.02em
   section:
-    fontFamily: 'Geist Sans'
+    fontFamily: 'Sora'
     fontSize: 18px
     fontWeight: '600'
     lineHeight: '1.35'
+  marketing-display:
+    fontFamily: 'Sora'
+    fontSize: 48px
+    fontWeight: '700'
+    lineHeight: '1.08'
+    letterSpacing: -0.035em
   public-hero:
-    fontFamily: 'Geist Sans'
+    fontFamily: 'Sora'
     fontSize: 28px
     fontWeight: '700'
     lineHeight: '1.15'
     letterSpacing: -0.02em
-  marketing-display:
-    fontFamily: 'Geist Sans'
-    fontSize: 40px
-    fontWeight: '700'
-    lineHeight: '1.1'
-    letterSpacing: -0.03em
+  body:
+    fontFamily: 'Source Sans 3'
+    fontSize: 16px
+    fontWeight: '400'
+    lineHeight: '1.5'
+  label:
+    fontFamily: 'Source Sans 3'
+    fontSize: 13px
+    fontWeight: '600'
+    lineHeight: '1.35'
+    letterSpacing: 0.02em
 rounded:
   sm: 4px
   md: 8px
   lg: 12px
   xl: 16px
-  full: 9999px
 spacing:
   public-section: 32px
   public-field-gap: 20px
   admin-row-height: 44px
-  admin-sidebar-width: 240px
+  admin-sidebar-width: 248px
   banner-padding-y: 12px
   stub-max-width: 640px
+  marketing-gutter: 24px
 components:
   button-primary:
-    background: '{colors.primary}'
-    foreground: '{colors.primary-foreground}'
+    background: '{colors.accent}'
+    foreground: '{colors.accent-foreground}'
+    radius: '{rounded.md}'
+  button-secondary:
+    background: 'transparent'
+    foreground: '{colors.primary}'
+    border: '1px solid {colors.line}'
     radius: '{rounded.md}'
   plan-badge-basic:
     background: '{colors.plan-basic}'
@@ -114,6 +145,10 @@ components:
     background: '{colors.plan-pro}'
     foreground: '{colors.plan-pro-foreground}'
     radius: '{rounded.sm}'
+  sponsored-badge:
+    background: '{colors.sponsored}'
+    foreground: '{colors.sponsored-foreground}'
+    radius: '{rounded.sm}'
   billing-banner-warn:
     background-light: '{colors.banner-warn}'
     foreground-light: '{colors.banner-warn-foreground}'
@@ -125,101 +160,94 @@ components:
     background-dark: '{colors.banner-danger-dark}'
     foreground-dark: '{colors.banner-danger-foreground-dark}'
   upgrade-panel:
-    background-light: '{colors.surface-warm}'
-    background-dark: '{colors.card-dark}'
-    border-light: '1px solid {colors.border-warm}'
-    border-dark: '1px solid {colors.border-warm-dark}'
+    background-light: '{colors.surface-raised}'
+    background-dark: '{colors.surface-raised-dark}'
+    border-light: '1px solid {colors.line}'
+    border-dark: '1px solid {colors.line-dark}'
     radius: '{rounded.lg}'
   stub-shell:
     background-light: '{colors.stub-surface}'
     background-dark: '{colors.stub-surface-dark}'
     maxWidth: '{spacing.stub-max-width}'
     radius: '{rounded.lg}'
+  marketing-hero:
+    background: 'linear-gradient(145deg, {colors.mist} 0%, {colors.mist-deep} 55%, #D5E4EC 100%)'
 ---
 
 # Cohestra Enterprise — Design Spine
 
-> Extends Platform 0 **Warm Utility** (`ux-lead-generation-crm-2026-06-14/DESIGN.md`). This file owns enterprise deltas only. Spines win on conflict with mocks.
+> **Gathered Clarity** — Cohestra’s own brand kit. Not Platform 0 forest green. Spines win on conflict with mocks.
+
+→ Key screens: `mockups/marketing-start-free.html`, `mockups/basic-stub-home.html`, `mockups/admin-dashboard-basic.html`, `mockups/team-seat-gate.html`, `mockups/platform-admin-suspend.html`
 
 ## Brand & Style
 
-**Cohestra Enterprise** is the multi-tenant SaaS product. Visual posture stays **Warm Utility** — calm community operations, not a sales CRM war room — with clearer **plan and billing** signals so Tenant Admins always know which tier they are on.
-
-Genres in one universe:
+**Cohestra** gathers community activity into one clear signal. Visual posture: **Gathered Clarity** — cool mist atmosphere, ink lagoon authority, teal action. Feels operational and welcoming; never sales-CRM purple, never cream-and-terracotta editorial, never broadsheet.
 
 | Genre | Feel |
 |-------|------|
-| Marketing / signup (`cohestra.app`) | Clear freemium ladder; **Start free** is the hero CTA |
-| Tenant admin (subdomain) | Same Warm Utility dashboard as Platform 0 + plan badge + billing banners |
-| Public tenant home | **Basic stub** (minimal) · **Core fixed SitePage** · **Pro builder** |
-| Public registration | Unchanged Platform 0 mobile-first welcome |
-| Platform Admin | Sparse ops console — denser tables, muted chrome, no marketing flair |
+| Marketing (`cohestra.app`) | Full-bleed mist gradient hero; **Cohestra** as hero-level brand; one headline; Start free primary |
+| Tenant admin | Quiet ink chrome; teal primary actions; PlanBadge always visible |
+| Basic stub | Minimal list — intentionally quieter than Core SitePage |
+| Public registration | Same brand tokens; mobile-first; thumb-friendly |
+| Platform Admin | Denser, muted — ops console, not marketing |
 
-`[ASSUMPTION]` Enterprise keeps Platform 0 forest-green primary until a dedicated Cohestra brand kit is supplied. Typography uses **Geist Sans** (shadcn default) for display — Platform 0 Inter overrides are **not** carried forward `[ASSUMPTION: refine if brand kit arrives]`.
+**Typography:** **Sora** (display / UI titles) + **Source Sans 3** (body / tables). Do not use Inter, Roboto, or Arial as brand faces.
 
-**Do not** introduce purple/indigo SaaS gradients, terracotta-cream editorial kits, or broadsheet newspaper layouts for v1.
+**Theme default:** Light (marketing-led). Dark + System supported for admin/public app chrome.
 
 ## Colors
 
-Inherited: forest primary, accent green, warm surfaces, Lead Status, WhatsApp — see Platform 0 DESIGN.md.
+- **Ink lagoon** `{colors.primary}` — nav active, headings, authority
+- **Teal signal** `{colors.accent}` — primary CTAs, focus, success-adjacent actions
+- **Cool mist** `{colors.mist}` → `{colors.mist-deep}` — atmospheric canvas / marketing hero gradient
+- **Ink / muted** — body and secondary text
+- **Plan badges** — Basic slate · Core sky · Pro teal
+- **Sponsored** `{colors.sponsored}` — complimentary tenants only (small badge beside PlanBadge)
+- **Billing banners** — warn / danger pairs (light + dark)
+- Lead Status + WhatsApp tokens remain semantic, not decorative brand accents
 
-Enterprise additions:
-
-- **Plan badges** — `{colors.plan-basic}` / `{colors.plan-core}` / `{colors.plan-pro}` — small, quiet, never competing with primary CTAs
-- **Billing banners** — warn (PastDue / trial ending) and danger (OnHold / Suspended public maintenance) tokens above
-- **Stub surface** — slightly cooler warm canvas than admin cards so Basic public home reads as “simple list,” not a designed site
+Avoid: purple SaaS gradients, glow stacks, terracotta-cream kits, pure black dark mode.
 
 ## Typography
 
-Body/labels inherit Geist Sans from shadcn. Enterprise uses:
-
-- `{typography.display}` / `{typography.display-sm}` — admin titles
-- `{typography.public-hero}` — Core/Pro SitePage and registration hero
-- `{typography.marketing-display}` — apex marketing only (`cohestra.app`)
-
-Basic stub uses `{typography.display-sm}` for org name — no marketing-display on stub.
+| Token | Use |
+|-------|-----|
+| `{typography.marketing-display}` | Apex hero brand/headline |
+| `{typography.display}` / `display-sm` | Admin page titles |
+| `{typography.public-hero}` | Stub org name, SitePage hero, registration title |
+| `{typography.body}` / `label` | Forms, tables, microcopy |
 
 ## Layout & Spacing
 
-Inherit Platform 0 admin sidebar width and public form max-width.
-
-Enterprise deltas:
-
-- **BillingBanner** — full-bleed under top bar; `{spacing.banner-padding-y}` vertical padding; single line + one CTA on `sm`
-- **Stub home** — centered column `{spacing.stub-max-width}`; activity list as plain links, not cards
-- **UpgradePanel** — replaces locked modules (campaigns, builder, Team invite on Basic); one headline, one sentence, one primary upgrade CTA
+- Marketing: one composition first viewport — brand, one headline, one sentence, CTA group, atmospheric plane (no stats strip)
+- Admin sidebar `{spacing.admin-sidebar-width}`
+- BillingBanner full-bleed under top bar
+- Stub max width `{spacing.stub-max-width}`; activity links not cards
 
 ## Elevation & Depth
 
-Inherit Platform 0: light borders, no multi-layer shadows. Billing banners are flat color bands, not floating toasts for PastDue/OnHold (Toast only for transient success/errors).
+Borders via `{colors.line}`; no multi-layer shadows. Atmosphere from mist gradients, not drop shadows.
 
 ## Shapes
 
-Inherit `{rounded.md}` buttons and `{rounded.lg}` panels. Plan badges use `{rounded.sm}` (not pill-full) to avoid “feature chip” clutter.
+`{rounded.md}` controls; `{rounded.sm}` badges (not pill-full clusters); `{rounded.lg}` panels.
 
 ## Components
 
-| Component | Visual contract |
-|-----------|-----------------|
-| **PlanBadge** | `{components.plan-badge-*}`; shows Basic / Core / Pro / Enterprise next to tenant name in top bar |
-| **BillingBanner** | Warn or danger tokens; always includes one text link/button (Customer Portal or upgrade) |
-| **UpgradePanel** | `{components.upgrade-panel}`; Admin sees Checkout CTA; Member sees feature-locked copy without billing controls (FR-5) |
-| **StubShell** | `{components.stub-shell}`; org display name + published activity links only |
-| **SeatGate** | Disabled invite control + short reason; primary CTA “Upgrade to Core” for Tenant Admin |
-
-Platform 0 components (RegistrationForm, ActivityHero, StatusBadge, etc.) unchanged unless plan-gated (hide Campaigns nav on Basic/Core).
+| Component | Contract |
+|-----------|----------|
+| **PlanBadge** | Visible to Admin and Member (Member read-only) |
+| **SponsoredBadge** | When `IsComplimentary`; sits beside PlanBadge |
+| **BillingBanner** | Warn/danger; one CTA (Portal or upgrade) |
+| **UpgradePanel** | Admin → Checkout; Member → feature-locked, no billing |
+| **SeatGate** | Disabled invite + upgrade reason |
+| **StubShell** | Org name + published activity links |
+| **CaptchaGate** | Google reCAPTCHA on signup (accessible challenge path) |
+| **MarketingHero** | `{components.marketing-hero}` full-bleed mist plane |
 
 ## Do's and Don'ts
 
-**Do**
+**Do:** Lead with the Cohestra wordmark on marketing; keep Basic stub quiet; show Sponsored + Plan together for comps.
 
-- Show plan + billing state continuously for Tenant Admin
-- Keep Basic stub visually quieter than Core SitePage
-- Reuse Platform 0 public registration look on all plans
-
-**Don't**
-
-- Put Stripe invoice tables or custom finance UI in-app (Customer Portal only)
-- Show upgrade Checkout CTAs to Tenant Members (FR-5)
-- Dress Basic stub like a marketing landing page
-- Use “club” as a product label — official term is **Community**
+**Don't:** Reuse Platform 0 forest green as the enterprise brand; show Portal to Members; dress stub like a landing page; emoji in product chrome.
