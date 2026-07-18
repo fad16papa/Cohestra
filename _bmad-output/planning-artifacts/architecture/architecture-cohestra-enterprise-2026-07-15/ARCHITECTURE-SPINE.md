@@ -248,6 +248,6 @@ erDiagram
 | Custom domain per tenant (`events.client.com`) | DNS + cert automation; Enterprise v1.1 |
 | Schema-per-tenant | AD-1 sufficient for 100-tenant target |
 | Tenant switcher (multi-membership UI) | One session = one tenant in v1 |
-| Platform Admin impersonation / break-glass | Audit complexity; metadata-only admin in v1 |
+| Platform Admin impersonation | Audit complexity; v1 Platform Admin is metadata + lifecycle (Suspend/reactivate) only — no login-as-tenant (PRD A-5). **Suspend** break-glass remains in scope (UJ-4 / FR-2). |
 | Per-tenant SendGrid API keys | Shared platform key + per-tenant sender auth first |
 | Event sourcing / tenant audit export | Append-only logs sufficient for MVP |
