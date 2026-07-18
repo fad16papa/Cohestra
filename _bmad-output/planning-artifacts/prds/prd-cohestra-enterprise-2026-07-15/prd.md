@@ -676,6 +676,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **M1** | §0 assumptions section pointer | **Option A ratified** — index is §12 (not §9 Data Governance) |
 | **M2** | Missing A-16 in §12 | **Option B ratified** — renumber former A-17…A-36 → A-16…A-35 (contiguous) |
 | **M3** | FR-22 pricing-study cite | **Option A ratified** — cite §13.9; annual 2 mo free ratified (A-16), not open “confirm” |
+| **M4** | Launch diagrams trial-first | **Option A ratified** — §13.2/§13.7 Basic-first + optional Core/Pro trial |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -764,7 +765,8 @@ flowchart LR
   P1[Phase 1 Stable] --> P2[Phase 2 Launch]
   P1 --> T[Tenancy + isolation tests]
   P1 --> Stripe[Stripe test mode + webhooks]
-  P2 --> S[Self-serve signup + 30-day trial]
+  P2 --> B[Start free Basic + stub]
+  P2 --> S[Optional Core/Pro trial Checkout]
   P2 --> M[cohestra.app marketing]
   P2 --> P[Pilots + first paid conversions]
   P2 --> Pro[Pro upsell via plan gates]
@@ -773,7 +775,7 @@ flowchart LR
 | Phase | Goal | Exit criteria |
 |-------|------|---------------|
 | **1 — Stable** | Safe multi-tenant platform + billing plumbing | Cross-tenant tests pass; Stripe sandbox Checkout E2E; webhooks update `Tenant.Plan` |
-| **2 — Launch** | Discoverable self-serve funnel with revenue | cohestra.app live; signup → trial → first activity E2E; ≥1 paying tenant after trial |
+| **2 — Launch** | Discoverable freemium funnel with revenue | cohestra.app live; **Basic** Start free → first activity → stub/register E2E (UJ-1); Core/Pro Checkout+trial E2E; ≥1 paying tenant after trial or upgrade |
 | **3 — Scale** | Optimize conversion and pricing | Intro price review; target list price rollout per market signal |
 
 ### 13.3 Pricing tiers
@@ -874,9 +876,9 @@ cohestra.app (apex marketing)
 
 1. Tenancy spine + isolation (Epic 11–13) — **blocks everything**
 2. **Stripe sandbox** + webhooks + plan sync + delinquency jobs (FR-19–23)
-3. Open self-serve signup + USD Checkout (monthly/annual) + 30-day trial
+3. Open self-serve: **Start free (Basic)** primary + secondary Core/Pro USD Checkout (monthly/annual) + 30-day trial
 4. cohestra.app marketing + pricing (Free Basic / Core $29 / Pro $79)
-5. 2–3 pilot tenants on trial
+5. 2–3 pilot tenants on **Basic and/or** Core/Pro trial
 6. Tenant-scoped website builder → **Pro upsell**
 7. **Pricing study (§13.9)** before list-price / grandfather rollout
 8. Scale content + outbound
