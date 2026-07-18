@@ -491,7 +491,7 @@ Tenants choose **monthly** or **annual** billing at signup or via Customer Porta
 | Item | Reason |
 |------|--------|
 | Usage-based billing / per-registration metering | Flat tier pricing sufficient for v1 |
-| Seat metering automation beyond Stripe quantity | Manual seat add-on via portal in v1.1 if needed |
+| Per-seat add-ons (+$15) | **P5:** out of v1 — upgrade tier instead; add-ons in v1.1 |
 | Custom domains per tenant | Subdomain sufficient for v1 launch |
 | Tenant switcher (multi-tenant users) | Rare in v1; one session = one tenant |
 | Platform Admin impersonation | Break-glass deferred; audit complexity |
@@ -570,6 +570,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P2b** | Reports by tier | **Ratified** — Basic: fixed + CSV; Core: queryable ops; Pro: Core + campaigns + saved views (FR-15) |
 | **P3** | Failed payment lifecycle | **Option A ratified** — see Q9 / FR-23 |
 | **P4** | Cancel / downgrade | **Option A ratified** — apply at **period end**; over-limit → `ReadOnly_OverLimit` until under caps (FR-24) |
+| **P5** | Seat add-ons in v1 | **Option A ratified** — no +$15 seats in v1; upgrade tier; add-ons v1.1 |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -613,6 +614,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-23:** Public site (P2 Option D): Basic stub / Core fixed SitePage / Pro builder — FR-12
 - **A-24:** Reports: Basic fixed+CSV / Core queryable / Pro + campaigns + saved views — FR-15
 - **A-25:** Cancel/downgrade at period end; over-limit read-only until compliant (P4) — FR-24
+- **A-26:** No seat add-ons in v1 (P5); more seats via tier upgrade only
 - **A-19:** Open self-serve signup at launch — §13.7
 - **A-20:** Usage limits: Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
 - **A-21:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
@@ -671,7 +673,7 @@ flowchart LR
 
 **Upgrade path:** Basic (free) → Core (trial + paid) → Pro (trial + paid).
 
-**Seat add-ons:** +$15 / month per operator beyond tier limit (**Core:** 3; **Pro:** 10). Basic cannot purchase extra seats — must upgrade to Core.
+**Seats (P5 Option A):** No per-seat add-ons in v1. Need more seats → **upgrade tier** (Basic→Core for 2nd seat; Core→Pro for 4th+). Seat add-ons (+$15) deferred to **v1.1**.
 
 ### 13.4 Feature gates by tier
 

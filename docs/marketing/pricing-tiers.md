@@ -99,6 +99,9 @@ Basic gives a simple public list so QR testing works. Core gives a branded fixed
 **What reports do I get on Basic?**  
 A straightforward list: who registered, how many, date and time — exportable as CSV. Upgrade to Core for filters and deeper ops reports.
 
+**Can I buy extra seats?**  
+Not in the current plans — upgrade instead (Basic 1 → Core 3 → Pro 10).
+
 ---
 
 [Start free on Basic →](#)
