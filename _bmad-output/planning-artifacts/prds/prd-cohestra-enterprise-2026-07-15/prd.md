@@ -682,6 +682,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **M6** | Frontmatter `updated` date | **Option A ratified** — set `updated: 2026-07-18` |
 | **M7** | SM-G5 old week language | **Option A ratified** — align to FR-23: daily PastDue 1–7; weekly OnHold 8–28 |
 | **M8** | All modules vs Pro campaigns | **Option A ratified** — vision/JTBD/§6.1/FR-16 qualified as plan-gated; campaigns Pro-only |
+| **L1** | §13.10 Basic “fixed site” | **Option A ratified** — wording → public stub (no SitePage) |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -922,7 +923,7 @@ cohestra.app (apex marketing)
 | Published activities (concurrent) | **3** | 12 | 50 |
 | Registrations / month (public) | 150 | 500 | 5,000 |
 
-**Basic rationale:** Minimum real product test — one operator, one community, three live events, 150 regs/mo, registration emails, fixed site. No card required.
+**Basic rationale:** Minimum real product test — one operator, one community, three live events, 150 regs/mo, registration emails, **public stub** (no SitePage). No card required.
 
 Full pricing page copy: `docs/marketing/pricing-tiers.md`
 
