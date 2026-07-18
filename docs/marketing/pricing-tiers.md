@@ -60,7 +60,7 @@ Start **free** on Basic. Upgrade when you need a public homepage, richer reports
 - **Website builder** — fully customizable homepage
 - **Campaign analytics** in reports + saved report views
 
-**30-day free trial** · card required
+**30-day free trial** · card required · not charged until trial ends
 
 [Start trial →](#)
 
