@@ -2,7 +2,7 @@
 title: Cohestra Enterprise — Multi-Tenant SaaS
 status: draft
 created: 2026-07-15
-updated: 2026-07-16
+updated: 2026-07-18
 gtm_pricing: section-13
 sources:
   - _bmad-output/planning-artifacts/sprint-change-proposal-2026-07-14.md
@@ -678,6 +678,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **M3** | FR-22 pricing-study cite | **Option A ratified** — cite §13.9; annual 2 mo free ratified (A-16), not open “confirm” |
 | **M4** | Launch diagrams trial-first | **Option A ratified** — §13.2/§13.7 Basic-first + optional Core/Pro trial |
 | **M5** | Deferred study includes ratified Q5 | **Option A ratified** — Q5 closed in decisions; deferred = Q2/P9 only; §13.9 renamed |
+| **M6** | Frontmatter `updated` date | **Option A ratified** — set `updated: 2026-07-18` |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
