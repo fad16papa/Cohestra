@@ -690,6 +690,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **L6** | Addendum FR-19–23 / cancel | **Option A ratified** — Epic 14 → FR-19–24; Portal cancel at period end |
 | **L7** | Addendum “proposed” models | **Option A ratified** — tenancy AD-1 / identity AD-7 marked ratified |
 | **L8** | A-19 unlabeled limit triad | **Option A ratified** — labeled communities / published / regs; seats called out |
+| **L9** | Coarse reports row overstates Basic | **Option A ratified** — Basic = Fixed report + CSV; Core/Pro = Queryable + CSV |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -815,7 +816,7 @@ flowchart LR
 | **Price** | **Free** | $29/mo | $79/mo |
 | Activities + QR + public registration | ✓ | ✓ | ✓ |
 | Client dedup + timeline | ✓ | ✓ | ✓ |
-| Dashboard + reports + CSV | ✓ | ✓ | ✓ |
+| Dashboard + reports + CSV | Fixed report + CSV | Queryable + CSV | Queryable + CSV |
 | **Registration email notifications** | ✓ | ✓ | ✓ |
 | **Email campaigns** | — | — | ✓ |
 | **Operator seats** | **1** | **3** | **10** |
