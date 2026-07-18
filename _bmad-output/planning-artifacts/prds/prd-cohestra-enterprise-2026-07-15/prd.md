@@ -445,7 +445,7 @@ During the **last 7 days** of trial (`trial_end` − 7 days through `trial_end`)
 
 #### FR-22: Monthly and annual billing
 
-Tenants choose **monthly** or **annual** billing at signup or via Customer Portal. Annual plans receive a **discount** vs 12× monthly `[ASSUMPTION: 2 months free — pay 10 months, get 12; confirm in pricing study §13.10]`.
+Tenants choose **monthly** or **annual** billing at signup or via Customer Portal. Annual plans receive a **discount** vs 12× monthly — **2 months free** (pay 10, get 12): Core **$290**/yr, Pro **$790**/yr `[ASSUMPTION: A-16; see pricing study §13.9 for market context — math ratified]`.
 
 **Consequences (testable):**
 - Stripe Prices exist for **Core/Pro** × monthly/annual only. **Basic has no Stripe Price.**
@@ -675,6 +675,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **H7** | Signup path wording | **Closed via P6** — Start free primary; Core/Pro trial secondary (FR-19, UJ-1); no further change |
 | **M1** | §0 assumptions section pointer | **Option A ratified** — index is §12 (not §9 Data Governance) |
 | **M2** | Missing A-16 in §12 | **Option B ratified** — renumber former A-17…A-36 → A-16…A-35 (contiguous) |
+| **M3** | FR-22 pricing-study cite | **Option A ratified** — cite §13.9; annual 2 mo free ratified (A-16), not open “confirm” |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
