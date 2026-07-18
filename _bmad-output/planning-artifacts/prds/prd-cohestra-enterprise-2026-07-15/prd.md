@@ -434,6 +434,24 @@ Tenants choose **monthly** or **annual** billing at signup or via Customer Porta
 - Renewal failure and trial-end failure use the **same** job + state machine.
 - All state transitions audited.
 
+#### FR-24: Cancel and downgrade at period end (P4 Option A)
+
+**Cancel** (Core/Pro → leave paid) and **downgrade** (Pro → Core, or Core/Pro → Basic) take effect at Stripe **`current_period_end`**, not immediately. Until then, the tenant keeps current plan limits and full access (unless FR-23 delinquency applies).
+
+| Event at period end | Result |
+|---------------------|--------|
+| Cancel paid | `Plan=Basic`, `BillingStatus=Free`; Stripe subscription ended |
+| Downgrade Pro → Core | `Plan=Core`; Core limits apply |
+| Downgrade → Basic | `Plan=Basic`, `BillingStatus=Free` |
+
+**Over-limit after change:** If usage exceeds the new plan caps (communities, published activities, seats, etc.), access becomes **`ReadOnly_OverLimit`**: admin read-only, public registration blocked, banner lists what to archive. Full access returns when usage ≤ new plan limits. Does **not** set `Tenant.Status=Suspended`.
+
+**Consequences (testable):**
+- Cancel mid-cycle: plan unchanged until `current_period_end`; then Basic + Free.
+- Downgrade scheduled: webhook/`customer.subscription.updated` applies new Price/plan at period end.
+- Tenant with 8 communities canceling to Basic → read-only until ≤1 community (and other Basic caps).
+- Over-limit lock distinct from billing `OnHold` (different banner copy; same read-only public-block behavior).
+
 ---
 
 ## 5. Non-Goals (Explicit)
@@ -466,6 +484,7 @@ Tenants choose **monthly** or **annual** billing at signup or via Customer Porta
 - **Cohestra cloud development** workflow (Cursor Cloud Agents + GitHub); no droplet deployment required for v1 dev
 - **Free Basic tier** signup without Stripe (FR-19)
 - **Plan gates** (`Tenant.Plan`) wired to Stripe subscription state
+- **Cancel/downgrade at period end** + over-limit lock (FR-24)
 
 ### 6.2 Out of Scope for MVP
 
@@ -549,6 +568,8 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P1** | Tenant status vs BillingStatus | **Option A ratified** — two dials + access matrix (FR-3); Platform `Suspended` always wins; `OnHold` keeps Status=`Active` |
 | **P2** | Public site by tier | **Option D ratified** — Basic: no SitePage (stub); Core: fixed SitePage; Pro: full builder (FR-12) |
 | **P2b** | Reports by tier | **Ratified** — Basic: fixed + CSV; Core: queryable ops; Pro: Core + campaigns + saved views (FR-15) |
+| **P3** | Failed payment lifecycle | **Option A ratified** — see Q9 / FR-23 |
+| **P4** | Cancel / downgrade | **Option A ratified** — apply at **period end**; over-limit → `ReadOnly_OverLimit` until under caps (FR-24) |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -591,6 +612,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-22:** Dual status model (P1 Option A): `Tenant.Status` ops + `BillingStatus` money; access matrix in FR-3
 - **A-23:** Public site (P2 Option D): Basic stub / Core fixed SitePage / Pro builder — FR-12
 - **A-24:** Reports: Basic fixed+CSV / Core queryable / Pro + campaigns + saved views — FR-15
+- **A-25:** Cancel/downgrade at period end; over-limit read-only until compliant (P4) — FR-24
 - **A-19:** Open self-serve signup at launch — §13.7
 - **A-20:** Usage limits: Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
 - **A-21:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
