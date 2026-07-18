@@ -7,8 +7,8 @@ paradigm: layered (Api · Application · Domain · Infrastructure · Contracts) 
 scope: Tenancy spine, identity, routing, isolation — Epics 11–15 foundation
 status: final
 created: 2026-07-15
-updated: 2026-07-16
-binds: [FR-1, FR-2, FR-4, FR-5, FR-6, FR-7, FR-8, FR-9, FR-10, FR-11, FR-12, FR-13, FR-14, FR-19, FR-20, FR-21, FR-22, FR-23]
+updated: 2026-07-18
+binds: [FR-1, FR-2, FR-4, FR-5, FR-6, FR-7, FR-8, FR-9, FR-10, FR-11, FR-12, FR-13, FR-14, FR-19, FR-20, FR-21, FR-22, FR-23, FR-24]
 sources:
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
@@ -120,9 +120,9 @@ flowchart TB
 
 ### AD-11 — Stripe billing with test/live environment split
 
-- **Binds:** FR-19–FR-23, §13.5 PRD
+- **Binds:** FR-19–FR-24, §13.5 PRD
 - **Prevents:** Accidental live charges in dev; plan drift from Stripe state; silent account deletion
-- **Rule:** `BillingService` creates Checkout Sessions with `trial_period_days: 30`, **USD only**, monthly or annual Price. Webhook handler idempotent on `event.id`. `Tenant` stores `StripeCustomerId`, `StripeSubscriptionId`, `BillingStatus`, `BillingInterval`, `TrialEndsAt`, `DelinquencyStartedAt`. **Test keys** in local/CI/staging; **live keys** production only. On `invoice.payment_failed` (trial or renewal): `PastDue` for 7 days (daily notify) → `OnHold` for days 8–28 (weekly notify, read-only) → `Tenant.Status=Archived`. Jobs: `TrialReminderJob`, `PastDueNotifier`, `OnHoldNotifier`, `DelinquencyEnforcer`.
+- **Rule:** `BillingService` creates Checkout Sessions with `trial_period_days: 30`, **USD only**, monthly or annual Price. **Tenant Admin** manages payment method / plan / cancel via **Stripe Customer Portal** (no custom finance UI). **Cancel and downgrade apply at Stripe `current_period_end`** (FR-24); over-limit after change → `ReadOnly_OverLimit` until under caps. Webhook handler idempotent on `event.id`. `Tenant` stores `StripeCustomerId`, `StripeSubscriptionId`, `BillingStatus`, `BillingInterval`, `TrialEndsAt`, `DelinquencyStartedAt`. **Test keys** in local/CI/staging; **live keys** production only. On `invoice.payment_failed` (trial or renewal): `PastDue` for 7 days (daily notify) → `OnHold` for days 8–28 (weekly notify, read-only) → `Tenant.Status=Archived`. Jobs: `TrialReminderJob`, `PastDueNotifier`, `OnHoldNotifier`, `DelinquencyEnforcer`.
 
 ### AD-9 — Migration via default tenant backfill
 
