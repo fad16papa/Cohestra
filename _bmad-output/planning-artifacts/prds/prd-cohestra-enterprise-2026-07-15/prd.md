@@ -93,13 +93,13 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
   - **Resolution:** Tenant workspace ready; Platform 0 features available inside tenant scope.
   - **Edge case:** Subdomain slug collision — system suggests alternatives before commit.
 
-- **UJ-2. Priya invites Marco as a second operator.**
-  - **Persona + context:** Priya needs help running weekend clinics.
-  - **Entry state:** Authenticated **Tenant Admin**.
+- **UJ-2. Priya invites Marco as a second operator (Core+).**
+  - **Persona + context:** Priya (on **Core** or higher — Basic is **1 seat** and cannot invite) needs help running weekend clinics.
+  - **Entry state:** Authenticated **Tenant Admin** on a plan with unused seat capacity.
   - **Path:** Settings → Team → invite email → Marco receives invite → sets password → logs in with **Tenant Member** role.
   - **Climax:** Marco sees dashboard and clients for Ikigai only; cannot access tenant settings or billing.
   - **Resolution:** Multi-user operations without sharing passwords.
-  - **Edge case:** Invite expires after 7 days; Priya can resend.
+  - **Edge cases:** Invite expires after 7 days; Priya can resend. On **Basic**, Team invite is disabled with upgrade CTA to Core (H3). At Core/Pro seat cap, invite disabled until a seat frees or plan upgrades.
 
 - **UJ-3. Elena registers at Ikigai's Sunday clinic (unchanged participant flow, tenant-scoped).**
   - **Persona + context:** Elena scans QR at venue.
@@ -226,9 +226,13 @@ An authenticated user session is bound to exactly one **Tenant** via JWT `tenant
 
 #### FR-6: Team invitation
 
-A **Tenant Admin** can invite users by email to join the **Tenant** with a specified role. Realizes UJ-2.
+A **Tenant Admin** can invite users by email to join the **Tenant** with a specified role when the tenant has unused **operator seat** capacity. Realizes UJ-2 (**Core+**).
+
+**Seat gate (H3 Option A):** Soft-block at invite UI and API — do not send invites that would exceed plan seats. **Basic = 1 seat** (the Tenant Admin only): Team invite control disabled; clear **upgrade to Core** CTA. Core = 3 seats; Pro = 10. No per-seat add-ons in v1 (P5).
 
 **Consequences (testable):**
+- Basic Tenant Admin cannot create invites; API returns plan-limit / upgrade error.
+- Invite allowed only when `active_members + pending_invites < plan_seat_cap`.
 - Invite token expires in 7 days.
 - Accepting invite creates tenant membership; no duplicate global operator block.
 - Revoked invite cannot be reused.
@@ -578,7 +582,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 
 **Secondary**
 - **SM-4:** 90% of Platform 0 unit tests pass without modification after tenancy migration (remaining failures addressed in Epic 11–13). Validates brownfield preservation.
-- **SM-5:** Tenant admin invites member; member completes activity creation without admin intervention. Validates FR-6, FR-5.
+- **SM-5:** On **Core+**, Tenant Admin invites member; member completes activity creation without admin intervention. Validates FR-6, FR-5. Basic invite soft-block covered by FR-6 seat gate.
 
 **Counter-metrics (do not optimize)**
 - **SM-C1:** Total tenant count — do not optimize at expense of isolation test coverage (SM-1).
@@ -643,6 +647,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P11** | Legal & tax | **Option A ratified** — ToS + Privacy + signup checkbox + logged versions; **Stripe Tax later** when setup verified (FR-26a) |
 | **P12** | Comp / pilot plans | **Option A ratified** — Platform Admin `IsComplimentary` + manual Plan; no Stripe; FR-2 |
 | **C5** | Billing self-management wording | **Option A ratified** — Tenant Admin Portal in scope; custom finance back-office out; §2.2/§6 fixed |
+| **H3** | UJ-2 vs Basic 1 seat | **Option A ratified** — Basic stays 1 seat; soft-block Team invite + upgrade CTA; UJ-2 is Core+ (FR-6) |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -754,7 +759,7 @@ flowchart LR
 
 **Upgrade path:** Basic (free) → Core (trial + paid) → Pro (trial + paid); or land directly on Core/Pro trial.
 
-**Seats (P5 Option A):** No per-seat add-ons in v1. Need more seats → **upgrade tier** (Basic→Core for 2nd seat; Core→Pro for 4th+). Seat add-ons (+$15) deferred to **v1.1**.
+**Seats (P5 + H3 Option A):** Basic = **1 seat forever** in v1 (no invite). No per-seat add-ons. Need more seats → **upgrade tier** (Basic→Core for 2nd seat; Core→Pro for 4th+). Soft-block Team invite at cap (FR-6). Seat add-ons (+$15) deferred to **v1.1**.
 
 ### 13.4 Feature gates by tier
 
