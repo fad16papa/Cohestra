@@ -477,6 +477,16 @@ Does **not** apply to Core/Pro (paid/trialing/past-due use FR-23). Platform Admi
 - Warning sent once at day 83; archive at day 90 if still idle.
 - Login on day 85 clears pending archive.
 
+#### FR-26a: Legal acceptance at signup (P11 Option A)
+
+Self-serve signup (Basic and direct Core/Pro) requires the user to accept **Terms of Service** and **Privacy Policy** before account creation.
+
+**Consequences (testable):**
+- Signup blocked without checked acceptance.
+- Platform stores `AcceptedAt`, `TermsVersion`, `PrivacyVersion` on the Tenant Admin (or Tenant) record.
+- Marketing site serves `/terms` and `/privacy` before public signup is enabled (launch gate).
+- **Stripe Tax:** disabled at v1 launch; enable when seller tax setup is ready and verified (no eng blocker for tenancy). Checkout copy may state prices exclusive of applicable tax.
+
 #### FR-26: Self-serve abuse controls (P8 Option A + CAPTCHA A1)
 
 All **self-serve** tenant signups (Basic and direct Core/Pro) require:
@@ -530,6 +540,7 @@ Platform Admin **Suspend** (FR-3) remains the manual break-glass for confirmed a
 - **Cancel/downgrade at period end** + over-limit lock (FR-24)
 - **Basic dormancy archive** after 90 days idle (FR-25)
 - **Signup CAPTCHA + rate limits** (FR-26)
+- **ToS/Privacy acceptance** at signup; Stripe Tax deferred (FR-26a)
 
 ### 6.2 Out of Scope for MVP
 
@@ -621,6 +632,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P8** | Abuse controls | **Option A + CAPTCHA A1 ratified** — always CAPTCHA on signup; email verify; IP + register rate limits (FR-26) |
 | **P9** | Grandfathering / list price | **Option D ratified** — defer lock until list raise; **hypothesis A** = 12 mo intro then 30-day notice |
 | **P10** | Tenant slug rules | **Option A ratified** — see FR-1 |
+| **P11** | Legal & tax | **Option A ratified** — ToS + Privacy + signup checkbox + logged versions; **Stripe Tax later** when setup verified (FR-26a) |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -675,6 +687,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-28:** Basic dormancy (P7): 90 days no login and no registrations → archive (FR-25)
 - **A-29:** Abuse controls (P8): CAPTCHA always on signup; IP signup limits; per-tenant register rate limit — FR-26
 - **A-30:** Grandfathering (P9 Option D): policy unlocked until list raise; working hypothesis A (12 mo intro) — §11 Q2
+- **A-31:** Legal (P11 Option A): ToS/Privacy + acceptance log at signup; Stripe Tax deferred until verified — FR-26a
 
 ---
 
