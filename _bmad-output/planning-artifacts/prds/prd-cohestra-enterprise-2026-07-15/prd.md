@@ -168,10 +168,12 @@ A prospective **Tenant Admin** can register a new **Tenant Organization** with o
 
 A **Platform Admin** can create, suspend, reactivate, and archive **Tenants** without using self-serve signup. Realizes UJ-4.
 
+**Suspend (H6 Option A):** Manual `Status=Suspended` is **break-glass** (abuse, ToS, support freeze). Ordinary unpaid invoices use FR-23 automation — Platform Admin does **not** Suspend as the primary collections tool.
+
 **Complimentary plans (P12 Option A):** Platform Admin may set `IsComplimentary=true` and assign `Plan` ∈ Basic/Core/Pro without Stripe. `BillingStatus=Free`. No FR-23 delinquency. FR-25 Basic dormancy applies only when Plan=Basic; complimentary Core/Pro are exempt. Converting to paid: clear complimentary flag → tenant completes Checkout (FR-19).
 
 **Consequences (testable):**
-- Suspended tenant blocks tenant admin login and returns maintenance state on public routes.
+- Suspended tenant blocks tenant admin login and returns maintenance state on public routes (`BillingStatus` unchanged).
 - Archived tenant is read-only for 30 days then hard-deleted per retention policy `[ASSUMPTION: 30-day soft archive]`.
 - All lifecycle changes append to platform audit log with actor, timestamp, reason.
 - Only Platform Admin can set/clear `IsComplimentary`; self-serve cannot grant Core/Pro without Stripe (unless Checkout).
