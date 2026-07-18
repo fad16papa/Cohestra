@@ -679,6 +679,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **M4** | Launch diagrams trial-first | **Option A ratified** — §13.2/§13.7 Basic-first + optional Core/Pro trial |
 | **M5** | Deferred study includes ratified Q5 | **Option A ratified** — Q5 closed in decisions; deferred = Q2/P9 only; §13.9 renamed |
 | **M6** | Frontmatter `updated` date | **Option A ratified** — set `updated: 2026-07-18` |
+| **M7** | SM-G5 old week language | **Option A ratified** — align to FR-23: daily PastDue 1–7; weekly OnHold 8–28 |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -889,7 +890,7 @@ cohestra.app (apex marketing)
 - **SM-G2:** First paid conversion after trial (`invoice.paid`)
 - **SM-G3:** ≥1 Pro upgrade driven by website-builder gate
 - **SM-G4:** Trial reminder emails delivered on days 7–1 before expiration (100% for active trials)
-- **SM-G5:** Delinquency notifications fire on schedule (daily week 5; weekly weeks 6–8)
+- **SM-G5:** Delinquency notifications fire on FR-23 schedule — **daily** while `PastDue` (days 1–7 after `payment_failed`); **weekly** while `OnHold` (days 8–28)
 - **SM-CG1:** Do not optimize signup volume over SM-1 (isolation)
 
 ### 13.9 List price & grandfathering study (Q2 / P9)
