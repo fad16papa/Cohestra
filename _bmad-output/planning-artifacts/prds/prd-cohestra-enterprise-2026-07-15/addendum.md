@@ -58,14 +58,14 @@ Platform 0 Docker project name: `cohestra-infra` (local).
 | 11 Tenant foundation | FR-1–3, FR-8 |
 | 12 Identity & RBAC | FR-4–7 |
 | 13 API scoping | FR-9–10 |
-| 14 Onboarding + billing | FR-1, FR-6, FR-19–23, UJ-1–2 |
+| 14 Onboarding + billing | FR-1, FR-6, FR-19–24, UJ-1–2 |
 | 15 Public surfaces | FR-11–13, FR-14 |
 
 ## Cloud development workflow
 
 No droplet deployment required for enterprise v1 development. Build via Cursor Cloud Agents; verify with `dotnet test` and `docker compose` in agent VM or developer machine.
 
-## Billing & Stripe (ratified 2026-07-16, updated 2026-07-16)
+## Billing & Stripe (ratified 2026-07-16, updated 2026-07-18)
 
 ### Stripe environments
 
@@ -88,7 +88,7 @@ Use [Stripe test cards](https://docs.stripe.com/testing) (e.g. `4242 4242 4242 4
 2. Stripe Checkout: `mode: subscription`, `trial_period_days: 30`, payment method required, USD
 3. Webhooks: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `invoice.payment_failed`
 4. Map to `Tenant.Plan`, `Tenant.BillingStatus`, `Tenant.BillingInterval`, `Tenant.TrialEndsAt`
-5. Customer Portal link for upgrade / cancel / payment method / interval change
+5. Customer Portal link for upgrade / payment method / interval change; **cancel and downgrade at `current_period_end`** (FR-24)
 
 ### Intro USD Prices (Stripe dashboard)
 

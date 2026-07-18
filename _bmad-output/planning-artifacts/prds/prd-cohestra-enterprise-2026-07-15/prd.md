@@ -687,6 +687,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **L3** | Pro trial copy incomplete | **Option A ratified** — Pro matches Core: not charged until trial ends |
 | **L4** | Spine omits FR-24 / Portal | **Option A ratified** — AD-11 + binds include FR-24, Customer Portal, period-end cancel |
 | **L5** | Spine break-glass deferred | **Option A ratified** — deferred = impersonation only; Suspend stays in v1 |
+| **L6** | Addendum FR-19–23 / cancel | **Option A ratified** — Epic 14 → FR-19–24; Portal cancel at period end |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
