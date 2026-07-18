@@ -610,14 +610,14 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-15:** Stripe test mode for dev/CI; live mode production only — FR-19, addendum
 - **A-17:** Monthly + annual billing; annual ≈ 2 months free — FR-22
 - **A-18:** Delinquency (P3): 7d PastDue daily → 21d OnHold weekly → archive; starts at `payment_failed` (trial or renewal) — FR-23
+- **A-19:** Open self-serve signup at launch — §13.7
+- **A-20:** Usage limits: Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
+- **A-21:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
 - **A-22:** Dual status model (P1 Option A): `Tenant.Status` ops + `BillingStatus` money; access matrix in FR-3
 - **A-23:** Public site (P2 Option D): Basic stub / Core fixed SitePage / Pro builder — FR-12
 - **A-24:** Reports: Basic fixed+CSV / Core queryable / Pro + campaigns + saved views — FR-15
 - **A-25:** Cancel/downgrade at period end; over-limit read-only until compliant (P4) — FR-24
 - **A-26:** No seat add-ons in v1 (P5); more seats via tier upgrade only
-- **A-19:** Open self-serve signup at launch — §13.7
-- **A-20:** Usage limits: Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — §13.4
-- **A-21:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
 
 ---
 
