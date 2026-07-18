@@ -36,7 +36,7 @@ Start **free** on Basic. Upgrade when you need a public homepage, richer reports
 **For:** Small organizations ready to run day-to-day.
 
 **Includes:**
-- **3** seats · **3** communities · **12** activities · **500** regs/mo
+- **3** seats · **3** communities · **12** published activities · **500** regs/mo
 - Everything in Basic, plus:
 - **Fixed public Site Page** at `{your-org}.cohestra.app`
 - **Queryable reports** — filter by date, community, activity, status; full CSV export
@@ -54,7 +54,7 @@ Start **free** on Basic. Upgrade when you need a public homepage, richer reports
 **For:** Marketing, campaigns, and a custom public site.
 
 **Includes:**
-- **10** seats · **10** communities · **50** activities · **5,000** regs/mo
+- **10** seats · **10** communities · **50** published activities · **5,000** regs/mo
 - Everything in Core, plus:
 - **Email campaigns**
 - **Website builder** — fully customizable homepage

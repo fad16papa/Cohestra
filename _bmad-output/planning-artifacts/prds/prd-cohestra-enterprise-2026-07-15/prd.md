@@ -683,6 +683,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **M7** | SM-G5 old week language | **Option A ratified** — align to FR-23: daily PastDue 1–7; weekly OnHold 8–28 |
 | **M8** | All modules vs Pro campaigns | **Option A ratified** — vision/JTBD/§6.1/FR-16 qualified as plan-gated; campaigns Pro-only |
 | **L1** | §13.10 Basic “fixed site” | **Option A ratified** — wording → public stub (no SitePage) |
+| **L2** | Pricing page “activities” | **Option A ratified** — Core/Pro bullets say **published** activities |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
