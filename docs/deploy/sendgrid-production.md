@@ -8,8 +8,8 @@ Complete this **before** `docker compose -f docker-compose.uat.yml up` on the dr
 
 | Setting | Value |
 |---------|-------|
-| From email | `noreply@creativorare.com` (campaigns, OTP, registration) |
-| From name | `Creativorare` |
+| From email | `noreply@your-domain.com` (campaigns, OTP, registration) |
+| From name | `Cohestra` |
 | Sandbox | **Off** (enforced in `docker-compose.uat.yml`) |
 | API key scope | **Mail Send** only (restricted key recommended) |
 
@@ -19,7 +19,7 @@ Domain authentication improves deliverability (SPF + DKIM).
 
 1. Log in to [SendGrid](https://app.sendgrid.com/)
 2. **Settings → Sender Authentication → Authenticate Your Domain**
-3. Choose your DNS host and enter **`creativorare.com`**
+3. Choose your DNS host and enter **your sending domain** (e.g. `cohestra.app` or your client domain)
 4. SendGrid provides **CNAME records** — add them at your DNS provider:
    - Typically 3 CNAMEs for DKIM + optional link branding
    - May include an SPF-related record depending on setup wizard
@@ -29,14 +29,14 @@ Confirm in SendGrid that the domain shows **Valid** / authenticated.
 
 ## 2. Verify the From address
 
-If you use `noreply@creativorare.com`:
+If you use `noreply@your-domain.com`:
 
-- With **domain authentication** complete, any `@creativorare.com` address can send once the domain is valid.
+- With **domain authentication** complete, any `@your-domain.com` address can send once the domain is valid.
 - Alternatively use **Verify a Single Sender** if not using domain auth (not recommended for production volume).
 
 **Settings → Sender Authentication → Verify a Single Sender** (if needed):
 
-1. Add `noreply@creativorare.com`
+1. Add `noreply@your-domain.com`
 2. Complete the verification email SendGrid sends to that inbox
 
 The in-app checklist (**Settings → Email delivery**) confirms verification via the SendGrid API after deploy.
@@ -55,8 +55,8 @@ Store in server `.env`:
 
 ```bash
 SendGrid__ApiKey=SG.your-live-key-here
-SendGrid__FromEmail=noreply@creativorare.com
-SendGrid__FromName=Creativorare
+SendGrid__FromEmail=noreply@your-domain.com
+SendGrid__FromName=Cohestra
 ```
 
 Never commit the key. Never expose it in the browser or client handoff docs.
@@ -82,7 +82,7 @@ docker compose -f docker-compose.uat.yml logs api
 ### In-app checklist
 
 1. Sign in → **Settings → Email delivery**
-2. All items should show **Complete** (domain auth may show **Info** only for freemail domains — not applicable for `@creativorare.com`)
+2. All items should show **Complete** (domain auth may show **Info** only for freemail domains — not applicable for a verified custom domain)
 
 ### Test campaign
 

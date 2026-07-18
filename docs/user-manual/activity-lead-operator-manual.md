@@ -1,6 +1,6 @@
-# Activity Lead — Operator User Manual
+# Cohestra — Operator User Manual
 
-**Product:** Activity Lead by Creativorare  
+**Product:** Cohestra  
 **Audience:** Community operators and event organisers  
 **Version:** 1.0  
 **Last updated:** June 2026
@@ -769,4 +769,4 @@ Complete any **action required** items with your email provider before large cam
 
 ---
 
-*Activity Lead — Operator User Manual — Creativorare*
+*Cohestra — Operator User Manual*

@@ -72,7 +72,7 @@ public class SendGridSettingsValidatorTests
             SendGridSettingsValidator.ValidateForProduction(new SendGridSettings
             {
                 ApiKey = null,
-                FromEmail = "tech@creativorare.com",
+                FromEmail = "tech@cohestra.app",
                 UseSandbox = false,
             }));
 
@@ -92,7 +92,7 @@ public class SendGridSettingsValidatorTests
             SendGridSettingsValidator.ValidateForProduction(new SendGridSettings
             {
                 ApiKey = "SG.live-key",
-                FromEmail = "tech@creativorare.com",
+                FromEmail = "tech@cohestra.app",
                 UseSandbox = true,
             }));
     }
@@ -103,8 +103,8 @@ public class SendGridSettingsValidatorTests
         SendGridSettingsValidator.ValidateForProduction(new SendGridSettings
         {
             ApiKey = "SG.live-key",
-            FromEmail = "noreply@creativorare.com",
-            FromName = "Creativorare",
+            FromEmail = "noreply@cohestra.app",
+            FromName = "Cohestra",
             UseSandbox = false,
         });
     }

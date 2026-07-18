@@ -29,7 +29,7 @@ public sealed class RegistrationNotificationServiceTests
         Assert.True(result.Sent);
         Assert.Equal("elena@example.com", result.RecipientEmail);
         Assert.Single(sender.Messages);
-        Assert.Equal("noreply@creativorare.com", sender.Messages[0].FromEmail);
+        Assert.Equal("noreply@cohestra.app", sender.Messages[0].FromEmail);
         Assert.Null(sender.Messages[0].ReplyTo);
         Assert.Equal("elena@example.com", sender.Messages[0].ToEmail);
         Assert.Contains("You're registered", sender.Messages[0].Subject);
@@ -58,14 +58,14 @@ public sealed class RegistrationNotificationServiceTests
             sender,
             Options.Create(new SendGridSettings
             {
-                FromEmail = "noreply@creativorare.com",
-                FromName = "Creativorare",
-                RegistrationFromEmail = "noreply@creativorare.com",
-                RegistrationFromName = "Creativorare",
+                FromEmail = "noreply@cohestra.app",
+                FromName = "Cohestra",
+                RegistrationFromEmail = "noreply@cohestra.app",
+                RegistrationFromName = "Cohestra",
             }),
             Options.Create(new EmailBrandingSettings()),
             Options.Create(new PublicWebOptions { BaseUrl = "http://localhost:3000" }),
-            Options.Create(new CampaignAssetOptions { PublicApiBaseUrl = "https://uat.creativorare.com" }),
+            Options.Create(new CampaignAssetOptions { PublicApiBaseUrl = "https://uat.cohestra.app" }),
             NullLogger<RegistrationNotificationService>.Instance);
 
     private static CohestraDbContext CreateDbContext()
