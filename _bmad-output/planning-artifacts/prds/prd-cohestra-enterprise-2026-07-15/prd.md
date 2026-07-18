@@ -156,10 +156,11 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
 A prospective **Tenant Admin** can register a new **Tenant Organization** with organization name, **Tenant Slug**, admin email, and password. Realizes UJ-1.
 
 **Consequences (testable):**
-- Successful signup creates **Tenant** row, default **Site Page** seed, and first **Tenant Admin** user.
+- Successful signup creates **Tenant** row, first **Tenant Admin** user, and plan per path (Basic free, or Core/Pro via Checkout — FR-19). SitePage seeded only for Core+ (FR-12).
 - **Tenant Slug** is globally unique; collision returns validation error with suggestions.
 - Email verification required before admin dashboard access.
 - Signup is disabled when Platform sets `registrationClosed=true` `[ASSUMPTION: sales-led tenants created by Platform Admin when self-serve disabled]`.
+- Abuse controls per FR-26 apply to all self-serve signups.
 
 #### FR-2: Platform-admin tenant provisioning
 
@@ -475,6 +476,24 @@ Does **not** apply to Core/Pro (paid/trialing/past-due use FR-23). Platform Admi
 - Warning sent once at day 83; archive at day 90 if still idle.
 - Login on day 85 clears pending archive.
 
+#### FR-26: Self-serve abuse controls (P8 Option A + CAPTCHA A1)
+
+All **self-serve** tenant signups (Basic and direct Core/Pro) require:
+
+| Control | Rule |
+|---------|------|
+| **CAPTCHA** | **Always** on signup form (e.g. Cloudflare Turnstile / hCaptcha) — A1 |
+| **Email verification** | Before dashboard access (FR-1) |
+| **Signup rate limit** | Max **5** successful signups per IP per hour; **20** per IP per day `[ASSUMPTION: tunable]` |
+| **Public registration rate limit** | Per-tenant burst limit on `/register` (e.g. 60/min) → HTTP 429 `[ASSUMPTION: tunable]` |
+
+Platform Admin **Suspend** (FR-3) remains the manual break-glass for confirmed abuse.
+
+**Consequences (testable):**
+- Signup without valid CAPTCHA token rejected.
+- 6th signup from same IP within an hour returns rate-limit error.
+- Flood of public registrations to one tenant returns 429 without creating rows beyond burst.
+
 ---
 
 ## 5. Non-Goals (Explicit)
@@ -509,6 +528,7 @@ Does **not** apply to Core/Pro (paid/trialing/past-due use FR-23). Platform Admi
 - **Plan gates** (`Tenant.Plan`) wired to Stripe subscription state
 - **Cancel/downgrade at period end** + over-limit lock (FR-24)
 - **Basic dormancy archive** after 90 days idle (FR-25)
+- **Signup CAPTCHA + rate limits** (FR-26)
 
 ### 6.2 Out of Scope for MVP
 
@@ -597,6 +617,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P5** | Seat add-ons in v1 | **Option A ratified** — no +$15 seats in v1; upgrade tier; add-ons v1.1 |
 | **P6** | Signup paths | **Option A ratified** — Basic-first primary CTA; direct Core/Pro trial also allowed (FR-19) |
 | **P7** | Basic dormancy | **Option A ratified** — 90 days idle → warn day 83 → archive day 90 (FR-25) |
+| **P8** | Abuse controls | **Option A + CAPTCHA A1 ratified** — always CAPTCHA on signup; email verify; IP + register rate limits (FR-26) |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -646,6 +667,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-26:** No seat add-ons in v1 (P5); more seats via tier upgrade only
 - **A-27:** Signup paths (P6): Start free primary; direct Core/Pro trial secondary — FR-19
 - **A-28:** Basic dormancy (P7): 90 days no login and no registrations → archive (FR-25)
+- **A-29:** Abuse controls (P8): CAPTCHA always on signup; IP signup limits; per-tenant register rate limit — FR-26
 
 ---
 
