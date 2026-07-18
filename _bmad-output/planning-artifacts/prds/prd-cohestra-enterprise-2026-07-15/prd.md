@@ -75,12 +75,13 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
 - Register for tenant activities via mobile-friendly public pages scoped to the correct organization.
 - Receive confirmation with registration number; no account required.
 
-### 2.2 Non-Users (enterprise v1)
+### 2.2 Non-Users & billing boundaries (enterprise v1)
 
 - **lead-generation-crm operators** — use the separate single-operator product; not Cohestra Enterprise tenants.
 - **Self-serve marketplace buyers comparing CRM categories** — enterprise v1 targets activity-led community operators, not horizontal sales CRM.
 - **Participant self-service portals** — participants do not log in; public registration only.
-- **End-customer billing self-management** — deferred (see §6.2).
+- **Tenant Members managing billing** — only **Tenant Admin** manages subscription (Stripe Customer Portal); Members cannot open billing settings (UJ-2).
+- **Custom finance back-office** — in-app invoices, credit notes, tax-ID admin UI, accounting sync — **not in v1**. Paid tiers use Stripe Checkout + **Customer Portal** (FR-19–24). Stripe Tax deferred until setup verified (P11 / FR-26a).
 
 ### 2.3 Key User Journeys
 
@@ -541,6 +542,7 @@ Platform Admin **Suspend** (FR-3) remains the manual break-glass for confirmed a
 - **Cohestra cloud development** workflow (Cursor Cloud Agents + GitHub); no droplet deployment required for v1 dev
 - **Free Basic tier** signup without Stripe (FR-19)
 - **Plan gates** (`Tenant.Plan`) wired to Stripe subscription state
+- **Tenant Admin subscription self-serve** via Stripe Customer Portal (update payment method, cancel, change plan) (FR-19–24)
 - **Cancel/downgrade at period end** + over-limit lock (FR-24)
 - **Basic dormancy archive** after 90 days idle (FR-25)
 - **Signup CAPTCHA + rate limits** (FR-26)
@@ -551,6 +553,8 @@ Platform Admin **Suspend** (FR-3) remains the manual break-glass for confirmed a
 | Item | Reason |
 |------|--------|
 | Usage-based billing / per-registration metering | Flat tier pricing sufficient for v1 |
+| Custom finance back-office (in-app invoices, accounting sync) | **C5:** use Stripe Checkout + Customer Portal only |
+| Stripe Tax at launch | **P11:** enable when tax setup verified |
 | Per-seat add-ons (+$15) | **P5:** out of v1 — upgrade tier instead; add-ons in v1.1 |
 | Custom domains per tenant | Subdomain sufficient for v1 launch |
 | Tenant switcher (multi-tenant users) | Rare in v1; one session = one tenant |
@@ -612,7 +616,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | Brownfield refactor breaks Platform 0 | High | Default tenant migration; incremental Epic 11–13; SM-4 |
 | Subdomain routing complexity on local dev | Medium | Document `*.localhost` and env overrides in addendum |
 | Single-operator code paths remain | Medium | Remove `AuthService` single-operator gate in Epic 12 |
-| Scope creep into billing/SSO | Medium | Stripe MVP scope locked in FR-19–21; Enterprise manual only |
+| Scope creep into billing/SSO | Medium | Stripe MVP = Checkout + Customer Portal (FR-19–24); no custom finance UI; Enterprise manual only |
 | Stripe webhook mis-sync | Medium | Idempotent handlers; reconcile job; test mode in CI |
 | Delinquency job misfire deletes active tenant | High | State machine tests; manual Platform Admin override before delete |
 
@@ -638,6 +642,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **P10** | Tenant slug rules | **Option A ratified** — see FR-1 |
 | **P11** | Legal & tax | **Option A ratified** — ToS + Privacy + signup checkbox + logged versions; **Stripe Tax later** when setup verified (FR-26a) |
 | **P12** | Comp / pilot plans | **Option A ratified** — Platform Admin `IsComplimentary` + manual Plan; no Stripe; FR-2 |
+| **C5** | Billing self-management wording | **Option A ratified** — Tenant Admin Portal in scope; custom finance back-office out; §2.2/§6 fixed |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
