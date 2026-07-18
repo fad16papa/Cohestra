@@ -39,7 +39,7 @@ It is written for product stakeholders, architects, UX, and implementation agent
 
 Community and activity-driven organizations capture leads through events, QR registrations, and referral-driven sign-ups — but when each organization runs isolated spreadsheets, forms, and messaging tools, growth data fragments and operational cost scales linearly with headcount.
 
-**Cohestra Enterprise** is a multi-tenant platform: each **Tenant Organization** gets a fully isolated workspace with branded public surfaces, operator accounts, activities, client lists, campaigns, and reports — without sharing data with other tenants. The platform operator (Creativorare / Cohestra team) provisions and governs tenants while tenant admins run day-to-day community operations.
+**Cohestra Enterprise** is a multi-tenant platform: each **Tenant Organization** gets a fully isolated workspace with operator accounts, activities, client lists, and plan-gated public surfaces, reports, and campaigns — without sharing data with other tenants. The platform operator (Creativorare / Cohestra team) provisions and governs tenants while tenant admins run day-to-day community operations within their plan.
 
 The inherited **Platform 0** codebase already implements the activity-engine CRM for one operator. Enterprise v1 adds the **tenancy spine** so that capability serves many organizations safely on one deployment.
 
@@ -58,10 +58,10 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
 ### 2.1 Jobs To Be Done
 
 **Tenant admin (organization operator)**
-- Stand up a branded community-events workspace without engineering help.
-- Invite colleagues to operate activities and follow up on leads under RBAC.
-- Run activities, registrations, campaigns, and reports with confidence that data stays inside the organization.
-- Configure public homepage and registration flows per tenant brand.
+- Stand up a community-events workspace without engineering help (Basic stub; Core/Pro branded SitePage per FR-12).
+- Invite colleagues when the plan has seat capacity (Core+ — FR-6).
+- Run activities, registrations, and plan-allowed reports/campaigns with confidence that data stays inside the organization.
+- Configure public registration flows; homepage depth follows plan (stub / fixed SitePage / builder).
 
 **Tenant member (operator)**
 - Perform day-to-day activity and client operations within permissions granted by tenant admin.
@@ -341,7 +341,7 @@ SendGrid sender identity and email footer branding are configurable per **Tenant
 
 ### 4.5 Inherited Platform 0 Capabilities (Tenant-Scoped)
 
-**Description:** The following Platform 0 feature areas remain in enterprise v1, executed **within Tenant Context**. Detailed FRs (activity engine, master client list, dashboard, reports, campaigns, WhatsApp click-to-message, website builder sections) are defined in `prd-lead-generation-crm-2026-06-14/prd.md` (FR-1 through FR-20+). This PRD adds tenancy preconditions only.
+**Description:** The following Platform 0 feature areas remain in enterprise v1, executed **within Tenant Context** and **plan-gated** where noted (FR-12, FR-15, FR-16). Detailed FRs (activity engine, master client list, dashboard, reports, campaigns, WhatsApp click-to-message, website builder sections) are defined in `prd-lead-generation-crm-2026-06-14/prd.md` (FR-1 through FR-20+). This PRD adds tenancy + plan preconditions.
 
 **Functional Requirements:**
 
@@ -370,13 +370,14 @@ Dashboard metrics and reports reflect only the current **Tenant** data. **Report
 - Core CSV respects filters; Basic CSV matches fixed columns only.
 - Cache TTL / polling preserved per tenant namespace.
 
-#### FR-16: Tenant-scoped campaigns and templates
+#### FR-16: Tenant-scoped campaigns and templates (Pro)
 
-Email templates, segments, and campaign sends are tenant-private.
+Email templates, segments, and campaign sends are tenant-private and **Pro-only** (§13.4). Basic/Core: campaign UI and APIs return upgrade CTA / 403.
 
 **Consequences (testable):**
-- Segment preview counts only tenant clients.
-- Campaign history on client profile shows only tenant campaigns.
+- Segment preview counts only tenant clients (Pro).
+- Campaign history on client profile shows only tenant campaigns (Pro).
+- Basic/Core cannot create or send campaigns; registration notification emails remain available on all plans (FR-13 / §13.4).
 
 ---
 
@@ -562,7 +563,7 @@ Platform Admin **Suspend** (FR-3) remains the manual break-glass for confirmed a
 - **Platform Admin** minimal tenant directory + suspend/reactivate (FR-2, FR-17)
 - **Plan-gated public site** — Basic stub / Core fixed SitePage / Pro builder (FR-12); public registration (FR-14)
 - **Plan-gated reports** — Basic fixed + CSV / Core queryable / Pro + campaigns (FR-15)
-- **All Platform 0 operational modules** tenant-scoped (FR-14–FR-16)
+- **Platform 0 operational modules** tenant-scoped **and plan-gated** (FR-12, FR-14–FR-16; campaigns Pro-only)
 - **Migration path:** default tenant backfill for existing dev/staging data
 - **Cohestra cloud development** workflow (Cursor Cloud Agents + GitHub); no droplet deployment required for v1 dev
 - **Free Basic tier** signup without Stripe (FR-19)
@@ -680,6 +681,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **M5** | Deferred study includes ratified Q5 | **Option A ratified** — Q5 closed in decisions; deferred = Q2/P9 only; §13.9 renamed |
 | **M6** | Frontmatter `updated` date | **Option A ratified** — set `updated: 2026-07-18` |
 | **M7** | SM-G5 old week language | **Option A ratified** — align to FR-23: daily PastDue 1–7; weekly OnHold 8–28 |
+| **M8** | All modules vs Pro campaigns | **Option A ratified** — vision/JTBD/§6.1/FR-16 qualified as plan-gated; campaigns Pro-only |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
