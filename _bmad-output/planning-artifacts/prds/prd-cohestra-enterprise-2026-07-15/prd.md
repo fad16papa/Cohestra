@@ -672,6 +672,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **H4** | UJ-1 vs Basic stub | **Option A ratified** — rewrite UJ-1 as Basic-first Start free → stub + register; SitePage is Core+ CTA |
 | **H5** | Role × plan matrix | **Option A ratified** — FR-5 matrix: Admin = money/team/settings; Member = plan-allowed ops; upgrade CTAs Admin-only |
 | **H6** | UJ-4 vs billing automation | **Option A ratified** — UJ-4 = break-glass Suspend (abuse/ToS); unpaid = FR-23 only |
+| **H7** | Signup path wording | **Closed via P6** — Start free primary; Core/Pro trial secondary (FR-19, UJ-1); no further change |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
