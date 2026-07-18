@@ -677,6 +677,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **M2** | Missing A-16 in §12 | **Option B ratified** — renumber former A-17…A-36 → A-16…A-35 (contiguous) |
 | **M3** | FR-22 pricing-study cite | **Option A ratified** — cite §13.9; annual 2 mo free ratified (A-16), not open “confirm” |
 | **M4** | Launch diagrams trial-first | **Option A ratified** — §13.2/§13.7 Basic-first + optional Core/Pro trial |
+| **M5** | Deferred study includes ratified Q5 | **Option A ratified** — Q5 closed in decisions; deferred = Q2/P9 only; §13.9 renamed |
 | Q3 | Currency | **USD only** — all prices and charges in USD globally |
 | Q4 | Country detection | **Dropped** — no geo currency logic |
 | Q9 / **P3** | Failed payment (trial or renewal) | **Option A ratified** — 7 days PastDue (daily) → 21 days OnHold (weekly) → archive; clock from `invoice.payment_failed` (FR-23) |
@@ -685,17 +686,15 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | Q7 | SendGrid | **Ratified** — shared platform key + per-tenant sender auth (addendum) |
 | Q8 | Droplet | Deferred until Francis approves production deploy |
 | **Terminology** | **Community** vs club | **Option A ratified** — **Community** official in product/pricing; "club" only as example community name in marketing |
+| **Q5** | Communities / activities / registration caps | **Ratified Option 1** — locked in §13.4 / §13.10 (A-19); no further study for MVP |
 
-**Deferred — pricing & packaging study (before scale, not blocking MVP build):**
+**Deferred — list price & grandfathering only (before Phase 3 scale; not blocking MVP build):**
 
 | # | Topic | Plan |
 |---|-------|------|
 | **Q2 / P9** | **Intro vs list price & grandfathering** | **Option D ratified** — do not lock grandfather policy until list-price raise; **working hypothesis = Option A** (12 months from first paid invoice at intro, then 30-day notice to list). Launch engineering on intro Prices only. Research: `research/market-cohestra-pricing-penetration-research-2026-07-16.md`. |
-| **Q5** | **Communities, activities, registration caps** | **Ratified Option 1** — see §13.4; Basic / Core / Pro ladder |
 
-**Pricing study deliverable:** `bmad-market-research` or focused pricing memo — competitor matrix, unit economics, recommended intro/list/annual discount, grandfather rules. Target: before Phase 3 scale (§13.2).
-
-**Registration cap study deliverable:** Per-tenant registration volume model vs plan gates; output updates §13.3 soft caps and `Tenant.Plan` flags.
+**Remaining pricing study deliverable (Q2/P9):** pilot WTP interviews + list-price / grandfather lock before Phase 3 — see §13.9. Competitor matrix and annual math already drafted in the research note.
 
 ---
 
@@ -892,14 +891,14 @@ cohestra.app (apex marketing)
 - **SM-G5:** Delinquency notifications fire on schedule (daily week 5; weekly weeks 6–8)
 - **SM-CG1:** Do not optimize signup volume over SM-1 (isolation)
 
-### 13.9 Pricing & packaging study (Q2, Q5)
+### 13.9 List price & grandfathering study (Q2 / P9)
 
-**Status:** Initial market research complete — `research/market-cohestra-pricing-penetration-research-2026-07-16.md`
+**Status:** Initial market research complete — `research/market-cohestra-pricing-penetration-research-2026-07-16.md`. **Q5 usage limits are ratified** (see §13.4 / §13.10) and are **out of scope** for further study.
 
 | Workstream | Status | Key finding |
 |------------|--------|-------------|
-| **Market penetration pricing (Q2 / P9)** | **Draft complete; policy deferred** | Launch intro **$29/$79**; grandfather **not locked** (P9-D); hypothesis **12 mo intro** (A) after pilots |
-| **Registration economics (Q5)** | **Ratified** | Option 1 limits; Basic / Core / Pro ladder — §13.4, §13.10 |
+| **Market penetration pricing (Q2 / P9)** | **Draft complete; grandfather policy deferred** | Launch intro **$29/$79**; grandfather **not locked** (P9-D); hypothesis **12 mo intro** (A) after pilots |
+| **Registration economics (Q5)** | **Ratified — closed** | Option 1 limits locked — §13.4, §13.10 |
 
 **Annual pricing verdict ($290 Core / $790 Pro):**
 
@@ -932,7 +931,7 @@ Full pricing page copy: `docs/marketing/pricing-tiers.md`
 | `bmad-architecture` | Tenancy spine — isolation, routing, identity, migration | **Done** — `architecture/architecture-cohestra-enterprise-2026-07-15/` |
 | `bmad-ux` | Enterprise journeys — signup, team invite, platform admin | Pending |
 | `bmad-create-epics-and-stories` | Epic 11–15 breakdown from this PRD | Pending |
-| `bmad-market-research` | Pricing penetration + registration economics (§13.9) | **Draft done** — `research/market-cohestra-pricing-penetration-research-2026-07-16.md`; pilot WTP interviews pending |
+| `bmad-market-research` | List price / grandfathering (Q2/P9 — §13.9) | **Draft done** — research note; pilot WTP + list lock pending. Q5 limits ratified separately. |
 | `bmad-check-implementation-readiness` | Align PRD + architecture + UX before dev | After UX |
 | `bmad-sprint-planning` | Enterprise sprint status | After epics |
 | Pricing page | `docs/marketing/pricing-tiers.md` | **Done** — cohestra.app copy draft |
