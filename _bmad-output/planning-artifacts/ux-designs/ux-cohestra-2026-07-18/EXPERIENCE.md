@@ -13,7 +13,7 @@ design: ./DESIGN.md
 
 # Cohestra Enterprise — Experience Spine
 
-> Multi-tenant SaaS UX. Visual identity → `DESIGN.md` (**Gathered Clarity** brand kit). Platform 0 supplies inherited *ops module behaviors* only — not brand. Spines win on conflict with mocks.
+> Multi-tenant SaaS UX. Visual identity → `DESIGN.md` (**RegFox-caliber product craft** + Cohestra ink/teal brand). Platform 0 supplies inherited *ops module behaviors* only — not brand. Spines win on conflict with mocks.
 
 → Key screens (GTM-A stack-killer): `mockups/marketing-start-free.html` · `mockups/basic-stub-home.html` · `mockups/admin-dashboard-basic.html` · `mockups/share-kit.html` · `mockups/team-seat-gate.html` · `mockups/platform-admin-suspend.html`
 
@@ -29,7 +29,7 @@ design: ./DESIGN.md
 | Public registration | Participant (Elena) | Mobile-first `/register/{activity-slug}` |
 | Platform Admin | Cohestra operator | Sparse console — lifecycle + audit |
 
-**UI system:** shadcn/ui + Tailwind + next-themes. Brand layer = Cohestra **Gathered Clarity** in `DESIGN.md` (not Platform 0 forest green).
+**UI system:** shadcn/ui + Tailwind + next-themes. Brand/craft = Cohestra ink navy + teal action with **RegFox-caliber product polish** in `DESIGN.md` (clean white, browser-framed product UI, dense admin — not AI-mist aesthetics).
 
 **Tenancy:** Session bound to one tenant (`tenant_id` JWT). No tenant switcher in v1. Subdomain resolves public + admin context.
 
@@ -247,7 +247,7 @@ Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless 
 
 | # | Decision |
 |---|----------|
-| Brand | **New Cohestra kit** — Gathered Clarity (DESIGN.md) |
+| Brand / craft | **Cohestra ink+teal** with **RegFox-caliber** modern product craft (DESIGN.md) |
 | PlanBadge | Members see it **read-only** |
 | Complimentary | **Sponsored** badge yes |
 | CAPTCHA | **Google reCAPTCHA** (standard, widely used, secured) + accessible path |

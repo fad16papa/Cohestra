@@ -3,201 +3,113 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ikigai Sports — Cohestra stub</title>
-  <!-- Spine: StubShell; Linktree replacement; still Basic (no SitePage composer) -->
+  <title>Ikigai Sports — Register</title>
+  <!-- RegFox-caliber public registration confidence; Basic stub (no builder) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --primary: #143D4A;
-      --accent: #0D9488;
-      --accent-fg: #042F2E;
-      --ink: #0C1B24;
-      --ink-muted: #5A6B75;
-      --line: rgba(255,255,255,0.22);
+      --navy: #0B1F2A;
+      --teal: #0F9F8A;
+      --teal-fg: #042F2E;
+      --canvas: #FFFFFF;
+      --muted: #F4F6F8;
+      --ink: #0B1F2A;
+      --ink3: #64748B;
+      --line: #E2E8F0;
       --display: "Sora", sans-serif;
       --body: "Source Sans 3", sans-serif;
     }
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: var(--body);
-      color: #F7FBFC;
-      background: #0C1B24;
-    }
-    /* Full-bleed atmosphere — dominant visual plane */
-    .plane {
-      min-height: 100vh;
+    body { margin: 0; font-family: var(--body); background: var(--muted); color: var(--ink); }
+    /* Full-bleed brand header — photo-like solid with overlay text */
+    .banner {
       background:
-        linear-gradient(165deg, rgba(12, 27, 36, 0.55) 0%, rgba(20, 61, 74, 0.72) 45%, rgba(13, 148, 136, 0.45) 100%),
-        radial-gradient(ellipse at 30% 20%, rgba(45, 212, 191, 0.25), transparent 50%),
-        linear-gradient(120deg, #143D4A, #0F766E 55%, #134E4A);
-      padding: 2rem 1.25rem 3rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+        linear-gradient(105deg, rgba(11,31,42,0.92) 0%, rgba(11,31,42,0.55) 55%, rgba(15,159,138,0.45) 100%),
+        linear-gradient(135deg, #0B1F2A, #134E4A);
+      color: #F8FAFC;
+      padding: 48px 20px 40px;
     }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
+    .banner-inner { max-width: 720px; margin: 0 auto; }
+    .banner .org {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; opacity: 0.8; margin: 0 0 10px;
     }
-    .shell {
-      width: min(100%, 420px);
-      animation: fadeUp 0.7s ease both;
+    .banner h1 {
+      font-family: var(--display); font-size: clamp(1.9rem, 5vw, 2.5rem);
+      letter-spacing: -0.035em; margin: 0 0 8px; line-height: 1.1;
     }
-    .brand-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 2.5rem;
-      opacity: 0.85;
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
+    .banner p { margin: 0; opacity: 0.85; font-size: 1.05rem; }
+    .sheet {
+      max-width: 720px; margin: -28px auto 48px; padding: 0 16px;
     }
-    h1 {
-      font-family: var(--display);
-      font-size: clamp(2rem, 8vw, 2.6rem);
-      font-weight: 700;
-      letter-spacing: -0.035em;
-      line-height: 1.1;
-      margin: 0 0 0.5rem;
-      animation: fadeUp 0.75s 0.08s ease both;
+    .panel {
+      background: var(--canvas); border: 1px solid var(--line); border-radius: 12px;
+      box-shadow: 0 16px 40px rgba(11,31,42,0.08); overflow: hidden;
     }
-    .tagline {
-      margin: 0 0 2rem;
-      color: rgba(247, 251, 252, 0.78);
-      font-size: 1.05rem;
-      animation: fadeUp 0.75s 0.16s ease both;
+    .panel h2 {
+      font-family: var(--display); font-size: 1rem; letter-spacing: -0.02em;
+      margin: 0; padding: 16px 18px; border-bottom: 1px solid var(--line); background: var(--muted);
     }
-    .list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      animation: fadeUp 0.75s 0.24s ease both;
+    .opt {
+      display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
+      padding: 16px 18px; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit;
+      transition: background .15s ease;
     }
-    .list li { margin-bottom: 0.65rem; }
-    .list a {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 1rem 1.1rem;
-      border-radius: 10px;
-      text-decoration: none;
-      color: #F7FBFC;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid var(--line);
-      backdrop-filter: blur(10px);
-      transition: background 0.2s ease, transform 0.2s ease;
-    }
-    .list a:hover {
-      background: rgba(255, 255, 255, 0.14);
-      transform: translateY(-2px);
-    }
-    .list strong {
-      font-family: var(--display);
-      font-weight: 600;
-      font-size: 1.05rem;
-      letter-spacing: -0.02em;
-    }
-    .list span {
-      font-size: 0.85rem;
-      color: #5EEAD4;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-    .meta {
-      margin-top: 0.35rem;
-      font-size: 0.85rem;
-      color: rgba(247, 251, 252, 0.65);
-      font-weight: 400;
-    }
-    .share {
-      margin-top: 2rem;
-      padding-top: 1.25rem;
-      border-top: 1px solid var(--line);
-      animation: fadeUp 0.75s 0.32s ease both;
-    }
-    .share p {
-      margin: 0 0 0.75rem;
-      font-size: 0.85rem;
-      color: rgba(247, 251, 252, 0.7);
-    }
-    .share-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    .chip {
-      border: 1px solid var(--line);
-      background: rgba(13, 148, 136, 0.35);
-      color: #F0FDFA;
-      border-radius: 8px;
-      padding: 0.55rem 0.85rem;
-      font-size: 0.85rem;
-      font-weight: 700;
-      text-decoration: none;
+    .opt:last-child { border-bottom: none; }
+    .opt:hover { background: #F8FAFC; }
+    .opt strong { display: block; font-family: var(--display); font-size: 1.05rem; letter-spacing: -0.02em; }
+    .opt span { color: var(--ink3); font-size: 0.9rem; }
+    .btn {
+      height: 40px; padding: 0 16px; border-radius: 8px; background: var(--teal); color: var(--teal-fg);
+      font-weight: 700; font-size: 0.9rem; display: inline-flex; align-items: center; white-space: nowrap;
     }
     .foot {
-      margin-top: 2.5rem;
-      font-size: 0.75rem;
-      color: rgba(247, 251, 252, 0.45);
-      text-align: center;
+      max-width: 720px; margin: 0 auto; padding: 0 16px;
+      display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      font-size: 0.85rem; color: var(--ink3);
     }
+    .foot a { color: var(--teal); font-weight: 700; text-decoration: none; }
   </style>
 </head>
 <body>
-  <div class="plane">
-    <div class="shell">
-      <div class="brand-row">
-        <span>Ikigai Sports</span>
-        <span>cohestra.app</span>
-      </div>
-      <h1>Ikigai Sports</h1>
-      <p class="tagline">This week’s activities — tap to register.</p>
-      <ul class="list">
-        <li>
-          <a href="#">
-            <div>
-              <strong>Sunday clinic</strong>
-              <div class="meta">Sun · 9:00 · Court 2</div>
-            </div>
-            <span>Register</span>
-          </a>
-        </li>
-        <li>
-          <a href="#">
-            <div>
-              <strong>Youth open play</strong>
-              <div class="meta">Sat · 16:00 · Hall B</div>
-            </div>
-            <span>Register</span>
-          </a>
-        </li>
-        <li>
-          <a href="#">
-            <div>
-              <strong>Board game night</strong>
-              <div class="meta">Fri · 19:30 · Café</div>
-            </div>
-            <span>Register</span>
-          </a>
-        </li>
-      </ul>
-      <div class="share">
-        <p>Share this page (replaces your link-in-bio)</p>
-        <div class="share-actions">
-          <a class="chip" href="#">Copy link</a>
-          <a class="chip" href="#">QR pack</a>
-          <a class="chip" href="#">WhatsApp text</a>
-        </div>
-      </div>
-      <p class="foot">Powered by Cohestra · Basic stub</p>
+  <header class="banner">
+    <div class="banner-inner">
+      <p class="org">Ikigai Sports</p>
+      <h1>Upcoming activities</h1>
+      <p>Choose an activity to register — confirmation email included.</p>
     </div>
+  </header>
+  <div class="sheet">
+    <div class="panel">
+      <h2>Registration options</h2>
+      <a class="opt" href="#">
+        <div>
+          <strong>Sunday clinic</strong>
+          <span>Sun · 9:00 AM · Court 2 · Free</span>
+        </div>
+        <span class="btn">Register</span>
+      </a>
+      <a class="opt" href="#">
+        <div>
+          <strong>Youth open play</strong>
+          <span>Sat · 4:00 PM · Hall B · Free</span>
+        </div>
+        <span class="btn">Register</span>
+      </a>
+      <a class="opt" href="#">
+        <div>
+          <strong>Board game night</strong>
+          <span>Fri · 7:30 PM · Café · Free</span>
+        </div>
+        <span class="btn">Register</span>
+      </a>
+    </div>
+  </div>
+  <div class="foot">
+    <span>Powered by Cohestra</span>
+    <span><a href="#">Copy page link</a> · <a href="#">Get QR</a></span>
   </div>
 </body>
 </html>

@@ -3,242 +3,150 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cohestra — Guided start (Basic)</title>
-  <!-- Spine: Flow A; GTM-A first-15-min; Client list payoff vs Forms -->
+  <title>Cohestra — Admin (RegFox-caliber)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --primary: #143D4A;
-      --accent: #0D9488;
-      --accent-fg: #042F2E;
-      --mist: #F0F4F7;
-      --ink: #0C1B24;
-      --ink-muted: #5A6B75;
-      --line: #C5D0D8;
-      --surface: #FFFFFF;
-      --plan-basic: #64748B;
+      --navy: #0B1F2A;
+      --teal: #0F9F8A;
+      --teal-fg: #042F2E;
+      --canvas: #FFFFFF;
+      --muted: #F4F6F8;
+      --ink: #0B1F2A;
+      --ink2: #334155;
+      --ink3: #64748B;
+      --line: #E2E8F0;
       --display: "Sora", sans-serif;
       --body: "Source Sans 3", sans-serif;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--mist); }
-    .app { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
-    @media (max-width: 860px) { .app { grid-template-columns: 1fr; } aside { display: none; } }
-    aside {
-      background: var(--primary);
-      color: #E8F1F5;
-      padding: 1.35rem 1rem;
+    body { margin: 0; font-family: var(--body); background: var(--muted); color: var(--ink); }
+    .app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+    @media (max-width: 880px) { .app { grid-template-columns: 1fr; } .side { display: none; } }
+    .side { background: var(--navy); color: #E2E8F0; padding: 20px 14px; }
+    .side .logo { font-family: var(--display); font-weight: 700; letter-spacing: -0.04em; margin-bottom: 28px; }
+    .side a {
+      display: block; padding: 10px 12px; border-radius: 8px; text-decoration: none;
+      color: rgba(226,232,240,.72); font-weight: 600; font-size: 0.92rem; margin-bottom: 2px;
     }
-    .wordmark {
-      font-family: var(--display);
-      font-weight: 700;
-      letter-spacing: -0.04em;
-      margin-bottom: 1.75rem;
-      font-size: 1.2rem;
-    }
-    .nav a {
-      display: block;
-      padding: 0.65rem 0.75rem;
-      border-radius: 8px;
-      color: rgba(232, 241, 245, 0.72);
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.95rem;
-      margin-bottom: 0.25rem;
-    }
-    .nav a.active { background: rgba(13, 148, 136, 0.35); color: #F0FDFA; }
-    .nav a.locked { opacity: 0.4; }
-    main { display: flex; flex-direction: column; min-width: 0; }
+    .side a.on { background: rgba(15,159,138,.32); color: #F0FDFA; }
+    .side a.lock { opacity: .38; }
     .top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0.9rem 1.5rem;
-      background: var(--surface);
-      border-bottom: 1px solid var(--line);
+      height: 56px; background: var(--canvas); border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
     }
-    .tenant { font-family: var(--display); font-weight: 700; color: var(--primary); letter-spacing: -0.02em; }
+    .tenant { font-family: var(--display); font-weight: 700; letter-spacing: -0.02em; }
     .badge {
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      padding: 0.3rem 0.5rem;
-      border-radius: 4px;
-      background: var(--plan-basic);
-      color: #fff;
-      text-transform: uppercase;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+      background: #64748B; color: #fff; padding: 4px 8px; border-radius: 4px;
     }
-    .content { padding: 1.75rem 1.5rem 2.5rem; max-width: 960px; }
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .content { padding: 24px; max-width: 1080px; }
+    h1 { font-family: var(--display); font-size: 1.6rem; letter-spacing: -0.03em; margin: 0 0 6px; }
+    .sub { color: var(--ink3); margin: 0 0 20px; }
+    .metrics {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px;
     }
-    h1 {
-      font-family: var(--display);
-      font-size: 1.75rem;
-      letter-spacing: -0.03em;
-      color: var(--primary);
-      margin: 0 0 0.4rem;
-      animation: rise 0.55s ease both;
+    @media (max-width: 900px) { .metrics { grid-template-columns: repeat(2, 1fr); } }
+    .metric {
+      background: var(--canvas); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
     }
-    .lede { color: var(--ink-muted); margin: 0 0 1.5rem; max-width: 48ch; animation: rise 0.55s 0.05s ease both; }
-    .grid {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 1rem;
-      animation: rise 0.55s 0.1s ease both;
-    }
-    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+    .metric span { display: block; font-size: 0.72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink3); }
+    .metric strong { font-family: var(--display); font-size: 1.6rem; letter-spacing: -0.03em; }
+    .split { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 12px; }
+    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
     .panel {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 1.25rem 1.35rem;
+      background: var(--canvas); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px;
     }
-    .panel.hero-setup {
-      background:
-        radial-gradient(ellipse at 100% 0%, rgba(13, 148, 136, 0.14), transparent 55%),
-        var(--surface);
+    .panel h2 { font-family: var(--display); font-size: 1rem; margin: 0 0 12px; letter-spacing: -0.02em; }
+    .step {
+      display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: center;
+      padding: 12px 0; border-top: 1px solid var(--line);
     }
-    .panel h2 {
-      font-family: var(--display);
-      font-size: 1.1rem;
-      margin: 0 0 0.35rem;
-      letter-spacing: -0.02em;
-      color: var(--primary);
+    .step:first-of-type { border-top: none; }
+    .n {
+      width: 28px; height: 28px; border-radius: 50%; background: #CCFBF1; color: var(--teal-fg);
+      display: grid; place-items: center; font-weight: 700; font-size: 0.8rem;
     }
-    .panel .sub { color: var(--ink-muted); font-size: 0.92rem; margin: 0 0 1rem; }
-    .steps { list-style: none; padding: 0; margin: 0 0 1rem; }
-    .steps li {
-      display: flex;
-      gap: 0.75rem;
-      align-items: flex-start;
-      padding: 0.7rem 0;
-      border-top: 1px solid var(--line);
-    }
-    .steps li:first-child { border-top: none; }
-    .num {
-      width: 1.6rem;
-      height: 1.6rem;
-      border-radius: 999px;
-      background: #CCFBF1;
-      color: var(--accent-fg);
-      font-weight: 700;
-      font-size: 0.8rem;
-      display: grid;
-      place-items: center;
-      flex-shrink: 0;
-    }
-    .steps strong { display: block; font-size: 0.98rem; }
-    .steps span { color: var(--ink-muted); font-size: 0.88rem; }
+    .step strong { display: block; font-size: 0.95rem; }
+    .step em { font-style: normal; color: var(--ink3); font-size: 0.85rem; }
     .btn {
-      display: inline-flex;
-      padding: 0.75rem 1.1rem;
-      background: var(--accent);
-      color: var(--accent-fg);
-      border-radius: 8px;
-      font-weight: 700;
-      text-decoration: none;
-      box-shadow: 0 8px 20px rgba(13, 148, 136, 0.22);
+      height: 36px; padding: 0 12px; border-radius: 8px; border: none;
+      background: var(--teal); color: var(--teal-fg); font-weight: 700; font-size: 0.85rem; cursor: pointer;
     }
-    .clients { margin-top: 0.25rem; }
-    .client {
-      display: flex;
-      justify-content: space-between;
-      gap: 0.75rem;
-      padding: 0.7rem 0;
-      border-top: 1px solid var(--line);
-      font-size: 0.95rem;
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th {
+      text-align: left; font-size: 0.7rem; letter-spacing: .04em; text-transform: uppercase;
+      color: var(--ink3); padding: 10px 8px; background: var(--muted); border-bottom: 1px solid var(--line);
     }
-    .client:first-of-type { border-top: none; }
-    .client em { font-style: normal; color: var(--ink-muted); font-size: 0.85rem; }
+    td { padding: 12px 8px; border-bottom: 1px solid var(--line); }
+    tr:hover td { background: #F8FAFC; }
     .pill {
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 0.2rem 0.45rem;
-      border-radius: 4px;
-      background: #E0F2FE;
-      color: #0369A1;
-      align-self: center;
+      font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+      background: #E0F2FE; color: #0369A1;
     }
-    .payoff {
-      margin-top: 1rem;
-      padding: 0.85rem 1rem;
-      border-radius: 8px;
-      background: #ECFDF5;
-      color: #065F46;
-      font-size: 0.9rem;
-      font-weight: 600;
-      line-height: 1.4;
-    }
+    .pill.r { background: #ECFDF5; color: #047857; }
   </style>
 </head>
 <body>
   <div class="app">
-    <aside>
-      <div class="wordmark">Cohestra</div>
-      <nav class="nav">
-        <a class="active" href="#">Home</a>
-        <a href="#">Activities</a>
-        <a href="#">Clients</a>
-        <a href="#">Reports</a>
-        <a class="locked" href="#">Campaigns</a>
-        <a href="#">Public page</a>
-        <a href="#">Settings</a>
-      </nav>
+    <aside class="side">
+      <div class="logo">Cohestra</div>
+      <a class="on" href="#">Home</a>
+      <a href="#">Activities</a>
+      <a href="#">Clients</a>
+      <a href="#">Reports</a>
+      <a class="lock" href="#">Campaigns</a>
+      <a href="#">Public page</a>
+      <a href="#">Settings</a>
     </aside>
     <main>
       <header class="top">
         <div class="tenant">Ikigai Sports</div>
-        <div style="display:flex;gap:0.6rem;align-items:center;">
+        <div style="display:flex;gap:10px;align-items:center;">
           <span class="badge">Basic</span>
-          <span style="color:var(--ink-muted);font-size:0.9rem;font-weight:600;">Priya</span>
+          <span style="color:var(--ink3);font-weight:600;font-size:0.9rem;">Priya</span>
         </div>
       </header>
       <div class="content">
-        <h1>Your stack, replaced.</h1>
-        <p class="lede">No more Forms → spreadsheet → WhatsApp chaos. Get one live activity and your first Clients in under 15 minutes.</p>
-        <div class="grid">
-          <div class="panel hero-setup">
-            <h2>Guided setup</h2>
-            <p class="sub">Basic: 1 community · 3 published activities · stub public page</p>
-            <ol class="steps">
-              <li>
-                <span class="num">1</span>
-                <div><strong>Name your community</strong><span>e.g. Weekend Clinics</span></div>
-              </li>
-              <li>
-                <span class="num">2</span>
-                <div><strong>Create & publish an activity</strong><span>QR + register link generated</span></div>
-              </li>
-              <li>
-                <span class="num">3</span>
-                <div><strong>Share your stub page</strong><span>Replaces link-in-bio — registrations become Clients</span></div>
-              </li>
-            </ol>
-            <a class="btn" href="#">Start with step 1</a>
+        <h1>Home</h1>
+        <p class="sub">Live workspace — registrations become Clients automatically.</p>
+        <div class="metrics">
+          <div class="metric"><span>Registrations (7d)</span><strong>24</strong></div>
+          <div class="metric"><span>Clients</span><strong>186</strong></div>
+          <div class="metric"><span>Published</span><strong>2 / 3</strong></div>
+          <div class="metric"><span>Regs this month</span><strong>61 / 150</strong></div>
+        </div>
+        <div class="split">
+          <div class="panel">
+            <h2>Get live in three steps</h2>
+            <div class="step">
+              <span class="n">1</span>
+              <div><strong>Community</strong><em>Weekend Clinics</em></div>
+              <span style="color:var(--teal);font-weight:700;font-size:0.85rem;">Done</span>
+            </div>
+            <div class="step">
+              <span class="n">2</span>
+              <div><strong>Publish an activity</strong><em>QR + register link</em></div>
+              <button class="btn" type="button">Create</button>
+            </div>
+            <div class="step">
+              <span class="n">3</span>
+              <div><strong>Share public page</strong><em>ikigai.cohestra.app</em></div>
+              <button class="btn" type="button">Share kit</button>
+            </div>
           </div>
           <div class="panel">
-            <h2>Client list preview</h2>
-            <p class="sub">What Forms never gave you — one people list across activities.</p>
-            <div class="clients">
-              <div class="client">
-                <div>Elena M.<br /><em>Sunday clinic · today</em></div>
-                <span class="pill">New</span>
-              </div>
-              <div class="client">
-                <div>Jordan K.<br /><em>Youth open play · yesterday</em></div>
-                <span class="pill">New</span>
-              </div>
-              <div class="client">
-                <div>Sam R.<br /><em>Sunday clinic · also Board game night</em></div>
-                <span class="pill">Returning</span>
-              </div>
-            </div>
-            <div class="payoff">Same person across activities = one Client. That’s the Cohestra edge.</div>
+            <h2>Recent registrations</h2>
+            <table>
+              <thead><tr><th>Client</th><th>Activity</th><th></th></tr></thead>
+              <tbody>
+                <tr><td>Elena Marquez</td><td>Sunday clinic</td><td><span class="pill">New</span></td></tr>
+                <tr><td>Jordan Kim</td><td>Youth open play</td><td><span class="pill">New</span></td></tr>
+                <tr><td>Sam Rivera</td><td>Sunday clinic</td><td><span class="pill r">Returning</span></td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

@@ -986,7 +986,7 @@ Full pricing page copy: `docs/marketing/pricing-tiers.md`
 | Next skill | Deliverable | Status |
 |------------|-------------|--------|
 | `bmad-architecture` | Tenancy spine — isolation, routing, identity, migration | **Done** — `architecture/architecture-cohestra-enterprise-2026-07-15/` |
-| `bmad-ux` | Enterprise journeys — signup, team invite, platform admin | **Final** — `ux-designs/ux-cohestra-2026-07-18/` (Gathered Clarity + stack-killer mock pass + `share-kit.html`) |
+| `bmad-ux` | Enterprise journeys — signup, team invite, platform admin | **Final** — `ux-designs/ux-cohestra-2026-07-18/` (RegFox-caliber craft + stack-killer mocks) |
 | `bmad-create-epics-and-stories` | Epic 11–15 breakdown from this PRD | Pending |
 | `bmad-market-research` | List price / grandfathering (Q2/P9 — §13.9) | **Draft done** — research note; pilot WTP + list lock pending. Q5 limits ratified separately. |
 | `bmad-check-implementation-readiness` | Align PRD + architecture + UX before dev | After UX |
