@@ -2,7 +2,7 @@
 name: Cohestra Enterprise
 status: final
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-19
 sources:
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
@@ -15,7 +15,7 @@ design: ./DESIGN.md
 
 > Multi-tenant SaaS UX. Visual identity → `DESIGN.md` (**Gathered Clarity** brand kit). Platform 0 supplies inherited *ops module behaviors* only — not brand. Spines win on conflict with mocks.
 
-→ Key screens: `mockups/marketing-start-free.html` · `mockups/basic-stub-home.html` · `mockups/admin-dashboard-basic.html` · `mockups/team-seat-gate.html` · `mockups/platform-admin-suspend.html`
+→ Key screens (GTM-A stack-killer): `mockups/marketing-start-free.html` · `mockups/basic-stub-home.html` · `mockups/admin-dashboard-basic.html` · `mockups/share-kit.html` · `mockups/team-seat-gate.html` · `mockups/platform-admin-suspend.html`
 
 ## Foundation
 
@@ -108,8 +108,9 @@ Microcopy only. Aesthetic in `DESIGN.md`.
 
 | Do | Don't |
 |----|-------|
-| "Start free" | "Start your journey 🚀" |
-| "No card required on Basic" | "Freemium forever!!!" |
+| Lead with **Cohestra** + “One client list from every QR and signup” | Generic “all-in-one CRM” |
+| “Replace Forms + spreadsheets + link-in-bio” | Compete as Peatix/Luma discovery |
+| "Start free" · "No card required on Basic" | "Start your journey 🚀" |
 | "You will not be charged while your trial is active" | Hide trial end date |
 
 ### Tenant admin

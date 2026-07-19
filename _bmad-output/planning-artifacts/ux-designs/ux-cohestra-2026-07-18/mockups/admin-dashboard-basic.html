@@ -3,8 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cohestra — Admin dashboard (Basic)</title>
-  <!-- Spine: DESIGN PlanBadge; EXPERIENCE Flow A step 3; State Basic empty / dashboard -->
+  <title>Cohestra — Guided start (Basic)</title>
+  <!-- Spine: Flow A; GTM-A first-15-min; Client list payoff vs Forms -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --primary: #143D4A;
@@ -16,90 +19,160 @@
       --line: #C5D0D8;
       --surface: #FFFFFF;
       --plan-basic: #64748B;
-      --display: "Sora", "Avenir Next", "Nunito Sans", sans-serif;
-      --body: "Source Sans 3", "Segoe UI", "Helvetica Neue", sans-serif;
+      --display: "Sora", sans-serif;
+      --body: "Source Sans 3", sans-serif;
     }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--mist); }
     .app { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
+    @media (max-width: 860px) { .app { grid-template-columns: 1fr; } aside { display: none; } }
     aside {
-      background: var(--surface);
-      border-right: 1px solid var(--line);
-      padding: 20px 16px;
+      background: var(--primary);
+      color: #E8F1F5;
+      padding: 1.35rem 1rem;
     }
     .wordmark {
       font-family: var(--display);
       font-weight: 700;
-      color: var(--primary);
-      letter-spacing: -0.03em;
-      margin-bottom: 24px;
+      letter-spacing: -0.04em;
+      margin-bottom: 1.75rem;
+      font-size: 1.2rem;
     }
     .nav a {
       display: block;
-      padding: 10px 12px;
+      padding: 0.65rem 0.75rem;
       border-radius: 8px;
-      color: var(--ink-muted);
+      color: rgba(232, 241, 245, 0.72);
       text-decoration: none;
-      font-size: 15px;
-      margin-bottom: 4px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 0.25rem;
     }
-    .nav a.active { background: #E6F6F4; color: var(--primary); font-weight: 600; }
-    .nav a.locked { opacity: 0.55; }
-    main { display: flex; flex-direction: column; }
+    .nav a.active { background: rgba(13, 148, 136, 0.35); color: #F0FDFA; }
+    .nav a.locked { opacity: 0.4; }
+    main { display: flex; flex-direction: column; min-width: 0; }
     .top {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      padding: 14px 24px;
+      gap: 1rem;
+      padding: 0.9rem 1.5rem;
       background: var(--surface);
       border-bottom: 1px solid var(--line);
     }
-    .tenant { font-weight: 600; color: var(--primary); }
-    .badges { display: flex; gap: 8px; align-items: center; }
+    .tenant { font-family: var(--display); font-weight: 700; color: var(--primary); letter-spacing: -0.02em; }
     .badge {
-      font-size: 12px;
+      font-size: 0.7rem;
       font-weight: 700;
-      letter-spacing: 0.02em;
-      padding: 4px 8px;
+      letter-spacing: 0.04em;
+      padding: 0.3rem 0.5rem;
       border-radius: 4px;
       background: var(--plan-basic);
       color: #fff;
       text-transform: uppercase;
     }
-    .content { padding: 28px 24px; }
+    .content { padding: 1.75rem 1.5rem 2.5rem; max-width: 960px; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     h1 {
       font-family: var(--display);
-      font-size: 24px;
-      margin: 0 0 8px;
-      letter-spacing: -0.02em;
+      font-size: 1.75rem;
+      letter-spacing: -0.03em;
       color: var(--primary);
+      margin: 0 0 0.4rem;
+      animation: rise 0.55s ease both;
     }
-    .muted { color: var(--ink-muted); margin: 0 0 24px; }
+    .lede { color: var(--ink-muted); margin: 0 0 1.5rem; max-width: 48ch; animation: rise 0.55s 0.05s ease both; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1rem;
+      animation: rise 0.55s 0.1s ease both;
+    }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
     .panel {
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 12px;
-      padding: 20px;
-      max-width: 520px;
+      padding: 1.25rem 1.35rem;
     }
-    .panel h2 { font-family: var(--display); font-size: 18px; margin: 0 0 8px; }
+    .panel.hero-setup {
+      background:
+        radial-gradient(ellipse at 100% 0%, rgba(13, 148, 136, 0.14), transparent 55%),
+        var(--surface);
+    }
+    .panel h2 {
+      font-family: var(--display);
+      font-size: 1.1rem;
+      margin: 0 0 0.35rem;
+      letter-spacing: -0.02em;
+      color: var(--primary);
+    }
+    .panel .sub { color: var(--ink-muted); font-size: 0.92rem; margin: 0 0 1rem; }
+    .steps { list-style: none; padding: 0; margin: 0 0 1rem; }
+    .steps li {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      padding: 0.7rem 0;
+      border-top: 1px solid var(--line);
+    }
+    .steps li:first-child { border-top: none; }
+    .num {
+      width: 1.6rem;
+      height: 1.6rem;
+      border-radius: 999px;
+      background: #CCFBF1;
+      color: var(--accent-fg);
+      font-weight: 700;
+      font-size: 0.8rem;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .steps strong { display: block; font-size: 0.98rem; }
+    .steps span { color: var(--ink-muted); font-size: 0.88rem; }
     .btn {
-      display: inline-block;
-      margin-top: 12px;
-      padding: 10px 16px;
+      display: inline-flex;
+      padding: 0.75rem 1.1rem;
       background: var(--accent);
       color: var(--accent-fg);
       border-radius: 8px;
-      font-weight: 600;
+      font-weight: 700;
       text-decoration: none;
+      box-shadow: 0 8px 20px rgba(13, 148, 136, 0.22);
     }
-    .upgrade {
-      margin-top: 16px;
-      padding-top: 16px;
+    .clients { margin-top: 0.25rem; }
+    .client {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.7rem 0;
       border-top: 1px solid var(--line);
-      font-size: 14px;
-      color: var(--ink-muted);
+      font-size: 0.95rem;
+    }
+    .client:first-of-type { border-top: none; }
+    .client em { font-style: normal; color: var(--ink-muted); font-size: 0.85rem; }
+    .pill {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.45rem;
+      border-radius: 4px;
+      background: #E0F2FE;
+      color: #0369A1;
+      align-self: center;
+    }
+    .payoff {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 8px;
+      background: #ECFDF5;
+      color: #065F46;
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1.4;
     }
   </style>
 </head>
@@ -108,31 +181,65 @@
     <aside>
       <div class="wordmark">Cohestra</div>
       <nav class="nav">
-        <a class="active" href="#">Dashboard</a>
+        <a class="active" href="#">Home</a>
         <a href="#">Activities</a>
         <a href="#">Clients</a>
         <a href="#">Reports</a>
         <a class="locked" href="#">Campaigns</a>
-        <a href="#">Site</a>
+        <a href="#">Public page</a>
         <a href="#">Settings</a>
       </nav>
     </aside>
     <main>
       <header class="top">
         <div class="tenant">Ikigai Sports</div>
-        <div class="badges">
+        <div style="display:flex;gap:0.6rem;align-items:center;">
           <span class="badge">Basic</span>
-          <span style="color:var(--ink-muted);font-size:14px;">Priya · Admin</span>
+          <span style="color:var(--ink-muted);font-size:0.9rem;font-weight:600;">Priya</span>
         </div>
       </header>
       <div class="content">
-        <h1>Welcome, Priya</h1>
-        <p class="muted">Your Basic workspace is ready. Create a community and publish an activity to go live on your stub page.</p>
-        <div class="panel">
-          <h2>Get your first registration</h2>
-          <p class="muted" style="margin:0">1 community · up to 3 published activities · 150 regs/mo</p>
-          <a class="btn" href="#">Create activity</a>
-          <div class="upgrade">Need a teammate or a branded Site Page? Upgrade to Core.</div>
+        <h1>Your stack, replaced.</h1>
+        <p class="lede">No more Forms → spreadsheet → WhatsApp chaos. Get one live activity and your first Clients in under 15 minutes.</p>
+        <div class="grid">
+          <div class="panel hero-setup">
+            <h2>Guided setup</h2>
+            <p class="sub">Basic: 1 community · 3 published activities · stub public page</p>
+            <ol class="steps">
+              <li>
+                <span class="num">1</span>
+                <div><strong>Name your community</strong><span>e.g. Weekend Clinics</span></div>
+              </li>
+              <li>
+                <span class="num">2</span>
+                <div><strong>Create & publish an activity</strong><span>QR + register link generated</span></div>
+              </li>
+              <li>
+                <span class="num">3</span>
+                <div><strong>Share your stub page</strong><span>Replaces link-in-bio — registrations become Clients</span></div>
+              </li>
+            </ol>
+            <a class="btn" href="#">Start with step 1</a>
+          </div>
+          <div class="panel">
+            <h2>Client list preview</h2>
+            <p class="sub">What Forms never gave you — one people list across activities.</p>
+            <div class="clients">
+              <div class="client">
+                <div>Elena M.<br /><em>Sunday clinic · today</em></div>
+                <span class="pill">New</span>
+              </div>
+              <div class="client">
+                <div>Jordan K.<br /><em>Youth open play · yesterday</em></div>
+                <span class="pill">New</span>
+              </div>
+              <div class="client">
+                <div>Sam R.<br /><em>Sunday clinic · also Board game night</em></div>
+                <span class="pill">Returning</span>
+              </div>
+            </div>
+            <div class="payoff">Same person across activities = one Client. That’s the Cohestra edge.</div>
+          </div>
         </div>
       </div>
     </main>

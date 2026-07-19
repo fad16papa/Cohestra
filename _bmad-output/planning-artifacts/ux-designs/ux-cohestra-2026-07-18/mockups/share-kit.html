@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cohestra — Share kit</title>
+  <!-- Spine: §13.11 share kit; Linktree replacement; Activity QR pack -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #143D4A;
+      --accent: #0D9488;
+      --accent-fg: #042F2E;
+      --mist: #F0F4F7;
+      --ink: #0C1B24;
+      --ink-muted: #5A6B75;
+      --line: #C5D0D8;
+      --surface: #FFFFFF;
+      --display: "Sora", sans-serif;
+      --body: "Source Sans 3", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--mist); }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    h1 {
+      font-family: var(--display);
+      font-size: 1.85rem;
+      letter-spacing: -0.03em;
+      color: var(--primary);
+      margin: 0 0 0.4rem;
+    }
+    .lede { color: var(--ink-muted); margin: 0 0 1.75rem; max-width: 46ch; }
+    .layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 1.25rem;
+    }
+    @media (max-width: 780px) { .layout { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .card h2 {
+      font-family: var(--display);
+      font-size: 1.05rem;
+      margin: 0 0 0.85rem;
+      color: var(--primary);
+    }
+    /* OG-style preview */
+    .og {
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(ellipse at 80% 20%, rgba(13,148,136,0.35), transparent 50%),
+        linear-gradient(145deg, #143D4A, #0F766E);
+      color: #F7FBFC;
+      min-height: 200px;
+      padding: 1.35rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      animation: pulseSoft 4s ease-in-out infinite;
+    }
+    @keyframes pulseSoft {
+      0%, 100% { filter: saturate(1); }
+      50% { filter: saturate(1.08); }
+    }
+    .og .org { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.8; }
+    .og .title { font-family: var(--display); font-size: 1.45rem; font-weight: 700; letter-spacing: -0.03em; margin: 0.35rem 0; }
+    .og .url { font-size: 0.85rem; opacity: 0.75; }
+    .field { margin-top: 1rem; }
+    .field label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--ink-muted); margin-bottom: 0.35rem; }
+    .field input, .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0.7rem 0.8rem;
+      font: inherit;
+      background: #F7FAFB;
+    }
+    .field textarea { min-height: 88px; resize: vertical; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .btn {
+      padding: 0.7rem 1rem;
+      border-radius: 8px;
+      font-weight: 700;
+      text-decoration: none;
+      border: 1px solid transparent;
+    }
+    .btn-primary { background: var(--accent); color: var(--accent-fg); }
+    .btn-ghost { background: transparent; border-color: var(--line); color: var(--primary); }
+    .qr {
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 1rem;
+      border-radius: 12px;
+      background:
+        linear-gradient(#143D4A 0 0) 0 0 / 20% 20%,
+        linear-gradient(#143D4A 0 0) 100% 0 / 20% 20%,
+        linear-gradient(#143D4A 0 0) 0 100% / 20% 20%,
+        repeating-conic-gradient(#143D4A 0% 25%, #F0F4F7 0% 50%) 50% / 16px 16px;
+      background-repeat: no-repeat;
+      box-shadow: inset 0 0 0 10px #fff;
+      border: 1px solid var(--line);
+    }
+    .hint {
+      margin-top: 1rem;
+      font-size: 0.88rem;
+      color: var(--ink-muted);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Share kit</h1>
+    <p class="lede">One link and QR pack for your stub page — so Instagram bio and venue posters point at Clients, not a dead Linktree.</p>
+    <div class="layout">
+      <div class="card">
+        <h2>Link preview</h2>
+        <div class="og">
+          <div class="org">Ikigai Sports</div>
+          <div class="title">This week’s activities</div>
+          <div class="url">ikigai.cohestra.app</div>
+        </div>
+        <div class="field">
+          <label>Public URL</label>
+          <input readonly value="https://ikigai.cohestra.app" />
+        </div>
+        <div class="field">
+          <label>WhatsApp / IG text</label>
+          <textarea readonly>Join Ikigai this week — pick an activity and register: https://ikigai.cohestra.app</textarea>
+        </div>
+        <div class="actions">
+          <a class="btn btn-primary" href="#">Copy link</a>
+          <a class="btn btn-ghost" href="#">Copy message</a>
+        </div>
+      </div>
+      <div class="card">
+        <h2>QR pack — Sunday clinic</h2>
+        <div class="qr" role="img" aria-label="QR code placeholder"></div>
+        <div class="actions" style="justify-content:center;">
+          <a class="btn btn-primary" href="#">Download PNG</a>
+          <a class="btn btn-ghost" href="#">Download PDF flyer</a>
+        </div>
+        <p class="hint">Each scan opens registration and writes a Client on your list — not a form response buried in Drive.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

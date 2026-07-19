@@ -3,7 +3,7 @@ name: Cohestra Enterprise
 description: Gathered Clarity — Cohestra multi-tenant brand kit (ink lagoon, teal signal, cool mist). Distinct from Platform 0 forest green.
 status: final
 created: 2026-07-18
-updated: 2026-07-18
+updated: 2026-07-19
 theme:
   modes: [light, dark, system]
   default: light
@@ -178,7 +178,7 @@ components:
 
 > **Gathered Clarity** — Cohestra’s own brand kit. Not Platform 0 forest green. Spines win on conflict with mocks.
 
-→ Key screens: `mockups/marketing-start-free.html`, `mockups/basic-stub-home.html`, `mockups/admin-dashboard-basic.html`, `mockups/team-seat-gate.html`, `mockups/platform-admin-suspend.html`
+→ Key screens (stack-killer pass): `mockups/marketing-start-free.html`, `mockups/basic-stub-home.html`, `mockups/admin-dashboard-basic.html`, `mockups/share-kit.html`, `mockups/team-seat-gate.html`, `mockups/platform-admin-suspend.html`
 
 ## Brand & Style
 

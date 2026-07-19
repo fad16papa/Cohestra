@@ -3,8 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cohestra — Team SeatGate (Basic)</title>
-  <!-- Spine: DESIGN SeatGate UpgradePanel; EXPERIENCE Flow B edge; FR-6 H3 -->
+  <title>Cohestra — Team (Basic seat gate)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --primary: #143D4A;
@@ -15,65 +17,65 @@
       --ink-muted: #5A6B75;
       --line: #C5D0D8;
       --surface: #FFFFFF;
-      --raised: #F7FAFB;
       --plan-basic: #64748B;
-      --display: "Sora", "Avenir Next", "Nunito Sans", sans-serif;
-      --body: "Source Sans 3", "Segoe UI", "Helvetica Neue", sans-serif;
+      --display: "Sora", sans-serif;
+      --body: "Source Sans 3", sans-serif;
     }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--mist); }
-    .shell { max-width: 720px; margin: 40px auto; padding: 0 20px; }
-    .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    h1 { font-family: var(--display); font-size: 24px; margin: 0; color: var(--primary); letter-spacing: -0.02em; }
-    .badge { font-size: 12px; font-weight: 700; padding: 4px 8px; border-radius: 4px; background: var(--plan-basic); color: #fff; text-transform: uppercase; }
+    .shell { max-width: 640px; margin: 2.5rem auto; padding: 0 1.25rem 3rem; }
+    .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+    h1 { font-family: var(--display); font-size: 1.65rem; margin: 0; color: var(--primary); letter-spacing: -0.03em; }
+    .badge { font-size: 0.7rem; font-weight: 700; padding: 0.3rem 0.5rem; border-radius: 4px; background: var(--plan-basic); color: #fff; text-transform: uppercase; }
     .card {
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 12px;
-      padding: 24px;
+      padding: 1.35rem;
+      box-shadow: 0 12px 40px rgba(20, 61, 74, 0.06);
     }
-    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--ink-muted); }
+    label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--ink-muted); margin-bottom: 0.35rem; }
     input, select {
       width: 100%;
-      padding: 10px 12px;
+      padding: 0.7rem 0.8rem;
       border: 1px solid var(--line);
       border-radius: 8px;
-      font-size: 16px;
-      margin-bottom: 14px;
-      background: #f3f5f7;
+      font-size: 1rem;
+      margin-bottom: 0.85rem;
+      background: #EEF2F5;
       color: var(--ink-muted);
     }
-    button.disabled {
+    button:disabled {
       width: 100%;
-      padding: 12px;
+      padding: 0.85rem;
       border: none;
       border-radius: 8px;
-      background: #cbd5e1;
-      color: #64748b;
-      font-weight: 600;
-      font-size: 16px;
-      cursor: not-allowed;
+      background: #CBD5E1;
+      color: #64748B;
+      font-weight: 700;
+      font-size: 1rem;
     }
     .gate {
-      margin-top: 20px;
-      background: var(--raised);
-      border: 1px solid var(--line);
+      margin-top: 1.15rem;
+      padding: 1.15rem;
       border-radius: 12px;
-      padding: 20px;
+      background:
+        radial-gradient(ellipse at 0% 0%, rgba(13,148,136,0.16), transparent 55%),
+        #F7FAFB;
+      border: 1px solid rgba(13, 148, 136, 0.28);
     }
-    .gate h2 { font-family: var(--display); font-size: 18px; margin: 0 0 8px; color: var(--primary); }
-    .gate p { margin: 0 0 14px; color: var(--ink-muted); line-height: 1.45; }
+    .gate h2 { font-family: var(--display); font-size: 1.1rem; margin: 0 0 0.4rem; color: var(--primary); }
+    .gate p { margin: 0 0 0.9rem; color: var(--ink-muted); line-height: 1.45; }
     .btn {
-      display: inline-block;
-      padding: 10px 16px;
+      display: inline-flex;
+      padding: 0.7rem 1.05rem;
       background: var(--accent);
       color: var(--accent-fg);
       border-radius: 8px;
-      font-weight: 600;
+      font-weight: 700;
       text-decoration: none;
     }
-    .member { margin-top: 24px; font-size: 14px; color: var(--ink-muted); }
-    .member strong { color: var(--ink); }
+    .you { margin-top: 1.25rem; font-size: 0.9rem; color: var(--ink-muted); }
   </style>
 </head>
 <body>
@@ -86,16 +88,14 @@
       <label>Email</label>
       <input type="email" value="marco@example.com" disabled />
       <label>Role</label>
-      <select disabled>
-        <option>Tenant Member</option>
-      </select>
-      <button class="disabled" type="button" disabled>Send invite</button>
+      <select disabled><option>Tenant Member</option></select>
+      <button type="button" disabled>Send invite</button>
       <div class="gate">
         <h2>Upgrade to Core for a second seat</h2>
-        <p>Basic includes 1 operator seat. Invite teammates on Core (3 seats) or Pro (10).</p>
+        <p>Basic is one operator — by design. Bring Marco in on Core (3 seats) when you’re ready to run weekends together.</p>
         <a class="btn" href="#">Upgrade to Core</a>
       </div>
-      <p class="member"><strong>Priya</strong> — Tenant Admin (you)</p>
+      <p class="you"><strong style="color:var(--ink)">Priya</strong> — Tenant Admin (you)</p>
     </div>
   </div>
 </body>
