@@ -2,7 +2,7 @@
 title: Cohestra Enterprise — Multi-Tenant SaaS
 status: draft
 created: 2026-07-15
-updated: 2026-07-18
+updated: 2026-07-19
 gtm_pricing: section-13
 sources:
   - _bmad-output/planning-artifacts/sprint-change-proposal-2026-07-14.md
@@ -542,9 +542,10 @@ Platform Admin **Suspend** (FR-3) remains the manual break-glass for confirmed a
 
 - **Modifying lead-generation-crm** — separate product; no shared deployment requirement.
 - **Cross-tenant client deduplication** — same person at two tenants is two **Clients** by design.
-- **Participant login / member portals** — public registration only.
-- **WhatsApp Business API** — deferred; click-to-message retained from Platform 0.
-- **Automated email drip sequences** — deferred to enterprise v2.
+- **Participant login / member portals** — public registration only (revisit only if pilots require; see §13.11).
+- **WhatsApp Business API** — deferred; click-to-message retained from Platform 0 (§13.11 later).
+- **Automated email drip sequences** — out of **v1 MVP**; thin confirm/reminder/thank-you automations are **v1.1 One-stop Lite** candidates (§13.11), not HubSpot-depth journeys.
+- **Cross-tenant discovery marketplace** — out of Option A one-stop definition (§13.1).
 - **Arbitrary custom report builder** (drag-and-drop widgets / ad-hoc SQL) — deferred; Core/Pro use defined query dimensions + filters (FR-15).
 - **Enterprise custom contracts in-app** — sales-led deals use manual invoice; self-serve **Basic is free**; **Core / Pro** via Stripe.
 - **Tenant custom domains** (`events.ikigai.com`) — deferred to v1.1; subdomain only in v1.
@@ -701,6 +702,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | Q8 | Droplet | Deferred until Francis approves production deploy |
 | **Terminology** | **Community** vs club | **Option A ratified** — **Community** official in product/pricing; "club" only as example community name in marketing |
 | **Q5** | Communities / activities / registration caps | **Ratified Option 1** — locked in §13.4 / §13.10 (A-19); no further study for MVP |
+| **GTM-A** | One-stop product definition | **Option A ratified** — operator stack killer (Forms + sheet + Linktree + light email; paid tickets later). Not marketplace / HubSpot-depth / RegFox. §13.1, §13.11 |
 
 **Deferred — list price & grandfathering only (before Phase 3 scale; not blocking MVP build):**
 
@@ -750,6 +752,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-33:** UJ-1 is Basic-first Start free → stub public site (H4); SitePage/composer are Core+ — FR-12, FR-19
 - **A-34:** Role × plan (H5 Option A): Admin-only billing/team/settings; Member gets plan-allowed ops; upgrade CTAs Admin-only — FR-5
 - **A-35:** UJ-4 is break-glass Suspend only (H6); ordinary non-payment is FR-23 automation — FR-2, FR-3
+- **A-36:** One-stop = operator stack killer (GTM-A); post-MVP backlog in §13.11 — not discovery marketplace
 
 ---
 
@@ -759,6 +762,8 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 
 **One-line:** Cohestra turns community events and QR registrations into one client list with follow-up — without Google Forms chaos.
 
+**North star (ratified 2026-07-19 — Option A “operator stack killer”):** Cohestra is the **operating system for community activities** — register, know your people, follow up, and (later) take payment — **in one place**. It replaces the operator’s everyday stack (**Google Forms + spreadsheet + Linktree/link-in-bio + light email**), not Peatix/Luma discovery marketplaces, HubSpot-depth CRM, or RegFox-scale ticketing.
+
 **Primary audience (v1):** Community clubs, fitness studios, and hobby groups running multiple activities per month with 1–5 operators.
 
 **Competitive frame:**
@@ -766,8 +771,12 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | Alternative | Cohestra advantage |
 |-------------|-------------------|
 | Google Forms + spreadsheet | Unified client list, dedup, timeline, campaigns |
+| Linktree / link-in-bio | Stub/SitePage + register links that create Clients |
 | Peatix / Luma | CRM pipeline after registration, not just event pages |
+| Mailchimp (light) | Capture identity first; Pro campaigns on the same Clients |
 | Generic CRM (HubSpot, etc.) | Activity-led capture built-in; no deal-desk complexity |
+
+**Explicitly out of the one-stop definition:** cross-tenant discovery marketplace; HubSpot-style deal pipelines / full marketing automation; festival-grade ticketing (complex fees/refunds). See §13.11 for post-MVP adds that still fit Option A.
 
 **Product boundary in all marketing:** Cohestra Enterprise (this product) is multi-tenant SaaS. **lead-generation-crm** is a separate single-operator product — never conflated in copy or demos.
 
@@ -935,6 +944,40 @@ cohestra.app (apex marketing)
 **Basic rationale:** Minimum real product test — one operator, one community, three live events, 150 regs/mo, registration emails, **public stub** (no SitePage). No card required.
 
 Full pricing page copy: `docs/marketing/pricing-tiers.md`
+
+### 13.11 Post-MVP capability backlog (Option A — operator stack killer)
+
+**Does not expand Enterprise v1 MVP** (Epics 11–15 / FR-1–26a). Prioritize after tenancy + freemium launch. Each item retires a stack tool.
+
+#### v1.1 — One-stop Lite (kill Forms + Linktree + light Mailchimp friction)
+
+| Capability | Retires | Notes |
+|------------|---------|--------|
+| Product-grade marketing + stub / first-15-min guided setup | Forms inertia | UX polish; empty-state wizard: Community → Activity → QR → first reg |
+| Share kit (OG/share image, WhatsApp copy, QR pack download) | Linktree / IG bio | High perceived product; low domain risk |
+| Google Forms / CSV client+registration import | Migration fear | One-time importer |
+| Thin email automations (confirm → reminder → thank-you) | Mailchimp light | Builds on registration mail + Pro campaigns; supersedes “drips deferred” when scheduled |
+| Custom domain per tenant | Pro site polish | Already deferred from v1 — promote here |
+
+#### v1.2 — Take money (kill small paid-event tools)
+
+| Capability | Retires | Notes |
+|------------|---------|--------|
+| Paid activity registration (Stripe Checkout per paid Activity) | Eventually / Peatix paid (SMB) | Price + capacity on Activity; not festival ticketing |
+| Capacity + waitlist | Event tools | Natural extension of published activities |
+| Simple refund / cancel policy (documented + Stripe refunds) | Paid-event hygiene | Keep policy thin — not RegFox |
+
+#### Explicitly later / out of Option A
+
+| Capability | Why deferred |
+|------------|----------------|
+| Cross-tenant discovery marketplace | Different GTM; dilutes CRM edge |
+| HubSpot-style pipelines / full marketing automation | Wrong ICP complexity |
+| Festival-grade ticketing (complex fees, multi-day) | RegFox altitude |
+| WhatsApp Business API broadcast | Keep click-to-message until demand proven |
+| Participant login / member portal | Still non-goal until pilots require it |
+
+**Epics note:** When running `bmad-create-epics-and-stories`, keep Epic 11–15 = v1 tenancy/billing only. Park §13.11 items as **Epic 16+** candidates (or a separate “One-stop Lite” epic set) after launch evidence.
 
 ---
 
