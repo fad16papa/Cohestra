@@ -115,7 +115,7 @@ _CR 2026-07-20 — Blind Hunter / Edge Case / Acceptance Auditor. Auditor: ACs 1
 
 _Post-patch re-review 2026-07-20 — Auditor clean on ACs; residual hardening only._
 
-- [ ] [Review][Patch] Narrow create `DbUpdateException` handling — only map unique/slug conflicts to 409; rethrow unrelated DB failures [PlatformTenantService.CreateAsync]
+- [x] [Review][Patch] Narrow create `DbUpdateException` handling — only map unique/slug conflicts to 409; rethrow unrelated DB failures [PlatformTenantService.CreateAsync]
 - [x] [Review][Defer] Stricter email RFC validation beyond `MailAddress` — deferred, v1 contact field; signup FR-1 can harden later
 
 ## Dev Notes
@@ -257,3 +257,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-20: Story context created (ready-for-dev)
 - 2026-07-20: Implemented Platform Admin lifecycle API + audit — status → review
 - 2026-07-20: CR patches applied (default-tenant guard + validation hardening) — status → done
+- 2026-07-20: Post-patch re-review — narrowed DbUpdateException unique-violation mapping

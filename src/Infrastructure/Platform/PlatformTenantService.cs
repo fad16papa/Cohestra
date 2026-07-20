@@ -6,6 +6,7 @@ using Cohestra.Domain.Billing;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Cohestra.Infrastructure.Platform;
 
@@ -106,7 +107,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
         {
             return PlatformTenantResult<TenantResponse>.Fail(
                 PlatformTenantError.Conflict,
@@ -301,6 +302,12 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             return false;
         }
     }
+
+    private static bool IsUniqueConstraintViolation(DbUpdateException exception) =>
+        exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation,
+        };
 
     private static TenantResponse Map(Tenant tenant) =>
         new(
