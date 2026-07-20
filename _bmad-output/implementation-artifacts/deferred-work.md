@@ -5,6 +5,11 @@
 - Concurrent PlatformAdminSeeder race on duplicate user create — same pattern as OperatorSeeder
 - Optimistic concurrency on Tenant status transitions — low-traffic platform admin path
 - Integration tests are SkippableFact when Postgres/Redis `/ready` unavailable — exercise AC5 live when stack is up
+- Stricter email RFC validation beyond `MailAddress` for AdminContactEmail — v1 contact field; FR-1 signup can harden later
+
+## Deferred from: post-patch re-review of 11-3 (2026-07-20)
+
+- (see above email deferral)
 
 ## Deferred from: code review of 11-2-default-tenant-migration-and-tenantid-on-core-entities (2026-07-20) — Group B
 

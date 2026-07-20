@@ -113,6 +113,11 @@ _CR 2026-07-20 — Blind Hunter / Edge Case / Acceptance Auditor. Auditor: ACs 1
 - [x] [Review][Defer] Optimistic concurrency on Tenant status transitions — deferred, low-traffic platform path
 - [x] [Review][Defer] Integration tests skippable without `/ready` stack — deferred, story allows; CI stack optional
 
+_Post-patch re-review 2026-07-20 — Auditor clean on ACs; residual hardening only._
+
+- [ ] [Review][Patch] Narrow create `DbUpdateException` handling — only map unique/slug conflicts to 409; rethrow unrelated DB failures [PlatformTenantService.CreateAsync]
+- [x] [Review][Defer] Stricter email RFC validation beyond `MailAddress` — deferred, v1 contact field; signup FR-1 can harden later
+
 ## Dev Notes
 
 ### Epic context
