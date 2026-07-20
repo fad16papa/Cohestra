@@ -7,6 +7,7 @@ sections_completed:
   - language_rules
   - framework_rules
   - testing_rules
+  - code_quality
 existing_patterns_found: 12
 discovery_status: complete
 initiative_focus: Cohestra Enterprise multi-tenant (Epics 11–15)
@@ -111,3 +112,30 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Do not delete Platform 0 tests to “make green”; fix tenancy migration so SM-4 (~90% pass) holds
 - Stripe: use test mode / fixtures / Stripe CLI — never live keys in CI
 - Web: no established Playwright suite required for v1 stories unless a story explicitly adds it — API isolation gates first
+
+### Code Quality & Style Rules
+
+**Organization**
+
+- C#: `src/{Api,Application,Domain,Infrastructure,Contracts}/` — new types in the layer that owns them
+- Controllers only in `Api/Controllers/V1/`
+- Web: `app/` routes · `components/` UI · `lib/` API/helpers · `hooks/` · `styles/` tokens
+- Brand tokens: update `web/styles/brand-tokens.css` (and Tailwind theme wiring) toward Midnight Atelier — single source of hex values
+
+**Naming**
+
+- C#: PascalCase types/methods; `TenantId` FK column name; enums as in PRD (`TenantAdmin`, `BillingStatus`, …)
+- Product term: **Community** (not “Club”)
+- Web files: kebab-case components where existing; `*-api.ts` for API modules
+- Tests: `*Tests.cs` beside area folders
+
+**Lint / format**
+
+- Web: `eslint-config-next` (core-web-vitals + typescript) — keep green on touched files
+- C#: nullable + existing analyzer warnings; don’t mass-suppress
+
+**Docs in code**
+
+- Prefer clear names over comment essays
+- XML docs exist on API (`GenerateDocumentationFile`) — keep public controller summaries useful when adding endpoints
+- Story/epic IDs in commit messages when implementing (`11.2`, `13.4`, …)
