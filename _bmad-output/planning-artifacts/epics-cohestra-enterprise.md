@@ -3,6 +3,7 @@ stepsCompleted:
   - step-01-validate-prerequisites
   - step-02-design-epics
   - step-03-create-stories
+  - step-04-final-validation
 inputDocuments:
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
@@ -17,6 +18,8 @@ initiative: Cohestra Enterprise multi-tenant SaaS
 outputNote: Dedicated file — does not replace Platform 0 planning-artifacts/epics.md
 epicsApproved: 2026-07-20
 storiesCompleted: 2026-07-20
+validationStatus: passed
+validationNotes: "All FR-1..26a mapped. Brownfield (no starter). Epic 11-13 sequential for isolation risk. FR-26 signup in 14.3; public reg rate in 15.4. UX-DR15 parked Epic 16. Residual: NFR-6/7 ops; SM-4 verify during 11-13."
 storyCounts:
   epic11: 5
   epic12: 4
