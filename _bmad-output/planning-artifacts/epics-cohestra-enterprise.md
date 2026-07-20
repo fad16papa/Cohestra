@@ -1,5 +1,7 @@
 ---
-stepsCompleted: [step-01-validate-prerequisites]
+stepsCompleted:
+  - step-01-validate-prerequisites
+  - step-02-design-epics
 inputDocuments:
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
@@ -12,6 +14,7 @@ inputDocuments:
 project_name: cohestra
 initiative: Cohestra Enterprise multi-tenant SaaS
 outputNote: Dedicated file — does not replace Platform 0 planning-artifacts/epics.md
+epicsApproved: 2026-07-20
 updated: 2026-07-20
 ---
 
@@ -202,33 +205,63 @@ UX-DR20: Key-screen fidelity — ship against ratified mocks `marketing-start-fr
 
 ### FR Coverage Map
 
-{{requirements_coverage_map}}
+| FR | Epic | Brief |
+|----|------|-------|
+| FR-2 | Epic 11 | Platform Admin provision / suspend / reactivate / archive |
+| FR-3 | Epic 11 | Status ∩ BillingStatus access matrix; Suspended wins |
+| FR-8 | Epic 11 | TenantId on entities + default-tenant migration |
+| FR-17 | Epic 11 | Platform tenant directory |
+| FR-18 | Epic 11 | Platform health + audit log |
+| FR-4 | Epic 12 | Tenant-scoped JWT auth |
+| FR-5 | Epic 12 | Admin vs Member role matrix |
+| FR-7 | Epic 12 | Platform Admin role (separate from tenant) |
+| FR-9 | Epic 13 | Tenant context middleware + Redis namespace |
+| FR-10 | Epic 13 | Export/report isolation |
+| FR-1 | Epic 14 | Self-serve Basic signup |
+| FR-6 | Epic 14 | Team invite + seat gates |
+| FR-19 | Epic 14 | Basic free + Core/Pro Checkout/trial |
+| FR-20 | Epic 14 | USD-only billing |
+| FR-21 | Epic 14 | Trial reminders (last 7 days) |
+| FR-22 | Epic 14 | Monthly / annual Prices |
+| FR-23 | Epic 14 | Delinquency PastDue → OnHold → Archive |
+| FR-24 | Epic 14 | Cancel/downgrade at period end + over-limit |
+| FR-25 | Epic 14 | Basic dormancy archive |
+| FR-26 | Epic 14 | CAPTCHA + rate limits |
+| FR-26a | Epic 14 | ToS/Privacy acceptance |
+| FR-11 | Epic 15 | Subdomain routing |
+| FR-12 | Epic 15 | Stub / fixed SitePage / builder by plan |
+| FR-13 | Epic 15 | Per-tenant email branding |
+| FR-14 | Epic 15 | Tenant-scoped activity engine / registration |
+| FR-15 | Epic 15 | Plan-gated dashboard reports |
+| FR-16 | Epic 15 | Pro-only campaigns |
+| (parked) | Epic 16 | One-stop Lite — share kit, domain, thin email, paid tickets |
+
+**UX-DR coverage (planned):** UX-DR1–11,17–20 → Epic 14 · UX-DR12–14,18–20 → Epic 15 · UX-DR16 → Epic 11 · UX-DR15 → Epic 16 parked
 
 ## Epic List
 
-{{epics_list}}
+### Epic 11: Tenant Workspaces & Platform Control
+Platform Admin can provision, suspend/reactivate/archive, and audit tenants; every Platform 0 entity is tenant-owned via migration + `TenantId`. Dual dials: `Status` ∩ `BillingStatus` (Suspended always wins).
+**FRs covered:** FR-2, FR-3, FR-8, FR-17, FR-18
 
-<!-- Repeat for each epic in epics_list (N = 1, 2, 3...) -->
+### Epic 12: Secure Tenant Sign-In & Roles
+Operators sign into one tenant; Admin vs Member enforced server-side; Platform Admin role separate; single-operator gate removed.
+**FRs covered:** FR-4, FR-5, FR-7
 
-## Epic {{N}}: {{epic_title_N}}
+### Epic 13: Guaranteed Tenant Isolation
+Every API/export/report is tenant-scoped; Redis namespaced; TenantIsolation tests are a release gate (SM-1).
+**FRs covered:** FR-9, FR-10
 
-{{epic_goal_N}}
+### Epic 14: Start Free, Invite Team & Billing
+Priya Starts free (Basic, no card) with CAPTCHA + ToS; upgrades to Core/Pro via Checkout + trial; Team seats; Stripe Customer Portal; cancel/downgrade at period end; delinquency + Basic dormancy; Midnight Atelier marketing/signup/billing/admin chrome for onboarding.
+**FRs covered:** FR-1, FR-6, FR-19, FR-20, FR-21, FR-22, FR-23, FR-24, FR-25, FR-26, FR-26a
 
-<!-- Repeat for each story (M = 1, 2, 3...) within epic N -->
+### Epic 15: Public Door & Plan-Gated Operations
+Subdomain public door — Basic stub, Core fixed SitePage, Pro builder; QR/register; plan-gated reports/campaigns; per-tenant email branding; atelier stub + ops surfaces.
+**FRs covered:** FR-11, FR-12, FR-13, FR-14, FR-15, FR-16
 
-### Story {{N}}.{{M}}: {{story_title_N_M}}
+### Epic 16 (Parked): One-stop Lite — post-MVP
+Share kit, custom domain, thin confirm/reminder/thank-you automations, paid tickets (v1.2), seat add-ons — not v1 per GTM-A §13.11.
+**FRs covered:** none for v1 · UX-DR15 parked
 
-As a {{user_type}},
-I want {{capability}},
-So that {{value_benefit}}.
-
-**Acceptance Criteria:**
-
-<!-- for each AC on this story -->
-
-**Given** {{precondition}}
-**When** {{action}}
-**Then** {{expected_outcome}}
-**And** {{additional_criteria}}
-
-<!-- End story repeat -->
+<!-- Stories appended below per epic during Step 3 -->
