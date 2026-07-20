@@ -9,8 +9,11 @@ sections_completed:
   - testing_rules
   - code_quality
   - workflow_rules
+  - dont_miss_rules
 existing_patterns_found: 12
-discovery_status: complete
+status: complete
+rule_count: 85
+optimized_for_llm: true
 initiative_focus: Cohestra Enterprise multi-tenant (Epics 11–15)
 implementation_mode: brownfield_extend
 sources:
@@ -152,3 +155,57 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Planning artifacts:** PRD/UX/epics live under `_bmad-output/`; implementation stories later under `_bmad-output/implementation-artifacts/` — don’t invent a second docs tree
 - **Product boundary:** never open PRs that couple this repo to `lead-generation-crm`
 - **Epic 16 items** (share kit, paid tickets, custom domain): out of v1 — file as follow-ups, don’t sneak into 11–15 PRs
+
+### Critical Don’t-Miss Rules
+
+**Anti-patterns — do NOT**
+
+- Greenfield a second API/web app “for multi-tenant”
+- Schema-per-tenant or DB-per-tenant in v1
+- Reintroduce single-operator signup blocking
+- Build custom invoicing / tax admin / accounting sync (Stripe Portal only)
+- Use Suspend for unpaid invoices (FR-23 delinquency; Suspend = abuse/ToS/freeze)
+- Trust UI-only plan locks
+- Ship forest-green Platform 0 brand as Cohestra Enterprise marketing/admin
+- Put stats/promos/card walls on Basic stub
+- Show billing/Portal CTAs to Tenant Members
+- Call the product unit a “Club” — use **Community**
+- Pull Epic 16 (share kit, paid tickets, custom domain) into v1 without explicit scope change
+
+**Security / tenancy**
+
+- Missing tenant → 404 public / 403 admin
+- Cross-tenant IDOR is a release blocker — TenantIsolation must catch it
+- Complimentary tenants: no FR-23; Sponsored badge data when `IsComplimentary`
+
+**Edge cases**
+
+- OnHold keeps `Status=Active` but read-only + public reg blocked
+- Cancel/downgrade at `current_period_end`; over-limit → `ReadOnly_OverLimit` ≠ Suspended
+- Activity slug unique **per tenant**, not globally
+- Same person at two tenants = two Clients
+
+**Performance**
+
+- Public registration p95 < 2s; dashboard p95 < 3s with per-tenant Redis cache
+- Don’t drop caching namespaces when porting Epic 9 site cache to multi-tenant
+
+---
+
+## Usage Guidelines
+
+**For AI Agents:**
+
+- Read this file before implementing any code
+- Follow ALL rules exactly as documented
+- When in doubt, prefer the more restrictive option
+- Update this file if new patterns emerge during Epics 11–15
+
+**For Humans:**
+
+- Keep this file lean and focused on agent needs
+- Update when technology stack or tenancy/billing rules change
+- Review periodically; remove rules that become obvious
+- Canonical epics: `_bmad-output/planning-artifacts/epics-cohestra-enterprise.md`
+
+Last Updated: 2026-07-20
