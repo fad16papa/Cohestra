@@ -517,3 +517,28 @@ So that money and seat controls stay Admin-only while Members can run allowed op
 **Given** Basic has only the Admin seat
 **When** Member-role behavior is tested
 **Then** matrix still holds for Core/Pro fixtures where Member seats exist
+
+### Story 12.4: Platform Admin role claim
+
+As a Platform Admin,
+I want a distinct platform role claim on my token,
+So that platform routes reject ordinary tenant JWTs and tenant routes stay tenant-scoped.
+
+**Acceptance Criteria:**
+
+**Given** a Platform Admin identity
+**When** they authenticate to platform routes
+**Then** the token includes a `platform_admin` (or equivalent) claim and is not a substitute for tenant membership
+
+**Given** a tenant Admin/Member JWT without platform claim
+**When** they call Platform Admin APIs (directory, lifecycle)
+**Then** the request is rejected (403)
+
+**Given** a Platform Admin JWT
+**When** they call tenant admin APIs without a valid tenant membership context
+**Then** they cannot impersonate a Tenant Admin (no break-glass login-as in v1)
+**And** they may only perform platform metadata/lifecycle operations as defined in Epic 11
+
+**Given** platform vs tenant route separation
+**When** authorization middleware runs
+**Then** platform routes require the platform claim; tenant routes require `tenant_id` + membership role
