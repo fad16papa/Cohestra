@@ -5,6 +5,7 @@ date: '2026-07-20'
 sections_completed:
   - technology_stack
   - language_rules
+  - framework_rules
 existing_patterns_found: 12
 discovery_status: complete
 initiative_focus: Cohestra Enterprise multi-tenant (Epics 11–15)
@@ -70,3 +71,30 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Parse ProblemDetails on failed fetches; surface `detail` when present
 - `"use client"` only where needed; prefer server fetch helpers already in `lib/`
 - Do not bypass typed API helpers with one-off raw `fetch` to new endpoints without a matching `lib/*-api.ts` (or extend an existing one)
+
+### Framework-Specific Rules
+
+**ASP.NET API**
+
+- Routes: `api/v1/admin/...`, `api/v1/public/...`, `api/v1/auth`, `api/v1/system` — keep this split
+- New enterprise endpoints follow same V1 controller folder + `[Route("api/v1/...")]`
+- Auth: JWT Bearer on admin; public routes unauthenticated but **tenant from Host**
+- Never trust client `X-Tenant-Id` alone — JWT `tenant_id` + Host alignment (AD-3)
+- EF: global query filters on `ITenantScoped`; bypass only `[RequiresPlatformAdmin]` audit paths
+- Redis keys: `tenant:{tenantId}:...` — no bare shared keys for tenant data
+- Plan gates enforced **server-side** (UI lock alone is insufficient)
+
+**Next.js App Router**
+
+- Keep route groups: `app/(admin)/`, `app/(public)/`, apex marketing/login as today
+- Theme via existing `components/theme/theme-provider.tsx` (next-themes, class on `html`)
+- Extend `lib/*-api.ts` for new API surfaces; mirror admin vs public base URL helpers
+- Subdomain: forward Host (middleware) so API can resolve tenant — local: `{slug}.localhost` or `DEV_TENANT_SLUG`
+
+**Enterprise product rules (Epics 11–15)**
+
+- Dual dials: access = `Tenant.Status` ∩ `BillingStatus`; **Suspended always wins**
+- Billing UX = Stripe Checkout + **Customer Portal only** — no custom invoices/finance UI
+- Basic = no SitePage (stub); Core = fixed SitePage; Pro = builder
+- Remove `AuthService.GetExistingOperatorAsync` single-operator gate (Epic 12) — do not reintroduce
+- Brand: replace Platform 0 forest green with **Midnight Atelier** tokens (`ux-cohestra-2026-07-18/DESIGN.md`) on Cohestra surfaces — do not invent a third palette
