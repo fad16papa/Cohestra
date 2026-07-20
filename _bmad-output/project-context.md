@@ -2,10 +2,12 @@
 project_name: cohestra
 user_name: Admin
 date: '2026-07-20'
-sections_completed: []
+sections_completed:
+  - technology_stack
 existing_patterns_found: 12
 discovery_status: complete
 initiative_focus: Cohestra Enterprise multi-tenant (Epics 11–15)
+implementation_mode: brownfield_extend
 sources:
   - _bmad-output/planning-artifacts/architecture.md
   - _bmad-output/planning-artifacts/architecture/architecture-cohestra-enterprise-2026-07-15/ARCHITECTURE-SPINE.md
@@ -15,6 +17,7 @@ sources:
   - src/Api/Api.csproj
   - src/Infrastructure/Infrastructure.csproj
   - docker-compose.yml
+updated: '2026-07-20'
 ---
 
 # Project Context for AI Agents
@@ -25,8 +28,26 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ## Technology Stack & Versions
 
-_Documented after discovery phase — pending collaborative generation (step 2)._
+**Mode: brownfield extend-only.** Implement Cohestra Enterprise (Epics 11–15) by extending `Cohestra.sln` + `web/`. Do **not** create a parallel app, microservice, or greenfield rewrite. Do **not** modify the separate `lead-generation-crm` product.
+
+- **Backend:** .NET 9.0 / ASP.NET Core Web API (`net9.0`), Nullable enable, ImplicitUsings
+- **EF Core:** 9.0.11 · **Npgsql.EntityFrameworkCore.PostgreSQL:** 9.0.4
+- **Auth:** ASP.NET Identity + JWT Bearer 9.0.11 · refresh tokens in Redis
+- **Cache:** Redis 7 (StackExchange.Redis 2.8.x) · Docker `redis:7-alpine`
+- **DB:** PostgreSQL 16 · Docker `postgres:16-alpine`
+- **Email / QR:** SendGrid 9.29.x · QRCoder 1.6.x
+- **API shape:** `/api/v1/...` · ProblemDetails · DTOs in `Contracts` only
+- **Web:** Next.js 16.2.9 · React 19.2.x · TypeScript 5 · Tailwind 4 · shadcn · next-themes 0.4.x
+- **Edge:** nginx 1.27-alpine · Compose projects `cohestra-infra` (local) / `cohestra-infra-uat`
+- **Solution:** `Cohestra.sln` → Api · Application · Domain · Infrastructure · Contracts (+ Api.IntegrationTests, Infrastructure.Tests)
+
+**Agent constraints**
+
+- Stay on **.NET 9** / **Next 16** line — do not upgrade majors in a story unless asked
+- Prefer package versions already in `*.csproj` / `package.json`; avoid parallel HTTP/ORM stacks
+- Stripe (Epic 14): test keys local/CI; live only production — pin Stripe.NET when first introduced
+- Read `web/AGENTS.md` before Next changes (Next 16 may differ from training data)
 
 ## Critical Implementation Rules
 
-_Documented after discovery phase — pending collaborative generation (step 2)._
+_Pending — next categories._
