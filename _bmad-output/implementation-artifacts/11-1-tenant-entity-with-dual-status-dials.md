@@ -69,6 +69,16 @@ so that every workspace has a clear lifecycle and access can be computed from St
   - [x] No web / Midnight Atelier work
   - [x] No seed of `default` tenant yet (11.2) — entity + empty table is enough
 
+### Review Findings
+
+- [ ] [Review][Decision] Active+Canceled access semantics — FR-3 lists Full only for Free/Trialing/Active/PastDue when Status=Active; evaluator (and tests) grant Full + public registration for `BillingStatus.Canceled`. Period-end cancel should land on Basic+Free, so this combo is rare/transient — product must choose treat-as-Full, treat-as-Blocked, or map to Free-equivalent until webhook settles.
+- [ ] [Review][Patch] Null-tenant guard on `Evaluate(Tenant)` [TenantAccessEvaluator.cs:21]
+- [ ] [Review][Patch] Undefined `TenantStatus` (non-defined enum cast) falls into Active billing matrix — fail-closed Blocked [TenantAccessEvaluator.cs:26-71]
+- [ ] [Review][Patch] Add unit test for unknown/`_` BillingStatus arm on Active [TenantAccessEvaluatorTests.cs]
+- [x] [Review][Defer] Empty/whitespace slug format validation [Tenant.cs / TenantConfiguration.cs] — deferred, pre-existing (FR-1 signup / 11.3 provision)
+- [x] [Review][Defer] CreatedAt/UpdatedAt auto-stamp on insert [Tenant.cs] — deferred, pre-existing (write path in 11.2/11.3; matches Activity pattern)
+- [x] [Review][Defer] StripeCustomerId/SubscriptionId unique indexes [TenantConfiguration.cs] — deferred, pre-existing (Epic 14 billing)
+
 ## Dev Notes
 
 ### Epic context

@@ -1,3 +1,10 @@
+
+## Deferred from: code review of 11-1-tenant-entity-with-dual-status-dials (2026-07-20)
+
+- Empty/whitespace slug format validation — FR-1 signup / Story 11.3 provisioning; uniqueness only in 11.1
+- CreatedAt/UpdatedAt auto-stamp on Tenant insert — write path in 11.2/11.3; matches Activity entity pattern
+- StripeCustomerId / StripeSubscriptionId unique indexes — Epic 14 billing reconciliation
+
 ## Deferred from: code review of 9-8-website-builder-polish (2026-07-07)
 
 - No integration tests for `POST /api/v1/admin/site/apply-preset` or `revert-published` — optional CI stack; `SitePageSeedDocumentBuilderTests` cover preset document shape only
