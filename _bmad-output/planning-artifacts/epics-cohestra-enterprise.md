@@ -2,6 +2,7 @@
 stepsCompleted:
   - step-01-validate-prerequisites
   - step-02-design-epics
+  - step-03-create-stories
 inputDocuments:
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
@@ -15,6 +16,14 @@ project_name: cohestra
 initiative: Cohestra Enterprise multi-tenant SaaS
 outputNote: Dedicated file — does not replace Platform 0 planning-artifacts/epics.md
 epicsApproved: 2026-07-20
+storiesCompleted: 2026-07-20
+storyCounts:
+  epic11: 5
+  epic12: 4
+  epic13: 4
+  epic14: 8
+  epic15: 7
+  epic16: parked
 updated: 2026-07-20
 ---
 
