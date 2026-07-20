@@ -33,6 +33,20 @@ internal static class IntegrationTestHelpers
             ?? throw new InvalidOperationException("Login response did not include an access token.");
     }
 
+    internal static async Task<string> LoginAsPlatformAdminAsync(HttpClient client)
+    {
+        var response = await client.PostAsJsonAsync(
+            "/api/v1/auth/login",
+            new LoginRequest("platform-admin@cohestra.local", "ChangeMe123!"),
+            JsonOptions);
+
+        response.EnsureSuccessStatusCode();
+
+        var auth = await response.Content.ReadFromJsonAsync<AuthTokenResponse>(JsonOptions);
+        return auth?.AccessToken
+            ?? throw new InvalidOperationException("Platform admin login response did not include an access token.");
+    }
+
     internal static void UseBearerToken(HttpClient client, string accessToken)
     {
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);

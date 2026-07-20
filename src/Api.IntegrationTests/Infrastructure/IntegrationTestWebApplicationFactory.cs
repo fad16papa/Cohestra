@@ -28,6 +28,9 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
         builder.UseSetting("OperatorSeed:Email", "operator@cohestra.local");
         builder.UseSetting("OperatorSeed:Password", "ChangeMe123!");
         builder.UseSetting("OperatorSeed:Enabled", "true");
+        builder.UseSetting("PlatformAdminSeed:Enabled", "true");
+        builder.UseSetting("PlatformAdminSeed:Email", "platform-admin@cohestra.local");
+        builder.UseSetting("PlatformAdminSeed:Password", "ChangeMe123!");
         builder.UseSetting("DemoDataSeed:Enabled", "false");
         builder.UseSetting("SendGrid:ApiKey", "SG.integration-test-key");
         builder.UseSetting("SendGrid:FromEmail", "operator@cohestra.local");

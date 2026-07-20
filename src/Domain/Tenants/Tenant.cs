@@ -10,6 +10,9 @@ public sealed class Tenant
 
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>Contact email captured at provision (membership/invite lands Epic 12).</summary>
+    public string? AdminContactEmail { get; set; }
+
     public TenantPlan Plan { get; set; } = TenantPlan.Basic;
 
     public TenantStatus Status { get; set; } = TenantStatus.Active;
@@ -25,6 +28,11 @@ public sealed class Tenant
     public DateTimeOffset? TrialEndsAt { get; set; }
 
     public DateTimeOffset? DelinquencyStartedAt { get; set; }
+
+    public DateTimeOffset? SuspendedAt { get; set; }
+
+    /// <summary>Soft-archive timestamp (NFR-8 / A-6: 30-day window before purge job — purge out of scope).</summary>
+    public DateTimeOffset? ArchivedAt { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 

@@ -4,7 +4,7 @@ baseline_commit: 3ba711155e855ec37b6e50af17d51e00ac657096
 
 # Story 11.3: Platform Admin provision, suspend, reactivate, archive
 
-Status: ready-for-dev
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -45,55 +45,55 @@ so that abuse and support freezes are handled without using Suspend as collectio
 
 ## Tasks / Subtasks
 
-- [ ] Platform Admin auth (minimal — unblocks AC 5; full PlatformUsers story remains 12.4) (AC: 5)
-  - [ ] Add Identity role constant e.g. `PlatformAdminSeeder.PlatformAdminRole = "PlatformAdmin"` (do **not** reuse `OperatorSeeder.AdminRole`)
-  - [ ] Ensure role exists at startup; optional config seed `PlatformAdminSeed:Enabled/Email/Password` (mirror `OperatorSeed` pattern) — **disabled by default** in production-like configs
-  - [ ] Existing `JwtTokenService` already emits `ClaimTypes.Role` from Identity roles — no claim inventing required for this story
-  - [ ] Protect platform controller with `[Authorize(Roles = PlatformAdminSeeder.PlatformAdminRole)]` (or equivalent policy named `PlatformAdmin`)
-  - [ ] Document that Story 12.4 may add `platform_admin` claim / PlatformUsers; this story’s role is the v1 gate
+- [x] Platform Admin auth (minimal — unblocks AC 5; full PlatformUsers story remains 12.4) (AC: 5)
+  - [x] Add Identity role constant e.g. `PlatformAdminSeeder.PlatformAdminRole = "PlatformAdmin"` (do **not** reuse `OperatorSeeder.AdminRole`)
+  - [x] Ensure role exists at startup; optional config seed `PlatformAdminSeed:Enabled/Email/Password` (mirror `OperatorSeed` pattern) — **disabled by default** in production-like configs
+  - [x] Existing `JwtTokenService` already emits `ClaimTypes.Role` from Identity roles — no claim inventing required for this story
+  - [x] Protect platform controller with `[Authorize(Roles = PlatformAdminSeeder.PlatformAdminRole)]` (or equivalent policy named `PlatformAdmin`)
+  - [x] Document that Story 12.4 may add `platform_admin` claim / PlatformUsers; this story’s role is the v1 gate
 
-- [ ] Domain + persistence (AC: 1–4)
-  - [ ] Add slug rules helper in Domain e.g. `TenantSlugRules` — validate format + reserved set: `www`, `api`, `admin`, `app`, `platform`, `mail`, `ftp`, `cdn`, `static`, `status`, `support`, `help`, `billing`, `cohestra` (+ reject `default` for **new** provisioned tenants; Platform 0 `default` row already exists)
-  - [ ] Extend `Tenant` with: `AdminContactEmail` (required on create), `ArchivedAt` (`DateTimeOffset?`), optional `SuspendedAt` (`DateTimeOffset?`) — clear `SuspendedAt` on reactivate; set `ArchivedAt` on archive
-  - [ ] Do **not** add `IsComplimentary` (11.5); do **not** add `TenantMembership` (Epic 12)
-  - [ ] Add immutable audit entity e.g. `PlatformAuditLog` (`Id`, `ActorUserId`, `TenantId`, `Action` string/enum, `Reason?`, `CreatedAt`, optional `DetailsJson`) — append-only; no update/delete API
-  - [ ] EF configs + migration for new columns + `platform_audit_logs` (or `platform_audit_entries`) table
-  - [ ] Stamp `CreatedAt`/`UpdatedAt` on Tenant write paths (11.1 CR defer)
+- [x] Domain + persistence (AC: 1–4)
+  - [x] Add slug rules helper in Domain e.g. `TenantSlugRules` — validate format + reserved set: `www`, `api`, `admin`, `app`, `platform`, `mail`, `ftp`, `cdn`, `static`, `status`, `support`, `help`, `billing`, `cohestra` (+ reject `default` for **new** provisioned tenants; Platform 0 `default` row already exists)
+  - [x] Extend `Tenant` with: `AdminContactEmail` (required on create), `ArchivedAt` (`DateTimeOffset?`), optional `SuspendedAt` (`DateTimeOffset?`) — clear `SuspendedAt` on reactivate; set `ArchivedAt` on archive
+  - [x] Do **not** add `IsComplimentary` (11.5); do **not** add `TenantMembership` (Epic 12)
+  - [x] Add immutable audit entity e.g. `PlatformAuditLog` (`Id`, `ActorUserId`, `TenantId`, `Action` string/enum, `Reason?`, `CreatedAt`, optional `DetailsJson`) — append-only; no update/delete API
+  - [x] EF configs + migration for new columns + `platform_audit_logs` (or `platform_audit_entries`) table
+  - [x] Stamp `CreatedAt`/`UpdatedAt` on Tenant write paths (11.1 CR defer)
 
-- [ ] Application + Infrastructure service (AC: 1–4)
-  - [ ] `IPlatformTenantService` in `Application/Tenants/` (or `Application/Platform/`)
-  - [ ] Implement in Infrastructure: create / suspend / reactivate / archive
-  - [ ] Create: validate slug → unique check → insert Tenant (`Status=Active`, `Plan` from request, `BillingStatus=Free` for Basic; for Core/Pro provisioned without Stripe still use `BillingStatus=Free` and document that Checkout is later — do **not** invent Stripe objects)
-  - [ ] Suspend: require non-whitespace reason; only from `Active` (or document allowed transitions); **never** mutate `BillingStatus`
-  - [ ] Reactivate: only from `Suspended` → `Active`; leave `BillingStatus` alone
-  - [ ] Archive: set `ArchivedAt=UtcNow`, `Status=Archived`; reject nonsense transitions (e.g. archive already Archived → 409)
-  - [ ] Every successful lifecycle mutation writes one audit row in the same SaveChanges (or explicit transaction)
-  - [ ] Do **not** create Identity users / TenantMembership on provision — store `AdminContactEmail` only (membership lands Epic 12 / signup FR-1)
+- [x] Application + Infrastructure service (AC: 1–4)
+  - [x] `IPlatformTenantService` in `Application/Tenants/` (or `Application/Platform/`)
+  - [x] Implement in Infrastructure: create / suspend / reactivate / archive
+  - [x] Create: validate slug → unique check → insert Tenant (`Status=Active`, `Plan` from request, `BillingStatus=Free` for Basic; for Core/Pro provisioned without Stripe still use `BillingStatus=Free` and document that Checkout is later — do **not** invent Stripe objects)
+  - [x] Suspend: require non-whitespace reason; only from `Active` (or document allowed transitions); **never** mutate `BillingStatus`
+  - [x] Reactivate: only from `Suspended` → `Active`; leave `BillingStatus` alone
+  - [x] Archive: set `ArchivedAt=UtcNow`, `Status=Archived`; reject nonsense transitions (e.g. archive already Archived → 409)
+  - [x] Every successful lifecycle mutation writes one audit row in the same SaveChanges (or explicit transaction)
+  - [x] Do **not** create Identity users / TenantMembership on provision — store `AdminContactEmail` only (membership lands Epic 12 / signup FR-1)
 
-- [ ] API (AC: 1–5)
-  - [ ] Add `PlatformTenantsController` at route `api/v1/platform/tenants` (spine name; **not** under `api/v1/admin`)
-  - [ ] Endpoints (suggested):
+- [x] API (AC: 1–5)
+  - [x] Add `PlatformTenantsController` at route `api/v1/platform/tenants` (spine name; **not** under `api/v1/admin`)
+  - [x] Endpoints (suggested):
     - `POST /` → create
     - `POST /{tenantId}/suspend` body `{ "reason": "..." }`
     - `POST /{tenantId}/reactivate`
     - `POST /{tenantId}/archive`
-  - [ ] Contracts under `Contracts/Platform/` — request/response DTOs only; never return EF entities
-  - [ ] ProblemDetails for 400 (validation), 403 (authz), 404 (unknown tenant), 409 (slug conflict / illegal transition)
-  - [ ] XML/OpenAPI summaries: Suspend = abuse/ToS/support freeze — **not** collections / non-payment
+  - [x] Contracts under `Contracts/Platform/` — request/response DTOs only; never return EF entities
+  - [x] ProblemDetails for 400 (validation), 403 (authz), 404 (unknown tenant), 409 (slug conflict / illegal transition)
+  - [x] XML/OpenAPI summaries: Suspend = abuse/ToS/support freeze — **not** collections / non-payment
 
-- [ ] Tests (AC: 1–5)
-  - [ ] Unit: `TenantSlugRules` reserved/format cases; lifecycle transition matrix; Suspend leaves BillingStatus unchanged; audit written
-  - [ ] Integration (preferred): PlatformAdmin JWT can create/suspend/reactivate/archive; tenant `Admin` JWT → **403** on same routes; unauthenticated → 401
-  - [ ] Extend integration helpers to seed/login a PlatformAdmin user without breaking Platform 0 operator tests
-  - [ ] Run `dotnet test src/Infrastructure.Tests` (+ relevant Api.IntegrationTests if stack available)
+- [x] Tests (AC: 1–5)
+  - [x] Unit: `TenantSlugRules` reserved/format cases; lifecycle transition matrix; Suspend leaves BillingStatus unchanged; audit written
+  - [x] Integration (preferred): PlatformAdmin JWT can create/suspend/reactivate/archive; tenant `Admin` JWT → **403** on same routes; unauthenticated → 401
+  - [x] Extend integration helpers to seed/login a PlatformAdmin user without breaking Platform 0 operator tests
+  - [x] Run `dotnet test src/Infrastructure.Tests` (+ relevant Api.IntegrationTests if stack available)
 
-- [ ] Out of scope
-  - [ ] Platform tenant **directory UI** / Midnight Atelier console (Story 11.4)
-  - [ ] Complimentary flag (11.5)
-  - [ ] JWT `tenant_id`, TenantMembership, remove single-operator gate (Epic 12)
-  - [ ] EF global filters / TenantResolutionMiddleware (Epic 13)
-  - [ ] Hard purge job after 30 days; Stripe Checkout; Suspend-as-collections
-  - [ ] Impersonation / login-as-tenant (explicitly forbidden — PRD A-5)
+- [x] Out of scope
+  - [x] Platform tenant **directory UI** / Midnight Atelier console (Story 11.4)
+  - [x] Complimentary flag (11.5)
+  - [x] JWT `tenant_id`, TenantMembership, remove single-operator gate (Epic 12)
+  - [x] EF global filters / TenantResolutionMiddleware (Epic 13)
+  - [x] Hard purge job after 30 days; Stripe Checkout; Suspend-as-collections
+  - [x] Impersonation / login-as-tenant (explicitly forbidden — PRD A-5)
 
 ## Dev Notes
 

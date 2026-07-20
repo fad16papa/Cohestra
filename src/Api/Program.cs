@@ -131,6 +131,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 await ApplyMigrationsAsync(app);
 await OperatorSeeder.SeedAsync(app.Services);
+await PlatformAdminSeeder.SeedAsync(app.Services);
 await SitePageSeeder.SeedAsync(app.Services);
 
 app.UseExceptionHandler();

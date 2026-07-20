@@ -16,6 +16,8 @@ public class CohestraDbContext(DbContextOptions<CohestraDbContext> options)
 {
     public DbSet<Tenant> Tenants => Set<Tenant>();
 
+    public DbSet<PlatformAuditLog> PlatformAuditLogs => Set<PlatformAuditLog>();
+
     public DbSet<Activity> Activities => Set<Activity>();
 
     public DbSet<Community> Communities => Set<Community>();

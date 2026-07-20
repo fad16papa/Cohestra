@@ -7,8 +7,10 @@ using Cohestra.Application.Email;
 using Cohestra.Application.Registrations;
 using Cohestra.Application.Reports;
 using Cohestra.Application.Site;
+using Cohestra.Application.Tenants;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Auth;
+using Cohestra.Infrastructure.Platform;
 using Cohestra.Infrastructure.Seed;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Clients;
@@ -62,6 +64,7 @@ public static class DependencyInjection
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.Configure<OperatorSeedSettings>(configuration.GetSection(OperatorSeedSettings.SectionName));
+        services.Configure<PlatformAdminSeedSettings>(configuration.GetSection(PlatformAdminSeedSettings.SectionName));
         services.Configure<AuthOtpSettings>(configuration.GetSection(AuthOtpSettings.SectionName));
         services.Configure<DemoDataSeedSettings>(configuration.GetSection(DemoDataSeedSettings.SectionName));
         services.Configure<PublicWebOptions>(configuration.GetSection(PublicWebOptions.SectionName));
@@ -110,6 +113,7 @@ public static class DependencyInjection
         services.AddScoped<ICampaignService, CampaignService>();
         services.AddScoped<ICampaignAssetService, CampaignAssetService>();
         services.AddScoped<ISitePageService, SitePageService>();
+        services.AddScoped<IPlatformTenantService, PlatformTenantService>();
         services.AddScoped<SitePublishGateValidator>();
         services.AddSingleton<SitePreviewTokenService>();
         services.AddScoped<ClientDeduplicationService>();
