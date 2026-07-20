@@ -4,7 +4,7 @@ baseline_commit: acebe70826445eb951fce203fd1e2570d28c202a
 
 # Story 11.2: Default-tenant migration and TenantId on core entities
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -99,10 +99,10 @@ _Group A CR (domain / configs / SitePage / DbContext) — 2026-07-20 — patches
 - [x] [Review][Defer] `ApplyDefaultTenantIds` does not cover `ExecuteUpdate`/bulk/raw SQL — deferred, known EF ChangeTracker gap
 - [x] [Review][Defer] Parent `TenantId` change does not sync dependent children — deferred, no tenant-move story yet
 
-_Group B CR (migration + tests) — 2026-07-20._
+_Group B CR (migration + tests) — 2026-07-20 — patches applied._
 
-- [ ] [Review][Patch] After seeding `default` tenant, assert well-known Id exists before TenantId FKs [`20260720162131_AddTenantIdToBusinessEntities.cs:15-19`] — `ON CONFLICT (Slug) DO NOTHING` can skip insert when Slug exists with a different Id; column defaults still use `11111111-…`
-- [ ] [Review][Patch] Drop PostgreSQL column `DEFAULT` on `TenantId` after backfill [`AddTenantIdToBusinessEntities` Up] — `AddColumn(..., defaultValue:)` leaves a DB default; AD-9 end state is NOT NULL without silent default (app uses `ApplyDefaultTenantIds`)
+- [x] [Review][Patch] After seeding `default` tenant, assert well-known Id exists before TenantId FKs [`20260720162131_AddTenantIdToBusinessEntities.cs:15-19`] — `ON CONFLICT (Slug) DO NOTHING` can skip insert when Slug exists with a different Id; column defaults still use `11111111-…`
+- [x] [Review][Patch] Drop PostgreSQL column `DEFAULT` on `TenantId` after backfill [`AddTenantIdToBusinessEntities` Up] — `AddColumn(..., defaultValue:)` leaves a DB default; AD-9 end state is NOT NULL without silent default (app uses `ApplyDefaultTenantIds`)
 - [x] [Review][Defer] `Down()` does not delete seeded `default` tenant — deferred, safer than wipe; incomplete reverse of seed only
 - [x] [Review][Defer] No PostgreSQL test executes migration SQL — deferred, story allows InMemory model tests
 - [x] [Review][Defer] Model tests cover only Activity slug + SitePage unique TenantId — deferred, story-required coverage met; other composites untested
@@ -269,3 +269,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-20: Story context created (ready-for-dev)
 - 2026-07-20: Implemented default-tenant migration + TenantId on core entities — status → review
 - 2026-07-20: Group A CR patches applied (SitePage doc + DemoDataSeeder TenantId); Group B CR still pending
+- 2026-07-20: Group B CR patches applied (seed Id assert + drop TenantId DEFAULT) — status → done

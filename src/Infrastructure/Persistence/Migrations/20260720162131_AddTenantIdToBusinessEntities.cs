@@ -16,6 +16,19 @@ namespace Infrastructure.Persistence.Migrations
                 INSERT INTO public.tenants ("Id", "Slug", "Name", "Plan", "Status", "BillingStatus", "CreatedAt", "UpdatedAt")
                 VALUES ('11111111-1111-1111-1111-111111111111', 'default', 'Default', 'Basic', 'Active', 'Free', TIMESTAMPTZ '2026-07-20 00:00:00+00', TIMESTAMPTZ '2026-07-20 00:00:00+00')
                 ON CONFLICT ("Slug") DO NOTHING;
+
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1
+                        FROM public.tenants
+                        WHERE "Id" = '11111111-1111-1111-1111-111111111111'
+                          AND "Slug" = 'default'
+                    ) THEN
+                        RAISE EXCEPTION
+                            'Story 11.2: tenants.Slug=default must use well-known Id 11111111-1111-1111-1111-111111111111';
+                    END IF;
+                END $$;
                 """);
 
             migrationBuilder.DropIndex(
@@ -143,6 +156,23 @@ namespace Infrastructure.Persistence.Migrations
                 type: "uuid",
                 nullable: false,
                 defaultValue: new Guid("11111111-1111-1111-1111-111111111111"));
+
+            // AD-9 end state: existing rows backfilled via DEFAULT; drop silent DEFAULT so new
+            // rows must set TenantId explicitly (app ApplyDefaultTenantIds until Epic 12–13).
+            migrationBuilder.Sql("""
+                ALTER TABLE public.site_pages ALTER COLUMN "TenantId" DROP DEFAULT;
+                ALTER TABLE public.site_homepage_templates ALTER COLUMN "TenantId" DROP DEFAULT;
+                ALTER TABLE public.registrations ALTER COLUMN "TenantId" DROP DEFAULT;
+                ALTER TABLE public.email_templates ALTER COLUMN "TenantId" DROP DEFAULT;
+                ALTER TABLE public.communities ALTER COLUMN "TenantId" DROP DEFAULT;
+                ALTER TABLE public.clients ALTER COLUMN "TenantId" DROP DEFAULT;
+                ALTER TABLE public.client_timeline_events ALTER COLUMN "TenantId" DROP DEFAULT;
+                ALTER TABLE public.categories ALTER COLUMN "TenantId" DROP DEFAULT;
+                ALTER TABLE public.campaigns ALTER COLUMN "TenantId" DROP DEFAULT;
+                ALTER TABLE public.campaign_recipients ALTER COLUMN "TenantId" DROP DEFAULT;
+                ALTER TABLE public.campaign_assets ALTER COLUMN "TenantId" DROP DEFAULT;
+                ALTER TABLE public.activities ALTER COLUMN "TenantId" DROP DEFAULT;
+                """);
 
             migrationBuilder.CreateIndex(
                 name: "IX_site_pages_TenantId",
