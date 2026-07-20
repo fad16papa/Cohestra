@@ -651,3 +651,37 @@ So that we never ship a tenant leak regression.
 **Given** documentation
 **When** developers add new tenant-scoped endpoints
 **Then** README/addendum notes that a TenantIsolation case should be added or extended for the new surface
+
+## Epic 14: Start Free, Invite Team & Billing
+
+Priya Starts free (Basic, no card) with CAPTCHA + ToS; upgrades to Core/Pro via Checkout + trial; Team seats; Stripe Customer Portal; cancel/downgrade at period end; delinquency + Basic dormancy; Midnight Atelier marketing/signup/billing/admin chrome for onboarding.
+
+**FRs covered:** FR-1, FR-6, FR-19, FR-20, FR-21, FR-22, FR-23, FR-24, FR-25, FR-26, FR-26a
+
+### Story 14.1: Midnight Atelier tokens, marketing home, and pricing
+
+As a prospect (Priya),
+I want a premium Cohestra marketing experience with clear Start free and pricing,
+So that I trust the product enough to begin without a card.
+
+**Acceptance Criteria:**
+
+**Given** the Next.js web app
+**When** Midnight Atelier tokens are implemented
+**Then** colors (ink, paper, lagoon, gold, stone, semantic), typography (Fraunces + Plus Jakarta Sans), radii/spacing, and next-themes light/dark/system match `DESIGN.md`
+**And** Platform 0 forest-green is not the Cohestra brand on marketing surfaces
+
+**Given** apex marketing home `/`
+**When** Priya lands
+**Then** Cohestra is the hero-level brand signal; one promise; one lede; primary Start free + secondary trial CTA
+**And** photographic field + product object craft follow the ratified mock (no dashboard-first / AI-mist / Inter default stack)
+
+**Given** `/pricing`
+**When** plans are shown
+**Then** Basic free, Core $29/$290, Pro $79/$790, Enterprise custom match `pricing-tiers.md`
+**And** annual is marketed as monthly equivalent ($24/mo and $66/mo billed annually)
+**And** Start free is the primary CTA
+
+**Given** motion guidelines
+**When** the hero loads
+**Then** at least staggered rise + soft product lift + 1px button hover are present (UX-DR2)
