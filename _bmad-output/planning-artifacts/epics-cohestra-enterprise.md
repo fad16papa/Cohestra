@@ -430,3 +430,35 @@ So that pilots get Core/Pro limits without delinquency automation or self-serve 
 **Given** `IsComplimentary=true`
 **When** admin UI later shows plan chrome (Epic 14)
 **Then** the data model supports Sponsored beside PlanBadge (UX component wiring can land in Epic 14)
+
+## Epic 12: Secure Tenant Sign-In & Roles
+
+Operators sign into one tenant; Admin vs Member enforced server-side; Platform Admin role separate; single-operator gate removed.
+
+**FRs covered:** FR-4, FR-5, FR-7
+
+### Story 12.1: TenantMembership and remove single-operator gate
+
+As a multi-user tenant,
+I want users linked to tenants via membership roles,
+So that Cohestra is no longer limited to a single global operator.
+
+**Acceptance Criteria:**
+
+**Given** the identity model
+**When** `TenantMembership` is introduced
+**Then** it stores `UserId`, `TenantId`, and `Role` ∈ {TenantAdmin, TenantMember}
+**And** a user may have memberships in multiple tenants (UI switcher still deferred)
+
+**Given** the existing `AuthService` single-operator existence check (`GetExistingOperatorAsync` or equivalent)
+**When** this story completes
+**Then** that gate is removed so a second user can exist without blocking signup/invite flows later
+
+**Given** the seeded `default` tenant from Epic 11
+**When** migration/seed runs
+**Then** the existing Platform 0 operator (if any) is linked as `TenantAdmin` on `default`
+**And** orphaned users without membership cannot obtain a tenant-scoped admin session
+
+**Given** unit/integration coverage
+**When** memberships are created/queried
+**Then** role values are validated and duplicate `(UserId, TenantId)` memberships are rejected
