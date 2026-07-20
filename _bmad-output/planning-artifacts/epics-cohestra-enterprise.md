@@ -627,3 +627,27 @@ So that I never download or see another organization’s clients.
 **Given** Platform Admin
 **When** using platform directory aggregates
 **Then** they see counts only — no bulk PII export of tenant clients in MVP (NFR-4)
+
+### Story 13.4: TenantIsolation integration test gate (SM-1)
+
+As a release owner,
+I want a CI category of cross-tenant negative tests that must pass on every PR to main,
+So that we never ship a tenant leak regression.
+
+**Acceptance Criteria:**
+
+**Given** `Api.IntegrationTests` (or equivalent)
+**When** category/trait `TenantIsolation` is defined
+**Then** it includes at least: Tenant A JWT cannot GET Tenant B activity by ID; public site for slug A does not return Tenant B activities; export/report negative case from Story 13.3
+
+**Given** a PR targeting `main`
+**When** CI runs
+**Then** `TenantIsolation` tests are required to pass (release gate)
+
+**Given** a deliberate cross-tenant access attempt in tests
+**When** executed
+**Then** the API returns 403/404 as designed — never 200 with foreign data
+
+**Given** documentation
+**When** developers add new tenant-scoped endpoints
+**Then** README/addendum notes that a TenantIsolation case should be added or extended for the new surface
