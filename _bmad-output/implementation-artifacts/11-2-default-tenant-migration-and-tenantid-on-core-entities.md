@@ -88,6 +88,17 @@ so that existing rows stay usable and all business entities become tenant-owned.
   - [x] No Platform Admin API / signup / Stripe
   - [x] No Midnight Atelier / web marketing work
 
+### Review Findings
+
+_Group A CR (domain / configs / SitePage / DbContext) — 2026-07-20. Group B (migration + tests) still pending._
+
+- [ ] [Review][Patch] Update `SitePage.SingletonId` XML doc to legacy/default-tenant wording [src/Domain/Site/SitePage.cs:7]
+- [ ] [Review][Patch] Set explicit `TenantId = TenantIds.Default` on `DemoDataSeeder` inserts [src/Infrastructure/Seed/DemoDataSeeder.cs] — story task claims done; ChangeTracker defaulting covers SaveChanges but seeder still omits TenantId
+- [x] [Review][Defer] No parent/child `TenantId` alignment invariant [CampaignRecipient/Registration/ClientTimelineEvent] — deferred, Epic 13 filters / later integrity
+- [x] [Review][Defer] SitePage create still hardcodes `SingletonId` PK — deferred, multi-tenant SitePage create beyond Platform 0 continuity
+- [x] [Review][Defer] `ApplyDefaultTenantIds` does not cover `ExecuteUpdate`/bulk/raw SQL — deferred, known EF ChangeTracker gap
+- [x] [Review][Defer] Parent `TenantId` change does not sync dependent children — deferred, no tenant-move story yet
+
 ## Dev Notes
 
 ### Previous story intelligence (11.1)

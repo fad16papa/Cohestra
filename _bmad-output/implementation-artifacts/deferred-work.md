@@ -1,4 +1,11 @@
 
+## Deferred from: code review of 11-2-default-tenant-migration-and-tenantid-on-core-entities (2026-07-20) — Group A
+
+- No parent/child `TenantId` alignment invariant (`CampaignRecipient`↔`Campaign`, `Registration`↔`Activity`/`Client`, `ClientTimelineEvent`↔`Client`) — Epic 13 filters / later integrity; Restrict FK alone allows cross-tenant graphs
+- SitePage create still hardcodes `SingletonId` as row Id — Platform 0 continuity per story; multi-tenant SitePage create needs new Guids later
+- `ApplyDefaultTenantIds` only via ChangeTracker — `ExecuteUpdate` / bulk / raw SQL can still persist empty `TenantId`
+- Parent `TenantId` Modified does not sync dependent children — no tenant-move story yet
+
 ## Deferred from: code review of 11-1-tenant-entity-with-dual-status-dials (2026-07-20)
 
 - Empty/whitespace slug format validation — FR-1 signup / Story 11.3 provisioning; uniqueness only in 11.1
