@@ -953,3 +953,33 @@ So that I can register without a full website — and it still feels high-end.
 **Given** Basic Admin Website/Site nav
 **When** opened
 **Then** UpgradePanel appears (not the builder)
+
+### Story 15.3: Core fixed SitePage and Pro builder unlock
+
+As a Tenant Admin on Core/Pro,
+I want a plan-appropriate public homepage,
+So that Core gets a branded fixed page and Pro can compose and publish.
+
+**Acceptance Criteria:**
+
+**Given** upgrade Basic → Core (or Core signup)
+**When** plan becomes Core
+**Then** a seeded fixed SitePage is created (`UNIQUE TenantId`); public `/` uses fixed template (name, accent, upcoming activities)
+**And** section composer remains locked
+
+**Given** upgrade Core → Pro
+**When** plan becomes Pro
+**Then** the same SitePage unlocks the builder; draft/publish is tenant-scoped
+**And** Ikigai publish does not affect another tenant
+
+**Given** Basic tenant
+**When** SitePage APIs/builder routes are called
+**Then** upgrade CTA / 403 — no SitePage row
+
+**Given** Pro preview token
+**When** used
+**Then** it is scoped to that tenant’s site draft only
+
+**Given** Midnight Atelier
+**When** Core/Pro public surfaces render
+**Then** they inherit Platform 0 behaviors under atelier chrome
