@@ -6,6 +6,7 @@ sections_completed:
   - technology_stack
   - language_rules
   - framework_rules
+  - testing_rules
 existing_patterns_found: 12
 discovery_status: complete
 initiative_focus: Cohestra Enterprise multi-tenant (Epics 11–15)
@@ -98,3 +99,15 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Basic = no SitePage (stub); Core = fixed SitePage; Pro = builder
 - Remove `AuthService.GetExistingOperatorAsync` single-operator gate (Epic 12) — do not reintroduce
 - Brand: replace Platform 0 forest green with **Midnight Atelier** tokens (`ux-cohestra-2026-07-18/DESIGN.md`) on Cohestra surfaces — do not invent a third palette
+
+### Testing Rules
+
+- **Unit:** `Infrastructure.Tests` — domain/service behavior close to existing test style (xUnit)
+- **Integration:** `Api.IntegrationTests` — `WebApplicationFactory`, `[Collection(IntegrationTestCollection.Name)]`, `[Trait("Category", "Integration")]`, `SkippableFact` + `SkipIfUnavailable`
+- Reuse `IntegrationTestHelpers` for login/seed patterns; extend helpers for multi-tenant fixtures rather than one-off bootstraps
+- **TenantIsolation** (Epic 13 / SM-1): category/trait required on PRs to `main` — at minimum cross-tenant GET denial + public site isolation + export isolation
+- New tenant-scoped endpoints → add or extend a TenantIsolation negative case
+- Prefer proving isolation with **two tenants** in one test over mocking away the filter
+- Do not delete Platform 0 tests to “make green”; fix tenancy migration so SM-4 (~90% pass) holds
+- Stripe: use test mode / fixtures / Stripe CLI — never live keys in CI
+- Web: no established Playwright suite required for v1 stories unless a story explicitly adds it — API isolation gates first
