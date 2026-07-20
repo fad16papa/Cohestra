@@ -265,3 +265,67 @@ Share kit, custom domain, thin confirm/reminder/thank-you automations, paid tick
 **FRs covered:** none for v1 · UX-DR15 parked
 
 <!-- Stories appended below per epic during Step 3 -->
+
+## Epic 11: Tenant Workspaces & Platform Control
+
+Platform Admin can provision, suspend/reactivate/archive, and audit tenants; every Platform 0 entity is tenant-owned via migration + `TenantId`. Dual dials: `Status` ∩ `BillingStatus` (Suspended always wins).
+
+**FRs covered:** FR-2, FR-3, FR-8, FR-17, FR-18
+
+### Story 11.1: Tenant entity with dual status dials
+
+As a Platform operator,
+I want a Tenant domain model with operational Status and BillingStatus,
+So that every workspace has a clear lifecycle and access can be computed from Status ∩ BillingStatus.
+
+**Acceptance Criteria:**
+
+**Given** the Domain layer
+**When** `Tenant` is introduced
+**Then** it includes at least: `Id`, `Slug` (unique), `Name`, `Plan` ∈ {Basic, Core, Pro, Enterprise}, `Status` ∈ {Active, Suspended, Archived}, `BillingStatus` ∈ {Free, Trialing, Active, PastDue, OnHold, Canceled}, and nullable Stripe/billing fields (`StripeCustomerId`, `StripeSubscriptionId`, `BillingInterval`, `TrialEndsAt`, `DelinquencyStartedAt`) ready for later epics without requiring Stripe wiring yet
+**And** slug uniqueness is enforced at the model/persistence level
+
+**Given** an access-evaluation helper (or documented matrix implementation)
+**When** Status/BillingStatus combinations are evaluated
+**Then** they match PRD FR-3: Active + Free/Trialing/Active/PastDue → full access (PastDue may show settle banner later); Active + OnHold → read-only; Suspended + any → blocked; Archived + any → blocked
+**And** Suspended always wins over billing
+
+**Given** a new Tenant is created in code/tests
+**When** defaults are applied
+**Then** `Status=Active` and Basic tenants default `Plan=Basic` / `BillingStatus=Free` unless otherwise specified
+
+**Given** unit tests for the access matrix
+**When** the suite runs
+**Then** Suspended blocks admin/public access regardless of `BillingStatus=Active`
+**And** OnHold does not change `Status` away from Active
+
+### Story 11.2: Default-tenant migration and TenantId on core entities
+
+As a developer preserving Platform 0 data,
+I want a safe migration that seeds a `default` tenant and backfills `TenantId`,
+So that existing rows stay usable and all business entities become tenant-owned.
+
+**Acceptance Criteria:**
+
+**Given** a database with Platform 0 tables and no tenancy
+**When** the migration runs
+**Then** a `Tenants` table exists and a seeded `default` tenant is created
+**And** core business tables gain nullable `TenantId`, all existing rows backfill to `default`, then `TenantId` becomes NOT NULL
+
+**Given** entities that must be tenant-scoped (Activity, Client, Registration, Campaign, Community, Category, SitePage, EmailTemplate, and other Platform 0 business entities in scope)
+**When** the migration completes
+**Then** each has a non-nullable `TenantId` FK to `Tenants`
+**And** composite unique constraints that need tenant scope include `TenantId` (e.g. Activities `(TenantId, Slug)`)
+
+**Given** SitePage previously treated as a singleton
+**When** tenancy is applied
+**Then** `UNIQUE (TenantId)` applies on SitePages (Epic 9 singleton retired per AD-4)
+
+**Given** local Docker / `cohestra-infra`
+**When** migrate + app start against existing data
+**Then** the stack still boots with the default tenant
+**And** no destructive wipe of prior rows
+
+**Given** EF Core configuration after migration
+**When** `ITenantScoped` (or equivalent) is introduced
+**Then** entities are ready for global query filters to be enabled in Epic 13 without another schema rewrite
