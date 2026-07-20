@@ -99,7 +99,8 @@ so that abuse and support freezes are handled without using Suspend as collectio
 
 _CR 2026-07-20 — Blind Hunter / Edge Case / Acceptance Auditor. Auditor: ACs 1–5 pass._
 
-- [ ] [Review][Decision] Block suspend/archive of Platform 0 `TenantIds.Default`? — Spec does not forbid it; suspending `default` would freeze all Platform 0 data until middleware/filters land
+- [x] [Review][Decision] Block suspend/archive of Platform 0 `TenantIds.Default`? — **chose Block (409)** 2026-07-20
+- [ ] [Review][Patch] Reject suspend/archive when `tenant.Id == TenantIds.Default` → 409 [PlatformTenantService.cs]
 - [ ] [Review][Patch] Map slug unique-index race to 409 via `DbUpdateException` [PlatformTenantService.cs CreateAsync]
 - [ ] [Review][Patch] Null-guard create/suspend request bodies → 400 [PlatformTenantsController.cs]
 - [ ] [Review][Patch] Reject `Guid.Empty` actor user id [PlatformTenantsController.cs TryGetActorUserId]
