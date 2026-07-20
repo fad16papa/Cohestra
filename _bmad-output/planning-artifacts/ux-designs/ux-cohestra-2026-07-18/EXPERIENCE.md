@@ -239,7 +239,7 @@ Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless 
 
 ## Inspiration & Anti-patterns
 
-**Borrow posture from:** calm ops density without purple glow; Stripe-hosted money UI rather than reinventing invoices; mist/atmosphere over flat white.
+**Borrow posture from:** editorial luxury restraint; calm ops density without purple glow; Stripe-hosted money UI rather than reinventing invoices; photography with meaning over flat white.
 
 **Anti-patterns:** Dashboard-first marketing hero; Basic stub with stats/promos; Member upgrade Checkout; Suspend-as-collections; card walls for activity lists on stub; Platform 0 forest green as Cohestra brand.
 
@@ -247,7 +247,7 @@ Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless 
 
 | # | Decision |
 |---|----------|
-| Brand / craft | **Cohestra ink+teal** with **RegFox-caliber** modern product craft (DESIGN.md) |
+| Brand / craft | **Midnight Atelier** — Fraunces + Plus Jakarta Sans, ink/lagoon/gold, photographic hospitality (DESIGN.md) |
 | PlanBadge | Members see it **read-only** |
 | Complimentary | **Sponsored** badge yes |
 | CAPTCHA | **Google reCAPTCHA** (standard, widely used, secured) + accessible path |
