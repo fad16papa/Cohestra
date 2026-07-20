@@ -835,3 +835,35 @@ So that a partner can operate the workspace — while Basic stays intentionally 
 **Given** no per-seat add-ons in v1
 **When** more seats are needed
 **Then** path is upgrade tier only (not +$15 add-on)
+
+### Story 14.7: Customer Portal, period-end cancel/downgrade, over-limit
+
+As a Tenant Admin,
+I want to manage payment method, cancel, and plan changes in Stripe Customer Portal,
+So that changes apply at period end and over-limit locks are clear — without a custom finance back-office.
+
+**Acceptance Criteria:**
+
+**Given** a paid/trialing tenant Admin
+**When** they open Settings → Billing → Manage billing
+**Then** Stripe Customer Portal opens; return URL restores Settings → Billing
+**And** Members never see the Portal entry point
+
+**Given** cancel or downgrade scheduled in Portal
+**When** `current_period_end` arrives (via webhook)
+**Then** Plan/BillingStatus update per FR-24 (paid→Basic+Free, Pro→Core, etc.)
+**And** until period end, current plan limits remain (unless delinquency applies)
+
+**Given** usage exceeds new plan caps after change
+**When** access is evaluated
+**Then** mode is `ReadOnly_OverLimit`: admin read-only, public registration blocked, banner lists what to archive
+**And** this does not set `Tenant.Status=Suspended`
+**And** full access returns when usage ≤ new caps
+
+**Given** Basic tenant
+**When** viewing Billing
+**Then** upgrade CTAs are shown (no Portal subscription to manage until paid)
+
+**Given** no custom finance UI
+**When** invoices/payment methods are needed
+**Then** all self-serve money UX is Stripe-hosted only
