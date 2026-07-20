@@ -1016,3 +1016,32 @@ So that I get a registration number and the operator’s client list — only in
 **Given** performance target
 **When** measuring public registration
 **Then** p95 < 2s under expected load (NFR-2)
+
+### Story 15.5: Plan-gated reports (Basic fixed / Core queryable / Pro+)
+
+As a Tenant Admin or Member,
+I want reports that match my plan depth,
+So that Basic stays simple with CSV while Core/Pro get real ops filtering.
+
+**Acceptance Criteria:**
+
+**Given** Basic
+**When** opening Reports
+**Then** fixed simple report (who registered, counts, date/time, registration number) + CSV of that list
+**And** filter builder / rankings / campaign stats are unavailable; API rejects advanced query params with upgrade hint
+
+**Given** Core
+**When** opening Reports
+**Then** queryable filters (date, community, activity, lead status, referral) + aggregates/rankings + full filtered CSV
+
+**Given** Pro
+**When** opening Reports
+**Then** everything in Core plus campaign analytics and saved report views
+
+**Given** dashboard metrics
+**When** viewed under Tenant A
+**Then** totals reflect only Tenant A; p95 < 3s with per-tenant Redis cache (NFR-2 / SM-3)
+
+**Given** Member vs Admin
+**When** viewing plan-locked report depth
+**Then** Member sees feature-locked; Admin sees UpgradePanel
