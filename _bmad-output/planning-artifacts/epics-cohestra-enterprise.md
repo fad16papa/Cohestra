@@ -488,3 +488,32 @@ So that my session cannot accidentally operate another workspace.
 **Given** a user who belongs to multiple tenants
 **When** they log in on tenant A’s host
 **Then** the session is bound to tenant A only (no switcher in v1)
+
+### Story 12.3: Enforce Admin vs Member server-side
+
+As a Tenant Admin,
+I want Members blocked from billing, team, and tenant settings APIs,
+So that money and seat controls stay Admin-only while Members can run allowed ops.
+
+**Acceptance Criteria:**
+
+**Given** a Tenant Member JWT
+**When** they call Team, Billing, or Tenant settings endpoints
+**Then** the API returns 403
+
+**Given** a Tenant Member on Core (no campaigns)
+**When** they call campaign create/send APIs
+**Then** the API returns 403 (or plan-locked equivalent)
+**And** Member UI later shows feature-locked copy — not a billing CTA (UX wiring Epic 14/15)
+
+**Given** a Tenant Admin
+**When** they call the same Team/Billing/settings endpoints (within plan)
+**Then** access is allowed subject to Status ∩ BillingStatus and plan gates
+
+**Given** role checks
+**When** any admin endpoint runs
+**Then** authorization is enforced server-side (not UI-only)
+
+**Given** Basic has only the Admin seat
+**When** Member-role behavior is tested
+**Then** matrix still holds for Core/Pro fixtures where Member seats exist
