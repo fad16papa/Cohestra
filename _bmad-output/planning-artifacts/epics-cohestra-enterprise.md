@@ -805,3 +805,33 @@ So that I always know my tier, headroom, and what to do when money or limits nee
 **Given** UpgradePanel on locked modules (Campaigns Basic/Core, Site on Basic, advanced reports on Basic)
 **When** Admin vs Member view the panel
 **Then** Admin gets upgrade/Checkout CTA; Member gets feature-locked message without billing CTA
+
+### Story 14.6: Team invite and SeatGate
+
+As a Tenant Admin on Core+,
+I want to invite Members up to my seat cap,
+So that a partner can operate the workspace — while Basic stays intentionally solo.
+
+**Acceptance Criteria:**
+
+**Given** Basic (1 seat)
+**When** Admin opens Team
+**Then** invite control is disabled with upgrade-to-Core CTA (“second keyholder” / atelier copy)
+**And** invite API returns plan-limit / upgrade error
+
+**Given** Core (3) or Pro (10) with unused capacity
+**When** Admin invites by email + role
+**Then** invite is created only if `active_members + pending_invites < plan_seat_cap`
+**And** token expires in 7 days; revoked invites cannot be reused
+
+**Given** invitee accepts
+**When** they set password and log in on the tenant host
+**Then** TenantMembership is created; Team/Billing stay hidden for Members
+
+**Given** seat cap reached
+**When** Admin attempts another invite
+**Then** SeatGate soft-blocks UI and API
+
+**Given** no per-seat add-ons in v1
+**When** more seats are needed
+**Then** path is upgrade tier only (not +$15 add-on)
