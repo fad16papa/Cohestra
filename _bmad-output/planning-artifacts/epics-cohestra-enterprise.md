@@ -462,3 +462,29 @@ So that Cohestra is no longer limited to a single global operator.
 **Given** unit/integration coverage
 **When** memberships are created/queried
 **Then** role values are validated and duplicate `(UserId, TenantId)` memberships are rejected
+
+### Story 12.2: JWT tenant_id and tenant-scoped login
+
+As a Tenant Admin or Member,
+I want to sign in on my tenant host and receive a JWT bound to that tenant,
+So that my session cannot accidentally operate another workspace.
+
+**Acceptance Criteria:**
+
+**Given** a user with a TenantMembership on tenant `{slug}`
+**When** they log in via `{slug}.cohestra.app` (or local equivalent)
+**Then** the access token includes `tenant_id` (and `role`) set from that membership
+**And** refresh preserves `tenant_id`
+
+**Given** a user with no membership in the resolved tenant
+**When** they attempt login on that host
+**Then** login fails with a clear error
+
+**Given** an admin API request
+**When** JWT `tenant_id` is missing or does not align with the resolved tenant Host
+**Then** the request is rejected (401/403 as appropriate)
+**And** client-supplied `X-Tenant-Id` alone is never trusted to set tenant context
+
+**Given** a user who belongs to multiple tenants
+**When** they log in on tenant A’s host
+**Then** the session is bound to tenant A only (no switcher in v1)
