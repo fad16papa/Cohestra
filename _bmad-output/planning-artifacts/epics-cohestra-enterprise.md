@@ -542,3 +542,37 @@ So that platform routes reject ordinary tenant JWTs and tenant routes stay tenan
 **Given** platform vs tenant route separation
 **When** authorization middleware runs
 **Then** platform routes require the platform claim; tenant routes require `tenant_id` + membership role
+
+## Epic 13: Guaranteed Tenant Isolation
+
+Every API/export/report is tenant-scoped; Redis namespaced; TenantIsolation tests are a release gate (SM-1).
+
+**FRs covered:** FR-9, FR-10
+
+### Story 13.1: TenantResolutionMiddleware on all API requests
+
+As a security-conscious operator,
+I want every API request to resolve Tenant Context before business logic,
+So that handlers never run ambiguously across tenants.
+
+**Acceptance Criteria:**
+
+**Given** a public or admin API request
+**When** it enters the pipeline
+**Then** `TenantResolutionMiddleware` (or equivalent) resolves Tenant Context before controllers/services execute
+
+**Given** Host `{slug}.cohestra.app` (or local `{slug}.localhost` / `DEV_TENANT_SLUG`)
+**When** the slug exists
+**Then** Tenant Context is set to that tenant
+
+**Given** an unknown or missing tenant slug on public routes
+**When** resolution fails
+**Then** the response is 404
+
+**Given** an unknown/mismatched tenant on admin routes
+**When** resolution fails or JWT `tenant_id` does not match
+**Then** the response is 403 (or 401 if unauthenticated)
+
+**Given** apex marketing host (`cohestra.app` / `www`)
+**When** platform marketing/signup routes are hit
+**Then** no tenant SitePage context is applied (marketing-only)
