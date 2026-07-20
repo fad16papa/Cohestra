@@ -79,6 +79,11 @@ so that every workspace has a clear lifecycle and access can be computed from St
 - [x] [Review][Defer] CreatedAt/UpdatedAt auto-stamp on insert [Tenant.cs] — deferred, pre-existing (write path in 11.2/11.3; matches Activity pattern)
 - [x] [Review][Defer] StripeCustomerId/SubscriptionId unique indexes [TenantConfiguration.cs] — deferred, pre-existing (Epic 14 billing)
 
+### Re-review (2026-07-20 post-patch)
+
+- Clean — Blind Hunter / Edge Case / Acceptance Auditor found no new actionable issues.
+- AC1–4 hold; decided patches verified. Residuals (PastDue Full, OnHold write enforcement, slug/timestamps) are FR-3-by-design or already deferred.
+
 ## Dev Notes
 
 ### Epic context
