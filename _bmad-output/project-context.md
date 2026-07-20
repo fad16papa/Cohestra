@@ -4,6 +4,7 @@ user_name: Admin
 date: '2026-07-20'
 sections_completed:
   - technology_stack
+  - language_rules
 existing_patterns_found: 12
 discovery_status: complete
 initiative_focus: Cohestra Enterprise multi-tenant (Epics 11–15)
@@ -50,4 +51,22 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ## Critical Implementation Rules
 
-_Pending — next categories._
+### Language-Specific Rules
+
+**C# / .NET**
+
+- Nullable reference types **on** — do not disable; fix nullability instead of `!` sprawl
+- Primary constructors / file-scoped namespaces match existing controllers (`Cohestra.Api.Controllers.V1`)
+- Business logic in **Application/Domain**; Api controllers stay thin
+- Return **ProblemDetails** for errors — never ad-hoc anonymous error JSON
+- Wire types live in **Contracts**; never return EF entities from API
+- Prefer `CancellationToken` through service methods (existing style)
+- Async all the way — no `.Result` / `.Wait()` on hot paths
+
+**TypeScript / Next**
+
+- `strict: true` in `tsconfig` — keep it
+- Imports via `@/` paths (e.g. `@/lib/api`) — match existing `lib/*-api.ts` wrappers
+- Parse ProblemDetails on failed fetches; surface `detail` when present
+- `"use client"` only where needed; prefer server fetch helpers already in `lib/`
+- Do not bypass typed API helpers with one-off raw `fetch` to new endpoints without a matching `lib/*-api.ts` (or extend an existing one)
