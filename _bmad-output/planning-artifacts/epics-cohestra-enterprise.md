@@ -1045,3 +1045,30 @@ So that Basic stays simple with CSV while Core/Pro get real ops filtering.
 **Given** Member vs Admin
 **When** viewing plan-locked report depth
 **Then** Member sees feature-locked; Admin sees UpgradePanel
+
+### Story 15.6: Pro-only campaigns and per-tenant email branding
+
+As a Tenant Admin on Pro,
+I want tenant-private campaigns with my sender identity,
+So that marketing stays Pro-gated while registration emails still work on all plans.
+
+**Acceptance Criteria:**
+
+**Given** Basic or Core
+**When** Campaigns UI/APIs are accessed
+**Then** UpgradePanel / 403 — cannot create or send campaigns
+**And** registration notification emails remain available on all plans
+
+**Given** Pro
+**When** creating segments, templates, and sends
+**Then** data is tenant-private; segment counts only tenant clients
+**And** client profile campaign history shows only that tenant’s campaigns
+
+**Given** per-tenant SendGrid sender (From name/email)
+**When** a campaign/send is attempted
+**Then** Ikigai uses Ikigai’s configured sender
+**And** send is blocked if tenant sender is not verified (platform key + per-tenant sender auth)
+
+**Given** Member on Pro
+**When** using campaigns (plan-allowed)
+**Then** access is allowed; Member still cannot open Billing/Team
