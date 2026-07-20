@@ -1,0 +1,208 @@
+# Story 11.2: Default-tenant migration and TenantId on core entities
+
+Status: ready-for-dev
+
+<!-- Ultimate context engine analysis completed - comprehensive developer guide created.
+     Optional: run validate-create-story before dev-story. -->
+
+## Story
+
+As a developer preserving Platform 0 data,
+I want a safe migration that seeds a `default` tenant and backfills `TenantId`,
+so that existing rows stay usable and all business entities become tenant-owned.
+
+## Acceptance Criteria
+
+1. **Given** a database with Platform 0 tables and no tenancy on business rows  
+   **When** the migration runs  
+   **Then** a seeded `default` tenant exists in `tenants` (`Slug = "default"`)  
+   **And** core business tables gain nullable `TenantId`, all existing rows backfill to that default tenant, then `TenantId` becomes NOT NULL
+
+2. **Given** entities that must be tenant-scoped (Activity, Client, Registration, Campaign, Community, Category, SitePage, EmailTemplate, **and** CampaignAsset, CampaignRecipient, ClientTimelineEvent, SiteHomepageTemplate)  
+   **When** the migration completes  
+   **Then** each has a non-nullable `TenantId` FK → `tenants`  
+   **And** composite unique constraints that need tenant scope include `TenantId` (e.g. Activities `(TenantId, Slug)`)
+
+3. **Given** SitePage previously treated as a singleton  
+   **When** tenancy is applied  
+   **Then** `UNIQUE (TenantId)` applies on SitePages (Epic 9 singleton retired per AD-4)  
+   **And** app code stops relying on `SitePage.SingletonId` as the sole lookup key (tenant-scoped get-or-create using default tenant for Platform 0 continuity)
+
+4. **Given** local Docker / `cohestra-infra`  
+   **When** migrate + app start against existing data  
+   **Then** the stack still boots with the default tenant  
+   **And** no destructive wipe of prior rows
+
+5. **Given** EF Core configuration after migration  
+   **When** `ITenantScoped` (or equivalent) is introduced  
+   **Then** tenant-owned entities implement it / carry `TenantId`  
+   **And** they are ready for global query filters in Epic 13 **without another schema rewrite**  
+   **And** global query filters are **NOT enabled** in this story
+
+## Tasks / Subtasks
+
+- [ ] Domain: `TenantId` + `ITenantScoped` (AC: 2, 5)
+  - [ ] Add `src/Domain/Tenants/ITenantScoped.cs` with `Guid TenantId { get; set; }`
+  - [ ] Add `TenantId` to: Activity, Client, Registration, Campaign, Community, Category, SitePage, EmailTemplate, CampaignAsset, CampaignRecipient, ClientTimelineEvent, SiteHomepageTemplate
+  - [ ] Implement `ITenantScoped` on those entities
+  - [ ] Do **not** add TenantId to `Tenant` itself; do **not** enable EF global filters
+
+- [ ] Seed default tenant + migration (AC: 1, 2, 3, 4)
+  - [ ] Define a stable well-known default tenant Guid (document constant e.g. `TenantIds.Default` or seed Guid in Domain/Infrastructure) — used by migration backfill and seeders
+  - [ ] New EF migration after `20260720153445_AddTenants` that:
+    1. Inserts `default` tenant row if missing (`Slug=default`, `Name` sensible e.g. "Default", `Plan=Basic`, `Status=Active`, `BillingStatus=Free`, timestamps UTC now)
+    2. Adds nullable `TenantId` columns to all business tables
+    3. Backfills all rows to default tenant Id
+    4. Sets NOT NULL + FK to `tenants`
+    5. Drops global unique indexes that must become tenant-scoped; creates composites (see Dev Notes table)
+    6. Adds `UNIQUE (TenantId)` on `site_pages`
+  - [ ] Prefer a carefully authored migration (or `dotnet ef migrations add` then edit `Up` for InsertData/backfill order) — verify Up/Down order is safe
+
+- [ ] EF configurations (AC: 2, 3, 5)
+  - [ ] Update each `*Configuration.cs` for `TenantId` required, FK, and new indexes
+  - [ ] Activity: unique `(TenantId, Slug)` — drop sole `Slug` unique
+  - [ ] Client: unique `(TenantId, NormalizedPhone)` / `(TenantId, NormalizedEmail)` with same null filters
+  - [ ] Community / Category: unique `(TenantId, Name)`
+  - [ ] Registration: unique `(TenantId, RegistrationNumber)`; keep `(ClientId, ActivityId)` unique
+  - [ ] SitePage: unique `(TenantId)` per AD-4
+  - [ ] CampaignRecipient: keep `(CampaignId, ClientId)` unique (parents already tenant-scoped)
+
+- [ ] Retire SingletonId usage (AC: 3, 4)
+  - [ ] Update `SitePageService` / `SitePageSeeder` to resolve SitePage by current/default `TenantId` (not only `SingletonId`)
+  - [ ] Keep or deprecate `SitePage.SingletonId` constant — if kept, document as legacy; new rows may keep that Id for the default tenant only if that eases migration, but lookups must be tenant-scoped
+  - [ ] Fix `Infrastructure.Tests/Seed/SitePageSeederTests` and `Api.IntegrationTests` SitePage assumptions
+
+- [ ] Seeders & tests (AC: 4)
+  - [ ] `DemoDataSeeder` (and any create paths in tests) set `TenantId` on inserts to default tenant
+  - [ ] Unit/integration tests that new entities without TenantId — compile/fix failures fixed
+  - [ ] Add focused test(s): after migrate (or InMemory model), Activity slug unique is per-tenant; SitePage has unique TenantId index
+  - [ ] Run `dotnet test src/Infrastructure.Tests` and relevant Api.IntegrationTests if stack available — do not delete Platform 0 tests (SM-4)
+
+- [ ] Out of scope
+  - [ ] No TenantResolutionMiddleware / JWT tenant_id (Epic 12–13)
+  - [ ] No EF global query filters enabled (Epic 13.2)
+  - [ ] No Platform Admin API / signup / Stripe
+  - [ ] No Midnight Atelier / web marketing work
+
+## Dev Notes
+
+### Previous story intelligence (11.1)
+
+- `tenants` table + unique Slug already shipped (`AddTenants`). **Default tenant row was deferred to this story.**
+- `Tenant` defaults: `Status=Active`, `Plan=Basic`, `BillingStatus=Free`.
+- Access matrix lives in `TenantAccessEvaluator` — not needed for migration logic.
+- CR decision: Active+Canceled is Blocked — irrelevant to backfill.
+- Pattern: Domain POCOs, fluent configs, `dotnet ef` with `DOTNET_ROOT=/home/ubuntu/.dotnet` in this environment.
+
+### Architecture compliance
+
+| AD | Implication |
+|----|-------------|
+| AD-1 | Non-nullable `TenantId` FK on all tenant-owned tables |
+| AD-4 | `UNIQUE (TenantId)` on SitePages; retire singleton model |
+| AD-5 | `UNIQUE (TenantId, Slug)` on Activities |
+| AD-9 | Nullable → backfill → NOT NULL; no destructive wipe |
+
+[Source: `architecture-cohestra-enterprise-2026-07-15/ARCHITECTURE-SPINE.md`]
+
+### Entities requiring TenantId (complete list)
+
+| Entity | Table | Unique index change |
+|--------|-------|---------------------|
+| Activity | activities | Slug → `(TenantId, Slug)` |
+| Client | clients | NormalizedPhone/Email → tenant-scoped + same filters |
+| Registration | registrations | RegistrationNumber → `(TenantId, RegistrationNumber)` |
+| Community | communities | Name → `(TenantId, Name)` |
+| Category | categories | Name → `(TenantId, Name)` |
+| Campaign | campaigns | TenantId FK + index optional |
+| EmailTemplate | email_templates | TenantId FK; optional `(TenantId, Name)` unique |
+| CampaignAsset | campaign_assets | TenantId FK |
+| CampaignRecipient | campaign_recipients | TenantId FK; keep (CampaignId, ClientId) unique |
+| ClientTimelineEvent | client_timeline_events | TenantId FK |
+| SitePage | site_pages | **`UNIQUE (TenantId)`** |
+| SiteHomepageTemplate | site_homepage_templates | TenantId FK |
+
+### Recommended migration order (Up)
+
+```text
+1. INSERT default tenant (fixed Guid, Slug='default') — idempotent if exists
+2. ADD COLUMN "TenantId" uuid NULL on each business table
+3. UPDATE ... SET "TenantId" = @default WHERE "TenantId" IS NULL
+4. ALTER COLUMN "TenantId" SET NOT NULL
+5. ADD FK TenantId → tenants(Id)
+6. DROP old unique indexes; CREATE tenant-scoped uniques
+7. CREATE UNIQUE INDEX on site_pages (TenantId)
+```
+
+Use the **same Guid** in C# constant and SQL insert so seeders/tests match.
+
+### SingletonId retirement strategy
+
+Today `SitePageService` / `SitePageSeeder` use `SitePage.SingletonId`. After this story:
+
+- Default tenant owns the existing singleton row: backfill sets its `TenantId` = default (row Id may remain `SingletonId` Guid — OK).
+- Lookups: `Where(p => p.TenantId == tenantId)` (for now hardcode/resolvable default until Epic 13 middleware).
+- Do not create a second SitePage for default tenant.
+
+### Anti-patterns — do NOT
+
+- Enable EF global query filters yet (breaks unscoped Platform 0 code until middleware lands)
+- Schema-per-tenant
+- Wipe DemoData / SitePage on migrate
+- Leave Activity.Slug globally unique
+- Skip CampaignAsset / Timeline / HomepageTemplate (orphan tables without TenantId)
+- Add Stripe / Platform Admin APIs
+
+### Project Structure Notes
+
+```text
+src/Domain/Tenants/ITenantScoped.cs          # NEW
+src/Domain/Tenants/TenantIds.cs              # NEW optional well-known Default Guid
+src/Domain/{Activities,Clients,...}/*.cs     # UPDATE + TenantId
+src/Infrastructure/Persistence/Configurations/*.cs  # UPDATE indexes
+src/Infrastructure/Persistence/Migrations/*AddTenantId*.cs  # NEW
+src/Infrastructure/Site/SitePageService.cs   # UPDATE lookups
+src/Infrastructure/Seed/SitePageSeeder.cs    # UPDATE
+src/Infrastructure/Seed/DemoDataSeeder.cs    # UPDATE TenantId on create
+src/Infrastructure.Tests/...                 # UPDATE / NEW index tests
+```
+
+### Testing requirements
+
+- Model/index assertions (InMemory or migration test) for Activity `(TenantId,Slug)` and SitePage `(TenantId)` unique
+- Existing Infrastructure.Tests must compile and pass after TenantId required
+- SM-4: do not delete Platform 0 tests to go green
+- Integration tests that create SitePage/Activity: set TenantId = default
+
+### Project context reference
+
+Read `_bmad-output/project-context.md`: brownfield extend-only; TenantId on entities; filters later; no greenfield rewrite.
+
+### Git intelligence
+
+- Latest: Story 11.1 done (`Tenant` + `AddTenants` + access evaluator patches).
+- Next implementable after this story file: Dev Story 11.2.
+
+### References
+
+- [Source: `epics-cohestra-enterprise.md` — Story 11.2]
+- [Source: `11-1-tenant-entity-with-dual-status-dials.md` — prior learnings]
+- [Source: ARCHITECTURE-SPINE AD-1, AD-4, AD-5, AD-9]
+- [Source: `addendum.md` migration strategy]
+- [Source: Configurations under `src/Infrastructure/Persistence/Configurations/`]
+
+## Dev Agent Record
+
+### Agent Model Used
+
+_(filled by dev agent)_
+
+### Debug Log References
+
+### Completion Notes List
+
+### File List
+
+## Change Log
+
+- 2026-07-20: Story context created (ready-for-dev)
