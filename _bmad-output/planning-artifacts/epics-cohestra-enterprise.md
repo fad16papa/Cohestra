@@ -928,3 +928,28 @@ So that public and admin surfaces always resolve to one workspace.
 **Given** Next.js middleware
 **When** forwarding to API
 **Then** Host (or equivalent tenant hint) is preserved for API resolution
+
+### Story 15.2: Basic StubHome (atelier hospitality)
+
+As a visitor,
+I want a simple public home with the org name and published activities,
+So that I can register without a full website — and it still feels high-end.
+
+**Acceptance Criteria:**
+
+**Given** a Basic tenant with `Status=Active` and non-blocking billing
+**When** a visitor opens `{slug}.cohestra.app/`
+**Then** StubHome renders org display name + list of published activities linking to `/register/{activity-slug}`
+**And** no `SitePage` entity is required or created
+
+**Given** no published activities
+**When** stub loads
+**Then** empty state shows “No published activities yet.” (or equivalent hospitality copy)
+
+**Given** Midnight Atelier craft
+**When** stub renders
+**Then** hospitality header/list craft matches DESIGN (no stats strips, promo badges, or card-wall marketing site)
+
+**Given** Basic Admin Website/Site nav
+**When** opened
+**Then** UpgradePanel appears (not the builder)
