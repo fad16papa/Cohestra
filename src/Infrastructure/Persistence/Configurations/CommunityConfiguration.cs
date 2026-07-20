@@ -1,3 +1,4 @@
+using Cohestra.Domain.Tenants;
 using Cohestra.Domain.Activities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -12,11 +13,22 @@ public sealed class CommunityConfiguration : IEntityTypeConfiguration<Community>
 
         builder.HasKey(community => community.Id);
 
+        builder.Property(community => community.TenantId)
+            .IsRequired();
+
+        builder.HasIndex(community => community.TenantId);
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(community => community.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+
         builder.Property(community => community.Name)
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.HasIndex(community => community.Name)
+        builder.HasIndex(community => new { community.TenantId, community.Name })
             .IsUnique();
 
         builder.Property(community => community.CreatedAt).IsRequired();

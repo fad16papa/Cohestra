@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Cohestra.Domain.Site;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,7 @@ public static class SitePageSeeder
         var publishedSiteCache = scope.ServiceProvider.GetRequiredService<IPublishedSiteCache>();
 
         var page = await dbContext.SitePages
-            .FirstOrDefaultAsync(item => item.Id == SitePage.SingletonId, cancellationToken);
+            .FirstOrDefaultAsync(item => item.TenantId == TenantIds.Default, cancellationToken);
 
         if (page?.PublishedSections is not null)
         {
@@ -42,6 +43,7 @@ public static class SitePageSeeder
             page = new SitePage
             {
                 Id = SitePage.SingletonId,
+                TenantId = TenantIds.Default,
                 SchemaVersion = 1,
             };
             dbContext.SitePages.Add(page);
@@ -55,7 +57,7 @@ public static class SitePageSeeder
             {
                 dbContext.Entry(page).State = EntityState.Detached;
                 page = await dbContext.SitePages
-                    .FirstAsync(item => item.Id == SitePage.SingletonId, cancellationToken);
+                    .FirstAsync(item => item.TenantId == TenantIds.Default, cancellationToken);
 
                 if (page.PublishedSections is not null || !IsEmptyDefaultDraft(page.DraftSections))
                 {

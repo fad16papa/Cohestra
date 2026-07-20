@@ -1,8 +1,12 @@
+using Cohestra.Domain.Tenants;
+
 namespace Cohestra.Domain.Campaigns;
 
-public class EmailTemplate
+public class EmailTemplate : ITenantScoped
 {
     public Guid Id { get; set; }
+
+    public Guid TenantId { get; set; }
 
     public string Name { get; set; } = string.Empty;
 

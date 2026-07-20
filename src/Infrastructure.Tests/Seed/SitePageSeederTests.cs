@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Cohestra.Contracts.Site;
 using Cohestra.Domain.Site;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Seed;
 using Cohestra.Infrastructure.Site;
@@ -24,7 +25,7 @@ public sealed class SitePageSeederTests
 
         await using var scope = provider.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
-        var page = await dbContext.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
+        var page = await dbContext.SitePages.SingleAsync(item => item.TenantId == TenantIds.Default);
 
         Assert.NotNull(page.PublishedSections);
         Assert.NotNull(page.PublishedAt);
@@ -46,6 +47,7 @@ public sealed class SitePageSeederTests
             dbContext.SitePages.Add(new SitePage
             {
                 Id = SitePage.SingletonId,
+                TenantId = TenantIds.Default,
                 DraftSections = CreateDraft("Existing draft"),
                 PublishedSections = CreateDraft("Existing published"),
                 DraftUpdatedAt = DateTimeOffset.UtcNow,
@@ -59,7 +61,7 @@ public sealed class SitePageSeederTests
 
         await using var verifyScope = provider.CreateAsyncScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<CohestraDbContext>();
-        var page = await verifyDb.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
+        var page = await verifyDb.SitePages.SingleAsync(item => item.TenantId == TenantIds.Default);
 
         Assert.Equal("Existing published", page.PublishedSections!.SiteName);
         Assert.Null(cache.LastEntry);
@@ -77,6 +79,7 @@ public sealed class SitePageSeederTests
             dbContext.SitePages.Add(new SitePage
             {
                 Id = SitePage.SingletonId,
+                TenantId = TenantIds.Default,
                 DraftSections = CreateDraft("Operator edited"),
                 PublishedSections = null,
                 DraftUpdatedAt = DateTimeOffset.UtcNow,
@@ -89,7 +92,7 @@ public sealed class SitePageSeederTests
 
         await using var verifyScope = provider.CreateAsyncScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<CohestraDbContext>();
-        var page = await verifyDb.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
+        var page = await verifyDb.SitePages.SingleAsync(item => item.TenantId == TenantIds.Default);
 
         Assert.Equal("Operator edited", page.DraftSections!.SiteName);
         Assert.Null(page.PublishedSections);
@@ -108,6 +111,7 @@ public sealed class SitePageSeederTests
             dbContext.SitePages.Add(new SitePage
             {
                 Id = SitePage.SingletonId,
+                TenantId = TenantIds.Default,
                 DraftSections = new SiteSectionsDocument
                 {
                     SchemaVersion = 1,
@@ -125,7 +129,7 @@ public sealed class SitePageSeederTests
 
         await using var verifyScope = provider.CreateAsyncScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<CohestraDbContext>();
-        var page = await verifyDb.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
+        var page = await verifyDb.SitePages.SingleAsync(item => item.TenantId == TenantIds.Default);
 
         Assert.Equal("Cohestra", page.DraftSections!.SiteName);
         Assert.Equal("Cohestra", page.PublishedSections!.SiteName);
@@ -143,7 +147,7 @@ public sealed class SitePageSeederTests
 
         await using var scope = provider.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
-        var page = await dbContext.SitePages.SingleAsync(item => item.Id == SitePage.SingletonId);
+        var page = await dbContext.SitePages.SingleAsync(item => item.TenantId == TenantIds.Default);
 
         Assert.Equal("Cohestra", page.PublishedSections!.SiteName);
         Assert.NotNull(page.PublishedAt);

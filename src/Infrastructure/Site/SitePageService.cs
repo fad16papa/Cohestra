@@ -1,6 +1,7 @@
 using Cohestra.Application.Site;
 using Cohestra.Contracts.Site;
 using Cohestra.Domain.Site;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Persistence;
@@ -272,7 +273,7 @@ public sealed class SitePageService(
         {
             var page = await dbContext.SitePages
                 .AsNoTracking()
-                .FirstOrDefaultAsync(item => item.Id == SitePage.SingletonId, cancellationToken);
+                .FirstOrDefaultAsync(item => item.TenantId == TenantIds.Default, cancellationToken);
 
             if (page?.PublishedSections is null || page.PublishedAt is null)
             {
@@ -316,7 +317,7 @@ public sealed class SitePageService(
 
         var page = await dbContext.SitePages
             .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Id == SitePage.SingletonId, cancellationToken);
+            .FirstOrDefaultAsync(item => item.TenantId == TenantIds.Default, cancellationToken);
 
         if (page?.DraftSections is null)
         {
@@ -349,8 +350,10 @@ public sealed class SitePageService(
 
     private async Task<SitePage> GetOrCreateSingletonAsync(CancellationToken cancellationToken)
     {
+        // Platform 0 continuity: one SitePage per default tenant (AD-4 UNIQUE TenantId).
+        // Legacy SingletonId retained as row Id for the default tenant only.
         var page = await dbContext.SitePages
-            .FirstOrDefaultAsync(item => item.Id == SitePage.SingletonId, cancellationToken);
+            .FirstOrDefaultAsync(item => item.TenantId == TenantIds.Default, cancellationToken);
 
         if (page is not null)
         {
@@ -361,6 +364,7 @@ public sealed class SitePageService(
         page = new SitePage
         {
             Id = SitePage.SingletonId,
+            TenantId = TenantIds.Default,
             DraftSections = CreateEmptyDraft(),
             PublishedSections = null,
             DraftUpdatedAt = now,
@@ -378,7 +382,7 @@ public sealed class SitePageService(
         {
             dbContext.Entry(page).State = EntityState.Detached;
             return await dbContext.SitePages
-                .FirstAsync(item => item.Id == SitePage.SingletonId, cancellationToken);
+                .FirstAsync(item => item.TenantId == TenantIds.Default, cancellationToken);
         }
     }
 

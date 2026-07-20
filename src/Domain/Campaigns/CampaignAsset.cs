@@ -1,8 +1,12 @@
+using Cohestra.Domain.Tenants;
+
 namespace Cohestra.Domain.Campaigns;
 
-public class CampaignAsset
+public class CampaignAsset : ITenantScoped
 {
     public Guid Id { get; set; }
+
+    public Guid TenantId { get; set; }
 
     public string FileName { get; set; } = string.Empty;
 

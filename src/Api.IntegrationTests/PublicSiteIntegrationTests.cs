@@ -5,6 +5,7 @@ using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Contracts.Site;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Site;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
@@ -135,7 +136,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
         var cache = scope.ServiceProvider.GetRequiredService<RedisPublishedSiteCache>();
 
         var page = await dbContext.SitePages
-            .FirstOrDefaultAsync(item => item.Id == SitePage.SingletonId);
+            .FirstOrDefaultAsync(item => item.TenantId == TenantIds.Default);
 
         if (page is not null)
         {

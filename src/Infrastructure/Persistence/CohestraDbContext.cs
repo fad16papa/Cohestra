@@ -46,4 +46,32 @@ public class CohestraDbContext(DbContextOptions<CohestraDbContext> options)
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CohestraDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        ApplyDefaultTenantIds();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
+
+    public override Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
+    {
+        ApplyDefaultTenantIds();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    /// <summary>
+    /// Until Epic 12–13 resolve tenant context, new ITenantScoped rows default to the Platform 0 tenant.
+    /// </summary>
+    private void ApplyDefaultTenantIds()
+    {
+        foreach (var entry in ChangeTracker.Entries<ITenantScoped>())
+        {
+            if (entry.State == EntityState.Added && entry.Entity.TenantId == Guid.Empty)
+            {
+                entry.Entity.TenantId = TenantIds.Default;
+            }
+        }
+    }
 }

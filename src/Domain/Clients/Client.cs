@@ -1,8 +1,12 @@
+using Cohestra.Domain.Tenants;
+
 namespace Cohestra.Domain.Clients;
 
-public class Client
+public class Client : ITenantScoped
 {
     public Guid Id { get; set; }
+
+    public Guid TenantId { get; set; }
 
     public string FullName { get; set; } = string.Empty;
 

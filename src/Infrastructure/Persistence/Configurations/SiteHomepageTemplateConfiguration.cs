@@ -1,3 +1,4 @@
+using Cohestra.Domain.Tenants;
 using System.Text.Json;
 using Cohestra.Domain.Site;
 using Cohestra.Infrastructure.Site;
@@ -13,6 +14,17 @@ internal sealed class SiteHomepageTemplateConfiguration : IEntityTypeConfigurati
         builder.ToTable("site_homepage_templates");
 
         builder.HasKey(template => template.Id);
+
+        builder.Property(template => template.TenantId)
+            .IsRequired();
+
+        builder.HasIndex(template => template.TenantId);
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(template => template.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
         builder.Property(template => template.Name)
             .HasMaxLength(80)

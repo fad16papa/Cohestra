@@ -1,3 +1,4 @@
+using Cohestra.Domain.Tenants;
 using Cohestra.Domain.Campaigns;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -11,6 +12,17 @@ internal sealed class EmailTemplateConfiguration : IEntityTypeConfiguration<Emai
         builder.ToTable("email_templates");
 
         builder.HasKey(template => template.Id);
+
+        builder.Property(template => template.TenantId)
+            .IsRequired();
+
+        builder.HasIndex(template => template.TenantId);
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(template => template.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
         builder.Property(template => template.Name)
             .HasMaxLength(120)
