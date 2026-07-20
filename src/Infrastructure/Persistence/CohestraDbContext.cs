@@ -3,6 +3,7 @@ using Cohestra.Domain.Campaigns;
 using Cohestra.Domain.Clients;
 using Cohestra.Domain.Registrations;
 using Cohestra.Domain.Site;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -13,6 +14,8 @@ namespace Cohestra.Infrastructure.Persistence;
 public class CohestraDbContext(DbContextOptions<CohestraDbContext> options)
     : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options)
 {
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+
     public DbSet<Activity> Activities => Set<Activity>();
 
     public DbSet<Community> Communities => Set<Community>();

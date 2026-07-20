@@ -1,6 +1,10 @@
+---
+baseline_commit: fd50bef1acc2c756d60eede7998d6fdc30d09259
+---
+
 # Story 11.1: Tenant entity with dual status dials
 
-Status: ready-for-dev
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -34,36 +38,36 @@ so that every workspace has a clear lifecycle and access can be computed from St
 
 ## Tasks / Subtasks
 
-- [ ] Domain model (AC: 1, 3)
-  - [ ] Add `src/Domain/Tenants/Tenant.cs` — POCO matching existing Domain style (`Guid Id`, no EF attributes)
-  - [ ] Add enums: `TenantPlan`, `TenantStatus`, `BillingStatus`, `BillingInterval` (files per spine: `Tenants/TenantPlan.cs`, `Tenants/TenantStatus.cs`, `Billing/BillingStatus.cs`, `Billing/BillingInterval.cs` or co-locate under `Tenants/` if Billing folder feels empty — prefer spine paths)
-  - [ ] Property defaults: `Status=Active`; for Basic path `Plan=Basic`, `BillingStatus=Free`; `CreatedAt`/`UpdatedAt` as `DateTimeOffset`
-  - [ ] Nullable billing foreshadow only: `StripeCustomerId`, `StripeSubscriptionId`, `BillingInterval?`, `TrialEndsAt?`, `DelinquencyStartedAt?` — **no Stripe.NET package**
-  - [ ] Do **not** add `IsComplimentary` here (Story 11.5); do **not** add `TenantMembership` (Epic 12); do **not** add `TenantId` to Activity/Client/etc. (Story 11.2)
+- [x] Domain model (AC: 1, 3)
+  - [x] Add `src/Domain/Tenants/Tenant.cs` — POCO matching existing Domain style (`Guid Id`, no EF attributes)
+  - [x] Add enums: `TenantPlan`, `TenantStatus`, `BillingStatus`, `BillingInterval` (files per spine: `Tenants/TenantPlan.cs`, `Tenants/TenantStatus.cs`, `Billing/BillingStatus.cs`, `Billing/BillingInterval.cs` or co-locate under `Tenants/` if Billing folder feels empty — prefer spine paths)
+  - [x] Property defaults: `Status=Active`; for Basic path `Plan=Basic`, `BillingStatus=Free`; `CreatedAt`/`UpdatedAt` as `DateTimeOffset`
+  - [x] Nullable billing foreshadow only: `StripeCustomerId`, `StripeSubscriptionId`, `BillingInterval?`, `TrialEndsAt?`, `DelinquencyStartedAt?` — **no Stripe.NET package**
+  - [x] Do **not** add `IsComplimentary` here (Story 11.5); do **not** add `TenantMembership` (Epic 12); do **not** add `TenantId` to Activity/Client/etc. (Story 11.2)
 
-- [ ] Access matrix helper (AC: 2, 4)
-  - [ ] Add pure Domain evaluator e.g. `TenantAccessEvaluator` / `TenantAccess.Evaluate(TenantStatus, BillingStatus)` returning admin access + public registration allowance (and preferably public surface mode: Available / Maintenance / NotFound)
-  - [ ] Encode FR-3 table exactly; Suspended wins over any `BillingStatus`
-  - [ ] Do **not** mutate `Tenant.Status` when evaluating OnHold — OnHold is billing-only read-only while Status stays Active
-  - [ ] `ReadOnly_OverLimit` (FR-24) is **out of scope** for this matrix — document as future access overlay, do not invent a fake BillingStatus value
+- [x] Access matrix helper (AC: 2, 4)
+  - [x] Add pure Domain evaluator e.g. `TenantAccessEvaluator` / `TenantAccess.Evaluate(TenantStatus, BillingStatus)` returning admin access + public registration allowance (and preferably public surface mode: Available / Maintenance / NotFound)
+  - [x] Encode FR-3 table exactly; Suspended wins over any `BillingStatus`
+  - [x] Do **not** mutate `Tenant.Status` when evaluating OnHold — OnHold is billing-only read-only while Status stays Active
+  - [x] `ReadOnly_OverLimit` (FR-24) is **out of scope** for this matrix — document as future access overlay, do not invent a fake BillingStatus value
 
-- [ ] Persistence (AC: 1)
-  - [ ] Add `DbSet<Tenant> Tenants` to `CohestraDbContext`
-  - [ ] Add `TenantConfiguration : IEntityTypeConfiguration<Tenant>` → table `"tenants"`, unique index on `Slug`, enum → string conversions (match `ActivityConfiguration`)
-  - [ ] EF migration for `tenants` table only (not TenantId backfill — that is 11.2)
-  - [ ] Optional: InMemory unique-slug smoke test or configuration assertion — not required if migration + unique index are clear
+- [x] Persistence (AC: 1)
+  - [x] Add `DbSet<Tenant> Tenants` to `CohestraDbContext`
+  - [x] Add `TenantConfiguration : IEntityTypeConfiguration<Tenant>` → table `"tenants"`, unique index on `Slug`, enum → string conversions (match `ActivityConfiguration`)
+  - [x] EF migration for `tenants` table only (not TenantId backfill — that is 11.2)
+  - [x] Optional: InMemory unique-slug smoke test or configuration assertion — not required if migration + unique index are clear
 
-- [ ] Unit tests (AC: 2, 3, 4)
-  - [ ] Add `src/Infrastructure.Tests/Tenants/TenantAccessEvaluatorTests.cs` (preferred — matches existing test home; Domain.Tests project does not exist)
-  - [ ] Theory/matrix cases: every Status × BillingStatus combo that matters; Suspended + BillingStatus.Active → blocked; Active + OnHold → read-only admin, public reg false, Status remains Active; Active + PastDue → full (banner later)
-  - [ ] Default construction test: new Tenant → Active + Basic + Free
-  - [ ] Run `dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --filter Tenants` (or full unit suite)
+- [x] Unit tests (AC: 2, 3, 4)
+  - [x] Add `src/Infrastructure.Tests/Tenants/TenantAccessEvaluatorTests.cs` (preferred — matches existing test home; Domain.Tests project does not exist)
+  - [x] Theory/matrix cases: every Status × BillingStatus combo that matters; Suspended + BillingStatus.Active → blocked; Active + OnHold → read-only admin, public reg false, Status remains Active; Active + PastDue → full (banner later)
+  - [x] Default construction test: new Tenant → Active + Basic + Free
+  - [x] Run `dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --filter Tenants` (or full unit suite)
 
-- [ ] Out of scope guardrails
-  - [ ] No Platform Admin API / UI
-  - [ ] No middleware / JWT / Redis tenancy
-  - [ ] No web / Midnight Atelier work
-  - [ ] No seed of `default` tenant yet (11.2) — entity + empty table is enough
+- [x] Out of scope guardrails
+  - [x] No Platform Admin API / UI
+  - [x] No middleware / JWT / Redis tenancy
+  - [x] No web / Midnight Atelier work
+  - [x] No seed of `default` tenant yet (11.2) — entity + empty table is enough
 
 ## Dev Notes
 
@@ -199,14 +203,40 @@ Recent commits are planning-only (project-context, IR, sprint-status). No Tenant
 
 ### Agent Model Used
 
-_(filled by dev agent)_
+Cursor Grok 4.5 (cloud agent)
 
 ### Debug Log References
 
+- `dotnet test src/Infrastructure.Tests` — 136 passed (21 Tenant + 115 existing)
+- `dotnet ef migrations add AddTenants` — tenants table only
+
 ### Completion Notes List
 
+- Added Tenant dual-dial domain model (Plan/Status/BillingStatus) with nullable Stripe foreshadow fields; no Stripe SDK.
+- Implemented `TenantAccessEvaluator` for FR-3 matrix; Suspended wins; OnHold → ReadOnly without mutating Status; PastDue exposes `ShowSettleBanner`.
+- Persistence: `DbSet<Tenant>`, `TenantConfiguration` (unique Slug), migration `AddTenants`.
+- Unit tests cover defaults, Suspended/Archived × all billing, Active full states, OnHold immutability, unique slug index.
+- Out of scope held: no Platform API/UI, no TenantId backfill, no IsComplimentary, no middleware.
+
 ### File List
+
+- src/Domain/Tenants/Tenant.cs
+- src/Domain/Tenants/TenantPlan.cs
+- src/Domain/Tenants/TenantStatus.cs
+- src/Domain/Tenants/TenantAccessMode.cs
+- src/Domain/Tenants/TenantPublicSurface.cs
+- src/Domain/Tenants/TenantAccessEvaluator.cs
+- src/Domain/Billing/BillingStatus.cs
+- src/Domain/Billing/BillingInterval.cs
+- src/Infrastructure/Persistence/CohestraDbContext.cs
+- src/Infrastructure/Persistence/Configurations/TenantConfiguration.cs
+- src/Infrastructure/Persistence/Migrations/20260720153445_AddTenants.cs
+- src/Infrastructure/Persistence/Migrations/20260720153445_AddTenants.Designer.cs
+- src/Infrastructure/Persistence/Migrations/CohestraDbContextModelSnapshot.cs
+- src/Infrastructure.Tests/Tenants/TenantAccessEvaluatorTests.cs
+- src/Infrastructure.Tests/Tenants/TenantConfigurationTests.cs
 
 ## Change Log
 
 - 2026-07-20: Story context created (ready-for-dev)
+- 2026-07-20: Implemented Tenant entity, FR-3 access evaluator, EF tenants migration, unit tests — status → review
