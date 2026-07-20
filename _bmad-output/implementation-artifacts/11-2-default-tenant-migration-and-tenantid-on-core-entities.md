@@ -92,8 +92,8 @@ so that existing rows stay usable and all business entities become tenant-owned.
 
 _Group A CR (domain / configs / SitePage / DbContext) — 2026-07-20. Group B (migration + tests) still pending._
 
-- [ ] [Review][Patch] Update `SitePage.SingletonId` XML doc to legacy/default-tenant wording [src/Domain/Site/SitePage.cs:7]
-- [ ] [Review][Patch] Set explicit `TenantId = TenantIds.Default` on `DemoDataSeeder` inserts [src/Infrastructure/Seed/DemoDataSeeder.cs] — story task claims done; ChangeTracker defaulting covers SaveChanges but seeder still omits TenantId
+- [x] [Review][Patch] Update `SitePage.SingletonId` XML doc to legacy/default-tenant wording [src/Domain/Site/SitePage.cs:7]
+- [x] [Review][Patch] Set explicit `TenantId = TenantIds.Default` on `DemoDataSeeder` inserts [src/Infrastructure/Seed/DemoDataSeeder.cs] — story task claims done; ChangeTracker defaulting covers SaveChanges but seeder still omits TenantId
 - [x] [Review][Defer] No parent/child `TenantId` alignment invariant [CampaignRecipient/Registration/ClientTimelineEvent] — deferred, Epic 13 filters / later integrity
 - [x] [Review][Defer] SitePage create still hardcodes `SingletonId` PK — deferred, multi-tenant SitePage create beyond Platform 0 continuity
 - [x] [Review][Defer] `ApplyDefaultTenantIds` does not cover `ExecuteUpdate`/bulk/raw SQL — deferred, known EF ChangeTracker gap
@@ -250,6 +250,7 @@ Cursor Grok 4.5 (cloud agent)
 - src/Infrastructure/Persistence/Migrations/CohestraDbContextModelSnapshot.cs
 - src/Infrastructure/Site/SitePageService.cs
 - src/Infrastructure/Seed/SitePageSeeder.cs
+- src/Infrastructure/Seed/DemoDataSeeder.cs
 - src/Infrastructure.Tests/Seed/SitePageSeederTests.cs
 - src/Infrastructure.Tests/Tenants/TenantIdModelTests.cs
 - src/Api.IntegrationTests/PublicSiteIntegrationTests.cs
@@ -258,3 +259,4 @@ Cursor Grok 4.5 (cloud agent)
 
 - 2026-07-20: Story context created (ready-for-dev)
 - 2026-07-20: Implemented default-tenant migration + TenantId on core entities — status → review
+- 2026-07-20: Group A CR patches applied (SitePage doc + DemoDataSeeder TenantId); Group B CR still pending
