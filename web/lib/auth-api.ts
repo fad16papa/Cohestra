@@ -133,6 +133,23 @@ async function postAuthTokens(
   return parseAuthTokenResponse(raw);
 }
 
+/** Post-login home: PlatformAdmin-only → platform console; tenant Admin → dashboard. */
+export function resolvePostLoginPath(profile: AdminProfile): string {
+  const roles = profile.roles;
+  const isPlatformAdmin = roles.includes("PlatformAdmin");
+  const isTenantAdmin = roles.includes("Admin");
+  if (isPlatformAdmin && !isTenantAdmin) {
+    return "/platform";
+  }
+  if (isTenantAdmin) {
+    return "/dashboard";
+  }
+  if (isPlatformAdmin) {
+    return "/platform";
+  }
+  return "/dashboard";
+}
+
 export async function loginWithPassword(
   email: string,
   password: string
@@ -158,7 +175,7 @@ export async function loginWithPassword(
     const raw = (await response.json()) as Record<string, unknown>;
     const session = parseAuthTokenResponse(raw);
     setAuthSession(session);
-    const profile = await fetchAdminProfile(session.accessToken);
+    const profile = await fetchSessionProfile(session.accessToken);
     return { ok: true, session, profile };
   } catch (error) {
     clearAuthSession();
@@ -198,11 +215,71 @@ export async function fetchAdminProfile(
   });
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    const error = new Error(await parseProblemDetail(response)) as Error & {
+      status?: number;
+    };
+    error.status = response.status;
+    throw error;
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
   return parseAdminProfile(raw);
+}
+
+/** PlatformAdmin-only users cannot call /admin/me (403). */
+export async function fetchPlatformProfile(
+  accessToken: string
+): Promise<AdminProfile> {
+  const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/platform/me`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  return parsePlatformProfile(raw);
+}
+
+function parsePlatformProfile(raw: Record<string, unknown>): AdminProfile {
+  const userId = raw.userId ?? raw.UserId;
+  const email = raw.email ?? raw.Email;
+  const roles = raw.roles ?? raw.Roles;
+
+  if (typeof userId !== "string" || typeof email !== "string") {
+    throw new Error("Invalid platform profile payload");
+  }
+
+  return {
+    userId,
+    email,
+    nickname: null,
+    roles: Array.isArray(roles)
+      ? roles.filter((role): role is string => typeof role === "string")
+      : [],
+    themePreference: "system",
+    brandAccentColor: null,
+  };
+}
+
+export async function fetchSessionProfile(
+  accessToken: string
+): Promise<AdminProfile> {
+  try {
+    return await fetchAdminProfile(accessToken);
+  } catch (error) {
+    const status =
+      error && typeof error === "object" && "status" in error
+        ? (error as { status?: number }).status
+        : undefined;
+    if (status === 403) {
+      return fetchPlatformProfile(accessToken);
+    }
+    throw error;
+  }
 }
 
 export async function ensureValidSession(): Promise<AuthSession | null> {
@@ -225,7 +302,7 @@ export async function validateStoredSession(): Promise<AdminProfile | null> {
   }
 
   try {
-    return await fetchAdminProfile(session.accessToken);
+    return await fetchSessionProfile(session.accessToken);
   } catch {
     const refreshed = await refreshAuthSession();
     if (!refreshed) {
@@ -233,7 +310,7 @@ export async function validateStoredSession(): Promise<AdminProfile | null> {
     }
 
     try {
-      return await fetchAdminProfile(refreshed.accessToken);
+      return await fetchSessionProfile(refreshed.accessToken);
     } catch {
       clearAuthSession();
       return null;

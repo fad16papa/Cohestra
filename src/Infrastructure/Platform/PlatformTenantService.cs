@@ -15,6 +15,107 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
     private const int MaxNameLength = 200;
     private const int MaxEmailLength = 320;
     private const int MaxReasonLength = 1000;
+    private const int DefaultPageSize = 25;
+    private const int MaxPageSize = 100;
+    private const int DefaultAuditTake = 25;
+    private const int MaxAuditTake = 50;
+
+    public async Task<TenantListResponse> ListAsync(
+        string? search,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedPage = page < 1 ? 1 : page;
+        var normalizedPageSize = pageSize < 1
+            ? DefaultPageSize
+            : Math.Min(pageSize, MaxPageSize);
+
+        var query = dbContext.Tenants.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLowerInvariant();
+            query = query.Where(t =>
+                t.Slug.ToLower().Contains(term) ||
+                t.Name.ToLower().Contains(term));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var tenants = await query
+            .OrderByDescending(t => t.CreatedAt)
+            .ThenBy(t => t.Slug)
+            .Skip((normalizedPage - 1) * normalizedPageSize)
+            .Take(normalizedPageSize)
+            .ToListAsync(cancellationToken);
+
+        var ids = tenants.Select(t => t.Id).ToList();
+        var activityCounts = ids.Count == 0
+            ? new Dictionary<Guid, int>()
+            : await dbContext.Activities.AsNoTracking()
+                .Where(a => ids.Contains(a.TenantId))
+                .GroupBy(a => a.TenantId)
+                .Select(g => new { TenantId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.TenantId, x => x.Count, cancellationToken);
+
+        var clientCounts = ids.Count == 0
+            ? new Dictionary<Guid, int>()
+            : await dbContext.Clients.AsNoTracking()
+                .Where(c => ids.Contains(c.TenantId))
+                .GroupBy(c => c.TenantId)
+                .Select(g => new { TenantId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.TenantId, x => x.Count, cancellationToken);
+
+        var items = tenants.Select(t => new TenantListItemResponse(
+            t.Id,
+            t.Slug,
+            t.Name,
+            t.Plan.ToString(),
+            t.Status.ToString(),
+            t.BillingStatus.ToString(),
+            t.AdminContactEmail,
+            t.CreatedAt,
+            activityCounts.GetValueOrDefault(t.Id),
+            clientCounts.GetValueOrDefault(t.Id))).ToList();
+
+        return new TenantListResponse(items, normalizedPage, normalizedPageSize, totalCount);
+    }
+
+    public async Task<PlatformTenantResult<TenantDetailResponse>> GetByIdAsync(
+        Guid tenantId,
+        int auditTake = DefaultAuditTake,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants.AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return PlatformTenantResult<TenantDetailResponse>.Fail(
+                PlatformTenantError.NotFound,
+                "Tenant not found.");
+        }
+
+        var take = auditTake < 1
+            ? DefaultAuditTake
+            : Math.Min(auditTake, MaxAuditTake);
+
+        var audits = await dbContext.PlatformAuditLogs.AsNoTracking()
+            .Where(a => a.TenantId == tenantId)
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(take)
+            .Select(a => new PlatformAuditEntryResponse(
+                a.Id,
+                a.ActorUserId,
+                a.TenantId,
+                a.Action.ToString(),
+                a.Reason,
+                a.CreatedAt))
+            .ToListAsync(cancellationToken);
+
+        return PlatformTenantResult<TenantDetailResponse>.Ok(
+            new TenantDetailResponse(Map(tenant), audits));
+    }
 
     public async Task<PlatformTenantResult<TenantResponse>> CreateAsync(
         CreateTenantRequest request,

@@ -5,6 +5,17 @@ namespace Cohestra.Application.Tenants;
 
 public interface IPlatformTenantService
 {
+    Task<TenantListResponse> ListAsync(
+        string? search,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default);
+
+    Task<PlatformTenantResult<TenantDetailResponse>> GetByIdAsync(
+        Guid tenantId,
+        int auditTake = 25,
+        CancellationToken cancellationToken = default);
+
     Task<PlatformTenantResult<TenantResponse>> CreateAsync(
         CreateTenantRequest request,
         Guid actorUserId,

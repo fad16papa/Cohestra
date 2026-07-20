@@ -16,6 +16,42 @@ namespace Cohestra.Api.Controllers.V1;
 [Produces("application/json")]
 public sealed class PlatformTenantsController(IPlatformTenantService platformTenantService) : ControllerBase
 {
+    /// <summary>Paginated tenant directory with aggregate activity/client counts (no PII export).</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(TenantListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<TenantListResponse>> List(
+        [FromQuery] string? search,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await platformTenantService.ListAsync(search, page, pageSize, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>Tenant detail plus recent platform audit entries for that tenant only.</summary>
+    [HttpGet("{tenantId:guid}")]
+    [ProducesResponseType(typeof(TenantDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TenantDetailResponse>> GetById(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var result = await platformTenantService.GetByIdAsync(tenantId, cancellationToken: cancellationToken);
+        if (result.Succeeded && result.Value is not null)
+        {
+            return Ok(result.Value);
+        }
+
+        return result.Error switch
+        {
+            PlatformTenantError.NotFound => NotFoundProblem(result.Detail ?? "Tenant not found."),
+            _ => BadRequestProblem(result.Detail ?? "Request failed."),
+        };
+    }
+
     /// <summary>Provision a tenant workspace (Status=Active). Does not create tenant memberships.</summary>
     [HttpPost]
     [ProducesResponseType(typeof(TenantResponse), StatusCodes.Status201Created)]

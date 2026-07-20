@@ -4,7 +4,7 @@ baseline_commit: ec86c4650d79dd1b568bb1b454597af00768cb6f
 
 # Story 11.4: Platform tenant directory and health
 
-Status: ready-for-dev
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -47,41 +47,41 @@ so that I can find workspaces and confirm platform readiness without exporting t
 
 ## Tasks / Subtasks
 
-- [ ] Contracts + service list/detail/audit (AC: 1, 2, 4)
-  - [ ] Add DTOs under `Contracts/Platform/`: e.g. `TenantListItemResponse` (+ `ActivityCount`, `ClientCount`), `TenantListResponse` (`Items`, `Page`, `PageSize`, `TotalCount`), `PlatformAuditEntryResponse`, extend detail response if needed (reuse `TenantResponse` + audits)
-  - [ ] Extend `IPlatformTenantService`: `ListAsync(search, page, pageSize)`, `GetByIdAsync(tenantId)`, `ListAuditAsync(tenantId, take)` (or embed recent audits in GetById)
-  - [ ] Implement in `PlatformTenantService`:
+- [x] Contracts + service list/detail/audit (AC: 1, 2, 4)
+  - [x] Add DTOs under `Contracts/Platform/`: e.g. `TenantListItemResponse` (+ `ActivityCount`, `ClientCount`), `TenantListResponse` (`Items`, `Page`, `PageSize`, `TotalCount`), `PlatformAuditEntryResponse`, extend detail response if needed (reuse `TenantResponse` + audits)
+  - [x] Extend `IPlatformTenantService`: `ListAsync(search, page, pageSize)`, `GetByIdAsync(tenantId)`, `ListAuditAsync(tenantId, take)` (or embed recent audits in GetById)
+  - [x] Implement in `PlatformTenantService`:
     - Pagination constants match admin norm: default **25**, max **100**; clamp page ≥ 1
     - Search: trim; case-insensitive `Contains` on `Slug` **and** `Name`
     - Counts: for page tenant ids, `GroupBy`/`Count` on `Activities` and `Clients` by `TenantId` (no PII fields)
     - Audit: `OrderByDescending(CreatedAt).Take(n)` (default n=20–50) for tenant; never expose other tenants’ audits
-  - [ ] Do **not** add bulk client/registration export (NFR-4)
+  - [x] Do **not** add bulk client/registration export (NFR-4)
 
-- [ ] API GET routes (AC: 1, 2, 5)
-  - [ ] Extend `PlatformTenantsController` (same `[Authorize(Roles = PlatformAdmin)]`):
+- [x] API GET routes (AC: 1, 2, 5)
+  - [x] Extend `PlatformTenantsController` (same `[Authorize(Roles = PlatformAdmin)]`):
     - `GET /api/v1/platform/tenants?search=&page=&pageSize=`
     - `GET /api/v1/platform/tenants/{tenantId}` — detail (+ recent audits or nested)
     - Optional: `GET /api/v1/platform/tenants/{tenantId}/audit` if detail payload should stay thin
-  - [ ] Reuse ProblemDetails helpers; 404 for unknown tenant; 403 via role gate
-  - [ ] Keep existing POST lifecycle endpoints; detail UI calls them (no duplicate mutation APIs)
+  - [x] Reuse ProblemDetails helpers; 404 for unknown tenant; 403 via role gate
+  - [x] Keep existing POST lifecycle endpoints; detail UI calls them (no duplicate mutation APIs)
 
-- [ ] Health (AC: 3)
-  - [ ] Confirm `/ready` stays anonymous (already: postgres + redis tagged checks in `Program.cs`)
-  - [ ] Document in story completion notes / brief API summary what `/ready` means
-  - [ ] **Preferred small enhancement:** add a ready-tagged check that `Tenants` contains `TenantIds.Default` (or slug `default`) — if missing, report degraded/unhealthy so ops notice a broken 11.2 seed. Keep unauthenticated.
-  - [ ] Do **not** put Platform Admin JWT on `/ready`
+- [x] Health (AC: 3)
+  - [x] Confirm `/ready` stays anonymous (already: postgres + redis tagged checks in `Program.cs`)
+  - [x] Document in story completion notes / brief API summary what `/ready` means
+  - [x] **Preferred small enhancement:** add a ready-tagged check that `Tenants` contains `TenantIds.Default` (or slug `default`) — if missing, report degraded/unhealthy so ops notice a broken 11.2 seed. Keep unauthenticated.
+  - [x] Do **not** put Platform Admin JWT on `/ready`
 
-- [ ] Web platform console (AC: 1, 2, 5, 6)
-  - [ ] New route group e.g. `web/app/(platform)/` — **not** under `(admin)` (tenant operator shell)
-  - [ ] PlatformAdmin session gate (reuse auth session; deny/redirect if role ≠ PlatformAdmin — mirror `AdminRouteGuard` pattern with role check via `/api/v1/admin/me` **or** a small `GET /api/v1/platform/me` if admin/me does not expose PlatformAdmin; prefer minimal: decode roles from existing profile endpoint or add `platform/me` that returns `{ email, roles }` for PlatformAdmin only)
-  - [ ] Pages: directory list (search + pagination + status/slug/created/admin contact/counts); detail (tenant fields, recent audit table, Suspend/Reactivate/Archive actions using 11.3 APIs with reason modal for Suspend)
-  - [ ] Sparse ops UI — UX-DR16; Midnight Atelier tokens from existing brand CSS; no impersonation; no card walls/stat strips in hero
-  - [ ] API client: `web/lib/platform-api.ts` (or similar) wrapping platform tenant endpoints
+- [x] Web platform console (AC: 1, 2, 5, 6)
+  - [x] New route group e.g. `web/app/(platform)/` — **not** under `(admin)` (tenant operator shell)
+  - [x] PlatformAdmin session gate (reuse auth session; deny/redirect if role ≠ PlatformAdmin — mirror `AdminRouteGuard` pattern with role check via `/api/v1/admin/me` **or** a small `GET /api/v1/platform/me` if admin/me does not expose PlatformAdmin; prefer minimal: decode roles from existing profile endpoint or add `platform/me` that returns `{ email, roles }` for PlatformAdmin only)
+  - [x] Pages: directory list (search + pagination + status/slug/created/admin contact/counts); detail (tenant fields, recent audit table, Suspend/Reactivate/Archive actions using 11.3 APIs with reason modal for Suspend)
+  - [x] Sparse ops UI — UX-DR16; Midnight Atelier tokens from existing brand CSS; no impersonation; no card walls/stat strips in hero
+  - [x] API client: `web/lib/platform-api.ts` (or similar) wrapping platform tenant endpoints
 
-- [ ] Tests (AC: 1–5)
-  - [ ] Unit: list search/pagination clamps; counts correct for two tenants; audit ordered newest-first; unknown tenant → NotFound
-  - [ ] Integration: PlatformAdmin can GET list/detail; operator Admin JWT → **403** on GET list; `/ready` still 200 without auth (when stack up)
-  - [ ] Run `dotnet test src/Infrastructure.Tests`; integration skippable if `/ready` unavailable (same pattern as 11.3)
+- [x] Tests (AC: 1–5)
+  - [x] Unit: list search/pagination clamps; counts correct for two tenants; audit ordered newest-first; unknown tenant → NotFound
+  - [x] Integration: PlatformAdmin can GET list/detail; operator Admin JWT → **403** on GET list; `/ready` still 200 without auth (when stack up)
+  - [x] Run `dotnet test src/Infrastructure.Tests`; integration skippable if `/ready` unavailable (same pattern as 11.3)
 
 - [ ] Out of scope
   - [ ] Complimentary / Sponsored flag UI+API (Story 11.5)
@@ -172,14 +172,40 @@ HEAD includes 11.3 done + CR patches (`ec86c46`). Extend in place; do not invent
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Cursor Grok 4.5 (cloud agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Directory API: `GET /api/v1/platform/tenants` (search slug|name, page default 25 / max 100) + `GET /api/v1/platform/tenants/{id}` with recent audits (newest-first, take 25).
+- `GET /api/v1/platform/me` returns `{ userId, email, roles }` for PlatformAdmin (tenant Admin `/admin/me` remains Admin-only).
+- Web login/`validateStoredSession` falls back to `/platform/me` on 403; PlatformAdmin-only users land on `/platform`.
+- `/ready` stays anonymous; added fail-closed `default-tenant` ready check for `TenantIds.Default` (Unhealthy if missing). Existing postgres + redis checks unchanged.
+- Platform console under `web/app/(platform)/` with sparse Midnight Atelier-scoped surface; lifecycle actions reuse 11.3 POSTs.
+- Unit tests: 9 PlatformTenantService tests passed. Integration tests added (skippable when stack unavailable).
+
 ### File List
+
+- `src/Contracts/Platform/PlatformTenantContracts.cs`
+- `src/Application/Tenants/IPlatformTenantService.cs`
+- `src/Infrastructure/Platform/PlatformTenantService.cs`
+- `src/Api/Controllers/V1/PlatformTenantsController.cs`
+- `src/Api/Controllers/V1/PlatformMeController.cs`
+- `src/Api/Health/DefaultTenantReadyHealthCheck.cs`
+- `src/Api/Program.cs`
+- `src/Infrastructure.Tests/Tenants/PlatformTenantServiceTests.cs`
+- `src/Api.IntegrationTests/PlatformTenantDirectoryIntegrationTests.cs`
+- `web/lib/auth-api.ts`
+- `web/lib/platform-api.ts`
+- `web/components/auth/login-form.tsx`
+- `web/components/auth/platform-route-guard.tsx`
+- `web/app/(platform)/layout.tsx`
+- `web/app/(platform)/platform/page.tsx`
+- `web/app/(platform)/platform/tenants/[id]/page.tsx`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
 ## Change Log
 
 - 2026-07-20: Story context created (ready-for-dev)
+- 2026-07-20: Implemented directory API, platform/me, default-tenant ready check, platform console UI, tests → review

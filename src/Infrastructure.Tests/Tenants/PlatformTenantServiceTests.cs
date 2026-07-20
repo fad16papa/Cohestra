@@ -1,6 +1,8 @@
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Platform;
+using Cohestra.Domain.Activities;
 using Cohestra.Domain.Billing;
+using Cohestra.Domain.Clients;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Platform;
@@ -178,6 +180,164 @@ public sealed class PlatformTenantServiceTests
         Assert.True(archived.Succeeded);
         Assert.NotNull(archived.Value!.SuspendedAt);
         Assert.NotNull(archived.Value.ArchivedAt);
+    }
+
+    [Fact]
+    public async Task List_searches_slug_or_name_and_clamps_pagination()
+    {
+        await using var db = CreateDb();
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        await service.CreateAsync(
+            new CreateTenantRequest("Northside Runners", "northside-runners", "Basic", "a@b.co"),
+            actor);
+        await service.CreateAsync(
+            new CreateTenantRequest("South Club", "south-club", "Core", "c@d.co"),
+            actor);
+        await service.CreateAsync(
+            new CreateTenantRequest("Eastside FC", "eastside-fc", "Pro", "e@f.co"),
+            actor);
+
+        var bySlug = await service.ListAsync("northside", page: 0, pageSize: 0);
+        Assert.Equal(1, bySlug.TotalCount);
+        Assert.Equal(1, bySlug.Page);
+        Assert.Equal(25, bySlug.PageSize);
+        Assert.Equal("northside-runners", bySlug.Items[0].Slug);
+
+        var byName = await service.ListAsync("Club", 1, 25);
+        Assert.Equal(1, byName.TotalCount);
+        Assert.Equal("south-club", byName.Items[0].Slug);
+
+        var oversized = await service.ListAsync(null, 1, 500);
+        Assert.Equal(3, oversized.TotalCount);
+        Assert.Equal(100, oversized.PageSize);
+    }
+
+    [Fact]
+    public async Task List_includes_activity_and_client_counts_per_tenant()
+    {
+        await using var db = CreateDb();
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        var first = await service.CreateAsync(
+            new CreateTenantRequest("Alpha Org", "alpha-org", "Basic", "a@b.co"),
+            actor);
+        var second = await service.CreateAsync(
+            new CreateTenantRequest("Beta Org", "beta-org", "Basic", "c@d.co"),
+            actor);
+
+        var now = DateTimeOffset.UtcNow;
+        db.Activities.AddRange(
+            new Activity
+            {
+                Id = Guid.NewGuid(),
+                TenantId = first.Value!.Id,
+                Name = "A1",
+                Slug = "a1",
+                Category = "Test",
+                Schedule = "Sat",
+                Location = "Court",
+                CommunityLabel = "C",
+                CreatedAt = now,
+                UpdatedAt = now,
+            },
+            new Activity
+            {
+                Id = Guid.NewGuid(),
+                TenantId = first.Value.Id,
+                Name = "A2",
+                Slug = "a2",
+                Category = "Test",
+                Schedule = "Sun",
+                Location = "Court",
+                CommunityLabel = "C",
+                CreatedAt = now,
+                UpdatedAt = now,
+            },
+            new Activity
+            {
+                Id = Guid.NewGuid(),
+                TenantId = second.Value!.Id,
+                Name = "B1",
+                Slug = "b1",
+                Category = "Test",
+                Schedule = "Mon",
+                Location = "Court",
+                CommunityLabel = "C",
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        db.Clients.AddRange(
+            new Client
+            {
+                Id = Guid.NewGuid(),
+                TenantId = first.Value.Id,
+                FullName = "Client One",
+                CreatedAt = now,
+                UpdatedAt = now,
+            },
+            new Client
+            {
+                Id = Guid.NewGuid(),
+                TenantId = second.Value.Id,
+                FullName = "Client Two",
+                CreatedAt = now,
+                UpdatedAt = now,
+            },
+            new Client
+            {
+                Id = Guid.NewGuid(),
+                TenantId = second.Value.Id,
+                FullName = "Client Three",
+                CreatedAt = now,
+                UpdatedAt = now,
+            },
+            new Client
+            {
+                Id = Guid.NewGuid(),
+                TenantId = second.Value.Id,
+                FullName = "Client Four",
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        await db.SaveChangesAsync();
+
+        var list = await service.ListAsync(null, 1, 25);
+        var alpha = list.Items.Single(i => i.Slug == "alpha-org");
+        var beta = list.Items.Single(i => i.Slug == "beta-org");
+        Assert.Equal(2, alpha.ActivityCount);
+        Assert.Equal(1, alpha.ClientCount);
+        Assert.Equal(1, beta.ActivityCount);
+        Assert.Equal(3, beta.ClientCount);
+    }
+
+    [Fact]
+    public async Task GetById_returns_audits_newest_first_and_unknown_is_not_found()
+    {
+        await using var db = CreateDb();
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        var created = await service.CreateAsync(
+            new CreateTenantRequest("Audit Org", "audit-org", "Basic", "a@b.co"),
+            actor);
+        await service.SuspendAsync(created.Value!.Id, new SuspendTenantRequest("freeze"), actor);
+        await service.ReactivateAsync(created.Value.Id, actor);
+
+        var detail = await service.GetByIdAsync(created.Value.Id);
+        Assert.True(detail.Succeeded);
+        Assert.Equal("audit-org", detail.Value!.Tenant.Slug);
+        Assert.True(detail.Value.RecentAudits.Count >= 3);
+        for (var i = 1; i < detail.Value.RecentAudits.Count; i++)
+        {
+            Assert.True(
+                detail.Value.RecentAudits[i - 1].CreatedAt >= detail.Value.RecentAudits[i].CreatedAt);
+        }
+
+        var missing = await service.GetByIdAsync(Guid.NewGuid());
+        Assert.Equal(PlatformTenantError.NotFound, missing.Error);
     }
 
     private static CohestraDbContext CreateDb()

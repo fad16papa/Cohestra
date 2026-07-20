@@ -1,3 +1,4 @@
+using Cohestra.Api.Health;
 using Cohestra.Api.Infrastructure;
 using Cohestra.Infrastructure;
 using Cohestra.Infrastructure.Auth;
@@ -115,9 +116,12 @@ builder.Services.AddOpenApi("v1", options =>
     });
 });
 
+// /ready stays anonymous. Checks: postgres + redis connectivity, plus default tenant row
+// (fail-closed Unhealthy if TenantIds.Default is missing after Story 11.2 seed).
 builder.Services.AddHealthChecks()
     .AddNpgSql(postgresConnection, name: "postgres", tags: ["ready"])
-    .AddRedis(redisConnection, name: "redis", tags: ["ready"]);
+    .AddRedis(redisConnection, name: "redis", tags: ["ready"])
+    .AddCheck<DefaultTenantReadyHealthCheck>("default-tenant", tags: ["ready"]);
 
 var app = builder.Build();
 

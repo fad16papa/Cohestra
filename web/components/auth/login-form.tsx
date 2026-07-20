@@ -8,7 +8,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loginWithPassword } from "@/lib/auth-api";
+import { loginWithPassword, resolvePostLoginPath } from "@/lib/auth-api";
 import { cn } from "@/lib/utils";
 
 type LoginFormProps = {
@@ -20,7 +20,7 @@ const fieldShellClassName =
 
 export function LoginForm({ showSessionExpiredNotice = false }: LoginFormProps) {
   const router = useRouter();
-  const { applyProfile, status } = useAuth();
+  const { applyProfile, profile, status } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -28,10 +28,10 @@ export function LoginForm({ showSessionExpiredNotice = false }: LoginFormProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated") {
-      router.replace("/dashboard");
+    if (status === "authenticated" && profile) {
+      router.replace(resolvePostLoginPath(profile));
     }
-  }, [router, status]);
+  }, [profile, router, status]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,7 +43,7 @@ export function LoginForm({ showSessionExpiredNotice = false }: LoginFormProps) 
 
     if (result.ok) {
       applyProfile(result.profile);
-      router.replace("/dashboard");
+      router.replace(resolvePostLoginPath(result.profile));
       return;
     }
 
