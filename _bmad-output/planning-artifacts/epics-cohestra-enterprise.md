@@ -709,3 +709,38 @@ So that legal consent is explicit and versioned before an account is created.
 **Given** Stripe Tax
 **When** v1 launches
 **Then** Stripe Tax remains disabled; copy may note prices exclusive of applicable tax (no eng blocker)
+
+### Story 14.3: Basic self-serve signup (CAPTCHA, slug, OTP, rate limits)
+
+As a prospect (Priya),
+I want to Start free on Basic without a card,
+So that I can open a workspace and verify email before any payment.
+
+**Acceptance Criteria:**
+
+**Given** `/signup` Start free
+**When** Priya submits org name, slug, email, password with valid CAPTCHA + ToS acceptance
+**Then** a Tenant is created with `Plan=Basic`, `BillingStatus=Free`, no Stripe customer
+**And** she is the Tenant Admin (1 seat)
+**And** no SitePage row is created
+
+**Given** Google reCAPTCHA on signup
+**When** token is missing/invalid
+**Then** signup is rejected
+**And** an accessible challenge path is available (not invisible-only)
+
+**Given** slug rules (FR-1 / P10)
+**When** slug is invalid, reserved, or colliding
+**Then** validation fails with clear errors and collision suggestions
+
+**Given** email verification
+**When** OTP/verify is incomplete
+**Then** dashboard access is blocked until verified
+
+**Given** signup rate limits
+**When** an IP exceeds 5 successful signups/hour or 20/day
+**Then** further signups are rejected with a rate-limit error
+
+**Given** `registrationClosed=true`
+**When** self-serve is attempted
+**Then** signup is disabled (Platform Admin provisioning remains)
