@@ -329,3 +329,39 @@ So that existing rows stay usable and all business entities become tenant-owned.
 **Given** EF Core configuration after migration
 **When** `ITenantScoped` (or equivalent) is introduced
 **Then** entities are ready for global query filters to be enabled in Epic 13 without another schema rewrite
+
+### Story 11.3: Platform Admin provision, suspend, reactivate, archive
+
+As a Platform Admin,
+I want to create tenants and run break-glass Suspend / reactivate / archive with a reason,
+So that abuse and support freezes are handled without using Suspend as collections.
+
+**Acceptance Criteria:**
+
+**Given** an authenticated Platform Admin
+**When** they create a tenant (name, slug, initial plan, admin contact as required by API)
+**Then** a Tenant row is created with `Status=Active` and audited (actor, timestamp, action)
+
+**Given** an Active tenant
+**When** Platform Admin sets `Status=Suspended` with a required reason (abuse / ToS / support freeze)
+**Then** the change is persisted and audited
+**And** UI/copy labels Suspend as break-glass — not non-payment
+**And** `BillingStatus` is left unchanged
+
+**Given** a Suspended tenant
+**When** Platform Admin reactivates
+**Then** `Status=Active` and prior `BillingStatus` remains unless separately adjusted
+**And** the action is audited
+
+**Given** a tenant to wind down
+**When** Platform Admin archives
+**Then** `Status=Archived` and the action is audited
+**And** soft-delete / retention window behavior aligns with NFR-8 (30-day soft archive assumption)
+
+**Given** a non–Platform Admin JWT
+**When** they call platform tenant lifecycle endpoints
+**Then** the request is rejected (403)
+
+**Given** Suspend is applied
+**When** access is evaluated (using Story 11.1 matrix)
+**Then** tenant admin login is blocked and public routes are maintenance-ready (full middleware enforcement may complete in Epic 13/15; this story at least sets Status correctly and documents the intended effect)
