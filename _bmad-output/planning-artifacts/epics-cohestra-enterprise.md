@@ -983,3 +983,36 @@ So that Core gets a branded fixed page and Pro can compose and publish.
 **Given** Midnight Atelier
 **When** Core/Pro public surfaces render
 **Then** they inherit Platform 0 behaviors under atelier chrome
+
+### Story 15.4: Tenant-scoped activity engine and public registration
+
+As a participant (Elena),
+I want to register on a tenant’s activity via QR/link,
+So that I get a registration number and the operator’s client list — only in that tenant.
+
+**Acceptance Criteria:**
+
+**Given** Host resolves Tenant A
+**When** Elena opens `/register/{activity-slug}`
+**Then** activity lookup is scoped to Tenant A only (`UNIQUE (TenantId, slug)`)
+
+**Given** a valid registration form submit
+**When** processed
+**Then** Client/Registration are created under Tenant A; dedup matches within tenant only
+**And** same phone at Tenant B remains a separate Client
+
+**Given** Platform 0 activity engine capabilities (form schema, QR, registration numbers)
+**When** used under tenancy
+**Then** they operate within Tenant Context with existing behaviors preserved
+
+**Given** public registration burst limit
+**When** requests exceed per-tenant limit (e.g. 60/min)
+**Then** API returns 429 without creating excess rows; UX shows a friendly message
+
+**Given** plan regs/mo or OnHold / ReadOnly_OverLimit / Suspended
+**When** registration is attempted
+**Then** request is rejected with clear messaging per access matrix
+
+**Given** performance target
+**When** measuring public registration
+**Then** p95 < 2s under expected load (NFR-2)
