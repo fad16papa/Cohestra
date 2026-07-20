@@ -867,3 +867,30 @@ So that changes apply at period end and over-limit locks are clear — without a
 **Given** no custom finance UI
 **When** invoices/payment methods are needed
 **Then** all self-serve money UX is Stripe-hosted only
+
+### Story 14.8: Trial reminders, delinquency jobs, and Basic dormancy
+
+As a Tenant Admin,
+I want automated trial, unpaid, and free-tier idle notices that match the dual-dial rules,
+So that money and dormancy are handled without Platform Admin Suspend-as-collections.
+
+**Acceptance Criteria:**
+
+**Given** `TrialReminderJob`
+**When** a tenant is `Trialing` with `TrialEndsAt` within 7 days
+**Then** Tenant Admins receive one email + in-app notice per day including `{trial_end_date}` and Portal link
+
+**Given** `invoice.payment_failed`
+**When** delinquency starts (`DelinquencyStartedAt`)
+**Then** days 1–7: `PastDue`, daily notify, full access; day 8: `OnHold`, weekly notify, read-only + public reg blocked; day 29 unpaid: `Tenant.Status=Archived`
+**And** successful payment during PastDue/OnHold restores `BillingStatus=Active` without requiring Suspend clear
+**And** complimentary tenants are exempt from FR-23
+
+**Given** Basic+Free non-complimentary idle 90 days (no admin/member login and zero new public regs)
+**When** dormancy job runs
+**Then** day 83 warning once; day 90 archive; any login/reg in window resets the timer
+**And** complimentary Core/Pro are exempt
+
+**Given** all job transitions
+**When** they fire
+**Then** actions are audited and covered by automated tests (state machine)
