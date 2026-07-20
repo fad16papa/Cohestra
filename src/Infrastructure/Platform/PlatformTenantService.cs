@@ -1,3 +1,4 @@
+using System.Net.Mail;
 using System.Text.Json;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Platform;
@@ -10,6 +11,10 @@ namespace Cohestra.Infrastructure.Platform;
 
 public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatformTenantService
 {
+    private const int MaxNameLength = 200;
+    private const int MaxEmailLength = 320;
+    private const int MaxReasonLength = 1000;
+
     public async Task<PlatformTenantResult<TenantResponse>> CreateAsync(
         CreateTenantRequest request,
         Guid actorUserId,
@@ -20,11 +25,27 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             return PlatformTenantResult<TenantResponse>.Fail(PlatformTenantError.Validation, "Name is required.");
         }
 
+        var name = request.Name.Trim();
+        if (name.Length > MaxNameLength)
+        {
+            return PlatformTenantResult<TenantResponse>.Fail(
+                PlatformTenantError.Validation,
+                $"Name must be at most {MaxNameLength} characters.");
+        }
+
         if (string.IsNullOrWhiteSpace(request.AdminContactEmail))
         {
             return PlatformTenantResult<TenantResponse>.Fail(
                 PlatformTenantError.Validation,
                 "Admin contact email is required.");
+        }
+
+        var email = request.AdminContactEmail.Trim();
+        if (email.Length > MaxEmailLength || !IsValidEmail(email))
+        {
+            return PlatformTenantResult<TenantResponse>.Fail(
+                PlatformTenantError.Validation,
+                "Admin contact email must be a valid email address (max 320 characters).");
         }
 
         var slugError = TenantSlugRules.ValidateForProvision(request.Slug);
@@ -33,7 +54,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             return PlatformTenantResult<TenantResponse>.Fail(PlatformTenantError.Validation, slugError);
         }
 
-        if (!Enum.TryParse<TenantPlan>(request.Plan, ignoreCase: true, out var plan))
+        if (!TryParsePlan(request.Plan, out var plan))
         {
             return PlatformTenantResult<TenantResponse>.Fail(
                 PlatformTenantError.Validation,
@@ -54,8 +75,8 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
         {
             Id = Guid.CreateVersion7(),
             Slug = slug,
-            Name = request.Name.Trim(),
-            AdminContactEmail = request.AdminContactEmail.Trim(),
+            Name = name,
+            AdminContactEmail = email,
             Plan = plan,
             Status = TenantStatus.Active,
             BillingStatus = BillingStatus.Free,
@@ -81,7 +102,17 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             CreatedAt = now,
         });
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            return PlatformTenantResult<TenantResponse>.Fail(
+                PlatformTenantError.Conflict,
+                $"Slug '{slug}' is already in use.");
+        }
+
         return PlatformTenantResult<TenantResponse>.Ok(Map(tenant));
     }
 
@@ -98,10 +129,25 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
                 "Suspend reason is required (abuse / ToS / support freeze — not non-payment).");
         }
 
+        var reason = request.Reason.Trim();
+        if (reason.Length > MaxReasonLength)
+        {
+            return PlatformTenantResult<TenantResponse>.Fail(
+                PlatformTenantError.Validation,
+                $"Suspend reason must be at most {MaxReasonLength} characters.");
+        }
+
         var tenant = await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
         if (tenant is null)
         {
             return PlatformTenantResult<TenantResponse>.Fail(PlatformTenantError.NotFound, "Tenant not found.");
+        }
+
+        if (tenant.Id == TenantIds.Default)
+        {
+            return PlatformTenantResult<TenantResponse>.Fail(
+                PlatformTenantError.Conflict,
+                "Cannot suspend the Platform 0 default tenant.");
         }
 
         if (tenant.Status != TenantStatus.Active)
@@ -123,7 +169,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             ActorUserId = actorUserId,
             TenantId = tenant.Id,
             Action = PlatformAuditAction.TenantSuspended,
-            Reason = request.Reason.Trim(),
+            Reason = reason,
             DetailsJson = JsonSerializer.Serialize(new
             {
                 BillingStatusUnchanged = billingBefore.ToString(),
@@ -188,6 +234,13 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             return PlatformTenantResult<TenantResponse>.Fail(PlatformTenantError.NotFound, "Tenant not found.");
         }
 
+        if (tenant.Id == TenantIds.Default)
+        {
+            return PlatformTenantResult<TenantResponse>.Fail(
+                PlatformTenantError.Conflict,
+                "Cannot archive the Platform 0 default tenant.");
+        }
+
         if (tenant.Status == TenantStatus.Archived)
         {
             return PlatformTenantResult<TenantResponse>.Fail(
@@ -198,7 +251,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
         var now = DateTimeOffset.UtcNow;
         tenant.Status = TenantStatus.Archived;
         tenant.ArchivedAt = now;
-        tenant.SuspendedAt = null;
+        // Keep SuspendedAt when archiving from Suspended (forensic timeline).
         tenant.UpdatedAt = now;
 
         dbContext.PlatformAuditLogs.Add(new PlatformAuditLog
@@ -217,6 +270,36 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return PlatformTenantResult<TenantResponse>.Ok(Map(tenant));
+    }
+
+    private static bool TryParsePlan(string? plan, out TenantPlan parsed)
+    {
+        parsed = default;
+        if (string.IsNullOrWhiteSpace(plan))
+        {
+            return false;
+        }
+
+        var value = plan.Trim();
+        if (value.All(char.IsDigit))
+        {
+            return false;
+        }
+
+        return Enum.TryParse(value, ignoreCase: true, out parsed) && Enum.IsDefined(parsed);
+    }
+
+    private static bool IsValidEmail(string email)
+    {
+        try
+        {
+            var address = new MailAddress(email);
+            return address.Address.Equals(email, StringComparison.OrdinalIgnoreCase);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 
     private static TenantResponse Map(Tenant tenant) =>

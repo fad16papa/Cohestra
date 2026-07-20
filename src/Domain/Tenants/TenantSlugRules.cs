@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Text.RegularExpressions;
 
 namespace Cohestra.Domain.Tenants;
@@ -11,7 +12,7 @@ public static partial class TenantSlugRules
     public const int MaxLength = 48;
 
     /// <summary>Reserved host labels — also blocks creating a second <c>default</c> tenant.</summary>
-    public static readonly HashSet<string> Reserved = new(StringComparer.Ordinal)
+    public static readonly FrozenSet<string> Reserved = new HashSet<string>(StringComparer.Ordinal)
     {
         "www",
         "api",
@@ -28,7 +29,7 @@ public static partial class TenantSlugRules
         "billing",
         "cohestra",
         TenantIds.DefaultSlug,
-    };
+    }.ToFrozenSet(StringComparer.Ordinal);
 
     public static bool IsValidFormat(string? slug)
     {

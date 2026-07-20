@@ -113,6 +113,73 @@ public sealed class PlatformTenantServiceTests
         Assert.Equal(PlatformTenantError.Conflict, again.Error);
     }
 
+    [Fact]
+    public async Task Suspend_and_archive_reject_default_tenant()
+    {
+        await using var db = CreateDb();
+        var now = DateTimeOffset.UtcNow;
+        db.Tenants.Add(new Tenant
+        {
+            Id = TenantIds.Default,
+            Slug = TenantIds.DefaultSlug,
+            Name = "Default",
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        var suspend = await service.SuspendAsync(
+            TenantIds.Default,
+            new SuspendTenantRequest("should fail"),
+            actor);
+        Assert.Equal(PlatformTenantError.Conflict, suspend.Error);
+        Assert.Contains("default tenant", suspend.Detail!, StringComparison.OrdinalIgnoreCase);
+
+        var archive = await service.ArchiveAsync(TenantIds.Default, actor);
+        Assert.Equal(PlatformTenantError.Conflict, archive.Error);
+    }
+
+    [Fact]
+    public async Task Create_rejects_numeric_plan_and_invalid_email()
+    {
+        await using var db = CreateDb();
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        var numericPlan = await service.CreateAsync(
+            new CreateTenantRequest("Acme", "acme-plan", "0", "admin@acme.test"),
+            actor);
+        Assert.Equal(PlatformTenantError.Validation, numericPlan.Error);
+
+        var badEmail = await service.CreateAsync(
+            new CreateTenantRequest("Acme", "acme-email", "Basic", "not-an-email"),
+            actor);
+        Assert.Equal(PlatformTenantError.Validation, badEmail.Error);
+    }
+
+    [Fact]
+    public async Task Archive_from_suspended_keeps_SuspendedAt()
+    {
+        await using var db = CreateDb();
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        var created = await service.CreateAsync(
+            new CreateTenantRequest("Acme", "acme-keep-suspend", "Basic", "admin@acme.test"),
+            actor);
+        await service.SuspendAsync(created.Value!.Id, new SuspendTenantRequest("freeze"), actor);
+
+        var archived = await service.ArchiveAsync(created.Value.Id, actor);
+        Assert.True(archived.Succeeded);
+        Assert.NotNull(archived.Value!.SuspendedAt);
+        Assert.NotNull(archived.Value.ArchivedAt);
+    }
+
     private static CohestraDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<CohestraDbContext>()

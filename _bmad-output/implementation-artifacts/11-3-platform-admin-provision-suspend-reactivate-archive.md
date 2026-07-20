@@ -4,7 +4,7 @@ baseline_commit: 3ba711155e855ec37b6e50af17d51e00ac657096
 
 # Story 11.3: Platform Admin provision, suspend, reactivate, archive
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -100,14 +100,14 @@ so that abuse and support freezes are handled without using Suspend as collectio
 _CR 2026-07-20 — Blind Hunter / Edge Case / Acceptance Auditor. Auditor: ACs 1–5 pass._
 
 - [x] [Review][Decision] Block suspend/archive of Platform 0 `TenantIds.Default`? — **chose Block (409)** 2026-07-20
-- [ ] [Review][Patch] Reject suspend/archive when `tenant.Id == TenantIds.Default` → 409 [PlatformTenantService.cs]
-- [ ] [Review][Patch] Map slug unique-index race to 409 via `DbUpdateException` [PlatformTenantService.cs CreateAsync]
-- [ ] [Review][Patch] Null-guard create/suspend request bodies → 400 [PlatformTenantsController.cs]
-- [ ] [Review][Patch] Reject `Guid.Empty` actor user id [PlatformTenantsController.cs TryGetActorUserId]
-- [ ] [Review][Patch] Validate AdminContactEmail format + Name/Reason/Email max lengths before SaveChanges [PlatformTenantService.cs]
-- [ ] [Review][Patch] Reject numeric enum plan strings (`"0"`) — require named plans [PlatformTenantService.cs]
-- [ ] [Review][Patch] Make `TenantSlugRules.Reserved` immutable (`FrozenSet` / copy) [TenantSlugRules.cs]
-- [ ] [Review][Patch] Keep `SuspendedAt` when archiving from Suspended (forensics) [PlatformTenantService.ArchiveAsync]
+- [x] [Review][Patch] Reject suspend/archive when `tenant.Id == TenantIds.Default` → 409 [PlatformTenantService.cs]
+- [x] [Review][Patch] Map slug unique-index race to 409 via `DbUpdateException` [PlatformTenantService.cs CreateAsync]
+- [x] [Review][Patch] Null-guard create/suspend request bodies → 400 [PlatformTenantsController.cs]
+- [x] [Review][Patch] Reject `Guid.Empty` actor user id [PlatformTenantsController.cs TryGetActorUserId]
+- [x] [Review][Patch] Validate AdminContactEmail format + Name/Reason/Email max lengths before SaveChanges [PlatformTenantService.cs]
+- [x] [Review][Patch] Reject numeric enum plan strings (`"0"`) — require named plans [PlatformTenantService.cs]
+- [x] [Review][Patch] Make `TenantSlugRules.Reserved` immutable (`FrozenSet` / copy) [TenantSlugRules.cs]
+- [x] [Review][Patch] Keep `SuspendedAt` when archiving from Suspended (forensics) [PlatformTenantService.ArchiveAsync]
 - [x] [Review][Defer] Append-only audit enforcement (DB triggers / no-update interceptor) — deferred, documentation + no update API for now
 - [x] [Review][Defer] Concurrent PlatformAdminSeeder race — deferred, same pattern as OperatorSeeder
 - [x] [Review][Defer] Optimistic concurrency on Tenant status transitions — deferred, low-traffic platform path
@@ -251,3 +251,4 @@ Cursor Grok 4.5 (cloud agent)
 
 - 2026-07-20: Story context created (ready-for-dev)
 - 2026-07-20: Implemented Platform Admin lifecycle API + audit — status → review
+- 2026-07-20: CR patches applied (default-tenant guard + validation hardening) — status → done

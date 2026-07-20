@@ -23,9 +23,14 @@ public sealed class PlatformTenantsController(IPlatformTenantService platformTen
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TenantResponse>> Create(
-        [FromBody] CreateTenantRequest request,
+        [FromBody] CreateTenantRequest? request,
         CancellationToken cancellationToken)
     {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
         if (!TryGetActorUserId(out var actorUserId))
         {
             return UnauthorizedProblem("Authenticated user id is missing.");
@@ -46,9 +51,14 @@ public sealed class PlatformTenantsController(IPlatformTenantService platformTen
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TenantResponse>> Suspend(
         Guid tenantId,
-        [FromBody] SuspendTenantRequest request,
+        [FromBody] SuspendTenantRequest? request,
         CancellationToken cancellationToken)
     {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
         if (!TryGetActorUserId(out var actorUserId))
         {
             return UnauthorizedProblem("Authenticated user id is missing.");
@@ -121,7 +131,7 @@ public sealed class PlatformTenantsController(IPlatformTenantService platformTen
         actorUserId = Guid.Empty;
         var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? User.FindFirstValue("sub");
-        return Guid.TryParse(raw, out actorUserId);
+        return Guid.TryParse(raw, out actorUserId) && actorUserId != Guid.Empty;
     }
 
     private BadRequestObjectResult BadRequestProblem(string detail)
