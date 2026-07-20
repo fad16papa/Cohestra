@@ -744,3 +744,34 @@ So that I can open a workspace and verify email before any payment.
 **Given** `registrationClosed=true`
 **When** self-serve is attempted
 **Then** signup is disabled (Platform Admin provisioning remains)
+
+### Story 14.4: Core/Pro Checkout, webhooks, and USD Prices
+
+As a Tenant Admin,
+I want to start a Core/Pro trial via Stripe Checkout (direct or upgrade from Basic),
+So that paid plan limits unlock without a custom billing UI.
+
+**Acceptance Criteria:**
+
+**Given** Stripe Prices for Core/Pro × monthly/annual in USD only
+**When** Checkout runs
+**Then** `currency: usd`, `mode: subscription`, `trial_period_days: 30`, card required
+**And** Basic has no Stripe Price/product
+
+**Given** direct signup `/signup?plan=core|pro` or in-app upgrade from Basic
+**When** Checkout completes successfully
+**Then** Tenant stores `StripeCustomerId`, `StripeSubscriptionId`, synced `Plan`, `BillingStatus=Trialing` (or Active if post-trial rule), `BillingInterval`, `TrialEndsAt`
+**And** upgrade from Basic lifts plan limits when subscription becomes Trialing/Active
+
+**Given** trial disclaimer UX
+**When** Checkout is shown
+**Then** copy includes: not charged while trial active; billing starts on `{trial_end_date}` unless canceled
+
+**Given** webhooks (`checkout.session.completed`, `customer.subscription.updated/deleted`, `invoice.paid`, `invoice.payment_failed`)
+**When** events arrive
+**Then** handlers are idempotent on `event.id` and sync Tenant billing fields
+**And** test keys are used in local/CI; live keys only in production
+
+**Given** one-trial-per-tenant product rule
+**When** a tenant already completed a trial
+**Then** upgrade path does not grant a second free trial (immediate paid or documented product rule)
