@@ -775,3 +775,33 @@ So that paid plan limits unlock without a custom billing UI.
 **Given** one-trial-per-tenant product rule
 **When** a tenant already completed a trial
 **Then** upgrade path does not grant a second free trial (immediate paid or documented product rule)
+
+### Story 14.5: Admin shell — PlanBadge, SponsoredBadge, LimitMeter, BillingBanner
+
+As a Tenant Admin or Member,
+I want clear plan, limit, and billing-state chrome in the atelier admin shell,
+So that I always know my tier, headroom, and what to do when money or limits need attention.
+
+**Acceptance Criteria:**
+
+**Given** authenticated tenant admin UI
+**When** the shell renders
+**Then** PlanBadge shows current Plan for Admin and Member (Member read-only — no billing affordance)
+**And** SponsoredBadge appears beside PlanBadge when `IsComplimentary=true`
+
+**Given** usage toward communities / published activities / regs-mo caps
+**When** LimitMeter renders
+**Then** it warns at ≥80% and blocks at 100% with which dial is exhausted
+
+**Given** BillingBanner states
+**When** Trialing (last 7 days), PastDue, OnHold, or ReadOnly_OverLimit
+**Then** banner copy + CTA match EXPERIENCE state patterns (settle / Portal / archive list)
+**And** banner is not color-only (text + icon + link); Admin-only Portal CTA
+
+**Given** Basic empty tenant dashboard
+**When** Priya lands after signup
+**Then** opening-ritual / empty CTAs guide Community → Activity (atelier craft; mock fidelity UX-DR20)
+
+**Given** UpgradePanel on locked modules (Campaigns Basic/Core, Site on Basic, advanced reports on Basic)
+**When** Admin vs Member view the panel
+**Then** Admin gets upgrade/Checkout CTA; Member gets feature-locked message without billing CTA
