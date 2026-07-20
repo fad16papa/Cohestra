@@ -15,33 +15,36 @@ public readonly record struct TenantAccessEvaluation(
 /// <summary>
 /// Canonical FR-3 access matrix. Suspended always wins over billing.
 /// OnHold keeps TenantStatus.Active — this evaluator never changes Status.
+/// Active + Canceled is fail-closed Blocked (inconsistent dual-dial; period-end cancel should land on Free).
 /// </summary>
 public static class TenantAccessEvaluator
 {
-    public static TenantAccessEvaluation Evaluate(Tenant tenant) =>
-        Evaluate(tenant.Status, tenant.BillingStatus);
+    public static TenantAccessEvaluation Evaluate(Tenant tenant)
+    {
+        ArgumentNullException.ThrowIfNull(tenant);
+        return Evaluate(tenant.Status, tenant.BillingStatus);
+    }
 
     public static TenantAccessEvaluation Evaluate(TenantStatus status, BillingStatus billingStatus)
     {
         if (status == TenantStatus.Suspended)
         {
-            return new TenantAccessEvaluation(
-                AdminAccess: TenantAccessMode.Blocked,
-                PublicRegistrationAllowed: false,
-                PublicSurface: TenantPublicSurface.Maintenance,
-                ShowSettleBanner: false);
+            return Blocked(TenantPublicSurface.Maintenance);
         }
 
         if (status == TenantStatus.Archived)
         {
-            return new TenantAccessEvaluation(
-                AdminAccess: TenantAccessMode.Blocked,
-                PublicRegistrationAllowed: false,
-                PublicSurface: TenantPublicSurface.NotFound,
-                ShowSettleBanner: false);
+            return Blocked(TenantPublicSurface.NotFound);
         }
 
-        // TenantStatus.Active
+        if (status != TenantStatus.Active || !Enum.IsDefined(status))
+        {
+            // Undefined / unexpected TenantStatus — fail closed (same as unknown billing).
+            return Blocked(TenantPublicSurface.NotFound);
+        }
+
+        // TenantStatus.Active — FR-3 Full only for Free / Trialing / Active / PastDue.
+        // Canceled is not a Full arm; rare Active+Canceled is Blocked until webhook settles to Free.
         return billingStatus switch
         {
             BillingStatus.OnHold => new TenantAccessEvaluation(
@@ -56,18 +59,21 @@ public static class TenantAccessEvaluator
                 PublicSurface: TenantPublicSurface.Available,
                 ShowSettleBanner: true),
 
-            BillingStatus.Free or BillingStatus.Trialing or BillingStatus.Active or BillingStatus.Canceled
+            BillingStatus.Free or BillingStatus.Trialing or BillingStatus.Active
                 => new TenantAccessEvaluation(
                     AdminAccess: TenantAccessMode.Full,
                     PublicRegistrationAllowed: true,
                     PublicSurface: TenantPublicSurface.Available,
                     ShowSettleBanner: false),
 
-            _ => new TenantAccessEvaluation(
-                AdminAccess: TenantAccessMode.Blocked,
-                PublicRegistrationAllowed: false,
-                PublicSurface: TenantPublicSurface.NotFound,
-                ShowSettleBanner: false),
+            _ => Blocked(TenantPublicSurface.NotFound),
         };
     }
+
+    private static TenantAccessEvaluation Blocked(TenantPublicSurface surface) =>
+        new(
+            AdminAccess: TenantAccessMode.Blocked,
+            PublicRegistrationAllowed: false,
+            PublicSurface: surface,
+            ShowSettleBanner: false);
 }

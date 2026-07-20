@@ -4,7 +4,7 @@ baseline_commit: fd50bef1acc2c756d60eede7998d6fdc30d09259
 
 # Story 11.1: Tenant entity with dual status dials
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -71,10 +71,10 @@ so that every workspace has a clear lifecycle and access can be computed from St
 
 ### Review Findings
 
-- [ ] [Review][Decision] Active+Canceled access semantics — FR-3 lists Full only for Free/Trialing/Active/PastDue when Status=Active; evaluator (and tests) grant Full + public registration for `BillingStatus.Canceled`. Period-end cancel should land on Basic+Free, so this combo is rare/transient — product must choose treat-as-Full, treat-as-Blocked, or map to Free-equivalent until webhook settles.
-- [ ] [Review][Patch] Null-tenant guard on `Evaluate(Tenant)` [TenantAccessEvaluator.cs:21]
-- [ ] [Review][Patch] Undefined `TenantStatus` (non-defined enum cast) falls into Active billing matrix — fail-closed Blocked [TenantAccessEvaluator.cs:26-71]
-- [ ] [Review][Patch] Add unit test for unknown/`_` BillingStatus arm on Active [TenantAccessEvaluatorTests.cs]
+- [x] [Review][Patch] Active+Canceled → Blocked (fail-closed) — decided 2026-07-20; remove Canceled from Full OR-group; update tests [TenantAccessEvaluator.cs]
+- [x] [Review][Patch] Null-tenant guard on `Evaluate(Tenant)` [TenantAccessEvaluator.cs:21]
+- [x] [Review][Patch] Undefined `TenantStatus` (non-defined enum cast) falls into Active billing matrix — fail-closed Blocked [TenantAccessEvaluator.cs:26-71]
+- [x] [Review][Patch] Add unit test for unknown/`_` BillingStatus arm on Active [TenantAccessEvaluatorTests.cs]
 - [x] [Review][Defer] Empty/whitespace slug format validation [Tenant.cs / TenantConfiguration.cs] — deferred, pre-existing (FR-1 signup / 11.3 provision)
 - [x] [Review][Defer] CreatedAt/UpdatedAt auto-stamp on insert [Tenant.cs] — deferred, pre-existing (write path in 11.2/11.3; matches Activity pattern)
 - [x] [Review][Defer] StripeCustomerId/SubscriptionId unique indexes [TenantConfiguration.cs] — deferred, pre-existing (Epic 14 billing)
@@ -227,6 +227,7 @@ Cursor Grok 4.5 (cloud agent)
 - Persistence: `DbSet<Tenant>`, `TenantConfiguration` (unique Slug), migration `AddTenants`.
 - Unit tests cover defaults, Suspended/Archived × all billing, Active full states, OnHold immutability, unique slug index.
 - Out of scope held: no Platform API/UI, no TenantId backfill, no IsComplimentary, no middleware.
+- ✅ Resolved review: Active+Canceled → Blocked; null-tenant guard; undefined TenantStatus fail-closed; unknown BillingStatus tests.
 
 ### File List
 
@@ -250,3 +251,4 @@ Cursor Grok 4.5 (cloud agent)
 
 - 2026-07-20: Story context created (ready-for-dev)
 - 2026-07-20: Implemented Tenant entity, FR-3 access evaluator, EF tenants migration, unit tests — status → review
+- 2026-07-20: Code review patches applied (Canceled fail-closed, null guard, undefined status, unknown billing tests) — status → done

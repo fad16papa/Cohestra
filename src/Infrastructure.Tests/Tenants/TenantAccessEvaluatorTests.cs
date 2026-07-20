@@ -20,6 +20,12 @@ public sealed class TenantAccessEvaluatorTests
         Assert.Null(tenant.DelinquencyStartedAt);
     }
 
+    [Fact]
+    public void Evaluate_Null_Tenant_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() => TenantAccessEvaluator.Evaluate(null!));
+    }
+
     [Theory]
     [InlineData(BillingStatus.Free)]
     [InlineData(BillingStatus.Trialing)]
@@ -58,7 +64,6 @@ public sealed class TenantAccessEvaluatorTests
     [InlineData(BillingStatus.Trialing, false)]
     [InlineData(BillingStatus.Active, false)]
     [InlineData(BillingStatus.PastDue, true)]
-    [InlineData(BillingStatus.Canceled, false)]
     public void Active_Full_Access_Billing_States(BillingStatus billingStatus, bool expectSettleBanner)
     {
         var evaluation = TenantAccessEvaluator.Evaluate(TenantStatus.Active, billingStatus);
@@ -67,6 +72,37 @@ public sealed class TenantAccessEvaluatorTests
         Assert.True(evaluation.PublicRegistrationAllowed);
         Assert.Equal(TenantPublicSurface.Available, evaluation.PublicSurface);
         Assert.Equal(expectSettleBanner, evaluation.ShowSettleBanner);
+    }
+
+    [Fact]
+    public void Active_Canceled_Is_Blocked_Fail_Closed()
+    {
+        var evaluation = TenantAccessEvaluator.Evaluate(TenantStatus.Active, BillingStatus.Canceled);
+
+        Assert.Equal(TenantAccessMode.Blocked, evaluation.AdminAccess);
+        Assert.False(evaluation.PublicRegistrationAllowed);
+        Assert.Equal(TenantPublicSurface.NotFound, evaluation.PublicSurface);
+        Assert.False(evaluation.ShowSettleBanner);
+    }
+
+    [Fact]
+    public void Active_Unknown_BillingStatus_Is_Blocked()
+    {
+        var evaluation = TenantAccessEvaluator.Evaluate(TenantStatus.Active, (BillingStatus)99);
+
+        Assert.Equal(TenantAccessMode.Blocked, evaluation.AdminAccess);
+        Assert.False(evaluation.PublicRegistrationAllowed);
+        Assert.Equal(TenantPublicSurface.NotFound, evaluation.PublicSurface);
+    }
+
+    [Fact]
+    public void Undefined_TenantStatus_Is_Blocked()
+    {
+        var evaluation = TenantAccessEvaluator.Evaluate((TenantStatus)99, BillingStatus.Active);
+
+        Assert.Equal(TenantAccessMode.Blocked, evaluation.AdminAccess);
+        Assert.False(evaluation.PublicRegistrationAllowed);
+        Assert.Equal(TenantPublicSurface.NotFound, evaluation.PublicSurface);
     }
 
     [Fact]

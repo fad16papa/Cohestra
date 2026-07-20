@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-20T15:40:00Z
+# last_updated: 2026-07-20T16:11:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - Epic 16 is parked (One-stop Lite / UX-DR15) — no v1 stories until pulled forward
 
 generated: 2026-06-16
-last_updated: 2026-07-20T15:40:00Z
+last_updated: 2026-07-20T16:11:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -181,7 +181,7 @@ development_status:
   # Next implementable story after 11.1: 11-2-default-tenant-migration-and-tenantid-on-core-entities
 
   epic-11: in-progress
-  11-1-tenant-entity-with-dual-status-dials: review
+  11-1-tenant-entity-with-dual-status-dials: done
   11-2-default-tenant-migration-and-tenantid-on-core-entities: backlog
   11-3-platform-admin-provision-suspend-reactivate-archive: backlog
   11-4-platform-tenant-directory-and-health: backlog
