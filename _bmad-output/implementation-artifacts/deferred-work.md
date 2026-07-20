@@ -1,4 +1,11 @@
 
+## Deferred from: code review of 11-3-platform-admin-provision-suspend-reactivate-archive (2026-07-20)
+
+- Append-only audit enforcement (DB triggers / no-update interceptor) — documentation + no update API for now; harden later if compliance requires
+- Concurrent PlatformAdminSeeder race on duplicate user create — same pattern as OperatorSeeder
+- Optimistic concurrency on Tenant status transitions — low-traffic platform admin path
+- Integration tests are SkippableFact when Postgres/Redis `/ready` unavailable — exercise AC5 live when stack is up
+
 ## Deferred from: code review of 11-2-default-tenant-migration-and-tenantid-on-core-entities (2026-07-20) — Group B
 
 - `Down()` does not delete the seeded `default` tenant row — safer than wipe; incomplete reverse of seed only

@@ -95,6 +95,23 @@ so that abuse and support freezes are handled without using Suspend as collectio
   - [x] Hard purge job after 30 days; Stripe Checkout; Suspend-as-collections
   - [x] Impersonation / login-as-tenant (explicitly forbidden — PRD A-5)
 
+### Review Findings
+
+_CR 2026-07-20 — Blind Hunter / Edge Case / Acceptance Auditor. Auditor: ACs 1–5 pass._
+
+- [ ] [Review][Decision] Block suspend/archive of Platform 0 `TenantIds.Default`? — Spec does not forbid it; suspending `default` would freeze all Platform 0 data until middleware/filters land
+- [ ] [Review][Patch] Map slug unique-index race to 409 via `DbUpdateException` [PlatformTenantService.cs CreateAsync]
+- [ ] [Review][Patch] Null-guard create/suspend request bodies → 400 [PlatformTenantsController.cs]
+- [ ] [Review][Patch] Reject `Guid.Empty` actor user id [PlatformTenantsController.cs TryGetActorUserId]
+- [ ] [Review][Patch] Validate AdminContactEmail format + Name/Reason/Email max lengths before SaveChanges [PlatformTenantService.cs]
+- [ ] [Review][Patch] Reject numeric enum plan strings (`"0"`) — require named plans [PlatformTenantService.cs]
+- [ ] [Review][Patch] Make `TenantSlugRules.Reserved` immutable (`FrozenSet` / copy) [TenantSlugRules.cs]
+- [ ] [Review][Patch] Keep `SuspendedAt` when archiving from Suspended (forensics) [PlatformTenantService.ArchiveAsync]
+- [x] [Review][Defer] Append-only audit enforcement (DB triggers / no-update interceptor) — deferred, documentation + no update API for now
+- [x] [Review][Defer] Concurrent PlatformAdminSeeder race — deferred, same pattern as OperatorSeeder
+- [x] [Review][Defer] Optimistic concurrency on Tenant status transitions — deferred, low-traffic platform path
+- [x] [Review][Defer] Integration tests skippable without `/ready` stack — deferred, story allows; CI stack optional
+
 ## Dev Notes
 
 ### Epic context
