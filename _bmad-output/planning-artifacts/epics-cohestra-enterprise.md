@@ -365,3 +365,37 @@ So that abuse and support freezes are handled without using Suspend as collectio
 **Given** Suspend is applied
 **When** access is evaluated (using Story 11.1 matrix)
 **Then** tenant admin login is blocked and public routes are maintenance-ready (full middleware enforcement may complete in Epic 13/15; this story at least sets Status correctly and documents the intended effect)
+
+### Story 11.4: Platform tenant directory and health
+
+As a Platform Admin,
+I want a searchable tenant directory plus health/audit visibility,
+So that I can find workspaces and confirm platform readiness without exporting tenant PII.
+
+**Acceptance Criteria:**
+
+**Given** an authenticated Platform Admin
+**When** they open the tenant directory
+**Then** they see a paginated list with status, slug, created date, admin contact, and aggregate counts (activities, clients — not PII export by default)
+**And** they can search by slug and organization name
+
+**Given** a tenant in the directory
+**When** they open tenant detail
+**Then** they can access lifecycle actions from Story 11.3 and see recent audit entries for that tenant
+
+**Given** the platform health endpoint `/ready`
+**When** called without auth
+**Then** it remains publicly reachable
+**And** readiness checks cover default tenant / DB connectivity as documented
+
+**Given** platform lifecycle and admin actions from Epic 11
+**When** they occur
+**Then** immutable audit entries include actor, action, tenantId, and timestamp
+
+**Given** a Tenant Admin or Member
+**When** they attempt platform directory routes
+**Then** access is denied (403)
+
+**Given** Midnight Atelier craft for platform console
+**When** the directory UI ships
+**Then** it stays sparse/ops-focused (UX-DR16); atelier refresh of `platform-admin-suspend` mock is acceptable but not blocking
