@@ -2,7 +2,7 @@
 name: Cohestra Enterprise
 status: final
 created: 2026-07-18
-updated: 2026-07-19
+updated: 2026-07-20
 sources:
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
@@ -13,7 +13,7 @@ design: ./DESIGN.md
 
 # Cohestra Enterprise — Experience Spine
 
-> Multi-tenant SaaS UX. Visual identity → `DESIGN.md` (**RegFox-caliber product craft** + Cohestra ink/teal brand). Platform 0 supplies inherited *ops module behaviors* only — not brand. Spines win on conflict with mocks.
+> Multi-tenant SaaS UX. Visual identity → `DESIGN.md` (**Midnight Atelier** — premium community-ops craft). Platform 0 supplies inherited *ops module behaviors* only — not brand. Spines win on conflict with mocks.
 
 → Key screens (GTM-A stack-killer): `mockups/marketing-start-free.html` · `mockups/basic-stub-home.html` · `mockups/admin-dashboard-basic.html` · `mockups/share-kit.html` · `mockups/team-seat-gate.html` · `mockups/platform-admin-suspend.html`
 
@@ -29,7 +29,7 @@ design: ./DESIGN.md
 | Public registration | Participant (Elena) | Mobile-first `/register/{activity-slug}` |
 | Platform Admin | Cohestra operator | Sparse console — lifecycle + audit |
 
-**UI system:** shadcn/ui + Tailwind + next-themes. Brand/craft = Cohestra ink navy + teal action with **RegFox-caliber product polish** in `DESIGN.md` (clean white, browser-framed product UI, dense admin — not AI-mist aesthetics).
+**UI system:** shadcn/ui + Tailwind + next-themes. Brand/craft = **Midnight Atelier** in `DESIGN.md` — Fraunces + Plus Jakarta Sans, deep ink, lagoon action, quiet gold, photographic hospitality (not AI-mist / commodity SaaS).
 
 **Tenancy:** Session bound to one tenant (`tenant_id` JWT). No tenant switcher in v1. Subdomain resolves public + admin context.
 

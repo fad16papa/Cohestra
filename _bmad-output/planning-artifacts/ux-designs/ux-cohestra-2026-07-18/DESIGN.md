@@ -1,214 +1,196 @@
 ---
 name: Cohestra Enterprise
-description: Modern event-ops product craft (RegFox-caliber) — clean white, ink navy, teal action. Cohestra brand; not Platform 0 forest green.
+description: Midnight Atelier — premium community-ops product craft. Deep ink, quiet gold, lagoon action, editorial type, photographic soul.
 status: final
 created: 2026-07-18
-updated: 2026-07-19
+updated: 2026-07-20
 theme:
   modes: [light, dark, system]
   default: light
   implementation: class-based (.dark on html) via next-themes
 sources:
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/prd.md
-  - docs/marketing/pricing-tiers.md
-  - visual_reference: RegFox product craft (clean SaaS + registration confidence) — craft only, not feature parity
+  - craft_reference: premium SaaS / registration confidence (RegFox polish) + editorial luxury restraint
 colors:
-  # Cohestra × RegFox-caliber craft
-  primary: '#0B1F2A'          # ink navy — headlines, nav active
-  primary-foreground: '#F8FAFC'
-  accent: '#0F9F8A'           # action teal — primary CTAs only
-  accent-foreground: '#042F2E'
-  accent-hover: '#0B8A77'
-  canvas: '#FFFFFF'
-  canvas-muted: '#F4F6F8'
-  ink: '#0B1F2A'
-  ink-secondary: '#334155'
-  ink-muted: '#64748B'
-  line: '#E2E8F0'
-  line-strong: '#CBD5E1'
-  success: '#059669'
-  success-soft: '#ECFDF5'
-  warn: '#B45309'
-  warn-soft: '#FFFBEB'
-  danger: '#B91C1C'
-  danger-soft: '#FEF2F2'
-  # Dark
-  primary-dark: '#5EEAD4'
-  primary-foreground-dark: '#042F2E'
-  canvas-dark: '#0B1F2A'
-  canvas-muted-dark: '#122636'
-  ink-dark: '#F1F5F9'
-  ink-muted-dark: '#94A3B8'
-  line-dark: '#1E3A4C'
-  # Plan badges (quiet)
-  plan-basic: '#64748B'
-  plan-basic-foreground: '#FFFFFF'
-  plan-core: '#0284C7'
-  plan-core-foreground: '#FFFFFF'
-  plan-pro: '#0F9F8A'
-  plan-pro-foreground: '#042F2E'
-  sponsored: '#6D28D9'
-  sponsored-foreground: '#FFFFFF'
+  ink: '#070D12'
+  ink-soft: '#141C24'
+  paper: '#FAFBFC'
+  paper-warm: '#F3F5F7'
+  stone: '#8B939C'
+  line: '#E6E9ED'
+  line-strong: '#D0D5DB'
+  lagoon: '#0B6B63'
+  lagoon-deep: '#08554F'
+  lagoon-fg: '#F3FFFC'
+  gold: '#A68B5B'
+  gold-soft: '#F4EEE3'
+  success: '#1F7A5C'
+  warn: '#9A6700'
+  danger: '#9B1C1C'
+  # legacy aliases used by components
+  primary: '#070D12'
+  primary-foreground: '#FAFBFC'
+  accent: '#0B6B63'
+  accent-foreground: '#F3FFFC'
+  canvas: '#FAFBFC'
+  canvas-muted: '#F3F5F7'
+  ink-muted: '#8B939C'
 typography:
   display:
-    fontFamily: 'Sora'
-    fontSize: 40px
-    fontWeight: '700'
-    lineHeight: '1.1'
-    letterSpacing: -0.04em
+    fontFamily: 'Fraunces'
+    fontSize: 48px
+    fontWeight: '500'
+    lineHeight: '1.08'
+    letterSpacing: -0.03em
   display-sm:
-    fontFamily: 'Sora'
-    fontSize: 28px
-    fontWeight: '700'
-    lineHeight: '1.2'
+    fontFamily: 'Fraunces'
+    fontSize: 32px
+    fontWeight: '500'
+    lineHeight: '1.15'
+    letterSpacing: -0.025em
+  marketing-display:
+    fontFamily: 'Fraunces'
+    fontSize: 64px
+    fontWeight: '500'
+    lineHeight: '1.02'
+    letterSpacing: -0.035em
+  public-hero:
+    fontFamily: 'Fraunces'
+    fontSize: 36px
+    fontWeight: '500'
+    lineHeight: '1.12'
     letterSpacing: -0.03em
   section:
-    fontFamily: 'Sora'
-    fontSize: 18px
-    fontWeight: '650'
+    fontFamily: 'Plus Jakarta Sans'
+    fontSize: 13px
+    fontWeight: '600'
     lineHeight: '1.3'
-  marketing-display:
-    fontFamily: 'Sora'
-    fontSize: 56px
-    fontWeight: '700'
-    lineHeight: '1.05'
-    letterSpacing: -0.045em
-  public-hero:
-    fontFamily: 'Sora'
-    fontSize: 32px
-    fontWeight: '700'
-    lineHeight: '1.15'
-    letterSpacing: -0.03em
+    letterSpacing: 0.12em
   body:
-    fontFamily: 'Source Sans 3'
+    fontFamily: 'Plus Jakarta Sans'
     fontSize: 16px
     fontWeight: '400'
-    lineHeight: '1.55'
+    lineHeight: '1.6'
   label:
-    fontFamily: 'Source Sans 3'
+    fontFamily: 'Plus Jakarta Sans'
     fontSize: 12px
-    fontWeight: '700'
-    lineHeight: '1.3'
-    letterSpacing: 0.04em
+    fontWeight: '600'
+    lineHeight: '1.35'
+    letterSpacing: 0.06em
 rounded:
-  sm: 6px
-  md: 8px
-  lg: 12px
-  xl: 16px
+  sm: 4px
+  md: 10px
+  lg: 16px
+  xl: 24px
 spacing:
-  admin-sidebar-width: 232px
-  admin-row-height: 48px
-  page-gutter: 24px
-  section-y: 72px
-  stub-max-width: 480px
+  admin-sidebar-width: 240px
+  page-gutter: 32px
+  section-y: 96px
+  hero-gap: 64px
 components:
   button-primary:
-    background: '{colors.accent}'
-    foreground: '{colors.accent-foreground}'
+    background: '{colors.lagoon}'
+    foreground: '{colors.lagoon-fg}'
     radius: '{rounded.md}'
-    height: 44px
+    height: 48px
   button-secondary:
-    background: '{colors.canvas}'
-    foreground: '{colors.primary}'
+    background: 'transparent'
+    foreground: '{colors.ink}'
     border: '1px solid {colors.line-strong}'
     radius: '{rounded.md}'
+  button-gold:
+    background: '{colors.ink}'
+    foreground: '{colors.gold-soft}'
+    radius: '{rounded.md}'
   browser-frame:
-    background: '{colors.canvas-muted}'
-    border: '1px solid {colors.line}'
     radius: '{rounded.xl}'
-    chrome-height: 36px
-  data-table:
-    row-height: '{spacing.admin-row-height}'
     border: '1px solid {colors.line}'
-    header-background: '{colors.canvas-muted}'
-  plan-badge-basic:
-    background: '{colors.plan-basic}'
-    foreground: '{colors.plan-basic-foreground}'
-    radius: '{rounded.sm}'
-  plan-badge-core:
-    background: '{colors.plan-core}'
-    foreground: '{colors.plan-core-foreground}'
-    radius: '{rounded.sm}'
-  plan-badge-pro:
-    background: '{colors.plan-pro}'
-    foreground: '{colors.plan-pro-foreground}'
-    radius: '{rounded.sm}'
-  sponsored-badge:
-    background: '{colors.sponsored}'
-    foreground: '{colors.sponsored-foreground}'
-    radius: '{rounded.sm}'
+    shadow: '0 40px 80px rgba(7, 13, 18, 0.14)'
+  hairline-rule:
+    color: '{colors.line}'
+    thickness: 1px
 ---
 
 # Cohestra Enterprise — Design Spine
 
-> **Craft target:** RegFox-caliber modern product SaaS — clean, confident, registration-grade.  
-> **Brand:** Cohestra (ink navy + teal action). Spines win on conflict with mocks.
+> **Midnight Atelier** — expensive, quiet, human. Soul over chrome. Spines win on conflict.
 
-→ Key screens: `mockups/marketing-start-free.html` · `mockups/basic-stub-home.html` · `mockups/admin-dashboard-basic.html` · `mockups/share-kit.html` · `mockups/team-seat-gate.html` · `mockups/platform-admin-suspend.html`
+→ Key screens: `mockups/marketing-start-free.html` · `mockups/basic-stub-home.html` · `mockups/admin-dashboard-basic.html` · `mockups/share-kit.html` · `mockups/team-seat-gate.html`
 
 ## Brand & Style
 
-**Posture:** Professional event-ops product. White canvas, ink headlines, one teal CTA. The hero shows a **real product surface in a browser frame**, not decorative mist.
+Cohestra is where community activity becomes a lasting relationship. The product should feel like a **private atelier for operators** — considered, calm, costly in the best way — never a commodity admin template.
 
-Inspired by RegFox’s product confidence (builder clarity, attendee trust, clean marketing) — **craft only**. Cohestra remains the operator stack killer (CRM after QR), not a RegFox ticketing clone.
+**Soul:** People gathering. Courts at dusk. Names remembered. Registration as hospitality, not form submission.
 
-| Surface | Feel |
-|---------|------|
-| Marketing | White, bold type, product screenshot as visual anchor |
-| Tenant admin | Dense, tool-like — tables, clear hierarchy, minimal decoration |
-| Public stub / register | Branded header band + clear register actions (conversion-first) |
-| Platform Admin | Utility console — muted, data-forward |
+**Craft principles**
 
-**Typography:** Sora (display) + Source Sans 3 (UI/body). No Inter / Roboto / Arial as brand faces.
+1. **Editorial type** — Fraunces for voice; Plus Jakarta Sans for instruments.
+2. **Restraint** — large quiet fields of paper; fewer elements; one action per region.
+3. **Material** — hairline rules, one deep shadow on the product frame only, no glow stacks.
+4. **Photography** — real atmosphere (sport / gathering), darkened for type; never stock-collage clutter.
+5. **Gold as whisper** — `{colors.gold}` for rare emphasis (eyebrow, hairline accent), not buttons everywhere.
+6. **Lagoon as will** — one primary CTA color; earned, not decorative.
 
-**Motion (intentional, 2–3):** (1) hero product frame subtle lift on load, (2) CTA hover lift, (3) table row highlight. No ambient particle/grid drift.
+| Surface | Expensive feel |
+|---------|----------------|
+| Marketing | Asymmetric hero, serif brand word, photographic field, product frame as object |
+| Admin | Gallery-quiet sidebar, airy metrics, typographic tables |
+| Public stub | Hospitality header photo, composed registration options |
+| Share kit | Print-quality assets, not “growth hack” chips |
+
+Reject: AI mist orbs, purple SaaS, cream–terracotta kits, Inter/Roboto, emoji, pill clusters, multi-shadow cards, busy feature grids in the first viewport.
 
 ## Colors
 
-- **Ink navy** `{colors.primary}` — wordmark, H1, sidebar
-- **Teal action** `{colors.accent}` — only primary buttons / key links
-- **White / muted canvas** — marketing + admin backgrounds
-- **Slate text** — secondary / muted
-- **Hairline borders** `{colors.line}` — structure without card-shadow stacks
-
-Avoid: purple SaaS glow, cream–terracotta editorial, mist-orb heroes, multi-layer shadows, emoji.
+- **Ink** `{colors.ink}` — near-black navy for authority
+- **Paper** `{colors.paper}` / `{colors.paper-warm}` — cool quiet canvas (not yellow cream)
+- **Lagoon** `{colors.lagoon}` — sole primary action
+- **Gold** `{colors.gold}` / `{colors.gold-soft}` — atelier accent, sparingly
+- **Stone** `{colors.stone}` — secondary text
 
 ## Typography
 
-| Token | Use |
-|-------|-----|
-| `{typography.marketing-display}` | Marketing H1 |
-| `{typography.display}` / `display-sm` | Admin titles |
-| `{typography.public-hero}` | Stub / SitePage / register titles |
-| `{typography.body}` / `label` | UI copy, tables |
+| Token | Soul |
+|-------|------|
+| `{typography.marketing-display}` | Brand / hero — soft weight, optical size |
+| `{typography.display}` | Page titles |
+| `{typography.section}` | Eyebrows — wide tracking, small |
+| `{typography.body}` | Reading text — generous leading |
 
 ## Layout & Spacing
 
-- Marketing first viewport: **brand · one headline · one sentence · CTA group · product frame** (full-bleed or edge-dominant). No stats strip in hero.
-- Admin: fixed sidebar `{spacing.admin-sidebar-width}`; content on white; tables preferred over card grids.
-- Public: header brand band → activity list / form; thumb-friendly CTAs.
+- Hero: brand word as art · one line of promise · one sentence · CTA · photographic or product object
+- Prefer **asymmetric** columns (5/7) over equal split
+- Section rhythm `{spacing.section-y}` — do not pack
 
 ## Elevation & Depth
 
-Almost flat. Separation via border + background shift (`canvas` / `canvas-muted`). Browser frame may use a single soft shadow for product realism — nowhere else by default.
+Almost flat. Product frame may use `{components.browser-frame.shadow}`. Elsewhere: border only.
 
 ## Shapes
 
-`{rounded.md}` controls; `{rounded.xl}` browser frame; badges `{rounded.sm}` (not pill clusters).
+Soft `{rounded.lg}` / `{rounded.xl}` on frames; controls `{rounded.md}`; avoid pill-full.
 
 ## Components
 
-| Component | Contract |
-|-----------|----------|
-| **BrowserFrame** | Fake macOS/chrome dots + URL bar; contains live-looking product UI |
-| **DataTable** | Dense rows, sticky header, status chips |
-| **PlanBadge / SponsoredBadge** | Quiet, uppercase micro labels |
-| **PrimaryButton** | Teal, 44px height, high contrast |
-| **SetupChecklist** | Numbered steps in a single panel — not gamified cards |
-| **ShareKit** | OG preview + copy fields + QR — ops tool, not social collage |
+| Component | Soul note |
+|-----------|-----------|
+| **Wordmark** | Fraunces, letter-spaced slightly tight |
+| **Eyebrow** | Gold or lagoon, tracked uppercase |
+| **PrimaryButton** | Lagoon, 48px, no gradient |
+| **BrowserFrame** | Dark chrome optional; feels like an object on a desk |
+| **Metric** | Big Fraunces number, quiet label |
+| **RegistrationOption** | Hospitality list — name, time, place, Register |
+
+## Motion
+
+1. Hero copy fades up (staggered, slow)
+2. Product frame eases in with soft lift
+3. Button hover: 1px lift + lagoon deepen — nothing else
 
 ## Do's and Don'ts
 
-**Do:** Show the product. Use real activity/client copy. Keep one accent. Match RegFox-level polish on registration confidence.
+**Do:** Leave empty space. Use one photograph with meaning. Speak like a host.
 
-**Don't:** Abstract gradient playgrounds, “Before/After” pastel cards as hero, purple glows, inventing RegFox features (marketplace fees, badge printing) into Cohestra v1.
+**Don't:** Decorate emptiness with gradients. Stack CTAs. Look like a dashboard template generator.

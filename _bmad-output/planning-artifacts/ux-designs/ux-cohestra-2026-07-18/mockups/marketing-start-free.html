@@ -3,257 +3,383 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cohestra — Modern product marketing</title>
+  <title>Cohestra</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --navy: #0B1F2A;
-      --teal: #0F9F8A;
-      --teal-fg: #042F2E;
-      --canvas: #FFFFFF;
-      --muted: #F4F6F8;
-      --ink: #0B1F2A;
-      --ink2: #334155;
-      --ink3: #64748B;
-      --line: #E2E8F0;
-      --line2: #CBD5E1;
-      --display: "Sora", sans-serif;
-      --body: "Source Sans 3", sans-serif;
+      --ink: #070D12;
+      --paper: #FAFBFC;
+      --paper2: #F3F5F7;
+      --stone: #8B939C;
+      --line: #E6E9ED;
+      --lagoon: #0B6B63;
+      --lagoon-deep: #08554F;
+      --lagoon-fg: #F3FFFC;
+      --gold: #A68B5B;
+      --gold-soft: #F4EEE3;
+      --serif: "Fraunces", Georgia, serif;
+      --sans: "Plus Jakarta Sans", system-ui, sans-serif;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--canvas); }
-    a { color: inherit; }
-    .nav {
-      position: sticky; top: 0; z-index: 20;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 32px;
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--line);
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background: var(--paper);
+      -webkit-font-smoothing: antialiased;
     }
-    .logo { font-family: var(--display); font-weight: 700; font-size: 1.25rem; letter-spacing: -0.04em; color: var(--navy); }
-    .nav-right { display: flex; align-items: center; gap: 20px; }
-    .nav-right a { text-decoration: none; font-weight: 600; font-size: 0.95rem; color: var(--ink2); }
+    a { color: inherit; text-decoration: none; }
+
+    /* Nav — quiet luxury */
+    .nav {
+      position: sticky; top: 0; z-index: 30;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 2.5rem;
+      background: rgba(250, 251, 252, 0.86);
+      backdrop-filter: blur(16px) saturate(1.2);
+      border-bottom: 1px solid transparent;
+    }
+    .nav.scrolled { border-bottom-color: var(--line); }
+    .wordmark {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.55rem;
+      letter-spacing: -0.04em;
+      font-variation-settings: "opsz" 72;
+    }
+    .nav-links { display: flex; align-items: center; gap: 1.75rem; }
+    .nav-links a {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--stone);
+      letter-spacing: 0.01em;
+    }
+    .nav-links a:hover { color: var(--ink); }
     .btn {
       display: inline-flex; align-items: center; justify-content: center;
-      height: 44px; padding: 0 18px; border-radius: 8px;
-      font-weight: 700; font-size: 0.95rem; text-decoration: none;
-      border: 1px solid transparent; transition: transform .15s ease, background .15s ease;
+      height: 48px; padding: 0 1.35rem;
+      border-radius: 10px;
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid transparent;
+      transition: transform 0.25s cubic-bezier(.2,.8,.2,1), background 0.2s ease;
+      cursor: pointer;
     }
-    .btn:hover { transform: translateY(-1px); }
-    .btn-teal { background: var(--teal); color: var(--teal-fg); }
-    .btn-ghost { background: var(--canvas); color: var(--navy); border-color: var(--line2); }
-    .btn-sm { height: 36px; padding: 0 14px; font-size: 0.875rem; }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-lagoon { background: var(--lagoon); color: var(--lagoon-fg); }
+    .btn-lagoon:hover { background: var(--lagoon-deep); }
+    .btn-ink { background: var(--ink); color: var(--gold-soft); }
+    .btn-ghost {
+      background: transparent; color: var(--ink);
+      border-color: var(--line);
+    }
+    .btn-sm { height: 40px; padding: 0 1.1rem; font-size: 0.8125rem; }
 
-    /* Hero: copy left + product frame right — RegFox-style product marketing */
+    /* Hero — soul: type + photograph + product object */
     .hero {
       display: grid;
-      grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.15fr);
-      gap: 40px;
-      align-items: center;
-      max-width: 1180px;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 3.5rem;
+      align-items: end;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 56px 32px 72px;
+      padding: 4.5rem 2.5rem 5.5rem;
+      min-height: calc(100vh - 72px);
     }
-    @media (max-width: 960px) {
-      .hero { grid-template-columns: 1fr; padding-top: 36px; }
+    @media (max-width: 980px) {
+      .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 3rem; }
+      .nav { padding: 1rem 1.25rem; }
     }
-    .eyebrow {
-      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--teal); margin: 0 0 12px;
-    }
-    h1 {
-      font-family: var(--display);
-      font-size: clamp(2.4rem, 4.5vw, 3.4rem);
-      line-height: 1.05; letter-spacing: -0.045em;
-      margin: 0 0 16px; color: var(--navy);
-    }
-    .lede {
-      font-size: 1.125rem; line-height: 1.55; color: var(--ink3);
-      max-width: 38ch; margin: 0 0 28px;
-    }
-    .cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
-    .fine { font-size: 0.875rem; color: var(--ink3); margin: 0; }
-
-    /* Browser product frame */
-    .frame {
-      background: var(--muted);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      box-shadow: 0 24px 60px rgba(11, 31, 42, 0.12);
-      overflow: hidden;
-      animation: frameIn .6s ease both;
-    }
-    @keyframes frameIn {
-      from { opacity: 0; transform: translateY(12px); }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .chrome {
-      height: 40px; display: flex; align-items: center; gap: 8px;
-      padding: 0 14px; background: #EEF1F4; border-bottom: 1px solid var(--line);
+    .eyebrow {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 0 0 1.25rem;
+      animation: rise 0.9s 0.05s cubic-bezier(.2,.8,.2,1) both;
     }
-    .dot { width: 10px; height: 10px; border-radius: 50%; background: #CBD5E1; }
-    .dot:nth-child(1) { background: #F87171; }
-    .dot:nth-child(2) { background: #FBBF24; }
-    .dot:nth-child(3) { background: #34D399; }
-    .url {
-      flex: 1; margin-left: 8px; height: 24px; border-radius: 6px;
-      background: #fff; border: 1px solid var(--line);
-      font-size: 0.75rem; color: var(--ink3); display: flex; align-items: center; padding: 0 10px;
+    .brand-art {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(3.75rem, 9vw, 5.75rem);
+      line-height: 0.92;
+      letter-spacing: -0.045em;
+      font-variation-settings: "opsz" 144;
+      margin: 0 0 1.5rem;
+      animation: rise 1s 0.12s cubic-bezier(.2,.8,.2,1) both;
     }
-    .app {
-      display: grid; grid-template-columns: 168px 1fr; min-height: 340px; background: #fff;
+    .promise {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: clamp(1.35rem, 2.4vw, 1.65rem);
+      line-height: 1.35;
+      letter-spacing: -0.02em;
+      max-width: 16ch;
+      margin: 0 0 1rem;
+      color: var(--ink);
+      animation: rise 1s 0.22s cubic-bezier(.2,.8,.2,1) both;
     }
-    .side {
-      background: var(--navy); color: #E2E8F0; padding: 16px 12px;
-      font-size: 0.8rem;
+    .lede {
+      font-size: 1.0625rem;
+      line-height: 1.65;
+      color: var(--stone);
+      max-width: 34ch;
+      margin: 0 0 2rem;
+      animation: rise 1s 0.3s cubic-bezier(.2,.8,.2,1) both;
     }
-    .side .brand { font-family: var(--display); font-weight: 700; margin-bottom: 16px; letter-spacing: -0.03em; }
-    .side a {
-      display: block; padding: 8px 10px; border-radius: 6px;
-      text-decoration: none; color: rgba(226,232,240,.75); font-weight: 600; margin-bottom: 2px;
+    .cta-row {
+      display: flex; flex-wrap: wrap; gap: 0.75rem;
+      margin-bottom: 1rem;
+      animation: rise 1s 0.38s cubic-bezier(.2,.8,.2,1) both;
     }
-    .side a.on { background: rgba(15,159,138,.35); color: #F0FDFA; }
-    .main { padding: 16px 18px; }
-    .main-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-    .main-top strong { font-family: var(--display); font-size: 1rem; letter-spacing: -0.02em; }
-    .chip {
-      font-size: 0.65rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
-      background: #64748B; color: #fff; padding: 3px 7px; border-radius: 4px;
+    .fine {
+      font-size: 0.8125rem;
+      color: var(--stone);
+      animation: rise 1s 0.45s cubic-bezier(.2,.8,.2,1) both;
     }
-    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-    th {
-      text-align: left; font-size: 0.68rem; letter-spacing: .04em; text-transform: uppercase;
-      color: var(--ink3); padding: 8px 6px; border-bottom: 1px solid var(--line); background: var(--muted);
-    }
-    td { padding: 10px 6px; border-bottom: 1px solid var(--line); color: var(--ink2); }
-    td:first-child { font-weight: 700; color: var(--ink); }
-    .status {
-      display: inline-block; font-size: 0.68rem; font-weight: 700;
-      padding: 2px 6px; border-radius: 4px; background: #ECFDF5; color: #047857;
-    }
-    .status.new { background: #E0F2FE; color: #0369A1; }
 
-    .band {
-      background: var(--muted);
+    /* Visual column — photograph with product floating */
+    .visual {
+      position: relative;
+      animation: rise 1.1s 0.2s cubic-bezier(.2,.8,.2,1) both;
+    }
+    .photo {
+      border-radius: 24px;
+      overflow: hidden;
+      aspect-ratio: 4 / 5;
+      max-height: 640px;
+      position: relative;
+      box-shadow: 0 40px 80px rgba(7, 13, 18, 0.16);
+    }
+    .photo img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      filter: saturate(0.92) contrast(1.05);
+    }
+    .photo::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(7,13,18,0.05) 0%, rgba(7,13,18,0.45) 100%);
+    }
+    .photo-caption {
+      position: absolute; left: 1.5rem; right: 1.5rem; bottom: 1.5rem; z-index: 2;
+      font-family: var(--serif);
+      font-size: 1.125rem;
+      color: #FAFBFC;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+    }
+    .photo-caption span {
+      display: block;
+      font-family: var(--sans);
+      font-size: 0.6875rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+    }
+
+    /* Floating product card on photo */
+    .float-card {
+      position: absolute;
+      right: -1.25rem;
+      bottom: 18%;
+      width: min(100%, 300px);
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1rem 1.1rem 1.1rem;
+      box-shadow: 0 28px 60px rgba(7, 13, 18, 0.2);
+      z-index: 3;
+    }
+    @media (max-width: 980px) {
+      .float-card { position: relative; right: auto; bottom: auto; margin: -3rem 1rem 0; width: auto; }
+      .photo { max-height: 480px; aspect-ratio: 5 / 4; }
+    }
+    .float-card .label {
+      font-size: 0.625rem; font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 0.65rem;
+    }
+    .float-card .row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 0.55rem 0; border-top: 1px solid var(--line);
+      font-size: 0.875rem;
+    }
+    .float-card .row:first-of-type { border-top: none; }
+    .float-card .name { font-weight: 600; }
+    .float-card .meta { color: var(--stone); font-size: 0.75rem; }
+    .pill {
+      font-size: 0.625rem; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; padding: 0.2rem 0.45rem; border-radius: 4px;
+      background: #E8F5F2; color: var(--lagoon);
+    }
+
+    /* Atelier band */
+    .atelier {
       border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      padding: 48px 32px;
+      padding: 6rem 2.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
     }
-    .band-inner { max-width: 1180px; margin: 0 auto; }
-    .band h2 {
-      font-family: var(--display); font-size: 1.65rem; letter-spacing: -0.03em;
-      margin: 0 0 8px; color: var(--navy);
+    .atelier-head {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+      margin-bottom: 3.5rem; align-items: end;
     }
-    .band p { margin: 0 0 24px; color: var(--ink3); max-width: 48ch; }
-    .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    @media (max-width: 800px) { .cols { grid-template-columns: 1fr; } }
-    .col {
-      background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px;
+    @media (max-width: 800px) { .atelier-head { grid-template-columns: 1fr; } }
+    .atelier h2 {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0;
+      max-width: 12ch;
     }
-    .col h3 { font-family: var(--display); font-size: 1rem; margin: 0 0 8px; letter-spacing: -0.02em; }
-    .col p { margin: 0; color: var(--ink3); font-size: 0.95rem; line-height: 1.5; }
-    .col .was { font-size: 0.75rem; font-weight: 700; color: var(--ink3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .atelier-head p {
+      margin: 0;
+      color: var(--stone);
+      font-size: 1.05rem;
+      line-height: 1.65;
+      max-width: 36ch;
+    }
+    .triptych {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+    @media (max-width: 800px) { .triptych { grid-template-columns: 1fr; } }
+    .cell {
+      padding: 2rem 1.75rem 2rem 0;
+      border-right: 1px solid var(--line);
+    }
+    .cell:last-child { border-right: none; padding-right: 0; }
+    @media (max-width: 800px) {
+      .cell { border-right: none; border-bottom: 1px solid var(--line); padding: 1.75rem 0; }
+    }
+    .cell .was {
+      font-size: 0.625rem; font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 0.85rem;
+    }
+    .cell h3 {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.35rem;
+      letter-spacing: -0.025em;
+      margin: 0 0 0.65rem;
+    }
+    .cell p { margin: 0; color: var(--stone); line-height: 1.6; font-size: 0.95rem; }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 2rem 2.5rem 3rem;
+      display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+      color: var(--stone); font-size: 0.8125rem;
+    }
+    footer .wordmark { font-size: 1.15rem; color: var(--ink); }
   </style>
 </head>
 <body>
   <header class="nav">
-    <div class="logo">Cohestra</div>
-    <div class="nav-right">
-      <a href="#replace">Product</a>
+    <div class="wordmark">Cohestra</div>
+    <div class="nav-links">
+      <a href="#atelier">The atelier</a>
       <a href="#">Pricing</a>
-      <a href="#">Log in</a>
-      <a class="btn btn-teal btn-sm" href="#">Start free</a>
+      <a href="#">Sign in</a>
+      <a class="btn btn-lagoon btn-sm" href="#">Start free</a>
     </div>
   </header>
 
   <section class="hero">
     <div>
-      <p class="eyebrow">Event registration + client ops</p>
-      <h1>Registration that builds your client list.</h1>
-      <p class="lede">QR signups, one people database, and follow-up — without Google Forms chaos or a second CRM.</p>
+      <p class="eyebrow">Community operations · Refined</p>
+      <h1 class="brand-art">Cohestra</h1>
+      <p class="promise">Remember every person who walked through the door.</p>
+      <p class="lede">QR registrations become a living client list — hospitality-grade ops for clubs and studios that outgrew spreadsheets.</p>
       <div class="cta-row">
-        <a class="btn btn-teal" href="#">Start free</a>
-        <a class="btn btn-ghost" href="#">Book a walkthrough</a>
+        <a class="btn btn-lagoon" href="#">Begin free</a>
+        <a class="btn btn-ghost" href="#">See how it feels</a>
       </div>
-      <p class="fine">Free Basic forever · No card · Upgrade when you need a team or Site Page</p>
+      <p class="fine">No card on Basic · Ready before your next session</p>
     </div>
 
-    <div class="frame" aria-label="Cohestra product preview">
-      <div class="chrome">
-        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-        <div class="url">ikigai.cohestra.app/clients</div>
-      </div>
-      <div class="app">
-        <aside class="side">
-          <div class="brand">Cohestra</div>
-          <a href="#">Dashboard</a>
-          <a href="#">Activities</a>
-          <a class="on" href="#">Clients</a>
-          <a href="#">Reports</a>
-          <a href="#">Public page</a>
-        </aside>
-        <div class="main">
-          <div class="main-top">
-            <strong>Clients · Ikigai Sports</strong>
-            <span class="chip">Basic</span>
+    <div class="visual">
+      <figure class="photo">
+        <!-- Soul: gathering / movement — dusk court energy -->
+        <img
+          src="https://images.unsplash.com/photo-1526232761682-d26e03ac149e?auto=format&fit=crop&w=1200&q=80"
+          alt="People gathering for community sport at dusk"
+          width="1200"
+          height="1500"
+        />
+        <figcaption class="photo-caption">
+          <span>Sunday clinic · Ikigai</span>
+          The list that knows who came back.
+        </figcaption>
+      </figure>
+      <aside class="float-card" aria-label="Live clients preview">
+        <div class="label">Tonight’s clients</div>
+        <div class="row">
+          <div>
+            <div class="name">Elena M.</div>
+            <div class="meta">Sunday clinic</div>
           </div>
-          <table>
-            <thead>
-              <tr><th>Name</th><th>Last activity</th><th>Status</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Elena Marquez</td>
-                <td>Sunday clinic</td>
-                <td><span class="status new">New</span></td>
-              </tr>
-              <tr>
-                <td>Jordan Kim</td>
-                <td>Youth open play</td>
-                <td><span class="status new">New</span></td>
-              </tr>
-              <tr>
-                <td>Sam Rivera</td>
-                <td>Clinic + board games</td>
-                <td><span class="status">Returning</span></td>
-              </tr>
-              <tr>
-                <td>Priya Nair</td>
-                <td>Sunday clinic</td>
-                <td><span class="status">Active</span></td>
-              </tr>
-            </tbody>
-          </table>
+          <span class="pill">New</span>
         </div>
+        <div class="row">
+          <div>
+            <div class="name">Sam R.</div>
+            <div class="meta">Clinic · also board games</div>
+          </div>
+          <span class="pill">Returning</span>
+        </div>
+        <div class="row">
+          <div>
+            <div class="name">Jordan K.</div>
+            <div class="meta">Youth open play</div>
+          </div>
+          <span class="pill">New</span>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="atelier" id="atelier">
+    <div class="atelier-head">
+      <h2>One atelier. Not five tools.</h2>
+      <p>Forms, sheets, link-in-bio, and light email collapse into a single composed workspace — quiet enough to trust, sharp enough to run on.</p>
+    </div>
+    <div class="triptych">
+      <div class="cell">
+        <div class="was">In place of Forms</div>
+        <h3>Registration as welcome</h3>
+        <p>A number, a confirmation, a name that stays — not a row lost in Drive.</p>
+      </div>
+      <div class="cell">
+        <div class="was">In place of spreadsheets</div>
+        <h3>Memory across activities</h3>
+        <p>Deduped clients and timelines. See returners without weekend VLOOKUPs.</p>
+      </div>
+      <div class="cell">
+        <div class="was">In place of Linktree</div>
+        <h3>A public door that works</h3>
+        <p>Share one page. Every register lands in your atelier, not a dead bio link.</p>
       </div>
     </div>
   </section>
 
-  <section class="band" id="replace">
-    <div class="band-inner">
-      <h2>Replace your stack — keep the relationships</h2>
-      <p>Built like a modern registration product. Focused on community operators, not marketplace discovery.</p>
-      <div class="cols">
-        <div class="col">
-          <div class="was">Instead of Forms</div>
-          <h3>QR + registration</h3>
-          <p>Every signup writes a Client with a registration number — not a Drive response.</p>
-        </div>
-        <div class="col">
-          <div class="was">Instead of spreadsheets</div>
-          <h3>One client list</h3>
-          <p>Dedup across activities. See who came back without VLOOKUP weekends.</p>
-        </div>
-        <div class="col">
-          <div class="was">Instead of Linktree</div>
-          <h3>Public stub / Site Page</h3>
-          <p>Share one link. Registrations land in your ops workspace automatically.</p>
-        </div>
-      </div>
-    </div>
-  </section>
+  <footer>
+    <div class="wordmark">Cohestra</div>
+    <span>Built for operators who remember names.</span>
+  </footer>
 </body>
 </html>
