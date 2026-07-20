@@ -90,7 +90,7 @@ so that existing rows stay usable and all business entities become tenant-owned.
 
 ### Review Findings
 
-_Group A CR (domain / configs / SitePage / DbContext) — 2026-07-20. Group B (migration + tests) still pending._
+_Group A CR (domain / configs / SitePage / DbContext) — 2026-07-20 — patches applied._
 
 - [x] [Review][Patch] Update `SitePage.SingletonId` XML doc to legacy/default-tenant wording [src/Domain/Site/SitePage.cs:7]
 - [x] [Review][Patch] Set explicit `TenantId = TenantIds.Default` on `DemoDataSeeder` inserts [src/Infrastructure/Seed/DemoDataSeeder.cs] — story task claims done; ChangeTracker defaulting covers SaveChanges but seeder still omits TenantId
@@ -98,6 +98,15 @@ _Group A CR (domain / configs / SitePage / DbContext) — 2026-07-20. Group B (m
 - [x] [Review][Defer] SitePage create still hardcodes `SingletonId` PK — deferred, multi-tenant SitePage create beyond Platform 0 continuity
 - [x] [Review][Defer] `ApplyDefaultTenantIds` does not cover `ExecuteUpdate`/bulk/raw SQL — deferred, known EF ChangeTracker gap
 - [x] [Review][Defer] Parent `TenantId` change does not sync dependent children — deferred, no tenant-move story yet
+
+_Group B CR (migration + tests) — 2026-07-20._
+
+- [ ] [Review][Patch] After seeding `default` tenant, assert well-known Id exists before TenantId FKs [`20260720162131_AddTenantIdToBusinessEntities.cs:15-19`] — `ON CONFLICT (Slug) DO NOTHING` can skip insert when Slug exists with a different Id; column defaults still use `11111111-…`
+- [ ] [Review][Patch] Drop PostgreSQL column `DEFAULT` on `TenantId` after backfill [`AddTenantIdToBusinessEntities` Up] — `AddColumn(..., defaultValue:)` leaves a DB default; AD-9 end state is NOT NULL without silent default (app uses `ApplyDefaultTenantIds`)
+- [x] [Review][Defer] `Down()` does not delete seeded `default` tenant — deferred, safer than wipe; incomplete reverse of seed only
+- [x] [Review][Defer] No PostgreSQL test executes migration SQL — deferred, story allows InMemory model tests
+- [x] [Review][Defer] Model tests cover only Activity slug + SitePage unique TenantId — deferred, story-required coverage met; other composites untested
+- [x] [Review][Defer] `Down()` recreating global uniques unsafe if multi-tenant rows exist — deferred, Platform 0 single-tenant rollback path only
 
 ## Dev Notes
 

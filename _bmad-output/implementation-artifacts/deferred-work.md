@@ -1,4 +1,11 @@
 
+## Deferred from: code review of 11-2-default-tenant-migration-and-tenantid-on-core-entities (2026-07-20) — Group B
+
+- `Down()` does not delete the seeded `default` tenant row — safer than wipe; incomplete reverse of seed only
+- No PostgreSQL test executes migration SQL (`ON CONFLICT`, defaults, FKs) — story allows InMemory model tests
+- Model tests cover only Activity `(TenantId,Slug)` + SitePage unique `TenantId` — other tenant composites untested
+- `Down()` recreating pre-tenant global unique indexes is unsafe if multi-tenant duplicate keys exist — Platform 0 rollback path only
+
 ## Deferred from: code review of 11-2-default-tenant-migration-and-tenantid-on-core-entities (2026-07-20) — Group A
 
 - No parent/child `TenantId` alignment invariant (`CampaignRecipient`↔`Campaign`, `Registration`↔`Activity`/`Client`, `ClientTimelineEvent`↔`Client`) — Epic 13 filters / later integrity; Restrict FK alone allows cross-tenant graphs
