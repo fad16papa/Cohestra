@@ -576,3 +576,29 @@ So that handlers never run ambiguously across tenants.
 **Given** apex marketing host (`cohestra.app` / `www`)
 **When** platform marketing/signup routes are hit
 **Then** no tenant SitePage context is applied (marketing-only)
+
+### Story 13.2: EF global query filters and Redis tenant namespaces
+
+As a tenant Admin,
+I want queries and caches automatically scoped to my tenant,
+So that another tenant’s data cannot appear through a missed WHERE clause or shared cache key.
+
+**Acceptance Criteria:**
+
+**Given** entities implementing `ITenantScoped` (or equivalent) from Epic 11
+**When** EF global query filters are enabled
+**Then** normal repository/query paths only return rows for the current Tenant Context
+**And** bypasses exist only on explicitly marked Platform Admin audit paths (`[RequiresPlatformAdmin]` or equivalent)
+
+**Given** Redis usage for public site, dashboard metrics, rate limits, or similar
+**When** keys are written/read
+**Then** keys follow `tenant:{tenantId}:…` (e.g. `tenant:{id}:public:site:published`, `tenant:{id}:dashboard:metrics`)
+**And** invalidation on publish/update only affects that tenant’s keys
+
+**Given** Tenant A context
+**When** a service accidentally queries without an explicit tenant filter
+**Then** the global filter still excludes Tenant B rows
+
+**Given** structured logging
+**When** business operations run
+**Then** logs include `tenantId` (NFR-5)
