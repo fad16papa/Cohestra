@@ -685,3 +685,27 @@ So that I trust the product enough to begin without a card.
 **Given** motion guidelines
 **When** the hero loads
 **Then** at least staggered rise + soft product lift + 1px button hover are present (UX-DR2)
+
+### Story 14.2: Legal pages and ToS/Privacy acceptance logging
+
+As a prospect signing up,
+I want accessible Terms and Privacy plus a required acceptance checkbox,
+So that legal consent is explicit and versioned before an account is created.
+
+**Acceptance Criteria:**
+
+**Given** apex routes `/terms` and `/privacy`
+**When** visited before signup is enabled
+**Then** both pages render readable legal content (launch gate)
+
+**Given** self-serve signup (Basic or paid)
+**When** the user has not checked ToS + Privacy acceptance
+**Then** account creation is blocked
+
+**Given** successful acceptance at signup
+**When** the Tenant Admin (or Tenant) record is saved
+**Then** `AcceptedAt`, `TermsVersion`, and `PrivacyVersion` are stored
+
+**Given** Stripe Tax
+**When** v1 launches
+**Then** Stripe Tax remains disabled; copy may note prices exclusive of applicable tax (no eng blocker)
