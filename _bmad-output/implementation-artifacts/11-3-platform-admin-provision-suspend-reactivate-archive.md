@@ -185,14 +185,51 @@ Recent commits on enterprise branch: 11.2 CR patches (migration seed assert + dr
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Cursor Grok 4.5 (cloud agent)
 
 ### Debug Log References
 
+- `dotnet test src/Infrastructure.Tests` — 161 passed
+- `dotnet ef migrations add AddPlatformTenantLifecycle`
+- `dotnet test src/Api.IntegrationTests --filter PlatformTenant` — 2 skipped (no local Postgres/Redis `/ready`)
+- `dotnet build src/Api` — succeeded
+
 ### Completion Notes List
 
+- Added `PlatformAdmin` Identity role + optional `PlatformAdminSeed` (Enabled=false by default); wired at startup after OperatorSeeder.
+- Domain: `TenantSlugRules` (P10 + reserved/`default`), Tenant `AdminContactEmail`/`SuspendedAt`/`ArchivedAt`, immutable `PlatformAuditLog`.
+- `PlatformTenantService` create/suspend/reactivate/archive; Suspend never mutates BillingStatus; audit per mutation.
+- API: `POST api/v1/platform/tenants` (+ suspend/reactivate/archive); OpenAPI copy marks Suspend as break-glass.
+- Unit tests for slug rules + lifecycle/audit; integration tests assert Admin→403 and PlatformAdmin lifecycle (skip when stack down).
+
 ### File List
+
+- src/Domain/Tenants/TenantSlugRules.cs
+- src/Domain/Tenants/PlatformAuditAction.cs
+- src/Domain/Tenants/PlatformAuditLog.cs
+- src/Domain/Tenants/Tenant.cs
+- src/Application/Tenants/IPlatformTenantService.cs
+- src/Contracts/Platform/PlatformTenantContracts.cs
+- src/Infrastructure/Auth/PlatformAdminSeedSettings.cs
+- src/Infrastructure/Auth/PlatformAdminSeeder.cs
+- src/Infrastructure/Platform/PlatformTenantService.cs
+- src/Infrastructure/Persistence/CohestraDbContext.cs
+- src/Infrastructure/Persistence/Configurations/TenantConfiguration.cs
+- src/Infrastructure/Persistence/Configurations/PlatformAuditLogConfiguration.cs
+- src/Infrastructure/Persistence/Migrations/20260720165150_AddPlatformTenantLifecycle.cs
+- src/Infrastructure/Persistence/Migrations/20260720165150_AddPlatformTenantLifecycle.Designer.cs
+- src/Infrastructure/Persistence/Migrations/CohestraDbContextModelSnapshot.cs
+- src/Infrastructure/DependencyInjection.cs
+- src/Api/Controllers/V1/PlatformTenantsController.cs
+- src/Api/Program.cs
+- src/Api/appsettings.json
+- src/Infrastructure.Tests/Tenants/TenantSlugRulesTests.cs
+- src/Infrastructure.Tests/Tenants/PlatformTenantServiceTests.cs
+- src/Api.IntegrationTests/PlatformTenantLifecycleIntegrationTests.cs
+- src/Api.IntegrationTests/Infrastructure/IntegrationTestHelpers.cs
+- src/Api.IntegrationTests/Infrastructure/IntegrationTestWebApplicationFactory.cs
 
 ## Change Log
 
 - 2026-07-20: Story context created (ready-for-dev)
+- 2026-07-20: Implemented Platform Admin lifecycle API + audit — status → review
