@@ -602,3 +602,28 @@ So that another tenant’s data cannot appear through a missed WHERE clause or s
 **Given** structured logging
 **When** business operations run
 **Then** logs include `tenantId` (NFR-5)
+
+### Story 13.3: Export and report queries always filter by TenantId
+
+As a Tenant Admin,
+I want CSV exports and report aggregates limited to my tenant,
+So that I never download or see another organization’s clients.
+
+**Acceptance Criteria:**
+
+**Given** Tenant A with many clients/registrations and Tenant B with distinct IDs
+**When** Tenant A exports CSV (fixed or filtered report path)
+**Then** the file contains zero Tenant B IDs/rows
+
+**Given** dashboard or report aggregation queries
+**When** they execute under Tenant A context
+**Then** totals/aggregates exclude Tenant B data
+**And** Tenant A totals are unchanged when Tenant B receives new registrations
+
+**Given** any export/report code path
+**When** reviewed/tested
+**Then** TenantId filtering is mandatory (global filter and/or explicit predicate — never optional)
+
+**Given** Platform Admin
+**When** using platform directory aggregates
+**Then** they see counts only — no bulk PII export of tenant clients in MVP (NFR-4)
