@@ -399,3 +399,34 @@ So that I can find workspaces and confirm platform readiness without exporting t
 **Given** Midnight Atelier craft for platform console
 **When** the directory UI ships
 **Then** it stays sparse/ops-focused (UX-DR16); atelier refresh of `platform-admin-suspend` mock is acceptable but not blocking
+
+### Story 11.5: Complimentary / Sponsored tenant flag
+
+As a Platform Admin,
+I want to mark a tenant complimentary and assign a Plan without Stripe,
+So that pilots get Core/Pro limits without delinquency automation or self-serve paid signup.
+
+**Acceptance Criteria:**
+
+**Given** an authenticated Platform Admin
+**When** they set `IsComplimentary=true` and assign `Plan` ∈ {Basic, Core, Pro}
+**Then** `BillingStatus=Free`, no Stripe subscription is required
+**And** FR-23 delinquency does not apply
+**And** the change is audited
+
+**Given** a complimentary Core or Pro tenant
+**When** Basic dormancy rules are considered
+**Then** FR-25 dormancy does not apply (only Basic+Free non-complimentary idle tenants)
+
+**Given** a complimentary tenant converting to paid
+**When** Platform Admin clears `IsComplimentary`
+**Then** the tenant must complete Checkout (FR-19) before paid entitlements sync from Stripe
+**And** self-serve cannot grant Core/Pro without Stripe unless Checkout completes
+
+**Given** only Platform Admin may set/clear complimentary
+**When** a Tenant Admin attempts to set the flag
+**Then** the request is rejected (403)
+
+**Given** `IsComplimentary=true`
+**When** admin UI later shows plan chrome (Epic 14)
+**Then** the data model supports Sponsored beside PlanBadge (UX component wiring can land in Epic 14)
