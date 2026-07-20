@@ -894,3 +894,37 @@ So that money and dormancy are handled without Platform Admin Suspend-as-collect
 **Given** all job transitions
 **When** they fire
 **Then** actions are audited and covered by automated tests (state machine)
+
+## Epic 15: Public Door & Plan-Gated Operations
+
+Subdomain public door — Basic stub, Core fixed SitePage, Pro builder; QR/register; plan-gated reports/campaigns; per-tenant email branding; atelier stub + ops surfaces.
+
+**FRs covered:** FR-11, FR-12, FR-13, FR-14, FR-15, FR-16
+
+### Story 15.1: Subdomain routing (nginx + Next.js Host)
+
+As a visitor or tenant operator,
+I want `{slug}.cohestra.app` to open the correct tenant,
+So that public and admin surfaces always resolve to one workspace.
+
+**Acceptance Criteria:**
+
+**Given** production Host `{slug}.cohestra.app`
+**When** web/API receive the request
+**Then** Tenant is resolved from slug and used for public + admin context
+
+**Given** apex `cohestra.app` / `www.cohestra.app`
+**When** requested
+**Then** marketing/signup routes only — no tenant SitePage
+
+**Given** local development
+**When** using `{slug}.localhost` or `DEV_TENANT_SLUG`
+**Then** tenant resolution works as documented in README/addendum
+
+**Given** unknown slug
+**When** public routes are hit
+**Then** response is 404
+
+**Given** Next.js middleware
+**When** forwarding to API
+**Then** Host (or equivalent tenant hint) is preserved for API resolution
