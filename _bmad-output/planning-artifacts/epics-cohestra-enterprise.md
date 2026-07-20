@@ -1072,3 +1072,46 @@ So that marketing stays Pro-gated while registration emails still work on all pl
 **Given** Member on Pro
 **When** using campaigns (plan-allowed)
 **Then** access is allowed; Member still cannot open Billing/Team
+
+### Story 15.7: Suspended maintenance and Archived 404 public states
+
+As a visitor or tenant Admin,
+I want public and login behavior to match Suspended vs Archived,
+So that break-glass and terminal states are unmistakable and other tenants stay unaffected.
+
+**Acceptance Criteria:**
+
+**Given** `Tenant.Status=Suspended`
+**When** public `/` or register routes are hit
+**Then** maintenance message is shown (not the stub/SitePage)
+**And** tenant Admin/Member login is blocked
+**And** other tenants remain fully available
+
+**Given** `Tenant.Status=Archived`
+**When** public routes are hit
+**Then** response is 404
+**And** tenant admin access is blocked
+
+**Given** Suspend reason copy
+**When** Platform Admin or maintenance UX references the state
+**Then** language stays abuse/ToS/support freeze — not ordinary non-payment
+
+**Given** reactivate from Suspended
+**When** Platform Admin sets Active
+**Then** public door and login restore per prior BillingStatus rules
+
+## Epic 16 (Parked): One-stop Lite — post-MVP
+
+Share kit, custom domain, thin confirm/reminder/thank-you automations, paid tickets (v1.2), seat add-ons — **not v1** per GTM-A §13.11. Kept visible so the stack-killer roadmap is not lost.
+
+**FRs covered:** none for v1 · **UX-DR15** parked
+
+### Parked candidates (do not story-break for v1)
+
+| Candidate | Why parked | Trigger to pull forward |
+|-----------|------------|-------------------------|
+| Share kit (OG/share image, WhatsApp copy, QR pack) | High perceived value; low domain risk but post-MVP | After SM-2 Basic path stable |
+| Custom domain | DNS + cert automation | Enterprise/pilot demand |
+| Thin email automations (confirm/reminder/thank-you) | One-stop Lite; not HubSpot-depth | After registration volume evidence |
+| Paid tickets (Stripe Checkout on activity) | v1.2 | After free registration product-market fit |
+| Seat add-ons (+$15) | P5 deferred | If Core→Pro seat pressure dominates upgrades |
