@@ -8,6 +8,7 @@ sections_completed:
   - framework_rules
   - testing_rules
   - code_quality
+  - workflow_rules
 existing_patterns_found: 12
 discovery_status: complete
 initiative_focus: Cohestra Enterprise multi-tenant (Epics 11–15)
@@ -139,3 +140,15 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Prefer clear names over comment essays
 - XML docs exist on API (`GenerateDocumentationFile`) — keep public controller summaries useful when adding endpoints
 - Story/epic IDs in commit messages when implementing (`11.2`, `13.4`, …)
+
+### Development Workflow Rules
+
+- **Brownfield:** implement stories against existing `main`-based branches; extend code in place
+- **Branches:** feature work under `cursor/<name>-4da3` (cloud agent convention) or team equivalent — keep Enterprise planning/impl on dedicated branches off `main`
+- **Commits:** imperative, scoped; include story id when implementing (`Add TenantIsolation tests (13.4)`)
+- **PRs to `main`:** CI must stay green — `.github/workflows/ci.yml` runs `dotnet test` with `Category!=Integration` plus targeted gates; **add TenantIsolation as a required gate** when Epic 13 lands (do not leave SM-1 optional)
+- **Local:** `docker compose` project `cohestra-infra`; document `{slug}.localhost` / `DEV_TENANT_SLUG` when touching routing
+- **Secrets:** never commit live Stripe/SendGrid keys; use `.env.example` / `.env.uat.example` patterns
+- **Planning artifacts:** PRD/UX/epics live under `_bmad-output/`; implementation stories later under `_bmad-output/implementation-artifacts/` — don’t invent a second docs tree
+- **Product boundary:** never open PRs that couple this repo to `lead-generation-crm`
+- **Epic 16 items** (share kit, paid tickets, custom domain): out of v1 — file as follow-ups, don’t sneak into 11–15 PRs
