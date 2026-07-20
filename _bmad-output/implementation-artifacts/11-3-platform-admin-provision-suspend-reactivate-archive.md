@@ -207,7 +207,7 @@ Cursor Grok 4.5 (cloud agent)
 
 ### Debug Log References
 
-- `dotnet test src/Infrastructure.Tests` — 161 passed
+- `dotnet test src/Infrastructure.Tests` — 164 passed (post-CR patches)
 - `dotnet ef migrations add AddPlatformTenantLifecycle`
 - `dotnet test src/Api.IntegrationTests --filter PlatformTenant` — 2 skipped (no local Postgres/Redis `/ready`)
 - `dotnet build src/Api` — succeeded
