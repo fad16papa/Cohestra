@@ -57,5 +57,13 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
 
         builder.Property(tenant => tenant.CreatedAt).IsRequired();
         builder.Property(tenant => tenant.UpdatedAt).IsRequired();
+
+        builder.Property(tenant => tenant.LegalAcceptedAt);
+
+        builder.Property(tenant => tenant.TermsVersion)
+            .HasMaxLength(32);
+
+        builder.Property(tenant => tenant.PrivacyVersion)
+            .HasMaxLength(32);
     }
 }

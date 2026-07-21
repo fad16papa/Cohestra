@@ -155,10 +155,14 @@ export function PricingPageContent() {
           ))}
         </dl>
 
-        <MarketingReveal delayMs={marketingRevealDelay(PRICING_FAQ.length + 2)} className="mt-12">
+        <MarketingReveal delayMs={marketingRevealDelay(PRICING_FAQ.length + 2)} className="mt-12 space-y-3">
           <Link href="/signup" className={marketingAtelierButtonClass("lagoon")}>
             Start free on Basic
           </Link>
+          <p className="text-xs text-stone">
+            Prices are in USD and may be exclusive of applicable taxes. Stripe Tax is not enabled in
+            v1.
+          </p>
         </MarketingReveal>
       </section>
 

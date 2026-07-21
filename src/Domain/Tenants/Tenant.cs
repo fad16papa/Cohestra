@@ -43,4 +43,13 @@ public sealed class Tenant
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>FR-26a: when the tenant admin accepted ToS + Privacy at self-serve signup.</summary>
+    public DateTimeOffset? LegalAcceptedAt { get; set; }
+
+    /// <summary>FR-26a: version string of Terms accepted (e.g. 2026-07-21).</summary>
+    public string? TermsVersion { get; set; }
+
+    /// <summary>FR-26a: version string of Privacy Policy accepted.</summary>
+    public string? PrivacyVersion { get; set; }
 }

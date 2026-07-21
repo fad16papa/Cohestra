@@ -10,7 +10,7 @@ export function AppFooter({ className }: AppFooterProps) {
   const pathname = usePathname();
   const year = new Date().getFullYear();
 
-  const marketingRoutes = ["/", "/pricing"];
+  const marketingRoutes = ["/", "/pricing", "/terms", "/privacy", "/signup"];
   const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
 
   if (

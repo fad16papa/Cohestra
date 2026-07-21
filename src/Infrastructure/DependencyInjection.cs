@@ -1,3 +1,4 @@
+using Cohestra.Application.Compliance;
 using Cohestra.Application.Activities;
 using Cohestra.Application.Auth;
 using Cohestra.Application.Campaigns;
@@ -12,6 +13,7 @@ using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Platform;
 using Cohestra.Infrastructure.Seed;
+using Cohestra.Infrastructure.Compliance;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Clients;
 using Cohestra.Infrastructure.Dashboard;
@@ -80,6 +82,7 @@ public static class DependencyInjection
         services.Configure<SiteLandingSeedSettings>(configuration.GetSection(SiteLandingSeedSettings.SectionName));
         services.PostConfigure<SiteLandingSeedSettings>(settings => ApplyLandingEnvironmentFallback(settings, configuration));
         services.Configure<SitePreviewSettings>(configuration.GetSection(SitePreviewSettings.SectionName));
+        services.Configure<LegalComplianceSettings>(configuration.GetSection(LegalComplianceSettings.SectionName));
 
         var sendGridSettings = configuration.GetSection(SendGridSettings.SectionName).Get<SendGridSettings>()
             ?? new SendGridSettings();
@@ -102,6 +105,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthOtpStore, RedisOtpStore>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ILegalComplianceService, LegalComplianceService>();
         services.AddScoped<ITenantMembershipService, TenantMembershipService>();
         services.AddScoped<ITenantHostResolver, TenantHostResolver>();
         services.AddScoped<CurrentTenant>();

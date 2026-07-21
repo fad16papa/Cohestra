@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { cn } from "@/lib/utils";
 
-const MARKETING_ROUTES = ["/", "/pricing"];
+const MARKETING_ROUTES = ["/", "/pricing", "/terms", "/privacy", "/signup"];
 
 export function isMarketingRoute(pathname: string | null): boolean {
   if (!pathname) {
