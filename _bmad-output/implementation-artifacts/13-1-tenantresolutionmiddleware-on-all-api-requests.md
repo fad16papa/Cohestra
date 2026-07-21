@@ -4,7 +4,7 @@ baseline_commit: f8659aa2fd51a591bc5d2fb3e40c96c950759476
 
 # Story 13.1: TenantResolutionMiddleware on all API requests
 
-Status: ready-for-dev
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -39,50 +39,50 @@ so that handlers never run ambiguously across tenants.
 
 ## Tasks / Subtasks
 
-- [ ] Ambient Tenant Context (AC: 1–2)
-  - [ ] Add Application contract e.g. `ICurrentTenant` / `ITenantContextAccessor` with: `Guid? TenantId`, `string? Slug`, `bool IsResolved`, `bool IsMarketingHost` (names flexible — keep clear)
-  - [ ] Scoped implementation set once per request by middleware; readable from Infrastructure services
-  - [ ] Do **not** trust `X-Tenant-Id` to set context (may log/ignore only)
-  - [ ] Place types under `Application/Tenants` + `Infrastructure/Tenancy/` (spine: `TenantResolutionMiddleware.cs`)
+- [x] Ambient Tenant Context (AC: 1–2)
+  - [x] Add Application contract e.g. `ICurrentTenant` / `ITenantContextAccessor` with: `Guid? TenantId`, `string? Slug`, `bool IsResolved`, `bool IsMarketingHost` (names flexible — keep clear)
+  - [x] Scoped implementation set once per request by middleware; readable from Infrastructure services
+  - [x] Do **not** trust `X-Tenant-Id` to set context (may log/ignore only)
+  - [x] Place types under `Application/Tenants` + `Infrastructure/Tenancy/` (spine: `TenantResolutionMiddleware.cs`)
 
-- [ ] `TenantResolutionMiddleware` (AC: 1–5)
-  - [ ] Register after `UseAuthentication`, before `UseAuthorization` (replace or absorb `UseTenantJwtHostAlignment`)
-  - [ ] **Reuse** `ITenantHostResolver` for slug/Host parsing (allowlist, Active-only, port/IPv6) — do not fork Host rules
-  - [ ] **Public** (`/api/v1/public/*`): require resolved Active tenant from Host → set context; failure → **404** ProblemDetails (stable `errorCode` e.g. `tenant_unresolved`)
-  - [ ] **Admin** (`/api/v1/admin/*` + `/api/v1/auth/change-password`): require authenticated user; require JWT `tenant_id` parseable non-empty Guid; Host resolve must match claim → set context; unauthenticated → **401**; mismatch/unresolved → **403** (`tenant_mismatch` / existing style)
-  - [ ] **Platform** (`/api/v1/platform/*`): do **not** require Tenant Context; leave unresolved / marketing-null; keep `PlatformAdminOnly`
-  - [ ] **System / health / openapi / anonymous auth** (login, register, refresh, …): skip tenant requirement (auth Host binding for login stays in `AuthService` as today)
-  - [ ] Preserve 12.4 lock: PlatformAdmin without `tenant_id` cannot pass **admin** paths
+- [x] `TenantResolutionMiddleware` (AC: 1–5)
+  - [x] Register after `UseAuthentication`, before `UseAuthorization` (replace or absorb `UseTenantJwtHostAlignment`)
+  - [x] **Reuse** `ITenantHostResolver` for slug/Host parsing (allowlist, Active-only, port/IPv6) — do not fork Host rules
+  - [x] **Public** (`/api/v1/public/*`): require resolved Active tenant from Host → set context; failure → **404** ProblemDetails (stable `errorCode` e.g. `tenant_unresolved`)
+  - [x] **Admin** (`/api/v1/admin/*` + `/api/v1/auth/change-password`): require authenticated user; require JWT `tenant_id` parseable non-empty Guid; Host resolve must match claim → set context; unauthenticated → **401**; mismatch/unresolved → **403** (`tenant_mismatch` / existing style)
+  - [x] **Platform** (`/api/v1/platform/*`): do **not** require Tenant Context; leave unresolved / marketing-null; keep `PlatformAdminOnly`
+  - [x] **System / health / openapi / anonymous auth** (login, register, refresh, …): skip tenant requirement (auth Host binding for login stays in `AuthService` as today)
+  - [x] Preserve 12.4 lock: PlatformAdmin without `tenant_id` cannot pass **admin** paths
 
-- [ ] Apex / marketing Host classification (AC: 5) — **locked**
-  - [ ] Distinguish **marketing apex** (`cohestra.app`, `www.cohestra.app`, and optionally bare apex without subdomain) from **local Platform 0 fallback**
-  - [ ] **Locked local behavior:** plain `localhost` / `127.0.0.1` / `::1` with `DEV_TENANT_SLUG` or default slug still resolves to an Active tenant for local/UAT ops (Platform 0 continuity)
-  - [ ] **Locked apex behavior:** production apex/www → `IsMarketingHost=true`, **no** Tenant Context for SitePage/public site APIs (do not silently serve `default` tenant SitePage on apex)
-  - [ ] Extend `ITenantHostResolver` / resolution result if needed (e.g. `MarketingOnly` outcome) rather than overloading Fail
-  - [ ] Public site endpoints under marketing host → 404 or explicit marketing-empty response **without** loading tenant SitePage (prefer 404 for `/api/v1/public/site` on apex unless product already defines otherwise — document choice in completion notes)
+- [x] Apex / marketing Host classification (AC: 5) — **locked**
+  - [x] Distinguish **marketing apex** (`cohestra.app`, `www.cohestra.app`, and optionally bare apex without subdomain) from **local Platform 0 fallback**
+  - [x] **Locked local behavior:** plain `localhost` / `127.0.0.1` / `::1` with `DEV_TENANT_SLUG` or default slug still resolves to an Active tenant for local/UAT ops (Platform 0 continuity)
+  - [x] **Locked apex behavior:** production apex/www → `IsMarketingHost=true`, **no** Tenant Context for SitePage/public site APIs (do not silently serve `default` tenant SitePage on apex)
+  - [x] Extend `ITenantHostResolver` / resolution result if needed (e.g. `MarketingOnly` outcome) rather than overloading Fail
+  - [x] Public site endpoints under marketing host → 404 or explicit marketing-empty response **without** loading tenant SitePage (prefer 404 for `/api/v1/public/site` on apex unless product already defines otherwise — document choice in completion notes)
 
-- [ ] Consume context on critical public path (AC: 1–2, 5)
-  - [ ] Update public site (and preferably public activity lookup) to read `ICurrentTenant` instead of hardcoding `TenantIds.Default` where Host-resolved tenant applies
-  - [ ] Do **not** enable EF `HasQueryFilter` (Story 13.2)
-  - [ ] Do **not** rename Redis keys to `tenant:{id}:…` (Story 13.2)
+- [x] Consume context on critical public path (AC: 1–2, 5)
+  - [x] Update public site (and preferably public activity lookup) to read `ICurrentTenant` instead of hardcoding `TenantIds.Default` where Host-resolved tenant applies
+  - [x] Do **not** enable EF `HasQueryFilter` (Story 13.2)
+  - [x] Do **not** rename Redis keys to `tenant:{id}:…` (Story 13.2)
 
-- [ ] Retire narrow alignment middleware
-  - [ ] Remove or thin-wrap `TenantJwtHostAlignmentMiddleware` so one middleware owns resolve + admin JWT align
-  - [ ] Migrate existing alignment tests to the new middleware; keep behavioral locks (match/mismatch/missing claim/platform path skip/system skip)
+- [x] Retire narrow alignment middleware
+  - [x] Remove or thin-wrap `TenantJwtHostAlignmentMiddleware` so one middleware owns resolve + admin JWT align
+  - [x] Migrate existing alignment tests to the new middleware; keep behavioral locks (match/mismatch/missing claim/platform path skip/system skip)
 
-- [ ] Tests (AC: 1–5)
-  - [ ] Unit: marketing apex → no TenantId; `{slug}.localhost` Active → context set; Suspended/unknown → fail
-  - [ ] Unit: public unresolved → 404; admin mismatch → 403; admin unauthenticated → 401
-  - [ ] Unit: PlatformAdmin on `/admin/me` without `tenant_id` → 403; `/platform/me` skips tenant require
-  - [ ] Unit/integration: public site uses Host tenant (not Default) when subdomain Host provided — extend existing harnesses
-  - [ ] Regression: Auth Host login/refresh still works; PlatformAdminOnly + TenantOperator policies unchanged
+- [x] Tests (AC: 1–5)
+  - [x] Unit: marketing apex → no TenantId; `{slug}.localhost` Active → context set; Suspended/unknown → fail
+  - [x] Unit: public unresolved → 404; admin mismatch → 403; admin unauthenticated → 401
+  - [x] Unit: PlatformAdmin on `/admin/me` without `tenant_id` → 403; `/platform/me` skips tenant require
+  - [x] Unit/integration: public site uses Host tenant (not Default) when subdomain Host provided — extend existing harnesses
+  - [x] Regression: Auth Host login/refresh still works; PlatformAdminOnly + TenantOperator policies unchanged
 
-- [ ] Out of scope (do not implement)
-  - [ ] EF global query filters / `[RequiresPlatformAdmin]` filter bypass (13.2)
-  - [ ] Redis `tenant:{id}:…` namespaces (13.2)
-  - [ ] Export/report isolation proofs as release gate (13.3)
-  - [ ] `TenantIsolation` CI trait required on main (13.4) — may add a single helper test but do not mark SM-1 done
-  - [ ] Break-glass impersonation; schema-per-tenant; Status∩Billing HTTP gate productization beyond Active-only Host resolve (already in resolver)
+- [x] Out of scope (do not implement)
+  - [x] EF global query filters / `[RequiresPlatformAdmin]` filter bypass (13.2)
+  - [x] Redis `tenant:{id}:…` namespaces (13.2)
+  - [x] Export/report isolation proofs as release gate (13.3)
+  - [x] `TenantIsolation` CI trait required on main (13.4) — may add a single helper test but do not mark SM-1 done
+  - [x] Break-glass impersonation; schema-per-tenant; Status∩Billing HTTP gate productization beyond Active-only Host resolve (already in resolver)
 
 ## Dev Notes
 
@@ -176,10 +176,42 @@ Key paths:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Cursor Grok 4.5
 
 ### Debug Log References
 
+- Infrastructure.Tests Tenancy filter: 39 passed
+- Full Infrastructure.Tests: 281 passed
+
 ### Completion Notes List
 
+- Added ambient `ICurrentTenant` / `CurrentTenant` (scoped) set by `TenantResolutionMiddleware` after auth, before authorization.
+- Absorbed `TenantJwtHostAlignmentMiddleware` into resolution middleware; obsolete shim retained for path helpers.
+- Public `/api/v1/public/*`: Host resolve required; failure/marketing → **404** `tenant_unresolved` (apex choice: 404, not empty SitePage).
+- Admin + change-password: unauthenticated → **401**; mismatch/missing claim → **403** `tenant_mismatch`; sets context on success.
+- Platform/system/health/openapi/anonymous auth skip tenant require; PlatformAdmin without `tenant_id` still blocked on admin.
+- Marketing apex (`cohestra.app` / `www`) → `TenantHostResolution.MarketingOnly()`; localhost/`DEV_TENANT_SLUG` Platform 0 fallback preserved.
+- `SitePageService.GetPublicAsync` / `GetPreviewAsync` and `ActivityService.GetPublicBySlugAsync` consume `ICurrentTenant` (no EF filters / no Redis key rename).
+- Redis global caches only used when serving `TenantIds.Default` to avoid cross-tenant bleed until 13.2.
+
 ### File List
+
+- src/Application/Tenants/ICurrentTenant.cs
+- src/Application/Tenants/ITenantHostResolver.cs
+- src/Infrastructure/Tenancy/CurrentTenant.cs
+- src/Infrastructure/Tenancy/TenantResolutionMiddleware.cs
+- src/Infrastructure/Tenancy/TenantHostResolver.cs
+- src/Infrastructure/Tenancy/TenantJwtHostAlignmentMiddleware.cs
+- src/Infrastructure/DependencyInjection.cs
+- src/Infrastructure/Site/SitePageService.cs
+- src/Infrastructure/Activities/ActivityService.cs
+- src/Api/Program.cs
+- src/Infrastructure.Tests/Tenancy/TenantResolutionMiddlewareTests.cs
+- src/Infrastructure.Tests/Tenancy/TenantJwtHostAlignmentMiddlewareTests.cs
+- src/Infrastructure.Tests/Tenancy/TenantHostResolverTests.cs
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/13-1-tenantresolutionmiddleware-on-all-api-requests.md
+
+## Change Log
+
+- 2026-07-21: Story 13.1 implemented — TenantResolutionMiddleware + ambient context + marketing apex split; status → review.

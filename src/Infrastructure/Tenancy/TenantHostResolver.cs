@@ -17,6 +17,11 @@ public sealed class TenantHostResolver(
         string? hostHeader,
         CancellationToken cancellationToken = default)
     {
+        if (IsMarketingApexHost(hostHeader))
+        {
+            return TenantHostResolution.MarketingOnly();
+        }
+
         var slug = ExtractSlug(hostHeader, configuration);
         if (string.IsNullOrWhiteSpace(slug))
         {
@@ -42,7 +47,28 @@ public sealed class TenantHostResolver(
     }
 
     /// <summary>
-    /// Host parsing: {slug}.cohestra.app, {slug}.localhost, else DEV_TENANT_SLUG or default.
+    /// Production apex/www — marketing-only (no tenant SitePage). Distinct from localhost Platform 0 fallback.
+    /// </summary>
+    public static bool IsMarketingApexHost(string? hostHeader)
+    {
+        var host = NormalizeHost(hostHeader);
+        if (host is "cohestra.app" or "www.cohestra.app")
+        {
+            return true;
+        }
+
+        if (host.EndsWith(".cohestra.app", StringComparison.Ordinal))
+        {
+            var without = host[..^".cohestra.app".Length];
+            return without is "www" or "";
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Host parsing: {slug}.cohestra.app, {slug}.localhost, else local DEV_TENANT_SLUG or default.
+    /// Marketing apex returns empty (use <see cref="IsMarketingApexHost"/> / ResolveAsync).
     /// Arbitrary multi-label hosts are rejected (empty slug → unresolved).
     /// </summary>
     public static string ExtractSlug(string? hostHeader, IConfiguration configuration)
@@ -53,13 +79,14 @@ public sealed class TenantHostResolver(
             return ResolveFallbackSlug(configuration);
         }
 
+        if (IsMarketingApexHost(hostHeader))
+        {
+            return string.Empty;
+        }
+
         if (host.EndsWith(".cohestra.app", StringComparison.Ordinal))
         {
             var without = host[..^".cohestra.app".Length];
-            if (without is "www" or "")
-            {
-                return ResolveFallbackSlug(configuration);
-            }
 
             // Single subdomain only — reject nested labels (foo.bar.cohestra.app).
             if (without.Contains('.', StringComparison.Ordinal))
@@ -86,7 +113,7 @@ public sealed class TenantHostResolver(
             return without;
         }
 
-        if (host is "localhost" or "127.0.0.1" or "::1" or "cohestra.app" or "www.cohestra.app")
+        if (host is "localhost" or "127.0.0.1" or "::1")
         {
             return ResolveFallbackSlug(configuration);
         }

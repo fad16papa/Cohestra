@@ -104,6 +104,8 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ITenantMembershipService, TenantMembershipService>();
         services.AddScoped<ITenantHostResolver, TenantHostResolver>();
+        services.AddScoped<CurrentTenant>();
+        services.AddScoped<ICurrentTenant>(sp => sp.GetRequiredService<CurrentTenant>());
         services.AddScoped<ITenantPlanGate, TenantPlanGate>();
         services.AddScoped<RequireProPlanFilter>();
         services.AddScoped<IActivityService, ActivityService>();

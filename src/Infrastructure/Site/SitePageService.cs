@@ -1,4 +1,5 @@
 using Cohestra.Application.Site;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Site;
 using Cohestra.Domain.Site;
 using Cohestra.Domain.Tenants;
@@ -17,7 +18,8 @@ public sealed class SitePageService(
     IPublishedSiteCache publishedSiteCache,
     SitePreviewTokenService previewTokenService,
     IOptions<CampaignAssetOptions> campaignAssetOptions,
-    IOptions<SiteLandingSeedSettings> landingSeedSettings) : ISitePageService
+    IOptions<SiteLandingSeedSettings> landingSeedSettings,
+    ICurrentTenant currentTenant) : ISitePageService
 {
     private const int MaxSavedTemplates = 12;
     public async Task<SitePageAdminResponse> GetAdminAsync(CancellationToken cancellationToken = default)
@@ -260,10 +262,20 @@ public sealed class SitePageService(
 
     public async Task<PublicSiteResponse?> GetPublicAsync(CancellationToken cancellationToken = default)
     {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        {
+            return null;
+        }
+
+        var tenantId = currentTenant.TenantId.Value;
         SiteSectionsDocumentDto publishedDto;
         DateTimeOffset? publishedAt;
 
-        var cached = await publishedSiteCache.GetAsync(cancellationToken);
+        // Redis published-site cache remains Platform-0 global until Story 13.2 namespaces.
+        // Only reuse cache when serving the default tenant to avoid cross-tenant bleed.
+        var cached = tenantId == TenantIds.Default
+            ? await publishedSiteCache.GetAsync(cancellationToken)
+            : null;
         if (cached is not null)
         {
             publishedDto = cached.Published;
@@ -273,7 +285,7 @@ public sealed class SitePageService(
         {
             var page = await dbContext.SitePages
                 .AsNoTracking()
-                .FirstOrDefaultAsync(item => item.TenantId == TenantIds.Default, cancellationToken);
+                .FirstOrDefaultAsync(item => item.TenantId == tenantId, cancellationToken);
 
             if (page?.PublishedSections is null || page.PublishedAt is null)
             {
@@ -283,9 +295,12 @@ public sealed class SitePageService(
             publishedDto = ToDto(page.PublishedSections);
             publishedAt = page.PublishedAt;
 
-            await publishedSiteCache.SetAsync(
-                new PublishedSiteCacheEntry(publishedDto, publishedAt.Value),
-                cancellationToken);
+            if (tenantId == TenantIds.Default)
+            {
+                await publishedSiteCache.SetAsync(
+                    new PublishedSiteCacheEntry(publishedDto, publishedAt.Value),
+                    cancellationToken);
+            }
         }
 
         var upcomingActivities = await SiteUpcomingActivitiesResolver.LoadAsync(
@@ -315,9 +330,14 @@ public sealed class SitePageService(
             return null;
         }
 
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        {
+            return null;
+        }
+
         var page = await dbContext.SitePages
             .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.TenantId == TenantIds.Default, cancellationToken);
+            .FirstOrDefaultAsync(item => item.TenantId == currentTenant.TenantId.Value, cancellationToken);
 
         if (page?.DraftSections is null)
         {

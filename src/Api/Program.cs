@@ -167,7 +167,7 @@ app.UseStatusCodePages(async statusCodeContext =>
 });
 
 app.UseAuthentication();
-app.UseTenantJwtHostAlignment();
+app.UseTenantResolution();
 app.UseAuthorization();
 
 app.MapControllers();

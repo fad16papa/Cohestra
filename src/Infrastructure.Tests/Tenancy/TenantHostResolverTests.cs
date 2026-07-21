@@ -25,10 +25,23 @@ public sealed class TenantHostResolverTests
     [InlineData("acme.example.com")]
     [InlineData("foo.bar.cohestra.app")]
     [InlineData("evil.com")]
-    public void ExtractSlug_rejects_non_allowlisted_hosts(string host)
+    [InlineData("cohestra.app")]
+    [InlineData("www.cohestra.app")]
+    public void ExtractSlug_rejects_non_allowlisted_or_marketing_hosts(string host)
     {
         var config = new ConfigurationBuilder().Build();
         Assert.Equal(string.Empty, TenantHostResolver.ExtractSlug(host, config));
+    }
+
+    [Theory]
+    [InlineData("cohestra.app")]
+    [InlineData("www.cohestra.app")]
+    [InlineData("www.cohestra.app:443")]
+    public void IsMarketingApexHost_detects_production_apex(string host)
+    {
+        Assert.True(TenantHostResolver.IsMarketingApexHost(host));
+        Assert.False(TenantHostResolver.IsMarketingApexHost("localhost"));
+        Assert.False(TenantHostResolver.IsMarketingApexHost("acme.cohestra.app"));
     }
 
     [Fact]
@@ -70,6 +83,66 @@ public sealed class TenantHostResolverTests
 
         Assert.True(result.Succeeded);
         Assert.Equal(TenantIds.Default, result.TenantId);
+        Assert.False(result.IsMarketingHost);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_active_subdomain_localhost_sets_tenant()
+    {
+        await using var db = new CohestraDbContext(
+            new DbContextOptionsBuilder<CohestraDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options);
+
+        var tenantId = Guid.CreateVersion7();
+        var now = DateTimeOffset.UtcNow;
+        db.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Slug = "acme",
+            Name = "Acme",
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        var resolver = new TenantHostResolver(db, new ConfigurationBuilder().Build());
+        var result = await resolver.ResolveAsync("acme.localhost");
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(tenantId, result.TenantId);
+        Assert.Equal("acme", result.Slug);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_marketing_apex_does_not_bind_default_tenant()
+    {
+        await using var db = new CohestraDbContext(
+            new DbContextOptionsBuilder<CohestraDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options);
+
+        var now = DateTimeOffset.UtcNow;
+        db.Tenants.Add(new Tenant
+        {
+            Id = TenantIds.Default,
+            Slug = TenantIds.DefaultSlug,
+            Name = "Default",
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        var resolver = new TenantHostResolver(db, new ConfigurationBuilder().Build());
+        var result = await resolver.ResolveAsync("cohestra.app");
+
+        Assert.False(result.Succeeded);
+        Assert.True(result.IsMarketingHost);
+        Assert.Null(result.TenantId);
     }
 
     [Fact]
@@ -97,6 +170,22 @@ public sealed class TenantHostResolverTests
         var result = await resolver.ResolveAsync("localhost");
 
         Assert.False(result.Succeeded);
+        Assert.False(result.IsMarketingHost);
         Assert.Contains("not available", result.ErrorDetail, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_unknown_slug_fails()
+    {
+        await using var db = new CohestraDbContext(
+            new DbContextOptionsBuilder<CohestraDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options);
+
+        var resolver = new TenantHostResolver(db, new ConfigurationBuilder().Build());
+        var result = await resolver.ResolveAsync("ghost.localhost");
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("Unknown", result.ErrorDetail, StringComparison.OrdinalIgnoreCase);
     }
 }

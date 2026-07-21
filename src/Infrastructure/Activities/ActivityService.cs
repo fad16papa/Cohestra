@@ -1,6 +1,8 @@
 using Cohestra.Application.Activities;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Activities;
 using Cohestra.Domain.Activities;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
@@ -14,7 +16,8 @@ public sealed class ActivityService(
     CohestraDbContext dbContext,
     IOptions<PublicWebOptions> publicWebOptions,
     IOptions<CampaignAssetOptions> campaignAssetOptions,
-    RedisPublicActivityCache publicActivityCache) : IActivityService
+    RedisPublicActivityCache publicActivityCache,
+    ICurrentTenant currentTenant) : IActivityService
 {
     private const int DefaultPageSize = 25;
     private const int MaxPageSize = 100;
@@ -339,17 +342,29 @@ public sealed class ActivityService(
             return null;
         }
 
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        {
+            return null;
+        }
+
+        var tenantId = currentTenant.TenantId.Value;
         var normalizedSlug = slug.Trim().ToLowerInvariant();
 
-        var cached = await publicActivityCache.GetAsync(normalizedSlug, cancellationToken);
-        if (cached is not null)
+        // Redis activity cache remains global until Story 13.2 — only reuse for default tenant.
+        if (tenantId == TenantIds.Default)
         {
-            return ResolvePublicResponse(cached);
+            var cached = await publicActivityCache.GetAsync(normalizedSlug, cancellationToken);
+            if (cached is not null)
+            {
+                return ResolvePublicResponse(cached);
+            }
         }
 
         var activity = await dbContext.Activities
             .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Slug == normalizedSlug, cancellationToken);
+            .FirstOrDefaultAsync(
+                item => item.Slug == normalizedSlug && item.TenantId == tenantId,
+                cancellationToken);
 
         if (activity is null)
         {
@@ -358,7 +373,7 @@ public sealed class ActivityService(
 
         var response = MapToPublicResponse(activity);
 
-        if (activity.Status == ActivityStatus.Published)
+        if (activity.Status == ActivityStatus.Published && tenantId == TenantIds.Default)
         {
             await publicActivityCache.SetAsync(normalizedSlug, response, cancellationToken);
         }
