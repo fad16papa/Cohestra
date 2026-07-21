@@ -372,7 +372,10 @@ export default function PlatformTenantDetailPage() {
                 <>
                   <button
                     type="button"
-                    disabled={busy || compPlan === tenant.plan}
+                    disabled={
+                      busy ||
+                      (compPlan === tenant.plan && tenant.billingStatus === "Free")
+                    }
                     onClick={() =>
                       void runAction(() =>
                         setPlatformTenantComplimentary(authFetch, tenant.id, {
@@ -384,7 +387,9 @@ export default function PlatformTenantDetailPage() {
                     }
                     className="min-h-11 rounded-[10px] bg-[var(--plat-lagoon)] px-4 text-sm font-semibold text-[var(--plat-lagoon-fg)] disabled:opacity-50"
                   >
-                    Update plan
+                    {compPlan === tenant.plan && tenant.billingStatus !== "Free"
+                      ? "Repair Free"
+                      : "Update plan"}
                   </button>
                   <button
                     type="button"
