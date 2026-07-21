@@ -47,7 +47,7 @@ so that Cohestra is no longer limited to a single global operator.
 - [x] Remove single-operator gate (AC: 2)
   - [x] Delete `AuthService.GetExistingOperatorAsync` and all call sites
   - [x] Rewrite `GetOnboardingStatusAsync` / `RegisterAsync` without Identity-role headcount as a workspace lock
-  - [x] **Bootstrap rule (locked for this story):** `registrationAvailable` / register accept when **default tenant has zero `TenantAdmin` memberships**; once ≥1 TenantAdmin membership exists on `default`, public `/auth/register` returns a clear “sign in instead” style error — this is **membership-scoped first bootstrap**, not a global Identity `GetUsersInRoleAsync` count. Do **not** reintroduce `GetExistingOperatorAsync`.
+  - [x] **Bootstrap rule (locked for this story):** `registrationAvailable` / register accept when **default tenant has zero confirmed `TenantAdmin` memberships** (Identity `EmailConfirmed`); membership may exist for a pending first admin without closing bootstrap. Once ≥1 confirmed TenantAdmin membership exists on `default`, public `/auth/register` returns a clear “sign in instead” style error — this is **membership-scoped first bootstrap**, not a global Identity `GetUsersInRoleAsync` count. Do **not** reintroduce `GetExistingOperatorAsync`.
   - [x] On successful Platform 0 register (first TenantAdmin on default): create Identity `TenantAdmin` role **and** `TenantMembership` on `TenantIds.Default` with `Role=TenantAdmin`
   - [x] Keep `RoleExclusivity` on register — refuse TenantAdmin if user is/would be PlatformAdmin
   - [x] Update AuthController 409 mapping if message strings change; web register/onboarding copy if needed
