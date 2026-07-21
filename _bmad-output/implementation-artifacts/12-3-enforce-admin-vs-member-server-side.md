@@ -254,3 +254,15 @@ Cursor Grok 4.5 (cloud agent)
 ### Change Log
 
 - 2026-07-21: Implement Story 12.3 Admin vs Member server-side authz + campaign Pro plan gate; mark review.
+
+### Review Findings
+
+- [ ] [Review][Patch] Plan gate missing-tenant uses distinct errorCode (not `plan_locked`) [`src/Infrastructure/Auth/TenantPlanGate.cs`]
+- [ ] [Review][Patch] Membership policies require parseable Guid `tenant_id` (not presence-only) [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
+- [ ] [Review][Patch] `GET admin/me` profile Roles include membership `"role"` claim for Members [`src/Api/Controllers/V1/AdminController.cs`]
+- [ ] [Review][Patch] Controller inventory scans all V1 admin controllers for leftover Identity `Roles=TenantAdmin` [`src/Infrastructure.Tests/Auth/TenantAuthControllerPolicyTests.cs`]
+- [ ] [Review][Patch] Assert malformed `tenant_id` fails TenantOperator / TenantAdminOnly policies [`src/Infrastructure.Tests/Auth/TenantMembershipAuthorizationTests.cs`]
+- [x] [Review][Defer] Access-token path does not re-validate TenantMembership each request — deferred, pre-existing (12.2)
+- [x] [Review][Defer] Full HTTP WebApplicationFactory Member→403 matrix — deferred; policy/filter unit coverage present; needs live stack
+- [x] [Review][Defer] Infrastructure.Tests → Api project reference for reflection — deferred; move to Api.Tests later if desired
+- [x] [Review][Defer] Assert `MapInboundClaims=false` via host boot — deferred; locked in Program.cs, no lightweight host fixture yet

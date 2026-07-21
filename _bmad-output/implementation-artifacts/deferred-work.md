@@ -1,4 +1,11 @@
 
+## Deferred from: code review of 12-3-enforce-admin-vs-member-server-side.md (2026-07-21)
+
+- Access-token path does not re-validate TenantMembership each request — pre-existing (also deferred under 12.2); refresh rechecks
+- Full HTTP WebApplicationFactory Member→403 matrix — policy/filter unit tests cover decisions; live Host+JWT pipeline needs stack
+- Infrastructure.Tests references Api.csproj for Authorize attribute reflection — optional move to Api.Tests
+- Assert `MapInboundClaims=false` / RoleClaimType via WebApplicationFactory host boot — locked in Program.cs; no lightweight fixture yet
+
 ## Deferred from: code review of 12-2-jwt-tenant-id-and-tenant-scoped-login.md (2026-07-21)
 
 - Access-token path does not re-validate TenantMembership each request — refresh rechecks; continuous revoke needs shorter TTL or Epic 13 context
