@@ -37,6 +37,8 @@ export default function PlatformTenantDetailPage() {
   const [compReason, setCompReason] = useState("");
   const busyRef = useRef(false);
   const requestIdRef = useRef(0);
+  const tenantIdRef = useRef(tenantId);
+  tenantIdRef.current = tenantId;
 
   const loadDetail = useCallback(
     async (options?: { clearTenantOnError?: boolean }) => {
@@ -78,11 +80,17 @@ export default function PlatformTenantDetailPage() {
   );
 
   useEffect(() => {
+    setTenant(null);
+    setAudits([]);
+    setError(null);
+    setLoading(true);
     setCompReason("");
     setCompPlan("Core");
     setActionError(null);
     setSuspendReason("");
     setShowSuspend(false);
+    busyRef.current = false;
+    setBusy(false);
   }, [tenantId]);
 
   useEffect(() => {
@@ -96,20 +104,29 @@ export default function PlatformTenantDetailPage() {
     if (busyRef.current) {
       return;
     }
+    const actionTenantId = tenantIdRef.current;
     busyRef.current = true;
     setBusy(true);
     setActionError(null);
     try {
       const updated = await action();
+      if (updated.id !== tenantIdRef.current || actionTenantId !== tenantIdRef.current) {
+        return;
+      }
       setTenant(updated);
       setShowSuspend(false);
       setSuspendReason("");
       await loadDetail({ clearTenantOnError: false });
     } catch (err) {
+      if (actionTenantId !== tenantIdRef.current) {
+        return;
+      }
       setActionError(err instanceof Error ? err.message : "Action failed.");
     } finally {
-      busyRef.current = false;
-      setBusy(false);
+      if (actionTenantId === tenantIdRef.current) {
+        busyRef.current = false;
+        setBusy(false);
+      }
     }
   }
 

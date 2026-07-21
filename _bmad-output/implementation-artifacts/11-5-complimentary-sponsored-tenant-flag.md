@@ -199,8 +199,8 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 
 ### Post-patch Review Findings (round 4)
 
-- [ ] [Review][Patch] On `tenantId` change: clear stale `tenant`, set `loading`, reset `busy`/`busyRef` so prior tenant cannot be mutated or painted under the new route before load completes [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
-- [ ] [Review][Patch] Ignore `runAction` success updates when `updated.id` ≠ current `tenantId` (stale in-flight action after navigation) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] On `tenantId` change: clear stale `tenant`, set `loading`, reset `busy`/`busyRef` so prior tenant cannot be mutated or painted under the new route before load completes [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] Ignore `runAction` success updates when `updated.id` ≠ current `tenantId` (stale in-flight action after navigation) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
 - [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (restated; no new deferrals)
 
 ## Dev Agent Record
@@ -254,3 +254,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Post-patch re-review round 3 — no AC violations; 1 residual patch (reset comp form on tenantId change)
 - 2026-07-21: Applied round-3 patch (reset complimentary/suspend form on tenantId change) → done
 - 2026-07-21: Post-patch re-review round 4 — no AC violations; 2 residual patches (clear stale tenant/busy on navigate; ignore stale runAction)
+- 2026-07-21: Applied round-4 patches (stale tenant clear + ignore stale runAction) → done
