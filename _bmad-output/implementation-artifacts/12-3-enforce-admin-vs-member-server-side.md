@@ -4,7 +4,7 @@ baseline_commit: e3615e154a37e8edd124966b27c3e2f9e2689b5f
 
 # Story 12.3: Enforce Admin vs Member server-side
 
-Status: done
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
