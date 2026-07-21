@@ -29,6 +29,11 @@ public interface ITenantMembershipService
 
     Task<int> CountMembershipsForUserAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    Task<TenantMembership?> GetMembershipAsync(
+        Guid userId,
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
     Task<TenantMembershipResult> EnsureMembershipAsync(
         Guid userId,
         Guid tenantId,

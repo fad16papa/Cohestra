@@ -8,10 +8,12 @@ using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Email;
 using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Tenancy;
 using Cohestra.Infrastructure.Tenants;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -74,7 +76,7 @@ public sealed class AuthServiceMembershipGuardTests
             emailConfirmed: true,
             roles: [OperatorSeeder.TenantAdminRole]);
 
-        var result = await harness.Auth.LoginAsync("orphan@test.local", "ChangeMe123!");
+        var result = await harness.Auth.LoginAsync("orphan@test.local", "ChangeMe123!", "localhost");
 
         Assert.Null(result.Tokens);
         Assert.Equal("no_tenant_membership", result.ErrorCode);
@@ -91,7 +93,7 @@ public sealed class AuthServiceMembershipGuardTests
             emailConfirmed: true,
             roles: [PlatformAdminSeeder.PlatformAdminRole]);
 
-        var result = await harness.Auth.LoginAsync("platform@test.local", "ChangeMe123!");
+        var result = await harness.Auth.LoginAsync("platform@test.local", "ChangeMe123!", "localhost");
 
         Assert.NotNull(result.Tokens);
         Assert.Null(result.ErrorCode);
@@ -145,7 +147,8 @@ public sealed class AuthServiceMembershipGuardTests
             pending.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
 
         var (tokens, error) = await harness.Auth.VerifyEmailAsync(
-            new VerifyEmailOtpRequest("pending@test.local", "123456"));
+            new VerifyEmailOtpRequest("pending@test.local", "123456"),
+            "localhost");
 
         Assert.Null(tokens);
         Assert.Contains("already has a tenant admin", error, StringComparison.OrdinalIgnoreCase);
@@ -163,15 +166,74 @@ public sealed class AuthServiceMembershipGuardTests
             roles: [OperatorSeeder.TenantAdminRole]);
 
         const string refreshToken = "orphan-refresh-token";
-        await harness.RefreshTokens.StoreAsync(refreshToken, orphan.Id, TimeSpan.FromHours(1));
+        await harness.RefreshTokens.StoreAsync(refreshToken, orphan.Id, tenantId: null, TimeSpan.FromHours(1));
 
-        var result = await harness.Auth.RefreshAsync(refreshToken);
+        var result = await harness.Auth.RefreshAsync(refreshToken, "localhost");
 
         Assert.Null(result.Tokens);
         Assert.Equal("no_tenant_membership", result.ErrorCode);
         Assert.Equal(0, harness.RefreshTokens.ConsumeCount);
         Assert.Equal(1, harness.RefreshTokens.RevokeCount);
-        Assert.Null(await harness.RefreshTokens.GetUserIdAsync(refreshToken));
+        Assert.Null(await harness.RefreshTokens.GetSessionAsync(refreshToken));
+    }
+
+    [Fact]
+    public async Task Login_binds_tenant_id_from_host_membership()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var admin = await harness.CreateUserAsync(
+            "admin@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+
+        Assert.NotNull(result.Tokens);
+        Assert.Contains(TenantIds.Default.ToString(), result.Tokens!.AccessToken, StringComparison.Ordinal);
+        Assert.Contains("TenantAdmin", result.Tokens.AccessToken, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Login_fails_when_membership_is_on_other_tenant_only()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var otherTenantId = await harness.SeedTenantAsync("other", "Other");
+        var admin = await harness.CreateUserAsync(
+            "admin@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, otherTenantId, TenantMembershipRole.TenantAdmin);
+
+        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+
+        Assert.Null(result.Tokens);
+        Assert.Equal("no_tenant_membership", result.ErrorCode);
+        Assert.Contains("not a member of this workspace", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Refresh_preserves_stored_tenant_id()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var admin = await harness.CreateUserAsync(
+            "admin@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        Assert.NotNull(login.Tokens);
+
+        var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "localhost");
+        Assert.NotNull(refreshed.Tokens);
+        Assert.Contains(TenantIds.Default.ToString(), refreshed.Tokens!.AccessToken, StringComparison.Ordinal);
     }
 
     private sealed class AuthHarness : IAsyncDisposable
@@ -217,6 +279,8 @@ public sealed class AuthServiceMembershipGuardTests
                 .AddDefaultTokenProviders();
 
             services.AddScoped<ITenantMembershipService, TenantMembershipService>();
+            services.AddScoped<ITenantHostResolver, TenantHostResolver>();
+            services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
             services.AddSingleton<IJwtTokenService>(new StubJwtTokenService());
             var refreshStore = new InMemoryRefreshTokenStore();
             services.AddSingleton<IRefreshTokenStore>(refreshStore);
@@ -258,6 +322,25 @@ public sealed class AuthServiceMembershipGuardTests
                 provider.GetRequiredService<AuthService>(),
                 provider.GetRequiredService<ITenantMembershipService>(),
                 provider.GetRequiredService<InMemoryRefreshTokenStore>());
+        }
+
+        public async Task<Guid> SeedTenantAsync(string slug, string name)
+        {
+            var db = _provider.GetRequiredService<CohestraDbContext>();
+            var id = Guid.CreateVersion7();
+            var now = DateTimeOffset.UtcNow;
+            db.Tenants.Add(new Tenant
+            {
+                Id = id,
+                Slug = slug,
+                Name = name,
+                Status = TenantStatus.Active,
+                BillingStatus = BillingStatus.Free,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            await db.SaveChangesAsync();
+            return id;
         }
 
         public async Task<ApplicationUser> CreateUserAsync(
@@ -303,13 +386,15 @@ public sealed class AuthServiceMembershipGuardTests
     {
         public (string AccessToken, int ExpiresInSeconds) CreateAccessToken(
             ApplicationUser user,
-            IList<string> roles) =>
-            ($"access-{user.Id}", 900);
+            IList<string> roles,
+            Guid? tenantId = null,
+            TenantMembershipRole? membershipRole = null) =>
+            ($"access-{user.Id}|tenant={tenantId}|role={membershipRole}", 900);
     }
 
     private sealed class InMemoryRefreshTokenStore : IRefreshTokenStore
     {
-        private readonly Dictionary<string, Guid> _tokens = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, RefreshTokenSession> _tokens = new(StringComparer.Ordinal);
 
         public int ConsumeCount { get; private set; }
 
@@ -318,25 +403,30 @@ public sealed class AuthServiceMembershipGuardTests
         public Task StoreAsync(
             string refreshToken,
             Guid userId,
+            Guid? tenantId,
             TimeSpan ttl,
             CancellationToken cancellationToken = default)
         {
-            _tokens[refreshToken] = userId;
+            _tokens[refreshToken] = new RefreshTokenSession(userId, tenantId);
             return Task.CompletedTask;
         }
 
-        public Task<Guid?> GetUserIdAsync(string refreshToken, CancellationToken cancellationToken = default) =>
-            Task.FromResult(_tokens.TryGetValue(refreshToken, out var userId) ? userId : (Guid?)null);
+        public Task<RefreshTokenSession?> GetSessionAsync(
+            string refreshToken,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(_tokens.TryGetValue(refreshToken, out var session) ? session : null);
 
-        public Task<Guid?> ConsumeAsync(string refreshToken, CancellationToken cancellationToken = default)
+        public Task<RefreshTokenSession?> ConsumeAsync(
+            string refreshToken,
+            CancellationToken cancellationToken = default)
         {
             ConsumeCount++;
-            if (!_tokens.Remove(refreshToken, out var userId))
+            if (!_tokens.Remove(refreshToken, out var session))
             {
-                return Task.FromResult<Guid?>(null);
+                return Task.FromResult<RefreshTokenSession?>(null);
             }
 
-            return Task.FromResult<Guid?>(userId);
+            return Task.FromResult<RefreshTokenSession?>(session);
         }
 
         public Task RevokeAsync(string refreshToken, CancellationToken cancellationToken = default)

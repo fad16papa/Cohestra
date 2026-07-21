@@ -4,7 +4,7 @@ baseline_commit: 5eafb559cb638fa7519979f954ff2a4149e10472
 
 # Story 12.2: JWT tenant_id and tenant-scoped login
 
-Status: ready-for-dev
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -37,65 +37,65 @@ so that my session cannot accidentally operate another workspace.
 
 ## Tasks / Subtasks
 
-- [ ] Host → tenant resolver (AC: 1–4)
-  - [ ] Add a small Infrastructure helper (e.g. `ITenantHostResolver` / `TenantHostResolver`) that maps request Host → `Tenant` (by `Slug`)
-  - [ ] **Locked Host rules:**
+- [x] Host → tenant resolver (AC: 1–4)
+  - [x] Add a small Infrastructure helper (e.g. `ITenantHostResolver` / `TenantHostResolver`) that maps request Host → `Tenant` (by `Slug`)
+  - [x] **Locked Host rules:**
     - `{slug}.cohestra.app` → slug
     - `{slug}.localhost` → slug
     - Plain `localhost` / `127.0.0.1` / apex without subdomain → `DEV_TENANT_SLUG` if set, else **`default`** (`TenantIds.DefaultSlug`) so Platform 0 local/UAT login keeps working
     - Unknown slug → treat as unresolved (login/admin alignment fail appropriately; do not invent tenants)
-  - [ ] Never set tenant context from `X-Tenant-Id` alone (ignore header for tenancy decisions)
+  - [x] Never set tenant context from `X-Tenant-Id` alone (ignore header for tenancy decisions)
 
-- [ ] Membership lookup for login (AC: 1, 2, 4)
-  - [ ] Extend `ITenantMembershipService` with `GetMembershipAsync(userId, tenantId)` (or equivalent)
-  - [ ] Login: resolve Host tenant → require membership for that tenant → mint JWT from that row
-  - [ ] Multi-membership: bind **only** to Host tenant (ignore other memberships for this session)
-  - [ ] Clear login error when no membership on resolved tenant — e.g. `errorCode = "no_tenant_membership"` (reuse/extend message to mention workspace/host)
+- [x] Membership lookup for login (AC: 1, 2, 4)
+  - [x] Extend `ITenantMembershipService` with `GetMembershipAsync(userId, tenantId)` (or equivalent)
+  - [x] Login: resolve Host tenant → require membership for that tenant → mint JWT from that row
+  - [x] Multi-membership: bind **only** to Host tenant (ignore other memberships for this session)
+  - [x] Clear login error when no membership on resolved tenant — e.g. `errorCode = "no_tenant_membership"` (reuse/extend message to mention workspace/host)
 
-- [ ] JWT claims (AC: 1)
-  - [ ] Extend `IJwtTokenService.CreateAccessToken` to accept tenant binding (`tenantId`, `TenantMembershipRole`)
-  - [ ] Emit claim **`tenant_id`** = tenant Guid string
-  - [ ] Emit claim **`role`** = membership role name (`TenantAdmin` | `TenantMember`) — architecture claim name
-  - [ ] **Preserve** existing claims: `sub`, `email`, `jti`, Identity `ClaimTypes.Role` (keeps `[Authorize(Roles = TenantAdmin)]` working until 12.3)
-  - [ ] Do **not** add `platform_admin` claim here (Story 12.4)
+- [x] JWT claims (AC: 1)
+  - [x] Extend `IJwtTokenService.CreateAccessToken` to accept tenant binding (`tenantId`, `TenantMembershipRole`)
+  - [x] Emit claim **`tenant_id`** = tenant Guid string
+  - [x] Emit claim **`role`** = membership role name (`TenantAdmin` | `TenantMember`) — architecture claim name
+  - [x] **Preserve** existing claims: `sub`, `email`, `jti`, Identity `ClaimTypes.Role` (keeps `[Authorize(Roles = TenantAdmin)]` working until 12.3)
+  - [x] Do **not** add `platform_admin` claim here (Story 12.4)
 
-- [ ] Refresh preserves `tenant_id` (AC: 1)
-  - [ ] Extend refresh token store to persist `tenantId` with the refresh token (Redis payload or paired key) — today store is userId-only
-  - [ ] On refresh: load stored `tenantId` → re-check membership still exists for that user+tenant → re-issue access token with same `tenant_id` + current membership `role`
-  - [ ] If membership gone → clear refresh + return clear orphan/membership error (**check before ConsumeAsync** — preserve 12.1 CR order)
-  - [ ] Optional Host re-alignment on refresh: if Host resolves a tenant, it must match stored `tenant_id` or reject; if Host cannot resolve (plain token refresh without Host), trust stored claim only
+- [x] Refresh preserves `tenant_id` (AC: 1)
+  - [x] Extend refresh token store to persist `tenantId` with the refresh token (Redis payload or paired key) — today store is userId-only
+  - [x] On refresh: load stored `tenantId` → re-check membership still exists for that user+tenant → re-issue access token with same `tenant_id` + current membership `role`
+  - [x] If membership gone → clear refresh + return clear orphan/membership error (**check before ConsumeAsync** — preserve 12.1 CR order)
+  - [x] Optional Host re-alignment on refresh: if Host resolves a tenant, it must match stored `tenant_id` or reject; if Host cannot resolve (plain token refresh without Host), trust stored claim only
 
-- [ ] Admin JWT ↔ Host alignment (AC: 3)
-  - [ ] Add middleware or endpoint filter for **authenticated admin** routes (not necessarily full Story 13.1 productization)
-  - [ ] **Locked behavior:**
+- [x] Admin JWT ↔ Host alignment (AC: 3)
+  - [x] Add middleware or endpoint filter for **authenticated admin** routes (not necessarily full Story 13.1 productization)
+  - [x] **Locked behavior:**
     - Requests with Identity **PlatformAdmin** role and **no** `tenant_id`: allow platform routes; do **not** require Host tenant bind for platform console
     - Requests that are tenant-scoped admin (have or need tenant context): require JWT `tenant_id`; require Host-resolved tenant Guid == claim; mismatch → 401/403
     - Missing `tenant_id` on a tenant-scoped admin call → 401/403
-  - [ ] Do **not** mark Story 13.1 done — keep resolver thin; Epic 13 owns full pipeline + EF filters
+  - [x] Do **not** mark Story 13.1 done — keep resolver thin; Epic 13 owns full pipeline + EF filters
 
-- [ ] PlatformAdmin login path (preserve 12.1)
-  - [ ] PlatformAdmin-only users continue to login **without** membership and **without** forced `tenant_id`
-  - [ ] TenantAdmin Identity users still subject to Host membership + orphan rules
-  - [ ] Preserve RoleExclusivity; do not put PlatformAdmin in `TenantMembershipRole`
+- [x] PlatformAdmin login path (preserve 12.1)
+  - [x] PlatformAdmin-only users continue to login **without** membership and **without** forced `tenant_id`
+  - [x] TenantAdmin Identity users still subject to Host membership + orphan rules
+  - [x] Preserve RoleExclusivity; do not put PlatformAdmin in `TenantMembershipRole`
 
-- [ ] Wire AuthController / IssueTokens paths (AC: 1–2)
-  - [ ] `LoginAsync` / `VerifyEmailAsync` / `RefreshAsync` receive Host (or pre-resolved tenant id) from controller via `HttpContext.Request.Host`
-  - [ ] Bootstrap register/verify on `default` still works; first confirmed admin tokens must include `tenant_id` = `TenantIds.Default`
+- [x] Wire AuthController / IssueTokens paths (AC: 1–2)
+  - [x] `LoginAsync` / `VerifyEmailAsync` / `RefreshAsync` receive Host (or pre-resolved tenant id) from controller via `HttpContext.Request.Host`
+  - [x] Bootstrap register/verify on `default` still works; first confirmed admin tokens must include `tenant_id` = `TenantIds.Default`
 
-- [ ] Tests (AC: 1–4)
-  - [ ] Unit: JwtTokenService emits `tenant_id` + membership `role`; Identity roles still present
-  - [ ] Unit/integration: login on tenant A Host with membership → claim matches A; membership on B only → login on A fails clear error
-  - [ ] Refresh preserves `tenant_id`; membership removed mid-session → refresh denied
-  - [ ] Admin request with wrong/missing `tenant_id` vs Host → rejected; `X-Tenant-Id` alone does not authorize
-  - [ ] PlatformAdmin login without membership still succeeds (no `tenant_id` required)
-  - [ ] Existing Infrastructure.Tests / integration login helpers updated for Host / default slug as needed
+- [x] Tests (AC: 1–4)
+  - [x] Unit: JwtTokenService emits `tenant_id` + membership `role`; Identity roles still present
+  - [x] Unit/integration: login on tenant A Host with membership → claim matches A; membership on B only → login on A fails clear error
+  - [x] Refresh preserves `tenant_id`; membership removed mid-session → refresh denied
+  - [x] Admin request with wrong/missing `tenant_id` vs Host → rejected; `X-Tenant-Id` alone does not authorize
+  - [x] PlatformAdmin login without membership still succeeds (no `tenant_id` required)
+  - [x] Existing Infrastructure.Tests / integration login helpers updated for Host / default slug as needed
 
-- [ ] Out of scope (do not implement)
-  - [ ] Admin vs Member endpoint matrix / replace all `[Authorize(Roles=…)]` (12.3)
-  - [ ] Distinct `platform_admin` claim hardening beyond Identity role (12.4)
-  - [ ] Full `TenantResolutionMiddleware` + EF global filters + TenantIsolation release gate (Epic 13)
-  - [ ] Tenant switcher UI; Team invite/seats (14.x)
-  - [ ] Production nginx/subdomain productization as Epic 15 deliverable (Host parsing for login/alignment is in scope; shipping public DNS is not)
+- [x] Out of scope (do not implement)
+  - [x] Admin vs Member endpoint matrix / replace all `[Authorize(Roles=…)]` (12.3)
+  - [x] Distinct `platform_admin` claim hardening beyond Identity role (12.4)
+  - [x] Full `TenantResolutionMiddleware` + EF global filters + TenantIsolation release gate (Epic 13)
+  - [x] Tenant switcher UI; Team invite/seats (14.x)
+  - [x] Production nginx/subdomain productization as Epic 15 deliverable (Host parsing for login/alignment is in scope; shipping public DNS is not)
 
 ## Dev Notes
 
@@ -193,10 +193,40 @@ Key paths:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Cursor Grok 4.5 (cloud agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- `ITenantHostResolver` / `TenantHostResolver`: Host → slug (`*.cohestra.app`, `*.localhost`, `DEV_TENANT_SLUG` / `default` fallback).
+- `GetMembershipAsync`; Host-scoped login binds JWT `tenant_id` + membership `role`.
+- Refresh store persists JSON `{userId,tenantId}` (legacy Guid still readable); orphan/membership check before Consume.
+- `TenantJwtHostAlignmentMiddleware` on authenticated tenant admin routes; PlatformAdmin-only and `/platform` skipped; `X-Tenant-Id` ignored.
+- PlatformAdmin login still works without `tenant_id`.
+- Infrastructure.Tests: **201** passed. No Epic 13 EF filters / 12.3 matrix / 12.4 platform claim.
+
 ### File List
+
+- `src/Application/Tenants/ITenantHostResolver.cs`
+- `src/Application/Tenants/ITenantMembershipService.cs`
+- `src/Application/Auth/IAuthService.cs`
+- `src/Infrastructure/Tenancy/TenantHostResolver.cs`
+- `src/Infrastructure/Tenancy/TenantJwtHostAlignmentMiddleware.cs`
+- `src/Infrastructure/Tenants/TenantMembershipService.cs`
+- `src/Infrastructure/Auth/JwtTokenService.cs`
+- `src/Infrastructure/Auth/IRefreshTokenStore.cs`
+- `src/Infrastructure/Auth/RedisRefreshTokenStore.cs`
+- `src/Infrastructure/Auth/AuthService.cs`
+- `src/Infrastructure/DependencyInjection.cs`
+- `src/Api/Controllers/V1/AuthController.cs`
+- `src/Api/Program.cs`
+- `src/Infrastructure.Tests/Auth/AuthServiceMembershipGuardTests.cs`
+- `src/Infrastructure.Tests/Auth/JwtTokenServiceTests.cs`
+- `src/Infrastructure.Tests/Tenancy/TenantHostResolverTests.cs`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+## Change Log
+
+- 2026-07-21: Story context created (ready-for-dev)
+- 2026-07-21: Implemented Host-scoped JWT tenant_id login, refresh persistence, alignment middleware → review

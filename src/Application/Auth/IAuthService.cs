@@ -6,9 +6,16 @@ public interface IAuthService
 {
     Task<OnboardingStatusResponse> GetOnboardingStatusAsync(CancellationToken cancellationToken = default);
 
-    Task<AuthLoginResult> LoginAsync(string email, string password, CancellationToken cancellationToken = default);
+    Task<AuthLoginResult> LoginAsync(
+        string email,
+        string password,
+        string? host,
+        CancellationToken cancellationToken = default);
 
-    Task<AuthLoginResult> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default);
+    Task<AuthLoginResult> RefreshAsync(
+        string refreshToken,
+        string? host,
+        CancellationToken cancellationToken = default);
 
     Task<(RegisterOperatorResponse? Response, string? Error)> RegisterAsync(
         RegisterOperatorRequest request,
@@ -16,6 +23,7 @@ public interface IAuthService
 
     Task<(AuthTokenResponse? Tokens, string? Error)> VerifyEmailAsync(
         VerifyEmailOtpRequest request,
+        string? host,
         CancellationToken cancellationToken = default);
 
     Task<(MessageResponse? Response, string? Error)> ResendOtpAsync(

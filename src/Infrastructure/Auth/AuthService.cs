@@ -27,7 +27,8 @@ public sealed class AuthService(
     IOptions<JwtSettings> jwtOptions,
     IOptions<AuthOtpSettings> otpOptions,
     IOptions<SendGridSettings> sendGridOptions,
-    ITenantMembershipService tenantMembershipService) : IAuthService
+    ITenantMembershipService tenantMembershipService,
+    ITenantHostResolver tenantHostResolver) : IAuthService
 {
     private const string BootstrapClosedMessage =
         "This workspace already has a tenant admin. Sign in instead.";
@@ -37,6 +38,9 @@ public sealed class AuthService(
 
     private const string OrphanMembershipMessage =
         "Your account is not linked to a tenant. Contact support or your platform administrator.";
+
+    private const string HostMembershipMessage =
+        "Your account is not a member of this workspace. Sign in from your tenant host.";
 
     private static readonly Regex NicknamePattern = new(
         @"^[A-Za-z0-9][A-Za-z0-9\s\-_.]{1,30}[A-Za-z0-9]$",
@@ -58,6 +62,7 @@ public sealed class AuthService(
     public async Task<AuthLoginResult> LoginAsync(
         string email,
         string password,
+        string? host,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
@@ -93,18 +98,23 @@ public sealed class AuthService(
             return InvalidCredentials();
         }
 
-        var orphanError = await GetOrphanTenantAdminErrorAsync(user, cancellationToken);
-        if (orphanError is not null)
+        var session = await ResolveSessionBindingAsync(user, host, preferredTenantId: null, cancellationToken);
+        if (session.ErrorCode is not null)
         {
-            return new AuthLoginResult(null, "no_tenant_membership", orphanError);
+            return new AuthLoginResult(null, session.ErrorCode, session.ErrorMessage);
         }
 
-        var tokens = await IssueTokensAsync(user, cancellationToken);
+        var tokens = await IssueTokensAsync(
+            user,
+            session.TenantId,
+            session.MembershipRole,
+            cancellationToken);
         return new AuthLoginResult(tokens, null, null);
     }
 
     public async Task<AuthLoginResult> RefreshAsync(
         string refreshToken,
+        string? host,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
@@ -112,33 +122,53 @@ public sealed class AuthService(
             return InvalidRefreshToken();
         }
 
-        var userId = await refreshTokenStore.GetUserIdAsync(refreshToken, cancellationToken);
-        if (userId is null)
+        var session = await refreshTokenStore.GetSessionAsync(refreshToken, cancellationToken);
+        if (session is null)
         {
             return InvalidRefreshToken();
         }
 
-        var user = await userManager.FindByIdAsync(userId.Value.ToString());
+        var user = await userManager.FindByIdAsync(session.UserId.ToString());
         if (user is null || !user.EmailConfirmed)
         {
             await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
             return InvalidRefreshToken();
         }
 
-        var orphanError = await GetOrphanTenantAdminErrorAsync(user, cancellationToken);
-        if (orphanError is not null)
+        var binding = await ResolveSessionBindingAsync(
+            user,
+            host,
+            preferredTenantId: session.TenantId,
+            cancellationToken);
+        if (binding.ErrorCode is not null)
         {
             await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
-            return new AuthLoginResult(null, "no_tenant_membership", orphanError);
+            return new AuthLoginResult(null, binding.ErrorCode, binding.ErrorMessage);
         }
 
-        var consumedUserId = await refreshTokenStore.ConsumeAsync(refreshToken, cancellationToken);
-        if (consumedUserId is null || consumedUserId != userId)
+        // Host (when resolvable) must match stored tenant_id.
+        if (session.TenantId is not null
+            && binding.TenantId is not null
+            && session.TenantId != binding.TenantId)
+        {
+            await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
+            return new AuthLoginResult(
+                null,
+                "tenant_mismatch",
+                "Refresh token tenant does not match this Host.");
+        }
+
+        var consumed = await refreshTokenStore.ConsumeAsync(refreshToken, cancellationToken);
+        if (consumed is null || consumed.UserId != session.UserId)
         {
             return InvalidRefreshToken();
         }
 
-        var tokens = await IssueTokensAsync(user, cancellationToken);
+        var tokens = await IssueTokensAsync(
+            user,
+            binding.TenantId ?? session.TenantId,
+            binding.MembershipRole,
+            cancellationToken);
         return new AuthLoginResult(tokens, null, null);
     }
 
@@ -267,6 +297,7 @@ public sealed class AuthService(
 
     public async Task<(AuthTokenResponse? Tokens, string? Error)> VerifyEmailAsync(
         VerifyEmailOtpRequest request,
+        string? host,
         CancellationToken cancellationToken = default)
     {
         var email = request.Email?.Trim() ?? string.Empty;
@@ -285,13 +316,13 @@ public sealed class AuthService(
 
         if (user.EmailConfirmed)
         {
-            var orphan = await GetOrphanTenantAdminErrorAsync(user, cancellationToken);
-            if (orphan is not null)
+            var session = await ResolveSessionBindingAsync(user, host, preferredTenantId: null, cancellationToken);
+            if (session.ErrorCode is not null)
             {
-                return (null, orphan);
+                return (null, session.ErrorMessage);
             }
 
-            return (await IssueTokensAsync(user, cancellationToken), null);
+            return (await IssueTokensAsync(user, session.TenantId, session.MembershipRole, cancellationToken), null);
         }
 
         // Another confirmed TenantAdmin already closed bootstrap — do not confirm a second admin.
@@ -318,13 +349,13 @@ public sealed class AuthService(
             return (null, "Could not verify email.");
         }
 
-        var orphanAfter = await GetOrphanTenantAdminErrorAsync(user, cancellationToken);
-        if (orphanAfter is not null)
+        var binding = await ResolveSessionBindingAsync(user, host, preferredTenantId: TenantIds.Default, cancellationToken);
+        if (binding.ErrorCode is not null)
         {
-            return (null, orphanAfter);
+            return (null, binding.ErrorMessage);
         }
 
-        return (await IssueTokensAsync(user, cancellationToken), null);
+        return (await IssueTokensAsync(user, binding.TenantId, binding.MembershipRole, cancellationToken), null);
     }
 
     public async Task<(MessageResponse? Response, string? Error)> ResendOtpAsync(
@@ -451,25 +482,70 @@ public sealed class AuthService(
     }
 
     /// <summary>
-    /// TenantAdmin Identity users must have at least one TenantMembership before tokens are issued.
-    /// PlatformAdmin users are exempt (no tenant membership required), including dual-role edge cases.
+    /// PlatformAdmin-only users may authenticate without membership/tenant_id.
+    /// Tenant-scoped users must have membership on the Host-resolved tenant (or preferredTenantId on refresh).
     /// </summary>
-    private async Task<string?> GetOrphanTenantAdminErrorAsync(
+    private async Task<SessionBinding> ResolveSessionBindingAsync(
         ApplicationUser user,
+        string? host,
+        Guid? preferredTenantId,
         CancellationToken cancellationToken)
     {
-        if (await userManager.IsInRoleAsync(user, PlatformAdminSeeder.PlatformAdminRole))
+        var isPlatformAdmin = await userManager.IsInRoleAsync(user, PlatformAdminSeeder.PlatformAdminRole);
+        var isTenantAdmin = await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole);
+
+        if (isPlatformAdmin && !isTenantAdmin)
         {
-            return null;
+            return SessionBinding.PlatformOnly();
         }
 
-        if (!await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole))
+        Guid tenantId;
+        if (preferredTenantId is not null)
         {
-            return null;
+            tenantId = preferredTenantId.Value;
+
+            if (!string.IsNullOrWhiteSpace(host))
+            {
+                var hostResolution = await tenantHostResolver.ResolveAsync(host, cancellationToken);
+                if (hostResolution.Succeeded
+                    && hostResolution.TenantId is not null
+                    && hostResolution.TenantId.Value != tenantId)
+                {
+                    return SessionBinding.Fail("tenant_mismatch", "Refresh token tenant does not match this Host.");
+                }
+            }
+        }
+        else
+        {
+            var hostResolution = await tenantHostResolver.ResolveAsync(host, cancellationToken);
+            if (!hostResolution.Succeeded || hostResolution.TenantId is null)
+            {
+                return SessionBinding.Fail(
+                    "tenant_unresolved",
+                    hostResolution.ErrorDetail ?? "Could not resolve tenant from Host.");
+            }
+
+            tenantId = hostResolution.TenantId.Value;
         }
 
-        var count = await tenantMembershipService.CountMembershipsForUserAsync(user.Id, cancellationToken);
-        return count == 0 ? OrphanMembershipMessage : null;
+        var membership = await tenantMembershipService.GetMembershipAsync(user.Id, tenantId, cancellationToken);
+        if (membership is null)
+        {
+            if (isPlatformAdmin)
+            {
+                return SessionBinding.PlatformOnly();
+            }
+
+            var anyMemberships = await tenantMembershipService.CountMembershipsForUserAsync(user.Id, cancellationToken);
+            if (isTenantAdmin && anyMemberships == 0)
+            {
+                return SessionBinding.Fail("no_tenant_membership", OrphanMembershipMessage);
+            }
+
+            return SessionBinding.Fail("no_tenant_membership", HostMembershipMessage);
+        }
+
+        return SessionBinding.ForTenant(membership.TenantId, membership.Role);
     }
 
     private async Task<string?> EnsureTenantAdminIdentityRoleAsync(
@@ -626,14 +702,20 @@ public sealed class AuthService(
 
     private async Task<AuthTokenResponse> IssueTokensAsync(
         ApplicationUser user,
+        Guid? tenantId,
+        TenantMembershipRole? membershipRole,
         CancellationToken cancellationToken)
     {
         var roles = await userManager.GetRolesAsync(user);
-        var (accessToken, expiresInSeconds) = jwtTokenService.CreateAccessToken(user, roles);
+        var (accessToken, expiresInSeconds) = jwtTokenService.CreateAccessToken(
+            user,
+            roles,
+            tenantId,
+            membershipRole);
         var refreshToken = GenerateRefreshToken();
         var refreshTtl = TimeSpan.FromHours(jwtOptions.Value.RefreshTokenHours);
 
-        await refreshTokenStore.StoreAsync(refreshToken, user.Id, refreshTtl, cancellationToken);
+        await refreshTokenStore.StoreAsync(refreshToken, user.Id, tenantId, refreshTtl, cancellationToken);
 
         return new AuthTokenResponse(accessToken, refreshToken, expiresInSeconds);
     }
@@ -680,4 +762,19 @@ public sealed class AuthService(
 
     private static string FormatIdentityErrors(IdentityResult result) =>
         result.Errors.FirstOrDefault()?.Description ?? "Request could not be completed.";
+
+    private sealed record SessionBinding(
+        Guid? TenantId,
+        TenantMembershipRole? MembershipRole,
+        string? ErrorCode,
+        string? ErrorMessage)
+    {
+        public static SessionBinding PlatformOnly() => new(null, null, null, null);
+
+        public static SessionBinding ForTenant(Guid tenantId, TenantMembershipRole role) =>
+            new(tenantId, role, null, null);
+
+        public static SessionBinding Fail(string errorCode, string message) =>
+            new(null, null, errorCode, message);
+    }
 }

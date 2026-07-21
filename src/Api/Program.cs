@@ -4,6 +4,7 @@ using Cohestra.Infrastructure;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Seed;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
@@ -161,6 +162,7 @@ app.UseStatusCodePages(async statusCodeContext =>
 });
 
 app.UseAuthentication();
+app.UseTenantJwtHostAlignment();
 app.UseAuthorization();
 
 app.MapControllers();

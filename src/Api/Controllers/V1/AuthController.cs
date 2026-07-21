@@ -60,7 +60,10 @@ public class AuthController(IAuthService authService) : ControllerBase
             return BadRequestProblem("Request body is required.");
         }
 
-        var (tokens, error) = await authService.VerifyEmailAsync(request, cancellationToken);
+        var (tokens, error) = await authService.VerifyEmailAsync(
+            request,
+            Request.Host.Value,
+            cancellationToken);
         if (tokens is null)
         {
             return BadRequestProblem(error ?? "Verification failed.");
@@ -104,7 +107,11 @@ public class AuthController(IAuthService authService) : ControllerBase
             return UnauthorizedProblem("Invalid email or password.");
         }
 
-        var result = await authService.LoginAsync(request.Email, request.Password, cancellationToken);
+        var result = await authService.LoginAsync(
+            request.Email,
+            request.Password,
+            Request.Host.Value,
+            cancellationToken);
         if (result.Tokens is null)
         {
             return UnauthorizedProblem(result.ErrorMessage ?? "Invalid email or password.", result.ErrorCode);
@@ -125,7 +132,10 @@ public class AuthController(IAuthService authService) : ControllerBase
             return UnauthorizedProblem("Invalid or expired refresh token.");
         }
 
-        var result = await authService.RefreshAsync(request.RefreshToken, cancellationToken);
+        var result = await authService.RefreshAsync(
+            request.RefreshToken,
+            Request.Host.Value,
+            cancellationToken);
         if (result.Tokens is null)
         {
             return UnauthorizedProblem(

@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -9,12 +10,23 @@ namespace Cohestra.Infrastructure.Auth;
 
 public interface IJwtTokenService
 {
-    (string AccessToken, int ExpiresInSeconds) CreateAccessToken(ApplicationUser user, IList<string> roles);
+    (string AccessToken, int ExpiresInSeconds) CreateAccessToken(
+        ApplicationUser user,
+        IList<string> roles,
+        Guid? tenantId = null,
+        TenantMembershipRole? membershipRole = null);
 }
 
 public sealed class JwtTokenService(IOptions<JwtSettings> options) : IJwtTokenService
 {
-    public (string AccessToken, int ExpiresInSeconds) CreateAccessToken(ApplicationUser user, IList<string> roles)
+    public const string TenantIdClaimType = "tenant_id";
+    public const string MembershipRoleClaimType = "role";
+
+    public (string AccessToken, int ExpiresInSeconds) CreateAccessToken(
+        ApplicationUser user,
+        IList<string> roles,
+        Guid? tenantId = null,
+        TenantMembershipRole? membershipRole = null)
     {
         var settings = options.Value;
         var expiresInSeconds = settings.AccessTokenMinutes * 60;
@@ -30,6 +42,16 @@ public sealed class JwtTokenService(IOptions<JwtSettings> options) : IJwtTokenSe
         foreach (var role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        if (tenantId is not null)
+        {
+            claims.Add(new Claim(TenantIdClaimType, tenantId.Value.ToString()));
+        }
+
+        if (membershipRole is not null)
+        {
+            claims.Add(new Claim(MembershipRoleClaimType, membershipRole.Value.ToString()));
         }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(settings.SigningKey));

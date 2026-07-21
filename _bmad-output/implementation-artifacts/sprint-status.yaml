@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-21T08:30:00Z
+# last_updated: 2026-07-21T08:45:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -178,7 +178,7 @@ development_status:
   epic-10-retrospective: optional
 
   # === Cohestra Enterprise (epics-cohestra-enterprise.md) ===
-  # Epic 12 in progress — 12.1 done; 12-2 ready-for-dev
+  # Epic 12 in progress — 12.1 done; 12-2 in review
 
   epic-11: done
   11-1-tenant-entity-with-dual-status-dials: done
@@ -190,7 +190,7 @@ development_status:
 
   epic-12: in-progress
   12-1-tenantmembership-and-remove-single-operator-gate: done
-  12-2-jwt-tenant-id-and-tenant-scoped-login: ready-for-dev
+  12-2-jwt-tenant-id-and-tenant-scoped-login: review
   12-3-enforce-admin-vs-member-server-side: backlog
   12-4-platform-admin-role-claim: backlog
   epic-12-retrospective: optional

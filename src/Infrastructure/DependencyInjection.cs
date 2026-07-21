@@ -22,6 +22,7 @@ using Cohestra.Infrastructure.Registrations;
 using Cohestra.Infrastructure.Reports;
 using Cohestra.Infrastructure.Site;
 using Cohestra.Infrastructure.Tenants;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -102,6 +103,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ITenantMembershipService, TenantMembershipService>();
+        services.AddScoped<ITenantHostResolver, TenantHostResolver>();
         services.AddScoped<IActivityService, ActivityService>();
         services.AddScoped<ICommunityService, CommunityService>();
         services.AddScoped<ICategoryService, CategoryService>();
