@@ -4,7 +4,7 @@ baseline_commit: ec86c4650d79dd1b568bb1b454597af00768cb6f
 
 # Story 11.4: Platform tenant directory and health
 
-Status: done
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -112,6 +112,19 @@ so that I can find workspaces and confirm platform readiness without exporting t
 - [x] [Review][Defer] `/ready` Unhealthy description names default tenant — deferred, intentional ops signal on anonymous readiness
 - [x] [Review][Defer] Reactivate has no confirm dialog (Suspend requires reason; Archive uses confirm) — deferred, UX polish
 - [x] [Review][Defer] `PlatformMeController` roles from JWT claims (matches `AdminController`) — deferred, pre-existing pattern
+
+### Post-patch Review Findings (2026-07-21)
+
+- [ ] [Review][Patch] Lifecycle reload clears tenant after successful action — `reload()` catches GET failures and `setTenant(null)`, so the outer “keep POST tenant” catch never helps [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [ ] [Review][Patch] Authenticated public Home/`/` hard-redirects to `/dashboard` — PlatformAdmin clicking header Home (or visiting `/`) lands in tenant shell; use `resolvePostLoginPath` [`web/components/marketing/site-landing-page.tsx`, `site-page-renderer.tsx`]
+- [ ] [Review][Patch] Seed exclusivity conflicts fail silent (`return`) — misconfigured seed emails leave intended role missing; fail closed with throw/log for hard rule [`PlatformAdminSeeder.cs`, `OperatorSeeder.cs`]
+- [ ] [Review][Patch] Align dual-role defensive path: if JWT somehow has both roles, `fetchSessionProfile` should prefer platform (matches `resolvePostLoginPath`) [`web/lib/auth-api.ts`]
+
+- [x] [Review][Defer] Role exclusivity TOCTOU / no transactional AddToRole — deferred, residual
+- [x] [Review][Defer] AuthService register exclusivity rarely hit (email unique before check) — deferred, seeders cover real collision
+- [x] [Review][Defer] JWT multi-claim same-key JSON.parse collapse — deferred; exclusive-role world makes single role typical
+- [x] [Review][Defer] Broader RoleExclusivity integration coverage on seeders — deferred, residual test gap
+- [x] [Review][Defer] DeleteAsync failure after refused assign leaves orphan user — deferred, rare
 
 ## Dev Notes
 
@@ -238,3 +251,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-20: Implemented directory API, platform/me, default-tenant ready check, platform console UI, tests → review
 - 2026-07-21: Code review findings recorded (1 decision, 9 patches, 5 deferred)
 - 2026-07-21: CR decision locked (mutually exclusive roles); all patch findings applied → done
+- 2026-07-21: Post-patch re-review — 4 residual patches, 5 deferred

@@ -1,4 +1,12 @@
 
+## Deferred from: post-patch re-review of 11-4-platform-tenant-directory-and-health (2026-07-21)
+
+- Role exclusivity TOCTOU / no transactional AddToRole — residual concurrency edge
+- AuthService register exclusivity rarely hit (email unique before check) — seeders cover real collision
+- JWT multi-claim same-key JSON.parse collapse — exclusive-role world makes single role typical
+- Broader RoleExclusivity integration coverage on seeders — residual test gap
+- DeleteAsync failure after refused assign leaves orphan user — rare
+
 ## Deferred from: code review of 11-4-platform-tenant-directory-and-health (2026-07-21)
 
 - EF `ToLower().Contains` search may be non-sargable at scale — residual perf; fine for Platform Admin directory volume
