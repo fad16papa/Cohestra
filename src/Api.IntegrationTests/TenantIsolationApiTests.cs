@@ -2,12 +2,11 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using Cohestra.Api.IntegrationTests.Infrastructure;
-using Cohestra.Contracts.Activities;
 using Cohestra.Contracts.Platform;
 using Cohestra.Contracts.Site;
 using Cohestra.Domain.Registrations;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cohestra.Api.IntegrationTests;
@@ -36,10 +35,16 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
             foreignSlug,
             foreignMarker);
 
+        var ownSlug = $"iso-a-own-{Guid.NewGuid():N}"[..20];
+        var ownActivity = await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, ownSlug);
+
         using var adminClient = Factory.CreateClient();
         // Default Host (localhost) + default operator JWT = Tenant A (Platform 0).
         var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
         IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+
+        using var ownResponse = await adminClient.GetAsync($"/api/v1/admin/activities/{ownActivity.Id}");
+        Assert.Equal(HttpStatusCode.OK, ownResponse.StatusCode);
 
         using var response = await adminClient.GetAsync($"/api/v1/admin/activities/{foreignActivity.Id}");
 
@@ -50,13 +55,6 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         var body = await response.Content.ReadAsStringAsync();
         Assert.DoesNotContain(foreignMarker, body, StringComparison.Ordinal);
         Assert.DoesNotContain(foreignSlug, body, StringComparison.Ordinal);
-
-        if (response.IsSuccessStatusCode)
-        {
-            var payload = await response.Content.ReadFromJsonAsync<ActivityResponse>(
-                IntegrationTestHelpers.JsonOptions);
-            Assert.Fail($"Cross-tenant GET must not return success. Payload id={payload?.Id}");
-        }
     }
 
     [SkippableFact]
@@ -88,6 +86,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         var site = await siteResponse.Content.ReadFromJsonAsync<PublicSiteResponse>(
             IntegrationTestHelpers.JsonOptions);
         Assert.NotNull(site);
+        Assert.Contains(site.UpcomingActivities, activity => activity.Slug == visibleSlug);
         Assert.DoesNotContain(
             site.UpcomingActivities,
             activity =>
@@ -140,6 +139,36 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
             await db.SaveChangesAsync();
         }
 
+        const string tenantAExportMarker = "TENANT_A_EXPORT_API_MARKER";
+        const string tenantARegNumber = "REG-A-API-ISOLATION-001";
+        var tenantAActivity = await IntegrationTestHelpers.SeedPublishedActivityAsync(
+            Factory.Services,
+            $"iso-a-exp-{Guid.NewGuid():N}"[..20]);
+        var tenantAClient = await IntegrationTestHelpers.SeedClientAsync(
+            Factory.Services,
+            client =>
+            {
+                client.TenantId = TenantIds.Default;
+                client.FullName = tenantAExportMarker;
+                client.Email = "alice-a@isolation-a-api.test";
+                client.NormalizedEmail = "alice-a@isolation-a-api.test";
+            });
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            db.Registrations.Add(new Registration
+            {
+                Id = Guid.NewGuid(),
+                TenantId = TenantIds.Default,
+                RegistrationNumber = tenantARegNumber,
+                ActivityId = tenantAActivity.Id,
+                ClientId = tenantAClient.Id,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+            await db.SaveChangesAsync();
+        }
+
         using var adminClient = Factory.CreateClient();
         var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
         IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
@@ -151,6 +180,8 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         exportResponse.EnsureSuccessStatusCode();
 
         var csv = Encoding.UTF8.GetString(await exportResponse.Content.ReadAsByteArrayAsync());
+        Assert.Contains(tenantAExportMarker, csv, StringComparison.Ordinal);
+        Assert.Contains(tenantARegNumber, csv, StringComparison.Ordinal);
         Assert.DoesNotContain(foreignName, csv, StringComparison.Ordinal);
         Assert.DoesNotContain(foreignEmail, csv, StringComparison.Ordinal);
         Assert.DoesNotContain("REG-B-API-ISOLATION-001", csv, StringComparison.Ordinal);

@@ -4,7 +4,7 @@ baseline_commit: 95c5ec47d63168c77b94d1f290e6c08ceba4ffd5
 
 # Story 13.4: TenantIsolation integration test gate (SM-1)
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -68,14 +68,18 @@ so that **we never ship a tenant-leak regression (SM-1 / NFR-11 / AD-10)**.
 
 ### Review Findings
 
-- [ ] [Review][Patch] CI SM-1 can pass when all `SkippableFact`s skip — require `Passed: [1-9]` and reject any `Skipped:` in TenantIsolation gate steps [`.github/workflows/ci.yml`]
-- [ ] [Review][Patch] Vacuous negatives — assert own activity GET 200, `visibleSlug` in public site, and Tenant A export marker present [`TenantIsolationApiTests.cs`]
-- [ ] [Review][Patch] Remove unreachable `IsSuccessStatusCode` branch after 403/404 assert [`TenantIsolationApiTests.cs`]
-- [ ] [Review][Patch] Zero-match canary: fail on `No test matches` / require listed count ≥ 1 rather than brittle class-name-only grep [`.github/workflows/ci.yml`]
+- [x] [Review][Patch] CI SM-1 can pass when all `SkippableFact`s skip — require `Passed: [1-9]` and reject any `Skipped:` in TenantIsolation gate steps [`.github/workflows/ci.yml`]
+- [x] [Review][Patch] Vacuous negatives — assert own activity GET 200, `visibleSlug` in public site, and Tenant A export marker present [`TenantIsolationApiTests.cs`]
+- [x] [Review][Patch] Remove unreachable `IsSuccessStatusCode` branch after 403/404 assert [`TenantIsolationApiTests.cs`]
+- [x] [Review][Patch] Zero-match canary: fail on `No test matches` / require listed count ≥ 1 rather than brittle class-name-only grep [`.github/workflows/ci.yml`]
 - [x] [Review][Defer] Host `{slug}.localhost` + Tenant B JWT helpers unused in minimum cases — deferred, AC met via default operator as A; helpers remain for later surfaces
 - [x] [Review][Defer] One-directional A→B only (no B↛A matrix) — deferred, epic minimum is A JWT ↛ B activity
 - [x] [Review][Defer] Shared IntegrationTestCollection pollution / double-run Integration then TenantIsolation — deferred, pre-existing collection pattern
 - [x] [Review][Defer] GitHub branch-protection required-check wiring — deferred, ops; workflow steps exist
+
+### Senior Developer Review (AI) — Re-review pending
+
+CR patches applied (2026-07-21): CI skip/pass guards, positive isolation asserts, dead branch removed, list-tests count canary.
 
 ## Dev Notes
 
@@ -129,7 +133,8 @@ Cursor Grok 4.5 (cloud agent)
 - Tagged Story 13.3 report/dashboard isolation tests with `Category=TenantIsolation`.
 - Extended `IntegrationTestHelpers` with Host binding, platform create-tenant, tenant admin user/membership, JWT mint, tenant-scoped activity seed, default site publish helper.
 - Added `TenantIsolationApiTests`: cross-tenant activity GET, public site / public activity isolation, report export CSV excludes B markers.
-- CI: required SM-1 steps on unit + integration jobs with zero-match failure via `--list-tests` grep.
+- CI: required SM-1 steps on unit + integration jobs; list-tests count ≥ 1 + `No test matches` guard; run must show Passed ≥ 1 and Skipped = 0.
+- CR patches: positive isolation asserts (own GET 200, visibleSlug, Tenant A export marker); removed dead branch; hardened CI skip detection.
 - README + project-context document the gate and contributor expectation.
 
 ### File List
@@ -146,6 +151,7 @@ Cursor Grok 4.5 (cloud agent)
 ## Change Log
 
 - 2026-07-21: DS 13.4 — TenantIsolation trait, API cases, CI SM-1 gate, docs; status → review.
+- 2026-07-21: CR 13.4 — applied 4 patches (CI skip/pass guards, positive asserts, list-tests canary); status → done.
 
 ## Ultimate context engineering tip
 
@@ -153,4 +159,4 @@ Story 13.4 = **make SM-1 a hard CI gate**: trait `Category=TenantIsolation`, min
 
 ### Story completion status
 
-review — implementation complete; ready for code-review.
+done — CR patches applied; Epic 13 tenant isolation complete (optional retro).
