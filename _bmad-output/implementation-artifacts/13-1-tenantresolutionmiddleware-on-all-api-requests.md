@@ -207,6 +207,8 @@ Cursor Grok 4.5
 
 ### Completion Notes List
 
+- Re-review #4 clean: no new patches; story remains done.
+
 - Re-review #3 patch applied: site-preview-v2 tokens bind tenantId; GetPreviewAsync rejects Host mismatch.
 
 - Re-review #2 patches applied: Registration.TenantId stamped from Host context; non-default SyncPublicActivityCacheAsync no-ops (no Invalidate).
@@ -256,7 +258,7 @@ Cursor Grok 4.5
 
 ### Outcome
 
-Approve (re-review #3 patch applied)
+Approve (re-review #4 clean)
 
 ### Re-review Date
 
@@ -279,7 +281,14 @@ See Tasks → Review Follow-ups (AI).
 
 Prior patches (1–4 + re-review #2) verified fixed; ACs still met. One residual patch: preview tokens are user-only; after Host-scoped `GetPreviewAsync`, a valid token can load another tenant's draft by changing Host. Bind `tenantId` in token create/validate.
 
+
+### Re-review #4 (2026-07-21)
+
+Clean — Blind Hunter, Edge Case Hunter, and Acceptance Auditor found no new medium+ issues. All ACs met; all Review[Patch] items verified (including site-preview-v2 tenant bind). Residual lows only (deferred Admin SitePage Default; optional deeper preview Host-mismatch integration test).
+
 ## Change Log
+
+- 2026-07-21: Re-review #4 clean — no new patches.
 
 - 2026-07-21: Re-review #3 patch applied — preview token tenant bind (site-preview-v2).
 
