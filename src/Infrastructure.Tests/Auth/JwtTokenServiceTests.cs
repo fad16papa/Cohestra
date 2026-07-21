@@ -73,4 +73,20 @@ public sealed class JwtTokenServiceTests
         var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
         Assert.DoesNotContain(jwt.Claims, c => c.Type == JwtTokenService.PlatformAdminClaimType);
     }
+
+    [Fact]
+    public void CreateAccessToken_omits_platform_admin_when_tenant_bind_supplied()
+    {
+        var service = CreateService();
+        var user = new ApplicationUser { Id = Guid.NewGuid(), Email = "pa-hybrid@test.local" };
+        var (token, _) = service.CreateAccessToken(
+            user,
+            [PlatformAdminSeeder.PlatformAdminRole],
+            TenantIds.Default,
+            TenantMembershipRole.TenantAdmin);
+
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        Assert.DoesNotContain(jwt.Claims, c => c.Type == JwtTokenService.PlatformAdminClaimType);
+        Assert.Contains(jwt.Claims, c => c.Type == JwtTokenService.TenantIdClaimType);
+    }
 }

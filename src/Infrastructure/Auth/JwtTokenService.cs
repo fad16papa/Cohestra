@@ -46,10 +46,11 @@ public sealed class JwtTokenService(IOptions<JwtSettings> options) : IJwtTokenSe
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
-        // Spine: platform_admin=true only for PlatformAdmin-only sessions (not when TenantAdmin Identity is present).
+        // Spine: platform_admin=true only for PlatformOnly sessions (no tenant bind).
+        // Fail-closed if TenantAdmin Identity is present or tenant claims are supplied.
         var isPlatformAdmin = roles.Contains(PlatformAdminSeeder.PlatformAdminRole, StringComparer.Ordinal);
         var isTenantAdmin = roles.Contains(OperatorSeeder.TenantAdminRole, StringComparer.Ordinal);
-        if (isPlatformAdmin && !isTenantAdmin)
+        if (isPlatformAdmin && !isTenantAdmin && tenantId is null && membershipRole is null)
         {
             claims.Add(new Claim(PlatformAdminClaimType, PlatformAdminClaimValue));
         }

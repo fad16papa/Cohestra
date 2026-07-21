@@ -4,7 +4,7 @@ baseline_commit: 526b75568aa7163ac3ed982413dcb5404a5c646b
 
 # Story 12.4: Platform Admin role claim
 
-Status: in-progress
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -179,6 +179,7 @@ Cursor Grok 4.5 (cloud agent)
 - Policy `PlatformAdminOnly` on claim; `PlatformMeController` / `PlatformTenantsController` switched from Identity Roles=.
 - Removed PlatformAdmin-only Host-alignment skip on tenant paths; `/api/v1/platform/*` path skip remains.
 - Tests: JWT claim emission, policy allow/deny, controller inventory, middleware tenant-path 403 vs platform-path skip. Infrastructure.Tests: **254** passed.
+- CR patches: PlatformOnly mint guard; Host alignment scoped to admin/change-password; PlatformAdminOnly rejects hybrid tenant_id; tests. Infrastructure.Tests: **258** passed.
 
 ### File List
 
@@ -198,12 +199,13 @@ Cursor Grok 4.5 (cloud agent)
 ### Change Log
 
 - 2026-07-21: Implement Story 12.4 platform_admin claim + PlatformAdminOnly policy; mark review.
+- 2026-07-21: Apply Story 12.4 CR patches; mark story done.
 
 ### Review Findings
 
-- [ ] [Review][Patch] Emit `platform_admin` only when `tenantId` and membership role are both null (PlatformOnly session) [`src/Infrastructure/Auth/JwtTokenService.cs`]
-- [ ] [Review][Patch] Scope Host alignment to tenant surfaces (`/api/v1/admin`, change-password) so authenticated PlatformAdmin is not 403'd on `/api/v1/system/*` [`src/Infrastructure/Tenancy/TenantJwtHostAlignmentMiddleware.cs`]
-- [ ] [Review][Patch] `PlatformAdminOnly` rejects principals that also carry `tenant_id` (no hybrid dual-plane token) [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
-- [ ] [Review][Patch] Tests: PlatformAdmin+tenantId omits claim; hybrid denied by platform policy; PlatformAdmin-only fails TenantOperator; system path not aligned [`src/Infrastructure.Tests`]
+- [x] [Review][Patch] Emit `platform_admin` only when `tenantId` and membership role are both null (PlatformOnly session) [`src/Infrastructure/Auth/JwtTokenService.cs`]
+- [x] [Review][Patch] Scope Host alignment to tenant surfaces (`/api/v1/admin`, change-password) so authenticated PlatformAdmin is not 403'd on `/api/v1/system/*` [`src/Infrastructure/Tenancy/TenantJwtHostAlignmentMiddleware.cs`]
+- [x] [Review][Patch] `PlatformAdminOnly` rejects principals that also carry `tenant_id` (no hybrid dual-plane token) [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
+- [x] [Review][Patch] Tests: PlatformAdmin+tenantId omits claim; hybrid denied by platform policy; PlatformAdmin-only fails TenantOperator; system path not aligned [`src/Infrastructure.Tests`]
 - [x] [Review][Defer] Full HTTP WebApplicationFactory tenant→403 on `/platform/*` — deferred; policy unit coverage present
 - [x] [Review][Defer] Assert `MapInboundClaims=false` via host boot — deferred (same as 12.3)

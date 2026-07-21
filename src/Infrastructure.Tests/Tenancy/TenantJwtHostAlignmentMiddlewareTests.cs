@@ -112,9 +112,37 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
     }
 
     [Fact]
+    public async Task Skips_system_path_for_platform_admin_without_tenant_id()
+    {
+        Assert.False(TenantJwtHostAlignmentMiddleware.RequiresTenantHostAlignment("/api/v1/system/info"));
+
+        var context = CreateContext(
+            "/api/v1/system/info",
+            host: "localhost",
+            authenticated: true,
+            roles: [PlatformAdminSeeder.PlatformAdminRole],
+            tenantId: null);
+
+        var called = false;
+        var middleware = new TenantJwtHostAlignmentMiddleware(_ =>
+        {
+            called = true;
+            return Task.CompletedTask;
+        });
+
+        await middleware.InvokeAsync(
+            context,
+            new StubHostResolver(TenantHostResolution.Fail("unused")));
+
+        Assert.True(called);
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode == 0 ? 200 : context.Response.StatusCode);
+    }
+
+    [Fact]
     public async Task Skips_anonymous_login_but_aligns_change_password()
     {
         Assert.True(TenantJwtHostAlignmentMiddleware.IsAnonymousAuthPath("/api/v1/auth/login"));
+        Assert.True(TenantJwtHostAlignmentMiddleware.RequiresTenantHostAlignment("/api/v1/auth/change-password"));
         Assert.False(TenantJwtHostAlignmentMiddleware.IsAnonymousAuthPath("/api/v1/auth/change-password"));
 
         var context = CreateContext(

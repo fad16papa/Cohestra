@@ -1,47 +1,29 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Cohestra.Application.Tenants;
-using Cohestra.Infrastructure.Auth;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
 namespace Cohestra.Infrastructure.Tenancy;
 
 /// <summary>
-/// Thin AD-3 alignment: authenticated tenant admin requests must have JWT tenant_id matching Host.
-/// /api/v1/platform/* skips (platform claim policy gates those routes). Does not implement full Epic 13 middleware.
-/// PlatformAdmin-only tokens do NOT skip tenant-path alignment — they cannot impersonate TenantAdmin.
+/// Thin AD-3 alignment for tenant-scoped surfaces: JWT tenant_id must match Host.
+/// Scoped to /api/v1/admin/* and change-password (not /system, /platform, public).
+/// PlatformAdmin without tenant_id cannot pass admin paths — no impersonation.
+/// Does not implement full Epic 13 middleware.
 /// </summary>
 public sealed class TenantJwtHostAlignmentMiddleware(RequestDelegate next)
 {
     public const string TenantIdClaimType = "tenant_id";
 
-    private static readonly PathString PlatformPath = new("/api/v1/platform");
-    private static readonly PathString PublicPath = new("/api/v1/public");
-
-    private static readonly HashSet<string> AnonymousAuthPaths = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "/api/v1/auth/onboarding",
-        "/api/v1/auth/login",
-        "/api/v1/auth/register",
-        "/api/v1/auth/verify-email",
-        "/api/v1/auth/resend-otp",
-        "/api/v1/auth/refresh",
-        "/api/v1/auth/forgot-password",
-        "/api/v1/auth/reset-password",
-    };
+    private static readonly PathString AdminPath = new("/api/v1/admin");
+    private static readonly PathString ChangePasswordPath = new("/api/v1/auth/change-password");
 
     public async Task InvokeAsync(HttpContext context, ITenantHostResolver hostResolver)
     {
         var path = context.Request.Path;
 
-        if (!path.StartsWithSegments("/api/v1")
-            || path.StartsWithSegments(PlatformPath)
-            || path.StartsWithSegments(PublicPath)
-            || path.StartsWithSegments("/health")
-            || path.StartsWithSegments("/ready")
-            || path.StartsWithSegments("/openapi")
-            || IsAnonymousAuthPath(path))
+        if (!RequiresTenantHostAlignment(path))
         {
             await next(context);
             return;
@@ -54,7 +36,9 @@ public sealed class TenantJwtHostAlignmentMiddleware(RequestDelegate next)
         }
 
         var tenantClaim = context.User.FindFirstValue(TenantIdClaimType);
-        if (string.IsNullOrWhiteSpace(tenantClaim) || !Guid.TryParse(tenantClaim, out var claimTenantId))
+        if (string.IsNullOrWhiteSpace(tenantClaim)
+            || !Guid.TryParse(tenantClaim, out var claimTenantId)
+            || claimTenantId == Guid.Empty)
         {
             await WriteForbiddenAsync(context, "JWT tenant_id claim is required for this resource.");
             return;
@@ -81,10 +65,23 @@ public sealed class TenantJwtHostAlignmentMiddleware(RequestDelegate next)
         await next(context);
     }
 
+    internal static bool RequiresTenantHostAlignment(PathString path) =>
+        path.StartsWithSegments(AdminPath)
+        || path.Equals(ChangePasswordPath)
+        || string.Equals(path.Value?.TrimEnd('/'), ChangePasswordPath.Value, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Legacy helper used by tests for anonymous auth path inventory.</summary>
     internal static bool IsAnonymousAuthPath(PathString path)
     {
         var value = path.Value?.TrimEnd('/') ?? string.Empty;
-        return AnonymousAuthPaths.Contains(value);
+        return value.Equals("/api/v1/auth/onboarding", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("/api/v1/auth/login", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("/api/v1/auth/register", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("/api/v1/auth/verify-email", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("/api/v1/auth/resend-otp", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("/api/v1/auth/refresh", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("/api/v1/auth/forgot-password", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("/api/v1/auth/reset-password", StringComparison.OrdinalIgnoreCase);
     }
 
     private static async Task WriteForbiddenAsync(HttpContext context, string detail)

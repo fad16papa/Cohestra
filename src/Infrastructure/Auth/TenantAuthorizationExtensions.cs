@@ -35,6 +35,9 @@ public static class TenantAuthorizationExtensions
             policy.RequireClaim(
                 JwtTokenService.PlatformAdminClaimType,
                 JwtTokenService.PlatformAdminClaimValue);
+            // No hybrid dual-plane tokens: platform claim must not ride with tenant_id.
+            policy.RequireAssertion(ctx =>
+                string.IsNullOrWhiteSpace(ctx.User.FindFirstValue(JwtTokenService.TenantIdClaimType)));
         });
 
         return options;
