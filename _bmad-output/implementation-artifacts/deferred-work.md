@@ -1,4 +1,9 @@
 
+## Deferred from: code review of 12-4-platform-admin-role-claim.md (2026-07-21)
+
+- Full HTTP WebApplicationFactory tenant JWT → 403 on `/platform/*` — policy unit coverage present; live stack optional
+- Assert `MapInboundClaims=false` via WebApplicationFactory host boot — locked in Program.cs; same deferral pattern as 12.3
+
 ## Deferred from: code review re-review of 12-3-enforce-admin-vs-member-server-side.md (2026-07-21)
 
 - Leftover Identity-role Authorize scan is Controllers.V1-namespace-scoped — sufficient while all tenant admin controllers live there
