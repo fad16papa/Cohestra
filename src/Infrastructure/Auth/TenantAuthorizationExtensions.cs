@@ -35,9 +35,8 @@ public static class TenantAuthorizationExtensions
             policy.RequireClaim(
                 JwtTokenService.PlatformAdminClaimType,
                 JwtTokenService.PlatformAdminClaimValue);
-            // No hybrid dual-plane tokens: platform claim must not ride with tenant_id.
-            policy.RequireAssertion(ctx =>
-                string.IsNullOrWhiteSpace(ctx.User.FindFirstValue(JwtTokenService.TenantIdClaimType)));
+            // No hybrid dual-plane tokens: reject any tenant_id or membership role claim.
+            policy.RequireAssertion(IsPlatformOnlyPrincipal);
         });
 
         return options;
@@ -47,5 +46,18 @@ public static class TenantAuthorizationExtensions
     {
         var raw = context.User.FindFirstValue(JwtTokenService.TenantIdClaimType);
         return Guid.TryParse(raw, out var tenantId) && tenantId != Guid.Empty;
+    }
+
+    private static bool IsPlatformOnlyPrincipal(AuthorizationHandlerContext context)
+    {
+        var hasTenantId = context.User
+            .FindAll(JwtTokenService.TenantIdClaimType)
+            .Any(c => !string.IsNullOrWhiteSpace(c.Value));
+
+        var hasMembershipRole = context.User
+            .FindAll(JwtTokenService.MembershipRoleClaimType)
+            .Any(c => !string.IsNullOrWhiteSpace(c.Value));
+
+        return !hasTenantId && !hasMembershipRole;
     }
 }

@@ -188,6 +188,41 @@ public sealed class TenantMembershipAuthorizationTests
     }
 
     [Fact]
+    public async Task PlatformAdminOnly_denies_when_whitespace_tenant_id_precedes_real_tenant_id()
+    {
+        var auth = BuildAuthorizationService();
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+            new(JwtTokenService.PlatformAdminClaimType, JwtTokenService.PlatformAdminClaimValue),
+            new(JwtTokenService.TenantIdClaimType, "   "),
+            new(JwtTokenService.TenantIdClaimType, TenantIds.Default.ToString()),
+        };
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, authenticationType: "Bearer"));
+
+        var result = await auth.AuthorizeAsync(user, null, TenantAuthPolicies.PlatformAdminOnly);
+
+        Assert.False(result.Succeeded);
+    }
+
+    [Fact]
+    public async Task PlatformAdminOnly_denies_platform_claim_with_membership_role_only()
+    {
+        var auth = BuildAuthorizationService();
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+            new(JwtTokenService.PlatformAdminClaimType, JwtTokenService.PlatformAdminClaimValue),
+            new(JwtTokenService.MembershipRoleClaimType, TenantMembershipRole.TenantMember.ToString()),
+        };
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, authenticationType: "Bearer"));
+
+        var result = await auth.AuthorizeAsync(user, null, TenantAuthPolicies.PlatformAdminOnly);
+
+        Assert.False(result.Succeeded);
+    }
+
+    [Fact]
     public async Task TenantOperator_denies_platform_admin_claim_without_membership()
     {
         var auth = BuildAuthorizationService();

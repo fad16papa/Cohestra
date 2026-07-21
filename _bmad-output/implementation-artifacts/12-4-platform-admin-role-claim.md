@@ -4,7 +4,7 @@ baseline_commit: 526b75568aa7163ac3ed982413dcb5404a5c646b
 
 # Story 12.4: Platform Admin role claim
 
-Status: in-progress
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -180,6 +180,7 @@ Cursor Grok 4.5 (cloud agent)
 - Removed PlatformAdmin-only Host-alignment skip on tenant paths; `/api/v1/platform/*` path skip remains.
 - Tests: JWT claim emission, policy allow/deny, controller inventory, middleware tenant-path 403 vs platform-path skip. Infrastructure.Tests: **254** passed.
 - CR patches: PlatformOnly mint guard; Host alignment scoped to admin/change-password; PlatformAdminOnly rejects hybrid tenant_id; tests. Infrastructure.Tests: **258** passed.
+- Re-review CR patches: PlatformAdminOnly rejects any tenant_id / membership role claims; whitespace-duplicate hybrid tests. Infrastructure.Tests: **260** passed.
 
 ### File List
 
@@ -200,6 +201,7 @@ Cursor Grok 4.5 (cloud agent)
 
 - 2026-07-21: Implement Story 12.4 platform_admin claim + PlatformAdminOnly policy; mark review.
 - 2026-07-21: Apply Story 12.4 CR patches; mark story done.
+- 2026-07-21: Apply Story 12.4 re-review CR patches; mark story done.
 
 ### Review Findings
 
@@ -212,8 +214,8 @@ Cursor Grok 4.5 (cloud agent)
 
 ### Re-review Findings (2026-07-21)
 
-- [ ] [Review][Patch] `PlatformAdminOnly` deny if **any** non-whitespace `tenant_id` claim exists (not just FindFirstValue) [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
-- [ ] [Review][Patch] `PlatformAdminOnly` also reject membership `"role"` claim (no partial dual-plane) [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
-- [ ] [Review][Patch] Unit tests for duplicate/whitespace `tenant_id` hybrid and membership+platform without tenant_id [`src/Infrastructure.Tests`]
+- [x] [Review][Patch] `PlatformAdminOnly` deny if **any** non-whitespace `tenant_id` claim exists (not just FindFirstValue) [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
+- [x] [Review][Patch] `PlatformAdminOnly` also reject membership `"role"` claim (no partial dual-plane) [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
+- [x] [Review][Patch] Unit tests for duplicate/whitespace `tenant_id` hybrid and membership+platform without tenant_id [`src/Infrastructure.Tests`]
 - [x] [Review][Defer] Identity `ClaimTypes.Role=PlatformAdmin` may still appear on mis-minted tenant sessions for leftover IsInRole callers outside Controllers.V1 — deferred; controllers use claim policy
 - [x] [Review][Defer] Host alignment allowlist shrink (`/admin` + change-password only) — intentional CR patch; revisit if new tenant-scoped routes appear outside `/admin`
