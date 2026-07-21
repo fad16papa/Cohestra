@@ -4,7 +4,7 @@ baseline_commit: f8659aa2fd51a591bc5d2fb3e40c96c950759476
 
 # Story 13.1: TenantResolutionMiddleware on all API requests
 
-Status: in-progress
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -87,10 +87,10 @@ so that handlers never run ambiguously across tenants.
 
 ### Review Follow-ups (AI)
 
-- [ ] [Review][Patch] Scope homepage upcoming activities by Host tenant [`SiteUpcomingActivitiesResolver.cs:42-49`] — `GetPublicAsync` scopes SitePage by `ICurrentTenant`, but `LoadAsync` still lists Published+ShowOnHomepage with no `TenantId` filter (cross-tenant bleed on public site).
-- [ ] [Review][Patch] Fail tenant-bound refresh on marketing apex [`AuthService.cs` ResolveSessionBinding] — `MarketingOnly` has `Succeeded=false`, so preferredTenantId refresh skips Host mismatch and can renew any tenant session from `cohestra.app`.
-- [ ] [Review][Patch] Scope public registration activity lookup by `ICurrentTenant` [`RegistrationService.cs:189-192`] — middleware sets context for `/api/v1/public/*`; slug-only Published lookup can bind another tenant's activity.
-- [ ] [Review][Patch] Do not write global public-activity Redis cache for non-default tenants [`ActivityService.SyncPublicActivityCacheAsync`] — publish/unpublish on tenant B can poison Default Host cache for shared slugs until 13.2 namespaces.
+- [x] [Review][Patch] Scope homepage upcoming activities by Host tenant [`SiteUpcomingActivitiesResolver.cs:42-49`] — `GetPublicAsync` scopes SitePage by `ICurrentTenant`, but `LoadAsync` still lists Published+ShowOnHomepage with no `TenantId` filter (cross-tenant bleed on public site).
+- [x] [Review][Patch] Fail tenant-bound refresh on marketing apex [`AuthService.cs` ResolveSessionBinding] — `MarketingOnly` has `Succeeded=false`, so preferredTenantId refresh skips Host mismatch and can renew any tenant session from `cohestra.app`.
+- [x] [Review][Patch] Scope public registration activity lookup by `ICurrentTenant` [`RegistrationService.cs:189-192`] — middleware sets context for `/api/v1/public/*`; slug-only Published lookup can bind another tenant's activity.
+- [x] [Review][Patch] Do not write global public-activity Redis cache for non-default tenants [`ActivityService.SyncPublicActivityCacheAsync`] — publish/unpublish on tenant B can poison Default Host cache for shared slugs until 13.2 namespaces.
 
 - [x] [Review][Defer] Admin SitePage still hardcodes `TenantIds.Default` while admin middleware sets ambient context — deferred, public-path scope for 13.1; admin consume in later isolation stories
 - [x] [Review][Defer] Marketing apex hostnames hardcoded to `cohestra.app`/`www` — deferred, ops/config allowlist; matches existing Host allowlist pattern
@@ -198,6 +198,8 @@ Cursor Grok 4.5
 
 ### Completion Notes List
 
+- CR patches applied (2026-07-21): upcoming activities tenant filter; MarketingOnly refresh fail; registration ICurrentTenant; non-default Redis cache invalidate-only.
+
 - Added ambient `ICurrentTenant` / `CurrentTenant` (scoped) set by `TenantResolutionMiddleware` after auth, before authorization.
 - Absorbed `TenantJwtHostAlignmentMiddleware` into resolution middleware; obsolete shim retained for path helpers.
 - Public `/api/v1/public/*`: Host resolve required; failure/marketing → **404** `tenant_unresolved` (apex choice: 404, not empty SitePage).
@@ -223,6 +225,11 @@ Cursor Grok 4.5
 - src/Infrastructure.Tests/Tenancy/TenantJwtHostAlignmentMiddlewareTests.cs
 - src/Infrastructure.Tests/Tenancy/TenantHostResolverTests.cs
 - _bmad-output/implementation-artifacts/sprint-status.yaml
+- src/Infrastructure/Site/SiteUpcomingActivitiesResolver.cs
+- src/Infrastructure/Auth/AuthService.cs
+- src/Infrastructure/Registrations/RegistrationService.cs
+- src/Infrastructure.Tests/Site/SiteUpcomingActivitiesResolverTests.cs
+- src/Infrastructure.Tests/Auth/AuthServiceMembershipGuardTests.cs
 - _bmad-output/implementation-artifacts/13-1-tenantresolutionmiddleware-on-all-api-requests.md
 
 
@@ -234,7 +241,7 @@ Cursor Grok 4.5
 
 ### Outcome
 
-Changes Requested
+Approve (patches applied)
 
 ### Summary
 
@@ -245,5 +252,7 @@ ACs and design locks for ambient context, middleware order, public 404 / admin 4
 See Tasks → Review Follow-ups (AI).
 
 ## Change Log
+
+- 2026-07-21: Addressed code review findings — 4 patch items resolved.
 
 - 2026-07-21: Story 13.1 implemented — TenantResolutionMiddleware + ambient context + marketing apex split; status → review.

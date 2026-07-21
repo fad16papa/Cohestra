@@ -307,6 +307,7 @@ public sealed class SitePageService(
             dbContext,
             publishedDto,
             campaignAssetOptions.Value.PublicApiBaseUrl,
+            tenantId,
             cancellationToken);
 
         return new PublicSiteResponse(publishedDto, publishedAt, upcomingActivities);
@@ -349,6 +350,7 @@ public sealed class SitePageService(
             dbContext,
             draftDto,
             campaignAssetOptions.Value.PublicApiBaseUrl,
+            currentTenant.TenantId.Value,
             cancellationToken);
 
         return new PublicSiteResponse(draftDto, page.DraftUpdatedAt, upcomingActivities);

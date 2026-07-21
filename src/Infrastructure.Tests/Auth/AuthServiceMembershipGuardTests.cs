@@ -258,6 +258,26 @@ public sealed class AuthServiceMembershipGuardTests
         Assert.Equal("no_tenant_membership", refreshed.ErrorCode);
     }
 
+    [Fact]
+    public async Task Refresh_denies_on_marketing_apex_host()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var admin = await harness.CreateUserAsync(
+            "admin@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        Assert.NotNull(login.Tokens);
+
+        var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "cohestra.app");
+        Assert.Null(refreshed.Tokens);
+        Assert.Equal("tenant_unresolved", refreshed.ErrorCode);
+    }
+
     private sealed class AuthHarness : IAsyncDisposable
     {
         private readonly ServiceProvider _provider;

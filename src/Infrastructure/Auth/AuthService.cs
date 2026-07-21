@@ -517,6 +517,13 @@ public sealed class AuthService(
             if (!string.IsNullOrWhiteSpace(host))
             {
                 var hostResolution = await tenantHostResolver.ResolveAsync(host, cancellationToken);
+                if (hostResolution.IsMarketingHost)
+                {
+                    return SessionBinding.Fail(
+                        "tenant_unresolved",
+                        hostResolution.ErrorDetail ?? "Marketing host has no tenant SitePage context.");
+                }
+
                 if (hostResolution.Succeeded
                     && hostResolution.TenantId is not null
                     && hostResolution.TenantId.Value != tenantId)

@@ -34,6 +34,7 @@ internal static class SiteUpcomingActivitiesResolver
         CohestraDbContext dbContext,
         SiteSectionsDocumentDto published,
         string publicApiBaseUrl,
+        Guid tenantId,
         CancellationToken cancellationToken = default)
     {
         var limit = ResolveLimit(published);
@@ -42,6 +43,7 @@ internal static class SiteUpcomingActivitiesResolver
         var activities = await dbContext.Activities
             .AsNoTracking()
             .Where(activity =>
+                activity.TenantId == tenantId &&
                 activity.Status == ActivityStatus.Published &&
                 activity.ShowOnHomepage)
             .OrderByDescending(activity => activity.UpdatedAt)

@@ -1,4 +1,5 @@
 using Cohestra.Application.Registrations;
+using Cohestra.Application.Tenants;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Registrations;
 using Cohestra.Infrastructure.Persistence;
@@ -13,6 +14,7 @@ public sealed class RegistrationService(
     ClientDeduplicationService clientDeduplicationService,
     RegistrationNumberGenerator registrationNumberGenerator,
     IRegistrationNotificationService registrationNotificationService,
+    ICurrentTenant currentTenant,
     ILogger<RegistrationService> logger) : IRegistrationService
 {
     public async Task<PublicRegistrationSubmitResult> SubmitPublicRegistrationAsync(
@@ -186,9 +188,18 @@ public sealed class RegistrationService(
     {
         var normalizedSlug = activitySlug.Trim();
 
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        {
+            return PublicRegistrationSubmitResult.NotFound();
+        }
+
+        var tenantId = currentTenant.TenantId.Value;
+
         var activity = await dbContext.Activities
             .FirstOrDefaultAsync(
-                item => item.Slug == normalizedSlug && item.Status == ActivityStatus.Published,
+                item => item.Slug == normalizedSlug
+                    && item.TenantId == tenantId
+                    && item.Status == ActivityStatus.Published,
                 cancellationToken);
 
         if (activity is null)

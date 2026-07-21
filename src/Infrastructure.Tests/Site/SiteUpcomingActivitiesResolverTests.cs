@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Cohestra.Contracts.Site;
 using Cohestra.Domain.Activities;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
@@ -66,7 +67,8 @@ public sealed class SiteUpcomingActivitiesResolverTests
         var results = await SiteUpcomingActivitiesResolver.LoadAsync(
             dbContext,
             published,
-            "http://localhost:8080");
+            "http://localhost:8080",
+            TenantIds.Default);
 
         Assert.Single(results);
         Assert.Equal("published-visible", results[0].Slug);
@@ -97,9 +99,37 @@ public sealed class SiteUpcomingActivitiesResolverTests
         var results = await SiteUpcomingActivitiesResolver.LoadAsync(
             dbContext,
             published,
-            "http://localhost:8080");
+            "http://localhost:8080",
+            TenantIds.Default);
 
         Assert.Equal(3, results.Count);
+    }
+
+    [Fact]
+    public async Task LoadAsync_ScopesToRequestedTenant()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = DateTimeOffset.UtcNow;
+        var otherTenant = Guid.CreateVersion7();
+
+        dbContext.Activities.AddRange(
+            CreateActivity("ours", ActivityStatus.Published, showOnHomepage: true, now, TenantIds.Default),
+            CreateActivity("theirs", ActivityStatus.Published, showOnHomepage: true, now, otherTenant));
+        await dbContext.SaveChangesAsync();
+
+        var published = CreatePublished(
+        [
+            CreateSection("upcoming-1", "upcomingActivities", true, """{"limit": 6}"""),
+        ]);
+
+        var results = await SiteUpcomingActivitiesResolver.LoadAsync(
+            dbContext,
+            published,
+            "http://localhost:8080",
+            TenantIds.Default);
+
+        Assert.Single(results);
+        Assert.Equal("ours", results[0].Slug);
     }
 
     private static SiteSectionsDocumentDto CreatePublished(IReadOnlyList<SiteSectionDto> sections) =>
@@ -130,10 +160,12 @@ public sealed class SiteUpcomingActivitiesResolverTests
         string slug,
         ActivityStatus status,
         bool showOnHomepage,
-        DateTimeOffset updatedAt) =>
+        DateTimeOffset updatedAt,
+        Guid? tenantId = null) =>
         new()
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId ?? TenantIds.Default,
             Name = slug,
             Slug = slug,
             Category = "Test",
