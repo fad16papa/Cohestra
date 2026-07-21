@@ -173,7 +173,7 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 
 ### Review Findings
 
-- [ ] [Review][Decision] Suspended tenants may set/clear complimentary — Spec blocks Archived + default only; Suspended currently allowed. Choose: keep allow (ops can sponsor a frozen tenant) vs reject with 409 like Archived.
+- [x] [Review][Decision] Suspended tenants may set/clear complimentary — **resolved: allow (keep current)**; Suspend remains break-glass independent of complimentary; only Archived + default blocked
 - [ ] [Review][Patch] Platform detail: allow plan reassignment while Sponsored (show plan select + update) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
 - [ ] [Review][Patch] Hide/disable complimentary controls for default Platform 0 tenant [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
 - [ ] [Review][Patch] Clear-path audit DetailsJson: include IsComplimentary before/after [`src/Infrastructure/Platform/PlatformTenantService.cs`]
@@ -226,3 +226,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Story context created (ready-for-dev)
 - 2026-07-21: Implemented IsComplimentary flag, complimentary API, platform detail control, tests → review
 - 2026-07-21: Code review findings recorded (1 decision, 6 patches, 3 deferred)
+- 2026-07-21: CR decision — Suspended tenants may set/clear complimentary (allow)
