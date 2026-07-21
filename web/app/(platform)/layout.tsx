@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 
 import { PlatformRouteGuard } from "@/components/auth/platform-route-guard";
+import { PlatformHeader } from "@/components/platform/platform-header";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -46,17 +47,7 @@ export default function PlatformRootLayout({
       style={platformSurfaceStyle}
     >
       <PlatformRouteGuard>
-        <header className="border-b border-[var(--plat-line)] bg-[var(--plat-ink)] text-[var(--plat-paper)]">
-          <div className="mx-auto flex max-w-5xl items-baseline gap-3 px-5 py-3.5 sm:px-8">
-            <p
-              className="text-lg tracking-tight"
-              style={{ fontFamily: "var(--font-plat-display), Georgia, serif" }}
-            >
-              Cohestra
-            </p>
-            <p className="text-sm text-[var(--plat-stone)]">Platform</p>
-          </div>
-        </header>
+        <PlatformHeader />
         <main className="mx-auto w-full max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
           {children}
         </main>

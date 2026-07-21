@@ -133,21 +133,44 @@ async function postAuthTokens(
   return parseAuthTokenResponse(raw);
 }
 
-/** Post-login home: PlatformAdmin-only → platform console; tenant Admin → dashboard. */
+/**
+ * Post-login home. Hard rule: PlatformAdmin and tenant Admin are mutually exclusive.
+ * PlatformAdmin → platform console; tenant Admin → operator dashboard.
+ */
 export function resolvePostLoginPath(profile: AdminProfile): string {
-  const roles = profile.roles;
-  const isPlatformAdmin = roles.includes("PlatformAdmin");
-  const isTenantAdmin = roles.includes("Admin");
-  if (isPlatformAdmin && !isTenantAdmin) {
+  if (profile.roles.includes("PlatformAdmin")) {
     return "/platform";
   }
-  if (isTenantAdmin) {
+  if (profile.roles.includes("Admin")) {
     return "/dashboard";
   }
-  if (isPlatformAdmin) {
-    return "/platform";
-  }
   return "/dashboard";
+}
+
+const ROLE_CLAIM =
+  "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+
+/** Best-effort role read from JWT payload (routing only; server still authorizes). */
+export function getRolesFromAccessToken(accessToken: string): string[] {
+  try {
+    const segment = accessToken.split(".")[1];
+    if (!segment) {
+      return [];
+    }
+    const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+    const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
+    const raw = payload.role ?? payload.roles ?? payload[ROLE_CLAIM];
+    if (typeof raw === "string") {
+      return [raw];
+    }
+    if (Array.isArray(raw)) {
+      return raw.filter((value): value is string => typeof value === "string");
+    }
+    return [];
+  } catch {
+    return [];
+  }
 }
 
 export async function loginWithPassword(
@@ -268,6 +291,19 @@ function parsePlatformProfile(raw: Record<string, unknown>): AdminProfile {
 export async function fetchSessionProfile(
   accessToken: string
 ): Promise<AdminProfile> {
+  const roles = getRolesFromAccessToken(accessToken);
+  const isPlatformAdmin = roles.includes("PlatformAdmin");
+  const isTenantAdmin = roles.includes("Admin");
+
+  if (isPlatformAdmin && !isTenantAdmin) {
+    return fetchPlatformProfile(accessToken);
+  }
+
+  if (isTenantAdmin && !isPlatformAdmin) {
+    return fetchAdminProfile(accessToken);
+  }
+
+  // Unknown / legacy token shape: try tenant admin profile, then platform on 403.
   try {
     return await fetchAdminProfile(accessToken);
   } catch (error) {

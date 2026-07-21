@@ -184,7 +184,7 @@ development_status:
   11-1-tenant-entity-with-dual-status-dials: done
   11-2-default-tenant-migration-and-tenantid-on-core-entities: done
   11-3-platform-admin-provision-suspend-reactivate-archive: done
-  11-4-platform-tenant-directory-and-health: review
+  11-4-platform-tenant-directory-and-health: done
   11-5-complimentary-sponsored-tenant-flag: backlog
   epic-11-retrospective: optional
 

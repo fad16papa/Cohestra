@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -27,37 +27,61 @@ export default function PlatformTenantDetailPage() {
   const [busy, setBusy] = useState(false);
   const [suspendReason, setSuspendReason] = useState("");
   const [showSuspend, setShowSuspend] = useState(false);
+  const busyRef = useRef(false);
+  const requestIdRef = useRef(0);
 
   const reload = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
     try {
       const detail = await getPlatformTenant(authFetch, tenantId);
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       setTenant(detail.tenant);
       setAudits(detail.recentAudits);
     } catch (err) {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       setError(err instanceof Error ? err.message : "Could not load tenant.");
       setTenant(null);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [authFetch, tenantId]);
 
   useEffect(() => {
     void reload();
+    return () => {
+      requestIdRef.current += 1;
+    };
   }, [reload]);
 
   async function runAction(action: () => Promise<TenantResponse>) {
+    if (busyRef.current) {
+      return;
+    }
+    busyRef.current = true;
     setBusy(true);
     setActionError(null);
     try {
-      await action();
+      const updated = await action();
+      setTenant(updated);
       setShowSuspend(false);
       setSuspendReason("");
-      await reload();
+      try {
+        await reload();
+      } catch {
+        // Keep POST response tenant if audit reload fails.
+      }
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Action failed.");
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }
@@ -216,19 +240,20 @@ export default function PlatformTenantDetailPage() {
           Recent audit
         </h2>
         <div className="overflow-x-auto border-y border-[var(--plat-line)]">
-          <table className="w-full min-w-[640px] border-collapse text-left text-sm">
+          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--plat-line)] text-xs uppercase tracking-[0.06em] text-[var(--plat-stone)]">
                 <th className="py-3 pr-4 font-semibold">When</th>
                 <th className="py-3 pr-4 font-semibold">Action</th>
                 <th className="py-3 pr-4 font-semibold">Actor</th>
+                <th className="py-3 pr-4 font-semibold">Tenant</th>
                 <th className="py-3 font-semibold">Reason</th>
               </tr>
             </thead>
             <tbody>
               {audits.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-6 text-[var(--plat-stone)]">
+                  <td colSpan={5} className="py-6 text-[var(--plat-stone)]">
                     No audit entries yet.
                   </td>
                 </tr>
@@ -241,6 +266,9 @@ export default function PlatformTenantDetailPage() {
                     <td className="py-3 pr-4 font-medium">{entry.action}</td>
                     <td className="py-3 pr-4 font-mono text-xs text-[var(--plat-ink-soft)]">
                       {shortId(entry.actorUserId)}
+                    </td>
+                    <td className="py-3 pr-4 font-mono text-xs text-[var(--plat-ink-soft)]">
+                      {shortId(entry.tenantId)}
                     </td>
                     <td className="py-3 text-[var(--plat-ink-soft)]">{entry.reason ?? "—"}</td>
                   </tr>

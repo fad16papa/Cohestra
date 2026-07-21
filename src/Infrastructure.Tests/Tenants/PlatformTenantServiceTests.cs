@@ -212,6 +212,14 @@ public sealed class PlatformTenantServiceTests
         var oversized = await service.ListAsync(null, 1, 500);
         Assert.Equal(3, oversized.TotalCount);
         Assert.Equal(100, oversized.PageSize);
+
+        var hugePage = await service.ListAsync(null, int.MaxValue, 100);
+        Assert.True(hugePage.Page < int.MaxValue);
+        Assert.True(hugePage.Page >= 1);
+
+        var longSearch = new string('a', 500);
+        var truncatedSearch = await service.ListAsync(longSearch, 1, 25);
+        Assert.Equal(0, truncatedSearch.TotalCount);
     }
 
     [Fact]

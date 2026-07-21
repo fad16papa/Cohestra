@@ -37,6 +37,8 @@ export default function PlatformTenantDirectoryPage() {
           return;
         }
         setError(err instanceof Error ? err.message : "Could not load tenants.");
+        setItems([]);
+        setTotalCount(0);
         setLoading(false);
       });
 

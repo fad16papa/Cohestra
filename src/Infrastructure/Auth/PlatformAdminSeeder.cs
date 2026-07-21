@@ -33,12 +33,18 @@ public static class PlatformAdminSeeder
         var existingUser = await userManager.FindByEmailAsync(seedSettings.Email);
         if (existingUser is not null)
         {
-            if (!await userManager.IsInRoleAsync(existingUser, PlatformAdminRole))
+            if (await userManager.IsInRoleAsync(existingUser, PlatformAdminRole))
             {
-                await userManager.AddToRoleAsync(existingUser, PlatformAdminRole);
-                logger.LogInformation("Added existing user {Email} to {Role}.", seedSettings.Email, PlatformAdminRole);
+                return;
             }
 
+            if (!await RoleExclusivity.CanAssignPlatformAdminAsync(userManager, existingUser, logger))
+            {
+                return;
+            }
+
+            await userManager.AddToRoleAsync(existingUser, PlatformAdminRole);
+            logger.LogInformation("Added existing user {Email} to {Role}.", seedSettings.Email, PlatformAdminRole);
             return;
         }
 
@@ -54,6 +60,13 @@ public static class PlatformAdminSeeder
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             throw new InvalidOperationException($"Failed to seed platform admin account: {errors}");
+        }
+
+        if (!await RoleExclusivity.CanAssignPlatformAdminAsync(userManager, user, logger))
+        {
+            await userManager.DeleteAsync(user);
+            throw new InvalidOperationException(
+                $"Failed to seed platform admin account: email {seedSettings.Email} conflicts with tenant Admin exclusivity.");
         }
 
         await userManager.AddToRoleAsync(user, PlatformAdminRole);

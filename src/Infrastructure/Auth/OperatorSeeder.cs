@@ -42,6 +42,18 @@ public static class OperatorSeeder
         var existingUser = await userManager.FindByEmailAsync(seedSettings.Email);
         if (existingUser is not null)
         {
+            if (await userManager.IsInRoleAsync(existingUser, AdminRole))
+            {
+                return;
+            }
+
+            if (!await RoleExclusivity.CanAssignTenantAdminAsync(userManager, existingUser, logger))
+            {
+                return;
+            }
+
+            await userManager.AddToRoleAsync(existingUser, AdminRole);
+            logger.LogInformation("Added existing user {Email} to {Role}.", seedSettings.Email, AdminRole);
             return;
         }
 
@@ -57,6 +69,13 @@ public static class OperatorSeeder
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             throw new InvalidOperationException($"Failed to seed operator account: {errors}");
+        }
+
+        if (!await RoleExclusivity.CanAssignTenantAdminAsync(userManager, user, logger))
+        {
+            await userManager.DeleteAsync(user);
+            throw new InvalidOperationException(
+                $"Failed to seed operator account: email {seedSettings.Email} conflicts with PlatformAdmin exclusivity.");
         }
 
         await userManager.AddToRoleAsync(user, AdminRole);

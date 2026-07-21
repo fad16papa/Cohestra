@@ -17,6 +17,8 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
     private const int MaxReasonLength = 1000;
     private const int DefaultPageSize = 25;
     private const int MaxPageSize = 100;
+    private const int MaxPage = 10_000;
+    private const int MaxSearchLength = 200;
     private const int DefaultAuditTake = 25;
     private const int MaxAuditTake = 50;
 
@@ -26,16 +28,28 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var normalizedPage = page < 1 ? 1 : page;
         var normalizedPageSize = pageSize < 1
             ? DefaultPageSize
             : Math.Min(pageSize, MaxPageSize);
+        var normalizedPage = page < 1 ? 1 : Math.Min(page, MaxPage);
+        // Keep Skip within Int32 range for EF providers.
+        var maxSafePage = Math.Max(1, (int.MaxValue / normalizedPageSize) - 1);
+        if (normalizedPage > maxSafePage)
+        {
+            normalizedPage = maxSafePage;
+        }
 
         var query = dbContext.Tenants.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.Trim().ToLowerInvariant();
+            var term = search.Trim();
+            if (term.Length > MaxSearchLength)
+            {
+                term = term[..MaxSearchLength];
+            }
+
+            term = term.ToLowerInvariant();
             query = query.Where(t =>
                 t.Slug.ToLower().Contains(term) ||
                 t.Name.ToLower().Contains(term));

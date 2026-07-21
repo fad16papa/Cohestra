@@ -51,7 +51,7 @@ If you also run `npm run dev` locally, stop the Compose stack first or use diffe
 |---------|-----|
 | App (via nginx) | http://localhost |
 | API health | http://localhost/health |
-| API readiness | http://localhost/ready |
+| API readiness | http://localhost/ready (anonymous; postgres + redis + Platform 0 default tenant row — fail-closed Unhealthy if `TenantIds.Default` / slug `default` is missing) |
 | OpenAPI spec (v1) | http://localhost/openapi/v1.json |
 | API v1 sample | http://localhost/api/v1/system/info |
 | Auth login | `POST http://localhost/api/v1/auth/login` |

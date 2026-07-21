@@ -215,6 +215,12 @@ public sealed class AuthService(
             await roleManager.CreateAsync(new IdentityRole<Guid>(OperatorSeeder.AdminRole));
         }
 
+        if (!await RoleExclusivity.CanAssignTenantAdminAsync(userManager, user, logger))
+        {
+            await userManager.DeleteAsync(user);
+            return (null, "This account cannot be registered as a tenant operator.");
+        }
+
         await userManager.AddToRoleAsync(user, OperatorSeeder.AdminRole);
 
         var sendErrorOnCreate = await SendOtpAsync(user.Email!, user.Nickname, OtpPurpose.EmailVerification, cancellationToken);

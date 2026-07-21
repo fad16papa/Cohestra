@@ -4,7 +4,7 @@ baseline_commit: ec86c4650d79dd1b568bb1b454597af00768cb6f
 
 # Story 11.4: Platform tenant directory and health
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -93,17 +93,19 @@ so that I can find workspaces and confirm platform readiness without exporting t
 
 ### Review Findings
 
-- [ ] [Review][Decision] Dual-role post-login destination — Users with both `PlatformAdmin` and tenant `Admin` are routed to `/dashboard` by `resolvePostLoginPath` (Admin wins). Platform console remains reachable if they navigate, but login never lands on `/platform`. Choose: (1) Admin wins (keep), (2) PlatformAdmin wins → `/platform`, or (3) prefer `/platform` when both present with a link to tenant dashboard.
+- [x] [Review][Decision] Dual-role post-login destination — **Resolved (2026-07-21):** Hard rule — a user MUST NOT hold both `PlatformAdmin` and tenant `Admin`. Platform Admin = Cohestra ops (whole-platform governance). Tenant Admin = subscribed customer only. Enforce in seeders / role assignment; simplify login routing to mutually exclusive homes (`/platform` vs `/dashboard`). No dual-role Dashboard switching.
+- [x] [Review][Patch] Enforce mutually exclusive PlatformAdmin vs Admin roles (reject/skip assigning the other; fix seeders if email collision) [`src/Infrastructure/Auth/PlatformAdminSeeder.cs`, `OperatorSeeder` / AuthService signup path as needed]
+- [x] [Review][Patch] Role-exclusive post-login + Dashboard nav (PlatformAdmin → `/platform`, Admin → `/dashboard`; sparse platform header Home + Dashboard only — no marketing mega-menu on ops console) [`web/lib/auth-api.ts`, `web/app/(platform)/layout.tsx`]
 
-- [ ] [Review][Patch] Show audit `tenantId` in detail table (AC2) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
-- [ ] [Review][Patch] Document `/ready` default-tenant fail-closed check in README (AC3) [`README.md`]
-- [ ] [Review][Patch] Clamp platform tenant search string max length [`src/Infrastructure/Platform/PlatformTenantService.cs`]
-- [ ] [Review][Patch] Clamp list `page` to avoid Skip overflow near Int32.MaxValue [`src/Infrastructure/Platform/PlatformTenantService.cs`]
-- [ ] [Review][Patch] Route session profile by JWT roles to avoid guaranteed `/admin/me` 403 for PlatformAdmin-only [`web/lib/auth-api.ts`]
-- [ ] [Review][Patch] Cancel/ignore stale tenant detail fetches on id change [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
-- [ ] [Review][Patch] Guard double-submit lifecycle actions with a ref (busy state races) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
-- [ ] [Review][Patch] On lifecycle success, apply returned tenant even if reload fails [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
-- [ ] [Review][Patch] Clear directory rows when a refetch errors (avoid stale + error) [`web/app/(platform)/platform/page.tsx`]
+- [x] [Review][Patch] Show audit `tenantId` in detail table (AC2) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] Document `/ready` default-tenant fail-closed check in README (AC3) [`README.md`]
+- [x] [Review][Patch] Clamp platform tenant search string max length [`src/Infrastructure/Platform/PlatformTenantService.cs`]
+- [x] [Review][Patch] Clamp list `page` to avoid Skip overflow near Int32.MaxValue [`src/Infrastructure/Platform/PlatformTenantService.cs`]
+- [x] [Review][Patch] Route session profile by JWT roles to avoid guaranteed `/admin/me` 403 for PlatformAdmin-only [`web/lib/auth-api.ts`]
+- [x] [Review][Patch] Cancel/ignore stale tenant detail fetches on id change [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] Guard double-submit lifecycle actions with a ref (busy state races) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] On lifecycle success, apply returned tenant even if reload fails [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] Clear directory rows when a refetch errors (avoid stale + error) [`web/app/(platform)/platform/page.tsx`]
 
 - [x] [Review][Defer] EF `ToLower().Contains` search may be non-sargable at scale [`PlatformTenantService.ListAsync`] — deferred, residual perf
 - [x] [Review][Defer] Integration coverage thin (no anonymous 401 on platform GETs; no `/ready` unhealthy when default missing) — deferred, residual test gaps
@@ -204,6 +206,7 @@ Cursor Grok 4.5 (cloud agent)
 - `/ready` stays anonymous; added fail-closed `default-tenant` ready check for `TenantIds.Default` (Unhealthy if missing). Existing postgres + redis checks unchanged.
 - Platform console under `web/app/(platform)/` with sparse Midnight Atelier-scoped surface; lifecycle actions reuse 11.3 POSTs.
 - Unit tests: 9 PlatformTenantService tests passed. Integration tests added (skippable when stack unavailable).
+- CR: Hard rule PlatformAdmin ⊥ tenant Admin enforced in seeders/signup; sparse platform header (Home + Dashboard); AC2 tenantId column; README /ready; search/page clamps; JWT-routed session profile; detail/directory race fixes.
 
 ### File List
 
@@ -223,6 +226,10 @@ Cursor Grok 4.5 (cloud agent)
 - `web/app/(platform)/layout.tsx`
 - `web/app/(platform)/platform/page.tsx`
 - `web/app/(platform)/platform/tenants/[id]/page.tsx`
+- `src/Infrastructure/Auth/RoleExclusivity.cs`
+- `src/Infrastructure.Tests/Auth/RoleExclusivityTests.cs`
+- `web/components/platform/platform-header.tsx`
+- `README.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
 ## Change Log
@@ -230,3 +237,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-20: Story context created (ready-for-dev)
 - 2026-07-20: Implemented directory API, platform/me, default-tenant ready check, platform console UI, tests → review
 - 2026-07-21: Code review findings recorded (1 decision, 9 patches, 5 deferred)
+- 2026-07-21: CR decision locked (mutually exclusive roles); all patch findings applied → done
