@@ -80,6 +80,14 @@ so that **I never receive another tenant's rows or counts (FR28 / NFR-S4)**.
 - [x] [Review][Defer] Activity/registration tenant mismatch silently drops ranking rows — deferred, data-integrity; not FR28 leakage for this story
 - [x] [Review][Defer] Campaign/community/follow-up sub-aggregates not individually asserted beyond GetReport totals — deferred, coverage expansion
 
+### Senior Developer Review (AI) — Re-review #2 (2026-07-21)
+
+**Outcome:** Approve (clean)
+
+**Layers:** Blind Hunter — no remaining substantive issues; Edge Case Hunter — `[]`; Acceptance Auditor — Clean vs ACs.
+
+**Notes:** Prior patches closed AC3/AC4 gaps. No new patch/decision findings. Low residual notes only (filter navigations already base-scoped; Redis key name `dashboard:metrics` vs AC text `stats` is brownfield/13.2, not a regression).
+
 ## Dev Notes
 
 ### Epic / PRD / Architecture anchors
