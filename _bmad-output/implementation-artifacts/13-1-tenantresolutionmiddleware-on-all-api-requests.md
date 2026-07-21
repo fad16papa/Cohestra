@@ -4,7 +4,7 @@ baseline_commit: f8659aa2fd51a591bc5d2fb3e40c96c950759476
 
 # Story 13.1: TenantResolutionMiddleware on all API requests
 
-Status: done
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -102,6 +102,9 @@ so that handlers never run ambiguously across tenants.
 - [x] [Review][Patch] Non-default `SyncPublicActivityCacheAsync` should no-op (no Invalidate) [`ActivityService.cs`] — Invalidate on shared slug thrashing Default Host Redis entry; defer full namespaces to 13.2.
 
 - [x] [Review][Defer] Client dedup `FindOrCreateAsync` still global / Default-stamped — deferred to Story 13.2 (+ explicit non-goal cross-tenant client dedup); registration TenantId stamp is the minimal 13.1 fix
+
+
+- [ ] [Review][Patch] Bind SitePage preview token to Host tenant [`SitePreviewTokenService` / `SitePageService.GetPreviewAsync`] — token payload is userId-only; Host-scoped draft load lets a valid token preview another tenant's SitePage by changing Host. Include tenantId in signed payload and reject mismatch with `ICurrentTenant`.
 
 ## Dev Notes
 
@@ -249,7 +252,7 @@ Cursor Grok 4.5
 
 ### Outcome
 
-Approve (re-review #2 patches applied)
+Changes Requested (re-review #3)
 
 ### Re-review Date
 
@@ -266,6 +269,11 @@ ACs and design locks for ambient context, middleware order, public 404 / admin 4
 ### Action Items
 
 See Tasks → Review Follow-ups (AI).
+
+
+### Re-review #3 (2026-07-21)
+
+Prior patches (1–4 + re-review #2) verified fixed; ACs still met. One residual patch: preview tokens are user-only; after Host-scoped `GetPreviewAsync`, a valid token can load another tenant's draft by changing Host. Bind `tenantId` in token create/validate.
 
 ## Change Log
 
