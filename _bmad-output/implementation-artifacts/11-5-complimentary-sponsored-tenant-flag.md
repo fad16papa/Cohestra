@@ -194,7 +194,7 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 
 ### Post-patch Review Findings (round 3)
 
-- [ ] [Review][Patch] Reset complimentary form state (`compReason` / plan defaults) when `tenantId` changes so a typed reason cannot carry across tenants [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] Reset complimentary form state (`compReason` / plan defaults) when `tenantId` changes so a typed reason cannot carry across tenants [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
 - [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (restated; no new deferrals)
 
 ## Dev Agent Record
@@ -246,3 +246,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Post-patch re-review — 4 residual patches, prior defers restated (no AC violations)
 - 2026-07-21: Applied post-patch residual patches (nullable flag, set-audit after, idempotent same-plan, plan-update test) → done
 - 2026-07-21: Post-patch re-review round 3 — no AC violations; 1 residual patch (reset comp form on tenantId change)
+- 2026-07-21: Applied round-3 patch (reset complimentary/suspend form on tenantId change) → done
