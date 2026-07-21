@@ -37,6 +37,7 @@ export default function PlatformTenantDetailPage() {
   const [compReason, setCompReason] = useState("");
   const busyRef = useRef(false);
   const requestIdRef = useRef(0);
+  const actionGenRef = useRef(0);
   const tenantIdRef = useRef(tenantId);
   tenantIdRef.current = tenantId;
 
@@ -91,6 +92,7 @@ export default function PlatformTenantDetailPage() {
     setShowSuspend(false);
     busyRef.current = false;
     setBusy(false);
+    actionGenRef.current += 1;
   }, [tenantId]);
 
   useEffect(() => {
@@ -105,25 +107,31 @@ export default function PlatformTenantDetailPage() {
       return;
     }
     const actionTenantId = tenantIdRef.current;
+    const actionGen = ++actionGenRef.current;
     busyRef.current = true;
     setBusy(true);
     setActionError(null);
     try {
       const updated = await action();
-      if (updated.id !== tenantIdRef.current || actionTenantId !== tenantIdRef.current) {
+      if (
+        actionGen !== actionGenRef.current ||
+        updated.id !== tenantIdRef.current ||
+        actionTenantId !== tenantIdRef.current
+      ) {
         return;
       }
       setTenant(updated);
       setShowSuspend(false);
       setSuspendReason("");
+      setCompReason("");
       await loadDetail({ clearTenantOnError: false });
     } catch (err) {
-      if (actionTenantId !== tenantIdRef.current) {
+      if (actionGen !== actionGenRef.current || actionTenantId !== tenantIdRef.current) {
         return;
       }
       setActionError(err instanceof Error ? err.message : "Action failed.");
     } finally {
-      if (actionTenantId === tenantIdRef.current) {
+      if (actionGen === actionGenRef.current && actionTenantId === tenantIdRef.current) {
         busyRef.current = false;
         setBusy(false);
       }
@@ -348,15 +356,13 @@ export default function PlatformTenantDetailPage() {
                   type="button"
                   disabled={busy}
                   onClick={() =>
-                    void runAction(async () => {
-                      const updated = await setPlatformTenantComplimentary(authFetch, tenant.id, {
+                    void runAction(() =>
+                      setPlatformTenantComplimentary(authFetch, tenant.id, {
                         isComplimentary: true,
                         plan: compPlan,
                         reason: compReason.trim() || undefined,
-                      });
-                      setCompReason("");
-                      return updated;
-                    })
+                      })
+                    )
                   }
                   className="min-h-11 rounded-[10px] bg-[var(--plat-lagoon)] px-4 text-sm font-semibold text-[var(--plat-lagoon-fg)] disabled:opacity-50"
                 >
@@ -368,15 +374,13 @@ export default function PlatformTenantDetailPage() {
                     type="button"
                     disabled={busy || compPlan === tenant.plan}
                     onClick={() =>
-                      void runAction(async () => {
-                        const updated = await setPlatformTenantComplimentary(authFetch, tenant.id, {
+                      void runAction(() =>
+                        setPlatformTenantComplimentary(authFetch, tenant.id, {
                           isComplimentary: true,
                           plan: compPlan,
                           reason: compReason.trim() || undefined,
-                        });
-                        setCompReason("");
-                        return updated;
-                      })
+                        })
+                      )
                     }
                     className="min-h-11 rounded-[10px] bg-[var(--plat-lagoon)] px-4 text-sm font-semibold text-[var(--plat-lagoon-fg)] disabled:opacity-50"
                   >
@@ -386,14 +390,12 @@ export default function PlatformTenantDetailPage() {
                     type="button"
                     disabled={busy}
                     onClick={() =>
-                      void runAction(async () => {
-                        const updated = await setPlatformTenantComplimentary(authFetch, tenant.id, {
+                      void runAction(() =>
+                        setPlatformTenantComplimentary(authFetch, tenant.id, {
                           isComplimentary: false,
                           reason: compReason.trim() || undefined,
-                        });
-                        setCompReason("");
-                        return updated;
-                      })
+                        })
+                      )
                     }
                     className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] px-4 text-sm font-semibold text-[var(--plat-ink)] disabled:opacity-50"
                   >
