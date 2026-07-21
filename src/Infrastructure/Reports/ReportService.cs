@@ -48,7 +48,13 @@ public sealed class ReportService(
                     client.CreatedAt <= endAt,
                 cancellationToken);
 
-        var totalLeadsAtEnd = await cohortClientIds.CountAsync(cancellationToken);
+        var totalLeadsAtEnd = await dbContext.Clients
+            .AsNoTracking()
+            .CountAsync(
+                client =>
+                    client.TenantId == tenantId &&
+                    cohortClientIds.Contains(client.Id),
+                cancellationToken);
 
         var totalLeadsBeforePeriod = await dbContext.Clients
             .AsNoTracking()
@@ -151,6 +157,9 @@ public sealed class ReportService(
                 query,
                 startAt,
                 endAt)
+            .Where(registration =>
+                registration.Client.TenantId == tenantId &&
+                registration.Activity.TenantId == tenantId)
             .OrderByDescending(registration => registration.CreatedAt)
             .Select(registration => new ReportCsvRegistrationRow(
                 registration.RegistrationNumber,
@@ -404,9 +413,10 @@ public sealed class ReportService(
                     cohortClientIds.Contains(client.Id) &&
                     (client.LeadStatus != LeadStatus.New ||
                      client.TimelineEvents.Any(timelineEvent =>
-                         timelineEvent.EventType == ClientTimelineEventType.EmailCampaignSent ||
+                         timelineEvent.TenantId == tenantId &&
+                         (timelineEvent.EventType == ClientTimelineEventType.EmailCampaignSent ||
                          timelineEvent.EventType == ClientTimelineEventType.WhatsAppInitiated ||
-                         timelineEvent.EventType == ClientTimelineEventType.WhatsAppFollowUpRecorded)),
+                         timelineEvent.EventType == ClientTimelineEventType.WhatsAppFollowUpRecorded))),
                 cancellationToken);
 
         var coveragePercent = cohortTotal == 0

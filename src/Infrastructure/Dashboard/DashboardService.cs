@@ -52,6 +52,7 @@ public sealed class DashboardService(
                 client =>
                     client.TenantId == tenantId &&
                     client.Registrations.Any(registration =>
+                        registration.TenantId == tenantId &&
                         registration.CreatedAt >= periodStart),
                 cancellationToken);
 
@@ -70,9 +71,10 @@ public sealed class DashboardService(
                     client.TenantId == tenantId &&
                     (client.LeadStatus != LeadStatus.New ||
                     client.TimelineEvents.Any(timelineEvent =>
-                        timelineEvent.EventType == ClientTimelineEventType.EmailCampaignSent ||
+                        timelineEvent.TenantId == tenantId &&
+                        (timelineEvent.EventType == ClientTimelineEventType.EmailCampaignSent ||
                         timelineEvent.EventType == ClientTimelineEventType.WhatsAppInitiated ||
-                        timelineEvent.EventType == ClientTimelineEventType.WhatsAppFollowUpRecorded)),
+                        timelineEvent.EventType == ClientTimelineEventType.WhatsAppFollowUpRecorded))),
                 cancellationToken);
 
         var followUpCoveragePercent = totalLeads == 0

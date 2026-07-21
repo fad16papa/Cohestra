@@ -4,7 +4,7 @@ baseline_commit: 868480d60b94da5050863b571ae4ee4783821055
 
 # Story 13.3: Export and report queries always filter by TenantId
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -72,10 +72,10 @@ so that **I never receive another tenant's rows or counts (FR28 / NFR-S4)**.
 
 ### Review Findings
 
-- [ ] [Review][Patch] Nested collection predicates omit TenantId — Dashboard `Registrations.Any` / `TimelineEvents.Any` and Report `TimelineEvents.Any` lack child `TenantId == ambient` (AC3 belt-and-suspenders) [`DashboardService.cs`, `ReportService.cs`]
-- [ ] [Review][Patch] CSV projection joins Client/Activity without navigation TenantId predicates [`ReportService.cs` ExportReportCsvAsync Select]
-- [ ] [Review][Patch] `totalLeadsAtEnd` counts cohort IDs without `Clients.TenantId` filter [`ReportService.cs`]
-- [ ] [Review][Patch] Fail-closed test covers unresolved only — add resolved-`Guid.Empty` case for Report + Dashboard [`ReportDashboardTenantIsolationTests.cs`]
+- [x] [Review][Patch] Nested collection predicates omit TenantId — Dashboard `Registrations.Any` / `TimelineEvents.Any` and Report `TimelineEvents.Any` lack child `TenantId == ambient` (AC3 belt-and-suspenders) [`DashboardService.cs`, `ReportService.cs`]
+- [x] [Review][Patch] CSV projection joins Client/Activity without navigation TenantId predicates [`ReportService.cs` ExportReportCsvAsync Select]
+- [x] [Review][Patch] `totalLeadsAtEnd` counts cohort IDs without `Clients.TenantId` filter [`ReportService.cs`]
+- [x] [Review][Patch] Fail-closed test covers unresolved only — add resolved-`Guid.Empty` case for Report + Dashboard [`ReportDashboardTenantIsolationTests.cs`]
 - [x] [Review][Defer] InMemory dual-tenant isolation may overstate vs SQL/global-filter production — deferred, pre-existing 13.2 test pattern
 - [x] [Review][Defer] Activity/registration tenant mismatch silently drops ranking rows — deferred, data-integrity; not FR28 leakage for this story
 - [x] [Review][Defer] Campaign/community/follow-up sub-aggregates not individually asserted beyond GetReport totals — deferred, coverage expansion
@@ -150,7 +150,7 @@ Cursor Grok 4.5 (cloud agent)
 
 ### Debug Log References
 
-- Full `Infrastructure.Tests`: 298 passed (includes 5 new Story 13.3 isolation tests)
+- Full `Infrastructure.Tests`: 300 passed (includes 7 Story 13.3 isolation tests after CR patches)
 
 ### Completion Notes List
 
@@ -159,7 +159,8 @@ Cursor Grok 4.5 (cloud agent)
 - Added explicit `TenantId` predicates on all `DashboardService` metric queries; Redis key remains `tenant:{id}:dashboard:metrics` via `IDashboardMetricsCache` / `RedisDashboardMetricsCache`.
 - Introduced `IDashboardMetricsCache` so dashboard isolation tests can run without Redis; DI registers Redis implementation.
 - Platform counts-only path (`PlatformTenantService` + `IgnoreTenantFilters`) left unchanged; no Platform CSV.
-- FR28 proofs: `ReportDashboardTenantIsolationTests` (CSV excludes B markers; report + dashboard counts are A-only; unresolved fails closed).
+- FR28 proofs: `ReportDashboardTenantIsolationTests` (7) — CSV excludes B markers; report + dashboard A-only; unresolved + resolved-Empty fail closed.
+- CR patches applied: nested collection TenantId, CSV navigation TenantId, totalLeadsAtEnd Clients.TenantId, Empty-tenant fail-closed tests.
 - Story 13.4 CI gate not implemented.
 
 ### File List
@@ -176,6 +177,7 @@ Cursor Grok 4.5 (cloud agent)
 ## Change Log
 
 - 2026-07-21: DS 13.3 — report/dashboard explicit TenantId filters + FR28 isolation tests; status → review.
+- 2026-07-21: CR 13.3 — applied 4 patches (nested TenantId, CSV nav TenantId, totalLeadsAtEnd, Empty fail-closed); status → done.
 
 ## Ultimate context engineering tip
 
@@ -183,4 +185,4 @@ Story 13.3 = **prove FR28** for CSV export + report/dashboard aggregates: inject
 
 ### Story completion status
 
-review — implementation complete; ready for code-review.
+done — CR patches applied; FR28 isolation proofs green (300 Infrastructure.Tests).

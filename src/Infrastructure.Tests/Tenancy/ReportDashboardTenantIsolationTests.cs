@@ -113,9 +113,35 @@ public sealed class ReportDashboardTenantIsolationTests
     }
 
     [Fact]
+    public async Task ReportService_ResolvedEmptyTenantId_FailsClosed()
+    {
+        var current = new CurrentTenant();
+        current.SetResolved(Guid.Empty, "empty");
+        await using var db = CreateDb(current);
+        var service = new ReportService(db, current);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.GetReportAsync(new ReportQuery("weekly")));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.ExportReportCsvAsync(new ReportQuery("weekly")));
+    }
+
+    [Fact]
     public async Task DashboardService_UnresolvedTenant_FailsClosed()
     {
         var current = new CurrentTenant();
+        await using var db = CreateDb(current);
+        var service = new DashboardService(db, new NullDashboardMetricsCache(), current);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetMetricsAsync());
+    }
+
+    [Fact]
+    public async Task DashboardService_ResolvedEmptyTenantId_FailsClosed()
+    {
+        var current = new CurrentTenant();
+        current.SetResolved(Guid.Empty, "empty");
         await using var db = CreateDb(current);
         var service = new DashboardService(db, new NullDashboardMetricsCache(), current);
 
