@@ -66,7 +66,7 @@ export function SignupPageContent() {
     }
 
     setInfo(
-      "Legal acceptance verified. Full self-serve signup (organization, slug, email, and verification) ships in the next release."
+      "Legal acceptance validated. Workspace creation and email verification ship in the next release."
     );
   }
 

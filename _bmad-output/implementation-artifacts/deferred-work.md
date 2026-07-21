@@ -1,3 +1,19 @@
+## Deferred from: code review of 14-2-legal-pages-and-tos-privacy-acceptance-logging.md (2026-07-21)
+
+- AC3 tenant legal stamp E2E — `ApplyToTenant` ready; persisted on tenant create in Story 14.3 self-serve signup
+- Bundled legal-content fallback versions when API unreachable during SSR — acceptable degrade
+- `/signup?plan=` paid trial context — Story 14.3 wires plan into checkout/signup
+- Public signup rate limits / CAPTCHA — Story 14.3
+
+## Deferred from: code review of 14-1-midnight-atelier-tokens-marketing-home-and-pricing.md (2026-07-21)
+
+- `/` shows legacy SitePageRenderer when published site exists — marketing mock only on env fallback; Epic 15 public/stub refresh
+- Admin/login forest accents (`login-brand-panel`, brand-accent presets) — Story 14.5 admin shell
+- Hero Unsplash CDN dependency — optional self-host polish
+- Tenant SitePageRenderer still uses sparkles/gradient `marketing-primitives` — Atelier composition deferred
+- Marketing shell light-only (no dark/system theme on apex) — Story 14.5 admin shell polish
+- Onboarding `registerAvailable` CTA removed from landing — `/register` path unchanged
+
 ## Deferred from: code review re-review #2 of 13-4-tenantisolation-integration-test-gate-sm-1.md (2026-07-21)
 
 - `UseTenantHost` sets `DefaultRequestHeaders.Host` — may throw on restricted-header HttpClient builds; helpers unused in minimum SM-1 gate cases

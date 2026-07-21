@@ -4,7 +4,7 @@ baseline_commit: b450275bcca089419d86606fc57e09f4357b455a
 
 # Story 14.2: Legal pages and ToS/Privacy acceptance logging
 
-Status: review
+Status: done
 
 ## Story
 
@@ -55,6 +55,24 @@ So that **legal consent is explicit and versioned before an account is created**
 - [x] Task 5: Tests + verify
   - [x] 5.1 `LegalComplianceServiceTests` (4 tests)
   - [x] 5.2 `dotnet test` + `npm run build`
+  - [x] 5.3 `PublicLegalIntegrationTests` (3 SkippableFact)
+
+### Review Findings
+
+- [x] [Review][Patch] Legal pages SSR-fetch versions from API with bundled fallback [`web/app/terms/page.tsx`, `web/app/privacy/page.tsx`, `web/lib/legal/legal-api.ts`]
+- [x] [Review][Patch] Clearer 501/signup copy — validated, not “recorded” [`PublicSignupController.cs`, `signup-page-content.tsx`]
+- [x] [Review][Patch] Marketing footer Terms · Privacy links [`marketing-shell.tsx`]
+- [x] [Review][Patch] Integration tests for public legal endpoints [`PublicLegalIntegrationTests.cs`]
+- [x] [Review][Defer] AC3 tenant legal stamp E2E — `ApplyToTenant` ready; persisted on tenant create in Story 14.3
+- [x] [Review][Defer] Bundled legal-content fallback when API unreachable during SSR — acceptable degrade
+- [x] [Review][Defer] `?plan=` query on `/signup` — paid trial context wired in Story 14.3
+- [x] [Review][Defer] Rate limits / CAPTCHA on public signup — Story 14.3
+
+### Senior Developer Review (AI) (2026-07-21)
+
+**Outcome:** Approve (clean with deferrals)
+
+**Layers:** Blind Hunter — 501-as-gate intentional for legal shell; Edge Case Hunter — version drift mitigated by API fetch; Acceptance Auditor — AC1–2 met; AC3 deferred to 14.3 per story scope.
 
 ## Dev Agent Record
 
@@ -95,3 +113,4 @@ Cursor Grok 4.5 (cloud agent)
 ## Change Log
 
 - 2026-07-21: DS 14.2 — legal pages, tenant legal fields, API gate, signup shell; status → review.
+- 2026-07-21: CR 14.2 — clean approve; SSR version fetch, integration tests, footer links; status → done.

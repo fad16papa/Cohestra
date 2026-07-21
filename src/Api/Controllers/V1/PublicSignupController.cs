@@ -41,7 +41,7 @@ public sealed class PublicSignupController(ILegalComplianceService legalComplian
         return StatusCode(StatusCodes.Status501NotImplemented, new ProblemDetails
         {
             Title = "Signup not yet available",
-            Detail = "Self-serve signup is being enabled. Legal acceptance was recorded as valid.",
+            Detail = "Self-serve signup is not enabled yet. Legal acceptance format was validated.",
             Status = StatusCodes.Status501NotImplemented,
             Type = "https://cohestra.app/errors/signup-not-implemented",
         });

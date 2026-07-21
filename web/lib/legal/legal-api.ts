@@ -1,4 +1,4 @@
-import { getPublicApiBaseUrl } from "@/lib/api";
+import { getPublicApiBaseUrl, getServerApiBaseUrl } from "@/lib/api";
 
 export type LegalComplianceVersions = {
   termsVersion: string;
@@ -23,6 +23,24 @@ function parseVersions(raw: Record<string, unknown>): LegalComplianceVersions | 
   }
 
   return { termsVersion, privacyVersion, termsPath, privacyPath };
+}
+
+export async function fetchLegalComplianceVersionsServer(): Promise<LegalComplianceVersions> {
+  const response = await fetch(`${getServerApiBaseUrl()}/api/v1/public/legal/versions`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to load legal versions (${response.status})`);
+  }
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  const parsed = parseVersions(raw);
+  if (!parsed) {
+    throw new Error("Invalid legal versions payload");
+  }
+
+  return parsed;
 }
 
 export async function fetchLegalComplianceVersions(): Promise<LegalComplianceVersions> {

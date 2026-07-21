@@ -89,7 +89,15 @@ export function MarketingFooter() {
   return (
     <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-line px-5 py-8 text-sm text-stone sm:px-8 lg:px-10">
       <MarketingWordmark className="text-[1.15rem]" />
-      <p>Built for operators who remember names.</p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <Link href="/terms" className="hover:text-ink">
+          Terms
+        </Link>
+        <Link href="/privacy" className="hover:text-ink">
+          Privacy
+        </Link>
+        <p>Built for operators who remember names.</p>
+      </div>
     </footer>
   );
 }

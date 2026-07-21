@@ -29,6 +29,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
       "QR codes + public registration",
       "Client list with dedup + timeline",
       "Simple registration report + CSV export",
+      "Registration email notifications",
       "Public stub page (org name + activity links)",
     ],
     ctaLabel: "Start free",
@@ -91,6 +92,7 @@ export const PRICING_COMPARE_ROWS = [
   { feature: "Published activities", basic: "3", core: "12", pro: "50" },
   { feature: "Registrations / month", basic: "150", core: "500", pro: "5,000" },
   { feature: "Reports", basic: "Simple + CSV", core: "Queryable + export", pro: "+ Campaigns + saved views" },
+  { feature: "Registration email notifications", basic: "✓", core: "✓", pro: "✓" },
   { feature: "Public site", basic: "Stub only", core: "Fixed Site Page", pro: "Full website builder" },
   { feature: "Email campaigns", basic: "—", core: "—", pro: "✓" },
 ] as const;

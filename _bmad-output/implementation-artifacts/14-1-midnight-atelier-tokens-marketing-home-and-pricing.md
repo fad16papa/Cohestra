@@ -4,7 +4,7 @@ baseline_commit: 571beef30a83e4dc56f14176aca9f01f904f0a1b
 
 # Story 14.1: Midnight Atelier tokens, marketing home, and pricing
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -64,6 +64,22 @@ So that **I trust the product enough to begin without a card**.
   - [x] 5.1 `npm run build` + lint on new 14.1 files (repo-wide lint has pre-existing failures)
   - [x] 5.2 No forest-green `#2d6a4f` / `#40916c` left in brand-tokens.css
   - [x] 5.3 Do not implement signup/Stripe (14.2–14.4); leave `deploy/uat-bootstrap.sh` alone
+
+### Review Findings
+
+- [x] [Review][Patch] Basic plan missing “Registration email notifications” in features + compare table vs `pricing-tiers.md` [`web/lib/marketing/pricing-plans.ts`]
+- [x] [Review][Defer] `/` shows legacy SitePageRenderer when published tenant site exists — marketing mock only on env fallback; Epic 15 refresh
+- [x] [Review][Defer] Admin/login forest accents and global token side-effects on non-marketing UI — Story 14.5 admin shell
+- [x] [Review][Defer] Hero Unsplash CDN dependency — optional self-host polish
+- [x] [Review][Defer] Tenant SitePageRenderer still uses sparkles/gradient `marketing-primitives` — Atelier composition deferred
+- [x] [Review][Defer] Marketing shell hardcodes light paper — dark/system theme polish deferred with admin shell (14.5)
+- [x] [Review][Defer] Onboarding `registerAvailable` CTA removed from landing — operator signup via `/register` remains; marketing home focuses on `/signup`
+
+### Senior Developer Review (AI) (2026-07-21)
+
+**Outcome:** Approve (clean with deferrals)
+
+**Layers:** Blind Hunter — no blocking issues; Edge Case Hunter — version drift and route-list notes deferred; Acceptance Auditor — ACs 1–4 met; pricing feature gap patched.
 
 ## Dev Notes
 
@@ -135,6 +151,7 @@ Cursor Grok 4.5 (cloud agent)
 
 - 2026-07-21: CS 14.1 — story created from Epic 14; status → ready-for-dev.
 - 2026-07-21: DS 14.1 — Midnight Atelier tokens, marketing home, pricing page; status → review.
+- 2026-07-21: CR 14.1 — clean approve; pricing notifications row patched; status → done.
 
 ## Ultimate context engineering tip
 
@@ -142,4 +159,4 @@ Story 14.1 = **replace Platform 0 forest chrome with Midnight Atelier on apex ma
 
 ### Story completion status
 
-review — DS complete; ready for CR.
+done — CR approved; Midnight Atelier marketing surfaces shipped.
