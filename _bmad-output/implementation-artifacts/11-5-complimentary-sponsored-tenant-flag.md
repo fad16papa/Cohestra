@@ -214,6 +214,11 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 - [x] [Review][Patch] Same-plan complimentary idempotent no-op must also require `BillingStatus=Free`; otherwise drifted billing is left unrepaired instead of forcing Free [`src/Infrastructure/Platform/PlatformTenantService.cs`]
 - [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (restated; no new deferrals)
 
+### Post-patch Review Findings (round 7)
+
+- [ ] [Review][Patch] Enable **Update plan** when Sponsored but `billingStatus !== "Free"` (even if plan unchanged) so the console can invoke the Free-repair path [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (restated; no new deferrals)
+
 ## Dev Agent Record
 
 ### Agent Model Used
