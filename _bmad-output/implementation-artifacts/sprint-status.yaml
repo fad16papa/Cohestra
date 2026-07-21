@@ -178,7 +178,7 @@ development_status:
   epic-10-retrospective: optional
 
   # === Cohestra Enterprise (epics-cohestra-enterprise.md) ===
-  # Epic 11 stories done; next: epic-11-retrospective (optional) or epic-12
+  # Epic 11 done; Epic 12 in progress — next DS: 12-1-tenantmembership-and-remove-single-operator-gate
 
   epic-11: done
   11-1-tenant-entity-with-dual-status-dials: done
@@ -188,8 +188,8 @@ development_status:
   11-5-complimentary-sponsored-tenant-flag: done
   epic-11-retrospective: optional
 
-  epic-12: backlog
-  12-1-tenantmembership-and-remove-single-operator-gate: backlog
+  epic-12: in-progress
+  12-1-tenantmembership-and-remove-single-operator-gate: ready-for-dev
   12-2-jwt-tenant-id-and-tenant-scoped-login: backlog
   12-3-enforce-admin-vs-member-server-side: backlog
   12-4-platform-admin-role-claim: backlog
