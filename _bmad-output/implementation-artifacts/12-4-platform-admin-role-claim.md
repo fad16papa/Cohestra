@@ -4,7 +4,7 @@ baseline_commit: 526b75568aa7163ac3ed982413dcb5404a5c646b
 
 # Story 12.4: Platform Admin role claim
 
-Status: done
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -209,3 +209,11 @@ Cursor Grok 4.5 (cloud agent)
 - [x] [Review][Patch] Tests: PlatformAdmin+tenantId omits claim; hybrid denied by platform policy; PlatformAdmin-only fails TenantOperator; system path not aligned [`src/Infrastructure.Tests`]
 - [x] [Review][Defer] Full HTTP WebApplicationFactory tenant→403 on `/platform/*` — deferred; policy unit coverage present
 - [x] [Review][Defer] Assert `MapInboundClaims=false` via host boot — deferred (same as 12.3)
+
+### Re-review Findings (2026-07-21)
+
+- [ ] [Review][Patch] `PlatformAdminOnly` deny if **any** non-whitespace `tenant_id` claim exists (not just FindFirstValue) [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
+- [ ] [Review][Patch] `PlatformAdminOnly` also reject membership `"role"` claim (no partial dual-plane) [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
+- [ ] [Review][Patch] Unit tests for duplicate/whitespace `tenant_id` hybrid and membership+platform without tenant_id [`src/Infrastructure.Tests`]
+- [x] [Review][Defer] Identity `ClaimTypes.Role=PlatformAdmin` may still appear on mis-minted tenant sessions for leftover IsInRole callers outside Controllers.V1 — deferred; controllers use claim policy
+- [x] [Review][Defer] Host alignment allowlist shrink (`/admin` + change-password only) — intentional CR patch; revisit if new tenant-scoped routes appear outside `/admin`

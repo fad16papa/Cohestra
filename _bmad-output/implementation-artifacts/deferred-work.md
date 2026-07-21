@@ -1,4 +1,9 @@
 
+## Deferred from: code review re-review of 12-4-platform-admin-role-claim.md (2026-07-21)
+
+- Identity `ClaimTypes.Role=PlatformAdmin` on a mis-minted tenant session could still satisfy leftover `IsInRole` outside Controllers.V1 — platform controllers use claim policy; RoleExclusivity + mint guards reduce likelihood
+- Host alignment allowlist (`/admin` + change-password only) is intentional post-CR; revisit if tenant-scoped routes appear outside `/admin`
+
 ## Deferred from: code review of 12-4-platform-admin-role-claim.md (2026-07-21)
 
 - Full HTTP WebApplicationFactory tenant JWT → 403 on `/platform/*` — policy unit coverage present; live stack optional
