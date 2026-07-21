@@ -77,7 +77,13 @@ so that **we never ship a tenant-leak regression (SM-1 / NFR-11 / AD-10)**.
 - [x] [Review][Defer] Shared IntegrationTestCollection pollution / double-run Integration then TenantIsolation — deferred, pre-existing collection pattern
 - [x] [Review][Defer] GitHub branch-protection required-check wiring — deferred, ops; workflow steps exist
 
-### Senior Developer Review (AI) — Re-review pending
+### Senior Developer Review (AI) — Re-review #2 (2026-07-21)
+
+**Outcome:** Approve (clean)
+
+**Layers:** Blind Hunter — no remaining substantive issues; Edge Case Hunter — 2 low residual notes only; Acceptance Auditor — Clean vs ACs 1–4.
+
+**Notes:** Prior CR patches verified (CI skip/pass guards, positive isolation asserts, list-tests canary). Residual lows deferred — `UseTenantHost` Host header restricted-header risk (helpers unused in minimum gate); `ShowOnHomepage=true` on seed helpers (test fixture convention); optional null-guard on `UpcomingActivities`; shared collection site-publish mutation (pre-existing IntegrationTestCollection pattern).
 
 CR patches applied (2026-07-21): CI skip/pass guards, positive isolation asserts, dead branch removed, list-tests count canary.
 
@@ -152,6 +158,7 @@ Cursor Grok 4.5 (cloud agent)
 
 - 2026-07-21: DS 13.4 — TenantIsolation trait, API cases, CI SM-1 gate, docs; status → review.
 - 2026-07-21: CR 13.4 — applied 4 patches (CI skip/pass guards, positive asserts, list-tests canary); status → done.
+- 2026-07-21: Re-review #2 clean — no new patches; story remains done.
 
 ## Ultimate context engineering tip
 

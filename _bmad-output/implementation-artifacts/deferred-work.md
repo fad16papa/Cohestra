@@ -1,3 +1,10 @@
+## Deferred from: code review re-review #2 of 13-4-tenantisolation-integration-test-gate-sm-1.md (2026-07-21)
+
+- `UseTenantHost` sets `DefaultRequestHeaders.Host` — may throw on restricted-header HttpClient builds; helpers unused in minimum SM-1 gate cases
+- `SeedPublishedActivity*` sets `ShowOnHomepage=true` — broad test fixture blast radius; acceptable for isolation gate seeds
+- Optional null-guard on `PublicSiteResponse.UpcomingActivities` in public-site test — site body already asserted non-null
+- Shared IntegrationTestCollection site-publish mutation — same deferral as first CR (pre-existing collection pattern)
+
 ## Deferred from: code review of 13-4-tenantisolation-integration-test-gate-sm-1.md (2026-07-21)
 
 - Host `{slug}.localhost` + Tenant B JWT helpers unused in minimum cases — deferred, AC met via default operator as A; helpers remain for later surfaces
