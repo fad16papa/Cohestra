@@ -1,3 +1,10 @@
+## Deferred from: code review of 13-1-tenantresolutionmiddleware-on-all-api-requests.md (2026-07-21)
+
+- Admin SitePage still hardcodes `TenantIds.Default` while admin middleware sets ambient context — deferred, public-path scope for 13.1; admin consume in later isolation stories
+- Marketing apex hostnames hardcoded to `cohestra.app`/`www` — deferred, ops/config allowlist; matches existing Host allowlist pattern
+- Redis `tenant:{id}:…` namespaces + full cache isolation — deferred to Story 13.2 (explicit out of scope)
+- Multi-tenant Host integration assertion for public SitePage (non-default subdomain) — deferred, middleware unit coverage present; optional WebApplicationFactory matrix
+
 
 ## Deferred from: code review re-review of 12-4-platform-admin-role-claim.md (2026-07-21)
 

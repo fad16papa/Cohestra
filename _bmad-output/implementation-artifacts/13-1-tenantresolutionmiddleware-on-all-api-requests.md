@@ -4,7 +4,7 @@ baseline_commit: f8659aa2fd51a591bc5d2fb3e40c96c950759476
 
 # Story 13.1: TenantResolutionMiddleware on all API requests
 
-Status: review
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -83,6 +83,19 @@ so that handlers never run ambiguously across tenants.
   - [x] Export/report isolation proofs as release gate (13.3)
   - [x] `TenantIsolation` CI trait required on main (13.4) — may add a single helper test but do not mark SM-1 done
   - [x] Break-glass impersonation; schema-per-tenant; Status∩Billing HTTP gate productization beyond Active-only Host resolve (already in resolver)
+
+
+### Review Follow-ups (AI)
+
+- [ ] [Review][Patch] Scope homepage upcoming activities by Host tenant [`SiteUpcomingActivitiesResolver.cs:42-49`] — `GetPublicAsync` scopes SitePage by `ICurrentTenant`, but `LoadAsync` still lists Published+ShowOnHomepage with no `TenantId` filter (cross-tenant bleed on public site).
+- [ ] [Review][Patch] Fail tenant-bound refresh on marketing apex [`AuthService.cs` ResolveSessionBinding] — `MarketingOnly` has `Succeeded=false`, so preferredTenantId refresh skips Host mismatch and can renew any tenant session from `cohestra.app`.
+- [ ] [Review][Patch] Scope public registration activity lookup by `ICurrentTenant` [`RegistrationService.cs:189-192`] — middleware sets context for `/api/v1/public/*`; slug-only Published lookup can bind another tenant's activity.
+- [ ] [Review][Patch] Do not write global public-activity Redis cache for non-default tenants [`ActivityService.SyncPublicActivityCacheAsync`] — publish/unpublish on tenant B can poison Default Host cache for shared slugs until 13.2 namespaces.
+
+- [x] [Review][Defer] Admin SitePage still hardcodes `TenantIds.Default` while admin middleware sets ambient context — deferred, public-path scope for 13.1; admin consume in later isolation stories
+- [x] [Review][Defer] Marketing apex hostnames hardcoded to `cohestra.app`/`www` — deferred, ops/config allowlist; matches existing Host allowlist pattern
+- [x] [Review][Defer] Redis `tenant:{id}:…` namespaces + full cache isolation — deferred to Story 13.2 (explicit out of scope)
+- [x] [Review][Defer] Multi-tenant Host integration assertion for public SitePage (non-default subdomain) — deferred, middleware unit coverage present; optional WebApplicationFactory matrix
 
 ## Dev Notes
 
@@ -211,6 +224,25 @@ Cursor Grok 4.5
 - src/Infrastructure.Tests/Tenancy/TenantHostResolverTests.cs
 - _bmad-output/implementation-artifacts/sprint-status.yaml
 - _bmad-output/implementation-artifacts/13-1-tenantresolutionmiddleware-on-all-api-requests.md
+
+
+## Senior Developer Review (AI)
+
+### Review Date
+
+2026-07-21
+
+### Outcome
+
+Changes Requested
+
+### Summary
+
+ACs and design locks for ambient context, middleware order, public 404 / admin 401·403, and marketing apex vs localhost are met. Four patches remain on public-path consumers and MarketingOnly auth refresh interaction. Admin SitePage Default and Redis namespaces deferred per 13.1/13.2 scope.
+
+### Action Items
+
+See Tasks → Review Follow-ups (AI).
 
 ## Change Log
 
