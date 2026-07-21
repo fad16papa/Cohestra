@@ -4,7 +4,7 @@ baseline_commit: 56d8a8be15d6a8d14deade597dcac83bed48226a
 
 # Story 11.5: Complimentary / Sponsored tenant flag
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -174,12 +174,12 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 ### Review Findings
 
 - [x] [Review][Decision] Suspended tenants may set/clear complimentary — **resolved: allow (keep current)**; Suspend remains break-glass independent of complimentary; only Archived + default blocked
-- [ ] [Review][Patch] Platform detail: allow plan reassignment while Sponsored (show plan select + update) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
-- [ ] [Review][Patch] Hide/disable complimentary controls for default Platform 0 tenant [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
-- [ ] [Review][Patch] Clear-path audit DetailsJson: include IsComplimentary before/after [`src/Infrastructure/Platform/PlatformTenantService.cs`]
-- [ ] [Review][Patch] Unit tests: assert ActorUserId on ComplimentarySet/Cleared audits [`src/Infrastructure.Tests/Tenants/PlatformTenantServiceTests.cs`]
-- [ ] [Review][Patch] Client-side reason max length 1000 to match API [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
-- [ ] [Review][Patch] Initialize `Tenant.IsComplimentary = false` for consistency with other dials [`src/Domain/Tenants/Tenant.cs`]
+- [x] [Review][Patch] Platform detail: allow plan reassignment while Sponsored (show plan select + update) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] Hide/disable complimentary controls for default Platform 0 tenant [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] Clear-path audit DetailsJson: include IsComplimentary before/after [`src/Infrastructure/Platform/PlatformTenantService.cs`]
+- [x] [Review][Patch] Unit tests: assert ActorUserId on ComplimentarySet/Cleared audits [`src/Infrastructure.Tests/Tenants/PlatformTenantServiceTests.cs`]
+- [x] [Review][Patch] Client-side reason max length 1000 to match API [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] Initialize `Tenant.IsComplimentary = false` for consistency with other dials [`src/Domain/Tenants/Tenant.cs`]
 - [x] [Review][Defer] Archive races with complimentary mutation — deferred, pre-existing (optimistic concurrency already deferred from 11.3)
 - [x] [Review][Defer] DelinquencyStartedAt not cleared when forcing Free — deferred, pre-existing (FR-23 jobs not implemented; IsComplimentary is the skip signal)
 - [x] [Review][Defer] Integration SkippableFact when stack unavailable — deferred, pre-existing (same pattern as 11.3/11.4)
@@ -201,6 +201,7 @@ Cursor Grok 4.5 (cloud agent)
 - Create path optional `IsComplimentary`; list/detail DTOs expose flag.
 - Platform detail: sparse Complimentary section + Sponsored label; no tenant-admin SponsoredBadge chrome.
 - Unit: 12 PlatformTenantService tests passed (incl. complimentary set/clear/validation). Integration complimentary test added (skippable when stack unavailable).
+- CR patches: Sponsored plan update UI; hide complimentary on default tenant; clear-audit before/after; ActorUserId asserts; reason maxLength 1000; `IsComplimentary = false` initializer. Decision: Suspended may set/clear complimentary.
 
 ### File List
 
@@ -227,3 +228,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Implemented IsComplimentary flag, complimentary API, platform detail control, tests → review
 - 2026-07-21: Code review findings recorded (1 decision, 6 patches, 3 deferred)
 - 2026-07-21: CR decision — Suspended tenants may set/clear complimentary (allow)
+- 2026-07-21: Applied all 6 CR patches → done

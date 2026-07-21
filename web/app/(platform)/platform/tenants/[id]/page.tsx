@@ -16,6 +16,9 @@ import {
 } from "@/lib/platform-api";
 
 const COMPLIMENTARY_PLANS = ["Basic", "Core", "Pro"] as const;
+/** Platform 0 default tenant — complimentary mutations are rejected server-side (409). */
+const DEFAULT_TENANT_ID = "11111111-1111-1111-1111-111111111111";
+const COMP_REASON_MAX = 1000;
 
 export default function PlatformTenantDetailPage() {
   const params = useParams<{ id: string }>();
@@ -122,7 +125,9 @@ export default function PlatformTenantDetailPage() {
   const canSuspend = tenant.status === "Active";
   const canReactivate = tenant.status === "Suspended";
   const canArchive = tenant.status !== "Archived";
-  const canChangeComplimentary = tenant.status !== "Archived";
+  const isDefaultTenant =
+    tenant.id === DEFAULT_TENANT_ID || tenant.slug === "default";
+  const canChangeComplimentary = tenant.status !== "Archived" && !isDefaultTenant;
 
   return (
     <div className="space-y-10">
@@ -278,29 +283,25 @@ export default function PlatformTenantDetailPage() {
 
         {canChangeComplimentary ? (
           <div className="max-w-xl space-y-3 border-t border-[var(--plat-line)] pt-4">
-            {!tenant.isComplimentary ? (
-              <>
-                <label
-                  htmlFor="comp-plan"
-                  className="block text-xs font-semibold uppercase tracking-[0.06em] text-[var(--plat-stone)]"
-                >
-                  Plan
-                </label>
-                <select
-                  id="comp-plan"
-                  value={compPlan}
-                  onChange={(event) => setCompPlan(event.target.value)}
-                  disabled={busy}
-                  className="min-h-11 w-full rounded-[10px] border border-[var(--plat-line-strong)] bg-white/80 px-3 text-sm outline-none focus:border-[var(--plat-lagoon)] focus:ring-2 focus:ring-[var(--plat-lagoon)]/20"
-                >
-                  {COMPLIMENTARY_PLANS.map((plan) => (
-                    <option key={plan} value={plan}>
-                      {plan}
-                    </option>
-                  ))}
-                </select>
-              </>
-            ) : null}
+            <label
+              htmlFor="comp-plan"
+              className="block text-xs font-semibold uppercase tracking-[0.06em] text-[var(--plat-stone)]"
+            >
+              Plan
+            </label>
+            <select
+              id="comp-plan"
+              value={compPlan}
+              onChange={(event) => setCompPlan(event.target.value)}
+              disabled={busy}
+              className="min-h-11 w-full rounded-[10px] border border-[var(--plat-line-strong)] bg-white/80 px-3 text-sm outline-none focus:border-[var(--plat-lagoon)] focus:ring-2 focus:ring-[var(--plat-lagoon)]/20"
+            >
+              {COMPLIMENTARY_PLANS.map((plan) => (
+                <option key={plan} value={plan}>
+                  {plan}
+                </option>
+              ))}
+            </select>
             <label
               htmlFor="comp-reason"
               className="block text-xs font-semibold uppercase tracking-[0.06em] text-[var(--plat-stone)]"
@@ -312,6 +313,7 @@ export default function PlatformTenantDetailPage() {
               value={compReason}
               onChange={(event) => setCompReason(event.target.value)}
               disabled={busy}
+              maxLength={COMP_REASON_MAX}
               className="min-h-11 w-full rounded-[10px] border border-[var(--plat-line-strong)] bg-white/80 px-3 text-sm outline-none focus:border-[var(--plat-lagoon)] focus:ring-2 focus:ring-[var(--plat-lagoon)]/20"
               placeholder="Pilot cohort Q3…"
             />
@@ -336,29 +338,51 @@ export default function PlatformTenantDetailPage() {
                   Set complimentary
                 </button>
               ) : (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() =>
-                    void runAction(async () => {
-                      const updated = await setPlatformTenantComplimentary(authFetch, tenant.id, {
-                        isComplimentary: false,
-                        reason: compReason.trim() || undefined,
-                      });
-                      setCompReason("");
-                      return updated;
-                    })
-                  }
-                  className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] px-4 text-sm font-semibold text-[var(--plat-ink)] disabled:opacity-50"
-                >
-                  Clear complimentary
-                </button>
+                <>
+                  <button
+                    type="button"
+                    disabled={busy || compPlan === tenant.plan}
+                    onClick={() =>
+                      void runAction(async () => {
+                        const updated = await setPlatformTenantComplimentary(authFetch, tenant.id, {
+                          isComplimentary: true,
+                          plan: compPlan,
+                          reason: compReason.trim() || undefined,
+                        });
+                        setCompReason("");
+                        return updated;
+                      })
+                    }
+                    className="min-h-11 rounded-[10px] bg-[var(--plat-lagoon)] px-4 text-sm font-semibold text-[var(--plat-lagoon-fg)] disabled:opacity-50"
+                  >
+                    Update plan
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      void runAction(async () => {
+                        const updated = await setPlatformTenantComplimentary(authFetch, tenant.id, {
+                          isComplimentary: false,
+                          reason: compReason.trim() || undefined,
+                        });
+                        setCompReason("");
+                        return updated;
+                      })
+                    }
+                    className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] px-4 text-sm font-semibold text-[var(--plat-ink)] disabled:opacity-50"
+                  >
+                    Clear complimentary
+                  </button>
+                </>
               )}
             </div>
           </div>
         ) : (
           <p className="text-sm text-[var(--plat-stone)]">
-            Complimentary cannot be changed on an Archived tenant.
+            {isDefaultTenant
+              ? "Complimentary cannot be changed on the Platform 0 default tenant."
+              : "Complimentary cannot be changed on an Archived tenant."}
           </p>
         )}
       </section>

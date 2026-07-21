@@ -23,7 +23,7 @@ public sealed class Tenant
     /// P12 / FR-2: Platform Admin complimentary (Sponsored) plan — no Stripe required, BillingStatus=Free.
     /// FR-23 delinquency jobs MUST skip when true. FR-25 dormancy does not apply to complimentary Core/Pro.
     /// </summary>
-    public bool IsComplimentary { get; set; }
+    public bool IsComplimentary { get; set; } = false;
 
     public string? StripeCustomerId { get; set; }
 

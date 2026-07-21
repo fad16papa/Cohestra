@@ -178,14 +178,14 @@ development_status:
   epic-10-retrospective: optional
 
   # === Cohestra Enterprise (epics-cohestra-enterprise.md) ===
-  # Epic 11 stories complete pending CR on 11.5; next after done: epic-11-retrospective or epic-12
+  # Epic 11 stories done; next: epic-11-retrospective (optional) or epic-12
 
-  epic-11: in-progress
+  epic-11: done
   11-1-tenant-entity-with-dual-status-dials: done
   11-2-default-tenant-migration-and-tenantid-on-core-entities: done
   11-3-platform-admin-provision-suspend-reactivate-archive: done
   11-4-platform-tenant-directory-and-health: done
-  11-5-complimentary-sponsored-tenant-flag: review
+  11-5-complimentary-sponsored-tenant-flag: done
   epic-11-retrospective: optional
 
   epic-12: backlog

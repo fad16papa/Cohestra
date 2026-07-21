@@ -497,6 +497,8 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
                 Reason = reason,
                 DetailsJson = JsonSerializer.Serialize(new
                 {
+                    IsComplimentaryBefore = true,
+                    IsComplimentaryAfter = false,
                     PlanUnchanged = tenant.Plan.ToString(),
                     BillingStatusUnchanged = tenant.BillingStatus.ToString(),
                     Note = "Checkout (FR-19) required before paid entitlements sync from Stripe.",

@@ -382,6 +382,7 @@ public sealed class PlatformTenantServiceTests
 
         var setAudit = await db.PlatformAuditLogs.SingleAsync(a =>
             a.TenantId == created.Value.Id && a.Action == PlatformAuditAction.ComplimentarySet);
+        Assert.Equal(actor, setAudit.ActorUserId);
         Assert.Equal("Pilot cohort", setAudit.Reason);
         Assert.Contains("FR-23", setAudit.DetailsJson!, StringComparison.Ordinal);
 
@@ -397,8 +398,11 @@ public sealed class PlatformTenantServiceTests
 
         var clearAudit = await db.PlatformAuditLogs.SingleAsync(a =>
             a.TenantId == created.Value.Id && a.Action == PlatformAuditAction.ComplimentaryCleared);
+        Assert.Equal(actor, clearAudit.ActorUserId);
         Assert.Equal("Converting to paid", clearAudit.Reason);
         Assert.Contains("FR-19", clearAudit.DetailsJson!, StringComparison.Ordinal);
+        Assert.Contains("IsComplimentaryBefore", clearAudit.DetailsJson!, StringComparison.Ordinal);
+        Assert.Contains("IsComplimentaryAfter", clearAudit.DetailsJson!, StringComparison.Ordinal);
 
         var detail = await service.GetByIdAsync(created.Value.Id);
         Assert.False(detail.Value!.Tenant.IsComplimentary);
