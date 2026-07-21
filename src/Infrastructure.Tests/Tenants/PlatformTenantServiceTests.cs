@@ -541,6 +541,41 @@ public sealed class PlatformTenantServiceTests
     }
 
     [Fact]
+    public async Task SetComplimentary_same_plan_repairs_drifted_billing_status_to_free()
+    {
+        await using var db = CreateDb();
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        var created = await service.CreateAsync(
+            new CreateTenantRequest("Drift Org", "drift-org", "Basic", "a@b.co"),
+            actor);
+
+        await service.SetComplimentaryAsync(
+            created.Value!.Id,
+            new SetComplimentaryRequest(true, "Core", "pilot"),
+            actor);
+
+        var tenant = await db.Tenants.SingleAsync(t => t.Id == created.Value.Id);
+        tenant.BillingStatus = BillingStatus.PastDue;
+        await db.SaveChangesAsync();
+
+        var repaired = await service.SetComplimentaryAsync(
+            created.Value.Id,
+            new SetComplimentaryRequest(true, "Core", "repair free"),
+            actor);
+
+        Assert.True(repaired.Succeeded);
+        Assert.True(repaired.Value!.IsComplimentary);
+        Assert.Equal(TenantPlan.Core.ToString(), repaired.Value.Plan);
+        Assert.Equal(BillingStatus.Free.ToString(), repaired.Value.BillingStatus);
+
+        var setCount = await db.PlatformAuditLogs.CountAsync(a =>
+            a.TenantId == created.Value.Id && a.Action == PlatformAuditAction.ComplimentarySet);
+        Assert.Equal(2, setCount);
+    }
+
+    [Fact]
     public async Task SetComplimentary_rejects_null_isComplimentary_flag()
     {
         await using var db = CreateDb();

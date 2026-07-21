@@ -458,8 +458,9 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
                     "Complimentary plan must be Basic, Core, or Pro.");
             }
 
-            // Idempotent: already sponsored on the requested plan — no duplicate audit.
-            if (tenant.IsComplimentary && tenant.Plan == plan)
+            // Idempotent: already sponsored on the requested plan with Free billing — no duplicate audit.
+            // If BillingStatus drifted, fall through to force Free (AC1).
+            if (tenant.IsComplimentary && tenant.Plan == plan && tenant.BillingStatus == BillingStatus.Free)
             {
                 return PlatformTenantResult<TenantResponse>.Ok(Map(tenant));
             }

@@ -211,7 +211,7 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 
 ### Post-patch Review Findings (round 6)
 
-- [ ] [Review][Patch] Same-plan complimentary idempotent no-op must also require `BillingStatus=Free`; otherwise drifted billing is left unrepaired instead of forcing Free [`src/Infrastructure/Platform/PlatformTenantService.cs`]
+- [x] [Review][Patch] Same-plan complimentary idempotent no-op must also require `BillingStatus=Free`; otherwise drifted billing is left unrepaired instead of forcing Free [`src/Infrastructure/Platform/PlatformTenantService.cs`]
 - [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (restated; no new deferrals)
 
 ## Dev Agent Record
@@ -269,3 +269,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Post-patch re-review round 5 — no AC violations; 2 residual UI race patches (compReason clear timing; actionGen for same-id revisit)
 - 2026-07-21: Applied round-5 patches (compReason via runAction; actionGenRef) → done
 - 2026-07-21: Post-patch re-review round 6 — no AC violations; 1 residual patch (idempotent no-op also requires BillingStatus=Free)
+- 2026-07-21: Applied round-6 patch (same-plan no-op requires Free; repair drifted billing) → done
