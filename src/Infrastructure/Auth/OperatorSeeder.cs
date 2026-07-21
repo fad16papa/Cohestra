@@ -1,5 +1,8 @@
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Identity;
+using Cohestra.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -20,21 +23,34 @@ public static class OperatorSeeder
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("OperatorSeeder");
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var seedSettings = scope.ServiceProvider.GetRequiredService<IOptions<OperatorSeedSettings>>().Value;
 
         await EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
 
-        if (!seedSettings.Enabled)
+        if (seedSettings.Enabled)
+        {
+            await SeedOperatorUserAsync(userManager, seedSettings, logger, cancellationToken);
+        }
+        else
         {
             logger.LogInformation("Operator seed skipped (OperatorSeed:Enabled=false).");
-            return;
         }
 
+        await BackfillDefaultTenantAdminMembershipsAsync(userManager, db, logger, cancellationToken);
+    }
+
+    private static async Task SeedOperatorUserAsync(
+        UserManager<ApplicationUser> userManager,
+        OperatorSeedSettings seedSettings,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
         var admins = await userManager.GetUsersInRoleAsync(TenantAdminRole);
         if (admins.Count > 0)
         {
             logger.LogInformation(
-                "Operator seed skipped — workspace already has {Count} tenant admin account(s).",
+                "Operator user seed skipped — workspace already has {Count} tenant admin account(s).",
                 admins.Count);
             return;
         }
@@ -96,6 +112,63 @@ public static class OperatorSeeder
     }
 
     /// <summary>
+    /// Idempotent: every Identity TenantAdmin who is not PlatformAdmin gets TenantAdmin membership on default.
+    /// </summary>
+    public static async Task BackfillDefaultTenantAdminMembershipsAsync(
+        UserManager<ApplicationUser> userManager,
+        CohestraDbContext db,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+    {
+        var defaultExists = await db.Tenants.AnyAsync(t => t.Id == TenantIds.Default, cancellationToken);
+        if (!defaultExists)
+        {
+            logger.LogWarning(
+                "Skipped TenantMembership backfill — default tenant {TenantId} is missing.",
+                TenantIds.Default);
+            return;
+        }
+
+        var admins = await userManager.GetUsersInRoleAsync(TenantAdminRole);
+        var linked = 0;
+        foreach (var admin in admins)
+        {
+            if (await userManager.IsInRoleAsync(admin, PlatformAdminSeeder.PlatformAdminRole))
+            {
+                continue;
+            }
+
+            var exists = await db.TenantMemberships.AnyAsync(
+                m => m.UserId == admin.Id && m.TenantId == TenantIds.Default,
+                cancellationToken);
+            if (exists)
+            {
+                continue;
+            }
+
+            var now = DateTimeOffset.UtcNow;
+            db.TenantMemberships.Add(new TenantMembership
+            {
+                Id = Guid.CreateVersion7(),
+                UserId = admin.Id,
+                TenantId = TenantIds.Default,
+                Role = TenantMembershipRole.TenantAdmin,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            linked++;
+        }
+
+        if (linked > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation(
+                "Backfilled {Count} TenantAdmin membership(s) on default tenant.",
+                linked);
+        }
+    }
+
+    /// <summary>
     /// Ensures Identity role <c>TenantAdmin</c> exists, renaming legacy <c>Admin</c> when present.
     /// </summary>
     public static async Task EnsureTenantAdminRoleAsync(
@@ -123,7 +196,6 @@ public static class OperatorSeeder
         }
         else if (legacy is not null)
         {
-            // Both names exist (partial migrate): keep TenantAdmin; drop empty legacy role if unused.
             logger.LogWarning(
                 "Both Identity roles {Legacy} and {Current} exist; canonical role is {Current}. Remove {Legacy} manually if unused.",
                 LegacyAdminRole,

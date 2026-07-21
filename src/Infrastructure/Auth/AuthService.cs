@@ -2,7 +2,9 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Cohestra.Application.Auth;
 using Cohestra.Application.Email;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Auth;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Email;
 using Cohestra.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -24,8 +26,15 @@ public sealed class AuthService(
     ILogger<AuthService> logger,
     IOptions<JwtSettings> jwtOptions,
     IOptions<AuthOtpSettings> otpOptions,
-    IOptions<SendGridSettings> sendGridOptions) : IAuthService
+    IOptions<SendGridSettings> sendGridOptions,
+    ITenantMembershipService tenantMembershipService) : IAuthService
 {
+    private const string BootstrapClosedMessage =
+        "This workspace already has a tenant admin. Sign in instead.";
+
+    private const string OrphanMembershipMessage =
+        "Your account is not linked to a tenant. Contact support or your platform administrator.";
+
     private static readonly Regex NicknamePattern = new(
         @"^[A-Za-z0-9][A-Za-z0-9\s\-_.]{1,30}[A-Za-z0-9]$",
         RegexOptions.Compiled);
@@ -33,24 +42,14 @@ public sealed class AuthService(
     public async Task<OnboardingStatusResponse> GetOnboardingStatusAsync(
         CancellationToken cancellationToken = default)
     {
-        var existingOperator = await GetExistingOperatorAsync(cancellationToken);
-        if (existingOperator is null)
+        if (await tenantMembershipService.DefaultTenantHasTenantAdminAsync(cancellationToken))
         {
-            return new OnboardingStatusResponse(
-                true,
-                "Create your operator account to get started.");
-        }
-
-        if (!existingOperator.EmailConfirmed)
-        {
-            return new OnboardingStatusResponse(
-                true,
-                "Operator account setup is in progress. Submit the form again with the same email to resend the verification code, or sign in after verifying.");
+            return new OnboardingStatusResponse(false, BootstrapClosedMessage);
         }
 
         return new OnboardingStatusResponse(
-            false,
-            "This workspace already has an operator account. Sign in instead.");
+            true,
+            "Create your operator account to get started.");
     }
 
     public async Task<AuthLoginResult> LoginAsync(
@@ -91,6 +90,12 @@ public sealed class AuthService(
             return InvalidCredentials();
         }
 
+        var orphanError = await GetOrphanTenantAdminErrorAsync(user, cancellationToken);
+        if (orphanError is not null)
+        {
+            return new AuthLoginResult(null, "no_tenant_membership", orphanError);
+        }
+
         var tokens = await IssueTokensAsync(user, cancellationToken);
         return new AuthLoginResult(tokens, null, null);
     }
@@ -123,6 +128,12 @@ public sealed class AuthService(
             return null;
         }
 
+        if (await GetOrphanTenantAdminErrorAsync(user, cancellationToken) is not null)
+        {
+            await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
+            return null;
+        }
+
         return await IssueTokensAsync(user, cancellationToken);
     }
 
@@ -130,12 +141,6 @@ public sealed class AuthService(
         RegisterOperatorRequest request,
         CancellationToken cancellationToken = default)
     {
-        var existingOperator = await GetExistingOperatorAsync(cancellationToken);
-        if (existingOperator?.EmailConfirmed == true)
-        {
-            return (null, "This workspace already has an operator account. Sign in instead.");
-        }
-
         var email = request.Email?.Trim() ?? string.Empty;
         var nickname = request.Nickname?.Trim() ?? string.Empty;
         var password = request.Password ?? string.Empty;
@@ -145,26 +150,30 @@ public sealed class AuthService(
             return (null, "Enter a valid email address.");
         }
 
-        if (existingOperator is not null
-            && !string.Equals(existingOperator.Email, email, StringComparison.OrdinalIgnoreCase))
-        {
-            return (null, "This workspace already has an operator account. Sign in instead.");
-        }
-
         if (!IsValidNickname(nickname))
         {
             return (null, "Nickname must be 3–32 characters (letters, numbers, spaces, - _ .).");
         }
+
+        var bootstrapClosed =
+            await tenantMembershipService.DefaultTenantHasTenantAdminAsync(cancellationToken);
 
         var existing = await userManager.FindByEmailAsync(email);
         if (existing is not null)
         {
             if (existing.EmailConfirmed)
             {
-                return (null, "This workspace already has an operator account. Sign in instead.");
+                return (null, BootstrapClosedMessage);
             }
 
-            // Resume the single pending operator setup for this email only.
+            // Resume pending verification for this email only (even if bootstrap already closed —
+            // membership may already exist from the first submit).
+            if (bootstrapClosed
+                && !await userManager.IsInRoleAsync(existing, OperatorSeeder.TenantAdminRole))
+            {
+                return (null, BootstrapClosedMessage);
+            }
+
             existing.Nickname = nickname;
             var updateResult = await userManager.UpdateAsync(existing);
             if (!updateResult.Succeeded)
@@ -187,6 +196,12 @@ public sealed class AuthService(
                 return (null, FormatIdentityErrors(passwordResult));
             }
 
+            var ensurePending = await EnsureDefaultTenantAdminMembershipAsync(existing.Id, cancellationToken);
+            if (ensurePending is not null)
+            {
+                return (null, ensurePending);
+            }
+
             var sendError = await SendOtpAsync(existing.Email!, existing.Nickname, OtpPurpose.EmailVerification, cancellationToken);
             if (sendError is not null)
             {
@@ -194,6 +209,11 @@ public sealed class AuthService(
             }
 
             return (BuildRegisterResponse(email), null);
+        }
+
+        if (bootstrapClosed)
+        {
+            return (null, BootstrapClosedMessage);
         }
 
         var user = new ApplicationUser
@@ -225,6 +245,13 @@ public sealed class AuthService(
             return (null, "Could not assign TenantAdmin role.");
         }
 
+        var ensureMembership = await EnsureDefaultTenantAdminMembershipAsync(user.Id, cancellationToken);
+        if (ensureMembership is not null)
+        {
+            await userManager.DeleteAsync(user);
+            return (null, ensureMembership);
+        }
+
         var sendErrorOnCreate = await SendOtpAsync(user.Email!, user.Nickname, OtpPurpose.EmailVerification, cancellationToken);
         if (sendErrorOnCreate is not null)
         {
@@ -254,6 +281,12 @@ public sealed class AuthService(
 
         if (user.EmailConfirmed)
         {
+            var orphan = await GetOrphanTenantAdminErrorAsync(user, cancellationToken);
+            if (orphan is not null)
+            {
+                return (null, orphan);
+            }
+
             return (await IssueTokensAsync(user, cancellationToken), null);
         }
 
@@ -267,6 +300,18 @@ public sealed class AuthService(
         if (!updateResult.Succeeded)
         {
             return (null, "Could not verify email.");
+        }
+
+        var ensureMembership = await EnsureDefaultTenantAdminMembershipAsync(user.Id, cancellationToken);
+        if (ensureMembership is not null)
+        {
+            return (null, ensureMembership);
+        }
+
+        var orphanAfter = await GetOrphanTenantAdminErrorAsync(user, cancellationToken);
+        if (orphanAfter is not null)
+        {
+            return (null, orphanAfter);
         }
 
         return (await IssueTokensAsync(user, cancellationToken), null);
@@ -396,19 +441,38 @@ public sealed class AuthService(
     }
 
     /// <summary>
-    /// Single-operator MVP: at most one Admin account may exist in the workspace.
+    /// TenantAdmin Identity users must have at least one TenantMembership before tokens are issued.
+    /// PlatformAdmin-only users are exempt (no tenant membership required).
     /// </summary>
-    private async Task<ApplicationUser?> GetExistingOperatorAsync(CancellationToken cancellationToken)
+    private async Task<string?> GetOrphanTenantAdminErrorAsync(
+        ApplicationUser user,
+        CancellationToken cancellationToken)
     {
-        _ = cancellationToken;
-        var admins = await userManager.GetUsersInRoleAsync(OperatorSeeder.TenantAdminRole);
-        return admins.Count switch
+        if (!await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole))
         {
-            0 => null,
-            1 => admins[0],
-            _ => throw new InvalidOperationException(
-                "Multiple operator accounts exist. This workspace supports one operator only."),
-        };
+            return null;
+        }
+
+        var count = await tenantMembershipService.CountMembershipsForUserAsync(user.Id, cancellationToken);
+        return count == 0 ? OrphanMembershipMessage : null;
+    }
+
+    private async Task<string?> EnsureDefaultTenantAdminMembershipAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var result = await tenantMembershipService.EnsureMembershipAsync(
+            userId,
+            TenantIds.Default,
+            TenantMembershipRole.TenantAdmin,
+            cancellationToken);
+
+        if (result.Succeeded)
+        {
+            return null;
+        }
+
+        return result.Detail ?? "Could not link operator to the default tenant.";
     }
 
     private RegisterOperatorResponse BuildRegisterResponse(string email)

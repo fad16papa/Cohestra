@@ -36,7 +36,8 @@ public class AuthController(IAuthService authService) : ControllerBase
         var (response, error) = await authService.RegisterAsync(request, cancellationToken);
         if (response is null)
         {
-            if (error?.Contains("already has an operator", StringComparison.OrdinalIgnoreCase) == true)
+            if (error?.Contains("already has a tenant admin", StringComparison.OrdinalIgnoreCase) == true
+                || error?.Contains("already has an operator", StringComparison.OrdinalIgnoreCase) == true)
             {
                 return ConflictProblem(error);
             }
