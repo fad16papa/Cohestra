@@ -79,6 +79,7 @@ public static class DemoDataSeeder
         CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
+        SeedTenantContext.BindPlatformZero(scope.ServiceProvider);
         var settings = scope.ServiceProvider.GetRequiredService<IOptions<DemoDataSeedSettings>>().Value;
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var logger = scope.ServiceProvider

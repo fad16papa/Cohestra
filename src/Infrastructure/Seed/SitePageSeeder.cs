@@ -15,6 +15,7 @@ public static class SitePageSeeder
     public static async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
+        SeedTenantContext.BindPlatformZero(scope.ServiceProvider);
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(SitePageSeeder));
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var settings = scope.ServiceProvider.GetRequiredService<IOptions<SiteLandingSeedSettings>>().Value;

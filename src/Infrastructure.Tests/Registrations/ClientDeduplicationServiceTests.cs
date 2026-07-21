@@ -235,6 +235,39 @@ public sealed class ClientDeduplicationServiceTests
         Assert.Equal(EntityState.Added, dbContext.Entry(client).State);
     }
 
+    [Fact]
+    public async Task FindOrCreateAsync_DoesNotMatch_OtherTenant_Phone()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = DateTimeOffset.UtcNow;
+        var otherTenant = Guid.CreateVersion7();
+
+        dbContext.Clients.Add(new Client
+        {
+            Id = Guid.NewGuid(),
+            TenantId = otherTenant,
+            FullName = "Other Tenant",
+            Phone = "09171234567",
+            NormalizedPhone = "+639171234567",
+            LeadStatus = LeadStatus.New,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext);
+        var profile = CreateProfile(
+            name: "Ours",
+            phone: "09171234567",
+            normalizedPhone: "+639171234567");
+
+        var (client, created) = await service.FindOrCreateAsync(profile, now.AddMinutes(1));
+
+        Assert.True(created);
+        Assert.Equal(TenantIds.Default, client.TenantId);
+        Assert.Equal("Ours", client.FullName);
+    }
+
     private static ClientDeduplicationService CreateService(CohestraDbContext dbContext)
     {
         var currentTenant = new CurrentTenant();
