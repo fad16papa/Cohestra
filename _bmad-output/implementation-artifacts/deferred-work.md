@@ -1,4 +1,12 @@
 
+## Deferred from: code review of 11-4-platform-tenant-directory-and-health (2026-07-21)
+
+- EF `ToLower().Contains` search may be non-sargable at scale — residual perf; fine for Platform Admin directory volume
+- Integration coverage thin (no anonymous 401 on platform GETs; no `/ready` unhealthy when default missing) — residual test gaps; SkippableFact pattern same as 11.3
+- `/ready` Unhealthy description names default tenant — intentional ops signal on anonymous readiness
+- Reactivate has no confirm dialog — UX polish; Suspend already requires reason; Archive uses confirm
+- `PlatformMeController` roles from JWT claims — matches existing `AdminController` pattern
+
 ## Deferred from: code review of 11-3-platform-admin-provision-suspend-reactivate-archive (2026-07-20)
 
 - Append-only audit enforcement (DB triggers / no-update interceptor) — documentation + no update API for now; harden later if compliance requires
