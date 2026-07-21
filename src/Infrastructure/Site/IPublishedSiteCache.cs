@@ -2,9 +2,9 @@ namespace Cohestra.Infrastructure.Site;
 
 public interface IPublishedSiteCache
 {
-    Task<PublishedSiteCacheEntry?> GetAsync(CancellationToken cancellationToken = default);
+    Task<PublishedSiteCacheEntry?> GetAsync(Guid tenantId, CancellationToken cancellationToken = default);
 
-    Task SetAsync(PublishedSiteCacheEntry entry, CancellationToken cancellationToken = default);
+    Task SetAsync(Guid tenantId, PublishedSiteCacheEntry entry, CancellationToken cancellationToken = default);
 
-    Task InvalidateAsync(CancellationToken cancellationToken = default);
+    Task InvalidateAsync(Guid tenantId, CancellationToken cancellationToken = default);
 }

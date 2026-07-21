@@ -271,11 +271,7 @@ public sealed class SitePageService(
         SiteSectionsDocumentDto publishedDto;
         DateTimeOffset? publishedAt;
 
-        // Redis published-site cache remains Platform-0 global until Story 13.2 namespaces.
-        // Only reuse cache when serving the default tenant to avoid cross-tenant bleed.
-        var cached = tenantId == TenantIds.Default
-            ? await publishedSiteCache.GetAsync(cancellationToken)
-            : null;
+        var cached = await publishedSiteCache.GetAsync(tenantId, cancellationToken);
         if (cached is not null)
         {
             publishedDto = cached.Published;
@@ -295,12 +291,10 @@ public sealed class SitePageService(
             publishedDto = ToDto(page.PublishedSections);
             publishedAt = page.PublishedAt;
 
-            if (tenantId == TenantIds.Default)
-            {
-                await publishedSiteCache.SetAsync(
-                    new PublishedSiteCacheEntry(publishedDto, publishedAt.Value),
-                    cancellationToken);
-            }
+            await publishedSiteCache.SetAsync(
+                tenantId,
+                new PublishedSiteCacheEntry(publishedDto, publishedAt.Value),
+                cancellationToken);
         }
 
         var upcomingActivities = await SiteUpcomingActivitiesResolver.LoadAsync(
@@ -364,7 +358,7 @@ public sealed class SitePageService(
 
     private async Task SyncPublishedSiteCacheAsync(SitePage page, CancellationToken cancellationToken)
     {
-        await publishedSiteCache.InvalidateAsync(cancellationToken);
+        await publishedSiteCache.InvalidateAsync(page.TenantId, cancellationToken);
 
         if (page.PublishedSections is null || page.PublishedAt is null)
         {
@@ -372,16 +366,24 @@ public sealed class SitePageService(
         }
 
         await publishedSiteCache.SetAsync(
+            page.TenantId,
             new PublishedSiteCacheEntry(ToDto(page.PublishedSections), page.PublishedAt.Value),
             cancellationToken);
     }
 
     private async Task<SitePage> GetOrCreateSingletonAsync(CancellationToken cancellationToken)
     {
-        // Platform 0 continuity: one SitePage per default tenant (AD-4 UNIQUE TenantId).
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null || currentTenant.TenantId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Tenant context is required for site page operations.");
+        }
+
+        var tenantId = currentTenant.TenantId.Value;
+
+        // One SitePage per tenant (AD-4 UNIQUE TenantId).
         // Legacy SingletonId retained as row Id for the default tenant only.
         var page = await dbContext.SitePages
-            .FirstOrDefaultAsync(item => item.TenantId == TenantIds.Default, cancellationToken);
+            .FirstOrDefaultAsync(item => item.TenantId == tenantId, cancellationToken);
 
         if (page is not null)
         {
@@ -391,8 +393,8 @@ public sealed class SitePageService(
         var now = DateTimeOffset.UtcNow;
         page = new SitePage
         {
-            Id = SitePage.SingletonId,
-            TenantId = TenantIds.Default,
+            Id = tenantId == TenantIds.Default ? SitePage.SingletonId : Guid.NewGuid(),
+            TenantId = tenantId,
             DraftSections = CreateEmptyDraft(),
             PublishedSections = null,
             DraftUpdatedAt = now,
@@ -410,7 +412,7 @@ public sealed class SitePageService(
         {
             dbContext.Entry(page).State = EntityState.Detached;
             return await dbContext.SitePages
-                .FirstAsync(item => item.TenantId == TenantIds.Default, cancellationToken);
+                .FirstAsync(item => item.TenantId == tenantId, cancellationToken);
         }
     }
 

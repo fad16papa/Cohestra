@@ -1,6 +1,8 @@
 using Cohestra.Domain.Clients;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Tests.Registrations;
@@ -20,6 +22,7 @@ public sealed class ClientDeduplicationServiceTests
         dbContext.Clients.Add(new Client
         {
             Id = existingId,
+            TenantId = TenantIds.Default,
             FullName = "Elena Santos",
             Phone = "09171234567",
             NormalizedPhone = "+639171234567",
@@ -31,7 +34,7 @@ public sealed class ClientDeduplicationServiceTests
         });
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientDeduplicationService(dbContext);
+        var service = CreateService(dbContext);
         var profile = CreateProfile(
             name: "Elena Santos",
             phone: "9171234567",
@@ -54,6 +57,7 @@ public sealed class ClientDeduplicationServiceTests
         dbContext.Clients.Add(new Client
         {
             Id = Guid.NewGuid(),
+            TenantId = TenantIds.Default,
             FullName = "Elena Santos",
             Phone = "09171234567",
             NormalizedPhone = "+639171234567",
@@ -65,7 +69,7 @@ public sealed class ClientDeduplicationServiceTests
         });
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientDeduplicationService(dbContext);
+        var service = CreateService(dbContext);
         var profile = CreateProfile(
             name: "Elena Santos",
             phone: "09171234567",
@@ -91,6 +95,7 @@ public sealed class ClientDeduplicationServiceTests
             new Client
             {
                 Id = phoneClientId,
+                TenantId = TenantIds.Default,
                 FullName = "Elena Santos",
                 Phone = "09171234567",
                 NormalizedPhone = "+639171234567",
@@ -101,6 +106,7 @@ public sealed class ClientDeduplicationServiceTests
             new Client
             {
                 Id = Guid.NewGuid(),
+                TenantId = TenantIds.Default,
                 FullName = "Work Contact",
                 Email = "work@example.com",
                 NormalizedEmail = "work@example.com",
@@ -110,7 +116,7 @@ public sealed class ClientDeduplicationServiceTests
             });
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientDeduplicationService(dbContext);
+        var service = CreateService(dbContext);
         var profile = CreateProfile(
             name: "Elena Santos",
             phone: "09171234567",
@@ -139,6 +145,7 @@ public sealed class ClientDeduplicationServiceTests
             new Client
             {
                 Id = phoneClientId,
+                TenantId = TenantIds.Default,
                 FullName = "Elena Santos",
                 Phone = "09171234567",
                 NormalizedPhone = "+639171234567",
@@ -151,6 +158,7 @@ public sealed class ClientDeduplicationServiceTests
             new Client
             {
                 Id = Guid.NewGuid(),
+                TenantId = TenantIds.Default,
                 FullName = "Work Contact",
                 Email = "work@example.com",
                 NormalizedEmail = "work@example.com",
@@ -160,7 +168,7 @@ public sealed class ClientDeduplicationServiceTests
             });
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientDeduplicationService(dbContext);
+        var service = CreateService(dbContext);
         var profile = CreateProfile(
             name: "Elena Santos",
             phone: "9171234567",
@@ -185,6 +193,7 @@ public sealed class ClientDeduplicationServiceTests
         dbContext.Clients.Add(new Client
         {
             Id = existingId,
+            TenantId = TenantIds.Default,
             FullName = "Elena Santos",
             Email = "elena@example.com",
             NormalizedEmail = "elena@example.com",
@@ -194,7 +203,7 @@ public sealed class ClientDeduplicationServiceTests
         });
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientDeduplicationService(dbContext);
+        var service = CreateService(dbContext);
         var profile = CreateProfile(
             name: "Elena Santos",
             email: "elena@example.com");
@@ -211,7 +220,7 @@ public sealed class ClientDeduplicationServiceTests
     {
         await using var dbContext = CreateDbContext();
         var now = DateTimeOffset.UtcNow;
-        var service = new ClientDeduplicationService(dbContext);
+        var service = CreateService(dbContext);
         var profile = CreateProfile(
             name: "New Person",
             phone: "09181234567",
@@ -222,7 +231,15 @@ public sealed class ClientDeduplicationServiceTests
 
         Assert.True(created);
         Assert.Equal("New Person", client.FullName);
+        Assert.Equal(TenantIds.Default, client.TenantId);
         Assert.Equal(EntityState.Added, dbContext.Entry(client).State);
+    }
+
+    private static ClientDeduplicationService CreateService(CohestraDbContext dbContext)
+    {
+        var currentTenant = new CurrentTenant();
+        currentTenant.SetResolved(TenantIds.Default, "default");
+        return new ClientDeduplicationService(dbContext, currentTenant);
     }
 
     private static ExtractedClientProfile CreateProfile(

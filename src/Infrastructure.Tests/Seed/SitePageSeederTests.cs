@@ -213,28 +213,38 @@ public sealed class SitePageSeederTests
     {
         public PublishedSiteCacheEntry? LastEntry { get; private set; }
 
-        public Task<PublishedSiteCacheEntry?> GetAsync(CancellationToken cancellationToken = default) =>
+        public Task<PublishedSiteCacheEntry?> GetAsync(
+            Guid tenantId,
+            CancellationToken cancellationToken = default) =>
             Task.FromResult(LastEntry);
 
-        public Task SetAsync(PublishedSiteCacheEntry entry, CancellationToken cancellationToken = default)
+        public Task SetAsync(
+            Guid tenantId,
+            PublishedSiteCacheEntry entry,
+            CancellationToken cancellationToken = default)
         {
             LastEntry = entry;
             return Task.CompletedTask;
         }
 
-        public Task InvalidateAsync(CancellationToken cancellationToken = default) =>
+        public Task InvalidateAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
     }
 
     private sealed class FailingPublishedSiteCache : IPublishedSiteCache
     {
-        public Task<PublishedSiteCacheEntry?> GetAsync(CancellationToken cancellationToken = default) =>
+        public Task<PublishedSiteCacheEntry?> GetAsync(
+            Guid tenantId,
+            CancellationToken cancellationToken = default) =>
             Task.FromResult<PublishedSiteCacheEntry?>(null);
 
-        public Task SetAsync(PublishedSiteCacheEntry entry, CancellationToken cancellationToken = default) =>
+        public Task SetAsync(
+            Guid tenantId,
+            PublishedSiteCacheEntry entry,
+            CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("Simulated Redis failure.");
 
-        public Task InvalidateAsync(CancellationToken cancellationToken = default) =>
+        public Task InvalidateAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
     }
 }

@@ -146,7 +146,6 @@ await SitePageSeeder.SeedAsync(app.Services);
 
 app.UseExceptionHandler();
 app.UseCors();
-app.UsePublicRegistrationRateLimit();
 app.UseStatusCodePages(async statusCodeContext =>
 {
     if (statusCodeContext.HttpContext.Response.HasStarted)
@@ -168,6 +167,7 @@ app.UseStatusCodePages(async statusCodeContext =>
 
 app.UseAuthentication();
 app.UseTenantResolution();
+app.UsePublicRegistrationRateLimit();
 app.UseAuthorization();
 
 app.MapControllers();

@@ -23,6 +23,12 @@ public sealed class RegistrationService(
         string? idempotencyKey = null,
         CancellationToken cancellationToken = default)
     {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        {
+            return PublicRegistrationSubmitResult.NotFound();
+        }
+
+        var tenantId = currentTenant.TenantId.Value;
         string? normalizedIdempotencyKey = null;
         string? requestFingerprint = null;
 
@@ -42,6 +48,7 @@ public sealed class RegistrationService(
                 answers);
 
             var lookup = await idempotencyStore.LookupAsync(
+                tenantId,
                 normalizedIdempotencyKey,
                 requestFingerprint,
                 cancellationToken);
@@ -62,6 +69,7 @@ public sealed class RegistrationService(
             }
 
             if (!await idempotencyStore.TryBeginAsync(
+                    tenantId,
                     normalizedIdempotencyKey,
                     requestFingerprint,
                     cancellationToken))
@@ -71,6 +79,7 @@ public sealed class RegistrationService(
                     await Task.Delay(TimeSpan.FromMilliseconds(100 * (attempt + 1)), cancellationToken);
 
                     lookup = await idempotencyStore.LookupAsync(
+                        tenantId,
                         normalizedIdempotencyKey,
                         requestFingerprint,
                         cancellationToken);
@@ -98,7 +107,7 @@ public sealed class RegistrationService(
 
         try
         {
-            var result = await SubmitCoreAsync(activitySlug, answers, cancellationToken);
+            var result = await SubmitCoreAsync(activitySlug, answers, tenantId, cancellationToken);
 
             if (result.IsSuccess && !result.IsReplay)
             {
@@ -128,6 +137,7 @@ public sealed class RegistrationService(
                 requestFingerprint is not null)
             {
                 await StoreIdempotencyResultWithRetryAsync(
+                    tenantId,
                     normalizedIdempotencyKey,
                     requestFingerprint,
                     result.RegistrationId,
@@ -142,12 +152,13 @@ public sealed class RegistrationService(
         {
             if (normalizedIdempotencyKey is not null)
             {
-                await idempotencyStore.ReleaseLockAsync(normalizedIdempotencyKey, cancellationToken);
+                await idempotencyStore.ReleaseLockAsync(tenantId, normalizedIdempotencyKey, cancellationToken);
             }
         }
     }
 
     private async Task StoreIdempotencyResultWithRetryAsync(
+        Guid tenantId,
         string idempotencyKey,
         string requestFingerprint,
         Guid registrationId,
@@ -168,6 +179,7 @@ public sealed class RegistrationService(
             try
             {
                 await idempotencyStore.StoreAsync(
+                    tenantId,
                     idempotencyKey,
                     requestFingerprint,
                     registration,
@@ -184,16 +196,10 @@ public sealed class RegistrationService(
     private async Task<PublicRegistrationSubmitResult> SubmitCoreAsync(
         string activitySlug,
         IReadOnlyDictionary<string, object?> answers,
+        Guid tenantId,
         CancellationToken cancellationToken)
     {
         var normalizedSlug = activitySlug.Trim();
-
-        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
-        {
-            return PublicRegistrationSubmitResult.NotFound();
-        }
-
-        var tenantId = currentTenant.TenantId.Value;
 
         var activity = await dbContext.Activities
             .FirstOrDefaultAsync(

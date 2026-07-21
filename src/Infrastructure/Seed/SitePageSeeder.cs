@@ -77,8 +77,9 @@ public static class SitePageSeeder
 
         try
         {
-            await publishedSiteCache.InvalidateAsync(cancellationToken);
+            await publishedSiteCache.InvalidateAsync(TenantIds.Default, cancellationToken);
             await publishedSiteCache.SetAsync(
+                TenantIds.Default,
                 new PublishedSiteCacheEntry(SitePageSeedDocumentBuilder.ToDto(document), now),
                 cancellationToken);
         }

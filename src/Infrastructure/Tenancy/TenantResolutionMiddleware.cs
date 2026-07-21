@@ -3,6 +3,7 @@ using System.Text.Json;
 using Cohestra.Application.Tenants;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Cohestra.Infrastructure.Tenancy;
 
@@ -27,7 +28,8 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
     public async Task InvokeAsync(
         HttpContext context,
         ITenantHostResolver hostResolver,
-        CurrentTenant currentTenant)
+        CurrentTenant currentTenant,
+        ILogger<TenantResolutionMiddleware> logger)
     {
         // Never trust client X-Tenant-Id for tenancy decisions (AD-3).
         _ = context.Request.Headers.TryGetValue("X-Tenant-Id", out _);
@@ -39,6 +41,12 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             if (TenantHostResolver.IsMarketingApexHost(context.Request.Host.Value))
             {
                 currentTenant.SetMarketingHost();
+                using (logger.BeginScope(new Dictionary<string, object?> { ["isMarketingHost"] = true }))
+                {
+                    await next(context);
+                }
+
+                return;
             }
 
             await next(context);
@@ -47,13 +55,13 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
 
         if (IsPublicPath(path))
         {
-            await HandlePublicAsync(context, hostResolver, currentTenant);
+            await HandlePublicAsync(context, hostResolver, currentTenant, logger);
             return;
         }
 
         if (RequiresAdminTenantAlignment(path))
         {
-            await HandleAdminAsync(context, hostResolver, currentTenant);
+            await HandleAdminAsync(context, hostResolver, currentTenant, logger);
             return;
         }
 
@@ -63,7 +71,8 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
     private async Task HandlePublicAsync(
         HttpContext context,
         ITenantHostResolver hostResolver,
-        CurrentTenant currentTenant)
+        CurrentTenant currentTenant,
+        ILogger<TenantResolutionMiddleware> logger)
     {
         var resolution = await hostResolver.ResolveAsync(context.Request.Host.Value, context.RequestAborted);
         if (resolution.IsMarketingHost)
@@ -92,13 +101,21 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         }
 
         currentTenant.SetResolved(resolution.TenantId.Value, resolution.Slug);
-        await next(context);
+        using (logger.BeginScope(new Dictionary<string, object?>
+        {
+            ["tenantId"] = resolution.TenantId.Value,
+            ["tenantSlug"] = resolution.Slug,
+        }))
+        {
+            await next(context);
+        }
     }
 
     private async Task HandleAdminAsync(
         HttpContext context,
         ITenantHostResolver hostResolver,
-        CurrentTenant currentTenant)
+        CurrentTenant currentTenant,
+        ILogger<TenantResolutionMiddleware> logger)
     {
         if (context.User.Identity?.IsAuthenticated != true)
         {
@@ -140,7 +157,14 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         }
 
         currentTenant.SetResolved(resolution.TenantId.Value, resolution.Slug);
-        await next(context);
+        using (logger.BeginScope(new Dictionary<string, object?>
+        {
+            ["tenantId"] = resolution.TenantId.Value,
+            ["tenantSlug"] = resolution.Slug,
+        }))
+        {
+            await next(context);
+        }
     }
 
     internal static bool IsPublicPath(PathString path) =>

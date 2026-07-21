@@ -121,7 +121,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
         firstResponse.EnsureSuccessStatusCode();
 
         var cache = Factory.Services.GetRequiredService<RedisPublishedSiteCache>();
-        var cached = await cache.GetAsync();
+        var cached = await cache.GetAsync(TenantIds.Default);
         Assert.NotNull(cached);
         Assert.Equal("Cohestra", cached.Published.SiteName);
 
@@ -146,7 +146,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
             await dbContext.SaveChangesAsync();
         }
 
-        await cache.InvalidateAsync();
+        await cache.InvalidateAsync(TenantIds.Default);
     }
 
     private static SiteSectionsDocumentDto CreatePublishableDraft(string activitySlug)

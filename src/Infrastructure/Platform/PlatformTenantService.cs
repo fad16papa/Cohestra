@@ -2,7 +2,9 @@ using System.Net.Mail;
 using System.Text.Json;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Platform;
+using Cohestra.Domain.Activities;
 using Cohestra.Domain.Billing;
+using Cohestra.Domain.Clients;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -67,7 +69,8 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
         var ids = tenants.Select(t => t.Id).ToList();
         var activityCounts = ids.Count == 0
             ? new Dictionary<Guid, int>()
-            : await dbContext.Activities.AsNoTracking()
+            : await dbContext.IgnoreTenantFilters<Activity>()
+                .AsNoTracking()
                 .Where(a => ids.Contains(a.TenantId))
                 .GroupBy(a => a.TenantId)
                 .Select(g => new { TenantId = g.Key, Count = g.Count() })
@@ -75,7 +78,8 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
 
         var clientCounts = ids.Count == 0
             ? new Dictionary<Guid, int>()
-            : await dbContext.Clients.AsNoTracking()
+            : await dbContext.IgnoreTenantFilters<Client>()
+                .AsNoTracking()
                 .Where(c => ids.Contains(c.TenantId))
                 .GroupBy(c => c.TenantId)
                 .Select(g => new { TenantId = g.Key, Count = g.Count() })

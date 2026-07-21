@@ -1,4 +1,5 @@
 using Cohestra.Application.Dashboard;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Dashboard;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Clients;
@@ -9,21 +10,28 @@ namespace Cohestra.Infrastructure.Dashboard;
 
 public sealed class DashboardService(
     CohestraDbContext dbContext,
-    RedisDashboardMetricsCache metricsCache) : IDashboardService
+    RedisDashboardMetricsCache metricsCache,
+    ICurrentTenant currentTenant) : IDashboardService
 {
     private const int NewLeadsPeriodDays = 7;
 
     public async Task<DashboardMetricsResponse> GetMetricsAsync(
         CancellationToken cancellationToken = default)
     {
-        var cached = await metricsCache.GetAsync(cancellationToken);
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null || currentTenant.TenantId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Tenant context is required for dashboard metrics.");
+        }
+
+        var tenantId = currentTenant.TenantId.Value;
+        var cached = await metricsCache.GetAsync(tenantId, cancellationToken);
         if (cached is not null)
         {
             return cached;
         }
 
         var metrics = await ComputeMetricsAsync(cancellationToken);
-        await metricsCache.SetAsync(metrics, cancellationToken);
+        await metricsCache.SetAsync(tenantId, metrics, cancellationToken);
         return metrics;
     }
 

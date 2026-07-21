@@ -1,12 +1,12 @@
 using System.Text.Json;
 using Cohestra.Contracts.Dashboard;
+using Cohestra.Infrastructure.Tenancy;
 using StackExchange.Redis;
 
 namespace Cohestra.Infrastructure.Dashboard;
 
 public sealed class RedisDashboardMetricsCache(IConnectionMultiplexer redis)
 {
-    private const string CacheKey = "dashboard:metrics";
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -14,11 +14,14 @@ public sealed class RedisDashboardMetricsCache(IConnectionMultiplexer redis)
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
-    public async Task<DashboardMetricsResponse?> GetAsync(CancellationToken cancellationToken = default)
+    public async Task<DashboardMetricsResponse?> GetAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
     {
+        var key = TenantRedisKeys.DashboardMetrics(tenantId);
         var value = await redis
             .GetDatabase()
-            .StringGetAsync(CacheKey)
+            .StringGetAsync(key)
             .WaitAsync(cancellationToken);
 
         if (value.IsNullOrEmpty)
@@ -34,21 +37,23 @@ public sealed class RedisDashboardMetricsCache(IConnectionMultiplexer redis)
         {
             await redis
                 .GetDatabase()
-                .KeyDeleteAsync(CacheKey)
+                .KeyDeleteAsync(key)
                 .WaitAsync(cancellationToken);
             return null;
         }
     }
 
     public Task SetAsync(
+        Guid tenantId,
         DashboardMetricsResponse metrics,
         CancellationToken cancellationToken = default)
     {
+        var key = TenantRedisKeys.DashboardMetrics(tenantId);
         var json = JsonSerializer.Serialize(metrics, JsonOptions);
 
         return redis
             .GetDatabase()
-            .StringSetAsync(CacheKey, json, CacheTtl)
+            .StringSetAsync(key, json, CacheTtl)
             .WaitAsync(cancellationToken);
     }
 }

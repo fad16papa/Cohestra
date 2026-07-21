@@ -2,7 +2,6 @@ using Cohestra.Application.Activities;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Activities;
 using Cohestra.Domain.Activities;
-using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
@@ -350,14 +349,10 @@ public sealed class ActivityService(
         var tenantId = currentTenant.TenantId.Value;
         var normalizedSlug = slug.Trim().ToLowerInvariant();
 
-        // Redis activity cache remains global until Story 13.2 — only reuse for default tenant.
-        if (tenantId == TenantIds.Default)
+        var cached = await publicActivityCache.GetAsync(tenantId, normalizedSlug, cancellationToken);
+        if (cached is not null)
         {
-            var cached = await publicActivityCache.GetAsync(normalizedSlug, cancellationToken);
-            if (cached is not null)
-            {
-                return ResolvePublicResponse(cached);
-            }
+            return ResolvePublicResponse(cached);
         }
 
         var activity = await dbContext.Activities
@@ -373,9 +368,9 @@ public sealed class ActivityService(
 
         var response = MapToPublicResponse(activity);
 
-        if (activity.Status == ActivityStatus.Published && tenantId == TenantIds.Default)
+        if (activity.Status == ActivityStatus.Published)
         {
-            await publicActivityCache.SetAsync(normalizedSlug, response, cancellationToken);
+            await publicActivityCache.SetAsync(tenantId, normalizedSlug, response, cancellationToken);
         }
 
         return response;
@@ -507,23 +502,17 @@ public sealed class ActivityService(
         Activity activity,
         CancellationToken cancellationToken)
     {
-        // Global Redis keys until Story 13.2 — only Default tenant may touch them.
-        // Non-default: no Set and no Invalidate (shared slug must not thrash Default's entry).
-        if (activity.TenantId != TenantIds.Default)
-        {
-            return;
-        }
-
         if (activity.Status == ActivityStatus.Published)
         {
             await publicActivityCache.SetAsync(
+                activity.TenantId,
                 activity.Slug,
                 MapToPublicResponse(activity),
                 cancellationToken);
             return;
         }
 
-        await publicActivityCache.InvalidateAsync(activity.Slug, cancellationToken);
+        await publicActivityCache.InvalidateAsync(activity.TenantId, activity.Slug, cancellationToken);
     }
 
     private ActivityRegistrationLinkResponse BuildRegistrationLink(string slug)
