@@ -182,7 +182,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [HttpPost("change-password")]
-    [Authorize(Roles = OperatorSeeder.TenantAdminRole)]
+    [Authorize(Policy = TenantAuthPolicies.TenantOperator)]
     [ProducesResponseType(typeof(MessageResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

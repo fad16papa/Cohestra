@@ -104,6 +104,8 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ITenantMembershipService, TenantMembershipService>();
         services.AddScoped<ITenantHostResolver, TenantHostResolver>();
+        services.AddScoped<ITenantPlanGate, TenantPlanGate>();
+        services.AddScoped<RequireProPlanFilter>();
         services.AddScoped<IActivityService, ActivityService>();
         services.AddScoped<ICommunityService, CommunityService>();
         services.AddScoped<ICategoryService, CategoryService>();

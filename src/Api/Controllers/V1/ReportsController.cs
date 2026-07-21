@@ -8,7 +8,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/reports")]
-[Authorize(Roles = OperatorSeeder.TenantAdminRole)]
+[Authorize(Policy = TenantAuthPolicies.TenantOperator)]
 public class ReportsController(IReportService reportService) : ControllerBase
 {
     [HttpGet]

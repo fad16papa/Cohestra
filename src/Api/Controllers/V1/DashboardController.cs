@@ -8,7 +8,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/dashboard")]
-[Authorize(Roles = OperatorSeeder.TenantAdminRole)]
+[Authorize(Policy = TenantAuthPolicies.TenantOperator)]
 [Produces("application/json")]
 public class DashboardController(IDashboardService dashboardService) : ControllerBase
 {

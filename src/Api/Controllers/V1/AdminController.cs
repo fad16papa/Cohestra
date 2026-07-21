@@ -12,7 +12,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin")]
-[Authorize(Roles = OperatorSeeder.TenantAdminRole)]
+[Authorize(Policy = TenantAuthPolicies.TenantOperator)]
 [Produces("application/json")]
 public class AdminController(UserManager<ApplicationUser> userManager) : ControllerBase
 {
@@ -34,9 +34,11 @@ public class AdminController(UserManager<ApplicationUser> userManager) : Control
     }
 
     [HttpPatch("me/appearance")]
+    [Authorize(Policy = TenantAuthPolicies.TenantAdminOnly)]
     [ProducesResponseType(typeof(AdminProfileResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<AdminProfileResponse>> UpdateAppearance(
         [FromBody] UpdateAppearanceRequest? request,
         CancellationToken cancellationToken)

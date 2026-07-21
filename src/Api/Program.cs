@@ -77,6 +77,7 @@ builder.Services.AddAuthorization(options =>
             JwtBearerDefaults.AuthenticationScheme)
         .RequireAuthenticatedUser()
         .Build();
+    options.AddTenantMembershipPolicies();
 });
 
 builder.Services.AddControllers();

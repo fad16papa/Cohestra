@@ -4,7 +4,7 @@ baseline_commit: e3615e154a37e8edd124966b27c3e2f9e2689b5f
 
 # Story 12.3: Enforce Admin vs Member server-side
 
-Status: ready-for-dev
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -41,58 +41,58 @@ so that money and seat controls stay Admin-only while Members can run allowed op
 
 ## Tasks / Subtasks
 
-- [ ] Authorization policies on membership claim (AC: 1, 3, 4)
-  - [ ] Keep **`MapInboundClaims = false`** and **`RoleClaimType = ClaimTypes.Role`** — do **not** set `RoleClaimType = "role"` (12.2 CR lock)
-  - [ ] Register named policies in `Program.cs` (or small `TenantAuthorizationExtensions`) using **`JwtTokenService.MembershipRoleClaimType`** (`"role"`):
+- [x] Authorization policies on membership claim (AC: 1, 3, 4)
+  - [x] Keep **`MapInboundClaims = false`** and **`RoleClaimType = ClaimTypes.Role`** — do **not** set `RoleClaimType = "role"` (12.2 CR lock)
+  - [x] Register named policies in `Program.cs` (or small `TenantAuthorizationExtensions`) using **`JwtTokenService.MembershipRoleClaimType`** (`"role"`):
     - **`TenantAdminOnly`** — authenticated + `RequireClaim("role", "TenantAdmin")` (+ prefer also `RequireClaim("tenant_id")`)
     - **`TenantOperator`** — authenticated + `RequireClaim("role", "TenantAdmin", "TenantMember")` (+ prefer `tenant_id`)
-  - [ ] Use claim **values** from `TenantMembershipRole.ToString()` (`TenantAdmin` | `TenantMember`)
-  - [ ] Do **not** authorize Admin vs Member via `[Authorize(Roles = …)]` / `IsInRole` on the short `"role"` claim
-  - [ ] Leave **PlatformAdmin** controllers on Identity `[Authorize(Roles = PlatformAdminSeeder.PlatformAdminRole)]` unchanged (12.4 hardens platform claim)
+  - [x] Use claim **values** from `TenantMembershipRole.ToString()` (`TenantAdmin` | `TenantMember`)
+  - [x] Do **not** authorize Admin vs Member via `[Authorize(Roles = …)]` / `IsInRole` on the short `"role"` claim
+  - [x] Leave **PlatformAdmin** controllers on Identity `[Authorize(Roles = PlatformAdminSeeder.PlatformAdminRole)]` unchanged (12.4 hardens platform claim)
 
-- [ ] Replace Identity TenantAdmin gates on tenant admin controllers (AC: 4)
-  - [ ] **TenantOperator** (Member + Admin): activities, clients, communities, categories, dashboard, reports, campaigns (+ email-templates if campaign-adjacent), `GET api/v1/admin/me`, `POST api/v1/auth/change-password`, and other operational modules Members may use per FR-5
-  - [ ] **TenantAdminOnly**: tenant settings / money / seats stand-ins:
+- [x] Replace Identity TenantAdmin gates on tenant admin controllers (AC: 4)
+  - [x] **TenantOperator** (Member + Admin): activities, clients, communities, categories, dashboard, reports, campaigns (+ email-templates if campaign-adjacent), `GET api/v1/admin/me`, `POST api/v1/auth/change-password`, and other operational modules Members may use per FR-5
+  - [x] **TenantAdminOnly**: tenant settings / money / seats stand-ins:
     - `PATCH api/v1/admin/me/appearance` (tenant appearance / brand settings)
     - `EmailDeliveryController` (SendGrid delivery/status — Admin-only per FR-5 SendGrid sender)
     - New thin **Team** and **Billing** stub controllers (below)
-  - [ ] **AdminSiteController**: `TenantOperator` (FR-5: Members get site admin within plan). Do **not** invent full SitePage plan gate UI; optional Basic→403 plan check only if cheap and tested — otherwise leave Site plan enforcement for later AD-8 work
-  - [ ] Remove controller-level `[Authorize(Roles = OperatorSeeder.TenantAdminRole)]` from tenant admin controllers once policies are applied (method-level override OK where Admin-only action lives on an otherwise Operator controller — e.g. appearance on `AdminController`)
+  - [x] **AdminSiteController**: `TenantOperator` (FR-5: Members get site admin within plan). Do **not** invent full SitePage plan gate UI; optional Basic→403 plan check only if cheap and tested — otherwise leave Site plan enforcement for later AD-8 work
+  - [x] Remove controller-level `[Authorize(Roles = OperatorSeeder.TenantAdminRole)]` from tenant admin controllers once policies are applied (method-level override OK where Admin-only action lives on an otherwise Operator controller — e.g. appearance on `AdminController`)
 
-- [ ] Team + Billing Admin-only stubs (AC: 1, 3)
-  - [ ] Add minimal controllers so AC is testable **before** Epic 14:
+- [x] Team + Billing Admin-only stubs (AC: 1, 3)
+  - [x] Add minimal controllers so AC is testable **before** Epic 14:
     - e.g. `GET api/v1/admin/team` → 200 empty/stub payload, `[Authorize(Policy = TenantAdminOnly)]`
     - e.g. `GET api/v1/admin/billing` → 200 stub payload, same policy
-  - [ ] Contracts DTOs can be minimal placeholders; no Stripe, no invites, no seats logic
-  - [ ] Document in comments/Dev Notes: Epic 14 replaces stubs with real Team invite / Stripe Portal surfaces **keeping the same policy names**
+  - [x] Contracts DTOs can be minimal placeholders; no Stripe, no invites, no seats logic
+  - [x] Document in comments/Dev Notes: Epic 14 replaces stubs with real Team invite / Stripe Portal surfaces **keeping the same policy names**
 
-- [ ] Campaign plan gate (AC: 2)
-  - [ ] Enforce **Pro+** for campaign APIs (Admin **and** Member): `Tenant.Plan` ∈ {`Pro`, `Enterprise`} allowed; `Basic`/`Core` → 403 + `plan_locked` (or existing ProblemDetails shape with stable code)
-  - [ ] Resolve plan from JWT `tenant_id` (load Tenant row) — never from client body/header
-  - [ ] Prefer a small reusable helper/filter/handler (e.g. `ITenantPlanGate` / authorization requirement) used by `CampaignsController` (and email-templates if those are campaign-only)
-  - [ ] Do **not** implement full AD-8 matrix for every module in this story
+- [x] Campaign plan gate (AC: 2)
+  - [x] Enforce **Pro+** for campaign APIs (Admin **and** Member): `Tenant.Plan` ∈ {`Pro`, `Enterprise`} allowed; `Basic`/`Core` → 403 + `plan_locked` (or existing ProblemDetails shape with stable code)
+  - [x] Resolve plan from JWT `tenant_id` (load Tenant row) — never from client body/header
+  - [x] Prefer a small reusable helper/filter/handler (e.g. `ITenantPlanGate` / authorization requirement) used by `CampaignsController` (and email-templates if those are campaign-only)
+  - [x] Do **not** implement full AD-8 matrix for every module in this story
 
-- [ ] Member session realism (AC: 5)
-  - [ ] Tests (and any helper) must mint/login a user with **`TenantMembershipRole.TenantMember`** on a Core/Pro tenant **without** requiring Identity role `TenantAdmin`
-  - [ ] Login/refresh already bind from membership (12.2) — do not reintroduce Identity-role-only admin gates that block Members from obtaining tokens
-  - [ ] Existing TenantAdmin Identity + membership Admin path must keep working (Platform 0 / seeded operator)
+- [x] Member session realism (AC: 5)
+  - [x] Tests (and any helper) must mint/login a user with **`TenantMembershipRole.TenantMember`** on a Core/Pro tenant **without** requiring Identity role `TenantAdmin`
+  - [x] Login/refresh already bind from membership (12.2) — do not reintroduce Identity-role-only admin gates that block Members from obtaining tokens
+  - [x] Existing TenantAdmin Identity + membership Admin path must keep working (Platform 0 / seeded operator)
 
-- [ ] Tests (AC: 1–5)
-  - [ ] Member JWT → **403** on Team stub, Billing stub, appearance PATCH, email-delivery
-  - [ ] Member JWT → **200** (or non-403 authz) on a representative Operator endpoint (e.g. `GET admin/me` or activities list) when otherwise valid
-  - [ ] Admin JWT → **200** on Team/Billing stubs and settings endpoints (authz passes)
-  - [ ] Member on **Core** → campaign APIs **403** `plan_locked`; Member (or Admin) on **Pro** → campaign authz/plan gate passes (may still fail business validation — assert not role/plan 403)
-  - [ ] PlatformAdmin routes still Identity-gated; tenant policies must not open platform APIs to Members
-  - [ ] Regression: Host/`tenant_id` alignment middleware still applies; `MapInboundClaims` remains false
-  - [ ] Prefer `Infrastructure.Tests` / API filter tests; integration optional if factory helpers already support Host + token mint
+- [x] Tests (AC: 1–5)
+  - [x] Member JWT → **403** on Team stub, Billing stub, appearance PATCH, email-delivery
+  - [x] Member JWT → **200** (or non-403 authz) on a representative Operator endpoint (e.g. `GET admin/me` or activities list) when otherwise valid
+  - [x] Admin JWT → **200** on Team/Billing stubs and settings endpoints (authz passes)
+  - [x] Member on **Core** → campaign APIs **403** `plan_locked`; Member (or Admin) on **Pro** → campaign authz/plan gate passes (may still fail business validation — assert not role/plan 403)
+  - [x] PlatformAdmin routes still Identity-gated; tenant policies must not open platform APIs to Members
+  - [x] Regression: Host/`tenant_id` alignment middleware still applies; `MapInboundClaims` remains false
+  - [x] Prefer `Infrastructure.Tests` / API filter tests; integration optional if factory helpers already support Host + token mint
 
-- [ ] Out of scope (do not implement)
-  - [ ] Distinct `platform_admin` claim / platform route hardening (12.4)
-  - [ ] Full `TenantResolutionMiddleware`, EF global filters, TenantIsolation CI gate (Epic 13)
-  - [ ] Team invite/seats, Stripe Checkout/Portal, UpgradePanel, feature-lock UI copy (Epic 14/15)
-  - [ ] Wiring `TenantAccessEvaluator` (Status ∩ BillingStatus) into every request
-  - [ ] Tenant switcher; creating production Member invite flows
-  - [ ] Reverting `MapInboundClaims` to true or collapsing Identity + membership into one claim type
+- [x] Out of scope (do not implement)
+  - [x] Distinct `platform_admin` claim / platform route hardening (12.4)
+  - [x] Full `TenantResolutionMiddleware`, EF global filters, TenantIsolation CI gate (Epic 13)
+  - [x] Team invite/seats, Stripe Checkout/Portal, UpgradePanel, feature-lock UI copy (Epic 14/15)
+  - [x] Wiring `TenantAccessEvaluator` (Status ∩ BillingStatus) into every request
+  - [x] Tenant switcher; creating production Member invite flows
+  - [x] Reverting `MapInboundClaims` to true or collapsing Identity + membership into one claim type
 
 ## Dev Notes
 
@@ -206,10 +206,51 @@ Key paths:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Cursor Grok 4.5 (cloud agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Added `TenantAdminOnly` / `TenantOperator` policies on membership claim `"role"` + `tenant_id`; kept `MapInboundClaims=false` and Identity `RoleClaimType`.
+- Retargeted tenant admin controllers from Identity `Roles=TenantAdmin` to membership policies; appearance + email-delivery Admin-only; ops endpoints TenantOperator.
+- Added Team/Billing Admin-only stubs (`GET api/v1/admin/team`, `GET api/v1/admin/billing`) for FR-5 matrix until Epic 14.
+- Added `ITenantPlanGate` + `RequireProPlan` filter on campaigns/email-templates (Pro/Enterprise); Core/Basic → 403 `plan_locked`.
+- Tests: policy allow/deny (Member vs Admin vs Identity-only), plan gate theory, filter ProblemDetails, controller attribute inventory. Infrastructure.Tests: **241** passed.
+
 ### File List
+
+- `src/Application/Tenants/ITenantPlanGate.cs`
+- `src/Infrastructure/Auth/TenantAuthPolicies.cs`
+- `src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`
+- `src/Infrastructure/Auth/TenantPlanGate.cs`
+- `src/Infrastructure/Auth/RequireProPlanFilter.cs`
+- `src/Infrastructure/DependencyInjection.cs`
+- `src/Api/Program.cs`
+- `src/Api/Controllers/V1/AdminController.cs`
+- `src/Api/Controllers/V1/ActivitiesController.cs`
+- `src/Api/Controllers/V1/AdminSiteController.cs`
+- `src/Api/Controllers/V1/AuthController.cs`
+- `src/Api/Controllers/V1/BillingController.cs`
+- `src/Api/Controllers/V1/CampaignsController.cs`
+- `src/Api/Controllers/V1/CategoriesController.cs`
+- `src/Api/Controllers/V1/ClientsController.cs`
+- `src/Api/Controllers/V1/CommunitiesController.cs`
+- `src/Api/Controllers/V1/DashboardController.cs`
+- `src/Api/Controllers/V1/EmailDeliveryController.cs`
+- `src/Api/Controllers/V1/EmailTemplatesController.cs`
+- `src/Api/Controllers/V1/ReportsController.cs`
+- `src/Api/Controllers/V1/TeamController.cs`
+- `src/Contracts/Billing/BillingStubResponse.cs`
+- `src/Contracts/Team/TeamStubResponse.cs`
+- `src/Infrastructure.Tests/Auth/TenantMembershipAuthorizationTests.cs`
+- `src/Infrastructure.Tests/Auth/TenantPlanGateTests.cs`
+- `src/Infrastructure.Tests/Auth/RequireProPlanFilterTests.cs`
+- `src/Infrastructure.Tests/Auth/TenantAuthControllerPolicyTests.cs`
+- `src/Infrastructure.Tests/Infrastructure.Tests.csproj`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/implementation-artifacts/12-3-enforce-admin-vs-member-server-side.md`
+
+### Change Log
+
+- 2026-07-21: Implement Story 12.3 Admin vs Member server-side authz + campaign Pro plan gate; mark review.

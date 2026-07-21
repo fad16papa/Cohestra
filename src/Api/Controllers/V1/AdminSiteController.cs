@@ -9,7 +9,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/site")]
-[Authorize(Roles = OperatorSeeder.TenantAdminRole)]
+[Authorize(Policy = TenantAuthPolicies.TenantOperator)]
 [Produces("application/json")]
 public class AdminSiteController(ISitePageService sitePageService) : ControllerBase
 {
