@@ -4,7 +4,7 @@ baseline_commit: 61cfe2a1819f750b25ae3ea27b2455f9ef9e5c98
 
 # Story 13.2: EF global query filters and Redis tenant namespaces
 
-Status: review
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -80,6 +80,18 @@ so that another tenant’s data cannot appear through a missed WHERE clause or s
   - [x] Schema-per-tenant; break-glass impersonation; per-tenant SendGrid keys
   - [x] Renaming OTP/refresh Redis key prefixes (locked out unless leak found)
   - [x] Full multi-tenant SitePage seed for every tenant (admin path using ambient tenant is enough)
+
+
+### Review Follow-ups (AI)
+
+- [ ] [Review][Patch] Reject `Guid.Empty` tenant in `RegistrationService.SubmitPublicRegistrationAsync` — peers reject Empty; Empty can mint Redis keys under `tenant:000…` and pass a weak guard.
+
+- [ ] [Review][Patch] Harden `SeedTenantContext.BindPlatformZero` to resolve via `ICurrentTenant`/`CurrentTenant` and fail loud when DI has tenancy but bind cannot run — avoid silent skip if registration shape changes.
+
+- [x] [Review][Defer] `IgnoreTenantFilters` uses full `IgnoreQueryFilters()` — deferred until a second global filter (e.g. soft-delete) exists; document in helper XML
+- [x] [Review][Defer] Concurrent client dedup unique-index race — pre-existing; rematch-on-DbUpdateException optional harden
+- [x] [Review][Defer] SitePage GetOrCreate `catch (DbUpdateException)` rematch masks non-unique failures — pre-existing pattern; narrow when unique-violation helper exists
+- [x] [Review][Defer] Unresolved insert stamps Default while reads fail-closed — intentional Story 13.2 design lock for seed/design-time; revisit if background jobs appear without BindPlatformZero
 
 ## Dev Notes
 
@@ -226,6 +238,25 @@ Cursor Grok 4.5
 - src/Infrastructure.Tests/Seed/SitePageSeederTests.cs
 - _bmad-output/implementation-artifacts/sprint-status.yaml
 - _bmad-output/implementation-artifacts/13-2-ef-global-query-filters-and-redis-tenant-namespaces.md
+
+
+## Senior Developer Review (AI)
+
+### Review Date
+
+2026-07-21
+
+### Outcome
+
+Changes Requested
+
+### Summary
+
+ACs 1–4 and design locks met (EF fail-closed filters, Platform bypass, Redis namespaces, log scope). Two small patches: Registration Empty-tenant guard alignment; SeedTenantContext bind hardening. Stamp-Default-when-unresolved kept per story lock.
+
+### Action Items
+
+See Tasks → Review Follow-ups (AI).
 
 ## Change Log
 

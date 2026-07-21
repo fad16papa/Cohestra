@@ -1,3 +1,10 @@
+## Deferred from: code review of 13-2-ef-global-query-filters-and-redis-tenant-namespaces.md (2026-07-21)
+
+- `IgnoreTenantFilters` uses full `IgnoreQueryFilters()` — deferred until a second global filter (e.g. soft-delete) exists; document in helper XML
+- Concurrent client dedup unique-index race — pre-existing; rematch-on-DbUpdateException optional harden
+- SitePage GetOrCreate `catch (DbUpdateException)` rematch masks non-unique failures — pre-existing pattern; narrow when unique-violation helper exists
+- Unresolved insert stamps Default while reads fail-closed — intentional Story 13.2 design lock for seed/design-time; revisit if background jobs appear without BindPlatformZero
+
 ## Deferred from: code review re-review of 13-1-tenantresolutionmiddleware-on-all-api-requests.md (2026-07-21)
 
 - Client dedup `FindOrCreateAsync` still global / Default-stamped — deferred to Story 13.2 (+ explicit non-goal cross-tenant client dedup); registration TenantId stamp is the minimal 13.1 fix
