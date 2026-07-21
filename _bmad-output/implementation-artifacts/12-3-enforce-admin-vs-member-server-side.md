@@ -4,7 +4,7 @@ baseline_commit: e3615e154a37e8edd124966b27c3e2f9e2689b5f
 
 # Story 12.3: Enforce Admin vs Member server-side
 
-Status: in-progress
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -218,6 +218,7 @@ Cursor Grok 4.5 (cloud agent)
 - Added `ITenantPlanGate` + `RequireProPlan` filter on campaigns/email-templates (Pro/Enterprise); Core/Basic → 403 `plan_locked`.
 - Tests: policy allow/deny (Member vs Admin vs Identity-only), plan gate theory, filter ProblemDetails, controller attribute inventory. Infrastructure.Tests: **241** passed.
 - CR patches: `tenant_not_found` vs `plan_locked`; Guid-parseable `tenant_id` in policies; membership role on `GET admin/me`; assembly-wide leftover Roles=TenantAdmin scan; malformed tenant_id deny test. Infrastructure.Tests: **243** passed.
+- Re-review CR patches: reject `Guid.Empty` tenant_id; `TenantProfileRoles` prefers membership claim; filter `tenant_not_found` + profile role unit tests. Infrastructure.Tests: **249** passed.
 
 ### File List
 
@@ -225,6 +226,7 @@ Cursor Grok 4.5 (cloud agent)
 - `src/Infrastructure/Auth/TenantAuthPolicies.cs`
 - `src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`
 - `src/Infrastructure/Auth/TenantPlanGate.cs`
+- `src/Infrastructure/Auth/TenantProfileRoles.cs`
 - `src/Infrastructure/Auth/RequireProPlanFilter.cs`
 - `src/Infrastructure/DependencyInjection.cs`
 - `src/Api/Program.cs`
@@ -248,6 +250,7 @@ Cursor Grok 4.5 (cloud agent)
 - `src/Infrastructure.Tests/Auth/TenantPlanGateTests.cs`
 - `src/Infrastructure.Tests/Auth/RequireProPlanFilterTests.cs`
 - `src/Infrastructure.Tests/Auth/TenantAuthControllerPolicyTests.cs`
+- `src/Infrastructure.Tests/Auth/TenantProfileRolesTests.cs`
 - `src/Infrastructure.Tests/Infrastructure.Tests.csproj`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - `_bmad-output/implementation-artifacts/12-3-enforce-admin-vs-member-server-side.md`
@@ -256,6 +259,7 @@ Cursor Grok 4.5 (cloud agent)
 
 - 2026-07-21: Implement Story 12.3 Admin vs Member server-side authz + campaign Pro plan gate; mark review.
 - 2026-07-21: Apply Story 12.3 CR patches; mark story done.
+- 2026-07-21: Apply Story 12.3 re-review CR patches; mark story done.
 
 ### Review Findings
 
@@ -271,8 +275,8 @@ Cursor Grok 4.5 (cloud agent)
 
 ### Re-review Findings (2026-07-21)
 
-- [ ] [Review][Patch] Reject `Guid.Empty` in membership policy `tenant_id` assertion [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
-- [ ] [Review][Patch] When membership `"role"` is present, prefer it for `GET admin/me` Roles (keep Identity PlatformAdmin if any) [`src/Api/Controllers/V1/AdminController.cs`]
-- [ ] [Review][Patch] Assert `RequireProPlanFilter` propagates `tenant_not_found` errorCode [`src/Infrastructure.Tests/Auth/RequireProPlanFilterTests.cs`]
-- [ ] [Review][Patch] Unit-cover `admin/me` Roles preference for membership-only Member principal [`src/Infrastructure.Tests` or AdminController helper]
+- [x] [Review][Patch] Reject `Guid.Empty` in membership policy `tenant_id` assertion [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
+- [x] [Review][Patch] When membership `"role"` is present, prefer it for `GET admin/me` Roles (keep Identity PlatformAdmin if any) [`src/Api/Controllers/V1/AdminController.cs`]
+- [x] [Review][Patch] Assert `RequireProPlanFilter` propagates `tenant_not_found` errorCode [`src/Infrastructure.Tests/Auth/RequireProPlanFilterTests.cs`]
+- [x] [Review][Patch] Unit-cover `admin/me` Roles preference for membership-only Member principal [`src/Infrastructure.Tests` or AdminController helper]
 - [x] [Review][Defer] Leftover Identity-role scan is Controllers.V1-namespace-scoped — deferred; all tenant admin controllers live there today

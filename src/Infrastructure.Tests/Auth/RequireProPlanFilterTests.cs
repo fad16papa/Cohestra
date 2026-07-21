@@ -47,6 +47,22 @@ public sealed class RequireProPlanFilterTests
     }
 
     [Fact]
+    public async Task Forbidden_when_tenant_not_found()
+    {
+        var filter = new RequireProPlanFilter(
+            new StubPlanGate(TenantPlanGateResult.TenantNotFound("Tenant not found for plan gate.")));
+        var context = CreateContext(TenantIds.Default);
+
+        await filter.OnActionExecutionAsync(context, () =>
+            Task.FromResult(new ActionExecutedContext(context, [], null!)));
+
+        var objectResult = Assert.IsType<ObjectResult>(context.Result);
+        Assert.Equal(StatusCodes.Status403Forbidden, objectResult.StatusCode);
+        var problem = Assert.IsType<ProblemDetails>(objectResult.Value);
+        Assert.Equal("tenant_not_found", problem.Extensions["errorCode"]?.ToString());
+    }
+
+    [Fact]
     public async Task Forbidden_when_tenant_id_missing()
     {
         var filter = new RequireProPlanFilter(new StubPlanGate(TenantPlanGateResult.Ok()));
@@ -57,6 +73,8 @@ public sealed class RequireProPlanFilterTests
 
         var objectResult = Assert.IsType<ObjectResult>(context.Result);
         Assert.Equal(StatusCodes.Status403Forbidden, objectResult.StatusCode);
+        var problem = Assert.IsType<ProblemDetails>(objectResult.Value);
+        Assert.Equal("tenant_required", problem.Extensions["errorCode"]?.ToString());
     }
 
     private static ActionExecutingContext CreateContext(Guid? tenantId)

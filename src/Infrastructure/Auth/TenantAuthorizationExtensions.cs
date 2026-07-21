@@ -35,6 +35,6 @@ public static class TenantAuthorizationExtensions
     private static bool HasParseableTenantId(AuthorizationHandlerContext context)
     {
         var raw = context.User.FindFirstValue(JwtTokenService.TenantIdClaimType);
-        return Guid.TryParse(raw, out _);
+        return Guid.TryParse(raw, out var tenantId) && tenantId != Guid.Empty;
     }
 }

@@ -106,6 +106,25 @@ public sealed class TenantMembershipAuthorizationTests
         Assert.False(op.Succeeded);
     }
 
+    [Fact]
+    public async Task Policies_deny_empty_guid_tenant_id()
+    {
+        var auth = BuildAuthorizationService();
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+            new(JwtTokenService.TenantIdClaimType, Guid.Empty.ToString()),
+            new(JwtTokenService.MembershipRoleClaimType, TenantMembershipRole.TenantAdmin.ToString()),
+        };
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, authenticationType: "Bearer"));
+
+        var adminOnly = await auth.AuthorizeAsync(user, null, TenantAuthPolicies.TenantAdminOnly);
+        var op = await auth.AuthorizeAsync(user, null, TenantAuthPolicies.TenantOperator);
+
+        Assert.False(adminOnly.Succeeded);
+        Assert.False(op.Succeeded);
+    }
+
     private static IAuthorizationService BuildAuthorizationService()
     {
         var services = new ServiceCollection();
