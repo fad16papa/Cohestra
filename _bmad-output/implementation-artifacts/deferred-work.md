@@ -1,3 +1,10 @@
+## Deferred from: code review of 13-4-tenantisolation-integration-test-gate-sm-1.md (2026-07-21)
+
+- Host `{slug}.localhost` + Tenant B JWT helpers unused in minimum cases — deferred, AC met via default operator as A; helpers remain for later surfaces
+- One-directional A→B only (no B↛A matrix) — deferred, epic minimum is A JWT ↛ B activity
+- Shared IntegrationTestCollection pollution / double-run Integration then TenantIsolation — deferred, pre-existing collection pattern
+- GitHub branch-protection required-check wiring — deferred, ops; workflow steps exist
+
 ## Deferred from: code review of 13-3-export-and-report-queries-always-filter-by-tenantid.md (2026-07-21)
 
 - InMemory dual-tenant isolation may overstate vs SQL/global-filter production — deferred, pre-existing 13.2 test pattern

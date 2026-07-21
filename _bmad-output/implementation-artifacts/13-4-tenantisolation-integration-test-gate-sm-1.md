@@ -66,6 +66,17 @@ so that **we never ship a tenant-leak regression (SM-1 / NFR-11 / AD-10)**.
   - [x] 5.2 Do not weaken Platform counts-only / marketing-apex locks from Epics 11–13
   - [x] 5.3 Leave `deploy/uat-bootstrap.sh` alone
 
+### Review Findings
+
+- [ ] [Review][Patch] CI SM-1 can pass when all `SkippableFact`s skip — require `Passed: [1-9]` and reject any `Skipped:` in TenantIsolation gate steps [`.github/workflows/ci.yml`]
+- [ ] [Review][Patch] Vacuous negatives — assert own activity GET 200, `visibleSlug` in public site, and Tenant A export marker present [`TenantIsolationApiTests.cs`]
+- [ ] [Review][Patch] Remove unreachable `IsSuccessStatusCode` branch after 403/404 assert [`TenantIsolationApiTests.cs`]
+- [ ] [Review][Patch] Zero-match canary: fail on `No test matches` / require listed count ≥ 1 rather than brittle class-name-only grep [`.github/workflows/ci.yml`]
+- [x] [Review][Defer] Host `{slug}.localhost` + Tenant B JWT helpers unused in minimum cases — deferred, AC met via default operator as A; helpers remain for later surfaces
+- [x] [Review][Defer] One-directional A→B only (no B↛A matrix) — deferred, epic minimum is A JWT ↛ B activity
+- [x] [Review][Defer] Shared IntegrationTestCollection pollution / double-run Integration then TenantIsolation — deferred, pre-existing collection pattern
+- [x] [Review][Defer] GitHub branch-protection required-check wiring — deferred, ops; workflow steps exist
+
 ## Dev Notes
 
 ### Epic / PRD / Architecture anchors
