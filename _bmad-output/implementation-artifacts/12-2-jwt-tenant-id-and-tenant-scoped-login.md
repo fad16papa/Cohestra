@@ -226,7 +226,23 @@ Cursor Grok 4.5 (cloud agent)
 - `src/Infrastructure.Tests/Tenancy/TenantHostResolverTests.cs`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
+### Review Findings
+
+- [ ] [Review][Decision] Membership JWT claim type vs ASP.NET role inbound map — Architecture names the membership claim `"role"`, but JwtBearer inbound mapping can fold `"role"` into `ClaimTypes.Role` / `IsInRole`, colliding with Identity roles. Choose: (1) keep claim type `"role"` and set `MapInboundClaims = false` (or equivalent) so membership `role` is not treated as an authorization Role; (2) emit `membership_role` instead (document AD claim-name deviation until 12.3).
+
+- [ ] [Review][Patch] Refresh must not revive tenant_id without membership [`AuthService.RefreshAsync`] — do not use `binding.TenantId ?? session.TenantId`; if stored tenant membership is gone, revoke and return `no_tenant_membership` (even if PlatformAdmin dual-role falls through to PlatformOnly).
+- [ ] [Review][Patch] Tighten Host slug allowlist [`TenantHostResolver.ExtractSlug`] — do not treat arbitrary multi-label hosts’ first label as slug; only `*.cohestra.app`, `*.localhost`, and explicit localhost/apex fallbacks.
+- [ ] [Review][Patch] Host port / IPv6 parsing [`TenantHostResolver.ExtractSlug`] — strip ports safely; do not `Split(':')[0]` on raw Host (breaks IPv6).
+- [ ] [Review][Patch] Resolve only Active tenants [`TenantHostResolver.ResolveAsync`] — Suspended/Archived must not authenticate or pass Host alignment (project-context: Suspended wins).
+- [ ] [Review][Patch] Align authenticated auth endpoints [`TenantJwtHostAlignmentMiddleware`] — do not blanket-skip all `/api/v1/auth`; only skip anonymous auth routes (login/register/verify/refresh/otp/forgot/reset); enforce Host↔JWT on `change-password`.
+- [ ] [Review][Patch] Middleware coverage tests — Host mismatch, missing `tenant_id`, PlatformAdmin skip, change-password alignment.
+
+- [x] [Review][Defer] Access-token membership not rechecked each request — deferred; refresh rechecks; full continuous membership revoke is Epic 13 / short TTL ops
+- [x] [Review][Defer] Legacy refresh Guid-only payload rebinds from Host — deferred rollout edge; new tokens store tenantId
+- [x] [Review][Defer] DEV_TENANT_SLUG mis-set in production apex — deferred ops/config; document in deploy notes
+
 ## Change Log
 
 - 2026-07-21: Story context created (ready-for-dev)
 - 2026-07-21: Implemented Host-scoped JWT tenant_id login, refresh persistence, alignment middleware → review
+- 2026-07-21: Code review (Blind/Edge/Acceptance) — findings recorded; awaiting claim-type decision

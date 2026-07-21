@@ -1,4 +1,10 @@
 
+## Deferred from: code review of 12-2-jwt-tenant-id-and-tenant-scoped-login.md (2026-07-21)
+
+- Access-token path does not re-validate TenantMembership each request — refresh rechecks; continuous revoke needs shorter TTL or Epic 13 context
+- Legacy Redis refresh values (plain Guid) rebind tenant from Host on refresh — rollout-only; new sessions store tenantId JSON
+- `DEV_TENANT_SLUG` / Tenancy:DevTenantSlug can remap apex/localhost in shared config — ops/deploy documentation
+
 ## Deferred from: code review re-review of 12-1-tenantmembership-and-remove-single-operator-gate.md (2026-07-21)
 
 - Backfill skips existing `(UserId, default)` pair ignoring Role — rare TenantMember-under-TenantAdmin Identity; harden in 12.3/ops if seen
