@@ -23,7 +23,9 @@ public sealed class RegistrationService(
         string? idempotencyKey = null,
         CancellationToken cancellationToken = default)
     {
-        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        if (!currentTenant.IsResolved
+            || currentTenant.TenantId is null
+            || currentTenant.TenantId == Guid.Empty)
         {
             return PublicRegistrationSubmitResult.NotFound();
         }

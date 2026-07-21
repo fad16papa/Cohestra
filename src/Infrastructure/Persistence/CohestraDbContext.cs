@@ -113,6 +113,7 @@ public class CohestraDbContext : IdentityDbContext<ApplicationUser, IdentityRole
 
     /// <summary>
     /// Platform Admin aggregate/audit paths over tenant-owned tables — only approved bypass (AD-1).
+    /// Clears all EF global query filters on <typeparamref name="TEntity"/> (today: tenant filter only).
     /// </summary>
     public IQueryable<TEntity> IgnoreTenantFilters<TEntity>()
         where TEntity : class =>

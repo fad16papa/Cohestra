@@ -4,7 +4,7 @@ baseline_commit: 61cfe2a1819f750b25ae3ea27b2455f9ef9e5c98
 
 # Story 13.2: EF global query filters and Redis tenant namespaces
 
-Status: in-progress
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -84,9 +84,9 @@ so that another tenant’s data cannot appear through a missed WHERE clause or s
 
 ### Review Follow-ups (AI)
 
-- [ ] [Review][Patch] Reject `Guid.Empty` tenant in `RegistrationService.SubmitPublicRegistrationAsync` — peers reject Empty; Empty can mint Redis keys under `tenant:000…` and pass a weak guard.
+- [x] [Review][Patch] Reject `Guid.Empty` tenant in `RegistrationService.SubmitPublicRegistrationAsync` — peers reject Empty; Empty can mint Redis keys under `tenant:000…` and pass a weak guard.
 
-- [ ] [Review][Patch] Harden `SeedTenantContext.BindPlatformZero` to resolve via `ICurrentTenant`/`CurrentTenant` and fail loud when DI has tenancy but bind cannot run — avoid silent skip if registration shape changes.
+- [x] [Review][Patch] Harden `SeedTenantContext.BindPlatformZero` to resolve via `ICurrentTenant`/`CurrentTenant` and fail loud when DI has tenancy but bind cannot run — avoid silent skip if registration shape changes.
 
 - [x] [Review][Defer] `IgnoreTenantFilters` uses full `IgnoreQueryFilters()` — deferred until a second global filter (e.g. soft-delete) exists; document in helper XML
 - [x] [Review][Defer] Concurrent client dedup unique-index race — pre-existing; rematch-on-DbUpdateException optional harden
@@ -200,6 +200,8 @@ Cursor Grok 4.5
 
 ### Completion Notes List
 
+- CR patches applied: Registration rejects Guid.Empty tenant; SeedTenantContext bind hardened (+ IgnoreTenantFilters XML note).
+
 - EF `HasQueryFilter` on all `ITenantScoped` via `TenantFilterTenantId` (fail-closed when unresolved; design-time/null injector → Default).
 - `IgnoreTenantFilters<T>()` used by Platform directory Activity/Client aggregates.
 - `ApplyTenantIdsOnInsert` stamps ambient tenant when resolved.
@@ -248,7 +250,7 @@ Cursor Grok 4.5
 
 ### Outcome
 
-Changes Requested
+Approve (patches applied)
 
 ### Summary
 
@@ -259,5 +261,7 @@ ACs 1–4 and design locks met (EF fail-closed filters, Platform bypass, Redis n
 See Tasks → Review Follow-ups (AI).
 
 ## Change Log
+
+- 2026-07-21: CR patches applied — Empty-tenant registration guard + seed bind harden.
 
 - 2026-07-21: Story 13.2 implemented — EF filters, Redis namespaces, dedup/SitePage stamp, log scopes; status → review.
