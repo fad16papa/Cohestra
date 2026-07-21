@@ -204,7 +204,7 @@ Cursor Grok 4.5 (cloud agent)
 - Refresh store persists JSON `{userId,tenantId}` (legacy Guid still readable); orphan/membership check before Consume.
 - `TenantJwtHostAlignmentMiddleware` on authenticated tenant admin routes; PlatformAdmin-only and `/platform` skipped; `X-Tenant-Id` ignored.
 - PlatformAdmin login still works without `tenant_id`.
-- Infrastructure.Tests: **212+** passed (after CR patches). No Epic 13 EF filters / 12.3 matrix / 12.4 platform claim.
+- Infrastructure.Tests: **212** passed. No Epic 13 EF filters / 12.3 matrix / 12.4 platform claim.
 
 ### File List
 
@@ -224,7 +224,9 @@ Cursor Grok 4.5 (cloud agent)
 - `src/Infrastructure.Tests/Auth/AuthServiceMembershipGuardTests.cs`
 - `src/Infrastructure.Tests/Auth/JwtTokenServiceTests.cs`
 - `src/Infrastructure.Tests/Tenancy/TenantHostResolverTests.cs`
+- `src/Infrastructure.Tests/Tenancy/TenantJwtHostAlignmentMiddlewareTests.cs`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/implementation-artifacts/deferred-work.md`
 
 ### Review Findings
 
