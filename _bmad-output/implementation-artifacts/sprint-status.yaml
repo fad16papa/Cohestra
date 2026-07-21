@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-21T14:25:00Z
+# last_updated: 2026-07-21T14:40:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - Epic 16 is parked (One-stop Lite / UX-DR15) — no v1 stories until pulled forward
 
 generated: 2026-06-16
-last_updated: 2026-07-21T14:25:00Z
+last_updated: 2026-07-21T14:40:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -178,7 +178,7 @@ development_status:
   epic-10-retrospective: optional
 
   # === Cohestra Enterprise (epics-cohestra-enterprise.md) ===
-  # Epic 12 done; Epic 13 in progress — next DS 13-4
+  # Epic 12 done; Epic 13 in progress — next CR 13-4
 
   epic-11: done
   11-1-tenant-entity-with-dual-status-dials: done
@@ -199,7 +199,7 @@ development_status:
   13-1-tenantresolutionmiddleware-on-all-api-requests: done
   13-2-ef-global-query-filters-and-redis-tenant-namespaces: done
   13-3-export-and-report-queries-always-filter-by-tenantid: done
-  13-4-tenantisolation-integration-test-gate-sm-1: ready-for-dev
+  13-4-tenantisolation-integration-test-gate-sm-1: in-progress
   epic-13-retrospective: optional
 
   epic-14: backlog

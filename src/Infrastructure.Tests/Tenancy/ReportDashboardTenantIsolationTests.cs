@@ -18,7 +18,9 @@ namespace Cohestra.Infrastructure.Tests.Tenancy;
 
 /// <summary>
 /// FR28 isolation proofs for Story 13.3 — report CSV / aggregates and dashboard metrics.
+/// Tagged TenantIsolation for SM-1 CI gate (Story 13.4).
 /// </summary>
+[Trait("Category", "TenantIsolation")]
 public sealed class ReportDashboardTenantIsolationTests
 {
     private const string TenantAMarker = "TENANT_A_ISOLATION_MARKER";

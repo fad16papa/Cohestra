@@ -149,7 +149,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Brownfield:** implement stories against existing `main`-based branches; extend code in place
 - **Branches:** feature work under `cursor/<name>-4da3` (cloud agent convention) or team equivalent — keep Enterprise planning/impl on dedicated branches off `main`
 - **Commits:** imperative, scoped; include story id when implementing (`Add TenantIsolation tests (13.4)`)
-- **PRs to `main`:** CI must stay green — `.github/workflows/ci.yml` runs `dotnet test` with `Category!=Integration` plus targeted gates; **add TenantIsolation as a required gate** when Epic 13 lands (do not leave SM-1 optional)
+- **PRs to `main`:** CI must stay green — `.github/workflows/ci.yml` runs `dotnet test` with `Category!=Integration`, SendGrid sandbox gate, **and required `Category=TenantIsolation` steps** (unit + API; SM-1 / Story 13.4). Empty trait match fails the gate.
 - **Local:** `docker compose` project `cohestra-infra`; document `{slug}.localhost` / `DEV_TENANT_SLUG` when touching routing
 - **Secrets:** never commit live Stripe/SendGrid keys; use `.env.example` / `.env.uat.example` patterns
 - **Planning artifacts:** PRD/UX/epics live under `_bmad-output/`; implementation stories later under `_bmad-output/implementation-artifacts/` — don’t invent a second docs tree

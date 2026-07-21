@@ -164,6 +164,27 @@ dotnet run --project src/Api/Api.csproj
 
 Requires PostgreSQL and Redis running locally with connection strings in `src/Api/appsettings.Development.json`.
 
+### TenantIsolation gate (SM-1)
+
+Cross-tenant negative tests are a **required CI gate** on every PR to `main` (AD-10 / Story 13.4).
+
+| Trait | Project | What it covers |
+|-------|---------|----------------|
+| `Category=TenantIsolation` | `Infrastructure.Tests` | Report/dashboard export isolation (Story 13.3) |
+| `Category=TenantIsolation` (+ `Integration`) | `Api.IntegrationTests` | A JWT ↛ B activity; public site A ↛ B activities; export API |
+
+Run locally:
+
+```bash
+# Unit isolation proofs (no Docker deps)
+dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --filter "Category=TenantIsolation"
+
+# API isolation (needs Postgres + Redis — same as integration suite)
+dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --filter "Category=TenantIsolation"
+```
+
+**When you add a new tenant-scoped endpoint**, add or extend a `TenantIsolation` negative case (prefer two real tenants + Host `{slug}.localhost` — never trust `X-Tenant-Id`). Extend `IntegrationTestHelpers` rather than one-off bootstraps.
+
 ## Planning artifacts
 
 Product specs live in `_bmad-output/planning-artifacts/` (PRD, architecture, epics, UX).

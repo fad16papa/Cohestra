@@ -1,6 +1,10 @@
+---
+baseline_commit: 95c5ec47d63168c77b94d1f290e6c08ceba4ffd5
+---
+
 # Story 13.4: TenantIsolation integration test gate (SM-1)
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -33,36 +37,34 @@ so that **we never ship a tenant-leak regression (SM-1 / NFR-11 / AD-10)**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Define `TenantIsolation` trait + helpers (AC: 1, 3)
-  - [ ] 1.1 Add `[Trait("Category", "TenantIsolation")]` to Story 13.3 `ReportDashboardTenantIsolationTests` (keep running under unit job; make SM-1 filterable)
-  - [ ] 1.2 Extend `IntegrationTestHelpers` (or a dedicated helper type in `Api.IntegrationTests/Infrastructure/`) for dual-tenant fixtures:
+- [x] Task 1: Define `TenantIsolation` trait + helpers (AC: 1, 3)
+  - [x] 1.1 Add `[Trait("Category", "TenantIsolation")]` to Story 13.3 `ReportDashboardTenantIsolationTests` (keep running under unit job; make SM-1 filterable)
+  - [x] 1.2 Extend `IntegrationTestHelpers` (or a dedicated helper type in `Api.IntegrationTests/Infrastructure/`) for dual-tenant fixtures:
         - Create Tenant B via `IPlatformTenantService` / platform API (or DB seed with `IgnoreTenantFilters` as needed)
         - Create Identity user + `ITenantMembershipService.EnsureMembershipAsync` for B (TenantAdmin)
         - Issue JWT bound to B (login with Host `{slug}.localhost` **or** `IJwtTokenService.CreateAccessToken(..., tenantId, membershipRole)`)
         - HTTP client `DefaultRequestHeaders.Host` = `{slug}.localhost` for tenant resolution
-  - [ ] 1.3 Prefer **two real tenants in one test** over mocking away EF filters (`project-context.md` Testing Rules)
+  - [x] 1.3 Prefer **two real tenants in one test** over mocking away EF filters (`project-context.md` Testing Rules)
 
-- [ ] Task 2: Minimum API isolation cases (AC: 1, 3) — **primary deliverable**
-  - [ ] 2.1 New `TenantIsolationApiTests` (or similarly named) in `Api.IntegrationTests` with **both** `[Trait("Category", "Integration")]` and `[Trait("Category", "TenantIsolation")]`, `[Collection(IntegrationTestCollection.Name)]`, `SkippableFact` + `SkipIfUnavailable`
-  - [ ] 2.2 **IDOR:** Authenticate as Tenant A; `GET /api/v1/admin/activities/{tenantBActivityId}` → assert status is 403 or 404; assert body is not B’s activity payload
-  - [ ] 2.3 **Public site:** Seed published activities on A and B; call `GET /api/v1/public/site` with Host `tenant-a.localhost` (or A’s slug); assert B activity name/slug absent from response
-  - [ ] 2.4 **Export/report:** Prefer tagging 13.3 service proofs with `TenantIsolation`. Optionally add API `GET /api/v1/admin/reports/export?preset=custom&from=&to=` as Tenant A and assert B markers absent (requires dual-tenant seed with distinguishable PII)
+- [x] Task 2: Minimum API isolation cases (AC: 1, 3) — **primary deliverable**
+  - [x] 2.1 New `TenantIsolationApiTests` (or similarly named) in `Api.IntegrationTests` with **both** `[Trait("Category", "Integration")]` and `[Trait("Category", "TenantIsolation")]`, `[Collection(IntegrationTestCollection.Name)]`, `SkippableFact` + `SkipIfUnavailable`
+  - [x] 2.2 **IDOR:** Authenticate as Tenant A; `GET /api/v1/admin/activities/{tenantBActivityId}` → assert status is 403 or 404; assert body is not B’s activity payload
+  - [x] 2.3 **Public site:** Seed published activities on A and B; call `GET /api/v1/public/site` with Host for A; assert B activity name/slug absent from response (+ public activity by slug 404)
+  - [x] 2.4 **Export/report:** Tagged 13.3 service proofs with `TenantIsolation` + API export assertion excluding B markers
 
-- [ ] Task 3: CI release gate (AC: 2)
-  - [ ] 3.1 Update `.github/workflows/ci.yml`:
-        - **Unit job:** add required step `dotnet test src/Infrastructure.Tests/... --filter "Category=TenantIsolation"` (after build; `--no-build -c Release`)
-        - **Integration job:** add required step `dotnet test src/Api.IntegrationTests/... --filter "Category=TenantIsolation"` (Postgres+Redis services already present)
-  - [ ] 3.2 Ensure gate fails if filter matches **zero** tests (xUnit exits non-zero when filter matches nothing **only if** configured — verify; if not, add an explicit assert/script or a sentinel test so empty trait cannot silently pass)
-  - [ ] 3.3 Do **not** remove existing `Category=Integration` / `Category!=Integration` filters — TenantIsolation is additive
+- [x] Task 3: CI release gate (AC: 2)
+  - [x] 3.1 Update `.github/workflows/ci.yml` with required TenantIsolation unit + API steps
+  - [x] 3.2 Gate fails if filter matches zero tests (`--list-tests` + grep before run)
+  - [x] 3.3 Existing `Category=Integration` / `Category!=Integration` filters preserved
 
-- [ ] Task 4: Documentation (AC: 4)
-  - [ ] 4.1 Add a short **TenantIsolation (SM-1)** subsection to `README.md` (how to run locally + “new tenant-scoped endpoint → extend TenantIsolation suite”)
-  - [ ] 4.2 Confirm `_bmad-output/project-context.md` Testing Rules still align (already mentions SM-1); tweak only if CI command paths diverge
+- [x] Task 4: Documentation (AC: 4)
+  - [x] 4.1 README TenantIsolation (SM-1) subsection
+  - [x] 4.2 `project-context.md` Testing Rules / PR CI note updated
 
-- [ ] Task 5: Hygiene
-  - [ ] 5.1 Do not implement Epic 14/15 stories here
-  - [ ] 5.2 Do not weaken Platform counts-only / marketing-apex locks from Epics 11–13
-  - [ ] 5.3 Leave `deploy/uat-bootstrap.sh` alone
+- [x] Task 5: Hygiene
+  - [x] 5.1 Do not implement Epic 14/15 stories here
+  - [x] 5.2 Do not weaken Platform counts-only / marketing-apex locks from Epics 11–13
+  - [x] 5.3 Leave `deploy/uat-bootstrap.sh` alone
 
 ## Dev Notes
 
@@ -72,64 +74,8 @@ so that **we never ship a tenant-leak regression (SM-1 / NFR-11 / AD-10)**.
 |--------|-------------|
 | Epics Story 13.4 | Trait `TenantIsolation`; CI required on PRs to main; 403/404 never 200+foreign; docs for new endpoints |
 | NFR-11 / SM-1 | Zero cross-tenant leakage; isolation matrix 100% pass on negative cases |
-| Architecture AD-10 | `Api.IntegrationTests` category `TenantIsolation` must pass on every PR to `main`. Minimum: A JWT cannot GET B activity; public site slug A does not return B activities |
-| FR28 / NFR-S4 | Export isolation already proven in 13.3 — fold into gate via trait and/or API case |
-| `project-context.md` | Extend `IntegrationTestHelpers`; two tenants preferred; CI must add TenantIsolation as required gate |
-
-### Brownfield CI today
-
-```yaml
-# .github/workflows/ci.yml (current)
-dotnet job:     dotnet test Cohestra.sln --filter "Category!=Integration"
-integration:    dotnet test Api.IntegrationTests --filter "Category=Integration"  # needs Postgres+Redis
-```
-
-**Gap:** No `TenantIsolation` trait yet; no dedicated SM-1 step; Story 13.3 proofs live only in `Infrastructure.Tests` without the trait.
-
-### Host / JWT dual-tenant facts (critical for DS)
-
-| Concern | Fact |
-|---------|------|
-| Default Host | Tests use `http://localhost` → `TenantHostResolver` → Platform 0 / `default` slug |
-| Non-default tenant | Set `HttpClient.DefaultRequestHeaders.Host` to `{slug}.localhost` |
-| Login binds tenant | `AuthController` passes `Request.Host` into `IAuthService.LoginAsync` |
-| Platform create tenant | `POST /api/v1/platform/tenants` — creates **Tenant row only** (no admin user/membership) |
-| Membership | `ITenantMembershipService.EnsureMembershipAsync(userId, tenantId, role)` |
-| Activity GET | `GET /api/v1/admin/activities/{id}` — `TenantOperator` policy; EF filter → typically **404** if wrong tenant |
-| Public site | `GET /api/v1/public/site` — ambient Host tenant; activities filtered by `TenantId` |
-| Export | `GET /api/v1/admin/reports/export?preset=…` — `TenantOperator` |
-
-### Implementation sketch
-
-```csharp
-[Trait("Category", "Integration")]
-[Trait("Category", "TenantIsolation")]
-[Collection(IntegrationTestCollection.Name)]
-public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
-{
-    [SkippableFact]
-    public async Task Admin_GetActivity_ByForeignTenantId_Returns404Or403()
-    {
-        IntegrationTestHelpers.SkipIfUnavailable(fixture.Factory);
-        // seed A+B activities, auth as A with Host a.localhost, GET B id → NotFound/Forbidden
-    }
-}
-```
-
-```yaml
-# ci.yml additions (illustrative)
-- name: TenantIsolation gate (SM-1)
-  run: dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release --filter "Category=TenantIsolation" --verbosity normal
-```
-
-### Anti-patterns (do NOT)
-
-- Soften SM-1 to optional / allow-failure CI step
-- Trust `X-Tenant-Id` header for isolation tests (AD-3 — Host + JWT only)
-- Mock away `ICurrentTenant` / EF filters for the **API** gate cases (service-level 13.3 proofs are fine tagged separately)
-- Delete Platform 0 tests to go green (SM-4)
-- Implement Story 14.x billing/marketing here
-- Reopen Stories 13.1–13.3 unless a regression appears
+| Architecture AD-10 | `Api.IntegrationTests` category `TenantIsolation` must pass on every PR to `main` |
+| FR28 / NFR-S4 | Export isolation from 13.3 folded into gate via trait + API case |
 
 ### Previous story intelligence (13.1–13.3)
 
@@ -137,46 +83,63 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
 - EF global filters + Redis `tenant:{id}:…` (13.2)
 - Report/Dashboard explicit `TenantId` + `ReportDashboardTenantIsolationTests` (13.3, clean CR #2)
 - Marketing apex ≠ tenant SitePage; tenant identity on `{slug}.cohestra.app` / `{slug}.localhost`
-- Integration pattern: `SkippableFact` + `SkipIfUnavailable` when Postgres/Redis down locally
-- Latest clean CR: Story 13.3 re-review #2
 
 ### Project Structure Notes
 
 | Path | Role |
 |------|------|
-| `.github/workflows/ci.yml` | **Required** SM-1 gate steps |
-| `src/Api.IntegrationTests/TenantIsolationApiTests.cs` (new) | HTTP IDOR + public site cases |
-| `src/Api.IntegrationTests/Infrastructure/IntegrationTestHelpers.cs` | Extend multi-tenant helpers |
-| `src/Infrastructure.Tests/Tenancy/ReportDashboardTenantIsolationTests.cs` | Tag `TenantIsolation` (13.3 proofs) |
+| `.github/workflows/ci.yml` | Required SM-1 gate steps |
+| `src/Api.IntegrationTests/TenantIsolationApiTests.cs` | HTTP IDOR + public site + export |
+| `src/Api.IntegrationTests/Infrastructure/IntegrationTestHelpers.cs` | Multi-tenant helpers |
+| `src/Infrastructure.Tests/Tenancy/ReportDashboardTenantIsolationTests.cs` | Tagged TenantIsolation |
 | `README.md` | Contributor note for SM-1 |
-| `_bmad-output/project-context.md` | Align Testing Rules if needed |
+| `_bmad-output/project-context.md` | CI / Testing Rules aligned |
 
 ### References
 
 - [Source: `_bmad-output/planning-artifacts/epics-cohestra-enterprise.md` — Epic 13 Story 13.4]
 - [Source: `_bmad-output/planning-artifacts/architecture/architecture-cohestra-enterprise-2026-07-15/ARCHITECTURE-SPINE.md` — AD-10]
-- [Source: `_bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/prd.md` — SM-1]
-- [Source: `_bmad-output/project-context.md` — Testing Rules]
-- [Source: `_bmad-output/implementation-artifacts/13-3-export-and-report-queries-always-filter-by-tenantid.md`]
 - [Source: `.github/workflows/ci.yml`]
-- [Source: `_bmad-output/implementation-artifacts/7-2-ci-pipeline-and-sendgrid-sandbox-gate.md`]
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Cursor Grok 4.5 (cloud agent)
 
 ### Debug Log References
 
+- `Infrastructure.Tests` Category=TenantIsolation: 7 passed
+- Full `Infrastructure.Tests`: 300 passed
+- `Api.IntegrationTests` TenantIsolation: listed 3 tests; skipped locally (no Postgres/Redis / ready deps) — same SkippableFact pattern as existing suite; CI integration job runs them with services
+
 ### Completion Notes List
+
+- Tagged Story 13.3 report/dashboard isolation tests with `Category=TenantIsolation`.
+- Extended `IntegrationTestHelpers` with Host binding, platform create-tenant, tenant admin user/membership, JWT mint, tenant-scoped activity seed, default site publish helper.
+- Added `TenantIsolationApiTests`: cross-tenant activity GET, public site / public activity isolation, report export CSV excludes B markers.
+- CI: required SM-1 steps on unit + integration jobs with zero-match failure via `--list-tests` grep.
+- README + project-context document the gate and contributor expectation.
 
 ### File List
 
+- `.github/workflows/ci.yml`
+- `src/Api.IntegrationTests/TenantIsolationApiTests.cs` (new)
+- `src/Api.IntegrationTests/Infrastructure/IntegrationTestHelpers.cs`
+- `src/Infrastructure.Tests/Tenancy/ReportDashboardTenantIsolationTests.cs`
+- `README.md`
+- `_bmad-output/project-context.md`
+- `_bmad-output/implementation-artifacts/13-4-tenantisolation-integration-test-gate-sm-1.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+## Change Log
+
+- 2026-07-21: DS 13.4 — TenantIsolation trait, API cases, CI SM-1 gate, docs; status → review.
+
 ## Ultimate context engineering tip
 
-Story 13.4 = **make SM-1 a hard CI gate**: trait `Category=TenantIsolation`, minimum API cases (A JWT ↛ B activity; public site A ↛ B activities), fold 13.3 export proofs into the trait, required CI steps on PRs to `main`, README note for new endpoints. Prefer extending `IntegrationTestHelpers` + Host `{slug}.localhost` over one-off bootstraps.
+Story 13.4 = **make SM-1 a hard CI gate**: trait `Category=TenantIsolation`, minimum API cases (A JWT ↛ B activity; public site A ↛ B activities), fold 13.3 export proofs into the trait, required CI steps on PRs to `main`, README note for new endpoints.
 
 ### Story completion status
 
-ready-for-dev — analyze complete; developer can implement the CI gate without inventing isolation scope.
+review — implementation complete; ready for code-review.

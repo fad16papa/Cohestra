@@ -39,6 +39,19 @@ jobs:
       - name: SendGrid sandbox gate
         run: dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --no-build -c Release --filter "FullyQualifiedName~SendGridSettingsValidatorTests" --verbosity normal
 
+      - name: TenantIsolation unit gate (SM-1)
+        run: |
+          set -euo pipefail
+          LIST_FILE=$(mktemp)
+          dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --no-build -c Release \
+            --list-tests --filter "Category=TenantIsolation" | tee "$LIST_FILE"
+          if ! grep -qE 'ReportDashboardTenantIsolation' "$LIST_FILE"; then
+            echo "SM-1 gate failed: Category=TenantIsolation matched zero unit tests."
+            exit 1
+          fi
+          dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --no-build -c Release \
+            --filter "Category=TenantIsolation" --verbosity normal
+
   integration:
     name: API integration tests
     runs-on: ubuntu-latest
@@ -86,6 +99,19 @@ jobs:
 
       - name: Integration tests
         run: dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release --filter "Category=Integration" --verbosity normal
+
+      - name: TenantIsolation API gate (SM-1)
+        run: |
+          set -euo pipefail
+          LIST_FILE=$(mktemp)
+          dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release \
+            --list-tests --filter "Category=TenantIsolation" | tee "$LIST_FILE"
+          if ! grep -qE 'TenantIsolationApi' "$LIST_FILE"; then
+            echo "SM-1 gate failed: Category=TenantIsolation matched zero API tests."
+            exit 1
+          fi
+          dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release \
+            --filter "Category=TenantIsolation" --verbosity normal
 
   web:
     name: Next.js build
