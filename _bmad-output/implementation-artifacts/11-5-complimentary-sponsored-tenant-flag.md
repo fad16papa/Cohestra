@@ -192,6 +192,11 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 - [x] [Review][Patch] Unit test: update plan while already Sponsored [`src/Infrastructure.Tests/Tenants/PlatformTenantServiceTests.cs`]
 - [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (unchanged from prior CR)
 
+### Post-patch Review Findings (round 3)
+
+- [ ] [Review][Patch] Reset complimentary form state (`compReason` / plan defaults) when `tenantId` changes so a typed reason cannot carry across tenants [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (restated; no new deferrals)
+
 ## Dev Agent Record
 
 ### Agent Model Used
