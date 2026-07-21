@@ -131,7 +131,7 @@ public static class DependencyInjection
         services.AddSingleton<RedisPublicActivityCache>();
         services.AddSingleton<RedisPublishedSiteCache>();
         services.AddSingleton<IPublishedSiteCache>(sp => sp.GetRequiredService<RedisPublishedSiteCache>());
-        services.AddSingleton<RedisDashboardMetricsCache>();
+        services.AddSingleton<IDashboardMetricsCache, RedisDashboardMetricsCache>();
 
         return services;
     }

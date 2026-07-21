@@ -1,11 +1,12 @@
 using System.Text.Json;
+using Cohestra.Application.Dashboard;
 using Cohestra.Contracts.Dashboard;
 using Cohestra.Infrastructure.Tenancy;
 using StackExchange.Redis;
 
 namespace Cohestra.Infrastructure.Dashboard;
 
-public sealed class RedisDashboardMetricsCache(IConnectionMultiplexer redis)
+public sealed class RedisDashboardMetricsCache(IConnectionMultiplexer redis) : IDashboardMetricsCache
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromSeconds(60);
 

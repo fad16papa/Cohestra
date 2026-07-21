@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Cohestra.Application.Reports;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Reports;
 using Cohestra.Domain.Clients;
 using Cohestra.Infrastructure.Persistence;
@@ -8,17 +9,21 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Reports;
 
-public sealed class ReportService(CohestraDbContext dbContext) : IReportService
+public sealed class ReportService(
+    CohestraDbContext dbContext,
+    ICurrentTenant currentTenant) : IReportService
 {
     public async Task<ReportResponse> GetReportAsync(
         ReportQuery query,
         CancellationToken cancellationToken = default)
     {
+        var tenantId = RequireTenantId();
         var normalizedPreset = query.Preset.Trim().ToLowerInvariant();
         var computedAt = DateTimeOffset.UtcNow;
         var (startAt, endAt) = ResolvePeriod(normalizedPreset, query, computedAt);
 
         var registrationsInPeriod = BuildFilteredRegistrationsQuery(
+            tenantId,
             query,
             startAt,
             endAt);
@@ -37,6 +42,7 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
             .AsNoTracking()
             .CountAsync(
                 client =>
+                    client.TenantId == tenantId &&
                     cohortClientIds.Contains(client.Id) &&
                     client.CreatedAt >= startAt &&
                     client.CreatedAt <= endAt,
@@ -48,6 +54,7 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
             .AsNoTracking()
             .CountAsync(
                 client =>
+                    client.TenantId == tenantId &&
                     cohortClientIds.Contains(client.Id) &&
                     client.CreatedAt < startAt,
                 cancellationToken);
@@ -56,6 +63,7 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
             .AsNoTracking()
             .CountAsync(
                 client =>
+                    client.TenantId == tenantId &&
                     cohortClientIds.Contains(client.Id) &&
                     client.LeadStatus == LeadStatus.Inactive,
                 cancellationToken);
@@ -66,18 +74,25 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
             .CountAsync(cancellationToken);
 
         var followUpStatus = await BuildFollowUpStatusAsync(
+            tenantId,
             registrationsInPeriod,
             cancellationToken);
 
         var activityRanking = await BuildActivityRankingAsync(
+            tenantId,
             registrationsInPeriod,
             cancellationToken);
 
         var communityRanking = await BuildCommunityRankingAsync(
+            tenantId,
             registrationsInPeriod,
             cancellationToken);
 
-        var campaignResults = await BuildCampaignResultsAsync(startAt, endAt, cancellationToken);
+        var campaignResults = await BuildCampaignResultsAsync(
+            tenantId,
+            startAt,
+            endAt,
+            cancellationToken);
 
         return new ReportResponse(
             new ReportPeriodResponse(normalizedPreset, startAt, endAt, computedAt),
@@ -94,13 +109,17 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
     }
 
     private async Task<ReportCampaignResultsResponse> BuildCampaignResultsAsync(
+        Guid tenantId,
         DateTimeOffset startAt,
         DateTimeOffset endAt,
         CancellationToken cancellationToken)
     {
         var campaignsInPeriod = dbContext.Campaigns
             .AsNoTracking()
-            .Where(campaign => campaign.SentAt >= startAt && campaign.SentAt <= endAt);
+            .Where(campaign =>
+                campaign.TenantId == tenantId &&
+                campaign.SentAt >= startAt &&
+                campaign.SentAt <= endAt);
 
         var campaignsSent = await campaignsInPeriod.CountAsync(cancellationToken);
         if (campaignsSent == 0)
@@ -119,6 +138,7 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
         ReportQuery query,
         CancellationToken cancellationToken = default)
     {
+        var tenantId = RequireTenantId();
         var report = await GetReportAsync(query, cancellationToken);
 
         var normalizedPreset = query.Preset.Trim().ToLowerInvariant();
@@ -126,7 +146,11 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
         var startAt = report.Period.StartAt;
         var endAt = report.Period.EndAt;
 
-        var registrationRows = await BuildFilteredRegistrationsQuery(query, startAt, endAt)
+        var registrationRows = await BuildFilteredRegistrationsQuery(
+                tenantId,
+                query,
+                startAt,
+                endAt)
             .OrderByDescending(registration => registration.CreatedAt)
             .Select(registration => new ReportCsvRegistrationRow(
                 registration.RegistrationNumber,
@@ -148,6 +172,7 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
     }
 
     private IQueryable<Domain.Registrations.Registration> BuildFilteredRegistrationsQuery(
+        Guid tenantId,
         ReportQuery query,
         DateTimeOffset startAt,
         DateTimeOffset endAt)
@@ -156,9 +181,22 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
             dbContext.Registrations
                 .AsNoTracking()
                 .Where(registration =>
+                    registration.TenantId == tenantId &&
                     registration.CreatedAt >= startAt &&
                     registration.CreatedAt <= endAt),
             query);
+    }
+
+    private Guid RequireTenantId()
+    {
+        if (!currentTenant.IsResolved
+            || currentTenant.TenantId is null
+            || currentTenant.TenantId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Tenant context is required for reports.");
+        }
+
+        return currentTenant.TenantId.Value;
     }
 
     private static byte[] BuildCsvContent(
@@ -239,6 +277,7 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
         string? ReferralSource,
         string ActivityName,
         string CommunityLabel);
+
     private static IQueryable<Domain.Registrations.Registration> ApplyRegistrationFilters(
         IQueryable<Domain.Registrations.Registration> query,
         ReportQuery filters)
@@ -329,6 +368,7 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
         new(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
 
     private async Task<ReportFollowUpStatusResponse> BuildFollowUpStatusAsync(
+        Guid tenantId,
         IQueryable<Domain.Registrations.Registration> registrationsInPeriod,
         CancellationToken cancellationToken)
     {
@@ -338,7 +378,9 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
 
         var statusCounts = await dbContext.Clients
             .AsNoTracking()
-            .Where(client => cohortClientIds.Contains(client.Id))
+            .Where(client =>
+                client.TenantId == tenantId &&
+                cohortClientIds.Contains(client.Id))
             .GroupBy(client => client.LeadStatus)
             .Select(group => new { Status = group.Key, Count = group.Count() })
             .ToListAsync(cancellationToken);
@@ -358,6 +400,7 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
             .AsNoTracking()
             .CountAsync(
                 client =>
+                    client.TenantId == tenantId &&
                     cohortClientIds.Contains(client.Id) &&
                     (client.LeadStatus != LeadStatus.New ||
                      client.TimelineEvents.Any(timelineEvent =>
@@ -379,6 +422,7 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
     }
 
     private async Task<IReadOnlyList<ReportActivityRankingItemResponse>> BuildActivityRankingAsync(
+        Guid tenantId,
         IQueryable<Domain.Registrations.Registration> registrationsInPeriod,
         CancellationToken cancellationToken)
     {
@@ -402,7 +446,9 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
 
         var activities = await dbContext.Activities
             .AsNoTracking()
-            .Where(activity => activityIds.Contains(activity.Id))
+            .Where(activity =>
+                activity.TenantId == tenantId &&
+                activityIds.Contains(activity.Id))
             .ToDictionaryAsync(activity => activity.Id, cancellationToken);
 
         return registrationCounts
@@ -420,6 +466,7 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
     }
 
     private async Task<IReadOnlyList<ReportCommunityRankingItemResponse>> BuildCommunityRankingAsync(
+        Guid tenantId,
         IQueryable<Domain.Registrations.Registration> registrationsInPeriod,
         CancellationToken cancellationToken)
     {
@@ -441,7 +488,9 @@ public sealed class ReportService(CohestraDbContext dbContext) : IReportService
 
         var activities = await dbContext.Activities
             .AsNoTracking()
-            .Where(activity => activityIds.Contains(activity.Id))
+            .Where(activity =>
+                activity.TenantId == tenantId &&
+                activityIds.Contains(activity.Id))
             .Select(activity => new { activity.Id, activity.CommunityLabel })
             .ToListAsync(cancellationToken);
 

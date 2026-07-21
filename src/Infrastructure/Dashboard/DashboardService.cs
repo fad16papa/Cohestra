@@ -10,7 +10,7 @@ namespace Cohestra.Infrastructure.Dashboard;
 
 public sealed class DashboardService(
     CohestraDbContext dbContext,
-    RedisDashboardMetricsCache metricsCache,
+    IDashboardMetricsCache metricsCache,
     ICurrentTenant currentTenant) : IDashboardService
 {
     private const int NewLeadsPeriodDays = 7;
@@ -30,12 +30,13 @@ public sealed class DashboardService(
             return cached;
         }
 
-        var metrics = await ComputeMetricsAsync(cancellationToken);
+        var metrics = await ComputeMetricsAsync(tenantId, cancellationToken);
         await metricsCache.SetAsync(tenantId, metrics, cancellationToken);
         return metrics;
     }
 
     private async Task<DashboardMetricsResponse> ComputeMetricsAsync(
+        Guid tenantId,
         CancellationToken cancellationToken)
     {
         var computedAt = DateTimeOffset.UtcNow;
@@ -43,30 +44,35 @@ public sealed class DashboardService(
 
         var totalLeads = await dbContext.Clients
             .AsNoTracking()
-            .CountAsync(cancellationToken);
+            .CountAsync(client => client.TenantId == tenantId, cancellationToken);
 
         var newLeadsInPeriod = await dbContext.Clients
             .AsNoTracking()
             .CountAsync(
-                client => client.Registrations.Any(registration =>
-                    registration.CreatedAt >= periodStart),
+                client =>
+                    client.TenantId == tenantId &&
+                    client.Registrations.Any(registration =>
+                        registration.CreatedAt >= periodStart),
                 cancellationToken);
 
         var activeActivitiesCount = await dbContext.Activities
             .AsNoTracking()
             .CountAsync(
-                activity => activity.Status == ActivityStatus.Published,
+                activity =>
+                    activity.TenantId == tenantId &&
+                    activity.Status == ActivityStatus.Published,
                 cancellationToken);
 
         var followedUpLeads = await dbContext.Clients
             .AsNoTracking()
             .CountAsync(
                 client =>
-                    client.LeadStatus != LeadStatus.New ||
+                    client.TenantId == tenantId &&
+                    (client.LeadStatus != LeadStatus.New ||
                     client.TimelineEvents.Any(timelineEvent =>
                         timelineEvent.EventType == ClientTimelineEventType.EmailCampaignSent ||
                         timelineEvent.EventType == ClientTimelineEventType.WhatsAppInitiated ||
-                        timelineEvent.EventType == ClientTimelineEventType.WhatsAppFollowUpRecorded),
+                        timelineEvent.EventType == ClientTimelineEventType.WhatsAppFollowUpRecorded)),
                 cancellationToken);
 
         var followUpCoveragePercent = totalLeads == 0
@@ -74,6 +80,7 @@ public sealed class DashboardService(
             : Math.Round(followedUpLeads * 100d / totalLeads, 1);
 
         var activityPerformance = await ComputeActivityPerformanceAsync(
+            tenantId,
             periodStart,
             cancellationToken);
 
@@ -88,12 +95,15 @@ public sealed class DashboardService(
     }
 
     private async Task<IReadOnlyList<ActivityPerformanceItemResponse>> ComputeActivityPerformanceAsync(
+        Guid tenantId,
         DateTimeOffset periodStart,
         CancellationToken cancellationToken)
     {
         var registrationCounts = await dbContext.Registrations
             .AsNoTracking()
-            .Where(registration => registration.CreatedAt >= periodStart)
+            .Where(registration =>
+                registration.TenantId == tenantId &&
+                registration.CreatedAt >= periodStart)
             .GroupBy(registration => registration.ActivityId)
             .Select(group => new
             {
@@ -112,7 +122,9 @@ public sealed class DashboardService(
         var activityIds = registrationCounts.Select(item => item.ActivityId).ToList();
         var activities = await dbContext.Activities
             .AsNoTracking()
-            .Where(activity => activityIds.Contains(activity.Id))
+            .Where(activity =>
+                activity.TenantId == tenantId &&
+                activityIds.Contains(activity.Id))
             .ToDictionaryAsync(activity => activity.Id, cancellationToken);
 
         return registrationCounts
