@@ -181,7 +181,7 @@ Cursor Grok 4.5 (cloud agent)
 - Orphan guard: TenantAdmin Identity with zero memberships → login/refresh/verify refuse tokens (`no_tenant_membership`); PlatformAdmin exempt.
 - `ITenantMembershipService` / `TenantMembershipService` for create/ensure/query validation (role mismatch Conflict; ensure race re-read).
 - CR patches applied: refresh `AuthLoginResult`, verify-before-confirm order, resume role ensure, non-destructive register conflict.
-- Unit tests: membership service + backfill + `AuthServiceMembershipGuardTests`. Full `Infrastructure.Tests`: 187 passed. No JWT `tenant_id` (12.2).
+- Unit tests: membership service + backfill + `AuthServiceMembershipGuardTests`. Full `Infrastructure.Tests`: 190 passed. No JWT `tenant_id` (12.2).
 
 ### File List
 
