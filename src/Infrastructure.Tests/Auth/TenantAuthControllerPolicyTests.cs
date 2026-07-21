@@ -57,12 +57,13 @@ public sealed class TenantAuthControllerPolicyTests
     }
 
     [Fact]
-    public void Platform_controllers_remain_identity_platform_admin()
+    public void Platform_controllers_use_PlatformAdminOnly_policy()
     {
         foreach (var type in new[] { typeof(PlatformMeController), typeof(PlatformTenantsController) })
         {
             var authorize = type.GetCustomAttributes<AuthorizeAttribute>(inherit: true).ToArray();
-            Assert.Contains(authorize, a => a.Roles == PlatformAdminSeeder.PlatformAdminRole);
+            Assert.Contains(authorize, a => a.Policy == TenantAuthPolicies.PlatformAdminOnly);
+            Assert.DoesNotContain(authorize, a => a.Roles == PlatformAdminSeeder.PlatformAdminRole);
             Assert.DoesNotContain(authorize, a => a.Policy == TenantAuthPolicies.TenantOperator
                 || a.Policy == TenantAuthPolicies.TenantAdminOnly);
         }
@@ -84,16 +85,10 @@ public sealed class TenantAuthControllerPolicyTests
         var offenders = new List<string>();
         foreach (var type in controllerTypes)
         {
-            // Platform routes intentionally keep Identity PlatformAdmin Roles=.
-            if (type == typeof(PlatformMeController) || type == typeof(PlatformTenantsController))
-            {
-                continue;
-            }
-
             var typeAttrs = type.GetCustomAttributes<AuthorizeAttribute>(inherit: true);
             foreach (var attr in typeAttrs)
             {
-                if (UsesIdentityTenantAdminRole(attr))
+                if (UsesIdentityTenantAdminRole(attr) || UsesIdentityPlatformAdminRole(attr))
                 {
                     offenders.Add($"{type.Name} (class)");
                 }
@@ -103,7 +98,7 @@ public sealed class TenantAuthControllerPolicyTests
             {
                 foreach (var attr in method.GetCustomAttributes<AuthorizeAttribute>(inherit: true))
                 {
-                    if (UsesIdentityTenantAdminRole(attr))
+                    if (UsesIdentityTenantAdminRole(attr) || UsesIdentityPlatformAdminRole(attr))
                     {
                         offenders.Add($"{type.Name}.{method.Name}");
                     }
@@ -113,7 +108,7 @@ public sealed class TenantAuthControllerPolicyTests
 
         Assert.True(
             offenders.Count == 0,
-            "Leftover Identity Roles=TenantAdmin on: " + string.Join(", ", offenders));
+            "Leftover Identity Roles= gates on: " + string.Join(", ", offenders));
     }
 
     private static bool UsesIdentityTenantAdminRole(AuthorizeAttribute attr) =>
@@ -121,4 +116,10 @@ public sealed class TenantAuthControllerPolicyTests
         && attr.Roles
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Contains(OperatorSeeder.TenantAdminRole, StringComparer.Ordinal);
+
+    private static bool UsesIdentityPlatformAdminRole(AuthorizeAttribute attr) =>
+        !string.IsNullOrWhiteSpace(attr.Roles)
+        && attr.Roles
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Contains(PlatformAdminSeeder.PlatformAdminRole, StringComparer.Ordinal);
 }

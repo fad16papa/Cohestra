@@ -4,7 +4,7 @@ baseline_commit: 526b75568aa7163ac3ed982413dcb5404a5c646b
 
 # Story 12.4: Platform Admin role claim
 
-Status: ready-for-dev
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -37,46 +37,46 @@ so that platform routes reject ordinary tenant JWTs and tenant routes stay tenan
 
 ## Tasks / Subtasks
 
-- [ ] Emit `platform_admin` claim (AC: 1)
-  - [ ] Add `JwtTokenService.PlatformAdminClaimType = "platform_admin"` (value `"true"` when Identity roles include `PlatformAdmin`)
-  - [ ] Emit only for Platform Admin sessions — **never** on pure tenant Admin/Member tokens
-  - [ ] Platform-only sessions continue to **omit** `tenant_id` and membership `"role"`
-  - [ ] Keep emitting Identity `ClaimTypes.Role` = `PlatformAdmin` for compatibility (do not drop Identity role claims)
-  - [ ] Keep `MapInboundClaims = false` and `RoleClaimType = ClaimTypes.Role` — do **not** remap `"role"` / `platform_admin`
+- [x] Emit `platform_admin` claim (AC: 1)
+  - [x] Add `JwtTokenService.PlatformAdminClaimType = "platform_admin"` (value `"true"` when Identity roles include `PlatformAdmin`)
+  - [x] Emit only for Platform Admin sessions — **never** on pure tenant Admin/Member tokens
+  - [x] Platform-only sessions continue to **omit** `tenant_id` and membership `"role"`
+  - [x] Keep emitting Identity `ClaimTypes.Role` = `PlatformAdmin` for compatibility (do not drop Identity role claims)
+  - [x] Keep `MapInboundClaims = false` and `RoleClaimType = ClaimTypes.Role` — do **not** remap `"role"` / `platform_admin`
 
-- [ ] Platform authorization policy (AC: 2, 4)
-  - [ ] Add policy e.g. **`PlatformAdminOnly`** — authenticated + `RequireClaim("platform_admin", "true")`
-  - [ ] Register beside existing `AddTenantMembershipPolicies` (same extension file or `PlatformAuthorizationExtensions`)
-  - [ ] Switch `PlatformMeController` and `PlatformTenantsController` from `[Authorize(Roles = PlatformAdmin)]` to `[Authorize(Policy = PlatformAdminOnly)]`
-  - [ ] Tenant Admin/Member JWT (membership `"role"` only, no `platform_admin`) → **403** on `/api/v1/platform/*`
+- [x] Platform authorization policy (AC: 2, 4)
+  - [x] Add policy e.g. **`PlatformAdminOnly`** — authenticated + `RequireClaim("platform_admin", "true")`
+  - [x] Register beside existing `AddTenantMembershipPolicies` (same extension file or `PlatformAuthorizationExtensions`)
+  - [x] Switch `PlatformMeController` and `PlatformTenantsController` from `[Authorize(Roles = PlatformAdmin)]` to `[Authorize(Policy = PlatformAdminOnly)]`
+  - [x] Tenant Admin/Member JWT (membership `"role"` only, no `platform_admin`) → **403** on `/api/v1/platform/*`
 
-- [ ] Block PlatformAdmin impersonation on tenant routes (AC: 3, 4)
-  - [ ] **Locked:** PlatformAdmin-only principals must **not** bypass tenant authz. Existing `TenantOperator` / `TenantAdminOnly` already require parseable `tenant_id` + membership `"role"` — keep that fail-closed
-  - [ ] **Tighten middleware:** `TenantJwtHostAlignmentMiddleware` must **not** skip Host↔`tenant_id` alignment for PlatformAdmin-only users on **tenant** paths. Path skip for `/api/v1/platform/*` remains. Remove (or narrow) the `IsInRole(PlatformAdmin) && !IsInRole(TenantAdmin)` early-return that currently skips alignment on `/admin/*`
-  - [ ] Result: PlatformAdmin without `tenant_id` hitting `/api/v1/admin/*` → **403** (middleware and/or membership policies) — never treated as TenantAdmin
-  - [ ] Do **not** implement break-glass login-as or audited impersonation
+- [x] Block PlatformAdmin impersonation on tenant routes (AC: 3, 4)
+  - [x] **Locked:** PlatformAdmin-only principals must **not** bypass tenant authz. Existing `TenantOperator` / `TenantAdminOnly` already require parseable `tenant_id` + membership `"role"` — keep that fail-closed
+  - [x] **Tighten middleware:** `TenantJwtHostAlignmentMiddleware` must **not** skip Host↔`tenant_id` alignment for PlatformAdmin-only users on **tenant** paths. Path skip for `/api/v1/platform/*` remains. Remove (or narrow) the `IsInRole(PlatformAdmin) && !IsInRole(TenantAdmin)` early-return that currently skips alignment on `/admin/*`
+  - [x] Result: PlatformAdmin without `tenant_id` hitting `/api/v1/admin/*` → **403** (middleware and/or membership policies) — never treated as TenantAdmin
+  - [x] Do **not** implement break-glass login-as or audited impersonation
 
-- [ ] Preserve PlatformAdmin login + Epic 11 APIs (AC: 1, 3)
-  - [ ] PlatformAdmin-only login without membership still succeeds (12.1/12.2)
-  - [ ] RoleExclusivity PlatformAdmin ⊥ TenantAdmin unchanged
-  - [ ] Seeder / `LoginAsPlatformAdminAsync` helpers still work; tokens now include `platform_admin=true`
-  - [ ] Optional: `TenantProfileRoles` / platform `/me` may surface claim or keep Identity role string — UI can keep using `PlatformAdmin` Identity role for routing if claim is also present
+- [x] Preserve PlatformAdmin login + Epic 11 APIs (AC: 1, 3)
+  - [x] PlatformAdmin-only login without membership still succeeds (12.1/12.2)
+  - [x] RoleExclusivity PlatformAdmin ⊥ TenantAdmin unchanged
+  - [x] Seeder / `LoginAsPlatformAdminAsync` helpers still work; tokens now include `platform_admin=true`
+  - [x] Optional: `TenantProfileRoles` / platform `/me` may surface claim or keep Identity role string — UI can keep using `PlatformAdmin` Identity role for routing if claim is also present
 
-- [ ] Tests (AC: 1–4)
-  - [ ] `JwtTokenService`: PlatformAdmin token has `platform_admin=true`; omits `tenant_id` / membership `"role"`; tenant Admin token does **not** get `platform_admin`
-  - [ ] Policy: `PlatformAdminOnly` allows claim; denies tenant membership-only principal
-  - [ ] Controller inventory: platform controllers use `PlatformAdminOnly` policy (not Identity Roles alone)
-  - [ ] Middleware: PlatformAdmin-only on `/api/v1/admin/me` **does not** skip alignment (403 without `tenant_id`); `/api/v1/platform/me` still skips Host bind
-  - [ ] Regression: PlatformAdmin login without membership; tenant Host login + membership policies; `MapInboundClaims=false` unchanged
-  - [ ] Integration (optional/Skippable): operator JWT → 403 on `/platform/tenants`; PlatformAdmin → 200 on platform list — extend existing platform tests if easy
+- [x] Tests (AC: 1–4)
+  - [x] `JwtTokenService`: PlatformAdmin token has `platform_admin=true`; omits `tenant_id` / membership `"role"`; tenant Admin token does **not** get `platform_admin`
+  - [x] Policy: `PlatformAdminOnly` allows claim; denies tenant membership-only principal
+  - [x] Controller inventory: platform controllers use `PlatformAdminOnly` policy (not Identity Roles alone)
+  - [x] Middleware: PlatformAdmin-only on `/api/v1/admin/me` **does not** skip alignment (403 without `tenant_id`); `/api/v1/platform/me` still skips Host bind
+  - [x] Regression: PlatformAdmin login without membership; tenant Host login + membership policies; `MapInboundClaims=false` unchanged
+  - [x] Integration (optional/Skippable): operator JWT → 403 on `/platform/tenants`; PlatformAdmin → 200 on platform list — extend existing platform tests if easy
 
-- [ ] Out of scope (do not implement)
-  - [ ] Full `TenantResolutionMiddleware`, EF global filters, TenantIsolation CI, `[RequiresPlatformAdmin]` audit bypass productization (Epic 13)
-  - [ ] `PlatformUsers` table / separate identity store
-  - [ ] Break-glass impersonation / login-as-tenant
-  - [ ] Team invite, Stripe, Member UI feature-lock (Epic 14/15)
-  - [ ] Collapsing Identity + membership + platform into one claim type; flipping `MapInboundClaims`
-  - [ ] Changing Identity role string away from `PlatformAdmin` (claim is additive)
+- [x] Out of scope (do not implement)
+  - [x] Full `TenantResolutionMiddleware`, EF global filters, TenantIsolation CI, `[RequiresPlatformAdmin]` audit bypass productization (Epic 13)
+  - [x] `PlatformUsers` table / separate identity store
+  - [x] Break-glass impersonation / login-as-tenant
+  - [x] Team invite, Stripe, Member UI feature-lock (Epic 14/15)
+  - [x] Collapsing Identity + membership + platform into one claim type; flipping `MapInboundClaims`
+  - [x] Changing Identity role string away from `PlatformAdmin` (claim is additive)
 
 ## Dev Notes
 
@@ -169,10 +169,32 @@ Key paths:
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Cursor Grok 4.5 (cloud agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Emit `platform_admin=true` on PlatformAdmin-only JWT sessions; omit when TenantAdmin Identity present; keep Identity `ClaimTypes.Role`.
+- Policy `PlatformAdminOnly` on claim; `PlatformMeController` / `PlatformTenantsController` switched from Identity Roles=.
+- Removed PlatformAdmin-only Host-alignment skip on tenant paths; `/api/v1/platform/*` path skip remains.
+- Tests: JWT claim emission, policy allow/deny, controller inventory, middleware tenant-path 403 vs platform-path skip. Infrastructure.Tests: **254** passed.
+
 ### File List
+
+- `src/Infrastructure/Auth/JwtTokenService.cs`
+- `src/Infrastructure/Auth/TenantAuthPolicies.cs`
+- `src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`
+- `src/Infrastructure/Tenancy/TenantJwtHostAlignmentMiddleware.cs`
+- `src/Api/Controllers/V1/PlatformMeController.cs`
+- `src/Api/Controllers/V1/PlatformTenantsController.cs`
+- `src/Infrastructure.Tests/Auth/JwtTokenServiceTests.cs`
+- `src/Infrastructure.Tests/Auth/TenantMembershipAuthorizationTests.cs`
+- `src/Infrastructure.Tests/Auth/TenantAuthControllerPolicyTests.cs`
+- `src/Infrastructure.Tests/Tenancy/TenantJwtHostAlignmentMiddlewareTests.cs`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/implementation-artifacts/12-4-platform-admin-role-claim.md`
+
+### Change Log
+
+- 2026-07-21: Implement Story 12.4 platform_admin claim + PlatformAdminOnly policy; mark review.

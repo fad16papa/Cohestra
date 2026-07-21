@@ -9,7 +9,8 @@ namespace Cohestra.Infrastructure.Tenancy;
 
 /// <summary>
 /// Thin AD-3 alignment: authenticated tenant admin requests must have JWT tenant_id matching Host.
-/// PlatformAdmin Identity and /api/v1/platform/* skip. Does not implement full Epic 13 middleware.
+/// /api/v1/platform/* skips (platform claim policy gates those routes). Does not implement full Epic 13 middleware.
+/// PlatformAdmin-only tokens do NOT skip tenant-path alignment — they cannot impersonate TenantAdmin.
 /// </summary>
 public sealed class TenantJwtHostAlignmentMiddleware(RequestDelegate next)
 {
@@ -47,13 +48,6 @@ public sealed class TenantJwtHostAlignmentMiddleware(RequestDelegate next)
         }
 
         if (context.User.Identity?.IsAuthenticated != true)
-        {
-            await next(context);
-            return;
-        }
-
-        if (context.User.IsInRole(PlatformAdminSeeder.PlatformAdminRole)
-            && !context.User.IsInRole(OperatorSeeder.TenantAdminRole))
         {
             await next(context);
             return;

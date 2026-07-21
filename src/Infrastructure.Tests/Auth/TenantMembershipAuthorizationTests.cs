@@ -125,6 +125,50 @@ public sealed class TenantMembershipAuthorizationTests
         Assert.False(op.Succeeded);
     }
 
+    [Fact]
+    public async Task PlatformAdminOnly_allows_platform_admin_claim()
+    {
+        var auth = BuildAuthorizationService();
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+            new(ClaimTypes.Role, PlatformAdminSeeder.PlatformAdminRole),
+            new(JwtTokenService.PlatformAdminClaimType, JwtTokenService.PlatformAdminClaimValue),
+        };
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, authenticationType: "Bearer"));
+
+        var result = await auth.AuthorizeAsync(user, null, TenantAuthPolicies.PlatformAdminOnly);
+
+        Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public async Task PlatformAdminOnly_denies_tenant_membership_without_platform_claim()
+    {
+        var auth = BuildAuthorizationService();
+        var user = Principal(TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var result = await auth.AuthorizeAsync(user, null, TenantAuthPolicies.PlatformAdminOnly);
+
+        Assert.False(result.Succeeded);
+    }
+
+    [Fact]
+    public async Task PlatformAdminOnly_denies_identity_PlatformAdmin_without_claim()
+    {
+        var auth = BuildAuthorizationService();
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+            new(ClaimTypes.Role, PlatformAdminSeeder.PlatformAdminRole),
+        };
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, authenticationType: "Bearer"));
+
+        var result = await auth.AuthorizeAsync(user, null, TenantAuthPolicies.PlatformAdminOnly);
+
+        Assert.False(result.Succeeded);
+    }
+
     private static IAuthorizationService BuildAuthorizationService()
     {
         var services = new ServiceCollection();

@@ -29,6 +29,14 @@ public static class TenantAuthorizationExtensions
                 TenantMembershipRole.TenantMember.ToString());
         });
 
+        options.AddPolicy(TenantAuthPolicies.PlatformAdminOnly, policy =>
+        {
+            policy.RequireAuthenticatedUser();
+            policy.RequireClaim(
+                JwtTokenService.PlatformAdminClaimType,
+                JwtTokenService.PlatformAdminClaimValue);
+        });
+
         return options;
     }
 

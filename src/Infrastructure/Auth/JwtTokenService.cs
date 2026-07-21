@@ -21,6 +21,8 @@ public sealed class JwtTokenService(IOptions<JwtSettings> options) : IJwtTokenSe
 {
     public const string TenantIdClaimType = "tenant_id";
     public const string MembershipRoleClaimType = "role";
+    public const string PlatformAdminClaimType = "platform_admin";
+    public const string PlatformAdminClaimValue = "true";
 
     public (string AccessToken, int ExpiresInSeconds) CreateAccessToken(
         ApplicationUser user,
@@ -42,6 +44,14 @@ public sealed class JwtTokenService(IOptions<JwtSettings> options) : IJwtTokenSe
         foreach (var role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        // Spine: platform_admin=true only for PlatformAdmin-only sessions (not when TenantAdmin Identity is present).
+        var isPlatformAdmin = roles.Contains(PlatformAdminSeeder.PlatformAdminRole, StringComparer.Ordinal);
+        var isTenantAdmin = roles.Contains(OperatorSeeder.TenantAdminRole, StringComparer.Ordinal);
+        if (isPlatformAdmin && !isTenantAdmin)
+        {
+            claims.Add(new Claim(PlatformAdminClaimType, PlatformAdminClaimValue));
         }
 
         if (tenantId is not null)

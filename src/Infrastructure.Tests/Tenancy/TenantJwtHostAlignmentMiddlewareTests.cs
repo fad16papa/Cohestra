@@ -69,10 +69,28 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
     }
 
     [Fact]
-    public async Task Skips_platform_admin_only()
+    public async Task Rejects_platform_admin_only_on_tenant_admin_path()
     {
         var context = CreateContext(
             "/api/v1/admin/me",
+            host: "localhost",
+            authenticated: true,
+            roles: [PlatformAdminSeeder.PlatformAdminRole],
+            tenantId: null);
+
+        var middleware = new TenantJwtHostAlignmentMiddleware(_ => Task.CompletedTask);
+        await middleware.InvokeAsync(
+            context,
+            new StubHostResolver(TenantHostResolution.Fail("unused")));
+
+        Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Skips_platform_path_without_tenant_id()
+    {
+        var context = CreateContext(
+            "/api/v1/platform/me",
             host: "localhost",
             authenticated: true,
             roles: [PlatformAdminSeeder.PlatformAdminRole],
@@ -90,6 +108,7 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
             new StubHostResolver(TenantHostResolution.Fail("unused")));
 
         Assert.True(called);
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode == 0 ? 200 : context.Response.StatusCode);
     }
 
     [Fact]

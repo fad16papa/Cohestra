@@ -12,7 +12,7 @@ namespace Cohestra.Api.Controllers.V1;
 /// </summary>
 [ApiController]
 [Route("api/v1/platform/tenants")]
-[Authorize(Roles = PlatformAdminSeeder.PlatformAdminRole)]
+[Authorize(Policy = TenantAuthPolicies.PlatformAdminOnly)]
 [Produces("application/json")]
 public sealed class PlatformTenantsController(IPlatformTenantService platformTenantService) : ControllerBase
 {
