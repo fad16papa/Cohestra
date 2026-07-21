@@ -385,6 +385,7 @@ public sealed class PlatformTenantServiceTests
         Assert.Equal(actor, setAudit.ActorUserId);
         Assert.Equal("Pilot cohort", setAudit.Reason);
         Assert.Contains("FR-23", setAudit.DetailsJson!, StringComparison.Ordinal);
+        Assert.Contains("IsComplimentaryAfter", setAudit.DetailsJson!, StringComparison.Ordinal);
 
         var cleared = await service.SetComplimentaryAsync(
             created.Value.Id,
@@ -494,6 +495,69 @@ public sealed class PlatformTenantServiceTests
             new CreateTenantRequest("Bad Comp", "bad-comp", "Enterprise", "e@c.co", IsComplimentary: true),
             actor);
         Assert.Equal(PlatformTenantError.Validation, enterprise.Error);
+    }
+
+    [Fact]
+    public async Task SetComplimentary_updates_plan_while_sponsored_and_is_idempotent_for_same_plan()
+    {
+        await using var db = CreateDb();
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        var created = await service.CreateAsync(
+            new CreateTenantRequest("Plan Bump", "plan-bump", "Basic", "a@b.co"),
+            actor);
+
+        await service.SetComplimentaryAsync(
+            created.Value!.Id,
+            new SetComplimentaryRequest(true, "Basic", "start"),
+            actor);
+
+        var bumped = await service.SetComplimentaryAsync(
+            created.Value.Id,
+            new SetComplimentaryRequest(true, "Pro", "upgrade pilot"),
+            actor);
+
+        Assert.True(bumped.Succeeded);
+        Assert.True(bumped.Value!.IsComplimentary);
+        Assert.Equal(TenantPlan.Pro.ToString(), bumped.Value.Plan);
+        Assert.Equal(BillingStatus.Free.ToString(), bumped.Value.BillingStatus);
+
+        var setCount = await db.PlatformAuditLogs.CountAsync(a =>
+            a.TenantId == created.Value.Id && a.Action == PlatformAuditAction.ComplimentarySet);
+        Assert.Equal(2, setCount);
+
+        var noop = await service.SetComplimentaryAsync(
+            created.Value.Id,
+            new SetComplimentaryRequest(true, "Pro", "again"),
+            actor);
+
+        Assert.True(noop.Succeeded);
+        Assert.Equal(TenantPlan.Pro.ToString(), noop.Value!.Plan);
+
+        setCount = await db.PlatformAuditLogs.CountAsync(a =>
+            a.TenantId == created.Value.Id && a.Action == PlatformAuditAction.ComplimentarySet);
+        Assert.Equal(2, setCount);
+    }
+
+    [Fact]
+    public async Task SetComplimentary_rejects_null_isComplimentary_flag()
+    {
+        await using var db = CreateDb();
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        var created = await service.CreateAsync(
+            new CreateTenantRequest("Null Flag", "null-flag", "Basic", "a@b.co"),
+            actor);
+
+        var missing = await service.SetComplimentaryAsync(
+            created.Value!.Id,
+            new SetComplimentaryRequest(null, "Pro", null),
+            actor);
+
+        Assert.Equal(PlatformTenantError.Validation, missing.Error);
+        Assert.Contains("isComplimentary", missing.Detail!, StringComparison.OrdinalIgnoreCase);
     }
 
     private static CohestraDbContext CreateDb()

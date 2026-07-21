@@ -186,10 +186,10 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 
 ### Post-patch Review Findings
 
-- [ ] [Review][Patch] Set-path audit DetailsJson: add `IsComplimentaryAfter=true` for before/after symmetry [`src/Infrastructure/Platform/PlatformTenantService.cs`]
-- [ ] [Review][Patch] `SetComplimentaryRequest.IsComplimentary` as `bool?` — reject omitted/null with 400 (missing bool currently defaults to clear) [`src/Contracts/Platform/PlatformTenantContracts.cs`]
-- [ ] [Review][Patch] Idempotent no-op when already complimentary on same plan (return Ok, no duplicate audit) [`src/Infrastructure/Platform/PlatformTenantService.cs`]
-- [ ] [Review][Patch] Unit test: update plan while already Sponsored [`src/Infrastructure.Tests/Tenants/PlatformTenantServiceTests.cs`]
+- [x] [Review][Patch] Set-path audit DetailsJson: add `IsComplimentaryAfter=true` for before/after symmetry [`src/Infrastructure/Platform/PlatformTenantService.cs`]
+- [x] [Review][Patch] `SetComplimentaryRequest.IsComplimentary` as `bool?` — reject omitted/null with 400 (missing bool currently defaults to clear) [`src/Contracts/Platform/PlatformTenantContracts.cs`]
+- [x] [Review][Patch] Idempotent no-op when already complimentary on same plan (return Ok, no duplicate audit) [`src/Infrastructure/Platform/PlatformTenantService.cs`]
+- [x] [Review][Patch] Unit test: update plan while already Sponsored [`src/Infrastructure.Tests/Tenants/PlatformTenantServiceTests.cs`]
 - [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (unchanged from prior CR)
 
 ## Dev Agent Record
@@ -210,6 +210,7 @@ Cursor Grok 4.5 (cloud agent)
 - Platform detail: sparse Complimentary section + Sponsored label; no tenant-admin SponsoredBadge chrome.
 - Unit: 12 PlatformTenantService tests passed (incl. complimentary set/clear/validation). Integration complimentary test added (skippable when stack unavailable).
 - CR patches: Sponsored plan update UI; hide complimentary on default tenant; clear-audit before/after; ActorUserId asserts; reason maxLength 1000; `IsComplimentary = false` initializer. Decision: Suspended may set/clear complimentary.
+- Post-patch patches: set-audit `IsComplimentaryAfter`; `bool?` required flag; idempotent same-plan set; unit coverage for Sponsored plan bump.
 
 ### File List
 
@@ -238,3 +239,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: CR decision — Suspended tenants may set/clear complimentary (allow)
 - 2026-07-21: Applied all 6 CR patches → done
 - 2026-07-21: Post-patch re-review — 4 residual patches, prior defers restated (no AC violations)
+- 2026-07-21: Applied post-patch residual patches (nullable flag, set-audit after, idempotent same-plan, plan-update test) → done

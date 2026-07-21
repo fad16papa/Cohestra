@@ -10,11 +10,12 @@ public sealed record CreateTenantRequest(
 public sealed record SuspendTenantRequest(string Reason);
 
 /// <summary>
-/// Set or clear complimentary (Sponsored) plan. When <paramref name="IsComplimentary"/> is true,
-/// <paramref name="Plan"/> must be Basic, Core, or Pro. Stripe IDs are left unchanged.
+/// Set or clear complimentary (Sponsored) plan. <paramref name="IsComplimentary"/> is required
+/// (omit/null → 400). When true, <paramref name="Plan"/> must be Basic, Core, or Pro.
+/// Stripe IDs are left unchanged.
 /// </summary>
 public sealed record SetComplimentaryRequest(
-    bool IsComplimentary,
+    bool? IsComplimentary,
     string? Plan,
     string? Reason);
 

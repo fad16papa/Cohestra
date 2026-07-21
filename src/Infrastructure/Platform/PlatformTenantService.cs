@@ -407,6 +407,15 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
         Guid actorUserId,
         CancellationToken cancellationToken = default)
     {
+        if (request.IsComplimentary is null)
+        {
+            return PlatformTenantResult<TenantResponse>.Fail(
+                PlatformTenantError.Validation,
+                "isComplimentary is required.");
+        }
+
+        var setComplimentary = request.IsComplimentary.Value;
+
         if (tenantId == TenantIds.Default)
         {
             return PlatformTenantResult<TenantResponse>.Fail(
@@ -440,13 +449,19 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
         var complimentaryBefore = tenant.IsComplimentary;
         var billingBefore = tenant.BillingStatus;
 
-        if (request.IsComplimentary)
+        if (setComplimentary)
         {
             if (!TryParseComplimentaryPlan(request.Plan, out var plan))
             {
                 return PlatformTenantResult<TenantResponse>.Fail(
                     PlatformTenantError.Validation,
                     "Complimentary plan must be Basic, Core, or Pro.");
+            }
+
+            // Idempotent: already sponsored on the requested plan — no duplicate audit.
+            if (tenant.IsComplimentary && tenant.Plan == plan)
+            {
+                return PlatformTenantResult<TenantResponse>.Ok(Map(tenant));
             }
 
             tenant.IsComplimentary = true;
@@ -467,6 +482,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
                     PlanBefore = planBefore.ToString(),
                     PlanAfter = plan.ToString(),
                     IsComplimentaryBefore = complimentaryBefore,
+                    IsComplimentaryAfter = true,
                     BillingStatusBefore = billingBefore.ToString(),
                     BillingStatusAfter = BillingStatus.Free.ToString(),
                     StripeIdsUnchanged = true,
