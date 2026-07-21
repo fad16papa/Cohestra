@@ -4,7 +4,7 @@ baseline_commit: f8659aa2fd51a591bc5d2fb3e40c96c950759476
 
 # Story 13.1: TenantResolutionMiddleware on all API requests
 
-Status: in-progress
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -104,7 +104,7 @@ so that handlers never run ambiguously across tenants.
 - [x] [Review][Defer] Client dedup `FindOrCreateAsync` still global / Default-stamped — deferred to Story 13.2 (+ explicit non-goal cross-tenant client dedup); registration TenantId stamp is the minimal 13.1 fix
 
 
-- [ ] [Review][Patch] Bind SitePage preview token to Host tenant [`SitePreviewTokenService` / `SitePageService.GetPreviewAsync`] — token payload is userId-only; Host-scoped draft load lets a valid token preview another tenant's SitePage by changing Host. Include tenantId in signed payload and reject mismatch with `ICurrentTenant`.
+- [x] [Review][Patch] Bind SitePage preview token to Host tenant [`SitePreviewTokenService` / `SitePageService.GetPreviewAsync`] — token payload is userId-only; Host-scoped draft load lets a valid token preview another tenant's SitePage by changing Host. Include tenantId in signed payload and reject mismatch with `ICurrentTenant`.
 
 ## Dev Notes
 
@@ -207,6 +207,8 @@ Cursor Grok 4.5
 
 ### Completion Notes List
 
+- Re-review #3 patch applied: site-preview-v2 tokens bind tenantId; GetPreviewAsync rejects Host mismatch.
+
 - Re-review #2 patches applied: Registration.TenantId stamped from Host context; non-default SyncPublicActivityCacheAsync no-ops (no Invalidate).
 
 - CR patches applied (2026-07-21): upcoming activities tenant filter; MarketingOnly refresh fail; registration ICurrentTenant; non-default Redis cache invalidate-only.
@@ -230,6 +232,8 @@ Cursor Grok 4.5
 - src/Infrastructure/Tenancy/TenantJwtHostAlignmentMiddleware.cs
 - src/Infrastructure/DependencyInjection.cs
 - src/Infrastructure/Site/SitePageService.cs
+- src/Infrastructure.Tests/Site/SitePreviewTokenServiceTests.cs
+- src/Infrastructure/Site/SitePreviewTokenService.cs
 - src/Infrastructure/Activities/ActivityService.cs
 - src/Api/Program.cs
 - src/Infrastructure.Tests/Tenancy/TenantResolutionMiddlewareTests.cs
@@ -252,7 +256,7 @@ Cursor Grok 4.5
 
 ### Outcome
 
-Changes Requested (re-review #3)
+Approve (re-review #3 patch applied)
 
 ### Re-review Date
 
@@ -276,6 +280,8 @@ See Tasks → Review Follow-ups (AI).
 Prior patches (1–4 + re-review #2) verified fixed; ACs still met. One residual patch: preview tokens are user-only; after Host-scoped `GetPreviewAsync`, a valid token can load another tenant's draft by changing Host. Bind `tenantId` in token create/validate.
 
 ## Change Log
+
+- 2026-07-21: Re-review #3 patch applied — preview token tenant bind (site-preview-v2).
 
 - 2026-07-21: Re-review #2 patches applied — Registration.TenantId + cache no-op.
 

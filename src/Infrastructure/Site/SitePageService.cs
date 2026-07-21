@@ -318,7 +318,12 @@ public sealed class SitePageService(
         CancellationToken cancellationToken = default)
     {
         _ = cancellationToken;
-        var result = previewTokenService.CreateToken(userId);
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null || currentTenant.TenantId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Tenant context is required to create a site preview token.");
+        }
+
+        var result = previewTokenService.CreateToken(userId, currentTenant.TenantId.Value);
         return Task.FromResult(new SitePreviewTokenResponse(result.Token, result.ExpiresAt));
     }
 
@@ -326,12 +331,13 @@ public sealed class SitePageService(
         string previewToken,
         CancellationToken cancellationToken = default)
     {
-        if (!previewTokenService.TryValidate(previewToken, out _))
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
         {
             return null;
         }
 
-        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        if (!previewTokenService.TryValidate(previewToken, out _, out var tokenTenantId)
+            || tokenTenantId != currentTenant.TenantId.Value)
         {
             return null;
         }

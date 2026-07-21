@@ -1,3 +1,4 @@
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Site;
 using Microsoft.Extensions.Options;
@@ -19,29 +20,51 @@ public sealed class SitePreviewTokenServiceTests
     {
         var service = CreateService();
         var userId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var tenantId = TenantIds.Default;
 
-        var created = service.CreateToken(userId);
+        var created = service.CreateToken(userId, tenantId);
 
         Assert.False(string.IsNullOrWhiteSpace(created.Token));
-        Assert.True(service.TryValidate(created.Token, out var validatedUserId));
+        Assert.True(service.TryValidate(created.Token, out var validatedUserId, out var validatedTenantId));
         Assert.Equal(userId, validatedUserId);
+        Assert.Equal(tenantId, validatedTenantId);
     }
 
     [Fact]
     public void TryValidate_RejectsTamperedToken()
     {
         var service = CreateService();
-        var created = service.CreateToken(Guid.NewGuid());
+        var created = service.CreateToken(Guid.NewGuid(), TenantIds.Default);
 
-        Assert.False(service.TryValidate($"{created.Token}x", out _));
+        Assert.False(service.TryValidate($"{created.Token}x", out _, out _));
     }
 
     [Fact]
     public void TryValidate_RejectsExpiredToken()
     {
         var service = CreateService(lifetimeMinutes: 0);
-        var created = service.CreateToken(Guid.NewGuid());
+        var created = service.CreateToken(Guid.NewGuid(), TenantIds.Default);
 
-        Assert.False(service.TryValidate(created.Token, out _));
+        Assert.False(service.TryValidate(created.Token, out _, out _));
+    }
+
+    [Fact]
+    public void CreateToken_RejectsEmptyTenantId()
+    {
+        var service = CreateService();
+        Assert.Throws<ArgumentException>(() => service.CreateToken(Guid.NewGuid(), Guid.Empty));
+    }
+
+    [Fact]
+    public void TryValidate_PreservesTenantIdForHostMismatchChecks()
+    {
+        var service = CreateService();
+        var mintedTenant = TenantIds.Default;
+        var otherTenant = Guid.CreateVersion7();
+        var created = service.CreateToken(Guid.NewGuid(), mintedTenant);
+
+        Assert.True(service.TryValidate(created.Token, out _, out var tokenTenantId));
+        Assert.Equal(mintedTenant, tokenTenantId);
+        Assert.NotEqual(otherTenant, tokenTenantId);
     }
 }
