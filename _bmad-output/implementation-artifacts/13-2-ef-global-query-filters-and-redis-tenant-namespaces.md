@@ -200,6 +200,8 @@ Cursor Grok 4.5
 
 ### Completion Notes List
 
+- Re-review #2 clean: no new patches; story remains done.
+
 - CR patches applied: Registration rejects Guid.Empty tenant; SeedTenantContext bind hardened (+ IgnoreTenantFilters XML note).
 
 - EF `HasQueryFilter` on all `ITenantScoped` via `TenantFilterTenantId` (fail-closed when unresolved; design-time/null injector → Default).
@@ -250,7 +252,7 @@ Cursor Grok 4.5
 
 ### Outcome
 
-Approve (patches applied)
+Approve (re-review #2 clean)
 
 ### Summary
 
@@ -260,7 +262,14 @@ ACs 1–4 and design locks met (EF fail-closed filters, Platform bypass, Redis n
 
 See Tasks → Review Follow-ups (AI).
 
+
+### Re-review #2 (2026-07-21)
+
+Clean — Blind Hunter, Edge Case Hunter, and Acceptance Auditor found no new medium+ issues. Prior CR patches verified. Residual lows only (optional Empty guards on public site/activity reads; SetResolved Empty harden).
+
 ## Change Log
+
+- 2026-07-21: Re-review #2 clean — no new patches.
 
 - 2026-07-21: CR patches applied — Empty-tenant registration guard + seed bind harden.
 
