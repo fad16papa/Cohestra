@@ -1,6 +1,7 @@
 using Cohestra.Application.Tenants;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -32,22 +33,21 @@ public sealed class TenantHostResolver(
             return TenantHostResolution.Fail($"Unknown tenant workspace '{normalized}'.");
         }
 
+        if (tenant.Status != TenantStatus.Active)
+        {
+            return TenantHostResolution.Fail($"Tenant workspace '{normalized}' is not available.");
+        }
+
         return TenantHostResolution.Ok(tenant.Id, tenant.Slug);
     }
 
     /// <summary>
     /// Host parsing: {slug}.cohestra.app, {slug}.localhost, else DEV_TENANT_SLUG or default.
+    /// Arbitrary multi-label hosts are rejected (empty slug → unresolved).
     /// </summary>
     public static string ExtractSlug(string? hostHeader, IConfiguration configuration)
     {
-        var host = hostHeader?.Trim() ?? string.Empty;
-        if (host.Contains(':', StringComparison.Ordinal))
-        {
-            host = host.Split(':')[0];
-        }
-
-        host = host.Trim().ToLowerInvariant();
-
+        var host = NormalizeHost(hostHeader);
         if (string.IsNullOrWhiteSpace(host))
         {
             return ResolveFallbackSlug(configuration);
@@ -61,13 +61,29 @@ public sealed class TenantHostResolver(
                 return ResolveFallbackSlug(configuration);
             }
 
-            return without.Contains('.') ? without.Split('.')[0] : without;
+            // Single subdomain only — reject nested labels (foo.bar.cohestra.app).
+            if (without.Contains('.', StringComparison.Ordinal))
+            {
+                return string.Empty;
+            }
+
+            return without;
         }
 
         if (host.EndsWith(".localhost", StringComparison.Ordinal))
         {
             var without = host[..^".localhost".Length];
-            return string.IsNullOrWhiteSpace(without) ? ResolveFallbackSlug(configuration) : without;
+            if (string.IsNullOrWhiteSpace(without))
+            {
+                return ResolveFallbackSlug(configuration);
+            }
+
+            if (without.Contains('.', StringComparison.Ordinal))
+            {
+                return string.Empty;
+            }
+
+            return without;
         }
 
         if (host is "localhost" or "127.0.0.1" or "::1" or "cohestra.app" or "www.cohestra.app")
@@ -75,13 +91,48 @@ public sealed class TenantHostResolver(
             return ResolveFallbackSlug(configuration);
         }
 
-        // Bare hostname — treat first label as slug when multi-part, else fallback
-        if (host.Contains('.', StringComparison.Ordinal))
+        return string.Empty;
+    }
+
+    /// <summary>Strip port safely; support bracketed IPv6 via <see cref="HostString"/>.</summary>
+    public static string NormalizeHost(string? hostHeader)
+    {
+        if (string.IsNullOrWhiteSpace(hostHeader))
         {
-            return host.Split('.')[0];
+            return string.Empty;
         }
 
-        return ResolveFallbackSlug(configuration);
+        try
+        {
+            var hostString = new HostString(hostHeader.Trim());
+            var host = hostString.Host.Trim().ToLowerInvariant();
+            if (host.StartsWith('[') && host.EndsWith(']') && host.Length > 2)
+            {
+                host = host[1..^1];
+            }
+
+            return host;
+        }
+        catch (Exception)
+        {
+            // Fall through to manual parse for odd test hosts.
+        }
+
+        var raw = hostHeader.Trim().ToLowerInvariant();
+        if (raw.StartsWith('[') && raw.Contains(']'))
+        {
+            var end = raw.IndexOf(']');
+            return end > 1 ? raw[1..end] : raw;
+        }
+
+        // hostname:port — only split on last colon when not IPv6.
+        var colon = raw.LastIndexOf(':');
+        if (colon > 0 && raw.Count(c => c == ':') == 1)
+        {
+            return raw[..colon];
+        }
+
+        return raw;
     }
 
     private static string ResolveFallbackSlug(IConfiguration configuration)

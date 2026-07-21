@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,6 +53,8 @@ if (jwtSettings.RefreshTokenHours <= 0)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Keep membership claim type "role" from colliding with Identity RoleClaimType via inbound map.
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -62,7 +65,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtSettings.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SigningKey)),
             ClockSkew = TimeSpan.FromMinutes(1),
-            NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier,
+            // MapInboundClaims=false → JWT "sub" stays "sub"; Identity roles stay ClaimTypes.Role URI.
+            NameClaimType = JwtRegisteredClaimNames.Sub,
             RoleClaimType = System.Security.Claims.ClaimTypes.Role
         };
     });

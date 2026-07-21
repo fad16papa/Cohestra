@@ -14,10 +14,21 @@ public sealed class TenantHostResolverTests
     [InlineData("acme.localhost:3000", "acme")]
     [InlineData("localhost", "default")]
     [InlineData("127.0.0.1", "default")]
+    [InlineData("[::1]:8080", "default")]
     public void ExtractSlug_follows_host_rules(string host, string expectedSlug)
     {
         var config = new ConfigurationBuilder().Build();
         Assert.Equal(expectedSlug, TenantHostResolver.ExtractSlug(host, config));
+    }
+
+    [Theory]
+    [InlineData("acme.example.com")]
+    [InlineData("foo.bar.cohestra.app")]
+    [InlineData("evil.com")]
+    public void ExtractSlug_rejects_non_allowlisted_hosts(string host)
+    {
+        var config = new ConfigurationBuilder().Build();
+        Assert.Equal(string.Empty, TenantHostResolver.ExtractSlug(host, config));
     }
 
     [Fact]
@@ -59,5 +70,33 @@ public sealed class TenantHostResolverTests
 
         Assert.True(result.Succeeded);
         Assert.Equal(TenantIds.Default, result.TenantId);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_rejects_suspended_tenant()
+    {
+        await using var db = new CohestraDbContext(
+            new DbContextOptionsBuilder<CohestraDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options);
+
+        var now = DateTimeOffset.UtcNow;
+        db.Tenants.Add(new Tenant
+        {
+            Id = TenantIds.Default,
+            Slug = TenantIds.DefaultSlug,
+            Name = "Default",
+            Status = TenantStatus.Suspended,
+            BillingStatus = BillingStatus.Free,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        var resolver = new TenantHostResolver(db, new ConfigurationBuilder().Build());
+        var result = await resolver.ResolveAsync("localhost");
+
+        Assert.False(result.Succeeded);
+        Assert.Contains("not available", result.ErrorDetail, StringComparison.OrdinalIgnoreCase);
     }
 }

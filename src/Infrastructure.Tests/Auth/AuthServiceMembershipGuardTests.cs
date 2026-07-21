@@ -236,6 +236,28 @@ public sealed class AuthServiceMembershipGuardTests
         Assert.Contains(TenantIds.Default.ToString(), refreshed.Tokens!.AccessToken, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task Refresh_denies_when_stored_tenant_membership_removed()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var admin = await harness.CreateUserAsync(
+            "admin@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        Assert.NotNull(login.Tokens);
+
+        await harness.RemoveMembershipsAsync(admin.Id);
+
+        var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "localhost");
+        Assert.Null(refreshed.Tokens);
+        Assert.Equal("no_tenant_membership", refreshed.ErrorCode);
+    }
+
     private sealed class AuthHarness : IAsyncDisposable
     {
         private readonly ServiceProvider _provider;
@@ -341,6 +363,14 @@ public sealed class AuthServiceMembershipGuardTests
             });
             await db.SaveChangesAsync();
             return id;
+        }
+
+        public async Task RemoveMembershipsAsync(Guid userId)
+        {
+            var db = _provider.GetRequiredService<CohestraDbContext>();
+            var rows = await db.TenantMemberships.Where(m => m.UserId == userId).ToListAsync();
+            db.TenantMemberships.RemoveRange(rows);
+            await db.SaveChangesAsync();
         }
 
         public async Task<ApplicationUser> CreateUserAsync(

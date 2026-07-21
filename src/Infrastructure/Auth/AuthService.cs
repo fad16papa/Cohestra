@@ -158,6 +158,16 @@ public sealed class AuthService(
                 "Refresh token tenant does not match this Host.");
         }
 
+        // Stored tenant sessions must keep a live membership — never revive tenant_id via ??.
+        if (session.TenantId is not null && binding.TenantId is null)
+        {
+            await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
+            return new AuthLoginResult(
+                null,
+                binding.ErrorCode ?? "no_tenant_membership",
+                binding.ErrorMessage ?? OrphanMembershipMessage);
+        }
+
         var consumed = await refreshTokenStore.ConsumeAsync(refreshToken, cancellationToken);
         if (consumed is null || consumed.UserId != session.UserId)
         {
@@ -166,7 +176,7 @@ public sealed class AuthService(
 
         var tokens = await IssueTokensAsync(
             user,
-            binding.TenantId ?? session.TenantId,
+            binding.TenantId,
             binding.MembershipRole,
             cancellationToken);
         return new AuthLoginResult(tokens, null, null);

@@ -15,21 +15,32 @@ public sealed class TenantJwtHostAlignmentMiddleware(RequestDelegate next)
 {
     public const string TenantIdClaimType = "tenant_id";
 
-    private static readonly PathString AuthPath = new("/api/v1/auth");
     private static readonly PathString PlatformPath = new("/api/v1/platform");
     private static readonly PathString PublicPath = new("/api/v1/public");
+
+    private static readonly HashSet<string> AnonymousAuthPaths = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "/api/v1/auth/onboarding",
+        "/api/v1/auth/login",
+        "/api/v1/auth/register",
+        "/api/v1/auth/verify-email",
+        "/api/v1/auth/resend-otp",
+        "/api/v1/auth/refresh",
+        "/api/v1/auth/forgot-password",
+        "/api/v1/auth/reset-password",
+    };
 
     public async Task InvokeAsync(HttpContext context, ITenantHostResolver hostResolver)
     {
         var path = context.Request.Path;
 
         if (!path.StartsWithSegments("/api/v1")
-            || path.StartsWithSegments(AuthPath)
             || path.StartsWithSegments(PlatformPath)
             || path.StartsWithSegments(PublicPath)
             || path.StartsWithSegments("/health")
             || path.StartsWithSegments("/ready")
-            || path.StartsWithSegments("/openapi"))
+            || path.StartsWithSegments("/openapi")
+            || IsAnonymousAuthPath(path))
         {
             await next(context);
             return;
@@ -55,7 +66,7 @@ public sealed class TenantJwtHostAlignmentMiddleware(RequestDelegate next)
             return;
         }
 
-        // Explicitly ignore client X-Tenant-Id for authorization.
+        // Never trust client X-Tenant-Id for tenancy decisions (AD-3).
         _ = context.Request.Headers.TryGetValue("X-Tenant-Id", out _);
 
         var resolution = await hostResolver.ResolveAsync(context.Request.Host.Value, context.RequestAborted);
@@ -74,6 +85,12 @@ public sealed class TenantJwtHostAlignmentMiddleware(RequestDelegate next)
         }
 
         await next(context);
+    }
+
+    internal static bool IsAnonymousAuthPath(PathString path)
+    {
+        var value = path.Value?.TrimEnd('/') ?? string.Empty;
+        return AnonymousAuthPaths.Contains(value);
     }
 
     private static async Task WriteForbiddenAsync(HttpContext context, string detail)

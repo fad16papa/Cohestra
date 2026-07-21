@@ -4,7 +4,7 @@ baseline_commit: 5eafb559cb638fa7519979f954ff2a4149e10472
 
 # Story 12.2: JWT tenant_id and tenant-scoped login
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -204,7 +204,7 @@ Cursor Grok 4.5 (cloud agent)
 - Refresh store persists JSON `{userId,tenantId}` (legacy Guid still readable); orphan/membership check before Consume.
 - `TenantJwtHostAlignmentMiddleware` on authenticated tenant admin routes; PlatformAdmin-only and `/platform` skipped; `X-Tenant-Id` ignored.
 - PlatformAdmin login still works without `tenant_id`.
-- Infrastructure.Tests: **201** passed. No Epic 13 EF filters / 12.3 matrix / 12.4 platform claim.
+- Infrastructure.Tests: **212+** passed (after CR patches). No Epic 13 EF filters / 12.3 matrix / 12.4 platform claim.
 
 ### File List
 
@@ -230,13 +230,13 @@ Cursor Grok 4.5 (cloud agent)
 
 - [x] [Review][Decision] Membership JWT claim type vs ASP.NET role inbound map — **Resolved: option 1** — keep claim type `"role"` and set `MapInboundClaims = false` (or equivalent) so membership `role` is not treated as an authorization Role.
 
-- [ ] [Review][Patch] MapInboundClaims=false (or equivalent) for JWT Bearer [`Program.cs`] — keep membership claim type `"role"`; ensure Identity `ClaimTypes.Role` auth still works with `[Authorize(Roles=…)]`.
-- [ ] [Review][Patch] Refresh must not revive tenant_id without membership [`AuthService.RefreshAsync`] — do not use `binding.TenantId ?? session.TenantId`; if stored tenant membership is gone, revoke and return `no_tenant_membership` (even if PlatformAdmin dual-role falls through to PlatformOnly).
-- [ ] [Review][Patch] Tighten Host slug allowlist [`TenantHostResolver.ExtractSlug`] — do not treat arbitrary multi-label hosts’ first label as slug; only `*.cohestra.app`, `*.localhost`, and explicit localhost/apex fallbacks.
-- [ ] [Review][Patch] Host port / IPv6 parsing [`TenantHostResolver.ExtractSlug`] — strip ports safely; do not `Split(':')[0]` on raw Host (breaks IPv6).
-- [ ] [Review][Patch] Resolve only Active tenants [`TenantHostResolver.ResolveAsync`] — Suspended/Archived must not authenticate or pass Host alignment (project-context: Suspended wins).
-- [ ] [Review][Patch] Align authenticated auth endpoints [`TenantJwtHostAlignmentMiddleware`] — do not blanket-skip all `/api/v1/auth`; only skip anonymous auth routes (login/register/verify/refresh/otp/forgot/reset); enforce Host↔JWT on `change-password`.
-- [ ] [Review][Patch] Middleware coverage tests — Host mismatch, missing `tenant_id`, PlatformAdmin skip, change-password alignment.
+- [x] [Review][Patch] MapInboundClaims=false (or equivalent) for JWT Bearer [`Program.cs`] — keep membership claim type `"role"`; ensure Identity `ClaimTypes.Role` auth still works with `[Authorize(Roles=…)]`.
+- [x] [Review][Patch] Refresh must not revive tenant_id without membership [`AuthService.RefreshAsync`] — do not use `binding.TenantId ?? session.TenantId`; if stored tenant membership is gone, revoke and return `no_tenant_membership` (even if PlatformAdmin dual-role falls through to PlatformOnly).
+- [x] [Review][Patch] Tighten Host slug allowlist [`TenantHostResolver.ExtractSlug`] — do not treat arbitrary multi-label hosts’ first label as slug; only `*.cohestra.app`, `*.localhost`, and explicit localhost/apex fallbacks.
+- [x] [Review][Patch] Host port / IPv6 parsing [`TenantHostResolver.ExtractSlug`] — strip ports safely; do not `Split(':')[0]` on raw Host (breaks IPv6).
+- [x] [Review][Patch] Resolve only Active tenants [`TenantHostResolver.ResolveAsync`] — Suspended/Archived must not authenticate or pass Host alignment (project-context: Suspended wins).
+- [x] [Review][Patch] Align authenticated auth endpoints [`TenantJwtHostAlignmentMiddleware`] — do not blanket-skip all `/api/v1/auth`; only skip anonymous auth routes (login/register/verify/refresh/otp/forgot/reset); enforce Host↔JWT on `change-password`.
+- [x] [Review][Patch] Middleware coverage tests — Host mismatch, missing `tenant_id`, PlatformAdmin skip, change-password alignment.
 
 - [x] [Review][Defer] Access-token membership not rechecked each request — deferred; refresh rechecks; full continuous membership revoke is Epic 13 / short TTL ops
 - [x] [Review][Defer] Legacy refresh Guid-only payload rebinds from Host — deferred rollout edge; new tokens store tenantId
@@ -248,3 +248,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Implemented Host-scoped JWT tenant_id login, refresh persistence, alignment middleware → review
 - 2026-07-21: Code review (Blind/Edge/Acceptance) — findings recorded; awaiting claim-type decision
 - 2026-07-21: CR decision — keep membership claim `"role"` with MapInboundClaims=false
+- 2026-07-21: Applied CR patches (MapInboundClaims, refresh, Host allowlist, Active-only, auth alignment, tests); story → done
