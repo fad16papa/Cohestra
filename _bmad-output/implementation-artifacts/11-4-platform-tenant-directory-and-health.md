@@ -229,3 +229,4 @@ Cursor Grok 4.5 (cloud agent)
 
 - 2026-07-20: Story context created (ready-for-dev)
 - 2026-07-20: Implemented directory API, platform/me, default-tenant ready check, platform console UI, tests → review
+- 2026-07-21: Code review findings recorded (1 decision, 9 patches, 5 deferred)
