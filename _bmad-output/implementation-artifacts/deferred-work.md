@@ -1,3 +1,7 @@
+## Deferred from: code review re-review of 13-1-tenantresolutionmiddleware-on-all-api-requests.md (2026-07-21)
+
+- Client dedup `FindOrCreateAsync` still global / Default-stamped — deferred to Story 13.2 (+ explicit non-goal cross-tenant client dedup); registration TenantId stamp is the minimal 13.1 fix
+
 ## Deferred from: code review of 13-1-tenantresolutionmiddleware-on-all-api-requests.md (2026-07-21)
 
 - Admin SitePage still hardcodes `TenantIds.Default` while admin middleware sets ambient context — deferred, public-path scope for 13.1; admin consume in later isolation stories

@@ -4,7 +4,7 @@ baseline_commit: f8659aa2fd51a591bc5d2fb3e40c96c950759476
 
 # Story 13.1: TenantResolutionMiddleware on all API requests
 
-Status: done
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -96,6 +96,12 @@ so that handlers never run ambiguously across tenants.
 - [x] [Review][Defer] Marketing apex hostnames hardcoded to `cohestra.app`/`www` — deferred, ops/config allowlist; matches existing Host allowlist pattern
 - [x] [Review][Defer] Redis `tenant:{id}:…` namespaces + full cache isolation — deferred to Story 13.2 (explicit out of scope)
 - [x] [Review][Defer] Multi-tenant Host integration assertion for public SitePage (non-default subdomain) — deferred, middleware unit coverage present; optional WebApplicationFactory matrix
+
+
+- [ ] [Review][Patch] Stamp `Registration.TenantId` from Host `ICurrentTenant` on public submit create [`RegistrationService.cs` SubmitCoreAsync] — lookup is tenant-scoped but new rows still rely on `ApplyDefaultTenantIds` → wrong ownership on non-default Host.
+- [ ] [Review][Patch] Non-default `SyncPublicActivityCacheAsync` should no-op (no Invalidate) [`ActivityService.cs`] — Invalidate on shared slug thrashing Default Host Redis entry; defer full namespaces to 13.2.
+
+- [x] [Review][Defer] Client dedup `FindOrCreateAsync` still global / Default-stamped — deferred to Story 13.2 (+ explicit non-goal cross-tenant client dedup); registration TenantId stamp is the minimal 13.1 fix
 
 ## Dev Notes
 
@@ -241,7 +247,15 @@ Cursor Grok 4.5
 
 ### Outcome
 
-Approve (patches applied)
+Changes Requested (re-review #2)
+
+### Re-review Date
+
+2026-07-21
+
+### Re-review Summary
+
+Prior 4 patches verified fixed. ACs still met. Two residual patches: stamp `Registration.TenantId` from Host context on create; non-default public-activity cache sync should no-op (not Invalidate) to avoid thrashing Default Redis keys. Client dedup tenant scope deferred to 13.2.
 
 ### Summary
 
