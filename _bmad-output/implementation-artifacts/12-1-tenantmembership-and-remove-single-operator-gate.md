@@ -4,7 +4,7 @@ baseline_commit: 39993a7feccc09b8b9f11ffe06481117f862f103
 
 # Story 12.1: TenantMembership and remove single-operator gate
 
-Status: done
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -224,6 +224,18 @@ Cursor Grok 4.5 (cloud agent)
 - [x] [Review][Defer] Auth before default tenant exists locks TenantAdmins [`OperatorSeeder` backfill warn] — deferred, deploy/seed ordering
 - [x] [Review][Defer] CreateMembership does not verify user exists [`TenantMembershipService.cs`] — deferred to invite/seat stories (14.x)
 
+### Review Findings (re-review after patches)
+
+- [ ] [Review][Patch] Block verify when bootstrap already closed [`AuthService.VerifyEmailAsync`] — if a confirmed default TenantAdmin exists and this user is still unconfirmed, reject (prevent second confirmed admin).
+- [ ] [Review][Patch] Block register resume when bootstrap closed [`AuthService.RegisterAsync`] — when confirmed admin exists, reject all register/resume (not only non-TenantAdmin).
+- [ ] [Review][Patch] Create-path must not continue on Ensure failure [`AuthService.RegisterAsync`] — on ensure error always return error; skip DeleteAsync only when user already has membership (never treat failure as success).
+- [ ] [Review][Patch] Ensure membership before consuming OTP [`AuthService.VerifyEmailAsync`] — avoid burning OTP on ensure failure.
+- [ ] [Review][Patch] Orphan check before ConsumeAsync on refresh [`AuthService.RefreshAsync`] — do not consume refresh token before orphan denial.
+- [ ] [Review][Patch] Detach failed insert on unique violation [`TenantMembershipService.CreateMembershipAsync`] — clear tracked Added entity after unique conflict so later SaveChanges cannot retry duplicate.
+
+- [x] [Review][Defer] Backfill skips existing pair ignoring Role [`OperatorSeeder.cs`] — deferred, rare wrong-role seed state; 12.3/ops
+- [x] [Review][Defer] Re-review residual test gaps (verify-after-close, resume-after-close, refresh-orphan-before-consume) — deferred after patches land
+
 ## Change Log
 
 - 2026-07-21: Story context created (ready-for-dev)
@@ -231,3 +243,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Code review (Blind/Edge/Acceptance) — findings recorded; awaiting decision on bootstrap close timing
 - 2026-07-21: CR decision — bootstrap closes only when confirmed TenantAdmin exists on default
 - 2026-07-21: Applied all CR patches; story → done
+- 2026-07-21: Re-review after patches — 6 residual patches; story → in-progress

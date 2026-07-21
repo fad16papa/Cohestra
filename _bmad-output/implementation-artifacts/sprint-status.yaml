@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-21T08:15:00Z
+# last_updated: 2026-07-21T08:20:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -189,7 +189,7 @@ development_status:
   epic-11-retrospective: optional
 
   epic-12: in-progress
-  12-1-tenantmembership-and-remove-single-operator-gate: done
+  12-1-tenantmembership-and-remove-single-operator-gate: in-progress
   12-2-jwt-tenant-id-and-tenant-scoped-login: backlog
   12-3-enforce-admin-vs-member-server-side: backlog
   12-4-platform-admin-role-claim: backlog
