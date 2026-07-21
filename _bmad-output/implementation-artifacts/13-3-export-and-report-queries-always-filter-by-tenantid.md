@@ -186,6 +186,7 @@ Cursor Grok 4.5 (cloud agent)
 
 - 2026-07-21: DS 13.3 — report/dashboard explicit TenantId filters + FR28 isolation tests; status → review.
 - 2026-07-21: CR 13.3 — applied 4 patches (nested TenantId, CSV nav TenantId, totalLeadsAtEnd, Empty fail-closed); status → done.
+- 2026-07-21: CR 13.3 re-review #2 — clean approve; no new findings.
 
 ## Ultimate context engineering tip
 
