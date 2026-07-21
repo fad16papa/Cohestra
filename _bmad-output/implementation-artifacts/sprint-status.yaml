@@ -199,7 +199,7 @@ development_status:
   13-1-tenantresolutionmiddleware-on-all-api-requests: done
   13-2-ef-global-query-filters-and-redis-tenant-namespaces: done
   13-3-export-and-report-queries-always-filter-by-tenantid: done
-  13-4-tenantisolation-integration-test-gate-sm-1: in-progress
+  13-4-tenantisolation-integration-test-gate-sm-1: review
   epic-13-retrospective: optional
 
   epic-14: backlog
