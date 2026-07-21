@@ -178,7 +178,7 @@ development_status:
   epic-10-retrospective: optional
 
   # === Cohestra Enterprise (epics-cohestra-enterprise.md) ===
-  # Epic 12 done; Epic 13 in progress — next CR 13-3
+  # Epic 12 done; Epic 13 in progress — next CS/DS 13-4
 
   epic-11: done
   11-1-tenant-entity-with-dual-status-dials: done
@@ -198,7 +198,7 @@ development_status:
   epic-13: in-progress
   13-1-tenantresolutionmiddleware-on-all-api-requests: done
   13-2-ef-global-query-filters-and-redis-tenant-namespaces: done
-  13-3-export-and-report-queries-always-filter-by-tenantid: review
+  13-3-export-and-report-queries-always-filter-by-tenantid: done
   13-4-tenantisolation-integration-test-gate-sm-1: backlog
   epic-13-retrospective: optional
 
