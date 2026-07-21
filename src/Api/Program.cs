@@ -168,6 +168,7 @@ app.UseStatusCodePages(async statusCodeContext =>
 app.UseAuthentication();
 app.UseTenantResolution();
 app.UsePublicRegistrationRateLimit();
+app.UsePublicSignupRateLimit();
 app.UseAuthorization();
 
 app.MapControllers();

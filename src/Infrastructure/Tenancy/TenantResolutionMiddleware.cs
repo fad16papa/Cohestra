@@ -187,6 +187,11 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             return true;
         }
 
+        if (IsMarketingApexPublicPath(path))
+        {
+            return true;
+        }
+
         var value = path.Value?.TrimEnd('/') ?? string.Empty;
         return value.StartsWith("/health", StringComparison.OrdinalIgnoreCase)
             || value.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase)
@@ -205,6 +210,15 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             || value.Equals("/api/v1/auth/refresh", StringComparison.OrdinalIgnoreCase)
             || value.Equals("/api/v1/auth/forgot-password", StringComparison.OrdinalIgnoreCase)
             || value.Equals("/api/v1/auth/reset-password", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Marketing apex self-serve — no tenant Host required (Story 14.3).</summary>
+    internal static bool IsMarketingApexPublicPath(PathString path)
+    {
+        var value = path.Value?.TrimEnd('/') ?? string.Empty;
+        return value.Equals("/api/v1/public/signup", StringComparison.OrdinalIgnoreCase)
+            || value.StartsWith("/api/v1/public/signup/", StringComparison.OrdinalIgnoreCase)
+            || value.Equals("/api/v1/public/legal/versions", StringComparison.OrdinalIgnoreCase);
     }
 
     private static Task WriteForbiddenAsync(HttpContext context, string detail) =>

@@ -45,13 +45,14 @@ public sealed class PublicLegalIntegrationTests(IntegrationTestFixture fixture)
                 OrgName: null,
                 Slug: null,
                 Email: null,
-                Password: null));
+                Password: null,
+                CaptchaToken: null));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [SkippableFact]
-    public async Task PublicSignup_Post_WithLegalAcceptance_Returns501UntilImplemented()
+    public async Task PublicSignup_Post_WithLegalOnly_Returns400UntilFieldsProvided()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
 
@@ -65,8 +66,9 @@ public sealed class PublicLegalIntegrationTests(IntegrationTestFixture fixture)
                 OrgName: null,
                 Slug: null,
                 Email: null,
-                Password: null));
+                Password: null,
+                CaptchaToken: null));
 
-        Assert.Equal(HttpStatusCode.NotImplemented, response.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 }

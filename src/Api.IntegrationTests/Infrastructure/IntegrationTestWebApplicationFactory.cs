@@ -37,6 +37,11 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
         builder.UseSetting("SendGrid:FromName", "Integration Tests");
         builder.UseSetting("SendGrid:UseSandbox", "true");
         builder.UseSetting("PublicRegistrationRateLimit:MaxRequests", "1000");
+        builder.UseSetting("SelfServeSignup:RegistrationClosed", "false");
+        builder.UseSetting("SelfServeSignup:Recaptcha:Enabled", "false");
+        builder.UseSetting("SelfServeSignup:Recaptcha:TestBypassToken", "test-captcha-pass");
+        builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerHour", "1000");
+        builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerDay", "1000");
 
         builder.ConfigureTestServices(services =>
         {

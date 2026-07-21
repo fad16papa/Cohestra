@@ -13,4 +13,5 @@ public sealed record PublicSignupRequest(
     string? OrgName,
     string? Slug,
     string? Email,
-    string? Password);
+    string? Password,
+    string? CaptchaToken);

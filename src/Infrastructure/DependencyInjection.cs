@@ -7,6 +7,7 @@ using Cohestra.Application.Dashboard;
 using Cohestra.Application.Email;
 using Cohestra.Application.Registrations;
 using Cohestra.Application.Reports;
+using Cohestra.Application.Signup;
 using Cohestra.Application.Site;
 using Cohestra.Application.Tenants;
 using Cohestra.Infrastructure.Activities;
@@ -22,6 +23,7 @@ using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
 using Cohestra.Infrastructure.Reports;
+using Cohestra.Infrastructure.Signup;
 using Cohestra.Infrastructure.Site;
 using Cohestra.Infrastructure.Tenants;
 using Cohestra.Infrastructure.Tenancy;
@@ -83,6 +85,11 @@ public static class DependencyInjection
         services.PostConfigure<SiteLandingSeedSettings>(settings => ApplyLandingEnvironmentFallback(settings, configuration));
         services.Configure<SitePreviewSettings>(configuration.GetSection(SitePreviewSettings.SectionName));
         services.Configure<LegalComplianceSettings>(configuration.GetSection(LegalComplianceSettings.SectionName));
+        services.Configure<SelfServeSignupSettings>(configuration.GetSection(SelfServeSignupSettings.SectionName));
+        services.Configure<PublicSignupRateLimitOptions>(
+            configuration.GetSection(PublicSignupRateLimitOptions.SectionName));
+
+        services.AddHttpClient(nameof(GoogleRecaptchaVerifier));
 
         var sendGridSettings = configuration.GetSection(SendGridSettings.SectionName).Get<SendGridSettings>()
             ?? new SendGridSettings();
@@ -106,6 +113,8 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ILegalComplianceService, LegalComplianceService>();
+        services.AddScoped<ISelfServeSignupService, SelfServeSignupService>();
+        services.AddScoped<ICaptchaVerifier, GoogleRecaptchaVerifier>();
         services.AddScoped<ITenantMembershipService, TenantMembershipService>();
         services.AddScoped<ITenantHostResolver, TenantHostResolver>();
         services.AddScoped<CurrentTenant>();
@@ -131,6 +140,7 @@ public static class DependencyInjection
         services.AddScoped<ClientDeduplicationService>();
         services.AddScoped<RegistrationNumberGenerator>();
         services.AddSingleton<IPublicRegistrationRateLimiter, RedisPublicRegistrationRateLimiter>();
+        services.AddSingleton<IPublicSignupRateLimiter, RedisPublicSignupRateLimiter>();
         services.AddSingleton<IRegistrationIdempotencyStore, RedisRegistrationIdempotencyStore>();
         services.AddSingleton<RedisPublicActivityCache>();
         services.AddSingleton<RedisPublishedSiteCache>();

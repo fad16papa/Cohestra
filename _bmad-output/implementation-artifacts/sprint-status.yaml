@@ -205,7 +205,7 @@ development_status:
   epic-14: in-progress
   14-1-midnight-atelier-tokens-marketing-home-and-pricing: done
   14-2-legal-pages-and-tos-privacy-acceptance-logging: done
-  14-3-basic-self-serve-signup-captcha-slug-otp-rate-limits: backlog
+  14-3-basic-self-serve-signup-captcha-slug-otp-rate-limits: review
   14-4-core-pro-checkout-webhooks-and-usd-prices: backlog
   14-5-admin-shell-planbadge-sponsoredbadge-limitmeter-billingbanner: backlog
   14-6-team-invite-and-seatgate: backlog
