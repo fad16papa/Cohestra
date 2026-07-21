@@ -78,6 +78,14 @@ export default function PlatformTenantDetailPage() {
   );
 
   useEffect(() => {
+    setCompReason("");
+    setCompPlan("Core");
+    setActionError(null);
+    setSuspendReason("");
+    setShowSuspend(false);
+  }, [tenantId]);
+
+  useEffect(() => {
     void loadDetail();
     return () => {
       requestIdRef.current += 1;
