@@ -88,6 +88,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             t.Plan.ToString(),
             t.Status.ToString(),
             t.BillingStatus.ToString(),
+            t.IsComplimentary,
             t.AdminContactEmail,
             t.CreatedAt,
             activityCounts.GetValueOrDefault(t.Id),
@@ -170,7 +171,17 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             return PlatformTenantResult<TenantResponse>.Fail(PlatformTenantError.Validation, slugError);
         }
 
-        if (!TryParsePlan(request.Plan, out var plan))
+        TenantPlan plan;
+        if (request.IsComplimentary)
+        {
+            if (!TryParseComplimentaryPlan(request.Plan, out plan))
+            {
+                return PlatformTenantResult<TenantResponse>.Fail(
+                    PlatformTenantError.Validation,
+                    "Complimentary plan must be Basic, Core, or Pro.");
+            }
+        }
+        else if (!TryParsePlan(request.Plan, out plan))
         {
             return PlatformTenantResult<TenantResponse>.Fail(
                 PlatformTenantError.Validation,
@@ -196,6 +207,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             Plan = plan,
             Status = TenantStatus.Active,
             BillingStatus = BillingStatus.Free,
+            IsComplimentary = request.IsComplimentary,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -213,6 +225,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
                 tenant.Slug,
                 tenant.Name,
                 Plan = tenant.Plan.ToString(),
+                tenant.IsComplimentary,
                 tenant.AdminContactEmail,
             }),
             CreatedAt = now,
@@ -388,6 +401,114 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
         return PlatformTenantResult<TenantResponse>.Ok(Map(tenant));
     }
 
+    public async Task<PlatformTenantResult<TenantResponse>> SetComplimentaryAsync(
+        Guid tenantId,
+        SetComplimentaryRequest request,
+        Guid actorUserId,
+        CancellationToken cancellationToken = default)
+    {
+        if (tenantId == TenantIds.Default)
+        {
+            return PlatformTenantResult<TenantResponse>.Fail(
+                PlatformTenantError.Conflict,
+                "Cannot change complimentary on the Platform 0 default tenant.");
+        }
+
+        var tenant = await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return PlatformTenantResult<TenantResponse>.Fail(PlatformTenantError.NotFound, "Tenant not found.");
+        }
+
+        if (tenant.Status == TenantStatus.Archived)
+        {
+            return PlatformTenantResult<TenantResponse>.Fail(
+                PlatformTenantError.Conflict,
+                "Cannot change complimentary on an Archived tenant.");
+        }
+
+        var reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
+        if (reason is { Length: > MaxReasonLength })
+        {
+            return PlatformTenantResult<TenantResponse>.Fail(
+                PlatformTenantError.Validation,
+                $"Reason must be at most {MaxReasonLength} characters.");
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var planBefore = tenant.Plan;
+        var complimentaryBefore = tenant.IsComplimentary;
+        var billingBefore = tenant.BillingStatus;
+
+        if (request.IsComplimentary)
+        {
+            if (!TryParseComplimentaryPlan(request.Plan, out var plan))
+            {
+                return PlatformTenantResult<TenantResponse>.Fail(
+                    PlatformTenantError.Validation,
+                    "Complimentary plan must be Basic, Core, or Pro.");
+            }
+
+            tenant.IsComplimentary = true;
+            tenant.Plan = plan;
+            tenant.BillingStatus = BillingStatus.Free;
+            // Stripe customer/subscription IDs left unchanged (conversion may reuse customer).
+            tenant.UpdatedAt = now;
+
+            dbContext.PlatformAuditLogs.Add(new PlatformAuditLog
+            {
+                Id = Guid.CreateVersion7(),
+                ActorUserId = actorUserId,
+                TenantId = tenant.Id,
+                Action = PlatformAuditAction.ComplimentarySet,
+                Reason = reason,
+                DetailsJson = JsonSerializer.Serialize(new
+                {
+                    PlanBefore = planBefore.ToString(),
+                    PlanAfter = plan.ToString(),
+                    IsComplimentaryBefore = complimentaryBefore,
+                    BillingStatusBefore = billingBefore.ToString(),
+                    BillingStatusAfter = BillingStatus.Free.ToString(),
+                    StripeIdsUnchanged = true,
+                    Note = "FR-23 delinquency jobs must skip IsComplimentary=true.",
+                }),
+                CreatedAt = now,
+            });
+        }
+        else
+        {
+            if (!tenant.IsComplimentary)
+            {
+                return PlatformTenantResult<TenantResponse>.Fail(
+                    PlatformTenantError.Conflict,
+                    "Tenant is not complimentary.");
+            }
+
+            tenant.IsComplimentary = false;
+            tenant.UpdatedAt = now;
+            // Plan and BillingStatus left as-is; Checkout (FR-19) required before paid Stripe sync.
+
+            dbContext.PlatformAuditLogs.Add(new PlatformAuditLog
+            {
+                Id = Guid.CreateVersion7(),
+                ActorUserId = actorUserId,
+                TenantId = tenant.Id,
+                Action = PlatformAuditAction.ComplimentaryCleared,
+                Reason = reason,
+                DetailsJson = JsonSerializer.Serialize(new
+                {
+                    PlanUnchanged = tenant.Plan.ToString(),
+                    BillingStatusUnchanged = tenant.BillingStatus.ToString(),
+                    Note = "Checkout (FR-19) required before paid entitlements sync from Stripe.",
+                }),
+                CreatedAt = now,
+            });
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return PlatformTenantResult<TenantResponse>.Ok(Map(tenant));
+    }
+
     private static bool TryParsePlan(string? plan, out TenantPlan parsed)
     {
         parsed = default;
@@ -403,6 +524,16 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
         }
 
         return Enum.TryParse(value, ignoreCase: true, out parsed) && Enum.IsDefined(parsed);
+    }
+
+    private static bool TryParseComplimentaryPlan(string? plan, out TenantPlan parsed)
+    {
+        if (!TryParsePlan(plan, out parsed))
+        {
+            return false;
+        }
+
+        return parsed is TenantPlan.Basic or TenantPlan.Core or TenantPlan.Pro;
     }
 
     private static bool IsValidEmail(string email)
@@ -432,6 +563,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             tenant.Plan.ToString(),
             tenant.Status.ToString(),
             tenant.BillingStatus.ToString(),
+            tenant.IsComplimentary,
             tenant.AdminContactEmail,
             tenant.SuspendedAt,
             tenant.ArchivedAt,

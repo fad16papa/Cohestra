@@ -348,6 +348,150 @@ public sealed class PlatformTenantServiceTests
         Assert.Equal(PlatformTenantError.NotFound, missing.Error);
     }
 
+    [Fact]
+    public async Task SetComplimentary_sets_plan_free_and_audits_clear_preserves_plan()
+    {
+        await using var db = CreateDb();
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        var created = await service.CreateAsync(
+            new CreateTenantRequest("Pilot Org", "pilot-org", "Basic", "pilot@acme.test"),
+            actor);
+        Assert.False(created.Value!.IsComplimentary);
+
+        var tenant = await db.Tenants.SingleAsync(t => t.Id == created.Value.Id);
+        tenant.BillingStatus = BillingStatus.PastDue;
+        tenant.StripeCustomerId = "cus_keep";
+        tenant.StripeSubscriptionId = "sub_keep";
+        await db.SaveChangesAsync();
+
+        var set = await service.SetComplimentaryAsync(
+            created.Value.Id,
+            new SetComplimentaryRequest(true, "Pro", "Pilot cohort"),
+            actor);
+
+        Assert.True(set.Succeeded);
+        Assert.True(set.Value!.IsComplimentary);
+        Assert.Equal(TenantPlan.Pro.ToString(), set.Value.Plan);
+        Assert.Equal(BillingStatus.Free.ToString(), set.Value.BillingStatus);
+
+        tenant = await db.Tenants.SingleAsync(t => t.Id == created.Value.Id);
+        Assert.Equal("cus_keep", tenant.StripeCustomerId);
+        Assert.Equal("sub_keep", tenant.StripeSubscriptionId);
+
+        var setAudit = await db.PlatformAuditLogs.SingleAsync(a =>
+            a.TenantId == created.Value.Id && a.Action == PlatformAuditAction.ComplimentarySet);
+        Assert.Equal("Pilot cohort", setAudit.Reason);
+        Assert.Contains("FR-23", setAudit.DetailsJson!, StringComparison.Ordinal);
+
+        var cleared = await service.SetComplimentaryAsync(
+            created.Value.Id,
+            new SetComplimentaryRequest(false, null, "Converting to paid"),
+            actor);
+
+        Assert.True(cleared.Succeeded);
+        Assert.False(cleared.Value!.IsComplimentary);
+        Assert.Equal(TenantPlan.Pro.ToString(), cleared.Value.Plan);
+        Assert.Equal(BillingStatus.Free.ToString(), cleared.Value.BillingStatus);
+
+        var clearAudit = await db.PlatformAuditLogs.SingleAsync(a =>
+            a.TenantId == created.Value.Id && a.Action == PlatformAuditAction.ComplimentaryCleared);
+        Assert.Equal("Converting to paid", clearAudit.Reason);
+        Assert.Contains("FR-19", clearAudit.DetailsJson!, StringComparison.Ordinal);
+
+        var detail = await service.GetByIdAsync(created.Value.Id);
+        Assert.False(detail.Value!.Tenant.IsComplimentary);
+
+        var list = await service.ListAsync("pilot-org", 1, 25);
+        Assert.False(list.Items[0].IsComplimentary);
+    }
+
+    [Fact]
+    public async Task SetComplimentary_rejects_invalid_plan_archived_default_and_clear_when_not_set()
+    {
+        await using var db = CreateDb();
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        var created = await service.CreateAsync(
+            new CreateTenantRequest("Comp Rules", "comp-rules", "Basic", "a@b.co"),
+            actor);
+
+        var enterprise = await service.SetComplimentaryAsync(
+            created.Value!.Id,
+            new SetComplimentaryRequest(true, "Enterprise", null),
+            actor);
+        Assert.Equal(PlatformTenantError.Validation, enterprise.Error);
+
+        var numeric = await service.SetComplimentaryAsync(
+            created.Value.Id,
+            new SetComplimentaryRequest(true, "1", null),
+            actor);
+        Assert.Equal(PlatformTenantError.Validation, numeric.Error);
+
+        var clearNotSet = await service.SetComplimentaryAsync(
+            created.Value.Id,
+            new SetComplimentaryRequest(false, null, null),
+            actor);
+        Assert.Equal(PlatformTenantError.Conflict, clearNotSet.Error);
+
+        await service.SetComplimentaryAsync(
+            created.Value.Id,
+            new SetComplimentaryRequest(true, "Core", null),
+            actor);
+        await service.ArchiveAsync(created.Value.Id, actor);
+
+        var onArchived = await service.SetComplimentaryAsync(
+            created.Value.Id,
+            new SetComplimentaryRequest(false, null, null),
+            actor);
+        Assert.Equal(PlatformTenantError.Conflict, onArchived.Error);
+        Assert.Contains("Archived", onArchived.Detail!, StringComparison.OrdinalIgnoreCase);
+
+        var now = DateTimeOffset.UtcNow;
+        db.Tenants.Add(new Tenant
+        {
+            Id = TenantIds.Default,
+            Slug = TenantIds.DefaultSlug,
+            Name = "Default",
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        var onDefault = await service.SetComplimentaryAsync(
+            TenantIds.Default,
+            new SetComplimentaryRequest(true, "Basic", null),
+            actor);
+        Assert.Equal(PlatformTenantError.Conflict, onDefault.Error);
+        Assert.Contains("default tenant", onDefault.Detail!, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Create_with_complimentary_forces_free_and_rejects_enterprise()
+    {
+        await using var db = CreateDb();
+        var service = new PlatformTenantService(db);
+        var actor = Guid.NewGuid();
+
+        var created = await service.CreateAsync(
+            new CreateTenantRequest("Sponsored Create", "sponsored-create", "Core", "s@c.co", IsComplimentary: true),
+            actor);
+
+        Assert.True(created.Succeeded);
+        Assert.True(created.Value!.IsComplimentary);
+        Assert.Equal(TenantPlan.Core.ToString(), created.Value.Plan);
+        Assert.Equal(BillingStatus.Free.ToString(), created.Value.BillingStatus);
+
+        var enterprise = await service.CreateAsync(
+            new CreateTenantRequest("Bad Comp", "bad-comp", "Enterprise", "e@c.co", IsComplimentary: true),
+            actor);
+        Assert.Equal(PlatformTenantError.Validation, enterprise.Error);
+    }
+
     private static CohestraDbContext CreateDb()
     {
         var options = new DbContextOptionsBuilder<CohestraDbContext>()

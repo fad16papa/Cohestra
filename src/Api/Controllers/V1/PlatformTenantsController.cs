@@ -142,6 +142,39 @@ public sealed class PlatformTenantsController(IPlatformTenantService platformTen
         return ToActionResult(result);
     }
 
+    /// <summary>
+    /// Set or clear complimentary (Sponsored) plan (P12). Forces BillingStatus=Free when set.
+    /// Stripe IDs unchanged; clearing requires Checkout (FR-19) before paid sync — not implemented here.
+    /// </summary>
+    [HttpPost("{tenantId:guid}/complimentary")]
+    [ProducesResponseType(typeof(TenantResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TenantResponse>> SetComplimentary(
+        Guid tenantId,
+        [FromBody] SetComplimentaryRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        if (!TryGetActorUserId(out var actorUserId))
+        {
+            return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
+        var result = await platformTenantService.SetComplimentaryAsync(
+            tenantId,
+            request,
+            actorUserId,
+            cancellationToken);
+        return ToActionResult(result);
+    }
+
     private ActionResult<TenantResponse> ToActionResult(
         PlatformTenantResult<TenantResponse> result,
         bool created = false)

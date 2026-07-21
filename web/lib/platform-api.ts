@@ -8,6 +8,7 @@ export type TenantListItem = {
   plan: string;
   status: string;
   billingStatus: string;
+  isComplimentary: boolean;
   adminContactEmail: string | null;
   createdAt: string;
   activityCount: number;
@@ -28,6 +29,7 @@ export type TenantResponse = {
   plan: string;
   status: string;
   billingStatus: string;
+  isComplimentary: boolean;
   adminContactEmail: string | null;
   suspendedAt: string | null;
   archivedAt: string | null;
@@ -88,6 +90,16 @@ function pickNumber(raw: Record<string, unknown>, ...keys: string[]): number {
   return 0;
 }
 
+function pickBoolean(raw: Record<string, unknown>, ...keys: string[]): boolean {
+  for (const key of keys) {
+    const value = raw[key];
+    if (typeof value === "boolean") {
+      return value;
+    }
+  }
+  return false;
+}
+
 function parseTenantListItem(raw: Record<string, unknown>): TenantListItem {
   const id = pickString(raw, "id", "Id");
   const slug = pickString(raw, "slug", "Slug");
@@ -106,6 +118,7 @@ function parseTenantListItem(raw: Record<string, unknown>): TenantListItem {
     plan,
     status,
     billingStatus,
+    isComplimentary: pickBoolean(raw, "isComplimentary", "IsComplimentary"),
     adminContactEmail: pickString(raw, "adminContactEmail", "AdminContactEmail"),
     createdAt,
     activityCount: pickNumber(raw, "activityCount", "ActivityCount"),
@@ -132,6 +145,7 @@ function parseTenant(raw: Record<string, unknown>): TenantResponse {
     plan,
     status,
     billingStatus,
+    isComplimentary: pickBoolean(raw, "isComplimentary", "IsComplimentary"),
     adminContactEmail: pickString(raw, "adminContactEmail", "AdminContactEmail"),
     suspendedAt: pickString(raw, "suspendedAt", "SuspendedAt"),
     archivedAt: pickString(raw, "archivedAt", "ArchivedAt"),
@@ -253,6 +267,29 @@ export async function archivePlatformTenant(
   const response = await authFetch(
     `${getPublicApiBaseUrl()}/api/v1/platform/tenants/${tenantId}/archive`,
     { method: "POST" }
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return parseTenant(asRecord(await response.json()));
+}
+
+export async function setPlatformTenantComplimentary(
+  authFetch: AuthFetch,
+  tenantId: string,
+  body: { isComplimentary: boolean; plan?: string; reason?: string }
+): Promise<TenantResponse> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/tenants/${tenantId}/complimentary`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        isComplimentary: body.isComplimentary,
+        plan: body.plan,
+        reason: body.reason,
+      }),
+    }
   );
   if (!response.ok) {
     throw new Error(await parseProblemDetail(response));

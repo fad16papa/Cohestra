@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-21T02:15:00Z
+# last_updated: 2026-07-21T02:10:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - Epic 16 is parked (One-stop Lite / UX-DR15) — no v1 stories until pulled forward
 
 generated: 2026-06-16
-last_updated: 2026-07-21T02:15:00Z
+last_updated: 2026-07-21T02:10:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -178,14 +178,14 @@ development_status:
   epic-10-retrospective: optional
 
   # === Cohestra Enterprise (epics-cohestra-enterprise.md) ===
-  # Next implementable story: 11-5-complimentary-sponsored-tenant-flag (after 11.4 CR → done)
+  # Epic 11 stories complete pending CR on 11.5; next after done: epic-11-retrospective or epic-12
 
   epic-11: in-progress
   11-1-tenant-entity-with-dual-status-dials: done
   11-2-default-tenant-migration-and-tenantid-on-core-entities: done
   11-3-platform-admin-provision-suspend-reactivate-archive: done
   11-4-platform-tenant-directory-and-health: done
-  11-5-complimentary-sponsored-tenant-flag: backlog
+  11-5-complimentary-sponsored-tenant-flag: review
   epic-11-retrospective: optional
 
   epic-12: backlog

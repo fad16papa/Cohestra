@@ -4,7 +4,7 @@ baseline_commit: 56d8a8be15d6a8d14deade597dcac83bed48226a
 
 # Story 11.5: Complimentary / Sponsored tenant flag
 
-Status: ready-for-dev
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -44,45 +44,45 @@ so that pilots get Core/Pro limits without delinquency automation or self-serve 
 
 ## Tasks / Subtasks
 
-- [ ] Domain + migration (AC: 1, 2, 5)
-  - [ ] Add `bool IsComplimentary { get; set; }` to `Tenant` (default `false`) — document P12 / FR-2 in XML summary
-  - [ ] Configure column in `TenantConfiguration` (required bool, default false)
-  - [ ] EF migration: add `IsComplimentary` NOT NULL DEFAULT false; update snapshot
-  - [ ] Extend `PlatformAuditAction` with e.g. `ComplimentarySet` / `ComplimentaryCleared` (or single `ComplimentaryChanged` with DetailsJson) — do **not** reuse Suspend actions
-  - [ ] Note on `Tenant` or evaluator docs: FR-23 jobs MUST skip when `IsComplimentary`; FR-25 dormancy skips complimentary Core/Pro
+- [x] Domain + migration (AC: 1, 2, 5)
+  - [x] Add `bool IsComplimentary { get; set; }` to `Tenant` (default `false`) — document P12 / FR-2 in XML summary
+  - [x] Configure column in `TenantConfiguration` (required bool, default false)
+  - [x] EF migration: add `IsComplimentary` NOT NULL DEFAULT false; update snapshot
+  - [x] Extend `PlatformAuditAction` with e.g. `ComplimentarySet` / `ComplimentaryCleared` (or single `ComplimentaryChanged` with DetailsJson) — do **not** reuse Suspend actions
+  - [x] Note on `Tenant` or evaluator docs: FR-23 jobs MUST skip when `IsComplimentary`; FR-25 dormancy skips complimentary Core/Pro
 
-- [ ] Contracts + service (AC: 1, 3, 5)
-  - [ ] Extend `TenantResponse` / `TenantListItemResponse` / detail mapping with `IsComplimentary`
-  - [ ] Optional: `CreateTenantRequest` optional `IsComplimentary` (default false) — if true, require Plan ∈ Basic|Core|Pro and force `BillingStatus=Free`
-  - [ ] Add dedicated mutation, preferred: `POST /api/v1/platform/tenants/{id}/complimentary` with body e.g. `SetComplimentaryRequest(bool IsComplimentary, string? Plan, string? Reason)`
+- [x] Contracts + service (AC: 1, 3, 5)
+  - [x] Extend `TenantResponse` / `TenantListItemResponse` / detail mapping with `IsComplimentary`
+  - [x] Optional: `CreateTenantRequest` optional `IsComplimentary` (default false) — if true, require Plan ∈ Basic|Core|Pro and force `BillingStatus=Free`
+  - [x] Add dedicated mutation, preferred: `POST /api/v1/platform/tenants/{id}/complimentary` with body e.g. `SetComplimentaryRequest(bool IsComplimentary, string? Plan, string? Reason)`
     - Set `true`: Plan required (named Basic|Core|Pro only — reject Enterprise/numeric); set Plan; `BillingStatus=Free`; do **not** create Stripe IDs; leave existing Stripe IDs unchanged unless product later clears them (document choice: **leave Stripe ids as-is** so conversion can reuse customer; do not invent subscription)
     - Set `false` (clear): `IsComplimentary=false`; do **not** invent Checkout; do **not** auto-change Plan; audit that Checkout (FR-19) is required before paid sync
-  - [ ] Reject unknown tenant → NotFound; validation → 400; illegal state → 409 if needed (e.g. Archived tenant — prefer **409** “Cannot change complimentary on Archived tenant”)
-  - [ ] Implement in `PlatformTenantService`; keep Suspend/BillingStatus separation (complimentary does not Suspend)
+  - [x] Reject unknown tenant → NotFound; validation → 400; illegal state → 409 if needed (e.g. Archived tenant — prefer **409** “Cannot change complimentary on Archived tenant”)
+  - [x] Implement in `PlatformTenantService`; keep Suspend/BillingStatus separation (complimentary does not Suspend)
 
-- [ ] API routes (AC: 1, 3, 4)
-  - [ ] Extend `PlatformTenantsController` — same `[Authorize(Roles = PlatformAdmin)]`
-  - [ ] ProblemDetails helpers; TenantAdmin → 403 via role gate (integration test)
-  - [ ] Keep GET list/detail returning new flag
+- [x] API routes (AC: 1, 3, 4)
+  - [x] Extend `PlatformTenantsController` — same `[Authorize(Roles = PlatformAdmin)]`
+  - [x] ProblemDetails helpers; TenantAdmin → 403 via role gate (integration test)
+  - [x] Keep GET list/detail returning new flag
 
-- [ ] Web platform detail (AC: 1, 3, 5)
-  - [ ] `web/lib/platform-api.ts` — types + `setComplimentary` client
-  - [ ] Detail page (`web/app/(platform)/platform/tenants/[id]/page.tsx`): sparse control to set/clear complimentary + plan select (Basic/Core/Pro); show Sponsored/Complimentary label when true
-  - [ ] UX-DR16: no card walls/stat strips; break-glass Suspend copy unchanged; this is ops metadata not collections
-  - [ ] No tenant-admin dashboard SponsoredBadge (Epic 14.5)
+- [x] Web platform detail (AC: 1, 3, 5)
+  - [x] `web/lib/platform-api.ts` — types + `setComplimentary` client
+  - [x] Detail page (`web/app/(platform)/platform/tenants/[id]/page.tsx`): sparse control to set/clear complimentary + plan select (Basic/Core/Pro); show Sponsored/Complimentary label when true
+  - [x] UX-DR16: no card walls/stat strips; break-glass Suspend copy unchanged; this is ops metadata not collections
+  - [x] No tenant-admin dashboard SponsoredBadge (Epic 14.5)
 
-- [ ] Tests (AC: 1–4)
-  - [ ] Unit: set complimentary → Free + Plan + audit; clear → flag false + audit; reject invalid plan; Archived → conflict; list/detail include flag
-  - [ ] Integration: PlatformAdmin can set/clear; TenantAdmin JWT → **403**
-  - [ ] Run `dotnet test src/Infrastructure.Tests` (filter Platform/Tenant as appropriate)
+- [x] Tests (AC: 1–4)
+  - [x] Unit: set complimentary → Free + Plan + audit; clear → flag false + audit; reject invalid plan; Archived → conflict; list/detail include flag
+  - [x] Integration: PlatformAdmin can set/clear; TenantAdmin JWT → **403**
+  - [x] Run `dotnet test src/Infrastructure.Tests` (filter Platform/Tenant as appropriate)
 
-- [ ] Out of scope
-  - [ ] Stripe Checkout / Customer Portal / webhooks (Epic 14)
-  - [ ] FR-23 delinquency jobs / FR-25 dormancy jobs (document skip contract only)
-  - [ ] Tenant-admin SponsoredBadge / PlanBadge chrome (Story 14.5)
-  - [ ] Impersonation; TenantMembership; EF global filters
-  - [ ] Self-serve plan upgrades
-  - [ ] Complimentary Enterprise (AC limits to Basic/Core/Pro)
+- [x] Out of scope
+  - [x] Stripe Checkout / Customer Portal / webhooks (Epic 14)
+  - [x] FR-23 delinquency jobs / FR-25 dormancy jobs (document skip contract only)
+  - [x] Tenant-admin SponsoredBadge / PlanBadge chrome (Story 14.5)
+  - [x] Impersonation; TenantMembership; EF global filters
+  - [x] Self-serve plan upgrades
+  - [x] Complimentary Enterprise (AC limits to Basic/Core/Pro)
 
 ## Dev Notes
 
@@ -175,14 +175,40 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Cursor Grok 4.5 (cloud agent)
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Domain: `Tenant.IsComplimentary` + XML/evaluator notes for FR-23 skip and FR-25 Core/Pro dormancy skip; `PlatformAuditAction.ComplimentarySet` / `ComplimentaryCleared`.
+- Migration `20260721021843_AddTenantIsComplimentary` — NOT NULL DEFAULT false.
+- `POST /api/v1/platform/tenants/{id}/complimentary` via `SetComplimentaryRequest`; set → Plan ∈ Basic|Core|Pro + `BillingStatus=Free`, Stripe IDs left unchanged; clear → flag false, Plan/Billing unchanged, audit notes Checkout (FR-19).
+- Rejects: default tenant 409, Archived 409, clear-when-not-set 409, invalid plan 400; PlatformAdmin-only (TenantAdmin 403).
+- Create path optional `IsComplimentary`; list/detail DTOs expose flag.
+- Platform detail: sparse Complimentary section + Sponsored label; no tenant-admin SponsoredBadge chrome.
+- Unit: 12 PlatformTenantService tests passed (incl. complimentary set/clear/validation). Integration complimentary test added (skippable when stack unavailable).
+
 ### File List
+
+- `src/Domain/Tenants/Tenant.cs`
+- `src/Domain/Tenants/PlatformAuditAction.cs`
+- `src/Domain/Tenants/TenantAccessEvaluator.cs`
+- `src/Infrastructure/Persistence/Configurations/TenantConfiguration.cs`
+- `src/Infrastructure/Persistence/Migrations/20260721021843_AddTenantIsComplimentary.cs`
+- `src/Infrastructure/Persistence/Migrations/20260721021843_AddTenantIsComplimentary.Designer.cs`
+- `src/Infrastructure/Persistence/Migrations/CohestraDbContextModelSnapshot.cs`
+- `src/Contracts/Platform/PlatformTenantContracts.cs`
+- `src/Application/Tenants/IPlatformTenantService.cs`
+- `src/Infrastructure/Platform/PlatformTenantService.cs`
+- `src/Api/Controllers/V1/PlatformTenantsController.cs`
+- `src/Infrastructure.Tests/Tenants/PlatformTenantServiceTests.cs`
+- `src/Api.IntegrationTests/PlatformTenantLifecycleIntegrationTests.cs`
+- `web/lib/platform-api.ts`
+- `web/app/(platform)/platform/tenants/[id]/page.tsx`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
 ## Change Log
 
 - 2026-07-21: Story context created (ready-for-dev)
+- 2026-07-21: Implemented IsComplimentary flag, complimentary API, platform detail control, tests → review

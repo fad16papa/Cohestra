@@ -41,6 +41,10 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .HasMaxLength(20)
             .IsRequired();
 
+        builder.Property(tenant => tenant.IsComplimentary)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(tenant => tenant.StripeCustomerId)
             .HasMaxLength(255);
 

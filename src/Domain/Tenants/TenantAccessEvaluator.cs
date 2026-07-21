@@ -16,6 +16,8 @@ public readonly record struct TenantAccessEvaluation(
 /// Canonical FR-3 access matrix. Suspended always wins over billing.
 /// OnHold keeps TenantStatus.Active — this evaluator never changes Status.
 /// Active + Canceled is fail-closed Blocked (inconsistent dual-dial; period-end cancel should land on Free).
+/// Note: FR-23 / FR-25 jobs (not implemented here) must consult <see cref="Tenant.IsComplimentary"/> —
+/// complimentary tenants skip delinquency; complimentary Core/Pro skip Basic dormancy.
 /// </summary>
 public static class TenantAccessEvaluator
 {

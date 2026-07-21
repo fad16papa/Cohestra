@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Contracts.Auth;
 using Cohestra.Contracts.Platform;
+using Cohestra.Domain.Billing;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -82,5 +83,62 @@ public sealed class PlatformTenantLifecycleIntegrationTests(IntegrationTestFixtu
             new CreateTenantRequest("No Auth", "no-auth-org", "Basic", "a@b.co"),
             IntegrationTestHelpers.JsonOptions);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [SkippableFact]
+    public async Task Platform_admin_can_set_and_clear_complimentary_tenant_admin_gets_403()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(fixture.Factory);
+
+        using var platformClient = fixture.Factory.CreateClient();
+        var platformToken = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platformClient);
+        IntegrationTestHelpers.UseBearerToken(platformClient, platformToken);
+
+        var slug = $"comp-{Guid.NewGuid():N}"[..12];
+        using var createResponse = await platformClient.PostAsJsonAsync(
+            "/api/v1/platform/tenants",
+            new CreateTenantRequest("Complimentary Org", slug, "Basic", "admin@comp-org.test"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = await createResponse.Content.ReadFromJsonAsync<TenantResponse>(IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(created);
+
+        using var operatorClient = fixture.Factory.CreateClient();
+        var operatorToken = await IntegrationTestHelpers.LoginAsOperatorAsync(operatorClient);
+        IntegrationTestHelpers.UseBearerToken(operatorClient, operatorToken);
+
+        using var forbiddenResponse = await operatorClient.PostAsJsonAsync(
+            $"/api/v1/platform/tenants/{created.Id}/complimentary",
+            new SetComplimentaryRequest(true, "Pro", "should fail"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenResponse.StatusCode);
+
+        using var setResponse = await platformClient.PostAsJsonAsync(
+            $"/api/v1/platform/tenants/{created.Id}/complimentary",
+            new SetComplimentaryRequest(true, "Pro", "Pilot"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.OK, setResponse.StatusCode);
+        var sponsored = await setResponse.Content.ReadFromJsonAsync<TenantResponse>(IntegrationTestHelpers.JsonOptions);
+        Assert.True(sponsored!.IsComplimentary);
+        Assert.Equal(TenantPlan.Pro.ToString(), sponsored.Plan);
+        Assert.Equal(BillingStatus.Free.ToString(), sponsored.BillingStatus);
+
+        using var clearResponse = await platformClient.PostAsJsonAsync(
+            $"/api/v1/platform/tenants/{created.Id}/complimentary",
+            new SetComplimentaryRequest(false, null, "Convert"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.OK, clearResponse.StatusCode);
+        var cleared = await clearResponse.Content.ReadFromJsonAsync<TenantResponse>(IntegrationTestHelpers.JsonOptions);
+        Assert.False(cleared!.IsComplimentary);
+        Assert.Equal(TenantPlan.Pro.ToString(), cleared.Plan);
+
+        await using var scope = fixture.Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var actions = await db.PlatformAuditLogs
+            .Where(a => a.TenantId == created.Id)
+            .Select(a => a.Action)
+            .ToListAsync();
+        Assert.Contains(PlatformAuditAction.ComplimentarySet, actions);
+        Assert.Contains(PlatformAuditAction.ComplimentaryCleared, actions);
     }
 }

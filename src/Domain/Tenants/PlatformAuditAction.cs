@@ -6,4 +6,6 @@ public enum PlatformAuditAction
     TenantSuspended = 1,
     TenantReactivated = 2,
     TenantArchived = 3,
+    ComplimentarySet = 4,
+    ComplimentaryCleared = 5,
 }

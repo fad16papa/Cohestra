@@ -19,6 +19,12 @@ public sealed class Tenant
 
     public BillingStatus BillingStatus { get; set; } = BillingStatus.Free;
 
+    /// <summary>
+    /// P12 / FR-2: Platform Admin complimentary (Sponsored) plan — no Stripe required, BillingStatus=Free.
+    /// FR-23 delinquency jobs MUST skip when true. FR-25 dormancy does not apply to complimentary Core/Pro.
+    /// </summary>
+    public bool IsComplimentary { get; set; }
+
     public string? StripeCustomerId { get; set; }
 
     public string? StripeSubscriptionId { get; set; }

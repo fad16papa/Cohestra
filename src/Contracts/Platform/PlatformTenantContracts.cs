@@ -4,9 +4,19 @@ public sealed record CreateTenantRequest(
     string Name,
     string Slug,
     string Plan,
-    string AdminContactEmail);
+    string AdminContactEmail,
+    bool IsComplimentary = false);
 
 public sealed record SuspendTenantRequest(string Reason);
+
+/// <summary>
+/// Set or clear complimentary (Sponsored) plan. When <paramref name="IsComplimentary"/> is true,
+/// <paramref name="Plan"/> must be Basic, Core, or Pro. Stripe IDs are left unchanged.
+/// </summary>
+public sealed record SetComplimentaryRequest(
+    bool IsComplimentary,
+    string? Plan,
+    string? Reason);
 
 public sealed record TenantResponse(
     Guid Id,
@@ -15,6 +25,7 @@ public sealed record TenantResponse(
     string Plan,
     string Status,
     string BillingStatus,
+    bool IsComplimentary,
     string? AdminContactEmail,
     DateTimeOffset? SuspendedAt,
     DateTimeOffset? ArchivedAt,
@@ -28,6 +39,7 @@ public sealed record TenantListItemResponse(
     string Plan,
     string Status,
     string BillingStatus,
+    bool IsComplimentary,
     string? AdminContactEmail,
     DateTimeOffset CreatedAt,
     int ActivityCount,

@@ -36,6 +36,12 @@ public interface IPlatformTenantService
         Guid tenantId,
         Guid actorUserId,
         CancellationToken cancellationToken = default);
+
+    Task<PlatformTenantResult<TenantResponse>> SetComplimentaryAsync(
+        Guid tenantId,
+        SetComplimentaryRequest request,
+        Guid actorUserId,
+        CancellationToken cancellationToken = default);
 }
 
 public enum PlatformTenantError
