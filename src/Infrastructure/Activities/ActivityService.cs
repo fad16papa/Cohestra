@@ -507,10 +507,10 @@ public sealed class ActivityService(
         Activity activity,
         CancellationToken cancellationToken)
     {
-        // Global Redis keys until Story 13.2 — only Default tenant may write/read them.
+        // Global Redis keys until Story 13.2 — only Default tenant may touch them.
+        // Non-default: no Set and no Invalidate (shared slug must not thrash Default's entry).
         if (activity.TenantId != TenantIds.Default)
         {
-            await publicActivityCache.InvalidateAsync(activity.Slug, cancellationToken);
             return;
         }
 

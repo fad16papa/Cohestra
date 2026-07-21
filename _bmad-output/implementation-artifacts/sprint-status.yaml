@@ -196,7 +196,7 @@ development_status:
   epic-12-retrospective: optional
 
   epic-13: in-progress
-  13-1-tenantresolutionmiddleware-on-all-api-requests: in-progress
+  13-1-tenantresolutionmiddleware-on-all-api-requests: done
   13-2-ef-global-query-filters-and-redis-tenant-namespaces: backlog
   13-3-export-and-report-queries-always-filter-by-tenantid: backlog
   13-4-tenantisolation-integration-test-gate-sm-1: backlog

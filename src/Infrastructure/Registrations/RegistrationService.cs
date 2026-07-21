@@ -245,6 +245,7 @@ public sealed class RegistrationService(
         var registration = new Registration
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             RegistrationNumber = registrationNumber,
             ActivityId = activity.Id,
             ClientId = client.Id,

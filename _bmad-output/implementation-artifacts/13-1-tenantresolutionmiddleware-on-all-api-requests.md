@@ -4,7 +4,7 @@ baseline_commit: f8659aa2fd51a591bc5d2fb3e40c96c950759476
 
 # Story 13.1: TenantResolutionMiddleware on all API requests
 
-Status: in-progress
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -98,8 +98,8 @@ so that handlers never run ambiguously across tenants.
 - [x] [Review][Defer] Multi-tenant Host integration assertion for public SitePage (non-default subdomain) — deferred, middleware unit coverage present; optional WebApplicationFactory matrix
 
 
-- [ ] [Review][Patch] Stamp `Registration.TenantId` from Host `ICurrentTenant` on public submit create [`RegistrationService.cs` SubmitCoreAsync] — lookup is tenant-scoped but new rows still rely on `ApplyDefaultTenantIds` → wrong ownership on non-default Host.
-- [ ] [Review][Patch] Non-default `SyncPublicActivityCacheAsync` should no-op (no Invalidate) [`ActivityService.cs`] — Invalidate on shared slug thrashing Default Host Redis entry; defer full namespaces to 13.2.
+- [x] [Review][Patch] Stamp `Registration.TenantId` from Host `ICurrentTenant` on public submit create [`RegistrationService.cs` SubmitCoreAsync] — lookup is tenant-scoped but new rows still rely on `ApplyDefaultTenantIds` → wrong ownership on non-default Host.
+- [x] [Review][Patch] Non-default `SyncPublicActivityCacheAsync` should no-op (no Invalidate) [`ActivityService.cs`] — Invalidate on shared slug thrashing Default Host Redis entry; defer full namespaces to 13.2.
 
 - [x] [Review][Defer] Client dedup `FindOrCreateAsync` still global / Default-stamped — deferred to Story 13.2 (+ explicit non-goal cross-tenant client dedup); registration TenantId stamp is the minimal 13.1 fix
 
@@ -204,6 +204,8 @@ Cursor Grok 4.5
 
 ### Completion Notes List
 
+- Re-review #2 patches applied: Registration.TenantId stamped from Host context; non-default SyncPublicActivityCacheAsync no-ops (no Invalidate).
+
 - CR patches applied (2026-07-21): upcoming activities tenant filter; MarketingOnly refresh fail; registration ICurrentTenant; non-default Redis cache invalidate-only.
 
 - Added ambient `ICurrentTenant` / `CurrentTenant` (scoped) set by `TenantResolutionMiddleware` after auth, before authorization.
@@ -247,7 +249,7 @@ Cursor Grok 4.5
 
 ### Outcome
 
-Changes Requested (re-review #2)
+Approve (re-review #2 patches applied)
 
 ### Re-review Date
 
@@ -266,6 +268,8 @@ ACs and design locks for ambient context, middleware order, public 404 / admin 4
 See Tasks → Review Follow-ups (AI).
 
 ## Change Log
+
+- 2026-07-21: Re-review #2 patches applied — Registration.TenantId + cache no-op.
 
 - 2026-07-21: Addressed code review findings — 4 patch items resolved.
 
