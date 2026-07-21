@@ -117,6 +117,7 @@ public sealed class TenantMembershipService(CohestraDbContext dbContext) : ITena
         }
         catch (DbUpdateException ex) when (IsUniqueViolation(ex))
         {
+            dbContext.Entry(membership).State = EntityState.Detached;
             return TenantMembershipResult.Fail(
                 TenantMembershipError.Conflict,
                 "A membership for this user and tenant already exists.");

@@ -97,20 +97,104 @@ public sealed class AuthServiceMembershipGuardTests
         Assert.Null(result.ErrorCode);
     }
 
+    [Fact]
+    public async Task Register_resume_blocked_when_bootstrap_closed()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var confirmed = await harness.CreateUserAsync(
+            "admin@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            confirmed.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var pending = await harness.CreateUserAsync(
+            "pending@test.local",
+            "ChangeMe123!",
+            emailConfirmed: false,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            pending.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var (response, error) = await harness.Auth.RegisterAsync(
+            new RegisterOperatorRequest("pending@test.local", "Pending Op", "ChangeMe123!"));
+
+        Assert.Null(response);
+        Assert.Contains("already has a tenant admin", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task VerifyEmail_blocked_when_bootstrap_closed()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var confirmed = await harness.CreateUserAsync(
+            "admin@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            confirmed.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var pending = await harness.CreateUserAsync(
+            "pending@test.local",
+            "ChangeMe123!",
+            emailConfirmed: false,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            pending.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var (tokens, error) = await harness.Auth.VerifyEmailAsync(
+            new VerifyEmailOtpRequest("pending@test.local", "123456"));
+
+        Assert.Null(tokens);
+        Assert.Contains("already has a tenant admin", error, StringComparison.OrdinalIgnoreCase);
+        Assert.False((await harness.GetUserAsync(pending.Id)).EmailConfirmed);
+    }
+
+    [Fact]
+    public async Task Refresh_orphan_revokes_without_consuming_rotation()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var orphan = await harness.CreateUserAsync(
+            "orphan@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+
+        const string refreshToken = "orphan-refresh-token";
+        await harness.RefreshTokens.StoreAsync(refreshToken, orphan.Id, TimeSpan.FromHours(1));
+
+        var result = await harness.Auth.RefreshAsync(refreshToken);
+
+        Assert.Null(result.Tokens);
+        Assert.Equal("no_tenant_membership", result.ErrorCode);
+        Assert.Equal(0, harness.RefreshTokens.ConsumeCount);
+        Assert.Equal(1, harness.RefreshTokens.RevokeCount);
+        Assert.Null(await harness.RefreshTokens.GetUserIdAsync(refreshToken));
+    }
+
     private sealed class AuthHarness : IAsyncDisposable
     {
         private readonly ServiceProvider _provider;
 
-        private AuthHarness(ServiceProvider provider, AuthService auth, ITenantMembershipService membership)
+        private AuthHarness(
+            ServiceProvider provider,
+            AuthService auth,
+            ITenantMembershipService membership,
+            InMemoryRefreshTokenStore refreshTokens)
         {
             _provider = provider;
             Auth = auth;
             Membership = membership;
+            RefreshTokens = refreshTokens;
         }
 
         public AuthService Auth { get; }
 
         public ITenantMembershipService Membership { get; }
+
+        public InMemoryRefreshTokenStore RefreshTokens { get; }
 
         public static async Task<AuthHarness> CreateAsync()
         {
@@ -134,7 +218,9 @@ public sealed class AuthServiceMembershipGuardTests
 
             services.AddScoped<ITenantMembershipService, TenantMembershipService>();
             services.AddSingleton<IJwtTokenService>(new StubJwtTokenService());
-            services.AddSingleton<IRefreshTokenStore>(new InMemoryRefreshTokenStore());
+            var refreshStore = new InMemoryRefreshTokenStore();
+            services.AddSingleton<IRefreshTokenStore>(refreshStore);
+            services.AddSingleton(refreshStore);
             services.AddSingleton<IAuthOtpStore>(new InMemoryOtpStore());
             services.AddSingleton<IEmailSender>(new StubEmailSender());
             services.AddSingleton<IHostEnvironment>(new StubHostEnvironment());
@@ -170,7 +256,8 @@ public sealed class AuthServiceMembershipGuardTests
             return new AuthHarness(
                 provider,
                 provider.GetRequiredService<AuthService>(),
-                provider.GetRequiredService<ITenantMembershipService>());
+                provider.GetRequiredService<ITenantMembershipService>(),
+                provider.GetRequiredService<InMemoryRefreshTokenStore>());
         }
 
         public async Task<ApplicationUser> CreateUserAsync(
@@ -197,6 +284,14 @@ public sealed class AuthServiceMembershipGuardTests
             return user;
         }
 
+        public async Task<ApplicationUser> GetUserAsync(Guid userId)
+        {
+            var userManager = _provider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = await userManager.FindByIdAsync(userId.ToString());
+            Assert.NotNull(user);
+            return user;
+        }
+
         public ValueTask DisposeAsync()
         {
             _provider.Dispose();
@@ -216,6 +311,10 @@ public sealed class AuthServiceMembershipGuardTests
     {
         private readonly Dictionary<string, Guid> _tokens = new(StringComparer.Ordinal);
 
+        public int ConsumeCount { get; private set; }
+
+        public int RevokeCount { get; private set; }
+
         public Task StoreAsync(
             string refreshToken,
             Guid userId,
@@ -231,6 +330,7 @@ public sealed class AuthServiceMembershipGuardTests
 
         public Task<Guid?> ConsumeAsync(string refreshToken, CancellationToken cancellationToken = default)
         {
+            ConsumeCount++;
             if (!_tokens.Remove(refreshToken, out var userId))
             {
                 return Task.FromResult<Guid?>(null);
@@ -241,6 +341,7 @@ public sealed class AuthServiceMembershipGuardTests
 
         public Task RevokeAsync(string refreshToken, CancellationToken cancellationToken = default)
         {
+            RevokeCount++;
             _tokens.Remove(refreshToken);
             return Task.CompletedTask;
         }

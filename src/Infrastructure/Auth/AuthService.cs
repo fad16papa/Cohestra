@@ -125,17 +125,17 @@ public sealed class AuthService(
             return InvalidRefreshToken();
         }
 
-        var consumedUserId = await refreshTokenStore.ConsumeAsync(refreshToken, cancellationToken);
-        if (consumedUserId is null || consumedUserId != userId)
-        {
-            return InvalidRefreshToken();
-        }
-
         var orphanError = await GetOrphanTenantAdminErrorAsync(user, cancellationToken);
         if (orphanError is not null)
         {
             await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
             return new AuthLoginResult(null, "no_tenant_membership", orphanError);
+        }
+
+        var consumedUserId = await refreshTokenStore.ConsumeAsync(refreshToken, cancellationToken);
+        if (consumedUserId is null || consumedUserId != userId)
+        {
+            return InvalidRefreshToken();
         }
 
         var tokens = await IssueTokensAsync(user, cancellationToken);
@@ -171,10 +171,8 @@ public sealed class AuthService(
                 return (null, bootstrapClosed ? BootstrapClosedMessage : EmailAlreadyRegisteredMessage);
             }
 
-            // Resume pending verification for this email only. Bootstrap closes only on confirmed
-            // TenantAdmin; an unconfirmed first admin may still resume after membership exists.
-            if (bootstrapClosed
-                && !await userManager.IsInRoleAsync(existing, OperatorSeeder.TenantAdminRole))
+            // Bootstrap closed = confirmed TenantAdmin exists — no public register/resume.
+            if (bootstrapClosed)
             {
                 return (null, BootstrapClosedMessage);
             }
@@ -253,10 +251,9 @@ public sealed class AuthService(
             if (await tenantMembershipService.CountMembershipsForUserAsync(user.Id, cancellationToken) == 0)
             {
                 await userManager.DeleteAsync(user);
-                return (null, ensureMembership);
             }
 
-            // Racing ensure already linked this user — continue registration.
+            return (null, ensureMembership);
         }
 
         var sendErrorOnCreate = await SendOtpAsync(user.Email!, user.Nickname, OtpPurpose.EmailVerification, cancellationToken);
@@ -297,15 +294,21 @@ public sealed class AuthService(
             return (await IssueTokensAsync(user, cancellationToken), null);
         }
 
-        if (!await otpStore.ValidateAndConsumeAsync(email, OtpPurpose.EmailVerification, code, cancellationToken))
+        // Another confirmed TenantAdmin already closed bootstrap — do not confirm a second admin.
+        if (await tenantMembershipService.DefaultTenantHasTenantAdminAsync(cancellationToken))
         {
-            return (null, "Invalid or expired verification code.");
+            return (null, BootstrapClosedMessage);
         }
 
         var ensureMembership = await EnsureDefaultTenantAdminMembershipAsync(user.Id, cancellationToken);
         if (ensureMembership is not null)
         {
             return (null, ensureMembership);
+        }
+
+        if (!await otpStore.ValidateAndConsumeAsync(email, OtpPurpose.EmailVerification, code, cancellationToken))
+        {
+            return (null, "Invalid or expired verification code.");
         }
 
         user.EmailConfirmed = true;

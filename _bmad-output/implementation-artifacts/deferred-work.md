@@ -2,7 +2,7 @@
 ## Deferred from: code review re-review of 12-1-tenantmembership-and-remove-single-operator-gate.md (2026-07-21)
 
 - Backfill skips existing `(UserId, default)` pair ignoring Role — rare TenantMember-under-TenantAdmin Identity; harden in 12.3/ops if seen
-- Residual auth guard tests for verify-after-close / resume-after-close / refresh-orphan-before-consume — add with residual patches
+- Residual auth guard tests for verify-after-close / resume-after-close / refresh-orphan-before-consume — **resolved** in AuthServiceMembershipGuardTests with residual patches
 
 ## Deferred from: code review of 12-1-tenantmembership-and-remove-single-operator-gate.md (2026-07-21)
 
