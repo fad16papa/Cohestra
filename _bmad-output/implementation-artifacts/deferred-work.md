@@ -1,3 +1,9 @@
+## Deferred from: code review of 13-3-export-and-report-queries-always-filter-by-tenantid.md (2026-07-21)
+
+- InMemory dual-tenant isolation may overstate vs SQL/global-filter production — deferred, pre-existing 13.2 test pattern
+- Activity/registration tenant mismatch silently drops ranking rows — deferred, data-integrity; not FR28 leakage for this story
+- Campaign/community/follow-up sub-aggregates not individually asserted beyond GetReport totals — deferred, coverage expansion
+
 ## Deferred from: code review of 13-2-ef-global-query-filters-and-redis-tenant-namespaces.md (2026-07-21)
 
 - `IgnoreTenantFilters` uses full `IgnoreQueryFilters()` — deferred until a second global filter (e.g. soft-delete) exists; document in helper XML

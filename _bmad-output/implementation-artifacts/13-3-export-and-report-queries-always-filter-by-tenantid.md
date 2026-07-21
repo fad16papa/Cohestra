@@ -70,6 +70,16 @@ so that **I never receive another tenant's rows or counts (FR28 / NFR-S4)**.
   - [x] 5.1 Ultimate context update note for 13.3
   - [x] 5.2 Do **not** implement Story 13.4 CI gate here
 
+### Review Findings
+
+- [ ] [Review][Patch] Nested collection predicates omit TenantId — Dashboard `Registrations.Any` / `TimelineEvents.Any` and Report `TimelineEvents.Any` lack child `TenantId == ambient` (AC3 belt-and-suspenders) [`DashboardService.cs`, `ReportService.cs`]
+- [ ] [Review][Patch] CSV projection joins Client/Activity without navigation TenantId predicates [`ReportService.cs` ExportReportCsvAsync Select]
+- [ ] [Review][Patch] `totalLeadsAtEnd` counts cohort IDs without `Clients.TenantId` filter [`ReportService.cs`]
+- [ ] [Review][Patch] Fail-closed test covers unresolved only — add resolved-`Guid.Empty` case for Report + Dashboard [`ReportDashboardTenantIsolationTests.cs`]
+- [x] [Review][Defer] InMemory dual-tenant isolation may overstate vs SQL/global-filter production — deferred, pre-existing 13.2 test pattern
+- [x] [Review][Defer] Activity/registration tenant mismatch silently drops ranking rows — deferred, data-integrity; not FR28 leakage for this story
+- [x] [Review][Defer] Campaign/community/follow-up sub-aggregates not individually asserted beyond GetReport totals — deferred, coverage expansion
+
 ## Dev Notes
 
 ### Epic / PRD / Architecture anchors
