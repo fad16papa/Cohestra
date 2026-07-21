@@ -171,6 +171,19 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 - [Source: `_bmad-output/implementation-artifacts/11-4-platform-tenant-directory-and-health.md` — console + auth patterns]
 - [Source: `_bmad-output/implementation-artifacts/11-3-platform-admin-provision-suspend-reactivate-archive.md` — lifecycle + audit]
 
+### Review Findings
+
+- [ ] [Review][Decision] Suspended tenants may set/clear complimentary — Spec blocks Archived + default only; Suspended currently allowed. Choose: keep allow (ops can sponsor a frozen tenant) vs reject with 409 like Archived.
+- [ ] [Review][Patch] Platform detail: allow plan reassignment while Sponsored (show plan select + update) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [ ] [Review][Patch] Hide/disable complimentary controls for default Platform 0 tenant [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [ ] [Review][Patch] Clear-path audit DetailsJson: include IsComplimentary before/after [`src/Infrastructure/Platform/PlatformTenantService.cs`]
+- [ ] [Review][Patch] Unit tests: assert ActorUserId on ComplimentarySet/Cleared audits [`src/Infrastructure.Tests/Tenants/PlatformTenantServiceTests.cs`]
+- [ ] [Review][Patch] Client-side reason max length 1000 to match API [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [ ] [Review][Patch] Initialize `Tenant.IsComplimentary = false` for consistency with other dials [`src/Domain/Tenants/Tenant.cs`]
+- [x] [Review][Defer] Archive races with complimentary mutation — deferred, pre-existing (optimistic concurrency already deferred from 11.3)
+- [x] [Review][Defer] DelinquencyStartedAt not cleared when forcing Free — deferred, pre-existing (FR-23 jobs not implemented; IsComplimentary is the skip signal)
+- [x] [Review][Defer] Integration SkippableFact when stack unavailable — deferred, pre-existing (same pattern as 11.3/11.4)
+
 ## Dev Agent Record
 
 ### Agent Model Used
@@ -212,3 +225,4 @@ Cursor Grok 4.5 (cloud agent)
 
 - 2026-07-21: Story context created (ready-for-dev)
 - 2026-07-21: Implemented IsComplimentary flag, complimentary API, platform detail control, tests → review
+- 2026-07-21: Code review findings recorded (1 decision, 6 patches, 3 deferred)

@@ -1,4 +1,10 @@
 
+## Deferred from: code review of 11-5-complimentary-sponsored-tenant-flag (2026-07-21)
+
+- Archive races with complimentary mutation — optimistic concurrency already deferred from 11.3; low-traffic platform admin path
+- DelinquencyStartedAt not cleared when forcing BillingStatus=Free on complimentary set — FR-23 jobs not implemented yet; IsComplimentary is the skip signal for future jobs
+- Integration complimentary coverage is SkippableFact when Postgres/Redis unavailable — same pattern as 11.3/11.4; exercise live when stack is up
+
 ## Deferred from: post-patch re-review of 11-4-platform-tenant-directory-and-health (2026-07-21)
 
 - Role exclusivity TOCTOU / no transactional AddToRole — residual concurrency edge
