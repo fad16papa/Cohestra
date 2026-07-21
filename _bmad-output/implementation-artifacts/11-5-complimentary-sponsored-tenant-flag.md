@@ -216,7 +216,7 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 
 ### Post-patch Review Findings (round 7)
 
-- [ ] [Review][Patch] Enable **Update plan** when Sponsored but `billingStatus !== "Free"` (even if plan unchanged) so the console can invoke the Free-repair path [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] Enable **Update plan** when Sponsored but `billingStatus !== "Free"` (even if plan unchanged) so the console can invoke the Free-repair path [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
 - [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (restated; no new deferrals)
 
 ## Dev Agent Record
@@ -276,3 +276,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Post-patch re-review round 6 — no AC violations; 1 residual patch (idempotent no-op also requires BillingStatus=Free)
 - 2026-07-21: Applied round-6 patch (same-plan no-op requires Free; repair drifted billing) → done
 - 2026-07-21: Post-patch re-review round 7 — no AC violations; 1 residual patch (enable Update plan when Sponsored billing drifted)
+- 2026-07-21: Applied round-7 patch (enable Repair Free / Update plan when Sponsored billing drifted) → done
