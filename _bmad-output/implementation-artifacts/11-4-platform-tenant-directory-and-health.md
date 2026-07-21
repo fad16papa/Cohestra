@@ -91,6 +91,26 @@ so that I can find workspaces and confirm platform readiness without exporting t
   - [ ] Hard purge job; Stripe; PII export
   - [ ] Full atelier redesign of marketing — platform console only
 
+### Review Findings
+
+- [ ] [Review][Decision] Dual-role post-login destination — Users with both `PlatformAdmin` and tenant `Admin` are routed to `/dashboard` by `resolvePostLoginPath` (Admin wins). Platform console remains reachable if they navigate, but login never lands on `/platform`. Choose: (1) Admin wins (keep), (2) PlatformAdmin wins → `/platform`, or (3) prefer `/platform` when both present with a link to tenant dashboard.
+
+- [ ] [Review][Patch] Show audit `tenantId` in detail table (AC2) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [ ] [Review][Patch] Document `/ready` default-tenant fail-closed check in README (AC3) [`README.md`]
+- [ ] [Review][Patch] Clamp platform tenant search string max length [`src/Infrastructure/Platform/PlatformTenantService.cs`]
+- [ ] [Review][Patch] Clamp list `page` to avoid Skip overflow near Int32.MaxValue [`src/Infrastructure/Platform/PlatformTenantService.cs`]
+- [ ] [Review][Patch] Route session profile by JWT roles to avoid guaranteed `/admin/me` 403 for PlatformAdmin-only [`web/lib/auth-api.ts`]
+- [ ] [Review][Patch] Cancel/ignore stale tenant detail fetches on id change [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [ ] [Review][Patch] Guard double-submit lifecycle actions with a ref (busy state races) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [ ] [Review][Patch] On lifecycle success, apply returned tenant even if reload fails [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [ ] [Review][Patch] Clear directory rows when a refetch errors (avoid stale + error) [`web/app/(platform)/platform/page.tsx`]
+
+- [x] [Review][Defer] EF `ToLower().Contains` search may be non-sargable at scale [`PlatformTenantService.ListAsync`] — deferred, residual perf
+- [x] [Review][Defer] Integration coverage thin (no anonymous 401 on platform GETs; no `/ready` unhealthy when default missing) — deferred, residual test gaps
+- [x] [Review][Defer] `/ready` Unhealthy description names default tenant — deferred, intentional ops signal on anonymous readiness
+- [x] [Review][Defer] Reactivate has no confirm dialog (Suspend requires reason; Archive uses confirm) — deferred, UX polish
+- [x] [Review][Defer] `PlatformMeController` roles from JWT claims (matches `AdminController`) — deferred, pre-existing pattern
+
 ## Dev Notes
 
 ### Epic context
