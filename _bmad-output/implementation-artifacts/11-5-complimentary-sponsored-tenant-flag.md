@@ -184,6 +184,14 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 - [x] [Review][Defer] DelinquencyStartedAt not cleared when forcing Free — deferred, pre-existing (FR-23 jobs not implemented; IsComplimentary is the skip signal)
 - [x] [Review][Defer] Integration SkippableFact when stack unavailable — deferred, pre-existing (same pattern as 11.3/11.4)
 
+### Post-patch Review Findings
+
+- [ ] [Review][Patch] Set-path audit DetailsJson: add `IsComplimentaryAfter=true` for before/after symmetry [`src/Infrastructure/Platform/PlatformTenantService.cs`]
+- [ ] [Review][Patch] `SetComplimentaryRequest.IsComplimentary` as `bool?` — reject omitted/null with 400 (missing bool currently defaults to clear) [`src/Contracts/Platform/PlatformTenantContracts.cs`]
+- [ ] [Review][Patch] Idempotent no-op when already complimentary on same plan (return Ok, no duplicate audit) [`src/Infrastructure/Platform/PlatformTenantService.cs`]
+- [ ] [Review][Patch] Unit test: update plan while already Sponsored [`src/Infrastructure.Tests/Tenants/PlatformTenantServiceTests.cs`]
+- [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (unchanged from prior CR)
+
 ## Dev Agent Record
 
 ### Agent Model Used
