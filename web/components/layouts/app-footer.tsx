@@ -10,9 +10,13 @@ export function AppFooter({ className }: AppFooterProps) {
   const pathname = usePathname();
   const year = new Date().getFullYear();
 
+  const marketingRoutes = ["/", "/pricing"];
   const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
 
-  if (pathname === "/" || authRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
+  if (
+    marketingRoutes.includes(pathname) ||
+    authRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))
+  ) {
     return null;
   }
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { Fraunces, Geist, Geist_Mono, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { BrandAccentSync } from "@/components/theme/brand-accent-sync";
 import { ThemeProvider } from "@/components/theme/theme-provider";
@@ -24,6 +24,18 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "Cohestra",
   description: "Cohestra — community events web client",
@@ -38,7 +50,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${fraunces.variable} ${jakarta.variable} h-full antialiased`}
     >
       <head>
         <ThemeScript />
