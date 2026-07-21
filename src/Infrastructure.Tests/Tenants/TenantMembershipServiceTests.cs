@@ -1,6 +1,7 @@
 using Cohestra.Application.Tenants;
 using Cohestra.Domain.Billing;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Tenants;
 using Microsoft.EntityFrameworkCore;
@@ -83,7 +84,7 @@ public sealed class TenantMembershipServiceTests
     }
 
     [Fact]
-    public async Task DefaultTenantHasTenantAdmin_reflects_membership_not_identity_headcount()
+    public async Task DefaultTenantHasTenantAdmin_requires_confirmed_identity_user()
     {
         await using var db = CreateDb();
         await SeedDefaultTenantAsync(db);
@@ -91,12 +92,36 @@ public sealed class TenantMembershipServiceTests
 
         Assert.False(await service.DefaultTenantHasTenantAdminAsync());
 
+        var pending = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = "pending@test.local",
+            Email = "pending@test.local",
+            EmailConfirmed = false,
+        };
+        db.Users.Add(pending);
+        await db.SaveChangesAsync();
+
+        await service.CreateMembershipAsync(
+            pending.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+        Assert.False(await service.DefaultTenantHasTenantAdminAsync());
+
         await service.CreateMembershipAsync(
             Guid.NewGuid(), TenantIds.Default, TenantMembershipRole.TenantMember);
         Assert.False(await service.DefaultTenantHasTenantAdminAsync());
 
+        var confirmed = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = "admin@test.local",
+            Email = "admin@test.local",
+            EmailConfirmed = true,
+        };
+        db.Users.Add(confirmed);
+        await db.SaveChangesAsync();
+
         await service.CreateMembershipAsync(
-            Guid.NewGuid(), TenantIds.Default, TenantMembershipRole.TenantAdmin);
+            confirmed.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
         Assert.True(await service.DefaultTenantHasTenantAdminAsync());
     }
 
@@ -117,6 +142,25 @@ public sealed class TenantMembershipServiceTests
         Assert.True(second.Succeeded);
         Assert.Equal(first.Value!.Id, second.Value!.Id);
         Assert.Equal(1, await db.TenantMemberships.CountAsync());
+    }
+
+    [Fact]
+    public async Task Ensure_rejects_role_mismatch_on_existing_pair()
+    {
+        await using var db = CreateDb();
+        await SeedDefaultTenantAsync(db);
+        var service = new TenantMembershipService(db);
+        var userId = Guid.NewGuid();
+
+        Assert.True((await service.CreateMembershipAsync(
+            userId, TenantIds.Default, TenantMembershipRole.TenantMember)).Succeeded);
+
+        var mismatch = await service.EnsureMembershipAsync(
+            userId, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        Assert.False(mismatch.Succeeded);
+        Assert.Equal(TenantMembershipError.Conflict, mismatch.Error);
+        Assert.Contains("different role", mismatch.Detail, StringComparison.OrdinalIgnoreCase);
     }
 
     private static async Task SeedDefaultTenantAsync(CohestraDbContext db)

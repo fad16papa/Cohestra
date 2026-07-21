@@ -32,6 +32,9 @@ public sealed class AuthService(
     private const string BootstrapClosedMessage =
         "This workspace already has a tenant admin. Sign in instead.";
 
+    private const string EmailAlreadyRegisteredMessage =
+        "An account with this email already exists. Sign in instead.";
+
     private const string OrphanMembershipMessage =
         "Your account is not linked to a tenant. Contact support or your platform administrator.";
 
@@ -100,41 +103,43 @@ public sealed class AuthService(
         return new AuthLoginResult(tokens, null, null);
     }
 
-    public async Task<AuthTokenResponse?> RefreshAsync(
+    public async Task<AuthLoginResult> RefreshAsync(
         string refreshToken,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            return null;
+            return InvalidRefreshToken();
         }
 
         var userId = await refreshTokenStore.GetUserIdAsync(refreshToken, cancellationToken);
         if (userId is null)
         {
-            return null;
+            return InvalidRefreshToken();
         }
 
         var user = await userManager.FindByIdAsync(userId.Value.ToString());
         if (user is null || !user.EmailConfirmed)
         {
             await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
-            return null;
+            return InvalidRefreshToken();
         }
 
         var consumedUserId = await refreshTokenStore.ConsumeAsync(refreshToken, cancellationToken);
         if (consumedUserId is null || consumedUserId != userId)
         {
-            return null;
+            return InvalidRefreshToken();
         }
 
-        if (await GetOrphanTenantAdminErrorAsync(user, cancellationToken) is not null)
+        var orphanError = await GetOrphanTenantAdminErrorAsync(user, cancellationToken);
+        if (orphanError is not null)
         {
             await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
-            return null;
+            return new AuthLoginResult(null, "no_tenant_membership", orphanError);
         }
 
-        return await IssueTokensAsync(user, cancellationToken);
+        var tokens = await IssueTokensAsync(user, cancellationToken);
+        return new AuthLoginResult(tokens, null, null);
     }
 
     public async Task<(RegisterOperatorResponse? Response, string? Error)> RegisterAsync(
@@ -163,11 +168,11 @@ public sealed class AuthService(
         {
             if (existing.EmailConfirmed)
             {
-                return (null, BootstrapClosedMessage);
+                return (null, bootstrapClosed ? BootstrapClosedMessage : EmailAlreadyRegisteredMessage);
             }
 
-            // Resume pending verification for this email only (even if bootstrap already closed —
-            // membership may already exist from the first submit).
+            // Resume pending verification for this email only. Bootstrap closes only on confirmed
+            // TenantAdmin; an unconfirmed first admin may still resume after membership exists.
             if (bootstrapClosed
                 && !await userManager.IsInRoleAsync(existing, OperatorSeeder.TenantAdminRole))
             {
@@ -194,6 +199,12 @@ public sealed class AuthService(
             if (!passwordResult.Succeeded)
             {
                 return (null, FormatIdentityErrors(passwordResult));
+            }
+
+            var ensureRole = await EnsureTenantAdminIdentityRoleAsync(existing, deleteOnFailure: false, cancellationToken);
+            if (ensureRole is not null)
+            {
+                return (null, ensureRole);
             }
 
             var ensurePending = await EnsureDefaultTenantAdminMembershipAsync(existing.Id, cancellationToken);
@@ -230,26 +241,22 @@ public sealed class AuthService(
             return (null, FormatIdentityErrors(createResult));
         }
 
-        await OperatorSeeder.EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
-
-        if (!await RoleExclusivity.CanAssignTenantAdminAsync(userManager, user, logger))
+        var assignRole = await EnsureTenantAdminIdentityRoleAsync(user, deleteOnFailure: true, cancellationToken);
+        if (assignRole is not null)
         {
-            await userManager.DeleteAsync(user);
-            return (null, "This account cannot be registered as a tenant operator.");
-        }
-
-        var addRole = await userManager.AddToRoleAsync(user, OperatorSeeder.TenantAdminRole);
-        if (!addRole.Succeeded)
-        {
-            await userManager.DeleteAsync(user);
-            return (null, "Could not assign TenantAdmin role.");
+            return (null, assignRole);
         }
 
         var ensureMembership = await EnsureDefaultTenantAdminMembershipAsync(user.Id, cancellationToken);
         if (ensureMembership is not null)
         {
-            await userManager.DeleteAsync(user);
-            return (null, ensureMembership);
+            if (await tenantMembershipService.CountMembershipsForUserAsync(user.Id, cancellationToken) == 0)
+            {
+                await userManager.DeleteAsync(user);
+                return (null, ensureMembership);
+            }
+
+            // Racing ensure already linked this user — continue registration.
         }
 
         var sendErrorOnCreate = await SendOtpAsync(user.Email!, user.Nickname, OtpPurpose.EmailVerification, cancellationToken);
@@ -295,17 +302,17 @@ public sealed class AuthService(
             return (null, "Invalid or expired verification code.");
         }
 
+        var ensureMembership = await EnsureDefaultTenantAdminMembershipAsync(user.Id, cancellationToken);
+        if (ensureMembership is not null)
+        {
+            return (null, ensureMembership);
+        }
+
         user.EmailConfirmed = true;
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
             return (null, "Could not verify email.");
-        }
-
-        var ensureMembership = await EnsureDefaultTenantAdminMembershipAsync(user.Id, cancellationToken);
-        if (ensureMembership is not null)
-        {
-            return (null, ensureMembership);
         }
 
         var orphanAfter = await GetOrphanTenantAdminErrorAsync(user, cancellationToken);
@@ -442,12 +449,17 @@ public sealed class AuthService(
 
     /// <summary>
     /// TenantAdmin Identity users must have at least one TenantMembership before tokens are issued.
-    /// PlatformAdmin-only users are exempt (no tenant membership required).
+    /// PlatformAdmin users are exempt (no tenant membership required), including dual-role edge cases.
     /// </summary>
     private async Task<string?> GetOrphanTenantAdminErrorAsync(
         ApplicationUser user,
         CancellationToken cancellationToken)
     {
+        if (await userManager.IsInRoleAsync(user, PlatformAdminSeeder.PlatformAdminRole))
+        {
+            return null;
+        }
+
         if (!await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole))
         {
             return null;
@@ -455,6 +467,42 @@ public sealed class AuthService(
 
         var count = await tenantMembershipService.CountMembershipsForUserAsync(user.Id, cancellationToken);
         return count == 0 ? OrphanMembershipMessage : null;
+    }
+
+    private async Task<string?> EnsureTenantAdminIdentityRoleAsync(
+        ApplicationUser user,
+        bool deleteOnFailure,
+        CancellationToken cancellationToken)
+    {
+        await OperatorSeeder.EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
+
+        if (await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole))
+        {
+            return null;
+        }
+
+        if (!await RoleExclusivity.CanAssignTenantAdminAsync(userManager, user, logger))
+        {
+            if (deleteOnFailure)
+            {
+                await userManager.DeleteAsync(user);
+            }
+
+            return "This account cannot be registered as a tenant operator.";
+        }
+
+        var addRole = await userManager.AddToRoleAsync(user, OperatorSeeder.TenantAdminRole);
+        if (addRole.Succeeded)
+        {
+            return null;
+        }
+
+        if (deleteOnFailure)
+        {
+            await userManager.DeleteAsync(user);
+        }
+
+        return "Could not assign TenantAdmin role.";
     }
 
     private async Task<string?> EnsureDefaultTenantAdminMembershipAsync(
@@ -599,6 +647,9 @@ public sealed class AuthService(
 
     private static AuthLoginResult InvalidCredentials() =>
         new(null, "invalid_credentials", "Invalid email or password.");
+
+    private static AuthLoginResult InvalidRefreshToken() =>
+        new(null, "invalid_refresh_token", "Invalid or expired refresh token.");
 
     private static bool IsValidEmail(string email) =>
         !string.IsNullOrWhiteSpace(email) && email.Contains('@', StringComparison.Ordinal);

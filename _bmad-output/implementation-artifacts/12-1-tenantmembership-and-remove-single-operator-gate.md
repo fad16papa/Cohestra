@@ -4,7 +4,7 @@ baseline_commit: 39993a7feccc09b8b9f11ffe06481117f862f103
 
 # Story 12.1: TenantMembership and remove single-operator gate
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -176,11 +176,12 @@ Cursor Grok 4.5 (cloud agent)
 
 - Domain: `TenantMembership` + `TenantMembershipRole` (TenantAdmin/TenantMember only); EF `tenant_memberships` with unique `(UserId, TenantId)`.
 - Migration `20260721072432_AddTenantMembership`.
-- Removed `GetExistingOperatorAsync`; bootstrap uses default-tenant TenantAdmin membership count; register creates Identity TenantAdmin + membership on `default`.
+- Removed `GetExistingOperatorAsync`; bootstrap uses **confirmed** default-tenant TenantAdmin membership (EmailConfirmed); register creates Identity TenantAdmin + membership on `default`.
 - `OperatorSeeder.BackfillDefaultTenantAdminMembershipsAsync` links existing TenantAdmins (skips PlatformAdmin).
-- Orphan guard: TenantAdmin Identity with zero memberships → login/refresh/verify refuse tokens (`no_tenant_membership`); PlatformAdmin-only unaffected.
-- `ITenantMembershipService` / `TenantMembershipService` for create/ensure/query validation.
-- Unit tests: membership service (5) + backfill (1). Full `Infrastructure.Tests`: 182 passed. No JWT `tenant_id` (12.2).
+- Orphan guard: TenantAdmin Identity with zero memberships → login/refresh/verify refuse tokens (`no_tenant_membership`); PlatformAdmin exempt.
+- `ITenantMembershipService` / `TenantMembershipService` for create/ensure/query validation (role mismatch Conflict; ensure race re-read).
+- CR patches applied: refresh `AuthLoginResult`, verify-before-confirm order, resume role ensure, non-destructive register conflict.
+- Unit tests: membership service + backfill + `AuthServiceMembershipGuardTests`. Full `Infrastructure.Tests`: 187 passed. No JWT `tenant_id` (12.2).
 
 ### File List
 
@@ -199,21 +200,23 @@ Cursor Grok 4.5 (cloud agent)
 - `src/Api/Controllers/V1/AuthController.cs`
 - `src/Infrastructure.Tests/Tenants/TenantMembershipServiceTests.cs`
 - `src/Infrastructure.Tests/Auth/OperatorMembershipBackfillTests.cs`
+- `src/Infrastructure.Tests/Auth/AuthServiceMembershipGuardTests.cs`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/implementation-artifacts/deferred-work.md`
 
 ### Review Findings
 
 - [x] [Review][Decision] Bootstrap close timing vs pending first-admin UX — **Resolved: option 1** — close bootstrap only when a confirmed TenantAdmin exists on default (membership may exist earlier; gate checks EmailConfirmed).
 
-- [ ] [Review][Patch] Bootstrap gate: confirmed TenantAdmin only [`AuthService` / `TenantMembershipService`] — `DefaultTenantHasTenantAdminAsync` (or callers) must treat bootstrap closed only when ≥1 TenantAdmin membership on default whose Identity user has `EmailConfirmed`; keep membership-on-register; allow resume for pending first admin.
-- [ ] [Review][Patch] EnsureMembership role mismatch returns Ok without upgrading [`TenantMembershipService.cs`] — if existing row is TenantMember and Ensure asks TenantAdmin (or reverse), return Conflict.
-- [ ] [Review][Patch] Dual-role PlatformAdmin+TenantAdmin orphan lockout [`AuthService.cs` GetOrphanTenantAdminErrorAsync] — backfill skips PlatformAdmin; orphan guard still blocks TenantAdmin with zero memberships. Exempt PlatformAdmin from orphan denial (align with AC3 PlatformAdmin-without-membership).
-- [ ] [Review][Patch] Confirmed email on open bootstrap returns BootstrapClosedMessage [`AuthService.RegisterAsync`] — when bootstrap still open, confirmed existing email should be an email-already-registered style error, not “workspace already has a tenant admin.”
-- [ ] [Review][Patch] Register create-path DeleteAsync on Ensure Conflict [`AuthService.cs`] — if concurrent Ensure already linked this userId, do not delete the user; treat existing membership for this user as success or return non-destructive error.
-- [ ] [Review][Patch] VerifyEmail confirms before Ensure membership [`AuthService.VerifyEmailAsync`] — call Ensure before setting EmailConfirmed (or roll back confirm on Ensure failure).
-- [ ] [Review][Patch] Refresh orphan path opaque [`AuthService.RefreshAsync` / AuthController] — AC3 requires clear error; login returns `no_tenant_membership`, refresh revokes and returns null → generic invalid token. Surface the same clear orphan error.
-- [ ] [Review][Patch] Resume register missing TenantAdmin role ensure [`AuthService.RegisterAsync`] — if pending user lacks Identity TenantAdmin, add role before/with membership ensure.
-- [ ] [Review][Patch] Missing AuthService coverage for AC bootstrap/orphan/PlatformAdmin — add tests: register blocked when default has TenantAdmin membership; orphan TenantAdmin login denied; PlatformAdmin login without membership succeeds.
+- [x] [Review][Patch] Bootstrap gate: confirmed TenantAdmin only [`AuthService` / `TenantMembershipService`] — `DefaultTenantHasTenantAdminAsync` joins Identity users and requires `EmailConfirmed`.
+- [x] [Review][Patch] EnsureMembership role mismatch returns Ok without upgrading [`TenantMembershipService.cs`] — Conflict on role mismatch; unique-violation race re-reads existing row.
+- [x] [Review][Patch] Dual-role PlatformAdmin+TenantAdmin orphan lockout [`AuthService.cs` GetOrphanTenantAdminErrorAsync] — PlatformAdmin exempt from orphan denial.
+- [x] [Review][Patch] Confirmed email on open bootstrap returns BootstrapClosedMessage [`AuthService.RegisterAsync`] — open bootstrap uses email-already-registered message.
+- [x] [Review][Patch] Register create-path DeleteAsync on Ensure Conflict [`AuthService.cs`] — delete only when user still has zero memberships; continue if already linked.
+- [x] [Review][Patch] VerifyEmail confirms before Ensure membership [`AuthService.VerifyEmailAsync`] — Ensure runs before setting EmailConfirmed.
+- [x] [Review][Patch] Refresh orphan path opaque [`AuthService.RefreshAsync` / AuthController] — Refresh returns `AuthLoginResult` with `no_tenant_membership`.
+- [x] [Review][Patch] Resume register missing TenantAdmin role ensure [`AuthService.RegisterAsync`] — `EnsureTenantAdminIdentityRoleAsync` on resume and create.
+- [x] [Review][Patch] Missing AuthService coverage for AC bootstrap/orphan/PlatformAdmin — `AuthServiceMembershipGuardTests` + confirmed-gate membership tests.
 
 - [x] [Review][Defer] Concurrent bootstrap register TOCTOU [`AuthService.RegisterAsync`] — deferred, pre-existing race class (no advisory lock); same pattern as prior platform races
 - [x] [Review][Defer] No FK from TenantMembership.UserId to Identity [`TenantMembershipConfiguration.cs`] — deferred, pre-existing Identity loose-coupling pattern
@@ -227,3 +230,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Implemented TenantMembership, removed single-operator gate, seed backfill, orphan guard, tests → review
 - 2026-07-21: Code review (Blind/Edge/Acceptance) — findings recorded; awaiting decision on bootstrap close timing
 - 2026-07-21: CR decision — bootstrap closes only when confirmed TenantAdmin exists on default
+- 2026-07-21: Applied all CR patches; story → done

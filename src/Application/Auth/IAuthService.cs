@@ -8,7 +8,7 @@ public interface IAuthService
 
     Task<AuthLoginResult> LoginAsync(string email, string password, CancellationToken cancellationToken = default);
 
-    Task<AuthTokenResponse?> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default);
+    Task<AuthLoginResult> RefreshAsync(string refreshToken, CancellationToken cancellationToken = default);
 
     Task<(RegisterOperatorResponse? Response, string? Error)> RegisterAsync(
         RegisterOperatorRequest request,

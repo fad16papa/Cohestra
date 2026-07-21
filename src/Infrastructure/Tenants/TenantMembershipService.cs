@@ -8,10 +8,18 @@ namespace Cohestra.Infrastructure.Tenants;
 
 public sealed class TenantMembershipService(CohestraDbContext dbContext) : ITenantMembershipService
 {
+    /// <summary>
+    /// Bootstrap is closed only when default has a TenantAdmin membership whose Identity user is email-confirmed.
+    /// </summary>
     public Task<bool> DefaultTenantHasTenantAdminAsync(CancellationToken cancellationToken = default) =>
-        dbContext.TenantMemberships.AnyAsync(
-            m => m.TenantId == TenantIds.Default && m.Role == TenantMembershipRole.TenantAdmin,
-            cancellationToken);
+        dbContext.TenantMemberships
+            .Where(m => m.TenantId == TenantIds.Default && m.Role == TenantMembershipRole.TenantAdmin)
+            .Join(
+                dbContext.Users,
+                membership => membership.UserId,
+                user => user.Id,
+                (_, user) => user)
+            .AnyAsync(user => user.EmailConfirmed, cancellationToken);
 
     public Task<int> CountMembershipsForUserAsync(Guid userId, CancellationToken cancellationToken = default) =>
         dbContext.TenantMemberships.CountAsync(m => m.UserId == userId, cancellationToken);
@@ -35,10 +43,23 @@ public sealed class TenantMembershipService(CohestraDbContext dbContext) : ITena
 
         if (existing is not null)
         {
-            return TenantMembershipResult.Ok(existing);
+            return ExistingMembershipResult(existing, role);
         }
 
-        return await CreateMembershipAsync(userId, tenantId, role, cancellationToken);
+        var created = await CreateMembershipAsync(userId, tenantId, role, cancellationToken);
+        if (created.Succeeded || created.Error != TenantMembershipError.Conflict)
+        {
+            return created;
+        }
+
+        // Race: another request inserted the unique pair — re-read and treat as ensure.
+        existing = await dbContext.TenantMemberships.FirstOrDefaultAsync(
+            m => m.UserId == userId && m.TenantId == tenantId,
+            cancellationToken);
+
+        return existing is null
+            ? created
+            : ExistingMembershipResult(existing, role);
     }
 
     public async Task<TenantMembershipResult> CreateMembershipAsync(
@@ -102,6 +123,20 @@ public sealed class TenantMembershipService(CohestraDbContext dbContext) : ITena
         }
 
         return TenantMembershipResult.Ok(membership);
+    }
+
+    private static TenantMembershipResult ExistingMembershipResult(
+        TenantMembership existing,
+        TenantMembershipRole requestedRole)
+    {
+        if (existing.Role != requestedRole)
+        {
+            return TenantMembershipResult.Fail(
+                TenantMembershipError.Conflict,
+                "A membership for this user and tenant already exists with a different role.");
+        }
+
+        return TenantMembershipResult.Ok(existing);
     }
 
     private static bool IsUniqueViolation(DbUpdateException exception) =>

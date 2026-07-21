@@ -126,12 +126,14 @@ public class AuthController(IAuthService authService) : ControllerBase
         }
 
         var result = await authService.RefreshAsync(request.RefreshToken, cancellationToken);
-        if (result is null)
+        if (result.Tokens is null)
         {
-            return UnauthorizedProblem("Invalid or expired refresh token.");
+            return UnauthorizedProblem(
+                result.ErrorMessage ?? "Invalid or expired refresh token.",
+                result.ErrorCode);
         }
 
-        return Ok(result);
+        return Ok(result.Tokens);
     }
 
     [HttpPost("forgot-password")]
