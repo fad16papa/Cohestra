@@ -237,3 +237,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Code review findings recorded (1 decision, 6 patches, 3 deferred)
 - 2026-07-21: CR decision — Suspended tenants may set/clear complimentary (allow)
 - 2026-07-21: Applied all 6 CR patches → done
+- 2026-07-21: Post-patch re-review — 4 residual patches, prior defers restated (no AC violations)
