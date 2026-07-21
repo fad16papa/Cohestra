@@ -228,8 +228,9 @@ Cursor Grok 4.5 (cloud agent)
 
 ### Review Findings
 
-- [ ] [Review][Decision] Membership JWT claim type vs ASP.NET role inbound map — Architecture names the membership claim `"role"`, but JwtBearer inbound mapping can fold `"role"` into `ClaimTypes.Role` / `IsInRole`, colliding with Identity roles. Choose: (1) keep claim type `"role"` and set `MapInboundClaims = false` (or equivalent) so membership `role` is not treated as an authorization Role; (2) emit `membership_role` instead (document AD claim-name deviation until 12.3).
+- [x] [Review][Decision] Membership JWT claim type vs ASP.NET role inbound map — **Resolved: option 1** — keep claim type `"role"` and set `MapInboundClaims = false` (or equivalent) so membership `role` is not treated as an authorization Role.
 
+- [ ] [Review][Patch] MapInboundClaims=false (or equivalent) for JWT Bearer [`Program.cs`] — keep membership claim type `"role"`; ensure Identity `ClaimTypes.Role` auth still works with `[Authorize(Roles=…)]`.
 - [ ] [Review][Patch] Refresh must not revive tenant_id without membership [`AuthService.RefreshAsync`] — do not use `binding.TenantId ?? session.TenantId`; if stored tenant membership is gone, revoke and return `no_tenant_membership` (even if PlatformAdmin dual-role falls through to PlatformOnly).
 - [ ] [Review][Patch] Tighten Host slug allowlist [`TenantHostResolver.ExtractSlug`] — do not treat arbitrary multi-label hosts’ first label as slug; only `*.cohestra.app`, `*.localhost`, and explicit localhost/apex fallbacks.
 - [ ] [Review][Patch] Host port / IPv6 parsing [`TenantHostResolver.ExtractSlug`] — strip ports safely; do not `Split(':')[0]` on raw Host (breaks IPv6).
@@ -246,3 +247,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Story context created (ready-for-dev)
 - 2026-07-21: Implemented Host-scoped JWT tenant_id login, refresh persistence, alignment middleware → review
 - 2026-07-21: Code review (Blind/Edge/Acceptance) — findings recorded; awaiting claim-type decision
+- 2026-07-21: CR decision — keep membership claim `"role"` with MapInboundClaims=false
