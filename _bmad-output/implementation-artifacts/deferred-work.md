@@ -1,4 +1,8 @@
 
+## Deferred from: code review re-review of 12-3-enforce-admin-vs-member-server-side.md (2026-07-21)
+
+- Leftover Identity-role Authorize scan is Controllers.V1-namespace-scoped — sufficient while all tenant admin controllers live there
+
 ## Deferred from: code review of 12-3-enforce-admin-vs-member-server-side.md (2026-07-21)
 
 - Access-token path does not re-validate TenantMembership each request — pre-existing (also deferred under 12.2); refresh rechecks

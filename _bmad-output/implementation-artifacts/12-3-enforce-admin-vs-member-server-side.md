@@ -268,3 +268,11 @@ Cursor Grok 4.5 (cloud agent)
 - [x] [Review][Defer] Full HTTP WebApplicationFactory Member→403 matrix — deferred; policy/filter unit coverage present; needs live stack
 - [x] [Review][Defer] Infrastructure.Tests → Api project reference for reflection — deferred; move to Api.Tests later if desired
 - [x] [Review][Defer] Assert `MapInboundClaims=false` via host boot — deferred; locked in Program.cs, no lightweight host fixture yet
+
+### Re-review Findings (2026-07-21)
+
+- [ ] [Review][Patch] Reject `Guid.Empty` in membership policy `tenant_id` assertion [`src/Infrastructure/Auth/TenantAuthorizationExtensions.cs`]
+- [ ] [Review][Patch] When membership `"role"` is present, prefer it for `GET admin/me` Roles (keep Identity PlatformAdmin if any) [`src/Api/Controllers/V1/AdminController.cs`]
+- [ ] [Review][Patch] Assert `RequireProPlanFilter` propagates `tenant_not_found` errorCode [`src/Infrastructure.Tests/Auth/RequireProPlanFilterTests.cs`]
+- [ ] [Review][Patch] Unit-cover `admin/me` Roles preference for membership-only Member principal [`src/Infrastructure.Tests` or AdminController helper]
+- [x] [Review][Defer] Leftover Identity-role scan is Controllers.V1-namespace-scoped — deferred; all tenant admin controllers live there today
