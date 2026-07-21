@@ -19,7 +19,7 @@ public sealed class TenantPlanGate(CohestraDbContext dbContext) : ITenantPlanGat
 
         if (plan is null)
         {
-            return TenantPlanGateResult.Locked("Tenant not found for plan gate.");
+            return TenantPlanGateResult.TenantNotFound("Tenant not found for plan gate.");
         }
 
         if (plan is TenantPlan.Pro or TenantPlan.Enterprise)

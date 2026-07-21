@@ -39,7 +39,7 @@ public sealed class TenantPlanGateTests
     }
 
     [Fact]
-    public async Task EvaluateCampaigns_missing_tenant_is_locked()
+    public async Task EvaluateCampaigns_missing_tenant_is_not_found()
     {
         await using var db = CreateDb();
         var gate = new TenantPlanGate(db);
@@ -47,7 +47,7 @@ public sealed class TenantPlanGateTests
         var result = await gate.EvaluateCampaignsAsync(Guid.CreateVersion7());
 
         Assert.False(result.Allowed);
-        Assert.Equal("plan_locked", result.ErrorCode);
+        Assert.Equal("tenant_not_found", result.ErrorCode);
     }
 
     private static CohestraDbContext CreateDb()

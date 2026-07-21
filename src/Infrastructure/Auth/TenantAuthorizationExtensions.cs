@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Cohestra.Domain.Tenants;
 using Microsoft.AspNetCore.Authorization;
 
@@ -12,7 +13,7 @@ public static class TenantAuthorizationExtensions
         options.AddPolicy(TenantAuthPolicies.TenantAdminOnly, policy =>
         {
             policy.RequireAuthenticatedUser();
-            policy.RequireClaim(JwtTokenService.TenantIdClaimType);
+            policy.RequireAssertion(HasParseableTenantId);
             policy.RequireClaim(
                 JwtTokenService.MembershipRoleClaimType,
                 TenantMembershipRole.TenantAdmin.ToString());
@@ -21,7 +22,7 @@ public static class TenantAuthorizationExtensions
         options.AddPolicy(TenantAuthPolicies.TenantOperator, policy =>
         {
             policy.RequireAuthenticatedUser();
-            policy.RequireClaim(JwtTokenService.TenantIdClaimType);
+            policy.RequireAssertion(HasParseableTenantId);
             policy.RequireClaim(
                 JwtTokenService.MembershipRoleClaimType,
                 TenantMembershipRole.TenantAdmin.ToString(),
@@ -29,5 +30,11 @@ public static class TenantAuthorizationExtensions
         });
 
         return options;
+    }
+
+    private static bool HasParseableTenantId(AuthorizationHandlerContext context)
+    {
+        var raw = context.User.FindFirstValue(JwtTokenService.TenantIdClaimType);
+        return Guid.TryParse(raw, out _);
     }
 }

@@ -16,4 +16,7 @@ public sealed record TenantPlanGateResult(bool Allowed, string? ErrorCode, strin
 
     public static TenantPlanGateResult Locked(string detail) =>
         new(false, "plan_locked", detail);
+
+    public static TenantPlanGateResult TenantNotFound(string detail) =>
+        new(false, "tenant_not_found", detail);
 }

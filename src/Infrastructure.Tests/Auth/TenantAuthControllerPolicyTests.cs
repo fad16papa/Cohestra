@@ -67,4 +67,58 @@ public sealed class TenantAuthControllerPolicyTests
                 || a.Policy == TenantAuthPolicies.TenantAdminOnly);
         }
     }
+
+    [Fact]
+    public void No_tenant_admin_controller_uses_identity_TenantAdmin_role_gate()
+    {
+        var controllerTypes = typeof(ActivitiesController).Assembly
+            .GetTypes()
+            .Where(t => t.IsClass
+                && !t.IsAbstract
+                && t.Namespace == typeof(ActivitiesController).Namespace
+                && typeof(ControllerBase).IsAssignableFrom(t))
+            .ToArray();
+
+        Assert.NotEmpty(controllerTypes);
+
+        var offenders = new List<string>();
+        foreach (var type in controllerTypes)
+        {
+            // Platform routes intentionally keep Identity PlatformAdmin Roles=.
+            if (type == typeof(PlatformMeController) || type == typeof(PlatformTenantsController))
+            {
+                continue;
+            }
+
+            var typeAttrs = type.GetCustomAttributes<AuthorizeAttribute>(inherit: true);
+            foreach (var attr in typeAttrs)
+            {
+                if (UsesIdentityTenantAdminRole(attr))
+                {
+                    offenders.Add($"{type.Name} (class)");
+                }
+            }
+
+            foreach (var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
+            {
+                foreach (var attr in method.GetCustomAttributes<AuthorizeAttribute>(inherit: true))
+                {
+                    if (UsesIdentityTenantAdminRole(attr))
+                    {
+                        offenders.Add($"{type.Name}.{method.Name}");
+                    }
+                }
+            }
+        }
+
+        Assert.True(
+            offenders.Count == 0,
+            "Leftover Identity Roles=TenantAdmin on: " + string.Join(", ", offenders));
+    }
+
+    private static bool UsesIdentityTenantAdminRole(AuthorizeAttribute attr) =>
+        !string.IsNullOrWhiteSpace(attr.Roles)
+        && attr.Roles
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Contains(OperatorSeeder.TenantAdminRole, StringComparer.Ordinal);
 }

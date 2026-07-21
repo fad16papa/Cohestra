@@ -79,8 +79,16 @@ public class AdminController(UserManager<ApplicationUser> userManager) : Control
         return Ok(ToProfile(user, GetRoles()));
     }
 
-    private string[] GetRoles() =>
-        User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+    private string[] GetRoles()
+    {
+        var identityRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value);
+        var membershipRoles = User.FindAll(JwtTokenService.MembershipRoleClaimType).Select(c => c.Value);
+        return identityRoles
+            .Concat(membershipRoles)
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+    }
 
     private async Task<ApplicationUser?> GetCurrentUserAsync(CancellationToken cancellationToken)
     {
