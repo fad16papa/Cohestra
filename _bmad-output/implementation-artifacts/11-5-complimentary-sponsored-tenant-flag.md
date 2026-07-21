@@ -197,6 +197,12 @@ HEAD at story creation: `56d8a8be15d6a8d14deade597dcac83bed48226a` (11.4 done + 
 - [x] [Review][Patch] Reset complimentary form state (`compReason` / plan defaults) when `tenantId` changes so a typed reason cannot carry across tenants [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
 - [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (restated; no new deferrals)
 
+### Post-patch Review Findings (round 4)
+
+- [ ] [Review][Patch] On `tenantId` change: clear stale `tenant`, set `loading`, reset `busy`/`busyRef` so prior tenant cannot be mutated or painted under the new route before load completes [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [ ] [Review][Patch] Ignore `runAction` success updates when `updated.id` ≠ current `tenantId` (stale in-flight action after navigation) [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Defer] Archive race / DelinquencyStartedAt / SkippableFact — still deferred (restated; no new deferrals)
+
 ## Dev Agent Record
 
 ### Agent Model Used
