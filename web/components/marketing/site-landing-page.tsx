@@ -9,7 +9,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { LoginAmbientBackground } from "@/components/auth/login-ambient-background";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { buttonVariants } from "@/components/ui/button";
-import { fetchOnboardingStatus } from "@/lib/auth-api";
+import { fetchOnboardingStatus, resolvePostLoginPath } from "@/lib/auth-api";
 import { getSiteLandingConfig } from "@/lib/site-landing-config";
 import { PLATFORM_LOGO_PATH } from "@/lib/brand-assets";
 import { cn } from "@/lib/utils";
@@ -34,14 +34,14 @@ const highlights = [
 
 export function SiteLandingPage() {
   const config = getSiteLandingConfig();
-  const { status } = useAuth();
+  const { status, profile } = useAuth();
   const [registerAvailable, setRegisterAvailable] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated") {
-      window.location.replace("/dashboard");
+    if (status === "authenticated" && profile) {
+      window.location.replace(resolvePostLoginPath(profile));
     }
-  }, [status]);
+  }, [profile, status]);
 
   useEffect(() => {
     void fetchOnboardingStatus()

@@ -8,7 +8,11 @@ namespace Cohestra.Infrastructure.Auth;
 
 public static class OperatorSeeder
 {
-    public const string AdminRole = "Admin";
+    /// <summary>PRD Tenant Admin — subscribed org operator (not PlatformAdmin).</summary>
+    public const string TenantAdminRole = "TenantAdmin";
+
+    /// <summary>Legacy Identity role name before Story 11.4 rename.</summary>
+    public const string LegacyAdminRole = "Admin";
 
     public static async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken = default)
     {
@@ -18,11 +22,7 @@ public static class OperatorSeeder
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var seedSettings = scope.ServiceProvider.GetRequiredService<IOptions<OperatorSeedSettings>>().Value;
 
-        if (!await roleManager.RoleExistsAsync(AdminRole))
-        {
-            await roleManager.CreateAsync(new IdentityRole<Guid>(AdminRole));
-            logger.LogInformation("Created role {Role}.", AdminRole);
-        }
+        await EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
 
         if (!seedSettings.Enabled)
         {
@@ -30,11 +30,11 @@ public static class OperatorSeeder
             return;
         }
 
-        var admins = await userManager.GetUsersInRoleAsync(AdminRole);
+        var admins = await userManager.GetUsersInRoleAsync(TenantAdminRole);
         if (admins.Count > 0)
         {
             logger.LogInformation(
-                "Operator seed skipped — workspace already has {Count} operator account(s).",
+                "Operator seed skipped — workspace already has {Count} tenant admin account(s).",
                 admins.Count);
             return;
         }
@@ -42,18 +42,25 @@ public static class OperatorSeeder
         var existingUser = await userManager.FindByEmailAsync(seedSettings.Email);
         if (existingUser is not null)
         {
-            if (await userManager.IsInRoleAsync(existingUser, AdminRole))
+            if (await userManager.IsInRoleAsync(existingUser, TenantAdminRole))
             {
                 return;
             }
 
             if (!await RoleExclusivity.CanAssignTenantAdminAsync(userManager, existingUser, logger))
             {
-                return;
+                throw new InvalidOperationException(
+                    $"Operator seed blocked for {seedSettings.Email}: user already has PlatformAdmin (roles are mutually exclusive).");
             }
 
-            await userManager.AddToRoleAsync(existingUser, AdminRole);
-            logger.LogInformation("Added existing user {Email} to {Role}.", seedSettings.Email, AdminRole);
+            var addResult = await userManager.AddToRoleAsync(existingUser, TenantAdminRole);
+            if (!addResult.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to add TenantAdmin role: {string.Join(", ", addResult.Errors.Select(e => e.Description))}");
+            }
+
+            logger.LogInformation("Added existing user {Email} to {Role}.", seedSettings.Email, TenantAdminRole);
             return;
         }
 
@@ -78,7 +85,57 @@ public static class OperatorSeeder
                 $"Failed to seed operator account: email {seedSettings.Email} conflicts with PlatformAdmin exclusivity.");
         }
 
-        await userManager.AddToRoleAsync(user, AdminRole);
-        logger.LogInformation("Seeded operator account {Email}.", seedSettings.Email);
+        var roleResult = await userManager.AddToRoleAsync(user, TenantAdminRole);
+        if (!roleResult.Succeeded)
+        {
+            throw new InvalidOperationException(
+                $"Failed to assign TenantAdmin role: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+        }
+
+        logger.LogInformation("Seeded tenant admin account {Email}.", seedSettings.Email);
+    }
+
+    /// <summary>
+    /// Ensures Identity role <c>TenantAdmin</c> exists, renaming legacy <c>Admin</c> when present.
+    /// </summary>
+    public static async Task EnsureTenantAdminRoleAsync(
+        RoleManager<IdentityRole<Guid>> roleManager,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+    {
+        var legacy = await roleManager.FindByNameAsync(LegacyAdminRole);
+        if (legacy is not null && !await roleManager.RoleExistsAsync(TenantAdminRole))
+        {
+            legacy.Name = TenantAdminRole;
+            legacy.NormalizedName = roleManager.NormalizeKey(TenantAdminRole);
+            var update = await roleManager.UpdateAsync(legacy);
+            if (!update.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to rename Identity role {LegacyAdminRole} → {TenantAdminRole}: " +
+                    string.Join(", ", update.Errors.Select(e => e.Description)));
+            }
+
+            logger.LogInformation(
+                "Renamed Identity role {Legacy} → {Current} (PRD Tenant Admin alignment).",
+                LegacyAdminRole,
+                TenantAdminRole);
+        }
+        else if (legacy is not null)
+        {
+            // Both names exist (partial migrate): keep TenantAdmin; drop empty legacy role if unused.
+            logger.LogWarning(
+                "Both Identity roles {Legacy} and {Current} exist; canonical role is {Current}. Remove {Legacy} manually if unused.",
+                LegacyAdminRole,
+                TenantAdminRole,
+                TenantAdminRole,
+                LegacyAdminRole);
+        }
+
+        if (!await roleManager.RoleExistsAsync(TenantAdminRole))
+        {
+            await roleManager.CreateAsync(new IdentityRole<Guid>(TenantAdminRole));
+            logger.LogInformation("Created role {Role}.", TenantAdminRole);
+        }
     }
 }

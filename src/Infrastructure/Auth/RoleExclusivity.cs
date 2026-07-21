@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 namespace Cohestra.Infrastructure.Auth;
 
 /// <summary>
-/// Hard rule (Story 11.4 CR): a user must not hold both PlatformAdmin and tenant Admin.
-/// PlatformAdmin = Cohestra ops; Admin = subscribed tenant operator.
+/// Hard rule (Story 11.4 CR): a user must not hold both PlatformAdmin and TenantAdmin.
+/// PlatformAdmin = Cohestra ops; TenantAdmin = subscribed tenant operator (PRD).
 /// </summary>
 public static class RoleExclusivity
 {
@@ -15,10 +15,10 @@ public static class RoleExclusivity
         ApplicationUser user,
         ILogger logger)
     {
-        if (await userManager.IsInRoleAsync(user, OperatorSeeder.AdminRole))
+        if (await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole))
         {
             logger.LogWarning(
-                "Refused PlatformAdmin for {Email}: user already has tenant Admin (roles are mutually exclusive).",
+                "Refused PlatformAdmin for {Email}: user already has TenantAdmin (roles are mutually exclusive).",
                 user.Email);
             return false;
         }
@@ -34,7 +34,7 @@ public static class RoleExclusivity
         if (await userManager.IsInRoleAsync(user, PlatformAdminSeeder.PlatformAdminRole))
         {
             logger.LogWarning(
-                "Refused tenant Admin for {Email}: user already has PlatformAdmin (roles are mutually exclusive).",
+                "Refused TenantAdmin for {Email}: user already has PlatformAdmin (roles are mutually exclusive).",
                 user.Email);
             return false;
         }

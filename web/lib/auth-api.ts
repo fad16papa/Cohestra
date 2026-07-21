@@ -133,15 +133,21 @@ async function postAuthTokens(
   return parseAuthTokenResponse(raw);
 }
 
+/** Identity role names — must match API (`OperatorSeeder.TenantAdminRole`, `PlatformAdminSeeder`). */
+export const ROLES = {
+  PlatformAdmin: "PlatformAdmin",
+  TenantAdmin: "TenantAdmin",
+} as const;
+
 /**
- * Post-login home. Hard rule: PlatformAdmin and tenant Admin are mutually exclusive.
- * PlatformAdmin → platform console; tenant Admin → operator dashboard.
+ * Post-login home. Hard rule: PlatformAdmin and TenantAdmin are mutually exclusive.
+ * PlatformAdmin → platform console; TenantAdmin → operator dashboard.
  */
 export function resolvePostLoginPath(profile: AdminProfile): string {
-  if (profile.roles.includes("PlatformAdmin")) {
+  if (profile.roles.includes(ROLES.PlatformAdmin)) {
     return "/platform";
   }
-  if (profile.roles.includes("Admin")) {
+  if (profile.roles.includes(ROLES.TenantAdmin)) {
     return "/dashboard";
   }
   return "/dashboard";
@@ -292,14 +298,15 @@ export async function fetchSessionProfile(
   accessToken: string
 ): Promise<AdminProfile> {
   const roles = getRolesFromAccessToken(accessToken);
-  const isPlatformAdmin = roles.includes("PlatformAdmin");
-  const isTenantAdmin = roles.includes("Admin");
+  const isPlatformAdmin = roles.includes(ROLES.PlatformAdmin);
+  const isTenantAdmin = roles.includes(ROLES.TenantAdmin);
 
-  if (isPlatformAdmin && !isTenantAdmin) {
+  // Prefer PlatformAdmin when present (defensive if a dual-role token ever appears).
+  if (isPlatformAdmin) {
     return fetchPlatformProfile(accessToken);
   }
 
-  if (isTenantAdmin && !isPlatformAdmin) {
+  if (isTenantAdmin) {
     return fetchAdminProfile(accessToken);
   }
 

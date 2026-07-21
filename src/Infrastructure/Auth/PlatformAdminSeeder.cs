@@ -24,6 +24,9 @@ public static class PlatformAdminSeeder
             logger.LogInformation("Created role {Role}.", PlatformAdminRole);
         }
 
+        // Ensure legacy Admin → TenantAdmin rename runs even when Platform seed is first.
+        await OperatorSeeder.EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
+
         if (!seedSettings.Enabled)
         {
             logger.LogInformation("Platform admin user seed skipped (PlatformAdminSeed:Enabled=false).");
@@ -40,10 +43,17 @@ public static class PlatformAdminSeeder
 
             if (!await RoleExclusivity.CanAssignPlatformAdminAsync(userManager, existingUser, logger))
             {
-                return;
+                throw new InvalidOperationException(
+                    $"PlatformAdmin seed blocked for {seedSettings.Email}: user already has TenantAdmin (roles are mutually exclusive).");
             }
 
-            await userManager.AddToRoleAsync(existingUser, PlatformAdminRole);
+            var addResult = await userManager.AddToRoleAsync(existingUser, PlatformAdminRole);
+            if (!addResult.Succeeded)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to add PlatformAdmin role: {string.Join(", ", addResult.Errors.Select(e => e.Description))}");
+            }
+
             logger.LogInformation("Added existing user {Email} to {Role}.", seedSettings.Email, PlatformAdminRole);
             return;
         }
@@ -66,10 +76,16 @@ public static class PlatformAdminSeeder
         {
             await userManager.DeleteAsync(user);
             throw new InvalidOperationException(
-                $"Failed to seed platform admin account: email {seedSettings.Email} conflicts with tenant Admin exclusivity.");
+                $"Failed to seed platform admin account: email {seedSettings.Email} conflicts with TenantAdmin exclusivity.");
         }
 
-        await userManager.AddToRoleAsync(user, PlatformAdminRole);
+        var roleResult = await userManager.AddToRoleAsync(user, PlatformAdminRole);
+        if (!roleResult.Succeeded)
+        {
+            throw new InvalidOperationException(
+                $"Failed to assign PlatformAdmin role: {string.Join(", ", roleResult.Errors.Select(e => e.Description))}");
+        }
+
         logger.LogInformation("Seeded platform admin account {Email}.", seedSettings.Email);
     }
 }

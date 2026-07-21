@@ -8,7 +8,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/clients")]
-[Authorize(Roles = OperatorSeeder.AdminRole)]
+[Authorize(Roles = OperatorSeeder.TenantAdminRole)]
 [Produces("application/json")]
 public class ClientsController(IClientService clientService) : ControllerBase
 {

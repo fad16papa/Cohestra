@@ -4,7 +4,7 @@ baseline_commit: ec86c4650d79dd1b568bb1b454597af00768cb6f
 
 # Story 11.4: Platform tenant directory and health
 
-Status: in-progress
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created.
      Optional: run validate-create-story before dev-story. -->
@@ -115,10 +115,10 @@ so that I can find workspaces and confirm platform readiness without exporting t
 
 ### Post-patch Review Findings (2026-07-21)
 
-- [ ] [Review][Patch] Lifecycle reload clears tenant after successful action — `reload()` catches GET failures and `setTenant(null)`, so the outer “keep POST tenant” catch never helps [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
-- [ ] [Review][Patch] Authenticated public Home/`/` hard-redirects to `/dashboard` — PlatformAdmin clicking header Home (or visiting `/`) lands in tenant shell; use `resolvePostLoginPath` [`web/components/marketing/site-landing-page.tsx`, `site-page-renderer.tsx`]
-- [ ] [Review][Patch] Seed exclusivity conflicts fail silent (`return`) — misconfigured seed emails leave intended role missing; fail closed with throw/log for hard rule [`PlatformAdminSeeder.cs`, `OperatorSeeder.cs`]
-- [ ] [Review][Patch] Align dual-role defensive path: if JWT somehow has both roles, `fetchSessionProfile` should prefer platform (matches `resolvePostLoginPath`) [`web/lib/auth-api.ts`]
+- [x] [Review][Patch] Lifecycle reload clears tenant after successful action — `reload()` catches GET failures and `setTenant(null)`, so the outer “keep POST tenant” catch never helps [`web/app/(platform)/platform/tenants/[id]/page.tsx`]
+- [x] [Review][Patch] Authenticated public Home/`/` hard-redirects to `/dashboard` — PlatformAdmin clicking header Home (or visiting `/`) lands in tenant shell; use `resolvePostLoginPath` [`web/components/marketing/site-landing-page.tsx`, `site-page-renderer.tsx`]
+- [x] [Review][Patch] Seed exclusivity conflicts fail silent (`return`) — misconfigured seed emails leave intended role missing; fail closed with throw/log for hard rule [`PlatformAdminSeeder.cs`, `OperatorSeeder.cs`]
+- [x] [Review][Patch] Align dual-role defensive path: if JWT somehow has both roles, `fetchSessionProfile` should prefer platform (matches `resolvePostLoginPath`) [`web/lib/auth-api.ts`]
 
 - [x] [Review][Defer] Role exclusivity TOCTOU / no transactional AddToRole — deferred, residual
 - [x] [Review][Defer] AuthService register exclusivity rarely hit (email unique before check) — deferred, seeders cover real collision
@@ -219,7 +219,7 @@ Cursor Grok 4.5 (cloud agent)
 - `/ready` stays anonymous; added fail-closed `default-tenant` ready check for `TenantIds.Default` (Unhealthy if missing). Existing postgres + redis checks unchanged.
 - Platform console under `web/app/(platform)/` with sparse Midnight Atelier-scoped surface; lifecycle actions reuse 11.3 POSTs.
 - Unit tests: 9 PlatformTenantService tests passed. Integration tests added (skippable when stack unavailable).
-- CR: Hard rule PlatformAdmin ⊥ tenant Admin enforced in seeders/signup; sparse platform header (Home + Dashboard); AC2 tenantId column; README /ready; search/page clamps; JWT-routed session profile; detail/directory race fixes.
+- CR: Hard rule PlatformAdmin ⊥ TenantAdmin; Identity role renamed Admin→TenantAdmin; residual post-patch fixes (reload, Home redirect, seeder fail-closed, JWT profile prefer PlatformAdmin).
 
 ### File List
 
@@ -252,3 +252,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Code review findings recorded (1 decision, 9 patches, 5 deferred)
 - 2026-07-21: CR decision locked (mutually exclusive roles); all patch findings applied → done
 - 2026-07-21: Post-patch re-review — 4 residual patches, 5 deferred
+- 2026-07-21: Renamed Identity role `Admin` → `TenantAdmin` (PRD alignment); applied residual post-patch CR fixes → done

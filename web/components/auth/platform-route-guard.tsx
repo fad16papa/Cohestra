@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { ROLES } from "@/lib/auth-api";
 
 type PlatformRouteGuardProps = {
   children: ReactNode;
@@ -12,7 +13,7 @@ type PlatformRouteGuardProps = {
 export function PlatformRouteGuard({ children }: PlatformRouteGuardProps) {
   const router = useRouter();
   const { status, profile } = useAuth();
-  const isPlatformAdmin = profile?.roles.includes("PlatformAdmin") ?? false;
+  const isPlatformAdmin = profile?.roles.includes(ROLES.PlatformAdmin) ?? false;
 
   useEffect(() => {
     if (status === "unauthenticated") {

@@ -15,6 +15,7 @@ import {
 import { useTheme } from "next-themes";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { resolvePostLoginPath } from "@/lib/auth-api";
 import {
   MarketingEyebrow,
   MarketingEmptyState,
@@ -650,7 +651,7 @@ export function SitePageRenderer({
   const previewMode = useSitePreviewLayout();
   const shouldShowPreviewBanner = showPreviewBanner ?? (isPreview && !previewMode);
   const { published, upcomingActivities } = site;
-  const { status } = useAuth();
+  const { status, profile } = useAuth();
   const { resolvedTheme } = useTheme();
 
   const sections = useMemo(() => getEnabledSections(published), [published]);
@@ -679,10 +680,10 @@ export function SitePageRenderer({
   }, [published.logoAssetId]);
 
   useEffect(() => {
-    if (!isPreview && status === "authenticated") {
-      window.location.replace("/dashboard");
+    if (!isPreview && status === "authenticated" && profile) {
+      window.location.replace(resolvePostLoginPath(profile));
     }
-  }, [isPreview, status]);
+  }, [isPreview, profile, status]);
 
   const heroBlock = sections.filter((section) => section.type.toLowerCase() === "hero");
   const highlightsBlock = sections.filter((section) => section.type.toLowerCase() === "highlights");

@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Cohestra.Api.Controllers.V1;
 
 /// <summary>
-/// Platform Admin session profile. Tenant Admin GET /api/v1/admin/me is role-gated to Admin
+/// Platform Admin session profile. Tenant Admin GET /api/v1/admin/me is role-gated to TenantAdmin
 /// and cannot be used by PlatformAdmin-only users (Story 11.4).
 /// </summary>
 [ApiController]

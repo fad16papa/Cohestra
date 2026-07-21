@@ -30,36 +30,48 @@ export default function PlatformTenantDetailPage() {
   const busyRef = useRef(false);
   const requestIdRef = useRef(0);
 
-  const reload = useCallback(async () => {
-    const requestId = ++requestIdRef.current;
-    setLoading(true);
-    setError(null);
-    try {
-      const detail = await getPlatformTenant(authFetch, tenantId);
-      if (requestId !== requestIdRef.current) {
-        return;
+  const loadDetail = useCallback(
+    async (options?: { clearTenantOnError?: boolean }) => {
+      const clearTenantOnError = options?.clearTenantOnError ?? true;
+      const requestId = ++requestIdRef.current;
+      setLoading(true);
+      setError(null);
+      try {
+        const detail = await getPlatformTenant(authFetch, tenantId);
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+        setTenant(detail.tenant);
+        setAudits(detail.recentAudits);
+      } catch (err) {
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+        if (clearTenantOnError) {
+          setError(err instanceof Error ? err.message : "Could not load tenant.");
+          setTenant(null);
+        } else {
+          setActionError(
+            err instanceof Error
+              ? `Updated, but could not refresh audits: ${err.message}`
+              : "Updated, but could not refresh audits."
+          );
+        }
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setLoading(false);
+        }
       }
-      setTenant(detail.tenant);
-      setAudits(detail.recentAudits);
-    } catch (err) {
-      if (requestId !== requestIdRef.current) {
-        return;
-      }
-      setError(err instanceof Error ? err.message : "Could not load tenant.");
-      setTenant(null);
-    } finally {
-      if (requestId === requestIdRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [authFetch, tenantId]);
+    },
+    [authFetch, tenantId]
+  );
 
   useEffect(() => {
-    void reload();
+    void loadDetail();
     return () => {
       requestIdRef.current += 1;
     };
-  }, [reload]);
+  }, [loadDetail]);
 
   async function runAction(action: () => Promise<TenantResponse>) {
     if (busyRef.current) {
@@ -73,11 +85,7 @@ export default function PlatformTenantDetailPage() {
       setTenant(updated);
       setShowSuspend(false);
       setSuspendReason("");
-      try {
-        await reload();
-      } catch {
-        // Keep POST response tenant if audit reload fails.
-      }
+      await loadDetail({ clearTenantOnError: false });
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Action failed.");
     } finally {

@@ -8,7 +8,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/email-templates")]
-[Authorize(Roles = OperatorSeeder.AdminRole)]
+[Authorize(Roles = OperatorSeeder.TenantAdminRole)]
 [Produces("application/json")]
 public class EmailTemplatesController(IEmailTemplateService emailTemplateService) : ControllerBase
 {

@@ -11,7 +11,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/campaigns")]
-[Authorize(Roles = OperatorSeeder.AdminRole)]
+[Authorize(Roles = OperatorSeeder.TenantAdminRole)]
 public class CampaignsController(
     ICampaignService campaignService,
     IClientSegmentService segmentService,

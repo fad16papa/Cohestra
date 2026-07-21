@@ -61,9 +61,18 @@ If you also run `npm run dev` locally, stop the Compose stack first or use diffe
 
 See [deploy/nginx/README.md](deploy/nginx/README.md) for routing details.
 
+### Identity roles
+
+| Role | Who | Home |
+|------|-----|------|
+| `PlatformAdmin` | Cohestra ops (whole-platform governance) | `/platform` |
+| `TenantAdmin` | Subscribed org operator (PRD Tenant Admin) | `/dashboard` |
+
+These roles are mutually exclusive. Legacy Identity role name `Admin` is renamed to `TenantAdmin` on API startup.
+
 ### Dev operator credentials (Docker Compose)
 
-Seeded on first API startup when no operator exists:
+Seeded on first API startup when no tenant admin exists:
 
 | Setting | Default |
 |---------|---------|

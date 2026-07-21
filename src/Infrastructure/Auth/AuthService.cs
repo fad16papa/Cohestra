@@ -210,10 +210,7 @@ public sealed class AuthService(
             return (null, FormatIdentityErrors(createResult));
         }
 
-        if (!await roleManager.RoleExistsAsync(OperatorSeeder.AdminRole))
-        {
-            await roleManager.CreateAsync(new IdentityRole<Guid>(OperatorSeeder.AdminRole));
-        }
+        await OperatorSeeder.EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
 
         if (!await RoleExclusivity.CanAssignTenantAdminAsync(userManager, user, logger))
         {
@@ -221,7 +218,12 @@ public sealed class AuthService(
             return (null, "This account cannot be registered as a tenant operator.");
         }
 
-        await userManager.AddToRoleAsync(user, OperatorSeeder.AdminRole);
+        var addRole = await userManager.AddToRoleAsync(user, OperatorSeeder.TenantAdminRole);
+        if (!addRole.Succeeded)
+        {
+            await userManager.DeleteAsync(user);
+            return (null, "Could not assign TenantAdmin role.");
+        }
 
         var sendErrorOnCreate = await SendOtpAsync(user.Email!, user.Nickname, OtpPurpose.EmailVerification, cancellationToken);
         if (sendErrorOnCreate is not null)
@@ -399,7 +401,7 @@ public sealed class AuthService(
     private async Task<ApplicationUser?> GetExistingOperatorAsync(CancellationToken cancellationToken)
     {
         _ = cancellationToken;
-        var admins = await userManager.GetUsersInRoleAsync(OperatorSeeder.AdminRole);
+        var admins = await userManager.GetUsersInRoleAsync(OperatorSeeder.TenantAdminRole);
         return admins.Count switch
         {
             0 => null,

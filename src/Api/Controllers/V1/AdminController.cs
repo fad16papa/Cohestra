@@ -12,7 +12,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin")]
-[Authorize(Roles = OperatorSeeder.AdminRole)]
+[Authorize(Roles = OperatorSeeder.TenantAdminRole)]
 [Produces("application/json")]
 public class AdminController(UserManager<ApplicationUser> userManager) : ControllerBase
 {

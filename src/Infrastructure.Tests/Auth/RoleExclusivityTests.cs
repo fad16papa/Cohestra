@@ -16,7 +16,7 @@ public sealed class RoleExclusivityTests
         await using var provider = BuildIdentity();
         var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = provider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-        await roleManager.CreateAsync(new IdentityRole<Guid>(OperatorSeeder.AdminRole));
+        await roleManager.CreateAsync(new IdentityRole<Guid>(OperatorSeeder.TenantAdminRole));
         await roleManager.CreateAsync(new IdentityRole<Guid>(PlatformAdminSeeder.PlatformAdminRole));
 
         var user = new ApplicationUser
@@ -27,7 +27,7 @@ public sealed class RoleExclusivityTests
             EmailConfirmed = true,
         };
         Assert.True((await userManager.CreateAsync(user, "ChangeMe123!")).Succeeded);
-        Assert.True((await userManager.AddToRoleAsync(user, OperatorSeeder.AdminRole)).Succeeded);
+        Assert.True((await userManager.AddToRoleAsync(user, OperatorSeeder.TenantAdminRole)).Succeeded);
 
         var allowed = await RoleExclusivity.CanAssignPlatformAdminAsync(
             userManager,
@@ -42,7 +42,7 @@ public sealed class RoleExclusivityTests
         await using var provider = BuildIdentity();
         var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
         var roleManager = provider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-        await roleManager.CreateAsync(new IdentityRole<Guid>(OperatorSeeder.AdminRole));
+        await roleManager.CreateAsync(new IdentityRole<Guid>(OperatorSeeder.TenantAdminRole));
         await roleManager.CreateAsync(new IdentityRole<Guid>(PlatformAdminSeeder.PlatformAdminRole));
 
         var user = new ApplicationUser
