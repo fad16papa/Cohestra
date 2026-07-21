@@ -1,4 +1,12 @@
 
+## Deferred from: code review of 12-1-tenantmembership-and-remove-single-operator-gate.md (2026-07-21)
+
+- Concurrent bootstrap register TOCTOU (check DefaultTenantHasTenantAdmin then create) — no advisory lock; low-traffic first-bootstrap path
+- No FK from `TenantMembership.UserId` to Identity users — matches loose Identity coupling; harden if invites need cascade
+- Backfill `SaveChanges` without unique-violation catch — rare seeder race with concurrent register Ensure
+- App auth before default tenant row exists — backfill warns and skips; TenantAdmins cannot get tokens until tenant+backfill
+- `CreateMembership` does not verify user exists — sufficient for register/seed; invite flows (14.x) should validate
+
 ## Deferred from: code review of 11-5-complimentary-sponsored-tenant-flag (2026-07-21)
 
 - Archive races with complimentary mutation — optimistic concurrency already deferred from 11.3; low-traffic platform admin path
