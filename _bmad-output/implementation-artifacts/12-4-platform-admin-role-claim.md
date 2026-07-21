@@ -202,6 +202,7 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Implement Story 12.4 platform_admin claim + PlatformAdminOnly policy; mark review.
 - 2026-07-21: Apply Story 12.4 CR patches; mark story done.
 - 2026-07-21: Apply Story 12.4 re-review CR patches; mark story done.
+- 2026-07-21: Re-review #2 clean — no new patches; story remains done.
 
 ### Review Findings
 
@@ -219,3 +220,7 @@ Cursor Grok 4.5 (cloud agent)
 - [x] [Review][Patch] Unit tests for duplicate/whitespace `tenant_id` hybrid and membership+platform without tenant_id [`src/Infrastructure.Tests`]
 - [x] [Review][Defer] Identity `ClaimTypes.Role=PlatformAdmin` may still appear on mis-minted tenant sessions for leftover IsInRole callers outside Controllers.V1 — deferred; controllers use claim policy
 - [x] [Review][Defer] Host alignment allowlist shrink (`/admin` + change-password only) — intentional CR patch; revisit if new tenant-scoped routes appear outside `/admin`
+
+### Re-review #2 Findings (2026-07-21)
+
+- ✅ Clean review — Blind Hunter / Edge Case Hunter / Acceptance Auditor found no new actionable patches. Prior CR and re-review patches remain applied; ACs 1–4 met.
