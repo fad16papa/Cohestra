@@ -203,8 +203,9 @@ Cursor Grok 4.5 (cloud agent)
 
 ### Review Findings
 
-- [ ] [Review][Decision] Bootstrap close timing vs pending first-admin UX — Membership is written on first register (before email confirm), so `DefaultTenantHasTenantAdminAsync` closes onboarding/register UI while OTP is still pending. Spec bootstrap rule closes on ≥1 TenantAdmin membership; resume API still allows unconfirmed TenantAdmin when closed. Choose: (1) close only when a confirmed TenantAdmin exists on default; (2) keep membership-early close but keep onboarding/register available for the pending first admin (API+UI); (3) strict close — no register/resume once any TenantAdmin membership exists.
+- [x] [Review][Decision] Bootstrap close timing vs pending first-admin UX — **Resolved: option 1** — close bootstrap only when a confirmed TenantAdmin exists on default (membership may exist earlier; gate checks EmailConfirmed).
 
+- [ ] [Review][Patch] Bootstrap gate: confirmed TenantAdmin only [`AuthService` / `TenantMembershipService`] — `DefaultTenantHasTenantAdminAsync` (or callers) must treat bootstrap closed only when ≥1 TenantAdmin membership on default whose Identity user has `EmailConfirmed`; keep membership-on-register; allow resume for pending first admin.
 - [ ] [Review][Patch] EnsureMembership role mismatch returns Ok without upgrading [`TenantMembershipService.cs`] — if existing row is TenantMember and Ensure asks TenantAdmin (or reverse), return Conflict.
 - [ ] [Review][Patch] Dual-role PlatformAdmin+TenantAdmin orphan lockout [`AuthService.cs` GetOrphanTenantAdminErrorAsync] — backfill skips PlatformAdmin; orphan guard still blocks TenantAdmin with zero memberships. Exempt PlatformAdmin from orphan denial (align with AC3 PlatformAdmin-without-membership).
 - [ ] [Review][Patch] Confirmed email on open bootstrap returns BootstrapClosedMessage [`AuthService.RegisterAsync`] — when bootstrap still open, confirmed existing email should be an email-already-registered style error, not “workspace already has a tenant admin.”
@@ -225,3 +226,4 @@ Cursor Grok 4.5 (cloud agent)
 - 2026-07-21: Story context created (ready-for-dev)
 - 2026-07-21: Implemented TenantMembership, removed single-operator gate, seed backfill, orphan guard, tests → review
 - 2026-07-21: Code review (Blind/Edge/Acceptance) — findings recorded; awaiting decision on bootstrap close timing
+- 2026-07-21: CR decision — bootstrap closes only when confirmed TenantAdmin exists on default
