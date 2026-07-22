@@ -10,7 +10,10 @@ export default function SettingsPage() {
       <Card className="border-border-warm">
         <CardContent className="space-y-10 pt-6">
           <p className="text-sm text-text-muted-warm">
-            Operator preferences for your admin workspace.
+            Operator preferences for your admin workspace.{" "}
+            <a href="/settings/billing" className="text-lagoon hover:text-ink">
+              Billing &amp; plan
+            </a>
           </p>
           <AppearanceSection />
           <BrandAccentSection />

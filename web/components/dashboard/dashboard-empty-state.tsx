@@ -1,6 +1,8 @@
-import { CalendarDays, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { Compass, Sparkles } from "lucide-react";
 
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
+import { marketingAtelierButtonClass } from "@/components/marketing/marketing-shell";
 
 export function DashboardEmptyState() {
   return (
@@ -12,30 +14,38 @@ export function DashboardEmptyState() {
         />
         <p className="relative flex items-center gap-2 text-sm font-medium text-primary">
           <Sparkles className="size-4" aria-hidden />
-          Let&apos;s launch your first community moment
+          Open your atelier
         </p>
         <h2 className="relative mt-3 text-display-sm text-text-warm">
-          Your outreach cockpit is ready when you are
+          Start with one community, then your first activity
         </h2>
         <p className="relative mt-2 max-w-xl text-sm leading-relaxed text-text-muted-warm">
-          Create an activity, share the QR at your next event, and watch registrations
-          flow into Clients — then follow up with campaigns in one calm workspace.
+          Basic is free forever — no card required. Create a community to organize your work,
+          publish an activity, and share a registration link or QR at your next event.
         </p>
         <ol className="relative mt-6 space-y-2 text-sm text-text-warm">
-          <li>1. Create activity metadata and registration form</li>
-          <li>2. Publish and share your QR / link</li>
-          <li>3. Follow up with segmented email campaigns</li>
+          <li>1. Create a community (your program or venue)</li>
+          <li>2. Add an activity with a registration form</li>
+          <li>3. Publish and share the QR / link</li>
         </ol>
+        <div className="relative mt-6 flex flex-wrap gap-3">
+          <Link href="/activities/communities" className={marketingAtelierButtonClass("lagoon")}>
+            Create a community
+          </Link>
+          <Link href="/activities/new" className={marketingAtelierButtonClass("ghost")}>
+            Skip to new activity
+          </Link>
+        </div>
       </section>
 
       <ProductEmptyState
-        icon={CalendarDays}
-        title="Start with one activity"
-        description="Most operators launch in under 15 minutes using a template form — you'll get a live registration link and QR code instantly."
-        primaryHref="/activities/new"
-        primaryLabel="Create your first activity"
-        secondaryHref="/activities/communities"
-        secondaryLabel="Set up communities"
+        icon={Compass}
+        title="Your workshop is ready"
+        description="Most operators publish their first activity in under fifteen minutes. You'll get a live registration link and QR code instantly."
+        primaryHref="/activities/communities"
+        primaryLabel="Set up communities"
+        secondaryHref="/activities/new"
+        secondaryLabel="Create an activity"
       />
     </div>
   );

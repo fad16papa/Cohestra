@@ -6,6 +6,8 @@ import { Copy, ExternalLink } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { SitePageRenderer } from "@/components/marketing/site-page-renderer";
 import { PageHeader } from "@/components/shared/page-header";
+import { UpgradePanel } from "@/components/shell/upgrade-panel";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,6 +93,7 @@ import {
   readInitialChecklistVisibility,
 } from "@/lib/website-builder-preferences";
 import { cn } from "@/lib/utils";
+import { isBasicPlan } from "@/lib/shell/tenant-shell-api";
 
 type DeviceMode = "phone" | "desktop";
 
@@ -156,6 +159,7 @@ function useUnsavedChangesGuard(isDirty: boolean) {
 
 export function WebsiteBuilderPage() {
   const { authFetch } = useAuth();
+  const { shell, loading: shellLoading } = useTenantShell();
   const { showToast, showErrorToast, showSuccessToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -874,6 +878,26 @@ export function WebsiteBuilderPage() {
     } finally {
       setIsReverting(false);
     }
+  }
+
+  if (shellLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Website Builder" description="Customize your public homepage" />
+        <div className="h-96 animate-pulse rounded-xl border border-border-warm bg-muted/30" />
+      </div>
+    );
+  }
+
+  if (shell && isBasicPlan(shell.plan)) {
+    return (
+      <UpgradePanel
+        title="Public site page unlocks on Core"
+        description="Basic includes a simple stub listing. Upgrade to Core for a branded fixed homepage at your workspace subdomain."
+        requiredPlan="Core"
+        isTenantAdmin={shell.isTenantAdmin}
+      />
+    );
   }
 
   if (loading) {

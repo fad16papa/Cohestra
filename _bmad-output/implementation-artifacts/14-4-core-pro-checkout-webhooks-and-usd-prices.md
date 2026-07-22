@@ -4,7 +4,7 @@ baseline_commit: b124a08ac3cfb2838321ac943a84cf78cf64ea00
 
 # Story 14.4: Core/Pro Checkout, webhooks, and USD Prices
 
-Status: review
+Status: done
 
 ## Story
 
@@ -60,6 +60,28 @@ So that **paid plan limits unlock without a custom billing UI**.
   - [x] 4.2 Webhook processor tests (fixture payloads)
   - [x] 4.3 `dotnet build` + `npm run build`
 
+### Review Findings
+
+- [x] [Review][Patch] Failed webhook handlers ledgered events — blocked Stripe retries [`StripeWebhookProcessor.cs`]
+- [x] [Review][Patch] Unknown subscription statuses defaulted to Active — map incomplete/unknown to safe states [`StripeTenantBillingSync.cs`]
+- [x] [Review][Patch] Open redirect on checkout SuccessUrl/CancelUrl — tenant-host allowlist [`BillingController.cs`]
+- [x] [Review][Patch] Webhook idempotency race — catch unique violation on ledger insert [`StripeWebhookProcessor.cs`]
+- [x] [Review][Patch] Canceled checkout immediately re-started session — skip auto-start when `canceled=1` [`checkout-page-content.tsx`]
+- [x] [Review][Patch] HasConsumedTrial only when TrialEnd set — mark on `trialing` status [`StripeTenantBillingSync.cs`]
+- [x] [Review][Patch] Checkout allowed with empty admin email — require email when no Stripe customer [`StripeBillingService.cs`]
+- [x] [Review][Patch] Metadata tenant_id not verified against customer — reject customer mismatch [`StripeWebhookProcessor.cs`]
+- [x] [Review][Defer] Auth handoff tokens in URL hash — replace with one-time code exchange
+- [x] [Review][Defer] Global StripeConfiguration.ApiKey mutation — scoped StripeClient
+- [x] [Review][Defer] Parallel checkout sessions before webhook — pending-checkout lock
+- [x] [Review][Defer] Frontend trial disclaimer hardcoded 30 days — fetch from billing summary API
+- [x] [Review][Defer] Stripe test/live key prefix validation at startup
+
+### Senior Developer Review (AI) (2026-07-22)
+
+**Outcome:** Approve (clean with deferrals)
+
+**Layers:** Blind Hunter — webhook ledger + open redirect patched; Edge Case Hunter — canceled checkout loop + subscription status mapping patched; Acceptance Auditor — ACs 1–5 satisfied.
+
 ## Dev Agent Record
 
 ### Agent Model Used
@@ -73,6 +95,7 @@ Cursor Composer (cloud agent)
 - `StripeWebhookProcessor` idempotent on `event.id`; syncs tenant billing on all required webhook types.
 - Web: `/signup?plan=` → verify → tenant `/billing/checkout` with auth handoff hash; trial disclaimer copy.
 - Admin upgrade: `POST /api/v1/admin/billing/checkout` from tenant subdomain (TenantAdminOnly).
+- CR patches: webhook retry semantics, URL allowlist, safe status mapping, canceled checkout UX.
 
 ### File List
 
@@ -100,10 +123,12 @@ Cursor Composer (cloud agent)
 - `web/components/legal/signup-verify-page-content.tsx`
 - `_bmad-output/implementation-artifacts/14-4-core-pro-checkout-webhooks-and-usd-prices.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/implementation-artifacts/deferred-work.md`
 
 ## Change Log
 
 - 2026-07-22: DS 14.4 — Stripe Checkout, webhooks, signup plan flow; status → review.
+- 2026-07-22: CR 14.4 — clean approve; webhook retry + redirect + status mapping patches; status → done.
 
 ## Ultimate context engineering tip
 
@@ -111,4 +136,4 @@ Story 14.4 = **Stripe Checkout for Core/Pro trials + idempotent webhooks syncing
 
 ### Story completion status
 
-review — DS complete; ready for CR.
+done — CR approved; Stripe Checkout + webhooks shipped.

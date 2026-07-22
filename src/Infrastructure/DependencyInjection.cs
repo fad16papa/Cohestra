@@ -119,6 +119,7 @@ public static class DependencyInjection
         services.AddScoped<ISelfServeSignupService, SelfServeSignupService>();
         services.AddScoped<IBillingService, StripeBillingService>();
         services.AddScoped<IStripeWebhookProcessor, StripeWebhookProcessor>();
+        services.AddScoped<ITenantShellService, TenantShellService>();
         services.AddScoped<ICaptchaVerifier, GoogleRecaptchaVerifier>();
         services.AddScoped<ITenantMembershipService, TenantMembershipService>();
         services.AddScoped<ITenantHostResolver, TenantHostResolver>();
