@@ -1,6 +1,8 @@
 using Cohestra.Application.Compliance;
 using Cohestra.Application.Activities;
 using Cohestra.Application.Auth;
+using Cohestra.Application.Billing;
+using Cohestra.Infrastructure.Billing;
 using Cohestra.Application.Campaigns;
 using Cohestra.Application.Clients;
 using Cohestra.Application.Dashboard;
@@ -88,6 +90,7 @@ public static class DependencyInjection
         services.Configure<SelfServeSignupSettings>(configuration.GetSection(SelfServeSignupSettings.SectionName));
         services.Configure<PublicSignupRateLimitOptions>(
             configuration.GetSection(PublicSignupRateLimitOptions.SectionName));
+        services.Configure<StripeSettings>(configuration.GetSection(StripeSettings.SectionName));
 
         services.AddHttpClient(nameof(GoogleRecaptchaVerifier));
 
@@ -114,6 +117,8 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ILegalComplianceService, LegalComplianceService>();
         services.AddScoped<ISelfServeSignupService, SelfServeSignupService>();
+        services.AddScoped<IBillingService, StripeBillingService>();
+        services.AddScoped<IStripeWebhookProcessor, StripeWebhookProcessor>();
         services.AddScoped<ICaptchaVerifier, GoogleRecaptchaVerifier>();
         services.AddScoped<ITenantMembershipService, TenantMembershipService>();
         services.AddScoped<ITenantHostResolver, TenantHostResolver>();

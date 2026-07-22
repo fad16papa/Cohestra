@@ -55,6 +55,18 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .HasConversion<string>()
             .HasMaxLength(20);
 
+        builder.Property(tenant => tenant.HasConsumedTrial)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.HasIndex(tenant => tenant.StripeCustomerId)
+            .IsUnique()
+            .HasFilter("\"StripeCustomerId\" IS NOT NULL");
+
+        builder.HasIndex(tenant => tenant.StripeSubscriptionId)
+            .IsUnique()
+            .HasFilter("\"StripeSubscriptionId\" IS NOT NULL");
+
         builder.Property(tenant => tenant.CreatedAt).IsRequired();
         builder.Property(tenant => tenant.UpdatedAt).IsRequired();
 

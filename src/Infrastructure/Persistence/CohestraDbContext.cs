@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Cohestra.Application.Tenants;
 using Cohestra.Domain.Activities;
+using Cohestra.Domain.Billing;
 using Cohestra.Domain.Campaigns;
 using Cohestra.Domain.Clients;
 using Cohestra.Domain.Registrations;
@@ -88,6 +89,8 @@ public class CohestraDbContext : IdentityDbContext<ApplicationUser, IdentityRole
     public DbSet<SitePage> SitePages => Set<SitePage>();
 
     public DbSet<SiteHomepageTemplate> SiteHomepageTemplates => Set<SiteHomepageTemplate>();
+
+    public DbSet<StripeWebhookEvent> StripeWebhookEvents => Set<StripeWebhookEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

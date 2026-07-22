@@ -26,6 +26,7 @@ import {
   submitPublicSignup,
   type SlugAvailability,
 } from "@/lib/signup/signup-api";
+import { formatTrialDisclaimer } from "@/lib/billing/billing-api";
 
 function slugifyOrgName(value: string): string {
   return value
@@ -40,7 +41,11 @@ export function SignupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = searchParams.get("plan");
+  const intervalParam = searchParams.get("interval");
   const { scrolled, anchorRef } = useMarketingHeaderScroll(true);
+
+  const billingInterval =
+    intervalParam === "annual" ? "annual" : "monthly";
 
   const [versions, setVersions] = useState<LegalComplianceVersions | null>(null);
   const [orgName, setOrgName] = useState("");
@@ -56,6 +61,7 @@ export function SignupPageContent() {
   const [submitting, setSubmitting] = useState(false);
 
   const isPaidPlanHint = plan === "core" || plan === "pro";
+  const trialDisclaimer = useMemo(() => formatTrialDisclaimer(30), []);
 
   useEffect(() => {
     void fetchLegalComplianceVersions()
@@ -156,6 +162,10 @@ export function SignupPageContent() {
       email: result.result.email,
       slug: result.result.tenantSlug,
     });
+    if (isPaidPlanHint && plan) {
+      params.set("plan", plan);
+      params.set("interval", billingInterval);
+    }
     router.push(`/signup/verify?${params.toString()}`);
   }
 
@@ -171,9 +181,13 @@ export function SignupPageContent() {
             Basic is free forever — no card required. Verify your email before opening the dashboard.
           </p>
           {isPaidPlanHint ? (
-            <p className="mt-3 text-sm text-stone">
-              Paid trials ({plan}) checkout ships in the next release — this step creates your free Basic workspace first.
-            </p>
+            <div className="mt-3 space-y-2 text-sm text-stone">
+              <p>
+                You chose <span className="font-medium text-ink">{plan}</span> ({billingInterval}).
+                After email verification you&apos;ll continue to Stripe Checkout for a 30-day trial.
+              </p>
+              <p>{trialDisclaimer}</p>
+            </div>
           ) : null}
         </MarketingReveal>
 

@@ -182,6 +182,11 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             return true;
         }
 
+        if (IsStripeWebhookPath(path))
+        {
+            return true;
+        }
+
         if (IsAnonymousAuthPath(path))
         {
             return true;
@@ -210,6 +215,13 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             || value.Equals("/api/v1/auth/refresh", StringComparison.OrdinalIgnoreCase)
             || value.Equals("/api/v1/auth/forgot-password", StringComparison.OrdinalIgnoreCase)
             || value.Equals("/api/v1/auth/reset-password", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Stripe webhooks — no tenant Host required (Story 14.4).</summary>
+    internal static bool IsStripeWebhookPath(PathString path)
+    {
+        var value = path.Value?.TrimEnd('/') ?? string.Empty;
+        return value.Equals("/api/v1/system/stripe/webhook", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Marketing apex self-serve — no tenant Host required (Story 14.3).</summary>

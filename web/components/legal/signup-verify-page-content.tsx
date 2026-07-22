@@ -11,23 +11,24 @@ import {
 } from "@/components/marketing/marketing-shell";
 import { MarketingReveal } from "@/components/marketing/marketing-reveal";
 import { useMarketingHeaderScroll } from "@/components/marketing/use-marketing-header-scroll";
-import { useAuth } from "@/components/auth/auth-provider";
+import { formatTrialDisclaimer } from "@/lib/billing/billing-api";
 import { createAuthSession, setAuthSession } from "@/lib/auth-storage";
-import { fetchAdminProfile } from "@/lib/auth-api";
 import {
   buildTenantDashboardUrl,
   resendSignupOtp,
   verifySignupEmail,
 } from "@/lib/signup/signup-api";
+import { buildAuthHandoffUrl } from "@/lib/auth-handoff";
 
 function SignupVerifyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { applyProfile } = useAuth();
   const { scrolled, anchorRef } = useMarketingHeaderScroll(true);
 
   const email = searchParams.get("email") ?? "";
   const tenantSlug = searchParams.get("slug") ?? "";
+  const plan = searchParams.get("plan");
+  const interval = searchParams.get("interval") ?? "monthly";
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -63,22 +64,18 @@ function SignupVerifyContent() {
       result.result.refreshToken,
       result.result.expiresInSeconds
     );
-    setAuthSession(session);
 
-    try {
-      const profile = await fetchAdminProfile(session.accessToken);
-      applyProfile(profile);
-    } catch {
-      applyProfile({
-        userId: "pending",
-        email,
-        nickname: null,
-        roles: ["TenantAdmin"],
-        themePreference: "system",
-        brandAccentColor: null,
+    const isPaidPlan = plan === "core" || plan === "pro";
+    if (isPaidPlan) {
+      const tenantBase = buildTenantDashboardUrl(tenantSlug).replace(/\/dashboard$/, "");
+      window.location.href = buildAuthHandoffUrl(tenantBase, session, "/billing/checkout", {
+        plan: plan!,
+        interval,
       });
+      return;
     }
 
+    setAuthSession(session);
     setSubmitting(false);
     window.location.href = buildTenantDashboardUrl(tenantSlug);
   }
@@ -153,7 +150,11 @@ function SignupVerifyContent() {
                 disabled={submitting || code.trim().length < 6}
                 className={marketingAtelierButtonClass("lagoon")}
               >
-                {submitting ? "Verifying…" : "Open dashboard"}
+                {submitting
+                  ? "Verifying…"
+                  : plan === "core" || plan === "pro"
+                    ? "Continue to checkout"
+                    : "Open dashboard"}
               </button>
               <button
                 type="button"

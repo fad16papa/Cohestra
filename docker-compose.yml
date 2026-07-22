@@ -71,6 +71,14 @@ services:
       SelfServeSignup__Recaptcha__TestBypassToken: ${SelfServeSignup__Recaptcha__TestBypassToken:-test-captcha-pass}
       PublicSignupRateLimit__MaxSuccessfulPerHour: ${PublicSignupRateLimit__MaxSuccessfulPerHour:-5}
       PublicSignupRateLimit__MaxSuccessfulPerDay: ${PublicSignupRateLimit__MaxSuccessfulPerDay:-20}
+      Stripe__SecretKey: ${Stripe__SecretKey:-}
+      Stripe__PublishableKey: ${Stripe__PublishableKey:-}
+      Stripe__WebhookSecret: ${Stripe__WebhookSecret:-}
+      Stripe__PriceCoreMonthly: ${Stripe__PriceCoreMonthly:-}
+      Stripe__PriceCoreAnnual: ${Stripe__PriceCoreAnnual:-}
+      Stripe__PriceProMonthly: ${Stripe__PriceProMonthly:-}
+      Stripe__PriceProAnnual: ${Stripe__PriceProAnnual:-}
+      Stripe__TrialPeriodDays: ${Stripe__TrialPeriodDays:-30}
     depends_on:
       postgres:
         condition: service_healthy

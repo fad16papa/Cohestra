@@ -33,6 +33,9 @@ public sealed class Tenant
 
     public DateTimeOffset? TrialEndsAt { get; set; }
 
+    /// <summary>FR-19: set when a tenant consumes its one-time Core/Pro trial.</summary>
+    public bool HasConsumedTrial { get; set; } = false;
+
     public DateTimeOffset? DelinquencyStartedAt { get; set; }
 
     public DateTimeOffset? SuspendedAt { get; set; }
