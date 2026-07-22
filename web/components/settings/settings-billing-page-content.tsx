@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
-import { fetchBillingSummaryWithAuth } from "@/lib/billing/billing-api";
+import { createBillingPortalSession, fetchBillingSummaryWithAuth } from "@/lib/billing/billing-api";
 import { marketingAtelierButtonClass } from "@/components/marketing/marketing-shell";
 import { useEffect, useState } from "react";
 
@@ -12,6 +12,8 @@ export function SettingsBillingPageContent() {
   const { authFetch } = useAuth();
   const { shell, refreshShell } = useTenantShell();
   const [stripeConfigured, setStripeConfigured] = useState<boolean | null>(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [portalError, setPortalError] = useState<string | null>(null);
 
   useEffect(() => {
     void fetchBillingSummaryWithAuth(authFetch)
@@ -63,9 +65,36 @@ export function SettingsBillingPageContent() {
         </div>
       ) : (
         <div className="rounded-xl border border-line bg-paper-warm p-5 text-sm text-stone">
-          {stripeConfigured
-            ? "Stripe Customer Portal for payment method and cancellation ships in the next release. Plan changes sync automatically from Stripe webhooks."
-            : "Stripe is not configured in this environment."}
+          {stripeConfigured ? (
+            <div className="space-y-4">
+              <p>
+                Manage payment method, invoices, and plan changes in Stripe Customer Portal.
+                Cancel and downgrades apply at period end.
+              </p>
+              <button
+                type="button"
+                className={marketingAtelierButtonClass("lagoon")}
+                disabled={portalLoading}
+                onClick={() => {
+                  setPortalLoading(true);
+                  setPortalError(null);
+                  void createBillingPortalSession(authFetch, `${window.location.origin}/settings/billing`)
+                    .then((url) => {
+                      window.location.href = url;
+                    })
+                    .catch((err) => {
+                      setPortalError(err instanceof Error ? err.message : "Could not open portal.");
+                      setPortalLoading(false);
+                    });
+                }}
+              >
+                {portalLoading ? "Opening…" : "Manage billing"}
+              </button>
+              {portalError ? <p className="text-destructive">{portalError}</p> : null}
+            </div>
+          ) : (
+            "Stripe is not configured in this environment."
+          )}
           <div className="mt-4">
             <button
               type="button"

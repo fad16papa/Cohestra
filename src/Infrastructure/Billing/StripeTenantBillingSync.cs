@@ -12,14 +12,17 @@ public static class StripeTenantBillingSync
         tenant.StripeCustomerId = subscription.CustomerId ?? tenant.StripeCustomerId;
         tenant.StripeSubscriptionId = subscription.Id;
 
+        var periodEnd = ResolvePeriodEnd(subscription);
+
         var priceId = subscription.Items?.Data?.FirstOrDefault()?.Price?.Id;
-        if (!string.IsNullOrWhiteSpace(priceId))
+        TenantPlan? mappedPlan = null;
+        BillingInterval? mappedInterval = null;
+
+        if (!string.IsNullOrWhiteSpace(priceId)
+            && TryMapPrice(priceId, settings, out var plan, out var interval))
         {
-            if (TryMapPrice(priceId, settings, out var plan, out var interval))
-            {
-                tenant.Plan = plan;
-                tenant.BillingInterval = interval;
-            }
+            mappedPlan = plan;
+            mappedInterval = interval;
         }
 
         tenant.BillingStatus = MapSubscriptionStatus(subscription.Status);
@@ -36,8 +39,72 @@ public static class StripeTenantBillingSync
             tenant.HasConsumedTrial = true;
         }
 
+        if (subscription.CancelAtPeriodEnd && periodEnd is not null)
+        {
+            tenant.ScheduledPlan = TenantPlan.Basic;
+            tenant.ScheduledPlanEffectiveAt = periodEnd;
+        }
+        else if (mappedPlan is { } targetPlan
+            && targetPlan != tenant.Plan
+            && periodEnd is not null
+            && periodEnd > DateTimeOffset.UtcNow
+            && IsDowngrade(tenant.Plan, targetPlan))
+        {
+            tenant.ScheduledPlan = targetPlan;
+            tenant.ScheduledPlanEffectiveAt = periodEnd;
+        }
+        else
+        {
+            tenant.ScheduledPlan = null;
+            tenant.ScheduledPlanEffectiveAt = null;
+
+            if (mappedPlan is not null)
+            {
+                tenant.Plan = mappedPlan.Value;
+            }
+
+            if (mappedInterval is not null)
+            {
+                tenant.BillingInterval = mappedInterval;
+            }
+        }
+
+        if (periodEnd is not null
+            && tenant.ScheduledPlanEffectiveAt is not null
+            && DateTimeOffset.UtcNow >= tenant.ScheduledPlanEffectiveAt
+            && tenant.ScheduledPlan is TenantPlan scheduled)
+        {
+            ApplyScheduledPlan(tenant, scheduled);
+        }
+
         tenant.UpdatedAt = DateTimeOffset.UtcNow;
     }
+
+    public static void ApplyScheduledPlan(Tenant tenant, TenantPlan scheduledPlan)
+    {
+        tenant.Plan = scheduledPlan;
+        tenant.ScheduledPlan = null;
+        tenant.ScheduledPlanEffectiveAt = null;
+
+        if (scheduledPlan == TenantPlan.Basic)
+        {
+            tenant.BillingStatus = BillingStatus.Free;
+            tenant.BillingInterval = null;
+            tenant.StripeSubscriptionId = null;
+            tenant.TrialEndsAt = null;
+        }
+
+        tenant.UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    private static bool IsDowngrade(TenantPlan current, TenantPlan target) =>
+        (current, target) switch
+        {
+            (TenantPlan.Pro, TenantPlan.Core) => true,
+            (TenantPlan.Pro, TenantPlan.Basic) => true,
+            (TenantPlan.Core, TenantPlan.Basic) => true,
+            _ => false,
+        };
 
     public static void ApplyCheckoutSession(Tenant tenant, Session session, StripeSettings settings)
     {
@@ -51,12 +118,21 @@ public static class StripeTenantBillingSync
 
     public static void ApplySubscriptionDeleted(Tenant tenant)
     {
+        if (tenant.ScheduledPlan is TenantPlan scheduled
+            && tenant.ScheduledPlanEffectiveAt is not null
+            && DateTimeOffset.UtcNow < tenant.ScheduledPlanEffectiveAt)
+        {
+            return;
+        }
+
         tenant.Plan = TenantPlan.Basic;
         tenant.BillingStatus = BillingStatus.Free;
         tenant.BillingInterval = null;
         tenant.StripeSubscriptionId = null;
         tenant.TrialEndsAt = null;
         tenant.DelinquencyStartedAt = null;
+        tenant.ScheduledPlan = null;
+        tenant.ScheduledPlanEffectiveAt = null;
         tenant.UpdatedAt = DateTimeOffset.UtcNow;
     }
 
@@ -142,6 +218,27 @@ public static class StripeTenantBillingSync
 
     public static string BuildTrialDisclaimer(DateTimeOffset trialEndDate) =>
         $"You will not be charged while your trial is active. Billing starts on {trialEndDate:MMMM d, yyyy} unless you cancel before then.";
+
+    internal static DateTimeOffset? ResolvePeriodEnd(Subscription subscription)
+    {
+        if (subscription.CancelAt is DateTime cancelAt)
+        {
+            return new DateTimeOffset(DateTime.SpecifyKind(cancelAt, DateTimeKind.Utc));
+        }
+
+        var itemEnd = subscription.Items?.Data?.FirstOrDefault()?.CurrentPeriodEnd;
+        if (itemEnd is DateTime itemPeriodEnd)
+        {
+            return new DateTimeOffset(DateTime.SpecifyKind(itemPeriodEnd, DateTimeKind.Utc));
+        }
+
+        if (subscription.BillingCycleAnchor is DateTime anchor)
+        {
+            return new DateTimeOffset(DateTime.SpecifyKind(anchor, DateTimeKind.Utc));
+        }
+
+        return null;
+    }
 
     private static string? NullIfEmpty(string value) =>
         string.IsNullOrWhiteSpace(value) ? null : value;

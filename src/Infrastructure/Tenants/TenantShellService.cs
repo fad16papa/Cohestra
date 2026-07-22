@@ -55,6 +55,23 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
             0,
             TimeSpan.Zero);
 
+        var now = DateTimeOffset.UtcNow;
+
+        var activeMembers = await dbContext.TenantMemberships
+            .AsNoTracking()
+            .CountAsync(m => m.TenantId == tenantId, cancellationToken);
+
+        var pendingInvites = await dbContext.TenantInvites
+            .AsNoTracking()
+            .CountAsync(
+                i => i.TenantId == tenantId
+                    && i.RevokedAt == null
+                    && i.AcceptedAt == null
+                    && i.ExpiresAt > now,
+                cancellationToken);
+
+        var seatsUsed = activeMembers + pendingInvites;
+
         var communities = await dbContext.Communities
             .AsNoTracking()
             .CountAsync(c => c.TenantId == tenantId, cancellationToken);
@@ -71,7 +88,7 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
                 r => r.TenantId == tenantId && r.CreatedAt >= monthStart,
                 cancellationToken);
 
-        return new PlanUsageResponse(communities, publishedActivities, registrationsThisMonth);
+        return new PlanUsageResponse(seatsUsed, communities, publishedActivities, registrationsThisMonth);
     }
 
     internal static IReadOnlyList<LimitDialResponse> BuildLimitDials(
@@ -80,6 +97,7 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
     {
         return
         [
+            BuildDial("seats", "Team seats", usage.SeatsUsed, limits.Seats),
             BuildDial("communities", "Communities", usage.Communities, limits.Communities),
             BuildDial("published", "Published activities", usage.PublishedActivities, limits.PublishedActivities),
             BuildDial("registrations", "Registrations this month", usage.RegistrationsThisMonth, limits.RegistrationsPerMonth),

@@ -19,6 +19,7 @@ public sealed record PlanLimitsResponse(
     int RegistrationsPerMonth);
 
 public sealed record PlanUsageResponse(
+    int SeatsUsed,
     int Communities,
     int PublishedActivities,
     int RegistrationsThisMonth);

@@ -33,6 +33,7 @@ export type TenantShell = {
     registrationsPerMonth: number;
   };
   usage: {
+    seatsUsed: number;
     communities: number;
     publishedActivities: number;
     registrationsThisMonth: number;
@@ -123,6 +124,7 @@ export function parseTenantShell(raw: Record<string, unknown>): TenantShell {
       ),
     },
     usage: {
+      seatsUsed: Number(usageRaw.seatsUsed ?? usageRaw.SeatsUsed ?? 0),
       communities: Number(usageRaw.communities ?? usageRaw.Communities ?? 0),
       publishedActivities: Number(usageRaw.publishedActivities ?? usageRaw.PublishedActivities ?? 0),
       registrationsThisMonth: Number(

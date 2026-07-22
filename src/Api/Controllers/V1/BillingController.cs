@@ -149,6 +149,65 @@ public class BillingController(
         }
     }
 
+    [HttpPost("portal")]
+    [ProducesResponseType(typeof(PortalSessionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<PortalSessionResponse>> CreatePortal(
+        [FromBody] CreatePortalSessionRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (!stripeOptions.Value.IsConfigured)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new ProblemDetails
+                {
+                    Title = "Billing unavailable",
+                    Detail = "Stripe Customer Portal is not configured in this environment.",
+                    Status = StatusCodes.Status503ServiceUnavailable,
+                });
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        var tenantBase = $"{Request.Scheme}://{Request.Host.Value}";
+        var returnUrl = string.IsNullOrWhiteSpace(request?.ReturnUrl)
+            ? $"{tenantBase}/settings/billing"
+            : request!.ReturnUrl!;
+
+        if (!IsAllowedReturnUrl(returnUrl, tenantBase))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid return URL",
+                Detail = "Return URL must stay on the current workspace host.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+        }
+
+        try
+        {
+            var session = await billingService.CreatePortalSessionAsync(
+                new CreatePortalSessionCommand(tenantId, returnUrl),
+                cancellationToken);
+            return Ok(new PortalSessionResponse(session.PortalUrl));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Portal unavailable",
+                Detail = ex.Message,
+                Status = StatusCodes.Status400BadRequest,
+            });
+        }
+    }
+
     private static bool IsAllowedReturnUrl(string url, string tenantBase)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var returnUri)

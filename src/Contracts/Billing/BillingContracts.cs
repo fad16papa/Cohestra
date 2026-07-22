@@ -22,3 +22,7 @@ public sealed record CheckoutSessionResponse(
     DateTimeOffset? TrialEndsAt,
     bool TrialIncluded,
     string TrialDisclaimer);
+
+public sealed record CreatePortalSessionRequest(string? ReturnUrl);
+
+public sealed record PortalSessionResponse(string PortalUrl);

@@ -154,4 +154,46 @@ public sealed class StripeBillingService(
             includeTrial,
             disclaimer);
     }
+
+    public async Task<PortalSessionDto> CreatePortalSessionAsync(
+        CreatePortalSessionCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_settings.IsConfigured)
+        {
+            throw new InvalidOperationException("Stripe is not configured.");
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == command.TenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        if (tenant.IsComplimentary)
+        {
+            throw new InvalidOperationException("Complimentary tenants do not use Stripe Portal.");
+        }
+
+        if (string.IsNullOrWhiteSpace(tenant.StripeCustomerId))
+        {
+            throw new InvalidOperationException("Tenant has no Stripe customer yet.");
+        }
+
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+        var portalService = new Stripe.BillingPortal.SessionService();
+        var session = await portalService.CreateAsync(
+            new Stripe.BillingPortal.SessionCreateOptions
+            {
+                Customer = tenant.StripeCustomerId,
+                ReturnUrl = command.ReturnUrl,
+            },
+            cancellationToken: cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(session.Url))
+        {
+            throw new InvalidOperationException("Stripe Portal session did not return a URL.");
+        }
+
+        return new PortalSessionDto(session.Url);
+    }
 }

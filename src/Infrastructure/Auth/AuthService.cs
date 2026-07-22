@@ -28,7 +28,8 @@ public sealed class AuthService(
     IOptions<AuthOtpSettings> otpOptions,
     IOptions<SendGridSettings> sendGridOptions,
     ITenantMembershipService tenantMembershipService,
-    ITenantHostResolver tenantHostResolver) : IAuthService
+    ITenantHostResolver tenantHostResolver,
+    ITenantAccessService tenantAccessService) : IAuthService
 {
     private const string BootstrapClosedMessage =
         "This workspace already has a tenant admin. Sign in instead.";
@@ -109,6 +110,12 @@ public sealed class AuthService(
             session.TenantId,
             session.MembershipRole,
             cancellationToken);
+
+        if (session.TenantId is Guid tenantId)
+        {
+            await tenantAccessService.TouchActivityAsync(tenantId, cancellationToken);
+        }
+
         return new AuthLoginResult(tokens, null, null);
     }
 

@@ -202,15 +202,15 @@ development_status:
   13-4-tenantisolation-integration-test-gate-sm-1: done
   epic-13-retrospective: optional
 
-  epic-14: in-progress
+  epic-14: done
   14-1-midnight-atelier-tokens-marketing-home-and-pricing: done
   14-2-legal-pages-and-tos-privacy-acceptance-logging: done
   14-3-basic-self-serve-signup-captcha-slug-otp-rate-limits: done
   14-4-core-pro-checkout-webhooks-and-usd-prices: done
   14-5-admin-shell-planbadge-sponsoredbadge-limitmeter-billingbanner: done
-  14-6-team-invite-and-seatgate: backlog
-  14-7-customer-portal-period-end-cancel-downgrade-over-limit: backlog
-  14-8-trial-reminders-delinquency-jobs-and-basic-dormancy: backlog
+  14-6-team-invite-and-seatgate: done
+  14-7-customer-portal-period-end-cancel-downgrade-over-limit: done
+  14-8-trial-reminders-delinquency-jobs-and-basic-dormancy: done
   epic-14-retrospective: optional
 
   epic-15: backlog

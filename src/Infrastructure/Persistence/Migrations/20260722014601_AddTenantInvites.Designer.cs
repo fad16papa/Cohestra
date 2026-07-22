@@ -3,6 +3,7 @@ using System;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CohestraDbContext))]
-    partial class CohestraDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260722014601_AddTenantInvites")]
+    partial class AddTenantInvites
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -712,21 +715,6 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<DateTimeOffset?>("LastActivityAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("LastDormancyWarningAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("LastOnHoldNoticeAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("LastPastDueNoticeAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("LastTrialReminderSentAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<DateTimeOffset?>("LegalAcceptedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -743,12 +731,6 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<string>("PrivacyVersion")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
-
-                    b.Property<int?>("ScheduledPlan")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset?>("ScheduledPlanEffectiveAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Slug")
                         .IsRequired()

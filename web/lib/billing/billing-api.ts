@@ -33,6 +33,29 @@ function parseProblem(raw: Record<string, unknown>): string {
   return "Request failed.";
 }
 
+export async function createBillingPortalSession(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  returnUrl?: string
+): Promise<string> {
+  const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/admin/billing/portal`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ returnUrl: returnUrl ?? null }),
+  });
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    throw new Error(parseProblem(raw));
+  }
+
+  const portalUrl = raw.portalUrl ?? raw.PortalUrl;
+  if (typeof portalUrl !== "string") {
+    throw new Error("Portal session did not return a URL.");
+  }
+
+  return portalUrl;
+}
+
 export async function fetchBillingSummaryWithAuth(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>
 ): Promise<BillingSummary> {

@@ -170,6 +170,7 @@ app.UseTenantResolution();
 app.UsePublicRegistrationRateLimit();
 app.UsePublicSignupRateLimit();
 app.UseAuthorization();
+app.UseTenantWriteAccess();
 
 app.MapControllers();
 app.MapOpenApi();

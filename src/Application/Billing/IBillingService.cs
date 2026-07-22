@@ -10,6 +10,10 @@ public interface IBillingService
     Task<CheckoutSessionDto> CreateCheckoutSessionAsync(
         CreateCheckoutSessionCommand command,
         CancellationToken cancellationToken = default);
+
+    Task<PortalSessionDto> CreatePortalSessionAsync(
+        CreatePortalSessionCommand command,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record BillingSummaryDto(
@@ -37,3 +41,9 @@ public sealed record CheckoutSessionDto(
     DateTimeOffset? TrialEndsAt,
     bool TrialIncluded,
     string TrialDisclaimer);
+
+public sealed record CreatePortalSessionCommand(
+    Guid TenantId,
+    string ReturnUrl);
+
+public sealed record PortalSessionDto(string PortalUrl);

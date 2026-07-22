@@ -64,6 +64,8 @@ public class CohestraDbContext : IdentityDbContext<ApplicationUser, IdentityRole
 
     public DbSet<TenantMembership> TenantMemberships => Set<TenantMembership>();
 
+    public DbSet<TenantInvite> TenantInvites => Set<TenantInvite>();
+
     public DbSet<PlatformAuditLog> PlatformAuditLogs => Set<PlatformAuditLog>();
 
     public DbSet<Activity> Activities => Set<Activity>();

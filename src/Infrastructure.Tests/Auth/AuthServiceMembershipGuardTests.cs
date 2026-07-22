@@ -322,6 +322,7 @@ public sealed class AuthServiceMembershipGuardTests
 
             services.AddScoped<ITenantMembershipService, TenantMembershipService>();
             services.AddScoped<ITenantHostResolver, TenantHostResolver>();
+            services.AddSingleton<ITenantAccessService>(new StubTenantAccessService());
             services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
             services.AddSingleton<IJwtTokenService>(new StubJwtTokenService());
             var refreshStore = new InMemoryRefreshTokenStore();
@@ -519,6 +520,22 @@ public sealed class AuthServiceMembershipGuardTests
             EmailMessage message,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(new EmailSendResult(true, "stub", null));
+    }
+
+    private sealed class StubTenantAccessService : ITenantAccessService
+    {
+        public Task<TenantAccessEvaluation> EvaluateAsync(
+            Guid tenantId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(TenantAccessEvaluator.Evaluate(TenantStatus.Active, BillingStatus.Free));
+
+        public Task<TenantUsageSnapshot> GetUsageAsync(
+            Guid tenantId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new TenantUsageSnapshot(1, 0, 0, 0));
+
+        public Task TouchActivityAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
     }
 
     private sealed class StubHostEnvironment : IHostEnvironment

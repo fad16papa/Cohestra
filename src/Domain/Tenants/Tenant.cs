@@ -55,4 +55,20 @@ public sealed class Tenant
 
     /// <summary>FR-26a: version string of Privacy Policy accepted.</summary>
     public string? PrivacyVersion { get; set; }
+
+    /// <summary>FR-24: plan scheduled to apply at Stripe period end (cancel/downgrade).</summary>
+    public TenantPlan? ScheduledPlan { get; set; }
+
+    public DateTimeOffset? ScheduledPlanEffectiveAt { get; set; }
+
+    /// <summary>FR-25: max(last admin/member login, last public registration) for dormancy.</summary>
+    public DateTimeOffset? LastActivityAt { get; set; }
+
+    public DateTimeOffset? LastTrialReminderSentAt { get; set; }
+
+    public DateTimeOffset? LastPastDueNoticeAt { get; set; }
+
+    public DateTimeOffset? LastOnHoldNoticeAt { get; set; }
+
+    public DateTimeOffset? LastDormancyWarningAt { get; set; }
 }
