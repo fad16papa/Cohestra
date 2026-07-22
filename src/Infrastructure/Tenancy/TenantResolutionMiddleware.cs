@@ -38,7 +38,7 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
 
         if (IsSkipTenantRequirementPath(path))
         {
-            if (TenantHostResolver.IsMarketingApexHost(context.Request.Host.Value))
+            if (TenantHostResolver.IsMarketingApexHost(TenantRequestHost.GetEffectiveHost(context)))
             {
                 currentTenant.SetMarketingHost();
                 using (logger.BeginScope(new Dictionary<string, object?> { ["isMarketingHost"] = true }))
@@ -80,7 +80,9 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         CurrentTenant currentTenant,
         ILogger<TenantResolutionMiddleware> logger)
     {
-        var resolution = await hostResolver.ResolveAsync(context.Request.Host.Value, context.RequestAborted);
+        var resolution = await hostResolver.ResolveAsync(
+            TenantRequestHost.GetEffectiveHost(context),
+            context.RequestAborted);
         if (resolution.IsMarketingHost)
         {
             currentTenant.SetMarketingHost();
@@ -144,7 +146,9 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             return;
         }
 
-        var resolution = await hostResolver.ResolveAsync(context.Request.Host.Value, context.RequestAborted);
+        var resolution = await hostResolver.ResolveAsync(
+            TenantRequestHost.GetEffectiveHost(context),
+            context.RequestAborted);
         if (resolution.IsMarketingHost
             || !resolution.Succeeded
             || resolution.TenantId is null

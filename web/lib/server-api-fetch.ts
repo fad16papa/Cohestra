@@ -13,7 +13,9 @@ export function buildTenantHostHeaders(host: string | null): HeadersInit {
     return {};
   }
 
-  return { Host: host.trim() };
+  // Node fetch ignores a custom Host header on internal Docker URLs — forward the
+  // browser host so the API can resolve the tenant (see TenantRequestHost).
+  return { "X-Forwarded-Host": host.trim() };
 }
 
 export async function fetchServerApi(

@@ -191,7 +191,8 @@ Each workspace is addressed by **Host**, not a path prefix:
 
 | Host | Resolves to |
 |------|-------------|
-| `localhost` / `cohestra.app` / `www.cohestra.app` | Marketing + signup only (no tenant SitePage) |
+| `cohestra.app` / `www.cohestra.app` | Marketing + signup only (no tenant SitePage) |
+| `localhost` (bare) | Default seed tenant (`default`) — Platform 0 dev fallback |
 | `{slug}.localhost` | Tenant workspace (public door, admin login, registration) |
 | `{slug}.cohestra.app` | Same as `{slug}.localhost` in production |
 
@@ -201,9 +202,19 @@ Each workspace is addressed by **Host**, not a path prefix:
 - `http://default.localhost/register/{activity-slug}` — tenant-scoped registration
 - `http://default.localhost/login` — admin login scoped to that tenant
 
-**Optional env for single-host dev:** set `DEV_TENANT_SLUG=default` in `.env` when you cannot use `{slug}.localhost` (e.g. some mobile browsers). The web middleware forwards Host to the API for tenant resolution.
+**Optional env for single-host dev:** set `DEV_TENANT_SLUG=default` on the **api** service when you cannot use `{slug}.localhost`. The web tier forwards your browser host to the API via `X-Forwarded-Host`.
 
 **Docker tip:** add `{slug}.localhost` to your OS hosts file if needed; most systems resolve `*.localhost` to `127.0.0.1` automatically.
+
+**404 on `/` after pulling Epic 15?** Rebuild containers (`docker compose up --build`). Then verify:
+
+```bash
+curl -s http://localhost/ready
+curl -s http://localhost/api/v1/public/door
+curl -s http://default.localhost/api/v1/public/door
+```
+
+`kind` should be `"active"` (default tenant) or `"marketing"` — not `"unknown"`. Prefer `http://default.localhost/` for the seed workspace; bare `http://localhost/` also maps to the default tenant in local dev.
 
 ## Planning artifacts
 

@@ -1,5 +1,6 @@
 using Cohestra.Application.PublicDoor;
 using Cohestra.Contracts.PublicDoor;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +16,9 @@ public sealed class PublicDoorController(IPublicDoorService publicDoorService) :
     [ProducesResponseType(typeof(PublicDoorResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<PublicDoorResponse>> Get(CancellationToken cancellationToken)
     {
-        var response = await publicDoorService.GetAsync(Request.Host.Value, cancellationToken);
+        var response = await publicDoorService.GetAsync(
+            TenantRequestHost.GetEffectiveHost(HttpContext),
+            cancellationToken);
         Response.Headers.CacheControl = response.Kind switch
         {
             "active" => "public, max-age=60",
