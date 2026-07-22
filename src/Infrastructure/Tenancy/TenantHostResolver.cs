@@ -63,6 +63,11 @@ public sealed class TenantHostResolver(
             return without is "www" or "";
         }
 
+        if (IsNipIoMarketingApex(host))
+        {
+            return true;
+        }
+
         return false;
     }
 
@@ -95,6 +100,11 @@ public sealed class TenantHostResolver(
             }
 
             return without;
+        }
+
+        if (TryExtractNipIoTenantSlug(host, out var nipSlug))
+        {
+            return nipSlug;
         }
 
         if (host.EndsWith(".localhost", StringComparison.Ordinal))
@@ -172,5 +182,75 @@ public sealed class TenantHostResolver(
         }
 
         return TenantIds.DefaultSlug;
+    }
+
+    /// <summary>
+    /// Cloud UAT / mobile testing: <c>{slug}.129-212-235-2.nip.io</c> resolves tenant slug;
+    /// apex <c>129-212-235-2.nip.io</c> is marketing-only.
+    /// </summary>
+    internal static bool TryExtractNipIoTenantSlug(string host, out string slug)
+    {
+        slug = string.Empty;
+        if (!host.EndsWith(".nip.io", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var withoutSuffix = host[..^".nip.io".Length];
+        var lastDot = withoutSuffix.LastIndexOf('.');
+        if (lastDot < 0)
+        {
+            return false;
+        }
+
+        var tenantLabel = withoutSuffix[..lastDot];
+        var apexLabel = withoutSuffix[(lastDot + 1)..];
+        if (string.IsNullOrWhiteSpace(tenantLabel)
+            || tenantLabel.Contains('.', StringComparison.Ordinal)
+            || !IsNipIoIpApexLabel(apexLabel))
+        {
+            return false;
+        }
+
+        slug = tenantLabel;
+        return true;
+    }
+
+    internal static bool IsNipIoMarketingApex(string host)
+    {
+        if (!host.EndsWith(".nip.io", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var withoutSuffix = host[..^".nip.io".Length];
+        return !withoutSuffix.Contains('.') && IsNipIoIpApexLabel(withoutSuffix);
+    }
+
+    internal static bool IsNipIoIpApexLabel(string label)
+    {
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return false;
+        }
+
+        var hasDigit = false;
+        foreach (var character in label)
+        {
+            if (character is >= '0' and <= '9')
+            {
+                hasDigit = true;
+                continue;
+            }
+
+            if (character == '-')
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        return hasDigit;
     }
 }

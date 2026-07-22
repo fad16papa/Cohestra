@@ -237,12 +237,29 @@ export function getTestCaptchaToken(): string {
 export function buildTenantDashboardUrl(slug: string): string {
   if (typeof window !== "undefined") {
     const hostname = window.location.hostname;
+
+    if (hostname.endsWith(".nip.io")) {
+      const parts = hostname.split(".");
+      // Tenant host: slug.129-212-235-2.nip.io (4 labels)
+      if (parts.length >= 4) {
+        return `${window.location.origin}/dashboard`;
+      }
+
+      // Marketing apex: 129-212-235-2.nip.io (3 labels)
+      if (parts.length === 3) {
+        const protocol = window.location.protocol;
+        return `${protocol}//${slug}.${parts[0]}.nip.io/dashboard`;
+      }
+    }
+
     if (hostname === "localhost" || hostname === "127.0.0.1") {
       return `http://${slug}.localhost/dashboard`;
     }
 
     if (hostname.endsWith(".cohestra.app")) {
-      const apex = hostname.includes("www.") ? "cohestra.app" : hostname.split(".").slice(-2).join(".");
+      const apex = hostname === "cohestra.app" || hostname === "www.cohestra.app"
+        ? "cohestra.app"
+        : hostname.split(".").slice(-2).join(".");
       return `https://${slug}.${apex}/dashboard`;
     }
   }

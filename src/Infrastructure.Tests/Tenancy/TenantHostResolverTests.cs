@@ -27,6 +27,7 @@ public sealed class TenantHostResolverTests
     [InlineData("evil.com")]
     [InlineData("cohestra.app")]
     [InlineData("www.cohestra.app")]
+    [InlineData("129-212-235-2.nip.io")]
     public void ExtractSlug_rejects_non_allowlisted_or_marketing_hosts(string host)
     {
         var config = new ConfigurationBuilder().Build();
@@ -37,11 +38,22 @@ public sealed class TenantHostResolverTests
     [InlineData("cohestra.app")]
     [InlineData("www.cohestra.app")]
     [InlineData("www.cohestra.app:443")]
+    [InlineData("129-212-235-2.nip.io")]
     public void IsMarketingApexHost_detects_production_apex(string host)
     {
         Assert.True(TenantHostResolver.IsMarketingApexHost(host));
         Assert.False(TenantHostResolver.IsMarketingApexHost("localhost"));
         Assert.False(TenantHostResolver.IsMarketingApexHost("acme.cohestra.app"));
+        Assert.False(TenantHostResolver.IsMarketingApexHost("acme.129-212-235-2.nip.io"));
+    }
+
+    [Theory]
+    [InlineData("acme.129-212-235-2.nip.io", "acme")]
+    [InlineData("ikigai.54-158-128-7.nip.io", "ikigai")]
+    public void ExtractSlug_resolves_nip_io_tenant_hosts(string host, string expectedSlug)
+    {
+        var config = new ConfigurationBuilder().Build();
+        Assert.Equal(expectedSlug, TenantHostResolver.ExtractSlug(host, config));
     }
 
     [Fact]
