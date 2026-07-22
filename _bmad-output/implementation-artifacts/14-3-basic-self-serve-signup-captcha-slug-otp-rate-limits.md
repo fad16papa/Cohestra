@@ -4,7 +4,7 @@ baseline_commit: 0353c97ac3cfb2838321ac943a84cf78cf64ea00
 
 # Story 14.3: Basic self-serve signup (CAPTCHA, slug, OTP, rate limits)
 
-Status: review
+Status: done
 
 ## Story
 
@@ -67,6 +67,27 @@ So that **I can open a workspace and verify email before any payment**.
   - [x] 5.2 `PublicSignupIntegrationTests`
   - [x] 5.3 `dotnet build` + `npm run build`
 
+### Review Findings
+
+- [x] [Review][Patch] verify-email issued JWT without OTP for already-confirmed users [`SelfServeSignupService.cs`]
+- [x] [Review][Patch] Unconfirmed email could provision multiple self-serve tenants — block pending workspace [`SelfServeSignupService.cs`]
+- [x] [Review][Patch] Slug-collision race left orphan Identity user — delete new user on unique violation [`SelfServeSignupService.cs`]
+- [x] [Review][Patch] nip.io dashboard redirect broke on `www.` apex host [`signup-api.ts`]
+- [x] [Review][Defer] OTP verify brute-force throttling — defer; login lockout separate; add verify-attempt counter in hardening pass
+- [x] [Review][Defer] CAPTCHA disabled by default in compose — intentional dev/UAT; enable keys before public launch
+- [x] [Review][Defer] Signup not fully transactional — OTP/membership partial failure paths; acceptable v1 with ops monitoring
+- [x] [Review][Defer] Rate limit counts 201 only — OTP-fail after tenant create not counted; defer abuse hardening
+- [x] [Review][Defer] X-Forwarded-For trust for IP limits — pre-existing registration pattern; nginx sets real IP in prod
+- [x] [Review][Defer] Integration tests: captcha reject, 429 rate limit, registrationClosed 403 — coverage expansion
+- [x] [Review][Defer] Login `email_not_verified` redirects to `/register/verify` not `/signup/verify` — UX polish
+- [x] [Review][Defer] nip.io accepts any digit-hyphen apex label — cloud mobile testing scope; tighten to configured apex later
+
+### Senior Developer Review (AI) (2026-07-22)
+
+**Outcome:** Approve (clean with deferrals)
+
+**Layers:** Blind Hunter — verify-email token leak patched; Edge Case Hunter — pending-tenant + www nip.io patched; Acceptance Auditor — ACs 1–6 satisfied.
+
 ## Dev Agent Record
 
 ### Agent Model Used
@@ -109,6 +130,7 @@ Cursor Composer (cloud agent)
 ## Change Log
 
 - 2026-07-21: DS 14.3 — self-serve signup, CAPTCHA, slug check, OTP verify, rate limits; status → review.
+- 2026-07-22: CR 14.3 — clean approve; verify-email + pending-tenant patches; status → done.
 
 ## Ultimate context engineering tip
 
@@ -116,4 +138,4 @@ Story 14.3 = **wire the 14.2 legal gate into real tenant+admin creation** — ap
 
 ### Story completion status
 
-review — DS complete; ready for CR.
+done — CR approved; self-serve Basic signup shipped.

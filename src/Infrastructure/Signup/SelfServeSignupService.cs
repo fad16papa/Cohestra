@@ -195,6 +195,23 @@ public sealed class SelfServeSignupService(
                 "An account with this email already exists. Sign in instead.");
         }
 
+        if (existingUser is not null && !existingUser.EmailConfirmed)
+        {
+            var pendingSelfServe = await dbContext.TenantMemberships
+                .AsNoTracking()
+                .AnyAsync(
+                    m => m.UserId == existingUser.Id
+                        && m.TenantId != TenantIds.Default
+                        && m.Role == TenantMembershipRole.TenantAdmin,
+                    cancellationToken);
+            if (pendingSelfServe)
+            {
+                return SelfServeSignupResult<PublicSignupResponse>.Fail(
+                    SelfServeSignupError.Conflict,
+                    "Finish verifying your existing workspace before creating another.");
+            }
+        }
+
         var nickname = BuildNickname(orgName, email);
         var passwordValidation = await ValidatePasswordAsync(password);
         if (passwordValidation is not null)
@@ -290,6 +307,11 @@ public sealed class SelfServeSignupService(
         }
         catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
         {
+            if (existingUser is null)
+            {
+                await userManager.DeleteAsync(user);
+            }
+
             var suggestions = await TenantSlugAvailability.BuildSuggestionsAsync(
                 dbContext,
                 normalizedSlug,
@@ -386,12 +408,9 @@ public sealed class SelfServeSignupService(
 
         if (user.EmailConfirmed)
         {
-            var tokens = await IssueTokensAsync(user, tenant.Id, membership.Role, cancellationToken);
-            return SelfServeSignupResult<SignupVerifyEmailResponse>.Ok(new SignupVerifyEmailResponse(
-                tokens.AccessToken,
-                tokens.RefreshToken,
-                tokens.ExpiresInSeconds,
-                normalizedSlug));
+            return SelfServeSignupResult<SignupVerifyEmailResponse>.Fail(
+                SelfServeSignupError.Validation,
+                "This email is already verified. Sign in instead.");
         }
 
         if (!await otpStore.ValidateAndConsumeAsync(email, OtpPurpose.EmailVerification, code, cancellationToken))

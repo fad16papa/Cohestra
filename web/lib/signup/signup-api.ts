@@ -239,7 +239,8 @@ export function buildTenantDashboardUrl(slug: string): string {
     const hostname = window.location.hostname;
 
     if (hostname.endsWith(".nip.io")) {
-      const parts = hostname.split(".");
+      const nipHost = hostname.startsWith("www.") ? hostname.slice(4) : hostname;
+      const parts = nipHost.split(".");
       // Tenant host: slug.129-212-235-2.nip.io (4 labels)
       if (parts.length >= 4) {
         return `${window.location.origin}/dashboard`;

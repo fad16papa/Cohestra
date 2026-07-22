@@ -1,3 +1,14 @@
+## Deferred from: code review of 14-3-basic-self-serve-signup-captcha-slug-otp-rate-limits.md (2026-07-22)
+
+- OTP verify brute-force throttling — add verify-attempt counter on public signup verify endpoint
+- CAPTCHA disabled by default in compose — enable reCAPTCHA keys before public launch
+- Signup not fully transactional — partial failure after tenant create; ops monitoring acceptable v1
+- Rate limit counts 201 only — OTP-fail after tenant create not counted toward IP cap
+- X-Forwarded-For trust for signup IP limits — nginx sets real IP in prod; same pattern as registration
+- Integration test gaps — captcha reject, 429 rate limit, registrationClosed 403
+- Login email_not_verified redirects to bootstrap /register/verify not /signup/verify
+- nip.io any digit-hyphen apex label accepted — tighten to configured apex in Epic 15
+
 ## Deferred from: code review of 14-2-legal-pages-and-tos-privacy-acceptance-logging.md (2026-07-21)
 
 - AC3 tenant legal stamp E2E — `ApplyToTenant` ready; persisted on tenant create in Story 14.3 self-serve signup
