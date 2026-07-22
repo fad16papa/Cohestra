@@ -4,7 +4,7 @@ baseline_commit: 8c1c210
 
 # Story 14.5: Admin shell — PlanBadge, SponsoredBadge, LimitMeter, BillingBanner
 
-Status: review
+Status: done
 
 ## Story
 
@@ -77,7 +77,18 @@ So that **I always know my tier, headroom, and what to do when money or limits n
 ## Change Log
 
 - 2026-07-22: DS 14.5 — admin shell plan/limit/billing chrome; status → review.
+- 2026-07-22: CR 14.5 — banner priority, mobile shell parity, billing refresh; status → done.
+
+## Review Findings
+
+| Severity | Finding | Resolution |
+|----------|---------|------------|
+| High | `admin-mobile-nav.tsx` used shell hooks/components without imports | Added PlanBadge, SponsoredBadge, LimitMeter, useTenantShell imports |
+| Medium | Billing banner over-limit could beat PastDue/OnHold/Trialing | Reordered priority: PastDue → OnHold → Trialing (7d window, future only) → over-limit |
+| Medium | Over-limit CTA always pointed at Pro | Dynamic upgrade slug: Basic→Core, Core→Pro |
+| Medium | PlanBadge hidden on small screens in top bar | Removed `hidden sm:flex` wrapper |
+| Low | Shell stale after Stripe checkout return | Refresh shell when `?billing=success` in dashboard layout |
 
 ### Story completion status
 
-review — DS complete; ready for CR.
+done — DS + CR complete.

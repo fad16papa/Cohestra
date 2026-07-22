@@ -109,18 +109,6 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
             return null;
         }
 
-        var overLimitDial = limitDials.FirstOrDefault(d => d.Blocked);
-        if (overLimitDial is not null)
-        {
-            return new BillingBannerResponse(
-                "read_only_over_limit",
-                "Plan limit reached",
-                $"{overLimitDial.Label} is at capacity ({overLimitDial.Used}/{overLimitDial.Limit}). Archive or unpublish items, or upgrade your plan.",
-                isTenantAdmin ? "Upgrade plan" : null,
-                isTenantAdmin ? "/billing/checkout?plan=core&interval=monthly" : null,
-                AdminOnlyCta: true);
-        }
-
         if (tenant.BillingStatus == BillingStatus.PastDue)
         {
             return new BillingBannerResponse(
@@ -145,6 +133,7 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
 
         if (tenant.BillingStatus == BillingStatus.Trialing
             && tenant.TrialEndsAt is { } trialEnd
+            && trialEnd > DateTimeOffset.UtcNow
             && trialEnd <= DateTimeOffset.UtcNow.AddDays(7))
         {
             return new BillingBannerResponse(
@@ -156,6 +145,27 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
                 AdminOnlyCta: true);
         }
 
+        var overLimitDial = limitDials.FirstOrDefault(d => d.Blocked);
+        if (overLimitDial is not null)
+        {
+            var upgradePlan = SuggestUpgradePlanSlug(tenant.Plan);
+            return new BillingBannerResponse(
+                "read_only_over_limit",
+                "Plan limit reached",
+                $"{overLimitDial.Label} is at capacity ({overLimitDial.Used}/{overLimitDial.Limit}). Archive or unpublish items, or upgrade your plan.",
+                isTenantAdmin ? "Upgrade plan" : null,
+                isTenantAdmin ? $"/billing/checkout?plan={upgradePlan}&interval=monthly" : null,
+                AdminOnlyCta: true);
+        }
+
         return null;
     }
+
+    private static string SuggestUpgradePlanSlug(TenantPlan plan) =>
+        plan switch
+        {
+            TenantPlan.Basic => "core",
+            TenantPlan.Core => "pro",
+            _ => "pro",
+        };
 }

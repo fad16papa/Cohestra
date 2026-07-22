@@ -44,7 +44,7 @@ export function AdminTopBar() {
         <div className="flex min-w-0 items-center gap-3">
           <h1 className="truncate text-section text-text-warm">{pageTitle}</h1>
           {shell ? (
-            <div className="hidden items-center gap-1.5 sm:flex">
+            <div className="flex items-center gap-1.5">
               <PlanBadge plan={shell.plan} />
               {shell.isComplimentary ? <SponsoredBadge /> : null}
             </div>

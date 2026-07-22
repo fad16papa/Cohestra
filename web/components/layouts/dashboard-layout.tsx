@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 import { DashboardMetricsRefreshProvider } from "@/components/dashboard/dashboard-metrics-refresh-context";
 import { AdminSidebar } from "@/components/layouts/admin-sidebar";
@@ -16,7 +17,14 @@ type DashboardLayoutProps = {
 
 function DashboardShellBody({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
-  const { shell } = useTenantShell();
+  const searchParams = useSearchParams();
+  const { shell, refreshShell } = useTenantShell();
+
+  useEffect(() => {
+    if (searchParams.get("billing") === "success") {
+      void refreshShell();
+    }
+  }, [refreshShell, searchParams]);
 
   return (
     <div

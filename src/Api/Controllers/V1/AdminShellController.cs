@@ -12,7 +12,7 @@ namespace Cohestra.Api.Controllers.V1;
 [Produces("application/json")]
 public sealed class AdminShellController(
     ITenantShellService tenantShellService,
-    Application.Tenants.ICurrentTenant currentTenant) : ControllerBase
+    ICurrentTenant currentTenant) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(TenantShellResponse), StatusCodes.Status200OK)]

@@ -207,7 +207,7 @@ development_status:
   14-2-legal-pages-and-tos-privacy-acceptance-logging: done
   14-3-basic-self-serve-signup-captcha-slug-otp-rate-limits: done
   14-4-core-pro-checkout-webhooks-and-usd-prices: done
-  14-5-admin-shell-planbadge-sponsoredbadge-limitmeter-billingbanner: review
+  14-5-admin-shell-planbadge-sponsoredbadge-limitmeter-billingbanner: done
   14-6-team-invite-and-seatgate: backlog
   14-7-customer-portal-period-end-cancel-downgrade-over-limit: backlog
   14-8-trial-reminders-delinquency-jobs-and-basic-dormancy: backlog
