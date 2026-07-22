@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-21T15:45:00Z
+# last_updated: 2026-07-22T08:30:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - Epic 16 is parked (One-stop Lite / UX-DR15) — no v1 stories until pulled forward
 
 generated: 2026-06-16
-last_updated: 2026-07-21T15:45:00Z
+last_updated: 2026-07-22T08:30:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -213,14 +213,14 @@ development_status:
   14-8-trial-reminders-delinquency-jobs-and-basic-dormancy: done
   epic-14-retrospective: optional
 
-  epic-15: backlog
-  15-1-subdomain-routing-nginx-next-js-host: backlog
-  15-2-basic-stubhome-atelier-hospitality: backlog
-  15-3-core-fixed-sitepage-and-pro-builder-unlock: backlog
-  15-4-tenant-scoped-activity-engine-and-public-registration: backlog
-  15-5-plan-gated-reports-basic-fixed-core-queryable-pro: backlog
-  15-6-pro-only-campaigns-and-per-tenant-email-branding: backlog
-  15-7-suspended-maintenance-and-archived-404-public-states: backlog
+  epic-15: done
+  15-1-subdomain-routing-nginx-next-js-host: done
+  15-2-basic-stubhome-atelier-hospitality: done
+  15-3-core-fixed-sitepage-and-pro-builder-unlock: done
+  15-4-tenant-scoped-activity-engine-and-public-registration: done
+  15-5-plan-gated-reports-basic-fixed-core-queryable-pro: done
+  15-6-pro-only-campaigns-and-per-tenant-email-branding: done
+  15-7-suspended-maintenance-and-archived-404-public-states: done
   epic-15-retrospective: optional
 
   # Epic 16 parked — One-stop Lite (share kit, custom domain, thin email, tickets, seat add-ons)

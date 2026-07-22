@@ -46,6 +46,43 @@ public sealed class TenantHostResolver(
         return TenantHostResolution.Ok(tenant.Id, tenant.Slug);
     }
 
+    public async Task<TenantDoorResolution> ResolveDoorAsync(
+        string? hostHeader,
+        CancellationToken cancellationToken = default)
+    {
+        if (IsMarketingApexHost(hostHeader))
+        {
+            return TenantDoorResolution.Marketing();
+        }
+
+        var slug = ExtractSlug(hostHeader, configuration);
+        if (string.IsNullOrWhiteSpace(slug))
+        {
+            return TenantDoorResolution.Unknown("Could not resolve tenant from Host.");
+        }
+
+        var normalized = slug.Trim().ToLowerInvariant();
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Slug == normalized, cancellationToken);
+
+        if (tenant is null)
+        {
+            return TenantDoorResolution.Unknown($"Unknown tenant workspace '{normalized}'.");
+        }
+
+        return tenant.Status switch
+        {
+            TenantStatus.Suspended => TenantDoorResolution.Suspended(
+                tenant.Id, tenant.Slug, tenant.Name, tenant.Plan),
+            TenantStatus.Archived => TenantDoorResolution.Archived(
+                tenant.Id, tenant.Slug, tenant.Name),
+            TenantStatus.Active => TenantDoorResolution.Active(
+                tenant.Id, tenant.Slug, tenant.Name, tenant.Plan, tenant.BillingStatus),
+            _ => TenantDoorResolution.Unknown($"Tenant workspace '{normalized}' is not available."),
+        };
+    }
+
     /// <summary>
     /// Production apex/www — marketing-only (no tenant SitePage). Distinct from localhost Platform 0 fallback.
     /// </summary>

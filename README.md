@@ -185,6 +185,26 @@ dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --filter "Categ
 
 **When you add a new tenant-scoped endpoint**, add or extend a `TenantIsolation` negative case (prefer two real tenants + Host `{slug}.localhost` — never trust `X-Tenant-Id`). Extend `IntegrationTestHelpers` rather than one-off bootstraps.
 
+### Local tenant subdomains (Epic 15)
+
+Each workspace is addressed by **Host**, not a path prefix:
+
+| Host | Resolves to |
+|------|-------------|
+| `localhost` / `cohestra.app` / `www.cohestra.app` | Marketing + signup only (no tenant SitePage) |
+| `{slug}.localhost` | Tenant workspace (public door, admin login, registration) |
+| `{slug}.cohestra.app` | Same as `{slug}.localhost` in production |
+
+**Examples (default nginx on port 80):**
+
+- `http://default.localhost/` — default seed tenant public home
+- `http://default.localhost/register/{activity-slug}` — tenant-scoped registration
+- `http://default.localhost/login` — admin login scoped to that tenant
+
+**Optional env for single-host dev:** set `DEV_TENANT_SLUG=default` in `.env` when you cannot use `{slug}.localhost` (e.g. some mobile browsers). The web middleware forwards Host to the API for tenant resolution.
+
+**Docker tip:** add `{slug}.localhost` to your OS hosts file if needed; most systems resolve `*.localhost` to `127.0.0.1` automatically.
+
 ## Planning artifacts
 
 Product specs live in `_bmad-output/planning-artifacts/` (PRD, architecture, epics, UX).

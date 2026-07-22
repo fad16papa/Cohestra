@@ -53,6 +53,12 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             return;
         }
 
+        if (IsPublicDoorPath(path))
+        {
+            await next(context);
+            return;
+        }
+
         if (IsPublicPath(path))
         {
             await HandlePublicAsync(context, hostResolver, currentTenant, logger);
@@ -169,6 +175,12 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
 
     internal static bool IsPublicPath(PathString path) =>
         path.StartsWithSegments(PublicPath);
+
+    internal static bool IsPublicDoorPath(PathString path)
+    {
+        var value = path.Value?.TrimEnd('/') ?? string.Empty;
+        return value.Equals("/api/v1/public/door", StringComparison.OrdinalIgnoreCase);
+    }
 
     internal static bool RequiresAdminTenantAlignment(PathString path) =>
         path.StartsWithSegments(AdminPath)

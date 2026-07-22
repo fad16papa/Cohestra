@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Cohestra.Application.Tenants;
+using Cohestra.Domain.Billing;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Tenancy;
@@ -230,5 +231,27 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
             string? hostHeader,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(resolution);
+
+        public Task<TenantDoorResolution> ResolveDoorAsync(
+            string? hostHeader,
+            CancellationToken cancellationToken = default)
+        {
+            if (resolution.IsMarketingHost)
+            {
+                return Task.FromResult(TenantDoorResolution.Marketing());
+            }
+
+            if (!resolution.Succeeded || resolution.TenantId is null || resolution.Slug is null)
+            {
+                return Task.FromResult(TenantDoorResolution.Unknown(resolution.ErrorDetail));
+            }
+
+            return Task.FromResult(TenantDoorResolution.Active(
+                resolution.TenantId.Value,
+                resolution.Slug,
+                resolution.Slug,
+                TenantPlan.Core,
+                BillingStatus.Active));
+        }
     }
 }

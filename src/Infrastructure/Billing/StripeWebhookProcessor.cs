@@ -1,5 +1,9 @@
 using Cohestra.Domain.Billing;
+using Cohestra.Domain.Site;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Seed;
+using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -10,6 +14,8 @@ namespace Cohestra.Infrastructure.Billing;
 
 public sealed class StripeWebhookProcessor(
     CohestraDbContext dbContext,
+    IPublishedSiteCache publishedSiteCache,
+    IOptions<SiteLandingSeedSettings> landingSeedSettings,
     IOptions<StripeSettings> stripeOptions,
     ILogger<StripeWebhookProcessor> logger) : IStripeWebhookProcessor
 {
@@ -125,6 +131,7 @@ public sealed class StripeWebhookProcessor(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await EnsureCoreSitePageIfNeededAsync(tenant, cancellationToken);
         return true;
     }
 
@@ -153,7 +160,27 @@ public sealed class StripeWebhookProcessor(
 
         StripeTenantBillingSync.ApplySubscription(tenant, subscription, _settings);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await EnsureCoreSitePageIfNeededAsync(tenant, cancellationToken);
         return true;
+    }
+
+    private async Task EnsureCoreSitePageIfNeededAsync(
+        Domain.Tenants.Tenant tenant,
+        CancellationToken cancellationToken)
+    {
+        if (tenant.Plan is not TenantPlan.Core)
+        {
+            return;
+        }
+
+        await SitePageCoreSeedHelper.EnsureCoreSitePageAsync(
+            dbContext,
+            publishedSiteCache,
+            landingSeedSettings,
+            logger,
+            tenant.Id,
+            tenant.Name,
+            cancellationToken);
     }
 
     private async Task<bool> HandleSubscriptionDeletedAsync(

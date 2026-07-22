@@ -932,6 +932,58 @@ export function WebsiteBuilderPage() {
     );
   }
 
+  if (adminData.builderLocked) {
+    const previewPayload = {
+      published: draft,
+      publishedAt: adminData.publishedAt,
+      upcomingActivities,
+    };
+
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Website"
+          description="Your Core plan includes a branded fixed homepage. Upgrade to Pro to customize sections and publish changes."
+        />
+        <UpgradePanel
+          title="Section composer unlocks on Pro"
+          description="Core tenants get a seeded fixed homepage at their subdomain. Upgrade to Pro to edit sections, apply presets, and publish layout changes."
+          requiredPlan="Pro"
+          isTenantAdmin={shell?.isTenantAdmin ?? false}
+        />
+        <WebsiteHealthStrip
+          siteUrl={publicSiteUrl}
+          statusLabel={adminData.published ? "Live" : "Draft saved"}
+          statusClassName="bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
+          publishedAt={adminData.publishedAt}
+          upcomingActivityCount={upcomingActivities.length}
+          enabledSectionCount={enabledSectionCount}
+          publishBlockerCount={0}
+          checklistHidden
+          onCopyLink={() => {
+            void copyTextToClipboard(publicSiteUrl).then((copied) => {
+              if (copied) {
+                showToast("Link copied");
+              } else {
+                showErrorToast("Could not copy link.");
+              }
+            });
+          }}
+          onOpenLive={() => {
+            const siteWindow = window.open(publicSiteUrl, "_blank", "noopener,noreferrer");
+            if (!siteWindow) {
+              showErrorToast("Popup blocked. Allow popups for this site and try again.");
+            }
+          }}
+          onShowChecklist={() => undefined}
+        />
+        <WebsiteLivePreview deviceMode={deviceMode} onDeviceModeChange={setDeviceMode}>
+          <SitePageRenderer site={previewPayload} isPreview />
+        </WebsiteLivePreview>
+      </div>
+    );
+  }
+
   const previewPayload = {
     published: draft,
     publishedAt: adminData.publishedAt,

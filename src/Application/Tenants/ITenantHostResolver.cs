@@ -29,4 +29,11 @@ public interface ITenantHostResolver
     Task<TenantHostResolution> ResolveAsync(
         string? hostHeader,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Public door resolution — includes suspended/archived tenants (Story 15.7).
+    /// </summary>
+    Task<TenantDoorResolution> ResolveDoorAsync(
+        string? hostHeader,
+        CancellationToken cancellationToken = default);
 }

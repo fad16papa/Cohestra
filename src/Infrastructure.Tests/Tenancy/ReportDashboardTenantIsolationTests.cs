@@ -212,6 +212,7 @@ public sealed class ReportDashboardTenantIsolationTests
                 Id = id,
                 Slug = id.ToString("N")[..8],
                 Name = "T",
+                Plan = TenantPlan.Core,
                 Status = TenantStatus.Active,
                 BillingStatus = BillingStatus.Free,
                 CreatedAt = now,

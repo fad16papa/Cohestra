@@ -4,6 +4,7 @@ using Cohestra.Application.Reports;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Reports;
 using Cohestra.Domain.Clients;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,8 @@ public sealed class ReportService(
         CancellationToken cancellationToken = default)
     {
         var tenantId = RequireTenantId();
+        await ValidateReportPlanAsync(tenantId, query, cancellationToken);
+        var plan = await GetTenantPlanAsync(tenantId, cancellationToken);
         var normalizedPreset = query.Preset.Trim().ToLowerInvariant();
         var computedAt = DateTimeOffset.UtcNow;
         var (startAt, endAt) = ResolvePeriod(normalizedPreset, query, computedAt);
@@ -84,21 +87,27 @@ public sealed class ReportService(
             registrationsInPeriod,
             cancellationToken);
 
-        var activityRanking = await BuildActivityRankingAsync(
-            tenantId,
-            registrationsInPeriod,
-            cancellationToken);
+        var activityRanking = plan is TenantPlan.Basic
+            ? []
+            : await BuildActivityRankingAsync(
+                tenantId,
+                registrationsInPeriod,
+                cancellationToken);
 
-        var communityRanking = await BuildCommunityRankingAsync(
-            tenantId,
-            registrationsInPeriod,
-            cancellationToken);
+        var communityRanking = plan is TenantPlan.Basic
+            ? []
+            : await BuildCommunityRankingAsync(
+                tenantId,
+                registrationsInPeriod,
+                cancellationToken);
 
-        var campaignResults = await BuildCampaignResultsAsync(
-            tenantId,
-            startAt,
-            endAt,
-            cancellationToken);
+        var campaignResults = plan is TenantPlan.Pro or TenantPlan.Enterprise
+            ? await BuildCampaignResultsAsync(
+                tenantId,
+                startAt,
+                endAt,
+                cancellationToken)
+            : new ReportCampaignResultsResponse(false, 0, 0);
 
         return new ReportResponse(
             new ReportPeriodResponse(normalizedPreset, startAt, endAt, computedAt),
@@ -517,5 +526,37 @@ public sealed class ReportService(
             .OrderByDescending(item => item.RegistrationCount)
             .ThenBy(item => item.CommunityLabel)
             .ToList();
+    }
+
+    private async Task<TenantPlan> GetTenantPlanAsync(Guid tenantId, CancellationToken cancellationToken) =>
+        await dbContext.Tenants
+            .AsNoTracking()
+            .Where(t => t.Id == tenantId)
+            .Select(t => t.Plan)
+            .FirstAsync(cancellationToken);
+
+    private async Task ValidateReportPlanAsync(
+        Guid tenantId,
+        ReportQuery query,
+        CancellationToken cancellationToken)
+    {
+        var plan = await GetTenantPlanAsync(tenantId, cancellationToken);
+        var hasAdvancedFilters = query.ActivityId is not null
+            || !string.IsNullOrWhiteSpace(query.Community)
+            || !string.IsNullOrWhiteSpace(query.LeadStatus)
+            || !string.IsNullOrWhiteSpace(query.ReferralSource);
+
+        if (plan is TenantPlan.Basic && hasAdvancedFilters)
+        {
+            throw new ArgumentException(
+                "Advanced report filters require a Core plan or higher. Upgrade to unlock queryable reports.");
+        }
+
+        if (plan is TenantPlan.Basic
+            && string.Equals(query.Preset.Trim(), "custom", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ArgumentException(
+                "Custom date ranges require a Core plan or higher.");
+        }
     }
 }

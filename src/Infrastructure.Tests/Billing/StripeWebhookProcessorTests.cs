@@ -1,7 +1,10 @@
+using Cohestra.Application.Site;
 using Cohestra.Domain.Billing;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Billing;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Seed;
+using Cohestra.Infrastructure.Site;
 using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -136,8 +139,27 @@ public sealed class StripeWebhookProcessorTests
     private static StripeWebhookProcessor CreateProcessor(CohestraDbContext db) =>
         new(
             db,
+            new NullPublishedSiteCache(),
+            Options.Create(new SiteLandingSeedSettings()),
             Options.Create(new StripeSettings { SecretKey = "sk_test_placeholder" }),
             NullLogger<StripeWebhookProcessor>.Instance);
+
+    private sealed class NullPublishedSiteCache : IPublishedSiteCache
+    {
+        public Task<PublishedSiteCacheEntry?> GetAsync(
+            Guid tenantId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<PublishedSiteCacheEntry?>(null);
+
+        public Task SetAsync(
+            Guid tenantId,
+            PublishedSiteCacheEntry entry,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task InvalidateAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+    }
 
     private static CohestraDbContext CreateDbContext()
     {
