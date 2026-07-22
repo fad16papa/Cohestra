@@ -27,7 +27,11 @@ public static class StripeTenantBillingSync
             ? tenant.TrialEndsAt
             : new DateTimeOffset(DateTime.SpecifyKind(subscription.TrialEnd.Value, DateTimeKind.Utc));
 
-        if (subscription.Status is "trialing" or "active" && subscription.TrialEnd is not null)
+        if (subscription.Status is "trialing")
+        {
+            tenant.HasConsumedTrial = true;
+        }
+        else if (subscription.Status is "active" && subscription.TrialEnd is not null)
         {
             tenant.HasConsumedTrial = true;
         }
@@ -81,7 +85,10 @@ public static class StripeTenantBillingSync
             "past_due" => BillingStatus.PastDue,
             "unpaid" => BillingStatus.OnHold,
             "canceled" => BillingStatus.Canceled,
-            _ => BillingStatus.Active,
+            "incomplete" => BillingStatus.Free,
+            "incomplete_expired" => BillingStatus.Canceled,
+            "paused" => BillingStatus.OnHold,
+            _ => BillingStatus.Canceled,
         };
 
     public static bool TryMapPrice(

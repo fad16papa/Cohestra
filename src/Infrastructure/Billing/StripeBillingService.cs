@@ -70,6 +70,16 @@ public sealed class StripeBillingService(
             throw new InvalidOperationException("Tenant already has an active paid subscription.");
         }
 
+        if (!string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId))
+        {
+            throw new InvalidOperationException("Tenant already has a Stripe subscription in progress.");
+        }
+
+        if (string.IsNullOrWhiteSpace(tenant.StripeCustomerId) && string.IsNullOrWhiteSpace(command.AdminEmail))
+        {
+            throw new InvalidOperationException("Admin email is required to start Checkout.");
+        }
+
         StripeConfiguration.ApiKey = _settings.SecretKey;
         var sessionService = new SessionService();
 

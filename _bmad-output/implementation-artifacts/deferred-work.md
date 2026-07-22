@@ -1,3 +1,13 @@
+## Deferred from: code review of 14-4-core-pro-checkout-webhooks-and-usd-prices.md (2026-07-22)
+
+- Auth handoff via URL hash — replace with one-time server code exchange (tokens visible in history/referrer)
+- Global `StripeConfiguration.ApiKey` mutation — inject scoped `StripeClient` per request
+- Parallel checkout session race before webhook — optimistic lock or pending-checkout flag on tenant
+- Stripe test vs live key prefix validation at startup — enforce per environment
+- Web frontend trial disclaimer hardcoded 30 days — fetch `trialPeriodDays` from billing summary API
+- Unmapped Stripe price ID during webhook sync — fail webhook or block plan upgrade when price unknown
+- Checkout auto-start without explicit confirm button — UX polish in 14.5
+
 ## Deferred from: code review of 14-3-basic-self-serve-signup-captcha-slug-otp-rate-limits.md (2026-07-22)
 
 - OTP verify brute-force throttling — add verify-attempt counter on public signup verify endpoint

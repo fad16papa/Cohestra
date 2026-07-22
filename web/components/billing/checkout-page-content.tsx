@@ -39,7 +39,7 @@ function CheckoutContent() {
   }, []);
 
   useEffect(() => {
-    if (!plan || status === "loading") {
+    if (!plan || status === "loading" || canceled) {
       return;
     }
 
@@ -80,7 +80,7 @@ function CheckoutContent() {
     return () => {
       cancelled = true;
     };
-  }, [authFetch, interval, plan, router, status]);
+  }, [authFetch, canceled, interval, plan, router, status]);
 
   if (!plan) {
     return (

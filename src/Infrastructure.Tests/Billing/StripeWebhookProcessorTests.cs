@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Stripe;
+using Stripe.Checkout;
 
 namespace Cohestra.Infrastructure.Tests.Billing;
 
@@ -16,8 +17,22 @@ public sealed class StripeWebhookProcessorTests
     public async Task ProcessAsync_IsIdempotentOnEventId()
     {
         await using var db = CreateDbContext();
-        var processor = CreateProcessor(db);
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Slug = $"idem-{Guid.NewGuid():N}"[..16],
+            Name = "Idempotency Test",
+            Plan = TenantPlan.Core,
+            BillingStatus = BillingStatus.Active,
+            StripeCustomerId = "cus_idempotent",
+            StripeSubscriptionId = "sub_idempotent",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        };
+        db.Tenants.Add(tenant);
+        await db.SaveChangesAsync();
 
+        var processor = CreateProcessor(db);
         var stripeEvent = new Event
         {
             Id = $"evt_{Guid.NewGuid():N}",
@@ -26,7 +41,14 @@ public sealed class StripeWebhookProcessorTests
             {
                 Object = new Invoice
                 {
-                    CustomerId = "cus_missing",
+                    CustomerId = tenant.StripeCustomerId,
+                    Parent = new InvoiceParent
+                    {
+                        SubscriptionDetails = new InvoiceParentSubscriptionDetails
+                        {
+                            SubscriptionId = tenant.StripeSubscriptionId,
+                        },
+                    },
                 },
             },
         };
@@ -34,11 +56,40 @@ public sealed class StripeWebhookProcessorTests
         var first = await processor.ProcessAsync(stripeEvent);
         var second = await processor.ProcessAsync(stripeEvent);
 
+        Assert.True(first.Processed);
         Assert.False(first.Duplicate);
+        Assert.False(second.Processed);
         Assert.True(second.Duplicate);
 
         var ledgerCount = await db.StripeWebhookEvents.CountAsync(e => e.EventId == stripeEvent.Id);
         Assert.Equal(1, ledgerCount);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_HandlerFailure_DoesNotLedgerEvent()
+    {
+        await using var db = CreateDbContext();
+        var processor = CreateProcessor(db);
+
+        var stripeEvent = new Event
+        {
+            Id = $"evt_{Guid.NewGuid():N}",
+            Type = EventTypes.CheckoutSessionCompleted,
+            Data = new EventData
+            {
+                Object = new Session
+                {
+                    Id = "cs_test_missing_sub",
+                    SubscriptionId = null,
+                },
+            },
+        };
+
+        var result = await processor.ProcessAsync(stripeEvent);
+
+        Assert.False(result.Processed);
+        Assert.False(result.Duplicate);
+        Assert.Equal(0, await db.StripeWebhookEvents.CountAsync());
     }
 
     [Fact]

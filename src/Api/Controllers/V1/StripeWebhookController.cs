@@ -47,6 +47,11 @@ public sealed class StripeWebhookController(
             return Ok(new { received = true, duplicate = true });
         }
 
+        if (!result.Processed && result.Detail == "Handler failed.")
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { received = false, retry = true });
+        }
+
         return Ok(new { received = true, processed = result.Processed, detail = result.Detail });
     }
 }

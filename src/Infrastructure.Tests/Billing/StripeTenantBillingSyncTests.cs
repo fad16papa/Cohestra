@@ -63,6 +63,15 @@ public sealed class StripeTenantBillingSyncTests
         Assert.Equal("cus_123", tenant.StripeCustomerId);
     }
 
+    [Theory]
+    [InlineData("incomplete", BillingStatus.Free)]
+    [InlineData("incomplete_expired", BillingStatus.Canceled)]
+    [InlineData("unknown_status", BillingStatus.Canceled)]
+    public void MapSubscriptionStatus_MapsNonActiveUnknownStatusesSafely(string stripeStatus, BillingStatus expected)
+    {
+        Assert.Equal(expected, StripeTenantBillingSync.MapSubscriptionStatus(stripeStatus));
+    }
+
     [Fact]
     public void BuildTrialDisclaimer_IncludesTrialEndDate()
     {

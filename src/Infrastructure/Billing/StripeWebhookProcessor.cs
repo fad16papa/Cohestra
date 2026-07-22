@@ -15,6 +15,15 @@ public sealed class StripeWebhookProcessor(
 {
     private readonly StripeSettings _settings = stripeOptions.Value;
 
+    private static readonly HashSet<string> TrackedEventTypes =
+    [
+        EventTypes.CheckoutSessionCompleted,
+        EventTypes.CustomerSubscriptionUpdated,
+        EventTypes.CustomerSubscriptionDeleted,
+        EventTypes.InvoicePaid,
+        EventTypes.InvoicePaymentFailed,
+    ];
+
     public async Task<StripeWebhookProcessResult> ProcessAsync(
         Event stripeEvent,
         CancellationToken cancellationToken = default)
@@ -28,6 +37,11 @@ public sealed class StripeWebhookProcessor(
             return new StripeWebhookProcessResult(false, true, "Duplicate event.");
         }
 
+        if (!TrackedEventTypes.Contains(stripeEvent.Type))
+        {
+            return new StripeWebhookProcessResult(false, false, "Ignored event type.");
+        }
+
         var handled = stripeEvent.Type switch
         {
             EventTypes.CheckoutSessionCompleted => await HandleCheckoutSessionCompletedAsync(stripeEvent, cancellationToken),
@@ -38,6 +52,11 @@ public sealed class StripeWebhookProcessor(
             _ => false,
         };
 
+        if (!handled)
+        {
+            return new StripeWebhookProcessResult(false, false, "Handler failed.");
+        }
+
         dbContext.StripeWebhookEvents.Add(new StripeWebhookEvent
         {
             Id = Guid.NewGuid(),
@@ -46,12 +65,17 @@ public sealed class StripeWebhookProcessor(
             ProcessedAt = DateTimeOffset.UtcNow,
         });
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex)
+        {
+            logger.LogInformation(ex, "Concurrent webhook delivery for event {EventId}", stripeEvent.Id);
+            return new StripeWebhookProcessResult(false, true, "Duplicate event.");
+        }
 
-        return new StripeWebhookProcessResult(
-            handled,
-            false,
-            handled ? null : "Event recorded; no handler side effects.");
+        return new StripeWebhookProcessResult(true, false, null);
     }
 
     private async Task<bool> HandleCheckoutSessionCompletedAsync(
@@ -60,6 +84,14 @@ public sealed class StripeWebhookProcessor(
     {
         if (stripeEvent.Data.Object is not Session session)
         {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(session.SubscriptionId))
+        {
+            logger.LogWarning(
+                "checkout.session.completed without subscription for session {SessionId}",
+                session.Id);
             return false;
         }
 
@@ -72,12 +104,24 @@ public sealed class StripeWebhookProcessor(
 
         StripeTenantBillingSync.ApplyCheckoutSession(tenant, session, _settings);
 
-        if (!string.IsNullOrWhiteSpace(session.SubscriptionId))
+        if (string.IsNullOrWhiteSpace(_settings.SecretKey))
+        {
+            logger.LogWarning("Stripe secret key missing; cannot fetch subscription {SubscriptionId}", session.SubscriptionId);
+            return false;
+        }
+
+        try
         {
             StripeConfiguration.ApiKey = _settings.SecretKey;
             var subscriptionService = new SubscriptionService();
             var subscription = await subscriptionService.GetAsync(session.SubscriptionId, cancellationToken: cancellationToken);
             StripeTenantBillingSync.ApplySubscription(tenant, subscription, _settings);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "Failed to fetch subscription {SubscriptionId} for checkout session {SessionId}",
+                session.SubscriptionId, session.Id);
+            return false;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -150,6 +194,12 @@ public sealed class StripeWebhookProcessor(
             return false;
         }
 
+        if (!string.IsNullOrWhiteSpace(GetInvoiceSubscriptionId(invoice))
+            && tenant.StripeSubscriptionId != GetInvoiceSubscriptionId(invoice))
+        {
+            return false;
+        }
+
         StripeTenantBillingSync.ApplyInvoicePaid(tenant);
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
@@ -170,6 +220,12 @@ public sealed class StripeWebhookProcessor(
             return false;
         }
 
+        if (!string.IsNullOrWhiteSpace(GetInvoiceSubscriptionId(invoice))
+            && tenant.StripeSubscriptionId != GetInvoiceSubscriptionId(invoice))
+        {
+            return false;
+        }
+
         StripeTenantBillingSync.ApplyInvoicePaymentFailed(tenant);
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
@@ -184,7 +240,25 @@ public sealed class StripeWebhookProcessor(
             && metadata.TryGetValue("tenant_id", out var tenantIdRaw)
             && Guid.TryParse(tenantIdRaw, out var tenantId))
         {
-            return await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+            var tenant = await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+            if (tenant is null)
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(customerId)
+                && !string.IsNullOrWhiteSpace(tenant.StripeCustomerId)
+                && !string.Equals(tenant.StripeCustomerId, customerId, StringComparison.Ordinal))
+            {
+                logger.LogWarning(
+                    "Webhook customer {CustomerId} does not match tenant {TenantId} customer {TenantCustomerId}",
+                    customerId,
+                    tenant.Id,
+                    tenant.StripeCustomerId);
+                return null;
+            }
+
+            return tenant;
         }
 
         return await ResolveTenantFromCustomerIdAsync(customerId, cancellationToken);
@@ -201,4 +275,7 @@ public sealed class StripeWebhookProcessor(
 
         return dbContext.Tenants.FirstOrDefaultAsync(t => t.StripeCustomerId == customerId, cancellationToken);
     }
+
+    private static string? GetInvoiceSubscriptionId(Invoice invoice) =>
+        invoice.Parent?.SubscriptionDetails?.SubscriptionId;
 }

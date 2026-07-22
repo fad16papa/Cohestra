@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using Cohestra.Application.Billing;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Billing;
@@ -86,11 +87,31 @@ public class BillingController(
             });
         }
 
-        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
-            ?? User.FindFirst("email")?.Value
+        var email = User.FindFirst(JwtRegisteredClaimNames.Email)?.Value
+            ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
             ?? string.Empty;
 
         var tenantBase = $"{Request.Scheme}://{Request.Host.Value}";
+        if (!string.IsNullOrWhiteSpace(request.SuccessUrl) && !IsAllowedReturnUrl(request.SuccessUrl, tenantBase))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid success URL",
+                Detail = "Success URL must stay on the current workspace host.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.CancelUrl) && !IsAllowedReturnUrl(request.CancelUrl, tenantBase))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid cancel URL",
+                Detail = "Cancel URL must stay on the current workspace host.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+        }
+
         var successUrl = string.IsNullOrWhiteSpace(request.SuccessUrl)
             ? $"{tenantBase}/dashboard?billing=success"
             : request.SuccessUrl!;
@@ -117,15 +138,27 @@ public class BillingController(
                 session.TrialIncluded,
                 session.TrialDisclaimer));
         }
-        catch (InvalidOperationException ex)
+        catch (InvalidOperationException)
         {
             return BadRequest(new ProblemDetails
             {
                 Title = "Checkout unavailable",
-                Detail = ex.Message,
+                Detail = "Could not start Stripe Checkout for this workspace.",
                 Status = StatusCodes.Status400BadRequest,
             });
         }
+    }
+
+    private static bool IsAllowedReturnUrl(string url, string tenantBase)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var returnUri)
+            || !Uri.TryCreate(tenantBase, UriKind.Absolute, out var baseUri))
+        {
+            return false;
+        }
+
+        return string.Equals(returnUri.Scheme, baseUri.Scheme, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(returnUri.Host, baseUri.Host, StringComparison.OrdinalIgnoreCase);
     }
 
     private static BillingSummaryResponse MapSummary(BillingSummaryDto summary) =>
