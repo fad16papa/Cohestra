@@ -125,10 +125,9 @@ export function SettingsTeamPageContent() {
     return (
       <UpgradePanel
         title="Add a second keyholder"
-        description="Basic workspaces are intentionally solo. Upgrade to Core to invite a partner who can help operate the atelier."
+        description="Basic workspaces are intentionally solo. Upgrade to Core or Pro to invite a partner who can help operate the atelier."
         requiredPlan="Core"
         isTenantAdmin
-        checkoutHref="/billing/checkout?plan=core&interval=monthly"
       />
     );
   }
@@ -154,7 +153,7 @@ export function SettingsTeamPageContent() {
             <p className="font-medium">Seat cap reached</p>
             <p className="mt-1 text-text-muted-warm">
               Revoke a pending invite, remove a member, or{" "}
-              <Link href="/billing/checkout?plan=pro&interval=monthly" className="text-primary underline">
+              <Link href="/settings/billing" className="text-primary underline">
                 upgrade your plan
               </Link>{" "}
               for more seats.

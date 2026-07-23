@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Compass, Sparkles } from "lucide-react";
 
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
-import { marketingAtelierButtonClass } from "@/components/marketing/marketing-shell";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function DashboardEmptyState() {
   return (
@@ -29,10 +30,13 @@ export function DashboardEmptyState() {
           <li>3. Publish and share the QR / link</li>
         </ol>
         <div className="relative mt-6 flex flex-wrap gap-3">
-          <Link href="/activities/communities" className={marketingAtelierButtonClass("lagoon")}>
+          <Link href="/activities/communities" className={cn(buttonVariants({ size: "lg" }))}>
             Create a community
           </Link>
-          <Link href="/activities/new" className={marketingAtelierButtonClass("ghost")}>
+          <Link
+            href="/activities/new"
+            className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
+          >
             Skip to new activity
           </Link>
         </div>

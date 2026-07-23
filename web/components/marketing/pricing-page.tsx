@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import {
   MarketingFooter,
@@ -16,8 +17,21 @@ import {
 } from "@/lib/marketing/pricing-plans";
 import { cn } from "@/lib/utils";
 
+type PricingInterval = "monthly" | "annual";
+
+function planCtaHref(planId: string, baseHref: string, interval: PricingInterval): string {
+  if (planId !== "core" && planId !== "pro") {
+    return baseHref;
+  }
+
+  const url = new URL(baseHref, "https://cohestra.local");
+  url.searchParams.set("interval", interval);
+  return `${url.pathname}?${url.searchParams.toString()}`;
+}
+
 export function PricingPageContent() {
   const { scrolled, anchorRef } = useMarketingHeaderScroll(true);
+  const [interval, setInterval] = useState<PricingInterval>("monthly");
 
   return (
     <MarketingShell scrolled={scrolled}>
@@ -35,76 +49,110 @@ export function PricingPageContent() {
           </p>
         </MarketingReveal>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
-          {MARKETING_PLANS.map((plan, index) => (
-            <MarketingReveal
-              key={plan.id}
-              delayMs={marketingRevealDelay(index, 120, 70)}
-              className={cn(
-                "flex h-full flex-col rounded-[16px] border bg-paper p-6",
-                plan.highlighted
-                  ? "border-lagoon shadow-[0_28px_60px_rgba(7,13,18,0.08)]"
-                  : "border-line"
-              )}
-            >
-              <div className="flex-1">
-                <h2 className="font-[family-name:var(--font-fraunces)] text-2xl font-medium tracking-[-0.03em] text-ink">
-                  {plan.name}
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-stone">{plan.headline}</p>
-
-                <div className="mt-6 space-y-1">
-                  {plan.annualMonthlyEquivalent ? (
-                    <p className="font-[family-name:var(--font-fraunces)] text-3xl font-medium tracking-[-0.03em] text-ink">
-                      {plan.annualMonthlyEquivalent}
-                    </p>
+        <MarketingReveal delayMs={140} className="mt-8">
+          <div
+            role="radiogroup"
+            aria-label="Billing interval"
+            className="inline-flex rounded-[12px] border border-line bg-paper-warm p-1"
+          >
+            {(["monthly", "annual"] as const).map((value) => {
+              const active = interval === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setInterval(value)}
+                  className={cn(
+                    "rounded-[10px] px-4 py-2 text-sm font-semibold transition-colors",
+                    active ? "bg-paper text-ink shadow-sm" : "text-stone hover:text-ink"
+                  )}
+                >
+                  {value === "monthly" ? "Monthly" : "Yearly"}
+                  {value === "annual" ? (
+                    <span className="ml-1.5 text-xs font-medium text-lagoon">Save ~17%</span>
                   ) : null}
-                  {plan.monthlyPrice ? (
-                    <p
-                      className={cn(
-                        "text-ink",
-                        plan.annualMonthlyEquivalent
-                          ? "text-sm text-stone"
-                          : "font-[family-name:var(--font-fraunces)] text-3xl font-medium tracking-[-0.03em]"
-                      )}
-                    >
-                      {plan.annualMonthlyEquivalent ? `Or ${plan.monthlyPrice} / month` : plan.monthlyPrice}
-                    </p>
-                  ) : null}
-                  {plan.annualPrice ? (
-                    <p className="text-sm text-stone">{plan.annualPrice}</p>
-                  ) : null}
-                </div>
+                </button>
+              );
+            })}
+          </div>
+        </MarketingReveal>
 
-                {plan.trialNote ? (
-                  <p className="mt-3 text-xs leading-relaxed text-stone">{plan.trialNote}</p>
-                ) : null}
+        <div className="mt-10 grid gap-6 lg:grid-cols-2 xl:grid-cols-4">
+          {MARKETING_PLANS.map((plan, index) => {
+            const showAnnual = interval === "annual" && Boolean(plan.annualMonthlyEquivalent);
+            const pricePrimary = showAnnual
+              ? plan.annualMonthlyEquivalent
+              : plan.monthlyPrice;
+            const priceSecondary = showAnnual
+              ? plan.annualPrice
+              : plan.annualMonthlyEquivalent
+                ? `Or ${plan.annualMonthlyEquivalent}`
+                : null;
 
-                <ul className="mt-6 space-y-2 text-sm leading-relaxed text-stone">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex gap-2">
-                      <span aria-hidden className="text-lagoon">
-                        ·
-                      </span>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <Link
-                href={plan.ctaHref}
+            return (
+              <MarketingReveal
+                key={plan.id}
+                delayMs={marketingRevealDelay(index, 120, 70)}
                 className={cn(
-                  marketingAtelierButtonClass(
-                    plan.id === "basic" ? "lagoon" : plan.id === "enterprise" ? "ink" : "ghost"
-                  ),
-                  "mt-8 w-full"
+                  "flex h-full flex-col rounded-[16px] border bg-paper p-6",
+                  plan.highlighted
+                    ? "border-lagoon shadow-[0_28px_60px_rgba(7,13,18,0.08)]"
+                    : "border-line"
                 )}
               >
-                {plan.ctaLabel}
-              </Link>
-            </MarketingReveal>
-          ))}
+                <div className="flex-1">
+                  <h2 className="font-[family-name:var(--font-fraunces)] text-2xl font-medium tracking-[-0.03em] text-ink">
+                    {plan.name}
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-stone">{plan.headline}</p>
+
+                  <div className="mt-6 space-y-1">
+                    {pricePrimary ? (
+                      <p className="font-[family-name:var(--font-fraunces)] text-3xl font-medium tracking-[-0.03em] text-ink">
+                        {pricePrimary}
+                      </p>
+                    ) : null}
+                    {priceSecondary ? (
+                      <p className="text-sm text-stone">{priceSecondary}</p>
+                    ) : null}
+                  </div>
+
+                  {plan.trialNote ? (
+                    <p className="mt-3 text-xs leading-relaxed text-stone">{plan.trialNote}</p>
+                  ) : null}
+
+                  <ul className="mt-6 space-y-2 text-sm leading-relaxed text-stone">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex gap-2">
+                        <span aria-hidden className="text-lagoon">
+                          ·
+                        </span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <Link
+                  href={planCtaHref(plan.id, plan.ctaHref, interval)}
+                  className={cn(
+                    marketingAtelierButtonClass(
+                      plan.id === "basic"
+                        ? "lagoon"
+                        : plan.id === "enterprise"
+                          ? "ink"
+                          : "ghost"
+                    ),
+                    "mt-8 w-full"
+                  )}
+                >
+                  {plan.ctaLabel}
+                </Link>
+              </MarketingReveal>
+            );
+          })}
         </div>
       </section>
 
@@ -161,7 +209,7 @@ export function PricingPageContent() {
           </Link>
           <p className="text-xs text-stone">
             Prices are in USD and may be exclusive of applicable taxes. Stripe Tax is not enabled in
-            v1.
+            v1. Stripe Checkout may show a local currency estimate based on your location.
           </p>
         </MarketingReveal>
       </section>

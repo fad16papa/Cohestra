@@ -892,8 +892,8 @@ export function WebsiteBuilderPage() {
   if (shell && isBasicPlan(shell.plan)) {
     return (
       <UpgradePanel
-        title="Public site page unlocks on Core"
-        description="Basic includes a simple stub listing. Upgrade to Core for a branded fixed homepage at your workspace subdomain."
+        title="Unlock a branded public homepage"
+        description="Basic includes a simple stub listing. Upgrade to Core for a fixed branded homepage, or Pro for the full website builder with custom sections."
         requiredPlan="Core"
         isTenantAdmin={shell.isTenantAdmin}
       />

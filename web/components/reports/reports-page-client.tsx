@@ -200,7 +200,7 @@ export function ReportsPageClient() {
     return (
       <UpgradePanel
         title="Queryable reports unlock on Core"
-        description="Basic includes a simple registration list and CSV export. Upgrade to Core to filter by date range, community, activity, and lead status."
+        description="Basic includes a simple registration list and CSV export. Upgrade to Core for filters and deeper ops reports, or Pro for campaign analytics and saved views."
         requiredPlan="Core"
         isTenantAdmin={shell.isTenantAdmin}
       />

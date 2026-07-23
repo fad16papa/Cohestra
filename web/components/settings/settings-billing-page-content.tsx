@@ -1,12 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
-import { createBillingPortalSession, fetchBillingSummaryWithAuth, syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
-import { marketingAtelierButtonClass } from "@/components/marketing/marketing-shell";
-import { useEffect, useRef, useState } from "react";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  createBillingPortalSession,
+  fetchBillingSummaryWithAuth,
+  syncBillingFromStripeWithAuth,
+} from "@/lib/billing/billing-api";
+import { MARKETING_PLANS } from "@/lib/marketing/pricing-plans";
+import { cn } from "@/lib/utils";
 
 export function SettingsBillingPageContent() {
   const { authFetch } = useAuth();
@@ -14,6 +20,7 @@ export function SettingsBillingPageContent() {
   const [stripeConfigured, setStripeConfigured] = useState<boolean | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const autoSyncedRef = useRef(false);
 
   useEffect(() => {
@@ -35,24 +42,28 @@ export function SettingsBillingPageContent() {
 
   if (!shell?.isTenantAdmin) {
     return (
-      <p className="text-sm text-stone">
+      <p className="text-sm text-text-muted-warm">
         Billing settings are available to tenant admins only.
       </p>
     );
   }
 
+  const core = MARKETING_PLANS.find((p) => p.id === "core");
+  const pro = MARKETING_PLANS.find((p) => p.id === "pro");
+
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-ink">Billing</h1>
-        <p className="mt-1 text-sm text-stone">
-          Plan: <span className="font-medium text-ink">{shell.plan}</span>
+        <h1 className="text-xl font-semibold text-text-warm">Billing</h1>
+        <p className="mt-1 text-sm text-text-muted-warm">
+          Plan: <span className="font-medium text-text-warm">{shell.plan}</span>
           {" · "}
-          Status: <span className="font-medium text-ink">{shell.billingStatus}</span>
+          Status: <span className="font-medium text-text-warm">{shell.billingStatus}</span>
         </p>
         {shell.trialEndsAt ? (
-          <p className="mt-2 text-sm text-stone">
-            Trial ends {new Date(shell.trialEndsAt).toLocaleDateString(undefined, {
+          <p className="mt-2 text-sm text-text-muted-warm">
+            Trial ends{" "}
+            {new Date(shell.trialEndsAt).toLocaleDateString(undefined, {
               month: "long",
               day: "numeric",
               year: "numeric",
@@ -62,32 +73,70 @@ export function SettingsBillingPageContent() {
       </div>
 
       {shell.plan === "Basic" ? (
-        <div className="space-y-3 rounded-xl border border-line bg-paper-warm p-5">
-          <p className="text-sm text-stone">
-            Upgrade to Core or Pro for a public site page, team seats, and richer reports.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/billing/checkout?plan=core&interval=monthly" className={marketingAtelierButtonClass("lagoon")}>
-              Start Core trial
-            </Link>
-            <Link href="/billing/checkout?plan=pro&interval=monthly" className={marketingAtelierButtonClass("ghost")}>
-              Start Pro trial
-            </Link>
-            <button
-              type="button"
-              className={marketingAtelierButtonClass("ghost")}
-              onClick={() => {
-                void syncBillingFromStripeWithAuth(authFetch)
-                  .then(() => refreshShell())
-                  .catch(() => refreshShell());
-              }}
-            >
-              Refresh billing status
-            </button>
+        <section className="space-y-5 rounded-2xl border border-border-warm bg-card p-5 sm:p-6">
+          <div>
+            <h2 className="text-sm font-medium text-text-warm">Upgrade your workspace</h2>
+            <p className="mt-1 text-sm text-text-muted-warm">
+              Choose Core or Pro, then pick monthly or yearly on the next step. Both include a
+              30-day free trial.
+            </p>
           </div>
-        </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[core, pro].filter(Boolean).map((plan) => (
+              <div
+                key={plan!.id}
+                className="rounded-xl border border-border-warm bg-background p-4"
+              >
+                <p className="font-semibold text-text-warm">{plan!.name}</p>
+                <p className="mt-1 text-xs text-text-muted-warm">{plan!.headline}</p>
+                <p className="mt-3 text-base font-semibold text-text-warm">
+                  {plan!.monthlyPrice}
+                  <span className="text-sm font-normal text-text-muted-warm">/mo</span>
+                </p>
+                {plan!.annualMonthlyEquivalent ? (
+                  <p className="text-xs text-text-muted-warm">
+                    or {plan!.annualMonthlyEquivalent}
+                  </p>
+                ) : null}
+                <div className="mt-4 flex flex-col gap-2">
+                  <Link
+                    href={`/billing/checkout?plan=${plan!.id}&interval=monthly`}
+                    className={cn(buttonVariants({ size: "sm" }), "justify-center")}
+                  >
+                    Monthly trial
+                  </Link>
+                  <Link
+                    href={`/billing/checkout?plan=${plan!.id}&interval=annual`}
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "justify-center"
+                    )}
+                  >
+                    Yearly trial
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-text-muted-warm")}
+            disabled={syncing}
+            onClick={() => {
+              setSyncing(true);
+              void syncBillingFromStripeWithAuth(authFetch)
+                .then(() => refreshShell())
+                .catch(() => refreshShell())
+                .finally(() => setSyncing(false));
+            }}
+          >
+            {syncing ? "Refreshing…" : "Refresh billing status"}
+          </button>
+        </section>
       ) : (
-        <div className="rounded-xl border border-line bg-paper-warm p-5 text-sm text-stone">
+        <section className="space-y-4 rounded-2xl border border-border-warm bg-card p-5 sm:p-6 text-sm text-text-muted-warm">
           {stripeConfigured ? (
             <div className="space-y-4">
               <p>
@@ -96,17 +145,22 @@ export function SettingsBillingPageContent() {
               </p>
               <button
                 type="button"
-                className={marketingAtelierButtonClass("lagoon")}
+                className={cn(buttonVariants(), "inline-flex")}
                 disabled={portalLoading}
                 onClick={() => {
                   setPortalLoading(true);
                   setPortalError(null);
-                  void createBillingPortalSession(authFetch, `${window.location.origin}/settings/billing`)
+                  void createBillingPortalSession(
+                    authFetch,
+                    `${window.location.origin}/settings/billing`
+                  )
                     .then((url) => {
                       window.location.href = url;
                     })
                     .catch((err) => {
-                      setPortalError(err instanceof Error ? err.message : "Could not open portal.");
+                      setPortalError(
+                        err instanceof Error ? err.message : "Could not open portal."
+                      );
                       setPortalLoading(false);
                     });
                 }}
@@ -116,22 +170,23 @@ export function SettingsBillingPageContent() {
               {portalError ? <p className="text-destructive">{portalError}</p> : null}
             </div>
           ) : (
-            "Stripe is not configured in this environment."
+            <p>Stripe is not configured in this environment.</p>
           )}
-          <div className="mt-4">
-            <button
-              type="button"
-              className={marketingAtelierButtonClass("ghost")}
-              onClick={() => {
-                void syncBillingFromStripeWithAuth(authFetch)
-                  .then(() => refreshShell())
-                  .catch(() => refreshShell());
-              }}
-            >
-              Refresh billing status
-            </button>
-          </div>
-        </div>
+          <button
+            type="button"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+            disabled={syncing}
+            onClick={() => {
+              setSyncing(true);
+              void syncBillingFromStripeWithAuth(authFetch)
+                .then(() => refreshShell())
+                .catch(() => refreshShell())
+                .finally(() => setSyncing(false));
+            }}
+          >
+            {syncing ? "Refreshing…" : "Refresh billing status"}
+          </button>
+        </section>
       )}
     </div>
   );
