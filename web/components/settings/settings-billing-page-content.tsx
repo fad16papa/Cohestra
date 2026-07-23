@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { UpgradePanel } from "@/components/shell/upgrade-panel";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -11,7 +11,6 @@ import {
   fetchBillingSummaryWithAuth,
   syncBillingFromStripeWithAuth,
 } from "@/lib/billing/billing-api";
-import { MARKETING_PLANS } from "@/lib/marketing/pricing-plans";
 import { cn } from "@/lib/utils";
 
 export function SettingsBillingPageContent() {
@@ -48,13 +47,10 @@ export function SettingsBillingPageContent() {
     );
   }
 
-  const core = MARKETING_PLANS.find((p) => p.id === "core");
-  const pro = MARKETING_PLANS.find((p) => p.id === "pro");
-
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-text-warm">Billing</h1>
+        <h1 className="text-xl font-semibold text-text-warm sm:text-2xl">Billing</h1>
         <p className="mt-1 text-sm text-text-muted-warm">
           Plan: <span className="font-medium text-text-warm">{shell.plan}</span>
           {" · "}
@@ -73,53 +69,13 @@ export function SettingsBillingPageContent() {
       </div>
 
       {shell.plan === "Basic" ? (
-        <section className="space-y-5 rounded-2xl border border-border-warm bg-card p-5 sm:p-6">
-          <div>
-            <h2 className="text-sm font-medium text-text-warm">Upgrade your workspace</h2>
-            <p className="mt-1 text-sm text-text-muted-warm">
-              Choose Core or Pro, then pick monthly or yearly on the next step. Both include a
-              30-day free trial.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[core, pro].filter(Boolean).map((plan) => (
-              <div
-                key={plan!.id}
-                className="rounded-xl border border-border-warm bg-background p-4"
-              >
-                <p className="font-semibold text-text-warm">{plan!.name}</p>
-                <p className="mt-1 text-xs text-text-muted-warm">{plan!.headline}</p>
-                <p className="mt-3 text-base font-semibold text-text-warm">
-                  {plan!.monthlyPrice}
-                  <span className="text-sm font-normal text-text-muted-warm">/mo</span>
-                </p>
-                {plan!.annualMonthlyEquivalent ? (
-                  <p className="text-xs text-text-muted-warm">
-                    or {plan!.annualMonthlyEquivalent}
-                  </p>
-                ) : null}
-                <div className="mt-4 flex flex-col gap-2">
-                  <Link
-                    href={`/billing/checkout?plan=${plan!.id}&interval=monthly`}
-                    className={cn(buttonVariants({ size: "sm" }), "justify-center")}
-                  >
-                    Monthly trial
-                  </Link>
-                  <Link
-                    href={`/billing/checkout?plan=${plan!.id}&interval=annual`}
-                    className={cn(
-                      buttonVariants({ variant: "outline", size: "sm" }),
-                      "justify-center"
-                    )}
-                  >
-                    Yearly trial
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-
+        <div className="space-y-4">
+          <UpgradePanel
+            title="Upgrade your workspace"
+            description="Compare Core and Pro, choose monthly or yearly billing, then continue to Stripe for a 30-day free trial."
+            requiredPlan="Core"
+            isTenantAdmin
+          />
           <button
             type="button"
             className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-text-muted-warm")}
@@ -134,7 +90,7 @@ export function SettingsBillingPageContent() {
           >
             {syncing ? "Refreshing…" : "Refresh billing status"}
           </button>
-        </section>
+        </div>
       ) : (
         <section className="space-y-4 rounded-2xl border border-border-warm bg-card p-5 sm:p-6 text-sm text-text-muted-warm">
           {stripeConfigured ? (

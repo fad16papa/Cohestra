@@ -109,7 +109,7 @@ export function CampaignsListPage() {
     return (
       <UpgradePanel
         title="Email campaigns are a Pro craft"
-        description="Send segmented email outreach to your community with delivery tracking and campaign history on client profiles."
+        description="Compare Core and Pro below. Campaigns unlock on Pro — segmented outreach, delivery tracking, and campaign history on client profiles."
         requiredPlan="Pro"
         isTenantAdmin={shell.isTenantAdmin}
       />

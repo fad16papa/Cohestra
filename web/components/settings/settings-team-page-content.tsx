@@ -125,7 +125,7 @@ export function SettingsTeamPageContent() {
     return (
       <UpgradePanel
         title="Add a second keyholder"
-        description="Basic workspaces are intentionally solo. Upgrade to Core or Pro to invite a partner who can help operate the atelier."
+        description="Basic workspaces are intentionally solo. Compare Core and Pro below — both unlock team invites up to your plan seat cap."
         requiredPlan="Core"
         isTenantAdmin
       />

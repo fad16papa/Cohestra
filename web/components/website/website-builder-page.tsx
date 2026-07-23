@@ -947,7 +947,7 @@ export function WebsiteBuilderPage() {
         />
         <UpgradePanel
           title="Section composer unlocks on Pro"
-          description="Core tenants get a seeded fixed homepage at their subdomain. Upgrade to Pro to edit sections, apply presets, and publish layout changes."
+          description="Your Core plan already includes a fixed branded homepage. Compare plans below — Pro unlocks the section composer, presets, and publish controls."
           requiredPlan="Pro"
           isTenantAdmin={shell?.isTenantAdmin ?? false}
         />

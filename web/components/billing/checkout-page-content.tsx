@@ -41,6 +41,7 @@ function CheckoutContent() {
 
   const trialCopy = useMemo(() => formatTrialDisclaimer(30), []);
   const planMeta = MARKETING_PLANS.find((p) => p.id === plan);
+  const planOptions = MARKETING_PLANS.filter((p) => p.id === "core" || p.id === "pro");
 
   useEffect(() => {
     const handoff = consumeAuthHandoffFromHash();
@@ -104,53 +105,15 @@ function CheckoutContent() {
     );
   }
 
-  if (!plan) {
-    return (
-      <div className="mx-auto max-w-2xl space-y-6 p-6 sm:p-8">
-        <div>
-          <h1 className="text-2xl font-semibold text-text-warm">Choose a plan</h1>
-          <p className="mt-2 text-sm text-text-muted-warm">
-            Pick Core or Pro, then monthly or yearly billing. You get a 30-day free trial.
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {(["core", "pro"] as const).map((id) => {
-            const meta = MARKETING_PLANS.find((p) => p.id === id);
-            if (!meta) {
-              return null;
-            }
-
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setPlan(id)}
-                className="rounded-2xl border border-border-warm bg-card p-5 text-left transition-colors hover:border-primary/40"
-              >
-                <p className="font-semibold text-text-warm">{meta.name}</p>
-                <p className="mt-1 text-sm text-text-muted-warm">{meta.headline}</p>
-                <p className="mt-3 text-lg font-semibold text-text-warm">
-                  {meta.monthlyPrice}
-                  <span className="text-sm font-normal text-text-muted-warm">/mo</span>
-                </p>
-              </button>
-            );
-          })}
-        </div>
-        <Link href="/pricing" className="text-sm text-primary hover:underline">
-          Compare all plans
-        </Link>
-      </div>
-    );
-  }
-
+  const effectivePlan = plan ?? "core";
+  const effectiveMeta = MARKETING_PLANS.find((p) => p.id === effectivePlan) ?? planOptions[0];
   const priceLabel =
     interval === "annual"
-      ? planMeta?.annualMonthlyEquivalent ?? planMeta?.annualPrice
-      : `${planMeta?.monthlyPrice ?? ""}/mo`;
+      ? effectiveMeta?.annualMonthlyEquivalent ?? effectiveMeta?.annualPrice
+      : `${effectiveMeta?.monthlyPrice ?? ""}/mo`;
 
   return (
-    <div className="mx-auto max-w-xl space-y-6 p-6 sm:p-8">
+    <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8">
       <div>
         <Link
           href="/settings/billing"
@@ -159,10 +122,12 @@ function CheckoutContent() {
           <ArrowLeft className="size-4" aria-hidden />
           Back to billing
         </Link>
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-text-warm">
-          Start your {planMeta?.name ?? plan} trial
+        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-text-warm sm:text-3xl">
+          Confirm your plan
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-text-muted-warm">{trialCopy}</p>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted-warm sm:text-base">
+          {trialCopy}
+        </p>
       </div>
 
       {canceled ? (
@@ -174,90 +139,109 @@ function CheckoutContent() {
         </p>
       ) : null}
 
-      <section className="space-y-4 rounded-2xl border border-border-warm bg-card p-5 sm:p-6">
+      <section className="space-y-6 rounded-2xl border border-border-warm bg-card p-5 shadow-sm sm:p-8 lg:p-10">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-text-warm">Billing interval</p>
+          <div
+            role="radiogroup"
+            aria-label="Billing interval"
+            className="inline-flex w-full max-w-sm rounded-xl border border-border-warm bg-muted/40 p-1 sm:w-auto"
+          >
+            {(["monthly", "annual"] as const).map((value) => {
+              const active = interval === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  disabled={starting}
+                  onClick={() => setInterval(value)}
+                  className={cn(
+                    "flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:flex-none",
+                    active
+                      ? "bg-background text-text-warm shadow-sm"
+                      : "text-text-muted-warm hover:text-text-warm"
+                  )}
+                >
+                  {value === "monthly" ? "Monthly" : "Yearly"}
+                  {value === "annual" ? (
+                    <span className="ml-1.5 text-xs font-normal text-primary">Save ~17%</span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <div
           role="radiogroup"
           aria-label="Plan"
-          className="grid gap-2 sm:grid-cols-2"
+          className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5"
         >
-          {(["core", "pro"] as const).map((id) => {
-            const meta = MARKETING_PLANS.find((p) => p.id === id);
-            if (!meta) {
-              return null;
-            }
+          {planOptions.map((meta) => {
+            const active = effectivePlan === meta.id;
+            const cardPrice =
+              interval === "annual"
+                ? meta.annualMonthlyEquivalent ?? meta.annualPrice
+                : `${meta.monthlyPrice}/mo`;
 
-            const active = plan === id;
             return (
               <button
-                key={id}
+                key={meta.id}
                 type="button"
                 role="radio"
                 aria-checked={active}
                 disabled={starting}
-                onClick={() => setPlan(id)}
+                onClick={() => setPlan(meta.id as PlanId)}
                 className={cn(
-                  "rounded-xl border p-4 text-left transition-colors",
+                  "flex h-full flex-col rounded-2xl border p-5 text-left transition-colors sm:p-6",
                   active
                     ? "border-primary bg-primary/5 ring-1 ring-primary/30"
                     : "border-border-warm hover:border-primary/40"
                 )}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-text-warm">{meta.name}</span>
-                  {active ? <Check className="size-4 text-primary" aria-hidden /> : null}
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-lg font-semibold text-text-warm">{meta.name}</p>
+                    <p className="mt-1 text-sm text-text-muted-warm">{meta.headline}</p>
+                  </div>
+                  {active ? <Check className="mt-1 size-5 shrink-0 text-primary" aria-hidden /> : null}
                 </div>
-                <p className="mt-1 text-xs text-text-muted-warm">{meta.headline}</p>
+                <p className="mt-4 text-2xl font-semibold text-text-warm">{cardPrice}</p>
+                {interval === "annual" && meta.annualPrice ? (
+                  <p className="mt-1 text-sm text-text-muted-warm">{meta.annualPrice}</p>
+                ) : null}
+                <ul className="mt-5 flex-1 space-y-2.5 text-sm leading-relaxed text-text-muted-warm">
+                  {meta.features.map((feature) => (
+                    <li key={feature} className="flex gap-2.5">
+                      <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
               </button>
             );
           })}
         </div>
 
-        <div
-          role="radiogroup"
-          aria-label="Billing interval"
-          className="grid grid-cols-2 gap-2"
-        >
-          {(["monthly", "annual"] as const).map((value) => {
-            const active = interval === value;
-            return (
-              <button
-                key={value}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                disabled={starting}
-                onClick={() => setInterval(value)}
-                className={cn(
-                  "rounded-xl border px-4 py-3 text-sm font-medium transition-colors",
-                  active
-                    ? "border-primary bg-primary/5 text-text-warm ring-1 ring-primary/30"
-                    : "border-border-warm text-text-muted-warm hover:border-primary/40 hover:text-text-warm"
-                )}
-              >
-                {value === "monthly" ? "Monthly" : "Yearly"}
-                {value === "annual" ? (
-                  <span className="mt-1 block text-xs font-normal text-primary">
-                    Save ~17%
-                  </span>
-                ) : (
-                  <span className="mt-1 block text-xs font-normal text-text-muted-warm">
-                    Flexible
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="rounded-xl bg-muted/50 px-4 py-3">
-          <p className="text-sm text-text-muted-warm">After trial</p>
-          <p className="mt-1 text-lg font-semibold text-text-warm">{priceLabel}</p>
-          {interval === "annual" && planMeta?.annualPrice ? (
-            <p className="text-xs text-text-muted-warm">{planMeta.annualPrice}</p>
-          ) : null}
-          <p className="mt-2 text-xs text-text-muted-warm">
-            Billed in USD. Stripe may show a local currency estimate at checkout.
-          </p>
+        <div className="flex flex-col gap-4 border-t border-border-warm pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-text-muted-warm">After trial</p>
+            <p className="mt-1 text-lg font-semibold text-text-warm">{priceLabel}</p>
+            <p className="mt-1 text-xs text-text-muted-warm">
+              Billed in USD. Stripe may show a local currency estimate at checkout.
+            </p>
+          </div>
+          <Button
+            type="button"
+            size="lg"
+            className="w-full sm:w-auto sm:min-w-[14rem]"
+            disabled={starting}
+            onClick={() => void startCheckout(effectivePlan, interval)}
+          >
+            {starting ? "Redirecting to Stripe…" : `Continue with ${effectiveMeta?.name ?? "plan"}`}
+          </Button>
         </div>
 
         {error ? (
@@ -265,16 +249,6 @@ function CheckoutContent() {
             {error}
           </p>
         ) : null}
-
-        <Button
-          type="button"
-          size="lg"
-          className="w-full"
-          disabled={starting}
-          onClick={() => void startCheckout(plan, interval)}
-        >
-          {starting ? "Redirecting to Stripe…" : "Continue to Stripe Checkout"}
-        </Button>
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
