@@ -236,25 +236,29 @@ export function getTestCaptchaToken(): string {
 
 export function buildTenantDashboardUrl(slug: string): string {
   if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
+    const { hostname, protocol, port, origin } = window.location;
+    const portSuffix = port ? `:${port}` : "";
 
     if (hostname.endsWith(".nip.io")) {
       const nipHost = hostname.startsWith("www.") ? hostname.slice(4) : hostname;
       const parts = nipHost.split(".");
       // Tenant host: slug.129-212-235-2.nip.io (4 labels)
       if (parts.length >= 4) {
-        return `${window.location.origin}/dashboard`;
+        return `${origin}/dashboard`;
       }
 
       // Marketing apex: 129-212-235-2.nip.io (3 labels)
       if (parts.length === 3) {
-        const protocol = window.location.protocol;
         return `${protocol}//${slug}.${parts[0]}.nip.io/dashboard`;
       }
     }
 
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return `http://${slug}.localhost/dashboard`;
+    if (
+      hostname === "localhost"
+      || hostname === "127.0.0.1"
+      || (hostname.endsWith(".localhost") && hostname !== "localhost")
+    ) {
+      return `${protocol}//${slug}.localhost${portSuffix}/dashboard`;
     }
 
     if (hostname.endsWith(".cohestra.app")) {
