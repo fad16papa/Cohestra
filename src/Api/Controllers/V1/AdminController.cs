@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Cohestra.Contracts.Admin;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Branding;
 using Cohestra.Infrastructure.Identity;
@@ -34,7 +35,6 @@ public class AdminController(UserManager<ApplicationUser> userManager) : Control
     }
 
     [HttpPatch("me/appearance")]
-    [Authorize(Policy = TenantAuthPolicies.TenantAdminOnly)]
     [ProducesResponseType(typeof(AdminProfileResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -53,23 +53,36 @@ public class AdminController(UserManager<ApplicationUser> userManager) : Control
             return BadRequestProblem("Theme preference must be light, dark, or system.");
         }
 
-        var brandValidation = BrandAccentValidator.Validate(request.BrandAccentColor);
-        if (brandValidation is not null)
-        {
-            return BadRequestProblem(brandValidation);
-        }
-
         var user = await GetCurrentUserAsync(cancellationToken);
         if (user is null)
         {
             return Unauthorized();
         }
 
+        var roles = GetRoles();
+        var isTenantAdmin = roles.Contains(
+            TenantMembershipRole.TenantAdmin.ToString(),
+            StringComparer.Ordinal);
+
+        if (!isTenantAdmin)
+        {
+            // Members may only update theme preference; ignore brand accent payload.
+        }
+        else
+        {
+            var brandValidation = BrandAccentValidator.Validate(request.BrandAccentColor);
+            if (brandValidation is not null)
+            {
+                return BadRequestProblem(brandValidation);
+            }
+
+            user.BrandAccentColor = BrandAccentValidator.Normalize(
+                string.IsNullOrWhiteSpace(request.BrandAccentColor)
+                    ? null
+                    : request.BrandAccentColor);
+        }
+
         user.ThemePreference = request.ThemePreference.ToLowerInvariant();
-        user.BrandAccentColor = BrandAccentValidator.Normalize(
-            string.IsNullOrWhiteSpace(request.BrandAccentColor)
-                ? null
-                : request.BrandAccentColor);
         var result = await userManager.UpdateAsync(user);
         if (!result.Succeeded)
         {

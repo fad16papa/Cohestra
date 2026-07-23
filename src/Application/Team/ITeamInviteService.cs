@@ -84,6 +84,12 @@ public interface ITeamInviteService
         Guid inviteId,
         CancellationToken cancellationToken = default);
 
+    Task<TeamInviteResult> RemoveMemberAsync(
+        Guid tenantId,
+        Guid actorUserId,
+        Guid memberUserId,
+        CancellationToken cancellationToken = default);
+
     Task<InvitePreviewDto?> GetInvitePreviewAsync(string token, CancellationToken cancellationToken = default);
 
     Task<(TeamInviteResult Result, AcceptInviteResultDto? Value)> AcceptInviteAsync(

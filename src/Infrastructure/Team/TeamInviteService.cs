@@ -199,6 +199,50 @@ public sealed class TeamInviteService(
         return TeamInviteResult.Ok();
     }
 
+    public async Task<TeamInviteResult> RemoveMemberAsync(
+        Guid tenantId,
+        Guid actorUserId,
+        Guid memberUserId,
+        CancellationToken cancellationToken = default)
+    {
+        if (actorUserId == memberUserId)
+        {
+            return TeamInviteResult.Fail(
+                TeamInviteError.Validation,
+                "You cannot remove yourself from the team.");
+        }
+
+        var membership = await dbContext.TenantMemberships
+            .FirstOrDefaultAsync(
+                m => m.TenantId == tenantId && m.UserId == memberUserId,
+                cancellationToken);
+
+        if (membership is null)
+        {
+            return TeamInviteResult.Fail(TeamInviteError.NotFound, "Team member not found.");
+        }
+
+        if (membership.Role == TenantMembershipRole.TenantAdmin)
+        {
+            var otherAdmins = await dbContext.TenantMemberships.CountAsync(
+                m => m.TenantId == tenantId
+                    && m.Role == TenantMembershipRole.TenantAdmin
+                    && m.UserId != memberUserId,
+                cancellationToken);
+
+            if (otherAdmins == 0)
+            {
+                return TeamInviteResult.Fail(
+                    TeamInviteError.Conflict,
+                    "Cannot remove the last workspace admin.");
+            }
+        }
+
+        dbContext.TenantMemberships.Remove(membership);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return TeamInviteResult.Ok();
+    }
+
     public async Task<InvitePreviewDto?> GetInvitePreviewAsync(
         string token,
         CancellationToken cancellationToken = default)

@@ -103,6 +103,49 @@ public sealed class TeamController(
         return NoContent();
     }
 
+    [HttpDelete("members/{memberUserId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RemoveMember(
+        Guid memberUserId,
+        CancellationToken cancellationToken)
+    {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        var actorUserId = ResolveUserId();
+        if (actorUserId is null)
+        {
+            return Forbid();
+        }
+
+        var result = await teamInviteService.RemoveMemberAsync(
+            tenantId,
+            actorUserId.Value,
+            memberUserId,
+            cancellationToken);
+
+        if (result.Succeeded)
+        {
+            return NoContent();
+        }
+
+        return result.Error switch
+        {
+            TeamInviteError.NotFound => NotFound(Problem("Member not found", result.Detail ?? "Member not found.")),
+            TeamInviteError.Conflict => Conflict(
+                Problem("Cannot remove member", result.Detail ?? "Cannot remove member.", "member_remove_conflict")),
+            TeamInviteError.Validation => BadRequest(
+                Problem("Invalid request", result.Detail ?? "Cannot remove member.")),
+            _ => BadRequest(Problem("Remove failed", result.Detail ?? "Could not remove member.")),
+        };
+    }
+
     private Guid? ResolveUserId()
     {
         var sub = User.FindFirstValue(JwtRegisteredClaimNames.Sub)

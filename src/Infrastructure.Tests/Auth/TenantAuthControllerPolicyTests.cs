@@ -39,12 +39,15 @@ public sealed class TenantAuthControllerPolicyTests
     }
 
     [Fact]
-    public void Appearance_patch_is_admin_only()
+    public void Appearance_patch_allows_tenant_operators()
     {
         var method = typeof(AdminController).GetMethod(nameof(AdminController.UpdateAppearance));
         Assert.NotNull(method);
         var authorize = method!.GetCustomAttributes<AuthorizeAttribute>(inherit: true).ToArray();
-        Assert.Contains(authorize, a => a.Policy == TenantAuthPolicies.TenantAdminOnly);
+        Assert.DoesNotContain(authorize, a => a.Policy == TenantAuthPolicies.TenantAdminOnly);
+        Assert.Contains(
+            typeof(AdminController).GetCustomAttributes<AuthorizeAttribute>(inherit: true),
+            a => a.Policy == TenantAuthPolicies.TenantOperator);
     }
 
     [Fact]

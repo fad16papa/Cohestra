@@ -140,6 +140,24 @@ export async function revokeTeamInvite(
   throw new Error(typeof detail === "string" ? detail : "Could not revoke invite.");
 }
 
+export async function removeTeamMember(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  memberUserId: string
+): Promise<void> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/team/members/${memberUserId}`,
+    { method: "DELETE" }
+  );
+
+  if (response.ok) {
+    return;
+  }
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  const detail = raw.detail ?? raw.Detail;
+  throw new Error(typeof detail === "string" ? detail : "Could not remove member.");
+}
+
 export async function fetchInvitePreview(token: string): Promise<InvitePreview> {
   const url = `${getPublicApiBaseUrl()}/api/v1/public/team/invites/preview?token=${encodeURIComponent(token)}`;
   const response = await fetch(url);

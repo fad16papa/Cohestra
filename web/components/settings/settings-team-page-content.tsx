@@ -13,12 +13,13 @@ import { Label } from "@/components/ui/label";
 import {
   createTeamInvite,
   fetchTeamOverview,
+  removeTeamMember,
   revokeTeamInvite,
   type TeamOverview,
 } from "@/lib/team/team-api";
 
 export function SettingsTeamPageContent() {
-  const { authFetch } = useAuth();
+  const { authFetch, profile } = useAuth();
   const { shell, refreshShell } = useTenantShell();
   const [team, setTeam] = useState<TeamOverview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +27,7 @@ export function SettingsTeamPageContent() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"TenantMember" | "TenantAdmin">("TenantMember");
   const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const loadTeam = useCallback(async () => {
     setLoading(true);
@@ -96,7 +98,7 @@ export function SettingsTeamPageContent() {
         >
           <p className="font-medium">Seat cap reached</p>
           <p className="mt-1 text-amber-900/90">
-            Revoke a pending invite or{" "}
+            Revoke a pending invite, remove a member, or{" "}
             <Link href="/billing/checkout?plan=pro&interval=monthly" className="underline">
               upgrade your plan
             </Link>{" "}
@@ -108,45 +110,85 @@ export function SettingsTeamPageContent() {
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-ink">Members</h2>
         <ul className="divide-y divide-line rounded-xl border border-line bg-paper-warm">
-          {team.members.map((member) => (
-            <li key={member.userId} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-              <div>
-                <p className="font-medium text-ink">{member.nickname ?? member.email}</p>
-                <p className="text-stone">{member.email}</p>
-              </div>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-stone">{member.role}</span>
-            </li>
-          ))}
+          {team.members.map((member) => {
+            const isSelf = profile?.userId === member.userId;
+            const canRemove = !isSelf;
+
+            return (
+              <li key={member.userId} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                <div>
+                  <p className="font-medium text-ink">
+                    {member.nickname ?? member.email}
+                    {isSelf ? (
+                      <span className="ml-2 text-xs font-normal text-stone">(you)</span>
+                    ) : null}
+                  </p>
+                  <p className="text-stone">{member.email}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-stone">{member.role}</span>
+                  {canRemove ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setActionError(null);
+                        void removeTeamMember(authFetch, member.userId)
+                          .then(() => loadTeam())
+                          .catch((err) =>
+                            setActionError(err instanceof Error ? err.message : "Could not remove member.")
+                          );
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </section>
 
-      {team.invites.length > 0 ? (
-        <section className="space-y-3">
-          <h2 className="text-sm font-medium text-ink">Pending invites</h2>
+      <section className="space-y-3">
+        <h2 className="text-sm font-medium text-ink">Pending invites</h2>
+        {team.invites.length > 0 ? (
           <ul className="divide-y divide-line rounded-xl border border-line bg-paper-warm">
             {team.invites.map((invite) => (
               <li key={invite.inviteId} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                 <div>
                   <p className="font-medium text-ink">{invite.email}</p>
                   <p className="text-stone">
-                    Expires {new Date(invite.expiresAt).toLocaleDateString()}
+                    {invite.role} · expires {new Date(invite.expiresAt).toLocaleDateString()}
                   </p>
                 </div>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    void revokeTeamInvite(authFetch, invite.inviteId).then(() => loadTeam())
-                  }
+                  onClick={() => {
+                    setActionError(null);
+                    void revokeTeamInvite(authFetch, invite.inviteId)
+                      .then(() => loadTeam())
+                      .catch((err) =>
+                        setActionError(err instanceof Error ? err.message : "Could not revoke invite.")
+                      );
+                  }}
                 >
                   Revoke
                 </Button>
               </li>
             ))}
           </ul>
-        </section>
-      ) : null}
+        ) : (
+          <p className="rounded-xl border border-line bg-paper-warm px-4 py-3 text-sm text-stone">
+            No pending invites. Sent invites appear here until accepted or revoked.
+          </p>
+        )}
+      </section>
+
+      {actionError ? <p className="text-sm text-destructive">{actionError}</p> : null}
 
       <section className="space-y-4 rounded-xl border border-line bg-paper-warm p-5">
         <h2 className="text-sm font-medium text-ink">Invite by email</h2>
