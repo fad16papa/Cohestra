@@ -2,10 +2,12 @@ using Cohestra.Application.Team;
 using Cohestra.Contracts.Team;
 using Cohestra.Domain.Tenants;
 using Cohestra.Application.Tenants;
+using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -15,7 +17,10 @@ namespace Cohestra.Api.Controllers.V1;
 [Route("api/v1/admin/team")]
 [Authorize(Policy = TenantAuthPolicies.TenantAdminOnly)]
 [Produces("application/json")]
-public sealed class TeamController(ITeamInviteService teamInviteService, ICurrentTenant currentTenant) : ControllerBase
+public sealed class TeamController(
+    ITeamInviteService teamInviteService,
+    ICurrentTenant currentTenant,
+    IOptions<PublicWebOptions> publicWebOptions) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(TeamOverviewResponse), StatusCodes.Status200OK)]
@@ -45,7 +50,9 @@ public sealed class TeamController(ITeamInviteService teamInviteService, ICurren
             return BadRequest(Problem("Invalid request", "Email is required."));
         }
 
-        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        if (!currentTenant.IsResolved
+            || currentTenant.TenantId is not Guid tenantId
+            || string.IsNullOrWhiteSpace(currentTenant.Slug))
         {
             return Forbid();
         }
@@ -61,7 +68,10 @@ public sealed class TeamController(ITeamInviteService teamInviteService, ICurren
             return Forbid();
         }
 
-        var acceptBaseUrl = $"{Request.Scheme}://{Request.Host.Value}/invite/accept";
+        var acceptBaseUrl = TenantPublicWebUrlBuilder.BuildTenantPath(
+            publicWebOptions.Value.BaseUrl,
+            currentTenant.Slug,
+            "/invite/accept");
         var result = await teamInviteService.CreateInviteAsync(
             tenantId,
             userId.Value,
