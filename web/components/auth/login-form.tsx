@@ -13,25 +13,45 @@ import { cn } from "@/lib/utils";
 
 type LoginFormProps = {
   showSessionExpiredNotice?: boolean;
+  initialEmail?: string;
+  invitedAccept?: boolean;
 };
 
 const fieldShellClassName =
   "flex min-h-12 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30";
 
-export function LoginForm({ showSessionExpiredNotice = false }: LoginFormProps) {
+export function LoginForm({
+  showSessionExpiredNotice = false,
+  initialEmail = "",
+  invitedAccept = false,
+}: LoginFormProps) {
   const router = useRouter();
   const { applyProfile, profile, status } = useAuth();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (initialEmail) {
+      setEmail(initialEmail);
+    }
+  }, [initialEmail]);
+
+  useEffect(() => {
     if (status === "authenticated" && profile) {
+      if (
+        invitedAccept
+        && initialEmail
+        && profile.email.toLowerCase() !== initialEmail.trim().toLowerCase()
+      ) {
+        return;
+      }
+
       router.replace(resolvePostLoginPath(profile));
     }
-  }, [profile, router, status]);
+  }, [initialEmail, invitedAccept, profile, router, status]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

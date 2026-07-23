@@ -6,9 +6,10 @@ import { useSearchParams } from "next/navigation";
 
 import { AuthFlowShell } from "@/components/auth/auth-flow-shell";
 import { LoginForm } from "@/components/auth/login-form";
-import { SESSION_EXPIRED_MESSAGE } from "@/components/auth/auth-provider";
+import { SESSION_EXPIRED_MESSAGE, useAuth } from "@/components/auth/auth-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import { fetchOnboardingStatus } from "@/lib/auth-api";
+import { clearAuthSession } from "@/lib/auth-storage";
 import type { PublishedSiteBranding } from "@/lib/site-seo-metadata";
 
 function LoginPageContent({
@@ -18,8 +19,11 @@ function LoginPageContent({
 }) {
   const searchParams = useSearchParams();
   const { showToast } = useToast();
+  const { profile, status } = useAuth();
   const reason = searchParams.get("reason");
   const reset = searchParams.get("reset");
+  const invitedEmail = searchParams.get("email")?.trim() ?? "";
+  const invitedAccept = searchParams.get("invited") === "1";
   const showSessionExpiredNotice = reason === "session-expired";
 
   useEffect(() => {
@@ -33,6 +37,21 @@ function LoginPageContent({
       showToast("Password updated. Sign in with your new password.");
     }
   }, [reset, showToast]);
+
+  useEffect(() => {
+    if (!invitedAccept || !invitedEmail || status !== "authenticated" || !profile) {
+      return;
+    }
+
+    if (profile.email.toLowerCase() === invitedEmail.toLowerCase()) {
+      return;
+    }
+
+    clearAuthSession();
+    window.location.replace(
+      `/login?email=${encodeURIComponent(invitedEmail)}&invited=1`
+    );
+  }, [invitedAccept, invitedEmail, profile, status]);
 
   return (
     <AuthFlowShell
@@ -53,7 +72,11 @@ function LoginPageContent({
         </div>
       }
     >
-      <LoginForm showSessionExpiredNotice={showSessionExpiredNotice} />
+      <LoginForm
+        showSessionExpiredNotice={showSessionExpiredNotice}
+        initialEmail={invitedEmail}
+        invitedAccept={invitedAccept}
+      />
     </AuthFlowShell>
   );
 }

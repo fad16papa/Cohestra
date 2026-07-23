@@ -1,17 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { useAuth } from "@/components/auth/auth-provider";
 import { marketingAtelierButtonClass } from "@/components/marketing/marketing-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { loginWithPassword } from "@/lib/auth-api";
+import { clearAuthSession } from "@/lib/auth-storage";
+import { buildTenantDashboardUrl } from "@/lib/signup/signup-api";
 import { acceptTeamInvite, fetchInvitePreview, type InvitePreview } from "@/lib/team/team-api";
+
+function buildTenantLoginUrl(slug: string, query: Record<string, string>): string {
+  const dashboardUrl = buildTenantDashboardUrl(slug);
+  const loginUrl = dashboardUrl.replace(/\/dashboard\/?$/, "/login");
+  const params = new URLSearchParams(query);
+  return `${loginUrl}?${params.toString()}`;
+}
 
 export function InviteAcceptPageClient() {
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const { applyProfile } = useAuth();
   const token = searchParams.get("token") ?? "";
 
   const [preview, setPreview] = useState<InvitePreview | null>(null);
@@ -68,8 +79,23 @@ export function InviteAcceptPageClient() {
           setSubmitting(true);
           setError(null);
           void acceptTeamInvite(token, password, nickname.trim() || undefined)
-            .then(() => {
-              router.push(`/login?email=${encodeURIComponent(preview.email)}&invited=1`);
+            .then(async (result) => {
+              // Clear any existing session (e.g. workspace owner testing the invite link).
+              clearAuthSession();
+
+              const loginResult = await loginWithPassword(result.email, password);
+              if (loginResult.ok) {
+                applyProfile(loginResult.profile);
+                window.location.assign(buildTenantDashboardUrl(result.tenantSlug));
+                return;
+              }
+
+              window.location.assign(
+                buildTenantLoginUrl(result.tenantSlug, {
+                  email: result.email,
+                  invited: "1",
+                })
+              );
             })
             .catch((err) => setError(err instanceof Error ? err.message : "Could not accept invite."))
             .finally(() => setSubmitting(false));
