@@ -79,8 +79,28 @@ public sealed class AuthServiceMembershipGuardTests
         var result = await harness.Auth.LoginAsync("orphan@test.local", "ChangeMe123!", "localhost");
 
         Assert.Null(result.Tokens);
-        Assert.Equal("no_tenant_membership", result.ErrorCode);
-        Assert.Contains("not linked to a tenant", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("invalid_credentials", result.ErrorCode);
+        Assert.Contains("Invalid email or password", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Login_masks_removed_member_as_invalid_credentials()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var member = await harness.CreateUserAsync(
+            "member@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: []);
+        await harness.Membership.EnsureMembershipAsync(
+            member.Id, TenantIds.Default, TenantMembershipRole.TenantMember);
+        await harness.RemoveMembershipsAsync(member.Id);
+
+        var result = await harness.Auth.LoginAsync("member@test.local", "ChangeMe123!", "localhost");
+
+        Assert.Null(result.Tokens);
+        Assert.Equal("invalid_credentials", result.ErrorCode);
+        Assert.Contains("Invalid email or password", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -171,7 +191,7 @@ public sealed class AuthServiceMembershipGuardTests
         var result = await harness.Auth.RefreshAsync(refreshToken, "localhost");
 
         Assert.Null(result.Tokens);
-        Assert.Equal("no_tenant_membership", result.ErrorCode);
+        Assert.Equal("invalid_refresh_token", result.ErrorCode);
         Assert.Equal(0, harness.RefreshTokens.ConsumeCount);
         Assert.Equal(1, harness.RefreshTokens.RevokeCount);
         Assert.Null(await harness.RefreshTokens.GetSessionAsync(refreshToken));
@@ -212,8 +232,8 @@ public sealed class AuthServiceMembershipGuardTests
         var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
 
         Assert.Null(result.Tokens);
-        Assert.Equal("no_tenant_membership", result.ErrorCode);
-        Assert.Contains("not a member of this workspace", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("invalid_credentials", result.ErrorCode);
+        Assert.Contains("Invalid email or password", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -255,7 +275,7 @@ public sealed class AuthServiceMembershipGuardTests
 
         var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "localhost");
         Assert.Null(refreshed.Tokens);
-        Assert.Equal("no_tenant_membership", refreshed.ErrorCode);
+        Assert.Equal("invalid_refresh_token", refreshed.ErrorCode);
     }
 
     [Fact]

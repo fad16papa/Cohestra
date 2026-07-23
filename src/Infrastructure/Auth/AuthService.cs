@@ -102,6 +102,11 @@ public sealed class AuthService(
         var session = await ResolveSessionBindingAsync(user, host, preferredTenantId: null, cancellationToken);
         if (session.ErrorCode is not null)
         {
+            if (ShouldMaskAsInvalidCredentials(session.ErrorCode))
+            {
+                return InvalidCredentials();
+            }
+
             return new AuthLoginResult(null, session.ErrorCode, session.ErrorMessage);
         }
 
@@ -150,6 +155,11 @@ public sealed class AuthService(
         if (binding.ErrorCode is not null)
         {
             await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
+            if (ShouldMaskAsInvalidCredentials(binding.ErrorCode))
+            {
+                return InvalidRefreshToken();
+            }
+
             return new AuthLoginResult(null, binding.ErrorCode, binding.ErrorMessage);
         }
 
@@ -159,20 +169,14 @@ public sealed class AuthService(
             && session.TenantId != binding.TenantId)
         {
             await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
-            return new AuthLoginResult(
-                null,
-                "tenant_mismatch",
-                "Refresh token tenant does not match this Host.");
+            return InvalidRefreshToken();
         }
 
         // Stored tenant sessions must keep a live membership — never revive tenant_id via ??.
         if (session.TenantId is not null && binding.TenantId is null)
         {
             await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
-            return new AuthLoginResult(
-                null,
-                binding.ErrorCode ?? "no_tenant_membership",
-                binding.ErrorMessage ?? OrphanMembershipMessage);
+            return InvalidRefreshToken();
         }
 
         var consumed = await refreshTokenStore.ConsumeAsync(refreshToken, cancellationToken);
@@ -756,6 +760,10 @@ public sealed class AuthService(
 
     private static AuthLoginResult InvalidCredentials() =>
         new(null, "invalid_credentials", "Invalid email or password.");
+
+    private static bool ShouldMaskAsInvalidCredentials(string errorCode) =>
+        string.Equals(errorCode, "no_tenant_membership", StringComparison.Ordinal)
+        || string.Equals(errorCode, "tenant_mismatch", StringComparison.Ordinal);
 
     private static AuthLoginResult InvalidRefreshToken() =>
         new(null, "invalid_refresh_token", "Invalid or expired refresh token.");
