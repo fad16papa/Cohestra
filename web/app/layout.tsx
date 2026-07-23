@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Geist, Geist_Mono, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { BrandAccentSync } from "@/components/theme/brand-accent-sync";
+import { MarketingThemeLock } from "@/components/theme/marketing-theme-lock";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ThemePreferenceSync } from "@/components/theme/theme-preference-sync";
 import { ThemeScript } from "@/components/theme/theme-script";
@@ -60,6 +61,7 @@ export default function RootLayout({
           <AuthProvider>
             <ThemeProvider>
               <BrandAccentSync />
+              <MarketingThemeLock />
               <ThemePreferenceSync />
               <div className="flex min-h-0 flex-1 flex-col">{children}</div>
               <AppFooter />

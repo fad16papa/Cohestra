@@ -113,7 +113,7 @@ builder.Services.AddOpenApi("v1", options =>
             Title = "Cohestra API",
             Version = "v1",
             Description =
-                "Activity Lead Engine — REST API v1. " +
+                "Cohestra — REST API v1. " +
                 "Contracts (Epic 2→3 gate): " +
                 "docs/contracts/activity-form-schema-v1.md, " +
                 "docs/contracts/public-registration-v1.md"
