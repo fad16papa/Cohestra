@@ -73,25 +73,41 @@ export function EmailDeliveryChecklist({
   const { authFetch } = useAuth();
   const [status, setStatus] = useState<EmailDeliveryStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [forbidden, setForbidden] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setForbidden(false);
 
     void fetchEmailDeliveryStatus(authFetch)
       .then((result) => {
         if (!cancelled) {
           setStatus(result);
           setError(null);
+          setForbidden(false);
         }
       })
       .catch((loadError) => {
         if (!cancelled) {
           setStatus(null);
+          if (loadError instanceof Error && loadError.message === "__forbidden__") {
+            setForbidden(true);
+            setError(null);
+            return;
+          }
+          setForbidden(false);
           setError(
             loadError instanceof Error
               ? loadError.message
               : "Could not load email delivery status."
           );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
         }
       });
 
@@ -99,6 +115,10 @@ export function EmailDeliveryChecklist({
       cancelled = true;
     };
   }, [authFetch]);
+
+  if (forbidden) {
+    return null;
+  }
 
   if (error) {
     return (
@@ -108,10 +128,14 @@ export function EmailDeliveryChecklist({
     );
   }
 
-  if (!status) {
+  if (loading && !status) {
     return (
       <p className="text-sm text-text-muted-warm">Checking email delivery setup…</p>
     );
+  }
+
+  if (!status) {
+    return null;
   }
 
   if (status.isReady && !showWhenReady) {
