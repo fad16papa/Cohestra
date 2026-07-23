@@ -68,6 +68,20 @@ export async function fetchBillingSummaryWithAuth(
   return mapBillingSummary(raw);
 }
 
+export async function syncBillingFromStripeWithAuth(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>
+): Promise<BillingSummary> {
+  const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/admin/billing/sync`, {
+    method: "POST",
+  });
+  const raw = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    throw new Error(parseProblem(raw));
+  }
+
+  return mapBillingSummary(raw);
+}
+
 export async function createBillingCheckoutWithAuth(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>,
   payload: {

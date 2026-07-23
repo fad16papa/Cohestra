@@ -24,6 +24,11 @@ public static class StripeTenantBillingSync
             mappedPlan = plan;
             mappedInterval = interval;
         }
+        else if (TryMapPlanFromMetadata(subscription.Metadata, out var metadataPlan, out var metadataInterval))
+        {
+            mappedPlan = metadataPlan;
+            mappedInterval = metadataInterval;
+        }
 
         tenant.BillingStatus = MapSubscriptionStatus(subscription.Status);
         tenant.TrialEndsAt = subscription.TrialEnd is null
@@ -204,6 +209,37 @@ public static class StripeTenantBillingSync
         plan = TenantPlan.Basic;
         interval = BillingInterval.Monthly;
         return false;
+    }
+
+    public static bool TryMapPlanFromMetadata(
+        IReadOnlyDictionary<string, string>? metadata,
+        out TenantPlan plan,
+        out BillingInterval? interval)
+    {
+        interval = null;
+        plan = TenantPlan.Basic;
+
+        if (metadata is null
+            || !metadata.TryGetValue("plan", out var planRaw)
+            || !Enum.TryParse(planRaw, ignoreCase: true, out plan)
+            || plan is not (TenantPlan.Core or TenantPlan.Pro))
+        {
+            return false;
+        }
+
+        if (metadata.TryGetValue("interval", out var intervalRaw))
+        {
+            var normalized = intervalRaw.Trim().ToLowerInvariant();
+            interval = normalized switch
+            {
+                "monthly" or "month" => BillingInterval.Monthly,
+                "annual" or "yearly" or "year" => BillingInterval.Annual,
+                _ when Enum.TryParse(intervalRaw, ignoreCase: true, out BillingInterval parsed) => parsed,
+                _ => null,
+            };
+        }
+
+        return true;
     }
 
     public static string? ResolvePriceId(TenantPlan plan, BillingInterval interval, StripeSettings settings) =>

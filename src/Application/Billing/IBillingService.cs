@@ -14,6 +14,13 @@ public interface IBillingService
     Task<PortalSessionDto> CreatePortalSessionAsync(
         CreatePortalSessionCommand command,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Pull the latest Stripe subscription state for this tenant (checkout return / manual refresh).
+    /// </summary>
+    Task<BillingSummaryDto> SyncFromStripeAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record BillingSummaryDto(

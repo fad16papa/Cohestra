@@ -73,6 +73,17 @@ public sealed class StripeTenantBillingSyncTests
     }
 
     [Fact]
+    public void TryMapPlanFromMetadata_ResolvesCoreAndPro()
+    {
+        Assert.True(StripeTenantBillingSync.TryMapPlanFromMetadata(
+            new Dictionary<string, string> { ["plan"] = "Pro", ["interval"] = "monthly" },
+            out var plan,
+            out var interval));
+        Assert.Equal(TenantPlan.Pro, plan);
+        Assert.Equal(BillingInterval.Monthly, interval);
+    }
+
+    [Fact]
     public void BuildTrialDisclaimer_IncludesTrialEndDate()
     {
         var disclaimer = StripeTenantBillingSync.BuildTrialDisclaimer(new DateTimeOffset(2026, 8, 21, 0, 0, 0, TimeSpan.Zero));

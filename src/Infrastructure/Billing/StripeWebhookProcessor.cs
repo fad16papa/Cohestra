@@ -113,7 +113,9 @@ public sealed class StripeWebhookProcessor(
         if (string.IsNullOrWhiteSpace(_settings.SecretKey))
         {
             logger.LogWarning("Stripe secret key missing; cannot fetch subscription {SubscriptionId}", session.SubscriptionId);
-            return false;
+            TryApplyPlanFromCheckoutMetadata(tenant, session.Metadata);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return !string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId);
         }
 
         try
@@ -122,17 +124,69 @@ public sealed class StripeWebhookProcessor(
             var subscriptionService = new SubscriptionService();
             var subscription = await subscriptionService.GetAsync(session.SubscriptionId, cancellationToken: cancellationToken);
             StripeTenantBillingSync.ApplySubscription(tenant, subscription, _settings);
+            if (tenant.Plan == TenantPlan.Basic)
+            {
+                TryApplyPlanFromCheckoutMetadata(tenant, session.Metadata);
+            }
         }
         catch (StripeException ex)
         {
             logger.LogWarning(ex, "Failed to fetch subscription {SubscriptionId} for checkout session {SessionId}",
                 session.SubscriptionId, session.Id);
-            return false;
+            TryApplyPlanFromCheckoutMetadata(tenant, session.Metadata);
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        await EnsureCoreSitePageIfNeededAsync(tenant, cancellationToken);
+        await EnsurePaidSitePageIfNeededAsync(tenant, cancellationToken);
+        return !string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId);
+    }
+
+    private static bool TryApplyPlanFromCheckoutMetadata(
+        Domain.Tenants.Tenant tenant,
+        IReadOnlyDictionary<string, string>? metadata)
+    {
+        if (!StripeTenantBillingSync.TryMapPlanFromMetadata(metadata, out var plan, out var interval))
+        {
+            return false;
+        }
+
+        if (tenant.Plan == plan && (interval is null || tenant.BillingInterval == interval))
+        {
+            return false;
+        }
+
+        tenant.Plan = plan;
+        if (interval is not null)
+        {
+            tenant.BillingInterval = interval;
+        }
+
+        if (tenant.BillingStatus == BillingStatus.Free)
+        {
+            tenant.BillingStatus = BillingStatus.Trialing;
+        }
+
+        tenant.UpdatedAt = DateTimeOffset.UtcNow;
         return true;
+    }
+
+    private async Task EnsurePaidSitePageIfNeededAsync(
+        Domain.Tenants.Tenant tenant,
+        CancellationToken cancellationToken)
+    {
+        if (tenant.Plan is not (TenantPlan.Core or TenantPlan.Pro))
+        {
+            return;
+        }
+
+        await SitePageCoreSeedHelper.EnsureCoreSitePageAsync(
+            dbContext,
+            publishedSiteCache,
+            landingSeedSettings,
+            logger,
+            tenant.Id,
+            tenant.Name,
+            cancellationToken);
     }
 
     private async Task<bool> HandleSubscriptionUpdatedAsync(
@@ -160,27 +214,8 @@ public sealed class StripeWebhookProcessor(
 
         StripeTenantBillingSync.ApplySubscription(tenant, subscription, _settings);
         await dbContext.SaveChangesAsync(cancellationToken);
-        await EnsureCoreSitePageIfNeededAsync(tenant, cancellationToken);
+        await EnsurePaidSitePageIfNeededAsync(tenant, cancellationToken);
         return true;
-    }
-
-    private async Task EnsureCoreSitePageIfNeededAsync(
-        Domain.Tenants.Tenant tenant,
-        CancellationToken cancellationToken)
-    {
-        if (tenant.Plan is not TenantPlan.Core)
-        {
-            return;
-        }
-
-        await SitePageCoreSeedHelper.EnsureCoreSitePageAsync(
-            dbContext,
-            publishedSiteCache,
-            landingSeedSettings,
-            logger,
-            tenant.Id,
-            tenant.Name,
-            cancellationToken);
     }
 
     private async Task<bool> HandleSubscriptionDeletedAsync(

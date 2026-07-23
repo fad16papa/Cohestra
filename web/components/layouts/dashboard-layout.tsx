@@ -3,12 +3,14 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
+import { useAuth } from "@/components/auth/auth-provider";
 import { DashboardMetricsRefreshProvider } from "@/components/dashboard/dashboard-metrics-refresh-context";
 import { AdminSidebar } from "@/components/layouts/admin-sidebar";
 import { AdminTopBar } from "@/components/layouts/admin-top-bar";
 import { AdminShellProvider } from "@/components/layouts/admin-shell-context";
 import { BillingBannerBar } from "@/components/shell/billing-banner";
 import { TenantShellProvider, useTenantShell } from "@/components/shell/tenant-shell-provider";
+import { syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
 import { cn } from "@/lib/utils";
 
 type DashboardLayoutProps = {
@@ -18,13 +20,34 @@ type DashboardLayoutProps = {
 function DashboardShellBody({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { authFetch } = useAuth();
   const { shell, refreshShell } = useTenantShell();
 
   useEffect(() => {
-    if (searchParams.get("billing") === "success") {
-      void refreshShell();
+    if (searchParams.get("billing") !== "success") {
+      return;
     }
-  }, [refreshShell, searchParams]);
+
+    let cancelled = false;
+
+    async function syncAfterCheckout() {
+      try {
+        await syncBillingFromStripeWithAuth(authFetch);
+      } catch {
+        // Webhook may have already synced; still refresh shell below.
+      }
+
+      if (!cancelled) {
+        await refreshShell();
+      }
+    }
+
+    void syncAfterCheckout();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authFetch, refreshShell, searchParams]);
 
   return (
     <div

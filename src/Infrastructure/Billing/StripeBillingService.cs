@@ -1,7 +1,10 @@
 using Cohestra.Application.Billing;
 using Cohestra.Domain.Billing;
+using Cohestra.Domain.Site;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Seed;
+using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,6 +15,8 @@ namespace Cohestra.Infrastructure.Billing;
 
 public sealed class StripeBillingService(
     CohestraDbContext dbContext,
+    IPublishedSiteCache publishedSiteCache,
+    IOptions<SiteLandingSeedSettings> landingSeedSettings,
     IOptions<StripeSettings> stripeOptions,
     ILogger<StripeBillingService> logger) : IBillingService
 {
@@ -94,6 +99,8 @@ public sealed class StripeBillingService(
             {
                 ["tenant_id"] = tenant.Id.ToString(),
                 ["tenant_slug"] = command.TenantSlug,
+                ["plan"] = command.Plan.ToString(),
+                ["interval"] = command.Interval.ToString(),
             },
         };
 
@@ -195,5 +202,68 @@ public sealed class StripeBillingService(
         }
 
         return new PortalSessionDto(session.Url);
+    }
+
+    public async Task<BillingSummaryDto> SyncFromStripeAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_settings.IsConfigured)
+        {
+            return await GetSummaryAsync(tenantId, cancellationToken);
+        }
+
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        if (string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId))
+        {
+            return await GetSummaryAsync(tenantId, cancellationToken);
+        }
+
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+        var subscriptionService = new SubscriptionService();
+        Subscription subscription;
+        try
+        {
+            subscription = await subscriptionService.GetAsync(
+                tenant.StripeSubscriptionId,
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Could not fetch Stripe subscription {SubscriptionId} for tenant {TenantId}",
+                tenant.StripeSubscriptionId,
+                tenantId);
+            return await GetSummaryAsync(tenantId, cancellationToken);
+        }
+
+        StripeTenantBillingSync.ApplySubscription(tenant, subscription, _settings);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await EnsurePaidSitePageIfNeededAsync(tenant, cancellationToken);
+
+        return await GetSummaryAsync(tenantId, cancellationToken);
+    }
+
+    private async Task EnsurePaidSitePageIfNeededAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken)
+    {
+        if (tenant.Plan is not (TenantPlan.Core or TenantPlan.Pro))
+        {
+            return;
+        }
+
+        await SitePageCoreSeedHelper.EnsureCoreSitePageAsync(
+            dbContext,
+            publishedSiteCache,
+            landingSeedSettings,
+            logger,
+            tenant.Id,
+            tenant.Name,
+            cancellationToken);
     }
 }

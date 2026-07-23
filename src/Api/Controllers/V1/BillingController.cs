@@ -39,6 +39,34 @@ public class BillingController(
         return Ok(MapSummary(summary));
     }
 
+    [HttpPost("sync")]
+    [ProducesResponseType(typeof(BillingSummaryResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<BillingSummaryResponse>> Sync(
+        CancellationToken cancellationToken)
+    {
+        if (!stripeOptions.Value.IsConfigured)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new ProblemDetails
+                {
+                    Title = "Billing unavailable",
+                    Detail = "Stripe is not configured in this environment.",
+                    Status = StatusCodes.Status503ServiceUnavailable,
+                });
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        var summary = await billingService.SyncFromStripeAsync(tenantId, cancellationToken);
+        return Ok(MapSummary(summary));
+    }
+
     [HttpPost("checkout")]
     [ProducesResponseType(typeof(CheckoutSessionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

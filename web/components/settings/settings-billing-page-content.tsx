@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
-import { createBillingPortalSession, fetchBillingSummaryWithAuth } from "@/lib/billing/billing-api";
+import { createBillingPortalSession, fetchBillingSummaryWithAuth, syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
 import { marketingAtelierButtonClass } from "@/components/marketing/marketing-shell";
 import { useEffect, useState } from "react";
 
@@ -99,7 +99,11 @@ export function SettingsBillingPageContent() {
             <button
               type="button"
               className={marketingAtelierButtonClass("ghost")}
-              onClick={() => void refreshShell()}
+              onClick={() => {
+                void syncBillingFromStripeWithAuth(authFetch)
+                  .then(() => refreshShell())
+                  .catch(() => refreshShell());
+              }}
             >
               Refresh billing status
             </button>

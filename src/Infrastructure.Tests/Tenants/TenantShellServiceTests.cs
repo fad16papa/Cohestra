@@ -140,4 +140,28 @@ public sealed class TenantShellServiceTests
         Assert.Equal("read_only_over_limit", banner!.Variant);
         Assert.Equal("/billing/checkout?plan=core&interval=monthly", banner.CtaHref);
     }
+
+    [Fact]
+    public void BuildBillingBanner_OverLimitOnPro_HidesUpgradeCta()
+    {
+        var tenant = new Tenant
+        {
+            Plan = TenantPlan.Pro,
+            BillingStatus = BillingStatus.Active,
+        };
+
+        var blockedDial = new Cohestra.Contracts.Admin.LimitDialResponse(
+            "published",
+            "Published activities",
+            50,
+            50,
+            100,
+            Warn: false,
+            Blocked: true);
+
+        var banner = TenantShellService.BuildBillingBanner(tenant, [blockedDial], isTenantAdmin: true);
+
+        Assert.NotNull(banner);
+        Assert.Null(banner!.CtaHref);
+    }
 }
