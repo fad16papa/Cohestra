@@ -20,6 +20,7 @@ public interface IBillingService
     /// </summary>
     Task<BillingSummaryDto> SyncFromStripeAsync(
         Guid tenantId,
+        string? checkoutSessionId = null,
         CancellationToken cancellationToken = default);
 }
 

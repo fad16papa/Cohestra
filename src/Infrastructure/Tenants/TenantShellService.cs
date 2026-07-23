@@ -107,14 +107,18 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
     private static LimitDialResponse BuildDial(string key, string label, int used, int limit)
     {
         var percent = limit <= 0 ? 0 : (int)Math.Min(100, Math.Round(used * 100.0 / limit));
+        // Seats at plan capacity (e.g. Basic 1/1) are normal — only block when over capacity.
+        var blocked = string.Equals(key, "seats", StringComparison.Ordinal)
+            ? used > limit
+            : used >= limit;
         return new LimitDialResponse(
             key,
             label,
             used,
             limit,
             percent,
-            Warn: percent >= 80 && percent < 100,
-            Blocked: used >= limit);
+            Warn: percent >= 80 && !blocked,
+            Blocked: blocked);
     }
 
     internal static BillingBannerResponse? BuildBillingBanner(
@@ -163,7 +167,9 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
                 AdminOnlyCta: true);
         }
 
-        var overLimitDial = limitDials.FirstOrDefault(d => d.Blocked);
+        var overLimitDial = limitDials.FirstOrDefault(d =>
+            d.Blocked
+            && !string.Equals(d.Key, "seats", StringComparison.Ordinal));
         if (overLimitDial is not null)
         {
             var canUpgrade = tenant.Plan is TenantPlan.Basic or TenantPlan.Core;

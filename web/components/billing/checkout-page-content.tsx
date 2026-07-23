@@ -57,7 +57,7 @@ function CheckoutContent() {
       const checkout = await createBillingCheckoutWithAuth(authFetch, {
         plan: plan!,
         interval,
-        successUrl: `${window.location.origin}/dashboard?billing=success`,
+        successUrl: `${window.location.origin}/dashboard?billing=success&session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/billing/checkout?plan=${plan}&interval=${interval}&canceled=1`,
       });
 

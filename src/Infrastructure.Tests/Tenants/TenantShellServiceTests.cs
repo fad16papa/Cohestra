@@ -24,14 +24,33 @@ public sealed class TenantShellServiceTests
     public void BuildLimitDials_BlocksAtCapacity()
     {
         var limits = TenantPlanLimits.For(TenantPlan.Basic);
-        var usage = new Cohestra.Contracts.Admin.PlanUsageResponse(0, 1, 3, 150);
+        var usage = new Cohestra.Contracts.Admin.PlanUsageResponse(1, 1, 3, 150);
 
         var dials = TenantShellService.BuildLimitDials(limits, usage);
+        var seats = dials.Single(d => d.Key == "seats");
         var published = dials.Single(d => d.Key == "published");
         var registrations = dials.Single(d => d.Key == "registrations");
 
+        Assert.False(seats.Blocked);
+        Assert.True(seats.Warn);
         Assert.True(published.Blocked);
         Assert.True(registrations.Blocked);
+    }
+
+    [Fact]
+    public void BuildBillingBanner_BasicSeatsAtCapacity_DoesNotShowUpgradeBanner()
+    {
+        var tenant = new Tenant
+        {
+            Plan = TenantPlan.Basic,
+            BillingStatus = BillingStatus.Free,
+        };
+
+        var limits = TenantPlanLimits.For(TenantPlan.Basic);
+        var usage = new Cohestra.Contracts.Admin.PlanUsageResponse(1, 0, 0, 0);
+        var dials = TenantShellService.BuildLimitDials(limits, usage);
+
+        Assert.Null(TenantShellService.BuildBillingBanner(tenant, dials, isTenantAdmin: true));
     }
 
     [Fact]

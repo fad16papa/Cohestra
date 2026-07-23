@@ -206,6 +206,7 @@ public sealed class StripeBillingService(
 
     public async Task<BillingSummaryDto> SyncFromStripeAsync(
         Guid tenantId,
+        string? checkoutSessionId = null,
         CancellationToken cancellationToken = default)
     {
         if (!_settings.IsConfigured)
@@ -217,35 +218,163 @@ public sealed class StripeBillingService(
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
             ?? throw new InvalidOperationException("Tenant not found.");
 
-        if (string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId))
-        {
-            return await GetSummaryAsync(tenantId, cancellationToken);
-        }
-
         StripeConfiguration.ApiKey = _settings.SecretKey;
         var subscriptionService = new SubscriptionService();
-        Subscription subscription;
+        Subscription? subscription = null;
+
+        if (!string.IsNullOrWhiteSpace(checkoutSessionId))
+        {
+            subscription = await TryResolveSubscriptionFromCheckoutSessionAsync(
+                tenant,
+                checkoutSessionId,
+                subscriptionService,
+                cancellationToken);
+        }
+
+        subscription ??= await TryResolveSubscriptionFromTenantAsync(
+            tenant,
+            subscriptionService,
+            cancellationToken);
+
+        if (subscription is not null)
+        {
+            StripeTenantBillingSync.ApplySubscription(tenant, subscription, _settings);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await EnsurePaidSitePageIfNeededAsync(tenant, cancellationToken);
+        }
+
+        return await GetSummaryAsync(tenantId, cancellationToken);
+    }
+
+    private async Task<Subscription?> TryResolveSubscriptionFromCheckoutSessionAsync(
+        Tenant tenant,
+        string checkoutSessionId,
+        SubscriptionService subscriptionService,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            subscription = await subscriptionService.GetAsync(
-                tenant.StripeSubscriptionId,
+            var sessionService = new SessionService();
+            var session = await sessionService.GetAsync(checkoutSessionId, cancellationToken: cancellationToken);
+
+            if (session.Metadata is not null
+                && session.Metadata.TryGetValue("tenant_id", out var tenantIdRaw)
+                && Guid.TryParse(tenantIdRaw, out var metadataTenantId)
+                && metadataTenantId != tenant.Id)
+            {
+                logger.LogWarning(
+                    "Checkout session {SessionId} tenant mismatch for tenant {TenantId}",
+                    checkoutSessionId,
+                    tenant.Id);
+                return null;
+            }
+
+            StripeTenantBillingSync.ApplyCheckoutSession(tenant, session, _settings);
+
+            if (string.IsNullOrWhiteSpace(session.SubscriptionId))
+            {
+                ApplyPlanFromCheckoutMetadataIfNeeded(tenant, session.Metadata);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                return null;
+            }
+
+            var subscription = await subscriptionService.GetAsync(
+                session.SubscriptionId,
                 cancellationToken: cancellationToken);
+            ApplyPlanFromCheckoutMetadataIfNeeded(tenant, session.Metadata);
+            return subscription;
         }
         catch (StripeException ex)
         {
             logger.LogWarning(
                 ex,
-                "Could not fetch Stripe subscription {SubscriptionId} for tenant {TenantId}",
-                tenant.StripeSubscriptionId,
-                tenantId);
-            return await GetSummaryAsync(tenantId, cancellationToken);
+                "Could not resolve checkout session {SessionId} for tenant {TenantId}",
+                checkoutSessionId,
+                tenant.Id);
+            return null;
+        }
+    }
+
+    private async Task<Subscription?> TryResolveSubscriptionFromTenantAsync(
+        Tenant tenant,
+        SubscriptionService subscriptionService,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId))
+        {
+            try
+            {
+                return await subscriptionService.GetAsync(
+                    tenant.StripeSubscriptionId,
+                    cancellationToken: cancellationToken);
+            }
+            catch (StripeException ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Could not fetch Stripe subscription {SubscriptionId} for tenant {TenantId}",
+                    tenant.StripeSubscriptionId,
+                    tenant.Id);
+            }
         }
 
-        StripeTenantBillingSync.ApplySubscription(tenant, subscription, _settings);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await EnsurePaidSitePageIfNeededAsync(tenant, cancellationToken);
+        if (string.IsNullOrWhiteSpace(tenant.StripeCustomerId))
+        {
+            return null;
+        }
 
-        return await GetSummaryAsync(tenantId, cancellationToken);
+        try
+        {
+            var subscriptions = await subscriptionService.ListAsync(
+                new SubscriptionListOptions
+                {
+                    Customer = tenant.StripeCustomerId,
+                    Limit = 10,
+                },
+                cancellationToken: cancellationToken);
+
+            return subscriptions.Data
+                .Where(s => s.Status is "trialing" or "active" or "past_due")
+                .OrderByDescending(s => s.Created)
+                .FirstOrDefault();
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Could not list Stripe subscriptions for customer {CustomerId} tenant {TenantId}",
+                tenant.StripeCustomerId,
+                tenant.Id);
+            return null;
+        }
+    }
+
+    private static void ApplyPlanFromCheckoutMetadataIfNeeded(
+        Tenant tenant,
+        IReadOnlyDictionary<string, string>? metadata)
+    {
+        if (tenant.Plan is TenantPlan.Core or TenantPlan.Pro)
+        {
+            return;
+        }
+
+        if (!StripeTenantBillingSync.TryMapPlanFromMetadata(metadata, out var plan, out var interval))
+        {
+            return;
+        }
+
+        tenant.Plan = plan;
+        if (interval is not null)
+        {
+            tenant.BillingInterval = interval;
+        }
+
+        if (tenant.BillingStatus == BillingStatus.Free)
+        {
+            tenant.BillingStatus = BillingStatus.Trialing;
+        }
+
+        tenant.UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     private async Task EnsurePaidSitePageIfNeededAsync(

@@ -44,6 +44,7 @@ public class BillingController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<ActionResult<BillingSummaryResponse>> Sync(
+        [FromBody] SyncBillingRequest? request,
         CancellationToken cancellationToken)
     {
         if (!stripeOptions.Value.IsConfigured)
@@ -63,7 +64,10 @@ public class BillingController(
             return Forbid();
         }
 
-        var summary = await billingService.SyncFromStripeAsync(tenantId, cancellationToken);
+        var summary = await billingService.SyncFromStripeAsync(
+            tenantId,
+            request?.CheckoutSessionId,
+            cancellationToken);
         return Ok(MapSummary(summary));
     }
 
@@ -141,7 +145,7 @@ public class BillingController(
         }
 
         var successUrl = string.IsNullOrWhiteSpace(request.SuccessUrl)
-            ? $"{tenantBase}/dashboard?billing=success"
+            ? $"{tenantBase}/dashboard?billing=success&session_id={{CHECKOUT_SESSION_ID}}"
             : request.SuccessUrl!;
         var cancelUrl = string.IsNullOrWhiteSpace(request.CancelUrl)
             ? $"{tenantBase}/billing/checkout?canceled=1"

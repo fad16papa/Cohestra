@@ -69,10 +69,15 @@ export async function fetchBillingSummaryWithAuth(
 }
 
 export async function syncBillingFromStripeWithAuth(
-  authFetch: (input: string, init?: RequestInit) => Promise<Response>
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  checkoutSessionId?: string | null
 ): Promise<BillingSummary> {
   const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/admin/billing/sync`, {
     method: "POST",
+    headers: checkoutSessionId ? { "Content-Type": "application/json" } : undefined,
+    body: checkoutSessionId
+      ? JSON.stringify({ checkoutSessionId })
+      : undefined,
   });
   const raw = (await response.json()) as Record<string, unknown>;
   if (!response.ok) {

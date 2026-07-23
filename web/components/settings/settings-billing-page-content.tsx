@@ -6,7 +6,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { createBillingPortalSession, fetchBillingSummaryWithAuth, syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
 import { marketingAtelierButtonClass } from "@/components/marketing/marketing-shell";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function SettingsBillingPageContent() {
   const { authFetch } = useAuth();
@@ -14,12 +14,24 @@ export function SettingsBillingPageContent() {
   const [stripeConfigured, setStripeConfigured] = useState<boolean | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
+  const autoSyncedRef = useRef(false);
 
   useEffect(() => {
     void fetchBillingSummaryWithAuth(authFetch)
       .then((summary) => setStripeConfigured(summary.stripeConfigured))
       .catch(() => setStripeConfigured(false));
   }, [authFetch]);
+
+  useEffect(() => {
+    if (!shell?.isTenantAdmin || shell.plan !== "Basic" || autoSyncedRef.current) {
+      return;
+    }
+
+    autoSyncedRef.current = true;
+    void syncBillingFromStripeWithAuth(authFetch)
+      .then(() => refreshShell())
+      .catch(() => undefined);
+  }, [authFetch, refreshShell, shell?.isTenantAdmin, shell?.plan]);
 
   if (!shell?.isTenantAdmin) {
     return (
@@ -61,6 +73,17 @@ export function SettingsBillingPageContent() {
             <Link href="/billing/checkout?plan=pro&interval=monthly" className={marketingAtelierButtonClass("ghost")}>
               Start Pro trial
             </Link>
+            <button
+              type="button"
+              className={marketingAtelierButtonClass("ghost")}
+              onClick={() => {
+                void syncBillingFromStripeWithAuth(authFetch)
+                  .then(() => refreshShell())
+                  .catch(() => refreshShell());
+              }}
+            >
+              Refresh billing status
+            </button>
           </div>
         </div>
       ) : (

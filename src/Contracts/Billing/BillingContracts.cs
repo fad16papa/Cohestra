@@ -25,4 +25,6 @@ public sealed record CheckoutSessionResponse(
 
 public sealed record CreatePortalSessionRequest(string? ReturnUrl);
 
+public sealed record SyncBillingRequest(string? CheckoutSessionId);
+
 public sealed record PortalSessionResponse(string PortalUrl);

@@ -24,7 +24,9 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
   const { shell, refreshShell } = useTenantShell();
 
   useEffect(() => {
-    if (searchParams.get("billing") !== "success") {
+    const billingSuccess = searchParams.get("billing") === "success";
+    const checkoutSessionId = searchParams.get("session_id");
+    if (!billingSuccess && !checkoutSessionId) {
       return;
     }
 
@@ -32,7 +34,7 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
 
     async function syncAfterCheckout() {
       try {
-        await syncBillingFromStripeWithAuth(authFetch);
+        await syncBillingFromStripeWithAuth(authFetch, checkoutSessionId);
       } catch {
         // Webhook may have already synced; still refresh shell below.
       }
