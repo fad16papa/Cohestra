@@ -23,22 +23,26 @@ public sealed record IdempotencyLookupResult
 public interface IRegistrationIdempotencyStore
 {
     Task<IdempotencyLookupResult> LookupAsync(
+        Guid tenantId,
         string idempotencyKey,
         string requestFingerprint,
         CancellationToken cancellationToken = default);
 
     Task<bool> TryBeginAsync(
+        Guid tenantId,
         string idempotencyKey,
         string requestFingerprint,
         CancellationToken cancellationToken = default);
 
     Task StoreAsync(
+        Guid tenantId,
         string idempotencyKey,
         string requestFingerprint,
         IdempotencyCachedRegistration registration,
         CancellationToken cancellationToken = default);
 
     Task ReleaseLockAsync(
+        Guid tenantId,
         string idempotencyKey,
         CancellationToken cancellationToken = default);
 }

@@ -2,7 +2,9 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Cohestra.Application.Auth;
 using Cohestra.Application.Email;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Auth;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Email;
 using Cohestra.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -24,8 +26,23 @@ public sealed class AuthService(
     ILogger<AuthService> logger,
     IOptions<JwtSettings> jwtOptions,
     IOptions<AuthOtpSettings> otpOptions,
-    IOptions<SendGridSettings> sendGridOptions) : IAuthService
+    IOptions<SendGridSettings> sendGridOptions,
+    ITenantMembershipService tenantMembershipService,
+    ITenantHostResolver tenantHostResolver,
+    ITenantAccessService tenantAccessService) : IAuthService
 {
+    private const string BootstrapClosedMessage =
+        "This workspace already has a tenant admin. Sign in instead.";
+
+    private const string EmailAlreadyRegisteredMessage =
+        "An account with this email already exists. Sign in instead.";
+
+    private const string OrphanMembershipMessage =
+        "Your account is not linked to a tenant. Contact support or your platform administrator.";
+
+    private const string HostMembershipMessage =
+        "Your account is not a member of this workspace. Sign in from your tenant host.";
+
     private static readonly Regex NicknamePattern = new(
         @"^[A-Za-z0-9][A-Za-z0-9\s\-_.]{1,30}[A-Za-z0-9]$",
         RegexOptions.Compiled);
@@ -33,29 +50,20 @@ public sealed class AuthService(
     public async Task<OnboardingStatusResponse> GetOnboardingStatusAsync(
         CancellationToken cancellationToken = default)
     {
-        var existingOperator = await GetExistingOperatorAsync(cancellationToken);
-        if (existingOperator is null)
+        if (await tenantMembershipService.DefaultTenantHasTenantAdminAsync(cancellationToken))
         {
-            return new OnboardingStatusResponse(
-                true,
-                "Create your operator account to get started.");
-        }
-
-        if (!existingOperator.EmailConfirmed)
-        {
-            return new OnboardingStatusResponse(
-                true,
-                "Operator account setup is in progress. Submit the form again with the same email to resend the verification code, or sign in after verifying.");
+            return new OnboardingStatusResponse(false, BootstrapClosedMessage);
         }
 
         return new OnboardingStatusResponse(
-            false,
-            "This workspace already has an operator account. Sign in instead.");
+            true,
+            "Create your operator account to get started.");
     }
 
     public async Task<AuthLoginResult> LoginAsync(
         string email,
         string password,
+        string? host,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
@@ -91,51 +99,104 @@ public sealed class AuthService(
             return InvalidCredentials();
         }
 
-        var tokens = await IssueTokensAsync(user, cancellationToken);
+        var session = await ResolveSessionBindingAsync(user, host, preferredTenantId: null, cancellationToken);
+        if (session.ErrorCode is not null)
+        {
+            if (ShouldMaskAsInvalidCredentials(session.ErrorCode))
+            {
+                return InvalidCredentials();
+            }
+
+            return new AuthLoginResult(null, session.ErrorCode, session.ErrorMessage);
+        }
+
+        var tokens = await IssueTokensAsync(
+            user,
+            session.TenantId,
+            session.MembershipRole,
+            cancellationToken);
+
+        if (session.TenantId is Guid tenantId)
+        {
+            await tenantAccessService.TouchActivityAsync(tenantId, cancellationToken);
+        }
+
         return new AuthLoginResult(tokens, null, null);
     }
 
-    public async Task<AuthTokenResponse?> RefreshAsync(
+    public async Task<AuthLoginResult> RefreshAsync(
         string refreshToken,
+        string? host,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
-            return null;
+            return InvalidRefreshToken();
         }
 
-        var userId = await refreshTokenStore.GetUserIdAsync(refreshToken, cancellationToken);
-        if (userId is null)
+        var session = await refreshTokenStore.GetSessionAsync(refreshToken, cancellationToken);
+        if (session is null)
         {
-            return null;
+            return InvalidRefreshToken();
         }
 
-        var user = await userManager.FindByIdAsync(userId.Value.ToString());
+        var user = await userManager.FindByIdAsync(session.UserId.ToString());
         if (user is null || !user.EmailConfirmed)
         {
             await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
-            return null;
+            return InvalidRefreshToken();
         }
 
-        var consumedUserId = await refreshTokenStore.ConsumeAsync(refreshToken, cancellationToken);
-        if (consumedUserId is null || consumedUserId != userId)
+        var binding = await ResolveSessionBindingAsync(
+            user,
+            host,
+            preferredTenantId: session.TenantId,
+            cancellationToken);
+        if (binding.ErrorCode is not null)
         {
-            return null;
+            await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
+            if (ShouldMaskAsInvalidCredentials(binding.ErrorCode))
+            {
+                return InvalidRefreshToken();
+            }
+
+            return new AuthLoginResult(null, binding.ErrorCode, binding.ErrorMessage);
         }
 
-        return await IssueTokensAsync(user, cancellationToken);
+        // Host (when resolvable) must match stored tenant_id.
+        if (session.TenantId is not null
+            && binding.TenantId is not null
+            && session.TenantId != binding.TenantId)
+        {
+            await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
+            return InvalidRefreshToken();
+        }
+
+        // Stored tenant sessions must keep a live membership — never revive tenant_id via ??.
+        if (session.TenantId is not null && binding.TenantId is null)
+        {
+            await refreshTokenStore.RevokeAsync(refreshToken, cancellationToken);
+            return InvalidRefreshToken();
+        }
+
+        var consumed = await refreshTokenStore.ConsumeAsync(refreshToken, cancellationToken);
+        if (consumed is null || consumed.UserId != session.UserId)
+        {
+            return InvalidRefreshToken();
+        }
+
+        var tokens = await IssueTokensAsync(
+            user,
+            binding.TenantId,
+            binding.MembershipRole,
+            cancellationToken);
+        return new AuthLoginResult(tokens, null, null);
     }
 
     public async Task<(RegisterOperatorResponse? Response, string? Error)> RegisterAsync(
         RegisterOperatorRequest request,
         CancellationToken cancellationToken = default)
     {
-        var existingOperator = await GetExistingOperatorAsync(cancellationToken);
-        if (existingOperator?.EmailConfirmed == true)
-        {
-            return (null, "This workspace already has an operator account. Sign in instead.");
-        }
-
         var email = request.Email?.Trim() ?? string.Empty;
         var nickname = request.Nickname?.Trim() ?? string.Empty;
         var password = request.Password ?? string.Empty;
@@ -145,26 +206,28 @@ public sealed class AuthService(
             return (null, "Enter a valid email address.");
         }
 
-        if (existingOperator is not null
-            && !string.Equals(existingOperator.Email, email, StringComparison.OrdinalIgnoreCase))
-        {
-            return (null, "This workspace already has an operator account. Sign in instead.");
-        }
-
         if (!IsValidNickname(nickname))
         {
             return (null, "Nickname must be 3–32 characters (letters, numbers, spaces, - _ .).");
         }
+
+        var bootstrapClosed =
+            await tenantMembershipService.DefaultTenantHasTenantAdminAsync(cancellationToken);
 
         var existing = await userManager.FindByEmailAsync(email);
         if (existing is not null)
         {
             if (existing.EmailConfirmed)
             {
-                return (null, "This workspace already has an operator account. Sign in instead.");
+                return (null, bootstrapClosed ? BootstrapClosedMessage : EmailAlreadyRegisteredMessage);
             }
 
-            // Resume the single pending operator setup for this email only.
+            // Bootstrap closed = confirmed TenantAdmin exists — no public register/resume.
+            if (bootstrapClosed)
+            {
+                return (null, BootstrapClosedMessage);
+            }
+
             existing.Nickname = nickname;
             var updateResult = await userManager.UpdateAsync(existing);
             if (!updateResult.Succeeded)
@@ -187,6 +250,18 @@ public sealed class AuthService(
                 return (null, FormatIdentityErrors(passwordResult));
             }
 
+            var ensureRole = await EnsureTenantAdminIdentityRoleAsync(existing, deleteOnFailure: false, cancellationToken);
+            if (ensureRole is not null)
+            {
+                return (null, ensureRole);
+            }
+
+            var ensurePending = await EnsureDefaultTenantAdminMembershipAsync(existing.Id, cancellationToken);
+            if (ensurePending is not null)
+            {
+                return (null, ensurePending);
+            }
+
             var sendError = await SendOtpAsync(existing.Email!, existing.Nickname, OtpPurpose.EmailVerification, cancellationToken);
             if (sendError is not null)
             {
@@ -194,6 +269,11 @@ public sealed class AuthService(
             }
 
             return (BuildRegisterResponse(email), null);
+        }
+
+        if (bootstrapClosed)
+        {
+            return (null, BootstrapClosedMessage);
         }
 
         var user = new ApplicationUser
@@ -210,12 +290,22 @@ public sealed class AuthService(
             return (null, FormatIdentityErrors(createResult));
         }
 
-        if (!await roleManager.RoleExistsAsync(OperatorSeeder.AdminRole))
+        var assignRole = await EnsureTenantAdminIdentityRoleAsync(user, deleteOnFailure: true, cancellationToken);
+        if (assignRole is not null)
         {
-            await roleManager.CreateAsync(new IdentityRole<Guid>(OperatorSeeder.AdminRole));
+            return (null, assignRole);
         }
 
-        await userManager.AddToRoleAsync(user, OperatorSeeder.AdminRole);
+        var ensureMembership = await EnsureDefaultTenantAdminMembershipAsync(user.Id, cancellationToken);
+        if (ensureMembership is not null)
+        {
+            if (await tenantMembershipService.CountMembershipsForUserAsync(user.Id, cancellationToken) == 0)
+            {
+                await userManager.DeleteAsync(user);
+            }
+
+            return (null, ensureMembership);
+        }
 
         var sendErrorOnCreate = await SendOtpAsync(user.Email!, user.Nickname, OtpPurpose.EmailVerification, cancellationToken);
         if (sendErrorOnCreate is not null)
@@ -228,6 +318,7 @@ public sealed class AuthService(
 
     public async Task<(AuthTokenResponse? Tokens, string? Error)> VerifyEmailAsync(
         VerifyEmailOtpRequest request,
+        string? host,
         CancellationToken cancellationToken = default)
     {
         var email = request.Email?.Trim() ?? string.Empty;
@@ -246,7 +337,25 @@ public sealed class AuthService(
 
         if (user.EmailConfirmed)
         {
-            return (await IssueTokensAsync(user, cancellationToken), null);
+            var session = await ResolveSessionBindingAsync(user, host, preferredTenantId: null, cancellationToken);
+            if (session.ErrorCode is not null)
+            {
+                return (null, session.ErrorMessage);
+            }
+
+            return (await IssueTokensAsync(user, session.TenantId, session.MembershipRole, cancellationToken), null);
+        }
+
+        // Another confirmed TenantAdmin already closed bootstrap — do not confirm a second admin.
+        if (await tenantMembershipService.DefaultTenantHasTenantAdminAsync(cancellationToken))
+        {
+            return (null, BootstrapClosedMessage);
+        }
+
+        var ensureMembership = await EnsureDefaultTenantAdminMembershipAsync(user.Id, cancellationToken);
+        if (ensureMembership is not null)
+        {
+            return (null, ensureMembership);
         }
 
         if (!await otpStore.ValidateAndConsumeAsync(email, OtpPurpose.EmailVerification, code, cancellationToken))
@@ -261,7 +370,13 @@ public sealed class AuthService(
             return (null, "Could not verify email.");
         }
 
-        return (await IssueTokensAsync(user, cancellationToken), null);
+        var binding = await ResolveSessionBindingAsync(user, host, preferredTenantId: TenantIds.Default, cancellationToken);
+        if (binding.ErrorCode is not null)
+        {
+            return (null, binding.ErrorMessage);
+        }
+
+        return (await IssueTokensAsync(user, binding.TenantId, binding.MembershipRole, cancellationToken), null);
     }
 
     public async Task<(MessageResponse? Response, string? Error)> ResendOtpAsync(
@@ -388,19 +503,131 @@ public sealed class AuthService(
     }
 
     /// <summary>
-    /// Single-operator MVP: at most one Admin account may exist in the workspace.
+    /// PlatformAdmin-only users may authenticate without membership/tenant_id.
+    /// Tenant-scoped users must have membership on the Host-resolved tenant (or preferredTenantId on refresh).
     /// </summary>
-    private async Task<ApplicationUser?> GetExistingOperatorAsync(CancellationToken cancellationToken)
+    private async Task<SessionBinding> ResolveSessionBindingAsync(
+        ApplicationUser user,
+        string? host,
+        Guid? preferredTenantId,
+        CancellationToken cancellationToken)
     {
-        _ = cancellationToken;
-        var admins = await userManager.GetUsersInRoleAsync(OperatorSeeder.AdminRole);
-        return admins.Count switch
+        var isPlatformAdmin = await userManager.IsInRoleAsync(user, PlatformAdminSeeder.PlatformAdminRole);
+        var isTenantAdmin = await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole);
+
+        if (isPlatformAdmin && !isTenantAdmin)
         {
-            0 => null,
-            1 => admins[0],
-            _ => throw new InvalidOperationException(
-                "Multiple operator accounts exist. This workspace supports one operator only."),
-        };
+            return SessionBinding.PlatformOnly();
+        }
+
+        Guid tenantId;
+        if (preferredTenantId is not null)
+        {
+            tenantId = preferredTenantId.Value;
+
+            if (!string.IsNullOrWhiteSpace(host))
+            {
+                var hostResolution = await tenantHostResolver.ResolveAsync(host, cancellationToken);
+                if (hostResolution.IsMarketingHost)
+                {
+                    return SessionBinding.Fail(
+                        "tenant_unresolved",
+                        hostResolution.ErrorDetail ?? "Marketing host has no tenant SitePage context.");
+                }
+
+                if (hostResolution.Succeeded
+                    && hostResolution.TenantId is not null
+                    && hostResolution.TenantId.Value != tenantId)
+                {
+                    return SessionBinding.Fail("tenant_mismatch", "Refresh token tenant does not match this Host.");
+                }
+            }
+        }
+        else
+        {
+            var hostResolution = await tenantHostResolver.ResolveAsync(host, cancellationToken);
+            if (!hostResolution.Succeeded || hostResolution.TenantId is null)
+            {
+                return SessionBinding.Fail(
+                    "tenant_unresolved",
+                    hostResolution.ErrorDetail ?? "Could not resolve tenant from Host.");
+            }
+
+            tenantId = hostResolution.TenantId.Value;
+        }
+
+        var membership = await tenantMembershipService.GetMembershipAsync(user.Id, tenantId, cancellationToken);
+        if (membership is null)
+        {
+            if (isPlatformAdmin)
+            {
+                return SessionBinding.PlatformOnly();
+            }
+
+            var anyMemberships = await tenantMembershipService.CountMembershipsForUserAsync(user.Id, cancellationToken);
+            if (isTenantAdmin && anyMemberships == 0)
+            {
+                return SessionBinding.Fail("no_tenant_membership", OrphanMembershipMessage);
+            }
+
+            return SessionBinding.Fail("no_tenant_membership", HostMembershipMessage);
+        }
+
+        return SessionBinding.ForTenant(membership.TenantId, membership.Role);
+    }
+
+    private async Task<string?> EnsureTenantAdminIdentityRoleAsync(
+        ApplicationUser user,
+        bool deleteOnFailure,
+        CancellationToken cancellationToken)
+    {
+        await OperatorSeeder.EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
+
+        if (await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole))
+        {
+            return null;
+        }
+
+        if (!await RoleExclusivity.CanAssignTenantAdminAsync(userManager, user, logger))
+        {
+            if (deleteOnFailure)
+            {
+                await userManager.DeleteAsync(user);
+            }
+
+            return "This account cannot be registered as a tenant operator.";
+        }
+
+        var addRole = await userManager.AddToRoleAsync(user, OperatorSeeder.TenantAdminRole);
+        if (addRole.Succeeded)
+        {
+            return null;
+        }
+
+        if (deleteOnFailure)
+        {
+            await userManager.DeleteAsync(user);
+        }
+
+        return "Could not assign TenantAdmin role.";
+    }
+
+    private async Task<string?> EnsureDefaultTenantAdminMembershipAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var result = await tenantMembershipService.EnsureMembershipAsync(
+            userId,
+            TenantIds.Default,
+            TenantMembershipRole.TenantAdmin,
+            cancellationToken);
+
+        if (result.Succeeded)
+        {
+            return null;
+        }
+
+        return result.Detail ?? "Could not link operator to the default tenant.";
     }
 
     private RegisterOperatorResponse BuildRegisterResponse(string email)
@@ -503,14 +730,20 @@ public sealed class AuthService(
 
     private async Task<AuthTokenResponse> IssueTokensAsync(
         ApplicationUser user,
+        Guid? tenantId,
+        TenantMembershipRole? membershipRole,
         CancellationToken cancellationToken)
     {
         var roles = await userManager.GetRolesAsync(user);
-        var (accessToken, expiresInSeconds) = jwtTokenService.CreateAccessToken(user, roles);
+        var (accessToken, expiresInSeconds) = jwtTokenService.CreateAccessToken(
+            user,
+            roles,
+            tenantId,
+            membershipRole);
         var refreshToken = GenerateRefreshToken();
         var refreshTtl = TimeSpan.FromHours(jwtOptions.Value.RefreshTokenHours);
 
-        await refreshTokenStore.StoreAsync(refreshToken, user.Id, refreshTtl, cancellationToken);
+        await refreshTokenStore.StoreAsync(refreshToken, user.Id, tenantId, refreshTtl, cancellationToken);
 
         return new AuthTokenResponse(accessToken, refreshToken, expiresInSeconds);
     }
@@ -527,6 +760,13 @@ public sealed class AuthService(
 
     private static AuthLoginResult InvalidCredentials() =>
         new(null, "invalid_credentials", "Invalid email or password.");
+
+    private static bool ShouldMaskAsInvalidCredentials(string errorCode) =>
+        string.Equals(errorCode, "no_tenant_membership", StringComparison.Ordinal)
+        || string.Equals(errorCode, "tenant_mismatch", StringComparison.Ordinal);
+
+    private static AuthLoginResult InvalidRefreshToken() =>
+        new(null, "invalid_refresh_token", "Invalid or expired refresh token.");
 
     private static bool IsValidEmail(string email) =>
         !string.IsNullOrWhiteSpace(email) && email.Contains('@', StringComparison.Ordinal);
@@ -554,4 +794,19 @@ public sealed class AuthService(
 
     private static string FormatIdentityErrors(IdentityResult result) =>
         result.Errors.FirstOrDefault()?.Description ?? "Request could not be completed.";
+
+    private sealed record SessionBinding(
+        Guid? TenantId,
+        TenantMembershipRole? MembershipRole,
+        string? ErrorCode,
+        string? ErrorMessage)
+    {
+        public static SessionBinding PlatformOnly() => new(null, null, null, null);
+
+        public static SessionBinding ForTenant(Guid tenantId, TenantMembershipRole role) =>
+            new(tenantId, role, null, null);
+
+        public static SessionBinding Fail(string errorCode, string message) =>
+            new(null, null, errorCode, message);
+    }
 }

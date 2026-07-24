@@ -1,16 +1,25 @@
+using Cohestra.Application.Tenants;
 using Cohestra.Domain.Clients;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Registrations;
 
-public sealed class ClientDeduplicationService(CohestraDbContext dbContext)
+public sealed class ClientDeduplicationService(
+    CohestraDbContext dbContext,
+    ICurrentTenant currentTenant)
 {
     public async Task<(Client Client, bool Created)> FindOrCreateAsync(
         ExtractedClientProfile profile,
         DateTimeOffset now,
         CancellationToken cancellationToken = default)
     {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null || currentTenant.TenantId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Tenant context is required for client deduplication.");
+        }
+
+        var tenantId = currentTenant.TenantId.Value;
         Client? matchedByPhone = null;
         Client? matchedByEmail = null;
 
@@ -18,7 +27,9 @@ public sealed class ClientDeduplicationService(CohestraDbContext dbContext)
         {
             matchedByPhone = await dbContext.Clients
                 .FirstOrDefaultAsync(
-                    client => client.NormalizedPhone == profile.NormalizedPhone,
+                    client =>
+                        client.TenantId == tenantId &&
+                        client.NormalizedPhone == profile.NormalizedPhone,
                     cancellationToken);
         }
 
@@ -26,7 +37,9 @@ public sealed class ClientDeduplicationService(CohestraDbContext dbContext)
         {
             matchedByEmail = await dbContext.Clients
                 .FirstOrDefaultAsync(
-                    client => client.NormalizedEmail == profile.NormalizedEmail,
+                    client =>
+                        client.TenantId == tenantId &&
+                        client.NormalizedEmail == profile.NormalizedEmail,
                     cancellationToken);
         }
 
@@ -38,6 +51,7 @@ public sealed class ClientDeduplicationService(CohestraDbContext dbContext)
                 profile,
                 now,
                 ClientMatchKind.Phone,
+                tenantId,
                 cancellationToken);
 
             if (mergeSuspect)
@@ -55,6 +69,7 @@ public sealed class ClientDeduplicationService(CohestraDbContext dbContext)
                 profile,
                 now,
                 ClientMatchKind.Email,
+                tenantId,
                 cancellationToken);
 
             if (mergeSuspect)
@@ -68,6 +83,7 @@ public sealed class ClientDeduplicationService(CohestraDbContext dbContext)
         var created = new Client
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId,
             FullName = profile.DisplayName,
             Phone = profile.Phone,
             NormalizedPhone = profile.NormalizedPhone,
@@ -93,6 +109,7 @@ public sealed class ClientDeduplicationService(CohestraDbContext dbContext)
         ExtractedClientProfile profile,
         DateTimeOffset now,
         ClientMatchKind matchKind,
+        Guid tenantId,
         CancellationToken cancellationToken)
     {
         var mergeSuspect = false;
@@ -111,6 +128,7 @@ public sealed class ClientDeduplicationService(CohestraDbContext dbContext)
             }
             else if (HasPhoneConflict(client, profile) ||
                      await IsNormalizedPhoneOwnedByOtherClientAsync(
+                         tenantId,
                          profile.NormalizedPhone!,
                          client.Id,
                          cancellationToken))
@@ -128,6 +146,7 @@ public sealed class ClientDeduplicationService(CohestraDbContext dbContext)
         {
             if (HasEmailConflict(client, profile) ||
                 await IsNormalizedEmailOwnedByOtherClientAsync(
+                    tenantId,
                     profile.NormalizedEmail!,
                     client.Id,
                     cancellationToken))
@@ -184,19 +203,27 @@ public sealed class ClientDeduplicationService(CohestraDbContext dbContext)
         !string.Equals(client.NormalizedPhone, profile.NormalizedPhone, StringComparison.Ordinal);
 
     private async Task<bool> IsNormalizedEmailOwnedByOtherClientAsync(
+        Guid tenantId,
         string normalizedEmail,
         Guid clientId,
         CancellationToken cancellationToken) =>
         await dbContext.Clients.AnyAsync(
-            client => client.NormalizedEmail == normalizedEmail && client.Id != clientId,
+            client =>
+                client.TenantId == tenantId &&
+                client.NormalizedEmail == normalizedEmail &&
+                client.Id != clientId,
             cancellationToken);
 
     private async Task<bool> IsNormalizedPhoneOwnedByOtherClientAsync(
+        Guid tenantId,
         string normalizedPhone,
         Guid clientId,
         CancellationToken cancellationToken) =>
         await dbContext.Clients.AnyAsync(
-            client => client.NormalizedPhone == normalizedPhone && client.Id != clientId,
+            client =>
+                client.TenantId == tenantId &&
+                client.NormalizedPhone == normalizedPhone &&
+                client.Id != clientId,
             cancellationToken);
 
     private enum ClientMatchKind

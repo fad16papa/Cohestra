@@ -1,3 +1,4 @@
+using Cohestra.Domain.Tenants;
 using Cohestra.Domain.Registrations;
 using Cohestra.Infrastructure.Registrations;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,17 @@ internal sealed class RegistrationConfiguration : IEntityTypeConfiguration<Regis
         builder.ToTable("registrations");
 
         builder.HasKey(registration => registration.Id);
+
+        builder.Property(registration => registration.TenantId)
+            .IsRequired();
+
+        builder.HasIndex(registration => registration.TenantId);
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(registration => registration.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
         builder.Property(registration => registration.RegistrationNumber)
             .HasColumnName("registration_number")
@@ -28,7 +40,7 @@ internal sealed class RegistrationConfiguration : IEntityTypeConfiguration<Regis
 
         builder.Property(registration => registration.CreatedAt).IsRequired();
 
-        builder.HasIndex(registration => registration.RegistrationNumber)
+        builder.HasIndex(registration => new { registration.TenantId, registration.RegistrationNumber })
             .IsUnique();
 
         builder.HasIndex(registration => new { registration.ClientId, registration.ActivityId })

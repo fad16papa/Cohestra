@@ -36,7 +36,8 @@ public class AuthController(IAuthService authService) : ControllerBase
         var (response, error) = await authService.RegisterAsync(request, cancellationToken);
         if (response is null)
         {
-            if (error?.Contains("already has an operator", StringComparison.OrdinalIgnoreCase) == true)
+            if (error?.Contains("already has a tenant admin", StringComparison.OrdinalIgnoreCase) == true
+                || error?.Contains("already has an operator", StringComparison.OrdinalIgnoreCase) == true)
             {
                 return ConflictProblem(error);
             }
@@ -59,7 +60,10 @@ public class AuthController(IAuthService authService) : ControllerBase
             return BadRequestProblem("Request body is required.");
         }
 
-        var (tokens, error) = await authService.VerifyEmailAsync(request, cancellationToken);
+        var (tokens, error) = await authService.VerifyEmailAsync(
+            request,
+            Request.Host.Value,
+            cancellationToken);
         if (tokens is null)
         {
             return BadRequestProblem(error ?? "Verification failed.");
@@ -103,7 +107,11 @@ public class AuthController(IAuthService authService) : ControllerBase
             return UnauthorizedProblem("Invalid email or password.");
         }
 
-        var result = await authService.LoginAsync(request.Email, request.Password, cancellationToken);
+        var result = await authService.LoginAsync(
+            request.Email,
+            request.Password,
+            Request.Host.Value,
+            cancellationToken);
         if (result.Tokens is null)
         {
             return UnauthorizedProblem(result.ErrorMessage ?? "Invalid email or password.", result.ErrorCode);
@@ -124,13 +132,18 @@ public class AuthController(IAuthService authService) : ControllerBase
             return UnauthorizedProblem("Invalid or expired refresh token.");
         }
 
-        var result = await authService.RefreshAsync(request.RefreshToken, cancellationToken);
-        if (result is null)
+        var result = await authService.RefreshAsync(
+            request.RefreshToken,
+            Request.Host.Value,
+            cancellationToken);
+        if (result.Tokens is null)
         {
-            return UnauthorizedProblem("Invalid or expired refresh token.");
+            return UnauthorizedProblem(
+                result.ErrorMessage ?? "Invalid or expired refresh token.",
+                result.ErrorCode);
         }
 
-        return Ok(result);
+        return Ok(result.Tokens);
     }
 
     [HttpPost("forgot-password")]
@@ -169,7 +182,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     [HttpPost("change-password")]
-    [Authorize(Roles = OperatorSeeder.AdminRole)]
+    [Authorize(Policy = TenantAuthPolicies.TenantOperator)]
     [ProducesResponseType(typeof(MessageResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

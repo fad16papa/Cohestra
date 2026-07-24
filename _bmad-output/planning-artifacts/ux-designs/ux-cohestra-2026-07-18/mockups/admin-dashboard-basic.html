@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cohestra — Console · Basic</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #070D12;
+      --ink-soft: #141C24;
+      --paper: #FAFBFC;
+      --paper2: #F3F5F7;
+      --stone: #8B939C;
+      --line: #E6E9ED;
+      --lagoon: #0B6B63;
+      --lagoon-deep: #08554F;
+      --lagoon-fg: #F3FFFC;
+      --gold: #A68B5B;
+      --gold-soft: #F4EEE3;
+      --ok: #1F7A5C;
+      --warn: #9A6700;
+      --serif: "Fraunces", Georgia, serif;
+      --sans: "Plus Jakarta Sans", system-ui, sans-serif;
+      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background: var(--paper2);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    .stage { max-width: 1180px; margin: 0 auto; padding: 1.75rem 1.25rem 4rem; }
+    .chrome {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.55rem 0.9rem; margin-bottom: 1rem;
+      background: rgba(250, 251, 252, 0.9); border: 1px solid var(--line); border-radius: 999px;
+      backdrop-filter: blur(12px); font-size: 0.72rem; color: var(--stone);
+    }
+    .chrome .dots { display: flex; gap: 5px; }
+    .chrome .dots i { width: 8px; height: 8px; border-radius: 50%; background: #C8CED6; display: block; }
+    .chrome .url {
+      flex: 1; text-align: center; font-family: ui-monospace, monospace; font-size: 0.68rem;
+      background: var(--paper2); border-radius: 999px; padding: 0.28rem 0.75rem; color: var(--ink-soft);
+    }
+
+    .shell {
+      display: grid; grid-template-columns: 232px 1fr; min-height: 720px;
+      background: var(--paper); border: 1px solid var(--line); border-radius: 20px;
+      overflow: hidden; box-shadow: 0 40px 80px rgba(7, 13, 18, 0.1);
+      animation: rise 0.85s var(--ease) both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: none; }
+    }
+    .side {
+      background: linear-gradient(185deg, var(--ink) 0%, #0F161E 100%);
+      color: rgba(250, 251, 252, 0.92); padding: 1.35rem 1rem 1.25rem; display: flex; flex-direction: column;
+    }
+    .side-brand {
+      display: flex; align-items: center; gap: 0.65rem; padding: 0.15rem 0.4rem 1.35rem;
+      border-bottom: 1px solid rgba(250, 251, 252, 0.08); margin-bottom: 1rem;
+    }
+    .mark {
+      width: 30px; height: 30px; border-radius: 9px;
+      background: var(--lagoon);
+      display: grid; place-items: center; font-family: var(--serif); font-weight: 600; font-size: 0.95rem; color: #fff;
+      box-shadow: 0 0 0 1px rgba(166, 139, 91, 0.35);
+    }
+    .side-brand strong { font-size: 0.95rem; letter-spacing: -0.02em; font-family: var(--serif); font-weight: 500; }
+    .side-brand span { display: block; font-size: 0.62rem; color: rgba(250,251,252,0.4); margin-top: 0.1rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    .nav-label {
+      font-size: 0.58rem; letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(250,251,252,0.32); padding: 0.5rem 0.55rem 0.35rem;
+    }
+    .nav a {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.55rem 0.65rem; border-radius: 10px; margin-bottom: 0.15rem;
+      color: rgba(250,251,252,0.58); font-size: 0.84rem; font-weight: 500; transition: background 0.2s ease, color 0.2s ease;
+    }
+    .nav a:hover { background: rgba(250,251,252,0.05); color: #fff; }
+    .nav a.active { background: rgba(11, 107, 99, 0.35); color: #fff; box-shadow: inset 0 0 0 1px rgba(166, 139, 91, 0.22); }
+    .nav a .soon {
+      font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase;
+      color: rgba(166, 139, 91, 0.9); border: 1px solid rgba(166, 139, 91, 0.3); padding: 0.12rem 0.35rem; border-radius: 4px;
+    }
+    .side-foot { margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(250,251,252,0.08); }
+    .tenant {
+      display: flex; gap: 0.65rem; align-items: center; padding: 0.55rem; border-radius: 12px;
+      background: rgba(250,251,252,0.04);
+    }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--lagoon), #1a4a44);
+      display: grid; place-items: center; font-size: 0.65rem; font-weight: 700; color: #fff;
+    }
+    .tenant strong { display: block; font-size: 0.8rem; }
+    .tenant span { font-size: 0.68rem; color: rgba(250,251,252,0.4); }
+
+    .main { padding: 1.5rem 1.65rem 2rem; }
+    .top {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+      margin-bottom: 1.5rem; flex-wrap: wrap;
+    }
+    .crumb { font-size: 0.625rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); font-weight: 600; margin: 0 0 0.4rem; }
+    .top h1 {
+      margin: 0; font-family: var(--serif); font-size: clamp(1.55rem, 2.5vw, 1.95rem);
+      font-weight: 500; letter-spacing: -0.03em; line-height: 1.15;
+    }
+    .top p { margin: 0.4rem 0 0; color: var(--stone); font-size: 0.92rem; max-width: 36rem; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.72rem; font-weight: 600;
+      background: #E8F5F2; color: var(--lagoon-deep); border: 1px solid rgba(11, 107, 99, 0.15);
+    }
+    .badge i { width: 6px; height: 6px; border-radius: 50%; background: var(--lagoon); }
+
+    .ritual {
+      display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 1rem; margin-bottom: 1.35rem;
+    }
+    .panel {
+      background: var(--paper); border: 1px solid var(--line); border-radius: 16px;
+      padding: 1.25rem 1.35rem;
+    }
+    .panel h2 {
+      margin: 0 0 0.25rem; font-family: var(--serif); font-size: 1.2rem; font-weight: 500; letter-spacing: -0.02em;
+    }
+    .panel .lede { margin: 0 0 1.1rem; color: var(--stone); font-size: 0.86rem; }
+    .steps { list-style: none; margin: 0; padding: 0; }
+    .steps li {
+      display: grid; grid-template-columns: 28px 1fr auto; gap: 0.75rem; align-items: start;
+      padding: 0.75rem 0; border-top: 1px solid var(--line);
+    }
+    .steps li:first-child { border-top: 0; padding-top: 0; }
+    .n {
+      width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center;
+      font-size: 0.72rem; font-weight: 700; background: var(--paper2); color: var(--stone);
+    }
+    .n.done { background: #E8F5F2; color: var(--lagoon-deep); }
+    .n.now { background: var(--ink); color: #fff; box-shadow: 0 0 0 3px rgba(166, 139, 91, 0.22); }
+    .steps strong { display: block; font-size: 0.9rem; margin-bottom: 0.15rem; }
+    .steps span { font-size: 0.78rem; color: var(--stone); line-height: 1.45; }
+    .chip {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 0.28rem 0.5rem; border-radius: 4px; white-space: nowrap; align-self: center;
+    }
+    .chip.ok { background: #E8F5F2; color: var(--ok); }
+    .chip.now { background: var(--gold-soft); color: #7a5c28; }
+    .chip.wait { background: var(--paper2); color: var(--stone); }
+
+    .payoff h2 { margin-bottom: 0.15rem; }
+    .signal {
+      display: flex; align-items: baseline; gap: 0.5rem; margin: 0.85rem 0 0.35rem;
+    }
+    .signal b {
+      font-family: var(--serif); font-size: 2.4rem; font-weight: 500; letter-spacing: -0.04em; line-height: 1;
+    }
+    .signal em { font-style: normal; font-size: 0.8rem; color: var(--stone); }
+    .payoff p { margin: 0 0 1rem; font-size: 0.84rem; color: var(--stone); line-height: 1.55; }
+    .mini-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.55rem 0; border-top: 1px solid var(--line); font-size: 0.8rem;
+    }
+    .mini-row:first-of-type { border-top: 0; }
+    .mini-row span { color: var(--stone); }
+    .mini-row strong { font-weight: 600; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-top: 1rem; width: 100%; height: 44px; padding: 0 1rem; border-radius: 10px;
+      background: var(--lagoon); color: var(--lagoon-fg); font-weight: 600; font-size: 0.84rem;
+      border: 1px solid transparent; transition: transform 0.25s var(--ease), background 0.2s ease;
+    }
+    .btn:hover { background: var(--lagoon-deep); transform: translateY(-1px); }
+    .btn.ghost {
+      background: transparent; color: var(--ink); border-color: var(--line); margin-top: 0.5rem;
+    }
+    .btn.ghost:hover { background: var(--paper2); }
+
+    .section-head {
+      display: flex; justify-content: space-between; align-items: end; gap: 1rem;
+      margin: 0.25rem 0 0.85rem;
+    }
+    .section-head h2 {
+      margin: 0; font-family: var(--serif); font-size: 1.15rem; font-weight: 500; letter-spacing: -0.02em;
+    }
+    .section-head a { font-size: 0.78rem; font-weight: 600; color: var(--lagoon-deep); }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.85rem; margin-bottom: 1.35rem; }
+    .metric {
+      background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 1.1rem 1.15rem;
+      transition: transform 0.3s var(--ease);
+    }
+    .metric:hover { transform: translateY(-2px); }
+    .metric .k { font-size: 0.625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--stone); margin: 0 0 0.45rem; font-weight: 600; }
+    .metric .v { font-family: var(--serif); font-size: 1.85rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; margin: 0; }
+    .metric .h { margin: 0.45rem 0 0; font-size: 0.75rem; color: var(--lagoon); font-weight: 500; }
+
+    .table-wrap {
+      background: var(--paper); border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: left; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--stone); font-weight: 600; padding: 0.75rem 1.1rem; background: var(--paper2);
+      border-bottom: 1px solid var(--line);
+    }
+    td { padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--line); font-size: 0.84rem; vertical-align: middle; }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: rgba(243, 245, 247, 0.55); }
+    .who { display: flex; align-items: center; gap: 0.65rem; }
+    .who .av {
+      width: 30px; height: 30px; border-radius: 9px; background: var(--paper2);
+      display: grid; place-items: center; font-size: 0.62rem; font-weight: 700; color: var(--lagoon-deep);
+    }
+    .who strong { display: block; font-size: 0.84rem; }
+    .who span { font-size: 0.72rem; color: var(--stone); }
+    .tag {
+      display: inline-flex; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.68rem; font-weight: 600;
+    }
+    .tag.ok { background: #E8F5F2; color: var(--ok); }
+    .tag.warn { background: #FBF3E0; color: var(--warn); }
+    .tag.mute { background: var(--paper2); color: var(--stone); }
+    .mono { font-variant-numeric: tabular-nums; color: var(--stone); font-size: 0.78rem; }
+
+    .banner {
+      margin-top: 1.15rem; padding: 0.95rem 1.15rem; border-radius: 16px;
+      background: linear-gradient(180deg, var(--gold-soft) 0%, var(--paper) 100%);
+      border: 1px solid #E8DFD0;
+      display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .banner strong { display: block; font-size: 0.9rem; margin-bottom: 0.15rem; font-family: var(--serif); font-weight: 500; }
+    .banner p { margin: 0; font-size: 0.8rem; color: var(--stone); max-width: 32rem; }
+    .banner a {
+      height: 40px; padding: 0 1rem; border-radius: 10px; background: var(--ink); color: var(--gold-soft);
+      font-size: 0.78rem; font-weight: 600; white-space: nowrap; display: inline-flex; align-items: center;
+    }
+
+    .note {
+      margin-top: 1.25rem; font-size: 0.72rem; color: var(--stone); text-align: center;
+    }
+    .note a { color: var(--lagoon-deep); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+    @media (max-width: 960px) {
+      .shell { grid-template-columns: 1fr; }
+      .side { display: none; }
+      .ritual, .grid-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="chrome" aria-hidden="true">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="url">ikigai.cohestra.app / dashboard</div>
+    </div>
+
+    <div class="shell">
+      <aside class="side">
+        <div class="side-brand">
+          <div class="mark">C</div>
+          <div>
+            <strong>Cohestra</strong>
+            <span>Console</span>
+          </div>
+        </div>
+        <div class="nav-label">Operate</div>
+        <nav class="nav">
+          <a class="active" href="#">Home</a>
+          <a href="#">Activities</a>
+          <a href="#">Clients</a>
+          <a href="#">Check-in</a>
+        </nav>
+        <div class="nav-label">Grow</div>
+        <nav class="nav">
+          <a href="#">Follow-up <span class="soon">Soon</span></a>
+          <a href="share-kit.html">Share kit</a>
+        </nav>
+        <div class="nav-label">Settings</div>
+        <nav class="nav">
+          <a href="team-seat-gate.html">Team</a>
+          <a href="#">Billing</a>
+        </nav>
+        <div class="side-foot">
+          <div class="tenant">
+            <div class="avatar">IK</div>
+            <div>
+              <strong>Ikigai Sports</strong>
+              <span>Basic · 1 seat</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="top">
+          <div>
+            <p class="crumb">Good evening · Saturday</p>
+            <h1>Your house is almost open.</h1>
+            <p>Three quiet steps. Then the people who show up become Clients you can actually follow.</p>
+          </div>
+          <span class="badge"><i></i> Basic · Free forever</span>
+        </div>
+
+        <div class="ritual">
+          <section class="panel">
+            <h2>Opening ritual</h2>
+            <p class="lede">Finish these once. After that, the week runs on the list — not the chat thread.</p>
+            <ol class="steps">
+              <li>
+                <div class="n done">✓</div>
+                <div>
+                  <strong>Community named</strong>
+                  <span>Ikigai Sports · Asia/Jakarta · English</span>
+                </div>
+                <span class="chip ok">Done</span>
+              </li>
+              <li>
+                <div class="n now">2</div>
+                <div>
+                  <strong>First activity</strong>
+                  <span>Create Sunday clinic — then your public page and QR exist.</span>
+                </div>
+                <span class="chip now">Now</span>
+              </li>
+              <li>
+                <div class="n">3</div>
+                <div>
+                  <strong>Share the door</strong>
+                  <span>Copy the link. Print the QR. Put it where people already look.</span>
+                </div>
+                <span class="chip wait">Next</span>
+              </li>
+            </ol>
+            <a class="btn" href="#">Create Sunday clinic →</a>
+            <a class="btn ghost" href="share-kit.html">Open share kit</a>
+          </section>
+
+          <section class="panel payoff">
+            <h2>Why this matters</h2>
+            <div class="signal">
+              <b>1</b>
+              <em>seat · forever free</em>
+            </div>
+            <p>Basic is the atelier for a solo operator. When you need a second keyholder, Core opens the door — without rewriting your house.</p>
+            <div class="mini-row"><span>Public page</span><strong>Ready after activity</strong></div>
+            <div class="mini-row"><span>Client list</span><strong>Builds from RSVPs</strong></div>
+            <div class="mini-row"><span>Follow-up email</span><strong>Core+</strong></div>
+            <div class="mini-row"><span>Paid activities</span><strong>v1.2 · Stripe</strong></div>
+          </section>
+        </div>
+
+        <div class="section-head">
+          <h2>This week</h2>
+          <a href="#">View Clients →</a>
+        </div>
+        <div class="grid-3">
+          <div class="metric">
+            <p class="k">Clients</p>
+            <p class="v">24</p>
+            <p class="h">+6 from last Sunday</p>
+          </div>
+          <div class="metric">
+            <p class="k">RSVPs open</p>
+            <p class="v">18</p>
+            <p class="h">Sunday clinic</p>
+          </div>
+          <div class="metric">
+            <p class="k">Checked in</p>
+            <p class="v">0</p>
+            <p class="h">QR ready at the door</p>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <h2>Recent Clients</h2>
+          <a href="#">Open full list →</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Person</th>
+                <th>Last activity</th>
+                <th>Status</th>
+                <th>Joined</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="who">
+                    <div class="av">EM</div>
+                    <div>
+                      <strong>Elena M.</strong>
+                      <span>elena@example.com</span>
+                    </div>
+                  </div>
+                </td>
+                <td>Sunday clinic</td>
+                <td><span class="tag ok">Going</span></td>
+                <td class="mono">Jul 12</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="who">
+                    <div class="av">SR</div>
+                    <div>
+                      <strong>Sam R.</strong>
+                      <span>sam@example.com</span>
+                    </div>
+                  </div>
+                </td>
+                <td>Sunday clinic</td>
+                <td><span class="tag warn">Maybe</span></td>
+                <td class="mono">Jul 11</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="who">
+                    <div class="av">JK</div>
+                    <div>
+                      <strong>Jordan K.</strong>
+                      <span>jordan@example.com</span>
+                    </div>
+                  </div>
+                </td>
+                <td>Youth open play</td>
+                <td><span class="tag mute">Past</span></td>
+                <td class="mono">Jun 28</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="banner">
+          <div>
+            <strong>When the second keyholder arrives</strong>
+            <p>Core unlocks seats, follow-up, and the quiet automations that keep a community feeling tended — not managed.</p>
+          </div>
+          <a href="marketing-start-free.html">See Core →</a>
+        </div>
+      </main>
+    </div>
+
+    <p class="note">
+      Midnight Atelier · <a href="basic-stub-home.html">Public stub</a> ·
+      <a href="share-kit.html">Share kit</a> ·
+      <a href="marketing-start-free.html">Marketing</a>
+    </p>
+  </div>
+</body>
+</html>

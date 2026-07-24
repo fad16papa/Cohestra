@@ -1,6 +1,6 @@
 import { PublicRegistrationOpen } from "@/components/registration/public-registration-open";
 import { PublicRegistrationUnavailable } from "@/components/registration/public-registration-unavailable";
-import { fetchPublicActivityBySlug } from "@/lib/public-registration-api";
+import { fetchPublicActivityBySlugServer } from "@/lib/public-registration-server-api";
 
 type PublicRegistrationPageProps = {
   params: Promise<{ slug: string }>;
@@ -10,7 +10,7 @@ export default async function PublicRegistrationPage({
   params,
 }: PublicRegistrationPageProps) {
   const { slug } = await params;
-  const result = await fetchPublicActivityBySlug(slug, { serverSide: true });
+  const result = await fetchPublicActivityBySlugServer(slug);
 
   if (result.kind === "not-found") {
     return <PublicRegistrationUnavailable slug={slug} reason="not-found" />;

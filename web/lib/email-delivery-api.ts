@@ -34,6 +34,9 @@ export async function fetchEmailDeliveryStatus(
   );
 
   if (!response.ok) {
+    if (response.status === 403) {
+      throw new Error("__forbidden__");
+    }
     throw new Error(await parseProblemDetail(response));
   }
 

@@ -6,6 +6,8 @@ import { Copy, ExternalLink } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { SitePageRenderer } from "@/components/marketing/site-page-renderer";
 import { PageHeader } from "@/components/shared/page-header";
+import { UpgradePanel } from "@/components/shell/upgrade-panel";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,6 +93,7 @@ import {
   readInitialChecklistVisibility,
 } from "@/lib/website-builder-preferences";
 import { cn } from "@/lib/utils";
+import { isBasicPlan } from "@/lib/shell/tenant-shell-api";
 
 type DeviceMode = "phone" | "desktop";
 
@@ -156,6 +159,7 @@ function useUnsavedChangesGuard(isDirty: boolean) {
 
 export function WebsiteBuilderPage() {
   const { authFetch } = useAuth();
+  const { shell, loading: shellLoading } = useTenantShell();
   const { showToast, showErrorToast, showSuccessToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -876,6 +880,26 @@ export function WebsiteBuilderPage() {
     }
   }
 
+  if (shellLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Website Builder" description="Customize your public homepage" />
+        <div className="h-96 animate-pulse rounded-xl border border-border-warm bg-muted/30" />
+      </div>
+    );
+  }
+
+  if (shell && isBasicPlan(shell.plan)) {
+    return (
+      <UpgradePanel
+        title="Unlock a branded public homepage"
+        description="Basic includes a simple stub listing. Upgrade to Core for a fixed branded homepage, or Pro for the full website builder with custom sections."
+        requiredPlan="Core"
+        isTenantAdmin={shell.isTenantAdmin}
+      />
+    );
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -904,6 +928,58 @@ export function WebsiteBuilderPage() {
         <Button type="button" onClick={() => void loadSite()}>
           Try again
         </Button>
+      </div>
+    );
+  }
+
+  if (adminData.builderLocked) {
+    const previewPayload = {
+      published: draft,
+      publishedAt: adminData.publishedAt,
+      upcomingActivities,
+    };
+
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Website"
+          description="Your Core plan includes a branded fixed homepage. Upgrade to Pro to customize sections and publish changes."
+        />
+        <UpgradePanel
+          title="Section composer unlocks on Pro"
+          description="Your Core plan already includes a fixed branded homepage. Pro unlocks the section composer, presets, and publish controls."
+          requiredPlan="Pro"
+          isTenantAdmin={shell?.isTenantAdmin ?? false}
+        />
+        <WebsiteHealthStrip
+          siteUrl={publicSiteUrl}
+          statusLabel={adminData.published ? "Live" : "Draft saved"}
+          statusClassName="bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
+          publishedAt={adminData.publishedAt}
+          upcomingActivityCount={upcomingActivities.length}
+          enabledSectionCount={enabledSectionCount}
+          publishBlockerCount={0}
+          checklistHidden
+          onCopyLink={() => {
+            void copyTextToClipboard(publicSiteUrl).then((copied) => {
+              if (copied) {
+                showToast("Link copied");
+              } else {
+                showErrorToast("Could not copy link.");
+              }
+            });
+          }}
+          onOpenLive={() => {
+            const siteWindow = window.open(publicSiteUrl, "_blank", "noopener,noreferrer");
+            if (!siteWindow) {
+              showErrorToast("Popup blocked. Allow popups for this site and try again.");
+            }
+          }}
+          onShowChecklist={() => undefined}
+        />
+        <WebsiteLivePreview deviceMode={deviceMode} onDeviceModeChange={setDeviceMode}>
+          <SitePageRenderer site={previewPayload} isPreview />
+        </WebsiteLivePreview>
       </div>
     );
   }

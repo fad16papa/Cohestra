@@ -1,8 +1,12 @@
+using Cohestra.Domain.Tenants;
+
 namespace Cohestra.Domain.Site;
 
-public sealed class SiteHomepageTemplate
+public sealed class SiteHomepageTemplate : ITenantScoped
 {
     public Guid Id { get; set; }
+
+    public Guid TenantId { get; set; }
 
     public string Name { get; set; } = string.Empty;
 

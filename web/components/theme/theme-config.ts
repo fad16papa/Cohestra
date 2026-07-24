@@ -14,17 +14,39 @@ export function normalizeThemePreference(
   return "system";
 }
 
+/** Marketing apex routes — designed light-only (Midnight Atelier paper tokens). */
+export function isMarketingLightOnlyPath(pathname: string | null): boolean {
+  if (!pathname) {
+    return false;
+  }
+
+  return (
+    pathname === "/"
+    || pathname === "/pricing"
+    || pathname === "/terms"
+    || pathname === "/privacy"
+    || pathname === "/signup"
+    || pathname.startsWith("/signup/")
+    || pathname === "/invite/accept"
+  );
+}
+
 /** Public surfaces use local next-themes storage only — not operator profile preference. */
 export function isPublicLocalThemePath(pathname: string | null): boolean {
   if (!pathname) {
     return false;
   }
 
-  return pathname === "/"
-    || pathname === "/login"
+  if (isMarketingLightOnlyPath(pathname)) {
+    return true;
+  }
+
+  return (
+    pathname === "/login"
     || pathname.startsWith("/register")
     || pathname === "/forgot-password"
-    || pathname === "/reset-password";
+    || pathname === "/reset-password"
+  );
 }
 
 export const themeOptionLabels: Record<ThemePreference, string> = {

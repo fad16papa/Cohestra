@@ -1,4 +1,5 @@
 using Cohestra.Application.Activities;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Activities;
 using Cohestra.Domain.Activities;
 using Cohestra.Infrastructure.Campaigns;
@@ -14,7 +15,8 @@ public sealed class ActivityService(
     CohestraDbContext dbContext,
     IOptions<PublicWebOptions> publicWebOptions,
     IOptions<CampaignAssetOptions> campaignAssetOptions,
-    RedisPublicActivityCache publicActivityCache) : IActivityService
+    RedisPublicActivityCache publicActivityCache,
+    ICurrentTenant currentTenant) : IActivityService
 {
     private const int DefaultPageSize = 25;
     private const int MaxPageSize = 100;
@@ -339,9 +341,15 @@ public sealed class ActivityService(
             return null;
         }
 
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        {
+            return null;
+        }
+
+        var tenantId = currentTenant.TenantId.Value;
         var normalizedSlug = slug.Trim().ToLowerInvariant();
 
-        var cached = await publicActivityCache.GetAsync(normalizedSlug, cancellationToken);
+        var cached = await publicActivityCache.GetAsync(tenantId, normalizedSlug, cancellationToken);
         if (cached is not null)
         {
             return ResolvePublicResponse(cached);
@@ -349,7 +357,9 @@ public sealed class ActivityService(
 
         var activity = await dbContext.Activities
             .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Slug == normalizedSlug, cancellationToken);
+            .FirstOrDefaultAsync(
+                item => item.Slug == normalizedSlug && item.TenantId == tenantId,
+                cancellationToken);
 
         if (activity is null)
         {
@@ -360,7 +370,7 @@ public sealed class ActivityService(
 
         if (activity.Status == ActivityStatus.Published)
         {
-            await publicActivityCache.SetAsync(normalizedSlug, response, cancellationToken);
+            await publicActivityCache.SetAsync(tenantId, normalizedSlug, response, cancellationToken);
         }
 
         return response;
@@ -495,13 +505,14 @@ public sealed class ActivityService(
         if (activity.Status == ActivityStatus.Published)
         {
             await publicActivityCache.SetAsync(
+                activity.TenantId,
                 activity.Slug,
                 MapToPublicResponse(activity),
                 cancellationToken);
             return;
         }
 
-        await publicActivityCache.InvalidateAsync(activity.Slug, cancellationToken);
+        await publicActivityCache.InvalidateAsync(activity.TenantId, activity.Slug, cancellationToken);
     }
 
     private ActivityRegistrationLinkResponse BuildRegistrationLink(string slug)

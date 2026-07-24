@@ -8,30 +8,50 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loginWithPassword } from "@/lib/auth-api";
+import { loginWithPassword, resolvePostLoginPath } from "@/lib/auth-api";
 import { cn } from "@/lib/utils";
 
 type LoginFormProps = {
   showSessionExpiredNotice?: boolean;
+  initialEmail?: string;
+  invitedAccept?: boolean;
 };
 
 const fieldShellClassName =
   "flex min-h-12 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30";
 
-export function LoginForm({ showSessionExpiredNotice = false }: LoginFormProps) {
+export function LoginForm({
+  showSessionExpiredNotice = false,
+  initialEmail = "",
+  invitedAccept = false,
+}: LoginFormProps) {
   const router = useRouter();
-  const { applyProfile, status } = useAuth();
-  const [email, setEmail] = useState("");
+  const { applyProfile, profile, status } = useAuth();
+  const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated") {
-      router.replace("/dashboard");
+    if (initialEmail) {
+      setEmail(initialEmail);
     }
-  }, [router, status]);
+  }, [initialEmail]);
+
+  useEffect(() => {
+    if (status === "authenticated" && profile) {
+      if (
+        invitedAccept
+        && initialEmail
+        && profile.email.toLowerCase() !== initialEmail.trim().toLowerCase()
+      ) {
+        return;
+      }
+
+      router.replace(resolvePostLoginPath(profile));
+    }
+  }, [initialEmail, invitedAccept, profile, router, status]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -43,7 +63,7 @@ export function LoginForm({ showSessionExpiredNotice = false }: LoginFormProps) 
 
     if (result.ok) {
       applyProfile(result.profile);
-      router.replace("/dashboard");
+      router.replace(resolvePostLoginPath(result.profile));
       return;
     }
 

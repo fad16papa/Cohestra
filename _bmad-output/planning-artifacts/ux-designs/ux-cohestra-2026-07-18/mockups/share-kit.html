@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cohestra — Share kit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #070D12;
+      --ink-soft: #141C24;
+      --paper: #FAFBFC;
+      --paper2: #F3F5F7;
+      --stone: #8B939C;
+      --line: #E6E9ED;
+      --lagoon: #0B6B63;
+      --lagoon-deep: #08554F;
+      --lagoon-fg: #F3FFFC;
+      --gold: #A68B5B;
+      --gold-soft: #F4EEE3;
+      --serif: "Fraunces", Georgia, serif;
+      --sans: "Plus Jakarta Sans", system-ui, sans-serif;
+      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--ink);
+      background: var(--paper2);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    .stage { max-width: 1080px; margin: 0 auto; padding: 1.75rem 1.25rem 4rem; }
+    .chrome {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.55rem 0.9rem; margin-bottom: 1rem;
+      background: rgba(250, 251, 252, 0.9); border: 1px solid var(--line); border-radius: 999px;
+      backdrop-filter: blur(12px); font-size: 0.72rem; color: var(--stone);
+    }
+    .chrome .dots { display: flex; gap: 5px; }
+    .chrome .dots i { width: 8px; height: 8px; border-radius: 50%; background: #C8CED6; display: block; }
+    .chrome .url {
+      flex: 1; text-align: center; font-family: ui-monospace, monospace; font-size: 0.68rem;
+      background: var(--paper); border-radius: 999px; padding: 0.28rem 0.75rem; color: var(--ink-soft);
+    }
+
+    .top {
+      display: flex; justify-content: space-between; align-items: flex-end; gap: 1.25rem;
+      margin-bottom: 1.75rem; flex-wrap: wrap;
+      animation: rise 0.8s var(--ease) both;
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: none; }
+    }
+    .eyebrow {
+      margin: 0 0 0.45rem; font-size: 0.625rem; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--gold); font-weight: 600;
+    }
+    h1 {
+      margin: 0; font-family: var(--serif); font-size: clamp(1.85rem, 3.5vw, 2.55rem);
+      font-weight: 500; letter-spacing: -0.035em; line-height: 1.1; max-width: 14ch;
+    }
+    .lede { margin: 0.65rem 0 0; color: var(--stone); max-width: 34rem; font-size: 0.98rem; }
+    .back {
+      font-size: 0.82rem; font-weight: 600; color: var(--lagoon-deep);
+      height: 40px; padding: 0 0.95rem; border-radius: 10px; border: 1px solid var(--line);
+      background: var(--paper); display: inline-flex; align-items: center;
+    }
+
+    .layout {
+      display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 1.15rem;
+      animation: rise 0.9s var(--ease) 0.08s both;
+    }
+    .card {
+      background: var(--paper); border: 1px solid var(--line); border-radius: 20px;
+      padding: 1.4rem 1.45rem; box-shadow: 0 24px 60px rgba(7, 13, 18, 0.06);
+    }
+    .card h2 {
+      margin: 0 0 0.25rem; font-family: var(--serif); font-size: 1.25rem;
+      font-weight: 500; letter-spacing: -0.02em;
+    }
+    .card .sub { margin: 0 0 1.15rem; color: var(--stone); font-size: 0.86rem; }
+
+    .link-box {
+      display: flex; gap: 0.5rem; align-items: stretch; margin-bottom: 1rem;
+    }
+    .link-box input {
+      flex: 1; border: 1px solid var(--line); border-radius: 10px; padding: 0.75rem 0.95rem;
+      font-family: ui-monospace, monospace; font-size: 0.78rem; background: var(--paper2);
+      color: var(--ink); outline: none;
+    }
+    .link-box button {
+      border: 0; border-radius: 10px; padding: 0 1.1rem; background: var(--ink); color: var(--gold-soft);
+      font-weight: 600; font-size: 0.82rem; cursor: pointer; white-space: nowrap;
+      transition: background 0.2s ease, transform 0.25s var(--ease);
+    }
+    .link-box button:hover { background: var(--ink-soft); transform: translateY(-1px); }
+
+    .channels {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;
+    }
+    .ch {
+      display: flex; flex-direction: column; gap: 0.2rem; align-items: flex-start;
+      padding: 0.85rem 0.95rem; border-radius: 12px; border: 1px solid var(--line);
+      background: var(--paper); transition: border-color 0.2s ease, transform 0.25s var(--ease);
+      text-align: left; cursor: pointer; font: inherit; color: inherit;
+    }
+    .ch:hover { border-color: rgba(11, 107, 99, 0.4); transform: translateY(-2px); }
+    .ch strong { font-size: 0.88rem; }
+    .ch span { font-size: 0.72rem; color: var(--stone); }
+
+    .poster {
+      position: relative; overflow: hidden; border-radius: 16px;
+      background: var(--ink); color: #FAFBFC; min-height: 420px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 1.5rem; box-shadow: 0 40px 80px rgba(7, 13, 18, 0.14);
+    }
+    .poster::before {
+      content: ""; position: absolute; inset: 0;
+      background:
+        linear-gradient(165deg, rgba(7,13,18,0.2) 0%, rgba(7,13,18,0.7) 55%, rgba(7,13,18,0.92) 100%),
+        url("https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=900&q=80") center/cover;
+      z-index: 0;
+    }
+    .poster > * { position: relative; z-index: 1; }
+    .poster .brand {
+      display: flex; align-items: center; gap: 0.55rem; font-size: 0.72rem;
+      letter-spacing: 0.14em; text-transform: uppercase; color: rgba(250,251,252,0.7);
+    }
+    .poster .brand i {
+      width: 22px; height: 22px; border-radius: 7px;
+      background: var(--lagoon);
+      display: grid; place-items: center; font-style: normal; font-weight: 700; font-size: 0.7rem; color: #fff;
+      box-shadow: 0 0 0 1px rgba(166, 139, 91, 0.4);
+    }
+    .poster h3 {
+      margin: 2.5rem 0 0.5rem; font-family: var(--serif); font-size: clamp(1.6rem, 3vw, 2.1rem);
+      font-weight: 500; letter-spacing: -0.03em; line-height: 1.15; max-width: 12ch;
+    }
+    .poster p { margin: 0; color: rgba(250,251,252,0.72); font-size: 0.9rem; max-width: 22rem; }
+    .poster-foot {
+      display: flex; justify-content: space-between; align-items: end; gap: 1rem; margin-top: 2rem;
+    }
+    .qr {
+      width: 88px; height: 88px; border-radius: 12px; background: #fff; padding: 8px;
+      display: grid; place-items: center;
+    }
+    .qr svg { width: 100%; height: 100%; }
+    .poster-meta { text-align: right; font-size: 0.78rem; color: rgba(250,251,252,0.75); }
+    .poster-meta strong { display: block; color: #fff; font-size: 0.92rem; margin-bottom: 0.15rem; }
+
+    .actions {
+      display: flex; gap: 0.55rem; flex-wrap: wrap; margin-top: 1rem;
+    }
+    .actions a, .actions button {
+      border: 1px solid var(--line); background: var(--paper); border-radius: 10px;
+      height: 40px; padding: 0 0.95rem; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+      font-family: inherit; color: var(--ink); transition: transform 0.25s var(--ease), background 0.2s ease;
+      display: inline-flex; align-items: center;
+    }
+    .actions a:hover, .actions button:hover { transform: translateY(-1px); background: #fff; }
+    .actions .primary {
+      background: var(--lagoon); color: var(--lagoon-fg); border-color: transparent;
+    }
+    .actions .primary:hover { background: var(--lagoon-deep); }
+
+    .tip {
+      margin-top: 1.15rem; padding: 1rem 1.1rem; border-radius: 12px;
+      background: linear-gradient(180deg, var(--gold-soft) 0%, var(--paper) 100%);
+      border: 1px solid #E8DFD0; font-size: 0.84rem; color: var(--stone);
+    }
+    .tip strong { color: var(--ink); font-family: var(--serif); font-weight: 500; }
+
+    .note {
+      margin-top: 1.5rem; font-size: 0.72rem; color: var(--stone); text-align: center;
+    }
+    .note a { color: var(--lagoon-deep); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .channels { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="chrome" aria-hidden="true">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="url">ikigai.cohestra.app / share</div>
+    </div>
+
+    <header class="top">
+      <div>
+        <p class="eyebrow">Share kit · Basic</p>
+        <h1>One door. Everywhere they already look.</h1>
+        <p class="lede">Copy the link. Print the poster. Put the QR at the door. The people who walk through become Clients — not another row in a sheet.</p>
+      </div>
+      <a class="back" href="admin-dashboard-basic.html">← Console</a>
+    </header>
+
+    <div class="layout">
+      <section class="card">
+        <h2>Public link</h2>
+        <p class="sub">Same URL for Instagram bio, WhatsApp, and the group chat pinned message.</p>
+        <div class="link-box">
+          <input readonly value="ikigai.cohestra.app" />
+          <button type="button">Copy</button>
+        </div>
+        <div class="channels">
+          <button class="ch" type="button">
+            <strong>WhatsApp</strong>
+            <span>Prefill a warm invite</span>
+          </button>
+          <button class="ch" type="button">
+            <strong>Instagram</strong>
+            <span>Bio + story sticker</span>
+          </button>
+          <button class="ch" type="button">
+            <strong>Email</strong>
+            <span>Short note to last week</span>
+          </button>
+          <button class="ch" type="button">
+            <strong>Download QR</strong>
+            <span>PNG · print ready</span>
+          </button>
+        </div>
+        <div class="tip">
+          <strong>Hospitality tip.</strong> Pin one link. Change the activity underneath — never the door. People learn where to go.
+        </div>
+      </section>
+
+      <section>
+        <div class="poster" aria-label="Printable share poster">
+          <div class="brand"><i>C</i> Cohestra · Ikigai Sports</div>
+          <div>
+            <h3>Sunday clinic — still open.</h3>
+            <p>Scan to RSVP. Show up. We remember you next week.</p>
+          </div>
+          <div class="poster-foot">
+            <div class="qr" aria-hidden="true">
+              <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+                <rect width="80" height="80" fill="#fff"/>
+                <g fill="#070D12">
+                  <rect x="6" y="6" width="22" height="22"/>
+                  <rect x="10" y="10" width="14" height="14" fill="#fff"/>
+                  <rect x="14" y="14" width="6" height="6"/>
+                  <rect x="52" y="6" width="22" height="22"/>
+                  <rect x="56" y="10" width="14" height="14" fill="#fff"/>
+                  <rect x="60" y="14" width="6" height="6"/>
+                  <rect x="6" y="52" width="22" height="22"/>
+                  <rect x="10" y="56" width="14" height="14" fill="#fff"/>
+                  <rect x="14" y="60" width="6" height="6"/>
+                  <rect x="34" y="6" width="4" height="4"/><rect x="42" y="6" width="4" height="4"/>
+                  <rect x="34" y="14" width="4" height="4"/><rect x="38" y="18" width="4" height="4"/>
+                  <rect x="34" y="34" width="4" height="4"/><rect x="42" y="34" width="4" height="4"/>
+                  <rect x="50" y="34" width="4" height="4"/><rect x="58" y="38" width="4" height="4"/>
+                  <rect x="66" y="42" width="4" height="4"/><rect x="34" y="42" width="4" height="4"/>
+                  <rect x="42" y="50" width="4" height="4"/><rect x="50" y="50" width="4" height="4"/>
+                  <rect x="58" y="54" width="4" height="4"/><rect x="66" y="58" width="4" height="4"/>
+                  <rect x="34" y="58" width="4" height="4"/><rect x="42" y="66" width="4" height="4"/>
+                  <rect x="50" y="66" width="8" height="8"/><rect x="66" y="66" width="8" height="8"/>
+                </g>
+              </svg>
+            </div>
+            <div class="poster-meta">
+              <strong>ikigai.cohestra.app</strong>
+              Court 2 · bring water
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="primary" type="button">Download poster · PDF</button>
+          <button type="button">PNG · square</button>
+          <a href="basic-stub-home.html">Preview public page →</a>
+        </div>
+      </section>
+    </div>
+
+    <p class="note">
+      Midnight Atelier · <a href="admin-dashboard-basic.html">Console</a> ·
+      <a href="basic-stub-home.html">Public stub</a> ·
+      <a href="marketing-start-free.html">Marketing</a>
+    </p>
+  </div>
+</body>
+</html>

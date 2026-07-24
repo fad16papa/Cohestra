@@ -1,9 +1,11 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-07T14:45:00Z
+# last_updated: 2026-07-22T08:30:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
+# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–15 active; 16 parked)
+# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–16)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -27,15 +29,22 @@
 #   - optional: Can be completed but not required
 #   - done: Retrospective has been completed
 #
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+#
 # WORKFLOW NOTES:
 # ===============
 # - Epic transitions to 'in-progress' automatically when first story is created
 # - Stories can be worked in parallel if team capacity allows
 # - Developer typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Enterprise next story: 11-1 via bmad-create-story (CS)
+# - Epic 16 is parked (One-stop Lite / UX-DR15) — no v1 stories until pulled forward
 
 generated: 2026-06-16
-last_updated: 2026-07-07T14:45:00Z
+last_updated: 2026-07-22T08:30:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -167,6 +176,57 @@ development_status:
   10-6-section-variants-and-preset-refresh: done
   10-7-integration-tests-and-builder-smoke: done
   epic-10-retrospective: optional
+
+  # === Cohestra Enterprise (epics-cohestra-enterprise.md) ===
+  # Epic 13 complete (13.1–13.4 done) — optional retro
+
+  epic-11: done
+  11-1-tenant-entity-with-dual-status-dials: done
+  11-2-default-tenant-migration-and-tenantid-on-core-entities: done
+  11-3-platform-admin-provision-suspend-reactivate-archive: done
+  11-4-platform-tenant-directory-and-health: done
+  11-5-complimentary-sponsored-tenant-flag: done
+  epic-11-retrospective: optional
+
+  epic-12: done
+  12-1-tenantmembership-and-remove-single-operator-gate: done
+  12-2-jwt-tenant-id-and-tenant-scoped-login: done
+  12-3-enforce-admin-vs-member-server-side: done
+  12-4-platform-admin-role-claim: done
+  epic-12-retrospective: optional
+
+  epic-13: done
+  13-1-tenantresolutionmiddleware-on-all-api-requests: done
+  13-2-ef-global-query-filters-and-redis-tenant-namespaces: done
+  13-3-export-and-report-queries-always-filter-by-tenantid: done
+  13-4-tenantisolation-integration-test-gate-sm-1: done
+  epic-13-retrospective: optional
+
+  epic-14: done
+  14-1-midnight-atelier-tokens-marketing-home-and-pricing: done
+  14-2-legal-pages-and-tos-privacy-acceptance-logging: done
+  14-3-basic-self-serve-signup-captcha-slug-otp-rate-limits: done
+  14-4-core-pro-checkout-webhooks-and-usd-prices: done
+  14-5-admin-shell-planbadge-sponsoredbadge-limitmeter-billingbanner: done
+  14-6-team-invite-and-seatgate: done
+  14-7-customer-portal-period-end-cancel-downgrade-over-limit: done
+  14-8-trial-reminders-delinquency-jobs-and-basic-dormancy: done
+  epic-14-retrospective: optional
+
+  epic-15: done
+  15-1-subdomain-routing-nginx-next-js-host: done
+  15-2-basic-stubhome-atelier-hospitality: done
+  15-3-core-fixed-sitepage-and-pro-builder-unlock: done
+  15-4-tenant-scoped-activity-engine-and-public-registration: done
+  15-5-plan-gated-reports-basic-fixed-core-queryable-pro: done
+  15-6-pro-only-campaigns-and-per-tenant-email-branding: done
+  15-7-suspended-maintenance-and-archived-404-public-states: done
+  epic-15-retrospective: optional
+
+  # Epic 16 parked — One-stop Lite (share kit, custom domain, thin email, tickets, seat add-ons)
+  # No story keys until pulled into v1.1+
+  epic-16: backlog
+  epic-16-retrospective: optional
 
 action_items:
   - epic: 9

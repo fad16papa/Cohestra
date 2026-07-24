@@ -9,4 +9,5 @@ public sealed record SitePageAdminResponse(
     bool HasUnpublishedChanges,
     bool CanRevertPublished,
     DateTimeOffset? PreviousPublishedAt,
-    IReadOnlyList<SiteHomepageTemplateSummaryDto> SavedTemplates);
+    IReadOnlyList<SiteHomepageTemplateSummaryDto> SavedTemplates,
+    bool BuilderLocked);

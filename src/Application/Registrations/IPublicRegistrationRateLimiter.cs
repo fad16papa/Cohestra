@@ -2,5 +2,8 @@ namespace Cohestra.Application.Registrations;
 
 public interface IPublicRegistrationRateLimiter
 {
-    Task<bool> AllowRequestAsync(string clientIdentifier, CancellationToken cancellationToken = default);
+    Task<bool> AllowRequestAsync(
+        Guid tenantId,
+        string clientIdentifier,
+        CancellationToken cancellationToken = default);
 }

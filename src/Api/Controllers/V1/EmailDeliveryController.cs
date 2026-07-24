@@ -8,7 +8,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/email-delivery")]
-[Authorize(Roles = OperatorSeeder.AdminRole)]
+[Authorize(Policy = TenantAuthPolicies.TenantAdminOnly)]
 [Produces("application/json")]
 public class EmailDeliveryController(IEmailDeliveryStatusService deliveryStatusService) : ControllerBase
 {

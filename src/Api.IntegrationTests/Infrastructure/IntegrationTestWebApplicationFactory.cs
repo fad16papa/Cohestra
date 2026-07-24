@@ -28,12 +28,20 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
         builder.UseSetting("OperatorSeed:Email", "operator@cohestra.local");
         builder.UseSetting("OperatorSeed:Password", "ChangeMe123!");
         builder.UseSetting("OperatorSeed:Enabled", "true");
+        builder.UseSetting("PlatformAdminSeed:Enabled", "true");
+        builder.UseSetting("PlatformAdminSeed:Email", "platform-admin@cohestra.local");
+        builder.UseSetting("PlatformAdminSeed:Password", "ChangeMe123!");
         builder.UseSetting("DemoDataSeed:Enabled", "false");
         builder.UseSetting("SendGrid:ApiKey", "SG.integration-test-key");
         builder.UseSetting("SendGrid:FromEmail", "operator@cohestra.local");
         builder.UseSetting("SendGrid:FromName", "Integration Tests");
         builder.UseSetting("SendGrid:UseSandbox", "true");
         builder.UseSetting("PublicRegistrationRateLimit:MaxRequests", "1000");
+        builder.UseSetting("SelfServeSignup:RegistrationClosed", "false");
+        builder.UseSetting("SelfServeSignup:Recaptcha:Enabled", "false");
+        builder.UseSetting("SelfServeSignup:Recaptcha:TestBypassToken", "test-captcha-pass");
+        builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerHour", "1000");
+        builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerDay", "1000");
 
         builder.ConfigureTestServices(services =>
         {

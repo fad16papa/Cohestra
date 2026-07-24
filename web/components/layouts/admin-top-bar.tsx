@@ -8,6 +8,9 @@ import { AdminMobileNav } from "@/components/layouts/admin-mobile-nav";
 import { useAdminShell } from "@/components/layouts/admin-shell-context";
 import { AdminUserMenu } from "@/components/layouts/admin-user-menu";
 import { UpdatedTime } from "@/components/layouts/updated-time";
+import { PlanBadge } from "@/components/shell/plan-badge";
+import { SponsoredBadge } from "@/components/shell/sponsored-badge";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getAdminBreadcrumbs } from "@/lib/admin-nav";
@@ -15,6 +18,7 @@ import { getAdminBreadcrumbs } from "@/lib/admin-nav";
 export function AdminTopBar() {
   const pathname = usePathname();
   const { openCommandPalette, pageMeta } = useAdminShell();
+  const { shell } = useTenantShell();
 
   const breadcrumbs = getAdminBreadcrumbs(pathname).map((item, index, items) => {
     if (
@@ -39,6 +43,12 @@ export function AdminTopBar() {
         ) : null}
         <div className="flex min-w-0 items-center gap-3">
           <h1 className="truncate text-section text-text-warm">{pageTitle}</h1>
+          {shell ? (
+            <div className="flex items-center gap-1.5">
+              <PlanBadge plan={shell.plan} />
+              {shell.isComplimentary ? <SponsoredBadge /> : null}
+            </div>
+          ) : null}
           <UpdatedTime />
         </div>
       </div>

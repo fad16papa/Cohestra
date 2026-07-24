@@ -133,6 +133,52 @@ async function postAuthTokens(
   return parseAuthTokenResponse(raw);
 }
 
+/** Identity role names — must match API (`OperatorSeeder.TenantAdminRole`, `PlatformAdminSeeder`). */
+export const ROLES = {
+  PlatformAdmin: "PlatformAdmin",
+  TenantAdmin: "TenantAdmin",
+} as const;
+
+/**
+ * Post-login home. Hard rule: PlatformAdmin and TenantAdmin are mutually exclusive.
+ * PlatformAdmin → platform console; TenantAdmin → operator dashboard.
+ */
+export function resolvePostLoginPath(profile: AdminProfile): string {
+  if (profile.roles.includes(ROLES.PlatformAdmin)) {
+    return "/platform";
+  }
+  if (profile.roles.includes(ROLES.TenantAdmin)) {
+    return "/dashboard";
+  }
+  return "/dashboard";
+}
+
+const ROLE_CLAIM =
+  "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+
+/** Best-effort role read from JWT payload (routing only; server still authorizes). */
+export function getRolesFromAccessToken(accessToken: string): string[] {
+  try {
+    const segment = accessToken.split(".")[1];
+    if (!segment) {
+      return [];
+    }
+    const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+    const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
+    const raw = payload.role ?? payload.roles ?? payload[ROLE_CLAIM];
+    if (typeof raw === "string") {
+      return [raw];
+    }
+    if (Array.isArray(raw)) {
+      return raw.filter((value): value is string => typeof value === "string");
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
 export async function loginWithPassword(
   email: string,
   password: string
@@ -158,7 +204,7 @@ export async function loginWithPassword(
     const raw = (await response.json()) as Record<string, unknown>;
     const session = parseAuthTokenResponse(raw);
     setAuthSession(session);
-    const profile = await fetchAdminProfile(session.accessToken);
+    const profile = await fetchSessionProfile(session.accessToken);
     return { ok: true, session, profile };
   } catch (error) {
     clearAuthSession();
@@ -198,11 +244,85 @@ export async function fetchAdminProfile(
   });
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    const error = new Error(await parseProblemDetail(response)) as Error & {
+      status?: number;
+    };
+    error.status = response.status;
+    throw error;
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
   return parseAdminProfile(raw);
+}
+
+/** PlatformAdmin-only users cannot call /admin/me (403). */
+export async function fetchPlatformProfile(
+  accessToken: string
+): Promise<AdminProfile> {
+  const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/platform/me`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  return parsePlatformProfile(raw);
+}
+
+function parsePlatformProfile(raw: Record<string, unknown>): AdminProfile {
+  const userId = raw.userId ?? raw.UserId;
+  const email = raw.email ?? raw.Email;
+  const roles = raw.roles ?? raw.Roles;
+
+  if (typeof userId !== "string" || typeof email !== "string") {
+    throw new Error("Invalid platform profile payload");
+  }
+
+  return {
+    userId,
+    email,
+    nickname: null,
+    roles: Array.isArray(roles)
+      ? roles.filter((role): role is string => typeof role === "string")
+      : [],
+    themePreference: "system",
+    brandAccentColor: null,
+  };
+}
+
+export async function fetchSessionProfile(
+  accessToken: string
+): Promise<AdminProfile> {
+  const roles = getRolesFromAccessToken(accessToken);
+  const isPlatformAdmin = roles.includes(ROLES.PlatformAdmin);
+  const isTenantAdmin = roles.includes(ROLES.TenantAdmin);
+
+  // Prefer PlatformAdmin when present (defensive if a dual-role token ever appears).
+  if (isPlatformAdmin) {
+    return fetchPlatformProfile(accessToken);
+  }
+
+  if (isTenantAdmin) {
+    return fetchAdminProfile(accessToken);
+  }
+
+  // Unknown / legacy token shape: try tenant admin profile, then platform on 403.
+  try {
+    return await fetchAdminProfile(accessToken);
+  } catch (error) {
+    const status =
+      error && typeof error === "object" && "status" in error
+        ? (error as { status?: number }).status
+        : undefined;
+    if (status === 403) {
+      return fetchPlatformProfile(accessToken);
+    }
+    throw error;
+  }
 }
 
 export async function ensureValidSession(): Promise<AuthSession | null> {
@@ -225,7 +345,7 @@ export async function validateStoredSession(): Promise<AdminProfile | null> {
   }
 
   try {
-    return await fetchAdminProfile(session.accessToken);
+    return await fetchSessionProfile(session.accessToken);
   } catch {
     const refreshed = await refreshAuthSession();
     if (!refreshed) {
@@ -233,7 +353,7 @@ export async function validateStoredSession(): Promise<AdminProfile | null> {
     }
 
     try {
-      return await fetchAdminProfile(refreshed.accessToken);
+      return await fetchSessionProfile(refreshed.accessToken);
     } catch {
       clearAuthSession();
       return null;
