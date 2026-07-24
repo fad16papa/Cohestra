@@ -38,18 +38,35 @@ export function buildCheckoutHref(
   return `/billing/checkout?plan=${planId}&interval=${interval}`;
 }
 
+function planPriceLabel(plan: MarketingPlan, interval: BillingIntervalChoice): string {
+  if (interval === "annual") {
+    return plan.annualMonthlyEquivalent ?? plan.annualPrice ?? "";
+  }
+
+  if (!plan.monthlyPrice || plan.monthlyPrice === "Free" || plan.monthlyPrice === "Custom") {
+    return plan.monthlyPrice ?? "";
+  }
+
+  return `${plan.monthlyPrice} / mo`;
+}
+
 function IntervalToggle({
   interval,
   onChange,
+  className,
 }: {
   interval: BillingIntervalChoice;
   onChange: (next: BillingIntervalChoice) => void;
+  className?: string;
 }) {
   return (
     <div
       role="radiogroup"
       aria-label="Billing interval"
-      className="inline-flex w-full max-w-sm rounded-xl border border-border-warm bg-muted/40 p-1 sm:w-auto"
+      className={cn(
+        "inline-flex w-full rounded-xl border border-border-warm bg-muted/40 p-1 sm:w-auto",
+        className
+      )}
     >
       {(["monthly", "annual"] as const).map((value) => {
         const active = interval === value;
@@ -78,7 +95,31 @@ function IntervalToggle({
   );
 }
 
-function PlanCard({
+function FeatureList({
+  features,
+  columns = false,
+}: {
+  features: string[];
+  columns?: boolean;
+}) {
+  return (
+    <ul
+      className={cn(
+        "gap-x-6 gap-y-2.5 text-sm leading-relaxed text-text-muted-warm",
+        columns ? "grid sm:grid-cols-2" : "space-y-2.5"
+      )}
+    >
+      {features.map((feature) => (
+        <li key={feature} className="flex gap-2.5">
+          <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+          <span>{feature}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function SelectablePlanCard({
   plan,
   interval,
   active,
@@ -91,15 +132,6 @@ function PlanCard({
   requiredPlan: UpgradeRequiredPlan;
   onSelect: () => void;
 }) {
-  const price =
-    interval === "annual"
-      ? plan.annualMonthlyEquivalent ?? plan.annualPrice
-      : `${plan.monthlyPrice}/mo`;
-  const unlocksRequired =
-    requiredPlan === "Pro"
-      ? plan.id === "pro"
-      : plan.id === "core" || plan.id === "pro";
-
   return (
     <button
       type="button"
@@ -117,11 +149,6 @@ function PlanCard({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-lg font-semibold text-text-warm">{plan.name}</p>
-            {unlocksRequired && requiredPlan === "Pro" && plan.id === "pro" ? (
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                Unlocks this feature
-              </span>
-            ) : null}
             {requiredPlan === "Core" && plan.id === "core" ? (
               <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-text-muted-warm">
                 Minimum for this feature
@@ -134,7 +161,9 @@ function PlanCard({
       </div>
 
       <div className="mt-4">
-        <p className="text-2xl font-semibold tracking-tight text-text-warm">{price}</p>
+        <p className="text-2xl font-semibold tracking-tight text-text-warm">
+          {planPriceLabel(plan, interval)}
+        </p>
         {interval === "annual" && plan.annualPrice ? (
           <p className="mt-1 text-sm text-text-muted-warm">{plan.annualPrice}</p>
         ) : plan.annualMonthlyEquivalent ? (
@@ -144,15 +173,56 @@ function PlanCard({
         ) : null}
       </div>
 
-      <ul className="mt-5 flex-1 space-y-2.5 text-sm leading-relaxed text-text-muted-warm">
-        {plan.features.map((feature) => (
-          <li key={feature} className="flex gap-2.5">
-            <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-            <span>{feature}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="mt-5 flex-1">
+        <FeatureList features={plan.features} />
+      </div>
     </button>
+  );
+}
+
+function ProOnlyPlanCard({
+  plan,
+  interval,
+}: {
+  plan: MarketingPlan;
+  interval: BillingIntervalChoice;
+}) {
+  return (
+    <article className="rounded-2xl border border-border-warm bg-muted/20 p-5 sm:p-7">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
+        <div className="min-w-0 lg:w-[15.5rem] lg:shrink-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="text-xl font-semibold text-text-warm">{plan.name}</h3>
+              <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-primary">
+                Unlocks this feature
+              </p>
+            </div>
+            <Check className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+          </div>
+          <p className="mt-3 text-sm leading-relaxed text-text-muted-warm">{plan.headline}</p>
+          <div className="mt-5">
+            <p className="text-3xl font-semibold tracking-tight text-text-warm">
+              {planPriceLabel(plan, interval)}
+            </p>
+            {interval === "annual" && plan.annualPrice ? (
+              <p className="mt-1 text-sm text-text-muted-warm">{plan.annualPrice}</p>
+            ) : plan.annualMonthlyEquivalent ? (
+              <p className="mt-1 text-sm text-text-muted-warm">
+                or {plan.annualMonthlyEquivalent}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="min-w-0 flex-1 border-t border-border-warm pt-5 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+            Included with Pro
+          </p>
+          <FeatureList features={plan.features} columns />
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -165,6 +235,7 @@ export function UpgradePanel({
   className,
 }: UpgradePanelProps) {
   const options = useMemo(() => planOptionsFor(requiredPlan), [requiredPlan]);
+  const proOnly = requiredPlan === "Pro" && options.length === 1;
   const [interval, setInterval] = useState<BillingIntervalChoice>("monthly");
   const [selectedPlan, setSelectedPlan] = useState<"core" | "pro">(
     requiredPlan === "Pro" ? "pro" : "core"
@@ -175,26 +246,37 @@ export function UpgradePanel({
   return (
     <section
       className={cn(
-        "mx-auto w-full max-w-5xl rounded-2xl border border-border-warm bg-card p-5 shadow-sm sm:p-8 lg:p-10",
+        "mx-auto w-full rounded-2xl border border-border-warm bg-card shadow-sm",
+        proOnly ? "max-w-4xl p-5 sm:p-8" : "max-w-5xl p-5 sm:p-8 lg:p-10",
         className
       )}
       aria-labelledby="upgrade-panel-title"
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/15">
-          <Lock className="size-5" aria-hidden />
-        </span>
-        <div className="min-w-0 space-y-2">
-          <h2
-            id="upgrade-panel-title"
-            className="text-xl font-semibold tracking-tight text-text-warm sm:text-2xl"
-          >
-            {title}
-          </h2>
-          <p className="max-w-3xl text-sm leading-relaxed text-text-muted-warm sm:text-base">
-            {description}
-          </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15 sm:size-12 sm:rounded-2xl">
+            <Lock className="size-5" aria-hidden />
+          </span>
+          <div className="min-w-0 space-y-2">
+            <h2
+              id="upgrade-panel-title"
+              className="text-xl font-semibold tracking-tight text-text-warm sm:text-2xl"
+            >
+              {title}
+            </h2>
+            <p className="max-w-2xl text-sm leading-relaxed text-text-muted-warm sm:text-[0.95rem]">
+              {description}
+            </p>
+          </div>
         </div>
+
+        {isTenantAdmin && !checkoutHref ? (
+          <IntervalToggle
+            interval={interval}
+            onChange={setInterval}
+            className="sm:shrink-0"
+          />
+        ) : null}
       </div>
 
       {!isTenantAdmin ? (
@@ -212,40 +294,39 @@ export function UpgradePanel({
           Upgrade to {requiredPlan}
         </Link>
       ) : (
-        <div className="mt-8 space-y-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm font-medium text-text-warm">Choose billing and plan</p>
-            <IntervalToggle interval={interval} onChange={setInterval} />
-          </div>
-
-          <div
-            role="radiogroup"
-            aria-label="Plan"
-            className={cn(
-              "grid grid-cols-1 gap-4 md:gap-5",
-              options.length > 1 ? "md:grid-cols-2" : "md:max-w-xl"
-            )}
-          >
-            {options.map((plan) => (
-              <PlanCard
-                key={plan.id}
-                plan={plan}
-                interval={interval}
-                active={selected?.id === plan.id}
-                requiredPlan={requiredPlan}
-                onSelect={() => setSelectedPlan(plan.id as "core" | "pro")}
-              />
-            ))}
-          </div>
+        <div className="mt-7 space-y-6 sm:mt-8">
+          {proOnly && selected ? (
+            <ProOnlyPlanCard plan={selected} interval={interval} />
+          ) : (
+            <>
+              <p className="text-sm font-medium text-text-warm">Choose a plan</p>
+              <div
+                role="radiogroup"
+                aria-label="Plan"
+                className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5"
+              >
+                {options.map((plan) => (
+                  <SelectablePlanCard
+                    key={plan.id}
+                    plan={plan}
+                    interval={interval}
+                    active={selected?.id === plan.id}
+                    requiredPlan={requiredPlan}
+                    onSelect={() => setSelectedPlan(plan.id as "core" | "pro")}
+                  />
+                ))}
+              </div>
+            </>
+          )}
 
           {selected ? (
-            <div className="flex flex-col gap-4 border-t border-border-warm pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
+            <div className="flex flex-col gap-4 border-t border-border-warm pt-6 sm:flex-row sm:items-end sm:justify-between">
+              <div className="space-y-2">
                 <p className="text-sm text-text-muted-warm">
                   30-day free trial · card required · cancel anytime before trial ends
                 </p>
-                {requiredPlan === "Pro" ? (
-                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                {proOnly ? (
+                  <p className="max-w-md text-xs leading-relaxed text-text-muted-warm">
                     Core does not include this Pro feature. Choose Pro to unlock it now.
                   </p>
                 ) : null}
@@ -254,7 +335,7 @@ export function UpgradePanel({
                 href={buildCheckoutHref(selected.id as "core" | "pro", interval)}
                 className={cn(
                   buttonVariants({ size: "lg" }),
-                  "inline-flex w-full justify-center sm:w-auto sm:min-w-[12rem]"
+                  "inline-flex w-full justify-center sm:w-auto sm:min-w-[13rem]"
                 )}
               >
                 Continue with {selected.name}
