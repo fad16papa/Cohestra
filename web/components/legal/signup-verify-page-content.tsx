@@ -71,6 +71,7 @@ function SignupVerifyContent() {
       window.location.href = buildAuthHandoffUrl(tenantBase, session, "/billing/checkout", {
         plan: plan!,
         interval,
+        start: "1",
       });
       return;
     }

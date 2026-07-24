@@ -35,7 +35,8 @@ export function buildCheckoutHref(
   planId: "core" | "pro",
   interval: BillingIntervalChoice
 ): string {
-  return `/billing/checkout?plan=${planId}&interval=${interval}`;
+  // start=1 skips the duplicate plan chooser and opens Stripe immediately.
+  return `/billing/checkout?plan=${planId}&interval=${interval}&start=1`;
 }
 
 function planPriceLabel(plan: MarketingPlan, interval: BillingIntervalChoice): string {
@@ -338,7 +339,7 @@ export function UpgradePanel({
                   "inline-flex w-full justify-center sm:w-auto sm:min-w-[13rem]"
                 )}
               >
-                Continue with {selected.name}
+                Start {selected.name} trial
               </Link>
             </div>
           ) : null}

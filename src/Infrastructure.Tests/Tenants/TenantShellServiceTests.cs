@@ -157,7 +157,7 @@ public sealed class TenantShellServiceTests
 
         Assert.NotNull(banner);
         Assert.Equal("read_only_over_limit", banner!.Variant);
-        Assert.Equal("/billing/checkout?plan=core&interval=monthly", banner.CtaHref);
+        Assert.Equal("/billing/checkout?plan=core&interval=monthly&start=1", banner.CtaHref);
     }
 
     [Fact]

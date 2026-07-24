@@ -179,7 +179,7 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
                 "Plan limit reached",
                 $"{overLimitDial.Label} is at capacity ({overLimitDial.Used}/{overLimitDial.Limit}). Archive or unpublish items{(canUpgrade ? ", or upgrade your plan" : "")}.",
                 isTenantAdmin && canUpgrade ? "Upgrade plan" : null,
-                isTenantAdmin && canUpgrade ? $"/billing/checkout?plan={upgradePlan}&interval=monthly" : null,
+                isTenantAdmin && canUpgrade ? $"/billing/checkout?plan={upgradePlan}&interval=monthly&start=1" : null,
                 AdminOnlyCta: true);
         }
 

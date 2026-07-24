@@ -19,6 +19,23 @@ import { cn } from "@/lib/utils";
 type PlanId = "core" | "pro";
 type IntervalId = "monthly" | "annual";
 
+function priceFor(planId: PlanId, interval: IntervalId): string {
+  const meta = MARKETING_PLANS.find((p) => p.id === planId);
+  if (!meta) {
+    return "";
+  }
+
+  if (interval === "annual") {
+    return meta.annualMonthlyEquivalent ?? meta.annualPrice ?? "";
+  }
+
+  if (!meta.monthlyPrice || meta.monthlyPrice === "Free" || meta.monthlyPrice === "Custom") {
+    return meta.monthlyPrice ?? "";
+  }
+
+  return `${meta.monthlyPrice} / mo`;
+}
+
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,10 +54,9 @@ function CheckoutContent() {
   const [plan, setPlan] = useState<PlanId | null>(initialPlan);
   const [interval, setInterval] = useState<IntervalId>(initialInterval);
   const [error, setError] = useState<string | null>(null);
-  const [starting, setStarting] = useState(false);
+  const [starting, setStarting] = useState(autoStart && !canceled);
 
   const trialCopy = useMemo(() => formatTrialDisclaimer(30), []);
-  const planMeta = MARKETING_PLANS.find((p) => p.id === plan);
   const planOptions = MARKETING_PLANS.filter((p) => p.id === "core" || p.id === "pro");
 
   useEffect(() => {
@@ -105,12 +121,56 @@ function CheckoutContent() {
     );
   }
 
+  // Plan + interval already chosen on the upgrade gate — go straight to Stripe.
+  if (autoStart && !canceled && plan) {
+    const meta = MARKETING_PLANS.find((p) => p.id === plan);
+    const adjustHref = `/billing/checkout?plan=${plan}&interval=${interval}`;
+
+    return (
+      <div className="mx-auto flex min-h-[50vh] w-full max-w-md flex-col items-center justify-center gap-5 p-8 text-center">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-text-warm">
+            {error ? "Could not start checkout" : `Starting ${meta?.name ?? "plan"} trial`}
+          </h1>
+          <p className="text-sm leading-relaxed text-text-muted-warm">
+            {error
+              ? "Something went wrong opening Stripe. You can try again or pick a different plan."
+              : `${priceFor(plan, interval)} after trial · card required · cancel anytime before trial ends.`}
+          </p>
+        </div>
+
+        {error ? (
+          <div className="flex w-full flex-col gap-3">
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+            <Button
+              type="button"
+              size="lg"
+              disabled={starting}
+              onClick={() => void startCheckout(plan, interval)}
+            >
+              {starting ? "Retrying…" : "Try again"}
+            </Button>
+            <Link
+              href={adjustHref}
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "inline-flex justify-center")}
+            >
+              Choose a different plan
+            </Link>
+          </div>
+        ) : (
+          <p className="text-sm text-text-muted-warm" role="status">
+            Redirecting to Stripe…
+          </p>
+        )}
+      </div>
+    );
+  }
+
   const effectivePlan = plan ?? "core";
   const effectiveMeta = MARKETING_PLANS.find((p) => p.id === effectivePlan) ?? planOptions[0];
-  const priceLabel =
-    interval === "annual"
-      ? effectiveMeta?.annualMonthlyEquivalent ?? effectiveMeta?.annualPrice
-      : `${effectiveMeta?.monthlyPrice ?? ""}/mo`;
+  const priceLabel = priceFor(effectivePlan, interval);
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8">
@@ -181,10 +241,7 @@ function CheckoutContent() {
         >
           {planOptions.map((meta) => {
             const active = effectivePlan === meta.id;
-            const cardPrice =
-              interval === "annual"
-                ? meta.annualMonthlyEquivalent ?? meta.annualPrice
-                : `${meta.monthlyPrice}/mo`;
+            const cardPrice = priceFor(meta.id as PlanId, interval);
 
             return (
               <button
@@ -240,7 +297,7 @@ function CheckoutContent() {
             disabled={starting}
             onClick={() => void startCheckout(effectivePlan, interval)}
           >
-            {starting ? "Redirecting to Stripe…" : `Continue with ${effectiveMeta?.name ?? "plan"}`}
+            {starting ? "Redirecting to Stripe…" : `Start ${effectiveMeta?.name ?? "plan"} trial`}
           </Button>
         </div>
 
