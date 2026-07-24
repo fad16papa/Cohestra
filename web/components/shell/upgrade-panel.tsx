@@ -24,9 +24,10 @@ type UpgradePanelProps = {
 function planOptionsFor(requiredPlan: UpgradeRequiredPlan): MarketingPlan[] {
   const core = MARKETING_PLANS.find((p) => p.id === "core");
   const pro = MARKETING_PLANS.find((p) => p.id === "pro");
-  // Always show Core + Pro for a uniform comparison across the app.
-  // requiredPlan only controls the default selection.
-  void requiredPlan;
+  if (requiredPlan === "Pro") {
+    return pro ? [pro] : [];
+  }
+
   return [core, pro].filter((p): p is MarketingPlan => p != null);
 }
 
@@ -220,7 +221,10 @@ export function UpgradePanel({
           <div
             role="radiogroup"
             aria-label="Plan"
-            className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5"
+            className={cn(
+              "grid grid-cols-1 gap-4 md:gap-5",
+              options.length > 1 ? "md:grid-cols-2" : "md:max-w-xl"
+            )}
           >
             {options.map((plan) => (
               <PlanCard
@@ -240,7 +244,7 @@ export function UpgradePanel({
                 <p className="text-sm text-text-muted-warm">
                   30-day free trial · card required · cancel anytime before trial ends
                 </p>
-                {requiredPlan === "Pro" && selected.id === "core" ? (
+                {requiredPlan === "Pro" ? (
                   <p className="text-xs text-amber-700 dark:text-amber-300">
                     Core does not include this Pro feature. Choose Pro to unlock it now.
                   </p>
