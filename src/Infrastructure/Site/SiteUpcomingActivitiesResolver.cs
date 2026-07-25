@@ -37,6 +37,7 @@ internal static class SiteUpcomingActivitiesResolver
         Guid tenantId,
         CancellationToken cancellationToken = default)
     {
+        _ = publicApiBaseUrl;
         var limit = ResolveLimit(published);
 
         // Schedule is operator-facing free text; UpdatedAt descending is the MVP ordering proxy.
@@ -57,7 +58,7 @@ internal static class SiteUpcomingActivitiesResolver
                 activity.Schedule,
                 activity.Location,
                 activity.CommunityLabel,
-                ActivityHeroImageUrlResolver.Resolve(activity.HeroImageUrl, publicApiBaseUrl),
+                ActivityHeroImageUrlResolver.ResolveForBrowser(activity.HeroImageUrl),
                 activity.AccentColor))
             .ToList();
     }

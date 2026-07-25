@@ -1,20 +1,22 @@
-import { getPublicApiBaseUrl } from "@/lib/api";
-
+/**
+ * Resolve activity/site hero image URLs for browser rendering.
+ * Campaign assets are returned as same-origin relative paths so tenant hosts
+ * (e.g. creativorare.localhost) can pass tenant-scoped public asset auth.
+ */
 const CAMPAIGN_ASSET_PREFIX = "/api/v1/public/campaign-assets/";
 
 export function resolveHeroImageUrl(
   heroImageUrl: string | null | undefined,
-  publicApiBaseUrl?: string
+  _publicApiBaseUrl?: string
 ): string | null {
   const trimmed = heroImageUrl?.trim();
   if (!trimmed) {
     return null;
   }
 
-  const baseUrl = (publicApiBaseUrl ?? getPublicApiBaseUrl()).replace(/\/$/, "");
-
-  if (trimmed.toLowerCase().startsWith(CAMPAIGN_ASSET_PREFIX)) {
-    return `${baseUrl}${trimmed}`;
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith(CAMPAIGN_ASSET_PREFIX)) {
+    return trimmed;
   }
 
   try {
@@ -22,7 +24,7 @@ export function resolveHeroImageUrl(
     const path = parsed.pathname;
     const index = path.toLowerCase().indexOf(CAMPAIGN_ASSET_PREFIX);
     if (index >= 0) {
-      return `${baseUrl}${path.slice(index)}`;
+      return path.slice(index);
     }
   } catch {
     // Keep non-URL strings as-is (validator requires absolute URLs on save).

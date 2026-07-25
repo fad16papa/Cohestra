@@ -2,7 +2,6 @@ using Cohestra.Application.Activities;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Activities;
 using Cohestra.Domain.Activities;
-using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
 using Cohestra.Infrastructure.Tenancy;
@@ -15,7 +14,6 @@ namespace Cohestra.Infrastructure.Activities;
 public sealed class ActivityService(
     CohestraDbContext dbContext,
     IOptions<PublicWebOptions> publicWebOptions,
-    IOptions<CampaignAssetOptions> campaignAssetOptions,
     RedisPublicActivityCache publicActivityCache,
     ICurrentTenant currentTenant) : IActivityService
 {
@@ -200,8 +198,8 @@ public sealed class ActivityService(
         activity.Schedule = request.Schedule.Trim();
         activity.Location = request.Location.Trim();
         activity.CommunityLabel = request.CommunityLabel.Trim();
-        activity.HeroImageUrl = ResolveHeroImageUrl(
-            ActivityBrandingValidator.NormalizeHeroImageUrl(request.HeroImageUrl));
+        // Persist the uploaded/external URL as provided; browser resolution happens on read.
+        activity.HeroImageUrl = ActivityBrandingValidator.NormalizeHeroImageUrl(request.HeroImageUrl);
         activity.AccentColor = ActivityBrandingValidator.NormalizeAccentColor(request.AccentColor);
         activity.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -561,10 +559,8 @@ public sealed class ActivityService(
             registrationCount,
             ResolveHeroImageUrl(activity.HeroImageUrl));
 
-    private string? ResolveHeroImageUrl(string? heroImageUrl) =>
-        ActivityHeroImageUrlResolver.Resolve(
-            heroImageUrl,
-            campaignAssetOptions.Value.PublicApiBaseUrl);
+    private static string? ResolveHeroImageUrl(string? heroImageUrl) =>
+        ActivityHeroImageUrlResolver.ResolveForBrowser(heroImageUrl);
 
     private PublicActivityResponse MapToPublicResponse(Activity activity) =>
         new(

@@ -4,7 +4,11 @@ internal static class ActivityHeroImageUrlResolver
 {
     internal const string CampaignAssetPathPrefix = "/api/v1/public/campaign-assets/";
 
-    public static string? Resolve(string? heroImageUrl, string publicApiBaseUrl)
+    /// <summary>
+    /// Browser-facing surfaces (registration, site, admin preview) should use a
+    /// same-origin relative campaign-asset path so tenant host resolution works.
+    /// </summary>
+    public static string? ResolveForBrowser(string? heroImageUrl)
     {
         var normalized = ActivityBrandingValidator.NormalizeHeroImageUrl(heroImageUrl);
         if (normalized is null)
@@ -12,18 +16,37 @@ internal static class ActivityHeroImageUrlResolver
             return null;
         }
 
-        var baseUrl = publicApiBaseUrl.Trim().TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(baseUrl))
-        {
-            return normalized;
-        }
-
         if (TryGetCampaignAssetPath(normalized, out var assetPath))
         {
-            return $"{baseUrl}{assetPath}";
+            return assetPath;
         }
 
         return normalized;
+    }
+
+    /// <summary>
+    /// Absolute URL for email / outbound surfaces that cannot rely on page origin.
+    /// </summary>
+    public static string? Resolve(string? heroImageUrl, string publicApiBaseUrl)
+    {
+        var forBrowser = ResolveForBrowser(heroImageUrl);
+        if (forBrowser is null)
+        {
+            return null;
+        }
+
+        if (!TryGetCampaignAssetPath(forBrowser, out var assetPath))
+        {
+            return forBrowser;
+        }
+
+        var baseUrl = publicApiBaseUrl.Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            return assetPath;
+        }
+
+        return $"{baseUrl}{assetPath}";
     }
 
     private static bool TryGetCampaignAssetPath(string url, out string assetPath)
@@ -32,7 +55,7 @@ internal static class ActivityHeroImageUrlResolver
 
         if (url.StartsWith(CampaignAssetPathPrefix, StringComparison.OrdinalIgnoreCase))
         {
-            assetPath = url;
+            assetPath = NormalizeAssetPath(url);
             return true;
         }
 
@@ -48,7 +71,20 @@ internal static class ActivityHeroImageUrlResolver
             return false;
         }
 
-        assetPath = path[index..];
+        assetPath = NormalizeAssetPath(path[index..]);
         return true;
+    }
+
+    private static string NormalizeAssetPath(string path)
+    {
+        // Keep GUID casing stable for cache keys / comparisons.
+        var prefixLength = CampaignAssetPathPrefix.Length;
+        if (path.Length <= prefixLength)
+        {
+            return CampaignAssetPathPrefix.TrimEnd('/');
+        }
+
+        var idPart = path[prefixLength..].Trim('/');
+        return $"{CampaignAssetPathPrefix}{idPart}";
     }
 }

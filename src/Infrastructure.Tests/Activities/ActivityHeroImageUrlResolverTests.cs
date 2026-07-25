@@ -5,12 +5,14 @@ namespace Cohestra.Infrastructure.Tests.Activities;
 public sealed class ActivityHeroImageUrlResolverTests
 {
     private const string PublicBase = "https://uat.creativorare.com";
+    private const string AssetId = "11111111-1111-1111-1111-111111111111";
 
     [Fact]
     public void Resolve_ReturnsNullForEmpty()
     {
         Assert.Null(ActivityHeroImageUrlResolver.Resolve(null, PublicBase));
         Assert.Null(ActivityHeroImageUrlResolver.Resolve("   ", PublicBase));
+        Assert.Null(ActivityHeroImageUrlResolver.ResolveForBrowser(null));
     }
 
     [Fact]
@@ -19,19 +21,41 @@ public sealed class ActivityHeroImageUrlResolverTests
         const string external = "https://cdn.example.com/hero.jpg";
 
         Assert.Equal(external, ActivityHeroImageUrlResolver.Resolve(external, PublicBase));
+        Assert.Equal(external, ActivityHeroImageUrlResolver.ResolveForBrowser(external));
     }
 
     [Fact]
-    public void Resolve_RewritesLocalhostCampaignAssetUrls()
+    public void Resolve_RewritesLocalhostCampaignAssetUrlsToAbsolute()
     {
-        const string stored =
-            "http://localhost:8080/api/v1/public/campaign-assets/11111111-1111-1111-1111-111111111111";
+        var stored =
+            $"http://localhost:8080/api/v1/public/campaign-assets/{AssetId}";
 
         var resolved = ActivityHeroImageUrlResolver.Resolve(stored, PublicBase);
 
         Assert.Equal(
-            $"{PublicBase}/api/v1/public/campaign-assets/11111111-1111-1111-1111-111111111111",
+            $"{PublicBase}/api/v1/public/campaign-assets/{AssetId}",
             resolved);
+    }
+
+    [Fact]
+    public void ResolveForBrowser_ReturnsRelativeCampaignAssetPath()
+    {
+        var stored =
+            $"http://localhost:8088/api/v1/public/campaign-assets/{AssetId}";
+
+        var resolved = ActivityHeroImageUrlResolver.ResolveForBrowser(stored);
+
+        Assert.Equal($"/api/v1/public/campaign-assets/{AssetId}", resolved);
+    }
+
+    [Fact]
+    public void ResolveForBrowser_KeepsRelativeCampaignAssetPath()
+    {
+        var stored = $"/api/v1/public/campaign-assets/{AssetId}";
+
+        var resolved = ActivityHeroImageUrlResolver.ResolveForBrowser(stored);
+
+        Assert.Equal(stored, resolved);
     }
 
     [Fact]

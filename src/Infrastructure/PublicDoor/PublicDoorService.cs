@@ -81,7 +81,6 @@ public sealed class PublicDoorService(
         Guid tenantId,
         CancellationToken cancellationToken)
     {
-        var baseUrl = campaignAssetOptions.Value.PublicApiBaseUrl;
         var activities = await dbContext.Activities
             .AsNoTracking()
             .Where(a => a.TenantId == tenantId && a.Status == ActivityStatus.Published)
@@ -96,7 +95,7 @@ public sealed class PublicDoorService(
                 a.Schedule,
                 a.Location,
                 a.CommunityLabel,
-                ActivityHeroImageUrlResolver.Resolve(a.HeroImageUrl, baseUrl),
+                ActivityHeroImageUrlResolver.ResolveForBrowser(a.HeroImageUrl),
                 a.AccentColor))
             .ToList();
     }
