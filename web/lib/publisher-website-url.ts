@@ -9,12 +9,36 @@ export type PublisherWebsiteLink = {
 };
 
 function formatSlugLabel(slug: string): string {
-  const trimmed = slug.trim();
-  if (!trimmed) {
-    return trimmed;
+  return slug.trim().toLowerCase();
+}
+
+function resolveTenantSlug(door: PublicDoorPayload, origin: string): string | null {
+  const fromDoor = door.tenantSlug?.trim();
+  if (fromDoor) {
+    return formatSlugLabel(fromDoor);
   }
 
-  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  try {
+    const hostname = new URL(origin).hostname.toLowerCase();
+    if (hostname.endsWith(".localhost") && hostname !== "localhost") {
+      return hostname.slice(0, -".localhost".length);
+    }
+
+    if (hostname.endsWith(".cohestra.app") && hostname !== "cohestra.app") {
+      return hostname.slice(0, -".cohestra.app".length);
+    }
+
+    if (hostname.endsWith(".nip.io")) {
+      const parts = hostname.split(".");
+      if (parts.length >= 5) {
+        return parts[0];
+      }
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
 }
 
 /** Marketing apex from a tenant workspace origin (e.g. slug.localhost → localhost). */
@@ -63,18 +87,14 @@ export function buildPublisherWebsiteLink(
       displayHost = null;
     }
 
-    const friendlyName =
-      door.site?.published.siteName?.trim() ||
-      door.tenantName?.trim() ||
-      (door.tenantSlug?.trim() ? formatSlugLabel(door.tenantSlug) : null);
-
-    if (!friendlyName && !displayHost) {
+    const slug = resolveTenantSlug(door, origin);
+    if (!slug && !displayHost) {
       return null;
     }
 
     return {
       href: origin.endsWith("/") ? origin : `${origin}/`,
-      label: friendlyName ? `Visit ${friendlyName}` : "Visit website",
+      label: slug ? `Visit ${slug} Cohestra` : "Visit Cohestra",
       title: displayHost ? `Opens ${displayHost}` : undefined,
       external: false,
     };
