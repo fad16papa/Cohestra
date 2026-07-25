@@ -63,6 +63,23 @@ export function buildActivityRegistrationMetadata(
     ? `${origin.replace(/\/$/, "")}${registrationPath}`
     : registrationPath;
 
+  if (options.indexable === false) {
+    const fallbackTitle = "Registration unavailable";
+    const fallbackDescription = "This registration page is not available.";
+
+    return {
+      title: fallbackTitle,
+      description: fallbackDescription,
+      robots: { index: false, follow: false },
+      openGraph: {
+        title: fallbackTitle,
+        description: fallbackDescription,
+        type: "website",
+        ...(origin ? { url: registrationUrl } : {}),
+      },
+    };
+  }
+
   const preview = buildActivitySharePreview(activity, registrationUrl);
   const ogImageUrl = resolveAbsolutePublicAssetUrl(activity.heroImageUrl, origin);
 
@@ -79,9 +96,6 @@ export function buildActivityRegistrationMetadata(
   return {
     title: `${activity.name} | Register`,
     description: preview.description,
-    ...(options.indexable === false
-      ? { robots: { index: false, follow: false } }
-      : {}),
     openGraph,
     ...(ogImageUrl
       ? {

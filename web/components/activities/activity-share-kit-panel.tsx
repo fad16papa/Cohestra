@@ -19,7 +19,7 @@ import {
   buildActivitySharePreview,
   buildActivityWhatsAppMessage,
   downloadBlobFile,
-  downloadTextFile,
+  downloadSharePackFiles,
 } from "@/lib/share-kit-utils";
 
 type ActivityShareKitPanelProps = {
@@ -35,9 +35,11 @@ export function ActivityShareKitPanel({
   const [registrationLink, setRegistrationLink] =
     useState<ActivityRegistrationLink | null>(null);
   const [qrPreviewUrl, setQrPreviewUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [qrError, setQrError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
 
   const isPublished = activity.status === "published";
   const isArchived = activity.status === "archived";
@@ -67,41 +69,48 @@ export function ActivityShareKitPanel({
       if (!isPublished) {
         setRegistrationLink(null);
         setQrPreviewUrl(null);
-        setError(null);
+        setLinkError(null);
+        setQrError(null);
         return;
       }
 
       setIsLoading(true);
-      setError(null);
+      setLinkError(null);
+      setQrError(null);
 
-      try {
-        const [link, qrBlob] = await Promise.all([
-          fetchActivityRegistrationLink(authFetch, activity.id),
-          fetchActivityQrCodeBlob(authFetch, activity.id),
-        ]);
+      const [linkResult, qrResult] = await Promise.allSettled([
+        fetchActivityRegistrationLink(authFetch, activity.id),
+        fetchActivityQrCodeBlob(authFetch, activity.id),
+      ]);
 
-        if (cancelled) {
-          return;
-        }
-
-        objectUrl = URL.createObjectURL(qrBlob);
-        setRegistrationLink(link);
-        setQrPreviewUrl(objectUrl);
-      } catch (loadError) {
-        if (!cancelled) {
-          setRegistrationLink(null);
-          setQrPreviewUrl(null);
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Could not load share kit."
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+      if (cancelled) {
+        return;
       }
+
+      if (linkResult.status === "fulfilled") {
+        setRegistrationLink(linkResult.value);
+      } else {
+        setRegistrationLink(null);
+        setLinkError(
+          linkResult.reason instanceof Error
+            ? linkResult.reason.message
+            : "Could not load registration link."
+        );
+      }
+
+      if (qrResult.status === "fulfilled") {
+        objectUrl = URL.createObjectURL(qrResult.value);
+        setQrPreviewUrl(objectUrl);
+      } else {
+        setQrPreviewUrl(null);
+        setQrError(
+          qrResult.reason instanceof Error
+            ? qrResult.reason.message
+            : "Could not load QR code."
+        );
+      }
+
+      setIsLoading(false);
     }
 
     void loadPublishedAssets();
@@ -118,7 +127,7 @@ export function ActivityShareKitPanel({
         return null;
       });
     };
-  }, [activity.id, activity.status, authFetch, isPublished]);
+  }, [activity.id, authFetch, isPublished, reloadToken]);
 
   async function handleCopyLink() {
     if (!registrationLink) {
@@ -153,13 +162,13 @@ export function ActivityShareKitPanel({
       return;
     }
 
-    setError(null);
+    setQrError(null);
 
     try {
       const blob = await fetchActivityQrCodeBlob(authFetch, activity.id);
       downloadBlobFile(`${activity.slug}-registration-qr.png`, blob);
     } catch (downloadError) {
-      setError(
+      setQrError(
         downloadError instanceof Error
           ? downloadError.message
           : "Could not download QR code."
@@ -172,25 +181,33 @@ export function ActivityShareKitPanel({
       return;
     }
 
-    setError(null);
+    setLinkError(null);
+    setQrError(null);
     setStatusMessage(null);
 
     try {
       const qrBlob = await fetchActivityQrCodeBlob(authFetch, activity.id);
-      downloadBlobFile(`${activity.slug}-registration-qr.png`, qrBlob);
-      downloadTextFile(
-        `${activity.slug}-share-kit.txt`,
+      downloadSharePackFiles(
+        activity.slug,
+        qrBlob,
         buildActivitySharePackText(activity, registrationLink.url)
       );
       setStatusMessage("Share pack downloaded.");
     } catch (downloadError) {
-      setError(
+      setLinkError(
         downloadError instanceof Error
           ? downloadError.message
           : "Could not download share pack."
       );
     }
   }
+
+  function handleRetryLoad() {
+    setReloadToken((current) => current + 1);
+  }
+
+  const hasShareActions = Boolean(registrationLink || qrPreviewUrl);
+  const loadErrorMessage = linkError ?? qrError;
 
   if (isArchived) {
     return (
@@ -223,32 +240,59 @@ export function ActivityShareKitPanel({
         <p className="text-sm text-text-muted-warm">Loading…</p>
       ) : null}
 
-      {registrationLink ? (
+      {!isLoading && !hasShareActions && loadErrorMessage ? (
+        <div className="space-y-3">
+          <p role="alert" className="text-sm text-destructive">
+            {loadErrorMessage}
+          </p>
+          <Button type="button" size="sm" variant="outline" onClick={handleRetryLoad}>
+            Retry
+          </Button>
+        </div>
+      ) : null}
+
+      {hasShareActions ? (
         <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-start">
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label
-                htmlFor="activity-share-link"
-                className="text-sm font-medium text-text-warm"
-              >
-                Registration link
-              </label>
-              <Input
-                id="activity-share-link"
-                readOnly
-                value={registrationLink.url}
-                aria-label="Public registration URL"
-                className="font-mono text-xs"
-                onFocus={(event) => event.target.select()}
-                onClick={(event) => event.currentTarget.select()}
-              />
-            </div>
+            {registrationLink ? (
+              <div className="space-y-2">
+                <label
+                  htmlFor="activity-share-link"
+                  className="text-sm font-medium text-text-warm"
+                >
+                  Registration link
+                </label>
+                <Input
+                  id="activity-share-link"
+                  readOnly
+                  value={registrationLink.url}
+                  aria-label="Public registration URL"
+                  className="font-mono text-xs"
+                  onFocus={(event) => event.target.select()}
+                  onClick={(event) => event.currentTarget.select()}
+                />
+              </div>
+            ) : linkError ? (
+              <div className="space-y-2">
+                <p role="alert" className="text-sm text-destructive">
+                  {linkError}
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleRetryLoad}
+                >
+                  Retry link
+                </Button>
+              </div>
+            ) : null}
 
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 size="sm"
-                disabled={isLoading}
+                disabled={isLoading || !registrationLink}
                 onClick={() => void handleCopyLink()}
               >
                 <Link2 className="size-4" aria-hidden />
@@ -285,6 +329,12 @@ export function ActivityShareKitPanel({
                 Share pack
               </Button>
             </div>
+
+            {qrError && registrationLink ? (
+              <p role="status" className="text-xs text-text-muted-warm">
+                QR preview unavailable — you can still download the PNG.
+              </p>
+            ) : null}
           </div>
 
           {qrPreviewUrl ? (
@@ -314,12 +364,6 @@ export function ActivityShareKitPanel({
       {statusMessage ? (
         <p role="status" className="text-sm text-text-muted-warm">
           {statusMessage}
-        </p>
-      ) : null}
-
-      {error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
         </p>
       ) : null}
     </div>

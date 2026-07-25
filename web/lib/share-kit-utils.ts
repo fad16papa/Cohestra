@@ -1,4 +1,5 @@
 import type { Activity } from "@/lib/activities-api";
+import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
 import type { SharePreviewData } from "@/lib/site-builder-utils";
 
 export function buildHomepageWhatsAppMessage(
@@ -55,7 +56,7 @@ export function buildActivitySharePreview(
     url: registrationUrl,
     title: activity.name,
     description: description.slice(0, 200),
-    imageUrl: activity.heroImageUrl,
+    imageUrl: resolveHeroImageUrl(activity.heroImageUrl),
   };
 }
 
@@ -92,4 +93,17 @@ export function downloadBlobFile(filename: string, blob: Blob): void {
   anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(blobUrl);
+}
+
+const SHARE_PACK_SECOND_DOWNLOAD_DELAY_MS = 400;
+
+export function downloadSharePackFiles(
+  slug: string,
+  qrBlob: Blob,
+  packText: string
+): void {
+  downloadBlobFile(`${slug}-registration-qr.png`, qrBlob);
+  window.setTimeout(() => {
+    downloadTextFile(`${slug}-share-kit.txt`, packText);
+  }, SHARE_PACK_SECOND_DOWNLOAD_DELAY_MS);
 }

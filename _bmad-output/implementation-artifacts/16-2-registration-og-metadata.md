@@ -31,3 +31,8 @@ So that WhatsApp, iMessage, and social crawlers show the correct title, descript
 
 - `web/lib/site-seo-metadata.ts`
 - `web/app/(public)/register/[slug]/page.tsx`
+
+### Review Findings
+
+- [x] [Review][Patch] Non-indexable registration pages still emit rich OG tags — generic fallback metadata when not indexable [`site-seo-metadata.ts`, `register/[slug]/page.tsx`]
+- [x] [Review][Defer] Missing request origin omits absolute `og:image` for relative campaign assets [`site-seo-metadata.ts:36-53`] — deferred, unlikely behind nginx in production
