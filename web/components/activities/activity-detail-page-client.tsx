@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin } from "lucide-react";
 
-import { ActivityHomepageFeaturePanel } from "@/components/activities/activity-homepage-feature-panel";
 import { ActivityBrandingPanel } from "@/components/activities/activity-branding-panel";
 import { ActivityFormTab } from "@/components/activities/activity-form-tab";
 import { ActivityPublishControls } from "@/components/activities/activity-publish-controls";
@@ -14,18 +13,18 @@ import { ActivityStatusBadge } from "@/components/activities/activity-status-bad
 import { useAuth } from "@/components/auth/auth-provider";
 import { useAdminPageMeta } from "@/components/layouts/admin-shell-context";
 import { ProductErrorState } from "@/components/shared/product-error-state";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { fetchActivityById, type Activity } from "@/lib/activities-api";
 import { getPublishGateIssues } from "@/lib/form-schema-utils";
+import { cn } from "@/lib/utils";
 
 type ActivityDetailTab = "overview" | "form" | "registrations" | "share";
+
+const ACTIVITY_TABS: { id: ActivityDetailTab; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "form", label: "Form" },
+  { id: "registrations", label: "Registrations" },
+  { id: "share", label: "Share kit" },
+];
 
 type ActivityDetailPageClientProps = {
   id: string;
@@ -40,6 +39,37 @@ function ActivityBackLink() {
       <ArrowLeft className="size-4 shrink-0" aria-hidden />
       Back to activities
     </Link>
+  );
+}
+
+function ActivityQuickFacts({ activity }: { activity: Activity }) {
+  return (
+    <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-1">
+        <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+          <Calendar className="size-3.5" aria-hidden />
+          Schedule
+        </dt>
+        <dd className="text-sm text-text-warm">{activity.schedule}</dd>
+      </div>
+      <div className="space-y-1">
+        <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+          <MapPin className="size-3.5" aria-hidden />
+          Location
+        </dt>
+        <dd className="text-sm text-text-warm">{activity.location}</dd>
+      </div>
+      <div className="space-y-1">
+        <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+          Public URL
+        </dt>
+        <dd className="text-sm">
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-text-warm">
+            /register/{activity.slug}
+          </code>
+        </dd>
+      </div>
+    </dl>
   );
 }
 
@@ -105,7 +135,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     <div className="space-y-6">
       <ActivityBackLink />
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-display-sm text-text-warm">{activity.name}</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
@@ -115,75 +145,42 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
         <ActivityStatusBadge status={activity.status} />
       </div>
 
-      {activity.status === "draft" ? (
-        <p
-          role="status"
-          className="rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
-        >
-          Not live — publish to generate QR and link.
-        </p>
-      ) : null}
-
-      <div
+      <nav
         role="tablist"
-        aria-label="Activity detail sections"
-        className="flex flex-wrap gap-2 border-b border-border-warm pb-2"
+        aria-label="Activity sections"
+        className="flex gap-1 overflow-x-auto border-b border-border-warm"
       >
-        {(
-          [
-            { id: "overview", label: "Overview" },
-            { id: "form", label: "Form" },
-            { id: "registrations", label: "Registrations" },
-            { id: "share", label: "Share kit" },
-          ] as const
-        ).map((tab) => (
-          <Button
+        {ACTIVITY_TABS.map((tab) => (
+          <button
             key={tab.id}
             type="button"
             role="tab"
             aria-selected={activeTab === tab.id}
-            variant={activeTab === tab.id ? "default" : "ghost"}
             onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors -mb-px",
+              activeTab === tab.id
+                ? "border-primary text-text-warm"
+                : "border-transparent text-text-muted-warm hover:text-text-warm"
+            )}
           >
             {tab.label}
-          </Button>
+          </button>
         ))}
-      </div>
+      </nav>
 
       {activeTab === "overview" ? (
-        <div className="space-y-6">
+        <div className="space-y-8">
           <ActivityPublishControls
             activity={activity}
             onActivityUpdated={setActivity}
           />
+          <ActivityQuickFacts activity={activity} />
           <ActivityBrandingPanel
             key={activity.id}
             activity={activity}
             onActivityUpdated={setActivity}
           />
-          <ActivityHomepageFeaturePanel activity={activity} />
-          <Card className="border-border-warm">
-            <CardHeader>
-              <CardTitle className="text-section text-text-warm">
-                Activity overview
-              </CardTitle>
-              <CardDescription className="text-text-muted-warm">
-                Metadata and public URL for this lead engine.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm text-text-muted-warm">
-              <p>{activity.schedule}</p>
-              <p>{activity.location}</p>
-              <p>
-                Public slug:{" "}
-                <code className="rounded bg-muted px-1 py-0.5">{activity.slug}</code>
-              </p>
-              <p>
-                Use the Share kit tab after publishing to copy a WhatsApp message,
-                preview your link, or download a QR pack.
-              </p>
-            </CardContent>
-          </Card>
         </div>
       ) : null}
 
@@ -208,4 +205,3 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     </div>
   );
 }
-

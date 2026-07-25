@@ -4,13 +4,6 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ResponsiveBannerImage } from "@/components/ui/responsive-banner-image";
@@ -121,13 +114,13 @@ export function ActivityBrandingPanel({
         onActivityUpdated(updated);
         setHeroImageUrl(updated.heroImageUrl ?? "");
         setAccentColor(updated.accentColor ?? "");
-        setSavedMessage("Public branding saved.");
+        setSavedMessage("Branding saved.");
       })
       .catch((saveError) => {
         setError(
           saveError instanceof Error
             ? saveError.message
-            : "Could not save public branding."
+            : "Could not save branding."
         );
         throw saveError;
       })
@@ -147,27 +140,35 @@ export function ActivityBrandingPanel({
   }
 
   return (
-    <Card className="border-border-warm">
-      <CardHeader>
-        <CardTitle className="text-section text-text-warm">
-          Public branding
-        </CardTitle>
-        <CardDescription className="text-text-muted-warm">
-          Optional hero image and accent color for the public registration page
-          and confirmation email. Upload an image or paste a public URL.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
+    <section className="space-y-5 border-t border-border-warm pt-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-section text-text-warm">Branding</h3>
+          <p className="mt-0.5 text-sm text-text-muted-warm">
+            Optional hero image and accent for the registration page.
+          </p>
+        </div>
+        <Button
+          type="button"
+          disabled={isArchived || isSaving || isUploadingHero || !isDirty}
+          onClick={handleSave}
+        >
+          {isSaving ? "Saving…" : "Save"}
+        </Button>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-3">
           <Label htmlFor="activity-hero-image-url">Hero image</Label>
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               disabled={isArchived || isSaving || isUploadingHero}
               onClick={() => heroFileInputRef.current?.click()}
             >
-              {isUploadingHero ? "Uploading…" : "Upload image"}
+              {isUploadingHero ? "Uploading…" : "Upload"}
             </Button>
             <input
               ref={heroFileInputRef}
@@ -181,6 +182,7 @@ export function ActivityBrandingPanel({
               <Button
                 type="button"
                 variant="ghost"
+                size="sm"
                 disabled={isArchived || isSaving || isUploadingHero}
                 onClick={handleClearHero}
               >
@@ -188,29 +190,17 @@ export function ActivityBrandingPanel({
               </Button>
             ) : null}
           </div>
-          <p className="text-xs text-text-muted-warm">Or paste an image URL</p>
           <Input
             id="activity-hero-image-url"
             type="url"
-            placeholder="https://example.com/cover.jpg"
+            placeholder="Or paste image URL"
             value={heroImageUrl}
             disabled={isArchived || isSaving || isUploadingHero}
             onChange={(event) => setHeroImageUrl(event.target.value)}
           />
-          {previewHeroUrl ? (
-            <ResponsiveBannerImage
-              src={previewHeroUrl}
-              variant="preview"
-              className="max-w-md overflow-hidden rounded-lg border border-border-warm bg-muted/30"
-            />
-          ) : null}
-          <p className="text-xs text-text-muted-warm">
-            Shown at its natural aspect ratio on the registration page and in
-            event listings. After upload or pasting a URL, click Save branding.
-          </p>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label htmlFor="activity-accent-color">Accent color</Label>
           <div className="flex flex-wrap items-center gap-3">
             <Input
@@ -233,31 +223,28 @@ export function ActivityBrandingPanel({
               className="size-10 cursor-pointer rounded-lg border border-input bg-background p-1"
             />
           </div>
-          <p className="text-xs text-text-muted-warm">
-            Applies to buttons and links on the public registration page.
-          </p>
         </div>
+      </div>
 
-        {error ? (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        ) : null}
+      {previewHeroUrl ? (
+        <ResponsiveBannerImage
+          src={previewHeroUrl}
+          variant="preview"
+          className="max-w-md overflow-hidden rounded-lg border border-border-warm bg-muted/30"
+        />
+      ) : null}
 
-        {savedMessage ? (
-          <p role="status" className="text-sm text-text-muted-warm">
-            {savedMessage}
-          </p>
-        ) : null}
+      {error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
 
-        <Button
-          type="button"
-          disabled={isArchived || isSaving || isUploadingHero || !isDirty}
-          onClick={handleSave}
-        >
-          {isSaving ? "Saving…" : "Save branding"}
-        </Button>
-      </CardContent>
-    </Card>
+      {savedMessage ? (
+        <p role="status" className="text-sm text-text-muted-warm">
+          {savedMessage}
+        </p>
+      ) : null}
+    </section>
   );
 }

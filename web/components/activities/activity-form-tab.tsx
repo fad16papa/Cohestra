@@ -27,16 +27,16 @@ import {
   getFormSchemaClientIssues,
   getPublishGateIssues,
   normalizeFormSchema,
-  publishGateSavedFormNote,
 } from "@/lib/form-schema-utils";
 import {
   cloneFormTemplate,
   getFormTemplate,
   type FormTemplateId,
 } from "@/lib/form-templates";
+import { cn } from "@/lib/utils";
 
 const publishedTemplateLockReason =
-  "This activity is published. Launch templates replace the entire form, so they are disabled while live. Unpublish from the Overview tab to apply a template, then publish again when ready.";
+  "Templates replace the entire form. Unpublish from Overview to apply one.";
 
 type ActivityFormTabProps = {
   activity: Activity;
@@ -73,6 +73,11 @@ export function ActivityFormTab({
     .map((field) => `${field.id}:${field.type}`)
     .join("|");
 
+  const showPublishGate =
+    isDraft &&
+    (draftPublishGateIssues.length > 0 ||
+      (isDirty && savedPublishGateIssues.length > 0));
+
   useEffect(() => {
     setDraftSchema(normalizeFormSchema(activity.formSchema));
   }, [activity.formSchema, activity.id, activity.status]);
@@ -81,9 +86,7 @@ export function ActivityFormTab({
     setError(null);
     setSuccess(null);
     setDraftSchema(cloneFormTemplate(templateId));
-    setSuccess(
-      `${getFormTemplate(templateId).name} template applied. Review the fields, then save the form.`
-    );
+    setSuccess(`${getFormTemplate(templateId).name} template applied. Save when ready.`);
   }
 
   function handleSelectTemplate(templateId: FormTemplateId) {
@@ -120,7 +123,7 @@ export function ActivityFormTab({
       );
       onActivityUpdated(updated);
       setDraftSchema(normalizeFormSchema(updated.formSchema));
-      setSuccess("Form saved. New registrations will use this schema.");
+      setSuccess("Form saved.");
     } catch (saveError) {
       setError(
         saveError instanceof Error
@@ -134,113 +137,86 @@ export function ActivityFormTab({
 
   return (
     <div className="space-y-8">
-      {isArchived ? (
-        <p
-          role="status"
-          className="rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm"
-        >
-          This activity is archived. Form fields are read-only.
-        </p>
-      ) : null}
-
-      {isPublished ? (
-        <p
-          role="status"
-          className="rounded-lg border border-border-warm bg-muted/30 px-4 py-3 text-sm text-text-warm"
-        >
-          This form is live at{" "}
-          <code className="rounded bg-muted px-1 py-0.5">/register/{activity.slug}</code>
-          . You can adjust individual fields below and save — changes apply to new
-          registrations only. To replace the whole form with a launch template,
-          unpublish from the Overview tab first.
-        </p>
-      ) : null}
-
       {!isArchived ? (
-        <div className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
-              <h3 className="text-section text-text-warm">Registration form</h3>
-              <p className="text-sm text-text-muted-warm">
-                Saved changes apply to new registrations only. Existing
-                submissions stay unchanged.
+        <div
+          className={cn(
+            "sticky top-0 z-10 -mx-1 flex flex-col gap-3 border-b border-border-warm bg-background/95 px-1 py-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between",
+            isDirty && "border-primary/20"
+          )}
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-text-warm">
+              Registration form
+            </p>
+            {isPublished ? (
+              <p className="text-xs text-text-muted-warm">
+                Live — changes apply to new registrations only.
               </p>
-            </div>
-            <Button
-              type="button"
-              disabled={isSaving || !isDirty || hasClientIssues}
-              onClick={() => void handleSave()}
-            >
-              {isSaving ? "Saving…" : "Save form"}
-            </Button>
+            ) : isDirty ? (
+              <p className="text-xs text-text-muted-warm">Unsaved changes</p>
+            ) : null}
           </div>
-
-          {hasClientIssues ? (
-            <div role="alert" className="space-y-1 text-sm text-destructive">
-              {clientIssues.map((issue) => (
-                <p key={issue}>{issue}</p>
-              ))}
-            </div>
-          ) : null}
-
-          {error ? (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          ) : null}
-
-          {success ? (
-            <p role="status" className="text-sm text-text-warm">
-              {success}
-            </p>
-          ) : null}
+          <Button
+            type="button"
+            size="sm"
+            disabled={isSaving || !isDirty || hasClientIssues}
+            onClick={() => void handleSave()}
+          >
+            {isSaving ? "Saving…" : "Save form"}
+          </Button>
         </div>
       ) : null}
 
-      {!isArchived && isDraft ? (
-        <section className="space-y-3 rounded-xl border border-border-warm bg-muted/20 p-4">
-          <div>
-            <h3 className="text-section text-text-warm">Publish requirements</h3>
-            <p className="mt-1 text-sm text-text-muted-warm">
-              {publishGateSavedFormNote}
-            </p>
-          </div>
+      {isArchived ? (
+        <p role="status" className="text-sm text-text-muted-warm">
+          Archived — form is read-only.
+        </p>
+      ) : null}
 
+      {hasClientIssues ? (
+        <ul role="alert" className="list-disc space-y-0.5 pl-5 text-sm text-destructive">
+          {clientIssues.map((issue) => (
+            <li key={issue}>{issue}</li>
+          ))}
+        </ul>
+      ) : null}
+
+      {showPublishGate ? (
+        <div role="alert" className="space-y-2 text-sm">
           {draftPublishGateIssues.length > 0 ? (
-            <div role="alert" className="space-y-1">
-              <p className="text-sm font-medium text-text-warm">Current draft</p>
-              <ul className="list-disc space-y-1 pl-5 text-sm text-destructive">
+            <div>
+              <p className="font-medium text-text-warm">Before you can publish</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-5 text-destructive">
                 {draftPublishGateIssues.map((issue) => (
                   <li key={`draft-${issue}`}>{issue}</li>
                 ))}
               </ul>
             </div>
-          ) : (
-            <p className="text-sm text-text-warm">
-              Current draft meets publish requirements.
-            </p>
-          )}
+          ) : null}
 
-          {isDirty ? (
-            <div className="space-y-1 border-t border-border-warm pt-3">
-              <p className="text-sm font-medium text-text-warm">
-                Last saved form (used when publishing)
-              </p>
-              {savedPublishGateIssues.length > 0 ? (
-                <ul className="list-disc space-y-1 pl-5 text-sm text-destructive">
-                  {savedPublishGateIssues.map((issue) => (
-                    <li key={`saved-${issue}`}>{issue}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-text-muted-warm">
-                  Saved form meets publish requirements. Save this draft, then
-                  publish from Overview.
-                </p>
-              )}
+          {isDirty && savedPublishGateIssues.length > 0 ? (
+            <div>
+              <p className="font-medium text-text-warm">Saved form (used when publishing)</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-5 text-destructive">
+                {savedPublishGateIssues.map((issue) => (
+                  <li key={`saved-${issue}`}>{issue}</li>
+                ))}
+              </ul>
             </div>
           ) : null}
-        </section>
+        </div>
+      ) : null}
+
+      {error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+
+      {success ? (
+        <p role="status" className="text-sm text-text-muted-warm">
+          {success}
+        </p>
       ) : null}
 
       {!isArchived ? (
@@ -252,38 +228,31 @@ export function ActivityFormTab({
         />
       ) : null}
 
-      <div className="flex min-w-0 flex-col gap-8">
-        <FormFieldEditor
-          schema={draftSchema}
-          onChange={setDraftSchema}
-          disabled={isArchived}
-          className="min-w-0"
-        />
+      <FormFieldEditor
+        schema={draftSchema}
+        onChange={setDraftSchema}
+        disabled={isArchived}
+        className="min-w-0"
+      />
 
-        <section
-          aria-labelledby="form-live-preview-heading"
-          className="min-w-0 space-y-3 rounded-xl border border-border-warm bg-card p-4 sm:p-5"
+      <section
+        aria-labelledby="form-live-preview-heading"
+        className="min-w-0 space-y-3 border-t border-border-warm pt-8"
+      >
+        <h3
+          id="form-live-preview-heading"
+          className="text-section text-text-warm"
         >
-          <div>
-            <h3
-              id="form-live-preview-heading"
-              className="text-section text-text-warm"
-            >
-              Live preview
-            </h3>
-            <p className="mt-1 text-sm text-text-muted-warm">
-              How registrants will see this form on the public registration page.
-            </p>
-          </div>
-          <div className="max-h-[min(36rem,70dvh)] overflow-y-auto overscroll-y-contain rounded-xl border border-border-warm bg-muted/20 p-4 [-webkit-overflow-scrolling:touch] sm:p-5">
-            <RegistrationForm
-              key={previewKey}
-              schema={draftSchema}
-              variant="preview"
-            />
-          </div>
-        </section>
-      </div>
+          Preview
+        </h3>
+        <div className="max-h-[min(36rem,70dvh)] overflow-y-auto overscroll-y-contain rounded-xl border border-border-warm bg-muted/20 p-4 [-webkit-overflow-scrolling:touch] sm:p-5">
+          <RegistrationForm
+            key={previewKey}
+            schema={draftSchema}
+            variant="preview"
+          />
+        </div>
+      </section>
 
       <AlertDialog
         open={pendingTemplateId !== null}

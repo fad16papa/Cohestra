@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { Download, Link2, MessageCircle } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { ShareLinkPreview } from "@/components/shared/share-link-preview";
@@ -14,7 +14,6 @@ import {
   type ActivityRegistrationLink,
 } from "@/lib/activities-api";
 import { copyTextToClipboard } from "@/lib/clipboard";
-import { publishGateSavedFormNote } from "@/lib/form-schema-utils";
 import {
   buildActivitySharePackText,
   buildActivitySharePreview,
@@ -130,8 +129,8 @@ export function ActivityShareKitPanel({
     const copied = await copyTextToClipboard(registrationLink.url);
     setStatusMessage(
       copied
-        ? "Public link copied."
-        : "Select the URL below and copy manually (Ctrl+C)."
+        ? "Link copied."
+        : "Select the URL and copy manually (Ctrl+C)."
     );
   }
 
@@ -144,8 +143,8 @@ export function ActivityShareKitPanel({
     const copied = await copyTextToClipboard(whatsAppMessage);
     setStatusMessage(
       copied
-        ? "WhatsApp message copied — paste it in your chat."
-        : "Could not copy automatically. Select the message preview below."
+        ? "WhatsApp message copied."
+        : "Could not copy automatically."
     );
   }
 
@@ -183,7 +182,7 @@ export function ActivityShareKitPanel({
         `${activity.slug}-share-kit.txt`,
         buildActivitySharePackText(activity, registrationLink.url)
       );
-      setStatusMessage("Share pack downloaded (QR PNG + message file).");
+      setStatusMessage("Share pack downloaded.");
     } catch (downloadError) {
       setError(
         downloadError instanceof Error
@@ -193,53 +192,49 @@ export function ActivityShareKitPanel({
     }
   }
 
-  return (
-    <section className="space-y-6 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
-      <div>
-        <h3 className="text-section text-text-warm">Share kit</h3>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Copy a WhatsApp-ready message, preview how your link looks when shared,
-          and download a QR pack for print or social.
+  if (isArchived) {
+    return (
+      <p className="text-sm text-text-muted-warm">
+        Share kit is unavailable for archived activities.
+      </p>
+    );
+  }
+
+  if (!isPublished) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-text-muted-warm">
+          Publish this activity to unlock link, QR, and WhatsApp copy.
         </p>
+        {gateBlocked ? (
+          <ul className="list-disc space-y-0.5 pl-5 text-sm text-destructive">
+            {publishGateIssues.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
+        ) : null}
       </div>
+    );
+  }
 
-      {isArchived ? (
-        <p className="rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm">
-          Share kit is unavailable for archived activities.
-        </p>
+  return (
+    <div className="space-y-8">
+      {isLoading ? (
+        <p className="text-sm text-text-muted-warm">Loading…</p>
       ) : null}
 
-      {!isArchived && !isPublished ? (
-        <div className="space-y-3 rounded-lg border border-dashed border-border-warm bg-muted/20 px-4 py-3 text-sm text-text-muted-warm">
-          <p>{publishGateSavedFormNote}</p>
-          <p role="status">
-            Share kit stays disabled until publish succeeds.
-          </p>
-          {gateBlocked ? (
-            <ul className="list-disc space-y-1 pl-5 text-destructive">
-              {publishGateIssues.map((issue) => (
-                <li key={issue}>{issue}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-text-warm">
-              Form meets publish requirements. Publish the activity to unlock
-              link, QR, and WhatsApp copy.
-            </p>
-          )}
-        </div>
-      ) : null}
-
-      {isPublished ? (
-        <div className="space-y-6">
-          {isLoading ? (
-            <p className="text-sm text-text-muted-warm">Loading share kit…</p>
-          ) : null}
-
-          {registrationLink ? (
+      {registrationLink ? (
+        <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-start">
+          <div className="space-y-4">
             <div className="space-y-2">
-              <p className="text-sm font-medium text-text-warm">Public link</p>
+              <label
+                htmlFor="activity-share-link"
+                className="text-sm font-medium text-text-warm"
+              >
+                Registration link
+              </label>
               <Input
+                id="activity-share-link"
                 readOnly
                 value={registrationLink.url}
                 aria-label="Public registration URL"
@@ -247,93 +242,74 @@ export function ActivityShareKitPanel({
                 onFocus={(event) => event.target.select()}
                 onClick={(event) => event.currentTarget.select()}
               />
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  disabled={isLoading}
-                  onClick={() => void handleCopyLink()}
-                >
-                  Copy link
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isLoading || !whatsAppMessage}
-                  onClick={() => void handleCopyWhatsAppMessage()}
-                >
-                  <MessageCircle className="size-4" aria-hidden />
-                  Copy WhatsApp message
-                </Button>
-              </div>
             </div>
-          ) : null}
+
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                disabled={isLoading}
+                onClick={() => void handleCopyLink()}
+              >
+                <Link2 className="size-4" aria-hidden />
+                Copy link
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isLoading || !whatsAppMessage}
+                onClick={() => void handleCopyWhatsAppMessage()}
+              >
+                <MessageCircle className="size-4" aria-hidden />
+                Copy WhatsApp
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isLoading}
+                onClick={() => void handleDownloadQr()}
+              >
+                <Download className="size-4" aria-hidden />
+                QR PNG
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isLoading || !registrationLink}
+                onClick={() => void handleDownloadSharePack()}
+              >
+                <Download className="size-4" aria-hidden />
+                Share pack
+              </Button>
+            </div>
+          </div>
 
           {qrPreviewUrl ? (
-            <div className="space-y-2">
+            <div className="flex flex-col items-start gap-2">
               <p className="text-sm font-medium text-text-warm">QR code</p>
-              <div className="inline-block rounded-lg border border-border-warm bg-white p-3">
+              <div className="rounded-lg border border-border-warm bg-white p-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={qrPreviewUrl}
-                  alt={`QR code for ${activity.name} registration link`}
-                  className="size-48"
+                  alt={`QR code for ${activity.name}`}
+                  className="size-36 sm:size-40"
                 />
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isLoading}
-                  onClick={() => void handleDownloadQr()}
-                >
-                  Download QR PNG
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isLoading || !registrationLink}
-                  onClick={() => void handleDownloadSharePack()}
-                >
-                  Download share pack
-                </Button>
-              </div>
-              <p className="text-xs text-text-muted-warm">
-                Share pack includes the QR PNG and a text file with your link and
-                WhatsApp message.
-              </p>
-            </div>
-          ) : null}
-
-          {sharePreview && whatsAppMessage ? (
-            <ShareLinkPreview
-              preview={sharePreview}
-              sampleMessage={whatsAppMessage.split("\n")[0] ?? "Join us!"}
-              helperText="Approximate preview when you share the registration link in WhatsApp or iMessage."
-            />
-          ) : null}
-
-          {whatsAppMessage ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-text-warm">WhatsApp message</p>
-              <pre className="overflow-x-auto rounded-lg border border-border-warm bg-muted/30 p-3 text-xs leading-relaxed whitespace-pre-wrap text-text-warm">
-                {whatsAppMessage}
-              </pre>
             </div>
           ) : null}
         </div>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" disabled>
-            Copy link
-          </Button>
-          <Button type="button" variant="outline" disabled>
-            Copy WhatsApp message
-          </Button>
-          <Button type="button" variant="outline" disabled>
-            Download share pack
-          </Button>
-        </div>
-      )}
+      ) : null}
+
+      {sharePreview && whatsAppMessage ? (
+        <ShareLinkPreview
+          preview={sharePreview}
+          sampleMessage={whatsAppMessage.split("\n")[0] ?? "Join us!"}
+          helperText="How your link may appear when shared."
+        />
+      ) : null}
 
       {statusMessage ? (
         <p role="status" className="text-sm text-text-muted-warm">
@@ -346,6 +322,6 @@ export function ActivityShareKitPanel({
           {error}
         </p>
       ) : null}
-    </section>
+    </div>
   );
 }

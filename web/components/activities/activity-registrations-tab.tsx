@@ -7,12 +7,6 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   fetchActivityRegistrations,
   type ActivityRegistrationListItem,
 } from "@/lib/activities-api";
@@ -110,39 +104,37 @@ export function ActivityRegistrationsTab({
   }, [activityId]);
 
   return (
-    <Card className="border-border-warm">
-      <CardHeader>
-        <CardTitle className="text-section text-text-warm">Registrations</CardTitle>
-        <CardDescription className="text-text-muted-warm">
-          {error
-            ? "Could not load registrations for this activity."
-            : initialized
-              ? totalCount === 0
-                ? "No registrations yet for this activity."
-                : `${totalCount} registration${totalCount === 1 ? "" : "s"} captured.`
-              : "Sign-ups submitted through this activity's public form."}
-        </CardDescription>
-      </CardHeader>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+        <h3 className="text-section text-text-warm">Registrations</h3>
+        {initialized && !error ? (
+          <p className="text-sm text-text-muted-warm">
+            {totalCount === 0
+              ? "No sign-ups yet"
+              : `${totalCount} total`}
+          </p>
+        ) : null}
+      </div>
 
-      <div className="overflow-hidden rounded-b-xl border-t border-border-warm">
+      <div className="overflow-hidden rounded-xl border border-border-warm">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border-warm bg-muted/30 text-left">
               <th
                 scope="col"
-                className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-text-muted-warm"
+                className="px-4 py-2.5 text-xs font-medium text-text-muted-warm"
               >
-                Registration ID
+                ID
               </th>
               <th
                 scope="col"
-                className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-text-muted-warm"
+                className="px-4 py-2.5 text-xs font-medium text-text-muted-warm"
               >
                 Registrant
               </th>
               <th
                 scope="col"
-                className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-text-muted-warm"
+                className="px-4 py-2.5 text-xs font-medium text-text-muted-warm"
               >
                 Submitted
               </th>
@@ -154,7 +146,7 @@ export function ActivityRegistrationsTab({
           >
             {!initialized ? (
               <tr>
-                <td colSpan={3} className="px-4 py-10 text-center">
+                <td colSpan={3} className="px-4 py-12 text-center">
                   <Loader2
                     className="mx-auto size-5 animate-spin text-text-muted-warm"
                     aria-label="Loading registrations"
@@ -177,9 +169,9 @@ export function ActivityRegistrationsTab({
               <tr>
                 <td
                   colSpan={3}
-                  className="px-4 py-10 text-center text-text-muted-warm"
+                  className="px-4 py-12 text-center text-text-muted-warm"
                 >
-                  No registrations in this activity yet.
+                  No registrations yet.
                 </td>
               </tr>
             ) : null}
@@ -190,20 +182,20 @@ export function ActivityRegistrationsTab({
                     key={item.registrationId}
                     className="border-b border-border-warm last:border-b-0"
                   >
-                    <td className="px-4 py-4 font-mono text-xs text-text-warm">
+                    <td className="px-4 py-3 font-mono text-xs text-text-warm">
                       {item.registrationNumber}
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-3">
                       <Link
                         href={`/clients/${item.clientId}`}
                         className={cn(
-                          "font-semibold text-text-warm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          "font-medium text-text-warm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         )}
                       >
                         {item.clientFullName}
                       </Link>
                     </td>
-                    <td className="px-4 py-4 text-text-muted-warm">
+                    <td className="px-4 py-3 text-text-muted-warm">
                       <time dateTime={item.submittedAt}>
                         {formatSubmittedAt(item.submittedAt)}
                       </time>
@@ -215,9 +207,9 @@ export function ActivityRegistrationsTab({
         </table>
 
         {initialized && !error && totalCount > 0 ? (
-          <div className="flex flex-col gap-3 border-t border-border-warm px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-text-muted-warm">
-              {`Showing ${(page - 1) * REGISTRATION_PAGE_SIZE + 1}-${Math.min(page * REGISTRATION_PAGE_SIZE, totalCount)} of ${totalCount}`}
+          <div className="flex flex-col gap-3 border-t border-border-warm px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-text-muted-warm">
+              {`${(page - 1) * REGISTRATION_PAGE_SIZE + 1}–${Math.min(page * REGISTRATION_PAGE_SIZE, totalCount)} of ${totalCount}`}
             </p>
             <div className="flex items-center gap-2">
               <Button
@@ -229,8 +221,8 @@ export function ActivityRegistrationsTab({
               >
                 Previous
               </Button>
-              <span className="text-sm text-text-muted-warm">
-                Page {page} of {totalPages}
+              <span className="text-xs text-text-muted-warm">
+                {page} / {totalPages}
               </span>
               <Button
                 type="button"
@@ -247,6 +239,6 @@ export function ActivityRegistrationsTab({
           </div>
         ) : null}
       </div>
-    </Card>
+    </div>
   );
 }
