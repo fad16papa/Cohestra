@@ -63,10 +63,10 @@ See [deploy/nginx/README.md](deploy/nginx/README.md) for routing details.
 
 ### Identity roles
 
-| Role | Who | Home |
-|------|-----|------|
-| `PlatformAdmin` | Cohestra ops (whole-platform governance) | `/platform` |
-| `TenantAdmin` | Subscribed org operator (PRD Tenant Admin) | `/dashboard` |
+| Role | Who | Login | Home |
+|------|-----|-------|------|
+| `PlatformAdmin` | Cohestra ops (whole-platform governance) | `/platform/login` | `/platform` |
+| `TenantAdmin` | Subscribed org operator (PRD Tenant Admin) | `/login` | `/dashboard` |
 
 These roles are mutually exclusive. Legacy Identity role name `Admin` is renamed to `TenantAdmin` on API startup.
 
