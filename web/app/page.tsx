@@ -10,7 +10,10 @@ import {
   buildEnvLandingMetadata,
   buildPublishedSiteMetadata,
 } from "@/lib/site-seo-metadata";
-import { fetchPreviewSiteServer } from "@/lib/public-site-server-api";
+import {
+  fetchPreviewSiteServer,
+  fetchPublicSiteServer,
+} from "@/lib/public-site-server-api";
 
 type HomePageProps = {
   searchParams: Promise<{ preview?: string }>;
@@ -74,6 +77,11 @@ export default async function Home({ searchParams }: HomePageProps) {
             activities={door.stubActivities}
           />
         );
+      }
+
+      const publicSite = await fetchPublicSiteServer();
+      if (publicSite) {
+        return <SitePageRenderer site={publicSite} />;
       }
 
       if (door.site) {

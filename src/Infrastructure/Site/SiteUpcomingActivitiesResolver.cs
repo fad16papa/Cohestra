@@ -41,7 +41,8 @@ internal static class SiteUpcomingActivitiesResolver
         var limit = ResolveLimit(published);
 
         // Schedule is operator-facing free text; UpdatedAt descending is the MVP ordering proxy.
-        var activities = await dbContext.Activities
+        // Ignore ambient tenant filters — caller passes an explicit tenant id (e.g. public door host resolve).
+        var activities = await dbContext.IgnoreTenantFilters<Activity>()
             .AsNoTracking()
             .Where(activity =>
                 activity.TenantId == tenantId &&

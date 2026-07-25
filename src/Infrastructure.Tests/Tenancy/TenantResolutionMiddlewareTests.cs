@@ -305,6 +305,59 @@ public sealed class TenantResolutionMiddlewareTests
         Assert.NotEqual(TenantIds.Default, current.TenantId);
     }
 
+    [Fact]
+    public async Task PublicDoor_sets_tenant_context_for_active_host()
+    {
+        var tenantId = Guid.CreateVersion7();
+        var context = CreateContext(
+            "/api/v1/public/door",
+            host: "acme.localhost",
+            authenticated: false,
+            roles: [],
+            tenantId: null);
+        var current = new CurrentTenant();
+        var called = false;
+
+        var middleware = new TenantResolutionMiddleware(_ =>
+        {
+            called = true;
+            return Task.CompletedTask;
+        });
+
+        await middleware.InvokeAsync(
+            context,
+            new StubHostResolver(TenantHostResolution.Ok(tenantId, "acme")),
+            current,
+            NullLogger<TenantResolutionMiddleware>.Instance);
+
+        Assert.True(called);
+        Assert.True(current.IsResolved);
+        Assert.Equal(tenantId, current.TenantId);
+        Assert.Equal("acme", current.Slug);
+    }
+
+    [Fact]
+    public async Task PublicDoor_does_not_set_tenant_for_marketing_host()
+    {
+        var context = CreateContext(
+            "/api/v1/public/door",
+            host: "cohestra.app",
+            authenticated: false,
+            roles: [],
+            tenantId: null);
+        var current = new CurrentTenant();
+
+        var middleware = new TenantResolutionMiddleware(_ => Task.CompletedTask);
+        await middleware.InvokeAsync(
+            context,
+            new StubHostResolver(TenantHostResolution.MarketingOnly()),
+            current,
+            NullLogger<TenantResolutionMiddleware>.Instance);
+
+        Assert.False(current.IsResolved);
+        Assert.Null(current.TenantId);
+    }
+
     private static string? ReadErrorCode(HttpContext context)
     {
         context.Response.Body.Position = 0;

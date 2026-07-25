@@ -55,7 +55,7 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
 
         if (IsPublicDoorPath(path))
         {
-            await next(context);
+            await HandlePublicDoorAsync(context, hostResolver, currentTenant, logger);
             return;
         }
 
@@ -68,6 +68,34 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         if (RequiresAdminTenantAlignment(path))
         {
             await HandleAdminAsync(context, hostResolver, currentTenant, logger);
+            return;
+        }
+
+        await next(context);
+    }
+
+    private async Task HandlePublicDoorAsync(
+        HttpContext context,
+        ITenantHostResolver hostResolver,
+        CurrentTenant currentTenant,
+        ILogger<TenantResolutionMiddleware> logger)
+    {
+        var door = await hostResolver.ResolveDoorAsync(
+            TenantRequestHost.GetEffectiveHost(context),
+            context.RequestAborted);
+
+        if (door.TenantId is Guid tenantId && !string.IsNullOrWhiteSpace(door.Slug))
+        {
+            currentTenant.SetResolved(tenantId, door.Slug);
+            using (logger.BeginScope(new Dictionary<string, object?>
+            {
+                ["tenantId"] = tenantId,
+                ["tenantSlug"] = door.Slug,
+            }))
+            {
+                await next(context);
+            }
+
             return;
         }
 

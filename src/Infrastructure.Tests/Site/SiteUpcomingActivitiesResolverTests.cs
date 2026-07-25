@@ -1,9 +1,11 @@
 using System.Text.Json;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Site;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Site;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Tests.Site;
@@ -132,6 +134,32 @@ public sealed class SiteUpcomingActivitiesResolverTests
         Assert.Equal("ours", results[0].Slug);
     }
 
+    [Fact]
+    public async Task LoadAsync_WorksWhenAmbientTenantIsUnresolved()
+    {
+        var tenantId = Guid.CreateVersion7();
+        await using var dbContext = CreateDbContext(new CurrentTenant());
+        var now = DateTimeOffset.UtcNow;
+
+        dbContext.Activities.Add(
+            CreateActivity("featured-event", ActivityStatus.Published, showOnHomepage: true, now, tenantId));
+        await dbContext.SaveChangesAsync();
+
+        var published = CreatePublished(
+        [
+            CreateSection("upcoming-1", "upcomingActivities", true, """{"limit": 6}"""),
+        ]);
+
+        var results = await SiteUpcomingActivitiesResolver.LoadAsync(
+            dbContext,
+            published,
+            "http://localhost:8080",
+            tenantId);
+
+        Assert.Single(results);
+        Assert.Equal("featured-event", results[0].Slug);
+    }
+
     private static SiteSectionsDocumentDto CreatePublished(IReadOnlyList<SiteSectionDto> sections) =>
         new(
             SchemaVersion: 1,
@@ -178,12 +206,12 @@ public sealed class SiteUpcomingActivitiesResolverTests
             UpdatedAt = updatedAt,
         };
 
-    private static CohestraDbContext CreateDbContext()
+    private static CohestraDbContext CreateDbContext(ICurrentTenant? currentTenant = null)
     {
         var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new CohestraDbContext(options);
+        return new CohestraDbContext(options, currentTenant);
     }
 }
