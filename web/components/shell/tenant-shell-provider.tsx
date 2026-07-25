@@ -64,13 +64,26 @@ export function TenantShellProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    function onFocus() {
+    let lastRefreshAt = 0;
+    const minRefreshIntervalMs = 30_000;
+
+    function maybeRefreshShell() {
+      const now = Date.now();
+      if (now - lastRefreshAt < minRefreshIntervalMs) {
+        return;
+      }
+
+      lastRefreshAt = now;
       void refreshShell();
+    }
+
+    function onFocus() {
+      maybeRefreshShell();
     }
 
     function onVisibility() {
       if (document.visibilityState === "visible") {
-        void refreshShell();
+        maybeRefreshShell();
       }
     }
 

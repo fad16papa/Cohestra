@@ -19,7 +19,7 @@ import {
   validateStoredSession,
   type AdminProfile,
 } from "@/lib/auth-api";
-import { clearAuthSession, getAuthSession } from "@/lib/auth-storage";
+import { clearAuthSession } from "@/lib/auth-storage";
 
 export const SESSION_EXPIRED_MESSAGE =
   "Session expired — sign in again." as const;
@@ -81,29 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    if (status !== "authenticated") {
-      return;
-    }
-
-    const onFocus = () => {
-      void validateStoredSession().then((nextProfile) => {
-        if (nextProfile) {
-          setProfile(nextProfile);
-          setStatus("authenticated");
-          return;
-        }
-
-        if (!getAuthSession()) {
-          handleSessionExpired();
-        }
-      });
-    };
-
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [handleSessionExpired, status]);
 
   const login = useCallback(async (email: string, password: string) => {
     const result = await loginWithPassword(email.trim(), password);

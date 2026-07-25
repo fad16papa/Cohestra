@@ -40,6 +40,7 @@ import {
 } from "@/components/website/website-branding-section";
 import { fetchAllActivities, type Activity } from "@/lib/activities-api";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import { openExternalUrl } from "@/lib/open-external-url";
 import type {
   PublicHomepageActivity,
   SiteSectionsDocument,
@@ -648,24 +649,13 @@ export function WebsiteBuilderPage() {
       return;
     }
 
-    // Must open synchronously on click — after await, popup blockers reject window.open().
-    const previewWindow = window.open("about:blank", "_blank");
-    if (!previewWindow) {
-      showErrorToast(
-        "Popup blocked. Allow popups for this site and try Preview again.",
-      );
-      return;
-    }
-
     setIsPreviewOpening(true);
     try {
       const { token } = await createSitePreviewToken(authFetch);
       const url = new URL("/", window.location.origin);
       url.searchParams.set("preview", token);
-      previewWindow.location.replace(url.toString());
-      previewWindow.focus();
+      openExternalUrl(url.toString());
     } catch (error) {
-      previewWindow.close();
       showErrorToast(
         error instanceof Error ? error.message : "Could not open preview.",
       );

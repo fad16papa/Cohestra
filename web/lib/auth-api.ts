@@ -15,6 +15,8 @@ import {
 
 const FETCH_TIMEOUT_MS = 10_000;
 
+let refreshInFlight: Promise<AuthSession | null> | null = null;
+
 export type AdminProfile = {
   userId: string;
   email: string;
@@ -246,21 +248,44 @@ export async function loginWithPassword(
 }
 
 export async function refreshAuthSession(): Promise<AuthSession | null> {
-  const current = getAuthSession();
-  if (!current?.refreshToken) {
-    return null;
+  if (refreshInFlight) {
+    return refreshInFlight;
   }
 
-  try {
-    const session = await postAuthTokens("/api/v1/auth/refresh", {
-      refreshToken: current.refreshToken,
-    });
-    setAuthSession(session);
-    return session;
-  } catch {
-    clearAuthSession();
-    return null;
-  }
+  refreshInFlight = (async () => {
+    const current = getAuthSession();
+    if (!current?.refreshToken) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: current.refreshToken }),
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+
+      if (!response.ok) {
+        if (isAuthFailureStatus(response.status)) {
+          clearAuthSession();
+        }
+
+        return null;
+      }
+
+      const raw = (await response.json()) as Record<string, unknown>;
+      const session = parseAuthTokenResponse(raw);
+      setAuthSession(session);
+      return session;
+    } catch {
+      return null;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
 }
 
 export async function fetchAdminProfile(
@@ -418,7 +443,9 @@ export async function fetchWithAuth(
 
   let session = await ensureValidSession();
   if (!session) {
-    onSessionExpired?.();
+    if (!getAuthSession()) {
+      onSessionExpired?.();
+    }
     throw new Error("Session expired");
   }
 
@@ -429,7 +456,9 @@ export async function fetchWithAuth(
 
   session = await refreshAuthSession();
   if (!session) {
-    onSessionExpired?.();
+    if (!getAuthSession()) {
+      onSessionExpired?.();
+    }
     throw new Error("Session expired");
   }
 
