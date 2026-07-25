@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { AuthFlowShell } from "@/components/auth/auth-flow-shell";
+import { LoginForm } from "@/components/auth/login-form";
 import { LoginWorkspaceNotice } from "@/components/auth/login-workspace-notice";
 import { SESSION_EXPIRED_MESSAGE, useAuth } from "@/components/auth/auth-provider";
 import { useToast } from "@/components/ui/toast-provider";
