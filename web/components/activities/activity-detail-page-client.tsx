@@ -8,7 +8,7 @@ import { ActivityHomepageFeaturePanel } from "@/components/activities/activity-h
 import { ActivityBrandingPanel } from "@/components/activities/activity-branding-panel";
 import { ActivityFormTab } from "@/components/activities/activity-form-tab";
 import { ActivityPublishControls } from "@/components/activities/activity-publish-controls";
-import { ActivityQrPanel } from "@/components/activities/activity-qr-panel";
+import { ActivityShareKitPanel } from "@/components/activities/activity-share-kit-panel";
 import { ActivityRegistrationsTab } from "@/components/activities/activity-registrations-tab";
 import { ActivityStatusBadge } from "@/components/activities/activity-status-badge";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -25,7 +25,7 @@ import {
 import { fetchActivityById, type Activity } from "@/lib/activities-api";
 import { getPublishGateIssues } from "@/lib/form-schema-utils";
 
-type ActivityDetailTab = "overview" | "form" | "registrations" | "qr";
+type ActivityDetailTab = "overview" | "form" | "registrations" | "share";
 
 type ActivityDetailPageClientProps = {
   id: string;
@@ -134,7 +134,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
             { id: "overview", label: "Overview" },
             { id: "form", label: "Form" },
             { id: "registrations", label: "Registrations" },
-            { id: "qr", label: "QR & Link" },
+            { id: "share", label: "Share kit" },
           ] as const
         ).map((tab) => (
           <Button
@@ -179,8 +179,8 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
                 <code className="rounded bg-muted px-1 py-0.5">{activity.slug}</code>
               </p>
               <p>
-                Use the QR &amp; Link tab after publishing to copy the public URL
-                or download a QR code PNG.
+                Use the Share kit tab after publishing to copy a WhatsApp message,
+                preview your link, or download a QR pack.
               </p>
             </CardContent>
           </Card>
@@ -199,8 +199,8 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
         <ActivityRegistrationsTab activityId={activity.id} />
       ) : null}
 
-      <div hidden={activeTab !== "qr"}>
-        <ActivityQrPanel
+      <div hidden={activeTab !== "share"}>
+        <ActivityShareKitPanel
           activity={activity}
           publishGateIssues={publishGateIssues}
         />
