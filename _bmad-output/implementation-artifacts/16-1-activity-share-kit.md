@@ -1,7 +1,7 @@
 # Story 16.1: Activity share kit
 
 **Epic:** 16 — One-stop Lite (v1.1)  
-**Status:** in-progress  
+**Status:** done  
 **Created:** 2026-07-25
 
 ## User story

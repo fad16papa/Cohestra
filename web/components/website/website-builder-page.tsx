@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy, ExternalLink, MessageCircle } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { SitePageRenderer } from "@/components/marketing/site-page-renderer";
@@ -40,6 +40,7 @@ import {
 } from "@/components/website/website-branding-section";
 import { fetchAllActivities, type Activity } from "@/lib/activities-api";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import { buildHomepageWhatsAppMessage } from "@/lib/share-kit-utils";
 import { openExternalUrl } from "@/lib/open-external-url";
 import type {
   PublicHomepageActivity,
@@ -517,6 +518,21 @@ export function WebsiteBuilderPage() {
     return getSharePreviewFromDraft(draft, publicSiteUrl);
   }, [draft, publicSiteUrl]);
 
+  function copyHomepageWhatsAppMessage(url: string) {
+    const message = buildHomepageWhatsAppMessage(url, {
+      siteName: draft?.siteName,
+      headline: sharePreview?.title,
+    });
+
+    void copyTextToClipboard(message).then((copied) => {
+      if (copied) {
+        showToast("WhatsApp message copied");
+      } else {
+        showErrorToast("Could not copy WhatsApp message.");
+      }
+    });
+  }
+
   async function handleSaveDraft(options?: {
     silent?: boolean;
   }): Promise<boolean> {
@@ -960,6 +976,7 @@ export function WebsiteBuilderPage() {
               }
             });
           }}
+          onCopyWhatsApp={() => copyHomepageWhatsAppMessage(publicSiteUrl)}
           onShowChecklist={() => undefined}
         />
         <WebsiteLivePreview deviceMode={deviceMode} onDeviceModeChange={setDeviceMode}>
@@ -1059,6 +1076,7 @@ export function WebsiteBuilderPage() {
             }
           });
         }}
+        onCopyWhatsApp={() => copyHomepageWhatsAppMessage(publicSiteUrl)}
         onShowChecklist={() => setChecklistVisible(true)}
       />
 
@@ -1210,7 +1228,9 @@ export function WebsiteBuilderPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4">
-            {sharePreview ? <WebsiteSharePreview preview={sharePreview} /> : null}
+            {sharePreview ? (
+              <WebsiteSharePreview preview={sharePreview} siteName={draft.siteName} />
+            ) : null}
             <div>
               <p className="text-sm font-medium text-text-warm">What will change</p>
               <div className="mt-2 rounded-lg border border-border-warm bg-muted/20 p-3">
@@ -1256,6 +1276,14 @@ export function WebsiteBuilderPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Done</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => copyHomepageWhatsAppMessage(liveUrl)}
+            >
+              <MessageCircle className="size-4" aria-hidden />
+              Copy WhatsApp
+            </Button>
             <Button
               type="button"
               variant="outline"

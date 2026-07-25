@@ -1,13 +1,40 @@
+import type { Metadata } from "next";
+
 import { PublicRegistrationOpen } from "@/components/registration/public-registration-open";
 import { PublicRegistrationUnavailable } from "@/components/registration/public-registration-unavailable";
 import { fetchPublicDoorServer } from "@/lib/public-door-api";
 import { fetchPublicActivityBySlugServer } from "@/lib/public-registration-server-api";
 import { buildPublisherWebsiteLink } from "@/lib/publisher-website-url";
 import { getRequestOrigin } from "@/lib/request-origin";
+import { buildActivityRegistrationMetadata } from "@/lib/site-seo-metadata";
 
 type PublicRegistrationPageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export async function generateMetadata({
+  params,
+}: PublicRegistrationPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const [result, origin] = await Promise.all([
+    fetchPublicActivityBySlugServer(slug),
+    getRequestOrigin(),
+  ]);
+
+  if (result.kind !== "ok") {
+    return {
+      title: "Registration unavailable",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const indexable =
+    result.activity.isRegistrationOpen && result.activity.status === "published";
+
+  return buildActivityRegistrationMetadata(result.activity, origin, {
+    indexable,
+  });
+}
 
 export default async function PublicRegistrationPage({
   params,

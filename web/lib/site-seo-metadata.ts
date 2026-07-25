@@ -11,7 +11,9 @@ import {
   type PublicSitePayload,
 } from "@/lib/public-site-api";
 import { fetchPublicSiteServer } from "@/lib/public-site-server-api";
+import type { PublicActivity } from "@/lib/public-registration-api";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
+import { buildActivitySharePreview } from "@/lib/share-kit-utils";
 
 export type PublishedSiteBranding = {
   siteName: string;
@@ -28,6 +30,69 @@ function resolveCampaignAssetUrl(assetId: string): string | null {
 function buildOpenGraphImage(imageUrl: string, alt: string): Metadata["openGraph"] {
   return {
     images: [{ url: imageUrl, alt }],
+  };
+}
+
+function resolveAbsolutePublicAssetUrl(
+  imageUrl: string | null | undefined,
+  origin: string | null
+): string | null {
+  const resolved = resolveHeroImageUrl(imageUrl);
+  if (!resolved) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(resolved)) {
+    return resolved;
+  }
+
+  if (origin && resolved.startsWith("/")) {
+    return `${origin.replace(/\/$/, "")}${resolved}`;
+  }
+
+  return null;
+}
+
+export function buildActivityRegistrationMetadata(
+  activity: PublicActivity,
+  origin: string | null,
+  options: { indexable?: boolean } = {}
+): Metadata {
+  const registrationPath = `/register/${activity.slug}`;
+  const registrationUrl = origin
+    ? `${origin.replace(/\/$/, "")}${registrationPath}`
+    : registrationPath;
+
+  const preview = buildActivitySharePreview(activity, registrationUrl);
+  const ogImageUrl = resolveAbsolutePublicAssetUrl(activity.heroImageUrl, origin);
+
+  const openGraph: NonNullable<Metadata["openGraph"]> = {
+    title: preview.title,
+    description: preview.description,
+    type: "website",
+    url: registrationUrl,
+    ...(ogImageUrl
+      ? buildOpenGraphImage(ogImageUrl, preview.title)
+      : {}),
+  };
+
+  return {
+    title: `${activity.name} | Register`,
+    description: preview.description,
+    ...(options.indexable === false
+      ? { robots: { index: false, follow: false } }
+      : {}),
+    openGraph,
+    ...(ogImageUrl
+      ? {
+          twitter: {
+            card: "summary_large_image",
+            title: preview.title,
+            description: preview.description,
+            images: [ogImageUrl],
+          },
+        }
+      : {}),
   };
 }
 

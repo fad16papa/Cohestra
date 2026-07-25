@@ -1,6 +1,22 @@
 import type { Activity } from "@/lib/activities-api";
 import type { SharePreviewData } from "@/lib/site-builder-utils";
 
+export function buildHomepageWhatsAppMessage(
+  siteUrl: string,
+  options: { siteName?: string; headline?: string } = {}
+): string {
+  const label =
+    options.headline?.trim() ||
+    options.siteName?.trim() ||
+    "our upcoming community activities";
+
+  return [
+    `Check out ${label}!`,
+    "",
+    `Browse events and register here: ${siteUrl.replace(/\/$/, "") || siteUrl}`,
+  ].join("\n");
+}
+
 export function buildActivityWhatsAppMessage(
   activity: Pick<Activity, "name" | "schedule" | "location">,
   registrationUrl: string
