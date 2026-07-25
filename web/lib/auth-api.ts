@@ -114,6 +114,19 @@ async function parseProblemResponse(
   return { message: `Request failed (${response.status})` };
 }
 
+function getErrorStatus(error: unknown): number | undefined {
+  if (error && typeof error === "object" && "status" in error) {
+    const status = (error as { status?: number }).status;
+    return typeof status === "number" ? status : undefined;
+  }
+
+  return undefined;
+}
+
+function isAuthFailureStatus(status: number | undefined): boolean {
+  return status === 401 || status === 403;
+}
+
 async function postAuthTokens(
   path: string,
   body: Record<string, string>
@@ -362,7 +375,11 @@ export async function validateStoredSession(): Promise<AdminProfile | null> {
 
   try {
     return await fetchSessionProfile(session.accessToken);
-  } catch {
+  } catch (error) {
+    if (!isAuthFailureStatus(getErrorStatus(error))) {
+      return null;
+    }
+
     const refreshed = await refreshAuthSession();
     if (!refreshed) {
       return null;
@@ -370,8 +387,11 @@ export async function validateStoredSession(): Promise<AdminProfile | null> {
 
     try {
       return await fetchSessionProfile(refreshed.accessToken);
-    } catch {
-      clearAuthSession();
+    } catch (retryError) {
+      if (isAuthFailureStatus(getErrorStatus(retryError))) {
+        clearAuthSession();
+      }
+
       return null;
     }
   }

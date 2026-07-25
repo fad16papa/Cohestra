@@ -19,7 +19,7 @@ import {
   validateStoredSession,
   type AdminProfile,
 } from "@/lib/auth-api";
-import { clearAuthSession, getAuthSession, isAccessTokenExpired } from "@/lib/auth-storage";
+import { clearAuthSession, getAuthSession } from "@/lib/auth-storage";
 
 export const SESSION_EXPIRED_MESSAGE =
   "Session expired — sign in again." as const;
@@ -88,18 +88,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const onFocus = () => {
-      const session = getAuthSession();
-      if (!session) {
-        handleSessionExpired();
-        return;
-      }
-
-      if (!isAccessTokenExpired(session)) {
-        return;
-      }
-
       void validateStoredSession().then((nextProfile) => {
-        if (!nextProfile) {
+        if (nextProfile) {
+          setProfile(nextProfile);
+          setStatus("authenticated");
+          return;
+        }
+
+        if (!getAuthSession()) {
           handleSessionExpired();
         }
       });

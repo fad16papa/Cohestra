@@ -6,6 +6,7 @@ import { Copy, ExternalLink } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { SitePageRenderer } from "@/components/marketing/site-page-renderer";
 import { PageHeader } from "@/components/shared/page-header";
+import { ExternalLinkButton } from "@/components/shared/external-link-button";
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import {
@@ -969,12 +970,6 @@ export function WebsiteBuilderPage() {
               }
             });
           }}
-          onOpenLive={() => {
-            const siteWindow = window.open(publicSiteUrl, "_blank", "noopener,noreferrer");
-            if (!siteWindow) {
-              showErrorToast("Popup blocked. Allow popups for this site and try again.");
-            }
-          }}
           onShowChecklist={() => undefined}
         />
         <WebsiteLivePreview deviceMode={deviceMode} onDeviceModeChange={setDeviceMode}>
@@ -1073,12 +1068,6 @@ export function WebsiteBuilderPage() {
               showErrorToast("Could not copy link.");
             }
           });
-        }}
-        onOpenLive={() => {
-          const siteWindow = window.open(publicSiteUrl, "_blank", "noopener,noreferrer");
-          if (!siteWindow) {
-            showErrorToast("Popup blocked. Allow popups for this site and try again.");
-          }
         }}
         onShowChecklist={() => setChecklistVisible(true)}
       />
@@ -1293,24 +1282,10 @@ export function WebsiteBuilderPage() {
               <Copy className="size-4" aria-hidden />
               Copy link
             </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                const siteWindow = window.open(
-                  liveUrl,
-                  "_blank",
-                  "noopener,noreferrer",
-                );
-                if (!siteWindow) {
-                  showErrorToast(
-                    "Popup blocked. Allow popups for this site and try again.",
-                  );
-                }
-              }}
-            >
+            <ExternalLinkButton href={liveUrl}>
               <ExternalLink className="size-4" aria-hidden />
               Open live site
-            </Button>
+            </ExternalLinkButton>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
