@@ -98,4 +98,17 @@ public sealed class ActivityHeroImageUrlResolverTests
 
         Assert.Equal(external, resolved);
     }
+
+    [Fact]
+    public void TryGetCampaignAssetId_ParsesRelativeCampaignAssetPath()
+    {
+        var stored = $"/api/v1/public/campaign-assets/{AssetId}";
+
+        var parsed = ActivityHeroImageUrlResolver.TryGetCampaignAssetId(
+            stored,
+            out var assetId);
+
+        Assert.True(parsed);
+        Assert.Equal(Guid.Parse(AssetId), assetId);
+    }
 }

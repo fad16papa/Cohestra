@@ -1,5 +1,7 @@
+using Cohestra.Application.Campaigns;
 using Cohestra.Application.Email;
 using Cohestra.Application.Registrations;
+using Cohestra.Contracts.Campaigns;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Clients;
 using Cohestra.Domain.Registrations;
@@ -37,7 +39,7 @@ public sealed class RegistrationNotificationServiceTests
     }
 
     [Fact]
-    public async Task SendConfirmationIfApplicableAsync_IncludesTenantHostHeroImageInHtml()
+    public async Task SendConfirmationIfApplicableAsync_EmbedsCampaignHeroInlineWhenAssetAvailable()
     {
         const string assetId = "11111111-1111-1111-1111-111111111111";
         await using var dbContext = CreateDbContext();
@@ -46,18 +48,25 @@ public sealed class RegistrationNotificationServiceTests
             "elena@example.com",
             heroImageUrl: $"/api/v1/public/campaign-assets/{assetId}");
         var sender = new CapturingEmailSender();
+        var assets = new StubCampaignAssetService(
+            Guid.Parse(assetId),
+            [0x89, 0x50, 0x4E, 0x47],
+            "image/png",
+            "hero.png");
 
         var service = CreateService(
             dbContext,
             sender,
+            assets,
             publicWebBaseUrl: "http://localhost:8088");
         var result = await service.SendConfirmationIfApplicableAsync(registrationId);
 
         Assert.True(result.Sent);
         Assert.Single(sender.Messages);
-        Assert.Contains(
-            $"http://creativorare.localhost:8088/api/v1/public/campaign-assets/{assetId}",
-            sender.Messages[0].HtmlBody);
+        Assert.Contains("cid:registration-hero", sender.Messages[0].HtmlBody);
+        Assert.NotNull(sender.Messages[0].InlineAttachments);
+        Assert.Single(sender.Messages[0].InlineAttachments!);
+        Assert.Equal("registration-hero", sender.Messages[0].InlineAttachments![0].ContentId);
     }
 
     [Fact]
@@ -78,10 +87,12 @@ public sealed class RegistrationNotificationServiceTests
     private static RegistrationNotificationService CreateService(
         CohestraDbContext dbContext,
         IEmailSender sender,
+        ICampaignAssetService? campaignAssetService = null,
         string publicWebBaseUrl = "http://localhost:3000") =>
         new(
             dbContext,
             sender,
+            campaignAssetService ?? new StubCampaignAssetService(),
             Options.Create(new SendGridSettings
             {
                 FromEmail = "noreply@creativorare.com",
@@ -180,7 +191,8 @@ public sealed class RegistrationNotificationServiceTests
         string? FromEmail,
         string? ReplyTo,
         string Subject,
-        string HtmlBody)
+        string HtmlBody,
+        IReadOnlyList<EmailInlineAttachment>? InlineAttachments)
     {
         public CapturedEmailMessage(EmailMessage message)
             : this(
@@ -188,8 +200,63 @@ public sealed class RegistrationNotificationServiceTests
                 message.FromEmail,
                 null,
                 message.Subject,
-                message.HtmlBody ?? string.Empty)
+                message.HtmlBody ?? string.Empty,
+                message.InlineAttachments)
         {
         }
+    }
+
+    private sealed class StubCampaignAssetService : ICampaignAssetService
+    {
+        private readonly Guid? _assetId;
+        private readonly byte[]? _content;
+        private readonly string? _contentType;
+        private readonly string? _fileName;
+
+        public StubCampaignAssetService()
+        {
+        }
+
+        public StubCampaignAssetService(
+            Guid assetId,
+            byte[] content,
+            string contentType,
+            string fileName)
+        {
+            _assetId = assetId;
+            _content = content;
+            _contentType = contentType;
+            _fileName = fileName;
+        }
+
+        public Task<CampaignAssetResponse> UploadAsync(
+            Stream content,
+            string fileName,
+            string contentType,
+            string? altText,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<CampaignAssetResponse> CreateFromActivityQrAsync(
+            Guid activityId,
+            string? altText,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<CampaignAssetFileResult?> GetFileAsync(
+            Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            if (_assetId != id || _content is null || _contentType is null || _fileName is null)
+            {
+                return Task.FromResult<CampaignAssetFileResult?>(null);
+            }
+
+            return Task.FromResult<CampaignAssetFileResult?>(
+                new CampaignAssetFileResult(_content, _contentType, _fileName));
+        }
+
+        public string BuildPublicUrl(Guid assetId) =>
+            $"https://example.com/api/v1/public/campaign-assets/{assetId:D}";
     }
 }

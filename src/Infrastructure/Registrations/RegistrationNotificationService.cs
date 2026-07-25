@@ -1,3 +1,4 @@
+using Cohestra.Application.Campaigns;
 using Cohestra.Application.Email;
 using Cohestra.Application.Registrations;
 using Cohestra.Infrastructure.Activities;
@@ -13,12 +14,14 @@ namespace Cohestra.Infrastructure.Registrations;
 public sealed class RegistrationNotificationService(
     CohestraDbContext dbContext,
     IEmailSender emailSender,
+    ICampaignAssetService campaignAssetService,
     IOptions<SendGridSettings> sendGridOptions,
     IOptions<EmailBrandingSettings> brandingOptions,
     IOptions<PublicWebOptions> publicWebOptions,
     IOptions<CampaignAssetOptions> campaignAssetOptions,
     ILogger<RegistrationNotificationService> logger) : IRegistrationNotificationService
 {
+    internal const string HeroInlineContentId = "registration-hero";
     public async Task<RegistrationConfirmationSendResult> SendConfirmationIfApplicableAsync(
         Guid registrationId,
         CancellationToken cancellationToken = default)
@@ -74,6 +77,15 @@ public sealed class RegistrationNotificationService(
         var websiteUrl = (branding.WebsiteUrl ?? string.Empty).Trim();
         var footerLegalName = (branding.FooterLegalName ?? brandName).Trim();
 
+        var heroInlineAttachment = await TryLoadHeroInlineAttachmentAsync(
+            registration.Activity.HeroImageUrl,
+            cancellationToken);
+        var heroImageUrl = heroInlineAttachment is not null
+            ? $"cid:{HeroInlineContentId}"
+            : ResolveHeroImageUrlForEmail(
+                registration.Activity.HeroImageUrl,
+                tenant?.Slug);
+
         var emailContent = RegistrationConfirmationEmailBuilder.Build(
             new RegistrationConfirmationEmailModel(
                 ParticipantName: registration.Client.FullName,
@@ -86,9 +98,7 @@ public sealed class RegistrationNotificationService(
                 FooterLegalName: footerLegalName,
                 WebsiteUrl: websiteUrl,
                 LogoUrl: logoUrl,
-                HeroImageUrl: ResolveHeroImageUrlForEmail(
-                    registration.Activity.HeroImageUrl,
-                    tenant?.Slug)));
+                HeroImageUrl: heroImageUrl));
 
         var sendResult = await emailSender.SendAsync(
             new EmailMessage(
@@ -98,7 +108,10 @@ public sealed class RegistrationNotificationService(
                 emailContent.PlainTextBody,
                 emailContent.HtmlBody,
                 FromEmail: fromEmail,
-                FromName: fromName),
+                FromName: fromName,
+                InlineAttachments: heroInlineAttachment is null
+                    ? null
+                    : [heroInlineAttachment]),
             cancellationToken);
 
         if (!sendResult.Success)
@@ -117,6 +130,31 @@ public sealed class RegistrationNotificationService(
             recipientEmail);
 
         return new RegistrationConfirmationSendResult(true, recipientEmail);
+    }
+
+    private async Task<EmailInlineAttachment?> TryLoadHeroInlineAttachmentAsync(
+        string? heroImageUrl,
+        CancellationToken cancellationToken)
+    {
+        if (!ActivityHeroImageUrlResolver.TryGetCampaignAssetId(heroImageUrl, out var assetId))
+        {
+            return null;
+        }
+
+        var file = await campaignAssetService.GetFileAsync(assetId, cancellationToken);
+        if (file is null || file.Content.Length == 0)
+        {
+            logger.LogWarning(
+                "Registration confirmation email hero asset {AssetId} was not found on disk.",
+                assetId);
+            return null;
+        }
+
+        return new EmailInlineAttachment(
+            HeroInlineContentId,
+            file.Content,
+            file.ContentType,
+            file.FileName);
     }
 
     private string? ResolveHeroImageUrlForEmail(string? heroImageUrl, string? tenantSlug)

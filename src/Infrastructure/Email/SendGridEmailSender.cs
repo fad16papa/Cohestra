@@ -55,6 +55,21 @@ public sealed class SendGridEmailSender(
             mail.SetSandBoxMode(true);
         }
 
+        if (message.InlineAttachments is { Count: > 0 })
+        {
+            foreach (var attachment in message.InlineAttachments)
+            {
+                mail.AddAttachment(new Attachment
+                {
+                    Content = Convert.ToBase64String(attachment.Content),
+                    Type = attachment.ContentType,
+                    Filename = attachment.FileName,
+                    Disposition = "inline",
+                    ContentId = attachment.ContentId,
+                });
+            }
+        }
+
         try
         {
             var response = await client.SendEmailAsync(mail, cancellationToken);

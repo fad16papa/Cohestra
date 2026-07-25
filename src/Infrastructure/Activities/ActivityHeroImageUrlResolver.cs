@@ -75,6 +75,20 @@ internal static class ActivityHeroImageUrlResolver
         return TenantPublicWebUrlBuilder.BuildTenantPath(publicWebBaseUrl, tenantSlug, assetPath);
     }
 
+    public static bool TryGetCampaignAssetId(string? heroImageUrl, out Guid assetId)
+    {
+        assetId = Guid.Empty;
+
+        var forBrowser = ResolveForBrowser(heroImageUrl);
+        if (forBrowser is null || !TryGetCampaignAssetPath(forBrowser, out var assetPath))
+        {
+            return false;
+        }
+
+        var idPart = assetPath[CampaignAssetPathPrefix.Length..].Trim('/');
+        return Guid.TryParse(idPart, out assetId);
+    }
+
     private static bool TryGetCampaignAssetPath(string url, out string assetPath)
     {
         assetPath = string.Empty;

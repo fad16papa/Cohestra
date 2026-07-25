@@ -1,5 +1,11 @@
 namespace Cohestra.Application.Email;
 
+public sealed record EmailInlineAttachment(
+    string ContentId,
+    byte[] Content,
+    string ContentType,
+    string FileName);
+
 public sealed record EmailMessage(
     string ToEmail,
     string? ToName,
@@ -7,7 +13,8 @@ public sealed record EmailMessage(
     string PlainTextBody,
     string? HtmlBody = null,
     string? FromEmail = null,
-    string? FromName = null);
+    string? FromName = null,
+    IReadOnlyList<EmailInlineAttachment>? InlineAttachments = null);
 
 public sealed record EmailSendResult(
     bool Success,
