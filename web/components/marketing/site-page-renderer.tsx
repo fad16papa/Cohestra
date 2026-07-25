@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ResponsiveBannerImage } from "@/components/ui/responsive-banner-image";
@@ -14,8 +14,6 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
-import { useAuth } from "@/components/auth/auth-provider";
-import { resolvePostLoginPath } from "@/lib/auth-api";
 import {
   MarketingEyebrow,
   MarketingEmptyState,
@@ -651,7 +649,6 @@ export function SitePageRenderer({
   const previewMode = useSitePreviewLayout();
   const shouldShowPreviewBanner = showPreviewBanner ?? (isPreview && !previewMode);
   const { published, upcomingActivities } = site;
-  const { status, profile } = useAuth();
   const { resolvedTheme } = useTheme();
 
   const sections = useMemo(() => getEnabledSections(published), [published]);
@@ -678,12 +675,6 @@ export function SitePageRenderer({
       PLATFORM_LOGO_PATH
     );
   }, [published.logoAssetId]);
-
-  useEffect(() => {
-    if (!isPreview && status === "authenticated" && profile) {
-      window.location.replace(resolvePostLoginPath(profile));
-    }
-  }, [isPreview, profile, status]);
 
   const heroBlock = sections.filter((section) => section.type.toLowerCase() === "hero");
   const highlightsBlock = sections.filter((section) => section.type.toLowerCase() === "highlights");
