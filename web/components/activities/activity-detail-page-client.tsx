@@ -161,10 +161,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
             activity={activity}
             onActivityUpdated={setActivity}
           />
-          <ActivityHomepageFeaturePanel
-            activity={activity}
-            onActivityUpdated={setActivity}
-          />
+          <ActivityHomepageFeaturePanel activity={activity} />
           <Card className="border-border-warm">
             <CardHeader>
               <CardTitle className="text-section text-text-warm">

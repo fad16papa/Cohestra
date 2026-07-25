@@ -38,18 +38,17 @@ internal static class SiteUpcomingActivitiesResolver
         CancellationToken cancellationToken = default)
     {
         _ = publicApiBaseUrl;
-        var limit = ResolveLimit(published);
+        _ = ResolveLimit(published);
 
+        // All published activities for the tenant appear on the public homepage.
         // Schedule is operator-facing free text; UpdatedAt descending is the MVP ordering proxy.
         // Ignore ambient tenant filters — caller passes an explicit tenant id (e.g. public door host resolve).
         var activities = await dbContext.IgnoreTenantFilters<Activity>()
             .AsNoTracking()
             .Where(activity =>
                 activity.TenantId == tenantId &&
-                activity.Status == ActivityStatus.Published &&
-                activity.ShowOnHomepage)
+                activity.Status == ActivityStatus.Published)
             .OrderByDescending(activity => activity.UpdatedAt)
-            .Take(limit)
             .ToListAsync(cancellationToken);
 
         return activities

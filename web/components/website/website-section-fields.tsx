@@ -81,14 +81,6 @@ function campaignAssetPath(assetId: string): string {
   return `/api/v1/public/campaign-assets/${assetId}`;
 }
 
-function clampUpcomingLimit(value: number): number {
-  if (!Number.isFinite(value)) {
-    return 6;
-  }
-
-  return Math.min(12, Math.max(1, Math.trunc(value)));
-}
-
 type WebsiteSectionFieldsProps = {
   draft: SiteSectionsDocument;
   section: SiteSection;
@@ -397,27 +389,6 @@ export function WebsiteSectionFields({
             value={typeof section.props.title === "string" ? section.props.title : ""}
             disabled={disabled}
             onChange={(event) => patchProps({ title: event.target.value })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`${section.id}-limit`}>Maximum cards</Label>
-          <Input
-            id={`${section.id}-limit`}
-            type="number"
-            min={1}
-            max={12}
-            value={
-              typeof section.props.limit === "number"
-                ? section.props.limit
-                : typeof section.props.limit === "string"
-                  ? section.props.limit
-                  : "6"
-            }
-            disabled={disabled}
-            onChange={(event) => {
-              const parsed = Number.parseInt(event.target.value, 10);
-              patchProps({ limit: clampUpcomingLimit(parsed) });
-            }}
           />
         </div>
         <div className="space-y-2">

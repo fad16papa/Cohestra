@@ -49,7 +49,7 @@ public sealed class SiteUpcomingActivitiesResolverTests
     }
 
     [Fact]
-    public async Task LoadAsync_ReturnsOnlyPublishedShowOnHomepageActivities()
+    public async Task LoadAsync_ReturnsOnlyPublishedActivities()
     {
         await using var dbContext = CreateDbContext();
         var now = DateTimeOffset.UtcNow;
@@ -72,17 +72,18 @@ public sealed class SiteUpcomingActivitiesResolverTests
             "http://localhost:8080",
             TenantIds.Default);
 
-        Assert.Single(results);
-        Assert.Equal("published-visible", results[0].Slug);
+        Assert.Equal(2, results.Count);
+        Assert.Contains(results, activity => activity.Slug == "published-visible");
+        Assert.Contains(results, activity => activity.Slug == "published-hidden");
     }
 
     [Fact]
-    public async Task LoadAsync_RespectsConfiguredLimit()
+    public async Task LoadAsync_ReturnsAllPublishedActivitiesWithoutLimit()
     {
         await using var dbContext = CreateDbContext();
         var now = DateTimeOffset.UtcNow;
 
-        for (var index = 0; index < 5; index++)
+        for (var index = 0; index < 15; index++)
         {
             dbContext.Activities.Add(CreateActivity(
                 $"published-{index}",
@@ -104,7 +105,7 @@ public sealed class SiteUpcomingActivitiesResolverTests
             "http://localhost:8080",
             TenantIds.Default);
 
-        Assert.Equal(3, results.Count);
+        Assert.Equal(15, results.Count);
     }
 
     [Fact]

@@ -81,7 +81,7 @@ public sealed class PublicDoorService(
         Guid tenantId,
         CancellationToken cancellationToken)
     {
-        var activities = await dbContext.Activities
+        var activities = await dbContext.IgnoreTenantFilters<Activity>()
             .AsNoTracking()
             .Where(a => a.TenantId == tenantId && a.Status == ActivityStatus.Published)
             .OrderByDescending(a => a.UpdatedAt)
