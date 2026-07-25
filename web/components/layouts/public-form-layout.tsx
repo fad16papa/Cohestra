@@ -1,7 +1,6 @@
 import Image from "next/image";
-import Link from "next/link";
-import { ExternalLink } from "lucide-react";
 
+import { PublisherWebsiteTextLink } from "@/components/registration/publisher-website-link";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   PLATFORM_BYLINE,
@@ -49,27 +48,7 @@ export function PublicFormLayout({
       <footer className="border-t border-border-warm/70 bg-card/60 px-5 py-6 text-center backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-[480px] flex-col items-center gap-3">
           <p className="text-sm font-medium text-text-warm">{PLATFORM_BYLINE}</p>
-          {websiteLink ? (
-            websiteLink.external ? (
-              <a
-                href={websiteLink.href}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-opacity hover:opacity-80"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {websiteLink.label}
-                <ExternalLink className="size-3.5" aria-hidden />
-              </a>
-            ) : (
-              <Link
-                href={websiteLink.href}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-opacity hover:opacity-80"
-              >
-                {websiteLink.label}
-                <ExternalLink className="size-3.5" aria-hidden />
-              </Link>
-            )
-          ) : null}
+          {websiteLink ? <PublisherWebsiteTextLink link={websiteLink} /> : null}
           <p className="text-xs text-text-muted-warm">
             Secure registration powered by {PLATFORM_NAME}
           </p>

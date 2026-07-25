@@ -3,8 +3,19 @@ import type { PublicDoorPayload } from "@/lib/public-door-api";
 export type PublisherWebsiteLink = {
   href: string;
   label: string;
+  /** Tooltip / screen-reader hint with the destination host or URL. */
+  title?: string;
   external: boolean;
 };
+
+function formatSlugLabel(slug: string): string {
+  const trimmed = slug.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
 
 /** Marketing apex from a tenant workspace origin (e.g. slug.localhost → localhost). */
 export function resolveMarketingApexUrl(origin: string): string {
@@ -52,28 +63,36 @@ export function buildPublisherWebsiteLink(
       displayHost = null;
     }
 
-    const siteLabel =
-      displayHost ||
-      door.tenantSlug?.trim() ||
+    const friendlyName =
       door.site?.published.siteName?.trim() ||
-      door.tenantName?.trim();
+      door.tenantName?.trim() ||
+      (door.tenantSlug?.trim() ? formatSlugLabel(door.tenantSlug) : null);
 
-    if (!siteLabel) {
+    if (!friendlyName && !displayHost) {
       return null;
     }
 
     return {
       href: origin.endsWith("/") ? origin : `${origin}/`,
-      label: displayHost ? `Visit ${displayHost}` : `Visit ${siteLabel}`,
+      label: friendlyName ? `Visit ${friendlyName}` : "Visit website",
+      title: displayHost ? `Opens ${displayHost}` : undefined,
       external: false,
     };
   }
 
   if (plan === "basic") {
     const marketingUrl = resolveMarketingApexUrl(origin);
+    let marketingHost: string | undefined;
+    try {
+      marketingHost = new URL(marketingUrl).host;
+    } catch {
+      marketingHost = undefined;
+    }
+
     return {
       href: marketingUrl,
       label: "Explore Cohestra",
+      title: marketingHost ? `Opens ${marketingHost}` : undefined,
       external: marketingUrl !== origin,
     };
   }
