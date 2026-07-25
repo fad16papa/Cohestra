@@ -49,7 +49,9 @@ export function ActivityPublishControls({
     useState<ArchiveActivityDialogVariant>("upcoming");
 
   const isBusy = isPublishing || isUnpublishing || isArchiving;
-  const publishGateIssues = getPublishGateIssues(activity.formSchema);
+  const publishGateIssues = getPublishGateIssues(activity.formSchema, {
+    slug: activity.slug,
+  });
   const publishBlocked = publishGateIssues.length > 0;
 
   async function performArchive() {

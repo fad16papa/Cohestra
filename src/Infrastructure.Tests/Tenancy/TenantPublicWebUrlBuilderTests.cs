@@ -16,6 +16,17 @@ public sealed class TenantPublicWebUrlBuilderTests
     }
 
     [Fact]
+    public void BuildTenantPath_localhostRegisterSlug_usesTenantHost()
+    {
+        var url = TenantPublicWebUrlBuilder.BuildTenantPath(
+            "http://localhost:8088",
+            "creativorare",
+            "/register/fnm");
+
+        Assert.Equal("http://creativorare.localhost:8088/register/fnm", url);
+    }
+
+    [Fact]
     public void BuildTenantPath_productionApex_usesCohestraSubdomain()
     {
         var url = TenantPublicWebUrlBuilder.BuildTenantPath(

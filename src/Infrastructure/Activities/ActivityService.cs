@@ -5,6 +5,7 @@ using Cohestra.Domain.Activities;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Npgsql;
@@ -317,6 +318,12 @@ public sealed class ActivityService(
 
         if (activity.Status == ActivityStatus.Draft)
         {
+            var previousSlug = activity.Slug;
+            await ActivitySlugGenerator.EnsureSlugForPublishAsync(
+                dbContext,
+                activity,
+                cancellationToken);
+
             var publishGateError = PublishGateValidator.ValidateForPublish(activity.FormSchema);
             if (publishGateError is not null)
             {
@@ -326,6 +333,16 @@ public sealed class ActivityService(
             activity.Status = ActivityStatus.Published;
             activity.UpdatedAt = DateTimeOffset.UtcNow;
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            if (!string.Equals(previousSlug, activity.Slug, StringComparison.Ordinal)
+                && !string.IsNullOrWhiteSpace(previousSlug))
+            {
+                await publicActivityCache.InvalidateAsync(
+                    activity.TenantId,
+                    previousSlug,
+                    cancellationToken);
+            }
+
             await SyncPublicActivityCacheAsync(activity, cancellationToken);
         }
 
@@ -517,10 +534,25 @@ public sealed class ActivityService(
 
     private ActivityRegistrationLinkResponse BuildRegistrationLink(string slug)
     {
-        var baseUrl = publicWebOptions.Value.BaseUrl.Trim().TrimEnd('/');
-        var path = $"/register/{slug}";
+        if (!currentTenant.IsResolved || string.IsNullOrWhiteSpace(currentTenant.Slug))
+        {
+            throw new InvalidOperationException(
+                "Tenant context is required to build a registration link.");
+        }
 
-        return new ActivityRegistrationLinkResponse($"{baseUrl}{path}", slug, path);
+        if (!ActivitySlugGenerator.IsValidSlug(slug))
+        {
+            throw new InvalidOperationException(
+                "A valid registration slug is required before sharing the public link.");
+        }
+
+        var path = $"/register/{slug}";
+        var url = TenantPublicWebUrlBuilder.BuildTenantPath(
+            publicWebOptions.Value.BaseUrl,
+            currentTenant.Slug,
+            path);
+
+        return new ActivityRegistrationLinkResponse(url, slug, path);
     }
 
     private ActivityResponse ToActivityResponse(Activity activity, int registrationCount = 0) =>

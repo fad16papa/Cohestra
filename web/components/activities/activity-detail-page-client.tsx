@@ -97,7 +97,9 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     );
   }
 
-  const publishGateIssues = getPublishGateIssues(activity.formSchema);
+  const publishGateIssues = getPublishGateIssues(activity.formSchema, {
+    slug: activity.slug,
+  });
 
   return (
     <div className="space-y-6">

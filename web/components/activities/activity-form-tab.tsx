@@ -63,8 +63,12 @@ export function ActivityFormTab({
   const isDirty = JSON.stringify(draftSchema) !== JSON.stringify(savedSchema);
   const clientIssues = getFormSchemaClientIssues(draftSchema);
   const hasClientIssues = clientIssues.length > 0;
-  const draftPublishGateIssues = getPublishGateIssues(draftSchema);
-  const savedPublishGateIssues = getPublishGateIssues(activity.formSchema);
+  const draftPublishGateIssues = getPublishGateIssues(draftSchema, {
+    slug: activity.slug,
+  });
+  const savedPublishGateIssues = getPublishGateIssues(activity.formSchema, {
+    slug: activity.slug,
+  });
   const previewKey = draftSchema.fields
     .map((field) => `${field.id}:${field.type}`)
     .join("|");
