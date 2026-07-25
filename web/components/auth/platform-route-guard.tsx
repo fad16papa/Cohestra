@@ -4,7 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/components/auth/auth-provider";
-import { ROLES } from "@/lib/auth-api";
+import { PLATFORM_LOGIN_PATH, ROLES } from "@/lib/auth-api";
 
 type PlatformRouteGuardProps = {
   children: ReactNode;
@@ -17,7 +17,7 @@ export function PlatformRouteGuard({ children }: PlatformRouteGuardProps) {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.replace("/login");
+      router.replace(PLATFORM_LOGIN_PATH);
       return;
     }
 

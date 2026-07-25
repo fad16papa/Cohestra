@@ -8,30 +8,43 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loginWithPassword, resolvePostLoginPath } from "@/lib/auth-api";
+import {
+  isPlatformAdminProfile,
+  loginWithPassword,
+  OPERATOR_LOGIN_PATH,
+  resolvePostLoginPath,
+} from "@/lib/auth-api";
 import { cn } from "@/lib/utils";
 
 type LoginFormProps = {
+  audience?: "operator" | "platform";
   showSessionExpiredNotice?: boolean;
   initialEmail?: string;
   invitedAccept?: boolean;
+  submitLabel?: string;
 };
 
 const fieldShellClassName =
   "flex min-h-12 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30";
 
 export function LoginForm({
+  audience = "operator",
   showSessionExpiredNotice = false,
   initialEmail = "",
   invitedAccept = false,
+  submitLabel,
 }: LoginFormProps) {
   const router = useRouter();
-  const { applyProfile, profile, status } = useAuth();
+  const { applyProfile, clearSession, profile, status } = useAuth();
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const resolvedSubmitLabel =
+    submitLabel
+    ?? (audience === "platform" ? "Sign in to platform console" : "Sign in to workspace");
 
   useEffect(() => {
     if (initialEmail) {
@@ -40,18 +53,30 @@ export function LoginForm({
   }, [initialEmail]);
 
   useEffect(() => {
-    if (status === "authenticated" && profile) {
-      if (
-        invitedAccept
-        && initialEmail
-        && profile.email.toLowerCase() !== initialEmail.trim().toLowerCase()
-      ) {
+    if (status !== "authenticated" || !profile) {
+      return;
+    }
+
+    if (
+      invitedAccept
+      && initialEmail
+      && profile.email.toLowerCase() !== initialEmail.trim().toLowerCase()
+    ) {
+      return;
+    }
+
+    if (audience === "platform") {
+      if (isPlatformAdminProfile(profile)) {
+        router.replace("/platform");
         return;
       }
 
-      router.replace(resolvePostLoginPath(profile));
+      router.replace("/dashboard");
+      return;
     }
-  }, [initialEmail, invitedAccept, profile, router, status]);
+
+    router.replace(resolvePostLoginPath(profile));
+  }, [audience, initialEmail, invitedAccept, profile, router, status]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -61,18 +86,28 @@ export function LoginForm({
     const result = await loginWithPassword(email.trim(), password);
     setIsSubmitting(false);
 
-    if (result.ok) {
-      applyProfile(result.profile);
-      router.replace(resolvePostLoginPath(result.profile));
+    if (!result.ok) {
+      if (result.errorCode === "email_not_verified") {
+        router.push(`/register/verify?email=${encodeURIComponent(email.trim())}`);
+        return;
+      }
+
+      setError(result.message);
       return;
     }
 
-    if (result.errorCode === "email_not_verified") {
-      router.push(`/register/verify?email=${encodeURIComponent(email.trim())}`);
+    if (audience === "platform" && !isPlatformAdminProfile(result.profile)) {
+      clearSession();
+      setError(
+        `This page is for Cohestra platform admins only. Use the operator workspace sign-in instead.`
+      );
       return;
     }
 
-    setError(result.message);
+    applyProfile(result.profile);
+    router.replace(
+      audience === "platform" ? "/platform" : resolvePostLoginPath(result.profile)
+    );
   }
 
   return (
@@ -108,7 +143,7 @@ export function LoginForm({
             onChange={(event) => setEmail(event.target.value)}
             aria-invalid={error ? true : undefined}
             className="min-h-0 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0 sm:text-sm"
-            placeholder="you@example.com"
+            placeholder={audience === "platform" ? "admin@cohestra.app" : "you@example.com"}
           />
         </div>
       </div>
@@ -157,12 +192,22 @@ export function LoginForm({
       </div>
 
       {error ? (
-        <p
+        <div
           role="alert"
-          className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+          className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
         >
-          {error}
-        </p>
+          <p>{error}</p>
+          {audience === "platform" && error.includes("operator workspace") ? (
+            <p>
+              <a
+                href={OPERATOR_LOGIN_PATH}
+                className="font-medium text-primary underline-offset-2 hover:underline"
+              >
+                Go to operator sign in
+              </a>
+            </p>
+          ) : null}
+        </div>
       ) : null}
 
       <Button
@@ -181,7 +226,7 @@ export function LoginForm({
             Signing in…
           </>
         ) : (
-          "Sign in to workspace"
+          resolvedSubmitLabel
         )}
       </Button>
     </form>

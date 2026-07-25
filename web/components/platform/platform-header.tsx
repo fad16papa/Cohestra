@@ -5,16 +5,13 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
-import { resolvePostLoginPath } from "@/lib/auth-api";
 
 export function PlatformHeader() {
-  const { profile } = useAuth();
+  const { logout, profile } = useAuth();
   const [open, setOpen] = useState(false);
-  const dashboardHref = profile ? resolvePostLoginPath(profile) : "/platform";
 
   const links = [
-    { href: "/", label: "Home" },
-    { href: dashboardHref, label: "Dashboard" },
+    { href: "/platform", label: "Tenants" },
   ];
 
   return (
@@ -41,6 +38,16 @@ export function PlatformHeader() {
               {link.label}
             </Link>
           ))}
+          {profile?.email ? (
+            <span className="text-[var(--plat-stone)]">{profile.email}</span>
+          ) : null}
+          <button
+            type="button"
+            onClick={logout}
+            className="text-[var(--plat-paper)]/90 transition-colors hover:text-white"
+          >
+            Sign out
+          </button>
         </nav>
 
         <button
@@ -73,6 +80,21 @@ export function PlatformHeader() {
                 </Link>
               </li>
             ))}
+            {profile?.email ? (
+              <li className="px-3 py-2 text-sm text-[var(--plat-stone)]">{profile.email}</li>
+            ) : null}
+            <li>
+              <button
+                type="button"
+                className="block w-full rounded-[10px] px-3 py-2.5 text-left text-sm hover:bg-white/5"
+                onClick={() => {
+                  setOpen(false);
+                  logout();
+                }}
+              >
+                Sign out
+              </button>
+            </li>
           </ul>
         </nav>
       ) : null}

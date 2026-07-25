@@ -43,6 +43,7 @@ export function isPublicLocalThemePath(pathname: string | null): boolean {
 
   return (
     pathname === "/login"
+    || pathname === "/platform/login"
     || pathname.startsWith("/register")
     || pathname === "/forgot-password"
     || pathname === "/reset-password"

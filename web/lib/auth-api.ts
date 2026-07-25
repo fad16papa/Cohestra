@@ -139,6 +139,9 @@ export const ROLES = {
   TenantAdmin: "TenantAdmin",
 } as const;
 
+export const OPERATOR_LOGIN_PATH = "/login";
+export const PLATFORM_LOGIN_PATH = "/platform/login";
+
 /**
  * Post-login home. Hard rule: PlatformAdmin and TenantAdmin are mutually exclusive.
  * PlatformAdmin → platform console; TenantAdmin → operator dashboard.
@@ -151,6 +154,19 @@ export function resolvePostLoginPath(profile: AdminProfile): string {
     return "/dashboard";
   }
   return "/dashboard";
+}
+
+/** Choose operator vs platform login from the current path. */
+export function resolveLoginPath(pathname: string | null | undefined): string {
+  if (pathname?.startsWith("/platform")) {
+    return PLATFORM_LOGIN_PATH;
+  }
+
+  return OPERATOR_LOGIN_PATH;
+}
+
+export function isPlatformAdminProfile(profile: AdminProfile): boolean {
+  return profile.roles.includes(ROLES.PlatformAdmin);
 }
 
 const ROLE_CLAIM =
