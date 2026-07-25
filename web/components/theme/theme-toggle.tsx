@@ -11,8 +11,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useToast } from "@/components/ui/toast-provider";
+import { resolvePublicTheme } from "@/lib/public-theme-storage";
 import { cn } from "@/lib/utils";
 
+import { usePublicTheme } from "./public-theme-context";
 import {
   getThemeToggleAriaLabel,
   themeOptionLabels,
@@ -43,22 +45,31 @@ type ThemeToggleProps = {
 export function ThemeToggle({ variant = "admin", className }: ThemeToggleProps) {
   const { resolvedTheme, setTheme, theme } = useTheme();
   const { persistThemePreference, selected } = usePersistedThemePreference();
+  const { isPublicSurface, publicTheme, setPublicTheme } = usePublicTheme();
   const { showToast } = useToast();
   const mounted = useMounted();
+
+  const publicResolved = resolvePublicTheme(publicTheme);
 
   const preference =
     variant === "admin"
       ? selected
-      : theme === "light" || theme === "dark" || theme === "system"
-        ? theme
-        : "system";
+      : isPublicSurface
+        ? publicTheme
+        : theme === "light" || theme === "dark" || theme === "system"
+          ? theme
+          : "system";
   const resolved: "light" | "dark" =
-    resolvedTheme === "dark" ? "dark" : "light";
+    variant === "public" && isPublicSurface
+      ? publicResolved
+      : resolvedTheme === "dark"
+        ? "dark"
+        : "light";
   const TriggerIcon = resolved === "dark" ? Moon : Sun;
 
   function selectTheme(next: ThemePreference) {
-    if (variant === "public") {
-      setTheme(next);
+    if (variant === "public" && isPublicSurface) {
+      setPublicTheme(next);
       return;
     }
 
