@@ -5,17 +5,24 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { AuthFlowShell } from "@/components/auth/auth-flow-shell";
-import { LoginForm } from "@/components/auth/login-form";
+import { LoginWorkspaceNotice } from "@/components/auth/login-workspace-notice";
 import { SESSION_EXPIRED_MESSAGE, useAuth } from "@/components/auth/auth-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import { fetchOnboardingStatus } from "@/lib/auth-api";
 import { clearAuthSession } from "@/lib/auth-storage";
 import type { PublishedSiteBranding } from "@/lib/site-seo-metadata";
 
+type LoginWorkspaceNoticeProps = {
+  workspaceLabel: string;
+  host: string;
+};
+
 function LoginPageContent({
   siteBranding,
+  workspaceNotice,
 }: {
   siteBranding: PublishedSiteBranding | null;
+  workspaceNotice: LoginWorkspaceNoticeProps | null;
 }) {
   const searchParams = useSearchParams();
   const { showToast } = useToast();
@@ -72,6 +79,12 @@ function LoginPageContent({
         </div>
       }
     >
+      {workspaceNotice ? (
+        <LoginWorkspaceNotice
+          workspaceLabel={workspaceNotice.workspaceLabel}
+          host={workspaceNotice.host}
+        />
+      ) : null}
       <LoginForm
         showSessionExpiredNotice={showSessionExpiredNotice}
         initialEmail={invitedEmail}
@@ -110,8 +123,10 @@ function OnboardingLink() {
 
 export function LoginPageClient({
   siteBranding = null,
+  workspaceNotice = null,
 }: {
   siteBranding?: PublishedSiteBranding | null;
+  workspaceNotice?: LoginWorkspaceNoticeProps | null;
 }) {
   return (
     <Suspense
@@ -121,7 +136,10 @@ export function LoginPageClient({
         </div>
       }
     >
-      <LoginPageContent siteBranding={siteBranding} />
+      <LoginPageContent
+        siteBranding={siteBranding}
+        workspaceNotice={workspaceNotice}
+      />
     </Suspense>
   );
 }
