@@ -3,6 +3,7 @@ using Cohestra.Application.Registrations;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Clients;
 using Cohestra.Domain.Registrations;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Email;
@@ -36,6 +37,30 @@ public sealed class RegistrationNotificationServiceTests
     }
 
     [Fact]
+    public async Task SendConfirmationIfApplicableAsync_IncludesTenantHostHeroImageInHtml()
+    {
+        const string assetId = "11111111-1111-1111-1111-111111111111";
+        await using var dbContext = CreateDbContext();
+        var (registrationId, _) = await SeedRegistrationAsync(
+            dbContext,
+            "elena@example.com",
+            heroImageUrl: $"/api/v1/public/campaign-assets/{assetId}");
+        var sender = new CapturingEmailSender();
+
+        var service = CreateService(
+            dbContext,
+            sender,
+            publicWebBaseUrl: "http://localhost:8088");
+        var result = await service.SendConfirmationIfApplicableAsync(registrationId);
+
+        Assert.True(result.Sent);
+        Assert.Single(sender.Messages);
+        Assert.Contains(
+            $"http://creativorare.localhost:8088/api/v1/public/campaign-assets/{assetId}",
+            sender.Messages[0].HtmlBody);
+    }
+
+    [Fact]
     public async Task SendConfirmationIfApplicableAsync_SkipsWhenClientHasNoEmail()
     {
         await using var dbContext = CreateDbContext();
@@ -52,7 +77,8 @@ public sealed class RegistrationNotificationServiceTests
 
     private static RegistrationNotificationService CreateService(
         CohestraDbContext dbContext,
-        IEmailSender sender) =>
+        IEmailSender sender,
+        string publicWebBaseUrl = "http://localhost:3000") =>
         new(
             dbContext,
             sender,
@@ -64,7 +90,7 @@ public sealed class RegistrationNotificationServiceTests
                 RegistrationFromName = "Creativorare",
             }),
             Options.Create(new EmailBrandingSettings()),
-            Options.Create(new PublicWebOptions { BaseUrl = "http://localhost:3000" }),
+            Options.Create(new PublicWebOptions { BaseUrl = publicWebBaseUrl }),
             Options.Create(new CampaignAssetOptions { PublicApiBaseUrl = "https://uat.creativorare.com" }),
             NullLogger<RegistrationNotificationService>.Instance);
 
@@ -79,21 +105,34 @@ public sealed class RegistrationNotificationServiceTests
 
     private static async Task<(Guid RegistrationId, Guid ClientId)> SeedRegistrationAsync(
         CohestraDbContext dbContext,
-        string? email)
+        string? email,
+        string? heroImageUrl = null)
     {
+        var tenantId = TenantIds.Default;
         var activityId = Guid.NewGuid();
         var clientId = Guid.NewGuid();
         var registrationId = Guid.NewGuid();
 
+        dbContext.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Slug = "creativorare",
+            Name = "Creativorare",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
         dbContext.Activities.Add(new Activity
         {
             Id = activityId,
+            TenantId = tenantId,
             Name = "Sunday Pickleball Clinic",
             Slug = "pickleball",
             Category = "Sports",
             Schedule = "Sun 9:00 AM",
             Location = "Ikigai Studio",
             CommunityLabel = "Ikigai",
+            HeroImageUrl = heroImageUrl,
             Status = ActivityStatus.Published,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -102,6 +141,7 @@ public sealed class RegistrationNotificationServiceTests
         dbContext.Clients.Add(new Client
         {
             Id = clientId,
+            TenantId = tenantId,
             FullName = "Elena Santos",
             Email = email,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -111,6 +151,7 @@ public sealed class RegistrationNotificationServiceTests
         dbContext.Registrations.Add(new Registration
         {
             Id = registrationId,
+            TenantId = tenantId,
             RegistrationNumber = "REG20260616000042",
             ActivityId = activityId,
             ClientId = clientId,
@@ -138,14 +179,16 @@ public sealed class RegistrationNotificationServiceTests
         string ToEmail,
         string? FromEmail,
         string? ReplyTo,
-        string Subject)
+        string Subject,
+        string HtmlBody)
     {
         public CapturedEmailMessage(EmailMessage message)
             : this(
                 message.ToEmail,
                 message.FromEmail,
                 null,
-                message.Subject)
+                message.Subject,
+                message.HtmlBody ?? string.Empty)
         {
         }
     }

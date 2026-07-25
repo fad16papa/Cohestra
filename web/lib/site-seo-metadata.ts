@@ -5,12 +5,12 @@ import { getPublicApiBaseUrl } from "@/lib/api";
 import { PLATFORM_NAME } from "@/lib/brand-assets";
 import { getSiteLandingConfig } from "@/lib/site-landing-config";
 import {
-  fetchPublicSiteServer,
   readHeroDescription,
   readHeroHeadline,
   readHeroImageAssetId,
   type PublicSitePayload,
 } from "@/lib/public-site-api";
+import { fetchPublicSiteServer } from "@/lib/public-site-server-api";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
 
 export type PublishedSiteBranding = {

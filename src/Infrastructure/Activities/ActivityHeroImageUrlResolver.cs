@@ -1,3 +1,5 @@
+using Cohestra.Infrastructure.Tenancy;
+
 namespace Cohestra.Infrastructure.Activities;
 
 internal static class ActivityHeroImageUrlResolver
@@ -26,6 +28,7 @@ internal static class ActivityHeroImageUrlResolver
 
     /// <summary>
     /// Absolute URL for email / outbound surfaces that cannot rely on page origin.
+    /// Prefer <see cref="ResolveForEmail"/> when the tenant slug is known.
     /// </summary>
     public static string? Resolve(string? heroImageUrl, string publicApiBaseUrl)
     {
@@ -47,6 +50,29 @@ internal static class ActivityHeroImageUrlResolver
         }
 
         return $"{baseUrl}{assetPath}";
+    }
+
+    /// <summary>
+    /// Absolute tenant-host URL for email clients (SendGrid, etc.).
+    /// Campaign assets are tenant-scoped and must load from the tenant origin.
+    /// </summary>
+    public static string? ResolveForEmail(
+        string? heroImageUrl,
+        string publicWebBaseUrl,
+        string tenantSlug)
+    {
+        var forBrowser = ResolveForBrowser(heroImageUrl);
+        if (forBrowser is null)
+        {
+            return null;
+        }
+
+        if (!TryGetCampaignAssetPath(forBrowser, out var assetPath))
+        {
+            return forBrowser;
+        }
+
+        return TenantPublicWebUrlBuilder.BuildTenantPath(publicWebBaseUrl, tenantSlug, assetPath);
     }
 
     private static bool TryGetCampaignAssetPath(string url, out string assetPath)

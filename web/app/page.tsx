@@ -10,6 +10,7 @@ import {
   buildEnvLandingMetadata,
   buildPublishedSiteMetadata,
 } from "@/lib/site-seo-metadata";
+import { fetchPreviewSiteServer } from "@/lib/public-site-server-api";
 
 type HomePageProps = {
   searchParams: Promise<{ preview?: string }>;
@@ -17,7 +18,13 @@ type HomePageProps = {
 
 export async function generateMetadata({ searchParams }: HomePageProps): Promise<Metadata> {
   const params = await searchParams;
-  if (params.preview?.trim()) {
+  const previewToken = params.preview?.trim();
+  if (previewToken) {
+    const site = await fetchPreviewSiteServer(previewToken);
+    if (site) {
+      return buildPublishedSiteMetadata(site, { preview: true });
+    }
+
     return buildEnvLandingMetadata();
   }
 
@@ -39,8 +46,14 @@ export async function generateMetadata({ searchParams }: HomePageProps): Promise
 
 export default async function Home({ searchParams }: HomePageProps) {
   const params = await searchParams;
-  if (params.preview?.trim()) {
-    return <SiteLandingPage />;
+  const previewToken = params.preview?.trim();
+  if (previewToken) {
+    const site = await fetchPreviewSiteServer(previewToken);
+    if (!site) {
+      notFound();
+    }
+
+    return <SitePageRenderer site={site} isPreview />;
   }
 
   const door = await fetchPublicDoorServer();

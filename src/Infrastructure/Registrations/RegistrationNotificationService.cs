@@ -37,6 +37,10 @@ public sealed class RegistrationNotificationService(
             return new RegistrationConfirmationSendResult(false, null);
         }
 
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == registration.TenantId, cancellationToken);
+
         var recipientEmail = registration.Client.Email?.Trim();
         if (string.IsNullOrWhiteSpace(recipientEmail))
         {
@@ -82,9 +86,9 @@ public sealed class RegistrationNotificationService(
                 FooterLegalName: footerLegalName,
                 WebsiteUrl: websiteUrl,
                 LogoUrl: logoUrl,
-                HeroImageUrl: ActivityHeroImageUrlResolver.Resolve(
+                HeroImageUrl: ResolveHeroImageUrlForEmail(
                     registration.Activity.HeroImageUrl,
-                    campaignAssetOptions.Value.PublicApiBaseUrl)));
+                    tenant?.Slug)));
 
         var sendResult = await emailSender.SendAsync(
             new EmailMessage(
@@ -113,6 +117,21 @@ public sealed class RegistrationNotificationService(
             recipientEmail);
 
         return new RegistrationConfirmationSendResult(true, recipientEmail);
+    }
+
+    private string? ResolveHeroImageUrlForEmail(string? heroImageUrl, string? tenantSlug)
+    {
+        if (string.IsNullOrWhiteSpace(tenantSlug))
+        {
+            return ActivityHeroImageUrlResolver.Resolve(
+                heroImageUrl,
+                campaignAssetOptions.Value.PublicApiBaseUrl);
+        }
+
+        return ActivityHeroImageUrlResolver.ResolveForEmail(
+            heroImageUrl,
+            publicWebOptions.Value.BaseUrl,
+            tenantSlug);
     }
 
     internal static string? ResolveLogoUrl(

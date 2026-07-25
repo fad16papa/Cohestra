@@ -70,4 +70,32 @@ public sealed class ActivityHeroImageUrlResolverTests
             $"{PublicBase}/api/v1/public/campaign-assets/22222222-2222-2222-2222-222222222222",
             resolved);
     }
+
+    [Fact]
+    public void ResolveForEmail_BuildsTenantHostCampaignAssetUrl()
+    {
+        var stored = $"/api/v1/public/campaign-assets/{AssetId}";
+
+        var resolved = ActivityHeroImageUrlResolver.ResolveForEmail(
+            stored,
+            "http://localhost:8088",
+            "creativorare");
+
+        Assert.Equal(
+            $"http://creativorare.localhost:8088/api/v1/public/campaign-assets/{AssetId}",
+            resolved);
+    }
+
+    [Fact]
+    public void ResolveForEmail_PassesThroughExternalUrls()
+    {
+        const string external = "https://cdn.example.com/hero.jpg";
+
+        var resolved = ActivityHeroImageUrlResolver.ResolveForEmail(
+            external,
+            "http://localhost:8088",
+            "creativorare");
+
+        Assert.Equal(external, resolved);
+    }
 }
