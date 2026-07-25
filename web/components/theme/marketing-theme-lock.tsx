@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 
-import { isMarketingLightOnlyPath } from "@/components/theme/theme-config";
+import { shouldLockMarketingLightTheme } from "@/components/theme/theme-config";
 
 /** Midnight Atelier marketing surfaces are light-only — reset dark/system when visiting them. */
 export function MarketingThemeLock() {
@@ -12,7 +12,7 @@ export function MarketingThemeLock() {
   const { setTheme } = useTheme();
 
   useEffect(() => {
-    if (!isMarketingLightOnlyPath(pathname)) {
+    if (!shouldLockMarketingLightTheme(pathname, window.location.hostname)) {
       return;
     }
 

@@ -1,4 +1,6 @@
 /** Shared theme config — inline script must stay in sync with next-themes storage key. */
+import { parseTenantSlugFromHostname } from "@/lib/tenant-host";
+
 export const THEME_STORAGE_KEY = "theme";
 
 export const themePreferences = ["light", "dark", "system"] as const;
@@ -29,6 +31,17 @@ export function isMarketingLightOnlyPath(pathname: string | null): boolean {
     || pathname.startsWith("/signup/")
     || pathname === "/invite/accept"
   );
+}
+
+export function shouldLockMarketingLightTheme(
+  pathname: string | null,
+  hostname: string
+): boolean {
+  if (!isMarketingLightOnlyPath(pathname)) {
+    return false;
+  }
+
+  return parseTenantSlugFromHostname(hostname) === null;
 }
 
 /** Public surfaces use local next-themes storage only — not operator profile preference. */
