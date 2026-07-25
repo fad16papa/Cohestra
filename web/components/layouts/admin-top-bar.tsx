@@ -44,8 +44,13 @@ export function AdminTopBar() {
         <div className="flex min-w-0 items-center gap-3">
           <h1 className="truncate text-section text-text-warm">{pageTitle}</h1>
           {shell ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex min-w-0 items-center gap-1.5">
               <PlanBadge plan={shell.plan} />
+              {shell.billingStatus && shell.billingStatus !== "Free" ? (
+                <span className="hidden text-xs text-text-muted-warm sm:inline">
+                  {shell.billingStatus}
+                </span>
+              ) : null}
               {shell.isComplimentary ? <SponsoredBadge /> : null}
             </div>
           ) : null}

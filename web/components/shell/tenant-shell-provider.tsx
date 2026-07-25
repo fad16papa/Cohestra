@@ -60,6 +60,29 @@ export function TenantShellProvider({ children }: { children: ReactNode }) {
   }, [refreshShell]);
 
   useEffect(() => {
+    if (status !== "authenticated") {
+      return;
+    }
+
+    function onFocus() {
+      void refreshShell();
+    }
+
+    function onVisibility() {
+      if (document.visibilityState === "visible") {
+        void refreshShell();
+      }
+    }
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [refreshShell, status]);
+
+  useEffect(() => {
     if (status !== "authenticated" || !shell?.isTenantAdmin) {
       return;
     }

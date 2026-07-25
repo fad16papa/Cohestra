@@ -376,6 +376,7 @@ export async function fetchWithAuth(
     fetch(input, {
       ...init,
       headers: withAuthHeaders(accessToken, init),
+      cache: init.cache ?? "no-store",
       signal: init.signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
 

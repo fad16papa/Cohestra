@@ -242,8 +242,50 @@ public sealed class StripeBillingService(
             await dbContext.SaveChangesAsync(cancellationToken);
             await EnsurePaidSitePageIfNeededAsync(tenant, cancellationToken);
         }
+        else if (ClearUnverifiedPaidPlan(tenant))
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         return await GetSummaryAsync(tenantId, cancellationToken);
+    }
+
+    /// <summary>
+    /// Heals Plan=Pro/Core + Billing=Free with no live Stripe subscription
+    /// (e.g. abandoned Checkout that previously granted a plan from metadata).
+    /// Complimentary/sponsored tenants are left unchanged.
+    /// </summary>
+    private static bool ClearUnverifiedPaidPlan(Tenant tenant)
+    {
+        if (tenant.IsComplimentary)
+        {
+            return false;
+        }
+
+        if (tenant.Plan is not (TenantPlan.Core or TenantPlan.Pro))
+        {
+            return false;
+        }
+
+        if (tenant.BillingStatus is not (BillingStatus.Free or BillingStatus.Canceled))
+        {
+            return false;
+        }
+
+        // If we still have a subscription id, a fetch failure should not wipe the plan.
+        if (!string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId))
+        {
+            return false;
+        }
+
+        tenant.Plan = TenantPlan.Basic;
+        tenant.BillingStatus = BillingStatus.Free;
+        tenant.BillingInterval = null;
+        tenant.TrialEndsAt = null;
+        tenant.ScheduledPlan = null;
+        tenant.ScheduledPlanEffectiveAt = null;
+        tenant.UpdatedAt = DateTimeOffset.UtcNow;
+        return true;
     }
 
     private async Task<Subscription?> TryResolveSubscriptionFromCheckoutSessionAsync(
@@ -273,7 +315,8 @@ public sealed class StripeBillingService(
 
             if (string.IsNullOrWhiteSpace(session.SubscriptionId))
             {
-                ApplyPlanFromCheckoutMetadataIfNeeded(tenant, session.Metadata);
+                // Link Stripe customer ids only. Plan unlocks when a real
+                // trialing/active subscription is applied below or via webhook.
                 await dbContext.SaveChangesAsync(cancellationToken);
                 return null;
             }
@@ -281,7 +324,6 @@ public sealed class StripeBillingService(
             var subscription = await subscriptionService.GetAsync(
                 session.SubscriptionId,
                 cancellationToken: cancellationToken);
-            ApplyPlanFromCheckoutMetadataIfNeeded(tenant, session.Metadata);
             return subscription;
         }
         catch (StripeException ex)
@@ -347,34 +389,6 @@ public sealed class StripeBillingService(
                 tenant.Id);
             return null;
         }
-    }
-
-    private static void ApplyPlanFromCheckoutMetadataIfNeeded(
-        Tenant tenant,
-        IReadOnlyDictionary<string, string>? metadata)
-    {
-        if (tenant.Plan is TenantPlan.Core or TenantPlan.Pro)
-        {
-            return;
-        }
-
-        if (!StripeTenantBillingSync.TryMapPlanFromMetadata(metadata, out var plan, out var interval))
-        {
-            return;
-        }
-
-        tenant.Plan = plan;
-        if (interval is not null)
-        {
-            tenant.BillingInterval = interval;
-        }
-
-        if (tenant.BillingStatus == BillingStatus.Free)
-        {
-            tenant.BillingStatus = BillingStatus.Trialing;
-        }
-
-        tenant.UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     private async Task EnsurePaidSitePageIfNeededAsync(

@@ -102,6 +102,25 @@ export default function PlatformTenantDetailPage() {
     };
   }, [loadDetail]);
 
+  useEffect(() => {
+    function onFocus() {
+      void loadDetail({ clearTenantOnError: false });
+    }
+
+    function onVisibility() {
+      if (document.visibilityState === "visible") {
+        void loadDetail({ clearTenantOnError: false });
+      }
+    }
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [loadDetail]);
+
   async function runAction(action: () => Promise<TenantResponse>) {
     if (busyRef.current) {
       return;

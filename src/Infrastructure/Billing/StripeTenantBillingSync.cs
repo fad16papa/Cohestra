@@ -63,14 +63,32 @@ public static class StripeTenantBillingSync
             tenant.ScheduledPlan = null;
             tenant.ScheduledPlanEffectiveAt = null;
 
-            if (mappedPlan is not null)
+            // Incomplete / abandoned Checkout must not grant a paid plan badge.
+            if (CanApplyPlanEntitlement(subscription.Status))
             {
-                tenant.Plan = mappedPlan.Value;
-            }
+                if (mappedPlan is not null)
+                {
+                    tenant.Plan = mappedPlan.Value;
+                }
 
-            if (mappedInterval is not null)
+                if (mappedInterval is not null)
+                {
+                    tenant.BillingInterval = mappedInterval;
+                }
+            }
+            else if (subscription.Status is "incomplete" or "incomplete_expired")
             {
-                tenant.BillingInterval = mappedInterval;
+                // Keep the Stripe customer, but clear the incomplete subscription so
+                // Checkout can be retried and a false Pro badge cannot stick.
+                tenant.StripeSubscriptionId = null;
+                if (!tenant.IsComplimentary
+                    && tenant.BillingStatus == BillingStatus.Free
+                    && tenant.Plan is TenantPlan.Core or TenantPlan.Pro)
+                {
+                    tenant.Plan = TenantPlan.Basic;
+                    tenant.BillingInterval = null;
+                    tenant.TrialEndsAt = null;
+                }
             }
         }
 
@@ -110,6 +128,9 @@ public static class StripeTenantBillingSync
             (TenantPlan.Core, TenantPlan.Basic) => true,
             _ => false,
         };
+
+    internal static bool CanApplyPlanEntitlement(string? status) =>
+        status is "trialing" or "active" or "past_due";
 
     public static void ApplyCheckoutSession(Tenant tenant, Session session, StripeSettings settings)
     {

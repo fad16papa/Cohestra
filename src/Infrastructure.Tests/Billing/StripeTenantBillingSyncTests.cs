@@ -1,6 +1,7 @@
 using Cohestra.Domain.Billing;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Billing;
+using Stripe;
 
 namespace Cohestra.Infrastructure.Tests.Billing;
 
@@ -89,5 +90,136 @@ public sealed class StripeTenantBillingSyncTests
         var disclaimer = StripeTenantBillingSync.BuildTrialDisclaimer(new DateTimeOffset(2026, 8, 21, 0, 0, 0, TimeSpan.Zero));
         Assert.Contains("August 21, 2026", disclaimer);
         Assert.Contains("not be charged", disclaimer, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ApplySubscription_Incomplete_DoesNotGrantPaidPlan()
+    {
+        var settings = CreateSettings();
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Slug = "basic-shop",
+            Name = "Basic Shop",
+            Plan = TenantPlan.Basic,
+            BillingStatus = BillingStatus.Free,
+        };
+
+        var subscription = new Subscription
+        {
+            Id = "sub_incomplete",
+            CustomerId = "cus_incomplete",
+            Status = "incomplete",
+            Metadata = new Dictionary<string, string>
+            {
+                ["plan"] = "Pro",
+                ["interval"] = "monthly",
+            },
+            Items = new StripeList<SubscriptionItem>
+            {
+                Data =
+                [
+                    new SubscriptionItem
+                    {
+                        Price = new Price { Id = settings.PriceProMonthly },
+                    },
+                ],
+            },
+        };
+
+        StripeTenantBillingSync.ApplySubscription(tenant, subscription, settings);
+
+        Assert.Equal(TenantPlan.Basic, tenant.Plan);
+        Assert.Equal(BillingStatus.Free, tenant.BillingStatus);
+        Assert.Null(tenant.StripeSubscriptionId);
+        Assert.Equal("cus_incomplete", tenant.StripeCustomerId);
+    }
+
+    [Fact]
+    public void ApplySubscription_Incomplete_ClearsFalsePaidPlanBadge()
+    {
+        var settings = CreateSettings();
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Slug = "false-pro",
+            Name = "False Pro",
+            Plan = TenantPlan.Pro,
+            BillingStatus = BillingStatus.Free,
+            BillingInterval = BillingInterval.Monthly,
+        };
+
+        var subscription = new Subscription
+        {
+            Id = "sub_incomplete_false_pro",
+            CustomerId = "cus_false_pro",
+            Status = "incomplete",
+            Items = new StripeList<SubscriptionItem>
+            {
+                Data =
+                [
+                    new SubscriptionItem
+                    {
+                        Price = new Price { Id = settings.PriceProMonthly },
+                    },
+                ],
+            },
+        };
+
+        StripeTenantBillingSync.ApplySubscription(tenant, subscription, settings);
+
+        Assert.Equal(TenantPlan.Basic, tenant.Plan);
+        Assert.Equal(BillingStatus.Free, tenant.BillingStatus);
+        Assert.Null(tenant.BillingInterval);
+        Assert.Null(tenant.StripeSubscriptionId);
+    }
+
+    [Fact]
+    public void ApplySubscription_Trialing_GrantsMappedPlan()
+    {
+        var settings = CreateSettings();
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Slug = "trial-shop",
+            Name = "Trial Shop",
+            Plan = TenantPlan.Basic,
+            BillingStatus = BillingStatus.Free,
+        };
+
+        var subscription = new Subscription
+        {
+            Id = "sub_trialing",
+            CustomerId = "cus_trialing",
+            Status = "trialing",
+            TrialEnd = DateTime.UtcNow.AddDays(30),
+            Items = new StripeList<SubscriptionItem>
+            {
+                Data =
+                [
+                    new SubscriptionItem
+                    {
+                        Price = new Price { Id = settings.PriceProMonthly },
+                    },
+                ],
+            },
+        };
+
+        StripeTenantBillingSync.ApplySubscription(tenant, subscription, settings);
+
+        Assert.Equal(TenantPlan.Pro, tenant.Plan);
+        Assert.Equal(BillingStatus.Trialing, tenant.BillingStatus);
+        Assert.True(tenant.HasConsumedTrial);
+    }
+
+    [Theory]
+    [InlineData("trialing", true)]
+    [InlineData("active", true)]
+    [InlineData("past_due", true)]
+    [InlineData("incomplete", false)]
+    [InlineData("canceled", false)]
+    public void CanApplyPlanEntitlement_OnlyPaidLifecycleStatuses(string status, bool expected)
+    {
+        Assert.Equal(expected, StripeTenantBillingSync.CanApplyPlanEntitlement(status));
     }
 }

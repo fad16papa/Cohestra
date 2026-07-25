@@ -1,11 +1,39 @@
+"use client";
+
 import Link from "next/link";
 import { Compass, Sparkles } from "lucide-react";
 
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { buttonVariants } from "@/components/ui/button";
+import { isBasicPlan, isProPlan } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
 
+function emptyStateCopy(plan: string | undefined): { eyebrow: string; body: string } {
+  if (plan && isProPlan(plan)) {
+    return {
+      eyebrow: "Your Pro workspace is ready",
+      body: "Create a community to organize your work, publish an activity, and share a registration link or QR. Campaigns and the website builder are unlocked on Pro.",
+    };
+  }
+
+  if (plan && !isBasicPlan(plan)) {
+    return {
+      eyebrow: "Your Core workspace is ready",
+      body: "Create a community to organize your work, publish an activity, and share a registration link or QR at your next event.",
+    };
+  }
+
+  return {
+    eyebrow: "Open your atelier",
+    body: "Basic is free forever — no card required. Create a community to organize your work, publish an activity, and share a registration link or QR at your next event.",
+  };
+}
+
 export function DashboardEmptyState() {
+  const { shell } = useTenantShell();
+  const copy = emptyStateCopy(shell?.plan);
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <section className="relative overflow-hidden rounded-2xl border border-border-warm bg-gradient-to-br from-primary/15 via-card to-card p-8">
@@ -15,14 +43,13 @@ export function DashboardEmptyState() {
         />
         <p className="relative flex items-center gap-2 text-sm font-medium text-primary">
           <Sparkles className="size-4" aria-hidden />
-          Open your atelier
+          {copy.eyebrow}
         </p>
         <h2 className="relative mt-3 text-display-sm text-text-warm">
           Start with one community, then your first activity
         </h2>
         <p className="relative mt-2 max-w-xl text-sm leading-relaxed text-text-muted-warm">
-          Basic is free forever — no card required. Create a community to organize your work,
-          publish an activity, and share a registration link or QR at your next event.
+          {copy.body}
         </p>
         <ol className="relative mt-6 space-y-2 text-sm text-text-warm">
           <li>1. Create a community (your program or venue)</li>
