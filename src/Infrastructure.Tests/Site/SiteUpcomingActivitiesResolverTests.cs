@@ -49,7 +49,7 @@ public sealed class SiteUpcomingActivitiesResolverTests
     }
 
     [Fact]
-    public async Task LoadAsync_ReturnsOnlyPublishedActivities()
+    public async Task LoadAsync_ExcludesDraftArchivedAndUnpublishedActivities()
     {
         await using var dbContext = CreateDbContext();
         var now = DateTimeOffset.UtcNow;

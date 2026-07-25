@@ -29,14 +29,14 @@ export function ActivityHomepageFeaturePanel({
       <CardContent>
         {isPublished ? (
           <p className="text-sm text-text-muted-warm">
-            Published activities automatically appear in the Upcoming activities
-            section on your public homepage. Visitors can also register directly
-            via the activity link or QR code.
+            Published (live) activities appear in the Upcoming activities section
+            on your public homepage. Draft, unpublished, and archived activities
+            are hidden from visitors.
           </p>
         ) : (
           <p className="text-sm text-text-muted-warm">
-            Publish this activity to list it on your public homepage and open
-            registration.
+            Publish this activity to show it on your public homepage. Draft,
+            unpublished, and archived activities are never listed publicly.
           </p>
         )}
       </CardContent>

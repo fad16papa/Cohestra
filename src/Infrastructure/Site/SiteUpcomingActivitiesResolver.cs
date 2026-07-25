@@ -40,7 +40,7 @@ internal static class SiteUpcomingActivitiesResolver
         _ = publicApiBaseUrl;
         _ = ResolveLimit(published);
 
-        // All published activities for the tenant appear on the public homepage.
+        // Published (live) activities only — Draft (incl. unpublished), and Archived stay off the homepage.
         // Schedule is operator-facing free text; UpdatedAt descending is the MVP ordering proxy.
         // Ignore ambient tenant filters — caller passes an explicit tenant id (e.g. public door host resolve).
         var activities = await dbContext.IgnoreTenantFilters<Activity>()
