@@ -1,10 +1,12 @@
 "use client";
 
-import { CalendarCheck, CheckCircle2, Copy, RotateCcw } from "lucide-react";
+import { CalendarCheck, CheckCircle2, Copy, ExternalLink, RotateCcw } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
 
 type RegistrationSuccessScreenProps = {
   activityName: string;
@@ -14,6 +16,7 @@ type RegistrationSuccessScreenProps = {
   registrationNumber: string;
   confirmationEmailSent?: boolean;
   confirmationEmail?: string | null;
+  websiteLink?: PublisherWebsiteLink | null;
   onRegisterAnother: () => void;
 };
 
@@ -25,6 +28,7 @@ export function RegistrationSuccessScreen({
   registrationNumber,
   confirmationEmailSent = false,
   confirmationEmail = null,
+  websiteLink = null,
   onRegisterAnother,
 }: RegistrationSuccessScreenProps) {
   const [copied, setCopied] = useState(false);
@@ -58,7 +62,7 @@ export function RegistrationSuccessScreen({
 
       <div className="space-y-4 px-6 py-8 text-left">
         {communityLabel ? (
-          <p className="text-xs font-medium uppercase tracking-wide text-primary">
+          <p className="text-center text-xs font-medium uppercase tracking-wide text-primary">
             {communityLabel}
           </p>
         ) : null}
@@ -119,6 +123,27 @@ export function RegistrationSuccessScreen({
         </p>
 
         <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-center">
+          {websiteLink ? (
+            websiteLink.external ? (
+              <a
+                href={websiteLink.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                {websiteLink.label}
+                <ExternalLink className="size-4" aria-hidden />
+              </a>
+            ) : (
+              <Link
+                href={websiteLink.href}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                {websiteLink.label}
+                <ExternalLink className="size-4" aria-hidden />
+              </Link>
+            )
+          ) : null}
           <Button type="button" variant="outline" className="gap-2" onClick={onRegisterAnother}>
             <RotateCcw className="size-4" aria-hidden />
             Register another person

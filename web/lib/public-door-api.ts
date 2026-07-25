@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import type { PublicHomepageActivity, PublicSitePayload, SiteSectionsDocument } from "@/lib/public-site-api";
 import { fetchServerApi } from "@/lib/server-api-fetch";
 
@@ -171,7 +173,7 @@ function parseDoorPayload(raw: Record<string, unknown>): PublicDoorPayload {
   };
 }
 
-export async function fetchPublicDoorServer(): Promise<PublicDoorPayload> {
+export const fetchPublicDoorServer = cache(async (): Promise<PublicDoorPayload> => {
   try {
     const response = await fetchServerApi("/api/v1/public/door", { cache: "no-store" });
     if (!response.ok) {
@@ -199,4 +201,4 @@ export async function fetchPublicDoorServer(): Promise<PublicDoorPayload> {
       builderLocked: false,
     };
   }
-}
+});

@@ -1,6 +1,9 @@
 import { PublicRegistrationOpen } from "@/components/registration/public-registration-open";
 import { PublicRegistrationUnavailable } from "@/components/registration/public-registration-unavailable";
+import { fetchPublicDoorServer } from "@/lib/public-door-api";
 import { fetchPublicActivityBySlugServer } from "@/lib/public-registration-server-api";
+import { buildPublisherWebsiteLink } from "@/lib/publisher-website-url";
+import { getRequestOrigin } from "@/lib/request-origin";
 
 type PublicRegistrationPageProps = {
   params: Promise<{ slug: string }>;
@@ -21,6 +24,8 @@ export default async function PublicRegistrationPage({
   }
 
   const { activity } = result;
+  const [door, origin] = await Promise.all([fetchPublicDoorServer(), getRequestOrigin()]);
+  const websiteLink = origin ? buildPublisherWebsiteLink(door, origin) : null;
 
   if (!activity.isRegistrationOpen) {
     return (
@@ -42,6 +47,7 @@ export default async function PublicRegistrationPage({
       heroImageUrl={activity.heroImageUrl}
       accentColor={activity.accentColor}
       formSchema={activity.formSchema}
+      websiteLink={websiteLink}
     />
   );
 }
