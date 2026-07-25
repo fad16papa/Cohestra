@@ -13,6 +13,7 @@ import {
 } from "@/components/dashboard/dashboard-matched-panel";
 import { buttonVariants } from "@/components/ui/button";
 import { fetchCommunities, type CommunityListItem } from "@/lib/communities-api";
+import type { DashboardViewMode } from "@/lib/dashboard-view-mode";
 import { cn } from "@/lib/utils";
 
 function pulseStrength(leadCount: number, maxLeads: number): number {
@@ -23,7 +24,11 @@ function pulseStrength(leadCount: number, maxLeads: number): number {
   return 0.25 + (leadCount / maxLeads) * 0.75;
 }
 
-export function DashboardCommunityPulse() {
+export function DashboardCommunityPulse({
+  variant = "overview",
+}: {
+  variant?: DashboardViewMode;
+}) {
   const { authFetch } = useAuth();
   const [communities, setCommunities] = useState<CommunityListItem[]>([]);
   const [error, setError] = useState(false);
@@ -63,6 +68,103 @@ export function DashboardCommunityPulse() {
   }
 
   const hasMore = communities.length > DASHBOARD_PANEL_VISIBLE_ITEMS;
+
+  if (variant === "tables") {
+    return (
+      <DashboardPanelSection aria-labelledby="community-pulse-heading">
+        <DashboardPanelHeader
+          headingId="community-pulse-heading"
+          title="Community pulse"
+          description="Lead volume by community."
+          action={
+            <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Users className="size-5" aria-hidden />
+            </span>
+          }
+        />
+        <div className="overflow-hidden rounded-xl border border-border-warm bg-card/90">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[24rem] text-left text-sm">
+              <thead className="bg-muted/30 text-xs uppercase tracking-wide text-text-muted-warm">
+                <tr>
+                  <th scope="col" className="px-4 py-3 font-medium sm:px-5">
+                    Community
+                  </th>
+                  <th scope="col" className="px-4 py-3 text-right font-medium sm:px-5">
+                    Leads
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-warm">
+                {communities.map((community) => (
+                  <tr key={community.id} className="transition-colors hover:bg-muted/20">
+                    <td className="px-4 py-3 font-medium text-text-warm sm:px-5">
+                      <Link
+                        href={`/activities/communities/${community.id}`}
+                        className="hover:text-primary"
+                      >
+                        {community.name}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums font-semibold text-text-warm sm:px-5">
+                      {community.leadCount}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </DashboardPanelSection>
+    );
+  }
+
+  if (variant === "graphs") {
+    return (
+      <DashboardPanelSection aria-labelledby="community-pulse-heading">
+        <DashboardPanelHeader
+          headingId="community-pulse-heading"
+          title="Community pulse"
+          description="Relative lead volume across communities."
+          action={
+            <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Users className="size-5" aria-hidden />
+            </span>
+          }
+        />
+        <div className="space-y-3 rounded-xl border border-border-warm bg-card/90 p-4 sm:p-5">
+          <ul className="space-y-3">
+            {communities.slice(0, 12).map((community) => {
+              const widthPercent = Math.round(pulseStrength(community.leadCount, maxLeads) * 100);
+              return (
+                <li key={community.id}>
+                  <Link
+                    href={`/activities/communities/${community.id}`}
+                    className="group block rounded-lg px-1 py-1"
+                  >
+                    <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+                      <span className="truncate font-medium text-text-warm group-hover:text-primary">
+                        {community.name}
+                      </span>
+                      <span className="shrink-0 tabular-nums font-semibold text-text-warm">
+                        {community.leadCount}
+                      </span>
+                    </div>
+                    <div className="h-3 overflow-hidden rounded-full bg-muted/60">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-primary to-accent"
+                        style={{ width: `${widthPercent}%` }}
+                      />
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </DashboardPanelSection>
+    );
+  }
 
   return (
     <DashboardPanelSection aria-labelledby="community-pulse-heading">

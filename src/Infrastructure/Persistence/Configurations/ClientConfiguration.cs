@@ -1,3 +1,4 @@
+using Cohestra.Domain.Tenants;
 using Cohestra.Domain.Clients;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -12,6 +13,17 @@ internal sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
 
         builder.HasKey(client => client.Id);
 
+        builder.Property(client => client.TenantId)
+            .IsRequired();
+
+        builder.HasIndex(client => client.TenantId);
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(client => client.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+
         builder.Property(client => client.FullName)
             .HasMaxLength(200)
             .IsRequired();
@@ -22,7 +34,7 @@ internal sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
         builder.Property(client => client.NormalizedPhone)
             .HasMaxLength(50);
 
-        builder.HasIndex(client => client.NormalizedPhone)
+        builder.HasIndex(client => new { client.TenantId, client.NormalizedPhone })
             .IsUnique()
             .HasFilter("\"NormalizedPhone\" IS NOT NULL");
 
@@ -32,7 +44,7 @@ internal sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
         builder.Property(client => client.NormalizedEmail)
             .HasMaxLength(320);
 
-        builder.HasIndex(client => client.NormalizedEmail)
+        builder.HasIndex(client => new { client.TenantId, client.NormalizedEmail })
             .IsUnique()
             .HasFilter("\"NormalizedEmail\" IS NOT NULL");
 

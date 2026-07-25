@@ -1,3 +1,4 @@
+using Cohestra.Domain.Tenants;
 using Cohestra.Domain.Campaigns;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -11,6 +12,17 @@ internal sealed class CampaignRecipientConfiguration : IEntityTypeConfiguration<
         builder.ToTable("campaign_recipients");
 
         builder.HasKey(recipient => recipient.Id);
+
+        builder.Property(recipient => recipient.TenantId)
+            .IsRequired();
+
+        builder.HasIndex(recipient => recipient.TenantId);
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(recipient => recipient.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
         builder.Property(recipient => recipient.Email)
             .HasMaxLength(320);

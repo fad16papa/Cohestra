@@ -1,6 +1,7 @@
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Clients;
 using Cohestra.Domain.Registrations;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
@@ -78,6 +79,7 @@ public static class DemoDataSeeder
         CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
+        SeedTenantContext.BindPlatformZero(scope.ServiceProvider);
         var settings = scope.ServiceProvider.GetRequiredService<IOptions<DemoDataSeedSettings>>().Value;
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var logger = scope.ServiceProvider
@@ -113,6 +115,7 @@ public static class DemoDataSeeder
             dbContext.Categories.Add(new Category
             {
                 Id = Guid.NewGuid(),
+                TenantId = TenantIds.Default,
                 Name = CategoryNames[categoryIndex],
                 CreatedAt = now,
                 UpdatedAt = now,
@@ -132,6 +135,7 @@ public static class DemoDataSeeder
             var client = new Client
             {
                 Id = Guid.NewGuid(),
+                TenantId = TenantIds.Default,
                 FullName = $"{firstName} {lastName}",
                 Email = email,
                 NormalizedEmail = normalizedEmail,
@@ -161,6 +165,7 @@ public static class DemoDataSeeder
             dbContext.Communities.Add(new Community
             {
                 Id = Guid.NewGuid(),
+                TenantId = TenantIds.Default,
                 Name = communityName,
                 CreatedAt = now,
                 UpdatedAt = now,
@@ -175,6 +180,7 @@ public static class DemoDataSeeder
                 var activity = new Activity
                 {
                     Id = Guid.NewGuid(),
+                    TenantId = TenantIds.Default,
                     Name = activityName,
                     Slug = activitySlug,
                     Category = CategoryNames[communityIndex % CategoryNames.Length],
@@ -196,6 +202,7 @@ public static class DemoDataSeeder
                     dbContext.Registrations.Add(new Registration
                     {
                         Id = Guid.NewGuid(),
+                        TenantId = TenantIds.Default,
                         RegistrationNumber = RegistrationNumberGenerator.Format(now, registrationSequence),
                         ActivityId = activity.Id,
                         ClientId = client.Id,

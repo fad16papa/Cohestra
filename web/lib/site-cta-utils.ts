@@ -2,8 +2,10 @@ export function isOperatorOnlyCtaTarget(target: string): boolean {
   const normalized = target.trim().toLowerCase();
   return (
     normalized === "/login" ||
+    normalized === "/platform/login" ||
     normalized === "/register" ||
     normalized.startsWith("/login/") ||
+    normalized.startsWith("/platform/login/") ||
     normalized.startsWith("/register/")
   );
 }

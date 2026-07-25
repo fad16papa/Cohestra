@@ -5,6 +5,7 @@ using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Contracts.Site;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Site;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
@@ -91,7 +92,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
         Assert.NotNull(site.PublishedAt);
         Assert.Equal("Cohestra", site.Published.SiteName);
         Assert.Contains(site.UpcomingActivities, activity => activity.Slug == visibleSlug);
-        Assert.DoesNotContain(site.UpcomingActivities, activity => activity.Slug == hiddenSlug);
+        Assert.Contains(site.UpcomingActivities, activity => activity.Slug == hiddenSlug);
     }
 
     [SkippableFact]
@@ -120,7 +121,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
         firstResponse.EnsureSuccessStatusCode();
 
         var cache = Factory.Services.GetRequiredService<RedisPublishedSiteCache>();
-        var cached = await cache.GetAsync();
+        var cached = await cache.GetAsync(TenantIds.Default);
         Assert.NotNull(cached);
         Assert.Equal("Cohestra", cached.Published.SiteName);
 
@@ -135,7 +136,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
         var cache = scope.ServiceProvider.GetRequiredService<RedisPublishedSiteCache>();
 
         var page = await dbContext.SitePages
-            .FirstOrDefaultAsync(item => item.Id == SitePage.SingletonId);
+            .FirstOrDefaultAsync(item => item.TenantId == TenantIds.Default);
 
         if (page is not null)
         {
@@ -145,7 +146,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
             await dbContext.SaveChangesAsync();
         }
 
-        await cache.InvalidateAsync();
+        await cache.InvalidateAsync(TenantIds.Default);
     }
 
     private static SiteSectionsDocumentDto CreatePublishableDraft(string activitySlug)

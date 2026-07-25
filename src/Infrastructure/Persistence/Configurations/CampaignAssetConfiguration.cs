@@ -1,3 +1,4 @@
+using Cohestra.Domain.Tenants;
 using Cohestra.Domain.Campaigns;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -11,6 +12,17 @@ internal sealed class CampaignAssetConfiguration : IEntityTypeConfiguration<Camp
         builder.ToTable("campaign_assets");
 
         builder.HasKey(asset => asset.Id);
+
+        builder.Property(asset => asset.TenantId)
+            .IsRequired();
+
+        builder.HasIndex(asset => asset.TenantId);
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(asset => asset.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
         builder.Property(asset => asset.FileName)
             .HasMaxLength(255)

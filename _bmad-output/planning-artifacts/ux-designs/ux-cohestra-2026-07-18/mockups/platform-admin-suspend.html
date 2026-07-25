@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cohestra — Platform Admin Suspend</title>
+  <!-- Spine: EXPERIENCE Flow D UJ-4; DESIGN Platform Admin posture; SponsoredBadge -->
+  <style>
+    :root {
+      --primary: #143D4A;
+      --accent: #0D9488;
+      --accent-fg: #042F2E;
+      --mist: #EEF1F3;
+      --ink: #0C1B24;
+      --ink-muted: #5A6B75;
+      --line: #C5D0D8;
+      --surface: #FFFFFF;
+      --danger-bg: #FEE2E2;
+      --danger-fg: #991B1B;
+      --sponsored: #7C3AED;
+      --plan-pro: #0D9488;
+      --display: "Sora", "Avenir Next", "Nunito Sans", sans-serif;
+      --body: "Source Sans 3", "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--body); color: var(--ink); background: var(--mist); }
+    .bar {
+      background: var(--primary);
+      color: #F7FBFC;
+      padding: 12px 24px;
+      font-family: var(--display);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .bar span { font-weight: 400; opacity: 0.75; margin-left: 12px; font-family: var(--body); font-size: 14px; }
+    .wrap { max-width: 880px; margin: 28px auto; padding: 0 20px 48px; }
+    h1 { font-family: var(--display); font-size: 24px; margin: 0 0 6px; color: var(--primary); }
+    .meta { color: var(--ink-muted); margin: 0 0 20px; }
+    .badges { display: flex; gap: 8px; margin-bottom: 20px; }
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #fff;
+    }
+    .badge.pro { background: var(--plan-pro); color: var(--accent-fg); }
+    .badge.sponsored { background: var(--sponsored); }
+    .badge.active { background: #64748B; }
+    .grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card h2 { font-family: var(--display); font-size: 16px; margin: 0 0 12px; }
+    dl { margin: 0; display: grid; grid-template-columns: 140px 1fr; gap: 8px 12px; font-size: 14px; }
+    dt { color: var(--ink-muted); }
+    dd { margin: 0; font-weight: 600; }
+    label { display: block; font-size: 13px; font-weight: 600; color: var(--ink-muted); margin-bottom: 6px; }
+    select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font: inherit;
+      margin-bottom: 12px;
+    }
+    textarea { min-height: 96px; resize: vertical; }
+    .hint {
+      background: var(--danger-bg);
+      color: var(--danger-fg);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    .btn-danger {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #B91C1C;
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .note { margin-top: 10px; font-size: 12px; color: var(--ink-muted); line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="bar">Cohestra Platform <span>Tenant detail</span></div>
+  <div class="wrap">
+    <h1>northside-runners</h1>
+    <p class="meta">Northside Runners · created 2026-06-02</p>
+    <div class="badges">
+      <span class="badge pro">Pro</span>
+      <span class="badge sponsored">Sponsored</span>
+      <span class="badge active">Active</span>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h2>Lifecycle</h2>
+        <dl>
+          <dt>Status</dt><dd>Active</dd>
+          <dt>BillingStatus</dt><dd>Free (complimentary)</dd>
+          <dt>Plan</dt><dd>Pro</dd>
+          <dt>Seats used</dt><dd>4 / 10</dd>
+        </dl>
+      </div>
+      <div class="card">
+        <h2>Suspend — break-glass</h2>
+        <div class="hint">For abuse, ToS, or support freeze. Ordinary unpaid invoices use automated PastDue → OnHold → archive — do not Suspend as collections.</div>
+        <label for="reason">Reason</label>
+        <select id="reason">
+          <option>Abuse / ToS violation</option>
+          <option>Support freeze</option>
+          <option>Other (explain)</option>
+        </select>
+        <label for="notes">Audit note</label>
+        <textarea id="notes">Confirmed spam registrations from this tenant after review.</textarea>
+        <button class="btn-danger" type="button">Suspend tenant</button>
+        <p class="note">Writes Status=Suspended; public maintenance; admin login blocked. BillingStatus unchanged.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

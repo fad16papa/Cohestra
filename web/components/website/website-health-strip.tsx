@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ExternalLinkButton } from "@/components/shared/external-link-button";
 import { cn } from "@/lib/utils";
 
 type WebsiteHealthStripProps = {
@@ -23,7 +24,6 @@ type WebsiteHealthStripProps = {
   publishBlockerCount: number;
   checklistHidden?: boolean;
   onCopyLink: () => void;
-  onOpenLive: () => void;
   onShowChecklist?: () => void;
 };
 
@@ -48,7 +48,6 @@ export function WebsiteHealthStrip({
   publishBlockerCount,
   checklistHidden = false,
   onCopyLink,
-  onOpenLive,
   onShowChecklist,
 }: WebsiteHealthStripProps) {
   return (
@@ -80,10 +79,10 @@ export function WebsiteHealthStrip({
             <Copy className="size-4" aria-hidden />
             Copy link
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={onOpenLive}>
+          <ExternalLinkButton href={siteUrl} variant="outline" size="sm">
             <ExternalLink className="size-4" aria-hidden />
             Open live site
-          </Button>
+          </ExternalLinkButton>
         </div>
       </div>
 

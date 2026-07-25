@@ -240,17 +240,35 @@ export function getFormSchemaClientIssues(
 export const publishGateSavedFormNote =
   "Publish requirements use the last saved form. Save the Form tab before publishing.";
 
+const ACTIVITY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const ACTIVITY_SLUG_MAX_LENGTH = 220;
+
+export function isValidActivitySlug(slug: string | null | undefined): boolean {
+  if (!slug || slug.length > ACTIVITY_SLUG_MAX_LENGTH) {
+    return false;
+  }
+
+  return ACTIVITY_SLUG_PATTERN.test(slug);
+}
+
 export function getPublishGateIssues(
-  schema: ActivityFormSchema | null | undefined
+  schema: ActivityFormSchema | null | undefined,
+  options?: { slug?: string | null }
 ): string[] {
   const normalized = normalizeFormSchema(schema);
   const issues: string[] = [];
+
+  if (!isValidActivitySlug(options?.slug?.trim())) {
+    issues.push(
+      "A valid registration slug is required before publishing. Create or rename the activity so a slug can be assigned."
+    );
+  }
 
   if (normalized.fields.length === 0) {
     issues.push(
       "Configure the registration form before publishing. Add at least one required phone or email field."
     );
-    return issues;
+    return [...new Set(issues)];
   }
 
   const clientIssues = getFormSchemaClientIssues(normalized);

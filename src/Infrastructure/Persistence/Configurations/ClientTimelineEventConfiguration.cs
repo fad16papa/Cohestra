@@ -1,3 +1,4 @@
+using Cohestra.Domain.Tenants;
 using Cohestra.Domain.Clients;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -11,6 +12,17 @@ internal sealed class ClientTimelineEventConfiguration : IEntityTypeConfiguratio
         builder.ToTable("client_timeline_events");
 
         builder.HasKey(timelineEvent => timelineEvent.Id);
+
+        builder.Property(timelineEvent => timelineEvent.TenantId)
+            .IsRequired();
+
+        builder.HasIndex(timelineEvent => timelineEvent.TenantId);
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(timelineEvent => timelineEvent.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
         builder.Property(timelineEvent => timelineEvent.EventType)
             .HasConversion<string>()

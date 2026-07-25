@@ -64,6 +64,20 @@ public sealed class CampaignService(
             .OrderBy(client => client.FullName)
             .ToListAsync(cancellationToken);
 
+        var tenantId = clients[0].TenantId;
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+
+        if (tenant is null || string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
+        {
+            throw new InvalidOperationException(
+                "Configure a verified admin contact email for this workspace before sending campaigns.");
+        }
+
+        var fromEmail = tenant.AdminContactEmail.Trim();
+        var fromName = string.IsNullOrWhiteSpace(tenant.Name) ? null : tenant.Name.Trim();
+
         var now = DateTimeOffset.UtcNow;
         var campaign = new Campaign
         {
@@ -106,7 +120,9 @@ public sealed class CampaignService(
                     client.FullName,
                     subject,
                     processedBody.PlainTextBody,
-                    processedBody.HtmlBody),
+                    processedBody.HtmlBody,
+                    fromEmail,
+                    fromName),
                 cancellationToken);
 
             if (sendResult.Success)

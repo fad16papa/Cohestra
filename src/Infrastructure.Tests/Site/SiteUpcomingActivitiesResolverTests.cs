@@ -1,8 +1,11 @@
 using System.Text.Json;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Site;
 using Cohestra.Domain.Activities;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Site;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Tests.Site;
@@ -46,7 +49,7 @@ public sealed class SiteUpcomingActivitiesResolverTests
     }
 
     [Fact]
-    public async Task LoadAsync_ReturnsOnlyPublishedShowOnHomepageActivities()
+    public async Task LoadAsync_ExcludesDraftArchivedAndUnpublishedActivities()
     {
         await using var dbContext = CreateDbContext();
         var now = DateTimeOffset.UtcNow;
@@ -66,19 +69,21 @@ public sealed class SiteUpcomingActivitiesResolverTests
         var results = await SiteUpcomingActivitiesResolver.LoadAsync(
             dbContext,
             published,
-            "http://localhost:8080");
+            "http://localhost:8080",
+            TenantIds.Default);
 
-        Assert.Single(results);
-        Assert.Equal("published-visible", results[0].Slug);
+        Assert.Equal(2, results.Count);
+        Assert.Contains(results, activity => activity.Slug == "published-visible");
+        Assert.Contains(results, activity => activity.Slug == "published-hidden");
     }
 
     [Fact]
-    public async Task LoadAsync_RespectsConfiguredLimit()
+    public async Task LoadAsync_ReturnsAllPublishedActivitiesWithoutLimit()
     {
         await using var dbContext = CreateDbContext();
         var now = DateTimeOffset.UtcNow;
 
-        for (var index = 0; index < 5; index++)
+        for (var index = 0; index < 15; index++)
         {
             dbContext.Activities.Add(CreateActivity(
                 $"published-{index}",
@@ -97,9 +102,63 @@ public sealed class SiteUpcomingActivitiesResolverTests
         var results = await SiteUpcomingActivitiesResolver.LoadAsync(
             dbContext,
             published,
-            "http://localhost:8080");
+            "http://localhost:8080",
+            TenantIds.Default);
 
-        Assert.Equal(3, results.Count);
+        Assert.Equal(15, results.Count);
+    }
+
+    [Fact]
+    public async Task LoadAsync_ScopesToRequestedTenant()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = DateTimeOffset.UtcNow;
+        var otherTenant = Guid.CreateVersion7();
+
+        dbContext.Activities.AddRange(
+            CreateActivity("ours", ActivityStatus.Published, showOnHomepage: true, now, TenantIds.Default),
+            CreateActivity("theirs", ActivityStatus.Published, showOnHomepage: true, now, otherTenant));
+        await dbContext.SaveChangesAsync();
+
+        var published = CreatePublished(
+        [
+            CreateSection("upcoming-1", "upcomingActivities", true, """{"limit": 6}"""),
+        ]);
+
+        var results = await SiteUpcomingActivitiesResolver.LoadAsync(
+            dbContext,
+            published,
+            "http://localhost:8080",
+            TenantIds.Default);
+
+        Assert.Single(results);
+        Assert.Equal("ours", results[0].Slug);
+    }
+
+    [Fact]
+    public async Task LoadAsync_WorksWhenAmbientTenantIsUnresolved()
+    {
+        var tenantId = Guid.CreateVersion7();
+        await using var dbContext = CreateDbContext(new CurrentTenant());
+        var now = DateTimeOffset.UtcNow;
+
+        dbContext.Activities.Add(
+            CreateActivity("featured-event", ActivityStatus.Published, showOnHomepage: true, now, tenantId));
+        await dbContext.SaveChangesAsync();
+
+        var published = CreatePublished(
+        [
+            CreateSection("upcoming-1", "upcomingActivities", true, """{"limit": 6}"""),
+        ]);
+
+        var results = await SiteUpcomingActivitiesResolver.LoadAsync(
+            dbContext,
+            published,
+            "http://localhost:8080",
+            tenantId);
+
+        Assert.Single(results);
+        Assert.Equal("featured-event", results[0].Slug);
     }
 
     private static SiteSectionsDocumentDto CreatePublished(IReadOnlyList<SiteSectionDto> sections) =>
@@ -130,10 +189,12 @@ public sealed class SiteUpcomingActivitiesResolverTests
         string slug,
         ActivityStatus status,
         bool showOnHomepage,
-        DateTimeOffset updatedAt) =>
+        DateTimeOffset updatedAt,
+        Guid? tenantId = null) =>
         new()
         {
             Id = Guid.NewGuid(),
+            TenantId = tenantId ?? TenantIds.Default,
             Name = slug,
             Slug = slug,
             Category = "Test",
@@ -146,12 +207,12 @@ public sealed class SiteUpcomingActivitiesResolverTests
             UpdatedAt = updatedAt,
         };
 
-    private static CohestraDbContext CreateDbContext()
+    private static CohestraDbContext CreateDbContext(ICurrentTenant? currentTenant = null)
     {
         var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new CohestraDbContext(options);
+        return new CohestraDbContext(options, currentTenant);
     }
 }

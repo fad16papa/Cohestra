@@ -1,6 +1,8 @@
 using Cohestra.Application.Site;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Site;
 using Cohestra.Domain.Site;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Persistence;
@@ -16,20 +18,22 @@ public sealed class SitePageService(
     IPublishedSiteCache publishedSiteCache,
     SitePreviewTokenService previewTokenService,
     IOptions<CampaignAssetOptions> campaignAssetOptions,
-    IOptions<SiteLandingSeedSettings> landingSeedSettings) : ISitePageService
+    IOptions<SiteLandingSeedSettings> landingSeedSettings,
+    ICurrentTenant currentTenant) : ISitePageService
 {
     private const int MaxSavedTemplates = 12;
     public async Task<SitePageAdminResponse> GetAdminAsync(CancellationToken cancellationToken = default)
     {
         var page = await GetOrCreateSingletonAsync(cancellationToken);
-        var savedTemplates = await LoadSavedTemplateSummariesAsync(cancellationToken);
-        return ToAdminResponse(page, savedTemplates);
+        return await BuildAdminResponseAsync(page, cancellationToken);
     }
 
     public async Task<SitePageAdminResponse> UpdateDraftAsync(
         UpdateSiteDraftRequest request,
         CancellationToken cancellationToken = default)
     {
+        await EnsureBuilderUnlockedAsync(cancellationToken);
+
         if (request.Draft is null)
         {
             throw new InvalidOperationException("Draft payload is required.");
@@ -54,14 +58,15 @@ public sealed class SitePageService(
         page.SchemaVersion = request.Draft.SchemaVersion;
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        var savedTemplates = await LoadSavedTemplateSummariesAsync(cancellationToken);
-        return ToAdminResponse(page, savedTemplates);
+        return await BuildAdminResponseAsync(page, cancellationToken);
     }
 
     public async Task<SitePageAdminResponse> PublishAsync(
         Guid publishedByUserId,
         CancellationToken cancellationToken = default)
     {
+        await EnsureBuilderUnlockedAsync(cancellationToken);
+
         var page = await GetOrCreateSingletonAsync(cancellationToken);
 
         var publishGateError = await publishGateValidator.ValidateForPublishAsync(
@@ -77,7 +82,8 @@ public sealed class SitePageService(
             page.PublishedAt is not null)
         {
             var unchangedTemplates = await LoadSavedTemplateSummariesAsync(cancellationToken);
-            return ToAdminResponse(page, unchangedTemplates);
+            var builderLocked = await IsBuilderLockedAsync(cancellationToken);
+            return ToAdminResponse(page, unchangedTemplates, builderLocked);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -94,14 +100,15 @@ public sealed class SitePageService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await SyncPublishedSiteCacheAsync(page, cancellationToken);
-        var savedTemplates = await LoadSavedTemplateSummariesAsync(cancellationToken);
-        return ToAdminResponse(page, savedTemplates);
+        return await BuildAdminResponseAsync(page, cancellationToken);
     }
 
     public async Task<SitePageAdminResponse> ApplyPresetAsync(
         string presetId,
         CancellationToken cancellationToken = default)
     {
+        await EnsureBuilderUnlockedAsync(cancellationToken);
+
         if (!SitePageLayoutPresets.IsBuiltInPresetId(presetId))
         {
             throw new InvalidOperationException(
@@ -126,14 +133,15 @@ public sealed class SitePageService(
         page.SchemaVersion = presetDocument.SchemaVersion;
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        var presetSavedTemplates = await LoadSavedTemplateSummariesAsync(cancellationToken);
-        return ToAdminResponse(page, presetSavedTemplates);
+        return await BuildAdminResponseAsync(page, cancellationToken);
     }
 
     public async Task<SitePageAdminResponse> ApplySavedTemplateAsync(
         Guid templateId,
         CancellationToken cancellationToken = default)
     {
+        await EnsureBuilderUnlockedAsync(cancellationToken);
+
         var template = await dbContext.SiteHomepageTemplates
             .FirstOrDefaultAsync(item => item.Id == templateId, cancellationToken);
 
@@ -165,14 +173,15 @@ public sealed class SitePageService(
         page.SchemaVersion = templateDocument.SchemaVersion;
 
         await dbContext.SaveChangesAsync(cancellationToken);
-        var savedTemplates = await LoadSavedTemplateSummariesAsync(cancellationToken);
-        return ToAdminResponse(page, savedTemplates);
+        return await BuildAdminResponseAsync(page, cancellationToken);
     }
 
     public async Task<SiteHomepageTemplateSummaryDto> CreateSavedTemplateAsync(
         string name,
         CancellationToken cancellationToken = default)
     {
+        await EnsureBuilderUnlockedAsync(cancellationToken);
+
         var trimmedName = name.Trim();
         if (trimmedName.Length < 2)
         {
@@ -230,8 +239,7 @@ public sealed class SitePageService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var page = await GetOrCreateSingletonAsync(cancellationToken);
-        var savedTemplates = await LoadSavedTemplateSummariesAsync(cancellationToken);
-        return ToAdminResponse(page, savedTemplates);
+        return await BuildAdminResponseAsync(page, cancellationToken);
     }
 
     public async Task<SitePageAdminResponse> RevertPublishedAsync(
@@ -253,16 +261,21 @@ public sealed class SitePageService(
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await SyncPublishedSiteCacheAsync(page, cancellationToken);
-        var revertSavedTemplates = await LoadSavedTemplateSummariesAsync(cancellationToken);
-        return ToAdminResponse(page, revertSavedTemplates);
+        return await BuildAdminResponseAsync(page, cancellationToken);
     }
 
     public async Task<PublicSiteResponse?> GetPublicAsync(CancellationToken cancellationToken = default)
     {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        {
+            return null;
+        }
+
+        var tenantId = currentTenant.TenantId.Value;
         SiteSectionsDocumentDto publishedDto;
         DateTimeOffset? publishedAt;
 
-        var cached = await publishedSiteCache.GetAsync(cancellationToken);
+        var cached = await publishedSiteCache.GetAsync(tenantId, cancellationToken);
         if (cached is not null)
         {
             publishedDto = cached.Published;
@@ -272,7 +285,7 @@ public sealed class SitePageService(
         {
             var page = await dbContext.SitePages
                 .AsNoTracking()
-                .FirstOrDefaultAsync(item => item.Id == SitePage.SingletonId, cancellationToken);
+                .FirstOrDefaultAsync(item => item.TenantId == tenantId, cancellationToken);
 
             if (page?.PublishedSections is null || page.PublishedAt is null)
             {
@@ -283,6 +296,7 @@ public sealed class SitePageService(
             publishedAt = page.PublishedAt;
 
             await publishedSiteCache.SetAsync(
+                tenantId,
                 new PublishedSiteCacheEntry(publishedDto, publishedAt.Value),
                 cancellationToken);
         }
@@ -291,6 +305,7 @@ public sealed class SitePageService(
             dbContext,
             publishedDto,
             campaignAssetOptions.Value.PublicApiBaseUrl,
+            tenantId,
             cancellationToken);
 
         return new PublicSiteResponse(publishedDto, publishedAt, upcomingActivities);
@@ -301,7 +316,12 @@ public sealed class SitePageService(
         CancellationToken cancellationToken = default)
     {
         _ = cancellationToken;
-        var result = previewTokenService.CreateToken(userId);
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null || currentTenant.TenantId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Tenant context is required to create a site preview token.");
+        }
+
+        var result = previewTokenService.CreateToken(userId, currentTenant.TenantId.Value);
         return Task.FromResult(new SitePreviewTokenResponse(result.Token, result.ExpiresAt));
     }
 
@@ -309,14 +329,20 @@ public sealed class SitePageService(
         string previewToken,
         CancellationToken cancellationToken = default)
     {
-        if (!previewTokenService.TryValidate(previewToken, out _))
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        {
+            return null;
+        }
+
+        if (!previewTokenService.TryValidate(previewToken, out _, out var tokenTenantId)
+            || tokenTenantId != currentTenant.TenantId.Value)
         {
             return null;
         }
 
         var page = await dbContext.SitePages
             .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Id == SitePage.SingletonId, cancellationToken);
+            .FirstOrDefaultAsync(item => item.TenantId == currentTenant.TenantId.Value, cancellationToken);
 
         if (page?.DraftSections is null)
         {
@@ -328,6 +354,7 @@ public sealed class SitePageService(
             dbContext,
             draftDto,
             campaignAssetOptions.Value.PublicApiBaseUrl,
+            currentTenant.TenantId.Value,
             cancellationToken);
 
         return new PublicSiteResponse(draftDto, page.DraftUpdatedAt, upcomingActivities);
@@ -335,7 +362,7 @@ public sealed class SitePageService(
 
     private async Task SyncPublishedSiteCacheAsync(SitePage page, CancellationToken cancellationToken)
     {
-        await publishedSiteCache.InvalidateAsync(cancellationToken);
+        await publishedSiteCache.InvalidateAsync(page.TenantId, cancellationToken);
 
         if (page.PublishedSections is null || page.PublishedAt is null)
         {
@@ -343,14 +370,26 @@ public sealed class SitePageService(
         }
 
         await publishedSiteCache.SetAsync(
+            page.TenantId,
             new PublishedSiteCacheEntry(ToDto(page.PublishedSections), page.PublishedAt.Value),
             cancellationToken);
     }
 
     private async Task<SitePage> GetOrCreateSingletonAsync(CancellationToken cancellationToken)
     {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null || currentTenant.TenantId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Tenant context is required for site page operations.");
+        }
+
+        var tenantId = currentTenant.TenantId.Value;
+
+        await EnsureSitePlanAllowedAsync(tenantId, cancellationToken);
+
+        // One SitePage per tenant (AD-4 UNIQUE TenantId).
+        // Legacy SingletonId retained as row Id for the default tenant only.
         var page = await dbContext.SitePages
-            .FirstOrDefaultAsync(item => item.Id == SitePage.SingletonId, cancellationToken);
+            .FirstOrDefaultAsync(item => item.TenantId == tenantId, cancellationToken);
 
         if (page is not null)
         {
@@ -360,7 +399,8 @@ public sealed class SitePageService(
         var now = DateTimeOffset.UtcNow;
         page = new SitePage
         {
-            Id = SitePage.SingletonId,
+            Id = tenantId == TenantIds.Default ? SitePage.SingletonId : Guid.NewGuid(),
+            TenantId = tenantId,
             DraftSections = CreateEmptyDraft(),
             PublishedSections = null,
             DraftUpdatedAt = now,
@@ -378,7 +418,7 @@ public sealed class SitePageService(
         {
             dbContext.Entry(page).State = EntityState.Detached;
             return await dbContext.SitePages
-                .FirstAsync(item => item.Id == SitePage.SingletonId, cancellationToken);
+                .FirstAsync(item => item.TenantId == tenantId, cancellationToken);
         }
     }
 
@@ -390,9 +430,68 @@ public sealed class SitePageService(
             Sections = [],
         };
 
+    private async Task EnsureSitePlanAllowedAsync(Guid tenantId, CancellationToken cancellationToken)
+    {
+        var plan = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(t => t.Id == tenantId)
+            .Select(t => t.Plan)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (plan is TenantPlan.Basic)
+        {
+            throw new InvalidOperationException("Site pages require a Core plan or higher.");
+        }
+    }
+
+    private async Task EnsureBuilderUnlockedAsync(CancellationToken cancellationToken)
+    {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            throw new InvalidOperationException("Tenant context is required for site page operations.");
+        }
+
+        var plan = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(t => t.Id == tenantId)
+            .Select(t => t.Plan)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (plan is TenantPlan.Core)
+        {
+            throw new InvalidOperationException("The section composer is locked on Core. Upgrade to Pro to customize layout.");
+        }
+    }
+
+    private async Task<bool> IsBuilderLockedAsync(CancellationToken cancellationToken)
+    {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return true;
+        }
+
+        var plan = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(t => t.Id == tenantId)
+            .Select(t => t.Plan)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return plan is TenantPlan.Core;
+    }
+
+    private async Task<SitePageAdminResponse> BuildAdminResponseAsync(
+        SitePage page,
+        CancellationToken cancellationToken)
+    {
+        var savedTemplates = await LoadSavedTemplateSummariesAsync(cancellationToken);
+        var builderLocked = await IsBuilderLockedAsync(cancellationToken);
+        return ToAdminResponse(page, savedTemplates, builderLocked);
+    }
+
     private static SitePageAdminResponse ToAdminResponse(
         SitePage page,
-        IReadOnlyList<SiteHomepageTemplateSummaryDto> savedTemplates)
+        IReadOnlyList<SiteHomepageTemplateSummaryDto> savedTemplates,
+        bool builderLocked)
     {
         var draft = page.DraftSections ?? CreateEmptyDraft();
         var published = page.PublishedSections is null ? null : ToDto(page.PublishedSections);
@@ -409,7 +508,8 @@ public sealed class SitePageService(
             hasUnpublishedChanges,
             page.PreviousPublishedSections is not null && page.PreviousPublishedAt is not null,
             page.PreviousPublishedAt,
-            savedTemplates);
+            savedTemplates,
+            builderLocked);
     }
 
     private async Task<IReadOnlyList<SiteHomepageTemplateSummaryDto>> LoadSavedTemplateSummariesAsync(

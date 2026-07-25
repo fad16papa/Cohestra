@@ -1,3 +1,5 @@
+using Cohestra.Domain.Tenants;
+
 namespace Cohestra.Domain.Campaigns;
 
 public enum CampaignRecipientStatus
@@ -7,9 +9,11 @@ public enum CampaignRecipientStatus
     Skipped,
 }
 
-public class CampaignRecipient
+public class CampaignRecipient : ITenantScoped
 {
     public Guid Id { get; set; }
+
+    public Guid TenantId { get; set; }
 
     public Guid CampaignId { get; set; }
 

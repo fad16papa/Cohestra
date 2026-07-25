@@ -9,16 +9,17 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { useToast } from "@/components/ui/toast-provider";
 import {
   fetchWithAuth,
   loginWithPassword,
+  resolveLoginPath,
   validateStoredSession,
   type AdminProfile,
 } from "@/lib/auth-api";
-import { clearAuthSession, getAuthSession, isAccessTokenExpired } from "@/lib/auth-storage";
+import { clearAuthSession } from "@/lib/auth-storage";
 
 export const SESSION_EXPIRED_MESSAGE =
   "Session expired — sign in again." as const;
@@ -30,6 +31,7 @@ type AuthContextValue = {
   profile: AdminProfile | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  clearSession: () => void;
   handleSessionExpired: () => void;
   authFetch: (input: string, init?: RequestInit) => Promise<Response>;
   applyProfile: (profile: AdminProfile) => void;
@@ -39,17 +41,23 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { showToast } = useToast();
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [profile, setProfile] = useState<AdminProfile | null>(null);
 
-  const handleSessionExpired = useCallback(() => {
+  const clearSession = useCallback(() => {
     clearAuthSession();
     setProfile(null);
     setStatus("unauthenticated");
+  }, []);
+
+  const handleSessionExpired = useCallback(() => {
+    clearSession();
     showToast(SESSION_EXPIRED_MESSAGE);
-    router.replace("/login?reason=session-expired");
-  }, [router, showToast]);
+    const loginPath = resolveLoginPath(pathname);
+    router.replace(`${loginPath}?reason=session-expired`);
+  }, [clearSession, pathname, router, showToast]);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,33 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  useEffect(() => {
-    if (status !== "authenticated") {
-      return;
-    }
-
-    const onFocus = () => {
-      const session = getAuthSession();
-      if (!session) {
-        handleSessionExpired();
-        return;
-      }
-
-      if (!isAccessTokenExpired(session)) {
-        return;
-      }
-
-      void validateStoredSession().then((nextProfile) => {
-        if (!nextProfile) {
-          handleSessionExpired();
-        }
-      });
-    };
-
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [handleSessionExpired, status]);
-
   const login = useCallback(async (email: string, password: string) => {
     const result = await loginWithPassword(email.trim(), password);
     if (!result.ok) {
@@ -115,11 +96,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    clearAuthSession();
-    setProfile(null);
-    setStatus("unauthenticated");
-    router.replace("/login");
-  }, [router]);
+    const loginPath = resolveLoginPath(pathname);
+    clearSession();
+    router.replace(loginPath);
+  }, [clearSession, pathname, router]);
 
   const authFetch = useCallback(
     (input: string, init?: RequestInit) =>
@@ -138,11 +118,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       login,
       logout,
+      clearSession,
       handleSessionExpired,
       authFetch,
       applyProfile,
     }),
-    [applyProfile, authFetch, handleSessionExpired, login, logout, profile, status]
+    [
+      applyProfile,
+      authFetch,
+      clearSession,
+      handleSessionExpired,
+      login,
+      logout,
+      profile,
+      status,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

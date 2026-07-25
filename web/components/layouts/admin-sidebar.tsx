@@ -1,6 +1,8 @@
 "use client";
 
 import { AdminNavLinks } from "@/components/layouts/admin-nav-links";
+import { LimitMeter } from "@/components/shell/limit-meter";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { cn } from "@/lib/utils";
 
 type AdminSidebarProps = {
@@ -8,6 +10,8 @@ type AdminSidebarProps = {
 };
 
 export function AdminSidebar({ className }: AdminSidebarProps) {
+  const { shell } = useTenantShell();
+
   return (
     <aside
       className={cn(
@@ -32,6 +36,15 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
       <div className="flex-1 overflow-y-auto p-2 lg:p-3">
         <AdminNavLinks compact />
       </div>
+
+      {shell?.limitDials?.length ? (
+        <div className="hidden border-t border-border-warm p-3 lg:block">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-text-muted-warm">
+            Plan headroom
+          </p>
+          <LimitMeter dials={shell.limitDials} compact />
+        </div>
+      ) : null}
     </aside>
   );
 }

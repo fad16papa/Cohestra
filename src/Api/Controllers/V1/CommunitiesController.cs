@@ -10,7 +10,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/communities")]
-[Authorize(Roles = OperatorSeeder.AdminRole)]
+[Authorize(Policy = TenantAuthPolicies.TenantOperator)]
 [Produces("application/json")]
 public class CommunitiesController(
     ICommunityService communityService,

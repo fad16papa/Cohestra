@@ -8,7 +8,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/categories")]
-[Authorize(Roles = OperatorSeeder.AdminRole)]
+[Authorize(Policy = TenantAuthPolicies.TenantOperator)]
 [Produces("application/json")]
 public class CategoriesController(ICategoryService categoryService) : ControllerBase
 {

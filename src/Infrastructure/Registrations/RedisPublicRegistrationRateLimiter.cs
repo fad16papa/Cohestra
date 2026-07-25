@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Cohestra.Application.Registrations;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
@@ -10,8 +11,6 @@ public sealed class RedisPublicRegistrationRateLimiter(
     IConnectionMultiplexer redis,
     IOptions<PublicRegistrationRateLimitOptions> options) : IPublicRegistrationRateLimiter
 {
-    private const string KeyPrefix = "ratelimit:public-registration:";
-
     private static readonly LuaScript SlidingWindowScript = LuaScript.Prepare("""
         local now = tonumber(@now)
         local windowMs = tonumber(@windowMs)
@@ -30,6 +29,7 @@ public sealed class RedisPublicRegistrationRateLimiter(
         """);
 
     public async Task<bool> AllowRequestAsync(
+        Guid tenantId,
         string clientIdentifier,
         CancellationToken cancellationToken = default)
     {
@@ -42,7 +42,9 @@ public sealed class RedisPublicRegistrationRateLimiter(
         var db = redis.GetDatabase();
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var windowMs = settings.WindowSeconds * 1000L;
-        var key = (RedisKey)(KeyPrefix + HashIdentifier(clientIdentifier));
+        var key = (RedisKey)TenantRedisKeys.PublicRegistrationRateLimit(
+            tenantId,
+            HashIdentifier(clientIdentifier));
         var member = Guid.NewGuid().ToString("N");
 
         var result = await SlidingWindowScript.EvaluateAsync(db, new

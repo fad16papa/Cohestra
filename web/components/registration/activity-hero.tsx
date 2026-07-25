@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ResponsiveBannerImage } from "@/components/ui/responsive-banner-image";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
@@ -27,6 +27,11 @@ export function ActivityHero({
     [heroImageUrl]
   );
   const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [resolvedHeroImageUrl]);
+
   const showImage = showHeroImage && resolvedHeroImageUrl && !imageFailed;
 
   return (

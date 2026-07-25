@@ -1,5 +1,7 @@
 using Cohestra.Application.Registrations;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Registrations;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +14,10 @@ namespace Cohestra.Api.Controllers.V1;
 [AllowAnonymous]
 [Produces("application/json")]
 [Tags("Public Registrations")]
-public class PublicRegistrationsController(IRegistrationService registrationService) : ControllerBase
+public class PublicRegistrationsController(
+    IRegistrationService registrationService,
+    ITenantAccessService tenantAccessService,
+    ICurrentTenant currentTenant) : ControllerBase
 {
     /// <summary>
     /// Submit a public registration.
@@ -48,6 +53,21 @@ public class PublicRegistrationsController(IRegistrationService registrationServ
                 Detail = "activitySlug and answers are required.",
                 Status = StatusCodes.Status400BadRequest,
             });
+        }
+
+        if (currentTenant.IsResolved && currentTenant.TenantId is Guid tenantId)
+        {
+            var access = await tenantAccessService.EvaluateAsync(tenantId, cancellationToken);
+            if (!access.PublicRegistrationAllowed)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new ProblemDetails
+                {
+                    Title = "Registration unavailable",
+                    Detail = "Public registration is temporarily unavailable for this workspace.",
+                    Status = StatusCodes.Status403Forbidden,
+                    Extensions = { ["errorCode"] = "registration_blocked" },
+                });
+            }
         }
 
         var result = await registrationService.SubmitPublicRegistrationAsync(
@@ -95,6 +115,11 @@ public class PublicRegistrationsController(IRegistrationService registrationServ
                 Detail = result.ValidationError,
                 Status = StatusCodes.Status400BadRequest,
             });
+        }
+
+        if (currentTenant.IsResolved && currentTenant.TenantId is Guid tenantIdForActivity)
+        {
+            await tenantAccessService.TouchActivityAsync(tenantIdForActivity, cancellationToken);
         }
 
         var response = new SubmitPublicRegistrationResponse(

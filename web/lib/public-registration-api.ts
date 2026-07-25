@@ -1,6 +1,6 @@
 import type { ActivityFormSchema, ActivityStatus } from "@/lib/activities-api";
 import { parseFormSchema } from "@/lib/activities-api";
-import { getPublicApiBaseUrl, getServerApiBaseUrl } from "@/lib/api";
+import { getPublicApiBaseUrl } from "@/lib/api";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
 
 export type PublicActivity = {
@@ -70,10 +70,9 @@ export type PublicActivityFetchResult =
   | { kind: "error" };
 
 export async function fetchPublicActivityBySlug(
-  slug: string,
-  options?: { serverSide?: boolean }
+  slug: string
 ): Promise<PublicActivityFetchResult> {
-  const baseUrl = options?.serverSide ? getServerApiBaseUrl() : getPublicApiBaseUrl();
+  const baseUrl = getPublicApiBaseUrl();
 
   try {
     const response = await fetch(
@@ -170,6 +169,12 @@ export async function submitPublicRegistration(
   }
 
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new Error(
+        "Too many registration attempts from this workspace. Please wait a minute and try again."
+      );
+    }
+
     let message = `Registration failed (${response.status})`;
     try {
       const problem = (await response.json()) as Record<string, unknown>;

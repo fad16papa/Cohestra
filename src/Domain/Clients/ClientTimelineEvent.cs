@@ -1,8 +1,12 @@
+using Cohestra.Domain.Tenants;
+
 namespace Cohestra.Domain.Clients;
 
-public class ClientTimelineEvent
+public class ClientTimelineEvent : ITenantScoped
 {
     public Guid Id { get; set; }
+
+    public Guid TenantId { get; set; }
 
     public Guid ClientId { get; set; }
 

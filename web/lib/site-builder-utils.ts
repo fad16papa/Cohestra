@@ -148,8 +148,8 @@ export function getSetupChecklist(
       label: "Show upcoming events",
       detail:
         options.upcomingActivityCount > 0
-          ? `${options.upcomingActivityCount} published event${options.upcomingActivityCount === 1 ? "" : "s"} featured`
-          : "Publish activities and feature them on your homepage",
+          ? `${options.upcomingActivityCount} published event${options.upcomingActivityCount === 1 ? "" : "s"} on your homepage`
+          : "Publish activities to list them on your homepage",
       done: options.upcomingActivityCount > 0,
     },
     {

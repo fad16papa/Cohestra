@@ -1,6 +1,9 @@
 using Cohestra.Application.Registrations;
+using Cohestra.Application.Tenants;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Cohestra.Api.Infrastructure;
 
@@ -18,8 +21,30 @@ public sealed class PublicRegistrationRateLimitMiddleware(
             return;
         }
 
+        var currentTenant = context.RequestServices.GetRequiredService<ICurrentTenant>();
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null || currentTenant.TenantId == Guid.Empty)
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            context.Response.ContentType = "application/problem+json";
+
+            var unresolved = new ProblemDetails
+            {
+                Title = "Not Found",
+                Detail = "Could not resolve tenant from Host.",
+                Status = StatusCodes.Status404NotFound,
+                Instance = context.Request.Path,
+                Type = "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+            };
+            unresolved.Extensions["errorCode"] = TenantResolutionMiddleware.TenantUnresolvedErrorCode;
+            unresolved.Extensions["traceId"] = context.TraceIdentifier;
+
+            await context.Response.WriteAsJsonAsync(unresolved);
+            return;
+        }
+
         var clientIdentifier = ResolveClientIdentifier(context);
         var allowed = await rateLimiter.AllowRequestAsync(
+            currentTenant.TenantId.Value,
             clientIdentifier,
             context.RequestAborted);
 

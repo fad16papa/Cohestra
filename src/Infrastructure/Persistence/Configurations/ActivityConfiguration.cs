@@ -1,3 +1,4 @@
+using Cohestra.Domain.Tenants;
 using System.Text.Json;
 using Cohestra.Domain.Activities;
 using Cohestra.Infrastructure.Activities;
@@ -14,6 +15,17 @@ internal sealed class ActivityConfiguration : IEntityTypeConfiguration<Activity>
 
         builder.HasKey(activity => activity.Id);
 
+        builder.Property(activity => activity.TenantId)
+            .IsRequired();
+
+        builder.HasIndex(activity => activity.TenantId);
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(activity => activity.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+
         builder.Property(activity => activity.Name)
             .HasMaxLength(200)
             .IsRequired();
@@ -22,7 +34,7 @@ internal sealed class ActivityConfiguration : IEntityTypeConfiguration<Activity>
             .HasMaxLength(220)
             .IsRequired();
 
-        builder.HasIndex(activity => activity.Slug)
+        builder.HasIndex(activity => new { activity.TenantId, activity.Slug })
             .IsUnique();
 
         builder.Property(activity => activity.Category)

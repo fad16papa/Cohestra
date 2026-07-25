@@ -1,12 +1,11 @@
 using System.Text.Json;
+using Cohestra.Infrastructure.Tenancy;
 using StackExchange.Redis;
 
 namespace Cohestra.Infrastructure.Site;
 
 public sealed class RedisPublishedSiteCache(IConnectionMultiplexer redis) : IPublishedSiteCache
 {
-    internal const string CacheKey = "public:site:published";
-
     private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(15);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -14,10 +13,13 @@ public sealed class RedisPublishedSiteCache(IConnectionMultiplexer redis) : IPub
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
-    public async Task<PublishedSiteCacheEntry?> GetAsync(CancellationToken cancellationToken = default)
+    public async Task<PublishedSiteCacheEntry?> GetAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
     {
+        var key = TenantRedisKeys.PublishedSite(tenantId);
         var db = redis.GetDatabase();
-        var value = await db.StringGetAsync(CacheKey).WaitAsync(cancellationToken);
+        var value = await db.StringGetAsync(key).WaitAsync(cancellationToken);
 
         if (value.IsNullOrEmpty)
         {
@@ -30,22 +32,24 @@ public sealed class RedisPublishedSiteCache(IConnectionMultiplexer redis) : IPub
         }
         catch (JsonException)
         {
-            await db.KeyDeleteAsync(CacheKey).WaitAsync(cancellationToken);
+            await db.KeyDeleteAsync(key).WaitAsync(cancellationToken);
             return null;
         }
     }
 
     public async Task SetAsync(
+        Guid tenantId,
         PublishedSiteCacheEntry entry,
         CancellationToken cancellationToken = default)
     {
+        var key = TenantRedisKeys.PublishedSite(tenantId);
         var json = JsonSerializer.Serialize(entry, JsonOptions);
         await redis
             .GetDatabase()
-            .StringSetAsync(CacheKey, json, CacheTtl)
+            .StringSetAsync(key, json, CacheTtl)
             .WaitAsync(cancellationToken);
     }
 
-    public Task InvalidateAsync(CancellationToken cancellationToken = default) =>
-        redis.GetDatabase().KeyDeleteAsync(CacheKey).WaitAsync(cancellationToken);
+    public Task InvalidateAsync(Guid tenantId, CancellationToken cancellationToken = default) =>
+        redis.GetDatabase().KeyDeleteAsync(TenantRedisKeys.PublishedSite(tenantId)).WaitAsync(cancellationToken);
 }

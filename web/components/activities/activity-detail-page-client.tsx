@@ -97,7 +97,9 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     );
   }
 
-  const publishGateIssues = getPublishGateIssues(activity.formSchema);
+  const publishGateIssues = getPublishGateIssues(activity.formSchema, {
+    slug: activity.slug,
+  });
 
   return (
     <div className="space-y-6">
@@ -159,10 +161,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
             activity={activity}
             onActivityUpdated={setActivity}
           />
-          <ActivityHomepageFeaturePanel
-            activity={activity}
-            onActivityUpdated={setActivity}
-          />
+          <ActivityHomepageFeaturePanel activity={activity} />
           <Card className="border-border-warm">
             <CardHeader>
               <CardTitle className="text-section text-text-warm">

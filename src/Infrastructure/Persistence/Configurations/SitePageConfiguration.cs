@@ -1,3 +1,4 @@
+using Cohestra.Domain.Tenants;
 using System.Text.Json;
 using Cohestra.Domain.Site;
 using Cohestra.Infrastructure.Site;
@@ -13,6 +14,18 @@ internal sealed class SitePageConfiguration : IEntityTypeConfiguration<SitePage>
         builder.ToTable("site_pages");
 
         builder.HasKey(page => page.Id);
+
+        builder.Property(page => page.TenantId)
+            .IsRequired();
+
+        builder.HasIndex(page => page.TenantId)
+            .IsUnique();
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(page => page.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
         builder.Property(page => page.DraftSections)
             .HasColumnName("draft_sections_json")

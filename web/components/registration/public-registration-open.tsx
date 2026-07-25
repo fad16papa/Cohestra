@@ -6,6 +6,7 @@ import { ActivityHero } from "@/components/registration/activity-hero";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { RegistrationSuccessScreen } from "@/components/registration/registration-success-screen";
 import type { ActivityFormSchema } from "@/lib/activities-api";
+import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
 import { cn } from "@/lib/utils";
 
 type PublicRegistrationOpenProps = {
@@ -17,6 +18,7 @@ type PublicRegistrationOpenProps = {
   heroImageUrl?: string | null;
   accentColor?: string | null;
   formSchema: ActivityFormSchema | null;
+  websiteLink?: PublisherWebsiteLink | null;
 };
 
 export function PublicRegistrationOpen({
@@ -28,6 +30,7 @@ export function PublicRegistrationOpen({
   heroImageUrl,
   accentColor,
   formSchema,
+  websiteLink = null,
 }: PublicRegistrationOpenProps) {
   const [submitted, setSubmitted] = useState(false);
   const [registrationNumber, setRegistrationNumber] = useState<string | null>(null);
@@ -57,6 +60,7 @@ export function PublicRegistrationOpen({
           registrationNumber={registrationNumber}
           confirmationEmailSent={confirmationEmailSent}
           confirmationEmail={confirmationEmail}
+          websiteLink={websiteLink}
           onRegisterAnother={() => {
             setRegistrationNumber(null);
             setConfirmationEmailSent(false);

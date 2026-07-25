@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 
 export function BrandAccentSection() {
   const { authFetch, applyProfile, profile } = useAuth();
+  const isTenantAdmin = profile?.roles.includes("TenantAdmin") ?? false;
   const { selected: themePreference } = usePersistedThemePreference();
   const { resolvedTheme } = useTheme();
   const [isSaving, setIsSaving] = useState(false);
@@ -94,6 +95,10 @@ export function BrandAccentSection() {
   async function resetToDefault() {
     setCustomHex("");
     await persistAccent(null);
+  }
+
+  if (!isTenantAdmin) {
+    return null;
   }
 
   return (

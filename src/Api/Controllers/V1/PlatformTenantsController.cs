@@ -1,0 +1,253 @@
+using System.Security.Claims;
+using Cohestra.Application.Tenants;
+using Cohestra.Contracts.Platform;
+using Cohestra.Infrastructure.Auth;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Cohestra.Api.Controllers.V1;
+
+/// <summary>
+/// Platform Admin tenant lifecycle (FR-2). Suspend is break-glass (abuse/ToS/support freeze), not collections.
+/// </summary>
+[ApiController]
+[Route("api/v1/platform/tenants")]
+[Authorize(Policy = TenantAuthPolicies.PlatformAdminOnly)]
+[Produces("application/json")]
+public sealed class PlatformTenantsController(IPlatformTenantService platformTenantService) : ControllerBase
+{
+    /// <summary>Paginated tenant directory with aggregate activity/client counts (no PII export).</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(TenantListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<TenantListResponse>> List(
+        [FromQuery] string? search,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await platformTenantService.ListAsync(search, page, pageSize, cancellationToken);
+        return Ok(result);
+    }
+
+    /// <summary>Tenant detail plus recent platform audit entries for that tenant only.</summary>
+    [HttpGet("{tenantId:guid}")]
+    [ProducesResponseType(typeof(TenantDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TenantDetailResponse>> GetById(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var result = await platformTenantService.GetByIdAsync(tenantId, cancellationToken: cancellationToken);
+        if (result.Succeeded && result.Value is not null)
+        {
+            return Ok(result.Value);
+        }
+
+        return result.Error switch
+        {
+            PlatformTenantError.NotFound => NotFoundProblem(result.Detail ?? "Tenant not found."),
+            _ => BadRequestProblem(result.Detail ?? "Request failed."),
+        };
+    }
+
+    /// <summary>Provision a tenant workspace (Status=Active). Does not create tenant memberships.</summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(TenantResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TenantResponse>> Create(
+        [FromBody] CreateTenantRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        if (!TryGetActorUserId(out var actorUserId))
+        {
+            return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
+        var result = await platformTenantService.CreateAsync(request, actorUserId, cancellationToken);
+        return ToActionResult(result, created: true);
+    }
+
+    /// <summary>
+    /// Break-glass suspend (abuse / ToS / support freeze). Does not change BillingStatus. Not for non-payment.
+    /// </summary>
+    [HttpPost("{tenantId:guid}/suspend")]
+    [ProducesResponseType(typeof(TenantResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TenantResponse>> Suspend(
+        Guid tenantId,
+        [FromBody] SuspendTenantRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        if (!TryGetActorUserId(out var actorUserId))
+        {
+            return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
+        var result = await platformTenantService.SuspendAsync(tenantId, request, actorUserId, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    /// <summary>Reactivate a Suspended tenant. BillingStatus is left unchanged.</summary>
+    [HttpPost("{tenantId:guid}/reactivate")]
+    [ProducesResponseType(typeof(TenantResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TenantResponse>> Reactivate(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetActorUserId(out var actorUserId))
+        {
+            return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
+        var result = await platformTenantService.ReactivateAsync(tenantId, actorUserId, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    /// <summary>Soft-archive a tenant (Status=Archived, ArchivedAt set). 30-day retention before purge (purge job out of scope).</summary>
+    [HttpPost("{tenantId:guid}/archive")]
+    [ProducesResponseType(typeof(TenantResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TenantResponse>> Archive(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        if (!TryGetActorUserId(out var actorUserId))
+        {
+            return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
+        var result = await platformTenantService.ArchiveAsync(tenantId, actorUserId, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    /// <summary>
+    /// Set or clear complimentary (Sponsored) plan (P12). Forces BillingStatus=Free when set.
+    /// Stripe IDs unchanged; clearing requires Checkout (FR-19) before paid sync — not implemented here.
+    /// </summary>
+    [HttpPost("{tenantId:guid}/complimentary")]
+    [ProducesResponseType(typeof(TenantResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TenantResponse>> SetComplimentary(
+        Guid tenantId,
+        [FromBody] SetComplimentaryRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        if (!TryGetActorUserId(out var actorUserId))
+        {
+            return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
+        var result = await platformTenantService.SetComplimentaryAsync(
+            tenantId,
+            request,
+            actorUserId,
+            cancellationToken);
+        return ToActionResult(result);
+    }
+
+    private ActionResult<TenantResponse> ToActionResult(
+        PlatformTenantResult<TenantResponse> result,
+        bool created = false)
+    {
+        if (result.Succeeded && result.Value is not null)
+        {
+            return created
+                ? Created($"/api/v1/platform/tenants/{result.Value.Id}", result.Value)
+                : Ok(result.Value);
+        }
+
+        return result.Error switch
+        {
+            PlatformTenantError.Validation => BadRequestProblem(result.Detail ?? "Invalid request."),
+            PlatformTenantError.NotFound => NotFoundProblem(result.Detail ?? "Tenant not found."),
+            PlatformTenantError.Conflict => ConflictProblem(result.Detail ?? "Conflict."),
+            _ => BadRequestProblem(result.Detail ?? "Request failed."),
+        };
+    }
+
+    private bool TryGetActorUserId(out Guid actorUserId)
+    {
+        actorUserId = Guid.Empty;
+        var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub");
+        return Guid.TryParse(raw, out actorUserId) && actorUserId != Guid.Empty;
+    }
+
+    private BadRequestObjectResult BadRequestProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+        return BadRequest(new ProblemDetails
+        {
+            Status = StatusCodes.Status400BadRequest,
+            Title = "Bad Request",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        });
+    }
+
+    private NotFoundObjectResult NotFoundProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+        return NotFound(new ProblemDetails
+        {
+            Status = StatusCodes.Status404NotFound,
+            Title = "Not Found",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        });
+    }
+
+    private ObjectResult ConflictProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+        return Conflict(new ProblemDetails
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = "Conflict",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        });
+    }
+
+    private UnauthorizedObjectResult UnauthorizedProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+        return Unauthorized(new ProblemDetails
+        {
+            Status = StatusCodes.Status401Unauthorized,
+            Title = "Unauthorized",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        });
+    }
+}

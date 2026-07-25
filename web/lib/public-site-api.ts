@@ -1,7 +1,3 @@
-import { getServerApiBaseUrl } from "@/lib/api";
-
-const FETCH_TIMEOUT_MS = 5000;
-
 export type SiteSection = {
   id: string;
   type: string;
@@ -111,7 +107,7 @@ function parseActivity(raw: Record<string, unknown>): PublicHomepageActivity | n
   };
 }
 
-function parsePublicSitePayload(raw: Record<string, unknown>): PublicSitePayload | null {
+export function parsePublicSitePayload(raw: Record<string, unknown>): PublicSitePayload | null {
   const publishedRaw = raw.published ?? raw.Published;
   if (typeof publishedRaw !== "object" || publishedRaw === null) {
     return null;
@@ -136,53 +132,6 @@ function parsePublicSitePayload(raw: Record<string, unknown>): PublicSitePayload
   const publishedAt = readString(raw.publishedAt ?? raw.PublishedAt);
 
   return { published, publishedAt, upcomingActivities };
-}
-
-export async function fetchPublicSiteServer(): Promise<PublicSitePayload | null> {
-  try {
-    const response = await fetch(`${getServerApiBaseUrl()}/api/v1/public/site`, {
-      next: { revalidate: 60 },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-
-    if (response.status === 404) {
-      return null;
-    }
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const raw = (await response.json()) as Record<string, unknown>;
-    return parsePublicSitePayload(raw);
-  } catch {
-    return null;
-  }
-}
-
-export async function fetchPreviewSiteServer(token: string): Promise<PublicSitePayload | null> {
-  if (!token.trim()) {
-    return null;
-  }
-
-  try {
-    const url = new URL(`${getServerApiBaseUrl()}/api/v1/public/site/preview`);
-    url.searchParams.set("token", token.trim());
-
-    const response = await fetch(url, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const raw = (await response.json()) as Record<string, unknown>;
-    return parsePublicSitePayload(raw);
-  } catch {
-    return null;
-  }
 }
 
 export function getEnabledSections(document: SiteSectionsDocument): SiteSection[] {

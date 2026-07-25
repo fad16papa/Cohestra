@@ -1,3 +1,173 @@
+## Deferred from: code review of 14-4-core-pro-checkout-webhooks-and-usd-prices.md (2026-07-22)
+
+- Auth handoff via URL hash — replace with one-time server code exchange (tokens visible in history/referrer)
+- Global `StripeConfiguration.ApiKey` mutation — inject scoped `StripeClient` per request
+- Parallel checkout session race before webhook — optimistic lock or pending-checkout flag on tenant
+- Stripe test vs live key prefix validation at startup — enforce per environment
+- Web frontend trial disclaimer hardcoded 30 days — fetch `trialPeriodDays` from billing summary API
+- Unmapped Stripe price ID during webhook sync — fail webhook or block plan upgrade when price unknown
+- Checkout auto-start without explicit confirm button — UX polish in 14.5
+
+## Deferred from: code review of 14-3-basic-self-serve-signup-captcha-slug-otp-rate-limits.md (2026-07-22)
+
+- OTP verify brute-force throttling — add verify-attempt counter on public signup verify endpoint
+- CAPTCHA disabled by default in compose — enable reCAPTCHA keys before public launch
+- Signup not fully transactional — partial failure after tenant create; ops monitoring acceptable v1
+- Rate limit counts 201 only — OTP-fail after tenant create not counted toward IP cap
+- X-Forwarded-For trust for signup IP limits — nginx sets real IP in prod; same pattern as registration
+- Integration test gaps — captcha reject, 429 rate limit, registrationClosed 403
+- Login email_not_verified redirects to bootstrap /register/verify not /signup/verify
+- nip.io any digit-hyphen apex label accepted — tighten to configured apex in Epic 15
+
+## Deferred from: code review of 14-2-legal-pages-and-tos-privacy-acceptance-logging.md (2026-07-21)
+
+- AC3 tenant legal stamp E2E — `ApplyToTenant` ready; persisted on tenant create in Story 14.3 self-serve signup
+- Bundled legal-content fallback versions when API unreachable during SSR — acceptable degrade
+- `/signup?plan=` paid trial context — Story 14.3 wires plan into checkout/signup
+- Public signup rate limits / CAPTCHA — Story 14.3
+
+## Deferred from: code review of 14-1-midnight-atelier-tokens-marketing-home-and-pricing.md (2026-07-21)
+
+- `/` shows legacy SitePageRenderer when published site exists — marketing mock only on env fallback; Epic 15 public/stub refresh
+- Admin/login forest accents (`login-brand-panel`, brand-accent presets) — Story 14.5 admin shell
+- Hero Unsplash CDN dependency — optional self-host polish
+- Tenant SitePageRenderer still uses sparkles/gradient `marketing-primitives` — Atelier composition deferred
+- Marketing shell light-only (no dark/system theme on apex) — Story 14.5 admin shell polish
+- Onboarding `registerAvailable` CTA removed from landing — `/register` path unchanged
+
+## Deferred from: code review re-review #2 of 13-4-tenantisolation-integration-test-gate-sm-1.md (2026-07-21)
+
+- `UseTenantHost` sets `DefaultRequestHeaders.Host` — may throw on restricted-header HttpClient builds; helpers unused in minimum SM-1 gate cases
+- `SeedPublishedActivity*` sets `ShowOnHomepage=true` — broad test fixture blast radius; acceptable for isolation gate seeds
+- Optional null-guard on `PublicSiteResponse.UpcomingActivities` in public-site test — site body already asserted non-null
+- Shared IntegrationTestCollection site-publish mutation — same deferral as first CR (pre-existing collection pattern)
+
+## Deferred from: code review of 13-4-tenantisolation-integration-test-gate-sm-1.md (2026-07-21)
+
+- Host `{slug}.localhost` + Tenant B JWT helpers unused in minimum cases — deferred, AC met via default operator as A; helpers remain for later surfaces
+- One-directional A→B only (no B↛A matrix) — deferred, epic minimum is A JWT ↛ B activity
+- Shared IntegrationTestCollection pollution / double-run Integration then TenantIsolation — deferred, pre-existing collection pattern
+- GitHub branch-protection required-check wiring — deferred, ops; workflow steps exist
+
+## Deferred from: code review of 13-3-export-and-report-queries-always-filter-by-tenantid.md (2026-07-21)
+
+- InMemory dual-tenant isolation may overstate vs SQL/global-filter production — deferred, pre-existing 13.2 test pattern
+- Activity/registration tenant mismatch silently drops ranking rows — deferred, data-integrity; not FR28 leakage for this story
+- Campaign/community/follow-up sub-aggregates not individually asserted beyond GetReport totals — deferred, coverage expansion
+
+## Deferred from: code review of 13-2-ef-global-query-filters-and-redis-tenant-namespaces.md (2026-07-21)
+
+- `IgnoreTenantFilters` uses full `IgnoreQueryFilters()` — deferred until a second global filter (e.g. soft-delete) exists; document in helper XML
+- Concurrent client dedup unique-index race — pre-existing; rematch-on-DbUpdateException optional harden
+- SitePage GetOrCreate `catch (DbUpdateException)` rematch masks non-unique failures — pre-existing pattern; narrow when unique-violation helper exists
+- Unresolved insert stamps Default while reads fail-closed — intentional Story 13.2 design lock for seed/design-time; revisit if background jobs appear without BindPlatformZero
+
+## Deferred from: code review re-review of 13-1-tenantresolutionmiddleware-on-all-api-requests.md (2026-07-21)
+
+- Client dedup `FindOrCreateAsync` still global / Default-stamped — deferred to Story 13.2 (+ explicit non-goal cross-tenant client dedup); registration TenantId stamp is the minimal 13.1 fix
+
+## Deferred from: code review of 13-1-tenantresolutionmiddleware-on-all-api-requests.md (2026-07-21)
+
+- Admin SitePage still hardcodes `TenantIds.Default` while admin middleware sets ambient context — deferred, public-path scope for 13.1; admin consume in later isolation stories
+- Marketing apex hostnames hardcoded to `cohestra.app`/`www` — deferred, ops/config allowlist; matches existing Host allowlist pattern
+- Redis `tenant:{id}:…` namespaces + full cache isolation — deferred to Story 13.2 (explicit out of scope)
+- Multi-tenant Host integration assertion for public SitePage (non-default subdomain) — deferred, middleware unit coverage present; optional WebApplicationFactory matrix
+
+
+## Deferred from: code review re-review of 12-4-platform-admin-role-claim.md (2026-07-21)
+
+- Identity `ClaimTypes.Role=PlatformAdmin` on a mis-minted tenant session could still satisfy leftover `IsInRole` outside Controllers.V1 — platform controllers use claim policy; RoleExclusivity + mint guards reduce likelihood
+- Host alignment allowlist (`/admin` + change-password only) is intentional post-CR; revisit if tenant-scoped routes appear outside `/admin`
+
+## Deferred from: code review of 12-4-platform-admin-role-claim.md (2026-07-21)
+
+- Full HTTP WebApplicationFactory tenant JWT → 403 on `/platform/*` — policy unit coverage present; live stack optional
+- Assert `MapInboundClaims=false` via WebApplicationFactory host boot — locked in Program.cs; same deferral pattern as 12.3
+
+## Deferred from: code review re-review of 12-3-enforce-admin-vs-member-server-side.md (2026-07-21)
+
+- Leftover Identity-role Authorize scan is Controllers.V1-namespace-scoped — sufficient while all tenant admin controllers live there
+
+## Deferred from: code review of 12-3-enforce-admin-vs-member-server-side.md (2026-07-21)
+
+- Access-token path does not re-validate TenantMembership each request — pre-existing (also deferred under 12.2); refresh rechecks
+- Full HTTP WebApplicationFactory Member→403 matrix — policy/filter unit tests cover decisions; live Host+JWT pipeline needs stack
+- Infrastructure.Tests references Api.csproj for Authorize attribute reflection — optional move to Api.Tests
+- Assert `MapInboundClaims=false` / RoleClaimType via WebApplicationFactory host boot — locked in Program.cs; no lightweight fixture yet
+
+## Deferred from: code review of 12-2-jwt-tenant-id-and-tenant-scoped-login.md (2026-07-21)
+
+- Access-token path does not re-validate TenantMembership each request — refresh rechecks; continuous revoke needs shorter TTL or Epic 13 context
+- Legacy Redis refresh values (plain Guid) rebind tenant from Host on refresh — rollout-only; new sessions store tenantId JSON
+- `DEV_TENANT_SLUG` / Tenancy:DevTenantSlug can remap apex/localhost in shared config — ops/deploy documentation
+
+## Deferred from: code review re-review of 12-1-tenantmembership-and-remove-single-operator-gate.md (2026-07-21)
+
+- Backfill skips existing `(UserId, default)` pair ignoring Role — rare TenantMember-under-TenantAdmin Identity; harden in 12.3/ops if seen
+- Residual auth guard tests for verify-after-close / resume-after-close / refresh-orphan-before-consume — **resolved** in AuthServiceMembershipGuardTests with residual patches
+
+## Deferred from: code review of 12-1-tenantmembership-and-remove-single-operator-gate.md (2026-07-21)
+
+- Concurrent bootstrap register TOCTOU (check DefaultTenantHasTenantAdmin then create) — no advisory lock; low-traffic first-bootstrap path
+- No FK from `TenantMembership.UserId` to Identity users — matches loose Identity coupling; harden if invites need cascade
+- Backfill `SaveChanges` without unique-violation catch — rare seeder race with concurrent register Ensure
+- App auth before default tenant row exists — backfill warns and skips; TenantAdmins cannot get tokens until tenant+backfill
+- `CreateMembership` does not verify user exists — sufficient for register/seed; invite flows (14.x) should validate
+
+## Deferred from: code review of 11-5-complimentary-sponsored-tenant-flag (2026-07-21)
+
+- Archive races with complimentary mutation — optimistic concurrency already deferred from 11.3; low-traffic platform admin path
+- DelinquencyStartedAt not cleared when forcing BillingStatus=Free on complimentary set — FR-23 jobs not implemented yet; IsComplimentary is the skip signal for future jobs
+- Integration complimentary coverage is SkippableFact when Postgres/Redis unavailable — same pattern as 11.3/11.4; exercise live when stack is up
+
+## Deferred from: post-patch re-review of 11-4-platform-tenant-directory-and-health (2026-07-21)
+
+- Role exclusivity TOCTOU / no transactional AddToRole — residual concurrency edge
+- AuthService register exclusivity rarely hit (email unique before check) — seeders cover real collision
+- JWT multi-claim same-key JSON.parse collapse — exclusive-role world makes single role typical
+- Broader RoleExclusivity integration coverage on seeders — residual test gap
+- DeleteAsync failure after refused assign leaves orphan user — rare
+
+## Deferred from: code review of 11-4-platform-tenant-directory-and-health (2026-07-21)
+
+- EF `ToLower().Contains` search may be non-sargable at scale — residual perf; fine for Platform Admin directory volume
+- Integration coverage thin (no anonymous 401 on platform GETs; no `/ready` unhealthy when default missing) — residual test gaps; SkippableFact pattern same as 11.3
+- `/ready` Unhealthy description names default tenant — intentional ops signal on anonymous readiness
+- Reactivate has no confirm dialog — UX polish; Suspend already requires reason; Archive uses confirm
+- `PlatformMeController` roles from JWT claims — matches existing `AdminController` pattern
+
+## Deferred from: code review of 11-3-platform-admin-provision-suspend-reactivate-archive (2026-07-20)
+
+- Append-only audit enforcement (DB triggers / no-update interceptor) — documentation + no update API for now; harden later if compliance requires
+- Concurrent PlatformAdminSeeder race on duplicate user create — same pattern as OperatorSeeder
+- Optimistic concurrency on Tenant status transitions — low-traffic platform admin path
+- Integration tests are SkippableFact when Postgres/Redis `/ready` unavailable — exercise AC5 live when stack is up
+- Stricter email RFC validation beyond `MailAddress` for AdminContactEmail — v1 contact field; FR-1 signup can harden later
+
+## Deferred from: post-patch re-review of 11-3 (2026-07-20)
+
+- (see above email deferral)
+
+## Deferred from: code review of 11-2-default-tenant-migration-and-tenantid-on-core-entities (2026-07-20) — Group B
+
+- `Down()` does not delete the seeded `default` tenant row — safer than wipe; incomplete reverse of seed only
+- No PostgreSQL test executes migration SQL (`ON CONFLICT`, defaults, FKs) — story allows InMemory model tests
+- Model tests cover only Activity `(TenantId,Slug)` + SitePage unique `TenantId` — other tenant composites untested
+- `Down()` recreating pre-tenant global unique indexes is unsafe if multi-tenant duplicate keys exist — Platform 0 rollback path only
+
+## Deferred from: code review of 11-2-default-tenant-migration-and-tenantid-on-core-entities (2026-07-20) — Group A
+
+- No parent/child `TenantId` alignment invariant (`CampaignRecipient`↔`Campaign`, `Registration`↔`Activity`/`Client`, `ClientTimelineEvent`↔`Client`) — Epic 13 filters / later integrity; Restrict FK alone allows cross-tenant graphs
+- SitePage create still hardcodes `SingletonId` as row Id — Platform 0 continuity per story; multi-tenant SitePage create needs new Guids later
+- `ApplyDefaultTenantIds` only via ChangeTracker — `ExecuteUpdate` / bulk / raw SQL can still persist empty `TenantId`
+- Parent `TenantId` Modified does not sync dependent children — no tenant-move story yet
+
+## Deferred from: code review of 11-1-tenant-entity-with-dual-status-dials (2026-07-20)
+
+- Empty/whitespace slug format validation — FR-1 signup / Story 11.3 provisioning; uniqueness only in 11.1
+- CreatedAt/UpdatedAt auto-stamp on Tenant insert — write path in 11.2/11.3; matches Activity entity pattern
+- StripeCustomerId / StripeSubscriptionId unique indexes — Epic 14 billing reconciliation
+
 ## Deferred from: code review of 9-8-website-builder-polish (2026-07-07)
 
 - No integration tests for `POST /api/v1/admin/site/apply-preset` or `revert-published` — optional CI stack; `SitePageSeedDocumentBuilderTests` cover preset document shape only

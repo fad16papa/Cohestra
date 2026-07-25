@@ -9,16 +9,22 @@ public sealed class SitePreviewTokenService(
     IOptions<JwtSettings> jwtSettings,
     IOptions<SitePreviewSettings> previewSettings)
 {
-    private const string TokenPurpose = "site-preview-v1";
+    /// <summary>v2 binds preview tokens to a tenant so Host-scoped draft load cannot cross tenants.</summary>
+    private const string TokenPurpose = "site-preview-v2";
 
-    public SitePreviewTokenResult CreateToken(Guid userId)
+    public SitePreviewTokenResult CreateToken(Guid userId, Guid tenantId)
     {
+        if (tenantId == Guid.Empty)
+        {
+            throw new ArgumentException("Tenant id is required for site preview tokens.", nameof(tenantId));
+        }
+
         var lifetimeMinutes = previewSettings.Value.TokenLifetimeMinutes;
         var expiresAt = lifetimeMinutes <= 0
             ? DateTimeOffset.UtcNow.AddSeconds(-30)
             : DateTimeOffset.UtcNow.AddMinutes(lifetimeMinutes);
 
-        var payload = $"{TokenPurpose}|{userId:N}|{expiresAt.ToUnixTimeSeconds()}";
+        var payload = $"{TokenPurpose}|{userId:N}|{tenantId:N}|{expiresAt.ToUnixTimeSeconds()}";
         var signature = ComputeSignature(payload);
 
         return new SitePreviewTokenResult(
@@ -26,9 +32,10 @@ public sealed class SitePreviewTokenService(
             expiresAt);
     }
 
-    public bool TryValidate(string? token, out Guid userId)
+    public bool TryValidate(string? token, out Guid userId, out Guid tenantId)
     {
         userId = Guid.Empty;
+        tenantId = Guid.Empty;
 
         if (string.IsNullOrWhiteSpace(token))
         {
@@ -62,10 +69,12 @@ public sealed class SitePreviewTokenService(
         }
 
         var parts = payload.Split('|');
-        if (parts.Length != 3 ||
+        if (parts.Length != 4 ||
             !string.Equals(parts[0], TokenPurpose, StringComparison.Ordinal) ||
             !Guid.TryParseExact(parts[1], "N", out userId) ||
-            !long.TryParse(parts[2], out var expiresUnix))
+            !Guid.TryParseExact(parts[2], "N", out tenantId) ||
+            tenantId == Guid.Empty ||
+            !long.TryParse(parts[3], out var expiresUnix))
         {
             return false;
         }

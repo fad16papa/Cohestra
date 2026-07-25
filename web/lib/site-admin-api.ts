@@ -44,6 +44,7 @@ export type SitePageAdmin = {
   canRevertPublished: boolean;
   previousPublishedAt: string | null;
   savedTemplates: SavedSiteTemplate[];
+  builderLocked: boolean;
 };
 
 export type SitePreviewToken = {
@@ -100,6 +101,7 @@ function parseSitePageAdmin(raw: Record<string, unknown>): SitePageAdmin | null 
   const canRevertPublished = raw.canRevertPublished ?? raw.CanRevertPublished;
   const previousPublishedAt = raw.previousPublishedAt ?? raw.PreviousPublishedAt;
   const savedTemplatesRaw = raw.savedTemplates ?? raw.SavedTemplates;
+  const builderLocked = raw.builderLocked ?? raw.BuilderLocked;
 
   if (
     typeof draftUpdatedAt !== "string" ||
@@ -127,6 +129,7 @@ function parseSitePageAdmin(raw: Record<string, unknown>): SitePageAdmin | null 
     previousPublishedAt:
       typeof previousPublishedAt === "string" ? previousPublishedAt : null,
     savedTemplates,
+    builderLocked: Boolean(builderLocked),
   };
 }
 

@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Cohestra.Application.Registrations;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
@@ -11,21 +12,19 @@ public sealed class RedisRegistrationIdempotencyStore(
     IConnectionMultiplexer redis,
     IOptions<RegistrationIdempotencyOptions> options) : IRegistrationIdempotencyStore
 {
-    private const string ResultKeyPrefix = "idempotency:public-registration:";
-    private const string LockKeyPrefix = "idempotency:public-registration:lock:";
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
     public async Task<IdempotencyLookupResult> LookupAsync(
+        Guid tenantId,
         string idempotencyKey,
         string requestFingerprint,
         CancellationToken cancellationToken = default)
     {
         var db = redis.GetDatabase();
-        var payload = await db.StringGetAsync(GetResultKey(idempotencyKey));
+        var payload = await db.StringGetAsync(GetResultKey(tenantId, idempotencyKey));
 
         if (payload.IsNullOrEmpty)
         {
@@ -51,12 +50,13 @@ public sealed class RedisRegistrationIdempotencyStore(
     }
 
     public async Task<bool> TryBeginAsync(
+        Guid tenantId,
         string idempotencyKey,
         string requestFingerprint,
         CancellationToken cancellationToken = default)
     {
         var db = redis.GetDatabase();
-        var lockKey = GetLockKey(idempotencyKey);
+        var lockKey = GetLockKey(tenantId, idempotencyKey);
         var lockValue = requestFingerprint;
         var lockTtl = TimeSpan.FromSeconds(Math.Max(1, options.Value.LockSeconds));
 
@@ -64,6 +64,7 @@ public sealed class RedisRegistrationIdempotencyStore(
     }
 
     public async Task StoreAsync(
+        Guid tenantId,
         string idempotencyKey,
         string requestFingerprint,
         IdempotencyCachedRegistration registration,
@@ -80,17 +81,18 @@ public sealed class RedisRegistrationIdempotencyStore(
 
         var ttl = TimeSpan.FromHours(Math.Max(1, options.Value.ResultTtlHours));
         await db.StringSetAsync(
-            GetResultKey(idempotencyKey),
+            GetResultKey(tenantId, idempotencyKey),
             JsonSerializer.Serialize(entry, JsonOptions),
             ttl);
     }
 
     public async Task ReleaseLockAsync(
+        Guid tenantId,
         string idempotencyKey,
         CancellationToken cancellationToken = default)
     {
         var db = redis.GetDatabase();
-        await db.KeyDeleteAsync(GetLockKey(idempotencyKey));
+        await db.KeyDeleteAsync(GetLockKey(tenantId, idempotencyKey));
     }
 
     internal static string ComputeRequestFingerprint(
@@ -123,11 +125,11 @@ public sealed class RedisRegistrationIdempotencyStore(
         return trimmed;
     }
 
-    private static string GetResultKey(string idempotencyKey) =>
-        ResultKeyPrefix + HashKey(idempotencyKey);
+    private static string GetResultKey(Guid tenantId, string idempotencyKey) =>
+        TenantRedisKeys.PublicRegistrationIdempotency(tenantId, HashKey(idempotencyKey));
 
-    private static string GetLockKey(string idempotencyKey) =>
-        LockKeyPrefix + HashKey(idempotencyKey);
+    private static string GetLockKey(Guid tenantId, string idempotencyKey) =>
+        TenantRedisKeys.PublicRegistrationIdempotencyLock(tenantId, HashKey(idempotencyKey));
 
     private static string HashKey(string idempotencyKey)
     {

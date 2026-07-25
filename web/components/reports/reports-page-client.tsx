@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { UpgradePanel } from "@/components/shell/upgrade-panel";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import {
   ensureDefaultReportSearchParams,
   ReportFilterBar,
@@ -20,11 +22,24 @@ import {
   filtersToSearchParams,
   type ReportResult,
 } from "@/lib/reports-api";
+import { isBasicPlan } from "@/lib/shell/tenant-shell-api";
+
+function isAdvancedReportFilters(filters: ReturnType<typeof filtersFromSearchParams>): boolean {
+  return (
+    filters.preset === "custom"
+    || filters.preset === "monthly"
+    || filters.activityId.trim().length > 0
+    || filters.community.trim().length > 0
+    || filters.leadStatus.trim().length > 0
+    || filters.referralSource.trim().length > 0
+  );
+}
 
 export function ReportsPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { authFetch, status } = useAuth();
+  const { shell } = useTenantShell();
   const { showToast } = useToast();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [report, setReport] = useState<ReportResult | null>(null);
@@ -179,6 +194,17 @@ export function ReportsPageClient() {
 
   if (status === "loading" || !searchParams.toString() || !pageReady) {
     return <p className="text-sm text-text-muted-warm">Loading report…</p>;
+  }
+
+  if (shell && isBasicPlan(shell.plan) && isAdvancedReportFilters(filters)) {
+    return (
+      <UpgradePanel
+        title="Queryable reports unlock on Core"
+        description="Basic includes a simple registration list and CSV export. Compare Core and Pro below for filters, rankings, campaign analytics, and saved views."
+        requiredPlan="Core"
+        isTenantAdmin={shell.isTenantAdmin}
+      />
+    );
   }
 
   return (

@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Cohestra.Contracts.Admin;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Branding;
 using Cohestra.Infrastructure.Identity;
@@ -12,7 +13,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin")]
-[Authorize(Roles = OperatorSeeder.AdminRole)]
+[Authorize(Policy = TenantAuthPolicies.TenantOperator)]
 [Produces("application/json")]
 public class AdminController(UserManager<ApplicationUser> userManager) : ControllerBase
 {
@@ -37,6 +38,7 @@ public class AdminController(UserManager<ApplicationUser> userManager) : Control
     [ProducesResponseType(typeof(AdminProfileResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<AdminProfileResponse>> UpdateAppearance(
         [FromBody] UpdateAppearanceRequest? request,
         CancellationToken cancellationToken)
@@ -51,23 +53,36 @@ public class AdminController(UserManager<ApplicationUser> userManager) : Control
             return BadRequestProblem("Theme preference must be light, dark, or system.");
         }
 
-        var brandValidation = BrandAccentValidator.Validate(request.BrandAccentColor);
-        if (brandValidation is not null)
-        {
-            return BadRequestProblem(brandValidation);
-        }
-
         var user = await GetCurrentUserAsync(cancellationToken);
         if (user is null)
         {
             return Unauthorized();
         }
 
+        var roles = GetRoles();
+        var isTenantAdmin = roles.Contains(
+            TenantMembershipRole.TenantAdmin.ToString(),
+            StringComparer.Ordinal);
+
+        if (!isTenantAdmin)
+        {
+            // Members may only update theme preference; ignore brand accent payload.
+        }
+        else
+        {
+            var brandValidation = BrandAccentValidator.Validate(request.BrandAccentColor);
+            if (brandValidation is not null)
+            {
+                return BadRequestProblem(brandValidation);
+            }
+
+            user.BrandAccentColor = BrandAccentValidator.Normalize(
+                string.IsNullOrWhiteSpace(request.BrandAccentColor)
+                    ? null
+                    : request.BrandAccentColor);
+        }
+
         user.ThemePreference = request.ThemePreference.ToLowerInvariant();
-        user.BrandAccentColor = BrandAccentValidator.Normalize(
-            string.IsNullOrWhiteSpace(request.BrandAccentColor)
-                ? null
-                : request.BrandAccentColor);
         var result = await userManager.UpdateAsync(user);
         if (!result.Succeeded)
         {
@@ -77,8 +92,7 @@ public class AdminController(UserManager<ApplicationUser> userManager) : Control
         return Ok(ToProfile(user, GetRoles()));
     }
 
-    private string[] GetRoles() =>
-        User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+    private string[] GetRoles() => TenantProfileRoles.FromPrincipal(User);
 
     private async Task<ApplicationUser?> GetCurrentUserAsync(CancellationToken cancellationToken)
     {

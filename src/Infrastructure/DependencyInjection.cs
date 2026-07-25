@@ -1,24 +1,38 @@
+using Cohestra.Application.Compliance;
 using Cohestra.Application.Activities;
 using Cohestra.Application.Auth;
+using Cohestra.Application.Billing;
+using Cohestra.Infrastructure.Billing;
 using Cohestra.Application.Campaigns;
 using Cohestra.Application.Clients;
 using Cohestra.Application.Dashboard;
 using Cohestra.Application.Email;
+using Cohestra.Application.PublicDoor;
 using Cohestra.Application.Registrations;
 using Cohestra.Application.Reports;
+using Cohestra.Application.Signup;
 using Cohestra.Application.Site;
+using Cohestra.Application.Team;
+using Cohestra.Application.Tenants;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Auth;
+using Cohestra.Infrastructure.Platform;
 using Cohestra.Infrastructure.Seed;
+using Cohestra.Infrastructure.Compliance;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Clients;
 using Cohestra.Infrastructure.Dashboard;
 using Cohestra.Infrastructure.Email;
 using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.PublicDoor;
 using Cohestra.Infrastructure.Registrations;
 using Cohestra.Infrastructure.Reports;
+using Cohestra.Infrastructure.Signup;
 using Cohestra.Infrastructure.Site;
+using Cohestra.Infrastructure.Team;
+using Cohestra.Infrastructure.Tenants;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -62,6 +76,7 @@ public static class DependencyInjection
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.Configure<OperatorSeedSettings>(configuration.GetSection(OperatorSeedSettings.SectionName));
+        services.Configure<PlatformAdminSeedSettings>(configuration.GetSection(PlatformAdminSeedSettings.SectionName));
         services.Configure<AuthOtpSettings>(configuration.GetSection(AuthOtpSettings.SectionName));
         services.Configure<DemoDataSeedSettings>(configuration.GetSection(DemoDataSeedSettings.SectionName));
         services.Configure<PublicWebOptions>(configuration.GetSection(PublicWebOptions.SectionName));
@@ -75,6 +90,13 @@ public static class DependencyInjection
         services.Configure<SiteLandingSeedSettings>(configuration.GetSection(SiteLandingSeedSettings.SectionName));
         services.PostConfigure<SiteLandingSeedSettings>(settings => ApplyLandingEnvironmentFallback(settings, configuration));
         services.Configure<SitePreviewSettings>(configuration.GetSection(SitePreviewSettings.SectionName));
+        services.Configure<LegalComplianceSettings>(configuration.GetSection(LegalComplianceSettings.SectionName));
+        services.Configure<SelfServeSignupSettings>(configuration.GetSection(SelfServeSignupSettings.SectionName));
+        services.Configure<PublicSignupRateLimitOptions>(
+            configuration.GetSection(PublicSignupRateLimitOptions.SectionName));
+        services.Configure<StripeSettings>(configuration.GetSection(StripeSettings.SectionName));
+
+        services.AddHttpClient(nameof(GoogleRecaptchaVerifier));
 
         var sendGridSettings = configuration.GetSection(SendGridSettings.SectionName).Get<SendGridSettings>()
             ?? new SendGridSettings();
@@ -97,6 +119,22 @@ public static class DependencyInjection
         services.AddScoped<IAuthOtpStore, RedisOtpStore>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<ILegalComplianceService, LegalComplianceService>();
+        services.AddScoped<ISelfServeSignupService, SelfServeSignupService>();
+        services.AddScoped<IBillingService, StripeBillingService>();
+        services.AddScoped<IStripeWebhookProcessor, StripeWebhookProcessor>();
+        services.AddHostedService<BillingJobsHostedService>();
+        services.AddScoped<ITenantShellService, TenantShellService>();
+        services.AddScoped<ITenantAccessService, TenantAccessService>();
+        services.AddScoped<IPublicDoorService, PublicDoorService>();
+        services.AddScoped<ICaptchaVerifier, GoogleRecaptchaVerifier>();
+        services.AddScoped<ITenantMembershipService, TenantMembershipService>();
+        services.AddScoped<ITeamInviteService, TeamInviteService>();
+        services.AddScoped<ITenantHostResolver, TenantHostResolver>();
+        services.AddScoped<CurrentTenant>();
+        services.AddScoped<ICurrentTenant>(sp => sp.GetRequiredService<CurrentTenant>());
+        services.AddScoped<ITenantPlanGate, TenantPlanGate>();
+        services.AddScoped<RequireProPlanFilter>();
         services.AddScoped<IActivityService, ActivityService>();
         services.AddScoped<ICommunityService, CommunityService>();
         services.AddScoped<ICategoryService, CategoryService>();
@@ -110,16 +148,18 @@ public static class DependencyInjection
         services.AddScoped<ICampaignService, CampaignService>();
         services.AddScoped<ICampaignAssetService, CampaignAssetService>();
         services.AddScoped<ISitePageService, SitePageService>();
+        services.AddScoped<IPlatformTenantService, PlatformTenantService>();
         services.AddScoped<SitePublishGateValidator>();
         services.AddSingleton<SitePreviewTokenService>();
         services.AddScoped<ClientDeduplicationService>();
         services.AddScoped<RegistrationNumberGenerator>();
         services.AddSingleton<IPublicRegistrationRateLimiter, RedisPublicRegistrationRateLimiter>();
+        services.AddSingleton<IPublicSignupRateLimiter, RedisPublicSignupRateLimiter>();
         services.AddSingleton<IRegistrationIdempotencyStore, RedisRegistrationIdempotencyStore>();
         services.AddSingleton<RedisPublicActivityCache>();
         services.AddSingleton<RedisPublishedSiteCache>();
         services.AddSingleton<IPublishedSiteCache>(sp => sp.GetRequiredService<RedisPublishedSiteCache>());
-        services.AddSingleton<RedisDashboardMetricsCache>();
+        services.AddSingleton<IDashboardMetricsCache, RedisDashboardMetricsCache>();
 
         return services;
     }

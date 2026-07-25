@@ -1,8 +1,10 @@
+using Cohestra.Api.Health;
 using Cohestra.Api.Infrastructure;
 using Cohestra.Infrastructure;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Seed;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,6 +53,8 @@ if (jwtSettings.RefreshTokenHours <= 0)
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // Keep membership claim type "role" from colliding with Identity RoleClaimType via inbound map.
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -60,7 +65,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtSettings.Audience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SigningKey)),
             ClockSkew = TimeSpan.FromMinutes(1),
-            NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier,
+            // MapInboundClaims=false → JWT "sub" stays "sub"; Identity roles stay ClaimTypes.Role URI.
+            NameClaimType = JwtRegisteredClaimNames.Sub,
             RoleClaimType = System.Security.Claims.ClaimTypes.Role
         };
     });
@@ -71,6 +77,7 @@ builder.Services.AddAuthorization(options =>
             JwtBearerDefaults.AuthenticationScheme)
         .RequireAuthenticatedUser()
         .Build();
+    options.AddTenantMembershipPolicies();
 });
 
 builder.Services.AddControllers();
@@ -106,7 +113,7 @@ builder.Services.AddOpenApi("v1", options =>
             Title = "Cohestra API",
             Version = "v1",
             Description =
-                "Activity Lead Engine — REST API v1. " +
+                "Cohestra — REST API v1. " +
                 "Contracts (Epic 2→3 gate): " +
                 "docs/contracts/activity-form-schema-v1.md, " +
                 "docs/contracts/public-registration-v1.md"
@@ -115,15 +122,20 @@ builder.Services.AddOpenApi("v1", options =>
     });
 });
 
+// /ready stays anonymous. Checks: postgres + redis connectivity, plus default tenant row
+// (fail-closed Unhealthy if TenantIds.Default is missing after Story 11.2 seed).
 builder.Services.AddHealthChecks()
     .AddNpgSql(postgresConnection, name: "postgres", tags: ["ready"])
-    .AddRedis(redisConnection, name: "redis", tags: ["ready"]);
+    .AddRedis(redisConnection, name: "redis", tags: ["ready"])
+    .AddCheck<DefaultTenantReadyHealthCheck>("default-tenant", tags: ["ready"]);
 
 var app = builder.Build();
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor
+        | ForwardedHeaders.XForwardedProto
+        | ForwardedHeaders.XForwardedHost,
     // nginx on the same host reaches the API via Docker-published localhost ports
     KnownNetworks = { },
     KnownProxies = { },
@@ -131,11 +143,11 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 
 await ApplyMigrationsAsync(app);
 await OperatorSeeder.SeedAsync(app.Services);
+await PlatformAdminSeeder.SeedAsync(app.Services);
 await SitePageSeeder.SeedAsync(app.Services);
 
 app.UseExceptionHandler();
 app.UseCors();
-app.UsePublicRegistrationRateLimit();
 app.UseStatusCodePages(async statusCodeContext =>
 {
     if (statusCodeContext.HttpContext.Response.HasStarted)
@@ -156,7 +168,11 @@ app.UseStatusCodePages(async statusCodeContext =>
 });
 
 app.UseAuthentication();
+app.UseTenantResolution();
+app.UsePublicRegistrationRateLimit();
+app.UsePublicSignupRateLimit();
 app.UseAuthorization();
+app.UseTenantWriteAccess();
 
 app.MapControllers();
 app.MapOpenApi();

@@ -5,21 +5,32 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { AuthFlowShell } from "@/components/auth/auth-flow-shell";
-import { LoginForm } from "@/components/auth/login-form";
-import { SESSION_EXPIRED_MESSAGE } from "@/components/auth/auth-provider";
+import { LoginWorkspaceNotice } from "@/components/auth/login-workspace-notice";
+import { SESSION_EXPIRED_MESSAGE, useAuth } from "@/components/auth/auth-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import { fetchOnboardingStatus } from "@/lib/auth-api";
+import { clearAuthSession } from "@/lib/auth-storage";
 import type { PublishedSiteBranding } from "@/lib/site-seo-metadata";
+
+type LoginWorkspaceNoticeProps = {
+  workspaceLabel: string;
+  host: string;
+};
 
 function LoginPageContent({
   siteBranding,
+  workspaceNotice,
 }: {
   siteBranding: PublishedSiteBranding | null;
+  workspaceNotice: LoginWorkspaceNoticeProps | null;
 }) {
   const searchParams = useSearchParams();
   const { showToast } = useToast();
+  const { profile, status } = useAuth();
   const reason = searchParams.get("reason");
   const reset = searchParams.get("reset");
+  const invitedEmail = searchParams.get("email")?.trim() ?? "";
+  const invitedAccept = searchParams.get("invited") === "1";
   const showSessionExpiredNotice = reason === "session-expired";
 
   useEffect(() => {
@@ -33,6 +44,21 @@ function LoginPageContent({
       showToast("Password updated. Sign in with your new password.");
     }
   }, [reset, showToast]);
+
+  useEffect(() => {
+    if (!invitedAccept || !invitedEmail || status !== "authenticated" || !profile) {
+      return;
+    }
+
+    if (profile.email.toLowerCase() === invitedEmail.toLowerCase()) {
+      return;
+    }
+
+    clearAuthSession();
+    window.location.replace(
+      `/login?email=${encodeURIComponent(invitedEmail)}&invited=1`
+    );
+  }, [invitedAccept, invitedEmail, profile, status]);
 
   return (
     <AuthFlowShell
@@ -53,7 +79,17 @@ function LoginPageContent({
         </div>
       }
     >
-      <LoginForm showSessionExpiredNotice={showSessionExpiredNotice} />
+      {workspaceNotice ? (
+        <LoginWorkspaceNotice
+          workspaceLabel={workspaceNotice.workspaceLabel}
+          host={workspaceNotice.host}
+        />
+      ) : null}
+      <LoginForm
+        showSessionExpiredNotice={showSessionExpiredNotice}
+        initialEmail={invitedEmail}
+        invitedAccept={invitedAccept}
+      />
     </AuthFlowShell>
   );
 }
@@ -87,8 +123,10 @@ function OnboardingLink() {
 
 export function LoginPageClient({
   siteBranding = null,
+  workspaceNotice = null,
 }: {
   siteBranding?: PublishedSiteBranding | null;
+  workspaceNotice?: LoginWorkspaceNoticeProps | null;
 }) {
   return (
     <Suspense
@@ -98,7 +136,10 @@ export function LoginPageClient({
         </div>
       }
     >
-      <LoginPageContent siteBranding={siteBranding} />
+      <LoginPageContent
+        siteBranding={siteBranding}
+        workspaceNotice={workspaceNotice}
+      />
     </Suspense>
   );
 }

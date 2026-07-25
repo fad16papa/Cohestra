@@ -1,11 +1,14 @@
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Clients;
 
+using Cohestra.Domain.Tenants;
 namespace Cohestra.Domain.Registrations;
 
-public class Registration
+public class Registration : ITenantScoped
 {
     public Guid Id { get; set; }
+
+    public Guid TenantId { get; set; }
 
     public string RegistrationNumber { get; set; } = string.Empty;
 

@@ -51,6 +51,21 @@ internal static partial class ActivityBrandingValidator
             return "Hero image URL must be 2048 characters or fewer.";
         }
 
+        // Same-origin campaign assets may be stored or edited as relative paths.
+        if (normalized.StartsWith(
+                ActivityHeroImageUrlResolver.CampaignAssetPathPrefix,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            var idPart = normalized[ActivityHeroImageUrlResolver.CampaignAssetPathPrefix.Length..]
+                .Trim('/');
+            if (!Guid.TryParse(idPart, out _))
+            {
+                return "Hero image asset path is not a valid campaign asset URL.";
+            }
+
+            return null;
+        }
+
         if (!Uri.TryCreate(normalized, UriKind.Absolute, out var uri) ||
             uri.Scheme is not "http" and not "https")
         {

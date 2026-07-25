@@ -97,6 +97,14 @@ export function getAdminBreadcrumbs(pathname: string): AdminBreadcrumb[] {
     return [{ label: "Settings" }];
   }
 
+  if (pathname === "/settings/billing") {
+    return [{ label: "Settings", href: "/settings" }, { label: "Billing" }];
+  }
+
+  if (pathname === "/settings/team") {
+    return [{ label: "Settings", href: "/settings" }, { label: "Team" }];
+  }
+
   if (pathname === "/activities/new") {
     return [
       { label: "Activities", href: "/activities" },

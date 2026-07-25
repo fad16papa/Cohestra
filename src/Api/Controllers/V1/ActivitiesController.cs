@@ -8,7 +8,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/activities")]
-[Authorize(Roles = OperatorSeeder.AdminRole)]
+[Authorize(Policy = TenantAuthPolicies.TenantOperator)]
 [Produces("application/json")]
 public class ActivitiesController(IActivityService activityService) : ControllerBase
 {

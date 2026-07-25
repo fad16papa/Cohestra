@@ -41,6 +41,13 @@ curl -fsS "${BASE_URL%/}/api/v1/auth/onboarding"
 echo ""
 
 echo ""
+echo "== Marketing / signup (Epic 14) =="
+curl -fsSI "${BASE_URL%/}/signup" | head -3 || true
+curl -fsSI "${BASE_URL%/}/pricing" | head -3 || true
+curl -fsS "${BASE_URL%/}/api/v1/public/legal/versions" | head -c 200
+echo ""
+
+echo ""
 echo "== Postgres (localhost bind) =="
 if command -v nc >/dev/null 2>&1; then
   nc -z 127.0.0.1 5432 && echo "Postgres listening on 127.0.0.1:5432" || echo "Postgres not reachable on 127.0.0.1:5432"

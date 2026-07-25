@@ -9,12 +9,15 @@ import { EmailDeliveryChecklist } from "@/components/campaigns/email-delivery-ch
 import { ListSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
+import { UpgradePanel } from "@/components/shell/upgrade-panel";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { buttonVariants } from "@/components/ui/button";
 import {
   fetchCampaigns,
   formatCampaignSentAt,
   type CampaignListItem,
 } from "@/lib/campaigns-api";
+import { isProPlan } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
 import { Mail } from "lucide-react";
 
@@ -60,11 +63,18 @@ function CampaignFailedIcon({ count }: { count: number }) {
 
 export function CampaignsListPage() {
   const { authFetch } = useAuth();
+  const { shell, loading: shellLoading } = useTenantShell();
   const [campaigns, setCampaigns] = useState<CampaignListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
 
+  const planLocked = shell ? !isProPlan(shell.plan) : false;
+
   useEffect(() => {
+    if (shellLoading || planLocked) {
+      return;
+    }
+
     let cancelled = false;
 
     void fetchCampaigns(authFetch)
@@ -89,7 +99,22 @@ export function CampaignsListPage() {
     return () => {
       cancelled = true;
     };
-  }, [authFetch]);
+  }, [authFetch, planLocked, shellLoading]);
+
+  if (shellLoading) {
+    return <ListSkeleton rows={4} />;
+  }
+
+  if (planLocked && shell) {
+    return (
+      <UpgradePanel
+        title="Email campaigns are a Pro craft"
+        description="Campaigns unlock on Pro — segmented outreach, delivery tracking, and campaign history on client profiles."
+        requiredPlan="Pro"
+        isTenantAdmin={shell.isTenantAdmin}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">

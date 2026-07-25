@@ -1,9 +1,10 @@
 using Cohestra.Application.Activities;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Activities;
 using Cohestra.Domain.Activities;
-using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Npgsql;
@@ -13,8 +14,8 @@ namespace Cohestra.Infrastructure.Activities;
 public sealed class ActivityService(
     CohestraDbContext dbContext,
     IOptions<PublicWebOptions> publicWebOptions,
-    IOptions<CampaignAssetOptions> campaignAssetOptions,
-    RedisPublicActivityCache publicActivityCache) : IActivityService
+    RedisPublicActivityCache publicActivityCache,
+    ICurrentTenant currentTenant) : IActivityService
 {
     private const int DefaultPageSize = 25;
     private const int MaxPageSize = 100;
@@ -197,8 +198,8 @@ public sealed class ActivityService(
         activity.Schedule = request.Schedule.Trim();
         activity.Location = request.Location.Trim();
         activity.CommunityLabel = request.CommunityLabel.Trim();
-        activity.HeroImageUrl = ResolveHeroImageUrl(
-            ActivityBrandingValidator.NormalizeHeroImageUrl(request.HeroImageUrl));
+        // Persist the uploaded/external URL as provided; browser resolution happens on read.
+        activity.HeroImageUrl = ActivityBrandingValidator.NormalizeHeroImageUrl(request.HeroImageUrl);
         activity.AccentColor = ActivityBrandingValidator.NormalizeAccentColor(request.AccentColor);
         activity.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -315,6 +316,12 @@ public sealed class ActivityService(
 
         if (activity.Status == ActivityStatus.Draft)
         {
+            var previousSlug = activity.Slug;
+            await ActivitySlugGenerator.EnsureSlugForPublishAsync(
+                dbContext,
+                activity,
+                cancellationToken);
+
             var publishGateError = PublishGateValidator.ValidateForPublish(activity.FormSchema);
             if (publishGateError is not null)
             {
@@ -324,6 +331,16 @@ public sealed class ActivityService(
             activity.Status = ActivityStatus.Published;
             activity.UpdatedAt = DateTimeOffset.UtcNow;
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            if (!string.Equals(previousSlug, activity.Slug, StringComparison.Ordinal)
+                && !string.IsNullOrWhiteSpace(previousSlug))
+            {
+                await publicActivityCache.InvalidateAsync(
+                    activity.TenantId,
+                    previousSlug,
+                    cancellationToken);
+            }
+
             await SyncPublicActivityCacheAsync(activity, cancellationToken);
         }
 
@@ -339,9 +356,15 @@ public sealed class ActivityService(
             return null;
         }
 
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        {
+            return null;
+        }
+
+        var tenantId = currentTenant.TenantId.Value;
         var normalizedSlug = slug.Trim().ToLowerInvariant();
 
-        var cached = await publicActivityCache.GetAsync(normalizedSlug, cancellationToken);
+        var cached = await publicActivityCache.GetAsync(tenantId, normalizedSlug, cancellationToken);
         if (cached is not null)
         {
             return ResolvePublicResponse(cached);
@@ -349,7 +372,9 @@ public sealed class ActivityService(
 
         var activity = await dbContext.Activities
             .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Slug == normalizedSlug, cancellationToken);
+            .FirstOrDefaultAsync(
+                item => item.Slug == normalizedSlug && item.TenantId == tenantId,
+                cancellationToken);
 
         if (activity is null)
         {
@@ -360,7 +385,7 @@ public sealed class ActivityService(
 
         if (activity.Status == ActivityStatus.Published)
         {
-            await publicActivityCache.SetAsync(normalizedSlug, response, cancellationToken);
+            await publicActivityCache.SetAsync(tenantId, normalizedSlug, response, cancellationToken);
         }
 
         return response;
@@ -495,21 +520,37 @@ public sealed class ActivityService(
         if (activity.Status == ActivityStatus.Published)
         {
             await publicActivityCache.SetAsync(
+                activity.TenantId,
                 activity.Slug,
                 MapToPublicResponse(activity),
                 cancellationToken);
             return;
         }
 
-        await publicActivityCache.InvalidateAsync(activity.Slug, cancellationToken);
+        await publicActivityCache.InvalidateAsync(activity.TenantId, activity.Slug, cancellationToken);
     }
 
     private ActivityRegistrationLinkResponse BuildRegistrationLink(string slug)
     {
-        var baseUrl = publicWebOptions.Value.BaseUrl.Trim().TrimEnd('/');
-        var path = $"/register/{slug}";
+        if (!currentTenant.IsResolved || string.IsNullOrWhiteSpace(currentTenant.Slug))
+        {
+            throw new InvalidOperationException(
+                "Tenant context is required to build a registration link.");
+        }
 
-        return new ActivityRegistrationLinkResponse($"{baseUrl}{path}", slug, path);
+        if (!ActivitySlugGenerator.IsValidSlug(slug))
+        {
+            throw new InvalidOperationException(
+                "A valid registration slug is required before sharing the public link.");
+        }
+
+        var path = $"/register/{slug}";
+        var url = TenantPublicWebUrlBuilder.BuildTenantPath(
+            publicWebOptions.Value.BaseUrl,
+            currentTenant.Slug,
+            path);
+
+        return new ActivityRegistrationLinkResponse(url, slug, path);
     }
 
     private ActivityResponse ToActivityResponse(Activity activity, int registrationCount = 0) =>
@@ -518,10 +559,8 @@ public sealed class ActivityService(
             registrationCount,
             ResolveHeroImageUrl(activity.HeroImageUrl));
 
-    private string? ResolveHeroImageUrl(string? heroImageUrl) =>
-        ActivityHeroImageUrlResolver.Resolve(
-            heroImageUrl,
-            campaignAssetOptions.Value.PublicApiBaseUrl);
+    private static string? ResolveHeroImageUrl(string? heroImageUrl) =>
+        ActivityHeroImageUrlResolver.ResolveForBrowser(heroImageUrl);
 
     private PublicActivityResponse MapToPublicResponse(Activity activity) =>
         new(

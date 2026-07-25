@@ -15,6 +15,8 @@ import {
 
 const FETCH_TIMEOUT_MS = 10_000;
 
+let refreshInFlight: Promise<AuthSession | null> | null = null;
+
 export type AdminProfile = {
   userId: string;
   email: string;
@@ -114,6 +116,19 @@ async function parseProblemResponse(
   return { message: `Request failed (${response.status})` };
 }
 
+function getErrorStatus(error: unknown): number | undefined {
+  if (error && typeof error === "object" && "status" in error) {
+    const status = (error as { status?: number }).status;
+    return typeof status === "number" ? status : undefined;
+  }
+
+  return undefined;
+}
+
+function isAuthFailureStatus(status: number | undefined): boolean {
+  return status === 401 || status === 403;
+}
+
 async function postAuthTokens(
   path: string,
   body: Record<string, string>
@@ -131,6 +146,68 @@ async function postAuthTokens(
 
   const raw = (await response.json()) as Record<string, unknown>;
   return parseAuthTokenResponse(raw);
+}
+
+/** Identity role names — must match API (`OperatorSeeder.TenantAdminRole`, `PlatformAdminSeeder`). */
+export const ROLES = {
+  PlatformAdmin: "PlatformAdmin",
+  TenantAdmin: "TenantAdmin",
+} as const;
+
+export const OPERATOR_LOGIN_PATH = "/login";
+export const PLATFORM_LOGIN_PATH = "/platform/login";
+
+/**
+ * Post-login home. Hard rule: PlatformAdmin and TenantAdmin are mutually exclusive.
+ * PlatformAdmin → platform console; TenantAdmin → operator dashboard.
+ */
+export function resolvePostLoginPath(profile: AdminProfile): string {
+  if (profile.roles.includes(ROLES.PlatformAdmin)) {
+    return "/platform";
+  }
+  if (profile.roles.includes(ROLES.TenantAdmin)) {
+    return "/dashboard";
+  }
+  return "/dashboard";
+}
+
+/** Choose operator vs platform login from the current path. */
+export function resolveLoginPath(pathname: string | null | undefined): string {
+  if (pathname?.startsWith("/platform")) {
+    return PLATFORM_LOGIN_PATH;
+  }
+
+  return OPERATOR_LOGIN_PATH;
+}
+
+export function isPlatformAdminProfile(profile: AdminProfile): boolean {
+  return profile.roles.includes(ROLES.PlatformAdmin);
+}
+
+const ROLE_CLAIM =
+  "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+
+/** Best-effort role read from JWT payload (routing only; server still authorizes). */
+export function getRolesFromAccessToken(accessToken: string): string[] {
+  try {
+    const segment = accessToken.split(".")[1];
+    if (!segment) {
+      return [];
+    }
+    const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+    const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
+    const raw = payload.role ?? payload.roles ?? payload[ROLE_CLAIM];
+    if (typeof raw === "string") {
+      return [raw];
+    }
+    if (Array.isArray(raw)) {
+      return raw.filter((value): value is string => typeof value === "string");
+    }
+    return [];
+  } catch {
+    return [];
+  }
 }
 
 export async function loginWithPassword(
@@ -158,7 +235,7 @@ export async function loginWithPassword(
     const raw = (await response.json()) as Record<string, unknown>;
     const session = parseAuthTokenResponse(raw);
     setAuthSession(session);
-    const profile = await fetchAdminProfile(session.accessToken);
+    const profile = await fetchSessionProfile(session.accessToken);
     return { ok: true, session, profile };
   } catch (error) {
     clearAuthSession();
@@ -171,21 +248,44 @@ export async function loginWithPassword(
 }
 
 export async function refreshAuthSession(): Promise<AuthSession | null> {
-  const current = getAuthSession();
-  if (!current?.refreshToken) {
-    return null;
+  if (refreshInFlight) {
+    return refreshInFlight;
   }
 
-  try {
-    const session = await postAuthTokens("/api/v1/auth/refresh", {
-      refreshToken: current.refreshToken,
-    });
-    setAuthSession(session);
-    return session;
-  } catch {
-    clearAuthSession();
-    return null;
-  }
+  refreshInFlight = (async () => {
+    const current = getAuthSession();
+    if (!current?.refreshToken) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: current.refreshToken }),
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+
+      if (!response.ok) {
+        if (isAuthFailureStatus(response.status)) {
+          clearAuthSession();
+        }
+
+        return null;
+      }
+
+      const raw = (await response.json()) as Record<string, unknown>;
+      const session = parseAuthTokenResponse(raw);
+      setAuthSession(session);
+      return session;
+    } catch {
+      return null;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+
+  return refreshInFlight;
 }
 
 export async function fetchAdminProfile(
@@ -198,11 +298,85 @@ export async function fetchAdminProfile(
   });
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    const error = new Error(await parseProblemDetail(response)) as Error & {
+      status?: number;
+    };
+    error.status = response.status;
+    throw error;
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
   return parseAdminProfile(raw);
+}
+
+/** PlatformAdmin-only users cannot call /admin/me (403). */
+export async function fetchPlatformProfile(
+  accessToken: string
+): Promise<AdminProfile> {
+  const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/platform/me`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  return parsePlatformProfile(raw);
+}
+
+function parsePlatformProfile(raw: Record<string, unknown>): AdminProfile {
+  const userId = raw.userId ?? raw.UserId;
+  const email = raw.email ?? raw.Email;
+  const roles = raw.roles ?? raw.Roles;
+
+  if (typeof userId !== "string" || typeof email !== "string") {
+    throw new Error("Invalid platform profile payload");
+  }
+
+  return {
+    userId,
+    email,
+    nickname: null,
+    roles: Array.isArray(roles)
+      ? roles.filter((role): role is string => typeof role === "string")
+      : [],
+    themePreference: "system",
+    brandAccentColor: null,
+  };
+}
+
+export async function fetchSessionProfile(
+  accessToken: string
+): Promise<AdminProfile> {
+  const roles = getRolesFromAccessToken(accessToken);
+  const isPlatformAdmin = roles.includes(ROLES.PlatformAdmin);
+  const isTenantAdmin = roles.includes(ROLES.TenantAdmin);
+
+  // Prefer PlatformAdmin when present (defensive if a dual-role token ever appears).
+  if (isPlatformAdmin) {
+    return fetchPlatformProfile(accessToken);
+  }
+
+  if (isTenantAdmin) {
+    return fetchAdminProfile(accessToken);
+  }
+
+  // Unknown / legacy token shape: try tenant admin profile, then platform on 403.
+  try {
+    return await fetchAdminProfile(accessToken);
+  } catch (error) {
+    const status =
+      error && typeof error === "object" && "status" in error
+        ? (error as { status?: number }).status
+        : undefined;
+    if (status === 403) {
+      return fetchPlatformProfile(accessToken);
+    }
+    throw error;
+  }
 }
 
 export async function ensureValidSession(): Promise<AuthSession | null> {
@@ -225,17 +399,24 @@ export async function validateStoredSession(): Promise<AdminProfile | null> {
   }
 
   try {
-    return await fetchAdminProfile(session.accessToken);
-  } catch {
+    return await fetchSessionProfile(session.accessToken);
+  } catch (error) {
+    if (!isAuthFailureStatus(getErrorStatus(error))) {
+      return null;
+    }
+
     const refreshed = await refreshAuthSession();
     if (!refreshed) {
       return null;
     }
 
     try {
-      return await fetchAdminProfile(refreshed.accessToken);
-    } catch {
-      clearAuthSession();
+      return await fetchSessionProfile(refreshed.accessToken);
+    } catch (retryError) {
+      if (isAuthFailureStatus(getErrorStatus(retryError))) {
+        clearAuthSession();
+      }
+
       return null;
     }
   }
@@ -256,12 +437,15 @@ export async function fetchWithAuth(
     fetch(input, {
       ...init,
       headers: withAuthHeaders(accessToken, init),
+      cache: init.cache ?? "no-store",
       signal: init.signal ?? AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
 
   let session = await ensureValidSession();
   if (!session) {
-    onSessionExpired?.();
+    if (!getAuthSession()) {
+      onSessionExpired?.();
+    }
     throw new Error("Session expired");
   }
 
@@ -272,7 +456,9 @@ export async function fetchWithAuth(
 
   session = await refreshAuthSession();
   if (!session) {
-    onSessionExpired?.();
+    if (!getAuthSession()) {
+      onSessionExpired?.();
+    }
     throw new Error("Session expired");
   }
 

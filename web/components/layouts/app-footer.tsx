@@ -10,9 +10,19 @@ export function AppFooter({ className }: AppFooterProps) {
   const pathname = usePathname();
   const year = new Date().getFullYear();
 
-  const authRoutes = ["/login", "/register", "/forgot-password", "/reset-password"];
+  const marketingRoutes = ["/", "/pricing", "/terms", "/privacy", "/signup"];
+  const authRoutes = [
+    "/login",
+    "/platform/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+  ];
 
-  if (pathname === "/" || authRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
+  if (
+    marketingRoutes.includes(pathname) ||
+    authRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))
+  ) {
     return null;
   }
 

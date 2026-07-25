@@ -34,18 +34,21 @@ internal static class SiteUpcomingActivitiesResolver
         CohestraDbContext dbContext,
         SiteSectionsDocumentDto published,
         string publicApiBaseUrl,
+        Guid tenantId,
         CancellationToken cancellationToken = default)
     {
-        var limit = ResolveLimit(published);
+        _ = publicApiBaseUrl;
+        _ = ResolveLimit(published);
 
+        // Published (live) activities only — Draft (incl. unpublished), and Archived stay off the homepage.
         // Schedule is operator-facing free text; UpdatedAt descending is the MVP ordering proxy.
-        var activities = await dbContext.Activities
+        // Ignore ambient tenant filters — caller passes an explicit tenant id (e.g. public door host resolve).
+        var activities = await dbContext.IgnoreTenantFilters<Activity>()
             .AsNoTracking()
             .Where(activity =>
-                activity.Status == ActivityStatus.Published &&
-                activity.ShowOnHomepage)
+                activity.TenantId == tenantId &&
+                activity.Status == ActivityStatus.Published)
             .OrderByDescending(activity => activity.UpdatedAt)
-            .Take(limit)
             .ToListAsync(cancellationToken);
 
         return activities
@@ -55,7 +58,7 @@ internal static class SiteUpcomingActivitiesResolver
                 activity.Schedule,
                 activity.Location,
                 activity.CommunityLabel,
-                ActivityHeroImageUrlResolver.Resolve(activity.HeroImageUrl, publicApiBaseUrl),
+                ActivityHeroImageUrlResolver.ResolveForBrowser(activity.HeroImageUrl),
                 activity.AccentColor))
             .ToList();
     }

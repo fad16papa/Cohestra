@@ -1,3 +1,5 @@
+using Cohestra.Domain.Tenants;
+
 namespace Cohestra.Domain.Campaigns;
 
 public enum CampaignStatus
@@ -6,9 +8,11 @@ public enum CampaignStatus
     Failed,
 }
 
-public class Campaign
+public class Campaign : ITenantScoped
 {
     public Guid Id { get; set; }
+
+    public Guid TenantId { get; set; }
 
     public string Subject { get; set; } = string.Empty;
 
