@@ -196,6 +196,7 @@ public sealed class AdminSiteIntegrationTests(IntegrationTestFixture fixture)
 
         await using (var scope = Factory.Services.CreateAsyncScope())
         {
+            IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
             var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
             var now = DateTimeOffset.UtcNow;
             dbContext.Activities.Add(new Activity

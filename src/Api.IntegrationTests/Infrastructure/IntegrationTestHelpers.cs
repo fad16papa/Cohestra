@@ -12,7 +12,9 @@ using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cohestra.Api.IntegrationTests.Infrastructure;
@@ -24,6 +26,39 @@ internal static class IntegrationTestHelpers
     internal static void SkipIfUnavailable(IntegrationTestWebApplicationFactory factory)
     {
         Skip.If(!factory.IsAvailable, factory.SkipReason ?? "Integration dependencies unavailable.");
+    }
+
+    /// <summary>
+    /// HTTP-less scopes need Platform 0 bound so EF tenant query filters see default-tenant rows.
+    /// </summary>
+    internal static void BindDefaultTenant(IServiceProvider services)
+    {
+        var current = services.GetService<CurrentTenant>()
+            ?? services.GetService<ICurrentTenant>() as CurrentTenant;
+        current?.SetResolved(TenantIds.Default, TenantIds.DefaultSlug);
+    }
+
+    /// <summary>
+    /// Integration tests assume full operator capabilities (site builder, campaigns, high plan limits).
+    /// Default tenant migrates as Basic; Epic 15 plan gates block most admin flows until Pro.
+    /// </summary>
+    internal static async Task EnsureDefaultTenantProPlanAsync(IServiceProvider services)
+    {
+        await using var scope = services.CreateAsyncScope();
+        BindDefaultTenant(scope.ServiceProvider);
+
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == TenantIds.Default);
+
+        if (tenant is null || tenant.Plan == TenantPlan.Pro)
+        {
+            return;
+        }
+
+        tenant.Plan = TenantPlan.Pro;
+        tenant.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync();
     }
 
     internal static async Task<string> LoginAsOperatorAsync(HttpClient client)
@@ -174,6 +209,7 @@ internal static class IntegrationTestHelpers
         CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
+        BindDefaultTenant(scope.ServiceProvider);
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var now = DateTimeOffset.UtcNow;
 
@@ -281,6 +317,7 @@ internal static class IntegrationTestHelpers
         CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
+        BindDefaultTenant(scope.ServiceProvider);
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var now = DateTimeOffset.UtcNow;
 

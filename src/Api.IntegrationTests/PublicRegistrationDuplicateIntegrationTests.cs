@@ -36,6 +36,7 @@ public sealed class PublicRegistrationDuplicateIntegrationTests(IntegrationTestF
         Assert.Equal(System.Net.HttpStatusCode.Conflict, secondResponse.StatusCode);
 
         await using var scope = Factory.Services.CreateAsyncScope();
+        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
 
         Assert.Equal(1, dbContext.Registrations.Count());

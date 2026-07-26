@@ -50,6 +50,7 @@ public sealed class ClientDedupIntegrationTests(IntegrationTestFixture fixture)
         Assert.NotEqual(first.RegistrationId, second.RegistrationId);
 
         await using var scope = Factory.Services.CreateAsyncScope();
+        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
 
         var matchingClient = await dbContext.Clients

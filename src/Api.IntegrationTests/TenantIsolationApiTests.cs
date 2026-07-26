@@ -126,12 +126,13 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
 
         await using (var scope = Factory.Services.CreateAsyncScope())
         {
+            IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
             var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
             db.Registrations.Add(new Registration
             {
                 Id = Guid.NewGuid(),
                 TenantId = tenantB.Id,
-                RegistrationNumber = "REG-B-API-ISOLATION-001",
+                RegistrationNumber = "REGBISO001",
                 ActivityId = foreignActivity.Id,
                 ClientId = foreignClient.Id,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -140,7 +141,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         }
 
         const string tenantAExportMarker = "TENANT_A_EXPORT_API_MARKER";
-        const string tenantARegNumber = "REG-A-API-ISOLATION-001";
+        const string tenantARegNumber = "REGAISO001";
         var tenantAActivity = await IntegrationTestHelpers.SeedPublishedActivityAsync(
             Factory.Services,
             $"iso-a-exp-{Guid.NewGuid():N}"[..20]);
@@ -156,6 +157,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
 
         await using (var scope = Factory.Services.CreateAsyncScope())
         {
+            IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
             var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
             db.Registrations.Add(new Registration
             {
@@ -184,7 +186,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         Assert.Contains(tenantARegNumber, csv, StringComparison.Ordinal);
         Assert.DoesNotContain(foreignName, csv, StringComparison.Ordinal);
         Assert.DoesNotContain(foreignEmail, csv, StringComparison.Ordinal);
-        Assert.DoesNotContain("REG-B-API-ISOLATION-001", csv, StringComparison.Ordinal);
+        Assert.DoesNotContain("REGBISO001", csv, StringComparison.Ordinal);
         Assert.DoesNotContain(foreignSlug, csv, StringComparison.Ordinal);
     }
 
