@@ -26,6 +26,8 @@ export type TenantShell = {
   trialEndsAt: string | null;
   isComplimentary: boolean;
   isTenantAdmin: boolean;
+  tenantSlug: string;
+  tenantName: string | null;
   limits: {
     seats: number;
     communities: number;
@@ -115,6 +117,11 @@ export function parseTenantShell(raw: Record<string, unknown>): TenantShell {
         : null,
     isComplimentary: Boolean(raw.isComplimentary ?? raw.IsComplimentary),
     isTenantAdmin: Boolean(raw.isTenantAdmin ?? raw.IsTenantAdmin),
+    tenantSlug: String(raw.tenantSlug ?? raw.TenantSlug ?? ""),
+    tenantName:
+      typeof (raw.tenantName ?? raw.TenantName) === "string"
+        ? String(raw.tenantName ?? raw.TenantName)
+        : null,
     limits: {
       seats: Number(limitsRaw.seats ?? limitsRaw.Seats ?? 1),
       communities: Number(limitsRaw.communities ?? limitsRaw.Communities ?? 1),

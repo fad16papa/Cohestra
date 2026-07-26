@@ -8,7 +8,7 @@ export function buildTenantPublicSiteUrl(slug: string): string {
 
 /**
  * Resolve the visitor-facing homepage URL for the current workspace.
- * When the operator dashboard is on apex localhost, pass tenantSlug from the door API.
+ * When the operator dashboard is on apex localhost, pass tenantSlug from admin shell or door API.
  */
 export function resolvePublicSiteUrl(tenantSlug?: string | null): string {
   if (typeof window === "undefined") {

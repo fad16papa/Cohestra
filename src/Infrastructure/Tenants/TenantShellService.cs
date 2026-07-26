@@ -32,6 +32,8 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
             tenant.TrialEndsAt,
             tenant.IsComplimentary,
             isTenantAdmin,
+            tenant.Slug,
+            tenant.Name,
             new PlanLimitsResponse(
                 limits.Seats,
                 limits.Communities,

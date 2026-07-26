@@ -1,12 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, ExternalLink, MessageCircle } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { SitePageRenderer } from "@/components/marketing/site-page-renderer";
 import { PageHeader } from "@/components/shared/page-header";
-import { ExternalLinkButton } from "@/components/shared/external-link-button";
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import {
@@ -33,6 +31,7 @@ import { WebsiteHealthStrip } from "@/components/website/website-health-strip";
 import { WebsiteTemplatesPanel } from "@/components/website/website-templates-panel";
 import { WebsiteLivePreview } from "@/components/website/website-live-preview";
 import { WebsiteSharePreview } from "@/components/website/website-share-preview";
+import { WebsitePublishSuccessDialog } from "@/components/website/website-publish-success-dialog";
 import {
   WebsiteBrandingSection,
   type WebsiteBrandingSectionHandle,
@@ -165,6 +164,7 @@ function useUnsavedChangesGuard(isDirty: boolean) {
 export function WebsiteBuilderPage() {
   const { authFetch } = useAuth();
   const { shell, loading: shellLoading } = useTenantShell();
+  const workspaceTenantSlug = shell?.tenantSlug?.trim() || null;
   const { showToast, showErrorToast, showSuccessToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -447,10 +447,29 @@ export function WebsiteBuilderPage() {
 
   const [publicSiteUrl, setPublicSiteUrl] = useState(() => resolvePublicSiteUrl());
 
+  const resolveWorkspaceLiveUrl = useCallback(async () => {
+    const slugFromHost = parseTenantSlugFromOrigin(window.location.origin);
+    if (slugFromHost) {
+      return resolvePublicSiteUrl(slugFromHost);
+    }
+
+    if (workspaceTenantSlug) {
+      return resolvePublicSiteUrl(workspaceTenantSlug);
+    }
+
+    const door = await fetchPublicDoorClient();
+    return resolvePublicSiteUrl(door.tenantSlug);
+  }, [workspaceTenantSlug]);
+
   useEffect(() => {
     const slugFromHost = parseTenantSlugFromOrigin(window.location.origin);
     if (slugFromHost) {
       setPublicSiteUrl(resolvePublicSiteUrl(slugFromHost));
+      return;
+    }
+
+    if (workspaceTenantSlug) {
+      setPublicSiteUrl(resolvePublicSiteUrl(workspaceTenantSlug));
       return;
     }
 
@@ -467,7 +486,7 @@ export function WebsiteBuilderPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [workspaceTenantSlug]);
 
   const publishGate = useMemo(() => {
     if (!draft) {
@@ -732,10 +751,7 @@ export function WebsiteBuilderPage() {
       setDraft(cloneSiteDocument(published.draft));
       setSavedSnapshot(serializeSiteDocument(published.draft));
 
-      const slugFromHost = parseTenantSlugFromOrigin(window.location.origin);
-      const resolvedLiveUrl = slugFromHost
-        ? resolvePublicSiteUrl(slugFromHost)
-        : resolvePublicSiteUrl((await fetchPublicDoorClient()).tenantSlug);
+      const resolvedLiveUrl = await resolveWorkspaceLiveUrl();
       setPublicSiteUrl(resolvedLiveUrl);
       setLiveUrl(resolvedLiveUrl);
       setPublishDialogOpen(false);
@@ -1294,49 +1310,21 @@ export function WebsiteBuilderPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Your site is live</AlertDialogTitle>
-            <AlertDialogDescription>
-              Your homepage is published at{" "}
-              <span className="font-medium text-text-warm">{liveUrl}</span>.
-              Share the link or open it in a new tab.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Done</AlertDialogCancel>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => copyHomepageWhatsAppMessage(liveUrl)}
-            >
-              <MessageCircle className="size-4" aria-hidden />
-              Copy WhatsApp
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                void copyTextToClipboard(liveUrl).then((copied) => {
-                  if (copied) {
-                    showToast("Link copied");
-                  } else {
-                    showErrorToast("Could not copy link.");
-                  }
-                });
-              }}
-            >
-              <Copy className="size-4" aria-hidden />
-              Copy link
-            </Button>
-            <ExternalLinkButton href={liveUrl}>
-              <ExternalLink className="size-4" aria-hidden />
-              Open live site
-            </ExternalLinkButton>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <WebsitePublishSuccessDialog
+        open={successDialogOpen}
+        onOpenChange={setSuccessDialogOpen}
+        liveUrl={liveUrl}
+        onCopyLink={() => {
+          void copyTextToClipboard(liveUrl).then((copied) => {
+            if (copied) {
+              showToast("Link copied");
+            } else {
+              showErrorToast("Could not copy link.");
+            }
+          });
+        }}
+        onCopyWhatsApp={() => copyHomepageWhatsAppMessage(liveUrl)}
+      />
 
       <AlertDialog
         open={presetDialogOpen}
