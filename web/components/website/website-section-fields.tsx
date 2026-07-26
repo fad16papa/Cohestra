@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Activity } from "@/lib/activities-api";
-import { getPublicApiBaseUrl } from "@/lib/api";
+import { resolvePublicSiteUrl } from "@/lib/tenant-public-url";
 import { uploadCampaignAsset } from "@/lib/campaigns-api";
 import type { SiteSection, SiteSectionsDocument } from "@/lib/public-site-api";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
@@ -745,9 +745,5 @@ export function WebsitePublishGateSummary({ gate }: { gate: PublishGateResult })
 }
 
 export function getPublicSiteUrl(): string {
-  if (typeof window !== "undefined") {
-    return window.location.origin;
-  }
-
-  return getPublicApiBaseUrl().replace(/:\d+$/, "");
+  return resolvePublicSiteUrl();
 }

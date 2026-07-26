@@ -226,7 +226,9 @@ development_status:
   # Epic 16 parked — One-stop Lite (share kit, custom domain, thin email, tickets, seat add-ons)
   # No story keys until pulled into v1.1+
   epic-16: in-progress
-  16-1-activity-share-kit: in-progress
+  16-1-activity-share-kit: done
+  16-2-registration-og-metadata: done
+  16-3-homepage-whatsapp-copy: done
   epic-16-retrospective: optional
 
 action_items:

@@ -202,3 +202,38 @@ export const fetchPublicDoorServer = cache(async (): Promise<PublicDoorPayload> 
     };
   }
 });
+
+export async function fetchPublicDoorClient(): Promise<PublicDoorPayload> {
+  const { getPublicApiBaseUrl } = await import("@/lib/api");
+
+  try {
+    const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/public/door`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      return {
+        kind: "unknown",
+        plan: null,
+        tenantName: null,
+        tenantSlug: null,
+        site: null,
+        stubActivities: [],
+        builderLocked: false,
+      };
+    }
+
+    const raw = (await response.json()) as Record<string, unknown>;
+    return parseDoorPayload(raw);
+  } catch {
+    return {
+      kind: "unknown",
+      plan: null,
+      tenantName: null,
+      tenantSlug: null,
+      site: null,
+      stubActivities: [],
+      builderLocked: false,
+    };
+  }
+}

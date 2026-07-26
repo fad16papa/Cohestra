@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Copy, ExternalLink } from "lucide-react";
+import { Copy, ExternalLink, MessageCircle } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { SitePageRenderer } from "@/components/marketing/site-page-renderer";
@@ -27,7 +27,6 @@ import {
   WebsitePublishChangeSummary,
   WebsitePublishGateSummary,
   WebsiteSectionList,
-  getPublicSiteUrl,
 } from "@/components/website/website-section-fields";
 import { WebsiteSetupChecklist } from "@/components/website/website-setup-checklist";
 import { WebsiteHealthStrip } from "@/components/website/website-health-strip";
@@ -40,6 +39,10 @@ import {
 } from "@/components/website/website-branding-section";
 import { fetchAllActivities, type Activity } from "@/lib/activities-api";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import { fetchPublicDoorClient } from "@/lib/public-door-api";
+import { buildHomepageWhatsAppMessage } from "@/lib/share-kit-utils";
+import { parseTenantSlugFromOrigin } from "@/lib/tenant-host";
+import { resolvePublicSiteUrl } from "@/lib/tenant-public-url";
 import { openExternalUrl } from "@/lib/open-external-url";
 import type {
   PublicHomepageActivity,
@@ -442,7 +445,29 @@ export function WebsiteBuilderPage() {
     [draft]
   );
 
-  const publicSiteUrl = useMemo(() => getPublicSiteUrl(), []);
+  const [publicSiteUrl, setPublicSiteUrl] = useState(() => resolvePublicSiteUrl());
+
+  useEffect(() => {
+    const slugFromHost = parseTenantSlugFromOrigin(window.location.origin);
+    if (slugFromHost) {
+      setPublicSiteUrl(resolvePublicSiteUrl(slugFromHost));
+      return;
+    }
+
+    let cancelled = false;
+
+    void fetchPublicDoorClient().then((door) => {
+      if (cancelled) {
+        return;
+      }
+
+      setPublicSiteUrl(resolvePublicSiteUrl(door.tenantSlug));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const publishGate = useMemo(() => {
     if (!draft) {
@@ -516,6 +541,21 @@ export function WebsiteBuilderPage() {
 
     return getSharePreviewFromDraft(draft, publicSiteUrl);
   }, [draft, publicSiteUrl]);
+
+  function copyHomepageWhatsAppMessage(url: string) {
+    const message = buildHomepageWhatsAppMessage(url, {
+      siteName: draft?.siteName,
+      headline: sharePreview?.title,
+    });
+
+    void copyTextToClipboard(message).then((copied) => {
+      if (copied) {
+        showToast("WhatsApp message copied");
+      } else {
+        showErrorToast("Could not copy WhatsApp message.");
+      }
+    });
+  }
 
   async function handleSaveDraft(options?: {
     silent?: boolean;
@@ -691,7 +731,13 @@ export function WebsiteBuilderPage() {
       setAdminData(published);
       setDraft(cloneSiteDocument(published.draft));
       setSavedSnapshot(serializeSiteDocument(published.draft));
-      setLiveUrl(getPublicSiteUrl());
+
+      const slugFromHost = parseTenantSlugFromOrigin(window.location.origin);
+      const resolvedLiveUrl = slugFromHost
+        ? resolvePublicSiteUrl(slugFromHost)
+        : resolvePublicSiteUrl((await fetchPublicDoorClient()).tenantSlug);
+      setPublicSiteUrl(resolvedLiveUrl);
+      setLiveUrl(resolvedLiveUrl);
       setPublishDialogOpen(false);
       setSuccessDialogOpen(true);
       markWebsiteBuilderVisited();
@@ -960,6 +1006,7 @@ export function WebsiteBuilderPage() {
               }
             });
           }}
+          onCopyWhatsApp={() => copyHomepageWhatsAppMessage(publicSiteUrl)}
           onShowChecklist={() => undefined}
         />
         <WebsiteLivePreview deviceMode={deviceMode} onDeviceModeChange={setDeviceMode}>
@@ -1059,6 +1106,7 @@ export function WebsiteBuilderPage() {
             }
           });
         }}
+        onCopyWhatsApp={() => copyHomepageWhatsAppMessage(publicSiteUrl)}
         onShowChecklist={() => setChecklistVisible(true)}
       />
 
@@ -1206,11 +1254,13 @@ export function WebsiteBuilderPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Publish homepage?</AlertDialogTitle>
             <AlertDialogDescription>
-              Visitors will see these updates at {getPublicSiteUrl()}.
+              Visitors will see these updates at {publicSiteUrl || "your public homepage"}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4">
-            {sharePreview ? <WebsiteSharePreview preview={sharePreview} /> : null}
+            {sharePreview ? (
+              <WebsiteSharePreview preview={sharePreview} siteName={draft.siteName} />
+            ) : null}
             <div>
               <p className="text-sm font-medium text-text-warm">What will change</p>
               <div className="mt-2 rounded-lg border border-border-warm bg-muted/20 p-3">
@@ -1256,6 +1306,14 @@ export function WebsiteBuilderPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Done</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => copyHomepageWhatsAppMessage(liveUrl)}
+            >
+              <MessageCircle className="size-4" aria-hidden />
+              Copy WhatsApp
+            </Button>
             <Button
               type="button"
               variant="outline"

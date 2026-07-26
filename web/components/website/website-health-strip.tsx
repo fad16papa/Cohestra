@@ -7,6 +7,7 @@ import {
   ExternalLink,
   Globe,
   Layers,
+  MessageCircle,
   Sparkles,
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ type WebsiteHealthStripProps = {
   publishBlockerCount: number;
   checklistHidden?: boolean;
   onCopyLink: () => void;
+  onCopyWhatsApp?: () => void;
   onShowChecklist?: () => void;
 };
 
@@ -48,6 +50,7 @@ export function WebsiteHealthStrip({
   publishBlockerCount,
   checklistHidden = false,
   onCopyLink,
+  onCopyWhatsApp,
   onShowChecklist,
 }: WebsiteHealthStripProps) {
   return (
@@ -79,6 +82,12 @@ export function WebsiteHealthStrip({
             <Copy className="size-4" aria-hidden />
             Copy link
           </Button>
+          {onCopyWhatsApp ? (
+            <Button type="button" variant="outline" size="sm" onClick={onCopyWhatsApp}>
+              <MessageCircle className="size-4" aria-hidden />
+              Copy WhatsApp
+            </Button>
+          ) : null}
           <ExternalLinkButton href={siteUrl} variant="outline" size="sm">
             <ExternalLink className="size-4" aria-hidden />
             Open live site
