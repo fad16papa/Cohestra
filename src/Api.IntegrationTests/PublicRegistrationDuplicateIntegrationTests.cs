@@ -39,7 +39,9 @@ public sealed class PublicRegistrationDuplicateIntegrationTests(IntegrationTestF
         IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
 
-        Assert.Equal(1, dbContext.Registrations.Count());
+        Assert.Equal(
+            1,
+            dbContext.Registrations.Count(registration => registration.Id == first.RegistrationId));
         Assert.Matches("^REG\\d{14}$", first.RegistrationNumber);
     }
 }

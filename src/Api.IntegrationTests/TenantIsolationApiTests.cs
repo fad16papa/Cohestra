@@ -104,10 +104,12 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
 
+        var runId = Guid.NewGuid().ToString("N")[..8];
         var tenantB = await CreateForeignTenantAsync();
-        const string foreignEmail = "bob-b@isolation-b-api.test";
+        var foreignEmail = $"bob-b-{runId}@isolation-b-api.test";
         const string foreignName = "TENANT_B_EXPORT_API_MARKER";
         var foreignSlug = $"iso-exp-{Guid.NewGuid():N}"[..20];
+        var foreignRegNumber = $"REGB{runId}";
         var foreignActivity = await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
             Factory.Services,
             tenantB.Id,
@@ -132,7 +134,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
             {
                 Id = Guid.NewGuid(),
                 TenantId = tenantB.Id,
-                RegistrationNumber = "REGBISO001",
+                RegistrationNumber = foreignRegNumber,
                 ActivityId = foreignActivity.Id,
                 ClientId = foreignClient.Id,
                 CreatedAt = DateTimeOffset.UtcNow,
@@ -141,7 +143,8 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         }
 
         const string tenantAExportMarker = "TENANT_A_EXPORT_API_MARKER";
-        const string tenantARegNumber = "REGAISO001";
+        var tenantARegNumber = $"REGA{runId}";
+        var tenantAEmail = $"alice-a-{runId}@isolation-a-api.test";
         var tenantAActivity = await IntegrationTestHelpers.SeedPublishedActivityAsync(
             Factory.Services,
             $"iso-a-exp-{Guid.NewGuid():N}"[..20]);
@@ -151,8 +154,8 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
             {
                 client.TenantId = TenantIds.Default;
                 client.FullName = tenantAExportMarker;
-                client.Email = "alice-a@isolation-a-api.test";
-                client.NormalizedEmail = "alice-a@isolation-a-api.test";
+                client.Email = tenantAEmail;
+                client.NormalizedEmail = tenantAEmail;
             });
 
         await using (var scope = Factory.Services.CreateAsyncScope())
@@ -186,7 +189,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         Assert.Contains(tenantARegNumber, csv, StringComparison.Ordinal);
         Assert.DoesNotContain(foreignName, csv, StringComparison.Ordinal);
         Assert.DoesNotContain(foreignEmail, csv, StringComparison.Ordinal);
-        Assert.DoesNotContain("REGBISO001", csv, StringComparison.Ordinal);
+        Assert.DoesNotContain(foreignRegNumber, csv, StringComparison.Ordinal);
         Assert.DoesNotContain(foreignSlug, csv, StringComparison.Ordinal);
     }
 

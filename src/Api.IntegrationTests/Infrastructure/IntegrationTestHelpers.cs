@@ -51,12 +51,29 @@ internal static class IntegrationTestHelpers
         var tenant = await dbContext.Tenants
             .FirstOrDefaultAsync(t => t.Id == TenantIds.Default);
 
-        if (tenant is null || tenant.Plan == TenantPlan.Pro)
+        if (tenant is null)
         {
             return;
         }
 
-        tenant.Plan = TenantPlan.Pro;
+        var changed = false;
+        if (tenant.Plan != TenantPlan.Pro)
+        {
+            tenant.Plan = TenantPlan.Pro;
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
+        {
+            tenant.AdminContactEmail = "operator@cohestra.local";
+            changed = true;
+        }
+
+        if (!changed)
+        {
+            return;
+        }
+
         tenant.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync();
     }
