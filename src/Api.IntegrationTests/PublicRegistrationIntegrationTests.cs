@@ -38,6 +38,7 @@ public sealed class PublicRegistrationIntegrationTests(IntegrationTestFixture fi
         Assert.NotEqual(Guid.Empty, response.ClientId);
 
         await using var scope = Factory.Services.CreateAsyncScope();
+        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
 
         Assert.Equal(1, dbContext.Registrations.Count(registration => registration.Id == response.RegistrationId));

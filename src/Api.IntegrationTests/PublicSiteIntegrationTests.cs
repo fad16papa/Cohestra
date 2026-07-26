@@ -44,6 +44,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
 
         await using (var scope = Factory.Services.CreateAsyncScope())
         {
+            IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
             var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
             var now = DateTimeOffset.UtcNow;
             dbContext.Activities.Add(new Activity
@@ -132,6 +133,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
     private static async Task ClearPublishedSiteAsync(IServiceProvider services)
     {
         await using var scope = services.CreateAsyncScope();
+        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var cache = scope.ServiceProvider.GetRequiredService<RedisPublishedSiteCache>();
 

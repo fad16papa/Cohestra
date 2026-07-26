@@ -66,7 +66,10 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
             if (!IsAvailable)
             {
                 SkipReason = $"Dependencies are not ready (GET /ready returned {(int)response.StatusCode}).";
+                return;
             }
+
+            await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Services);
         }
         catch (Exception ex)
         {
