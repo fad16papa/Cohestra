@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-22T08:30:00Z
+# last_updated: 2026-07-26T03:30:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - Epic 16 is parked (One-stop Lite / UX-DR15) — no v1 stories until pulled forward
 
 generated: 2026-06-16
-last_updated: 2026-07-22T08:30:00Z
+last_updated: 2026-07-26T03:30:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -223,15 +223,30 @@ development_status:
   15-7-suspended-maintenance-and-archived-404-public-states: done
   epic-15-retrospective: optional
 
-  # Epic 16 parked — One-stop Lite (share kit, custom domain, thin email, tickets, seat add-ons)
-  # No story keys until pulled into v1.1+
-  epic-16: in-progress
+  # Epic 16 v1 scope done (16.1–16.3); parked items (custom domain, thin email, tickets) remain in epics-cohestra-enterprise.md
+  epic-16: done
   16-1-activity-share-kit: done
   16-2-registration-og-metadata: done
   16-3-homepage-whatsapp-copy: done
-  epic-16-retrospective: optional
+  epic-16-retrospective: done
 
 action_items:
+  - epic: 16
+    action: "Run Epic 16 UAT on local Docker: Share kit, OG unfurl, homepage WhatsApp, publish tenant URL"
+    owner: Operator
+    status: open
+  - epic: 16
+    action: "Investigate and fix API integration test failures in CI"
+    owner: Dev
+    status: open
+  - epic: 16
+    action: "Product gate: Epic 16 parked items vs uat-handoff-checklist as next priority"
+    owner: Product
+    status: open
+  - epic: 16
+    action: "Use dedicated client API modules when adding client-side fetches (no server imports in shared API files)"
+    owner: Dev
+    status: open
   - epic: 9
     action: "Commit Epic 9 changes (migrations, API, web builder, docs) in reviewable chunks"
     owner: Dev
