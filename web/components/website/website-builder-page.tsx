@@ -39,7 +39,7 @@ import {
 } from "@/components/website/website-branding-section";
 import { fetchAllActivities, type Activity } from "@/lib/activities-api";
 import { copyTextToClipboard } from "@/lib/clipboard";
-import { fetchPublicDoorClient } from "@/lib/public-door-api";
+import { fetchPublicDoorClient } from "@/lib/public-door-client-api";
 import { buildHomepageWhatsAppMessage } from "@/lib/share-kit-utils";
 import { parseTenantSlugFromOrigin } from "@/lib/tenant-host";
 import { resolvePublicSiteUrl } from "@/lib/tenant-public-url";
