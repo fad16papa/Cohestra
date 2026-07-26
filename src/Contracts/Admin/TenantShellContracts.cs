@@ -7,6 +7,8 @@ public sealed record TenantShellResponse(
     DateTimeOffset? TrialEndsAt,
     bool IsComplimentary,
     bool IsTenantAdmin,
+    string TenantSlug,
+    string? TenantName,
     PlanLimitsResponse Limits,
     PlanUsageResponse Usage,
     IReadOnlyList<LimitDialResponse> LimitDials,

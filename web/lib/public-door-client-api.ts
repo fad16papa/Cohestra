@@ -7,8 +7,14 @@ import {
 
 export async function fetchPublicDoorClient(): Promise<PublicDoorPayload> {
   try {
+    const headers: HeadersInit = {};
+    if (typeof window !== "undefined") {
+      headers["X-Forwarded-Host"] = window.location.host;
+    }
+
     const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/public/door`, {
       cache: "no-store",
+      headers,
     });
 
     if (!response.ok) {
