@@ -26,7 +26,7 @@ import {
   type Activity,
 } from "@/lib/activities-api";
 import { isActivityScheduleUpcomingOrToday } from "@/lib/activity-schedule-utils";
-import { getPublishGateIssues, publishGateSavedFormNote } from "@/lib/form-schema-utils";
+import { getPublishGateIssues } from "@/lib/form-schema-utils";
 
 type ActivityPublishControlsProps = {
   activity: Activity;
@@ -63,7 +63,7 @@ export function ActivityPublishControls({
       const updated = await archiveActivity(authFetch, activity.id);
       onActivityUpdated(updated);
       setArchiveDialogOpen(false);
-      setSuccess("Activity archived. The public registration page is unavailable.");
+      setSuccess("Activity archived.");
     } catch (archiveError) {
       setError(
         archiveError instanceof Error
@@ -99,7 +99,7 @@ export function ActivityPublishControls({
     try {
       const updated = await publishActivity(authFetch, activity.id);
       onActivityUpdated(updated);
-      setSuccess("Activity published. Registration link is live.");
+      setSuccess("Activity is live.");
     } catch (publishError) {
       setError(
         publishError instanceof Error
@@ -120,9 +120,7 @@ export function ActivityPublishControls({
       const updated = await unpublishActivity(authFetch, activity.id);
       onActivityUpdated(updated);
       setUnpublishDialogOpen(false);
-      setSuccess(
-        "Activity unpublished. The registration link is offline until you publish again."
-      );
+      setSuccess("Activity is offline until you publish again.");
     } catch (unpublishError) {
       setError(
         unpublishError instanceof Error
@@ -138,88 +136,84 @@ export function ActivityPublishControls({
     return (
       <p
         role="status"
-        className="rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm"
+        className="text-sm text-text-muted-warm"
       >
-        This activity is archived. Restore publishing in a future story if needed.
-        The public registration URL shows an unavailable state.
+        This activity is archived. The public registration page is unavailable.
       </p>
     );
   }
 
   return (
     <>
-      <div className="space-y-4 rounded-xl border border-border-warm bg-card p-4">
-        <div>
-          <h3 className="text-section text-text-warm">Publishing</h3>
-          <p className="mt-1 text-sm text-text-muted-warm">
-            Control when the public registration link is live.
-          </p>
-        </div>
+      <div className="space-y-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-section text-text-warm">Publishing</h3>
+            {activity.status === "published" ? (
+              <p className="mt-0.5 text-sm text-text-muted-warm">
+                Live at{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                  /register/{activity.slug}
+                </code>
+              </p>
+            ) : (
+              <p className="mt-0.5 text-sm text-text-muted-warm">
+                Publish to open registration and unlock Share kit.
+              </p>
+            )}
+          </div>
 
-        {activity.status === "draft" ? (
-          <p className="text-sm text-text-muted-warm">{publishGateSavedFormNote}</p>
-        ) : null}
-
-        {activity.status === "published" ? (
-          <p
-            role="status"
-            className="rounded-lg border border-border-warm bg-muted/30 px-4 py-3 text-sm text-text-warm"
-          >
-            Live at{" "}
-            <code className="rounded bg-muted px-1 py-0.5">/register/{activity.slug}</code>
-          </p>
-        ) : null}
-
-        <div className="flex flex-wrap gap-2">
-          {activity.status === "draft" ? (
-            <Button
-              type="button"
-              disabled={isBusy || publishBlocked}
-              onClick={() => void handlePublish()}
-            >
-              {isPublishing ? "Publishing…" : "Publish activity"}
-            </Button>
-          ) : null}
-
-          {activity.status === "published" ? (
-            <>
+          <div className="flex flex-wrap gap-2">
+            {activity.status === "draft" ? (
               <Button
                 type="button"
-                variant="outline"
-                disabled={isBusy}
-                onClick={() => setUnpublishDialogOpen(true)}
+                disabled={isBusy || publishBlocked}
+                onClick={() => void handlePublish()}
               >
-                {isUnpublishing ? "Unpublishing…" : "Unpublish activity"}
+                {isPublishing ? "Publishing…" : "Publish"}
               </Button>
+            ) : null}
+
+            {activity.status === "published" ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isBusy}
+                  onClick={() => setUnpublishDialogOpen(true)}
+                >
+                  {isUnpublishing ? "Unpublishing…" : "Unpublish"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isBusy}
+                  onClick={requestArchive}
+                >
+                  {isArchiving ? "Archiving…" : "Archive"}
+                </Button>
+              </>
+            ) : null}
+
+            {activity.status === "draft" ? (
               <Button
                 type="button"
                 variant="outline"
                 disabled={isBusy}
                 onClick={requestArchive}
               >
-                {isArchiving ? "Archiving…" : "Archive activity"}
+                {isArchiving ? "Archiving…" : "Archive"}
               </Button>
-            </>
-          ) : null}
-
-          {activity.status === "draft" ? (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isBusy}
-              onClick={requestArchive}
-            >
-              {isArchiving ? "Archiving…" : "Archive without publishing"}
-            </Button>
-          ) : null}
+            ) : null}
+          </div>
         </div>
 
         {activity.status === "draft" && publishBlocked ? (
-          <div role="alert" className="space-y-1 text-sm text-destructive">
+          <ul role="alert" className="list-disc space-y-0.5 pl-5 text-sm text-destructive">
             {publishGateIssues.map((issue) => (
-              <p key={issue}>{issue}</p>
+              <li key={issue}>{issue}</li>
             ))}
-          </div>
+          </ul>
         ) : null}
 
         {error ? (
@@ -229,7 +223,7 @@ export function ActivityPublishControls({
         ) : null}
 
         {success ? (
-          <p role="status" className="text-sm text-text-warm">
+          <p role="status" className="text-sm text-text-muted-warm">
             {success}
           </p>
         ) : null}
