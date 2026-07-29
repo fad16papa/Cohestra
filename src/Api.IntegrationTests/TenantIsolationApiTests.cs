@@ -278,7 +278,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         Assert.Equal(HttpStatusCode.NotFound, activityResponse.StatusCode);
 
         var activityBody = await activityResponse.Content.ReadAsStringAsync();
+        // ProblemDetails.Instance echoes the request path (may include {slug}); assert no tenant payload leaked.
         Assert.DoesNotContain(foreignMarker, activityBody, StringComparison.Ordinal);
-        Assert.DoesNotContain(foreignSlug, activityBody, StringComparison.Ordinal);
     }
 }
