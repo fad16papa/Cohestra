@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Contracts.Platform;
 using Cohestra.Contracts.Site;
@@ -217,6 +218,12 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         const string foreignMarker = "TENANT_B_DOOR_ISOLATION_MARKER";
         var tenantB = await CreateForeignTenantAsync(foreignMarker);
         var foreignSlug = tenantB.Slug;
+        var foreignActivitySlug = $"iso-door-{Guid.NewGuid():N}"[..20];
+        await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            tenantB.Id,
+            foreignActivitySlug,
+            foreignMarker);
 
         var tenantASlug = $"iso-a-{Guid.NewGuid():N}"[..20];
         await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, tenantASlug);
@@ -227,16 +234,26 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         using var doorResponse = await tenantAClient.GetAsync("/api/v1/public/door");
         doorResponse.EnsureSuccessStatusCode();
 
-        var door = await doorResponse.Content.ReadFromJsonAsync<PublicDoorResponse>(
-            IntegrationTestHelpers.JsonOptions);
+        var body = await doorResponse.Content.ReadAsStringAsync();
+        var door = JsonSerializer.Deserialize<PublicDoorResponse>(body, IntegrationTestHelpers.JsonOptions);
         Assert.NotNull(door);
         Assert.Equal("active", door.Kind);
         Assert.Equal(TenantIds.DefaultSlug, door.TenantSlug);
 
-        var body = await doorResponse.Content.ReadAsStringAsync();
         Assert.DoesNotContain(foreignMarker, body, StringComparison.Ordinal);
         Assert.DoesNotContain(foreignSlug, body, StringComparison.Ordinal);
         Assert.DoesNotContain(tenantB.Name, body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(door.StubActivities, activity => activity.Slug == foreignActivitySlug);
+        Assert.DoesNotContain(
+            door.StubActivities,
+            activity => activity.Name.Contains(foreignMarker, StringComparison.Ordinal));
+        if (door.Site?.UpcomingActivities is { Count: > 0 } upcoming)
+        {
+            Assert.DoesNotContain(upcoming, activity => activity.Slug == foreignActivitySlug);
+            Assert.DoesNotContain(
+                upcoming,
+                activity => activity.Name.Contains(foreignMarker, StringComparison.Ordinal));
+        }
     }
 
     [SkippableFact]

@@ -5,7 +5,7 @@ baseline_commit: 2295eff23ae11a9130e1ccbce9019d147c17ec11
 # Story: Enterprise launch checklist
 
 **Track:** Post–Epic 16 launch readiness (replaces cancelled `uat-handoff-checklist`)  
-**Status:** review  
+**Status:** done  
 **Created:** 2026-07-29  
 **Baseline:** `main` @ `ebf33d1` (Epics 11–16 v1 complete, CI green, Docker glibc fix merged)
 
@@ -104,10 +104,10 @@ So that **we can sign off production readiness with evidence** — not the singl
 
 ### Review Findings
 
-- [ ] [Review][Patch] Door test reads HttpContent twice — body assertions may pass vacuously [`src/Api.IntegrationTests/TenantIsolationApiTests.cs:230`]
-- [ ] [Review][Patch] Door test should assert `StubActivities` excludes foreign tenant slug [`src/Api.IntegrationTests/TenantIsolationApiTests.cs:230`]
-- [ ] [Review][Patch] Smoke script hardcodes `Host: cohestra.app:8088` — derive port from `PUBLIC_BASE_URL` [`deploy/local-smoke-run.sh:170`]
-- [ ] [Review][Patch] Checklist Isolation section missing cross-tenant registration step [`docs/deploy/enterprise-launch-checklist.md`]
+- [x] [Review][Patch] Door test reads HttpContent twice — body assertions may pass vacuously [`src/Api.IntegrationTests/TenantIsolationApiTests.cs:230`]
+- [x] [Review][Patch] Door test should assert `StubActivities` excludes foreign tenant slug [`src/Api.IntegrationTests/TenantIsolationApiTests.cs:230`]
+- [x] [Review][Patch] Smoke script hardcodes `Host: cohestra.app:8088` — derive port from `PUBLIC_BASE_URL` [`deploy/local-smoke-run.sh:170`]
+- [x] [Review][Patch] Checklist Isolation section missing cross-tenant registration step [`docs/deploy/enterprise-launch-checklist.md`]
 - [x] [Review][Defer] CI SM-1 job green not verified in cloud agent — confirm on PR #25 merge — deferred, pre-existing process gap
 
 ## Dev notes
@@ -198,7 +198,13 @@ Composer (cloud agent)
 
 ## Change log
 
-- 2026-07-29: Implemented enterprise launch checklist story (AC1–AC5).
+- 2026-07-29: Code review patches applied — door test body read fix, StubActivities asserts, smoke port derivation, registration checklist item.
+
+### Completion notes (code review)
+
+- Fixed `PublicDoor_OnTenantAHost_DoesNotExposeForeignTenantSlugOrName`: single body read, Tenant B activity seed, StubActivities/Site assertions.
+- Smoke script derives apex Host port from `PUBLIC_BASE_URL`.
+- Checklist adds cross-tenant registration POST isolation step.
 
 ---
 

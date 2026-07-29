@@ -166,13 +166,15 @@ fi
 
 # 14. Enterprise apex — marketing /pricing (optional; set PUBLIC_BASE_URL e.g. http://localhost:8088)
 if [[ -n "${PUBLIC_BASE_URL:-}" ]]; then
+  APEX_HOST="${APEX_HOST:-cohestra.app}"
+  PUBLIC_PORT=$(python3 -c "from urllib.parse import urlparse; u=urlparse('${PUBLIC_BASE_URL}'); print(u.port or (443 if u.scheme=='https' else 80))")
   PRICING_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
-    -H "Host: cohestra.app:8088" \
+    -H "Host: ${APEX_HOST}:${PUBLIC_PORT}" \
     "${PUBLIC_BASE_URL%/}/pricing" || true)
   if [[ "$PRICING_CODE" == "200" ]]; then
-    pass "Apex /pricing returns 200 (cohestra.app host)"
+    pass "Apex /pricing returns 200 (${APEX_HOST} host)"
   else
-    fail "Apex /pricing returned ${PRICING_CODE} — add 127.0.0.1 cohestra.app to hosts"
+    fail "Apex /pricing returned ${PRICING_CODE} — add 127.0.0.1 ${APEX_HOST} to hosts"
   fi
 else
   skip "PUBLIC_BASE_URL unset — apex /pricing check skipped"

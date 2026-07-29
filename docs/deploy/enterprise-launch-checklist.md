@@ -54,6 +54,7 @@ Optional apex check is included when `PUBLIC_BASE_URL` is set (see script sectio
 - [ ] Cross-tenant admin GET returns **404/403**, never foreign payload
 - [ ] Public site / door on Tenant A Host does **not** expose Tenant B slug, name, or activities
 - [ ] `GET /api/v1/public/activities/{foreignSlug}` on Tenant A Host returns **404**
+- [ ] `POST /api/v1/public/registrations` with Tenant B activity slug on Tenant A Host returns **404** (fail-closed)
 - [ ] JWT minted on `{slug}.localhost` is scoped to that tenant; platform routes reject tenant JWTs
 - [ ] No client-trusted `X-Tenant-Id` — Host + JWT only (AD-3)
 
