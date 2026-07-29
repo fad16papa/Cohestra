@@ -1,3 +1,7 @@
+## Deferred from: code review of enterprise-launch-checklist.md (2026-07-29)
+
+- CI SM-1 integration job green not verified in cloud agent — confirm on PR #25 before merge
+
 ## Deferred from: code review of 14-4-core-pro-checkout-webhooks-and-usd-prices.md (2026-07-22)
 
 - Auth handoff via URL hash — replace with one-time server code exchange (tokens visible in history/referrer)

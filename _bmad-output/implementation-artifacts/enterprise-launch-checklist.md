@@ -102,6 +102,14 @@ So that **we can sign off production readiness with evidence** — not the singl
   - [x] Extend `deploy/local-smoke-run.sh` or add `deploy/enterprise-local-smoke.sh`
   - [x] Document command in enterprise launch checklist
 
+### Review Findings
+
+- [ ] [Review][Patch] Door test reads HttpContent twice — body assertions may pass vacuously [`src/Api.IntegrationTests/TenantIsolationApiTests.cs:230`]
+- [ ] [Review][Patch] Door test should assert `StubActivities` excludes foreign tenant slug [`src/Api.IntegrationTests/TenantIsolationApiTests.cs:230`]
+- [ ] [Review][Patch] Smoke script hardcodes `Host: cohestra.app:8088` — derive port from `PUBLIC_BASE_URL` [`deploy/local-smoke-run.sh:170`]
+- [ ] [Review][Patch] Checklist Isolation section missing cross-tenant registration step [`docs/deploy/enterprise-launch-checklist.md`]
+- [x] [Review][Defer] CI SM-1 job green not verified in cloud agent — confirm on PR #25 merge — deferred, pre-existing process gap
+
 ## Dev notes
 
 ### Files to read before coding
