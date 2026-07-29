@@ -1,9 +1,9 @@
-FROM node:22-alpine AS deps
+FROM node:22-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:22-alpine AS build
+FROM node:22-slim AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -26,6 +26,7 @@ ENV NEXT_PUBLIC_RECAPTCHA_ENABLED=$NEXT_PUBLIC_RECAPTCHA_ENABLED
 ENV NEXT_PUBLIC_RECAPTCHA_SITE_KEY=$NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 ENV NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN=$NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN
 ENV NEXT_TELEMETRY_DISABLED=1
+# node:22-slim (glibc) — Turbopack native bindings fail on Alpine musl with "platform not supported".
 RUN npm run build
 
 FROM node:22-alpine AS final
