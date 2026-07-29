@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-26T12:15:00Z
+# last_updated: 2026-07-29T12:15:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - Epic 16 is parked (One-stop Lite / UX-DR15) — no v1 stories until pulled forward
 
 generated: 2026-06-16
-last_updated: 2026-07-26T12:15:00Z
+last_updated: 2026-07-29T12:15:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -221,7 +221,7 @@ development_status:
   15-5-plan-gated-reports-basic-fixed-core-queryable-pro: done
   15-6-pro-only-campaigns-and-per-tenant-email-branding: done
   15-7-suspended-maintenance-and-archived-404-public-states: done
-  epic-15-retrospective: optional
+  epic-15-retrospective: done
 
   # Epic 16 v1 scope done (16.1–16.3); parked items (custom domain, thin email, tickets) remain in epics-cohestra-enterprise.md
   epic-16: done
@@ -231,6 +231,22 @@ development_status:
   epic-16-retrospective: done
 
 action_items:
+  - epic: 15
+    action: "Extend SM-1 isolation gate for public door and cross-tenant registration slug rejection"
+    owner: Dev
+    status: open
+  - epic: 15
+    action: "Document integration test Pro bootstrap (EnsureDefaultTenantProPlanAsync) in project-context or test README"
+    owner: Dev
+    status: open
+  - epic: 15
+    action: "Product gate: nip.io apex tightening vs enterprise launch checklist priority"
+    owner: Product
+    status: open
+  - epic: 15
+    action: "Schedule sender settings UI story (15.6 defer) or accept provisioned-email-only for v1 launch"
+    owner: Product
+    status: open
   - epic: 16
     action: "Run Epic 16 UAT on local Docker: Share kit, OG unfurl, homepage WhatsApp, publish tenant URL"
     owner: Operator
