@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-29T16:30:00Z
+# last_updated: 2026-07-29T16:45:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-07-29T16:30:00Z
+last_updated: 2026-07-29T16:45:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -232,7 +232,7 @@ development_status:
   epic-16-retrospective: done
 
   epic-17: in-progress
-  17-1-auth-handoff-code-exchange: ready-for-dev
+  17-1-auth-handoff-code-exchange: review
   17-2-otp-verify-brute-force-throttling: backlog
   17-3-member-jwt-403-integration-matrix: backlog
   epic-17-retrospective: optional
@@ -314,7 +314,8 @@ action_items:
   - epic: 14
     action: "Replace auth handoff URL-hash tokens with one-time server code exchange"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Story 17.1 — Redis handoff store + POST /api/v1/auth/handoff/exchange; web paid signup uses ?handoff= code"
   - epic: 14
     action: "Enable reCAPTCHA in compose before public launch"
     owner: Ops

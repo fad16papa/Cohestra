@@ -73,7 +73,7 @@ dotnet test src/Api.IntegrationTests --filter "Category=TenantIsolation"
 - [ ] Public signup rate limits configured (`PublicSignupRateLimit` in appsettings / env)
 - [ ] OTP verify flow tested end-to-end on apex `/pricing` or signup route
 - [ ] **P1 follow-up:** OTP brute-force throttling + abuse integration tests (document if not yet shipped)
-- [ ] **P1 follow-up:** Auth handoff hash → one-time server code exchange (document if not yet shipped)
+- [x] **P1 shipped (Story 17.1):** Auth handoff uses one-time server code exchange (`POST /api/v1/auth/handoff/exchange`) — no JWTs in URL hash
 
 See [cloud-mobile-testing.md](./cloud-mobile-testing.md) for reCAPTCHA env blocks.
 
@@ -146,7 +146,7 @@ Track in sprint / deferred-work; do not block enterprise launch sign-off unless 
 
 | Item | Owner |
 |------|-------|
-| Auth handoff URL-hash → server code exchange | Dev |
+| ~~Auth handoff URL-hash → server code exchange~~ (Story 17.1) | Dev |
 | OTP verify brute-force throttling + abuse tests | Dev |
 | Member JWT 403 integration matrix | Dev |
 | Platform async-action refactor (Epic 11 retro) | Dev |

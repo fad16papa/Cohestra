@@ -1,60 +1,49 @@
 import type { AuthSession } from "@/lib/auth-storage";
+import { getPublicApiBaseUrl } from "@/lib/api";
 
-export function buildAuthHandoffUrl(
+export async function exchangeAuthHandoff(code: string): Promise<AuthSession | null> {
+  const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/handoff/exchange`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  });
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    return null;
+  }
+
+  const accessToken = raw.accessToken ?? raw.AccessToken;
+  const refreshToken = raw.refreshToken ?? raw.RefreshToken;
+  const expiresInSeconds = raw.expiresInSeconds ?? raw.ExpiresInSeconds;
+
+  if (
+    typeof accessToken !== "string"
+    || typeof refreshToken !== "string"
+    || typeof expiresInSeconds !== "number"
+  ) {
+    return null;
+  }
+
+  return {
+    accessToken,
+    refreshToken,
+    expiresAt: Date.now() + expiresInSeconds * 1000,
+  };
+}
+
+export function buildCheckoutHandoffUrl(
   tenantDashboardBase: string,
-  session: AuthSession,
-  path: string,
+  handoffCode: string,
   query?: Record<string, string>
 ): string {
-  const url = new URL(path, tenantDashboardBase);
+  const url = new URL("/billing/checkout", tenantDashboardBase);
+  url.searchParams.set("handoff", handoffCode);
   if (query) {
     for (const [key, value] of Object.entries(query)) {
       url.searchParams.set(key, value);
     }
   }
 
-  const hash = new URLSearchParams({
-    access_token: session.accessToken,
-    refresh_token: session.refreshToken,
-    expires_at: String(session.expiresAt),
-  });
-  url.hash = hash.toString();
   return url.toString();
-}
-
-export function consumeAuthHandoffFromHash(): AuthSession | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const rawHash = window.location.hash.replace(/^#/, "");
-  if (!rawHash) {
-    return null;
-  }
-
-  const params = new URLSearchParams(rawHash);
-  const accessToken = params.get("access_token");
-  const refreshToken = params.get("refresh_token");
-  const expiresAtRaw = params.get("expires_at");
-
-  if (
-    !accessToken
-    || !refreshToken
-    || !expiresAtRaw
-    || Number.isNaN(Number(expiresAtRaw))
-  ) {
-    return null;
-  }
-
-  window.history.replaceState(
-    null,
-    "",
-    `${window.location.pathname}${window.location.search}`
-  );
-
-  return {
-    accessToken,
-    refreshToken,
-    expiresAt: Number(expiresAtRaw),
-  };
 }

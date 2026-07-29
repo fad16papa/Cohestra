@@ -15,10 +15,12 @@ export type PublicSignupResult = {
 };
 
 export type SignupVerifyResult = {
-  accessToken: string;
-  refreshToken: string;
-  expiresInSeconds: number;
   tenantSlug: string;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresInSeconds?: number;
+  handoffCode?: string;
+  handoffExpiresInSeconds?: number;
 };
 
 function parseProblem(raw: Record<string, unknown>): string {
@@ -150,6 +152,7 @@ export async function verifySignupEmail(payload: {
   email: string;
   code: string;
   tenantSlug: string;
+  forCheckout?: boolean;
 }): Promise<{ ok: true; result: SignupVerifyResult } | { ok: false; message: string }> {
   const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/public/signup/verify-email`, {
     method: "POST",
@@ -158,6 +161,7 @@ export async function verifySignupEmail(payload: {
       email: payload.email,
       code: payload.code,
       tenantSlug: payload.tenantSlug,
+      forCheckout: payload.forCheckout === true,
     }),
   });
 
@@ -167,26 +171,41 @@ export async function verifySignupEmail(payload: {
     return { ok: false, message: parseProblem(raw) };
   }
 
+  const tenantSlug = raw.tenantSlug ?? raw.TenantSlug;
+  if (typeof tenantSlug !== "string") {
+    return { ok: false, message: "Invalid verification response." };
+  }
+
+  const handoffCode = raw.handoffCode ?? raw.HandoffCode;
+  const handoffExpiresInSeconds = raw.handoffExpiresInSeconds ?? raw.HandoffExpiresInSeconds;
+
+  if (typeof handoffCode === "string" && handoffCode.length > 0) {
+    return {
+      ok: true,
+      result: {
+        tenantSlug,
+        handoffCode,
+        handoffExpiresInSeconds:
+          typeof handoffExpiresInSeconds === "number" ? handoffExpiresInSeconds : 120,
+      },
+    };
+  }
+
   const accessToken = raw.accessToken ?? raw.AccessToken;
   const refreshToken = raw.refreshToken ?? raw.RefreshToken;
   const expiresInSeconds = raw.expiresInSeconds ?? raw.ExpiresInSeconds;
-  const tenantSlug = raw.tenantSlug ?? raw.TenantSlug;
 
-  if (
-    typeof accessToken !== "string"
-    || typeof refreshToken !== "string"
-    || typeof tenantSlug !== "string"
-  ) {
+  if (typeof accessToken !== "string" || typeof refreshToken !== "string") {
     return { ok: false, message: "Invalid verification response." };
   }
 
   return {
     ok: true,
     result: {
+      tenantSlug,
       accessToken,
       refreshToken,
       expiresInSeconds: typeof expiresInSeconds === "number" ? expiresInSeconds : 900,
-      tenantSlug,
     },
   };
 }

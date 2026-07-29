@@ -65,6 +65,12 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             return;
         }
 
+        if (IsTenantBoundAnonymousAuthPath(path))
+        {
+            await HandlePublicAsync(context, hostResolver, currentTenant, logger);
+            return;
+        }
+
         if (RequiresAdminTenantAlignment(path))
         {
             await HandleAdminAsync(context, hostResolver, currentTenant, logger);
@@ -245,6 +251,13 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         return value.StartsWith("/health", StringComparison.OrdinalIgnoreCase)
             || value.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase)
             || value.Equals("/favicon.ico", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Anonymous auth on tenant Host — e.g. post-signup handoff exchange (Story 17.1).</summary>
+    internal static bool IsTenantBoundAnonymousAuthPath(PathString path)
+    {
+        var value = path.Value?.TrimEnd('/') ?? string.Empty;
+        return value.Equals("/api/v1/auth/handoff/exchange", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Anonymous auth surfaces — Host binding remains in AuthService.</summary>
