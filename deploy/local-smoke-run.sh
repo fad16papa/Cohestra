@@ -164,6 +164,20 @@ else
   skip "creativorare tenant not in this DB (${CREATIVORARE:0:120})"
 fi
 
+# 14. Enterprise apex — marketing /pricing (optional; set PUBLIC_BASE_URL e.g. http://localhost:8088)
+if [[ -n "${PUBLIC_BASE_URL:-}" ]]; then
+  PRICING_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
+    -H "Host: cohestra.app:8088" \
+    "${PUBLIC_BASE_URL%/}/pricing" || true)
+  if [[ "$PRICING_CODE" == "200" ]]; then
+    pass "Apex /pricing returns 200 (cohestra.app host)"
+  else
+    fail "Apex /pricing returned ${PRICING_CODE} — add 127.0.0.1 cohestra.app to hosts"
+  fi
+else
+  skip "PUBLIC_BASE_URL unset — apex /pricing check skipped"
+fi
+
 echo ""
 echo "=== Summary ==="
 echo "Passed: ${PASS} | Failed: ${FAIL} | Skipped: ${SKIP}"

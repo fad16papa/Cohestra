@@ -128,7 +128,9 @@ For client UAT on Ubuntu with Docker + nginx + HTTPS, see **[docs/deploy/digital
 
 **SendGrid (live production delivery, required):** [docs/deploy/sendgrid-production.md](docs/deploy/sendgrid-production.md)
 
-Pre-handoff QA: **[UAT polish checklist](docs/deploy/uat-polish-checklist.md)**.
+**Enterprise launch (multi-tenant):** [docs/deploy/enterprise-launch-checklist.md](docs/deploy/enterprise-launch-checklist.md) — use before public launch.
+
+Legacy single-operator pre-handoff QA: **[UAT polish checklist](docs/deploy/uat-polish-checklist.md)**.
 
 **CI/CD (GitHub Actions → droplet):** [docs/deploy/github-actions-cd.md](docs/deploy/github-actions-cd.md)
 
