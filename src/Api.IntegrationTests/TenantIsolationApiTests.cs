@@ -1,9 +1,11 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Contracts.Platform;
 using Cohestra.Contracts.Site;
+using Cohestra.Contracts.PublicDoor;
 using Cohestra.Domain.Registrations;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
@@ -193,17 +195,90 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         Assert.DoesNotContain(foreignSlug, csv, StringComparison.Ordinal);
     }
 
-    private async Task<TenantResponse> CreateForeignTenantAsync()
+    private async Task<TenantResponse> CreateForeignTenantAsync(string? name = null)
     {
         using var platformClient = Factory.CreateClient();
         var platformToken = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platformClient);
         IntegrationTestHelpers.UseBearerToken(platformClient, platformToken);
 
         var slug = $"iso-{Guid.NewGuid():N}"[..12];
+        var tenantName = name ?? "Isolation Tenant B";
         return await IntegrationTestHelpers.CreateTenantViaPlatformAsync(
             platformClient,
-            "Isolation Tenant B",
+            tenantName,
             slug,
             $"admin@{slug}.test");
+    }
+
+    [SkippableFact]
+    public async Task PublicDoor_OnTenantAHost_DoesNotExposeForeignTenantSlugOrName()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        const string foreignMarker = "TENANT_B_DOOR_ISOLATION_MARKER";
+        var tenantB = await CreateForeignTenantAsync(foreignMarker);
+        var foreignSlug = tenantB.Slug;
+        var foreignActivitySlug = $"iso-door-{Guid.NewGuid():N}"[..20];
+        await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            tenantB.Id,
+            foreignActivitySlug,
+            foreignMarker);
+
+        var tenantASlug = $"iso-a-{Guid.NewGuid():N}"[..20];
+        await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, tenantASlug);
+
+        using var tenantAClient = Factory.CreateClient();
+        IntegrationTestHelpers.UseTenantHost(tenantAClient, TenantIds.DefaultSlug);
+
+        using var doorResponse = await tenantAClient.GetAsync("/api/v1/public/door");
+        doorResponse.EnsureSuccessStatusCode();
+
+        var body = await doorResponse.Content.ReadAsStringAsync();
+        var door = JsonSerializer.Deserialize<PublicDoorResponse>(body, IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(door);
+        Assert.Equal("active", door.Kind);
+        Assert.Equal(TenantIds.DefaultSlug, door.TenantSlug);
+
+        Assert.DoesNotContain(foreignMarker, body, StringComparison.Ordinal);
+        Assert.DoesNotContain(foreignSlug, body, StringComparison.Ordinal);
+        Assert.DoesNotContain(tenantB.Name, body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(door.StubActivities, activity => activity.Slug == foreignActivitySlug);
+        Assert.DoesNotContain(
+            door.StubActivities,
+            activity => activity.Name.Contains(foreignMarker, StringComparison.Ordinal));
+        if (door.Site?.UpcomingActivities is { Count: > 0 } upcoming)
+        {
+            Assert.DoesNotContain(upcoming, activity => activity.Slug == foreignActivitySlug);
+            Assert.DoesNotContain(
+                upcoming,
+                activity => activity.Name.Contains(foreignMarker, StringComparison.Ordinal));
+        }
+    }
+
+    [SkippableFact]
+    public async Task PublicDoor_CrossTenantActivitySlug_OnTenantAHost_Returns404()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        const string foreignMarker = "TENANT_B_DOOR_ACTIVITY_MARKER";
+        var foreignSlug = $"iso-door-{Guid.NewGuid():N}"[..20];
+        await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            tenantB.Id,
+            foreignSlug,
+            foreignMarker);
+
+        using var tenantAClient = Factory.CreateClient();
+        IntegrationTestHelpers.UseTenantHost(tenantAClient, TenantIds.DefaultSlug);
+
+        using var activityResponse = await tenantAClient.GetAsync(
+            $"/api/v1/public/activities/{foreignSlug}");
+        Assert.Equal(HttpStatusCode.NotFound, activityResponse.StatusCode);
+
+        var activityBody = await activityResponse.Content.ReadAsStringAsync();
+        // ProblemDetails.Instance echoes the request path (may include {slug}); assert no tenant payload leaked.
+        Assert.DoesNotContain(foreignMarker, activityBody, StringComparison.Ordinal);
     }
 }
