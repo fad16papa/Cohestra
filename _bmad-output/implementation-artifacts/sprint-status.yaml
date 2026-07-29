@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-26T13:20:00Z
+# last_updated: 2026-07-29T14:15:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -40,12 +40,11 @@
 # - Stories can be worked in parallel if team capacity allows
 # - Developer typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
-# - Enterprise next story: 11-1 via bmad-create-story (CS)
-# - Epic 16 v1 done (16.1–16.3); parked items (custom domain, thin email, tickets) stay in epics-cohestra-enterprise.md
-# - Next UAT polish: uat-handoff-checklist
+# - Enterprise delivery complete (Epics 11–16 v1); next milestone: enterprise-launch-checklist
+# - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-07-26T13:20:00Z
+last_updated: 2026-07-29T14:15:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -130,7 +129,7 @@ development_status:
   epic-7-retrospective: optional
 
   # UAT polish (post–Epic 7, pre–client handoff) — see uat-polish-implementation-log.md
-  uat-polish: in-progress
+  uat-polish: done
   uat-ui-dashboard-clients: done
   uat-ui-client-profile-multi-activity: done
   uat-settings-brand-accent: done
@@ -151,9 +150,10 @@ development_status:
   uat-form-drag-reorder: done
   uat-archive-delete-modals: done
   uat-toast-theme-reports-polish: done
-  uat-handoff-checklist: backlog
+  uat-handoff-checklist: cancelled  # single-operator handoff — superseded by enterprise launch checklist
+  enterprise-launch-checklist: backlog
 
-  epic-8: backlog
+  epic-8: superseded  # RBAC pulled forward into Epic 12
   epic-8-retrospective: optional
 
   epic-9: done
@@ -187,21 +187,21 @@ development_status:
   11-3-platform-admin-provision-suspend-reactivate-archive: done
   11-4-platform-tenant-directory-and-health: done
   11-5-complimentary-sponsored-tenant-flag: done
-  epic-11-retrospective: optional
+  epic-11-retrospective: done
 
   epic-12: done
   12-1-tenantmembership-and-remove-single-operator-gate: done
   12-2-jwt-tenant-id-and-tenant-scoped-login: done
   12-3-enforce-admin-vs-member-server-side: done
   12-4-platform-admin-role-claim: done
-  epic-12-retrospective: optional
+  epic-12-retrospective: done
 
   epic-13: done
   13-1-tenantresolutionmiddleware-on-all-api-requests: done
   13-2-ef-global-query-filters-and-redis-tenant-namespaces: done
   13-3-export-and-report-queries-always-filter-by-tenantid: done
   13-4-tenantisolation-integration-test-gate-sm-1: done
-  epic-13-retrospective: optional
+  epic-13-retrospective: done
 
   epic-14: done
   14-1-midnight-atelier-tokens-marketing-home-and-pricing: done
@@ -212,7 +212,7 @@ development_status:
   14-6-team-invite-and-seatgate: done
   14-7-customer-portal-period-end-cancel-downgrade-over-limit: done
   14-8-trial-reminders-delinquency-jobs-and-basic-dormancy: done
-  epic-14-retrospective: optional
+  epic-14-retrospective: done
 
   epic-15: done
   15-1-subdomain-routing-nginx-next-js-host: done
@@ -222,7 +222,7 @@ development_status:
   15-5-plan-gated-reports-basic-fixed-core-queryable-pro: done
   15-6-pro-only-campaigns-and-per-tenant-email-branding: done
   15-7-suspended-maintenance-and-archived-404-public-states: done
-  epic-15-retrospective: optional
+  epic-15-retrospective: done
 
   # Epic 16 v1 scope done (16.1–16.3); parked items (custom domain, thin email, tickets) remain in epics-cohestra-enterprise.md
   epic-16: done
@@ -246,7 +246,7 @@ action_items:
     action: "Product gate: Epic 16 parked items vs uat-handoff-checklist as next priority"
     owner: Product
     status: done
-    resolution: "Proceed to uat-handoff-checklist; Epic 16 parked items stay parked until product pull-forward"
+    resolution: "Proceed to enterprise-launch-checklist; Epic 16 parked items stay parked until product pull-forward"
   - epic: 16
     action: "Use dedicated client API modules when adding client-side fetches (no server imports in shared API files)"
     owner: Dev
@@ -261,7 +261,7 @@ action_items:
     action: "Deploy to UAT droplet with SitePage migrations and verify seed + public homepage"
     owner: Dev
     status: done
-    resolution: "Superseded — local Docker UAT + enterprise multi-tenant stack; droplet deploy deferred to uat-handoff-checklist"
+    resolution: "Superseded — local Docker UAT + enterprise multi-tenant stack; droplet deploy in enterprise-launch-checklist"
   - epic: 9
     action: "Run operator UAT checklist for website builder (draft, preview, publish, preset, revert, branding)"
     owner: Operator
@@ -276,4 +276,54 @@ action_items:
     action: "Triage Epic 9 deferred-work — prioritize router unsaved guard, login ISR lag, preview token hardening"
     owner: Product
     status: done
-    resolution: "Deferred items remain in deferred-work.md; no new hardening epic until uat-handoff-checklist complete"
+    resolution: "Deferred items remain in deferred-work.md; enterprise-launch-checklist is next milestone"
+
+  # Epic 11–15 retrospective action items (enterprise launch hardening backlog)
+  - epic: 11
+    action: "Extract shared async-action pattern from platform tenant detail page"
+    owner: Dev
+    status: open
+  - epic: 11
+    action: "Close skippable platform integration tests when CI stack required"
+    owner: Dev
+    status: open
+  - epic: 12
+    action: "Add live-stack integration authz cases (Member 403, tenant JWT blocked on /platform/*)"
+    owner: Dev
+    status: open
+  - epic: 12
+    action: "Document DEV_TENANT_SLUG / apex fallback in deploy ops notes"
+    owner: Dev
+    status: open
+  - epic: 13
+    action: "Wire GitHub branch protection for SM-1 unit + API gate required checks"
+    owner: Ops
+    status: open
+  - epic: 13
+    action: "Extend SM-1 for public door and cross-tenant registration slug rejection"
+    owner: Dev
+    status: open
+  - epic: 14
+    action: "Replace auth handoff URL-hash tokens with one-time server code exchange"
+    owner: Dev
+    status: open
+  - epic: 14
+    action: "Enable reCAPTCHA in compose before public launch"
+    owner: Ops
+    status: open
+  - epic: 14
+    action: "Add OTP brute-force throttling and signup abuse integration tests"
+    owner: Dev
+    status: open
+  - epic: 15
+    action: "Document integration test Pro bootstrap (EnsureDefaultTenantProPlanAsync) in project-context or test README"
+    owner: Dev
+    status: open
+  - epic: 15
+    action: "Product gate: nip.io apex tightening vs enterprise launch checklist priority"
+    owner: Product
+    status: open
+  - epic: 15
+    action: "Schedule sender settings UI story (15.6 defer) or accept provisioned-email-only for v1 launch"
+    owner: Product
+    status: open
