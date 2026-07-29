@@ -1127,3 +1127,93 @@ Share kit, custom domain, thin confirm/reminder/thank-you automations, paid tick
 | Thin email automations (confirm/reminder/thank-you) | One-stop Lite; not HubSpot-depth | After registration volume evidence |
 | Paid tickets (Stripe Checkout on activity) | v1.2 | After free registration product-market fit |
 | Seat add-ons (+$15) | P5 deferred | If Core→Pro seat pressure dominates upgrades |
+
+## Epic 17: P1 Launch Hardening
+
+Post–enterprise-launch-checklist security and abuse hardening required before public production launch. Sourced from Epic 12–14 retrospectives and `docs/deploy/enterprise-launch-checklist.md` P1 backlog.
+
+**FRs touched:** FR-26 (abuse controls), FR-4/5/7 (authz evidence), auth security NFR  
+**Not in scope:** Epic 16 parked items, reCAPTCHA prod key enable (ops), nip.io tightening (product)
+
+### Story 17.1: Auth handoff one-time code exchange
+
+As a **Tenant Admin completing paid signup**,
+I want **my session passed to checkout via a one-time server code instead of JWTs in the URL hash**,
+So that **tokens never appear in browser history, referrer headers, or server access logs**.
+
+**Acceptance Criteria:**
+
+**Given** successful signup email verification on a Core/Pro plan path  
+**When** the client redirects to `{tenant}/billing/checkout`  
+**Then** the redirect URL contains a short-lived `handoff` query code only — **no** `access_token`, `refresh_token`, or `expires_at` in the URL hash or query
+
+**Given** a valid unused handoff code on the correct tenant Host  
+**When** `POST /api/v1/auth/handoff/exchange` is called with the code  
+**Then** the API returns a normal `AuthTokenResponse` (access + refresh + expiry)  
+**And** the code is consumed (single-use)
+
+**Given** an expired, reused, or unknown handoff code  
+**When** exchange is attempted  
+**Then** the API returns 400 with ProblemDetails (no token leak)
+
+**Given** a handoff code issued for tenant A  
+**When** exchange is attempted on tenant B Host  
+**Then** the API returns 400/403 fail-closed
+
+**Given** Basic (free) signup verify success  
+**When** the user is redirected to the tenant dashboard  
+**Then** existing direct session behavior is unchanged (no handoff code required)
+
+**Given** the legacy hash-based handoff  
+**When** Epic 17.1 ships  
+**Then** `buildAuthHandoffUrl` / `consumeAuthHandoffFromHash` hash token path is removed or reduced to backward-compat shim with tests proving paid path uses code exchange only
+
+### Story 17.2: OTP verify brute-force throttling and signup abuse tests
+
+As a **platform operator**,
+I want **signup OTP verify brute-force protection and CI abuse coverage**,
+So that **attackers cannot guess verification codes and regressions are caught before launch**.
+
+**Acceptance Criteria:**
+
+**Given** repeated failed OTP verify attempts for the same email (and/or client IP)  
+**When** attempts exceed configured threshold within the window  
+**Then** further verify attempts return 429 with ProblemDetails (`errorCode` signup_verify_rate_limited or equivalent)  
+**And** successful verify still works after window expires (or after correct code before lockout)
+
+**Given** integration test stack (Postgres + Redis)  
+**When** abuse tests run in CI  
+**Then** cases cover at minimum:
+
+1. Invalid/missing CAPTCHA token → signup rejected  
+2. Signup IP rate limit → 429 after threshold  
+3. `registrationClosed=true` → signup 403  
+4. OTP verify brute-force → 429 after threshold
+
+**Given** existing successful-signup-only IP counter (Story 14.3)  
+**When** verify throttling ships  
+**Then** verify failures count toward abuse limits independently (documented in story/dev notes)
+
+### Story 17.3: Member JWT 403 integration matrix
+
+As a **platform operator**,
+I want **live-stack integration proof that Member and tenant JWTs cannot access forbidden routes**,
+So that **Epic 12 authz policies are evidenced beyond unit tests before launch**.
+
+**Acceptance Criteria:**
+
+**Given** a TenantMember JWT on the tenant Host  
+**When** calling admin-only routes (e.g. Team invite create, Billing checkout session, TenantAdmin settings)  
+**Then** each returns **403** with ProblemDetails
+
+**Given** a tenant-scoped JWT (Admin or Member)  
+**When** calling `/api/v1/platform/*` routes  
+**Then** each returns **403** (tenant JWT blocked from platform namespace)
+
+**Given** a Platform Admin JWT  
+**When** calling a representative platform route  
+**Then** request succeeds (positive control)
+
+**Given** CI integration job  
+**When** tests run  
+**Then** new cases use `[Trait("Category", "TenantIsolation")]` or dedicated `Authz` trait and are non-skipped when Postgres/Redis available
