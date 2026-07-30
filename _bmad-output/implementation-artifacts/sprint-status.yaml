@@ -234,7 +234,7 @@ development_status:
   epic-17: in-progress
   17-1-auth-handoff-code-exchange: done
   17-2-otp-verify-brute-force-throttling: done
-  17-3-member-jwt-403-integration-matrix: backlog
+  17-3-member-jwt-403-integration-matrix: review
   epic-17-retrospective: optional
 
 action_items:
@@ -296,7 +296,8 @@ action_items:
   - epic: 12
     action: "Add live-stack integration authz cases (Member 403, tenant JWT blocked on /platform/*)"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Story 17.3 — TenantAuthzIntegrationTests (Member admin 403, tenant JWT platform 403, platform admin 200)"
   - epic: 12
     action: "Document DEV_TENANT_SLUG / apex fallback in deploy ops notes"
     owner: Dev

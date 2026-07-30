@@ -36,6 +36,9 @@ CI runs TenantIsolation tests in the integration job; branch protection should r
 | `IntegrationTestHelpers.CreateTenantViaPlatformAsync` | Provision Tenant B via platform admin API |
 | `IntegrationTestHelpers.SeedPublishedActivityForTenantAsync` | Seed activity on a specific tenant |
 | `IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(services)` | **Canonical Pro bootstrap** — call before tests needing reports, site builder, or campaigns |
+| `IntegrationTestHelpers.CreateTenantAdminUserAsync` | Seed TenantAdmin user + membership on a tenant |
+| `IntegrationTestHelpers.CreateTenantMemberUserAsync` | Seed TenantMember user + membership on a tenant |
+| `IntegrationTestHelpers.MintTenantAccessToken` | Mint tenant-scoped JWT with chosen membership role |
 
 Default tenant (`TenantIds.Default` / slug `default`) migrates as **Basic**. Plan gates block Pro-only admin flows until `EnsureDefaultTenantProPlanAsync` runs (wired in the integration test factory for the default tenant).
 

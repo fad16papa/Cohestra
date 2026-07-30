@@ -193,6 +193,48 @@ internal static class IntegrationTestHelpers
     }
 
     /// <summary>
+    /// Creates an Identity user and TenantMember membership for the given tenant.
+    /// </summary>
+    internal static async Task<(ApplicationUser User, string Password)> CreateTenantMemberUserAsync(
+        IServiceProvider services,
+        Guid tenantId,
+        string email,
+        string password = "ChangeMe123!")
+    {
+        await using var scope = services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var membership = scope.ServiceProvider.GetRequiredService<ITenantMembershipService>();
+
+        var user = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+        };
+
+        var createResult = await userManager.CreateAsync(user, password);
+        if (!createResult.Succeeded)
+        {
+            throw new InvalidOperationException(
+                "Failed to create tenant member user: " +
+                string.Join("; ", createResult.Errors.Select(e => e.Description)));
+        }
+
+        var membershipResult = await membership.EnsureMembershipAsync(
+            user.Id,
+            tenantId,
+            TenantMembershipRole.TenantMember);
+        if (!membershipResult.Succeeded)
+        {
+            throw new InvalidOperationException(
+                $"Failed to ensure TenantMember membership: {membershipResult.Detail}");
+        }
+
+        return (user, password);
+    }
+
+    /// <summary>
     /// Direct JWT mint for a tenant-scoped session (bypasses login Host binding when needed).
     /// </summary>
     internal static string MintTenantAccessToken(
