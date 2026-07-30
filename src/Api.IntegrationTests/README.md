@@ -46,3 +46,4 @@ Default tenant (`TenantIds.Default` / slug `default`) migrates as **Basic**. Pla
 
 - `_bmad-output/project-context.md` — Testing Rules
 - `TenantIsolationApiTests.cs` — SM-1 negative-case patterns
+- `TenantAuthzIntegrationTests.cs` — Epic 12 membership + platform authz matrix (Story 17.3)

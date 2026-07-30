@@ -6,7 +6,7 @@ story: 3
 
 # Story 17.3: Member JWT 403 integration matrix
 
-Status: review
+Status: done
 
 ## Story
 
