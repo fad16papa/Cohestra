@@ -46,7 +46,7 @@ public sealed class RedisAuthHandoffStore(
         var db = redis.GetDatabase();
         var key = GetKey(code.Trim());
         var ttl = await db.KeyTimeToLiveAsync(key);
-        if (ttl is null or <= TimeSpan.Zero)
+        if (ttl is null || ttl <= TimeSpan.Zero)
         {
             return null;
         }
