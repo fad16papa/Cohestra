@@ -148,7 +148,7 @@ Track in sprint / deferred-work; do not block enterprise launch sign-off unless 
 |------|-------|
 | ~~Auth handoff URL-hash → server code exchange~~ (Story 17.1) | Dev |
 | ~~OTP verify brute-force throttling + abuse tests~~ (Story 17.2) | Dev |
-| Member JWT 403 integration matrix | Dev |
+| ~~Member JWT 403 integration matrix~~ (Story 17.3) | Dev |
 | Platform async-action refactor (Epic 11 retro) | Dev |
 | Close skippable platform integration tests in CI | Dev |
 | Sender settings UI vs provisioned email | Product |
