@@ -7,13 +7,19 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Cohestra.Api.IntegrationTests.Infrastructure;
 
-public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory<Program>
+public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Program>
 {
     public bool IsAvailable { get; private set; }
 
     public string? SkipReason { get; private set; }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        ApplyDefaultSettings(builder);
+        ConfigureTestServices(builder);
+    }
+
+    protected virtual void ApplyDefaultSettings(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
 
@@ -42,7 +48,12 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
         builder.UseSetting("SelfServeSignup:Recaptcha:TestBypassToken", "test-captcha-pass");
         builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerHour", "1000");
         builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerDay", "1000");
+        builder.UseSetting("PublicSignupVerifyRateLimit:MaxFailedAttemptsPerWindow", "1000");
+        builder.UseSetting("PublicSignupVerifyRateLimit:WindowMinutes", "15");
+    }
 
+    protected virtual void ConfigureTestServices(IWebHostBuilder builder)
+    {
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IEmailSender>();
