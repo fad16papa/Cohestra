@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Application.Auth;
 using Cohestra.Contracts.Auth;
+using Cohestra.Contracts.Legal;
 using Cohestra.Contracts.Signup;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
