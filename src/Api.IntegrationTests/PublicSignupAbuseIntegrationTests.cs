@@ -3,14 +3,10 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Application.Auth;
-using Cohestra.Application.Email;
 using Cohestra.Contracts.Legal;
 using Cohestra.Contracts.Signup;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Cohestra.Api.IntegrationTests;
 
@@ -115,7 +111,7 @@ public sealed class PublicSignupAbuseIntegrationTests : IAsyncLifetime
     public async Task Signup_registration_closed_returns_403()
     {
         await using var closedFactory = new PublicSignupAbuseWebApplicationFactory(
-            configure: builder => builder.UseSetting("SelfServeSignup:RegistrationClosed", "true"));
+            extraConfigure: builder => builder.UseSetting("SelfServeSignup:RegistrationClosed", "true"));
         await closedFactory.InitializeAsync();
         IntegrationTestHelpers.SkipIfUnavailable(closedFactory);
 
@@ -203,88 +199,5 @@ public sealed class PublicSignupAbuseIntegrationTests : IAsyncLifetime
         return document.RootElement.TryGetProperty("errorCode", out var code)
             ? code.GetString()
             : null;
-    }
-
-    private sealed class PublicSignupAbuseWebApplicationFactory : WebApplicationFactory<Program>
-    {
-        private readonly Action<IWebHostBuilder>? _configure;
-
-        public PublicSignupAbuseWebApplicationFactory(Action<IWebHostBuilder>? configure = null)
-        {
-            _configure = configure;
-        }
-
-        public bool IsAvailable { get; private set; }
-
-        public string? SkipReason { get; private set; }
-
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
-        {
-            builder.UseEnvironment("Development");
-
-            var postgresConnection = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                ?? "Host=localhost;Port=5432;Database=cohestra_test;Username=crm;Password=crm";
-            var redisConnection = Environment.GetEnvironmentVariable("ConnectionStrings__Redis")
-                ?? "localhost:6379";
-
-            builder.UseSetting("ConnectionStrings:DefaultConnection", postgresConnection);
-            builder.UseSetting("ConnectionStrings:Redis", redisConnection);
-            builder.UseSetting("Jwt:SigningKey", "integration-test-jwt-signing-key-min-32-chars!");
-            builder.UseSetting("OperatorSeed:Email", "operator@cohestra.local");
-            builder.UseSetting("OperatorSeed:Password", "ChangeMe123!");
-            builder.UseSetting("OperatorSeed:Enabled", "true");
-            builder.UseSetting("PlatformAdminSeed:Enabled", "true");
-            builder.UseSetting("PlatformAdminSeed:Email", "platform-admin@cohestra.local");
-            builder.UseSetting("PlatformAdminSeed:Password", "ChangeMe123!");
-            builder.UseSetting("DemoDataSeed:Enabled", "false");
-            builder.UseSetting("SendGrid:ApiKey", "SG.integration-test-key");
-            builder.UseSetting("SendGrid:FromEmail", "operator@cohestra.local");
-            builder.UseSetting("SendGrid:FromName", "Integration Tests");
-            builder.UseSetting("SendGrid:UseSandbox", "true");
-            builder.UseSetting("PublicRegistrationRateLimit:MaxRequests", "1000");
-            builder.UseSetting("SelfServeSignup:RegistrationClosed", "false");
-            builder.UseSetting("SelfServeSignup:Recaptcha:Enabled", "false");
-            builder.UseSetting("SelfServeSignup:Recaptcha:TestBypassToken", "test-captcha-pass");
-            builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerHour", "2");
-            builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerDay", "100");
-            builder.UseSetting("PublicSignupVerifyRateLimit:MaxFailedAttemptsPerWindow", "3");
-            builder.UseSetting("PublicSignupVerifyRateLimit:WindowMinutes", "15");
-
-            _configure?.Invoke(builder);
-
-            builder.ConfigureTestServices(services =>
-            {
-                services.RemoveAll<IEmailSender>();
-                services.AddSingleton<IEmailSender, FakeEmailSender>();
-            });
-        }
-
-        protected override void ConfigureClient(HttpClient client)
-        {
-            client.BaseAddress = new Uri("http://localhost");
-        }
-
-        public async Task InitializeAsync()
-        {
-            try
-            {
-                var client = CreateClient();
-                using var response = await client.GetAsync("/ready");
-                IsAvailable = response.IsSuccessStatusCode;
-
-                if (!IsAvailable)
-                {
-                    SkipReason = $"Dependencies are not ready (GET /ready returned {(int)response.StatusCode}).";
-                    return;
-                }
-
-                await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Services);
-            }
-            catch (Exception ex)
-            {
-                IsAvailable = false;
-                SkipReason = $"Integration dependencies unavailable: {ex.Message}";
-            }
-        }
     }
 }

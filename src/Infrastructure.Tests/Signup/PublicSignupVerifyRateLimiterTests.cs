@@ -1,6 +1,6 @@
 using Cohestra.Infrastructure.Signup;
+using Cohestra.Infrastructure.Tests.Infrastructure;
 using Microsoft.Extensions.Options;
-using StackExchange.Redis;
 
 namespace Cohestra.Infrastructure.Tests.Signup;
 
@@ -9,22 +9,13 @@ public sealed class PublicSignupVerifyRateLimiterTests
     [SkippableFact]
     public async Task Failed_attempts_block_after_threshold_and_clear_on_success()
     {
-        var connection = Environment.GetEnvironmentVariable("ConnectionStrings__Redis") ?? "localhost:6379";
-        IConnectionMultiplexer redis;
-        try
-        {
-            redis = ConnectionMultiplexer.Connect(connection);
-        }
-        catch (RedisConnectionException)
-        {
-            Skip.If(true, "Redis unavailable for PublicSignupVerifyRateLimiterTests.");
-            return;
-        }
+        var redis = RedisTestConnection.TryConnect(out var skipReason);
+        Skip.If(redis is null, skipReason ?? "Redis unavailable for PublicSignupVerifyRateLimiterTests.");
 
         var email = $"verify-limit-{Guid.NewGuid():N}@example.com";
         var clientIp = $"127.0.0.{Random.Shared.Next(10, 200)}";
         var limiter = new RedisPublicSignupVerifyRateLimiter(
-            redis,
+            redis!,
             Options.Create(new PublicSignupVerifyRateLimitOptions
             {
                 MaxFailedAttemptsPerWindow = 3,
