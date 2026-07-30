@@ -75,6 +75,12 @@ So that **tokens never appear in browser history, referrer headers, or server ac
   - [x] 5.1 Update `docs/deploy/enterprise-launch-checklist.md` P1 auth handoff row when done (dev-story completion)
   - [x] 5.2 Mark Epic 14 retro action item (auth handoff) done in sprint-status when story completes
 
+### Review Findings
+
+- [ ] [Review][Patch] Failed handoff exchange + `start=1` redirects to login before error is shown [`web/components/billing/checkout-page-content.tsx:121`]
+- [ ] [Review][Patch] Handoff exchange uses GET then DELETE — concurrent exchanges can both succeed; use atomic GETDEL with tenant-mismatch re-store [`src/Infrastructure/Auth/RedisAuthHandoffStore.cs:48`]
+- [x] [Review][Defer] Handoff code in `?handoff=` query may appear in nginx/proxy access logs on checkout page GET — opaque code + 120s TTL; accepted vs JWT-in-URL tradeoff [`web/lib/auth-handoff.ts:41`] — deferred, story explicitly chose query-param handoff over hash tokens
+
 ## Dev Notes
 
 ### Problem being solved
