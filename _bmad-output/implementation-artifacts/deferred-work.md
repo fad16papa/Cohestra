@@ -1,3 +1,7 @@
+## Deferred from: code review of 17-1-auth-handoff-code-exchange.md (2026-07-30)
+
+- Handoff code in `?handoff=` query may appear in nginx/proxy access logs on checkout page GET — opaque code + 120s TTL; accepted vs JWT-in-URL tradeoff
+
 ## Deferred from: code review of enterprise-launch-checklist.md (2026-07-29)
 
 - CI SM-1 integration job green not verified in cloud agent — confirm on PR #25 before merge

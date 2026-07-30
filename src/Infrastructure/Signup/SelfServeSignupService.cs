@@ -34,6 +34,7 @@ public sealed class SelfServeSignupService(
     IEmailSender emailSender,
     IJwtTokenService jwtTokenService,
     IRefreshTokenStore refreshTokenStore,
+    IAuthHandoffStore authHandoffStore,
     IHostEnvironment hostEnvironment,
     ILogger<SelfServeSignupService> logger,
     IOptions<SelfServeSignupSettings> signupOptions,
@@ -430,11 +431,29 @@ public sealed class SelfServeSignupService(
         }
 
         var issued = await IssueTokensAsync(user, tenant.Id, membership.Role, cancellationToken);
+
+        if (request.ForCheckout)
+        {
+            var (handoffCode, handoffExpiresInSeconds) = await authHandoffStore.CreateAsync(
+                new AuthHandoffPayload(
+                    tenant.Id,
+                    normalizedSlug,
+                    issued.AccessToken,
+                    issued.RefreshToken,
+                    issued.ExpiresInSeconds),
+                cancellationToken);
+
+            return SelfServeSignupResult<SignupVerifyEmailResponse>.Ok(new SignupVerifyEmailResponse(
+                TenantSlug: normalizedSlug,
+                HandoffCode: handoffCode,
+                HandoffExpiresInSeconds: handoffExpiresInSeconds));
+        }
+
         return SelfServeSignupResult<SignupVerifyEmailResponse>.Ok(new SignupVerifyEmailResponse(
-            issued.AccessToken,
-            issued.RefreshToken,
-            issued.ExpiresInSeconds,
-            normalizedSlug));
+            TenantSlug: normalizedSlug,
+            AccessToken: issued.AccessToken,
+            RefreshToken: issued.RefreshToken,
+            ExpiresInSeconds: issued.ExpiresInSeconds));
     }
 
     public async Task<SelfServeSignupResult<SignupMessageResponse>> ResendOtpAsync(

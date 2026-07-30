@@ -78,6 +78,7 @@ public static class DependencyInjection
         services.Configure<OperatorSeedSettings>(configuration.GetSection(OperatorSeedSettings.SectionName));
         services.Configure<PlatformAdminSeedSettings>(configuration.GetSection(PlatformAdminSeedSettings.SectionName));
         services.Configure<AuthOtpSettings>(configuration.GetSection(AuthOtpSettings.SectionName));
+        services.Configure<AuthHandoffOptions>(configuration.GetSection(AuthHandoffOptions.SectionName));
         services.Configure<DemoDataSeedSettings>(configuration.GetSection(DemoDataSeedSettings.SectionName));
         services.Configure<PublicWebOptions>(configuration.GetSection(PublicWebOptions.SectionName));
         services.Configure<PublicRegistrationRateLimitOptions>(
@@ -117,6 +118,7 @@ public static class DependencyInjection
 
         services.AddScoped<IRefreshTokenStore, RedisRefreshTokenStore>();
         services.AddScoped<IAuthOtpStore, RedisOtpStore>();
+        services.AddScoped<IAuthHandoffStore, RedisAuthHandoffStore>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ILegalComplianceService, LegalComplianceService>();

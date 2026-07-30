@@ -1,11 +1,11 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-29T15:12:00Z
+# last_updated: 2026-07-30T15:15:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–16 v1 done)
-# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–16)
+# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–16 v1 done) + Epic 17 P1 hardening
+# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–17)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -40,11 +40,11 @@
 # - Stories can be worked in parallel if team capacity allows
 # - Developer typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
-# - Enterprise delivery complete (Epics 11–16 v1); next milestone: enterprise-launch-checklist
+# - Enterprise delivery complete (Epics 11–16 v1); enterprise-launch-checklist done; Epic 17 P1 hardening in progress
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-07-29T15:12:00Z
+last_updated: 2026-07-30T15:15:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -231,6 +231,12 @@ development_status:
   16-3-homepage-whatsapp-copy: done
   epic-16-retrospective: done
 
+  epic-17: in-progress
+  17-1-auth-handoff-code-exchange: done
+  17-2-otp-verify-brute-force-throttling: backlog
+  17-3-member-jwt-403-integration-matrix: backlog
+  epic-17-retrospective: optional
+
 action_items:
   - epic: 16
     action: "Run Epic 16 UAT on local Docker: Share kit, OG unfurl, homepage WhatsApp, publish tenant URL"
@@ -308,7 +314,8 @@ action_items:
   - epic: 14
     action: "Replace auth handoff URL-hash tokens with one-time server code exchange"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Story 17.1 — Redis handoff store + POST /api/v1/auth/handoff/exchange; web paid signup uses ?handoff= code"
   - epic: 14
     action: "Enable reCAPTCHA in compose before public launch"
     owner: Ops

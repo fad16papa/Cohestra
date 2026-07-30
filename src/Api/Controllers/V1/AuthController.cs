@@ -1,4 +1,5 @@
 using Cohestra.Application.Auth;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Auth;
 using Cohestra.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
@@ -10,7 +11,10 @@ namespace Cohestra.Api.Controllers.V1;
 [ApiController]
 [Route("api/v1/auth")]
 [Produces("application/json")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController(
+    IAuthService authService,
+    IAuthHandoffStore authHandoffStore,
+    ICurrentTenant currentTenant) : ControllerBase
 {
     [HttpGet("onboarding")]
     [ProducesResponseType(typeof(OnboardingStatusResponse), StatusCodes.Status200OK)]
@@ -70,6 +74,39 @@ public class AuthController(IAuthService authService) : ControllerBase
         }
 
         return Ok(tokens);
+    }
+
+    [HttpPost("handoff/exchange")]
+    [ProducesResponseType(typeof(AuthTokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<AuthTokenResponse>> ExchangeHandoff(
+        [FromBody] AuthHandoffExchangeRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.Code))
+        {
+            return BadRequestProblem("Invalid or expired handoff code.");
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        {
+            return BadRequestProblem("Invalid or expired handoff code.");
+        }
+
+        var payload = await authHandoffStore.ExchangeAsync(
+            request.Code.Trim(),
+            currentTenant.TenantId.Value,
+            cancellationToken);
+
+        if (payload is null)
+        {
+            return BadRequestProblem("Invalid or expired handoff code.");
+        }
+
+        return Ok(new AuthTokenResponse(
+            payload.AccessToken,
+            payload.RefreshToken,
+            payload.ExpiresInSeconds));
     }
 
     [HttpPost("resend-otp")]

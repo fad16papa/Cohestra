@@ -18,7 +18,7 @@ import {
   resendSignupOtp,
   verifySignupEmail,
 } from "@/lib/signup/signup-api";
-import { buildAuthHandoffUrl } from "@/lib/auth-handoff";
+import { buildCheckoutHandoffUrl } from "@/lib/auth-handoff";
 
 function SignupVerifyContent() {
   const router = useRouter();
@@ -47,10 +47,13 @@ function SignupVerifyContent() {
     setInfo(null);
     setSubmitting(true);
 
+    const isPaidPlan = plan === "core" || plan === "pro";
+
     const result = await verifySignupEmail({
       email,
       code: code.trim(),
       tenantSlug,
+      forCheckout: isPaidPlan,
     });
 
     if (!result.ok) {
@@ -59,22 +62,37 @@ function SignupVerifyContent() {
       return;
     }
 
-    const session = createAuthSession(
-      result.result.accessToken,
-      result.result.refreshToken,
-      result.result.expiresInSeconds
-    );
-
-    const isPaidPlan = plan === "core" || plan === "pro";
     if (isPaidPlan) {
+      if (!result.result.handoffCode) {
+        setSubmitting(false);
+        setError("Could not start checkout. Try signing in from your workspace.");
+        return;
+      }
+
       const tenantBase = buildTenantDashboardUrl(tenantSlug).replace(/\/dashboard$/, "");
-      window.location.href = buildAuthHandoffUrl(tenantBase, session, "/billing/checkout", {
+      window.location.href = buildCheckoutHandoffUrl(tenantBase, result.result.handoffCode, {
         plan: plan!,
         interval,
         start: "1",
       });
       return;
     }
+
+    if (
+      !result.result.accessToken
+      || !result.result.refreshToken
+      || !result.result.expiresInSeconds
+    ) {
+      setSubmitting(false);
+      setError("Invalid verification response.");
+      return;
+    }
+
+    const session = createAuthSession(
+      result.result.accessToken,
+      result.result.refreshToken,
+      result.result.expiresInSeconds
+    );
 
     setAuthSession(session);
     setSubmitting(false);
