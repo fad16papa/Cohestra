@@ -42,6 +42,8 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
         builder.UseSetting("SelfServeSignup:Recaptcha:TestBypassToken", "test-captcha-pass");
         builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerHour", "1000");
         builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerDay", "1000");
+        builder.UseSetting("PublicSignupVerifyRateLimit:MaxFailedAttemptsPerWindow", "1000");
+        builder.UseSetting("PublicSignupVerifyRateLimit:WindowMinutes", "15");
 
         builder.ConfigureTestServices(services =>
         {

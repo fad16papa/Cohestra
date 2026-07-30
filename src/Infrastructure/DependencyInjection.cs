@@ -95,6 +95,8 @@ public static class DependencyInjection
         services.Configure<SelfServeSignupSettings>(configuration.GetSection(SelfServeSignupSettings.SectionName));
         services.Configure<PublicSignupRateLimitOptions>(
             configuration.GetSection(PublicSignupRateLimitOptions.SectionName));
+        services.Configure<PublicSignupVerifyRateLimitOptions>(
+            configuration.GetSection(PublicSignupVerifyRateLimitOptions.SectionName));
         services.Configure<StripeSettings>(configuration.GetSection(StripeSettings.SectionName));
 
         services.AddHttpClient(nameof(GoogleRecaptchaVerifier));
@@ -157,6 +159,7 @@ public static class DependencyInjection
         services.AddScoped<RegistrationNumberGenerator>();
         services.AddSingleton<IPublicRegistrationRateLimiter, RedisPublicRegistrationRateLimiter>();
         services.AddSingleton<IPublicSignupRateLimiter, RedisPublicSignupRateLimiter>();
+        services.AddSingleton<IPublicSignupVerifyRateLimiter, RedisPublicSignupVerifyRateLimiter>();
         services.AddSingleton<IRegistrationIdempotencyStore, RedisRegistrationIdempotencyStore>();
         services.AddSingleton<RedisPublicActivityCache>();
         services.AddSingleton<RedisPublishedSiteCache>();

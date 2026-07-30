@@ -51,6 +51,7 @@ public interface ISelfServeSignupService
 
     Task<SelfServeSignupResult<SignupVerifyEmailResponse>> VerifyEmailAsync(
         SignupVerifyEmailRequest request,
+        string? clientIp,
         CancellationToken cancellationToken = default);
 
     Task<SelfServeSignupResult<SignupMessageResponse>> ResendOtpAsync(

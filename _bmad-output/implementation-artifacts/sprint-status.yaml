@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-30T15:15:00Z
+# last_updated: 2026-07-30T16:00:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-07-30T15:15:00Z
+last_updated: 2026-07-30T16:00:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -233,7 +233,7 @@ development_status:
 
   epic-17: in-progress
   17-1-auth-handoff-code-exchange: done
-  17-2-otp-verify-brute-force-throttling: backlog
+  17-2-otp-verify-brute-force-throttling: review
   17-3-member-jwt-403-integration-matrix: backlog
   epic-17-retrospective: optional
 
@@ -324,7 +324,8 @@ action_items:
   - epic: 14
     action: "Add OTP brute-force throttling and signup abuse integration tests"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Story 17.2 — Redis verify failure limiter + PublicSignupAbuseIntegrationTests (captcha, signup 429, registrationClosed, OTP 429)"
   - epic: 15
     action: "Document integration test Pro bootstrap (EnsureDefaultTenantProPlanAsync) in project-context or test README"
     owner: Dev

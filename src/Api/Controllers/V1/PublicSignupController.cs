@@ -68,6 +68,7 @@ public sealed class PublicSignupController(
     [HttpPost("verify-email")]
     [ProducesResponseType(typeof(SignupVerifyEmailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> VerifyEmail(
         [FromBody] SignupVerifyEmailRequest? request,
         CancellationToken cancellationToken)
@@ -82,15 +83,11 @@ public sealed class PublicSignupController(
             });
         }
 
-        var result = await signupService.VerifyEmailAsync(request, cancellationToken);
+        var clientIp = PublicRegistrationRateLimitMiddleware.ResolveClientIdentifier(HttpContext);
+        var result = await signupService.VerifyEmailAsync(request, clientIp, cancellationToken);
         if (!result.Succeeded || result.Value is null)
         {
-            return BadRequest(new ProblemDetails
-            {
-                Title = "Verification failed",
-                Detail = result.Detail ?? "Could not verify email.",
-                Status = StatusCodes.Status400BadRequest,
-            });
+            return MapVerifyFailure(result);
         }
 
         return Ok(result.Value);
@@ -125,6 +122,29 @@ public sealed class PublicSignupController(
         }
 
         return Ok(result.Value);
+    }
+
+    private IActionResult MapVerifyFailure(SelfServeSignupResult<SignupVerifyEmailResponse> result)
+    {
+        if (result.Error == SelfServeSignupError.RateLimited)
+        {
+            var problem = new ProblemDetails
+            {
+                Title = "Too many verification attempts",
+                Detail = result.Detail ?? "Verification limit reached. Try again later.",
+                Status = StatusCodes.Status429TooManyRequests,
+                Type = "https://cohestra.app/errors/signup-verify-rate-limited",
+            };
+            problem.Extensions["errorCode"] = "signup_verify_rate_limited";
+            return StatusCode(StatusCodes.Status429TooManyRequests, problem);
+        }
+
+        return BadRequest(new ProblemDetails
+        {
+            Title = "Verification failed",
+            Detail = result.Detail ?? "Could not verify email.",
+            Status = StatusCodes.Status400BadRequest,
+        });
     }
 
     private IActionResult MapSignupFailure(SelfServeSignupResult<PublicSignupResponse> result)

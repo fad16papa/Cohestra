@@ -35,6 +35,7 @@ public sealed class SelfServeSignupService(
     IJwtTokenService jwtTokenService,
     IRefreshTokenStore refreshTokenStore,
     IAuthHandoffStore authHandoffStore,
+    IPublicSignupVerifyRateLimiter verifyRateLimiter,
     IHostEnvironment hostEnvironment,
     ILogger<SelfServeSignupService> logger,
     IOptions<SelfServeSignupSettings> signupOptions,
@@ -361,11 +362,20 @@ public sealed class SelfServeSignupService(
 
     public async Task<SelfServeSignupResult<SignupVerifyEmailResponse>> VerifyEmailAsync(
         SignupVerifyEmailRequest request,
+        string? clientIp,
         CancellationToken cancellationToken = default)
     {
         var email = request.Email?.Trim() ?? string.Empty;
         var code = request.Code?.Trim() ?? string.Empty;
         var tenantSlug = request.TenantSlug?.Trim() ?? string.Empty;
+
+        if (IsValidEmail(email)
+            && !await verifyRateLimiter.AllowVerifyAsync(email, clientIp, cancellationToken))
+        {
+            return SelfServeSignupResult<SignupVerifyEmailResponse>.Fail(
+                SelfServeSignupError.RateLimited,
+                "Too many verification attempts. Try again later.");
+        }
 
         if (!IsValidEmail(email) || code.Length != otpOptions.Value.CodeLength)
         {
@@ -416,10 +426,13 @@ public sealed class SelfServeSignupService(
 
         if (!await otpStore.ValidateAndConsumeAsync(email, OtpPurpose.EmailVerification, code, cancellationToken))
         {
+            await verifyRateLimiter.RecordFailedVerifyAsync(email, clientIp, cancellationToken);
             return SelfServeSignupResult<SignupVerifyEmailResponse>.Fail(
                 SelfServeSignupError.Validation,
                 "Invalid or expired verification code.");
         }
+
+        await verifyRateLimiter.ClearFailuresAsync(email, clientIp, cancellationToken);
 
         user.EmailConfirmed = true;
         var updateResult = await userManager.UpdateAsync(user);
