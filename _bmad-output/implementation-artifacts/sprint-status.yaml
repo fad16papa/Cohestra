@@ -233,7 +233,7 @@ development_status:
 
   epic-17: in-progress
   17-1-auth-handoff-code-exchange: done
-  17-2-otp-verify-brute-force-throttling: review
+  17-2-otp-verify-brute-force-throttling: done
   17-3-member-jwt-403-integration-matrix: backlog
   epic-17-retrospective: optional
 

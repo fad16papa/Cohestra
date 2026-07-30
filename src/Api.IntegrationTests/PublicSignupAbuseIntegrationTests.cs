@@ -40,7 +40,7 @@ public sealed class PublicSignupAbuseIntegrationTests : IAsyncLifetime
         var slug = $"captcha-{Guid.NewGuid():N}"[..20];
         var email = $"captcha-{Guid.NewGuid():N}@example.com";
 
-        using var client = Factory.CreateClient();
+        using var client = CreateClientWithUniqueIp(Factory);
         using var response = await client.PostAsJsonAsync(
             "/api/v1/public/signup",
             new PublicSignupRequest(
@@ -64,7 +64,7 @@ public sealed class PublicSignupAbuseIntegrationTests : IAsyncLifetime
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
 
-        using var client = Factory.CreateClient();
+        using var client = CreateClientWithUniqueIp(Factory);
 
         for (var i = 0; i < 2; i++)
         {
@@ -118,7 +118,7 @@ public sealed class PublicSignupAbuseIntegrationTests : IAsyncLifetime
         var slug = $"closed-{Guid.NewGuid():N}"[..20];
         var email = $"closed-{Guid.NewGuid():N}@example.com";
 
-        using var client = closedFactory.CreateClient();
+        using var client = CreateClientWithUniqueIp(closedFactory);
         using var response = await client.PostAsJsonAsync(
             "/api/v1/public/signup",
             new PublicSignupRequest(
@@ -143,7 +143,7 @@ public sealed class PublicSignupAbuseIntegrationTests : IAsyncLifetime
         var email = $"otp-{Guid.NewGuid():N}@example.com";
         const string validOtp = "123456";
 
-        using var client = Factory.CreateClient();
+        using var client = CreateClientWithUniqueIp(Factory);
         using var signupResponse = await client.PostAsJsonAsync(
             "/api/v1/public/signup",
             new PublicSignupRequest(
@@ -191,6 +191,15 @@ public sealed class PublicSignupAbuseIntegrationTests : IAsyncLifetime
             new SignupVerifyEmailRequest(email, validOtp, slug));
 
         Assert.Equal(HttpStatusCode.TooManyRequests, successResponse.StatusCode);
+    }
+
+    private static HttpClient CreateClientWithUniqueIp(PublicSignupAbuseWebApplicationFactory factory)
+    {
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add(
+            "X-Forwarded-For",
+            $"10.{Random.Shared.Next(1, 200)}.{Random.Shared.Next(1, 200)}.{Random.Shared.Next(1, 200)}");
+        return client;
     }
 
     private static async Task<string?> ReadErrorCodeAsync(HttpResponseMessage response)

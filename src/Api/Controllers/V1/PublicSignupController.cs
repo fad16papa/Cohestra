@@ -136,6 +136,7 @@ public sealed class PublicSignupController(
                 Type = "https://cohestra.app/errors/signup-verify-rate-limited",
             };
             problem.Extensions["errorCode"] = "signup_verify_rate_limited";
+            problem.Extensions["traceId"] = HttpContext.TraceIdentifier;
             return StatusCode(StatusCodes.Status429TooManyRequests, problem);
         }
 

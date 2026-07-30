@@ -432,8 +432,6 @@ public sealed class SelfServeSignupService(
                 "Invalid or expired verification code.");
         }
 
-        await verifyRateLimiter.ClearFailuresAsync(email, clientIp, cancellationToken);
-
         user.EmailConfirmed = true;
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
@@ -442,6 +440,8 @@ public sealed class SelfServeSignupService(
                 SelfServeSignupError.Validation,
                 "Could not verify email.");
         }
+
+        await verifyRateLimiter.ClearFailuresAsync(email, clientIp, cancellationToken);
 
         var issued = await IssueTokensAsync(user, tenant.Id, membership.Role, cancellationToken);
 

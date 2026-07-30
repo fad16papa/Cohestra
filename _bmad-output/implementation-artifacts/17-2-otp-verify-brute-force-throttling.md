@@ -6,7 +6,7 @@ story: 2
 
 # Story 17.2: OTP verify brute-force throttling and signup abuse tests
 
-Status: review
+Status: done
 
 ## Story
 
@@ -53,6 +53,13 @@ So that **attackers cannot guess verification codes and regressions are caught b
 - [x] **Task 4 — Docs + sprint hygiene**
   - [x] 4.1 Update enterprise launch checklist P1 OTP row
   - [x] 4.2 Mark Epic 14 retro action #3 (OTP throttling) done in sprint-status
+
+### Review Findings
+
+- [x] [Review][Patch] Abuse integration tests share localhost IP — cross-test Redis pollution causes CI failures [`PublicSignupAbuseIntegrationTests.cs`]
+- [x] [Review][Patch] `ClearFailuresAsync` runs before `UpdateAsync` — consumed OTP + cleared counters if user update fails [`SelfServeSignupService.cs:435`]
+- [x] [Review][Patch] Verify 429 ProblemDetails omits `traceId` (inconsistent with signup middleware) [`PublicSignupController.cs:131`]
+- [x] [Review][Defer] `resend-otp` endpoint not rate limited — out of scope for 17.2; consider follow-up story [`PublicSignupController.cs:96`] — deferred, pre-existing gap
 
 ## Dev Notes
 
@@ -102,4 +109,13 @@ Cursor Composer (cloud agent — dev-story)
 
 ## Change Log
 
-- 2026-07-30: Story 17.2 implemented — OTP verify throttling + abuse integration tests; status → review
+- 2026-07-30: CR 17.2 — approve with 3 patches applied; status → done
+
+### Senior Developer Review (AI) (2026-07-30)
+
+**Outcome:** Approve (patches applied)
+
+**Patches applied:**
+- Unique `X-Forwarded-For` per abuse integration test client (CI isolation)
+- `ClearFailuresAsync` moved after successful `UpdateAsync`
+- `traceId` added to verify 429 ProblemDetails

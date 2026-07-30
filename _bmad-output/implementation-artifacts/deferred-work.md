@@ -1,3 +1,7 @@
+## Deferred from: code review of 17-2-otp-verify-brute-force-throttling.md (2026-07-30)
+
+- `resend-otp` endpoint not rate limited — out of scope for 17.2; consider follow-up story
+
 ## Deferred from: code review of 17-1-auth-handoff-code-exchange.md (2026-07-30)
 
 - Handoff code in `?handoff=` query may appear in nginx/proxy access logs on checkout page GET — opaque code + 120s TTL; accepted vs JWT-in-URL tradeoff
