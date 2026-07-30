@@ -58,6 +58,7 @@ function CheckoutContent() {
   const [handoffPending, setHandoffPending] = useState(
     () => (searchParams.get("handoff")?.trim().length ?? 0) > 0
   );
+  const [handoffFailed, setHandoffFailed] = useState(false);
 
   const trialCopy = useMemo(() => formatTrialDisclaimer(30), []);
   const planOptions = MARKETING_PLANS.filter((p) => p.id === "core" || p.id === "pro");
@@ -78,7 +79,11 @@ function CheckoutContent() {
 
       if (!session) {
         setHandoffPending(false);
+        setHandoffFailed(true);
         setError("Could not complete sign-in. Try signing in again.");
+        const url = new URL(window.location.href);
+        url.searchParams.delete("handoff");
+        window.history.replaceState(null, "", `${url.pathname}${url.search}`);
         return;
       }
 
@@ -119,7 +124,7 @@ function CheckoutContent() {
   }
 
   useEffect(() => {
-    if (!autoStart || !plan || status === "loading" || canceled || handoffPending) {
+    if (!autoStart || !plan || status === "loading" || canceled || handoffPending || handoffFailed) {
       return;
     }
 
@@ -130,7 +135,7 @@ function CheckoutContent() {
 
     void startCheckout(plan, interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot auto start from query
-  }, [autoStart, canceled, handoffPending, interval, plan, router, status]);
+  }, [autoStart, canceled, handoffFailed, handoffPending, interval, plan, router, status]);
 
   if (handoffPending || status === "loading") {
     return <p className="p-8 text-sm text-text-muted-warm">Loading checkout…</p>;

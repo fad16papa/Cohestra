@@ -45,7 +45,13 @@ public sealed class RedisAuthHandoffStore(
 
         var db = redis.GetDatabase();
         var key = GetKey(code.Trim());
-        var value = await db.StringGetAsync(key);
+        var ttl = await db.KeyTimeToLiveAsync(key);
+        if (ttl is null or <= TimeSpan.Zero)
+        {
+            return null;
+        }
+
+        var value = await db.StringGetDeleteAsync(key);
         if (value.IsNullOrEmpty)
         {
             return null;
@@ -58,6 +64,7 @@ public sealed class RedisAuthHandoffStore(
         }
         catch (JsonException)
         {
+            await db.StringSetAsync(key, value, ttl.Value);
             return null;
         }
 
@@ -65,10 +72,10 @@ public sealed class RedisAuthHandoffStore(
             || payload.TenantId == Guid.Empty
             || payload.TenantId != expectedTenantId)
         {
+            await db.StringSetAsync(key, value, ttl.Value);
             return null;
         }
 
-        await db.KeyDeleteAsync(key);
         return payload;
     }
 

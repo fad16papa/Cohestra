@@ -6,7 +6,7 @@ story: 1
 
 # Story 17.1: Auth handoff one-time code exchange
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 
@@ -77,8 +77,8 @@ So that **tokens never appear in browser history, referrer headers, or server ac
 
 ### Review Findings
 
-- [ ] [Review][Patch] Failed handoff exchange + `start=1` redirects to login before error is shown [`web/components/billing/checkout-page-content.tsx:121`]
-- [ ] [Review][Patch] Handoff exchange uses GET then DELETE — concurrent exchanges can both succeed; use atomic GETDEL with tenant-mismatch re-store [`src/Infrastructure/Auth/RedisAuthHandoffStore.cs:48`]
+- [x] [Review][Patch] Failed handoff exchange + `start=1` redirects to login before error is shown [`web/components/billing/checkout-page-content.tsx:121`]
+- [x] [Review][Patch] Handoff exchange uses GET then DELETE — concurrent exchanges can both succeed; use atomic GETDEL with tenant-mismatch re-store [`src/Infrastructure/Auth/RedisAuthHandoffStore.cs:48`]
 - [x] [Review][Defer] Handoff code in `?handoff=` query may appear in nginx/proxy access logs on checkout page GET — opaque code + 120s TTL; accepted vs JWT-in-URL tradeoff [`web/lib/auth-handoff.ts:41`] — deferred, story explicitly chose query-param handoff over hash tokens
 
 ## Dev Notes
@@ -239,7 +239,18 @@ Cursor Composer (cloud agent — dev-story)
 
 - 2026-07-29: Story 17.1 created — P1 auth handoff code exchange; status → ready-for-dev
 - 2026-07-29: DS 17.1 — auth handoff code exchange implemented; status → review
+- 2026-07-30: CR 17.1 — approve with 2 patches applied; status → done
+
+### Senior Developer Review (AI) (2026-07-30)
+
+**Outcome:** Approve (patches applied)
+
+**Layers:** Blind Hunter — JWT removed from URL hash (AC1/6 met); Edge Case Hunter — autoStart/login race on failed exchange, GET+DEL concurrency; Acceptance Auditor — AC2–5 covered by integration tests; AC1 satisfied for paid path.
+
+**Patches applied:**
+- `handoffFailed` guard + strip `?handoff=` on exchange failure (checkout page)
+- Atomic `StringGetDeleteAsync` with tenant-mismatch re-store (Redis handoff store)
 
 ### Story completion status
 
-review — All ACs implemented; await code review (`bmad-code-review`).
+done — CR approved; both patches applied.
