@@ -20,4 +20,6 @@ public interface IRefreshTokenStore
         CancellationToken cancellationToken = default);
 
     Task RevokeAsync(string refreshToken, CancellationToken cancellationToken = default);
+
+    Task RevokeAllForUserAsync(Guid userId, CancellationToken cancellationToken = default);
 }

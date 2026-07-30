@@ -1,3 +1,4 @@
+using Cohestra.Api.Infrastructure;
 using Cohestra.Application.Auth;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Auth;
@@ -55,6 +56,7 @@ public class AuthController(
     [HttpPost("verify-email")]
     [ProducesResponseType(typeof(AuthTokenResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<AuthTokenResponse>> VerifyEmail(
         [FromBody] VerifyEmailOtpRequest? request,
         CancellationToken cancellationToken)
@@ -64,12 +66,22 @@ public class AuthController(
             return BadRequestProblem("Request body is required.");
         }
 
-        var (tokens, error) = await authService.VerifyEmailAsync(
+        var clientIp = PublicRegistrationRateLimitMiddleware.ResolveClientIdentifier(HttpContext);
+        var (tokens, error, errorCode) = await authService.VerifyEmailAsync(
             request,
             Request.Host.Value,
+            clientIp,
             cancellationToken);
         if (tokens is null)
         {
+            if (string.Equals(errorCode, AuthErrorCodes.OtpVerifyRateLimited, StringComparison.Ordinal))
+            {
+                return TooManyRequestsProblem(
+                    error ?? "Too many verification attempts. Try again later.",
+                    AuthErrorCodes.OtpVerifyRateLimited,
+                    "https://cohestra.app/errors/otp-verify-rate-limited");
+            }
+
             return BadRequestProblem(error ?? "Verification failed.");
         }
 
@@ -200,6 +212,7 @@ public class AuthController(
     [HttpPost("reset-password")]
     [ProducesResponseType(typeof(MessageResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<MessageResponse>> ResetPassword(
         [FromBody] ResetPasswordRequest? request,
         CancellationToken cancellationToken)
@@ -209,9 +222,18 @@ public class AuthController(
             return BadRequestProblem("Request body is required.");
         }
 
-        var (response, error) = await authService.ResetPasswordAsync(request, cancellationToken);
+        var clientIp = PublicRegistrationRateLimitMiddleware.ResolveClientIdentifier(HttpContext);
+        var (response, error, errorCode) = await authService.ResetPasswordAsync(request, clientIp, cancellationToken);
         if (response is null)
         {
+            if (string.Equals(errorCode, AuthErrorCodes.OtpVerifyRateLimited, StringComparison.Ordinal))
+            {
+                return TooManyRequestsProblem(
+                    error ?? "Too many verification attempts. Try again later.",
+                    AuthErrorCodes.OtpVerifyRateLimited,
+                    "https://cohestra.app/errors/otp-verify-rate-limited");
+            }
+
             return BadRequestProblem(error ?? "Could not reset password.");
         }
 
@@ -293,5 +315,23 @@ public class AuthController(
             Detail = detail,
             Instance = HttpContext.Request.Path,
         });
+    }
+
+    private ObjectResult TooManyRequestsProblem(string detail, string errorCode, string? type = null)
+    {
+        Response.ContentType = "application/problem+json";
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Too many verification attempts",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+            Type = type,
+        };
+        problem.Extensions["errorCode"] = errorCode;
+        problem.Extensions["traceId"] = HttpContext.TraceIdentifier;
+
+        return StatusCode(StatusCodes.Status429TooManyRequests, problem);
     }
 }

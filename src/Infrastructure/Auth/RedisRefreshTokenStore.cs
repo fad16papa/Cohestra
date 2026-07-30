@@ -8,6 +8,7 @@ namespace Cohestra.Infrastructure.Auth;
 public sealed class RedisRefreshTokenStore(IConnectionMultiplexer redis) : IRefreshTokenStore
 {
     private const string KeyPrefix = "auth:refresh:";
+    private const string UserIndexPrefix = "auth:refresh:user:";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -26,6 +27,8 @@ public sealed class RedisRefreshTokenStore(IConnectionMultiplexer redis) : IRefr
             new RefreshTokenPayload(userId, tenantId),
             JsonOptions);
         await db.StringSetAsync(GetKey(refreshToken), payload, ttl);
+        await db.SetAddAsync(GetUserIndexKey(userId), GetKey(refreshToken));
+        await db.KeyExpireAsync(GetUserIndexKey(userId), ttl);
     }
 
     public async Task<RefreshTokenSession?> GetSessionAsync(
@@ -43,14 +46,43 @@ public sealed class RedisRefreshTokenStore(IConnectionMultiplexer redis) : IRefr
     {
         var db = redis.GetDatabase();
         var value = await db.StringGetDeleteAsync(GetKey(refreshToken));
-        return ParseSession(value);
+        var session = ParseSession(value);
+        if (session is not null)
+        {
+            await db.SetRemoveAsync(GetUserIndexKey(session.UserId), GetKey(refreshToken));
+        }
+
+        return session;
     }
 
     public async Task RevokeAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
         var db = redis.GetDatabase();
-        await db.KeyDeleteAsync(GetKey(refreshToken));
+        var key = GetKey(refreshToken);
+        var session = await GetSessionAsync(refreshToken, cancellationToken);
+        await db.KeyDeleteAsync(key);
+        if (session is not null)
+        {
+            await db.SetRemoveAsync(GetUserIndexKey(session.UserId), key);
+        }
     }
+
+    public async Task RevokeAllForUserAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var db = redis.GetDatabase();
+        var indexKey = GetUserIndexKey(userId);
+        var members = await db.SetMembersAsync(indexKey);
+        if (members.Length == 0)
+        {
+            return;
+        }
+
+        var keys = members.Select(m => (RedisKey)m.ToString()).ToArray();
+        keys = keys.Append(indexKey).ToArray();
+        await db.KeyDeleteAsync(keys);
+    }
+
+    private static RedisKey GetUserIndexKey(Guid userId) => (RedisKey)$"{UserIndexPrefix}{userId:N}";
 
     private static RefreshTokenSession? ParseSession(RedisValue value)
     {

@@ -21,6 +21,7 @@ public sealed class AuthService(
     IJwtTokenService jwtTokenService,
     IRefreshTokenStore refreshTokenStore,
     IAuthOtpStore otpStore,
+    IAuthOtpVerifyRateLimiter otpVerifyRateLimiter,
     IEmailSender emailSender,
     IHostEnvironment hostEnvironment,
     ILogger<AuthService> logger,
@@ -316,23 +317,30 @@ public sealed class AuthService(
         return (BuildRegisterResponse(email), null);
     }
 
-    public async Task<(AuthTokenResponse? Tokens, string? Error)> VerifyEmailAsync(
+    public async Task<(AuthTokenResponse? Tokens, string? Error, string? ErrorCode)> VerifyEmailAsync(
         VerifyEmailOtpRequest request,
         string? host,
+        string? clientIp,
         CancellationToken cancellationToken = default)
     {
         var email = request.Email?.Trim() ?? string.Empty;
         var code = request.Code?.Trim() ?? string.Empty;
 
+        if (IsValidEmail(email)
+            && !await otpVerifyRateLimiter.AllowVerifyAsync(email, clientIp, cancellationToken))
+        {
+            return (null, "Too many verification attempts. Try again later.", AuthErrorCodes.OtpVerifyRateLimited);
+        }
+
         if (!IsValidEmail(email) || code.Length != otpOptions.Value.CodeLength)
         {
-            return (null, "Invalid verification code.");
+            return (null, "Invalid verification code.", null);
         }
 
         var user = await userManager.FindByEmailAsync(email);
         if (user is null)
         {
-            return (null, "Invalid verification code.");
+            return (null, "Invalid verification code.", null);
         }
 
         if (user.EmailConfirmed)
@@ -340,43 +348,47 @@ public sealed class AuthService(
             var session = await ResolveSessionBindingAsync(user, host, preferredTenantId: null, cancellationToken);
             if (session.ErrorCode is not null)
             {
-                return (null, session.ErrorMessage);
+                return (null, session.ErrorMessage, null);
             }
 
-            return (await IssueTokensAsync(user, session.TenantId, session.MembershipRole, cancellationToken), null);
+            return (await IssueTokensAsync(user, session.TenantId, session.MembershipRole, cancellationToken), null, null);
         }
 
         // Another confirmed TenantAdmin already closed bootstrap — do not confirm a second admin.
         if (await tenantMembershipService.DefaultTenantHasTenantAdminAsync(cancellationToken))
         {
-            return (null, BootstrapClosedMessage);
+            return (null, BootstrapClosedMessage, null);
         }
 
         var ensureMembership = await EnsureDefaultTenantAdminMembershipAsync(user.Id, cancellationToken);
         if (ensureMembership is not null)
         {
-            return (null, ensureMembership);
+            return (null, ensureMembership, null);
         }
 
         if (!await otpStore.ValidateAndConsumeAsync(email, OtpPurpose.EmailVerification, code, cancellationToken))
         {
-            return (null, "Invalid or expired verification code.");
+            await otpVerifyRateLimiter.RecordFailedVerifyAsync(email, clientIp, cancellationToken);
+            return (null, "Invalid or expired verification code.", null);
         }
 
         user.EmailConfirmed = true;
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
-            return (null, "Could not verify email.");
+            return (null, "Could not verify email.", null);
         }
+
+        await otpVerifyRateLimiter.ClearFailuresAsync(email, clientIp, cancellationToken);
+        await refreshTokenStore.RevokeAllForUserAsync(user.Id, cancellationToken);
 
         var binding = await ResolveSessionBindingAsync(user, host, preferredTenantId: TenantIds.Default, cancellationToken);
         if (binding.ErrorCode is not null)
         {
-            return (null, binding.ErrorMessage);
+            return (null, binding.ErrorMessage, null);
         }
 
-        return (await IssueTokensAsync(user, binding.TenantId, binding.MembershipRole, cancellationToken), null);
+        return (await IssueTokensAsync(user, binding.TenantId, binding.MembershipRole, cancellationToken), null, null);
     }
 
     public async Task<(MessageResponse? Response, string? Error)> ResendOtpAsync(
@@ -444,38 +456,49 @@ public sealed class AuthService(
         return new MessageResponse("If an account exists, a reset code was sent.");
     }
 
-    public async Task<(MessageResponse? Response, string? Error)> ResetPasswordAsync(
+    public async Task<(MessageResponse? Response, string? Error, string? ErrorCode)> ResetPasswordAsync(
         ResetPasswordRequest request,
+        string? clientIp,
         CancellationToken cancellationToken = default)
     {
         var email = request.Email?.Trim() ?? string.Empty;
         var code = request.Code?.Trim() ?? string.Empty;
         var newPassword = request.NewPassword ?? string.Empty;
 
+        if (IsValidEmail(email)
+            && !await otpVerifyRateLimiter.AllowVerifyAsync(email, clientIp, cancellationToken))
+        {
+            return (null, "Too many verification attempts. Try again later.", AuthErrorCodes.OtpVerifyRateLimited);
+        }
+
         if (!IsValidEmail(email) || code.Length != otpOptions.Value.CodeLength)
         {
-            return (null, "Invalid or expired reset code.");
+            return (null, "Invalid or expired reset code.", null);
         }
 
         var user = await userManager.FindByEmailAsync(email);
         if (user is null || !user.EmailConfirmed)
         {
-            return (null, "Invalid or expired reset code.");
+            return (null, "Invalid or expired reset code.", null);
         }
 
         if (!await otpStore.ValidateAndConsumeAsync(email, OtpPurpose.PasswordReset, code, cancellationToken))
         {
-            return (null, "Invalid or expired reset code.");
+            await otpVerifyRateLimiter.RecordFailedVerifyAsync(email, clientIp, cancellationToken);
+            return (null, "Invalid or expired reset code.", null);
         }
 
         var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
         var resetResult = await userManager.ResetPasswordAsync(user, resetToken, newPassword);
         if (!resetResult.Succeeded)
         {
-            return (null, FormatIdentityErrors(resetResult));
+            return (null, FormatIdentityErrors(resetResult), null);
         }
 
-        return (new MessageResponse("Password updated. You can sign in with your new password."), null);
+        await otpVerifyRateLimiter.ClearFailuresAsync(email, clientIp, cancellationToken);
+        await refreshTokenStore.RevokeAllForUserAsync(user.Id, cancellationToken);
+
+        return (new MessageResponse("Password updated. You can sign in with your new password."), null, null);
     }
 
     public async Task<(MessageResponse? Response, string? Error)> ChangePasswordAsync(
@@ -498,6 +521,8 @@ public sealed class AuthService(
         {
             return (null, FormatIdentityErrors(changeResult));
         }
+
+        await refreshTokenStore.RevokeAllForUserAsync(userId, cancellationToken);
 
         return (new MessageResponse("Password updated successfully."), null);
     }
