@@ -43,7 +43,7 @@ public static class ProductionSecurityValidator
 
         var postgres = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
         if (postgres.Contains("Password=crm", StringComparison.OrdinalIgnoreCase)
-            && postgres.Contains("Username=crm", StringComparison.OrdinalIgnoreCase))
+            || postgres.Contains("Username=crm", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
                 "DefaultConnection uses development database credentials. Configure production secrets via environment.");

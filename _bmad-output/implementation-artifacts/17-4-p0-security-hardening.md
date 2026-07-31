@@ -6,7 +6,7 @@ story: 4
 
 # Story 17.4: P0 security hardening
 
-Status: review
+Status: done
 
 ## Story
 
@@ -86,3 +86,25 @@ So that **operator OTP endpoints cannot be brute-forced and misconfigured produc
 - `src/Api.IntegrationTests/AuthOtpAbuseIntegrationTests.cs`
 - `src/Api.IntegrationTests/Infrastructure/AuthOtpAbuseWebApplicationFactory.cs`
 - `src/Api.IntegrationTests/Infrastructure/IntegrationTestWebApplicationFactory.cs`
+
+### Review Findings
+
+- [ ] [Review][Decision] **CSP header policy** — Adding `Content-Security-Policy` can break Next.js inline scripts/styles. Should we add a permissive starter CSP now, defer CSP to a dedicated hardening story, or skip?
+- [ ] [Review][Decision] **Duplicate security headers (nginx + Next.js)** — Both layers set the same four headers; production responses may carry duplicates. Should nginx own headers in prod (remove from `next.config.ts`) or keep Next.js for local dev-without-nginx and strip nginx duplicates?
+- [ ] [Review][Decision] **Redis outage during OTP verify** — `AllowVerifyAsync` throws on Redis failure → 500 on auth endpoints. Fail-open (allow verify, log warning) or fail-closed (503/429)?
+
+- [x] [Review][Patch] Security headers missing from production HTTPS template [`deploy/nginx/app-ssl.conf.template`] — AC4 partial; only pre-TLS `app.conf` was updated
+- [x] [Review][Patch] Add HSTS to HTTPS nginx template [`deploy/nginx/app-ssl.conf.template:52`]
+- [x] [Review][Patch] Remove stale `/openapi/` proxy from HTTPS template [`deploy/nginx/app-ssl.conf.template:76-80`]
+- [x] [Review][Patch] User-index TTL shortened by later short-TTL token — `RevokeAllForUserAsync` can miss tokens [`RedisRefreshTokenStore.cs:31`]
+- [x] [Review][Patch] `ClearFailuresAsync` missing on already-confirmed verify success path [`AuthService.cs:348-354`]
+- [x] [Review][Patch] `ClearFailuresAsync` missing after OTP consumed but before password reset succeeds [`AuthService.cs:485-496`]
+- [x] [Review][Patch] Add `Retry-After` header on 429 responses [`AuthController.cs:TooManyRequestsProblem`]
+- [x] [Review][Patch] DB credential guard uses `&&` — fail if either dev username OR password present [`ProductionSecurityValidator.cs:45-46`]
+- [x] [Review][Patch] Add unit test for dev DB credential rejection [`ProductionSecurityValidatorTests.cs`]
+
+- [x] [Review][Defer] Rate-limit check/record TOCTOU burst [`RedisAuthOtpVerifyRateLimiter.cs`] — deferred, same Lua split pattern as Story 17.2 signup limiter
+- [x] [Review][Defer] Wrong-length OTP codes skip failure counter [`AuthService.cs:335`] — deferred, not brute-force exploitable
+- [x] [Review][Defer] `RevokeAllForUserAsync` non-atomic read-then-delete race [`RedisRefreshTokenStore.cs:70-82`] — deferred, low-traffic auth path
+- [x] [Review][Defer] Non-atomic email+IP failure record [`RedisAuthOtpVerifyRateLimiter.cs:92-97`] — deferred, mirrors signup limiter
+- [x] [Review][Defer] JWT min-length in ProductionSecurityValidator [`ProductionSecurityValidator.cs`] — deferred, `Program.cs` already enforces ≥32 chars at startup

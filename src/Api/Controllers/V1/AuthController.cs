@@ -5,6 +5,7 @@ using Cohestra.Contracts.Auth;
 using Cohestra.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.Security.Claims;
 
 namespace Cohestra.Api.Controllers.V1;
@@ -15,7 +16,8 @@ namespace Cohestra.Api.Controllers.V1;
 public class AuthController(
     IAuthService authService,
     IAuthHandoffStore authHandoffStore,
-    ICurrentTenant currentTenant) : ControllerBase
+    ICurrentTenant currentTenant,
+    IOptions<AuthOtpVerifyRateLimitOptions> authOtpVerifyRateLimitOptions) : ControllerBase
 {
     [HttpGet("onboarding")]
     [ProducesResponseType(typeof(OnboardingStatusResponse), StatusCodes.Status200OK)]
@@ -320,6 +322,9 @@ public class AuthController(
     private ObjectResult TooManyRequestsProblem(string detail, string errorCode, string? type = null)
     {
         Response.ContentType = "application/problem+json";
+
+        var windowMinutes = Math.Clamp(authOtpVerifyRateLimitOptions.Value.WindowMinutes, 1, 1440);
+        Response.Headers.RetryAfter = (windowMinutes * 60).ToString();
 
         var problem = new ProblemDetails
         {

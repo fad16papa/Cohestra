@@ -351,6 +351,7 @@ public sealed class AuthService(
                 return (null, session.ErrorMessage, null);
             }
 
+            await otpVerifyRateLimiter.ClearFailuresAsync(email, clientIp, cancellationToken);
             return (await IssueTokensAsync(user, session.TenantId, session.MembershipRole, cancellationToken), null, null);
         }
 
@@ -488,6 +489,8 @@ public sealed class AuthService(
             return (null, "Invalid or expired reset code.", null);
         }
 
+        await otpVerifyRateLimiter.ClearFailuresAsync(email, clientIp, cancellationToken);
+
         var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
         var resetResult = await userManager.ResetPasswordAsync(user, resetToken, newPassword);
         if (!resetResult.Succeeded)
@@ -495,7 +498,6 @@ public sealed class AuthService(
             return (null, FormatIdentityErrors(resetResult), null);
         }
 
-        await otpVerifyRateLimiter.ClearFailuresAsync(email, clientIp, cancellationToken);
         await refreshTokenStore.RevokeAllForUserAsync(user.Id, cancellationToken);
 
         return (new MessageResponse("Password updated. You can sign in with your new password."), null, null);

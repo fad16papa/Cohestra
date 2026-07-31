@@ -28,7 +28,7 @@ public sealed class RedisRefreshTokenStore(IConnectionMultiplexer redis) : IRefr
             JsonOptions);
         await db.StringSetAsync(GetKey(refreshToken), payload, ttl);
         await db.SetAddAsync(GetUserIndexKey(userId), GetKey(refreshToken));
-        await db.KeyExpireAsync(GetUserIndexKey(userId), ttl);
+        await db.KeyExpireAsync(GetUserIndexKey(userId), ttl, ExpireWhen.GreaterThanCurrentExpiry);
     }
 
     public async Task<RefreshTokenSession?> GetSessionAsync(

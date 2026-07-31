@@ -58,6 +58,24 @@ public sealed class ProductionSecurityValidatorTests
         Assert.Contains("OperatorSeed:Enabled", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Validate_rejects_dev_db_credentials_in_production()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:SigningKey"] = "production-secret-key-with-sufficient-length",
+                ["ConnectionStrings:DefaultConnection"] =
+                    "Host=localhost;Port=5432;Database=cohestra;Username=crm;Password=crm",
+            })
+            .Build();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("DefaultConnection", exception.Message, StringComparison.Ordinal);
+    }
+
     private sealed class StubHostEnvironment(string environmentName) : IHostEnvironment
     {
         public string EnvironmentName { get; set; } = environmentName;
