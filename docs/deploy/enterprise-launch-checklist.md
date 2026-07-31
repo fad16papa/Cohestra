@@ -57,6 +57,8 @@ Optional apex check is included when `PUBLIC_BASE_URL` is set (see script sectio
 - [ ] `POST /api/v1/public/registrations` with Tenant B activity slug on Tenant A Host returns **404** (fail-closed)
 - [ ] JWT minted on `{slug}.localhost` is scoped to that tenant; platform routes reject tenant JWTs
 - [ ] No client-trusted `X-Tenant-Id` — Host + JWT only (AD-3)
+- [x] **P1 shipped (Story 17.3):** Member JWT → 403 on admin-only routes; tenant JWT → 403 on `/platform/*`; platform admin positive control
+- [x] **P1 shipped (Story 17.4):** Operator auth OTP verify throttling (`/api/v1/auth/verify-email`, `/reset-password`); refresh revoke-all on credential change; production secret validation; security headers (nginx + Next.js); OpenAPI dev-only; HtmlSanitizer ≥ 9.0.892
 
 Run SM-1 locally (Postgres + Redis required):
 
@@ -72,7 +74,7 @@ dotnet test src/Api.IntegrationTests --filter "Category=TenantIsolation"
 - [ ] Web build receives `NEXT_PUBLIC_RECAPTCHA_*` vars (rebuild web after changing)
 - [ ] Public signup rate limits configured (`PublicSignupRateLimit` in appsettings / env)
 - [ ] OTP verify flow tested end-to-end on apex `/pricing` or signup route
-- [ ] **P1 follow-up:** ~~OTP brute-force throttling + abuse integration tests~~ (Story 17.2 — shipped)
+- [x] **P1 shipped (Story 17.2):** Signup OTP verify brute-force throttling + abuse integration tests
 - [x] **P1 shipped (Story 17.1):** Auth handoff uses one-time server code exchange (`POST /api/v1/auth/handoff/exchange`) — no JWTs in URL hash
 
 See [cloud-mobile-testing.md](./cloud-mobile-testing.md) for reCAPTCHA env blocks.
@@ -110,7 +112,7 @@ See [cloud-mobile-testing.md](./cloud-mobile-testing.md) for reCAPTCHA env block
 - [ ] Know log command: `docker compose -f docker-compose.uat.yml logs -f api web`
 - [ ] Postgres backup tested once; rollback plan documented (previous git tag + rebuild)
 - [ ] **`DEV_TENANT_SLUG`** documented: local apex/`localhost` fallback only — **do not set in production** (use real subdomains). See [README](../../README.md) and `.env.example`.
-- [ ] **P1 follow-up:** Member JWT → 403 integration matrix on admin routes
+- [x] **P1 shipped (Story 17.3):** Member JWT → 403 integration matrix on admin routes (see Isolation & security)
 - [ ] **Product gate:** nip.io apex tightening vs wildcard DNS — decision recorded
 - [ ] **Product gate:** Sender settings UI (15.6 defer) vs provisioned-email-only for v1 launch
 
@@ -134,9 +136,9 @@ Repeat on at least one **Basic** and one **Pro** tenant (e.g. `creativorare`):
 
 | Role | Name | Date | Notes |
 |------|------|------|-------|
-| Dev | | | SM-1 green, smoke script pass, checklist doc current |
+| Dev | Cursor / Amelia | 2026-07-31 | Epic 17 P1 hardening merged (`23875d3`); SM-1 + abuse tests on main |
 | Operator | | | Multi-tenant UAT on local Docker + droplet |
-| PM | | | P1 items triaged; launch scope agreed |
+| PM | | | P1 dev items done; ops gates (reCAPTCHA, deploy) remain |
 
 ---
 
@@ -149,6 +151,8 @@ Track in sprint / deferred-work; do not block enterprise launch sign-off unless 
 | ~~Auth handoff URL-hash → server code exchange~~ (Story 17.1) | Dev |
 | ~~OTP verify brute-force throttling + abuse tests~~ (Story 17.2) | Dev |
 | ~~Member JWT 403 integration matrix~~ (Story 17.3) | Dev |
+| ~~Operator auth OTP throttling + production guardrails~~ (Story 17.4) | Dev |
+| resend-otp rate limiting (deferred from 17.2 CR) | Dev |
 | Platform async-action refactor (Epic 11 retro) | Dev |
 | Close skippable platform integration tests in CI | Dev |
 | Sender settings UI vs provisioned email | Product |

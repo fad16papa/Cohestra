@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-31T14:45:00Z
+# last_updated: 2026-07-31T16:55:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-07-31T14:45:00Z
+last_updated: 2026-07-31T16:55:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -231,12 +231,12 @@ development_status:
   16-3-homepage-whatsapp-copy: done
   epic-16-retrospective: done
 
-  epic-17: in-progress
+  epic-17: done
   17-1-auth-handoff-code-exchange: done
   17-2-otp-verify-brute-force-throttling: done
   17-3-member-jwt-403-integration-matrix: done
   17-4-p0-security-hardening: done
-  epic-17-retrospective: optional
+  epic-17-retrospective: done
 
 action_items:
   - epic: 16
@@ -340,4 +340,20 @@ action_items:
   - epic: 15
     action: "Schedule sender settings UI story (15.6 defer) or accept provisioned-email-only for v1 launch"
     owner: Product
+    status: open
+  - epic: 17
+    action: "Run local Epic 17 verification — auth unit tests + AuthOtpAbuseIntegrationTests on Docker stack"
+    owner: Operator
+    status: open
+  - epic: 17
+    action: "Regenerate active-ssl.conf on droplet after app-ssl.conf.template header changes"
+    owner: Ops
+    status: open
+  - epic: 17
+    action: "Create follow-up story for resend-otp rate limiting (deferred from 17.2 CR)"
+    owner: Dev
+    status: open
+  - epic: 17
+    action: "Resolve 17.4 CR decision items — CSP policy, nginx vs Next header ownership, Redis fail policy"
+    owner: Dev
     status: open
