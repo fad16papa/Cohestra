@@ -18,6 +18,8 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+ProductionSecurityValidator.Validate(builder.Configuration, builder.Environment);
+
 var postgresConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(postgresConnection))
 {
@@ -175,7 +177,11 @@ app.UseAuthorization();
 app.UseTenantWriteAccess();
 
 app.MapControllers();
-app.MapOpenApi();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
 
 app.Lifetime.ApplicationStarted.Register(() =>
 {

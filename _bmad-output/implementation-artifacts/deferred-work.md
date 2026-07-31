@@ -1,3 +1,11 @@
+## Deferred from: code review of 17-4-p0-security-hardening.md (2026-07-30)
+
+- Rate-limit check/record TOCTOU burst in auth OTP limiter — same Lua split pattern as Story 17.2 signup limiter
+- Wrong-length OTP codes skip failure counter — not brute-force exploitable
+- `RevokeAllForUserAsync` non-atomic read-then-delete race — low-traffic auth path
+- Non-atomic email+IP failure record in auth OTP limiter — mirrors signup limiter
+- JWT min-length duplicate check in ProductionSecurityValidator — Program.cs already enforces ≥32 chars
+
 ## Deferred from: code review of 17-2-otp-verify-brute-force-throttling.md (2026-07-30)
 
 - `resend-otp` endpoint not rate limited — out of scope for 17.2; consider follow-up story
