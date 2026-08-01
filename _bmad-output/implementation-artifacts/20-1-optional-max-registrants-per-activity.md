@@ -129,6 +129,10 @@ So that **registration closes automatically when the event reaches capacity with
 - [x] [Review][Defer] AC2 admin cap-below-count covered by unit tests only — deferred, test gap
 - [x] [Review][Defer] AC8 cache refresh after registration not proven with warm-cache integration test — deferred, test gap
 
+### Re-review (2026-08-01, post-patch commit 82116ce)
+
+**Result:** Clean — Blind Hunter: no findings; Acceptance Auditor: all 10 ACs met. Edge Case Hunter noted only deferred/ops items (request cancellation during cache refresh, legacy Redis payload shape after deploy).
+
 ## Dev Notes
 
 ### Do NOT break
