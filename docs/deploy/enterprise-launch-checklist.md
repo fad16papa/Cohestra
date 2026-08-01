@@ -60,14 +60,38 @@ Optional apex check is included when `PUBLIC_BASE_URL` is set (see script sectio
 - [x] **P1 shipped (Story 17.3):** Member JWT → 403 on admin-only routes; tenant JWT → 403 on `/platform/*`; platform admin positive control
 - [x] **P1 shipped (Story 17.4):** Operator auth OTP verify throttling; refresh revoke-all; production secret validation; security headers; OpenAPI dev-only; HtmlSanitizer ≥ 9.0.892
 - [x] **P2 shipped (Story 18.3):** Security header ownership — **nginx** owns headers in Docker/production (`app.conf`, `app-ssl.conf.template`); **Next.js** emits them only in `next dev` (`web/security-headers.ts`). Nginx `proxy_hide_header` strips upstream duplicates on `/`.
+- [x] **P2 shipped (Story 18.2):** CSP baseline — **report-only** policy (`Content-Security-Policy-Report-Only`) owned by nginx in Docker/production; Next.js emits dev variant in `next dev`. Canonical policy in `web/content-security-policy.ts`.
 
 **Verify single header values (Docker on port 8088):**
 
 ```bash
-curl -sI http://default.localhost:8088/ | grep -E '^(X-Frame-Options|X-Content-Type-Options|Referrer-Policy|Permissions-Policy):'
+curl -sI http://default.localhost:8088/ | grep -E '^(X-Frame-Options|X-Content-Type-Options|Referrer-Policy|Permissions-Policy|Content-Security-Policy-Report-Only):'
 ```
 
 Each name should appear **once**. After HTTPS setup, repeat against `https://…` and confirm `Strict-Transport-Security` is present (HTTPS template only).
+
+### CSP (Story 18.2)
+
+v1 ships **report-only** — violations appear in browser DevTools console but do **not** block pages. Upgrade path:
+
+1. **Observe** — smoke core flows (login, dashboard, website builder, public registration) with DevTools → Console open; note CSP report-only violations.
+2. **Tighten** — adjust directives in `web/content-security-policy.ts` and mirror the same string in nginx templates.
+3. **Enforce** — rename header to `Content-Security-Policy` in nginx + Next dev once reports are clean.
+
+**CSP smoke (manual, Docker 8088):**
+
+| Surface | URL | Pass |
+|---------|-----|------|
+| Tenant login | `http://default.localhost:8088/login` | Page loads; no broken UI |
+| Dashboard | after login | Shell + nav render |
+| Website builder | `/dashboard/website` | Editor loads |
+| Public registration | tenant door `/register` or apex `/signup` | Form + reCAPTCHA (if enabled) |
+| Marketing | `http://cohestra.app:8088/` | Home + fonts/images |
+
+```bash
+curl -sI http://default.localhost:8088/ | grep -i content-security-policy
+# Expect: Content-Security-Policy-Report-Only: ...
+```
 
 Run SM-1 locally (Postgres + Redis required):
 

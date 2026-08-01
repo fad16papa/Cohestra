@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-01T05:00:00Z
+# last_updated: 2026-08-01T05:10:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -240,7 +240,7 @@ development_status:
 
   epic-18: in-progress
   18-1-resend-otp-rate-limiting: done
-  18-2-content-security-policy-baseline: ready-for-dev
+  18-2-content-security-policy-baseline: review
   18-3-security-header-ownership: review
   18-4-redis-outage-rate-limiter-policy: ready-for-dev
   epic-18-retrospective: optional

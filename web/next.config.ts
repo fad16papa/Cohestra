@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { contentSecurityPolicyReportOnlyDevHeader } from "./content-security-policy";
 import { securityHeaders, shouldNextJsEmitSecurityHeaders } from "./security-headers";
 
 const nextConfig: NextConfig = {
@@ -11,7 +12,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/:path*",
-        headers: [...securityHeaders],
+        headers: [...securityHeaders, contentSecurityPolicyReportOnlyDevHeader],
       },
     ];
   },
