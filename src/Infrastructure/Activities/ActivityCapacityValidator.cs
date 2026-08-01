@@ -14,6 +14,25 @@ internal static class ActivityCapacityValidator
             : null;
     }
 
+    public static string? ValidateMaxRegistrantsAgainstPlanLimit(
+        int? maxRegistrants,
+        int planRegistrationsPerMonth)
+    {
+        var formatError = ValidateMaxRegistrants(maxRegistrants);
+        if (formatError is not null)
+        {
+            return formatError;
+        }
+
+        if (maxRegistrants is int max && max > planRegistrationsPerMonth)
+        {
+            return
+                $"Max registrants cannot exceed your plan limit of {planRegistrationsPerMonth:N0} registrations per month.";
+        }
+
+        return null;
+    }
+
     public static string? ValidateMaxRegistrantsAgainstCount(int? maxRegistrants, int registrationCount)
     {
         var formatError = ValidateMaxRegistrants(maxRegistrants);

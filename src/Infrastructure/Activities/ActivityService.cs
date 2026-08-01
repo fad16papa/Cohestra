@@ -2,6 +2,7 @@ using Cohestra.Application.Activities;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Activities;
 using Cohestra.Domain.Activities;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
 using Cohestra.Infrastructure.Tenancy;
@@ -35,6 +36,20 @@ public sealed class ActivityService(
         if (capacityError is not null)
         {
             throw new InvalidOperationException(capacityError);
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            throw new InvalidOperationException("Tenant context is required to create an activity.");
+        }
+
+        var planLimitError = await ValidateMaxRegistrantsAgainstTenantPlanAsync(
+            request.MaxRegistrants,
+            tenantId,
+            cancellationToken);
+        if (planLimitError is not null)
+        {
+            throw new InvalidOperationException(planLimitError);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -210,6 +225,15 @@ public sealed class ActivityService(
         if (capacityError is not null)
         {
             throw new InvalidOperationException(capacityError);
+        }
+
+        var planLimitError = await ValidateMaxRegistrantsAgainstTenantPlanAsync(
+            request.MaxRegistrants,
+            activity.TenantId,
+            cancellationToken);
+        if (planLimitError is not null)
+        {
+            throw new InvalidOperationException(planLimitError);
         }
 
         activity.Name = request.Name.Trim();
@@ -644,6 +668,31 @@ public sealed class ActivityService(
         {
             HeroImageUrl = ResolveHeroImageUrl(response.HeroImageUrl),
         };
+
+    private async Task<string?> ValidateMaxRegistrantsAgainstTenantPlanAsync(
+        int? maxRegistrants,
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        if (maxRegistrants is null)
+        {
+            return null;
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return "Tenant not found.";
+        }
+
+        var planLimit = TenantPlanLimits.For(tenant.Plan).RegistrationsPerMonth;
+        return ActivityCapacityValidator.ValidateMaxRegistrantsAgainstPlanLimit(
+            maxRegistrants,
+            planLimit);
+    }
 
     private static ActivityStatus? ParseStatus(string? value)
     {

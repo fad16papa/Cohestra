@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { ActivityCountrySelect } from "@/components/activities/activity-country-select";
 import { ActivityLocationField } from "@/components/activities/activity-location-field";
 import { ActivitySchedulePicker } from "@/components/activities/activity-schedule-picker";
@@ -13,6 +14,10 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createActivity } from "@/lib/activities-api";
+import {
+  formatPlanRegistrationLimit,
+  validateActivityMaxRegistrantsAgainstPlan,
+} from "@/lib/activity-capacity-limits";
 import { fetchCategories } from "@/lib/categories-api";
 import { fetchCommunities } from "@/lib/communities-api";
 import { buildActivityLocation, defaultCountryCode } from "@/lib/countries";
@@ -25,6 +30,8 @@ import { cn } from "@/lib/utils";
 export function CreateActivityForm() {
   const router = useRouter();
   const { authFetch } = useAuth();
+  const { shell } = useTenantShell();
+  const planRegistrationLimit = shell?.limits.registrationsPerMonth ?? null;
   const [name, setName] = useState("");
   const [communityLabel, setCommunityLabel] = useState("");
   const [category, setCategory] = useState("");
@@ -94,6 +101,18 @@ export function CreateActivityForm() {
         setError("Max registrants must be a whole number of at least 1, or leave blank.");
         setIsSubmitting(false);
         return;
+      }
+
+      if (planRegistrationLimit != null) {
+        const planError = validateActivityMaxRegistrantsAgainstPlan(
+          parsedCap,
+          planRegistrationLimit
+        );
+        if (planError) {
+          setError(planError);
+          setIsSubmitting(false);
+          return;
+        }
       }
 
       const activity = await createActivity(authFetch, {
@@ -220,6 +239,7 @@ export function CreateActivityForm() {
             id="activity-max-registrants"
             type="number"
             min={1}
+            max={planRegistrationLimit ?? undefined}
             inputMode="numeric"
             placeholder="Unlimited"
             value={maxRegistrants}
@@ -227,8 +247,11 @@ export function CreateActivityForm() {
             onChange={(event) => setMaxRegistrants(event.target.value)}
           />
           <p className="text-xs text-text-muted-warm">
-            Leave blank for unlimited registrations. You can change this later on the
-            activity overview.
+            Leave blank for unlimited registrations on this activity. Monthly plan
+            usage still applies
+            {planRegistrationLimit != null
+              ? ` (up to ${formatPlanRegistrationLimit(planRegistrationLimit)} per month on your plan).`
+              : "."}
           </p>
         </div>
       </div>

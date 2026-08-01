@@ -3,10 +3,15 @@
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateActivity, type Activity } from "@/lib/activities-api";
+import {
+  formatPlanRegistrationLimit,
+  validateActivityMaxRegistrantsAgainstPlan,
+} from "@/lib/activity-capacity-limits";
 
 type ActivityCapacityPanelProps = {
   activity: Activity;
@@ -28,6 +33,8 @@ export function ActivityCapacityPanel({
   onActivityUpdated,
 }: ActivityCapacityPanelProps) {
   const { authFetch } = useAuth();
+  const { shell } = useTenantShell();
+  const planRegistrationLimit = shell?.limits.registrationsPerMonth ?? null;
   const [maxRegistrants, setMaxRegistrants] = useState(
     activity.maxRegistrants != null ? String(activity.maxRegistrants) : ""
   );
@@ -54,6 +61,17 @@ export function ActivityCapacityPanel({
     if (maxRegistrants.trim() && (parsedCap === null || parsedCap < 1)) {
       setError("Enter a whole number of at least 1, or leave blank for unlimited.");
       return;
+    }
+
+    if (planRegistrationLimit != null) {
+      const planError = validateActivityMaxRegistrantsAgainstPlan(
+        parsedCap,
+        planRegistrationLimit
+      );
+      if (planError) {
+        setError(planError);
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -89,9 +107,16 @@ export function ActivityCapacityPanel({
       <div>
         <h3 className="text-sm font-semibold text-text-warm">Registration cap</h3>
         <p className="mt-1 text-sm text-text-muted-warm">
-          Optional limit on how many people can register. Leave blank for unlimited
-          registrations.
+          Optional limit on how many people can register for this activity. Leave blank
+          for unlimited registrations on this activity (monthly plan usage still applies).
         </p>
+        {planRegistrationLimit != null ? (
+          <p className="mt-1 text-xs text-text-muted-warm">
+            Your plan allows up to{" "}
+            {formatPlanRegistrationLimit(planRegistrationLimit)} registrations per month
+            across all activities.
+          </p>
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -100,6 +125,7 @@ export function ActivityCapacityPanel({
           id="activity-max-registrants"
           type="number"
           min={1}
+          max={planRegistrationLimit ?? undefined}
           inputMode="numeric"
           placeholder="Unlimited"
           value={maxRegistrants}
