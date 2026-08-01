@@ -51,8 +51,12 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
         builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerDay", "1000");
         builder.UseSetting("PublicSignupVerifyRateLimit:MaxFailedAttemptsPerWindow", "1000");
         builder.UseSetting("PublicSignupVerifyRateLimit:WindowMinutes", "15");
+        builder.UseSetting("PublicSignupResendRateLimit:MaxResendsPerWindow", "1000");
+        builder.UseSetting("PublicSignupResendRateLimit:WindowMinutes", "15");
         builder.UseSetting("AuthOtpVerifyRateLimit:MaxFailedAttemptsPerWindow", "1000");
         builder.UseSetting("AuthOtpVerifyRateLimit:WindowMinutes", "15");
+        builder.UseSetting("AuthResendOtpRateLimit:MaxResendsPerWindow", "1000");
+        builder.UseSetting("AuthResendOtpRateLimit:WindowMinutes", "15");
     }
 
     protected virtual void ConfigureTestServices(IWebHostBuilder builder)

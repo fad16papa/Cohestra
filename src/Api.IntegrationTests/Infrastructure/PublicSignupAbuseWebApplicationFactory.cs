@@ -22,6 +22,8 @@ public sealed class PublicSignupAbuseWebApplicationFactory : IntegrationTestWebA
         builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerDay", "100");
         builder.UseSetting("PublicSignupVerifyRateLimit:MaxFailedAttemptsPerWindow", "3");
         builder.UseSetting("PublicSignupVerifyRateLimit:WindowMinutes", "15");
+        builder.UseSetting("PublicSignupResendRateLimit:MaxResendsPerWindow", "3");
+        builder.UseSetting("PublicSignupResendRateLimit:WindowMinutes", "15");
 
         _extraConfigure?.Invoke(builder);
     }

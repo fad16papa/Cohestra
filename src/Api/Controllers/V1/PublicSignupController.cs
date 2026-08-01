@@ -2,8 +2,10 @@ using Cohestra.Api.Infrastructure;
 using Cohestra.Application.Signup;
 using Cohestra.Contracts.Legal;
 using Cohestra.Contracts.Signup;
+using Cohestra.Infrastructure.Signup;
 using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Cohestra.Api.Controllers.V1;
 
@@ -11,7 +13,9 @@ namespace Cohestra.Api.Controllers.V1;
 [Route("api/v1/public/signup")]
 public sealed class PublicSignupController(
     ISelfServeSignupService signupService,
-    IPublicSignupRateLimiter signupRateLimiter) : ControllerBase
+    IPublicSignupRateLimiter signupRateLimiter,
+    IPublicSignupResendRateLimiter signupResendRateLimiter,
+    IOptions<PublicSignupResendRateLimitOptions> signupResendRateLimitOptions) : ControllerBase
 {
     [HttpGet("slug-check")]
     [ProducesResponseType(typeof(SlugAvailabilityResponse), StatusCodes.Status200OK)]
@@ -96,6 +100,7 @@ public sealed class PublicSignupController(
     [HttpPost("resend-otp")]
     [ProducesResponseType(typeof(SignupMessageResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<IActionResult> ResendOtp(
         [FromBody] SignupResendOtpRequest? request,
         CancellationToken cancellationToken)
@@ -110,6 +115,18 @@ public sealed class PublicSignupController(
             });
         }
 
+        var email = request.Email?.Trim() ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            var clientIp = PublicRegistrationRateLimitMiddleware.ResolveClientIdentifier(HttpContext);
+            if (!await signupResendRateLimiter.AllowResendAsync(email, clientIp, cancellationToken))
+            {
+                return MapResendRateLimited();
+            }
+
+            await signupResendRateLimiter.RecordResendAsync(email, clientIp, cancellationToken);
+        }
+
         var result = await signupService.ResendOtpAsync(request, cancellationToken);
         if (!result.Succeeded || result.Value is null)
         {
@@ -122,6 +139,23 @@ public sealed class PublicSignupController(
         }
 
         return Ok(result.Value);
+    }
+
+    private IActionResult MapResendRateLimited()
+    {
+        var windowMinutes = Math.Clamp(signupResendRateLimitOptions.Value.WindowMinutes, 1, 1440);
+        Response.Headers.RetryAfter = (windowMinutes * 60).ToString();
+
+        var problem = new ProblemDetails
+        {
+            Title = "Too many resend attempts",
+            Detail = "Resend limit reached. Try again later.",
+            Status = StatusCodes.Status429TooManyRequests,
+            Type = "https://cohestra.app/errors/resend-otp-rate-limited",
+        };
+        problem.Extensions["errorCode"] = "resend_otp_rate_limited";
+        problem.Extensions["traceId"] = HttpContext.TraceIdentifier;
+        return StatusCode(StatusCodes.Status429TooManyRequests, problem);
     }
 
     private IActionResult MapVerifyFailure(SelfServeSignupResult<SignupVerifyEmailResponse> result)
