@@ -65,6 +65,7 @@ Deferred from Story 17.2 CR — `POST /api/v1/public/signup/resend-otp` and `POS
 - Added `IPublicSignupResendRateLimiter` / `IAuthResendOtpRateLimiter` with sliding-window Redis ZSET pattern matching Epic 17 verify limiters.
 - Controllers check allow → record → service; 429 includes `Retry-After` and `resend_otp_rate_limited` error code.
 - Integration test extends existing `PublicSignupAbuseWebApplicationFactory` with low resend limits.
+- Abuse factory raises `AuthOtp:MaxSendAttemptsPerWindow` so legacy OTP send cap (default 3) does not block resend abuse test after signup's initial send.
 
 ## File List
 

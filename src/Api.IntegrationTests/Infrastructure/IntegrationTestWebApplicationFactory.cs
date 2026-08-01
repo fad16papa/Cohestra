@@ -57,6 +57,8 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
         builder.UseSetting("AuthOtpVerifyRateLimit:WindowMinutes", "15");
         builder.UseSetting("AuthResendOtpRateLimit:MaxResendsPerWindow", "1000");
         builder.UseSetting("AuthResendOtpRateLimit:WindowMinutes", "15");
+        builder.UseSetting("AuthOtp:MaxSendAttemptsPerWindow", "1000");
+        builder.UseSetting("AuthOtp:SendWindowMinutes", "15");
     }
 
     protected virtual void ConfigureTestServices(IWebHostBuilder builder)
