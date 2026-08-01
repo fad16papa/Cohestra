@@ -7,4 +7,5 @@ public sealed record UpdateActivityRequest(
     string Location,
     string CommunityLabel,
     string? HeroImageUrl,
-    string? AccentColor);
+    string? AccentColor,
+    int? MaxRegistrants = null);

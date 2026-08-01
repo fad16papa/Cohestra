@@ -31,6 +31,12 @@ public sealed class ActivityService(
                 "New activities must be created as draft. Use publish to go live.");
         }
 
+        var capacityError = ActivityCapacityValidator.ValidateMaxRegistrants(request.MaxRegistrants);
+        if (capacityError is not null)
+        {
+            throw new InvalidOperationException(capacityError);
+        }
+
         var now = DateTimeOffset.UtcNow;
         const int maxAttempts = 3;
 
@@ -52,6 +58,7 @@ public sealed class ActivityService(
                 Schedule = request.Schedule.Trim(),
                 Location = request.Location.Trim(),
                 CommunityLabel = request.CommunityLabel.Trim(),
+                MaxRegistrants = request.MaxRegistrants,
                 Status = ActivityStatus.Draft,
                 CreatedAt = now,
                 UpdatedAt = now,
@@ -193,6 +200,18 @@ public sealed class ActivityService(
             throw new InvalidOperationException(accentError);
         }
 
+        var registrationCount = await dbContext.Registrations
+            .AsNoTracking()
+            .CountAsync(registration => registration.ActivityId == id, cancellationToken);
+
+        var capacityError = ActivityCapacityValidator.ValidateMaxRegistrantsAgainstCount(
+            request.MaxRegistrants,
+            registrationCount);
+        if (capacityError is not null)
+        {
+            throw new InvalidOperationException(capacityError);
+        }
+
         activity.Name = request.Name.Trim();
         activity.Category = request.Category.Trim();
         activity.Schedule = request.Schedule.Trim();
@@ -201,12 +220,13 @@ public sealed class ActivityService(
         // Persist the uploaded/external URL as provided; browser resolution happens on read.
         activity.HeroImageUrl = ActivityBrandingValidator.NormalizeHeroImageUrl(request.HeroImageUrl);
         activity.AccentColor = ActivityBrandingValidator.NormalizeAccentColor(request.AccentColor);
+        activity.MaxRegistrants = request.MaxRegistrants;
         activity.UpdatedAt = DateTimeOffset.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await SyncPublicActivityCacheAsync(activity, cancellationToken);
 
-        return ToActivityResponse(activity);
+        return ToActivityResponse(activity, registrationCount);
     }
 
     public async Task<ActivityResponse?> UpdateShowOnHomepageAsync(
@@ -381,7 +401,7 @@ public sealed class ActivityService(
             return null;
         }
 
-        var response = MapToPublicResponse(activity);
+        var response = await MapToPublicResponseAsync(activity, cancellationToken);
 
         if (activity.Status == ActivityStatus.Published)
         {
@@ -389,6 +409,32 @@ public sealed class ActivityService(
         }
 
         return response;
+    }
+
+    public async Task RefreshPublicActivityCacheBySlugAsync(
+        Guid tenantId,
+        string activitySlug,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(activitySlug))
+        {
+            return;
+        }
+
+        var normalizedSlug = activitySlug.Trim().ToLowerInvariant();
+        var activity = await dbContext.Activities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                item => item.TenantId == tenantId && item.Slug == normalizedSlug,
+                cancellationToken);
+
+        if (activity is null)
+        {
+            await publicActivityCache.InvalidateAsync(tenantId, normalizedSlug, cancellationToken);
+            return;
+        }
+
+        await SyncPublicActivityCacheAsync(activity, cancellationToken);
     }
 
     public async Task<ActivityResponse?> UpdateFormSchemaAsync(
@@ -519,10 +565,11 @@ public sealed class ActivityService(
     {
         if (activity.Status == ActivityStatus.Published)
         {
+            var response = await MapToPublicResponseAsync(activity, cancellationToken);
             await publicActivityCache.SetAsync(
                 activity.TenantId,
                 activity.Slug,
-                MapToPublicResponse(activity),
+                response,
                 cancellationToken);
             return;
         }
@@ -562,8 +609,19 @@ public sealed class ActivityService(
     private static string? ResolveHeroImageUrl(string? heroImageUrl) =>
         ActivityHeroImageUrlResolver.ResolveForBrowser(heroImageUrl);
 
-    private PublicActivityResponse MapToPublicResponse(Activity activity) =>
-        new(
+    private async Task<PublicActivityResponse> MapToPublicResponseAsync(
+        Activity activity,
+        CancellationToken cancellationToken)
+    {
+        var registrationCount = 0;
+        if (activity.Status == ActivityStatus.Published)
+        {
+            registrationCount = await dbContext.Registrations
+                .AsNoTracking()
+                .CountAsync(registration => registration.ActivityId == activity.Id, cancellationToken);
+        }
+
+        return new PublicActivityResponse(
             activity.Slug,
             activity.Name,
             activity.Status.ToString().ToLowerInvariant(),
@@ -575,7 +633,11 @@ public sealed class ActivityService(
             activity.AccentColor,
             activity.Status == ActivityStatus.Published
                 ? FormSchemaMapper.ToDto(activity.FormSchema)
-                : null);
+                : null,
+            activity.MaxRegistrants,
+            registrationCount,
+            ActivityCapacityValidator.IsRegistrationFull(activity.MaxRegistrants, registrationCount));
+    }
 
     private PublicActivityResponse ResolvePublicResponse(PublicActivityResponse response) =>
         response with

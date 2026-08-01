@@ -46,6 +46,7 @@ export type Activity = {
   showOnHomepage: boolean;
   status: ActivityStatus;
   formSchema: ActivityFormSchema | null;
+  maxRegistrants: number | null;
   registrationCount: number;
   createdAt: string;
   updatedAt: string;
@@ -65,6 +66,7 @@ export type CreateActivityInput = {
   location: string;
   communityLabel: string;
   status?: ActivityStatus;
+  maxRegistrants?: number | null;
 };
 
 export type UpdateActivityInput = {
@@ -75,6 +77,7 @@ export type UpdateActivityInput = {
   communityLabel: string;
   heroImageUrl?: string | null;
   accentColor?: string | null;
+  maxRegistrants?: number | null;
 };
 
 export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
@@ -165,6 +168,7 @@ function parseActivity(raw: Record<string, unknown>): Activity {
   const status = raw.status ?? raw.Status;
   const formSchemaRaw = raw.formSchema ?? raw.FormSchema;
   const registrationCount = raw.registrationCount ?? raw.RegistrationCount;
+  const maxRegistrantsRaw = raw.maxRegistrants ?? raw.MaxRegistrants;
   const createdAt = raw.createdAt ?? raw.CreatedAt;
   const updatedAt = raw.updatedAt ?? raw.UpdatedAt;
 
@@ -198,6 +202,10 @@ function parseActivity(raw: Record<string, unknown>): Activity {
     showOnHomepage,
     status: status as ActivityStatus,
     formSchema: parseFormSchema(formSchemaRaw),
+    maxRegistrants:
+      typeof maxRegistrantsRaw === "number" && Number.isFinite(maxRegistrantsRaw)
+        ? maxRegistrantsRaw
+        : null,
     registrationCount,
     createdAt,
     updatedAt,
@@ -341,6 +349,7 @@ export async function createActivity(
       body: JSON.stringify({
         ...input,
         status: input.status ?? "draft",
+        maxRegistrants: input.maxRegistrants ?? null,
       }),
     }
   );
@@ -371,6 +380,7 @@ export async function updateActivity(
         communityLabel: input.communityLabel,
         heroImageUrl: input.heroImageUrl?.trim() || null,
         accentColor: input.accentColor?.trim() || null,
+        maxRegistrants: input.maxRegistrants ?? null,
       }),
     }
   );

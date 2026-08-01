@@ -8,6 +8,9 @@ export type PublicActivity = {
   name: string;
   status: ActivityStatus;
   isRegistrationOpen: boolean;
+  isRegistrationFull: boolean;
+  maxRegistrants: number | null;
+  registrationCount: number;
   schedule: string;
   location: string;
   communityLabel: string;
@@ -29,6 +32,9 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
   const name = raw.name ?? raw.Name;
   const status = raw.status ?? raw.Status;
   const isRegistrationOpen = raw.isRegistrationOpen ?? raw.IsRegistrationOpen;
+  const isRegistrationFull = raw.isRegistrationFull ?? raw.IsRegistrationFull;
+  const maxRegistrantsRaw = raw.maxRegistrants ?? raw.MaxRegistrants;
+  const registrationCountRaw = raw.registrationCount ?? raw.RegistrationCount;
   const schedule = raw.schedule ?? raw.Schedule;
   const location = raw.location ?? raw.Location;
   const communityLabel = raw.communityLabel ?? raw.CommunityLabel;
@@ -40,6 +46,8 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
     typeof slug !== "string" ||
     typeof name !== "string" ||
     typeof isRegistrationOpen !== "boolean" ||
+    typeof isRegistrationFull !== "boolean" ||
+    typeof registrationCountRaw !== "number" ||
     typeof schedule !== "string" ||
     typeof location !== "string" ||
     typeof communityLabel !== "string"
@@ -52,6 +60,12 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
     name,
     status: parseActivityStatus(status),
     isRegistrationOpen,
+    isRegistrationFull,
+    maxRegistrants:
+      typeof maxRegistrantsRaw === "number" && Number.isFinite(maxRegistrantsRaw)
+        ? maxRegistrantsRaw
+        : null,
+    registrationCount: registrationCountRaw,
     schedule,
     location,
     communityLabel,

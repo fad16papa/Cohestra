@@ -13,6 +13,7 @@ public sealed record ActivityResponse(
     string Status,
     bool ShowOnHomepage,
     ActivityFormSchemaDto? FormSchema,
+    int? MaxRegistrants,
     int RegistrationCount,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
