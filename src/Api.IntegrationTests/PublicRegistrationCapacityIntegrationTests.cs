@@ -38,9 +38,8 @@ public sealed class PublicRegistrationCapacityIntegrationTests(IntegrationTestFi
 
         Assert.Equal(HttpStatusCode.Conflict, fullResponse.StatusCode);
 
-        var problem = await fullResponse.Content.ReadFromJsonAsync<JsonElement>(
-            IntegrationTestHelpers.JsonOptions);
-        Assert.Equal("activity_full", problem.GetProperty("errorCode").GetString());
+        var errorCode = await IntegrationTestHelpers.ReadProblemErrorCodeAsync(fullResponse);
+        Assert.Equal("activity_full", errorCode);
     }
 
     [SkippableFact]
@@ -55,17 +54,19 @@ public sealed class PublicRegistrationCapacityIntegrationTests(IntegrationTestFi
             slug,
             maxRegistrants: 2);
 
-        using var client = Factory.CreateClient();
+        using var setupClient = Factory.CreateClient();
         await IntegrationTestHelpers.SubmitRegistrationAsync(
-            client,
+            setupClient,
             slug,
             CreateAnswers($"0919{Random.Shared.Next(1000000, 9999999)}"));
 
         var firstAnswers = CreateAnswers($"0920{Random.Shared.Next(1000000, 9999999)}");
         var secondAnswers = CreateAnswers($"0921{Random.Shared.Next(1000000, 9999999)}");
 
-        var firstTask = IntegrationTestHelpers.SubmitRegistrationRawAsync(client, slug, firstAnswers);
-        var secondTask = IntegrationTestHelpers.SubmitRegistrationRawAsync(client, slug, secondAnswers);
+        using var firstClient = Factory.CreateClient();
+        using var secondClient = Factory.CreateClient();
+        var firstTask = IntegrationTestHelpers.SubmitRegistrationRawAsync(firstClient, slug, firstAnswers);
+        var secondTask = IntegrationTestHelpers.SubmitRegistrationRawAsync(secondClient, slug, secondAnswers);
 
         await Task.WhenAll(firstTask, secondTask);
 
@@ -74,9 +75,8 @@ public sealed class PublicRegistrationCapacityIntegrationTests(IntegrationTestFi
         Assert.Equal(1, responses.Count(response => response.StatusCode == HttpStatusCode.Conflict));
 
         var conflict = responses.Single(response => response.StatusCode == HttpStatusCode.Conflict);
-        var problem = await conflict.Content.ReadFromJsonAsync<JsonElement>(
-            IntegrationTestHelpers.JsonOptions);
-        Assert.Equal("activity_full", problem.GetProperty("errorCode").GetString());
+        var errorCode = await IntegrationTestHelpers.ReadProblemErrorCodeAsync(conflict);
+        Assert.Equal("activity_full", errorCode);
 
         await using var scope = Factory.Services.CreateAsyncScope();
         IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);

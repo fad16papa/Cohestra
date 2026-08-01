@@ -409,6 +409,24 @@ internal static class IntegrationTestHelpers
             JsonOptions);
     }
 
+    internal static async Task<string?> ReadProblemErrorCodeAsync(HttpResponseMessage response)
+    {
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+        if (root.TryGetProperty("errorCode", out var code))
+        {
+            return code.GetString();
+        }
+
+        if (root.TryGetProperty("extensions", out var extensions)
+            && extensions.TryGetProperty("errorCode", out var nestedCode))
+        {
+            return nestedCode.GetString();
+        }
+
+        return null;
+    }
+
     internal static async Task<SubmitPublicRegistrationResponse> SubmitRegistrationAsync(
         HttpClient client,
         string activitySlug,
