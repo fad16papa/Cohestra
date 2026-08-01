@@ -273,6 +273,7 @@ public sealed class RegistrationService(
         if (ActivityCapacityValidator.IsRegistrationFull(lockedActivity.MaxRegistrants, registrationCount))
         {
             await transaction.RollbackAsync(cancellationToken);
+            await RefreshPublicActivityCacheBestEffortAsync(tenantId, normalizedSlug, cancellationToken);
             return PublicRegistrationSubmitResult.ActivityFull();
         }
 
@@ -319,15 +320,33 @@ public sealed class RegistrationService(
             throw;
         }
 
-        await activityService.RefreshPublicActivityCacheBySlugAsync(
-            tenantId,
-            normalizedSlug,
-            cancellationToken);
+        await RefreshPublicActivityCacheBestEffortAsync(tenantId, normalizedSlug, cancellationToken);
 
         return PublicRegistrationSubmitResult.Created(
             registration.Id,
             registration.RegistrationNumber,
             client.Id,
             clientCreated);
+    }
+
+    private async Task RefreshPublicActivityCacheBestEffortAsync(
+        Guid tenantId,
+        string activitySlug,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await activityService.RefreshPublicActivityCacheBySlugAsync(
+                tenantId,
+                activitySlug,
+                cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(
+                ex,
+                "Public activity cache refresh failed for slug {ActivitySlug}.",
+                activitySlug);
+        }
     }
 }

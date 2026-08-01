@@ -2,6 +2,7 @@ import type { ActivityFormSchema, ActivityStatus } from "@/lib/activities-api";
 import { parseFormSchema } from "@/lib/activities-api";
 import { getPublicApiBaseUrl } from "@/lib/api";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
+import { parseProblemFields } from "@/lib/problem-details";
 
 export type PublicActivity = {
   slug: string;
@@ -190,17 +191,22 @@ export async function submitPublicRegistration(
     }
 
     let message = `Registration failed (${response.status})`;
+    let errorCode: string | undefined;
     try {
       const problem = (await response.json()) as Record<string, unknown>;
-      const detail = problem.detail ?? problem.Detail;
-      if (typeof detail === "string" && detail.trim()) {
-        message = detail;
-      }
+      const parsed = parseProblemFields(problem);
+      message = parsed.message;
+      errorCode = parsed.errorCode;
     } catch {
       // Keep generic message when problem details are unavailable.
     }
 
-    throw new Error(message);
+    const error = new Error(message) as Error & { errorCode?: string };
+    if (errorCode) {
+      error.errorCode = errorCode;
+    }
+
+    throw error;
   }
 
   throw new Error("Unexpected registration response.");
