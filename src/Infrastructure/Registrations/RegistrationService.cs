@@ -254,7 +254,7 @@ public sealed class RegistrationService(
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         await dbContext.Database.ExecuteSqlInterpolatedAsync(
-            $"SELECT id FROM activities WHERE id = {activity.Id} FOR UPDATE",
+            $"""SELECT "Id" FROM public.activities WHERE "Id" = {activity.Id} FOR UPDATE""",
             cancellationToken);
 
         var lockedActivity = await dbContext.Activities
