@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Cohestra.Application.Auth;
+using Cohestra.Infrastructure.RateLimiting;
 using Cohestra.Infrastructure.Registrations;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -11,6 +12,7 @@ public sealed class RedisAuthOtpVerifyRateLimiter(
     IConnectionMultiplexer redis,
     IOptions<AuthOtpVerifyRateLimitOptions> options) : IAuthOtpVerifyRateLimiter
 {
+    private const string LimiterName = "AuthOtpVerify";
     private static readonly LuaScript CountScript = LuaScript.Prepare("""
         local now = tonumber(@now)
         local windowMs = tonumber(@windowMs)
@@ -109,7 +111,9 @@ public sealed class RedisAuthOtpVerifyRateLimiter(
             keys.Add(BuildIpKey(clientIdentifier));
         }
 
-        await db.KeyDeleteAsync(keys.ToArray());
+        await RedisRateLimiterOperations.ExecuteAsync(
+            () => db.KeyDeleteAsync(keys.ToArray()),
+            LimiterName);
     }
 
     private static RedisKey BuildEmailKey(string email)
@@ -131,7 +135,7 @@ public sealed class RedisAuthOtpVerifyRateLimiter(
         return Convert.ToHexString(hash);
     }
 
-    private static async Task<bool> EvaluateAllowAsync(
+    private static Task<bool> EvaluateAllowAsync(
         IDatabase db,
         RedisKey key,
         long now,
@@ -139,18 +143,18 @@ public sealed class RedisAuthOtpVerifyRateLimiter(
         int limit)
     {
         var windowMs = (long)window.TotalMilliseconds;
-        var result = await CountScript.EvaluateAsync(db, new
-        {
-            key,
-            now,
-            windowMs,
-            limit,
-        });
-
-        return result is not null && (int)result == 1;
+        return RedisRateLimiterOperations.EvaluateAllowAsync(
+            () => CountScript.EvaluateAsync(db, new
+            {
+                key,
+                now,
+                windowMs,
+                limit,
+            }),
+            LimiterName);
     }
 
-    private static async Task RecordAsync(
+    private static Task RecordAsync(
         IDatabase db,
         RedisKey key,
         long now,
@@ -158,12 +162,14 @@ public sealed class RedisAuthOtpVerifyRateLimiter(
         string member)
     {
         var windowMs = (long)window.TotalMilliseconds;
-        await RecordScript.EvaluateAsync(db, new
-        {
-            key,
-            now,
-            windowMs,
-            member,
-        });
+        return RedisRateLimiterOperations.ExecuteAsync(
+            () => RecordScript.EvaluateAsync(db, new
+            {
+                key,
+                now,
+                windowMs,
+                member,
+            }),
+            LimiterName);
     }
 }

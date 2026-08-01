@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 using Cohestra.Application.Auth;
+using Cohestra.Application.RateLimiting;
+using Cohestra.Infrastructure.RateLimiting;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
@@ -10,71 +12,75 @@ public sealed class RedisOtpStore(
     IConnectionMultiplexer redis,
     IOptions<JwtSettings> jwtOptions) : IAuthOtpStore
 {
+    private const string ComponentName = "AuthOtpStore";
     private const string CodeKeyPrefix = "auth:otp:code:";
     private const string RateKeyPrefix = "auth:otp:rate:";
 
-    public async Task<bool> TryStoreAsync(
+    public Task<bool> TryStoreAsync(
         string email,
         OtpPurpose purpose,
         string code,
         TimeSpan ttl,
-        CancellationToken cancellationToken = default)
-    {
-        var db = redis.GetDatabase();
-        return await db.StringSetAsync(
-            GetCodeKey(email, purpose),
-            HashCode(email, purpose, code),
-            ttl,
-            When.Always);
-    }
+        CancellationToken cancellationToken = default) =>
+        RedisRateLimiterOperations.ExecuteAsync(async () =>
+        {
+            var db = redis.GetDatabase();
+            return await db.StringSetAsync(
+                GetCodeKey(email, purpose),
+                HashCode(email, purpose, code),
+                ttl,
+                When.Always);
+        }, ComponentName);
 
-    public async Task<bool> ValidateAndConsumeAsync(
+    public Task<bool> ValidateAndConsumeAsync(
         string email,
         OtpPurpose purpose,
         string code,
-        CancellationToken cancellationToken = default)
-    {
-        var db = redis.GetDatabase();
-        var key = GetCodeKey(email, purpose);
-        var stored = await db.StringGetAsync(key);
-
-        if (stored.IsNullOrEmpty)
+        CancellationToken cancellationToken = default) =>
+        RedisRateLimiterOperations.ExecuteAsync(async () =>
         {
-            return false;
-        }
+            var db = redis.GetDatabase();
+            var key = GetCodeKey(email, purpose);
+            var stored = await db.StringGetAsync(key);
 
-        var expected = HashCode(email, purpose, code.Trim());
-        var storedValue = stored.ToString();
-        if (storedValue.Length != expected.Length
-            || !CryptographicOperations.FixedTimeEquals(
-                Encoding.UTF8.GetBytes(storedValue),
-                Encoding.UTF8.GetBytes(expected)))
-        {
-            return false;
-        }
+            if (stored.IsNullOrEmpty)
+            {
+                return false;
+            }
 
-        await db.KeyDeleteAsync(key);
-        return true;
-    }
+            var expected = HashCode(email, purpose, code.Trim());
+            var storedValue = stored.ToString();
+            if (storedValue.Length != expected.Length
+                || !CryptographicOperations.FixedTimeEquals(
+                    Encoding.UTF8.GetBytes(storedValue),
+                    Encoding.UTF8.GetBytes(expected)))
+            {
+                return false;
+            }
 
-    public async Task<bool> TryRecordSendAttemptAsync(
+            await db.KeyDeleteAsync(key);
+            return true;
+        }, ComponentName);
+
+    public Task<bool> TryRecordSendAttemptAsync(
         string email,
         OtpPurpose purpose,
         int maxAttempts,
         TimeSpan window,
-        CancellationToken cancellationToken = default)
-    {
-        var db = redis.GetDatabase();
-        var key = GetRateKey(email, purpose);
-        var count = await db.StringIncrementAsync(key);
-
-        if (count == 1)
+        CancellationToken cancellationToken = default) =>
+        RedisRateLimiterOperations.ExecuteAsync(async () =>
         {
-            await db.KeyExpireAsync(key, window);
-        }
+            var db = redis.GetDatabase();
+            var key = GetRateKey(email, purpose);
+            var count = await db.StringIncrementAsync(key);
 
-        return count <= maxAttempts;
-    }
+            if (count == 1)
+            {
+                await db.KeyExpireAsync(key, window);
+            }
+
+            return count <= maxAttempts;
+        }, ComponentName);
 
     private string HashCode(string email, OtpPurpose purpose, string code)
     {

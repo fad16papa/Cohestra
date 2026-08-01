@@ -80,10 +80,15 @@ public sealed class AuthService(
 
         if (!user.EmailConfirmed)
         {
+            var verifyTenantSlug = await tenantMembershipService.GetPendingVerificationTenantSlugAsync(
+                user.Id,
+                cancellationToken);
+
             return new AuthLoginResult(
                 null,
                 "email_not_verified",
-                "Verify your email before signing in. Check your inbox for the verification code.");
+                "Verify your email before signing in. Check your inbox for the verification code.",
+                verifyTenantSlug);
         }
 
         var signInResult = await signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
