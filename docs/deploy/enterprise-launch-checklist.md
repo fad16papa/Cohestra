@@ -109,8 +109,31 @@ dotnet test src/Api.IntegrationTests --filter "Category=TenantIsolation"
 - [ ] OTP verify flow tested end-to-end on apex `/pricing` or signup route
 - [x] **P1 shipped (Story 17.2):** Signup OTP verify brute-force throttling + abuse integration tests
 - [x] **P1 shipped (Story 17.1):** Auth handoff uses one-time server code exchange (`POST /api/v1/auth/handoff/exchange`) — no JWTs in URL hash
+- [x] **P2 shipped (Story 18.1):** Resend OTP rate limiting (signup + tenant login); 429 + `Retry-After`
 
 See [cloud-mobile-testing.md](./cloud-mobile-testing.md) for reCAPTCHA env blocks.
+
+### OTP send vs resend limits (Story 18.1)
+
+Signup and tenant login use **two independent Redis-backed limits**. Both use a **15-minute sliding window**. Operators often hit the **send cap** before the resend limiter during UAT.
+
+| Limit | What it counts | Default | Config (`appsettings` / env) | User-facing signal |
+|-------|----------------|---------|------------------------------|-------------------|
+| **OTP send cap** | Every OTP **email sent** (initial signup/login send + each resend) | **3 sends / 15 min** per email | `AuthOtp:MaxSendAttemptsPerWindow`, `AuthOtp:SendWindowMinutes` | 429 when cap exceeded (may occur before resend limiter) |
+| **Resend limiter** | Explicit **Resend OTP** API calls only | **5 resends / 15 min** per email **or** client IP | `PublicSignupResendRateLimit:*` (apex signup), `AuthResendOtpRateLimit:*` (tenant login) | 429 + `Retry-After` header (seconds until window slot frees) |
+
+**Operator guidance:**
+
+- If resend is blocked after only a few tries, the **send cap (3)** likely fired first — wait up to **15 minutes** from the first send in the window, then try again.
+- **Verify brute-force** is separate (Story 17.2): **10 failed verify attempts / 15 min** per email (`PublicSignupVerifyRateLimit`, `AuthOtpVerifyRateLimit`).
+- **Redis outage:** rate limiters and OTP send fail **closed** → API returns **503** with a friendly message (Story 18.4). Raw Redis errors must not appear in the UI.
+- **Local dev:** OTP codes log as `DEV ONLY — OTP for …` in API container logs (`docker compose logs api`).
+
+**UAT smoke (optional):**
+
+```bash
+dotnet test src/Api.IntegrationTests --filter "FullyQualifiedName~Resend_otp"
+```
 
 ---
 
@@ -185,7 +208,7 @@ Track in sprint / deferred-work; do not block enterprise launch sign-off unless 
 | ~~OTP verify brute-force throttling + abuse tests~~ (Story 17.2) | Dev |
 | ~~Member JWT 403 integration matrix~~ (Story 17.3) | Dev |
 | ~~Operator auth OTP throttling + production guardrails~~ (Story 17.4) | Dev |
-| resend-otp rate limiting (deferred from 17.2 CR) | Dev |
+| ~~resend-otp rate limiting~~ (Story 18.1) | Dev |
 | Platform async-action refactor (Epic 11 retro) | Dev |
 | Close skippable platform integration tests in CI | Dev |
 | Sender settings UI vs provisioned email | Product |
