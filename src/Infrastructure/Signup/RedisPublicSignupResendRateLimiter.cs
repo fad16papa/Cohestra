@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Cohestra.Application.Signup;
+using Cohestra.Infrastructure.RateLimiting;
 using Cohestra.Infrastructure.Registrations;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -11,6 +12,7 @@ public sealed class RedisPublicSignupResendRateLimiter(
     IConnectionMultiplexer redis,
     IOptions<PublicSignupResendRateLimitOptions> options) : IPublicSignupResendRateLimiter
 {
+    private const string LimiterName = "PublicSignupResend";
     private static readonly LuaScript CountScript = LuaScript.Prepare("""
         local now = tonumber(@now)
         local windowMs = tonumber(@windowMs)
@@ -116,7 +118,7 @@ public sealed class RedisPublicSignupResendRateLimiter(
         return Convert.ToHexString(hash);
     }
 
-    private static async Task<bool> EvaluateAllowAsync(
+    private static Task<bool> EvaluateAllowAsync(
         IDatabase db,
         RedisKey key,
         long now,
@@ -124,18 +126,18 @@ public sealed class RedisPublicSignupResendRateLimiter(
         int limit)
     {
         var windowMs = (long)window.TotalMilliseconds;
-        var result = await CountScript.EvaluateAsync(db, new
-        {
-            key,
-            now,
-            windowMs,
-            limit,
-        });
-
-        return result is not null && (int)result == 1;
+        return RedisRateLimiterOperations.EvaluateAllowAsync(
+            () => CountScript.EvaluateAsync(db, new
+            {
+                key,
+                now,
+                windowMs,
+                limit,
+            }),
+            LimiterName);
     }
 
-    private static async Task RecordAsync(
+    private static Task RecordAsync(
         IDatabase db,
         RedisKey key,
         long now,
@@ -143,12 +145,14 @@ public sealed class RedisPublicSignupResendRateLimiter(
         string member)
     {
         var windowMs = (long)window.TotalMilliseconds;
-        await RecordScript.EvaluateAsync(db, new
-        {
-            key,
-            now,
-            windowMs,
-            member,
-        });
+        return RedisRateLimiterOperations.ExecuteAsync(
+            () => RecordScript.EvaluateAsync(db, new
+            {
+                key,
+                now,
+                windowMs,
+                member,
+            }),
+            LimiterName);
     }
 }
