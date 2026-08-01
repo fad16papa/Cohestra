@@ -1364,3 +1364,34 @@ So that **stakeholders can approve public launch with evidence**.
 **Then** **Operator** and **PM** rows are filled with date and scope (UAT droplet URL)  
 **And** remaining §6 product gates are listed with owner if still open
 
+## Epic 20: Activity registration capacity
+
+Optional per-activity registrant cap. Sourced from product request and PRD "Capacity + waitlist" extension (waitlist out of v1 scope).
+
+**FRs touched:** activity registration, public door  
+**Not in scope:** waitlist, tenant plan limit changes, CSP/httpOnly
+
+### Story 20.1: Optional max registrants per activity
+
+As a **Tenant Admin**,
+I want **to optionally set a maximum number of registrants when creating or editing an activity**,
+So that **registration closes when the event is full without affecting unlimited activities**.
+
+**Acceptance Criteria:**
+
+**Given** max registrants is left blank  
+**When** activity is saved  
+**Then** registrations remain unlimited (backward compatible)
+
+**Given** max registrants is set to `N >= 1`  
+**When** registration count reaches `N`  
+**Then** new public submits return 409 `activity_full`  
+**And** public GET exposes `isRegistrationFull`, `registrationCount`, `maxRegistrants`  
+**And** concurrent last-spot submits are safe via DB transaction + row lock
+
+**Given** admin lowers cap below current count  
+**When** update is attempted  
+**Then** validation rejects the change
+
+See story file `20-1-optional-max-registrants-per-activity.md` for full AC and dev guardrails.
+
