@@ -37,13 +37,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 
 namespace Cohestra.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         var postgresConnection = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
@@ -107,7 +111,7 @@ public static class DependencyInjection
             ?? new SendGridSettings();
         SendGridSettingsValidator.ValidateForEnvironment(
             sendGridSettings,
-            configuration["ASPNETCORE_ENVIRONMENT"]);
+            environment.EnvironmentName);
 
         if (string.IsNullOrWhiteSpace(sendGridSettings.ApiKey))
         {
