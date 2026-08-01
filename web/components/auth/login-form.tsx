@@ -41,6 +41,9 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [verificationRedirectPath, setVerificationRedirectPath] = useState<string | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resolvedSubmitLabel =
@@ -52,6 +55,11 @@ export function LoginForm({
       setEmail(initialEmail);
     }
   }, [initialEmail]);
+
+  useEffect(() => {
+    setVerificationRedirectPath(null);
+    setError(null);
+  }, [email, password]);
 
   useEffect(() => {
     if (status !== "authenticated" || !profile) {
@@ -81,6 +89,12 @@ export function LoginForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (verificationRedirectPath) {
+      router.push(verificationRedirectPath);
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true);
 
@@ -93,7 +107,9 @@ export function LoginForm({
         || result.message.toLowerCase().includes("verify your email");
 
       if (isUnverified) {
-        router.push(buildVerifyEmailPath(email.trim(), result.verifyTenantSlug));
+        setVerificationRedirectPath(
+          buildVerifyEmailPath(email.trim(), result.verifyTenantSlug)
+        );
         return;
       }
 
@@ -196,6 +212,16 @@ export function LoginForm({
         </div>
       </div>
 
+      {verificationRedirectPath ? (
+        <p
+          role="status"
+          className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-text-warm"
+        >
+          Your email is not verified yet. Continue below to enter the code we sent you
+          or request a new one.
+        </p>
+      ) : null}
+
       {error ? (
         <div
           role="alert"
@@ -230,6 +256,8 @@ export function LoginForm({
             <Loader2 className="size-4 animate-spin" aria-hidden />
             Signing in…
           </>
+        ) : verificationRedirectPath ? (
+          "Verify your account"
         ) : (
           resolvedSubmitLabel
         )}
