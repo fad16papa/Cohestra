@@ -193,6 +193,48 @@ public sealed class PublicSignupAbuseIntegrationTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.TooManyRequests, successResponse.StatusCode);
     }
 
+    [SkippableFact]
+    public async Task Resend_otp_returns_429_after_threshold()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var slug = $"resend-{Guid.NewGuid():N}"[..20];
+        var email = $"resend-{Guid.NewGuid():N}@example.com";
+
+        using var client = CreateClientWithUniqueIp(Factory);
+        using var signupResponse = await client.PostAsJsonAsync(
+            "/api/v1/public/signup",
+            new PublicSignupRequest(
+                AcceptTermsAndPrivacy: true,
+                TermsVersion: "2026-07-21",
+                PrivacyVersion: "2026-07-21",
+                OrgName: "Resend Abuse Atelier",
+                Slug: slug,
+                Email: email,
+                Password: "ChangeMe123!",
+                CaptchaToken: "test-captcha-pass"));
+
+        Assert.Equal(HttpStatusCode.Created, signupResponse.StatusCode);
+
+        for (var attempt = 1; attempt <= 3; attempt++)
+        {
+            using var resendResponse = await client.PostAsJsonAsync(
+                "/api/v1/public/signup/resend-otp",
+                new SignupResendOtpRequest(email, slug));
+
+            Assert.Equal(HttpStatusCode.OK, resendResponse.StatusCode);
+        }
+
+        using var rateLimitedResponse = await client.PostAsJsonAsync(
+            "/api/v1/public/signup/resend-otp",
+            new SignupResendOtpRequest(email, slug));
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, rateLimitedResponse.StatusCode);
+
+        var errorCode = await ReadErrorCodeAsync(rateLimitedResponse);
+        Assert.Equal("resend_otp_rate_limited", errorCode);
+    }
+
     private static HttpClient CreateClientWithUniqueIp(PublicSignupAbuseWebApplicationFactory factory)
     {
         var client = factory.CreateClient();

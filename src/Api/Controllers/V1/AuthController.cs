@@ -17,7 +17,9 @@ public class AuthController(
     IAuthService authService,
     IAuthHandoffStore authHandoffStore,
     ICurrentTenant currentTenant,
-    IOptions<AuthOtpVerifyRateLimitOptions> authOtpVerifyRateLimitOptions) : ControllerBase
+    IAuthResendOtpRateLimiter authResendOtpRateLimiter,
+    IOptions<AuthOtpVerifyRateLimitOptions> authOtpVerifyRateLimitOptions,
+    IOptions<AuthResendOtpRateLimitOptions> authResendOtpRateLimitOptions) : ControllerBase
 {
     [HttpGet("onboarding")]
     [ProducesResponseType(typeof(OnboardingStatusResponse), StatusCodes.Status200OK)]
@@ -126,6 +128,7 @@ public class AuthController(
     [HttpPost("resend-otp")]
     [ProducesResponseType(typeof(MessageResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<MessageResponse>> ResendOtp(
         [FromBody] ResendOtpRequest? request,
         CancellationToken cancellationToken)
@@ -133,6 +136,21 @@ public class AuthController(
         if (request is null)
         {
             return BadRequestProblem("Request body is required.");
+        }
+
+        var email = request.Email?.Trim() ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            var clientIp = PublicRegistrationRateLimitMiddleware.ResolveClientIdentifier(HttpContext);
+            if (!await authResendOtpRateLimiter.AllowResendAsync(email, clientIp, cancellationToken))
+            {
+                return TooManyRequestsResendProblem(
+                    "Too many resend attempts. Try again later.",
+                    AuthErrorCodes.ResendOtpRateLimited,
+                    "https://cohestra.app/errors/resend-otp-rate-limited");
+            }
+
+            await authResendOtpRateLimiter.RecordResendAsync(email, clientIp, cancellationToken);
         }
 
         var (response, error) = await authService.ResendOtpAsync(request, cancellationToken);
@@ -317,6 +335,27 @@ public class AuthController(
             Detail = detail,
             Instance = HttpContext.Request.Path,
         });
+    }
+
+    private ObjectResult TooManyRequestsResendProblem(string detail, string errorCode, string? type = null)
+    {
+        Response.ContentType = "application/problem+json";
+
+        var windowMinutes = Math.Clamp(authResendOtpRateLimitOptions.Value.WindowMinutes, 1, 1440);
+        Response.Headers.RetryAfter = (windowMinutes * 60).ToString();
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Too many resend attempts",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+            Type = type,
+        };
+        problem.Extensions["errorCode"] = errorCode;
+        problem.Extensions["traceId"] = HttpContext.TraceIdentifier;
+
+        return StatusCode(StatusCodes.Status429TooManyRequests, problem);
     }
 
     private ObjectResult TooManyRequestsProblem(string detail, string errorCode, string? type = null)
