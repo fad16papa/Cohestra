@@ -1,11 +1,11 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-01T13:10:00Z
+# last_updated: 2026-08-01T15:00:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–18 done) + Epic 19 production launch
-# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–19)
+# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–19) + Epic 20 activity capacity
+# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–20)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -252,6 +252,10 @@ development_status:
   19-4-stripe-billing-uat-on-droplet: backlog
   19-5-operator-core-flows-launch-signoff: backlog
   epic-19-retrospective: optional
+
+  epic-20: in-progress
+  20-1-optional-max-registrants-per-activity: ready-for-dev
+  epic-20-retrospective: optional
 
 action_items:
   - epic: 16
