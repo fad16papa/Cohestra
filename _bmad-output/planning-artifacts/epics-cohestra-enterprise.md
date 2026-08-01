@@ -1217,3 +1217,150 @@ So that **Epic 12 authz policies are evidenced beyond unit tests before launch**
 **Given** CI integration job  
 **When** tests run  
 **Then** new cases use `[Trait("Category", "TenantIsolation")]` or dedicated `Authz` trait and are non-skipped when Postgres/Redis available
+
+## Epic 18: P2 Launch Hardening (done)
+
+Post–Epic 17 deferred CR items and resend-OTP gap. **Status: done** on `main` (PRs #33–#40).
+
+| Story | Summary |
+|-------|---------|
+| 18.1 | Resend OTP rate limiting (429 + Retry-After) |
+| 18.2 | CSP report-only baseline (nginx prod / Next dev) |
+| 18.3 | Security header ownership + `proxy_hide_header` |
+| 18.4 | Redis outage fail-closed 503 for limiters + OTP store |
+
+**Bonus shipped:** Unverified login → **Verify your account** (PR #37).
+
+**Local operator sign-off:** Launch checklist §1–§3 (Francis, 2026-08-01).
+
+**Deferred:** CSP enforce mode, httpOnly sessions → Epic 20+ candidates.
+
+## Epic 19: Production Launch Sign-off
+
+Close enterprise launch checklist **§4–§7** on UAT droplet after local §1–§3 sign-off. Sourced from Epic 18 retro, open checklist gates, and sprint-change-proposal-2026-08-01.
+
+**FRs touched:** FR-26 (abuse — reCAPTCHA prod), billing (FR-14+), deploy NFR  
+**Not in scope:** CSP enforce, httpOnly sessions, Epic 16 parked items, sender settings UI (product gate only)
+
+### Story 19.1: UAT droplet deploy and stack smoke
+
+As a **platform operator**,
+I want **Cohestra running on a UAT droplet with automated smoke passing**,
+So that **we have a live stack matching production topology before public launch**.
+
+**Acceptance Criteria:**
+
+**Given** DigitalOcean droplet provisioned per `docs/deploy/digitalocean-uat.md`  
+**When** `.env` is filled from `.env.uat.example` with strong secrets  
+**Then** `docker compose -f docker-compose.uat.yml up -d --build` succeeds  
+**And** firewall allows **22, 80, 443 only**
+
+**Given** deploy completes  
+**When** `bash deploy/uat-smoke.sh` runs with `PUBLIC_BASE_URL` set to the droplet URL  
+**Then** script completes without error (`/ready`, web home, auth onboarding, signup/pricing surfaces)
+
+**Given** production-minded UAT  
+**When** reviewing compose env  
+**Then** `DemoDataSeed__Enabled=false` and `OperatorSeed__Enabled=false` (or documented exception for bootstrap-only run)  
+**And** `DEV_TENANT_SLUG` is **not** set on production path
+
+**Given** DNS  
+**When** launch uses custom domain  
+**Then** apex + wildcard (or documented nip.io interim) point to droplet
+
+### Story 19.2: HTTPS edge and security header verify
+
+As a **platform operator**,
+I want **HTTPS serving with Epic 17/18 security headers on the public edge**,
+So that **production matches local header ownership and HSTS is present**.
+
+**Acceptance Criteria:**
+
+**Given** `deploy/nginx/app-ssl.conf.template` includes Epic 18 headers  
+**When** HTTPS is configured on the droplet  
+**Then** `active-ssl.conf` is regenerated (see deploy HTTPS scripts / ops notes)  
+**And** nginx is recreated/reloaded
+
+**Given** HTTPS public URL  
+**When** `curl -sI https://{tenant-host}/` runs  
+**Then** each of `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy-Report-Only` appears **once**  
+**And** `Strict-Transport-Security` is present (HTTPS template only)
+
+**Given** HTTP port  
+**When** accessed on production  
+**Then** redirects to HTTPS (or documented interim exception for nip.io bootstrap)
+
+### Story 19.3: reCAPTCHA production enablement
+
+As a **platform operator**,
+I want **reCAPTCHA enabled on public signup before launch**,
+So that **automated signup abuse is mitigated on the live apex path**.
+
+**Acceptance Criteria:**
+
+**Given** UAT/prod `.env`  
+**When** configuring signup  
+**Then** `SelfServeSignup__Recaptcha__Enabled=true` with valid site/secret keys  
+**And** web build receives `NEXT_PUBLIC_RECAPTCHA_ENABLED=true` + `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`  
+**And** web container is rebuilt after env change
+
+**Given** apex `/pricing` or signup route on live URL  
+**When** operator loads signup form  
+**Then** reCAPTCHA widget renders (or v3 flow completes)  
+**And** successful signup + OTP verify completes end-to-end
+
+**Given** checklist §3  
+**When** Epic 19.3 is done  
+**Then** reCAPTCHA items are checked off with evidence (date/URL in sign-off notes)
+
+### Story 19.4: Stripe billing UAT on droplet
+
+As a **platform operator**,
+I want **Stripe test-mode billing verified on the UAT droplet**,
+So that **checkout, webhooks, and plan gates work on a live URL before going live**.
+
+**Acceptance Criteria:**
+
+**Given** Stripe **test** keys on UAT (live keys only on production)  
+**When** env is configured  
+**Then** `Stripe__WebhookSecret` matches Stripe Dashboard endpoint for deploy URL  
+**And** `Stripe__PriceCore*` / `Stripe__PricePro*` match Stripe products
+
+**Given** tenant admin on Core or Pro path  
+**When** completing test checkout  
+**Then** checkout succeeds and plan reflects in tenant door/API  
+**And** webhook delivery succeeds (Stripe Dashboard or API logs)
+
+**Given** trial/delinquency background jobs (Epic 14.8)  
+**When** test subscription events fire  
+**Then** job logs show expected processing (no silent failures)
+
+### Story 19.5: Operator core flows and launch sign-off
+
+As a **platform operator**,
+I want **full §7 core flows verified on live UAT and sign-off recorded**,
+So that **stakeholders can approve public launch with evidence**.
+
+**Acceptance Criteria:**
+
+**Given** at least one **Basic** and one **Pro** tenant on the UAT droplet  
+**When** operator runs checklist §7 flows  
+**Then** each item is exercised or explicitly N/A with reason:
+
+1. Dashboard metrics load  
+2. Create activity → publish → share kit  
+3. Public registration + client dedup  
+4. Reports + CSV export (Pro)  
+5. Campaign send test (Pro) with tenant email branding  
+6. Website builder publish (Pro) or stub home (Basic)  
+7. Suspended/archived tenant → maintenance or 404 on public door
+
+**Given** SendGrid required for campaign test  
+**When** sending mail from UAT  
+**Then** SendGrid domain auth complete per `sendgrid-production.md` (or documented defer with product approval)
+
+**Given** all Epic 19 stories complete  
+**When** updating `docs/deploy/enterprise-launch-checklist.md` sign-off table  
+**Then** **Operator** and **PM** rows are filled with date and scope (UAT droplet URL)  
+**And** remaining §6 product gates are listed with owner if still open
+
