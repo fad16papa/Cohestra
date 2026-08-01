@@ -1,13 +1,13 @@
 ---
 epic: 20
 story: 1
-status: done
+status: in-progress
 baseline_commit: e3e98c5
 ---
 
 # Story 20.1: Optional max registrants per activity
 
-Status: done
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 
@@ -115,6 +115,19 @@ So that **registration closes automatically when the event reaches capacity with
   - [x] Integration: parallel last-spot (two tasks, one wins)
   - [x] Unit: admin validation cannot set cap below count
   - [x] Update `docs/contracts/public-registration-v1.md`
+
+### Review Findings (2026-08-01)
+
+- [ ] [Review][Patch] Post-commit cache refresh can 500 after successful registration [`RegistrationService.cs:322`]
+- [ ] [Review][Patch] Invalidate/refresh cache on `activity_full` rejection to reduce stale register-page state [`RegistrationService.cs:273`]
+- [ ] [Review][Patch] Explicit `activity_full` handling in submit path (parse `errorCode`, dedicated UX) [`public-registration-api.ts`, `registration-form.tsx`]
+- [ ] [Review][Patch] Invalid `maxRegistrants` on create returns 409; update returns 400 — align to 400 [`ActivitiesController.cs:79`]
+
+- [x] [Review][Defer] PUT full-replace clears cap when `maxRegistrants` omitted — pre-existing API pattern; current UI panels preserve value — deferred, pre-existing
+- [x] [Review][Defer] Register page SSR can show form while cache stale until submit — server enforces cap; v1 acceptable — deferred, accepted v1 limitation
+- [x] [Review][Defer] AC4 duplicate-before-capacity has no integration test — behavior correct in code — deferred, test gap
+- [x] [Review][Defer] AC2 admin cap-below-count covered by unit tests only — deferred, test gap
+- [x] [Review][Defer] AC8 cache refresh after registration not proven with warm-cache integration test — deferred, test gap
 
 ## Dev Notes
 
