@@ -371,11 +371,13 @@ action_items:
   - epic: 18
     action: "Close superseded PRs #35 and #36 (commits already on main)"
     owner: Dev
-    status: open
+    status: done
+    resolution: "PRs #35 and #36 closed — commits on main via stacked merge through #37"
   - epic: 18
     action: "Francis: nginx recreate + curl verify security headers and CSP on Docker 8088"
     owner: Operator
-    status: open
+    status: done
+    resolution: "2026-08-01 — curl default.localhost:8088 single X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, CSP-Report-Only; HTTP 200"
   - epic: 18
     action: "Document OTP wait windows in launch checklist (3 send cap vs 5 resend cap, 15 min sliding window)"
     owner: Dev
