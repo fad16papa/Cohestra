@@ -381,7 +381,8 @@ action_items:
   - epic: 18
     action: "Document OTP wait windows in launch checklist (3 send cap vs 5 resend cap, 15 min sliding window)"
     owner: Dev
-    status: open
+    status: done
+    resolution: "docs/deploy/enterprise-launch-checklist.md — OTP send vs resend limits section (Story 18.1)"
   - epic: 18
     action: "Plan CSP enforce-mode story when report-only violations are clean"
     owner: Product
