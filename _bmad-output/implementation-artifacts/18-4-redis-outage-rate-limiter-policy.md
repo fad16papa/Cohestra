@@ -59,6 +59,9 @@ So that **auth and signup endpoints fail consistently instead of returning ambig
 - `GlobalExceptionHandler` returns 503 with `rate_limiter_unavailable` error code and logs at Warning level.
 - Refresh token store unchanged per story scope.
 - `/ready` redis health check unchanged.
+- `RedisOtpStore` (OTP send cap INCR) now uses the same fail-closed Redis fault handling — fixes raw Redis errors leaking to the verify/resend UI.
+- API never returns raw exception messages to clients (including Development).
+- Web client sanitizes infrastructure error text as defense in depth.
 
 ## File List
 
@@ -73,6 +76,10 @@ So that **auth and signup endpoints fail consistently instead of returning ambig
 - `src/Infrastructure/Registrations/RedisPublicRegistrationRateLimiter.cs`
 - `src/Api/Infrastructure/GlobalExceptionHandler.cs`
 - `src/Infrastructure.Tests/RateLimiting/RedisRateLimiterOperationsTests.cs`
+- `src/Infrastructure/Auth/RedisOtpStore.cs`
+- `web/lib/api-error-message.ts`
+- `web/lib/auth-api.ts`
+- `web/lib/signup/signup-api.ts`
 
 ## Change Log
 

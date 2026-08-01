@@ -23,10 +23,10 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
             var unavailable = new ProblemDetails
             {
                 Status = StatusCodes.Status503ServiceUnavailable,
-                Title = "Rate limiting temporarily unavailable",
+                Title = "Service temporarily unavailable",
                 Detail = "Try again shortly. If the problem persists, contact support.",
                 Instance = httpContext.Request.Path,
-                Type = "https://cohestra.app/errors/rate-limiter-unavailable",
+                Type = "https://cohestra.app/errors/service-unavailable",
             };
             unavailable.Extensions["errorCode"] = RateLimitErrorCodes.Unavailable;
             unavailable.Extensions["traceId"] = httpContext.TraceIdentifier;
@@ -45,9 +45,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
         {
             Status = StatusCodes.Status500InternalServerError,
             Title = "An unexpected error occurred.",
-            Detail = httpContext.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment()
-                ? exception.Message
-                : "See server logs for details.",
+            Detail = "See server logs for details.",
             Instance = httpContext.Request.Path
         };
 

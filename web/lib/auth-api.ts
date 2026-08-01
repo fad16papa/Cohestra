@@ -1,4 +1,5 @@
 import { getPublicApiBaseUrl, getServerApiBaseUrl } from "@/lib/api";
+import { sanitizeClientErrorMessage } from "@/lib/api-error-message";
 import {
   normalizeThemePreference,
   type ThemePreference,
@@ -107,13 +108,21 @@ async function parseProblemResponse(
     }
 
     if (typeof detail === "string" && detail.length > 0) {
-      return { message: detail, errorCode };
+      return {
+        message: sanitizeClientErrorMessage(detail, response.status, errorCode),
+        errorCode,
+      };
     }
   } catch {
     // fall through
   }
 
-  return { message: `Request failed (${response.status})` };
+  return {
+    message: sanitizeClientErrorMessage(
+      `Request failed (${response.status})`,
+      response.status
+    ),
+  };
 }
 
 function getErrorStatus(error: unknown): number | undefined {
