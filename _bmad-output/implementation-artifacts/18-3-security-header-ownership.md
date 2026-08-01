@@ -1,13 +1,13 @@
 ---
 epic: 18
 story: 3
-status: review
+status: done
 baseline_commit: 8d02336
 ---
 
 # Story 18.3: Security header ownership (nginx vs Next.js)
 
-Status: review
+Status: done
 
 ## Story
 

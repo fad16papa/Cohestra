@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-01T05:20:00Z
+# last_updated: 2026-08-01T13:10:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -238,12 +238,12 @@ development_status:
   17-4-p0-security-hardening: done
   epic-17-retrospective: done
 
-  epic-18: in-progress
+  epic-18: done
   18-1-resend-otp-rate-limiting: done
-  18-2-content-security-policy-baseline: review
-  18-3-security-header-ownership: review
-  18-4-redis-outage-rate-limiter-policy: review
-  epic-18-retrospective: optional
+  18-2-content-security-policy-baseline: done
+  18-3-security-header-ownership: done
+  18-4-redis-outage-rate-limiter-policy: done
+  epic-18-retrospective: done
 
 action_items:
   - epic: 16
@@ -359,8 +359,32 @@ action_items:
   - epic: 17
     action: "Create follow-up story for resend-otp rate limiting (deferred from 17.2 CR)"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Epic 18 Story 18.1 — PR #33 merged"
   - epic: 17
     action: "Resolve 17.4 CR decision items — CSP policy, nginx vs Next header ownership, Redis fail policy"
     owner: Dev
+    status: done
+    resolution: "Epic 18 Stories 18.2–18.4 on main (PRs #34–#37); CSP report-only, nginx header ownership, Redis fail-closed 503"
+
+  # Epic 18 retrospective action items
+  - epic: 18
+    action: "Close superseded PRs #35 and #36 (commits already on main)"
+    owner: Dev
+    status: open
+  - epic: 18
+    action: "Francis: nginx recreate + curl verify security headers and CSP on Docker 8088"
+    owner: Operator
+    status: open
+  - epic: 18
+    action: "Document OTP wait windows in launch checklist (3 send cap vs 5 resend cap, 15 min sliding window)"
+    owner: Dev
+    status: open
+  - epic: 18
+    action: "Plan CSP enforce-mode story when report-only violations are clean"
+    owner: Product
+    status: open
+  - epic: 18
+    action: "Enable reCAPTCHA keys before public signup"
+    owner: Ops
     status: open

@@ -1,13 +1,13 @@
 ---
 epic: 18
 story: 4
-status: review
+status: done
 baseline_commit: 5ff26ba
 ---
 
 # Story 18.4: Redis outage policy for rate limiters
 
-Status: review
+Status: done
 
 ## Story
 

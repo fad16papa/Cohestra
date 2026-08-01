@@ -1,13 +1,13 @@
 ---
 epic: 18
 story: 2
-status: review
+status: done
 baseline_commit: 96cb862
 ---
 
 # Story 18.2: Content-Security-Policy baseline
 
-Status: review
+Status: done
 
 ## Story
 

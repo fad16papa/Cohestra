@@ -1,13 +1,13 @@
 ---
 epic: 18
 story: 1
-status: review
+status: done
 baseline_commit: daf822ffe118e34ae13e0eb377b14f6b6b2bab20
 ---
 
 # Story 18.1: Resend-OTP rate limiting
 
-Status: review
+Status: done
 
 ## Story
 
