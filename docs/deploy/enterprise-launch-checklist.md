@@ -58,7 +58,16 @@ Optional apex check is included when `PUBLIC_BASE_URL` is set (see script sectio
 - [ ] JWT minted on `{slug}.localhost` is scoped to that tenant; platform routes reject tenant JWTs
 - [ ] No client-trusted `X-Tenant-Id` — Host + JWT only (AD-3)
 - [x] **P1 shipped (Story 17.3):** Member JWT → 403 on admin-only routes; tenant JWT → 403 on `/platform/*`; platform admin positive control
-- [x] **P1 shipped (Story 17.4):** Operator auth OTP verify throttling (`/api/v1/auth/verify-email`, `/reset-password`); refresh revoke-all on credential change; production secret validation; security headers (nginx + Next.js); OpenAPI dev-only; HtmlSanitizer ≥ 9.0.892
+- [x] **P1 shipped (Story 17.4):** Operator auth OTP verify throttling; refresh revoke-all; production secret validation; security headers; OpenAPI dev-only; HtmlSanitizer ≥ 9.0.892
+- [x] **P2 shipped (Story 18.3):** Security header ownership — **nginx** owns headers in Docker/production (`app.conf`, `app-ssl.conf.template`); **Next.js** emits them only in `next dev` (`web/security-headers.ts`). Nginx `proxy_hide_header` strips upstream duplicates on `/`.
+
+**Verify single header values (Docker on port 8088):**
+
+```bash
+curl -sI http://default.localhost:8088/ | grep -E '^(X-Frame-Options|X-Content-Type-Options|Referrer-Policy|Permissions-Policy):'
+```
+
+Each name should appear **once**. After HTTPS setup, repeat against `https://…` and confirm `Strict-Transport-Security` is present (HTTPS template only).
 
 Run SM-1 locally (Postgres + Redis required):
 

@@ -239,9 +239,9 @@ development_status:
   epic-17-retrospective: done
 
   epic-18: in-progress
-  18-1-resend-otp-rate-limiting: review
+  18-1-resend-otp-rate-limiting: done
   18-2-content-security-policy-baseline: ready-for-dev
-  18-3-security-header-ownership: ready-for-dev
+  18-3-security-header-ownership: review
   18-4-redis-outage-rate-limiter-policy: ready-for-dev
   epic-18-retrospective: optional
 
