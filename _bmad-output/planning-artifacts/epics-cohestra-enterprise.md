@@ -26,8 +26,10 @@ storyCounts:
   epic13: 4
   epic14: 8
   epic15: 7
+  epic17: 4
+  epic18: 4
   epic16: parked
-updated: 2026-07-20
+updated: 2026-08-01
 ---
 
 # cohestra — Epic Breakdown (Enterprise)
@@ -1217,3 +1219,135 @@ So that **Epic 12 authz policies are evidenced beyond unit tests before launch**
 **Given** CI integration job  
 **When** tests run  
 **Then** new cases use `[Trait("Category", "TenantIsolation")]` or dedicated `Authz` trait and are non-skipped when Postgres/Redis available
+
+### Story 17.4: P0 security hardening
+
+As a **platform operator**,
+I want **operator auth OTP throttling, refresh-token revocation on credential change, and production secret guardrails**,
+So that **auth abuse and misconfiguration are blocked before public launch**.
+
+**Acceptance Criteria:**
+
+**Given** repeated failed OTP verify on `/api/v1/auth/verify-email` or `/api/v1/auth/reset-password`  
+**When** attempts exceed threshold  
+**Then** 429 with `otp_verify_rate_limited`
+
+**Given** successful verify, reset, or password change  
+**When** operation completes  
+**Then** all refresh tokens for that user are revoked
+
+**Given** non-Development environment  
+**When** API starts with placeholder JWT, operator seed, or dev DB creds  
+**Then** startup fails (`ProductionSecurityValidator`)
+
+**Given** production-like deployment  
+**When** responses are served  
+**Then** baseline security headers (nginx + Next.js), OpenAPI dev-only, HtmlSanitizer ≥ 9.0.892
+
+**Shipped:** PR #30 · **Deferred to Epic 18:** CSP policy, nginx/Next header ownership, Redis outage fail policy
+
+---
+
+## Epic 18: P2 Launch Hardening
+
+Post–Epic 17 follow-up: close code-review decision items and abuse gaps that are **dev-owned** but not blocking enterprise launch checklist sign-off. Sourced from Epic 17 retro, Story 17.2/17.4 CR deferrals, and `deferred-work.md`.
+
+**FRs touched:** FR-26 (abuse controls), auth/security NFR  
+**Not in scope:** Epic 16 parked items (custom domain, tickets — product pull-forward), reCAPTCHA enable (ops), nip.io/sender UI product gates, platform async-action refactor (Epic 11 tech debt — optional 18.5)
+
+**Prerequisite:** Epic 17 complete on `main` (17.1–17.4 merged)
+
+### Story 18.1: Resend-OTP rate limiting
+
+As a **platform operator**,
+I want **rate limits on OTP resend endpoints**,
+So that **attackers cannot spam SendGrid or harass users via unlimited resend requests**.
+
+**Acceptance Criteria:**
+
+**Given** repeated `POST /api/v1/public/signup/resend-otp` for the same email and/or client IP  
+**When** attempts exceed configured threshold within the window  
+**Then** API returns 429 with ProblemDetails (`errorCode`: `resend_otp_rate_limited` or equivalent)  
+**And** legitimate resend still works after window expires
+
+**Given** repeated `POST /api/v1/auth/resend-otp` (operator auth path)  
+**When** attempts exceed configured threshold  
+**Then** same 429 behavior with separate Redis key namespace from signup resend
+
+**Given** integration test stack (Postgres + Redis)  
+**When** abuse tests run  
+**Then** at least one integration test proves signup resend 429 after threshold (dedicated factory with low limits acceptable)
+
+**Given** successful OTP delivery path  
+**When** resend is rate limited  
+**Then** response does not leak whether the email exists (consistent with existing auth/signup messaging)
+
+### Story 18.2: Content-Security-Policy baseline
+
+As a **platform operator**,
+I want **a documented, non-breaking CSP baseline for the web app**,
+So that **XSS blast radius is reduced without breaking Next.js or the admin builder**.
+
+**Acceptance Criteria:**
+
+**Given** production web responses (via nginx or Next.js — per Story 18.3 ownership)  
+**When** CSP is enabled  
+**Then** a `Content-Security-Policy` (or `Content-Security-Policy-Report-Only` for first ship) header is present  
+**And** policy allows Next.js runtime requirements (inline styles/scripts as documented in dev notes)
+
+**Given** marketing apex and tenant admin surfaces  
+**When** manual smoke runs on local Docker  
+**Then** login, dashboard, website builder, and public registration pages load without CSP console violations blocking core flows
+
+**Given** CSP configuration  
+**When** documented in `docs/deploy/` or story dev notes  
+**Then** operators know how to tighten from report-only to enforce mode
+
+### Story 18.3: Security header ownership (nginx vs Next.js)
+
+As a **platform operator**,
+I want **each security header set once in production**,
+So that **responses do not carry duplicate or conflicting `X-Frame-Options`, `X-Content-Type-Options`, etc.**
+
+**Acceptance Criteria:**
+
+**Given** production deployment behind nginx (`app-ssl.conf.template`)  
+**When** a response is served over HTTPS  
+**Then** baseline security headers appear exactly once (no duplicate values from nginx + Next.js)
+
+**Given** local `next dev` or web container without nginx  
+**When** developers run the app  
+**Then** headers still present via Next.js config (dev parity)
+
+**Given** both `deploy/nginx/app.conf` and `app-ssl.conf.template`  
+**When** header ownership changes  
+**Then** both templates updated (Epic 17 team agreement)
+
+**Given** documentation  
+**When** operator reads enterprise launch checklist or deploy docs  
+**Then** which layer owns headers in prod vs local is explicit
+
+### Story 18.4: Redis outage policy for rate limiters
+
+As a **platform operator**,
+I want **predictable behavior when Redis is unavailable during OTP verify or rate-limit checks**,
+So that **auth endpoints fail consistently instead of returning ambiguous 500s or silently skipping protection**.
+
+**Acceptance Criteria:**
+
+**Given** Redis unreachable during signup OTP verify, auth OTP verify, or resend rate-limit check  
+**When** the affected endpoint is called  
+**Then** behavior matches the **documented policy** (fail-closed → 503/429 with ProblemDetails, or fail-open with structured warning log — decision recorded in story)
+
+**Given** the chosen policy  
+**When** implemented  
+**Then** all Redis-backed limiters in auth/signup paths behave consistently (signup verify, auth OTP verify, resend — Story 18.1)
+
+**Given** unit or integration tests  
+**When** Redis connection fails (mocked or Testcontainers disconnect)  
+**Then** at least one test per policy path proves the documented behavior
+
+**Given** `/ready` health check  
+**When** Redis is down  
+**Then** existing unhealthy semantics unchanged (fail-closed for new sessions remains ops concern)
+
