@@ -351,7 +351,8 @@ action_items:
   - epic: 17
     action: "Run local Epic 17 verification — auth unit tests + AuthOtpAbuseIntegrationTests on Docker stack"
     owner: Operator
-    status: open
+    status: done
+    resolution: "2026-08-01 — launch checklist §1–3 on Docker 8088: smoke 10/0/4, headers/CSP, signup OTP + verify UX"
   - epic: 17
     action: "Regenerate active-ssl.conf on droplet after app-ssl.conf.template header changes"
     owner: Ops

@@ -193,8 +193,9 @@ Repeat on at least one **Basic** and one **Pro** tenant (e.g. `creativorare`):
 | Role | Name | Date | Notes |
 |------|------|------|-------|
 | Dev | Cursor / Amelia | 2026-07-31 | Epic 17 P1 hardening merged (`23875d3`); SM-1 + abuse tests on main |
-| Operator | | | Multi-tenant UAT on local Docker + droplet |
-| PM | | | P1 dev items done; ops gates (reCAPTCHA, deploy) remain |
+| Operator | Francis | 2026-08-01 | **Local Docker 8088:** checklist §1 (smoke 10/0/4), §2 (headers/CSP), §3 (signup OTP + verify UX) |
+| Operator | | | Droplet UAT (§4–6 deploy, billing, full §7 flows) |
+| PM | | | P1/P2 dev done; ops gates (reCAPTCHA prod, deploy) remain |
 
 ---
 
