@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { updateActivity, type Activity } from "@/lib/activities-api";
 import {
   formatPlanRegistrationLimit,
+  resolvePlanRegistrationLimit,
   validateActivityMaxRegistrantsAgainstPlan,
 } from "@/lib/activity-capacity-limits";
 
@@ -33,8 +34,8 @@ export function ActivityCapacityPanel({
   onActivityUpdated,
 }: ActivityCapacityPanelProps) {
   const { authFetch } = useAuth();
-  const { shell } = useTenantShell();
-  const planRegistrationLimit = shell?.limits.registrationsPerMonth ?? null;
+  const { shell, loading: shellLoading } = useTenantShell();
+  const planRegistrationLimit = resolvePlanRegistrationLimit(shell);
   const [maxRegistrants, setMaxRegistrants] = useState(
     activity.maxRegistrants != null ? String(activity.maxRegistrants) : ""
   );
@@ -52,26 +53,31 @@ export function ActivityCapacityPanel({
   const parsedCap = parseMaxRegistrantsInput(maxRegistrants);
   const savedCap = activity.maxRegistrants ?? null;
   const isDirty = parsedCap !== savedCap;
+  const formatError =
+    maxRegistrants.trim() && (parsedCap === null || parsedCap < 1)
+      ? "Enter a whole number of at least 1, or leave blank for unlimited."
+      : null;
+  const planCapError =
+    planRegistrationLimit != null
+      ? validateActivityMaxRegistrantsAgainstPlan(parsedCap, planRegistrationLimit)
+      : null;
+  const validationError = formatError ?? planCapError;
+  const mustWaitForShell =
+    Boolean(maxRegistrants.trim()) && shellLoading && planRegistrationLimit == null;
 
   async function handleSave() {
-    if (isArchived || !isDirty || isSaving) {
+    if (isArchived || !isDirty || isSaving || mustWaitForShell) {
       return;
     }
 
-    if (maxRegistrants.trim() && (parsedCap === null || parsedCap < 1)) {
-      setError("Enter a whole number of at least 1, or leave blank for unlimited.");
+    if (formatError) {
+      setError(formatError);
       return;
     }
 
-    if (planRegistrationLimit != null) {
-      const planError = validateActivityMaxRegistrantsAgainstPlan(
-        parsedCap,
-        planRegistrationLimit
-      );
-      if (planError) {
-        setError(planError);
-        return;
-      }
+    if (planCapError) {
+      setError(planCapError);
+      return;
     }
 
     setIsSaving(true);
@@ -150,6 +156,12 @@ export function ActivityCapacityPanel({
         )}
       </div>
 
+      {mustWaitForShell ? (
+        <p className="text-sm text-text-muted-warm">Loading plan limits…</p>
+      ) : null}
+      {validationError && !error ? (
+        <p className="text-sm text-destructive">{validationError}</p>
+      ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       {savedMessage ? (
         <p className="text-sm text-primary">{savedMessage}</p>
@@ -157,7 +169,14 @@ export function ActivityCapacityPanel({
 
       <Button
         type="button"
-        disabled={isArchived || !isDirty || isSaving}
+        disabled={
+          isArchived ||
+          !isDirty ||
+          isSaving ||
+          mustWaitForShell ||
+          Boolean(formatError) ||
+          Boolean(planCapError)
+        }
         onClick={() => void handleSave()}
       >
         {isSaving ? "Saving…" : "Save cap"}

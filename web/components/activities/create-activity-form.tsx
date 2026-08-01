@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { createActivity } from "@/lib/activities-api";
 import {
   formatPlanRegistrationLimit,
+  resolvePlanRegistrationLimit,
   validateActivityMaxRegistrantsAgainstPlan,
 } from "@/lib/activity-capacity-limits";
 import { fetchCategories } from "@/lib/categories-api";
@@ -30,8 +31,8 @@ import { cn } from "@/lib/utils";
 export function CreateActivityForm() {
   const router = useRouter();
   const { authFetch } = useAuth();
-  const { shell } = useTenantShell();
-  const planRegistrationLimit = shell?.limits.registrationsPerMonth ?? null;
+  const { shell, loading: shellLoading } = useTenantShell();
+  const planRegistrationLimit = resolvePlanRegistrationLimit(shell);
   const [name, setName] = useState("");
   const [communityLabel, setCommunityLabel] = useState("");
   const [category, setCategory] = useState("");
@@ -84,6 +85,27 @@ export function CreateActivityForm() {
     ? "Detecting your location…"
     : geoMessage;
 
+  const parsedCapPreview = maxRegistrants.trim()
+    ? Number.parseInt(maxRegistrants.trim(), 10)
+    : null;
+  const formatError =
+    maxRegistrants.trim() &&
+    (parsedCapPreview === null ||
+      !Number.isFinite(parsedCapPreview) ||
+      parsedCapPreview < 1)
+      ? "Max registrants must be a whole number of at least 1, or leave blank."
+      : null;
+  const planCapError =
+    planRegistrationLimit != null
+      ? validateActivityMaxRegistrantsAgainstPlan(
+          parsedCapPreview,
+          planRegistrationLimit
+        )
+      : null;
+  const validationError = formatError ?? planCapError;
+  const mustWaitForShell =
+    Boolean(maxRegistrants.trim()) && shellLoading && planRegistrationLimit == null;
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -94,25 +116,22 @@ export function CreateActivityForm() {
         ? Number.parseInt(maxRegistrants.trim(), 10)
         : null;
 
-      if (
-        maxRegistrants.trim() &&
-        (parsedCap === null || !Number.isFinite(parsedCap) || parsedCap < 1)
-      ) {
-        setError("Max registrants must be a whole number of at least 1, or leave blank.");
+      if (mustWaitForShell) {
+        setError("Plan limits are still loading. Try again in a moment.");
         setIsSubmitting(false);
         return;
       }
 
-      if (planRegistrationLimit != null) {
-        const planError = validateActivityMaxRegistrantsAgainstPlan(
-          parsedCap,
-          planRegistrationLimit
-        );
-        if (planError) {
-          setError(planError);
-          setIsSubmitting(false);
-          return;
-        }
+      if (formatError) {
+        setError(formatError);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (planCapError) {
+        setError(planCapError);
+        setIsSubmitting(false);
+        return;
       }
 
       const activity = await createActivity(authFetch, {
@@ -266,6 +285,16 @@ export function CreateActivityForm() {
         </p>
       ) : null}
 
+      {mustWaitForShell ? (
+        <p className="text-sm text-text-muted-warm">Loading plan limits…</p>
+      ) : null}
+
+      {validationError && !error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {validationError}
+        </p>
+      ) : null}
+
       {error ? (
         <p role="alert" className="text-sm text-destructive">
           {error}
@@ -273,7 +302,15 @@ export function CreateActivityForm() {
       ) : null}
 
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={
+            isSubmitting ||
+            mustWaitForShell ||
+            Boolean(formatError) ||
+            Boolean(planCapError)
+          }
+        >
           {isSubmitting ? "Saving…" : "Save draft activity"}
         </Button>
         <Link href="/activities" className={cn(buttonVariants({ variant: "outline" }))}>
