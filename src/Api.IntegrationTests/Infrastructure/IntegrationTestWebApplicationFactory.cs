@@ -22,6 +22,7 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
     protected virtual void ApplyDefaultSettings(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+        builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
 
         var postgresConnection = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
             ?? "Host=localhost;Port=5432;Database=cohestra_test;Username=crm;Password=crm";

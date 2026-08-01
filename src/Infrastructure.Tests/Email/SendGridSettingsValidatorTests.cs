@@ -66,6 +66,38 @@ public class SendGridSettingsValidatorTests
     }
 
     [Fact]
+    public void ValidateForEnvironment_AllowsSandboxInDevelopment()
+    {
+        SendGridSettingsValidator.ValidateForEnvironment(new SendGridSettings
+        {
+            ApiKey = "SG.integration-test-key",
+            FromEmail = "operator@cohestra.local",
+            UseSandbox = true,
+        }, "Development");
+    }
+
+    [Fact]
+    public void ValidateForEnvironment_UsesEnvironmentNameOverProcessVariable()
+    {
+        var previous = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Production");
+
+        try
+        {
+            SendGridSettingsValidator.ValidateForEnvironment(new SendGridSettings
+            {
+                ApiKey = "SG.integration-test-key",
+                FromEmail = "operator@cohestra.local",
+                UseSandbox = true,
+            }, "Development");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", previous);
+        }
+    }
+
+    [Fact]
     public void ValidateForProduction_RequiresApiKeyAndFromEmail()
     {
         Assert.Throws<InvalidOperationException>(() =>

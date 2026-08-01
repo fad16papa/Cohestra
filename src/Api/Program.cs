@@ -32,7 +32,7 @@ if (string.IsNullOrWhiteSpace(redisConnection))
     throw new InvalidOperationException("Connection string 'Redis' is not configured.");
 }
 
-builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
     ?? throw new InvalidOperationException("Jwt configuration is missing.");
