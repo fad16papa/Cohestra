@@ -152,7 +152,8 @@ Track in sprint / deferred-work; do not block enterprise launch sign-off unless 
 | ~~OTP verify brute-force throttling + abuse tests~~ (Story 17.2) | Dev |
 | ~~Member JWT 403 integration matrix~~ (Story 17.3) | Dev |
 | ~~Operator auth OTP throttling + production guardrails~~ (Story 17.4) | Dev |
-| resend-otp rate limiting (deferred from 17.2 CR) | Dev |
+| resend-otp rate limiting (deferred from 17.2 CR) | Dev → **Epic 18.1** |
+| CSP baseline + header ownership + Redis fail policy (17.4 CR) | Dev → **Epic 18.2–18.4** |
 | Platform async-action refactor (Epic 11 retro) | Dev |
 | Close skippable platform integration tests in CI | Dev |
 | Sender settings UI vs provisioned email | Product |

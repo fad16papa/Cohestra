@@ -1,11 +1,11 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-31T16:55:00Z
+# last_updated: 2026-08-01T04:35:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–16 v1 done) + Epic 17 P1 hardening
-# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–17)
+# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–16 v1 done) + Epic 17 P1 hardening done + Epic 18 P2 hardening
+# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–18)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-07-31T16:55:00Z
+last_updated: 2026-08-01T04:35:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -238,6 +238,13 @@ development_status:
   17-4-p0-security-hardening: done
   epic-17-retrospective: done
 
+  epic-18: in-progress
+  18-1-resend-otp-rate-limiting: ready-for-dev
+  18-2-content-security-policy-baseline: ready-for-dev
+  18-3-security-header-ownership: ready-for-dev
+  18-4-redis-outage-rate-limiter-policy: ready-for-dev
+  epic-18-retrospective: optional
+
 action_items:
   - epic: 16
     action: "Run Epic 16 UAT on local Docker: Share kit, OG unfurl, homepage WhatsApp, publish tenant URL"
@@ -344,7 +351,8 @@ action_items:
   - epic: 17
     action: "Run local Epic 17 verification — auth unit tests + AuthOtpAbuseIntegrationTests on Docker stack"
     owner: Operator
-    status: open
+    status: done
+    resolution: "Francis verified 2026-08-01 — unit auth 79/79, integration TenantIsolation + AuthOtpAbuse pass on Docker 5433/6380; PR #31 merged"
   - epic: 17
     action: "Regenerate active-ssl.conf on droplet after app-ssl.conf.template header changes"
     owner: Ops
@@ -352,8 +360,10 @@ action_items:
   - epic: 17
     action: "Create follow-up story for resend-otp rate limiting (deferred from 17.2 CR)"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Epic 18 Story 18.1 ready-for-dev"
   - epic: 17
     action: "Resolve 17.4 CR decision items — CSP policy, nginx vs Next header ownership, Redis fail policy"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Epic 18 Stories 18.2–18.4 ready-for-dev"
