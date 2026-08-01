@@ -14,6 +14,7 @@ import {
   OPERATOR_LOGIN_PATH,
   resolvePostLoginPath,
 } from "@/lib/auth-api";
+import { buildVerifyEmailPath } from "@/lib/verify-email-path";
 import { cn } from "@/lib/utils";
 
 type LoginFormProps = {
@@ -87,8 +88,12 @@ export function LoginForm({
     setIsSubmitting(false);
 
     if (!result.ok) {
-      if (result.errorCode === "email_not_verified") {
-        router.push(`/register/verify?email=${encodeURIComponent(email.trim())}`);
+      const isUnverified =
+        result.errorCode === "email_not_verified"
+        || result.message.toLowerCase().includes("verify your email");
+
+      if (isUnverified) {
+        router.push(buildVerifyEmailPath(email.trim(), result.verifyTenantSlug));
         return;
       }
 

@@ -183,7 +183,10 @@ public class AuthController(
             cancellationToken);
         if (result.Tokens is null)
         {
-            return UnauthorizedProblem(result.ErrorMessage ?? "Invalid email or password.", result.ErrorCode);
+            return UnauthorizedProblem(
+                result.ErrorMessage ?? "Invalid email or password.",
+                result.ErrorCode,
+                result.VerifyTenantSlug);
         }
 
         return Ok(result.Tokens);
@@ -291,7 +294,10 @@ public class AuthController(
         return Ok(response);
     }
 
-    private UnauthorizedObjectResult UnauthorizedProblem(string detail, string? errorCode = null)
+    private UnauthorizedObjectResult UnauthorizedProblem(
+        string detail,
+        string? errorCode = null,
+        string? verifyTenantSlug = null)
     {
         Response.ContentType = "application/problem+json";
 
@@ -306,6 +312,11 @@ public class AuthController(
         if (!string.IsNullOrWhiteSpace(errorCode))
         {
             problem.Extensions["errorCode"] = errorCode;
+        }
+
+        if (!string.IsNullOrWhiteSpace(verifyTenantSlug))
+        {
+            problem.Extensions["verifyTenantSlug"] = verifyTenantSlug;
         }
 
         return Unauthorized(problem);
