@@ -4,8 +4,8 @@
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–16 v1 done) + Epic 17 P1 hardening
-# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–17)
+# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–18 done) + Epic 19 production launch
+# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–19)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -244,6 +244,14 @@ development_status:
   18-3-security-header-ownership: done
   18-4-redis-outage-rate-limiter-policy: done
   epic-18-retrospective: done
+
+  epic-19: backlog
+  19-1-uat-droplet-deploy-and-smoke: backlog
+  19-2-https-edge-security-header-verify: backlog
+  19-3-recaptcha-production-enablement: backlog
+  19-4-stripe-billing-uat-on-droplet: backlog
+  19-5-operator-core-flows-launch-signoff: backlog
+  epic-19-retrospective: optional
 
 action_items:
   - epic: 16
