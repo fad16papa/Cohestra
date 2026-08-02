@@ -109,6 +109,7 @@ export function ActivityBrandingPanel({
       communityLabel: activity.communityLabel,
       heroImageUrl: nextHeroImageUrl.trim() || null,
       accentColor: nextAccentColor.trim() || null,
+      maxRegistrants: activity.maxRegistrants,
     })
       .then((updated) => {
         onActivityUpdated(updated);

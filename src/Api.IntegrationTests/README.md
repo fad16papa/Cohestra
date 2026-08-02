@@ -5,7 +5,15 @@ Live-stack integration tests for the Cohestra API using `WebApplicationFactory`.
 ## Prerequisites
 
 - **PostgreSQL** and **Redis** reachable with the same connection strings as the test factory (CI uses service containers; locally run `docker compose up -d postgres redis` or full stack).
-- Migrations applied — the factory runs `EnsureDefaultTenantProPlanAsync` and seeds on startup when the stack is available.
+- **Test database:** integration tests default to `cohestra_test` (not the Docker Compose `cohestra` DB). Create it once if missing:
+
+  ```bash
+  docker compose exec postgres psql -U crm -d cohestra -c "CREATE DATABASE cohestra_test;"
+  ```
+
+  Or point tests at your dev DB: `ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=cohestra;Username=crm;Password=crm`
+
+- Migrations applied — the factory runs `MigrateAsync` on startup when the stack is available (requires the migration `Designer.cs` files to be present).
 
 If dependencies are missing, tests call `IntegrationTestHelpers.SkipIfUnavailable` and are **skipped** (not failed).
 

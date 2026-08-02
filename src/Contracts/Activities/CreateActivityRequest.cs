@@ -6,4 +6,5 @@ public sealed record CreateActivityRequest(
     string Schedule,
     string Location,
     string CommunityLabel,
-    string? Status);
+    string? Status,
+    int? MaxRegistrants = null);

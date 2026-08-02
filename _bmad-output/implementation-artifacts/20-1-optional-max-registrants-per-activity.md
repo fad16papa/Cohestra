@@ -1,13 +1,13 @@
 ---
 epic: 20
 story: 1
-status: ready-for-dev
+status: done
 baseline_commit: e3e98c5
 ---
 
 # Story 20.1: Optional max registrants per activity
 
-Status: ready-for-dev
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 
@@ -75,46 +75,63 @@ So that **registration closes automatically when the event reaches capacity with
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Domain & migration** (AC: 1, 2)
-  - [ ] Add `int? MaxRegistrants` to `Activity` entity
-  - [ ] Map column `max_registrants` nullable in `ActivityConfiguration`
-  - [ ] EF migration; existing rows stay `NULL` (unlimited)
+- [x] **Task 1 — Domain & migration** (AC: 1, 2)
+  - [x] Add `int? MaxRegistrants` to `Activity` entity
+  - [x] Map column `max_registrants` nullable in `ActivityConfiguration`
+  - [x] EF migration; existing rows stay `NULL` (unlimited)
 
-- [ ] **Task 2 — Admin API & validation** (AC: 1, 2)
-  - [ ] Extend `CreateActivityRequest`, `UpdateActivityRequest`, `ActivityResponse` with `MaxRegistrants?`
-  - [ ] Validate in `ActivitiesController` / `ActivityService`: `>= 1` if set; update cannot set below `RegistrationCount`
-  - [ ] Wire create + update paths; sync public cache on update when published
+- [x] **Task 2 — Admin API & validation** (AC: 1, 2)
+  - [x] Extend `CreateActivityRequest`, `UpdateActivityRequest`, `ActivityResponse` with `MaxRegistrants?`
+  - [x] Validate in `ActivitiesController` / `ActivityService`: `>= 1` if set; update cannot set below `RegistrationCount`
+  - [x] Wire create + update paths; sync public cache on update when published
 
-- [ ] **Task 3 — Public API** (AC: 5, 8)
-  - [ ] Extend `PublicActivityResponse`: `MaxRegistrants?`, `RegistrationCount`, `IsRegistrationFull`
-  - [ ] In `GetPublicBySlugAsync` / `MapToPublicResponse`: count registrations when published; compute `IsRegistrationFull`
-  - [ ] **Cache strategy:** include count/full in cached payload **and** refresh cache after registration + after cap change (call `SyncPublicActivityCacheAsync` from registration success path)
+- [x] **Task 3 — Public API** (AC: 5, 8)
+  - [x] Extend `PublicActivityResponse`: `MaxRegistrants?`, `RegistrationCount`, `IsRegistrationFull`
+  - [x] In `GetPublicBySlugAsync` / `MapToPublicResponse`: count registrations when published; compute `IsRegistrationFull`
+  - [x] **Cache strategy:** include count/full in cached payload **and** refresh cache after registration + after cap change (call `SyncPublicActivityCacheAsync` from registration success path)
 
-- [ ] **Task 4 — Registration enforcement** (AC: 3, 4, 7, 8)
-  - [ ] Add `IsActivityFull` to `PublicRegistrationSubmitResult` + factory `ActivityFull()`
-  - [ ] In `SubmitCoreAsync`: after duplicate-client check, inside transaction:
+- [x] **Task 4 — Registration enforcement** (AC: 3, 4, 7, 8)
+  - [x] Add `IsActivityFull` to `PublicRegistrationSubmitResult` + factory `ActivityFull()`
+  - [x] In `SubmitCoreAsync`: after duplicate-client check, inside transaction:
     - Load activity with `FOR UPDATE` (EF: transaction + reload or raw SQL lock)
     - Count registrations for `activity.Id`
     - If `MaxRegistrants` has value and `count >= MaxRegistrants` → return ActivityFull (unless duplicate path already returned)
     - Insert registration; commit
-  - [ ] Map to 409 in `PublicRegistrationsController` with `errorCode: activity_full`
-  - [ ] After successful save: invalidate/sync public activity cache for slug
+  - [x] Map to 409 in `PublicRegistrationsController` with `errorCode: activity_full`
+  - [x] After successful save: invalidate/sync public activity cache for slug
 
-- [ ] **Task 5 — Admin UI** (AC: 1, 2)
-  - [ ] `create-activity-form.tsx`: optional number input "Max registrants" (blank = unlimited), helper text
-  - [ ] Activity detail overview (or edit panel): same field editable; show `{registrationCount}/{maxRegistrants}` when set
-  - [ ] `activities-api.ts` types + create/update payloads
+- [x] **Task 5 — Admin UI** (AC: 1, 2)
+  - [x] `create-activity-form.tsx`: optional number input "Max registrants" (blank = unlimited), helper text
+  - [x] Activity detail overview (or edit panel): same field editable; show `{registrationCount}/{maxRegistrants}` when set
+  - [x] `activities-api.ts` types + create/update payloads
 
-- [ ] **Task 6 — Public UI** (AC: 5, 6)
-  - [ ] `public-registration-api.ts`: parse new fields
-  - [ ] `register/[slug]/page.tsx`: if `isRegistrationFull` → full state (new reason `full` on unavailable component)
-  - [ ] `registration-form.tsx`: handle 409 `activity_full` from submit with friendly message
+- [x] **Task 6 — Public UI** (AC: 5, 6)
+  - [x] `public-registration-api.ts`: parse new fields
+  - [x] `register/[slug]/page.tsx`: if `isRegistrationFull` → full state (new reason `full` on unavailable component)
+  - [x] `registration-form.tsx`: handle 409 `activity_full` from submit with friendly message
 
-- [ ] **Task 7 — Tests & docs** (AC: 9, 10)
-  - [ ] Integration: `PublicRegistrationIntegrationTests` or new file — fill to cap, next submit 409
-  - [ ] Integration: parallel last-spot (two tasks, one wins)
-  - [ ] Unit: admin validation cannot set cap below count
-  - [ ] Update `docs/contracts/public-registration-v1.md`
+- [x] **Task 7 — Tests & docs** (AC: 9, 10)
+  - [x] Integration: `PublicRegistrationIntegrationTests` or new file — fill to cap, next submit 409
+  - [x] Integration: parallel last-spot (two tasks, one wins)
+  - [x] Unit: admin validation cannot set cap below count
+  - [x] Update `docs/contracts/public-registration-v1.md`
+
+### Review Findings (2026-08-01)
+
+- [x] [Review][Patch] Post-commit cache refresh can 500 after successful registration [`RegistrationService.cs:322`]
+- [x] [Review][Patch] Invalidate/refresh cache on `activity_full` rejection to reduce stale register-page state [`RegistrationService.cs:273`]
+- [x] [Review][Patch] Explicit `activity_full` handling in submit path (parse `errorCode`, dedicated UX) [`public-registration-api.ts`, `registration-form.tsx`]
+- [x] [Review][Patch] Invalid `maxRegistrants` on create returns 409; update returns 400 — align to 400 [`ActivitiesController.cs:79`]
+
+- [x] [Review][Defer] PUT full-replace clears cap when `maxRegistrants` omitted — pre-existing API pattern; current UI panels preserve value — deferred, pre-existing
+- [x] [Review][Defer] Register page SSR can show form while cache stale until submit — server enforces cap; v1 acceptable — deferred, accepted v1 limitation
+- [x] [Review][Defer] AC4 duplicate-before-capacity has no integration test — behavior correct in code — deferred, test gap
+- [x] [Review][Defer] AC2 admin cap-below-count covered by unit tests only — deferred, test gap
+- [x] [Review][Defer] AC8 cache refresh after registration not proven with warm-cache integration test — deferred, test gap
+
+### Re-review (2026-08-01, post-patch commit 82116ce)
+
+**Result:** Clean — Blind Hunter: no findings; Acceptance Auditor: all 10 ACs met. Edge Case Hunter noted only deferred/ops items (request cancellation during cache refresh, legacy Redis payload shape after deploy).
 
 ## Dev Notes
 
@@ -213,14 +230,45 @@ Mirror existing 409 already registered ([PublicRegistrationsController.cs:94-107
 
 ### Agent Model Used
 
-_(filled on implementation)_
-
-### Debug Log References
+Composer
 
 ### Completion Notes List
 
+- Optional `MaxRegistrants` on activities; null = unlimited.
+- Public API exposes `isRegistrationFull`, `registrationCount`, `maxRegistrants` without overloading `isRegistrationOpen`.
+- Registration enforcement uses `FOR UPDATE` + count inside transaction; 409 `activity_full`.
+- Public Redis cache refreshed after registration and admin cap changes.
+- Admin UI: create form + capacity panel on activity detail; branding save preserves cap.
+- Public UI: full state on register page; submit errors surface ProblemDetails detail.
+
 ### File List
+
+- `src/Domain/Activities/Activity.cs`
+- `src/Infrastructure/Persistence/Configurations/ActivityConfiguration.cs`
+- `src/Infrastructure/Persistence/Migrations/20260801150000_AddActivityMaxRegistrants.cs`
+- `src/Infrastructure/Persistence/Migrations/CohestraDbContextModelSnapshot.cs`
+- `src/Infrastructure/Activities/ActivityCapacityValidator.cs`
+- `src/Infrastructure/Activities/ActivityMapper.cs`
+- `src/Infrastructure/Activities/ActivityService.cs`
+- `src/Infrastructure/Registrations/RegistrationService.cs`
+- `src/Application/Activities/IActivityService.cs`
+- `src/Application/Registrations/PublicRegistrationSubmitResult.cs`
+- `src/Contracts/Activities/*.cs`
+- `src/Api/Controllers/V1/PublicRegistrationsController.cs`
+- `web/lib/activities-api.ts`
+- `web/lib/public-registration-api.ts`
+- `web/components/activities/create-activity-form.tsx`
+- `web/components/activities/activity-capacity-panel.tsx`
+- `web/components/activities/activity-detail-page-client.tsx`
+- `web/components/activities/activity-branding-panel.tsx`
+- `web/app/(public)/register/[slug]/page.tsx`
+- `web/components/registration/public-registration-unavailable.tsx`
+- `docs/contracts/public-registration-v1.md`
+- `src/Infrastructure.Tests/Activities/ActivityCapacityValidatorTests.cs`
+- `src/Api.IntegrationTests/PublicRegistrationCapacityIntegrationTests.cs`
+- `src/Api.IntegrationTests/Infrastructure/IntegrationTestHelpers.cs`
 
 ## Change Log
 
 - 2026-08-01: Story 20.1 created — optional max registrants per activity (ready-for-dev).
+- 2026-08-01: Story 20.1 implemented — capacity field, enforcement, UI, tests, contract update.

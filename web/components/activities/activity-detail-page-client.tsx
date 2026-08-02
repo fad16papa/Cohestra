@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Calendar, MapPin } from "lucide-react";
 
 import { ActivityBrandingPanel } from "@/components/activities/activity-branding-panel";
+import { ActivityCapacityPanel } from "@/components/activities/activity-capacity-panel";
 import { ActivityFormTab } from "@/components/activities/activity-form-tab";
 import { ActivityPublishControls } from "@/components/activities/activity-publish-controls";
 import { ActivityShareKitPanel } from "@/components/activities/activity-share-kit-panel";
@@ -58,6 +59,16 @@ function ActivityQuickFacts({ activity }: { activity: Activity }) {
           Location
         </dt>
         <dd className="text-sm text-text-warm">{activity.location}</dd>
+      </div>
+      <div className="space-y-1">
+        <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+          Registrations
+        </dt>
+        <dd className="text-sm text-text-warm">
+          {activity.maxRegistrants != null
+            ? `${activity.registrationCount} / ${activity.maxRegistrants}`
+            : `${activity.registrationCount} (no cap)`}
+        </dd>
       </div>
       <div className="space-y-1">
         <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
@@ -176,6 +187,10 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
             onActivityUpdated={setActivity}
           />
           <ActivityQuickFacts activity={activity} />
+          <ActivityCapacityPanel
+            activity={activity}
+            onActivityUpdated={setActivity}
+          />
           <ActivityBrandingPanel
             key={activity.id}
             activity={activity}

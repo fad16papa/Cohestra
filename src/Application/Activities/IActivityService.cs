@@ -55,4 +55,9 @@ public interface IActivityService
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);
+
+    Task RefreshPublicActivityCacheBySlugAsync(
+        Guid tenantId,
+        string activitySlug,
+        CancellationToken cancellationToken = default);
 }

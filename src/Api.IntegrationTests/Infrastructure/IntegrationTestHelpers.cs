@@ -258,6 +258,7 @@ internal static class IntegrationTestHelpers
             TenantIds.Default,
             slug,
             name: null,
+            maxRegistrants: null,
             cancellationToken);
 
     internal static async Task<Activity> SeedPublishedActivityForTenantAsync(
@@ -265,6 +266,7 @@ internal static class IntegrationTestHelpers
         Guid tenantId,
         string slug,
         string? name = null,
+        int? maxRegistrants = null,
         CancellationToken cancellationToken = default)
     {
         await using var scope = services.CreateAsyncScope();
@@ -282,6 +284,7 @@ internal static class IntegrationTestHelpers
             Schedule = "Saturday 10:00",
             Location = "Test Court",
             CommunityLabel = "Integration Community",
+            MaxRegistrants = maxRegistrants,
             Status = ActivityStatus.Published,
             ShowOnHomepage = true,
             FormSchema = new ActivityFormSchema
@@ -395,15 +398,41 @@ internal static class IntegrationTestHelpers
         return client;
     }
 
+    internal static async Task<HttpResponseMessage> SubmitRegistrationRawAsync(
+        HttpClient client,
+        string activitySlug,
+        IReadOnlyDictionary<string, object?> answers)
+    {
+        return await client.PostAsJsonAsync(
+            "/api/v1/public/registrations",
+            new SubmitPublicRegistrationRequest(activitySlug, answers),
+            JsonOptions);
+    }
+
+    internal static async Task<string?> ReadProblemErrorCodeAsync(HttpResponseMessage response)
+    {
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+        if (root.TryGetProperty("errorCode", out var code))
+        {
+            return code.GetString();
+        }
+
+        if (root.TryGetProperty("extensions", out var extensions)
+            && extensions.TryGetProperty("errorCode", out var nestedCode))
+        {
+            return nestedCode.GetString();
+        }
+
+        return null;
+    }
+
     internal static async Task<SubmitPublicRegistrationResponse> SubmitRegistrationAsync(
         HttpClient client,
         string activitySlug,
         IReadOnlyDictionary<string, object?> answers)
     {
-        var response = await client.PostAsJsonAsync(
-            "/api/v1/public/registrations",
-            new SubmitPublicRegistrationRequest(activitySlug, answers),
-            JsonOptions);
+        var response = await SubmitRegistrationRawAsync(client, activitySlug, answers);
 
         response.EnsureSuccessStatusCode();
 

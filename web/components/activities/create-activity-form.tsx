@@ -36,6 +36,7 @@ export function CreateActivityForm() {
   );
   const [locationDetail, setLocationDetail] = useState("");
   const [countryCode, setCountryCode] = useState(defaultCountryCode);
+  const [maxRegistrants, setMaxRegistrants] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -82,6 +83,19 @@ export function CreateActivityForm() {
     setIsSubmitting(true);
 
     try {
+      const parsedCap = maxRegistrants.trim()
+        ? Number.parseInt(maxRegistrants.trim(), 10)
+        : null;
+
+      if (
+        maxRegistrants.trim() &&
+        (parsedCap === null || !Number.isFinite(parsedCap) || parsedCap < 1)
+      ) {
+        setError("Max registrants must be a whole number of at least 1, or leave blank.");
+        setIsSubmitting(false);
+        return;
+      }
+
       const activity = await createActivity(authFetch, {
         name,
         communityLabel,
@@ -89,6 +103,7 @@ export function CreateActivityForm() {
         schedule: formatScheduleForStorage(scheduleDateTime),
         location: buildActivityLocation(locationDetail, countryCode),
         status: "draft",
+        maxRegistrants: parsedCap,
       });
       router.push(`/activities/${activity.id}`);
     } catch (submitError) {
@@ -198,6 +213,24 @@ export function CreateActivityForm() {
           disabled={isSubmitting || isDetecting}
           helperText={locationHelperText}
         />
+
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="activity-max-registrants">Max registrants (optional)</Label>
+          <Input
+            id="activity-max-registrants"
+            type="number"
+            min={1}
+            inputMode="numeric"
+            placeholder="Unlimited"
+            value={maxRegistrants}
+            disabled={isSubmitting}
+            onChange={(event) => setMaxRegistrants(event.target.value)}
+          />
+          <p className="text-xs text-text-muted-warm">
+            Leave blank for unlimited registrations. You can change this later on the
+            activity overview.
+          </p>
+        </div>
       </div>
 
       <p className="rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm">

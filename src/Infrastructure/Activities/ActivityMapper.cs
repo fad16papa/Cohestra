@@ -22,6 +22,7 @@ internal static class ActivityMapper
             activity.Status.ToString().ToLowerInvariant(),
             activity.ShowOnHomepage,
             FormSchemaMapper.ToDto(activity.FormSchema),
+            activity.MaxRegistrants,
             registrationCount,
             activity.CreatedAt,
             activity.UpdatedAt);

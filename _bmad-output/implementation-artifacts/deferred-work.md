@@ -1,3 +1,11 @@
+## Deferred from: code review of 20-1-optional-max-registrants-per-activity.md (2026-08-01)
+
+- PUT full-replace clears cap when `maxRegistrants` omitted — pre-existing API pattern; current UI panels preserve value
+- Register page SSR can show form while cache stale until submit — server enforces cap; v1 acceptable
+- AC4 duplicate-before-capacity has no integration test — behavior correct in code
+- AC2 admin cap-below-count covered by unit tests only
+- AC8 cache refresh after registration not proven with warm-cache integration test
+
 ## Deferred from: code review of 17-4-p0-security-hardening.md (2026-07-30)
 
 - Rate-limit check/record TOCTOU burst in auth OTP limiter — same Lua split pattern as Story 17.2 signup limiter
