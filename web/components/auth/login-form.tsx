@@ -26,7 +26,7 @@ type LoginFormProps = {
 };
 
 const fieldShellClassName =
-  "flex min-h-12 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30";
+  "flex min-h-11 items-center gap-3 rounded-[10px] border border-line bg-paper-warm/50 px-3 transition-[border-color,box-shadow] focus-within:border-lagoon/40 focus-within:ring-2 focus-within:ring-lagoon/15";
 
 export function LoginForm({
   audience = "operator",
@@ -143,7 +143,7 @@ export function LoginForm({
       ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-text-warm">
+        <Label htmlFor="email" className="text-ink">
           Email address
         </Label>
         <div
@@ -152,7 +152,7 @@ export function LoginForm({
             error ? "border-destructive/40 focus-within:ring-destructive/20" : null
           )}
         >
-          <Mail className="size-4 shrink-0 text-text-muted-warm" aria-hidden />
+          <Mail className="size-4 shrink-0 text-stone" aria-hidden />
           <Input
             id="email"
             name="email"
@@ -170,7 +170,7 @@ export function LoginForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-text-warm">
+        <Label htmlFor="password" className="text-ink">
           Password
         </Label>
         <div
@@ -180,7 +180,7 @@ export function LoginForm({
             error ? "border-destructive/40 focus-within:ring-destructive/20" : null
           )}
         >
-          <Lock className="size-4 shrink-0 text-text-muted-warm" aria-hidden />
+          <Lock className="size-4 shrink-0 text-stone" aria-hidden />
           <Input
             id="password"
             name="password"
@@ -198,8 +198,8 @@ export function LoginForm({
             onClick={() => setShowPassword((current) => !current)}
             className={cn(
               "flex size-9 shrink-0 items-center justify-center rounded-lg",
-              "text-text-muted-warm outline-none transition-colors hover:bg-muted/60 hover:text-text-warm",
-              "focus-visible:ring-2 focus-visible:ring-ring"
+              "text-stone outline-none transition-colors hover:bg-paper-warm hover:text-ink",
+              "focus-visible:ring-2 focus-visible:ring-lagoon/30"
             )}
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
@@ -215,7 +215,7 @@ export function LoginForm({
       {verificationRedirectPath ? (
         <p
           role="status"
-          className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-text-warm"
+          className="rounded-xl border border-lagoon/20 bg-lagoon/[0.06] px-4 py-3 text-sm text-ink"
         >
           Your email is not verified yet. Continue below to enter the code we sent you
           or request a new one.
@@ -232,7 +232,7 @@ export function LoginForm({
             <p>
               <a
                 href={OPERATOR_LOGIN_PATH}
-                className="font-medium text-primary underline-offset-2 hover:underline"
+                className="font-medium text-lagoon underline-offset-2 hover:text-lagoon-deep hover:underline"
               >
                 Go to operator sign in
               </a>
@@ -244,9 +244,8 @@ export function LoginForm({
       <Button
         type="submit"
         className={cn(
-          "min-h-12 w-full rounded-xl text-base font-semibold shadow-md shadow-primary/20 sm:text-sm",
-          "bg-gradient-to-r from-primary to-accent text-primary-foreground",
-          "hover:from-primary/95 hover:to-accent/95",
+          "min-h-11 w-full rounded-[10px] text-sm font-semibold",
+          "bg-lagoon text-lagoon-fg hover:bg-lagoon-deep",
           "disabled:opacity-70"
         )}
         disabled={isSubmitting}
