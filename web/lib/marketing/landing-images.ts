@@ -1,4 +1,4 @@
-/** Self-hosted marketing photography — replace files in /public/marketing/ with your own club photos. */
+/** Self hosted marketing photography. Replace files in /public/marketing/ with your own club photos. */
 export const LANDING_IMAGES = {
   hero: {
     src: "/marketing/hero-community-sports.png",

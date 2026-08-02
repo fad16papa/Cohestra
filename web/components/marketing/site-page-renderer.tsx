@@ -285,7 +285,7 @@ function HeroSection({
           })}
           style={marketingHeroEnterStyle(eyebrow ? 240 : 170)}
         >
-          Have an event link or QR code? Open it directly — no need to start here.
+          Have an event link or QR code? Open it directly. No need to start here.
         </p>
       </div>
     </MarketingCinematicHero>

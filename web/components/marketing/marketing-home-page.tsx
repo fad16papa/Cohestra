@@ -34,28 +34,28 @@ import { cn } from "@/lib/utils";
 
 const FLOAT_ROWS = [
   { name: "Elena M.", meta: "Sunday clinic", pill: "New" },
-  { name: "Sam R.", meta: "Clinic · also board games", pill: "Returning" },
+  { name: "Sam R.", meta: "Clinic, also board games", pill: "Returning" },
   { name: "Jordan K.", meta: "Youth open play", pill: "New" },
 ] as const;
 
 const HERO_STATS = [
-  { value: "Minutes", label: "from signup to first QR" },
-  { value: "1 list", label: "deduped across activities" },
-  { value: "0 apps", label: "needed by your clients" },
+  { value: "Under 1 hr", label: "typical setup time" },
+  { value: "1 list", label: "for all your activities" },
+  { value: "0 apps", label: "for your clients to install" },
 ] as const;
 
 const OUTREACH_POINTS = [
-  "One-click WhatsApp and Viber chat from any client profile",
-  "Every touch logged on the relationship timeline",
-  "Follow-up status so the team never double-messages",
-  "Dashboard coverage shows who's still waiting on a reply",
+  "Open WhatsApp or Viber from any client profile",
+  "Save each message on the client timeline",
+  "Status flags so the team does not double message",
+  "Dashboard shows who still needs a reply",
 ] as const;
 
 const WEBSITE_POINTS = [
-  "Branded homepage at your-org.cohestra.app",
-  "Upcoming activities fed live from your CRM",
+  "Homepage at your org subdomain on cohestra.app",
+  "Upcoming activities update from your workspace",
   "Draft, preview, and publish without a developer",
-  "Share kit: QR pack, link, and WhatsApp-ready copy",
+  "Share kit with QR, link, and WhatsApp text to paste",
 ] as const;
 
 export function MarketingHomePage() {
@@ -77,20 +77,20 @@ export function MarketingHomePage() {
       <section className="mx-auto grid max-w-6xl gap-10 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end lg:gap-14 lg:px-10 lg:pb-20 lg:pt-12">
         <div>
           <MarketingReveal immediate delayMs={50}>
-            <p className="text-section text-gold">The community operations platform</p>
+            <p className="text-section text-gold">Community operations software</p>
           </MarketingReveal>
 
           <MarketingReveal immediate delayMs={120}>
             <h1 className="text-marketing-hero mt-5 text-balance text-ink">
-              Turn every registration into a relationship
+              Registrations, client list, and follow up in one place
             </h1>
           </MarketingReveal>
 
           <MarketingReveal immediate delayMs={300}>
             <p className="text-marketing-lead mt-6 max-w-[42ch] text-stone">
-              Cohestra replaces forms, spreadsheets, and link-in-bio with one workspace — no
-              juggling tools, no weekly cleanup. QR registrations, a client CRM with memory,
-              messenger outreach, campaigns, and a branded public site.
+              Cohestra replaces the forms, spreadsheets, and link in bio stack most clubs patch
+              together. Publish activities, collect registrations by QR, keep one client list, and
+              message people on WhatsApp or Viber from the same workspace.
             </p>
           </MarketingReveal>
 
@@ -107,7 +107,7 @@ export function MarketingHomePage() {
 
           <MarketingReveal immediate delayMs={450}>
             <p className="mt-4 text-sm text-stone">
-              Free forever on Basic · No credit card · Ready before your next session
+              Free on Basic. No credit card. Most clubs publish their first activity the same day.
             </p>
           </MarketingReveal>
 
@@ -143,7 +143,7 @@ export function MarketingHomePage() {
             <figcaption className="absolute inset-x-6 bottom-6 z-[2] text-paper">
               <span className="text-section mb-2 block text-gold">Sunday clinic</span>
               <span className="font-[family-name:var(--font-fraunces)] text-lg leading-snug tracking-[-0.02em]">
-                The list that knows who came back.
+                New and returning clients in one list.
               </span>
             </figcaption>
           </figure>
@@ -198,15 +198,14 @@ export function MarketingHomePage() {
           <MarketingReveal delayMs={marketingRevealDelay(0)}>
             <p className="text-section text-gold">Why Cohestra</p>
             <h2 className="text-marketing-section mt-4 max-w-[16ch] text-ink">
-              One workspace. No tool clutter.
+              One workspace instead of five tools
             </h2>
           </MarketingReveal>
           <MarketingReveal delayMs={marketingRevealDelay(1)}>
             <p className="max-w-[42ch] text-[1.05rem] leading-relaxed text-stone">
-              Stop duct-taping Forms, spreadsheets, link-in-bio, group chats, and email into a
-              workflow you have to reorganize every week. Cohestra replaces that stack with one
-              composed workspace — registrations, CRM, outreach, and your public site in one place,
-              nothing to declutter.
+              Most clubs run on Google Forms, a spreadsheet, a link in bio, group chat follow ups,
+              and maybe Mailchimp. Cohestra puts registration, the client list, messaging notes,
+              email, and your public page in one product you do not have to rebuild every week.
             </p>
           </MarketingReveal>
         </div>
@@ -214,22 +213,22 @@ export function MarketingHomePage() {
         <div className="mt-14 grid gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-3 lg:gap-12">
           {[
             {
-              eyebrow: "In place of Forms",
-              title: "Registration as welcome",
+              eyebrow: "Instead of Google Forms",
+              title: "Registration that sticks",
               description:
-                "A registration number, a confirmation email, a name that stays — not a row lost in Drive.",
+                "Each signup gets a number and confirmation email. Names stay in Cohestra, not a sheet you lose track of.",
             },
             {
-              eyebrow: "In place of spreadsheets",
-              title: "Memory across activities",
+              eyebrow: "Instead of spreadsheets",
+              title: "One profile per person",
               description:
-                "Deduped clients and relationship timelines. See returners without weekend VLOOKUPs.",
+                "See who came back across activities without VLOOKUPs or copy paste between tabs.",
             },
             {
-              eyebrow: "In place of Linktree",
-              title: "A public door that works",
+              eyebrow: "Instead of link in bio",
+              title: "A public page that registers",
               description:
-                "Share one page. Every registration lands in your workspace, not a dead bio link.",
+                "Share one URL. Every signup lands in your workspace, not a form that exports nowhere.",
             },
           ].map((cell, index) => (
             <MarketingReveal key={cell.title} delayMs={marketingRevealDelay(index + 2)}>
@@ -247,13 +246,13 @@ export function MarketingHomePage() {
       <section id="features" className="scroll-mt-24 border-t border-line bg-paper-warm">
         <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:px-10 lg:py-24">
           <MarketingReveal delayMs={marketingRevealDelay(0)}>
-            <p className="text-section text-gold">Everything in the box</p>
+            <p className="text-section text-gold">What is included</p>
             <h2 className="text-marketing-section mt-4 max-w-[18ch] text-ink">
-              From first scan to lasting relationship
+              Built for how clubs actually run
             </h2>
             <p className="text-marketing-lead mt-4 max-w-2xl text-stone">
-              The full operating stack for activity-led communities — no plugins, no Zapier
-              gymnastics.
+              Activities, registration, client history, messaging, reports, and a public site. No
+              plugins and no Zapier required.
             </p>
           </MarketingReveal>
 
@@ -282,11 +281,11 @@ export function MarketingHomePage() {
             >
               <div>
                 <h3 className="font-[family-name:var(--font-fraunces)] text-[1.2rem] font-medium tracking-[-0.02em] text-ink">
-                  And it keeps growing
+                  More shipping regularly
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-stone">
-                  Capacity caps, share kits, team invites, per-tenant email branding — shipped and
-                  shipping.
+                  Capacity limits, share kits, team invites, and per org email branding are live
+                  today. We add operator requests on a steady cadence.
                 </p>
               </div>
               <Link
@@ -306,7 +305,7 @@ export function MarketingHomePage() {
         <MarketingReveal delayMs={marketingRevealDelay(0)}>
           <p className="text-section text-gold">How it works</p>
           <h2 className="text-marketing-section mt-4 max-w-[16ch] text-ink">
-            Live before your next session
+            Set up before your next event
           </h2>
         </MarketingReveal>
 
@@ -336,11 +335,11 @@ export function MarketingHomePage() {
           <MarketingReveal delayMs={marketingRevealDelay(0)}>
             <p className="text-section text-gold">Client outreach</p>
             <h2 className="text-marketing-section mt-4 max-w-[16ch] text-ink">
-              Follow up where your clients actually are
+              Message clients where they already are
             </h2>
             <p className="text-marketing-lead mt-4 max-w-[44ch] text-stone">
-              WhatsApp and Viber outreach built into every client profile — with the audit trail
-              your team needs to stay coordinated.
+              WhatsApp and Viber open from the client profile. Cohestra logs what you sent so the
+              team stays aligned.
             </p>
             <ul className="mt-8 space-y-3">
               {OUTREACH_POINTS.map((point) => (
@@ -367,9 +366,7 @@ export function MarketingHomePage() {
             </figure>
             <div className="absolute -bottom-5 left-5 z-[2] flex items-center gap-3 rounded-[14px] border border-line bg-paper px-4 py-3 shadow-[0_20px_44px_rgba(7,13,18,0.16)]">
               <span className="inline-flex size-2.5 rounded-full bg-lagoon" aria-hidden />
-              <p className="text-sm font-medium text-ink">
-                Follow-up coverage <span className="text-lagoon">↑ 86%</span>
-              </p>
+              <p className="text-sm font-medium text-ink">Saved on client timeline</p>
             </div>
           </MarketingReveal>
         </div>
@@ -389,18 +386,18 @@ export function MarketingHomePage() {
             <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/35 to-transparent" />
           </figure>
           <div className="absolute -bottom-5 right-5 z-[2] rounded-[14px] border border-line bg-paper px-4 py-3 shadow-[0_20px_44px_rgba(7,13,18,0.16)]">
-            <p className="font-mono text-xs text-stone">your-org.cohestra.app</p>
+            <p className="font-mono text-xs text-stone">yourclub.cohestra.app</p>
           </div>
         </MarketingReveal>
 
         <MarketingReveal delayMs={marketingRevealDelay(1)} className="lg:order-1">
           <p className="text-section text-gold">Public site</p>
           <h2 className="text-marketing-section mt-4 max-w-[16ch] text-ink">
-            A homepage that fills your sessions
+            A public site tied to your activities
           </h2>
           <p className="text-marketing-lead mt-4 max-w-[44ch] text-stone">
-            Your public door on the internet — branded, always current, and wired straight into
-            registrations.
+            Your club homepage stays current because activities and registration come from the same
+            system.
           </p>
           <ul className="mt-8 space-y-3">
             {WEBSITE_POINTS.map((point) => (
@@ -419,9 +416,9 @@ export function MarketingHomePage() {
       <section className="border-t border-line bg-ink">
         <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:px-10 lg:py-24">
           <MarketingReveal delayMs={marketingRevealDelay(0)}>
-            <p className="text-section text-gold">Operators on Cohestra</p>
+            <p className="text-section text-gold">From operators</p>
             <h2 className="text-marketing-section mt-4 max-w-[18ch] text-paper">
-              Run by people who remember names
+              Used by clubs that run weekly sessions
             </h2>
           </MarketingReveal>
 
@@ -453,8 +450,8 @@ export function MarketingHomePage() {
             Start free. Upgrade when you grow.
           </h2>
           <p className="text-marketing-lead mt-4 max-w-2xl text-stone">
-            Basic is free forever. Core and Pro come with a 30-day trial — you&apos;re not charged
-            until it ends.
+            Basic is free. Core and Pro include a 30 day trial. You are not charged until the trial
+            ends.
           </p>
         </MarketingReveal>
 
@@ -507,11 +504,10 @@ export function MarketingHomePage() {
           >
             <p className="text-section text-gold">Ready when you are</p>
             <h2 className="text-marketing-section mx-auto mt-4 max-w-[20ch] text-balance text-paper">
-              Your next session deserves a better welcome
+              Publish your next activity today
             </h2>
             <p className="mx-auto mt-4 max-w-[44ch] text-[1.02rem] leading-relaxed text-paper/70">
-              Sign up free, publish your first activity, and share the QR — all before warm-up
-              ends.
+              Create a free account, publish an activity, and share the QR with your group.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/signup" className={marketingAtelierButtonClass("lagoon")}>
@@ -527,7 +523,7 @@ export function MarketingHomePage() {
               </Link>
             </div>
             <p className="mt-4 text-xs text-paper/50">
-              Free forever on Basic · 30-day trials on Core and Pro
+              Free on Basic. 30 day trials on Core and Pro.
             </p>
           </MarketingReveal>
         </div>

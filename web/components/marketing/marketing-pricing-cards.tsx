@@ -114,7 +114,7 @@ export function PricingPlanGrid({ interval }: { interval: PricingInterval }) {
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex gap-2">
                     <span aria-hidden className="text-lagoon">
-                      ·
+                      ✓
                     </span>
                     <span>{feature}</span>
                   </li>
