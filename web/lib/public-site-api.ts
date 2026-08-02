@@ -66,7 +66,7 @@ function parseDocument(raw: Record<string, unknown>): SiteSectionsDocument | nul
   const siteName = readString(raw.siteName ?? raw.SiteName);
   const sectionsRaw = raw.sections ?? raw.Sections;
 
-  if (typeof schemaVersion !== "number" || !siteName || !Array.isArray(sectionsRaw)) {
+  if (typeof schemaVersion !== "number" || siteName === null || !Array.isArray(sectionsRaw)) {
     return null;
   }
 

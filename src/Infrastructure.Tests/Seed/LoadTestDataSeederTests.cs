@@ -65,6 +65,17 @@ public sealed class LoadTestDataSeederTests
     }
 
     [Fact]
+    public void TenantSpecs_UseValidTenantSlugFormat()
+    {
+        Assert.All(LoadTestDataSeeder.TenantSpecs, spec =>
+        {
+            var error = TenantSlugRules.ValidateForProvision(spec.Slug);
+            Assert.Null(error);
+            Assert.Equal(spec.Slug, TenantSlugRules.Normalize(spec.Slug));
+        });
+    }
+
+    [Fact]
     public void TenantSpecs_UseUniqueSlugsAndAdminEmails()
     {
         var slugs = LoadTestDataSeeder.TenantSpecs.Select(spec => spec.Slug).ToList();

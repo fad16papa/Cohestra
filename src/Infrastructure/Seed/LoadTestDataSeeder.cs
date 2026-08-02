@@ -9,6 +9,7 @@ using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
+using Cohestra.Infrastructure.Site;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -166,6 +167,12 @@ public static class LoadTestDataSeeder
                     userManager,
                     membershipService,
                     password,
+                    logger,
+                    cancellationToken);
+
+                await EnsureLoadTestSitePagesAsync(
+                    scope.ServiceProvider,
+                    dbContext,
                     logger,
                     cancellationToken);
 
@@ -388,6 +395,17 @@ public static class LoadTestDataSeeder
                 spec.RegistrationsThisMonth);
 
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            if (spec.Plan is TenantPlan.Core or TenantPlan.Pro)
+            {
+                await EnsureLoadTestSitePageAsync(
+                    scope.ServiceProvider,
+                    dbContext,
+                    tenantId,
+                    spec.DisplayName,
+                    logger,
+                    cancellationToken);
+            }
         }
 
         logger.LogInformation(
@@ -468,9 +486,74 @@ public static class LoadTestDataSeeder
             {
                 return false;
             }
+
+            if (spec.Plan is TenantPlan.Core or TenantPlan.Pro)
+            {
+                var hasPublishedSite = await dbContext.SitePages
+                    .AsNoTracking()
+                    .AnyAsync(
+                        p => p.TenantId == tenant.Id
+                            && p.PublishedSections != null
+                            && p.PublishedAt != null,
+                        cancellationToken);
+                if (!hasPublishedSite)
+                {
+                    return false;
+                }
+            }
         }
 
         return true;
+    }
+
+    private static async Task EnsureLoadTestSitePagesAsync(
+        IServiceProvider scopedServices,
+        CohestraDbContext dbContext,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var tenants = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(t => TenantSpecs.Select(s => s.Slug).Contains(t.Slug))
+            .ToListAsync(cancellationToken);
+
+        foreach (var spec in TenantSpecs.Where(spec => spec.Plan is TenantPlan.Core or TenantPlan.Pro))
+        {
+            var tenant = tenants.FirstOrDefault(t => t.Slug == spec.Slug);
+            if (tenant is null)
+            {
+                continue;
+            }
+
+            await EnsureLoadTestSitePageAsync(
+                scopedServices,
+                dbContext,
+                tenant.Id,
+                spec.DisplayName,
+                logger,
+                cancellationToken);
+        }
+    }
+
+    private static async Task EnsureLoadTestSitePageAsync(
+        IServiceProvider scopedServices,
+        CohestraDbContext dbContext,
+        Guid tenantId,
+        string tenantDisplayName,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var publishedSiteCache = scopedServices.GetRequiredService<IPublishedSiteCache>();
+        var landingSettings = scopedServices.GetRequiredService<IOptions<SiteLandingSeedSettings>>();
+
+        await SitePageCoreSeedHelper.EnsureCoreSitePageAsync(
+            dbContext,
+            publishedSiteCache,
+            landingSettings,
+            logger,
+            tenantId,
+            tenantDisplayName,
+            cancellationToken);
     }
 
     private static async Task EnsureLoadTestAdminUsersAsync(
@@ -708,6 +791,8 @@ public static class LoadTestDataSeeder
             await dbContext.Categories.Where(c => c.TenantId == tenantId).ToListAsync(cancellationToken));
         dbContext.EmailTemplates.RemoveRange(
             await dbContext.EmailTemplates.Where(t => t.TenantId == tenantId).ToListAsync(cancellationToken));
+        dbContext.SitePages.RemoveRange(
+            await dbContext.SitePages.Where(p => p.TenantId == tenantId).ToListAsync(cancellationToken));
 
         await dbContext.SaveChangesAsync(cancellationToken);
     }
