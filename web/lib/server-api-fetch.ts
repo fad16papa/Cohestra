@@ -56,6 +56,10 @@ export function isMarketingApexHost(host: string | null): boolean {
     return label === "" || label === "www";
   }
 
+  if (normalized === "localhost" || normalized === "127.0.0.1" || normalized === "::1") {
+    return true;
+  }
+
   return false;
 }
 
