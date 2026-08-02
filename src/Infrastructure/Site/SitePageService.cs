@@ -451,13 +451,7 @@ public sealed class SitePageService(
             throw new InvalidOperationException("Tenant context is required for site page operations.");
         }
 
-        var plan = await dbContext.Tenants
-            .AsNoTracking()
-            .Where(t => t.Id == tenantId)
-            .Select(t => t.Plan)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (plan is TenantPlan.Core)
+        if (await IsBuilderLockedAsync(cancellationToken))
         {
             throw new InvalidOperationException("The section composer is locked on Core. Upgrade to Pro to customize layout.");
         }
@@ -470,13 +464,23 @@ public sealed class SitePageService(
             return true;
         }
 
-        var plan = await dbContext.Tenants
+        var tenant = await dbContext.Tenants
             .AsNoTracking()
             .Where(t => t.Id == tenantId)
-            .Select(t => t.Plan)
+            .Select(t => new { t.Plan, t.Slug, t.IsComplimentary })
             .FirstOrDefaultAsync(cancellationToken);
 
-        return plan is TenantPlan.Core;
+        if (tenant is null)
+        {
+            return true;
+        }
+
+        if (tenant.Plan is not TenantPlan.Core)
+        {
+            return false;
+        }
+
+        return !LoadTestTenantRules.UnlocksWebsiteBuilder(tenant.Slug, tenant.IsComplimentary);
     }
 
     private async Task<SitePageAdminResponse> BuildAdminResponseAsync(

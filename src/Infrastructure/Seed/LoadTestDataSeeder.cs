@@ -24,7 +24,7 @@ namespace Cohestra.Infrastructure.Seed;
 public static class LoadTestDataSeeder
 {
     public const string EmailDomain = "cohestra.local";
-    public const string SlugPrefix = "load-";
+    public const string SlugPrefix = LoadTestTenantRules.SlugPrefix;
     public const string DefaultPassword = "LoadTest123!";
 
     private static readonly string[] CategoryNames = ["Sports", "Social", "Wellness"];

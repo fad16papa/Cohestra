@@ -10,6 +10,7 @@ using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Seed;
 using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -51,7 +52,15 @@ public sealed class PublicDoorService(
         TenantPlan plan,
         CancellationToken cancellationToken)
     {
-        var builderLocked = plan is TenantPlan.Core;
+        var tenantMeta = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(t => t.Id == tenantId)
+            .Select(t => new { t.IsComplimentary })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var builderLocked = plan is TenantPlan.Core
+            && !(tenantMeta is not null
+                && LoadTestTenantRules.UnlocksWebsiteBuilder(slug, tenantMeta.IsComplimentary));
 
         if (plan is TenantPlan.Basic)
         {
