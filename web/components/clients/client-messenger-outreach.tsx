@@ -3,6 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import {
+  MessengerOpenConfirmDialog,
+  MessengerPrerequisitesNotice,
+} from "@/components/clients/messenger-open-confirm-dialog";
 import { clientProfileCardClassName } from "@/components/clients/client-profile-motion";
 import { useToast } from "@/components/ui/toast-provider";
 import { Button } from "@/components/ui/button";
@@ -16,6 +20,7 @@ import {
   type ClientTimelineItem,
 } from "@/lib/clients-api";
 import { formatPhoneDisplay } from "@/lib/phone-countries";
+import type { MessengerChannel } from "@/lib/messenger-prerequisites";
 import {
   buildViberAppDeepLink,
   buildWhatsAppWebUrl,
@@ -85,6 +90,9 @@ export function ClientMessengerOutreach({
   );
   const [followUpNote, setFollowUpNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmChannel, setConfirmChannel] = useState<MessengerChannel | null>(
+    null
+  );
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
@@ -121,6 +129,7 @@ export function ClientMessengerOutreach({
       );
     } finally {
       setBusy(false);
+      setConfirmChannel(null);
     }
   }
 
@@ -135,15 +144,33 @@ export function ClientMessengerOutreach({
       const updated = await recordViberInitiated(authFetch, client.id);
       onUpdated(updated);
       openAppDeepLink(viberDeepLink);
-      showToast(
-        "Opening Viber… If nothing happens, install Viber desktop or use the mobile app."
-      );
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Could not log Viber initiation."
       );
     } finally {
       setBusy(false);
+      setConfirmChannel(null);
+    }
+  }
+
+  function requestOpenMessenger(channel: MessengerChannel) {
+    if (!hasPhone) {
+      showToast("This client has no phone number on file.");
+      return;
+    }
+
+    setConfirmChannel(channel);
+  }
+
+  function handleConfirmOpenMessenger() {
+    if (confirmChannel === "whatsapp") {
+      void handleOpenWhatsApp();
+      return;
+    }
+
+    if (confirmChannel === "viber") {
+      void handleOpenViber();
     }
   }
 
@@ -184,16 +211,18 @@ export function ClientMessengerOutreach({
       <div>
         <h3 className="text-sm font-semibold text-text-warm">Messenger outreach</h3>
         <p className="mt-1 text-sm text-text-muted-warm">
-          Open WhatsApp or Viber with this client&apos;s number. Record WhatsApp
-          follow-up status below.
+          Open WhatsApp or Viber with this client&apos;s number, then record WhatsApp
+          follow-up below.
         </p>
       </div>
+
+      <MessengerPrerequisitesNotice />
 
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button
           type="button"
           disabled={!hasPhone || busy}
-          onClick={() => void handleOpenWhatsApp()}
+          onClick={() => requestOpenMessenger("whatsapp")}
           className="w-full bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90 sm:flex-1"
         >
           Open WhatsApp
@@ -201,12 +230,25 @@ export function ClientMessengerOutreach({
         <Button
           type="button"
           disabled={!hasPhone || busy}
-          onClick={() => void handleOpenViber()}
+          onClick={() => requestOpenMessenger("viber")}
           className="w-full bg-viber text-viber-foreground hover:bg-viber/90 sm:flex-1"
         >
           Open Viber
         </Button>
       </div>
+
+      <MessengerOpenConfirmDialog
+        channel={confirmChannel}
+        clientPhoneLabel={phoneLabel}
+        open={confirmChannel !== null}
+        busy={busy}
+        onOpenChange={(open) => {
+          if (!open && !busy) {
+            setConfirmChannel(null);
+          }
+        }}
+        onConfirm={() => handleConfirmOpenMessenger()}
+      />
 
       {phoneLabel ? (
         <p className="text-xs text-text-muted-warm">

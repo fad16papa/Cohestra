@@ -139,8 +139,9 @@ export function ClientFollowUpPanel({
 
       {needsFollowUp ? (
         <p className="mt-4 text-xs text-text-muted-warm">
-          Tip: Mark as {leadStatusLabels.contacted.toLowerCase()} after your first touch — use
-          Messenger outreach below for WhatsApp or Viber, then record follow-up there.
+          Tip: Mark as {leadStatusLabels.contacted.toLowerCase()} after your first touch. Use
+          Messenger outreach below (review operator requirements before opening WhatsApp or
+          Viber).
         </p>
       ) : null}
     </section>
