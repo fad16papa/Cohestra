@@ -44,6 +44,13 @@ export function MarketingWordmark({ className }: { className?: string }) {
   );
 }
 
+const MARKETING_NAV_LINKS = [
+  { label: "Features", href: "/#features" },
+  { label: "How it works", href: "/#how-it-works" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "FAQ", href: "/#faq" },
+] as const;
+
 export function MarketingShell({
   children,
   scrolled = false,
@@ -61,10 +68,19 @@ export function MarketingShell({
         )}
       >
         <MarketingWordmark />
-        <nav className="flex items-center gap-3 sm:gap-5">
+        <nav className="flex items-center gap-3 sm:gap-5" aria-label="Marketing">
+          {MARKETING_NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="hidden text-sm font-medium text-stone hover:text-ink lg:inline"
+            >
+              {link.label}
+            </Link>
+          ))}
           <Link
             href="/pricing"
-            className="hidden text-sm font-medium text-stone hover:text-ink sm:inline"
+            className="text-sm font-medium text-stone hover:text-ink lg:hidden"
           >
             Pricing
           </Link>
@@ -81,18 +97,67 @@ export function MarketingShell({
   );
 }
 
+const FOOTER_COLUMNS = [
+  {
+    heading: "Product",
+    links: [
+      { label: "Features", href: "/#features" },
+      { label: "How it works", href: "/#how-it-works" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "FAQ", href: "/#faq" },
+    ],
+  },
+  {
+    heading: "Get started",
+    links: [
+      { label: "Start free", href: "/signup" },
+      { label: "Start Core trial", href: "/signup?plan=core" },
+      { label: "Start Pro trial", href: "/signup?plan=pro" },
+      { label: "Sign in", href: "/login" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { label: "Contact", href: "mailto:hello@cohestra.app" },
+      { label: "Book a demo", href: "mailto:hello@cohestra.app?subject=Enterprise%20demo" },
+      { label: "Terms", href: "/terms" },
+      { label: "Privacy", href: "/privacy" },
+    ],
+  },
+] as const;
+
 export function MarketingFooter() {
   return (
-    <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-line px-5 py-8 text-sm text-stone sm:px-8 lg:px-10">
-      <MarketingWordmark className="text-[1.15rem]" />
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Link href="/terms" className="hover:text-ink">
-          Terms
-        </Link>
-        <Link href="/privacy" className="hover:text-ink">
-          Privacy
-        </Link>
-        <p>Built for operators who remember names.</p>
+    <footer className="border-t border-line bg-paper-warm">
+      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[1.2fr_repeat(3,minmax(0,1fr))] lg:px-10 lg:py-16">
+        <div>
+          <MarketingWordmark className="text-[1.3rem]" />
+          <p className="mt-3 max-w-[30ch] text-sm leading-relaxed text-stone">
+            The community operations platform — QR registrations, client CRM, messenger outreach,
+            and a branded public site.
+          </p>
+        </div>
+        {FOOTER_COLUMNS.map((column) => (
+          <nav key={column.heading} aria-label={column.heading}>
+            <p className="text-section text-gold">{column.heading}</p>
+            <ul className="mt-4 space-y-2.5">
+              {column.links.map((link) => (
+                <li key={link.label}>
+                  <Link href={link.href} className="text-sm text-stone hover:text-ink">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))}
+      </div>
+      <div className="border-t border-line">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-stone sm:px-8 lg:px-10">
+          <p>© {new Date().getFullYear()} Cohestra. All rights reserved.</p>
+          <p>Built for operators who remember names.</p>
+        </div>
       </div>
     </footer>
   );
