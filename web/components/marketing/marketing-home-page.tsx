@@ -96,9 +96,9 @@ export function MarketingHomePage() {
 
           <MarketingReveal immediate delayMs={300}>
             <p className="text-marketing-lead mt-6 max-w-[42ch] text-stone">
-              Cohestra replaces forms, spreadsheets, and link-in-bio with one workspace — QR
-              registrations, a client CRM with memory, messenger outreach, campaigns, and a
-              branded public site.
+              Cohestra replaces forms, spreadsheets, and link-in-bio with one workspace — no
+              juggling tools, no weekly cleanup. QR registrations, a client CRM with memory,
+              messenger outreach, campaigns, and a branded public site.
             </p>
           </MarketingReveal>
 
@@ -149,7 +149,7 @@ export function MarketingHomePage() {
               className="absolute inset-0 bg-gradient-to-b from-ink/[0.05] to-ink/45"
             />
             <figcaption className="absolute inset-x-6 bottom-6 z-[2] text-paper">
-              <span className="text-section mb-2 block text-gold">Sunday clinic · Ikigai</span>
+              <span className="text-section mb-2 block text-gold">Sunday clinic</span>
               <span className="font-[family-name:var(--font-fraunces)] text-lg leading-snug tracking-[-0.02em]">
                 The list that knows who came back.
               </span>
@@ -205,14 +205,16 @@ export function MarketingHomePage() {
         <div className="grid gap-8 lg:grid-cols-2 lg:items-end">
           <MarketingReveal delayMs={marketingRevealDelay(0)}>
             <p className="text-section text-gold">Why Cohestra</p>
-            <h2 className="text-marketing-section mt-4 max-w-[14ch] text-ink">
-              One workspace. Not five tools.
+            <h2 className="text-marketing-section mt-4 max-w-[16ch] text-ink">
+              One workspace. No tool clutter.
             </h2>
           </MarketingReveal>
           <MarketingReveal delayMs={marketingRevealDelay(1)}>
-            <p className="max-w-[40ch] text-[1.05rem] leading-relaxed text-stone">
-              Forms, sheets, link-in-bio, group-chat follow-ups, and light email collapse into a
-              single composed workspace — quiet enough to trust, sharp enough to run on.
+            <p className="max-w-[42ch] text-[1.05rem] leading-relaxed text-stone">
+              Stop duct-taping Forms, spreadsheets, link-in-bio, group chats, and email into a
+              workflow you have to reorganize every week. Cohestra replaces that stack with one
+              composed workspace — registrations, CRM, outreach, and your public site in one place,
+              nothing to declutter.
             </p>
           </MarketingReveal>
         </div>
