@@ -311,19 +311,22 @@ export function MarketingHomePage() {
 
       {/* ── Product highlight: client CRM ────────────────────── */}
       <section id="crm" className="scroll-mt-24 border-t border-line">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:px-10 lg:py-24">
+        <div className="mx-auto max-w-3xl px-5 pt-16 pb-10 text-center sm:px-8 lg:px-10 lg:pt-24 lg:pb-12">
           <MarketingReveal delayMs={marketingRevealDelay(0)}>
             <p className="text-section text-gold">Client CRM</p>
-            <h2 className="text-marketing-section mt-4 max-w-[16ch] text-ink">
+            <h2 className="text-marketing-section mx-auto mt-4 max-w-[18ch] text-balance text-ink">
               A client list your team actually uses
             </h2>
-            <p className="text-marketing-lead mt-4 max-w-[44ch] text-stone">
+            <p className="text-marketing-lead mx-auto mt-4 max-w-2xl text-stone">
               Every registration builds one profile. Search the list, open a client, see their
               history, and message them without leaving Cohestra.
             </p>
-            <ul className="mt-8 space-y-3">
+          </MarketingReveal>
+
+          <MarketingReveal delayMs={marketingRevealDelay(1)}>
+            <ul className="mt-8 grid gap-3 text-left sm:grid-cols-2 sm:gap-x-6 sm:gap-y-3 sm:text-[0.95rem]">
               {CRM_POINTS.map((point) => (
-                <li key={point} className="flex items-start gap-3 text-[0.95rem] text-ink/85">
+                <li key={point} className="flex items-start gap-3 text-ink/85">
                   <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-lagoon/12 text-lagoon">
                     <Check className="size-3.5" aria-hidden />
                   </span>
@@ -332,11 +335,13 @@ export function MarketingHomePage() {
               ))}
             </ul>
           </MarketingReveal>
-
-          <MarketingReveal delayMs={marketingRevealDelay(2)}>
-            <MarketingCrmShowcase />
-          </MarketingReveal>
         </div>
+
+        <MarketingReveal delayMs={marketingRevealDelay(2)} className="w-full">
+          <div className="border-t border-line bg-paper-warm pb-16 pt-8 sm:pb-20 sm:pt-10 lg:pb-24">
+            <MarketingCrmShowcase />
+          </div>
+        </MarketingReveal>
       </section>
 
       {/* ── How it works ─────────────────────────────────────── */}

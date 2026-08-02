@@ -47,61 +47,69 @@ const SHOWCASE_CLIENTS: ShowcaseClient[] = [
     status: "active",
     lastActivity: "Registered youth open play · 4 days ago",
   },
+  {
+    id: "5",
+    name: "Marcus Chen",
+    nationality: "Singapore",
+    status: "inactive",
+    lastActivity: "Registered summer camp · 3 weeks ago",
+  },
 ];
 
 const TIMELINE = [
-  { label: "Registered Sunday clinic", meta: "Mar 8 · #142", tone: "default" as const },
+  { label: "Registered Sunday clinic", meta: "Mar 8 · Registration #142", tone: "default" as const },
   { label: "WhatsApp message logged", meta: "Mar 9 · Welcome note sent", tone: "lagoon" as const },
   { label: "Status changed to Active", meta: "Mar 10 · After second visit", tone: "default" as const },
+  { label: "Registered board games night", meta: "Mar 15 · Registration #158", tone: "default" as const },
 ];
 
 function ShowcaseBrowserChrome({ children }: { children: ReactNode }) {
   return (
     <div
       aria-hidden
-      className="overflow-hidden rounded-[20px] border border-line bg-paper shadow-[0_32px_64px_rgba(7,13,18,0.14)]"
+      className="flex h-full min-h-0 flex-col overflow-hidden rounded-none border-y border-line bg-paper sm:rounded-[20px] sm:border"
     >
-      <div className="flex items-center gap-2 border-b border-line bg-paper-warm px-4 py-3">
+      <div className="flex shrink-0 items-center gap-2 border-b border-line bg-paper-warm px-4 py-3 sm:px-5">
         <span className="size-2.5 rounded-full bg-[#ff5f57]" />
         <span className="size-2.5 rounded-full bg-[#febc2e]" />
         <span className="size-2.5 rounded-full bg-[#28c840]" />
-        <span className="ml-3 font-mono text-[0.65rem] text-stone">
+        <span className="ml-2 truncate font-mono text-[0.7rem] text-stone sm:ml-3 sm:text-xs">
           default.localhost/clients
         </span>
       </div>
-      {children}
+      <div className="min-h-0 flex-1">{children}</div>
     </div>
   );
 }
 
 function ShowcaseClientsList() {
   return (
-    <div className="border-r border-line bg-paper lg:w-[58%]">
-      <div className="border-b border-line px-4 py-4 sm:px-5">
-        <div className="flex items-center gap-2">
-          <Users className="size-4 text-lagoon" aria-hidden />
-          <p className="font-[family-name:var(--font-fraunces)] text-[1.05rem] font-medium tracking-[-0.02em] text-ink">
+    <div className="flex min-h-0 min-w-0 flex-col border-b border-line bg-paper lg:w-[52%] lg:border-r lg:border-b-0">
+      <div className="shrink-0 border-b border-line px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <Users className="size-5 text-lagoon" aria-hidden />
+          <p className="font-[family-name:var(--font-fraunces)] text-xl font-medium tracking-[-0.02em] text-ink sm:text-[1.35rem]">
             Clients
           </p>
-          <span className="rounded-full bg-lagoon/10 px-2 py-0.5 text-[0.625rem] font-bold tracking-wide text-lagoon uppercase">
+          <span className="rounded-full bg-lagoon/10 px-2.5 py-0.5 text-[0.6875rem] font-bold tracking-wide text-lagoon uppercase">
             248
           </span>
         </div>
-        <div className="relative mt-3">
+        <div className="relative mt-4">
           <Search
-            className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-stone"
+            className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-stone"
             aria-hidden
           />
-          <div className="h-9 rounded-[8px] border border-line bg-paper-warm pl-9 text-xs leading-9 text-stone">
+          <div className="h-11 rounded-[10px] border border-line bg-paper-warm pl-11 text-sm leading-[2.75rem] text-stone sm:h-12 sm:pl-12 sm:text-[0.9375rem]">
             Search by name or nationality
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap gap-2">
           {["All", "New", "Contacted", "Active"].map((filter, index) => (
             <span
               key={filter}
               className={cn(
-                "rounded-full px-2.5 py-1 text-[0.6875rem] font-medium",
+                "rounded-full px-3 py-1.5 text-xs font-medium sm:text-[0.8125rem]",
                 index === 0
                   ? "bg-ink text-paper"
                   : "border border-line bg-paper text-stone"
@@ -113,31 +121,45 @@ function ShowcaseClientsList() {
         </div>
       </div>
 
-      <div className="hidden border-b border-line px-4 py-2 text-[0.625rem] font-semibold tracking-wide text-stone uppercase sm:grid sm:grid-cols-[1.2fr_0.7fr_0.7fr_1fr] sm:gap-3 sm:px-5">
+      <div className="hidden shrink-0 border-b border-line px-4 py-2.5 text-[0.6875rem] font-semibold tracking-wide text-stone uppercase md:grid md:grid-cols-[1.25fr_0.75fr_0.75fr_1.1fr] md:gap-4 md:px-6">
         <span>Name</span>
         <span className="text-center">Nationality</span>
         <span>Status</span>
         <span>Last activity</span>
       </div>
 
-      <div className="divide-y divide-line">
+      <div className="min-h-0 flex-1 divide-y divide-line overflow-y-auto">
         {SHOWCASE_CLIENTS.map((client) => (
           <div
             key={client.id}
             className={cn(
-              "grid grid-cols-1 gap-2 px-4 py-3 sm:grid-cols-[1.2fr_0.7fr_0.7fr_1fr] sm:items-center sm:gap-3 sm:px-5 sm:py-3.5",
-              client.selected && "border-l-4 border-l-lagoon bg-lagoon/[0.04]"
+              "px-4 py-4 sm:px-6 sm:py-4",
+              client.selected && "border-l-4 border-l-lagoon bg-lagoon/[0.05]"
             )}
           >
-            <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex items-start gap-3 md:hidden">
               <PersonAvatar name={client.name} size="sm" />
-              <span className="truncate text-sm font-semibold text-ink">{client.name}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-base font-semibold text-ink">{client.name}</p>
+                  <LeadStatusBadge status={client.status} />
+                </div>
+                <p className="mt-1 text-sm text-stone">{client.nationality}</p>
+                <p className="mt-1 text-sm leading-snug text-stone">{client.lastActivity}</p>
+              </div>
             </div>
-            <span className="hidden truncate text-center text-xs text-stone sm:block">
-              {client.nationality}
-            </span>
-            <LeadStatusBadge status={client.status} />
-            <span className="hidden truncate text-xs text-stone sm:block">{client.lastActivity}</span>
+
+            <div className="hidden md:grid md:grid-cols-[1.25fr_0.75fr_0.75fr_1.1fr] md:items-center md:gap-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <PersonAvatar name={client.name} size="sm" />
+                <span className="truncate text-[0.9375rem] font-semibold text-ink">
+                  {client.name}
+                </span>
+              </div>
+              <span className="truncate text-center text-sm text-stone">{client.nationality}</span>
+              <LeadStatusBadge status={client.status} />
+              <span className="truncate text-sm text-stone">{client.lastActivity}</span>
+            </div>
           </div>
         ))}
       </div>
@@ -149,52 +171,52 @@ function ShowcaseClientProfile() {
   const selected = SHOWCASE_CLIENTS.find((client) => client.selected)!;
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col bg-paper-warm/60 p-4 sm:p-5">
-      <div className="flex flex-wrap items-center gap-2.5">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-paper-warm/50 p-4 sm:p-6 lg:overflow-y-auto">
+      <div className="flex flex-wrap items-center gap-3">
         <PersonAvatar name={selected.name} size="md" />
-        <div className="min-w-0">
-          <p className="truncate font-[family-name:var(--font-fraunces)] text-[1.05rem] font-medium tracking-[-0.02em] text-ink">
+        <div className="min-w-0 flex-1">
+          <p className="font-[family-name:var(--font-fraunces)] text-xl font-medium tracking-[-0.02em] text-ink sm:text-[1.35rem]">
             {selected.name}
           </p>
-          <p className="text-xs text-stone">{selected.nationality}</p>
+          <p className="mt-0.5 text-sm text-stone sm:text-[0.9375rem]">{selected.nationality}</p>
         </div>
-        <LeadStatusBadge status={selected.status} className="ml-auto" />
+        <LeadStatusBadge status={selected.status} />
       </div>
 
-      <div className="mt-4 rounded-[12px] border border-line bg-paper p-3">
-        <p className="text-[0.625rem] font-semibold tracking-wide text-stone uppercase">
+      <div className="mt-5 rounded-[14px] border border-line bg-paper p-4 sm:p-5">
+        <p className="text-[0.6875rem] font-semibold tracking-wide text-stone uppercase">
           Contact
         </p>
-        <p className="mt-1 text-sm text-ink">elena@example.com</p>
-        <p className="text-sm text-stone">+34 612 345 678</p>
+        <p className="mt-2 text-base text-ink sm:text-[1.02rem]">elena@example.com</p>
+        <p className="mt-1 text-base text-stone sm:text-[1.02rem]">+34 612 345 678</p>
       </div>
 
-      <div className="mt-3 flex gap-2">
-        <span className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-[8px] border border-lagoon/25 bg-lagoon/10 text-xs font-semibold text-lagoon">
-          <MessageCircle className="size-3.5" aria-hidden />
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <span className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] border border-lagoon/25 bg-lagoon/10 text-sm font-semibold text-lagoon">
+          <MessageCircle className="size-4" aria-hidden />
           WhatsApp
         </span>
-        <span className="inline-flex h-8 flex-1 items-center justify-center rounded-[8px] border border-line bg-paper text-xs font-semibold text-ink">
+        <span className="inline-flex h-11 items-center justify-center rounded-[10px] border border-line bg-paper text-sm font-semibold text-ink">
           Viber
         </span>
       </div>
 
-      <div className="mt-4 min-h-0 flex-1 rounded-[12px] border border-line bg-paper p-3">
-        <p className="text-[0.625rem] font-semibold tracking-wide text-stone uppercase">
+      <div className="mt-5 flex-1 rounded-[14px] border border-line bg-paper p-4 sm:p-5">
+        <p className="text-[0.6875rem] font-semibold tracking-wide text-stone uppercase">
           Relationship timeline
         </p>
-        <ul className="mt-3 space-y-3">
+        <ul className="mt-4 space-y-4">
           {TIMELINE.map((event) => (
-            <li key={event.label} className="flex gap-2.5">
+            <li key={event.label} className="flex gap-3">
               <span
                 className={cn(
-                  "mt-1 size-2 shrink-0 rounded-full",
+                  "mt-1.5 size-2.5 shrink-0 rounded-full",
                   event.tone === "lagoon" ? "bg-lagoon" : "bg-line-strong"
                 )}
               />
               <div className="min-w-0">
-                <p className="text-xs font-medium text-ink">{event.label}</p>
-                <p className="text-[0.6875rem] text-stone">{event.meta}</p>
+                <p className="text-sm font-medium text-ink sm:text-[0.9375rem]">{event.label}</p>
+                <p className="mt-0.5 text-sm text-stone">{event.meta}</p>
               </div>
             </li>
           ))}
@@ -206,18 +228,21 @@ function ShowcaseClientProfile() {
 
 export function MarketingCrmShowcase({ className }: { className?: string }) {
   return (
-    <div className={cn("relative", className)}>
-      <ShowcaseBrowserChrome>
-        <div className="flex min-h-[420px] flex-col lg:min-h-[460px] lg:flex-row">
-          <ShowcaseClientsList />
-          <ShowcaseClientProfile />
+    <div className={cn("flex w-full flex-col", className)}>
+      <div className="marketing-crm-showcase-frame mx-auto w-full max-w-[1400px] px-0 sm:px-5 lg:px-8">
+        <div className="marketing-crm-showcase-surface min-h-[min(78vh,920px)] shadow-[0_40px_80px_rgba(7,13,18,0.12)] sm:min-h-[min(82vh,960px)]">
+          <ShowcaseBrowserChrome>
+            <div className="flex h-full min-h-[min(72vh,840px)] flex-col lg:min-h-0 lg:flex-row">
+              <ShowcaseClientsList />
+              <ShowcaseClientProfile />
+            </div>
+          </ShowcaseBrowserChrome>
         </div>
-      </ShowcaseBrowserChrome>
-
-      <div className="absolute -bottom-4 left-5 z-[2] rounded-[14px] border border-line bg-paper px-4 py-3 shadow-[0_20px_44px_rgba(7,13,18,0.16)] max-sm:relative max-sm:mt-4 max-sm:w-fit">
-        <p className="text-sm font-medium text-ink">One profile per person</p>
-        <p className="mt-0.5 text-xs text-stone">List, profile, and timeline in one view</p>
       </div>
+
+      <p className="mx-auto mt-6 max-w-2xl px-5 text-center text-sm text-stone sm:px-8 sm:text-[0.9375rem]">
+        One profile per person. List, profile, and timeline stay in the same workspace.
+      </p>
     </div>
   );
 }
