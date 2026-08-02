@@ -59,8 +59,9 @@ export function ClientViberOutreach({
       <div>
         <h3 className="text-sm font-semibold text-text-warm">Viber outreach</h3>
         <p className="mt-1 text-sm text-text-muted-warm">
-          Open Viber with this client&apos;s number. Follow-up status recording
-          arrives in a later update.
+          Open Viber with this client&apos;s number. Opens viber.me in your browser
+          (install Viber desktop if prompted). Follow-up status recording arrives
+          in a later update.
         </p>
       </div>
 

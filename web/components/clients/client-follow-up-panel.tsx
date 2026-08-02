@@ -184,9 +184,9 @@ export function ClientFollowUpPanel({
           ) : null}
           <Button
             type="button"
-            variant="outline"
             disabled={!whatsAppPhone || busy}
             onClick={() => void handleOpenWhatsApp()}
+            className="bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
           >
             Open WhatsApp
           </Button>

@@ -178,7 +178,7 @@ export function toWhatsAppPhoneDigits(
   return `${CALLING_CODES[DEFAULT_PHONE_COUNTRY]}${nationalDigits}`;
 }
 
-/** Deep link to open a one-to-one Viber chat (E.164 digits URL-encoded with %2B prefix). */
+/** Opens a one-to-one Viber chat in browser (mirrors wa.me — redirects to app when installed). */
 export function buildViberChatUrl(
   phone: string | null | undefined
 ): string | null {
@@ -187,7 +187,7 @@ export function buildViberChatUrl(
     return null;
   }
 
-  return `viber://chat?number=%2B${digits}`;
+  return `https://viber.me/${digits}`;
 }
 
 /** Formats stored phone for operator display: flag, +prefix, grouped national number. */

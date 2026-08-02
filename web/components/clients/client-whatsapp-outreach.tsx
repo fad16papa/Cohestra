@@ -159,9 +159,9 @@ export function ClientWhatsAppOutreach({
 
       <Button
         type="button"
-        variant="outline"
         disabled={!whatsAppPhone || busy}
         onClick={() => void handleOpenWhatsApp()}
+        className="w-full bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90 sm:w-auto"
       >
         Open WhatsApp
       </Button>
