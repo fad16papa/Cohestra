@@ -134,7 +134,7 @@ export function MarketingFooter() {
         <div>
           <MarketingWordmark className="text-[1.3rem]" />
           <p className="mt-3 max-w-[30ch] text-sm leading-relaxed text-stone">
-            Software for community and sports clubs. Registration by QR, client list, WhatsApp and
+            Software for clubs, workshops, and groups. Registration by QR, client list, WhatsApp and
             Viber outreach, and a public site on one platform.
           </p>
         </div>
@@ -156,7 +156,7 @@ export function MarketingFooter() {
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-stone sm:px-8 lg:px-10">
           <p>© {new Date().getFullYear()} Cohestra. All rights reserved.</p>
-          <p>Built for club operators.</p>
+          <p>Built for community operators.</p>
         </div>
       </div>
     </footer>

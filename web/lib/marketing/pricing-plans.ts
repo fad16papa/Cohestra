@@ -38,7 +38,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
   {
     id: "core",
     name: "Core",
-    headline: "For clubs running day to day operations",
+    headline: "For clubs, workshops, and groups running day to day",
     monthlyPrice: "$29",
     annualPrice: "$290 / year",
     annualMonthlyEquivalent: "$24 / mo billed annually",

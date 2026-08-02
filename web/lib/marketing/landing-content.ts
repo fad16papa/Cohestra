@@ -94,11 +94,11 @@ export type LandingAudience = {
 export const LANDING_AUDIENCES: LandingAudience[] = [
   { label: "Community clubs" },
   { label: "Sports clubs" },
+  { label: "Workshops" },
+  { label: "Groups and meetups" },
   { label: "Run crews" },
   { label: "Board game nights" },
   { label: "Yoga and wellness studios" },
-  { label: "Creative workshops" },
-  { label: "Community meetups" },
 ];
 
 export type LandingTestimonial = {

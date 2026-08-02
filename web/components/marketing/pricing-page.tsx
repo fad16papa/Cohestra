@@ -29,7 +29,7 @@ export function PricingPageContent() {
         <MarketingReveal immediate delayMs={80}>
           <p className="text-section text-gold">Pricing</p>
           <h1 className="text-marketing-section mt-4 max-w-[18ch] text-ink">
-            Plans for clubs at every stage
+            Plans for clubs, workshops, and groups
           </h1>
           <p className="text-marketing-lead mt-4 max-w-2xl text-stone">
             Start free on Basic. Upgrade when you need a public homepage, richer reports, a team,

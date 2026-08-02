@@ -88,9 +88,9 @@ export function MarketingHomePage() {
 
           <MarketingReveal immediate delayMs={300}>
             <p className="text-marketing-lead mt-6 max-w-[42ch] text-stone">
-              Cohestra replaces the forms, spreadsheets, and link in bio stack most clubs patch
-              together. Publish activities, collect registrations by QR, keep one client list, and
-              message people on WhatsApp or Viber from the same workspace.
+              Cohestra replaces the forms, spreadsheets, and link in bio stack most clubs, workshops,
+              and groups patch together. Publish activities, collect registrations by QR, keep one
+              client list, and message people on WhatsApp or Viber from the same workspace.
             </p>
           </MarketingReveal>
 
@@ -107,7 +107,7 @@ export function MarketingHomePage() {
 
           <MarketingReveal immediate delayMs={450}>
             <p className="mt-4 text-sm text-stone">
-              Free on Basic. No credit card. Most clubs publish their first activity the same day.
+              Free on Basic. No credit card. Most teams publish their first activity the same day.
             </p>
           </MarketingReveal>
 
@@ -203,9 +203,10 @@ export function MarketingHomePage() {
           </MarketingReveal>
           <MarketingReveal delayMs={marketingRevealDelay(1)}>
             <p className="max-w-[42ch] text-[1.05rem] leading-relaxed text-stone">
-              Most clubs run on Google Forms, a spreadsheet, a link in bio, group chat follow ups,
-              and maybe Mailchimp. Cohestra puts registration, the client list, messaging notes,
-              email, and your public page in one product you do not have to rebuild every week.
+              Most clubs, workshops, and groups run on Google Forms, a spreadsheet, a link in bio,
+              group chat follow ups, and maybe Mailchimp. Cohestra puts registration, the client
+              list, messaging notes, email, and your public page in one product you do not have to
+              rebuild every week.
             </p>
           </MarketingReveal>
         </div>
@@ -248,7 +249,7 @@ export function MarketingHomePage() {
           <MarketingReveal delayMs={marketingRevealDelay(0)}>
             <p className="text-section text-gold">What is included</p>
             <h2 className="text-marketing-section mt-4 max-w-[18ch] text-ink">
-              Built for how clubs actually run
+              Built for clubs, workshops, and groups
             </h2>
             <p className="text-marketing-lead mt-4 max-w-2xl text-stone">
               Activities, registration, client history, messaging, reports, and a public site. No
@@ -396,7 +397,7 @@ export function MarketingHomePage() {
             A public site tied to your activities
           </h2>
           <p className="text-marketing-lead mt-4 max-w-[44ch] text-stone">
-            Your club homepage stays current because activities and registration come from the same
+            Your homepage stays current because activities and registration come from the same
             system.
           </p>
           <ul className="mt-8 space-y-3">
@@ -418,7 +419,7 @@ export function MarketingHomePage() {
           <MarketingReveal delayMs={marketingRevealDelay(0)}>
             <p className="text-section text-gold">From operators</p>
             <h2 className="text-marketing-section mt-4 max-w-[18ch] text-paper">
-              Used by clubs that run weekly sessions
+              Used by clubs, workshops, and groups that run weekly sessions
             </h2>
           </MarketingReveal>
 
