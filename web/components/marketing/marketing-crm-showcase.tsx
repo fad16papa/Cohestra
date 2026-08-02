@@ -82,10 +82,20 @@ function ShowcaseBrowserChrome({ children }: { children: ReactNode }) {
   );
 }
 
-function ShowcaseClientsList() {
+function ShowcaseClientsList({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex min-h-0 min-w-0 flex-col border-b border-line bg-paper lg:w-[52%] lg:border-r lg:border-b-0">
-      <div className="shrink-0 border-b border-line px-4 py-4 sm:px-6 sm:py-5">
+    <div
+      className={cn(
+        "flex min-h-0 min-w-0 flex-col border-b border-line bg-paper",
+        compact ? "lg:w-[55%] lg:border-r lg:border-b-0" : "lg:w-[52%] lg:border-r lg:border-b-0"
+      )}
+    >
+      <div
+        className={cn(
+          "shrink-0 border-b border-line px-4 py-4 sm:px-6",
+          compact ? "sm:py-4" : "sm:py-5"
+        )}
+      >
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Users className="size-5 text-lagoon" aria-hidden />
           <p className="font-[family-name:var(--font-fraunces)] text-xl font-medium tracking-[-0.02em] text-ink sm:text-[1.35rem]">
@@ -129,7 +139,7 @@ function ShowcaseClientsList() {
       </div>
 
       <div className="min-h-0 flex-1 divide-y divide-line overflow-y-auto">
-        {SHOWCASE_CLIENTS.map((client) => (
+        {SHOWCASE_CLIENTS.slice(0, compact ? 4 : SHOWCASE_CLIENTS.length).map((client) => (
           <div
             key={client.id}
             className={cn(
@@ -167,11 +177,16 @@ function ShowcaseClientsList() {
   );
 }
 
-function ShowcaseClientProfile() {
+function ShowcaseClientProfile({ compact = false }: { compact?: boolean }) {
   const selected = SHOWCASE_CLIENTS.find((client) => client.selected)!;
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-paper-warm/50 p-4 sm:p-6 lg:overflow-y-auto">
+    <div
+      className={cn(
+        "flex min-h-0 min-w-0 flex-1 flex-col bg-paper-warm/50 p-4 sm:p-6 lg:overflow-y-auto",
+        compact && "p-4 sm:p-5"
+      )}
+    >
       <div className="flex flex-wrap items-center gap-3">
         <PersonAvatar name={selected.name} size="md" />
         <div className="min-w-0 flex-1">
@@ -206,7 +221,7 @@ function ShowcaseClientProfile() {
           Relationship timeline
         </p>
         <ul className="mt-4 space-y-4">
-          {TIMELINE.map((event) => (
+          {TIMELINE.slice(0, compact ? 3 : TIMELINE.length).map((event) => (
             <li key={event.label} className="flex gap-3">
               <span
                 className={cn(
@@ -226,23 +241,43 @@ function ShowcaseClientProfile() {
   );
 }
 
-export function MarketingCrmShowcase({ className }: { className?: string }) {
+export function MarketingCrmShowcase({
+  className,
+  compact = false,
+}: {
+  className?: string;
+  compact?: boolean;
+}) {
   return (
-    <div className={cn("flex w-full flex-col", className)}>
-      <div className="marketing-crm-showcase-frame mx-auto w-full max-w-[1400px] px-0 sm:px-5 lg:px-8">
-        <div className="marketing-crm-showcase-surface min-h-[min(78vh,920px)] shadow-[0_40px_80px_rgba(7,13,18,0.12)] sm:min-h-[min(82vh,960px)]">
+    <div className={cn("flex w-full min-w-0 flex-col", className)}>
+      <div className="marketing-crm-showcase-frame w-full min-w-0">
+        <div
+          className={cn(
+            "marketing-crm-showcase-surface shadow-[0_32px_64px_rgba(7,13,18,0.12)]",
+            compact
+              ? "min-h-[420px] sm:min-h-[480px] lg:min-h-[520px]"
+              : "min-h-[min(78vh,920px)] sm:min-h-[min(82vh,960px)]"
+          )}
+        >
           <ShowcaseBrowserChrome>
-            <div className="flex h-full min-h-[min(72vh,840px)] flex-col lg:min-h-0 lg:flex-row">
-              <ShowcaseClientsList />
-              <ShowcaseClientProfile />
+            <div
+              className={cn(
+                "flex h-full flex-col",
+                compact ? "min-h-[380px] lg:min-h-[480px] lg:flex-row" : "min-h-[min(72vh,840px)] lg:min-h-0 lg:flex-row"
+              )}
+            >
+              <ShowcaseClientsList compact={compact} />
+              <ShowcaseClientProfile compact={compact} />
             </div>
           </ShowcaseBrowserChrome>
         </div>
       </div>
 
-      <p className="mx-auto mt-6 max-w-2xl px-5 text-center text-sm text-stone sm:px-8 sm:text-[0.9375rem]">
-        One profile per person. List, profile, and timeline stay in the same workspace.
-      </p>
+      {!compact ? (
+        <p className="mx-auto mt-6 max-w-2xl px-5 text-center text-sm text-stone sm:px-8 sm:text-[0.9375rem]">
+          One profile per person. List, profile, and timeline stay in the same workspace.
+        </p>
+      ) : null}
     </div>
   );
 }
