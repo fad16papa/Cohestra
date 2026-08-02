@@ -211,7 +211,7 @@ export function MarketingHomePage() {
           </MarketingReveal>
         </div>
 
-        <div className="mt-14 grid border-t border-line sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-3 lg:gap-12">
           {[
             {
               eyebrow: "In place of Forms",
@@ -232,15 +232,7 @@ export function MarketingHomePage() {
                 "Share one page. Every registration lands in your workspace, not a dead bio link.",
             },
           ].map((cell, index) => (
-            <MarketingReveal
-              key={cell.title}
-              delayMs={marketingRevealDelay(index + 2)}
-              className={cn(
-                "border-line py-7 lg:border-r lg:pr-7",
-                index === 2 && "lg:border-r-0 lg:pr-0",
-                index > 0 && "border-t sm:border-t-0"
-              )}
-            >
+            <MarketingReveal key={cell.title} delayMs={marketingRevealDelay(index + 2)}>
               <p className="text-section mb-3 text-gold">{cell.eyebrow}</p>
               <h3 className="font-[family-name:var(--font-fraunces)] text-[1.35rem] font-medium tracking-[-0.025em] text-ink">
                 {cell.title}
