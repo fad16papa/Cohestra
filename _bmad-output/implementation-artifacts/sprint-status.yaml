@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-07-31T16:55:00Z
+last_updated: 2026-08-02T06:15:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -255,7 +255,7 @@ development_status:
 
   epic-20: done
   20-1-optional-max-registrants-per-activity: done
-  epic-20-retrospective: optional
+  epic-20-retrospective: done
 
 action_items:
   - epic: 16
@@ -402,4 +402,26 @@ action_items:
   - epic: 18
     action: "Enable reCAPTCHA keys before public signup"
     owner: Ops
+    status: open
+
+  # Epic 20 retrospective action items (2026-08-02)
+  - epic: 20
+    action: "Document rebuild Docker after merge in operator verify checklist for feature epics"
+    owner: Dev
+    status: open
+  - epic: 20
+    action: "Add EF migration Designer.cs to PR/dev-story guardrail checklist"
+    owner: Dev
+    status: open
+  - epic: 20
+    action: "Run ActivityCapacityPlanLimitIntegrationTests on CI Postgres stack"
+    owner: Dev
+    status: open
+  - epic: 20
+    action: "Lower grandfathered activity caps above plan limit on live tenants if any remain"
+    owner: Operator
+    status: open
+  - epic: 20
+    action: "Align create endpoint validation errors to 400 vs 409 (InvalidOperationException taxonomy)"
+    owner: Dev
     status: open
