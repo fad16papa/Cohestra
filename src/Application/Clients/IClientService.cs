@@ -41,6 +41,10 @@ public interface IClientService
         Guid id,
         CancellationToken cancellationToken = default);
 
+    Task<ClientDetailResponse?> RecordViberInitiatedAsync(
+        Guid id,
+        CancellationToken cancellationToken = default);
+
     Task<ClientDetailResponse?> RecordWhatsAppFollowUpAsync(
         Guid id,
         string status,

@@ -257,8 +257,8 @@ development_status:
   20-1-optional-max-registrants-per-activity: done
   epic-20-retrospective: done
 
-  epic-21: backlog
-  21-1-viber-click-to-message-from-client-profile: backlog
+  epic-21: in-progress
+  21-1-viber-click-to-message-from-client-profile: review
   21-2-viber-follow-up-status-tracking: backlog
   21-3-multi-channel-follow-up-coverage-includes-viber: backlog
   epic-21-retrospective: optional

@@ -75,6 +75,20 @@ internal static class ClientTimelineBuilder
                         null));
                     break;
 
+                case ClientTimelineEventType.ViberInitiated:
+                    items.Add(new ClientTimelineItemResponse(
+                        "viber_initiated",
+                        timelineEvent.OccurredAt,
+                        "Viber initiated",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null));
+                    break;
+
                 case ClientTimelineEventType.WhatsAppFollowUpRecorded:
                     items.Add(new ClientTimelineItemResponse(
                         "whatsapp_follow_up_recorded",

@@ -9,11 +9,16 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-provider";
 import {
   leadStatusLabels,
+  recordViberInitiated,
   recordWhatsAppInitiated,
   updateClientLeadStatus,
   type ClientDetail,
 } from "@/lib/clients-api";
-import { formatPhoneDisplay, toWhatsAppPhoneDigits } from "@/lib/phone-countries";
+import {
+  buildViberChatUrl,
+  formatPhoneDisplay,
+  toWhatsAppPhoneDigits,
+} from "@/lib/phone-countries";
 import { cn } from "@/lib/utils";
 
 type ClientFollowUpPanelProps = {
@@ -51,6 +56,7 @@ export function ClientFollowUpPanel({
   const [busy, setBusy] = useState(false);
 
   const whatsAppPhone = toWhatsAppPhoneDigits(client.phone);
+  const viberChatUrl = buildViberChatUrl(client.phone);
   const phoneLabel = formatPhoneDisplay(client.phone)?.display ?? null;
   const latestRegistration = formatLatestRegistration(client);
   const needsFollowUp = client.leadStatus === "new";
@@ -98,6 +104,26 @@ export function ClientFollowUpPanel({
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Could not log WhatsApp initiation."
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleOpenViber() {
+    if (!viberChatUrl) {
+      showToast("This client has no phone number on file.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const updated = await recordViberInitiated(authFetch, client.id);
+      onUpdated(updated);
+      window.open(viberChatUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Could not log Viber initiation."
       );
     } finally {
       setBusy(false);
@@ -163,6 +189,14 @@ export function ClientFollowUpPanel({
             onClick={() => void handleOpenWhatsApp()}
           >
             Open WhatsApp
+          </Button>
+          <Button
+            type="button"
+            disabled={!viberChatUrl || busy}
+            onClick={() => void handleOpenViber()}
+            className="bg-viber text-viber-foreground hover:bg-viber/90"
+          >
+            Open Viber
           </Button>
         </div>
       </div>

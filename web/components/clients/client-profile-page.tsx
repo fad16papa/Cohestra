@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { ClientFollowUpPanel } from "@/components/clients/client-follow-up-panel";
+import { ClientViberOutreach } from "@/components/clients/client-viber-outreach";
 import { ClientWhatsAppOutreach } from "@/components/clients/client-whatsapp-outreach";
 import { ClientLeadStatusControl } from "@/components/clients/client-lead-status-control";
 import { ClientMergeSuspectBanner } from "@/components/clients/client-merge-suspect-banner";
@@ -137,6 +138,10 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
 
       <ClientProfileSection animationDelayMs={160}>
         <ClientWhatsAppOutreach client={client} onUpdated={setClient} />
+      </ClientProfileSection>
+
+      <ClientProfileSection animationDelayMs={180}>
+        <ClientViberOutreach client={client} onUpdated={setClient} />
       </ClientProfileSection>
 
       <ClientProfileSection animationDelayMs={200}>

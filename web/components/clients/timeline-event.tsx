@@ -50,6 +50,10 @@ function formatTimelineSummary(item: ClientTimelineItem) {
     return "WhatsApp chat opened";
   }
 
+  if (item.eventType === "viber_initiated") {
+    return "Viber chat opened";
+  }
+
   if (item.eventType === "whatsapp_follow_up_recorded") {
     return item.campaignSubject ?? "Follow-up recorded";
   }
