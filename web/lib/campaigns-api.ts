@@ -475,19 +475,30 @@ export async function uploadCampaignAsset(
   file: File,
   altText?: string
 ): Promise<CampaignAsset> {
+  return uploadBrandingAsset(authFetch, file, altText, "campaigns");
+}
+
+export async function uploadBrandingAsset(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  file: File,
+  altText?: string,
+  scope: "branding" | "campaigns" = "branding"
+): Promise<CampaignAsset> {
   const formData = new FormData();
   formData.append("file", file);
   if (altText?.trim()) {
     formData.append("altText", altText.trim());
   }
 
-  const response = await authFetch(
-    `${getPublicApiBaseUrl()}/api/v1/admin/campaigns/assets`,
-    {
-      method: "POST",
-      body: formData,
-    }
-  );
+  const path =
+    scope === "campaigns"
+      ? "/api/v1/admin/campaigns/assets"
+      : "/api/v1/admin/branding/assets";
+
+  const response = await authFetch(`${getPublicApiBaseUrl()}${path}`, {
+    method: "POST",
+    body: formData,
+  });
 
   if (!response.ok) {
     throw new Error(await parseProblemDetail(response));

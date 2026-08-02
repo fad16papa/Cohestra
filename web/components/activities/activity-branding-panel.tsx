@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ResponsiveBannerImage } from "@/components/ui/responsive-banner-image";
 import { updateActivity, type Activity } from "@/lib/activities-api";
-import { uploadCampaignAsset } from "@/lib/campaigns-api";
+import { uploadBrandingAsset } from "@/lib/campaigns-api";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
 
 type ActivityBrandingPanelProps = {
@@ -80,7 +80,7 @@ export function ActivityBrandingPanel({
     setSavedMessage(null);
     setIsUploadingHero(true);
 
-    void uploadCampaignAsset(authFetch, file, "Activity hero image")
+    void uploadBrandingAsset(authFetch, file, "Activity hero image")
       .then((asset) => {
         setHeroImageUrl(asset.url);
       })
