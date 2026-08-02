@@ -133,6 +133,12 @@
     }
   }
 
+  .auth-login-input {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
   .auth-login-input:-webkit-autofill,
   .auth-login-input:-webkit-autofill:hover,
   .auth-login-input:-webkit-autofill:focus,
@@ -143,6 +149,15 @@
     caret-color: var(--ink);
     border-radius: 0 !important;
     transition: background-color 99999s ease-out 0s;
+  }
+
+  .dark .auth-login-input:-webkit-autofill,
+  .dark .auth-login-input:-webkit-autofill:hover,
+  .dark .auth-login-input:-webkit-autofill:focus,
+  .dark .auth-login-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--paper) inset !important;
+    box-shadow: 0 0 0 1000px var(--paper) inset !important;
+    -webkit-text-fill-color: var(--ink) !important;
   }
 
   .marketing-atelier-btn {

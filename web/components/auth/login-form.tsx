@@ -6,7 +6,6 @@ import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   isPlatformAdminProfile,
@@ -29,7 +28,7 @@ const fieldShellClassName =
   "flex min-h-11 items-center gap-3 rounded-[10px] border border-line bg-paper px-3 transition-colors focus-within:border-lagoon/40 focus-within:ring-2 focus-within:ring-lagoon/15";
 
 const loginInputClassName =
-  "auth-login-input min-h-0 flex-1 rounded-none border-0 bg-transparent px-0 text-base text-ink shadow-none outline-none focus-visible:border-0 focus-visible:ring-0 sm:text-sm placeholder:text-stone dark:bg-transparent";
+  "auth-login-input min-h-0 h-auto w-full min-w-0 flex-1 appearance-none rounded-none border-0 bg-transparent px-0 py-0 text-base text-ink shadow-none outline-none focus-visible:border-0 focus-visible:ring-0 sm:text-sm placeholder:text-stone disabled:cursor-not-allowed disabled:opacity-50";
 
 export function LoginForm({
   audience = "operator",
@@ -151,7 +150,7 @@ export function LoginForm({
         </Label>
         <div className={fieldShellClassName}>
           <Mail className="size-4 shrink-0 text-stone" aria-hidden />
-          <Input
+          <input
             id="email"
             name="email"
             type="email"
@@ -160,7 +159,7 @@ export function LoginForm({
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="min-h-0 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0 sm:text-sm"
+            className={loginInputClassName}
             placeholder={audience === "platform" ? "admin@cohestra.app" : "you@example.com"}
           />
         </div>
@@ -172,7 +171,7 @@ export function LoginForm({
         </Label>
         <div className={cn(fieldShellClassName, "pr-1.5")}>
           <Lock className="size-4 shrink-0 text-stone" aria-hidden />
-          <Input
+          <input
             id="password"
             name="password"
             type={showPassword ? "text" : "password"}
@@ -180,7 +179,7 @@ export function LoginForm({
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="min-h-0 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0 sm:text-sm"
+            className={loginInputClassName}
             placeholder="Enter your password"
           />
           <button
