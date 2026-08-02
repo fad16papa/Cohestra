@@ -84,6 +84,7 @@ public static class DependencyInjection
         services.Configure<AuthOtpSettings>(configuration.GetSection(AuthOtpSettings.SectionName));
         services.Configure<AuthHandoffOptions>(configuration.GetSection(AuthHandoffOptions.SectionName));
         services.Configure<DemoDataSeedSettings>(configuration.GetSection(DemoDataSeedSettings.SectionName));
+        services.Configure<LoadTestDataSeedSettings>(configuration.GetSection(LoadTestDataSeedSettings.SectionName));
         services.Configure<PublicWebOptions>(configuration.GetSection(PublicWebOptions.SectionName));
         services.Configure<PublicRegistrationRateLimitOptions>(
             configuration.GetSection(PublicRegistrationRateLimitOptions.SectionName));

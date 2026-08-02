@@ -44,6 +44,8 @@ services:
       Jwt__SigningKey: dev-compose-jwt-signing-key-min-32-chars!!
       OperatorSeed__Enabled: ${OperatorSeed__Enabled:-false}
       DemoDataSeed__Enabled: ${DemoDataSeed__Enabled:-false}
+      LoadTestSeed__Enabled: ${LoadTestSeed__Enabled:-false}
+      LoadTestSeed__ForceReseed: ${LoadTestSeed__ForceReseed:-false}
       PublicWeb__BaseUrl: ${PUBLIC_BASE_URL:-http://localhost}
       CampaignAssets__StoragePath: /app/data/campaign-assets
       CampaignAssets__PublicApiBaseUrl: ${PUBLIC_BASE_URL:-http://localhost}

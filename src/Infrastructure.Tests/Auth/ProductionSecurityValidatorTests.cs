@@ -59,6 +59,23 @@ public sealed class ProductionSecurityValidatorTests
     }
 
     [Fact]
+    public void Validate_rejects_load_test_seed_in_production()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:SigningKey"] = "production-secret-key-with-sufficient-length",
+                ["LoadTestSeed:Enabled"] = "true",
+            })
+            .Build();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("LoadTestSeed:Enabled", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Validate_rejects_dev_db_credentials_in_production()
     {
         var configuration = new ConfigurationBuilder()
