@@ -146,12 +146,7 @@ export function LoginForm({
         <Label htmlFor="email" className="text-ink">
           Email address
         </Label>
-        <div
-          className={cn(
-            fieldShellClassName,
-            error ? "border-destructive/40 focus-within:ring-destructive/20" : null
-          )}
-        >
+        <div className={fieldShellClassName}>
           <Mail className="size-4 shrink-0 text-stone" aria-hidden />
           <Input
             id="email"
@@ -162,7 +157,6 @@ export function LoginForm({
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            aria-invalid={error ? true : undefined}
             className="min-h-0 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0 sm:text-sm"
             placeholder={audience === "platform" ? "admin@cohestra.app" : "you@example.com"}
           />
@@ -173,13 +167,7 @@ export function LoginForm({
         <Label htmlFor="password" className="text-ink">
           Password
         </Label>
-        <div
-          className={cn(
-            fieldShellClassName,
-            "pr-1.5",
-            error ? "border-destructive/40 focus-within:ring-destructive/20" : null
-          )}
-        >
+        <div className={cn(fieldShellClassName, "pr-1.5")}>
           <Lock className="size-4 shrink-0 text-stone" aria-hidden />
           <Input
             id="password"
@@ -189,7 +177,6 @@ export function LoginForm({
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            aria-invalid={error ? true : undefined}
             className="min-h-0 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0 sm:text-sm"
             placeholder="Enter your password"
           />
@@ -223,10 +210,7 @@ export function LoginForm({
       ) : null}
 
       {error ? (
-        <div
-          role="alert"
-          className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-        >
+        <div role="alert" className="space-y-2 text-sm text-destructive">
           <p>{error}</p>
           {audience === "platform" && error.includes("operator workspace") ? (
             <p>
