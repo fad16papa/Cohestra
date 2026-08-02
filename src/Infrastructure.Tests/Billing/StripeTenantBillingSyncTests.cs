@@ -28,6 +28,13 @@ public sealed class StripeTenantBillingSyncTests
     }
 
     [Fact]
+    public void IsPaidPlanDowngrade_DetectsProToCore()
+    {
+        Assert.True(StripeTenantBillingSync.IsPaidPlanDowngrade(TenantPlan.Pro, TenantPlan.Core));
+        Assert.False(StripeTenantBillingSync.IsPaidPlanDowngrade(TenantPlan.Core, TenantPlan.Pro));
+    }
+
+    [Fact]
     public void TryMapPrice_ResolvesCoreAndProPrices()
     {
         var settings = CreateSettings();
