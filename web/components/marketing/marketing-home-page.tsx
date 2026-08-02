@@ -28,17 +28,9 @@ import {
   LANDING_STEPS,
   LANDING_TESTIMONIALS,
 } from "@/lib/marketing/landing-content";
+import { LANDING_IMAGES } from "@/lib/marketing/landing-images";
 import { resolvePostLoginPath } from "@/lib/auth-api";
 import { cn } from "@/lib/utils";
-
-const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1526232761682-d26e03ac149e?auto=format&fit=crop&w=1200&q=80";
-
-const OUTREACH_IMAGE =
-  "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=1200&q=80";
-
-const WEBSITE_IMAGE =
-  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80";
 
 const FLOAT_ROWS = [
   { name: "Elena M.", meta: "Sunday clinic", pill: "New" },
@@ -137,8 +129,8 @@ export function MarketingHomePage() {
         <div className="marketing-product-lift relative">
           <figure className="relative aspect-[4/5] max-h-[640px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)]">
             <Image
-              src={HERO_IMAGE}
-              alt="People gathering for community sport at dusk"
+              src={LANDING_IMAGES.hero.src}
+              alt={LANDING_IMAGES.hero.alt}
               fill
               priority
               className="object-cover saturate-[0.92] contrast-[1.05]"
@@ -373,8 +365,8 @@ export function MarketingHomePage() {
           <MarketingReveal delayMs={marketingRevealDelay(2)} className="relative">
             <figure className="relative aspect-[4/3] overflow-hidden rounded-[20px] shadow-[0_32px_64px_rgba(7,13,18,0.14)]">
               <Image
-                src={OUTREACH_IMAGE}
-                alt="Operator following up with community members on a phone"
+                src={LANDING_IMAGES.outreach.src}
+                alt={LANDING_IMAGES.outreach.alt}
                 fill
                 className="object-cover saturate-[0.9]"
                 sizes="(max-width: 1024px) 100vw, 520px"
@@ -396,8 +388,8 @@ export function MarketingHomePage() {
         <MarketingReveal delayMs={marketingRevealDelay(0)} className="relative lg:order-2">
           <figure className="relative aspect-[4/3] overflow-hidden rounded-[20px] shadow-[0_32px_64px_rgba(7,13,18,0.14)]">
             <Image
-              src={WEBSITE_IMAGE}
-              alt="Community members discovering activities together"
+              src={LANDING_IMAGES.website.src}
+              alt={LANDING_IMAGES.website.alt}
               fill
               className="object-cover saturate-[0.9]"
               sizes="(max-width: 1024px) 100vw, 520px"
