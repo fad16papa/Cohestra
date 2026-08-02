@@ -11,6 +11,7 @@ import {
   MarketingShell,
   marketingAtelierButtonClass,
 } from "@/components/marketing/marketing-shell";
+import { MarketingCrmShowcase } from "@/components/marketing/marketing-crm-showcase";
 import {
   MarketingReveal,
   marketingRevealDelay,
@@ -49,6 +50,13 @@ const OUTREACH_POINTS = [
   "Save each message on the client timeline",
   "Status flags so the team does not double message",
   "Dashboard shows who still needs a reply",
+] as const;
+
+const CRM_POINTS = [
+  "Search and filter by status, nationality, or recent signup",
+  "Lead status badges so the team knows who still needs a reply",
+  "Full profile with contact details, registration history, and timeline",
+  "WhatsApp and Viber open from the profile with messages saved automatically",
 ] as const;
 
 const WEBSITE_POINTS = [
@@ -298,6 +306,36 @@ export function MarketingHomePage() {
               </Link>
             </MarketingReveal>
           </div>
+        </div>
+      </section>
+
+      {/* ── Product highlight: client CRM ────────────────────── */}
+      <section id="crm" className="scroll-mt-24 border-t border-line">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:px-10 lg:py-24">
+          <MarketingReveal delayMs={marketingRevealDelay(0)}>
+            <p className="text-section text-gold">Client CRM</p>
+            <h2 className="text-marketing-section mt-4 max-w-[16ch] text-ink">
+              A client list your team actually uses
+            </h2>
+            <p className="text-marketing-lead mt-4 max-w-[44ch] text-stone">
+              Every registration builds one profile. Search the list, open a client, see their
+              history, and message them without leaving Cohestra.
+            </p>
+            <ul className="mt-8 space-y-3">
+              {CRM_POINTS.map((point) => (
+                <li key={point} className="flex items-start gap-3 text-[0.95rem] text-ink/85">
+                  <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-lagoon/12 text-lagoon">
+                    <Check className="size-3.5" aria-hidden />
+                  </span>
+                  {point}
+                </li>
+              ))}
+            </ul>
+          </MarketingReveal>
+
+          <MarketingReveal delayMs={marketingRevealDelay(2)}>
+            <MarketingCrmShowcase />
+          </MarketingReveal>
         </div>
       </section>
 
