@@ -148,12 +148,27 @@ public static class LoadTestDataSeeder
             .Select(t => t.Slug)
             .ToListAsync(cancellationToken);
 
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var membershipService = scope.ServiceProvider.GetRequiredService<ITenantMembershipService>();
+
+        await OperatorSeeder.EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
+
+        var password = string.IsNullOrWhiteSpace(settings.Password) ? DefaultPassword : settings.Password;
+
         if (existingSlugs.Count > 0 && !settings.ForceReseed)
         {
+            await EnsureLoadTestAdminUsersAsync(
+                dbContext,
+                userManager,
+                membershipService,
+                password,
+                logger,
+                cancellationToken);
+
             logger.LogInformation(
-                "Load test seed skipped — {Count} tenant(s) already exist ({Slugs}). Set LoadTestSeed:ForceReseed=true to replace.",
-                existingSlugs.Count,
-                string.Join(", ", existingSlugs));
+                "Load test data already present ({Count} tenant(s)). Ensured admin users and memberships. Set LoadTestSeed:ForceReseed=true to replace data.",
+                existingSlugs.Count);
             return;
         }
 
@@ -162,13 +177,6 @@ public static class LoadTestDataSeeder
             await WipeLoadTestTenantsAsync(scope.ServiceProvider, dbContext, logger, cancellationToken);
         }
 
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var membershipService = scope.ServiceProvider.GetRequiredService<ITenantMembershipService>();
-
-        await OperatorSeeder.EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
-
-        var password = string.IsNullOrWhiteSpace(settings.Password) ? DefaultPassword : settings.Password;
         var monthStart = new DateTimeOffset(
             DateTime.UtcNow.Year,
             DateTime.UtcNow.Month,
@@ -200,6 +208,9 @@ public static class LoadTestDataSeeder
                 CreatedAt = now,
                 UpdatedAt = now,
             });
+
+            // Membership service checks the database — tenant must exist before linking admin users.
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             await EnsureAdminUserAsync(
                 userManager,
@@ -358,7 +369,7 @@ public static class LoadTestDataSeeder
         await dbContext.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation(
-            "Load test seed complete for {Count} tenants. Login at http://{{slug}}.localhost:8088/login with seeded admin emails.",
+            "Load test seed complete for {Count} tenants. Login at http://{{slug}}.localhost:8088/login (tenant subdomain required).",
             TenantSpecs.Length);
     }
 
@@ -372,6 +383,38 @@ public static class LoadTestDataSeeder
         statuses.AddRange(Enumerable.Repeat(ActivityStatus.Draft, drafts));
         statuses.AddRange(Enumerable.Repeat(ActivityStatus.Archived, archived));
         return statuses;
+    }
+
+    private static async Task EnsureLoadTestAdminUsersAsync(
+        CohestraDbContext dbContext,
+        UserManager<ApplicationUser> userManager,
+        ITenantMembershipService membershipService,
+        string password,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var tenants = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(t => TenantSpecs.Select(s => s.Slug).Contains(t.Slug))
+            .ToListAsync(cancellationToken);
+
+        foreach (var spec in TenantSpecs)
+        {
+            var tenant = tenants.FirstOrDefault(t => t.Slug == spec.Slug);
+            if (tenant is null)
+            {
+                continue;
+            }
+
+            await EnsureAdminUserAsync(
+                userManager,
+                membershipService,
+                tenant.Id,
+                spec.AdminEmail,
+                password,
+                logger,
+                cancellationToken);
+        }
     }
 
     private static async Task EnsureAdminUserAsync(
@@ -416,20 +459,47 @@ public static class LoadTestDataSeeder
                     string.Join(", ", roleResult.Errors.Select(e => e.Description)));
             }
         }
-        else if (!await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole))
+        else
         {
-            if (!await RoleExclusivity.CanAssignTenantAdminAsync(userManager, user, logger))
+            if (!user.EmailConfirmed)
             {
-                throw new InvalidOperationException(
-                    $"Cannot assign TenantAdmin to existing user {email}: role exclusivity conflict.");
+                user.EmailConfirmed = true;
+                var confirmResult = await userManager.UpdateAsync(user);
+                if (!confirmResult.Succeeded)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to confirm email for load test admin {email}: " +
+                        string.Join(", ", confirmResult.Errors.Select(e => e.Description)));
+                }
             }
 
-            var roleResult = await userManager.AddToRoleAsync(user, OperatorSeeder.TenantAdminRole);
-            if (!roleResult.Succeeded)
+            if (!await userManager.CheckPasswordAsync(user, password))
             {
-                throw new InvalidOperationException(
-                    $"Failed to assign TenantAdmin role to {email}: " +
-                    string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+                var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+                var resetResult = await userManager.ResetPasswordAsync(user, resetToken, password);
+                if (!resetResult.Succeeded)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to reset password for load test admin {email}: " +
+                        string.Join(", ", resetResult.Errors.Select(e => e.Description)));
+                }
+            }
+
+            if (!await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole))
+            {
+                if (!await RoleExclusivity.CanAssignTenantAdminAsync(userManager, user, logger))
+                {
+                    throw new InvalidOperationException(
+                        $"Cannot assign TenantAdmin to existing user {email}: role exclusivity conflict.");
+                }
+
+                var roleResult = await userManager.AddToRoleAsync(user, OperatorSeeder.TenantAdminRole);
+                if (!roleResult.Succeeded)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to assign TenantAdmin role to {email}: " +
+                        string.Join(", ", roleResult.Errors.Select(e => e.Description)));
+                }
             }
         }
 
