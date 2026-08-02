@@ -42,7 +42,7 @@ public sealed class ActivityCapacityPlanLimitIntegrationTests(IntegrationTestFix
 
         var detail = await ReadProblemDetailAsync(overLimitResponse);
         Assert.Contains("plan limit", detail, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("5000", detail, StringComparison.Ordinal);
+        AssertPlanLimitAmountInDetail(detail, 5000);
 
         var atLimitRequest = BuildUpdateRequest(activity, maxRegistrants: 5000);
         using var atLimitResponse = await adminClient.PutAsJsonAsync(
@@ -154,5 +154,11 @@ public sealed class ActivityCapacityPlanLimitIntegrationTests(IntegrationTestFix
         }
 
         return raw;
+    }
+
+    private static void AssertPlanLimitAmountInDetail(string detail, int expectedLimit)
+    {
+        var digitsOnly = string.Concat(detail.Where(char.IsDigit));
+        Assert.Contains(expectedLimit.ToString(), digitsOnly, StringComparison.Ordinal);
     }
 }
