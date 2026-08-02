@@ -288,7 +288,17 @@ public static class LoadTestDataSeeder
                 }
             }
 
-            var clientCount = Math.Clamp(spec.RegistrationsThisMonth / 5, 50, 2_000);
+            var publishedCount = publishedActivityIds.Count;
+            var minClientsForUniqueRegistrations = (int)Math.Ceiling(
+                spec.RegistrationsThisMonth / (double)publishedCount);
+            var clientCount = Math.Clamp(minClientsForUniqueRegistrations, 50, 2_000);
+            if (clientCount < minClientsForUniqueRegistrations)
+            {
+                throw new InvalidOperationException(
+                    $"Load test spec {spec.Slug} needs at least {minClientsForUniqueRegistrations} clients " +
+                    $"for {spec.RegistrationsThisMonth} unique registrations across {publishedCount} published activities.");
+            }
+
             var clients = new List<Client>(clientCount);
             for (var clientIndex = 1; clientIndex <= clientCount; clientIndex++)
             {
@@ -330,8 +340,12 @@ public static class LoadTestDataSeeder
             var registrationSpanMinutes = Math.Max(1, (int)(now - monthStart).TotalMinutes);
             for (var registrationIndex = 0; registrationIndex < spec.RegistrationsThisMonth; registrationIndex++)
             {
-                var activityId = publishedActivityIds[registrationIndex % publishedActivityIds.Count];
-                var client = clients[registrationIndex % clients.Count];
+                var (activityIndex, clientIndex) = ResolveRegistrationAssignment(
+                    registrationIndex,
+                    publishedCount,
+                    clientCount);
+                var activityId = publishedActivityIds[activityIndex];
+                var client = clients[clientIndex];
                 registrationSequence++;
 
                 var createdAt = monthStart.AddMinutes(
@@ -383,6 +397,36 @@ public static class LoadTestDataSeeder
         statuses.AddRange(Enumerable.Repeat(ActivityStatus.Draft, drafts));
         statuses.AddRange(Enumerable.Repeat(ActivityStatus.Archived, archived));
         return statuses;
+    }
+
+    /// <summary>
+    /// Maps a registration index to a unique (activity, client) pair before pairs repeat.
+    /// </summary>
+    internal static (int ActivityIndex, int ClientIndex) ResolveRegistrationAssignment(
+        int registrationIndex,
+        int publishedActivityCount,
+        int clientCount)
+    {
+        if (publishedActivityCount < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(publishedActivityCount));
+        }
+
+        if (clientCount < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(clientCount));
+        }
+
+        var activityIndex = registrationIndex % publishedActivityCount;
+        var clientIndex = registrationIndex / publishedActivityCount;
+        if (clientIndex >= clientCount)
+        {
+            throw new InvalidOperationException(
+                $"Registration index {registrationIndex} requires client slot {clientIndex + 1}, " +
+                $"but only {clientCount} clients are available for {publishedActivityCount} published activities.");
+        }
+
+        return (activityIndex, clientIndex);
     }
 
     private static async Task EnsureLoadTestAdminUsersAsync(

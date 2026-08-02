@@ -74,4 +74,33 @@ public sealed class LoadTestDataSeederTests
         Assert.Equal(emails.Count, emails.Distinct(StringComparer.OrdinalIgnoreCase).Count());
         Assert.All(slugs, slug => Assert.StartsWith(LoadTestDataSeeder.SlugPrefix, slug, StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void ResolveRegistrationAssignment_ProducesUniquePairsWithinCapacity()
+    {
+        const int published = 12;
+        const int clients = 84;
+        const int registrations = 1_000;
+
+        var pairs = new HashSet<(int ActivityIndex, int ClientIndex)>();
+        for (var index = 0; index < registrations; index++)
+        {
+            var pair = LoadTestDataSeeder.ResolveRegistrationAssignment(index, published, clients);
+            Assert.True(pairs.Add(pair), $"Duplicate pair at index {index}: {pair}");
+        }
+
+        Assert.Equal(registrations, pairs.Count);
+    }
+
+    [Fact]
+    public void ResolveRegistrationAssignment_ThrowsWhenClientCapacityIsInsufficient()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            LoadTestDataSeeder.ResolveRegistrationAssignment(
+                registrationIndex: 120,
+                publishedActivityCount: 12,
+                clientCount: 10));
+
+        Assert.Contains("client slot 11", exception.Message, StringComparison.Ordinal);
+    }
 }
