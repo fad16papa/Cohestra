@@ -3,10 +3,17 @@
 import { useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateActivity, type Activity } from "@/lib/activities-api";
+import {
+  formatPlanRegistrationLimit,
+  parseActivityMaxRegistrantsInput,
+  resolvePlanRegistrationLimit,
+  validateActivityMaxRegistrantsAgainstPlan,
+} from "@/lib/activity-capacity-limits";
 
 type ActivityCapacityPanelProps = {
   activity: Activity;
@@ -14,13 +21,7 @@ type ActivityCapacityPanelProps = {
 };
 
 function parseMaxRegistrantsInput(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const parsed = Number.parseInt(trimmed, 10);
-  return Number.isFinite(parsed) ? parsed : null;
+  return parseActivityMaxRegistrantsInput(value);
 }
 
 export function ActivityCapacityPanel({
@@ -28,6 +29,8 @@ export function ActivityCapacityPanel({
   onActivityUpdated,
 }: ActivityCapacityPanelProps) {
   const { authFetch } = useAuth();
+  const { shell, loading: shellLoading, error: shellError } = useTenantShell();
+  const planRegistrationLimit = resolvePlanRegistrationLimit(shell);
   const [maxRegistrants, setMaxRegistrants] = useState(
     activity.maxRegistrants != null ? String(activity.maxRegistrants) : ""
   );
@@ -45,14 +48,40 @@ export function ActivityCapacityPanel({
   const parsedCap = parseMaxRegistrantsInput(maxRegistrants);
   const savedCap = activity.maxRegistrants ?? null;
   const isDirty = parsedCap !== savedCap;
+  const formatError =
+    maxRegistrants.trim() && (parsedCap === null || parsedCap < 1)
+      ? "Enter a whole number of at least 1, or leave blank for unlimited."
+      : null;
+  const planCapError =
+    planRegistrationLimit != null
+      ? validateActivityMaxRegistrantsAgainstPlan(parsedCap, planRegistrationLimit)
+      : null;
+  const validationError = formatError ?? planCapError;
+  const mustWaitForShell =
+    Boolean(maxRegistrants.trim()) && shellLoading && planRegistrationLimit == null;
+  const shellLimitsUnavailable =
+    Boolean(maxRegistrants.trim()) &&
+    !shellLoading &&
+    planRegistrationLimit == null &&
+    shellError != null;
 
   async function handleSave() {
-    if (isArchived || !isDirty || isSaving) {
+    if (isArchived || !isDirty || isSaving || mustWaitForShell || shellLimitsUnavailable) {
       return;
     }
 
-    if (maxRegistrants.trim() && (parsedCap === null || parsedCap < 1)) {
-      setError("Enter a whole number of at least 1, or leave blank for unlimited.");
+    if (formatError) {
+      setError(formatError);
+      return;
+    }
+
+    if (planCapError) {
+      setError(planCapError);
+      return;
+    }
+
+    if (shellLimitsUnavailable) {
+      setError("Plan limits could not be loaded. Refresh the page and try again.");
       return;
     }
 
@@ -89,9 +118,16 @@ export function ActivityCapacityPanel({
       <div>
         <h3 className="text-sm font-semibold text-text-warm">Registration cap</h3>
         <p className="mt-1 text-sm text-text-muted-warm">
-          Optional limit on how many people can register. Leave blank for unlimited
-          registrations.
+          Optional limit on how many people can register for this activity. Leave blank
+          for unlimited registrations on this activity (monthly plan usage still applies).
         </p>
+        {planRegistrationLimit != null ? (
+          <p className="mt-1 text-xs text-text-muted-warm">
+            Your plan allows up to{" "}
+            {formatPlanRegistrationLimit(planRegistrationLimit)} registrations per month
+            across all activities.
+          </p>
+        ) : null}
       </div>
 
       <div className="space-y-2">
@@ -100,6 +136,7 @@ export function ActivityCapacityPanel({
           id="activity-max-registrants"
           type="number"
           min={1}
+          max={planRegistrationLimit ?? undefined}
           inputMode="numeric"
           placeholder="Unlimited"
           value={maxRegistrants}
@@ -124,6 +161,17 @@ export function ActivityCapacityPanel({
         )}
       </div>
 
+      {mustWaitForShell ? (
+        <p className="text-sm text-text-muted-warm">Loading plan limits…</p>
+      ) : null}
+      {shellLimitsUnavailable ? (
+        <p className="text-sm text-destructive">
+          Plan limits could not be loaded. Refresh the page before setting a registration cap.
+        </p>
+      ) : null}
+      {validationError && !error ? (
+        <p className="text-sm text-destructive">{validationError}</p>
+      ) : null}
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       {savedMessage ? (
         <p className="text-sm text-primary">{savedMessage}</p>
@@ -131,7 +179,15 @@ export function ActivityCapacityPanel({
 
       <Button
         type="button"
-        disabled={isArchived || !isDirty || isSaving}
+        disabled={
+          isArchived ||
+          !isDirty ||
+          isSaving ||
+          mustWaitForShell ||
+          shellLimitsUnavailable ||
+          Boolean(formatError) ||
+          Boolean(planCapError)
+        }
         onClick={() => void handleSave()}
       >
         {isSaving ? "Saving…" : "Save cap"}

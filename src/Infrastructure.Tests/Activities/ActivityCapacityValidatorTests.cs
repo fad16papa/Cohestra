@@ -25,6 +25,27 @@ public sealed class ActivityCapacityValidatorTests
     }
 
     [Fact]
+    public void ValidateMaxRegistrantsAgainstPlanLimit_RejectsCapAbovePlanLimit()
+    {
+        var error = ActivityCapacityValidator.ValidateMaxRegistrantsAgainstPlanLimit(5001, 5000);
+
+        Assert.NotNull(error);
+        Assert.Contains("5,000", error);
+    }
+
+    [Fact]
+    public void ValidateMaxRegistrantsAgainstPlanLimit_AllowsCapAtPlanLimit()
+    {
+        Assert.Null(ActivityCapacityValidator.ValidateMaxRegistrantsAgainstPlanLimit(5000, 5000));
+    }
+
+    [Fact]
+    public void ValidateMaxRegistrantsAgainstPlanLimit_AllowsNullCap()
+    {
+        Assert.Null(ActivityCapacityValidator.ValidateMaxRegistrantsAgainstPlanLimit(null, 5000));
+    }
+
+    [Fact]
     public void ValidateMaxRegistrantsAgainstCount_RejectsCapBelowCurrentCount()
     {
         var error = ActivityCapacityValidator.ValidateMaxRegistrantsAgainstCount(2, registrationCount: 3);
