@@ -178,18 +178,6 @@ export function toWhatsAppPhoneDigits(
   return `${CALLING_CODES[DEFAULT_PHONE_COUNTRY]}${nationalDigits}`;
 }
 
-/** Opens a one-to-one Viber chat in browser (mirrors wa.me — redirects to app when installed). */
-export function buildViberChatUrl(
-  phone: string | null | undefined
-): string | null {
-  const digits = toWhatsAppPhoneDigits(phone);
-  if (!digits) {
-    return null;
-  }
-
-  return `https://viber.me/${digits}`;
-}
-
 /** Formats stored phone for operator display: flag, +prefix, grouped national number. */
 export function formatPhoneDisplay(
   phone: string | null | undefined

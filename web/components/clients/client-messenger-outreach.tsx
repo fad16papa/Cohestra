@@ -9,15 +9,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  recordViberInitiated,
   recordWhatsAppFollowUp,
   recordWhatsAppInitiated,
   type ClientDetail,
   type ClientTimelineItem,
 } from "@/lib/clients-api";
-import { formatPhoneDisplay, toWhatsAppPhoneDigits } from "@/lib/phone-countries";
+import { formatPhoneDisplay } from "@/lib/phone-countries";
+import {
+  buildViberAppDeepLink,
+  buildWhatsAppWebUrl,
+  openAppDeepLink,
+} from "@/lib/messenger-links";
 import { cn } from "@/lib/utils";
 
-type ClientWhatsAppOutreachProps = {
+type ClientMessengerOutreachProps = {
   client: ClientDetail;
   onUpdated: (client: ClientDetail) => void;
 };
@@ -65,10 +71,10 @@ function createFollowUpBaseline(client: ClientDetail): FollowUpFormBaseline {
   };
 }
 
-export function ClientWhatsAppOutreach({
+export function ClientMessengerOutreach({
   client,
   onUpdated,
-}: ClientWhatsAppOutreachProps) {
+}: ClientMessengerOutreachProps) {
   const { authFetch } = useAuth();
   const { showToast } = useToast();
   const [baseline, setBaseline] = useState<FollowUpFormBaseline>(() =>
@@ -93,11 +99,13 @@ export function ClientWhatsAppOutreach({
     followUpStatus !== baseline.status || trimmedNote !== baseline.note;
   const canSaveFollowUp = isDirty && !busy;
 
-  const whatsAppPhone = toWhatsAppPhoneDigits(client.phone);
-  const whatsAppPhoneLabel = formatPhoneDisplay(client.phone)?.display ?? null;
+  const whatsAppUrl = buildWhatsAppWebUrl(client.phone);
+  const viberDeepLink = buildViberAppDeepLink(client.phone);
+  const phoneLabel = formatPhoneDisplay(client.phone)?.display ?? null;
+  const hasPhone = Boolean(whatsAppUrl);
 
   async function handleOpenWhatsApp() {
-    if (!whatsAppPhone) {
+    if (!whatsAppUrl) {
       showToast("This client has no phone number on file.");
       return;
     }
@@ -106,10 +114,33 @@ export function ClientWhatsAppOutreach({
     try {
       const updated = await recordWhatsAppInitiated(authFetch, client.id);
       onUpdated(updated);
-      window.open(`https://wa.me/${whatsAppPhone}`, "_blank", "noopener,noreferrer");
+      window.open(whatsAppUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Could not log WhatsApp initiation."
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleOpenViber() {
+    if (!viberDeepLink) {
+      showToast("This client has no phone number on file.");
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const updated = await recordViberInitiated(authFetch, client.id);
+      onUpdated(updated);
+      openAppDeepLink(viberDeepLink);
+      showToast(
+        "Opening Viber… If nothing happens, install Viber desktop or use the mobile app."
+      );
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Could not log Viber initiation."
       );
     } finally {
       setBusy(false);
@@ -151,30 +182,49 @@ export function ClientWhatsAppOutreach({
       )}
     >
       <div>
-        <h3 className="text-sm font-semibold text-text-warm">WhatsApp outreach</h3>
+        <h3 className="text-sm font-semibold text-text-warm">Messenger outreach</h3>
         <p className="mt-1 text-sm text-text-muted-warm">
-          Open WhatsApp with this client&apos;s number and record follow-up status.
+          Open WhatsApp or Viber with this client&apos;s number. Record WhatsApp
+          follow-up status below.
         </p>
       </div>
 
-      <Button
-        type="button"
-        disabled={!whatsAppPhone || busy}
-        onClick={() => void handleOpenWhatsApp()}
-        className="w-full bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90 sm:w-auto"
-      >
-        Open WhatsApp
-      </Button>
-      {whatsAppPhoneLabel ? (
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          type="button"
+          disabled={!hasPhone || busy}
+          onClick={() => void handleOpenWhatsApp()}
+          className="w-full bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90 sm:flex-1"
+        >
+          Open WhatsApp
+        </Button>
+        <Button
+          type="button"
+          disabled={!hasPhone || busy}
+          onClick={() => void handleOpenViber()}
+          className="w-full bg-viber text-viber-foreground hover:bg-viber/90 sm:flex-1"
+        >
+          Open Viber
+        </Button>
+      </div>
+
+      {phoneLabel ? (
         <p className="text-xs text-text-muted-warm">
           Opens chat for{" "}
           <span className="font-medium tabular-nums text-text-warm">
-            {whatsAppPhoneLabel}
+            {phoneLabel}
           </span>
         </p>
-      ) : null}
+      ) : (
+        <p className="text-xs text-text-muted-warm">
+          Add a phone number to enable messenger outreach.
+        </p>
+      )}
 
       <div className="space-y-2 border-t border-border-warm pt-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+          WhatsApp follow-up
+        </p>
         <Label htmlFor="whatsapp-follow-up-status">Record follow-up status</Label>
         <select
           id="whatsapp-follow-up-status"
