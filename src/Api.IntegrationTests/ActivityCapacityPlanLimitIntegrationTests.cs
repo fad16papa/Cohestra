@@ -42,7 +42,7 @@ public sealed class ActivityCapacityPlanLimitIntegrationTests(IntegrationTestFix
 
         var detail = await ReadProblemDetailAsync(overLimitResponse);
         Assert.Contains("plan limit", detail, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("5,000", detail, StringComparison.Ordinal);
+        Assert.Contains("5000", detail, StringComparison.Ordinal);
 
         var atLimitRequest = BuildUpdateRequest(activity, maxRegistrants: 5000);
         using var atLimitResponse = await adminClient.PutAsJsonAsync(
@@ -56,6 +56,42 @@ public sealed class ActivityCapacityPlanLimitIntegrationTests(IntegrationTestFix
             IntegrationTestHelpers.JsonOptions);
         Assert.NotNull(updated);
         Assert.Equal(5000, updated!.MaxRegistrants);
+    }
+
+    [SkippableFact]
+    public async Task UpdateActivity_WhenOverPlanCapUnchanged_AllowsOtherFieldEdits()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+
+        var slug = $"plan-cap-legacy-{Guid.NewGuid():N}"[..24];
+        var activity = await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            TenantIds.Default,
+            slug,
+            maxRegistrants: 5001);
+
+        using var adminClient = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+
+        var renameRequest = BuildUpdateRequest(activity, maxRegistrants: 5001) with
+        {
+            Name = $"{activity.Name} (renamed)",
+        };
+
+        using var response = await adminClient.PutAsJsonAsync(
+            $"/api/v1/admin/activities/{activity.Id}",
+            renameRequest,
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var updated = await response.Content.ReadFromJsonAsync<ActivityResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(updated);
+        Assert.Equal(5001, updated!.MaxRegistrants);
+        Assert.Contains("(renamed)", updated.Name, StringComparison.Ordinal);
     }
 
     [SkippableFact]

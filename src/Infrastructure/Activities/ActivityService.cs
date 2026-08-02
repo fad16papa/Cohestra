@@ -227,13 +227,16 @@ public sealed class ActivityService(
             throw new InvalidOperationException(capacityError);
         }
 
-        var planLimitError = await ValidateMaxRegistrantsAgainstTenantPlanAsync(
-            request.MaxRegistrants,
-            activity.TenantId,
-            cancellationToken);
-        if (planLimitError is not null)
+        if (request.MaxRegistrants != activity.MaxRegistrants)
         {
-            throw new InvalidOperationException(planLimitError);
+            var planLimitError = await ValidateMaxRegistrantsAgainstTenantPlanAsync(
+                request.MaxRegistrants,
+                activity.TenantId,
+                cancellationToken);
+            if (planLimitError is not null)
+            {
+                throw new InvalidOperationException(planLimitError);
+            }
         }
 
         activity.Name = request.Name.Trim();

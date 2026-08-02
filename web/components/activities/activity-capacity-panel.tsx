@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { updateActivity, type Activity } from "@/lib/activities-api";
 import {
   formatPlanRegistrationLimit,
+  parseActivityMaxRegistrantsInput,
   resolvePlanRegistrationLimit,
   validateActivityMaxRegistrantsAgainstPlan,
 } from "@/lib/activity-capacity-limits";
@@ -20,13 +21,7 @@ type ActivityCapacityPanelProps = {
 };
 
 function parseMaxRegistrantsInput(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const parsed = Number.parseInt(trimmed, 10);
-  return Number.isFinite(parsed) ? parsed : null;
+  return parseActivityMaxRegistrantsInput(value);
 }
 
 export function ActivityCapacityPanel({
@@ -34,7 +29,7 @@ export function ActivityCapacityPanel({
   onActivityUpdated,
 }: ActivityCapacityPanelProps) {
   const { authFetch } = useAuth();
-  const { shell, loading: shellLoading } = useTenantShell();
+  const { shell, loading: shellLoading, error: shellError } = useTenantShell();
   const planRegistrationLimit = resolvePlanRegistrationLimit(shell);
   const [maxRegistrants, setMaxRegistrants] = useState(
     activity.maxRegistrants != null ? String(activity.maxRegistrants) : ""
@@ -64,9 +59,14 @@ export function ActivityCapacityPanel({
   const validationError = formatError ?? planCapError;
   const mustWaitForShell =
     Boolean(maxRegistrants.trim()) && shellLoading && planRegistrationLimit == null;
+  const shellLimitsUnavailable =
+    Boolean(maxRegistrants.trim()) &&
+    !shellLoading &&
+    planRegistrationLimit == null &&
+    shellError != null;
 
   async function handleSave() {
-    if (isArchived || !isDirty || isSaving || mustWaitForShell) {
+    if (isArchived || !isDirty || isSaving || mustWaitForShell || shellLimitsUnavailable) {
       return;
     }
 
@@ -77,6 +77,11 @@ export function ActivityCapacityPanel({
 
     if (planCapError) {
       setError(planCapError);
+      return;
+    }
+
+    if (shellLimitsUnavailable) {
+      setError("Plan limits could not be loaded. Refresh the page and try again.");
       return;
     }
 
@@ -159,6 +164,11 @@ export function ActivityCapacityPanel({
       {mustWaitForShell ? (
         <p className="text-sm text-text-muted-warm">Loading plan limits…</p>
       ) : null}
+      {shellLimitsUnavailable ? (
+        <p className="text-sm text-destructive">
+          Plan limits could not be loaded. Refresh the page before setting a registration cap.
+        </p>
+      ) : null}
       {validationError && !error ? (
         <p className="text-sm text-destructive">{validationError}</p>
       ) : null}
@@ -174,6 +184,7 @@ export function ActivityCapacityPanel({
           !isDirty ||
           isSaving ||
           mustWaitForShell ||
+          shellLimitsUnavailable ||
           Boolean(formatError) ||
           Boolean(planCapError)
         }

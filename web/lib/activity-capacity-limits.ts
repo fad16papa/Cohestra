@@ -1,5 +1,21 @@
 import type { TenantShell } from "@/lib/shell/tenant-shell-api";
 
+const WHOLE_NUMBER_PATTERN = /^\d+$/;
+
+export function parseActivityMaxRegistrantsInput(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (!WHOLE_NUMBER_PATTERN.test(trimmed)) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function resolvePlanRegistrationLimit(shell: TenantShell | null): number | null {
   if (!shell) {
     return null;
