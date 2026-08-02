@@ -133,6 +133,18 @@
     }
   }
 
+  .auth-login-input:-webkit-autofill,
+  .auth-login-input:-webkit-autofill:hover,
+  .auth-login-input:-webkit-autofill:focus,
+  .auth-login-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--paper) inset !important;
+    box-shadow: 0 0 0 1000px var(--paper) inset !important;
+    -webkit-text-fill-color: var(--ink) !important;
+    caret-color: var(--ink);
+    border-radius: 0 !important;
+    transition: background-color 99999s ease-out 0s;
+  }
+
   .marketing-atelier-btn {
     transition:
       transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1),

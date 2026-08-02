@@ -29,7 +29,7 @@ const fieldShellClassName =
   "flex min-h-11 items-center gap-3 rounded-[10px] border border-line bg-paper px-3 transition-colors focus-within:border-lagoon/40 focus-within:ring-2 focus-within:ring-lagoon/15";
 
 const loginInputClassName =
-  "min-h-0 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:border-0 focus-visible:ring-0 sm:text-sm autofill:shadow-[inset_0_0_0_1000px_var(--paper)] autofill:[-webkit-text-fill-color:var(--ink)]";
+  "auth-login-input min-h-0 flex-1 rounded-none border-0 bg-transparent px-0 text-base text-ink shadow-none outline-none focus-visible:border-0 focus-visible:ring-0 sm:text-sm placeholder:text-stone dark:bg-transparent";
 
 export function LoginForm({
   audience = "operator",
