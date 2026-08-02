@@ -2,7 +2,7 @@ import type { ActivityFormSchema, FormFieldDefinition } from "@/lib/activities-a
 
 export type FormTemplateId =
   | "tgh-tennis"
-  | "ikigai-pickleball"
+  | "pickleball-club"
   | "ikigai-board-game";
 
 export type FormTemplate = {
@@ -124,7 +124,7 @@ const tghTennisSchema: ActivityFormSchema = {
   ],
 };
 
-const ikigaiPickleballSchema: ActivityFormSchema = {
+const pickleballClubSchema: ActivityFormSchema = {
   version: 1,
   fields: [
     field({
@@ -320,11 +320,11 @@ export const formTemplates: FormTemplate[] = [
     schema: tghTennisSchema,
   },
   {
-    id: "ikigai-pickleball",
+    id: "pickleball-club",
     name: "Pickle Ball Template",
     description:
       "First-timer toggle, playing level, invited-by, referral, and consent.",
-    schema: ikigaiPickleballSchema,
+    schema: pickleballClubSchema,
   },
   {
     id: "ikigai-board-game",

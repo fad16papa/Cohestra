@@ -71,8 +71,6 @@ export function FormTemplatePicker({
       </div>
 
       <p className="text-xs text-text-muted-warm">
-        Templates match the proposal field sets in{" "}
-        <code className="rounded bg-muted px-1 py-0.5">addendum.md</code>.
         Customize fields after applying, then save the form.
       </p>
     </section>
