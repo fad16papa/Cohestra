@@ -156,23 +156,31 @@ public static class LoadTestDataSeeder
 
         var password = string.IsNullOrWhiteSpace(settings.Password) ? DefaultPassword : settings.Password;
 
-        if (existingSlugs.Count > 0 && !settings.ForceReseed)
+        var shouldReseed = settings.ForceReseed;
+        if (existingSlugs.Count > 0 && !shouldReseed)
         {
-            await EnsureLoadTestAdminUsersAsync(
-                dbContext,
-                userManager,
-                membershipService,
-                password,
-                logger,
-                cancellationToken);
+            if (await IsLoadTestSeedCompleteAsync(dbContext, cancellationToken))
+            {
+                await EnsureLoadTestAdminUsersAsync(
+                    dbContext,
+                    userManager,
+                    membershipService,
+                    password,
+                    logger,
+                    cancellationToken);
 
-            logger.LogInformation(
-                "Load test data already present ({Count} tenant(s)). Ensured admin users and memberships. Set LoadTestSeed:ForceReseed=true to replace data.",
-                existingSlugs.Count);
-            return;
+                logger.LogInformation(
+                    "Load test data already present ({Count} tenant(s)). Ensured admin users and memberships. Set LoadTestSeed:ForceReseed=true to replace data.",
+                    existingSlugs.Count);
+                return;
+            }
+
+            logger.LogWarning(
+                "Load test seed is incomplete (a previous run may have failed). Wiping and re-seeding load-test tenants.");
+            shouldReseed = true;
         }
 
-        if (settings.ForceReseed && existingSlugs.Count > 0)
+        if (shouldReseed && existingSlugs.Count > 0)
         {
             await WipeLoadTestTenantsAsync(scope.ServiceProvider, dbContext, logger, cancellationToken);
         }
@@ -370,7 +378,7 @@ public static class LoadTestDataSeeder
             }
 
             logger.LogInformation(
-                "Prepared load test tenant {Slug} ({Plan}): {Communities} communities, {Published} published, {Drafts} drafts, {Archived} archived, {Registrations} registrations this month.",
+                "Seeded load test tenant {Slug} ({Plan}): {Communities} communities, {Published} published, {Drafts} drafts, {Archived} archived, {Registrations} registrations this month.",
                 spec.Slug,
                 spec.Plan,
                 spec.Communities,
@@ -378,9 +386,9 @@ public static class LoadTestDataSeeder
                 spec.DraftActivities,
                 spec.ArchivedActivities,
                 spec.RegistrationsThisMonth);
-        }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         logger.LogInformation(
             "Load test seed complete for {Count} tenants. Login at http://{{slug}}.localhost:8088/login (tenant subdomain required).",
@@ -427,6 +435,42 @@ public static class LoadTestDataSeeder
         }
 
         return (activityIndex, clientIndex);
+    }
+
+    private static async Task<bool> IsLoadTestSeedCompleteAsync(
+        CohestraDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        foreach (var spec in TenantSpecs)
+        {
+            var tenant = await dbContext.Tenants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Slug == spec.Slug, cancellationToken);
+            if (tenant is null)
+            {
+                return false;
+            }
+
+            var expectedActivities =
+                spec.PublishedActivities + spec.DraftActivities + spec.ArchivedActivities;
+            var activityCount = await dbContext.Activities
+                .AsNoTracking()
+                .CountAsync(a => a.TenantId == tenant.Id, cancellationToken);
+            if (activityCount != expectedActivities)
+            {
+                return false;
+            }
+
+            var registrationCount = await dbContext.Registrations
+                .AsNoTracking()
+                .CountAsync(r => r.TenantId == tenant.Id, cancellationToken);
+            if (registrationCount != spec.RegistrationsThisMonth)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static async Task EnsureLoadTestAdminUsersAsync(
