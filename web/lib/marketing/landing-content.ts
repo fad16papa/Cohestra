@@ -112,7 +112,7 @@ export const LANDING_TESTIMONIALS: LandingTestimonial[] = [
     quote:
       "We ran three communities on Google Forms and a group chat. Cohestra collapsed all of it — now I open one page before every session and I know exactly who's coming back.",
     name: "Marco L.",
-    role: "Operator, racquet sports community",
+    role: "Operator, community sports club",
   },
   {
     quote:
