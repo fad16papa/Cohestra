@@ -10,11 +10,13 @@ import {
   SITE_BUILT_IN_PRESETS,
   type SiteBuiltInPresetId,
 } from "@/lib/site-templates";
-import { cn } from "@/lib/utils";
+import { isPresetAvailableForPlan } from "@/lib/site-sections/plan-gate";
+import { isProPlan } from "@/lib/shell/tenant-shell-api";
 
 type WebsiteTemplatesPanelProps = {
   adminData: SitePageAdmin;
   draft: SiteSectionsDocument;
+  plan: string;
   disabled: boolean;
   recoveryDisabled: boolean;
   formatLastSaved: (iso: string) => string;
@@ -28,6 +30,7 @@ type WebsiteTemplatesPanelProps = {
 export function WebsiteTemplatesPanel({
   adminData,
   draft,
+  plan,
   disabled,
   recoveryDisabled,
   formatLastSaved,
@@ -70,26 +73,42 @@ export function WebsiteTemplatesPanel({
           <div className="space-y-2">
             <p className="text-sm font-medium text-text-warm">Built-in presets</p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {SITE_BUILT_IN_PRESETS.map((preset) => (
+              {SITE_BUILT_IN_PRESETS.map((preset) => {
+                const presetAvailable = isPresetAvailableForPlan(preset.id, plan);
+
+                return (
                 <div
                   key={preset.id}
                   className="rounded-lg border border-border-warm bg-surface-warm/30 p-3"
                 >
-                  <p className="text-sm font-medium text-text-warm">{preset.label}</p>
+                  <p className="text-sm font-medium text-text-warm">
+                    {preset.label}
+                    {!presetAvailable ? (
+                      <span className="ml-2 text-xs font-normal text-text-muted-warm">
+                        Pro
+                      </span>
+                    ) : null}
+                  </p>
                   <p className="mt-1 text-xs text-text-muted-warm">{preset.description}</p>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     className="mt-3"
-                    disabled={recoveryDisabled}
+                    disabled={recoveryDisabled || !presetAvailable}
                     onClick={() => onApplyPreset(preset.id)}
                   >
                     Use {preset.label}
                   </Button>
                 </div>
-              ))}
+                );
+              })}
             </div>
+            {!isProPlan(plan) ? (
+              <p className="text-xs text-text-muted-warm">
+                Marketing showcase and Event hub presets use Studio sections available on Pro.
+              </p>
+            ) : null}
             <p className="text-xs text-text-muted-warm">
               Applies to your draft only. Site name, hero image, and accent are kept;
               your logo returns to the default platform mark.
