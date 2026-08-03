@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-02T06:15:00Z
+last_updated: 2026-08-03T16:10:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -222,6 +222,7 @@ development_status:
   15-5-plan-gated-reports-basic-fixed-core-queryable-pro: done
   15-6-pro-only-campaigns-and-per-tenant-email-branding: done
   15-7-suspended-maintenance-and-archived-404-public-states: done
+  15-8-pro-studio-video-embed-section: ready-for-dev
   epic-15-retrospective: done
 
   # Epic 16 v1 scope done (16.1–16.3); parked items (custom domain, thin email, tickets) remain in epics-cohestra-enterprise.md
