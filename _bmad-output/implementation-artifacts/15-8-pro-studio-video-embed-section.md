@@ -9,7 +9,7 @@ depends_on:
 
 # Story 15.8: Pro Studio video embed section (YouTube / Vimeo)
 
-Status: done
+Status: in-progress
 
 ## Story
 
@@ -173,7 +173,15 @@ Ensure existing CSP `frame-src` allows `youtube-nocookie.com` and `player.vimeo.
 - `web/lib/site-video-embed.ts` — client parse helper for builder preview
 - `VideoPublicSection` + builder fields; CSP `frame-src` extended for YouTube nocookie + Vimeo
 
+### Review Findings
+
+- [ ] [Review][Patch] Public renderer trusts stored `embedUrl` without re-parsing `videoUrl` — derive iframe src from parsed URL only [`web/lib/site-video-embed.ts:121-122`]
+- [ ] [Review][Patch] Draft save rejects invalid video URLs on **disabled** sections — skip video validation when `section.Enabled` is false [`SiteVideoEmbedValidator.cs:19-33`]
+- [x] [Review][Defer] No AdminSite integration test for video publish round-trip — story listed optional; matches existing builder test pattern
+- [x] [Review][Defer] Duplicate YouTube/Vimeo parsers in C# and TypeScript — acceptable v1 drift risk; consolidate later if embed rules grow
+
 ## Change Log
 
 - 2026-08-03: Story created after party-mode video embed decision + PR #54 Essentials/Studio split.
 - 2026-08-03: DS 15.8 — Pro Studio video embed (YouTube/Vimeo) complete.
+- 2026-08-03: CR — 2 patch, 2 defer, 1 dismissed; see Review Findings.
