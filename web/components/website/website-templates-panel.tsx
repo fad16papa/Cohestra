@@ -12,6 +12,7 @@ import {
 } from "@/lib/site-templates";
 import { isPresetAvailableForPlan } from "@/lib/site-sections/plan-gate";
 import { isProPlan } from "@/lib/shell/tenant-shell-api";
+import { cn } from "@/lib/utils";
 
 type WebsiteTemplatesPanelProps = {
   adminData: SitePageAdmin;
