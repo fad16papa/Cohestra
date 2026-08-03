@@ -652,20 +652,46 @@ export function WebsiteSectionList({
                 className="absolute inset-x-0 bottom-0 z-10 h-0.5 bg-primary"
               />
             ) : null}
-            <div className="flex items-center gap-2 px-3 py-2.5">
-              <button
-                type="button"
+            <div className="flex items-center gap-2 py-2.5 pl-1 pr-3">
+              <div
+                role="button"
+                tabIndex={disabled ? -1 : 0}
                 draggable={!disabled}
-                disabled={disabled}
                 aria-label={`Drag to reorder ${label}`}
+                aria-grabbed={isDragging}
                 className={cn(
-                  "flex shrink-0 touch-none rounded-md p-1 text-text-muted-warm/70 transition-colors",
+                  "flex shrink-0 touch-none select-none rounded-lg px-1.5 py-2 text-text-muted-warm/70 transition-colors",
                   disabled
                     ? "cursor-not-allowed opacity-50"
                     : "cursor-grab hover:bg-muted/60 hover:text-text-warm active:cursor-grabbing"
                 )}
+                onKeyDown={(event) => {
+                  if (disabled) {
+                    return;
+                  }
+
+                  const currentIndex = sections.findIndex((entry) => entry.id === section.id);
+                  if (currentIndex < 0) {
+                    return;
+                  }
+
+                  if (event.key === "ArrowUp" && currentIndex > 0) {
+                    event.preventDefault();
+                    onDraftChange((current) =>
+                      reorderSections(current, currentIndex, currentIndex - 1)
+                    );
+                  }
+
+                  if (event.key === "ArrowDown" && currentIndex < sections.length - 1) {
+                    event.preventDefault();
+                    onDraftChange((current) =>
+                      reorderSections(current, currentIndex, currentIndex + 1)
+                    );
+                  }
+                }}
                 onDragStart={(event) => {
                   if (disabled) {
+                    event.preventDefault();
                     return;
                   }
 
@@ -676,7 +702,7 @@ export function WebsiteSectionList({
                 onDragEnd={clearDragState}
               >
                 <GripVertical className="size-4" aria-hidden />
-              </button>
+              </div>
               <SectionTypeIcon type={section.type} />
               <button
                 type="button"
