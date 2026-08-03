@@ -13,6 +13,7 @@ export const SECTION_TYPE_LABELS: Record<string, string> = {
   faq: "FAQ",
   stats: "Stats",
   ctaBand: "CTA band",
+  video: "Video",
 };
 
 /** Essentials palette — Core and Pro. */
@@ -30,6 +31,7 @@ export const STUDIO_SECTION_TYPES = [
   "faq",
   "stats",
   "ctaBand",
+  "video",
 ] as const;
 
 /** Section types operators can add from the builder palette (Pro+ full set). */
@@ -115,6 +117,17 @@ export function getDefaultSectionProps(type: string): Record<string, unknown> {
         description: "Browse upcoming activities and register in seconds.",
         variant: "accent",
         primaryCta: { label: "See events", target: "scroll-upcoming" },
+      };
+    case "video":
+      return {
+        title: "Watch our community",
+        description: "",
+        source: "",
+        videoUrl: "",
+        videoId: "",
+        embedUrl: "",
+        aspectRatio: "16:9",
+        variant: "default",
       };
     case "highlights":
       return {

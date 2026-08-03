@@ -222,6 +222,7 @@ development_status:
   15-5-plan-gated-reports-basic-fixed-core-queryable-pro: done
   15-6-pro-only-campaigns-and-per-tenant-email-branding: done
   15-7-suspended-maintenance-and-archived-404-public-states: done
+  15-8-pro-studio-video-embed-section: done
   epic-15-retrospective: done
 
   # Epic 16 v1 scope done (16.1–16.3); parked items (custom domain, thin email, tickets) remain in epics-cohestra-enterprise.md

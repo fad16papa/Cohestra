@@ -75,6 +75,9 @@ public sealed class SitePublishGateValidator(CohestraDbContext dbContext)
             "faq" => ValidateFaq(props, section.Type),
             "stats" => ValidateStats(props, section.Type),
             "ctaband" => ValidateCtaBand(props, section.Type),
+            "video" => SiteVideoEmbedValidator.ValidateSectionPropsForPublish(props) is { } videoError
+                ? videoError
+                : null,
             _ => null,
         };
     }

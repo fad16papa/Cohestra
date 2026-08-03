@@ -49,7 +49,14 @@ public sealed class SitePageService(
             throw new InvalidOperationException(sectionPlanError);
         }
 
-        var accentError = ActivityBrandingValidator.ValidateAccentColor(request.Draft.AccentColor);
+        var videoError = SiteVideoEmbedValidator.ValidateDocumentDto(request.Draft);
+        if (videoError is not null)
+        {
+            throw new InvalidOperationException(videoError);
+        }
+
+        var normalizedDraft = NormalizeVideoSectionProps(request.Draft);
+        var accentError = ActivityBrandingValidator.ValidateAccentColor(normalizedDraft.AccentColor);
         if (accentError is not null)
         {
             throw new InvalidOperationException(accentError);
@@ -58,7 +65,7 @@ public sealed class SitePageService(
         var page = await GetOrCreateSingletonAsync(cancellationToken);
         var now = DateTimeOffset.UtcNow;
 
-        page.DraftSections = ToDocument(request.Draft);
+        page.DraftSections = ToDocument(normalizedDraft);
         page.DraftUpdatedAt = now;
         page.SchemaVersion = request.Draft.SchemaVersion;
 
@@ -456,6 +463,21 @@ public sealed class SitePageService(
             SiteName = string.Empty,
             Sections = [],
         };
+
+    private static SiteSectionsDocumentDto NormalizeVideoSectionProps(SiteSectionsDocumentDto draft)
+    {
+        var sections = draft.Sections
+            .Select(section =>
+                string.Equals(section.Type, "video", StringComparison.OrdinalIgnoreCase)
+                    ? section with
+                    {
+                        Props = SiteVideoEmbedValidator.NormalizeSectionProps(section.Props),
+                    }
+                    : section)
+            .ToList();
+
+        return draft with { Sections = sections };
+    }
 
     private async Task EnsureSitePlanAllowedAsync(Guid tenantId, CancellationToken cancellationToken)
     {

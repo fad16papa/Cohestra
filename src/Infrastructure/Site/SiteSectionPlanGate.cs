@@ -27,6 +27,7 @@ public static class SiteSectionPlanGate
             "faq",
             "stats",
             "ctaBand",
+            "video",
         };
 
     public static bool IsStudioSection(string sectionType) =>

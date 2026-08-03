@@ -9,8 +9,10 @@ public sealed class SiteSectionPlanGateTests
     [InlineData("hero", TenantPlan.Core, true)]
     [InlineData("highlights", TenantPlan.Core, true)]
     [InlineData("carousel", TenantPlan.Core, false)]
+    [InlineData("video", TenantPlan.Core, false)]
     [InlineData("testimonials", TenantPlan.Core, false)]
     [InlineData("carousel", TenantPlan.Pro, true)]
+    [InlineData("video", TenantPlan.Pro, true)]
     [InlineData("ctaBand", TenantPlan.Enterprise, true)]
     public void IsAllowedForPlan_matches_essentials_and_studio_split(
         string sectionType,
