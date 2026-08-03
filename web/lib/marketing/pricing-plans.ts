@@ -68,7 +68,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     features: [
       "10 seats · 10 communities · 50 published activities",
       "5,000 registrations / month",
-      "Website builder (Studio) — carousel, testimonials, FAQ, stats, and premium presets",
+      "Website builder (Studio) — carousel, testimonials, FAQ, stats, video embeds, and premium presets",
       "Email campaigns with segments and templates",
       "Campaign analytics + saved report views",
       "Everything in Core, including team invites",

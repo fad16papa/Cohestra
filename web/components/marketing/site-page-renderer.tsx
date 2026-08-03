@@ -33,6 +33,7 @@ import {
 import { useMarketingHeaderScroll } from "@/components/marketing/use-marketing-header-scroll";
 import { SiteMarketingBackground } from "@/components/marketing/site-marketing-background";
 import { CarouselPublicSection } from "@/components/marketing/sections/carousel-section";
+import { VideoPublicSection } from "@/components/marketing/sections/video-section";
 import { CtaBandPublicSection } from "@/components/marketing/sections/cta-band-section";
 import { FaqPublicSection } from "@/components/marketing/sections/faq-section";
 import { StatsPublicSection } from "@/components/marketing/sections/stats-section";
@@ -626,6 +627,9 @@ function renderSection(
       break;
     case "ctaband":
       node = <CtaBandPublicSection section={section} />;
+      break;
+    case "video":
+      node = <VideoPublicSection section={section} />;
       break;
     case "footer":
       node = <FooterSection section={section} previewMode={context.previewMode} />;

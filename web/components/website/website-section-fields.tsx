@@ -12,6 +12,7 @@ import {
   Layers,
   Megaphone,
   MessageSquareQuote,
+  PlayCircle,
   Sparkles,
   Trash2,
   CalendarDays,
@@ -66,6 +67,7 @@ const SECTION_TYPE_ICONS: Record<string, typeof Sparkles> = {
   faq: HelpCircle,
   stats: BarChart3,
   ctaband: Megaphone,
+  video: PlayCircle,
   highlights: LayoutGrid,
   howitworks: Footprints,
   upcomingactivities: CalendarDays,
@@ -128,6 +130,7 @@ export function WebsiteSectionFields({
     "faq",
     "stats",
     "ctaband",
+    "video",
   ]);
 
   if (marketingTypes.has(type)) {
