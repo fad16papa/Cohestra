@@ -129,7 +129,7 @@ public sealed class SitePageService(
         if (!SitePageLayoutPresets.IsBuiltInPresetId(presetId))
         {
             throw new InvalidOperationException(
-                "Preset must be community, minimal, showcase, or event-hub.");
+                "Preset must be community, minimal, essentials-pilot, pilot-playbook, showcase, or event-hub.");
         }
 
         var plan = await GetTenantPlanAsync(cancellationToken);

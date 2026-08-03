@@ -58,7 +58,8 @@ public static class SiteSectionPlanGate
 
         var normalized = presetId.Trim();
         return string.Equals(normalized, "community", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(normalized, "minimal", StringComparison.OrdinalIgnoreCase);
+            || string.Equals(normalized, "minimal", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(normalized, "essentials-pilot", StringComparison.OrdinalIgnoreCase);
     }
 
     public static string? ValidateDocument(SiteSectionsDocument document, TenantPlan plan)
@@ -72,7 +73,7 @@ public static class SiteSectionPlanGate
 
             if (IsStudioSection(section.Type))
             {
-                return "Studio sections (carousel, testimonials, FAQ, stats, CTA band) require a Pro plan.";
+                return "Studio sections (carousel, testimonials, FAQ, stats, CTA band, video) require a Pro plan.";
             }
 
             return $"Section type \"{section.Type}\" is not allowed on your plan.";

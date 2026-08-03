@@ -17,8 +17,14 @@ export function getAddableSectionTypesForPlan(plan: string): AddableSectionType[
   return [...ESSENTIALS_SECTION_TYPES];
 }
 
+const STUDIO_PRESET_IDS = new Set<SiteBuiltInPresetId>([
+  "showcase",
+  "event-hub",
+  "pilot-playbook",
+]);
+
 export function isStudioPreset(presetId: SiteBuiltInPresetId): boolean {
-  return presetId === "showcase" || presetId === "event-hub";
+  return STUDIO_PRESET_IDS.has(presetId);
 }
 
 export function isPresetAvailableForPlan(
@@ -29,5 +35,9 @@ export function isPresetAvailableForPlan(
     return true;
   }
 
-  return presetId === "community" || presetId === "minimal";
+  return (
+    presetId === "community" ||
+    presetId === "minimal" ||
+    presetId === "essentials-pilot"
+  );
 }

@@ -25,9 +25,11 @@ public sealed class SiteSectionPlanGateTests
     [Theory]
     [InlineData("community", TenantPlan.Core, true)]
     [InlineData("minimal", TenantPlan.Core, true)]
+    [InlineData("essentials-pilot", TenantPlan.Core, true)]
     [InlineData("showcase", TenantPlan.Core, false)]
-    [InlineData("event-hub", TenantPlan.Core, false)]
+    [InlineData("pilot-playbook", TenantPlan.Core, false)]
     [InlineData("showcase", TenantPlan.Pro, true)]
+    [InlineData("pilot-playbook", TenantPlan.Pro, true)]
     public void IsPresetAllowedForPlan_matches_essentials_and_studio_presets(
         string presetId,
         TenantPlan plan,

@@ -457,6 +457,27 @@ export function MarketingSectionFields({
     const description =
       typeof section.props.description === "string" ? section.props.description : "";
 
+    function applyVideoUrl(raw: string) {
+      const trimmed = raw.trim();
+      const nextParsed = trimmed ? parseVideoEmbedUrl(trimmed) : null;
+      if (nextParsed) {
+        patchProps({
+          videoUrl: nextParsed.videoUrl,
+          videoId: nextParsed.videoId,
+          source: nextParsed.source,
+          embedUrl: nextParsed.embedUrl,
+        });
+        return;
+      }
+
+      patchProps({
+        videoUrl: raw,
+        videoId: "",
+        source: "",
+        embedUrl: "",
+      });
+    }
+
     return (
       <div className="space-y-4">
         <div className="space-y-2">
@@ -488,18 +509,15 @@ export function MarketingSectionFields({
             placeholder="https://www.youtube.com/watch?v=..."
             onChange={(event) => {
               const nextUrl = event.target.value;
-              const nextParsed = nextUrl.trim() ? parseVideoEmbedUrl(nextUrl) : null;
-              patchProps(
-                nextParsed
-                  ? {
-                      videoUrl: nextParsed.videoUrl,
-                      videoId: nextParsed.videoId,
-                      source: nextParsed.source,
-                      embedUrl: nextParsed.embedUrl,
-                      aspectRatio: "16:9",
-                    }
-                  : { videoUrl: nextUrl, videoId: "", source: "", embedUrl: "" },
-              );
+              applyVideoUrl(nextUrl);
+            }}
+            onPaste={(event) => {
+              const pasted = event.clipboardData.getData("text").trim();
+              if (!pasted) {
+                return;
+              }
+              event.preventDefault();
+              applyVideoUrl(pasted);
             }}
           />
           <p className="text-xs text-text-muted-warm">

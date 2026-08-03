@@ -130,6 +130,7 @@ export function WebsiteSectionFields({
     "faq",
     "stats",
     "ctaband",
+    "video",
   ]);
 
   if (marketingTypes.has(type)) {
