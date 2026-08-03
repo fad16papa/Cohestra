@@ -113,15 +113,6 @@ export function parseVideoEmbedUrl(input: string): VideoEmbedInfo | null {
 export function readVideoEmbedFromSectionProps(
   props: Record<string, unknown>,
 ): VideoEmbedInfo | null {
-  const embedUrl = typeof props.embedUrl === "string" ? props.embedUrl.trim() : "";
-  const videoId = typeof props.videoId === "string" ? props.videoId.trim() : "";
-  const source = props.source === "youtube" || props.source === "vimeo" ? props.source : null;
-  const videoUrl = typeof props.videoUrl === "string" ? props.videoUrl.trim() : "";
-
-  if (embedUrl && videoId && source && videoUrl) {
-    return { source, videoId, videoUrl, embedUrl };
-  }
-
   if (typeof props.videoUrl === "string") {
     return parseVideoEmbedUrl(props.videoUrl);
   }

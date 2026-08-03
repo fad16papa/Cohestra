@@ -20,7 +20,8 @@ public static partial class SiteVideoEmbedValidator
     {
         foreach (var section in dto.Sections)
         {
-            if (!string.Equals(section.Type, "video", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(section.Type, "video", StringComparison.OrdinalIgnoreCase) ||
+                !section.Enabled)
             {
                 continue;
             }
@@ -66,7 +67,8 @@ public static partial class SiteVideoEmbedValidator
     {
         foreach (var section in document.Sections)
         {
-            if (!string.Equals(section.Type, "video", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(section.Type, "video", StringComparison.OrdinalIgnoreCase) ||
+                !section.Enabled)
             {
                 continue;
             }

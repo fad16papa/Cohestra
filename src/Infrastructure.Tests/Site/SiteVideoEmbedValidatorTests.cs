@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Cohestra.Contracts.Site;
 using Cohestra.Infrastructure.Site;
 
 namespace Cohestra.Infrastructure.Tests.Site;
@@ -40,5 +42,51 @@ public sealed class SiteVideoEmbedValidatorTests
     {
         Assert.False(SiteSectionPlanGate.IsAllowedForPlan("video", Domain.Tenants.TenantPlan.Core));
         Assert.True(SiteSectionPlanGate.IsAllowedForPlan("video", Domain.Tenants.TenantPlan.Pro));
+    }
+
+    [Fact]
+    public void ValidateDocumentDto_ignores_invalid_video_url_when_section_disabled()
+    {
+        using var document = JsonDocument.Parse("""{"videoUrl":"not-a-url"}""");
+        var dto = new SiteSectionsDocumentDto(
+            SchemaVersion: 1,
+            SiteName: "Test Site",
+            AccentColor: null,
+            LogoAssetId: null,
+            PresetId: null,
+            Sections:
+            [
+                new SiteSectionDto(
+                    "video-1",
+                    "video",
+                    Enabled: false,
+                    Order: 0,
+                    Props: document.RootElement.Clone()),
+            ]);
+
+        Assert.Null(SiteVideoEmbedValidator.ValidateDocumentDto(dto));
+    }
+
+    [Fact]
+    public void ValidateDocumentDto_rejects_invalid_video_url_when_section_enabled()
+    {
+        using var document = JsonDocument.Parse("""{"videoUrl":"not-a-url"}""");
+        var dto = new SiteSectionsDocumentDto(
+            SchemaVersion: 1,
+            SiteName: "Test Site",
+            AccentColor: null,
+            LogoAssetId: null,
+            PresetId: null,
+            Sections:
+            [
+                new SiteSectionDto(
+                    "video-1",
+                    "video",
+                    Enabled: true,
+                    Order: 0,
+                    Props: document.RootElement.Clone()),
+            ]);
+
+        Assert.NotNull(SiteVideoEmbedValidator.ValidateDocumentDto(dto));
     }
 }
