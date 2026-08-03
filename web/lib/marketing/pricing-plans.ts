@@ -46,7 +46,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     features: [
       "3 seats · 3 communities · 12 published activities",
       "500 registrations / month",
-      "Fixed public Site Page at {your-org}.cohestra.app",
+      "Website builder (Essentials) — draft, publish, and customize your homepage",
       "Queryable reports with filters + full CSV export",
       "Team invites up to your seat cap",
       "QR codes + public registration",
@@ -68,7 +68,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     features: [
       "10 seats · 10 communities · 50 published activities",
       "5,000 registrations / month",
-      "Website builder — fully customizable homepage",
+      "Website builder (Studio) — carousel, testimonials, FAQ, stats, and premium presets",
       "Email campaigns with segments and templates",
       "Campaign analytics + saved report views",
       "Everything in Core, including team invites",
@@ -100,7 +100,7 @@ export const PRICING_COMPARE_ROWS = [
   { feature: "Registrations / month", basic: "150", core: "500", pro: "5,000" },
   { feature: "Reports", basic: "Simple + CSV", core: "Queryable + export", pro: "+ Campaigns + saved views" },
   { feature: "Registration email notifications", basic: "✓", core: "✓", pro: "✓" },
-  { feature: "Public site", basic: "Stub only", core: "Fixed Site Page", pro: "Full website builder" },
+  { feature: "Public site", basic: "Stub only", core: "Builder (Essentials)", pro: "Builder (Studio)" },
   { feature: "Email campaigns", basic: "—", core: "—", pro: "✓" },
 ] as const;
 
@@ -110,9 +110,9 @@ export const PRICING_FAQ = [
     answer: "Yes — free forever at the limits above. No card.",
   },
   {
-    question: "What's the difference between Basic stub and Core Site Page?",
+    question: "What's the difference between Basic stub and Core website builder?",
     answer:
-      "Basic gives a simple public list so QR testing works. Core gives a branded fixed homepage. Pro lets you fully design it.",
+      "Basic gives a simple public list so QR testing works. Core unlocks the website builder with Essentials sections — hero, highlights, upcoming events, and more — plus draft and publish. Pro adds Studio sections like carousel, testimonials, FAQ, and premium layouts.",
   },
   {
     question: "What reports do I get on Basic?",

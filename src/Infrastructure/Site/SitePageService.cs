@@ -32,8 +32,6 @@ public sealed class SitePageService(
         UpdateSiteDraftRequest request,
         CancellationToken cancellationToken = default)
     {
-        await EnsureBuilderUnlockedAsync(cancellationToken);
-
         if (request.Draft is null)
         {
             throw new InvalidOperationException("Draft payload is required.");
@@ -42,6 +40,13 @@ public sealed class SitePageService(
         if (request.Draft.SchemaVersion != 1)
         {
             throw new InvalidOperationException("Unsupported schema version. Only schema version 1 is supported.");
+        }
+
+        var plan = await GetTenantPlanAsync(cancellationToken);
+        var sectionPlanError = SiteSectionPlanGate.ValidateDocumentDto(request.Draft, plan);
+        if (sectionPlanError is not null)
+        {
+            throw new InvalidOperationException(sectionPlanError);
         }
 
         var accentError = ActivityBrandingValidator.ValidateAccentColor(request.Draft.AccentColor);
@@ -65,9 +70,17 @@ public sealed class SitePageService(
         Guid publishedByUserId,
         CancellationToken cancellationToken = default)
     {
-        await EnsureBuilderUnlockedAsync(cancellationToken);
-
         var page = await GetOrCreateSingletonAsync(cancellationToken);
+        var plan = await GetTenantPlanAsync(cancellationToken);
+
+        if (page.DraftSections is not null)
+        {
+            var sectionPlanError = SiteSectionPlanGate.ValidateDocument(page.DraftSections, plan);
+            if (sectionPlanError is not null)
+            {
+                throw new InvalidOperationException(sectionPlanError);
+            }
+        }
 
         var publishGateError = await publishGateValidator.ValidateForPublishAsync(
             page.DraftSections,
@@ -82,8 +95,7 @@ public sealed class SitePageService(
             page.PublishedAt is not null)
         {
             var unchangedTemplates = await LoadSavedTemplateSummariesAsync(cancellationToken);
-            var builderLocked = await IsBuilderLockedAsync(cancellationToken);
-            return ToAdminResponse(page, unchangedTemplates, builderLocked);
+            return ToAdminResponse(page, unchangedTemplates);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -107,12 +119,17 @@ public sealed class SitePageService(
         string presetId,
         CancellationToken cancellationToken = default)
     {
-        await EnsureBuilderUnlockedAsync(cancellationToken);
-
         if (!SitePageLayoutPresets.IsBuiltInPresetId(presetId))
         {
             throw new InvalidOperationException(
                 "Preset must be community, minimal, showcase, or event-hub.");
+        }
+
+        var plan = await GetTenantPlanAsync(cancellationToken);
+        if (!SiteSectionPlanGate.IsPresetAllowedForPlan(presetId, plan))
+        {
+            throw new InvalidOperationException(
+                "This preset includes Studio sections and requires a Pro plan.");
         }
 
         var page = await GetOrCreateSingletonAsync(cancellationToken);
@@ -140,8 +157,6 @@ public sealed class SitePageService(
         Guid templateId,
         CancellationToken cancellationToken = default)
     {
-        await EnsureBuilderUnlockedAsync(cancellationToken);
-
         var template = await dbContext.SiteHomepageTemplates
             .FirstOrDefaultAsync(item => item.Id == templateId, cancellationToken);
 
@@ -162,6 +177,13 @@ public sealed class SitePageService(
             template.Sections,
             landingSeedSettings.Value);
 
+        var plan = await GetTenantPlanAsync(cancellationToken);
+        var sectionPlanError = SiteSectionPlanGate.ValidateDocument(templateDocument, plan);
+        if (sectionPlanError is not null)
+        {
+            throw new InvalidOperationException(sectionPlanError);
+        }
+
         var accentError = ActivityBrandingValidator.ValidateAccentColor(templateDocument.AccentColor);
         if (accentError is not null)
         {
@@ -180,8 +202,6 @@ public sealed class SitePageService(
         string name,
         CancellationToken cancellationToken = default)
     {
-        await EnsureBuilderUnlockedAsync(cancellationToken);
-
         var trimmedName = name.Trim();
         if (trimmedName.Length < 2)
         {
@@ -205,6 +225,13 @@ public sealed class SitePageService(
         if (draft.Sections.Count == 0)
         {
             throw new InvalidOperationException("Add at least one section before saving a template.");
+        }
+
+        var plan = await GetTenantPlanAsync(cancellationToken);
+        var sectionPlanError = SiteSectionPlanGate.ValidateDocument(draft, plan);
+        if (sectionPlanError is not null)
+        {
+            throw new InvalidOperationException(sectionPlanError);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -444,7 +471,7 @@ public sealed class SitePageService(
         }
     }
 
-    private async Task EnsureBuilderUnlockedAsync(CancellationToken cancellationToken)
+    private async Task<TenantPlan> GetTenantPlanAsync(CancellationToken cancellationToken)
     {
         if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
         {
@@ -457,26 +484,7 @@ public sealed class SitePageService(
             .Select(t => t.Plan)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (plan is TenantPlan.Core)
-        {
-            throw new InvalidOperationException("The section composer is locked on Core. Upgrade to Pro to customize layout.");
-        }
-    }
-
-    private async Task<bool> IsBuilderLockedAsync(CancellationToken cancellationToken)
-    {
-        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
-        {
-            return true;
-        }
-
-        var plan = await dbContext.Tenants
-            .AsNoTracking()
-            .Where(t => t.Id == tenantId)
-            .Select(t => t.Plan)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        return plan is TenantPlan.Core;
+        return plan;
     }
 
     private async Task<SitePageAdminResponse> BuildAdminResponseAsync(
@@ -484,14 +492,12 @@ public sealed class SitePageService(
         CancellationToken cancellationToken)
     {
         var savedTemplates = await LoadSavedTemplateSummariesAsync(cancellationToken);
-        var builderLocked = await IsBuilderLockedAsync(cancellationToken);
-        return ToAdminResponse(page, savedTemplates, builderLocked);
+        return ToAdminResponse(page, savedTemplates);
     }
 
     private static SitePageAdminResponse ToAdminResponse(
         SitePage page,
-        IReadOnlyList<SiteHomepageTemplateSummaryDto> savedTemplates,
-        bool builderLocked)
+        IReadOnlyList<SiteHomepageTemplateSummaryDto> savedTemplates)
     {
         var draft = page.DraftSections ?? CreateEmptyDraft();
         var published = page.PublishedSections is null ? null : ToDto(page.PublishedSections);
@@ -509,7 +515,7 @@ public sealed class SitePageService(
             page.PreviousPublishedSections is not null && page.PreviousPublishedAt is not null,
             page.PreviousPublishedAt,
             savedTemplates,
-            builderLocked);
+            BuilderLocked: false);
     }
 
     private async Task<IReadOnlyList<SiteHomepageTemplateSummaryDto>> LoadSavedTemplateSummariesAsync(

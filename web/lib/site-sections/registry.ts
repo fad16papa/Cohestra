@@ -15,19 +15,31 @@ export const SECTION_TYPE_LABELS: Record<string, string> = {
   ctaBand: "CTA band",
 };
 
-/** Section types operators can add from the builder palette. */
-export const ADDABLE_SECTION_TYPES = [
-  "carousel",
-  "testimonials",
-  "faq",
-  "stats",
-  "ctaBand",
+/** Essentials palette — Core and Pro. */
+export const ESSENTIALS_SECTION_TYPES = [
   "highlights",
   "howItWorks",
   "upcomingActivities",
   "footer",
 ] as const;
 
+/** Studio palette — Pro and Enterprise only. */
+export const STUDIO_SECTION_TYPES = [
+  "carousel",
+  "testimonials",
+  "faq",
+  "stats",
+  "ctaBand",
+] as const;
+
+/** Section types operators can add from the builder palette (Pro+ full set). */
+export const ADDABLE_SECTION_TYPES = [
+  ...ESSENTIALS_SECTION_TYPES,
+  ...STUDIO_SECTION_TYPES,
+] as const;
+
+export type EssentialsSectionType = (typeof ESSENTIALS_SECTION_TYPES)[number];
+export type StudioSectionType = (typeof STUDIO_SECTION_TYPES)[number];
 export type AddableSectionType = (typeof ADDABLE_SECTION_TYPES)[number];
 
 function newId(type: string): string {
