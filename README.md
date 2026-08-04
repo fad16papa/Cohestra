@@ -83,18 +83,22 @@ Override via `OperatorSeed__Email` and `OperatorSeed__Password` in `.env` or `do
 
 ### Demo data seed (Development)
 
-When `DemoDataSeed:Enabled` is `true`, the API **wipes all business data** (clients, registrations, activities, communities, categories, campaigns, templates) and reseeds on every startup. Operator login is preserved.
+When `DemoDataSeed:Enabled` is `true`, the API **wipes all business data** (clients, registrations, activities, communities, categories, campaigns, templates, timeline) and reseeds on every startup. Operator login is preserved.
 
-| Item | Count |
-|------|-------|
-| Communities | 6 |
-| Activities | 60 (10 per community) |
-| Clients (leads) | 100 |
-| Registrations | 6,000 (each client registered for every activity) |
+Seeds a **production-like scenario matrix** — not a 6,000-row cross product:
 
-Demo clients use emails like `demo.user001@demo.cohestra.local` and appear under **Clients**, **Communities**, and campaign segment filters. Each registration has a unique ID like `REG20260616000001`.
+| Item | Default |
+|------|---------|
+| Curated personas | 11 (Francis Decena, merge suspects, no phone, PH mobile, …) |
+| Synthetic clients | Fill to 48 total |
+| Scenario activities | 7 (capacity full, draft, archived, …) + bulk per community |
+| Registrations | Sparse (~35% fill), unique per client×activity |
+| Timeline | WhatsApp, Viber, lead status, email campaign |
+| Tenant | Default promoted to **Pro trialing** |
 
-Enabled by default in `appsettings.Development.json` and Docker Compose (`DemoDataSeed__Enabled`). Set to `false` in production.
+See [docs/deploy/demo-seed-data.md](docs/deploy/demo-seed-data.md) for the full persona/activity list.
+
+Enabled by default in `appsettings.Development.json`. For Docker, set `DemoDataSeed__Enabled=true` in `.env`. **Must be `false` in production** (enforced at startup).
 
 Example login:
 
