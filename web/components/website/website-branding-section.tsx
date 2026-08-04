@@ -210,11 +210,31 @@ export const WebsiteBrandingSection = forwardRef<
   }
 
   return (
-    <section className="space-y-4 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
+    <section
+      id="website-branding-section"
+      className="space-y-4 rounded-xl border border-border-warm bg-card p-4 sm:p-5"
+    >
       <div>
-        <h3 className="text-section text-text-warm">Site branding</h3>
+        <h3 className="text-section text-text-warm">Site identity</h3>
         <p className="mt-1 text-sm text-text-muted-warm">
-          Logo and accent apply on the public homepage after you publish.
+          Name, logo, and accent appear on your public homepage after you publish.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="site-name">Site name</Label>
+        <Input
+          id="site-name"
+          value={draft.siteName}
+          disabled={disabled}
+          onChange={(event) =>
+            onDraftChange((current) =>
+              updateSiteDocument(current, { siteName: event.target.value })
+            )
+          }
+        />
+        <p className="text-xs text-text-muted-warm">
+          Shown in the homepage header and browser title.
         </p>
       </div>
 
