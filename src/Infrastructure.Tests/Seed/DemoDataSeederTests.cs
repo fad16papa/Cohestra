@@ -1,6 +1,7 @@
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Clients;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Registrations;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Seed;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,34 @@ namespace Cohestra.Infrastructure.Tests.Seed;
 
 public sealed class DemoDataSeederTests
 {
+    [Fact]
+    public void Personas_HaveUniqueNormalizedPhonesAndEmailsPerTenantRules()
+    {
+        var phones = new HashSet<string>(StringComparer.Ordinal);
+        var emails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var persona in DemoDataSeedCatalog.Personas)
+        {
+            if (!string.IsNullOrWhiteSpace(persona.Phone))
+            {
+                var normalizedPhone = ClientContactNormalizer.NormalizePhone(persona.Phone, persona.PhoneCountry);
+                Assert.NotNull(normalizedPhone);
+                Assert.True(
+                    phones.Add(normalizedPhone!),
+                    $"Duplicate normalized phone in demo personas: {persona.FullName} ({normalizedPhone})");
+            }
+
+            if (!string.IsNullOrWhiteSpace(persona.Email))
+            {
+                var normalizedEmail = ClientContactNormalizer.NormalizeEmail(persona.Email);
+                Assert.NotNull(normalizedEmail);
+                Assert.True(
+                    emails.Add(normalizedEmail!),
+                    $"Duplicate normalized email in demo personas: {persona.FullName} ({normalizedEmail})");
+            }
+        }
+    }
+
     [Fact]
     public async Task SeedDatabaseAsync_WhenEnabled_SeedsProductionLikeScenarioMatrix()
     {
