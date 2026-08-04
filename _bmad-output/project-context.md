@@ -101,7 +101,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 - Dual dials: access = `Tenant.Status` ∩ `BillingStatus`; **Suspended always wins**
 - Billing UX = Stripe Checkout + **Customer Portal only** — no custom invoices/finance UI
-- Basic = no SitePage (stub); Core = fixed SitePage; Pro = builder
+- Basic = no SitePage (stub); Core = Essentials website builder; Pro = Essentials + Studio sections
 - Remove `AuthService.GetExistingOperatorAsync` single-operator gate (Epic 12) — do not reintroduce
 - Brand: replace Platform 0 forest green with **Midnight Atelier** tokens (`ux-cohestra-2026-07-18/DESIGN.md`) on Cohestra surfaces — do not invent a third palette
 

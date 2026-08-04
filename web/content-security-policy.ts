@@ -19,7 +19,7 @@ const BASE_DIRECTIVES = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "frame-src https://www.google.com https://www.recaptcha.net",
+  "frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://player.vimeo.com",
 ] as const;
 
 /** Production / Docker (nginx-owned). API calls are same-origin via /api/ proxy. */

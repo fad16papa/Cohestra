@@ -64,7 +64,7 @@ FR-10: Export and report isolation — CSV/reports include only authenticated te
 
 FR-11: Subdomain tenant routing — `{slug}.cohestra.app` for public + admin; apex marketing only; local `{slug}.localhost` or `DEV_TENANT_SLUG`.
 
-FR-12: Public site by plan — Basic stub (no SitePage); Core fixed SitePage (no composer); Pro full builder; upgrade paths seed/unlock SitePage.
+FR-12: Public site by plan — Basic stub (no SitePage); Core Essentials website builder; Pro adds Studio sections/presets; upgrade paths seed SitePage.
 
 FR-13: Per-tenant email branding — SendGrid From name/email per tenant within platform guardrails; block send if sender unverified.
 
@@ -966,27 +966,31 @@ So that I can register without a full website — and it still feels high-end.
 **When** opened
 **Then** UpgradePanel appears (not the builder)
 
-### Story 15.3: Core fixed SitePage and Pro builder unlock
+### Story 15.3: Core Essentials builder and Pro Studio unlock
 
 As a Tenant Admin on Core/Pro,
-I want a plan-appropriate public homepage,
-So that Core gets a branded fixed page and Pro can compose and publish.
+I want a plan-appropriate website builder,
+So that Core can compose Essentials layouts and Pro adds Studio sections.
 
 **Acceptance Criteria:**
 
 **Given** upgrade Basic → Core (or Core signup)
 **When** plan becomes Core
-**Then** a seeded fixed SitePage is created (`UNIQUE TenantId`); public `/` uses fixed template (name, accent, upcoming activities)
-**And** section composer remains locked
+**Then** a seeded SitePage is created (`UNIQUE TenantId`); public `/` uses published SitePage
+**And** Core admin gets full draft/publish composer with Essentials palette only (no Pro UpgradePanel)
 
 **Given** upgrade Core → Pro
 **When** plan becomes Pro
-**Then** the same SitePage unlocks the builder; draft/publish is tenant-scoped
-**And** Ikigai publish does not affect another tenant
+**Then** the same SitePage unlocks Studio sections and Showcase/Event hub presets
+**And** publish remains tenant-scoped (Ikigai publish does not affect another tenant)
 
 **Given** Basic tenant
 **When** SitePage APIs/builder routes are called
 **Then** upgrade CTA / 403 — no SitePage row
+
+**Given** Core tenant saves draft with Studio section
+**When** API validates plan
+**Then** 400 with upgrade hint — Studio sections require Pro
 
 **Given** Pro preview token
 **When** used

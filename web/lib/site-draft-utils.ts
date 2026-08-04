@@ -90,25 +90,32 @@ export function moveSection(
   }
 
   const swapIndex = direction === "up" ? index - 1 : index + 1;
-  if (swapIndex < 0 || swapIndex >= sorted.length) {
+  return reorderSections(document, index, swapIndex);
+}
+
+export function reorderSections(
+  document: SiteSectionsDocument,
+  fromIndex: number,
+  toIndex: number
+): SiteSectionsDocument {
+  const sorted = getSortedSections(document);
+  if (
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= sorted.length ||
+    toIndex >= sorted.length ||
+    fromIndex === toIndex
+  ) {
     return document;
   }
 
-  const reordered = sorted.map((section, sectionIndex) => {
-    if (sectionIndex === index) {
-      return { ...sorted[swapIndex], order: section.order };
-    }
-    if (sectionIndex === swapIndex) {
-      return { ...sorted[index], order: section.order };
-    }
-    return section;
-  });
+  const next = [...sorted];
+  const [moved] = next.splice(fromIndex, 1);
+  next.splice(toIndex, 0, moved);
 
   return {
     ...document,
-    sections: reordered
-      .sort((left, right) => left.order - right.order)
-      .map((section, order) => ({ ...section, order })),
+    sections: next.map((section, order) => ({ ...section, order })),
   };
 }
 

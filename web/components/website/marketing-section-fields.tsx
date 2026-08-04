@@ -12,6 +12,7 @@ import type { Activity } from "@/lib/activities-api";
 import { uploadCampaignAsset } from "@/lib/campaigns-api";
 import type { SiteSection } from "@/lib/public-site-api";
 import { readSectionVariant } from "@/lib/site-sections/limits";
+import { parseVideoEmbedUrl } from "@/lib/site-video-embed";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
 
 import {
@@ -445,6 +446,105 @@ export function MarketingSectionFields({
           disabled={disabled}
           onChange={(label, target) => patchProps({ primaryCta: { label, target } })}
         />
+      </div>
+    );
+  }
+
+  if (type === "video") {
+    const videoUrl = typeof section.props.videoUrl === "string" ? section.props.videoUrl : "";
+    const parsed = videoUrl.trim() ? parseVideoEmbedUrl(videoUrl) : null;
+    const title = typeof section.props.title === "string" ? section.props.title : "";
+    const description =
+      typeof section.props.description === "string" ? section.props.description : "";
+
+    function applyVideoUrl(raw: string) {
+      const trimmed = raw.trim();
+      const nextParsed = trimmed ? parseVideoEmbedUrl(trimmed) : null;
+      if (nextParsed) {
+        patchProps({
+          videoUrl: nextParsed.videoUrl,
+          videoId: nextParsed.videoId,
+          source: nextParsed.source,
+          embedUrl: nextParsed.embedUrl,
+        });
+        return;
+      }
+
+      patchProps({
+        videoUrl: raw,
+        videoId: "",
+        source: "",
+        embedUrl: "",
+      });
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor={`${section.id}-title`}>Section title</Label>
+          <Input
+            id={`${section.id}-title`}
+            value={title}
+            disabled={disabled}
+            onChange={(event) => patchProps({ title: event.target.value })}
+            placeholder="Watch our community"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${section.id}-description`}>Caption (optional)</Label>
+          <Input
+            id={`${section.id}-description`}
+            value={description}
+            disabled={disabled}
+            onChange={(event) => patchProps({ description: event.target.value })}
+            placeholder="A short line under the heading"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${section.id}-video-url`}>YouTube or Vimeo link</Label>
+          <Input
+            id={`${section.id}-video-url`}
+            value={videoUrl}
+            disabled={disabled}
+            placeholder="https://www.youtube.com/watch?v=..."
+            onChange={(event) => {
+              const nextUrl = event.target.value;
+              applyVideoUrl(nextUrl);
+            }}
+            onPaste={(event) => {
+              const pasted = event.clipboardData.getData("text").trim();
+              if (!pasted) {
+                return;
+              }
+              event.preventDefault();
+              applyVideoUrl(pasted);
+            }}
+          />
+          <p className="text-xs text-text-muted-warm">
+            Paste a public YouTube or Vimeo URL. Video plays from their platform — nothing is
+            uploaded to Cohestra.
+          </p>
+          {videoUrl.trim() && !parsed ? (
+            <p className="text-xs text-destructive">
+              Enter a valid HTTPS YouTube or Vimeo link.
+            </p>
+          ) : null}
+        </div>
+        {parsed ? (
+          <div className="overflow-hidden rounded-xl border border-border-warm bg-muted/20">
+            <div className="relative aspect-video">
+              <iframe
+                src={parsed.embedUrl}
+                title={title.trim() || "Video preview"}
+                className="absolute inset-0 size-full border-0"
+                loading="lazy"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   }

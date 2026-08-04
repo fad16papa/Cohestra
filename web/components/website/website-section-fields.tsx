@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { ResponsiveBannerImage } from "@/components/ui/responsive-banner-image";
 import {
   ChevronDown,
-  ChevronUp,
   GripVertical,
   HelpCircle,
   ImageIcon,
@@ -12,6 +11,7 @@ import {
   Layers,
   Megaphone,
   MessageSquareQuote,
+  PlayCircle,
   Sparkles,
   Trash2,
   CalendarDays,
@@ -31,7 +31,7 @@ import type { SiteSection, SiteSectionsDocument } from "@/lib/public-site-api";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
 import {
   SECTION_TYPE_LABELS,
-  moveSection,
+  reorderSections,
   updateSectionProps,
   type PublishGateResult,
 } from "@/lib/site-draft-utils";
@@ -66,6 +66,7 @@ const SECTION_TYPE_ICONS: Record<string, typeof Sparkles> = {
   faq: HelpCircle,
   stats: BarChart3,
   ctaband: Megaphone,
+  video: PlayCircle,
   highlights: LayoutGrid,
   howitworks: Footprints,
   upcomingactivities: CalendarDays,
@@ -128,6 +129,7 @@ export function WebsiteSectionFields({
     "faq",
     "stats",
     "ctaband",
+    "video",
   ]);
 
   if (marketingTypes.has(type)) {
@@ -545,6 +547,11 @@ export function WebsiteSectionList({
 }: WebsiteSectionListProps) {
   const sections = [...draft.sections].sort((left, right) => left.order - right.order);
   const expandedRef = useRef<HTMLDivElement>(null);
+  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{
+    sectionId: string;
+    position: "before" | "after";
+  } | null>(null);
 
   useEffect(() => {
     if (!expandedSectionId || !expandedRef.current) {
@@ -554,13 +561,47 @@ export function WebsiteSectionList({
     expandedRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [expandedSectionId]);
 
+  function clearDragState() {
+    setDraggedSectionId(null);
+    setDropTarget(null);
+  }
+
+  function handleDrop(sectionId: string) {
+    if (!draggedSectionId || draggedSectionId === sectionId || disabled) {
+      clearDragState();
+      return;
+    }
+
+    const fromIndex = sections.findIndex((section) => section.id === draggedSectionId);
+    const overIndex = sections.findIndex((section) => section.id === sectionId);
+    if (fromIndex < 0 || overIndex < 0) {
+      clearDragState();
+      return;
+    }
+
+    const position =
+      dropTarget?.sectionId === sectionId ? dropTarget.position : "before";
+    let toIndex = position === "after" ? overIndex + 1 : overIndex;
+    if (fromIndex < toIndex) {
+      toIndex -= 1;
+    }
+
+    onDraftChange((current) => reorderSections(current, fromIndex, toIndex));
+    clearDragState();
+  }
+
   return (
     <div className="space-y-2">
-      {sections.map((section, index) => {
+      {sections.map((section) => {
         const label = SECTION_TYPE_LABELS[section.type] ?? section.type;
         const isExpanded = expandedSectionId === section.id;
         const isHighlighted = highlightedSectionId === section.id;
         const summary = getSectionSummary(section);
+        const isDragging = draggedSectionId === section.id;
+        const showDropBefore =
+          dropTarget?.sectionId === section.id && dropTarget.position === "before";
+        const showDropAfter =
+          dropTarget?.sectionId === section.id && dropTarget.position === "after";
 
         return (
           <div
@@ -568,18 +609,100 @@ export function WebsiteSectionList({
             data-website-section-id={section.id}
             ref={isExpanded ? expandedRef : undefined}
             className={cn(
-              "overflow-hidden rounded-xl border bg-card transition-shadow",
+              "relative overflow-hidden rounded-xl border bg-card transition-shadow",
               isHighlighted && "ring-2 ring-primary/50",
+              isDragging && "opacity-50",
               isExpanded
                 ? "border-primary/30 shadow-sm"
                 : "border-border-warm"
             )}
+            onDragOver={(event) => {
+              if (!draggedSectionId || draggedSectionId === section.id || disabled) {
+                return;
+              }
+
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+              const rect = event.currentTarget.getBoundingClientRect();
+              const position =
+                event.clientY < rect.top + rect.height / 2 ? "before" : "after";
+              setDropTarget({ sectionId: section.id, position });
+            }}
+            onDragLeave={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                setDropTarget((current) =>
+                  current?.sectionId === section.id ? null : current
+                );
+              }
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              handleDrop(section.id);
+            }}
           >
-            <div className="flex items-center gap-2 px-3 py-2.5">
-              <GripVertical
-                className="size-4 shrink-0 text-text-muted-warm/70"
+            {showDropBefore ? (
+              <div
                 aria-hidden
+                className="absolute inset-x-0 top-0 z-10 h-0.5 bg-primary"
               />
+            ) : null}
+            {showDropAfter ? (
+              <div
+                aria-hidden
+                className="absolute inset-x-0 bottom-0 z-10 h-0.5 bg-primary"
+              />
+            ) : null}
+            <div className="flex items-center gap-2 py-2.5 pl-1 pr-3">
+              <div
+                role="button"
+                tabIndex={disabled ? -1 : 0}
+                draggable={!disabled}
+                aria-label={`Drag to reorder ${label}`}
+                aria-grabbed={isDragging}
+                className={cn(
+                  "flex shrink-0 touch-none select-none rounded-lg px-1.5 py-2 text-text-muted-warm/70 transition-colors",
+                  disabled
+                    ? "cursor-not-allowed opacity-50"
+                    : "cursor-grab hover:bg-muted/60 hover:text-text-warm active:cursor-grabbing"
+                )}
+                onKeyDown={(event) => {
+                  if (disabled) {
+                    return;
+                  }
+
+                  const currentIndex = sections.findIndex((entry) => entry.id === section.id);
+                  if (currentIndex < 0) {
+                    return;
+                  }
+
+                  if (event.key === "ArrowUp" && currentIndex > 0) {
+                    event.preventDefault();
+                    onDraftChange((current) =>
+                      reorderSections(current, currentIndex, currentIndex - 1)
+                    );
+                  }
+
+                  if (event.key === "ArrowDown" && currentIndex < sections.length - 1) {
+                    event.preventDefault();
+                    onDraftChange((current) =>
+                      reorderSections(current, currentIndex, currentIndex + 1)
+                    );
+                  }
+                }}
+                onDragStart={(event) => {
+                  if (disabled) {
+                    event.preventDefault();
+                    return;
+                  }
+
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData("text/plain", section.id);
+                  setDraggedSectionId(section.id);
+                }}
+                onDragEnd={clearDragState}
+              >
+                <GripVertical className="size-4" aria-hidden />
+              </div>
               <SectionTypeIcon type={section.type} />
               <button
                 type="button"
@@ -616,32 +739,6 @@ export function WebsiteSectionList({
                 Visible
               </label>
               <div className="flex items-center gap-0.5">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={disabled || index === 0}
-                  aria-label={`Move ${label} up`}
-                  onClick={() =>
-                    onDraftChange((current) => moveSection(current, section.id, "up"))
-                  }
-                >
-                  <ChevronUp className="size-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  disabled={disabled || index === sections.length - 1}
-                  aria-label={`Move ${label} down`}
-                  onClick={() =>
-                    onDraftChange((current) =>
-                      moveSection(current, section.id, "down")
-                    )
-                  }
-                >
-                  <ChevronDown className="size-4" />
-                </Button>
                 {onRemoveSection && !isProtectedFromRemoval(draft, section) ? (
                   <Button
                     type="button"

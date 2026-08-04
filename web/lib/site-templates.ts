@@ -1,4 +1,10 @@
-export type SiteBuiltInPresetId = "community" | "minimal" | "showcase" | "event-hub";
+export type SiteBuiltInPresetId =
+  | "community"
+  | "minimal"
+  | "essentials-pilot"
+  | "showcase"
+  | "event-hub"
+  | "pilot-playbook";
 
 export type SiteBuiltInPreset = {
   id: SiteBuiltInPresetId;
@@ -7,6 +13,18 @@ export type SiteBuiltInPreset = {
 };
 
 export const SITE_BUILT_IN_PRESETS: SiteBuiltInPreset[] = [
+  {
+    id: "essentials-pilot",
+    label: "Essentials pilot",
+    description:
+      "Guided Core layout — hero, highlights, how it works, upcoming events, and footer with inline tips.",
+  },
+  {
+    id: "pilot-playbook",
+    label: "Full pilot playbook",
+    description:
+      "Pro Studio tour — every section type including video, carousel, testimonials, stats, FAQ, and CTA band.",
+  },
   {
     id: "community",
     label: "Community",

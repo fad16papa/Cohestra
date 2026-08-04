@@ -51,8 +51,6 @@ public sealed class PublicDoorService(
         TenantPlan plan,
         CancellationToken cancellationToken)
     {
-        var builderLocked = plan is TenantPlan.Core;
-
         if (plan is TenantPlan.Basic)
         {
             var stubActivities = await LoadStubActivitiesAsync(tenantId, cancellationToken);
@@ -63,7 +61,7 @@ public sealed class PublicDoorService(
                 slug,
                 null,
                 stubActivities,
-                true);
+                false);
         }
 
         var site = await LoadPublishedSiteAsync(tenantId, cancellationToken);
@@ -74,7 +72,7 @@ public sealed class PublicDoorService(
             slug,
             site,
             site?.UpcomingActivities ?? [],
-            builderLocked);
+            false);
     }
 
     private async Task<IReadOnlyList<PublicStubActivityResponse>> LoadStubActivitiesAsync(
