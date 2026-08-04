@@ -183,6 +183,15 @@ public class AuthController(
             cancellationToken);
         if (result.Tokens is null)
         {
+            if (!string.IsNullOrWhiteSpace(result.HandoffCode)
+                && !string.IsNullOrWhiteSpace(result.TenantSlug))
+            {
+                return Ok(new AuthLoginHandoffResponse(
+                    result.TenantSlug,
+                    result.HandoffCode,
+                    result.HandoffExpiresInSeconds ?? 120));
+            }
+
             return UnauthorizedProblem(
                 result.ErrorMessage ?? "Invalid email or password.",
                 result.ErrorCode,

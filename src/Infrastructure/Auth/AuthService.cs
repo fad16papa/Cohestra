@@ -7,6 +7,7 @@ using Cohestra.Contracts.Auth;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Email;
 using Cohestra.Infrastructure.Identity;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -30,7 +31,8 @@ public sealed class AuthService(
     IOptions<SendGridSettings> sendGridOptions,
     ITenantMembershipService tenantMembershipService,
     ITenantHostResolver tenantHostResolver,
-    ITenantAccessService tenantAccessService) : IAuthService
+    ITenantAccessService tenantAccessService,
+    IAuthHandoffStore authHandoffStore) : IAuthService
 {
     private const string BootstrapClosedMessage =
         "This workspace already has a tenant admin. Sign in instead.";
@@ -43,6 +45,9 @@ public sealed class AuthService(
 
     private const string HostMembershipMessage =
         "Your account is not a member of this workspace. Sign in from your tenant host.";
+
+    private const string MultipleWorkspacesMessage =
+        "Your account belongs to multiple workspaces. Sign in using your workspace address (for example, your-org.localhost).";
 
     private static readonly Regex NicknamePattern = new(
         @"^[A-Za-z0-9][A-Za-z0-9\s\-_.]{1,30}[A-Za-z0-9]$",
@@ -125,6 +130,28 @@ public sealed class AuthService(
         if (session.TenantId is Guid tenantId)
         {
             await tenantAccessService.TouchActivityAsync(tenantId, cancellationToken);
+        }
+
+        if (session.RequiresTenantHandoff
+            && session.TenantId is Guid handoffTenantId
+            && !string.IsNullOrWhiteSpace(session.TenantSlug))
+        {
+            var (handoffCode, handoffExpiresInSeconds) = await authHandoffStore.CreateAsync(
+                new AuthHandoffPayload(
+                    handoffTenantId,
+                    session.TenantSlug,
+                    tokens.AccessToken,
+                    tokens.RefreshToken,
+                    tokens.ExpiresInSeconds),
+                cancellationToken);
+
+            return new AuthLoginResult(
+                null,
+                null,
+                null,
+                TenantSlug: session.TenantSlug,
+                HandoffCode: handoffCode,
+                HandoffExpiresInSeconds: handoffExpiresInSeconds);
         }
 
         return new AuthLoginResult(tokens, null, null);
@@ -553,6 +580,9 @@ public sealed class AuthService(
         }
 
         Guid tenantId;
+        var requiresTenantHandoff = false;
+        string? resolvedTenantSlug = null;
+
         if (preferredTenantId is not null)
         {
             tenantId = preferredTenantId.Value;
@@ -560,37 +590,74 @@ public sealed class AuthService(
             if (!string.IsNullOrWhiteSpace(host))
             {
                 var hostResolution = await tenantHostResolver.ResolveAsync(host, cancellationToken);
-                if (hostResolution.IsMarketingHost)
-                {
-                    return SessionBinding.Fail(
-                        "tenant_unresolved",
-                        hostResolution.ErrorDetail ?? "Marketing host has no tenant SitePage context.");
-                }
-
-                if (hostResolution.Succeeded
+                if (!hostResolution.IsMarketingHost
+                    && hostResolution.Succeeded
                     && hostResolution.TenantId is not null
                     && hostResolution.TenantId.Value != tenantId)
                 {
                     return SessionBinding.Fail("tenant_mismatch", "Refresh token tenant does not match this Host.");
                 }
+
+                resolvedTenantSlug = hostResolution.Slug;
             }
         }
         else
         {
             var hostResolution = await tenantHostResolver.ResolveAsync(host, cancellationToken);
-            if (!hostResolution.Succeeded || hostResolution.TenantId is null)
+            if (hostResolution.Succeeded && hostResolution.TenantId is not null)
             {
-                return SessionBinding.Fail(
-                    "tenant_unresolved",
-                    hostResolution.ErrorDetail ?? "Could not resolve tenant from Host.");
+                tenantId = hostResolution.TenantId.Value;
+                resolvedTenantSlug = hostResolution.Slug;
             }
+            else
+            {
+                var memberships = await tenantMembershipService.GetActiveMembershipsForUserAsync(
+                    user.Id,
+                    cancellationToken);
 
-            tenantId = hostResolution.TenantId.Value;
+                if (memberships.Count == 0)
+                {
+                    return SessionBinding.Fail(
+                        "tenant_unresolved",
+                        hostResolution.ErrorDetail ?? "Could not resolve tenant from Host.");
+                }
+
+                if (memberships.Count > 1)
+                {
+                    return SessionBinding.Fail("multiple_workspaces", MultipleWorkspacesMessage);
+                }
+
+                tenantId = memberships[0].TenantId;
+                resolvedTenantSlug = memberships[0].TenantSlug;
+                requiresTenantHandoff = hostResolution.IsMarketingHost || !hostResolution.Succeeded;
+            }
         }
 
         var membership = await tenantMembershipService.GetMembershipAsync(user.Id, tenantId, cancellationToken);
         if (membership is null)
         {
+            if (preferredTenantId is null
+                && TenantHostResolver.IsBareLocalDevHost(host))
+            {
+                var memberships = await tenantMembershipService.GetActiveMembershipsForUserAsync(
+                    user.Id,
+                    cancellationToken);
+
+                if (memberships.Count == 1)
+                {
+                    return SessionBinding.ForTenant(
+                        memberships[0].TenantId,
+                        memberships[0].Role,
+                        memberships[0].TenantSlug,
+                        requiresTenantHandoff: true);
+                }
+
+                if (memberships.Count > 1)
+                {
+                    return SessionBinding.Fail("multiple_workspaces", MultipleWorkspacesMessage);
+                }
+            }
+
             if (isPlatformAdmin)
             {
                 return SessionBinding.PlatformOnly();
@@ -605,7 +672,11 @@ public sealed class AuthService(
             return SessionBinding.Fail("no_tenant_membership", HostMembershipMessage);
         }
 
-        return SessionBinding.ForTenant(membership.TenantId, membership.Role);
+        return SessionBinding.ForTenant(
+            membership.TenantId,
+            membership.Role,
+            resolvedTenantSlug,
+            requiresTenantHandoff);
     }
 
     private async Task<string?> EnsureTenantAdminIdentityRoleAsync(
@@ -830,15 +901,21 @@ public sealed class AuthService(
     private sealed record SessionBinding(
         Guid? TenantId,
         TenantMembershipRole? MembershipRole,
+        string? TenantSlug,
+        bool RequiresTenantHandoff,
         string? ErrorCode,
         string? ErrorMessage)
     {
-        public static SessionBinding PlatformOnly() => new(null, null, null, null);
+        public static SessionBinding PlatformOnly() => new(null, null, null, false, null, null);
 
-        public static SessionBinding ForTenant(Guid tenantId, TenantMembershipRole role) =>
-            new(tenantId, role, null, null);
+        public static SessionBinding ForTenant(
+            Guid tenantId,
+            TenantMembershipRole role,
+            string? tenantSlug = null,
+            bool requiresTenantHandoff = false) =>
+            new(tenantId, role, tenantSlug, requiresTenantHandoff, null, null);
 
         public static SessionBinding Fail(string errorCode, string message) =>
-            new(null, null, errorCode, message);
+            new(null, null, null, false, errorCode, message);
     }
 }

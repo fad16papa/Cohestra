@@ -1,5 +1,6 @@
 import type { AuthSession } from "@/lib/auth-storage";
 import { getPublicApiBaseUrl } from "@/lib/api";
+import { buildTenantDashboardUrl } from "@/lib/signup/signup-api";
 
 export async function exchangeAuthHandoff(code: string): Promise<AuthSession | null> {
   const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/handoff/exchange`, {
@@ -30,6 +31,15 @@ export async function exchangeAuthHandoff(code: string): Promise<AuthSession | n
     refreshToken,
     expiresAt: Date.now() + expiresInSeconds * 1000,
   };
+}
+
+export function buildTenantLoginHandoffUrl(
+  tenantSlug: string,
+  handoffCode: string
+): string {
+  const url = new URL(buildTenantDashboardUrl(tenantSlug));
+  url.searchParams.set("handoff", handoffCode);
+  return url.toString();
 }
 
 export function buildCheckoutHandoffUrl(

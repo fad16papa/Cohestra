@@ -215,6 +215,16 @@ public sealed class TenantHostResolver(
         return raw;
     }
 
+    /// <summary>
+    /// Bare localhost / loopback — user typed <c>localhost:8088</c>, not <c>{slug}.localhost</c>.
+    /// Used for email-first login even when <see cref="DevTenantSlugConfigKey"/> remaps Host to a tenant.
+    /// </summary>
+    public static bool IsBareLocalDevHost(string? hostHeader)
+    {
+        var host = NormalizeHost(hostHeader);
+        return host is "localhost" or "127.0.0.1" or "::1";
+    }
+
     private static bool IsLocalDevApexHost(string host) =>
         host is "localhost" or "127.0.0.1" or "::1";
 

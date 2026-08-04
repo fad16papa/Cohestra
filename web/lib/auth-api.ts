@@ -1,4 +1,5 @@
 import { getPublicApiBaseUrl, getServerApiBaseUrl } from "@/lib/api";
+import { buildTenantLoginHandoffUrl } from "@/lib/auth-handoff";
 import { sanitizeClientErrorMessage } from "@/lib/api-error-message";
 import { parseProblemFields } from "@/lib/problem-details";
 import {
@@ -35,6 +36,7 @@ export type OnboardingStatus = {
 
 export type LoginResult =
   | { ok: true; session: AuthSession; profile: AdminProfile }
+  | { ok: true; redirected: true }
   | {
       ok: false;
       message: string;
@@ -243,6 +245,15 @@ export async function loginWithPassword(
     }
 
     const raw = (await response.json()) as Record<string, unknown>;
+    const handoffCode = raw.handoffCode ?? raw.HandoffCode;
+    const tenantSlug = raw.tenantSlug ?? raw.TenantSlug;
+
+    if (typeof handoffCode === "string" && typeof tenantSlug === "string") {
+      clearAuthSession();
+      window.location.assign(buildTenantLoginHandoffUrl(tenantSlug, handoffCode));
+      return { ok: true, redirected: true };
+    }
+
     const session = parseAuthTokenResponse(raw);
     setAuthSession(session);
     const profile = await fetchSessionProfile(session.accessToken);

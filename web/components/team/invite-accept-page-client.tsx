@@ -85,7 +85,14 @@ export function InviteAcceptPageClient() {
 
               const loginResult = await loginWithPassword(result.email, password);
               if (loginResult.ok) {
-                applyProfile(loginResult.profile);
+                if ("redirected" in loginResult && loginResult.redirected) {
+                  return;
+                }
+
+                if ("profile" in loginResult) {
+                  applyProfile(loginResult.profile);
+                }
+
                 window.location.assign(buildTenantDashboardUrl(result.tenantSlug));
                 return;
               }
