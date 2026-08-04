@@ -149,7 +149,6 @@ await OperatorSeeder.SeedAsync(app.Services);
 await PlatformAdminSeeder.SeedAsync(app.Services);
 await SitePageSeeder.SeedAsync(app.Services);
 await DemoDataSeeder.SeedAsync(app.Services);
-await RunLoadTestSeedSafelyAsync(app);
 
 app.UseExceptionHandler();
 app.UseCors();
@@ -189,6 +188,22 @@ if (app.Environment.IsDevelopment())
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     var stoppingToken = app.Lifetime.ApplicationStopping;
+
+    if (app.Configuration.GetValue("LoadTestSeed:Enabled", false))
+    {
+        _ = Task.Run(async () =>
+        {
+            if (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            app.Logger.LogInformation(
+                "Load test seed running in background (API is already up; demo seed on default tenant is ready).");
+            await RunLoadTestSeedSafelyAsync(app);
+        }, stoppingToken);
+    }
+
     _ = Task.Run(async () =>
     {
         if (stoppingToken.IsCancellationRequested)

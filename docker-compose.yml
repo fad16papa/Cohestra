@@ -95,8 +95,8 @@ services:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/ready || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 15s
+      retries: 12
+      start_period: 120s
 
   web:
     build:
