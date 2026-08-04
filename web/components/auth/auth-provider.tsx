@@ -90,8 +90,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    setProfile(result.profile);
-    setStatus("authenticated");
+    if ("redirected" in result && result.redirected) {
+      return true;
+    }
+
+    if ("profile" in result) {
+      setProfile(result.profile);
+      setStatus("authenticated");
+    }
+
     return true;
   }, []);
 

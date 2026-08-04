@@ -123,6 +123,10 @@ export function LoginForm({
       return;
     }
 
+    if (!("profile" in result)) {
+      return;
+    }
+
     if (audience === "platform" && !isPlatformAdminProfile(result.profile)) {
       clearSession();
       setError(

@@ -7,6 +7,7 @@ using Cohestra.Contracts.Auth;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Email;
 using Cohestra.Infrastructure.Identity;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -635,6 +636,28 @@ public sealed class AuthService(
         var membership = await tenantMembershipService.GetMembershipAsync(user.Id, tenantId, cancellationToken);
         if (membership is null)
         {
+            if (preferredTenantId is null
+                && TenantHostResolver.IsBareLocalDevHost(host))
+            {
+                var memberships = await tenantMembershipService.GetActiveMembershipsForUserAsync(
+                    user.Id,
+                    cancellationToken);
+
+                if (memberships.Count == 1)
+                {
+                    return SessionBinding.ForTenant(
+                        memberships[0].TenantId,
+                        memberships[0].Role,
+                        memberships[0].TenantSlug,
+                        requiresTenantHandoff: true);
+                }
+
+                if (memberships.Count > 1)
+                {
+                    return SessionBinding.Fail("multiple_workspaces", MultipleWorkspacesMessage);
+                }
+            }
+
             if (isPlatformAdmin)
             {
                 return SessionBinding.PlatformOnly();

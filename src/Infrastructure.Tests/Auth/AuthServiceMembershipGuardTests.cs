@@ -230,6 +230,30 @@ public sealed class AuthServiceMembershipGuardTests
     }
 
     [Fact]
+    public async Task Login_on_bare_localhost_with_dev_tenant_slug_resolves_other_membership()
+    {
+        await using var harness = await AuthHarness.CreateAsync(devTenantSlug: "default");
+        var otherTenantId = await harness.SeedTenantAsync("load-core-alpha", "Load Core Alpha");
+        var admin = await harness.CreateUserAsync(
+            "load.core.alpha@cohestra.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, otherTenantId, TenantMembershipRole.TenantAdmin);
+
+        var result = await harness.Auth.LoginAsync(
+            "load.core.alpha@cohestra.local",
+            "ChangeMe123!",
+            "localhost");
+
+        Assert.Null(result.Tokens);
+        Assert.Null(result.ErrorCode);
+        Assert.Equal("load-core-alpha", result.TenantSlug);
+        Assert.False(string.IsNullOrWhiteSpace(result.HandoffCode));
+    }
+
+    [Fact]
     public async Task Login_on_marketing_apex_resolves_single_membership_and_returns_handoff()
     {
         await using var harness = await AuthHarness.CreateAsync();
@@ -420,7 +444,9 @@ public sealed class AuthServiceMembershipGuardTests
 
         public InMemoryRefreshTokenStore RefreshTokens { get; }
 
-        public static async Task<AuthHarness> CreateAsync(bool useCountingOtpLimiter = false)
+        public static async Task<AuthHarness> CreateAsync(
+            bool useCountingOtpLimiter = false,
+            string? devTenantSlug = null)
         {
             var services = new ServiceCollection();
             services.AddLogging();
@@ -443,7 +469,16 @@ public sealed class AuthServiceMembershipGuardTests
             services.AddScoped<ITenantMembershipService, TenantMembershipService>();
             services.AddScoped<ITenantHostResolver, TenantHostResolver>();
             services.AddSingleton<ITenantAccessService>(new StubTenantAccessService());
-            services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+            var configurationBuilder = new ConfigurationBuilder();
+            if (!string.IsNullOrWhiteSpace(devTenantSlug))
+            {
+                configurationBuilder.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["DEV_TENANT_SLUG"] = devTenantSlug,
+                });
+            }
+
+            services.AddSingleton<IConfiguration>(configurationBuilder.Build());
             services.AddSingleton<IJwtTokenService>(new StubJwtTokenService());
             var refreshStore = new InMemoryRefreshTokenStore();
             services.AddSingleton<IRefreshTokenStore>(refreshStore);

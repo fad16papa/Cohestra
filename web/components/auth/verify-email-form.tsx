@@ -43,6 +43,10 @@ function VerifyEmailFormContent() {
       return;
     }
 
+    if (!("profile" in result)) {
+      return;
+    }
+
     applyProfile(result.profile);
     router.replace("/dashboard");
   }
