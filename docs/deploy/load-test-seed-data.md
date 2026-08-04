@@ -90,7 +90,7 @@ After logs show `Seeded load test tenant load-core-alpha ...`:
 
 ## Notes
 
-- Login must use the **tenant subdomain** (e.g. `load-core-alpha.localhost`), not bare `localhost:8088`.
+- You can sign in at **http://localhost:8088/login** (email-based workspace resolution) or on a tenant subdomain.
 - `LoadTestSeed__ForceReseed=true` wipes existing `load-*` tenants and recreates them on each API startup.
 - Compatible with `DemoDataSeed__Enabled=true` (demo targets **default** tenant only; load test uses `load-*` tenants).
 - Implementation: `src/Infrastructure/Seed/LoadTestDataSeeder.cs`

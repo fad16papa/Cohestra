@@ -131,7 +131,9 @@ public static class DependencyInjection
 
         services.AddScoped<IRefreshTokenStore, RedisRefreshTokenStore>();
         services.AddScoped<IAuthOtpStore, RedisOtpStore>();
-        services.AddScoped<IAuthHandoffStore, RedisAuthHandoffStore>();
+        services.AddScoped<RedisAuthHandoffStore>();
+        services.AddSingleton<InMemoryAuthHandoffStore>();
+        services.AddScoped<IAuthHandoffStore, ResilientAuthHandoffStore>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ILegalComplianceService, LegalComplianceService>();
