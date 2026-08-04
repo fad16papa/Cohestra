@@ -148,6 +148,7 @@ await OperatorSeeder.SeedAsync(app.Services);
 await PlatformAdminSeeder.SeedAsync(app.Services);
 await SitePageSeeder.SeedAsync(app.Services);
 await DemoDataSeeder.SeedAsync(app.Services);
+await RunLoadTestSeedSafelyAsync(app);
 
 app.UseExceptionHandler();
 app.UseCors();
@@ -270,6 +271,26 @@ static string GetRedisTarget(string connectionString)
 {
     var endpoint = connectionString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[0];
     return string.IsNullOrWhiteSpace(endpoint) ? "unknown" : endpoint;
+}
+
+static async Task RunLoadTestSeedSafelyAsync(WebApplication app)
+{
+    if (!app.Configuration.GetValue("LoadTestSeed:Enabled", false))
+    {
+        return;
+    }
+
+    try
+    {
+        await LoadTestDataSeeder.SeedAsync(app.Services);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(
+            ex,
+            "Load test seed failed. API will continue starting. " +
+            "Check logs for constraint violations, then set LoadTestSeed:ForceReseed=true and restart the API.");
+    }
 }
 
 public partial class Program { }

@@ -41,6 +41,12 @@ public static class ProductionSecurityValidator
                 "OperatorSeed:Enabled must be false in non-Development environments.");
         }
 
+        if (configuration.GetValue("LoadTestSeed:Enabled", false))
+        {
+            throw new InvalidOperationException(
+                "LoadTestSeed:Enabled must be false in non-Development environments.");
+        }
+
         if (configuration.GetValue("DemoDataSeed:Enabled", false))
         {
             throw new InvalidOperationException(
