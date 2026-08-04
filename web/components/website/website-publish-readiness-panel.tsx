@@ -22,7 +22,7 @@ export function WebsitePublishReadinessPanel({
     <section
       id="website-publish-readiness"
       className={cn(
-        "rounded-lg border px-3 py-2.5 sm:px-4 sm:py-3",
+        "rounded-lg border px-3 py-2 sm:px-4",
         hasBlockers
           ? "border-destructive/40 bg-destructive/5"
           : hasIssues
