@@ -129,6 +129,71 @@ public static class LoadTestDataSeeder
             RegistrationsThisMonth: 150),
     ];
 
+    public static async Task BootstrapLoginsAsync(
+        IServiceProvider services,
+        CancellationToken cancellationToken = default)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var settings = scope.ServiceProvider.GetRequiredService<IOptions<LoadTestDataSeedSettings>>().Value;
+        if (!settings.Enabled)
+        {
+            return;
+        }
+
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("LoadTestDataSeeder");
+        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var membershipService = scope.ServiceProvider.GetRequiredService<ITenantMembershipService>();
+
+        await OperatorSeeder.EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
+
+        var password = string.IsNullOrWhiteSpace(settings.Password) ? DefaultPassword : settings.Password;
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var spec in TenantSpecs)
+        {
+            var tenant = await dbContext.Tenants
+                .FirstOrDefaultAsync(t => t.Slug == spec.Slug, cancellationToken);
+
+            if (tenant is null)
+            {
+                tenant = new Tenant
+                {
+                    Id = Guid.CreateVersion7(),
+                    Slug = spec.Slug,
+                    Name = spec.DisplayName,
+                    AdminContactEmail = spec.AdminEmail,
+                    Plan = spec.Plan,
+                    Status = TenantStatus.Active,
+                    BillingStatus = BillingStatus.Free,
+                    IsComplimentary = true,
+                    LegalAcceptedAt = now,
+                    TermsVersion = "2026-load-test",
+                    PrivacyVersion = "2026-load-test",
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                };
+                dbContext.Tenants.Add(tenant);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                logger.LogInformation("Created load-test tenant {Slug} (login bootstrap).", spec.Slug);
+            }
+
+            await EnsureAdminUserAsync(
+                userManager,
+                membershipService,
+                tenant.Id,
+                spec.AdminEmail,
+                password,
+                logger,
+                cancellationToken);
+        }
+
+        logger.LogInformation(
+            "Load-test logins are ready (example: {Email}). Full volume seed continues in background.",
+            TenantSpecs[0].AdminEmail);
+    }
+
     public static async Task SeedAsync(
         IServiceProvider services,
         CancellationToken cancellationToken = default)
@@ -187,8 +252,7 @@ public static class LoadTestDataSeeder
             }
 
             logger.LogWarning(
-                "Load test seed is incomplete (a previous run may have failed). Wiping and re-seeding load-test tenants.");
-            shouldReseed = true;
+                "Load test seed is incomplete (a previous run may have failed). Continuing data seed without wipe.");
         }
 
         if (shouldReseed && existingSlugs.Count > 0)
@@ -210,26 +274,36 @@ public static class LoadTestDataSeeder
 
         foreach (var spec in TenantSpecs)
         {
-            var tenantId = Guid.CreateVersion7();
-            dbContext.Tenants.Add(new Tenant
-            {
-                Id = tenantId,
-                Slug = spec.Slug,
-                Name = spec.DisplayName,
-                AdminContactEmail = spec.AdminEmail,
-                Plan = spec.Plan,
-                Status = TenantStatus.Active,
-                BillingStatus = BillingStatus.Free,
-                IsComplimentary = true,
-                LegalAcceptedAt = now,
-                TermsVersion = "2026-load-test",
-                PrivacyVersion = "2026-load-test",
-                CreatedAt = now,
-                UpdatedAt = now,
-            });
+            var tenant = await dbContext.Tenants
+                .FirstOrDefaultAsync(t => t.Slug == spec.Slug, cancellationToken);
 
-            // Membership service checks the database — tenant must exist before linking admin users.
-            await dbContext.SaveChangesAsync(cancellationToken);
+            Guid tenantId;
+            if (tenant is null)
+            {
+                tenantId = Guid.CreateVersion7();
+                dbContext.Tenants.Add(new Tenant
+                {
+                    Id = tenantId,
+                    Slug = spec.Slug,
+                    Name = spec.DisplayName,
+                    AdminContactEmail = spec.AdminEmail,
+                    Plan = spec.Plan,
+                    Status = TenantStatus.Active,
+                    BillingStatus = BillingStatus.Free,
+                    IsComplimentary = true,
+                    LegalAcceptedAt = now,
+                    TermsVersion = "2026-load-test",
+                    PrivacyVersion = "2026-load-test",
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                });
+
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+            else
+            {
+                tenantId = tenant.Id;
+            }
 
             await EnsureAdminUserAsync(
                 userManager,
@@ -239,6 +313,18 @@ public static class LoadTestDataSeeder
                 password,
                 logger,
                 cancellationToken);
+
+            var expectedActivities =
+                spec.PublishedActivities + spec.DraftActivities + spec.ArchivedActivities;
+            var existingActivities = await dbContext.Activities
+                .CountAsync(a => a.TenantId == tenantId, cancellationToken);
+            if (existingActivities >= expectedActivities)
+            {
+                logger.LogInformation(
+                    "Skipping load test data seed for {Slug} — activities already present.",
+                    spec.Slug);
+                continue;
+            }
 
             SeedTenantContext.BindTenant(scope.ServiceProvider, tenantId, spec.Slug);
 

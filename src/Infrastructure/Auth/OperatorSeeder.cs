@@ -46,18 +46,31 @@ public static class OperatorSeeder
         ILogger logger,
         CancellationToken cancellationToken)
     {
-        var admins = await userManager.GetUsersInRoleAsync(TenantAdminRole);
-        if (admins.Count > 0)
-        {
-            logger.LogInformation(
-                "Operator user seed skipped — workspace already has {Count} tenant admin account(s).",
-                admins.Count);
-            return;
-        }
-
         var existingUser = await userManager.FindByEmailAsync(seedSettings.Email);
         if (existingUser is not null)
         {
+            if (!existingUser.EmailConfirmed)
+            {
+                existingUser.EmailConfirmed = true;
+                await userManager.UpdateAsync(existingUser);
+            }
+
+            if (!await userManager.CheckPasswordAsync(existingUser, seedSettings.Password))
+            {
+                var resetToken = await userManager.GeneratePasswordResetTokenAsync(existingUser);
+                var resetResult = await userManager.ResetPasswordAsync(
+                    existingUser,
+                    resetToken,
+                    seedSettings.Password);
+                if (!resetResult.Succeeded)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to reset operator password: {string.Join(", ", resetResult.Errors.Select(e => e.Description))}");
+                }
+
+                logger.LogInformation("Reset password for operator account {Email}.", seedSettings.Email);
+            }
+
             if (await userManager.IsInRoleAsync(existingUser, TenantAdminRole))
             {
                 return;

@@ -2,11 +2,13 @@ using Cohestra.Api.Health;
 using Cohestra.Api.Infrastructure;
 using Cohestra.Infrastructure;
 using Cohestra.Infrastructure.Auth;
+using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Seed;
 using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -150,6 +152,13 @@ await PlatformAdminSeeder.SeedAsync(app.Services);
 await SitePageSeeder.SeedAsync(app.Services);
 await DemoDataSeeder.SeedAsync(app.Services);
 
+if (app.Configuration.GetValue("LoadTestSeed:Enabled", false))
+{
+    await LoadTestDataSeeder.BootstrapLoginsAsync(app.Services);
+}
+
+await LogStartupLoginAccountsAsync(app);
+
 app.UseExceptionHandler();
 app.UseCors();
 app.UseStatusCodePages(async statusCodeContext =>
@@ -292,14 +301,41 @@ static string GetRedisTarget(string connectionString)
 static void LogStartupSeedConfiguration(WebApplication app)
 {
     var config = app.Configuration;
+    var devTenantSlug = config["DEV_TENANT_SLUG"] ?? config.GetSection("Tenancy")["DevTenantSlug"] ?? "(not set — bare localhost uses email login + handoff)";
     app.Logger.LogInformation(
-        "Startup seed flags — OperatorSeed:Enabled={OperatorEnabled}, DemoDataSeed:Enabled={DemoEnabled}, " +
-        "LoadTestSeed:Enabled={LoadTestEnabled}, LoadTestSeed:ForceReseed={LoadTestForceReseed}. " +
-        "After changing .env, recreate the API container: docker compose up -d --force-recreate api",
+        "Startup seed flags — DEV_TENANT_SLUG={DevTenantSlug}, OperatorSeed:Enabled={OperatorEnabled}, " +
+        "DemoDataSeed:Enabled={DemoEnabled}, LoadTestSeed:Enabled={LoadTestEnabled}, LoadTestSeed:ForceReseed={LoadTestForceReseed}. " +
+        "After changing .env, recreate the API container: docker compose build api --no-cache && docker compose up -d --force-recreate api web",
+        devTenantSlug,
         config.GetValue("OperatorSeed:Enabled", false),
         config.GetValue("DemoDataSeed:Enabled", false),
         config.GetValue("LoadTestSeed:Enabled", false),
         config.GetValue("LoadTestSeed:ForceReseed", false));
+}
+
+static async Task LogStartupLoginAccountsAsync(WebApplication app)
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var operatorEmail = app.Configuration["OperatorSeed:Email"] ?? "operator@cohestra.local";
+    var loadTestPassword = app.Configuration["LoadTestSeed:Password"] ?? LoadTestDataSeeder.DefaultPassword;
+
+    var operatorUser = await userManager.FindByEmailAsync(operatorEmail);
+    app.Logger.LogInformation(
+        "Login readiness — operator {Email}: {Status}",
+        operatorEmail,
+        operatorUser?.EmailConfirmed == true ? "ready" : "missing (set OperatorSeed__Enabled=true and recreate api)");
+
+    if (app.Configuration.GetValue("LoadTestSeed:Enabled", false))
+    {
+        var loadTestEmail = "load.core.alpha@cohestra.local";
+        var loadTestUser = await userManager.FindByEmailAsync(loadTestEmail);
+        app.Logger.LogInformation(
+            "Login readiness — load test {Email}: {Status} (password from LoadTestSeed__Password, default {DefaultPassword})",
+            loadTestEmail,
+            loadTestUser?.EmailConfirmed == true ? "ready" : "still seeding — wait for background seed or check logs",
+            LoadTestDataSeeder.DefaultPassword);
+    }
 }
 
 static async Task RunLoadTestSeedSafelyAsync(WebApplication app)

@@ -39,7 +39,7 @@ services:
       - campaign_assets_data:/app/data/campaign-assets
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      DEV_TENANT_SLUG: ${DEV_TENANT_SLUG:-}
+      DEV_TENANT_SLUG: ${DEV_TENANT_SLUG:-default}
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-cohestra};Username=${POSTGRES_USER:-crm};Password=${POSTGRES_PASSWORD:-crm}
       ConnectionStrings__Redis: redis:6379
       Jwt__SigningKey: dev-compose-jwt-signing-key-min-32-chars!!
@@ -119,7 +119,7 @@ services:
     environment:
       NODE_ENV: production
       API_URL: http://api:8080
-      DEV_TENANT_SLUG: ${DEV_TENANT_SLUG:-}
+      DEV_TENANT_SLUG: ${DEV_TENANT_SLUG:-default}
     depends_on:
       api:
         condition: service_healthy
