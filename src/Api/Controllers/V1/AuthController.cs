@@ -3,6 +3,7 @@ using Cohestra.Application.Auth;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Auth;
 using Cohestra.Infrastructure.Auth;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -73,7 +74,7 @@ public class AuthController(
         var clientIp = PublicRegistrationRateLimitMiddleware.ResolveClientIdentifier(HttpContext);
         var (tokens, error, errorCode) = await authService.VerifyEmailAsync(
             request,
-            Request.Host.Value,
+            TenantRequestHost.GetEffectiveHost(HttpContext),
             clientIp,
             cancellationToken);
         if (tokens is null)
@@ -179,7 +180,7 @@ public class AuthController(
         var result = await authService.LoginAsync(
             request.Email,
             request.Password,
-            Request.Host.Value,
+            TenantRequestHost.GetEffectiveHost(HttpContext),
             cancellationToken);
         if (result.Tokens is null)
         {
@@ -190,6 +191,12 @@ public class AuthController(
                     result.TenantSlug,
                     result.HandoffCode,
                     result.HandoffExpiresInSeconds ?? 120));
+            }
+
+            if (string.Equals(result.ErrorCode, "service_unavailable", StringComparison.Ordinal))
+            {
+                return ServiceUnavailableProblem(
+                    result.ErrorMessage ?? "Sign-in is temporarily unavailable. Try again shortly.");
             }
 
             return UnauthorizedProblem(
@@ -215,7 +222,7 @@ public class AuthController(
 
         var result = await authService.RefreshAsync(
             request.RefreshToken,
-            Request.Host.Value,
+            TenantRequestHost.GetEffectiveHost(HttpContext),
             cancellationToken);
         if (result.Tokens is null)
         {
@@ -329,6 +336,22 @@ public class AuthController(
         }
 
         return Unauthorized(problem);
+    }
+
+    private ObjectResult ServiceUnavailableProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status503ServiceUnavailable,
+            Title = "Service Unavailable",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        };
+        problem.Extensions["errorCode"] = "service_unavailable";
+
+        return StatusCode(StatusCodes.Status503ServiceUnavailable, problem);
     }
 
     private BadRequestObjectResult BadRequestProblem(string detail)

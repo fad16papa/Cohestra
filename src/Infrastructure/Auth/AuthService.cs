@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 
 namespace Cohestra.Infrastructure.Auth;
 
@@ -121,6 +122,28 @@ public sealed class AuthService(
             return new AuthLoginResult(null, session.ErrorCode, session.ErrorMessage);
         }
 
+        AuthLoginResult sessionResult;
+        try
+        {
+            sessionResult = await CompleteLoginSessionAsync(user, session, cancellationToken);
+        }
+        catch (Exception ex) when (IsAuthPersistenceFailure(ex))
+        {
+            logger.LogError(ex, "Login session persistence failed for {Email}", user.Email);
+            return new AuthLoginResult(
+                null,
+                "service_unavailable",
+                "Sign-in is temporarily unavailable. Ensure Redis is running, then try again.");
+        }
+
+        return sessionResult;
+    }
+
+    private async Task<AuthLoginResult> CompleteLoginSessionAsync(
+        ApplicationUser user,
+        SessionBinding session,
+        CancellationToken cancellationToken)
+    {
         var tokens = await IssueTokensAsync(
             user,
             session.TenantId,
@@ -129,7 +152,14 @@ public sealed class AuthService(
 
         if (session.TenantId is Guid tenantId)
         {
-            await tenantAccessService.TouchActivityAsync(tenantId, cancellationToken);
+            try
+            {
+                await tenantAccessService.TouchActivityAsync(tenantId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "TouchActivity failed during login for tenant {TenantId}", tenantId);
+            }
         }
 
         if (session.RequiresTenantHandoff
@@ -860,6 +890,12 @@ public sealed class AuthService(
         var min = max / 10;
         return RandomNumberGenerator.GetInt32(min, max).ToString();
     }
+
+    private static bool IsAuthPersistenceFailure(Exception exception) =>
+        exception is RedisException
+        or RedisConnectionException
+        or RedisTimeoutException
+        or TimeoutException;
 
     private static AuthLoginResult InvalidCredentials() =>
         new(null, "invalid_credentials", "Invalid email or password.");
