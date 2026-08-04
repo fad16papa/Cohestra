@@ -95,8 +95,11 @@ public static class DemoDataSeeder
     {
         if (!settings.Enabled)
         {
+            logger.LogInformation("Demo data seed skipped (DemoDataSeed:Enabled=false).");
             return;
         }
+
+        logger.LogInformation("Demo data seed starting — wipes business data and reseeds default tenant.");
 
         var communityCount = Math.Clamp(settings.CommunityCount, 1, CommunityNames.Length);
         var activitiesPerCommunity = Math.Max(1, settings.ActivitiesPerCommunity);

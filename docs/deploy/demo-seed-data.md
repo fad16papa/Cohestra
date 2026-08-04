@@ -59,8 +59,23 @@ On every API startup the seeder **wipes business data** (clients, registrations,
 | `IncludeCampaigns` | true | Template + sent campaign |
 | `PromoteDefaultTenantToPro` | true | Plan-gated admin features |
 
-## Rebuild after pull
+## Rebuild after pull or .env change
+
+Changing seed flags in `.env` does **not** update a running API container. Recreate it:
 
 ```bash
-docker compose up -d --build --force-recreate api
+docker compose build api --no-cache   # after git pull with seeder changes
+docker compose up -d --force-recreate api
+docker compose logs api | grep -i seed
 ```
+
+## Where demo data appears
+
+Demo seed targets the **default** tenant only — not `creativorare`:
+
+| Surface | URL |
+|---------|-----|
+| Login | `http://default.localhost:8088/login` |
+| Clients | `http://default.localhost:8088/clients` |
+
+Load test seed uses `load-*` subdomains — see `.env.local-docker.example` hosts list.
