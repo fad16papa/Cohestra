@@ -103,6 +103,10 @@ export function LoginForm({
     const result = await loginWithPassword(email.trim(), password);
     setIsSubmitting(false);
 
+    if (result.ok && "redirected" in result && result.redirected) {
+      return;
+    }
+
     if (!result.ok) {
       const isUnverified =
         result.errorCode === "email_not_verified"

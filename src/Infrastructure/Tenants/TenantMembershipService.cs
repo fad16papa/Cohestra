@@ -24,6 +24,28 @@ public sealed class TenantMembershipService(CohestraDbContext dbContext) : ITena
     public Task<int> CountMembershipsForUserAsync(Guid userId, CancellationToken cancellationToken = default) =>
         dbContext.TenantMemberships.CountAsync(m => m.UserId == userId, cancellationToken);
 
+    public async Task<IReadOnlyList<UserTenantMembership>> GetActiveMembershipsForUserAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var memberships = await dbContext.TenantMemberships
+            .AsNoTracking()
+            .Where(m => m.UserId == userId)
+            .Join(
+                dbContext.Tenants.AsNoTracking().Where(t => t.Status == TenantStatus.Active),
+                membership => membership.TenantId,
+                tenant => tenant.Id,
+                (membership, tenant) => new UserTenantMembership(
+                    membership.TenantId,
+                    tenant.Slug,
+                    membership.Role))
+            .OrderByDescending(m => m.Role == TenantMembershipRole.TenantAdmin)
+            .ThenBy(m => m.TenantSlug)
+            .ToListAsync(cancellationToken);
+
+        return memberships;
+    }
+
     public Task<TenantMembership?> GetMembershipAsync(
         Guid userId,
         Guid tenantId,

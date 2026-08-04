@@ -230,6 +230,74 @@ public sealed class AuthServiceMembershipGuardTests
     }
 
     [Fact]
+    public async Task Login_on_marketing_apex_resolves_single_membership_and_returns_handoff()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var otherTenantId = await harness.SeedTenantAsync("load-core-alpha", "Load Core Alpha");
+        var admin = await harness.CreateUserAsync(
+            "load.core.alpha@cohestra.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, otherTenantId, TenantMembershipRole.TenantAdmin);
+
+        var result = await harness.Auth.LoginAsync(
+            "load.core.alpha@cohestra.local",
+            "ChangeMe123!",
+            "localhost");
+
+        Assert.Null(result.Tokens);
+        Assert.Null(result.ErrorCode);
+        Assert.Equal("load-core-alpha", result.TenantSlug);
+        Assert.False(string.IsNullOrWhiteSpace(result.HandoffCode));
+        Assert.True(result.HandoffExpiresInSeconds > 0);
+    }
+
+    [Fact]
+    public async Task Login_on_marketing_apex_fails_when_user_has_multiple_workspaces()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var otherTenantId = await harness.SeedTenantAsync("other", "Other");
+        var admin = await harness.CreateUserAsync(
+            "admin@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, otherTenantId, TenantMembershipRole.TenantAdmin);
+
+        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+
+        Assert.Null(result.Tokens);
+        Assert.Equal("multiple_workspaces", result.ErrorCode);
+        Assert.Contains("multiple workspaces", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Login_on_marketing_apex_allows_user_with_other_tenant_membership_only()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var otherTenantId = await harness.SeedTenantAsync("other", "Other");
+        var admin = await harness.CreateUserAsync(
+            "admin@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, otherTenantId, TenantMembershipRole.TenantAdmin);
+
+        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+
+        Assert.Null(result.Tokens);
+        Assert.Null(result.ErrorCode);
+        Assert.Equal("other", result.TenantSlug);
+        Assert.False(string.IsNullOrWhiteSpace(result.HandoffCode));
+    }
+
+    [Fact]
     public async Task Login_binds_tenant_id_from_host_membership()
     {
         await using var harness = await AuthHarness.CreateAsync();
@@ -311,7 +379,7 @@ public sealed class AuthServiceMembershipGuardTests
     }
 
     [Fact]
-    public async Task Refresh_denies_on_marketing_apex_host()
+    public async Task Refresh_allows_marketing_apex_host_when_stored_tenant_matches_membership()
     {
         await using var harness = await AuthHarness.CreateAsync();
         var admin = await harness.CreateUserAsync(
@@ -326,8 +394,8 @@ public sealed class AuthServiceMembershipGuardTests
         Assert.NotNull(login.Tokens);
 
         var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "cohestra.app");
-        Assert.Null(refreshed.Tokens);
-        Assert.Equal("tenant_unresolved", refreshed.ErrorCode);
+        Assert.NotNull(refreshed.Tokens);
+        Assert.Contains(TenantIds.Default.ToString(), refreshed.Tokens!.AccessToken, StringComparison.Ordinal);
     }
 
     private sealed class AuthHarness : IAsyncDisposable
@@ -391,6 +459,7 @@ public sealed class AuthServiceMembershipGuardTests
                 services.AddSingleton<IAuthOtpVerifyRateLimiter>(new NoOpAuthOtpVerifyRateLimiter());
             }
             services.AddSingleton<IEmailSender>(new StubEmailSender());
+            services.AddSingleton<IAuthHandoffStore>(new InMemoryAuthHandoffStore());
             services.AddSingleton<IHostEnvironment>(new StubHostEnvironment());
             services.AddSingleton(Options.Create(new JwtSettings
             {
@@ -680,5 +749,22 @@ public sealed class AuthServiceMembershipGuardTests
         public string ContentRootPath { get; set; } = "/tmp";
         public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; } =
             new Microsoft.Extensions.FileProviders.NullFileProvider();
+    }
+
+    private sealed class InMemoryAuthHandoffStore : IAuthHandoffStore
+    {
+        public Task<(string Code, int ExpiresInSeconds)> CreateAsync(
+            AuthHandoffPayload payload,
+            CancellationToken cancellationToken = default)
+        {
+            var code = Guid.NewGuid().ToString("N");
+            return Task.FromResult((code, 120));
+        }
+
+        public Task<AuthHandoffPayload?> ExchangeAsync(
+            string code,
+            Guid expectedTenantId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<AuthHandoffPayload?>(null);
     }
 }

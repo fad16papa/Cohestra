@@ -44,6 +44,8 @@ Use port **8088** when `NGINX_HTTP_PORT=8088` in `.env` (local-docker example).
 
 Default password: **`LoadTest123!`** (override with `LoadTestSeed__Password` in `.env`).
 
+You can sign in at the **default URL** `http://localhost:8088/login` using any load-test email below — the app resolves your workspace from your account and redirects to the correct tenant dashboard. Tenant-specific URLs still work if you prefer them.
+
 | Plan | Tenant | Login URL | Email |
 |------|--------|-----------|-------|
 | **Core** | Load Test Core Alpha | http://load-core-alpha.localhost:8088/login | load.core.alpha@cohestra.local |
