@@ -98,6 +98,10 @@ Seeds a **production-like scenario matrix** — not a 6,000-row cross product:
 
 See [docs/deploy/demo-seed-data.md](docs/deploy/demo-seed-data.md) for the full persona/activity list.
 
+### Load test seed (Development)
+
+Five workspaces (2 Core, 2 Pro, 1 Basic) with realistic activity and registration volumes for performance UAT. Set `LoadTestSeed__Enabled=true` in `.env`. See [docs/deploy/load-test-seed-data.md](docs/deploy/load-test-seed-data.md) for credentials and volumes.
+
 Enabled by default in `appsettings.Development.json`. For Docker, set `DemoDataSeed__Enabled=true` in `.env`. **Must be `false` in production** (enforced at startup).
 
 Example login:
