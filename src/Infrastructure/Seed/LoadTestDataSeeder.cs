@@ -143,6 +143,10 @@ public static class LoadTestDataSeeder
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("LoadTestDataSeeder");
 
+        logger.LogInformation(
+            "Load test seed starting (5 tenants — may take several minutes on first run). ForceReseed={ForceReseed}.",
+            settings.ForceReseed);
+
         var existingSlugs = await dbContext.Tenants
             .AsNoTracking()
             .Where(t => TenantSpecs.Select(s => s.Slug).Contains(t.Slug))

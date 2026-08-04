@@ -144,6 +144,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 });
 
 await ApplyMigrationsAsync(app);
+LogStartupSeedConfiguration(app);
 await OperatorSeeder.SeedAsync(app.Services);
 await PlatformAdminSeeder.SeedAsync(app.Services);
 await SitePageSeeder.SeedAsync(app.Services);
@@ -271,6 +272,19 @@ static string GetRedisTarget(string connectionString)
 {
     var endpoint = connectionString.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[0];
     return string.IsNullOrWhiteSpace(endpoint) ? "unknown" : endpoint;
+}
+
+static void LogStartupSeedConfiguration(WebApplication app)
+{
+    var config = app.Configuration;
+    app.Logger.LogInformation(
+        "Startup seed flags — OperatorSeed:Enabled={OperatorEnabled}, DemoDataSeed:Enabled={DemoEnabled}, " +
+        "LoadTestSeed:Enabled={LoadTestEnabled}, LoadTestSeed:ForceReseed={LoadTestForceReseed}. " +
+        "After changing .env, recreate the API container: docker compose up -d --force-recreate api",
+        config.GetValue("OperatorSeed:Enabled", false),
+        config.GetValue("DemoDataSeed:Enabled", false),
+        config.GetValue("LoadTestSeed:Enabled", false),
+        config.GetValue("LoadTestSeed:ForceReseed", false));
 }
 
 static async Task RunLoadTestSeedSafelyAsync(WebApplication app)
