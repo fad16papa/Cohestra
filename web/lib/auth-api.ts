@@ -221,6 +221,33 @@ export function getRolesFromAccessToken(accessToken: string): string[] {
   }
 }
 
+function decodeAccessTokenSubject(accessToken: string): string | null {
+  try {
+    const segment = accessToken.split(".")[1];
+    if (!segment) {
+      return null;
+    }
+    const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
+    const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
+    const sub = payload.sub ?? payload.Sub;
+    return typeof sub === "string" ? sub : null;
+  } catch {
+    return null;
+  }
+}
+
+function buildProfileFromAccessToken(accessToken: string, email: string): AdminProfile {
+  return {
+    userId: decodeAccessTokenSubject(accessToken) ?? "unknown",
+    email,
+    nickname: null,
+    roles: getRolesFromAccessToken(accessToken),
+    themePreference: "system",
+    brandAccentColor: null,
+  };
+}
+
 export async function loginWithPassword(
   email: string,
   password: string
@@ -256,7 +283,12 @@ export async function loginWithPassword(
 
     const session = parseAuthTokenResponse(raw);
     setAuthSession(session);
-    const profile = await fetchSessionProfile(session.accessToken);
+    let profile: AdminProfile;
+    try {
+      profile = await fetchSessionProfile(session.accessToken);
+    } catch {
+      profile = buildProfileFromAccessToken(session.accessToken, email.trim());
+    }
     return { ok: true, session, profile };
   } catch (error) {
     clearAuthSession();
