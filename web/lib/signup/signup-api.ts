@@ -1,4 +1,5 @@
 import { getPublicApiBaseUrl } from "@/lib/api";
+import { sanitizeClientErrorMessage } from "@/lib/api-error-message";
 
 export type SlugAvailability = {
   available: boolean;
@@ -15,21 +16,33 @@ export type PublicSignupResult = {
 };
 
 export type SignupVerifyResult = {
-  accessToken: string;
-  refreshToken: string;
-  expiresInSeconds: number;
   tenantSlug: string;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresInSeconds?: number;
+  handoffCode?: string;
+  handoffExpiresInSeconds?: number;
 };
 
-function parseProblem(raw: Record<string, unknown>): string {
+function parseProblem(raw: Record<string, unknown>, status?: number): string {
   const detail = raw.detail ?? raw.Detail;
   const title = raw.title ?? raw.Title;
+  const extensions = raw.extensions ?? raw.Extensions;
+  let errorCode: string | undefined;
+
+  if (extensions && typeof extensions === "object") {
+    const code = (extensions as Record<string, unknown>).errorCode;
+    if (typeof code === "string") {
+      errorCode = code;
+    }
+  }
+
   if (typeof detail === "string" && detail.length > 0) {
-    return detail;
+    return sanitizeClientErrorMessage(detail, status, errorCode);
   }
 
   if (typeof title === "string") {
-    return title;
+    return sanitizeClientErrorMessage(title, status, errorCode);
   }
 
   return "Request failed.";
@@ -150,6 +163,7 @@ export async function verifySignupEmail(payload: {
   email: string;
   code: string;
   tenantSlug: string;
+  forCheckout?: boolean;
 }): Promise<{ ok: true; result: SignupVerifyResult } | { ok: false; message: string }> {
   const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/public/signup/verify-email`, {
     method: "POST",
@@ -158,6 +172,7 @@ export async function verifySignupEmail(payload: {
       email: payload.email,
       code: payload.code,
       tenantSlug: payload.tenantSlug,
+      forCheckout: payload.forCheckout === true,
     }),
   });
 
@@ -167,26 +182,41 @@ export async function verifySignupEmail(payload: {
     return { ok: false, message: parseProblem(raw) };
   }
 
+  const tenantSlug = raw.tenantSlug ?? raw.TenantSlug;
+  if (typeof tenantSlug !== "string") {
+    return { ok: false, message: "Invalid verification response." };
+  }
+
+  const handoffCode = raw.handoffCode ?? raw.HandoffCode;
+  const handoffExpiresInSeconds = raw.handoffExpiresInSeconds ?? raw.HandoffExpiresInSeconds;
+
+  if (typeof handoffCode === "string" && handoffCode.length > 0) {
+    return {
+      ok: true,
+      result: {
+        tenantSlug,
+        handoffCode,
+        handoffExpiresInSeconds:
+          typeof handoffExpiresInSeconds === "number" ? handoffExpiresInSeconds : 120,
+      },
+    };
+  }
+
   const accessToken = raw.accessToken ?? raw.AccessToken;
   const refreshToken = raw.refreshToken ?? raw.RefreshToken;
   const expiresInSeconds = raw.expiresInSeconds ?? raw.ExpiresInSeconds;
-  const tenantSlug = raw.tenantSlug ?? raw.TenantSlug;
 
-  if (
-    typeof accessToken !== "string"
-    || typeof refreshToken !== "string"
-    || typeof tenantSlug !== "string"
-  ) {
+  if (typeof accessToken !== "string" || typeof refreshToken !== "string") {
     return { ok: false, message: "Invalid verification response." };
   }
 
   return {
     ok: true,
     result: {
+      tenantSlug,
       accessToken,
       refreshToken,
       expiresInSeconds: typeof expiresInSeconds === "number" ? expiresInSeconds : 900,
-      tenantSlug,
     },
   };
 }
@@ -206,7 +236,7 @@ export async function resendSignupOtp(payload: {
 
   const raw = (await response.json()) as Record<string, unknown>;
   if (!response.ok) {
-    throw new Error(parseProblem(raw));
+    throw new Error(parseProblem(raw, response.status));
   }
 
   const message = raw.message ?? raw.Message;

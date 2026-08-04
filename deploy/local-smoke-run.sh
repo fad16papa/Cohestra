@@ -26,7 +26,7 @@ else
   fail "API /ready unhealthy"
 fi
 
-# 2. Public door
+# 2. Public door (tenant host)
 DOOR=$(curl_api "${API}/api/v1/public/door" || true)
 if echo "$DOOR" | grep -q '"kind":"active"'; then
   pass "Public door active for ${TENANT_HOST}"
@@ -35,6 +35,14 @@ if echo "$DOOR" | grep -q '"kind":"active"'; then
   echo "   plan=${PLAN} slug=${SLUG}"
 else
   fail "Public door not active: ${DOOR}"
+fi
+
+# 2b. Marketing apex on bare localhost (local landing page UAT)
+MARKETING_DOOR=$(curl -sS -H "Host: localhost:8088" "${API}/api/v1/public/door" || true)
+if echo "$MARKETING_DOOR" | grep -q '"kind":"marketing"'; then
+  pass "Public door marketing for localhost:8088"
+else
+  fail "Bare localhost should return marketing door (rebuild api): ${MARKETING_DOOR}"
 fi
 
 # 3. Public site
@@ -162,6 +170,22 @@ if echo "$CREATIVORARE" | grep -q '"kind":"active"'; then
   pass "creativorare tenant door active"
 else
   skip "creativorare tenant not in this DB (${CREATIVORARE:0:120})"
+fi
+
+# 14. Enterprise apex — marketing /pricing (optional; set PUBLIC_BASE_URL e.g. http://localhost:8088)
+if [[ -n "${PUBLIC_BASE_URL:-}" ]]; then
+  APEX_HOST="${APEX_HOST:-cohestra.app}"
+  PUBLIC_PORT=$(python3 -c "from urllib.parse import urlparse; u=urlparse('${PUBLIC_BASE_URL}'); print(u.port or (443 if u.scheme=='https' else 80))")
+  PRICING_CODE=$(curl -sS -o /dev/null -w "%{http_code}" \
+    -H "Host: ${APEX_HOST}:${PUBLIC_PORT}" \
+    "${PUBLIC_BASE_URL%/}/pricing" || true)
+  if [[ "$PRICING_CODE" == "200" ]]; then
+    pass "Apex /pricing returns 200 (${APEX_HOST} host)"
+  else
+    fail "Apex /pricing returned ${PRICING_CODE} — add 127.0.0.1 ${APEX_HOST} to hosts"
+  fi
+else
+  skip "PUBLIC_BASE_URL unset — apex /pricing check skipped"
 fi
 
 echo ""

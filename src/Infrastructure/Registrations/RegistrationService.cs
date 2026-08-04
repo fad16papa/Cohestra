@@ -1,7 +1,9 @@
+using Cohestra.Application.Activities;
 using Cohestra.Application.Registrations;
 using Cohestra.Application.Tenants;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Registrations;
+using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,6 +16,7 @@ public sealed class RegistrationService(
     ClientDeduplicationService clientDeduplicationService,
     RegistrationNumberGenerator registrationNumberGenerator,
     IRegistrationNotificationService registrationNotificationService,
+    IActivityService activityService,
     ICurrentTenant currentTenant,
     ILogger<RegistrationService> logger) : IRegistrationService
 {
@@ -248,6 +251,32 @@ public sealed class RegistrationService(
                 client.Id);
         }
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"""SELECT "Id" FROM public.activities WHERE "Id" = {activity.Id} FOR UPDATE""",
+            cancellationToken);
+
+        var lockedActivity = await dbContext.Activities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == activity.Id, cancellationToken);
+
+        if (lockedActivity is null || lockedActivity.Status != ActivityStatus.Published)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return PublicRegistrationSubmitResult.NotFound();
+        }
+
+        var registrationCount = await dbContext.Registrations
+            .CountAsync(registration => registration.ActivityId == activity.Id, cancellationToken);
+
+        if (ActivityCapacityValidator.IsRegistrationFull(lockedActivity.MaxRegistrants, registrationCount))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            await RefreshPublicActivityCacheBestEffortAsync(tenantId, normalizedSlug, cancellationToken);
+            return PublicRegistrationSubmitResult.ActivityFull();
+        }
+
         var registrationNumber = await registrationNumberGenerator.GenerateNextAsync(now, cancellationToken);
 
         var registration = new Registration
@@ -266,9 +295,12 @@ public sealed class RegistrationService(
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
         }
         catch (DbUpdateException)
         {
+            await transaction.RollbackAsync(cancellationToken);
+
             var duplicateRegistration = await dbContext.Registrations
                 .AsNoTracking()
                 .FirstOrDefaultAsync(
@@ -288,10 +320,33 @@ public sealed class RegistrationService(
             throw;
         }
 
+        await RefreshPublicActivityCacheBestEffortAsync(tenantId, normalizedSlug, cancellationToken);
+
         return PublicRegistrationSubmitResult.Created(
             registration.Id,
             registration.RegistrationNumber,
             client.Id,
             clientCreated);
+    }
+
+    private async Task RefreshPublicActivityCacheBestEffortAsync(
+        Guid tenantId,
+        string activitySlug,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await activityService.RefreshPublicActivityCacheBySlugAsync(
+                tenantId,
+                activitySlug,
+                cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(
+                ex,
+                "Public activity cache refresh failed for slug {ActivitySlug}.",
+                activitySlug);
+        }
     }
 }

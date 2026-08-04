@@ -32,6 +32,24 @@ public sealed class TenantMembershipService(CohestraDbContext dbContext) : ITena
             m => m.UserId == userId && m.TenantId == tenantId,
             cancellationToken);
 
+    public async Task<string?> GetPendingVerificationTenantSlugAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var adminSlugs = await dbContext.TenantMemberships
+            .AsNoTracking()
+            .Where(m => m.UserId == userId && m.Role == TenantMembershipRole.TenantAdmin)
+            .Join(
+                dbContext.Tenants.AsNoTracking(),
+                membership => membership.TenantId,
+                tenant => tenant.Id,
+                (_, tenant) => tenant.Slug)
+            .ToListAsync(cancellationToken);
+
+        return adminSlugs.FirstOrDefault(slug =>
+            !string.Equals(slug, TenantIds.DefaultSlug, StringComparison.OrdinalIgnoreCase));
+    }
+
     public async Task<TenantMembershipResult> EnsureMembershipAsync(
         Guid userId,
         Guid tenantId,

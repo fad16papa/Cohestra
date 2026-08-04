@@ -1,11 +1,11 @@
 # generated: 2026-06-16
-# last_updated: 2026-07-29T12:15:00Z
+# last_updated: 2026-08-04T13:30:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–15 active; 16 parked)
-# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–16)
+# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–19) + Epic 20 activity capacity + Epic 21 Viber touch-base
+# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–21)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -40,11 +40,11 @@
 # - Stories can be worked in parallel if team capacity allows
 # - Developer typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
-# - Enterprise next story: 11-1 via bmad-create-story (CS)
-# - Epic 16 is parked (One-stop Lite / UX-DR15) — no v1 stories until pulled forward
+# - Enterprise delivery complete (Epics 11–16 v1); enterprise-launch-checklist done; Epic 17 P1 hardening in progress
+# - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-07-29T12:15:00Z
+last_updated: 2026-08-04T13:30:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -129,7 +129,7 @@ development_status:
   epic-7-retrospective: optional
 
   # UAT polish (post–Epic 7, pre–client handoff) — see uat-polish-implementation-log.md
-  uat-polish: in-progress
+  uat-polish: done
   uat-ui-dashboard-clients: done
   uat-ui-client-profile-multi-activity: done
   uat-settings-brand-accent: done
@@ -150,9 +150,10 @@ development_status:
   uat-form-drag-reorder: done
   uat-archive-delete-modals: done
   uat-toast-theme-reports-polish: done
-  uat-handoff-checklist: backlog
+  uat-handoff-checklist: cancelled  # single-operator handoff — superseded by enterprise launch checklist
+  enterprise-launch-checklist: done
 
-  epic-8: backlog
+  epic-8: superseded  # RBAC pulled forward into Epic 12
   epic-8-retrospective: optional
 
   epic-9: done
@@ -186,21 +187,21 @@ development_status:
   11-3-platform-admin-provision-suspend-reactivate-archive: done
   11-4-platform-tenant-directory-and-health: done
   11-5-complimentary-sponsored-tenant-flag: done
-  epic-11-retrospective: optional
+  epic-11-retrospective: done
 
   epic-12: done
   12-1-tenantmembership-and-remove-single-operator-gate: done
   12-2-jwt-tenant-id-and-tenant-scoped-login: done
   12-3-enforce-admin-vs-member-server-side: done
   12-4-platform-admin-role-claim: done
-  epic-12-retrospective: optional
+  epic-12-retrospective: done
 
   epic-13: done
   13-1-tenantresolutionmiddleware-on-all-api-requests: done
   13-2-ef-global-query-filters-and-redis-tenant-namespaces: done
   13-3-export-and-report-queries-always-filter-by-tenantid: done
   13-4-tenantisolation-integration-test-gate-sm-1: done
-  epic-13-retrospective: optional
+  epic-13-retrospective: done
 
   epic-14: done
   14-1-midnight-atelier-tokens-marketing-home-and-pricing: done
@@ -211,7 +212,7 @@ development_status:
   14-6-team-invite-and-seatgate: done
   14-7-customer-portal-period-end-cancel-downgrade-over-limit: done
   14-8-trial-reminders-delinquency-jobs-and-basic-dormancy: done
-  epic-14-retrospective: optional
+  epic-14-retrospective: done
 
   epic-15: done
   15-1-subdomain-routing-nginx-next-js-host: done
@@ -221,6 +222,7 @@ development_status:
   15-5-plan-gated-reports-basic-fixed-core-queryable-pro: done
   15-6-pro-only-campaigns-and-per-tenant-email-branding: done
   15-7-suspended-maintenance-and-archived-404-public-states: done
+  15-8-pro-studio-video-embed-section: done
   epic-15-retrospective: done
 
   # Epic 16 v1 scope done (16.1–16.3); parked items (custom domain, thin email, tickets) remain in epics-cohestra-enterprise.md
@@ -229,6 +231,38 @@ development_status:
   16-2-registration-og-metadata: done
   16-3-homepage-whatsapp-copy: done
   epic-16-retrospective: done
+
+  epic-17: done
+  17-1-auth-handoff-code-exchange: done
+  17-2-otp-verify-brute-force-throttling: done
+  17-3-member-jwt-403-integration-matrix: done
+  17-4-p0-security-hardening: done
+  epic-17-retrospective: done
+
+  epic-18: done
+  18-1-resend-otp-rate-limiting: done
+  18-2-content-security-policy-baseline: done
+  18-3-security-header-ownership: done
+  18-4-redis-outage-rate-limiter-policy: done
+  epic-18-retrospective: done
+
+  epic-19: backlog
+  19-1-uat-droplet-deploy-and-smoke: backlog
+  19-2-https-edge-security-header-verify: backlog
+  19-3-recaptcha-production-enablement: backlog
+  19-4-stripe-billing-uat-on-droplet: backlog
+  19-5-operator-core-flows-launch-signoff: backlog
+  epic-19-retrospective: optional
+
+  epic-20: done
+  20-1-optional-max-registrants-per-activity: done
+  epic-20-retrospective: done
+
+  epic-21: in-progress
+  21-1-viber-click-to-message-from-client-profile: review
+  21-2-viber-follow-up-status-tracking: backlog
+  21-3-multi-channel-follow-up-coverage-includes-viber: backlog
+  epic-21-retrospective: optional
 
 action_items:
   - epic: 15
@@ -251,35 +285,166 @@ action_items:
     action: "Run Epic 16 UAT on local Docker: Share kit, OG unfurl, homepage WhatsApp, publish tenant URL"
     owner: Operator
     status: done
+    resolution: "Signed off 2026-07-26 on creativorare.localhost:8088 (PR #17)"
   - epic: 16
     action: "Investigate and fix API integration test failures in CI"
     owner: Dev
-    status: open
+    status: done
+    resolution: "PR #18 merged — integration job green on main (48691e0)"
   - epic: 16
     action: "Product gate: Epic 16 parked items vs uat-handoff-checklist as next priority"
     owner: Product
-    status: open
+    status: done
+    resolution: "Proceed to enterprise-launch-checklist; Epic 16 parked items stay parked until product pull-forward"
   - epic: 16
     action: "Use dedicated client API modules when adding client-side fetches (no server imports in shared API files)"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Implemented in PR #14 (public-door-client-api.ts split); team agreement recorded"
   - epic: 9
     action: "Commit Epic 9 changes (migrations, API, web builder, docs) in reviewable chunks"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Superseded — Epic 9–15 delivered and merged to main"
   - epic: 9
     action: "Deploy to UAT droplet with SitePage migrations and verify seed + public homepage"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Superseded — local Docker UAT + enterprise multi-tenant stack; droplet deploy in enterprise-launch-checklist"
   - epic: 9
     action: "Run operator UAT checklist for website builder (draft, preview, publish, preset, revert, branding)"
     owner: Operator
-    status: open
+    status: done
+    resolution: "Covered by Epic 16 operator UAT sign-off 2026-07-26 (website builder + share kit surfaces)"
   - epic: 9
     action: "Add CI job for AdminSite and PublicSite integration tests (Postgres/Redis stack)"
     owner: Dev
-    status: open
+    status: done
+    resolution: "CI integration job in .github/workflows/ci.yml; PR #18 fixes plan-gate failures"
   - epic: 9
     action: "Triage Epic 9 deferred-work — prioritize router unsaved guard, login ISR lag, preview token hardening"
     owner: Product
+    status: done
+    resolution: "Deferred items remain in deferred-work.md; enterprise-launch-checklist is next milestone"
+
+  # Epic 11–15 retrospective action items (enterprise launch hardening backlog)
+  - epic: 11
+    action: "Extract shared async-action pattern from platform tenant detail page"
+    owner: Dev
+    status: open
+  - epic: 11
+    action: "Close skippable platform integration tests when CI stack required"
+    owner: Dev
+    status: open
+  - epic: 12
+    action: "Add live-stack integration authz cases (Member 403, tenant JWT blocked on /platform/*)"
+    owner: Dev
+    status: done
+    resolution: "Story 17.3 — TenantAuthzIntegrationTests (Member admin 403, tenant JWT platform 403, platform admin 200)"
+  - epic: 12
+    action: "Document DEV_TENANT_SLUG / apex fallback in deploy ops notes"
+    owner: Dev
+    status: done
+    resolution: "enterprise-launch-checklist.md + .env.example + README"
+  - epic: 13
+    action: "Wire GitHub branch protection for SM-1 unit + API gate required checks"
+    owner: Ops
+    status: open
+  - epic: 13
+    action: "Extend SM-1 for public door and cross-tenant registration slug rejection"
+    owner: Dev
+    status: done
+    resolution: "PublicDoor isolation tests in TenantIsolationApiTests.cs (PR dev branch)"
+  - epic: 14
+    action: "Replace auth handoff URL-hash tokens with one-time server code exchange"
+    owner: Dev
+    status: done
+    resolution: "Story 17.1 — Redis handoff store + POST /api/v1/auth/handoff/exchange; web paid signup uses ?handoff= code"
+  - epic: 14
+    action: "Enable reCAPTCHA in compose before public launch"
+    owner: Ops
+    status: open
+    note: "Env documented in .env.example; ops enables keys on deploy"
+  - epic: 14
+    action: "Add OTP brute-force throttling and signup abuse integration tests"
+    owner: Dev
+    status: done
+    resolution: "Story 17.2 — Redis verify failure limiter + PublicSignupAbuseIntegrationTests (captcha, signup 429, registrationClosed, OTP 429)"
+  - epic: 15
+    action: "Document integration test Pro bootstrap (EnsureDefaultTenantProPlanAsync) in project-context or test README"
+    owner: Dev
+    status: done
+    resolution: "project-context.md Testing Rules + Api.IntegrationTests/README.md"
+  - epic: 15
+    action: "Product gate: nip.io apex tightening vs enterprise launch checklist priority"
+    owner: Product
+    status: open
+  - epic: 15
+    action: "Schedule sender settings UI story (15.6 defer) or accept provisioned-email-only for v1 launch"
+    owner: Product
+    status: open
+  - epic: 17
+    action: "Run local Epic 17 verification — auth unit tests + AuthOtpAbuseIntegrationTests on Docker stack"
+    owner: Operator
+    status: open
+  - epic: 17
+    action: "Regenerate active-ssl.conf on droplet after app-ssl.conf.template header changes"
+    owner: Ops
+    status: open
+  - epic: 17
+    action: "Create follow-up story for resend-otp rate limiting (deferred from 17.2 CR)"
+    owner: Dev
+    status: done
+    resolution: "Epic 18 Story 18.1 — PR #33 merged"
+  - epic: 17
+    action: "Resolve 17.4 CR decision items — CSP policy, nginx vs Next header ownership, Redis fail policy"
+    owner: Dev
+    status: done
+    resolution: "Epic 18 Stories 18.2–18.4 on main (PRs #34–#37); CSP report-only, nginx header ownership, Redis fail-closed 503"
+
+  # Epic 18 retrospective action items
+  - epic: 18
+    action: "Close superseded PRs #35 and #36 (commits already on main)"
+    owner: Dev
+    status: done
+    resolution: "PRs #35 and #36 closed — commits on main via stacked merge through #37"
+  - epic: 18
+    action: "Francis: nginx recreate + curl verify security headers and CSP on Docker 8088"
+    owner: Operator
+    status: done
+    resolution: "2026-08-01 — curl default.localhost:8088 single X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, CSP-Report-Only; HTTP 200"
+  - epic: 18
+    action: "Document OTP wait windows in launch checklist (3 send cap vs 5 resend cap, 15 min sliding window)"
+    owner: Dev
+    status: done
+    resolution: "docs/deploy/enterprise-launch-checklist.md — OTP send vs resend limits section (Story 18.1)"
+  - epic: 18
+    action: "Plan CSP enforce-mode story when report-only violations are clean"
+    owner: Product
+    status: open
+  - epic: 18
+    action: "Enable reCAPTCHA keys before public signup"
+    owner: Ops
+    status: open
+
+  # Epic 20 retrospective action items (2026-08-02)
+  - epic: 20
+    action: "Document rebuild Docker after merge in operator verify checklist for feature epics"
+    owner: Dev
+    status: open
+  - epic: 20
+    action: "Add EF migration Designer.cs to PR/dev-story guardrail checklist"
+    owner: Dev
+    status: open
+  - epic: 20
+    action: "Run ActivityCapacityPlanLimitIntegrationTests on CI Postgres stack"
+    owner: Dev
+    status: open
+  - epic: 20
+    action: "Lower grandfathered activity caps above plan limit on live tenants if any remain"
+    owner: Operator
+    status: open
+  - epic: 20
+    action: "Align create endpoint validation errors to 400 vs 409 (InvalidOperationException taxonomy)"
+    owner: Dev
     status: open

@@ -313,21 +313,21 @@ Public and admin web surfaces resolve **Tenant** from subdomain `{tenant-slug}.c
 - `https://ikigai.cohestra.app/register/{activity-slug}` scopes activity lookup to Ikigai on all plans.
 - Local dev supports `{slug}.localhost` or `?tenant=` override documented in addendum.
 
-#### FR-12: Public site by plan (P2 Option D)
+#### FR-12: Public site by plan (Essentials / Studio split)
 
 Public homepage capability depends on `Tenant.Plan`:
 
-| Plan | Public `/` | SitePage entity |
-|------|------------|-----------------|
-| **Basic** | **No Site Page** — minimal **stub** (org display name + list of published activities linking to register) | Not created |
-| **Core** | **Fixed Site Page** — branded home (name, accent, upcoming activities); **no** section composer | Created on upgrade to Core (or Core signup); not editable via builder |
-| **Pro** | **Full Site Page builder** — draft/publish, wide components (Platform 0 Website Builder, tenant-scoped) | Unlocked composer on existing SitePage |
+| Plan | Public `/` | SitePage entity | Website builder |
+|------|------------|-----------------|-----------------|
+| **Basic** | **No Site Page** — minimal **stub** (org display name + list of published activities linking to register) | Not created | Upgrade CTA only |
+| **Core** | **Branded Site Page** — draft/publish via **Essentials** builder (hero, highlights, upcoming activities, how-it-works, footer; Community/Minimal presets) | Created on upgrade to Core (or Core signup) | Full composer workflow; **no** Studio sections |
+| **Pro** | Same Site Page entity with **Studio** builder additions (carousel, testimonials, FAQ, stats, CTA band; Showcase/Event hub presets) | Same row as Core | Essentials + Studio palette |
 
 **Consequences (testable):**
 - Basic tenant: no `SitePage` row; `/` renders stub; `/register/{slug}` works; admin Website builder routes return upgrade CTA.
-- Basic → Core: creates seeded fixed SitePage; `/` uses fixed template.
-- Core → Pro: same SitePage; composer unlocked; publish is tenant-scoped (Ikigai publish does not affect TGH).
-- Preview token (Pro) scoped to tenant site draft.
+- Basic → Core: creates seeded SitePage; `/` uses published draft; Core admin can edit and publish Essentials layouts (no Pro upgrade panel in builder).
+- Core → Pro: same SitePage; Studio section types and presets unlock; API rejects Studio sections for Core tenants.
+- Preview token scoped to tenant site draft.
 
 #### FR-13: Per-tenant email branding
 

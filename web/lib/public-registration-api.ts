@@ -2,12 +2,16 @@ import type { ActivityFormSchema, ActivityStatus } from "@/lib/activities-api";
 import { parseFormSchema } from "@/lib/activities-api";
 import { getPublicApiBaseUrl } from "@/lib/api";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
+import { parseProblemFields } from "@/lib/problem-details";
 
 export type PublicActivity = {
   slug: string;
   name: string;
   status: ActivityStatus;
   isRegistrationOpen: boolean;
+  isRegistrationFull: boolean;
+  maxRegistrants: number | null;
+  registrationCount: number;
   schedule: string;
   location: string;
   communityLabel: string;
@@ -29,6 +33,9 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
   const name = raw.name ?? raw.Name;
   const status = raw.status ?? raw.Status;
   const isRegistrationOpen = raw.isRegistrationOpen ?? raw.IsRegistrationOpen;
+  const isRegistrationFull = raw.isRegistrationFull ?? raw.IsRegistrationFull;
+  const maxRegistrantsRaw = raw.maxRegistrants ?? raw.MaxRegistrants;
+  const registrationCountRaw = raw.registrationCount ?? raw.RegistrationCount;
   const schedule = raw.schedule ?? raw.Schedule;
   const location = raw.location ?? raw.Location;
   const communityLabel = raw.communityLabel ?? raw.CommunityLabel;
@@ -40,6 +47,8 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
     typeof slug !== "string" ||
     typeof name !== "string" ||
     typeof isRegistrationOpen !== "boolean" ||
+    typeof isRegistrationFull !== "boolean" ||
+    typeof registrationCountRaw !== "number" ||
     typeof schedule !== "string" ||
     typeof location !== "string" ||
     typeof communityLabel !== "string"
@@ -52,6 +61,12 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
     name,
     status: parseActivityStatus(status),
     isRegistrationOpen,
+    isRegistrationFull,
+    maxRegistrants:
+      typeof maxRegistrantsRaw === "number" && Number.isFinite(maxRegistrantsRaw)
+        ? maxRegistrantsRaw
+        : null,
+    registrationCount: registrationCountRaw,
     schedule,
     location,
     communityLabel,
@@ -176,17 +191,22 @@ export async function submitPublicRegistration(
     }
 
     let message = `Registration failed (${response.status})`;
+    let errorCode: string | undefined;
     try {
       const problem = (await response.json()) as Record<string, unknown>;
-      const detail = problem.detail ?? problem.Detail;
-      if (typeof detail === "string" && detail.trim()) {
-        message = detail;
-      }
+      const parsed = parseProblemFields(problem);
+      message = parsed.message;
+      errorCode = parsed.errorCode;
     } catch {
       // Keep generic message when problem details are unavailable.
     }
 
-    throw new Error(message);
+    const error = new Error(message) as Error & { errorCode?: string };
+    if (errorCode) {
+      error.errorCode = errorCode;
+    }
+
+    throw error;
   }
 
   throw new Error("Unexpected registration response.");

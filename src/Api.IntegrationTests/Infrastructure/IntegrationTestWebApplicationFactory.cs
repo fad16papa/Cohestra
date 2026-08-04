@@ -1,4 +1,5 @@
 using Cohestra.Application.Email;
+using Cohestra.Domain.Tenants;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -7,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Cohestra.Api.IntegrationTests.Infrastructure;
 
-public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory<Program>
+public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Program>
 {
     public bool IsAvailable { get; private set; }
 
@@ -15,7 +16,14 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        ApplyDefaultSettings(builder);
+        ConfigureTestServices(builder);
+    }
+
+    protected virtual void ApplyDefaultSettings(IWebHostBuilder builder)
+    {
         builder.UseEnvironment("Development");
+        builder.UseSetting("ASPNETCORE_ENVIRONMENT", "Development");
 
         var postgresConnection = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
             ?? "Host=localhost;Port=5432;Database=cohestra_test;Username=crm;Password=crm";
@@ -42,7 +50,20 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
         builder.UseSetting("SelfServeSignup:Recaptcha:TestBypassToken", "test-captcha-pass");
         builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerHour", "1000");
         builder.UseSetting("PublicSignupRateLimit:MaxSuccessfulPerDay", "1000");
+        builder.UseSetting("PublicSignupVerifyRateLimit:MaxFailedAttemptsPerWindow", "1000");
+        builder.UseSetting("PublicSignupVerifyRateLimit:WindowMinutes", "15");
+        builder.UseSetting("PublicSignupResendRateLimit:MaxResendsPerWindow", "1000");
+        builder.UseSetting("PublicSignupResendRateLimit:WindowMinutes", "15");
+        builder.UseSetting("AuthOtpVerifyRateLimit:MaxFailedAttemptsPerWindow", "1000");
+        builder.UseSetting("AuthOtpVerifyRateLimit:WindowMinutes", "15");
+        builder.UseSetting("AuthResendOtpRateLimit:MaxResendsPerWindow", "1000");
+        builder.UseSetting("AuthResendOtpRateLimit:WindowMinutes", "15");
+        builder.UseSetting("AuthOtp:MaxSendAttemptsPerWindow", "1000");
+        builder.UseSetting("AuthOtp:SendWindowMinutes", "15");
+    }
 
+    protected virtual void ConfigureTestServices(IWebHostBuilder builder)
+    {
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IEmailSender>();
@@ -52,7 +73,8 @@ public sealed class IntegrationTestWebApplicationFactory : WebApplicationFactory
 
     protected override void ConfigureClient(HttpClient client)
     {
-        client.BaseAddress = new Uri("http://localhost");
+        client.BaseAddress = new Uri($"http://{TenantIds.DefaultSlug}.localhost");
+        client.DefaultRequestHeaders.Host = $"{TenantIds.DefaultSlug}.localhost";
     }
 
     public async Task InitializeAsync()

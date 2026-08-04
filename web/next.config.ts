@@ -1,14 +1,23 @@
 import type { NextConfig } from "next";
+import { contentSecurityPolicyReportOnlyDevHeader } from "./content-security-policy";
+import { securityHeaders, shouldNextJsEmitSecurityHeaders } from "./security-headers";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  images: {
-    remotePatterns: [
+  async headers() {
+    if (!shouldNextJsEmitSecurityHeaders()) {
+      return [];
+    }
+
+    return [
       {
-        protocol: "https",
-        hostname: "images.unsplash.com",
+        source: "/:path*",
+        headers: [...securityHeaders, contentSecurityPolicyReportOnlyDevHeader],
       },
-    ],
+    ];
+  },
+  images: {
+    remotePatterns: [],
   },
 };
 

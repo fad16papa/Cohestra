@@ -234,6 +234,17 @@ export function getSectionSummary(section: SiteSection): string {
       const headline = typeof props.headline === "string" ? props.headline.trim() : "";
       return headline || "Call-to-action band";
     }
+    case "video": {
+      const title = typeof props.title === "string" ? props.title.trim() : "";
+      const source = typeof props.source === "string" ? props.source : "";
+      if (title && source) {
+        return `${title} · ${source}`;
+      }
+      if (source) {
+        return `${source} video`;
+      }
+      return "Video link needed";
+    }
     case "footer":
       return "Site footer";
     default:

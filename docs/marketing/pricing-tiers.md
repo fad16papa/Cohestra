@@ -83,7 +83,7 @@ Custom limits, domain, SSO. [Book a demo →](#)
 | Registrations / month | 150 | 500 | 5,000 |
 | Registration email notifications | ✓ | ✓ | ✓ |
 | Reports | Simple + CSV | Queryable + export | + Campaigns + saved views |
-| Public site | Stub only | Fixed Site Page | Full website builder |
+| Public site | Stub only | Builder (Essentials) | Builder (Studio) |
 | Email campaigns | — | — | ✓ |
 
 ---
@@ -93,8 +93,8 @@ Custom limits, domain, SSO. [Book a demo →](#)
 **Is Basic really free?**  
 Yes — free forever at the limits above. No card.
 
-**What's the difference between Basic stub and Core Site Page?**  
-Basic gives a simple public list so QR testing works. Core gives a branded fixed homepage. Pro lets you fully design it.
+**What's the difference between Basic stub and Core website builder?**  
+Basic gives a simple public list so QR testing works. Core unlocks the website builder with Essentials sections plus draft and publish. Pro adds Studio sections like carousel, testimonials, FAQ, and premium layouts.
 
 **What reports do I get on Basic?**  
 A straightforward list: who registered, how many, date and time — exportable as CSV. Upgrade to Core for filters and deeper ops reports.

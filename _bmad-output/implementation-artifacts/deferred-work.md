@@ -1,3 +1,36 @@
+## Deferred from: code review of 15-8-pro-studio-video-embed-section.md (2026-08-03)
+
+- No AdminSite integration test for video publish round-trip — story listed optional; matches existing builder test pattern
+- Duplicate YouTube/Vimeo parsers in C# and TypeScript — acceptable v1 drift risk; consolidate later if embed rules grow
+
+## Deferred from: code review of 20-1-optional-max-registrants-per-activity.md (2026-08-01)
+
+- PUT full-replace clears cap when `maxRegistrants` omitted — pre-existing API pattern; current UI panels preserve value
+- Register page SSR can show form while cache stale until submit — server enforces cap; v1 acceptable
+- AC4 duplicate-before-capacity has no integration test — behavior correct in code
+- AC2 admin cap-below-count covered by unit tests only
+- AC8 cache refresh after registration not proven with warm-cache integration test
+
+## Deferred from: code review of 17-4-p0-security-hardening.md (2026-07-30)
+
+- Rate-limit check/record TOCTOU burst in auth OTP limiter — same Lua split pattern as Story 17.2 signup limiter
+- Wrong-length OTP codes skip failure counter — not brute-force exploitable
+- `RevokeAllForUserAsync` non-atomic read-then-delete race — low-traffic auth path
+- Non-atomic email+IP failure record in auth OTP limiter — mirrors signup limiter
+- JWT min-length duplicate check in ProductionSecurityValidator — Program.cs already enforces ≥32 chars
+
+## Deferred from: code review of 17-2-otp-verify-brute-force-throttling.md (2026-07-30)
+
+- `resend-otp` endpoint not rate limited — out of scope for 17.2; consider follow-up story
+
+## Deferred from: code review of 17-1-auth-handoff-code-exchange.md (2026-07-30)
+
+- Handoff code in `?handoff=` query may appear in nginx/proxy access logs on checkout page GET — opaque code + 120s TTL; accepted vs JWT-in-URL tradeoff
+
+## Deferred from: code review of enterprise-launch-checklist.md (2026-07-29)
+
+- CI SM-1 integration job green not verified in cloud agent — confirm on PR #25 before merge
+
 ## Deferred from: code review of 14-4-core-pro-checkout-webhooks-and-usd-prices.md (2026-07-22)
 
 - Auth handoff via URL hash — replace with one-time server code exchange (tokens visible in history/referrer)

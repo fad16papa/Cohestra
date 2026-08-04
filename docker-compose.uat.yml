@@ -58,6 +58,7 @@ services:
       Jwt__Audience: ${JWT_AUDIENCE:-cohestra-api}
       OperatorSeed__Enabled: "false"
       DemoDataSeed__Enabled: "false"
+      LoadTestSeed__Enabled: "false"
       PublicWeb__BaseUrl: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
       CampaignAssets__StoragePath: /app/data/campaign-assets
       CampaignAssets__PublicApiBaseUrl: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}

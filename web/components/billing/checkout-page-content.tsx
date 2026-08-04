@@ -11,7 +11,7 @@ import {
   createBillingCheckoutWithAuth,
   formatTrialDisclaimer,
 } from "@/lib/billing/billing-api";
-import { consumeAuthHandoffFromHash } from "@/lib/auth-handoff";
+import { exchangeAuthHandoff } from "@/lib/auth-handoff";
 import { setAuthSession } from "@/lib/auth-storage";
 import { MARKETING_PLANS } from "@/lib/marketing/pricing-plans";
 import { cn } from "@/lib/utils";
@@ -55,17 +55,48 @@ function CheckoutContent() {
   const [interval, setInterval] = useState<IntervalId>(initialInterval);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(autoStart && !canceled);
+  const [handoffPending, setHandoffPending] = useState(
+    () => (searchParams.get("handoff")?.trim().length ?? 0) > 0
+  );
+  const [handoffFailed, setHandoffFailed] = useState(false);
 
   const trialCopy = useMemo(() => formatTrialDisclaimer(30), []);
   const planOptions = MARKETING_PLANS.filter((p) => p.id === "core" || p.id === "pro");
 
   useEffect(() => {
-    const handoff = consumeAuthHandoffFromHash();
-    if (handoff) {
-      setAuthSession(handoff);
-      window.location.replace(`${window.location.pathname}${window.location.search}`);
+    const handoffCode = searchParams.get("handoff")?.trim();
+    if (!handoffCode) {
+      return;
     }
-  }, []);
+
+    let cancelled = false;
+
+    void (async () => {
+      const session = await exchangeAuthHandoff(handoffCode);
+      if (cancelled) {
+        return;
+      }
+
+      if (!session) {
+        setHandoffPending(false);
+        setHandoffFailed(true);
+        setError("Could not complete sign-in. Try signing in again.");
+        const url = new URL(window.location.href);
+        url.searchParams.delete("handoff");
+        window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+        return;
+      }
+
+      setAuthSession(session);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("handoff");
+      window.location.replace(`${url.pathname}${url.search}`);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams]);
 
   useEffect(() => {
     setPlan(initialPlan);
@@ -93,7 +124,7 @@ function CheckoutContent() {
   }
 
   useEffect(() => {
-    if (!autoStart || !plan || status === "loading" || canceled) {
+    if (!autoStart || !plan || status === "loading" || canceled || handoffPending || handoffFailed) {
       return;
     }
 
@@ -104,9 +135,9 @@ function CheckoutContent() {
 
     void startCheckout(plan, interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot auto start from query
-  }, [autoStart, canceled, interval, plan, router, status]);
+  }, [autoStart, canceled, handoffFailed, handoffPending, interval, plan, router, status]);
 
-  if (status === "loading") {
+  if (handoffPending || status === "loading") {
     return <p className="p-8 text-sm text-text-muted-warm">Loading checkout…</p>;
   }
 
@@ -139,12 +170,20 @@ function CheckoutContent() {
           </p>
         </div>
 
-        {error ? (
-          <div className="flex w-full flex-col gap-3">
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-            <Button
+            {error ? (
+              <div className="flex w-full flex-col gap-3">
+                <p role="alert" className="text-sm text-destructive">
+                  {error}
+                </p>
+                {error.includes("Manage billing") ? (
+                  <Link
+                    href="/settings/billing"
+                    className={cn(buttonVariants({ size: "lg" }), "inline-flex justify-center")}
+                  >
+                    Open billing settings
+                  </Link>
+                ) : null}
+                <Button
               type="button"
               size="lg"
               disabled={starting}
@@ -161,7 +200,7 @@ function CheckoutContent() {
           </div>
         ) : (
           <p className="text-sm text-text-muted-warm" role="status">
-            Redirecting to Stripe…
+            Processing your plan change…
           </p>
         )}
       </div>

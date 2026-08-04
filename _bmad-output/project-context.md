@@ -101,7 +101,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 - Dual dials: access = `Tenant.Status` ∩ `BillingStatus`; **Suspended always wins**
 - Billing UX = Stripe Checkout + **Customer Portal only** — no custom invoices/finance UI
-- Basic = no SitePage (stub); Core = fixed SitePage; Pro = builder
+- Basic = no SitePage (stub); Core = Essentials website builder; Pro = Essentials + Studio sections
 - Remove `AuthService.GetExistingOperatorAsync` single-operator gate (Epic 12) — do not reintroduce
 - Brand: replace Platform 0 forest green with **Midnight Atelier** tokens (`ux-cohestra-2026-07-18/DESIGN.md`) on Cohestra surfaces — do not invent a third palette
 
@@ -110,7 +110,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Unit:** `Infrastructure.Tests` — domain/service behavior close to existing test style (xUnit)
 - **Integration:** `Api.IntegrationTests` — `WebApplicationFactory`, `[Collection(IntegrationTestCollection.Name)]`, `[Trait("Category", "Integration")]`, `SkippableFact` + `SkipIfUnavailable`
 - Reuse `IntegrationTestHelpers` for login/seed patterns; extend helpers for multi-tenant fixtures rather than one-off bootstraps
-- **TenantIsolation** (Epic 13 / SM-1): category/trait required on PRs to `main` — at minimum cross-tenant GET denial + public site isolation + export isolation
+- **Pro plan bootstrap (canonical):** Default tenant migrates as **Basic**; Epic 15 plan gates block reports, site builder, and campaigns until Pro. Before tests that hit those surfaces, call `IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(factory.Services)` once per fixture (see `IntegrationTestWebApplicationFactory` / test collection setup). Do **not** hand-edit plan in one-off tests — use this helper so CI and local runs stay aligned.
+- **TenantIsolation** (Epic 13 / SM-1): category/trait required on PRs to `main` — at minimum cross-tenant GET denial + public site isolation + export isolation + public door isolation
 - New tenant-scoped endpoints → add or extend a TenantIsolation negative case
 - Prefer proving isolation with **two tenants** in one test over mocking away the filter
 - Do not delete Platform 0 tests to “make green”; fix tenancy migration so SM-4 (~90% pass) holds

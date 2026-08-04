@@ -1,8 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 
-import { LoginAmbientBackground } from "@/components/auth/login-ambient-background";
-import { LoginBrandPanel } from "@/components/auth/login-brand-panel";
+import { MarketingWordmark } from "@/components/marketing/marketing-shell";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import type { PublishedSiteBranding } from "@/lib/site-seo-metadata";
 import { PLATFORM_LOGO_PATH, PLATFORM_NAME } from "@/lib/brand-assets";
@@ -27,66 +26,69 @@ export function AuthFlowShell({
   className,
   siteBranding = null,
 }: AuthFlowShellProps) {
-  const mobileLogoUrl = siteBranding?.logoUrl ?? PLATFORM_LOGO_PATH;
-  const mobileSiteName = siteBranding?.siteName?.trim() || PLATFORM_NAME;
+  const tenantName = siteBranding?.siteName?.trim();
+  const logoUrl = siteBranding?.logoUrl ?? PLATFORM_LOGO_PATH;
+  const isTenantBranded = Boolean(tenantName);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col lg:grid lg:min-h-dvh lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch">
-      <LoginBrandPanel variant="compact" className="lg:hidden" siteBranding={siteBranding} />
-      <LoginBrandPanel variant="sidebar" className="hidden lg:flex" siteBranding={siteBranding} />
-
-      <div className="relative flex min-h-0 flex-1 flex-col">
-        <LoginAmbientBackground />
-
-        <header className="relative z-10 flex items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-10">
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 rounded-xl outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
-          >
-            <span className="flex size-10 items-center justify-center overflow-hidden rounded-xl bg-card/90 p-1.5 shadow-sm ring-1 ring-border-warm backdrop-blur-sm">
+    <div className="flex min-h-dvh flex-col bg-paper text-ink">
+      <header className="flex items-center justify-between gap-4 border-b border-line/80 px-5 py-4 sm:px-8">
+        {isTenantBranded ? (
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-line bg-paper-warm p-1.5">
               <Image
-                src={mobileLogoUrl}
+                src={logoUrl}
                 alt=""
                 width={28}
                 height={28}
                 className="size-7 object-contain"
-                unoptimized={mobileLogoUrl.includes("/api/")}
+                unoptimized={logoUrl.includes("/api/")}
               />
             </span>
-            <span className="text-sm font-semibold text-text-warm">{mobileSiteName}</span>
-          </Link>
-          <div className="ml-auto rounded-xl bg-card/70 p-0.5 shadow-sm ring-1 ring-border-warm/80 backdrop-blur-sm">
-            <ThemeToggle variant="public" className="min-h-10 px-3" />
-          </div>
-        </header>
-
-        <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 pb-8 sm:px-8 sm:pb-10 lg:px-12 lg:pb-14">
-          <div className={cn("w-full max-w-[420px] motion-safe:animate-page-enter", className)}>
-            <div className="mb-8 text-center lg:mb-10">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">
-                {eyebrow}
-              </p>
-              <h1 className="mt-3 text-balance text-display-sm text-text-warm sm:text-[1.75rem]">
-                {title}
-              </h1>
-              <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-text-muted-warm">
-                {description}
-              </p>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-ink">{tenantName}</p>
+              <p className="text-xs text-stone">Operator workspace</p>
             </div>
-
-            <div
-              className={cn(
-                "rounded-3xl border border-border-warm/80 bg-card/85 p-6 shadow-xl shadow-primary/[0.06] backdrop-blur-md sm:p-8",
-                "ring-1 ring-black/[0.03] dark:bg-card/90 dark:shadow-black/20 dark:ring-white/[0.06]"
-              )}
-            >
-              {children}
-            </div>
-
-            {footer ? <div className="mt-8 text-center text-sm">{footer}</div> : null}
           </div>
-        </main>
-      </div>
+        ) : (
+          <MarketingWordmark />
+        )}
+        <ThemeToggle variant="public" className="min-h-10 shrink-0 px-3" />
+      </header>
+
+      <main className="flex flex-1 flex-col items-center justify-center px-5 py-10 sm:px-8">
+        <div className={cn("w-full max-w-[400px] motion-safe:animate-page-enter", className)}>
+          <div className="mb-8 text-center">
+            <p className="text-section text-gold">{eyebrow}</p>
+            <h1 className="mt-3 font-[family-name:var(--font-fraunces)] text-[1.75rem] font-medium tracking-[-0.02em] text-ink sm:text-3xl">
+              {title}
+            </h1>
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-stone">
+              {description}
+            </p>
+          </div>
+
+          <div className="rounded-[16px] border border-line bg-paper p-6 shadow-[0_20px_40px_rgba(7,13,18,0.05)] sm:p-8">
+            {children}
+          </div>
+
+          {footer ? (
+            <div className="mt-6 space-y-2 text-center text-sm text-stone">{footer}</div>
+          ) : null}
+        </div>
+      </main>
+
+      <footer className="border-t border-line px-5 py-4 text-center text-xs text-stone sm:px-8">
+        <Link href="/" className="font-medium hover:text-ink">
+          Back to cohestra.app
+        </Link>
+        {!isTenantBranded ? null : (
+          <p className="mt-1">
+            Powered by{" "}
+            <span className="font-medium text-ink">{PLATFORM_NAME}</span>
+          </p>
+        )}
+      </footer>
     </div>
   );
 }

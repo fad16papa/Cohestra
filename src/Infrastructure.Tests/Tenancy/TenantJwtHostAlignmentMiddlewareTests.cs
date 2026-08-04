@@ -5,6 +5,7 @@ using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Cohestra.Infrastructure.Tests.Tenancy;
@@ -14,6 +15,7 @@ namespace Cohestra.Infrastructure.Tests.Tenancy;
 /// </summary>
 public sealed class TenantJwtHostAlignmentMiddlewareTests
 {
+    private static readonly IConfiguration EmptyConfiguration = new ConfigurationBuilder().Build();
     [Fact]
     public void Shim_path_helpers_delegate_to_resolution_middleware()
     {
@@ -48,7 +50,8 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(tenantId, "default")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.True(called);
     }
@@ -68,7 +71,8 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(TenantIds.Default, "default")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
     }
@@ -89,7 +93,8 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(other, "acme")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
     }
@@ -109,7 +114,8 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Fail("unused")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
     }
@@ -135,7 +141,8 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Fail("unused")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.True(called);
     }
@@ -163,7 +170,8 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Fail("unused")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.True(called);
     }
@@ -186,7 +194,8 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(TenantIds.Default, "default")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
     }

@@ -66,6 +66,8 @@
   --color-status-inactive-foreground: var(--status-inactive-foreground);
   --color-whatsapp: var(--whatsapp);
   --color-whatsapp-foreground: var(--whatsapp-foreground);
+  --color-viber: var(--viber);
+  --color-viber-foreground: var(--viber-foreground);
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
@@ -120,6 +122,44 @@
 
   .marketing-product-lift {
     animation: marketing-product-lift 1.1s 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .marketing-crm-showcase-surface {
+    isolation: isolate;
+  }
+
+  @media (min-width: 640px) {
+    .marketing-crm-showcase-surface {
+      border-radius: 20px;
+      overflow: hidden;
+    }
+  }
+
+  .auth-login-input {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  .auth-login-input:-webkit-autofill,
+  .auth-login-input:-webkit-autofill:hover,
+  .auth-login-input:-webkit-autofill:focus,
+  .auth-login-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--paper) inset !important;
+    box-shadow: 0 0 0 1000px var(--paper) inset !important;
+    -webkit-text-fill-color: var(--ink) !important;
+    caret-color: var(--ink);
+    border-radius: 0 !important;
+    transition: background-color 99999s ease-out 0s;
+  }
+
+  .dark .auth-login-input:-webkit-autofill,
+  .dark .auth-login-input:-webkit-autofill:hover,
+  .dark .auth-login-input:-webkit-autofill:focus,
+  .dark .auth-login-input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--paper) inset !important;
+    box-shadow: 0 0 0 1000px var(--paper) inset !important;
+    -webkit-text-fill-color: var(--ink) !important;
   }
 
   .marketing-atelier-btn {

@@ -1,4 +1,6 @@
 import { getPublicApiBaseUrl, getServerApiBaseUrl } from "@/lib/api";
+import { sanitizeClientErrorMessage } from "@/lib/api-error-message";
+import { parseProblemFields } from "@/lib/problem-details";
 import {
   normalizeThemePreference,
   type ThemePreference,
@@ -33,7 +35,12 @@ export type OnboardingStatus = {
 
 export type LoginResult =
   | { ok: true; session: AuthSession; profile: AdminProfile }
-  | { ok: false; message: string; errorCode?: string };
+  | {
+      ok: false;
+      message: string;
+      errorCode?: string;
+      verifyTenantSlug?: string;
+    };
 
 function parseAuthTokenResponse(raw: Record<string, unknown>): AuthSession {
   const accessToken = raw.accessToken ?? raw.AccessToken;
@@ -92,28 +99,30 @@ async function parseProblemDetail(response: Response): Promise<string> {
 
 async function parseProblemResponse(
   response: Response
-): Promise<{ message: string; errorCode?: string }> {
+): Promise<{ message: string; errorCode?: string; verifyTenantSlug?: string }> {
   try {
     const raw = (await response.json()) as Record<string, unknown>;
-    const detail = raw.detail ?? raw.Detail;
-    const extensions = raw.extensions ?? raw.Extensions;
-    let errorCode: string | undefined;
+    const parsed = parseProblemFields(raw);
 
-    if (extensions && typeof extensions === "object") {
-      const code = (extensions as Record<string, unknown>).errorCode;
-      if (typeof code === "string") {
-        errorCode = code;
-      }
-    }
-
-    if (typeof detail === "string" && detail.length > 0) {
-      return { message: detail, errorCode };
-    }
+    return {
+      message: sanitizeClientErrorMessage(
+        parsed.message,
+        response.status,
+        parsed.errorCode
+      ),
+      errorCode: parsed.errorCode,
+      verifyTenantSlug: parsed.verifyTenantSlug,
+    };
   } catch {
     // fall through
   }
 
-  return { message: `Request failed (${response.status})` };
+  return {
+    message: sanitizeClientErrorMessage(
+      `Request failed (${response.status})`,
+      response.status
+    ),
+  };
 }
 
 function getErrorStatus(error: unknown): number | undefined {
@@ -229,6 +238,7 @@ export async function loginWithPassword(
         ok: false,
         message: problem.message,
         errorCode: problem.errorCode,
+        verifyTenantSlug: problem.verifyTenantSlug,
       };
     }
 

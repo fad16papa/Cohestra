@@ -30,6 +30,9 @@ public class Activity : ITenantScoped
 
     public bool ShowOnHomepage { get; set; } = true;
 
+    /// <summary>When set, public registration closes after this many registrations. Null = unlimited.</summary>
+    public int? MaxRegistrants { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }

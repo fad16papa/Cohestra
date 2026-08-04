@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { ActivityCountrySelect } from "@/components/activities/activity-country-select";
 import { ActivityLocationField } from "@/components/activities/activity-location-field";
 import { ActivitySchedulePicker } from "@/components/activities/activity-schedule-picker";
@@ -13,6 +14,12 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createActivity } from "@/lib/activities-api";
+import {
+  formatPlanRegistrationLimit,
+  parseActivityMaxRegistrantsInput,
+  resolvePlanRegistrationLimit,
+  validateActivityMaxRegistrantsAgainstPlan,
+} from "@/lib/activity-capacity-limits";
 import { fetchCategories } from "@/lib/categories-api";
 import { fetchCommunities } from "@/lib/communities-api";
 import { buildActivityLocation, defaultCountryCode } from "@/lib/countries";
@@ -25,6 +32,8 @@ import { cn } from "@/lib/utils";
 export function CreateActivityForm() {
   const router = useRouter();
   const { authFetch } = useAuth();
+  const { shell, loading: shellLoading, error: shellError } = useTenantShell();
+  const planRegistrationLimit = resolvePlanRegistrationLimit(shell);
   const [name, setName] = useState("");
   const [communityLabel, setCommunityLabel] = useState("");
   const [category, setCategory] = useState("");
@@ -36,6 +45,7 @@ export function CreateActivityForm() {
   );
   const [locationDetail, setLocationDetail] = useState("");
   const [countryCode, setCountryCode] = useState(defaultCountryCode);
+  const [maxRegistrants, setMaxRegistrants] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -76,12 +86,65 @@ export function CreateActivityForm() {
     ? "Detecting your location…"
     : geoMessage;
 
+  const parsedCapPreview = maxRegistrants.trim()
+    ? parseActivityMaxRegistrantsInput(maxRegistrants)
+    : null;
+  const formatError =
+    maxRegistrants.trim() && parsedCapPreview === null
+      ? "Max registrants must be a whole number of at least 1, or leave blank."
+      : maxRegistrants.trim() && parsedCapPreview !== null && parsedCapPreview < 1
+        ? "Max registrants must be a whole number of at least 1, or leave blank."
+        : null;
+  const planCapError =
+    planRegistrationLimit != null
+      ? validateActivityMaxRegistrantsAgainstPlan(
+          parsedCapPreview,
+          planRegistrationLimit
+        )
+      : null;
+  const validationError = formatError ?? planCapError;
+  const mustWaitForShell =
+    Boolean(maxRegistrants.trim()) && shellLoading && planRegistrationLimit == null;
+  const shellLimitsUnavailable =
+    Boolean(maxRegistrants.trim()) &&
+    !shellLoading &&
+    planRegistrationLimit == null &&
+    shellError != null;
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
     try {
+      const parsedCap = maxRegistrants.trim()
+        ? parseActivityMaxRegistrantsInput(maxRegistrants)
+        : null;
+
+      if (mustWaitForShell) {
+        setError("Plan limits are still loading. Try again in a moment.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (shellLimitsUnavailable) {
+        setError("Plan limits could not be loaded. Refresh the page and try again.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (formatError) {
+        setError(formatError);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (planCapError) {
+        setError(planCapError);
+        setIsSubmitting(false);
+        return;
+      }
+
       const activity = await createActivity(authFetch, {
         name,
         communityLabel,
@@ -89,6 +152,7 @@ export function CreateActivityForm() {
         schedule: formatScheduleForStorage(scheduleDateTime),
         location: buildActivityLocation(locationDetail, countryCode),
         status: "draft",
+        maxRegistrants: parsedCap,
       });
       router.push(`/activities/${activity.id}`);
     } catch (submitError) {
@@ -198,6 +262,28 @@ export function CreateActivityForm() {
           disabled={isSubmitting || isDetecting}
           helperText={locationHelperText}
         />
+
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="activity-max-registrants">Max registrants (optional)</Label>
+          <Input
+            id="activity-max-registrants"
+            type="number"
+            min={1}
+            max={planRegistrationLimit ?? undefined}
+            inputMode="numeric"
+            placeholder="Unlimited"
+            value={maxRegistrants}
+            disabled={isSubmitting}
+            onChange={(event) => setMaxRegistrants(event.target.value)}
+          />
+          <p className="text-xs text-text-muted-warm">
+            Leave blank for unlimited registrations on this activity. Monthly plan
+            usage still applies
+            {planRegistrationLimit != null
+              ? ` (up to ${formatPlanRegistrationLimit(planRegistrationLimit)} per month on your plan).`
+              : "."}
+          </p>
+        </div>
       </div>
 
       <p className="rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm">
@@ -210,6 +296,22 @@ export function CreateActivityForm() {
         </p>
       ) : null}
 
+      {mustWaitForShell ? (
+        <p className="text-sm text-text-muted-warm">Loading plan limits…</p>
+      ) : null}
+
+      {shellLimitsUnavailable ? (
+        <p role="alert" className="text-sm text-destructive">
+          Plan limits could not be loaded. Refresh the page before setting a registration cap.
+        </p>
+      ) : null}
+
+      {validationError && !error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {validationError}
+        </p>
+      ) : null}
+
       {error ? (
         <p role="alert" className="text-sm text-destructive">
           {error}
@@ -217,7 +319,16 @@ export function CreateActivityForm() {
       ) : null}
 
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button
+          type="submit"
+          disabled={
+            isSubmitting ||
+            mustWaitForShell ||
+            shellLimitsUnavailable ||
+            Boolean(formatError) ||
+            Boolean(planCapError)
+          }
+        >
           {isSubmitting ? "Saving…" : "Save draft activity"}
         </Button>
         <Link href="/activities" className={cn(buttonVariants({ variant: "outline" }))}>

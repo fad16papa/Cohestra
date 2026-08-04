@@ -10,5 +10,8 @@ public sealed record PublicActivityResponse(
     string CommunityLabel,
     string? HeroImageUrl,
     string? AccentColor,
-    ActivityFormSchemaDto? FormSchema);
+    ActivityFormSchemaDto? FormSchema,
+    int? MaxRegistrants,
+    int RegistrationCount,
+    bool IsRegistrationFull);
 

@@ -13,21 +13,35 @@ export const SECTION_TYPE_LABELS: Record<string, string> = {
   faq: "FAQ",
   stats: "Stats",
   ctaBand: "CTA band",
+  video: "Video",
 };
 
-/** Section types operators can add from the builder palette. */
-export const ADDABLE_SECTION_TYPES = [
-  "carousel",
-  "testimonials",
-  "faq",
-  "stats",
-  "ctaBand",
+/** Essentials palette — Core and Pro. */
+export const ESSENTIALS_SECTION_TYPES = [
   "highlights",
   "howItWorks",
   "upcomingActivities",
   "footer",
 ] as const;
 
+/** Studio palette — Pro and Enterprise only. */
+export const STUDIO_SECTION_TYPES = [
+  "carousel",
+  "testimonials",
+  "faq",
+  "stats",
+  "ctaBand",
+  "video",
+] as const;
+
+/** Section types operators can add from the builder palette (Pro+ full set). */
+export const ADDABLE_SECTION_TYPES = [
+  ...ESSENTIALS_SECTION_TYPES,
+  ...STUDIO_SECTION_TYPES,
+] as const;
+
+export type EssentialsSectionType = (typeof ESSENTIALS_SECTION_TYPES)[number];
+export type StudioSectionType = (typeof STUDIO_SECTION_TYPES)[number];
 export type AddableSectionType = (typeof ADDABLE_SECTION_TYPES)[number];
 
 function newId(type: string): string {
@@ -103,6 +117,17 @@ export function getDefaultSectionProps(type: string): Record<string, unknown> {
         description: "Browse upcoming activities and register in seconds.",
         variant: "accent",
         primaryCta: { label: "See events", target: "scroll-upcoming" },
+      };
+    case "video":
+      return {
+        title: "Watch our community",
+        description: "",
+        source: "",
+        videoUrl: "",
+        videoId: "",
+        embedUrl: "",
+        aspectRatio: "16:9",
+        variant: "default",
       };
     case "highlights":
       return {

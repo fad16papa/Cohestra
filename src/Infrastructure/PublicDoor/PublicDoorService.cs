@@ -10,6 +10,7 @@ using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Seed;
 using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -51,8 +52,6 @@ public sealed class PublicDoorService(
         TenantPlan plan,
         CancellationToken cancellationToken)
     {
-        var builderLocked = plan is TenantPlan.Core;
-
         if (plan is TenantPlan.Basic)
         {
             var stubActivities = await LoadStubActivitiesAsync(tenantId, cancellationToken);
@@ -63,7 +62,7 @@ public sealed class PublicDoorService(
                 slug,
                 null,
                 stubActivities,
-                true);
+                false);
         }
 
         var site = await LoadPublishedSiteAsync(tenantId, cancellationToken);
@@ -74,7 +73,7 @@ public sealed class PublicDoorService(
             slug,
             site,
             site?.UpcomingActivities ?? [],
-            builderLocked);
+            false);
     }
 
     private async Task<IReadOnlyList<PublicStubActivityResponse>> LoadStubActivitiesAsync(

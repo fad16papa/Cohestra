@@ -29,7 +29,7 @@ function PlatformLoginPageContent() {
       title="Platform admin sign in"
       description="Sign in to manage tenants, complimentary plans, and Cohestra platform operations."
       footer={
-        <div className="space-y-3 text-text-muted-warm">
+        <div className="space-y-3">
           <p className="text-xs leading-relaxed">
             Restricted access for Cohestra platform administrators only.
           </p>
@@ -37,7 +37,7 @@ function PlatformLoginPageContent() {
             Looking for a workspace?{" "}
             <Link
               href={OPERATOR_LOGIN_PATH}
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-lagoon hover:text-lagoon-deep"
             >
               Operator sign in
             </Link>

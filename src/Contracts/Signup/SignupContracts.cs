@@ -13,17 +13,20 @@ public sealed record PublicSignupResponse(
     string Message);
 
 public sealed record SignupVerifyEmailResponse(
-    string AccessToken,
-    string RefreshToken,
-    int ExpiresInSeconds,
-    string TenantSlug);
+    string TenantSlug,
+    string? AccessToken = null,
+    string? RefreshToken = null,
+    int? ExpiresInSeconds = null,
+    string? HandoffCode = null,
+    int? HandoffExpiresInSeconds = null);
 
 public sealed record SignupMessageResponse(string Message);
 
 public sealed record SignupVerifyEmailRequest(
     string? Email,
     string? Code,
-    string? TenantSlug);
+    string? TenantSlug,
+    bool ForCheckout = false);
 
 public sealed record SignupResendOtpRequest(
     string? Email,

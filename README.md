@@ -83,18 +83,22 @@ Override via `OperatorSeed__Email` and `OperatorSeed__Password` in `.env` or `do
 
 ### Demo data seed (Development)
 
-When `DemoDataSeed:Enabled` is `true`, the API **wipes all business data** (clients, registrations, activities, communities, categories, campaigns, templates) and reseeds on every startup. Operator login is preserved.
+When `DemoDataSeed:Enabled` is `true`, the API **wipes all business data** (clients, registrations, activities, communities, categories, campaigns, templates, timeline) and reseeds on every startup. Operator login is preserved.
 
-| Item | Count |
-|------|-------|
-| Communities | 6 |
-| Activities | 60 (10 per community) |
-| Clients (leads) | 100 |
-| Registrations | 6,000 (each client registered for every activity) |
+Seeds a **production-like scenario matrix** — not a 6,000-row cross product:
 
-Demo clients use emails like `demo.user001@demo.cohestra.local` and appear under **Clients**, **Communities**, and campaign segment filters. Each registration has a unique ID like `REG20260616000001`.
+| Item | Default |
+|------|---------|
+| Curated personas | 11 (Francis Decena, merge suspects, no phone, PH mobile, …) |
+| Synthetic clients | Fill to 48 total |
+| Scenario activities | 7 (capacity full, draft, archived, …) + bulk per community |
+| Registrations | Sparse (~35% fill), unique per client×activity |
+| Timeline | WhatsApp, Viber, lead status, email campaign |
+| Tenant | Default promoted to **Pro trialing** |
 
-Enabled by default in `appsettings.Development.json` and Docker Compose (`DemoDataSeed__Enabled`). Set to `false` in production.
+See [docs/deploy/demo-seed-data.md](docs/deploy/demo-seed-data.md) for the full persona/activity list.
+
+Enabled by default in `appsettings.Development.json`. For Docker, set `DemoDataSeed__Enabled=true` in `.env`. **Must be `false` in production** (enforced at startup).
 
 Example login:
 
@@ -128,7 +132,9 @@ For client UAT on Ubuntu with Docker + nginx + HTTPS, see **[docs/deploy/digital
 
 **SendGrid (live production delivery, required):** [docs/deploy/sendgrid-production.md](docs/deploy/sendgrid-production.md)
 
-Pre-handoff QA: **[UAT polish checklist](docs/deploy/uat-polish-checklist.md)**.
+**Enterprise launch (multi-tenant):** [docs/deploy/enterprise-launch-checklist.md](docs/deploy/enterprise-launch-checklist.md) — use before public launch.
+
+Legacy single-operator pre-handoff QA: **[UAT polish checklist](docs/deploy/uat-polish-checklist.md)**.
 
 **CI/CD (GitHub Actions → droplet):** [docs/deploy/github-actions-cd.md](docs/deploy/github-actions-cd.md)
 
@@ -192,7 +198,7 @@ Each workspace is addressed by **Host**, not a path prefix:
 | Host | Resolves to |
 |------|-------------|
 | `cohestra.app` / `www.cohestra.app` | Marketing + signup only (no tenant SitePage) |
-| `localhost` (bare) | Default seed tenant (`default`) — Platform 0 dev fallback |
+| `localhost` (bare) | Marketing + signup (mirrors production apex) |
 | `{slug}.localhost` | Tenant workspace (public door, admin login, registration) |
 | `{slug}.cohestra.app` | Same as `{slug}.localhost` in production |
 
@@ -214,7 +220,7 @@ curl -s http://localhost/api/v1/public/door
 curl -s http://default.localhost/api/v1/public/door
 ```
 
-`kind` should be `"active"` (default tenant) or `"marketing"` — not `"unknown"`. Prefer `http://default.localhost/` for the seed workspace; bare `http://localhost/` also maps to the default tenant in local dev.
+`kind` should be `"marketing"` on bare localhost or `"active"` on `{slug}.localhost` — not `"unknown"`. Use `http://default.localhost/` for the seed workspace; bare `http://localhost/` shows the marketing landing page.
 
 ## Planning artifacts
 

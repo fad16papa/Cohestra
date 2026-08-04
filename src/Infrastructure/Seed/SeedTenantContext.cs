@@ -10,14 +10,17 @@ namespace Cohestra.Infrastructure.Seed;
 /// </summary>
 internal static class SeedTenantContext
 {
-    public static void BindPlatformZero(IServiceProvider scopedServices)
+    public static void BindPlatformZero(IServiceProvider scopedServices) =>
+        BindTenant(scopedServices, TenantIds.Default, TenantIds.DefaultSlug);
+
+    public static void BindTenant(IServiceProvider scopedServices, Guid tenantId, string slug)
     {
         var current = scopedServices.GetService<CurrentTenant>()
             ?? scopedServices.GetService<ICurrentTenant>() as CurrentTenant;
 
         if (current is not null)
         {
-            current.SetResolved(TenantIds.Default, TenantIds.DefaultSlug);
+            current.SetResolved(tenantId, slug);
             return;
         }
 
@@ -26,7 +29,7 @@ internal static class SeedTenantContext
         if (scopedServices.GetService<ICurrentTenant>() is not null)
         {
             throw new InvalidOperationException(
-                "SeedTenantContext requires CurrentTenant (concrete) to bind Platform 0. " +
+                "SeedTenantContext requires CurrentTenant (concrete) to bind tenant context. " +
                 "Register CurrentTenant as scoped and map ICurrentTenant to it.");
         }
     }
