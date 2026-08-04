@@ -526,10 +526,6 @@ export function ClientsListPage() {
               </div>
             );
           })}
-          <span className="hidden min-w-0 text-center text-xs font-medium uppercase tracking-wide text-text-muted-warm sm:block">
-            Actions
-          </span>
-          <span className="sr-only">Open profile</span>
         </div>
 
         {error ? (
