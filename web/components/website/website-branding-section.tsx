@@ -212,7 +212,7 @@ export const WebsiteBrandingSection = forwardRef<
   return (
     <section
       id="website-branding-section"
-      className="space-y-4 rounded-xl border border-border-warm bg-card p-4 sm:p-5"
+      className="space-y-3 rounded-xl border border-border-warm bg-card p-3 sm:p-4"
     >
       <div>
         <h3 className="text-section text-text-warm">Site identity</h3>

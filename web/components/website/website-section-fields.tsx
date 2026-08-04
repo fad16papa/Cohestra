@@ -822,7 +822,7 @@ export function WebsitePublishGateSummary({ gate }: { gate: PublishGateResult })
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-1.5">
       {gate.blockers.length > 0 ? (
         <ul className="list-disc space-y-1 pl-5 text-sm text-destructive">
           {gate.blockers.map((issue) => (

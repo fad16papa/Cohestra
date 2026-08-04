@@ -81,9 +81,9 @@ export function WebsiteBuilderToolbar({
   onPublish,
 }: WebsiteBuilderToolbarProps) {
   return (
-    <header className="space-y-3 rounded-xl border border-border-warm bg-card p-4 shadow-sm sm:p-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0 space-y-2">
+    <header className="space-y-2.5 rounded-xl border border-border-warm bg-card p-3 shadow-sm sm:p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0 space-y-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-display-sm text-text-warm">Website Builder</h2>
             <span
@@ -110,10 +110,10 @@ export function WebsiteBuilderToolbar({
               <span className="text-xs text-text-muted-warm">{lastSavedLabel}</span>
             ) : null}
           </div>
-          <p className="max-w-2xl text-sm text-text-muted-warm">
+          <p className="max-w-2xl text-xs text-text-muted-warm sm:text-sm">
             Design and publish your public homepage — changes go live only when you publish.
           </p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-muted-warm">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-text-muted-warm sm:text-sm">
             <Globe className="size-3.5 shrink-0 text-primary" aria-hidden />
             <span className="break-all">{siteUrl}</span>
           </div>
@@ -175,7 +175,7 @@ export function WebsiteBuilderToolbar({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 border-t border-border-warm pt-3">
+      <div className="flex flex-wrap gap-1.5 border-t border-border-warm pt-2.5">
         <MetricChip label="Published" value={formatPublished(publishedAt)} />
         <MetricChip
           icon={<CalendarDays className="size-3.5" aria-hidden />}

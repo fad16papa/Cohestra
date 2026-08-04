@@ -33,6 +33,7 @@ import {
 } from "@/components/website/website-builder-editor-rail";
 import type { WebsiteBuilderEditorTab } from "@/lib/website-builder-tour";
 import { WebsiteBuilderOnboardingTour } from "@/components/website/website-builder-onboarding-tour";
+import { WebsitePublishReadinessPanel } from "@/components/website/website-publish-readiness-panel";
 import { WebsiteTemplatesPanel } from "@/components/website/website-templates-panel";
 import { WebsiteLivePreview } from "@/components/website/website-live-preview";
 import { WebsiteSharePreview } from "@/components/website/website-share-preview";
@@ -1016,7 +1017,7 @@ export function WebsiteBuilderPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <WebsiteBuilderToolbar
         siteUrl={publicSiteUrl}
         statusLabel={statusLabel}
@@ -1056,10 +1057,11 @@ export function WebsiteBuilderPage() {
         onPublish={() => void handleOpenPublishDialog()}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-start">
         <WebsiteBuilderEditorRail
           activeTab={editorTab}
           onTabChange={setEditorTab}
+          topSlot={<WebsitePublishReadinessPanel gate={publishGate} />}
           designPanel={
             <>
               {checklistPrefsReady && checklistVisible ? (
@@ -1083,59 +1085,46 @@ export function WebsiteBuilderPage() {
             </>
           }
           sectionsPanel={
-            <>
-              <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
-                <div>
-                  <h3 className="text-section text-text-warm">Homepage sections</h3>
-                  <p className="mt-1 text-sm text-text-muted-warm">
-                    Enable, reorder, and edit sections visitors see on your homepage.
-                  </p>
+            <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3 sm:p-4">
+              <div>
+                <h3 className="text-section text-text-warm">Homepage sections</h3>
+                <p className="mt-0.5 text-xs text-text-muted-warm">
+                  Enable, reorder, and edit sections on your homepage.
+                </p>
+              </div>
+              <WebsiteSectionList
+                draft={draft}
+                expandedSectionId={expandedSectionId}
+                highlightedSectionId={expandedSectionId}
+                publishedActivities={publishedActivities}
+                disabled={editorDisabled}
+                onDraftChange={applyDraftChange}
+                onExpandedSectionChange={setExpandedSectionId}
+                onRemoveSection={handleRequestRemoveSection}
+                onHeroUploadBusyChange={setIsHeroUploading}
+              />
+              <div className="space-y-1.5 border-t border-border-warm pt-3">
+                <p className="text-sm font-medium text-text-warm">Add section</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {addableSectionTypes.map((type) => (
+                    <Button
+                      key={type}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8"
+                      disabled={editorDisabled}
+                      onClick={() => handleAddSection(type)}
+                    >
+                      + {SECTION_TYPE_LABELS[type] ?? type}
+                    </Button>
+                  ))}
                 </div>
-                <WebsiteSectionList
-                  draft={draft}
-                  expandedSectionId={expandedSectionId}
-                  highlightedSectionId={expandedSectionId}
-                  publishedActivities={publishedActivities}
-                  disabled={editorDisabled}
-                  onDraftChange={applyDraftChange}
-                  onExpandedSectionChange={setExpandedSectionId}
-                  onRemoveSection={handleRequestRemoveSection}
-                  onHeroUploadBusyChange={setIsHeroUploading}
-                />
-                <div className="space-y-2 border-t border-border-warm pt-4">
-                  <p className="text-sm font-medium text-text-warm">Add section</p>
-                  <div className="flex flex-wrap gap-2">
-                    {addableSectionTypes.map((type) => (
-                      <Button
-                        key={type}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={editorDisabled}
-                        onClick={() => handleAddSection(type)}
-                      >
-                        + {SECTION_TYPE_LABELS[type] ?? type}
-                      </Button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-text-muted-warm">
-                    Homepage supports up to {MAX_SECTIONS} sections.
-                  </p>
-                </div>
-              </section>
-
-              {publishGate.blockers.length > 0 || publishGate.warnings.length > 0 ? (
-                <section className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20 sm:p-5">
-                  <div>
-                    <h3 className="text-section text-text-warm">Publish readiness</h3>
-                    <p className="mt-1 text-sm text-text-muted-warm">
-                      Fix these before visitors see your changes.
-                    </p>
-                  </div>
-                  <WebsitePublishGateSummary gate={publishGate} />
-                </section>
-              ) : null}
-            </>
+                <p className="text-xs text-text-muted-warm">
+                  Up to {MAX_SECTIONS} sections.
+                </p>
+              </div>
+            </section>
           }
           templatesPanel={
             <WebsiteTemplatesPanel
