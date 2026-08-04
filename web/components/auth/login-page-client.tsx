@@ -64,16 +64,16 @@ function LoginPageContent({
   return (
     <AuthFlowShell
       siteBranding={siteBranding}
-      title="Welcome back"
-      description="Sign in to manage activities, grow your client list, and run campaigns from one calm dashboard."
+      title="Sign in"
+      description="Manage activities, your client list, and outreach from one workspace."
       footer={
-        <div className="space-y-3 text-text-muted-warm">
+        <div className="space-y-3">
           <p className="text-xs leading-relaxed">
-            Secure access for authorized operators only.
+            For authorized operators only.
           </p>
           <OnboardingLink />
           <p>
-            <Link href="/forgot-password" className="font-medium text-primary hover:underline">
+            <Link href="/forgot-password" className="font-medium text-lagoon hover:text-lagoon-deep">
               Forgot password?
             </Link>
           </p>
@@ -115,7 +115,7 @@ function OnboardingLink() {
   return (
     <p>
       First time here?{" "}
-      <Link href={href} className="font-medium text-primary hover:underline">
+      <Link href={href} className="font-medium text-lagoon hover:text-lagoon-deep">
         Create your operator account
       </Link>
     </p>

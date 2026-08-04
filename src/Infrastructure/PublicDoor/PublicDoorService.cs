@@ -52,16 +52,6 @@ public sealed class PublicDoorService(
         TenantPlan plan,
         CancellationToken cancellationToken)
     {
-        var tenantMeta = await dbContext.Tenants
-            .AsNoTracking()
-            .Where(t => t.Id == tenantId)
-            .Select(t => new { t.IsComplimentary })
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var builderLocked = plan is TenantPlan.Core
-            && !(tenantMeta is not null
-                && LoadTestTenantRules.UnlocksWebsiteBuilder(slug, tenantMeta.IsComplimentary));
-
         if (plan is TenantPlan.Basic)
         {
             var stubActivities = await LoadStubActivitiesAsync(tenantId, cancellationToken);
@@ -72,7 +62,7 @@ public sealed class PublicDoorService(
                 slug,
                 null,
                 stubActivities,
-                true);
+                false);
         }
 
         var site = await LoadPublishedSiteAsync(tenantId, cancellationToken);
@@ -83,7 +73,7 @@ public sealed class PublicDoorService(
             slug,
             site,
             site?.UpcomingActivities ?? [],
-            builderLocked);
+            false);
     }
 
     private async Task<IReadOnlyList<PublicStubActivityResponse>> LoadStubActivitiesAsync(

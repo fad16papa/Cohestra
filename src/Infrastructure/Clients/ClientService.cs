@@ -375,6 +375,45 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
             client.TimelineEvents.ToList());
     }
 
+    public async Task<ClientDetailResponse?> RecordViberInitiatedAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        var client = await dbContext.Clients
+            .Include(item => item.Registrations)
+            .ThenInclude(registration => registration.Activity)
+            .Include(item => item.TimelineEvents)
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (client is null)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(client.Phone))
+        {
+            throw new ArgumentException("Client has no phone number on file.");
+        }
+
+        var occurredAt = DateTimeOffset.UtcNow;
+        client.UpdatedAt = occurredAt;
+
+        dbContext.ClientTimelineEvents.Add(new ClientTimelineEvent
+        {
+            Id = Guid.NewGuid(),
+            ClientId = client.Id,
+            EventType = ClientTimelineEventType.ViberInitiated,
+            OccurredAt = occurredAt,
+        });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return ClientDetailMapper.ToResponse(
+            client,
+            client.Registrations.ToList(),
+            client.TimelineEvents.ToList());
+    }
+
     public async Task<ClientDetailResponse?> RecordWhatsAppFollowUpAsync(
         Guid id,
         string status,

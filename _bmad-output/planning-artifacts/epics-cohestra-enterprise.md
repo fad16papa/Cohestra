@@ -27,7 +27,8 @@ storyCounts:
   epic14: 8
   epic15: 7
   epic16: parked
-updated: 2026-07-20
+  epic21: 3
+updated: 2026-08-02
 ---
 
 # cohestra — Epic Breakdown (Enterprise)
@@ -64,7 +65,7 @@ FR-10: Export and report isolation — CSV/reports include only authenticated te
 
 FR-11: Subdomain tenant routing — `{slug}.cohestra.app` for public + admin; apex marketing only; local `{slug}.localhost` or `DEV_TENANT_SLUG`.
 
-FR-12: Public site by plan — Basic stub (no SitePage); Core fixed SitePage (no composer); Pro full builder; upgrade paths seed/unlock SitePage.
+FR-12: Public site by plan — Basic stub (no SitePage); Core Essentials website builder; Pro adds Studio sections/presets; upgrade paths seed SitePage.
 
 FR-13: Per-tenant email branding — SendGrid From name/email per tenant within platform guardrails; block send if sender unverified.
 
@@ -966,27 +967,31 @@ So that I can register without a full website — and it still feels high-end.
 **When** opened
 **Then** UpgradePanel appears (not the builder)
 
-### Story 15.3: Core fixed SitePage and Pro builder unlock
+### Story 15.3: Core Essentials builder and Pro Studio unlock
 
 As a Tenant Admin on Core/Pro,
-I want a plan-appropriate public homepage,
-So that Core gets a branded fixed page and Pro can compose and publish.
+I want a plan-appropriate website builder,
+So that Core can compose Essentials layouts and Pro adds Studio sections.
 
 **Acceptance Criteria:**
 
 **Given** upgrade Basic → Core (or Core signup)
 **When** plan becomes Core
-**Then** a seeded fixed SitePage is created (`UNIQUE TenantId`); public `/` uses fixed template (name, accent, upcoming activities)
-**And** section composer remains locked
+**Then** a seeded SitePage is created (`UNIQUE TenantId`); public `/` uses published SitePage
+**And** Core admin gets full draft/publish composer with Essentials palette only (no Pro UpgradePanel)
 
 **Given** upgrade Core → Pro
 **When** plan becomes Pro
-**Then** the same SitePage unlocks the builder; draft/publish is tenant-scoped
-**And** Ikigai publish does not affect another tenant
+**Then** the same SitePage unlocks Studio sections and Showcase/Event hub presets
+**And** publish remains tenant-scoped (Ikigai publish does not affect another tenant)
 
 **Given** Basic tenant
 **When** SitePage APIs/builder routes are called
 **Then** upgrade CTA / 403 — no SitePage row
+
+**Given** Core tenant saves draft with Studio section
+**When** API validates plan
+**Then** 400 with upgrade hint — Studio sections require Pro
 
 **Given** Pro preview token
 **When** used
@@ -1394,4 +1399,85 @@ So that **registration closes when the event is full without affecting unlimited
 **Then** validation rejects the change
 
 See story file `20-1-optional-max-registrants-per-activity.md` for full AC and dev guardrails.
+
+## Epic 21: Viber client touch-base
+
+Extend client outreach beyond WhatsApp with **Viber click-to-message** on the client profile — same operator workflow as Platform 0 Epic 5 (FR-14, FR-15), without replacing WhatsApp or Epic 16 share-kit copy.
+
+**FRs touched:** FR-14 (click-to-message pattern), FR-15 (follow-up status + coverage metric), FR-7 (timeline)  
+**Platform 0 baseline:** Epic 5 Stories 5.6–5.7, Epic 7 Story 7.5 (server dedup)  
+**Not in scope:** Viber Business / Bot API, broadcast templates, share-kit “Copy Viber message” (park as 21.4 candidate after client-profile path ships)
+
+**Technical notes:**
+- Deep link: `viber://chat?number=%2B{E164}` (URL-encode leading `+` as `%2B`; reuse `toWhatsAppPhoneDigits` / E.164 normalization from `phone-countries.ts`, extended for Viber)
+- Fallback web link (desktop without app): `https://viber.me/{digitsWithoutPlus}` per Viber support docs
+- Brand token: Viber purple `#7360F2` — add `--viber` semantic token; never use for generic primary actions (mirror `--whatsapp`)
+- API routes mirror WhatsApp: `POST .../viber-initiated`, `POST .../viber-follow-up`
+- Timeline event types: `ViberInitiated`, `ViberFollowUpRecorded`
+- Follow-up dedup: 15-minute cooldown on identical status + note (mirror `RecordWhatsAppFollowUpAsync`)
+
+### Story 21.1: Viber click-to-message from client profile
+
+As a **Tenant Admin or Member**,
+I want **to open Viber with a Client's phone number pre-filled from their profile**,
+So that **I can reach clients on their preferred messenger without leaving Cohestra**.
+
+**Acceptance Criteria:**
+
+**Given** a Client with a registered mobile number in E.164 storage  
+**When** I click **Open Viber** on the client profile outreach panel  
+**Then** `viber://chat?number=%2B{digits}` opens in a new tab/app with the number pre-filled  
+**And** the API records `ViberInitiated` on the client timeline before navigation  
+**And** the button is disabled with helper text when the client has no phone on file
+
+**Given** the client profile on mobile  
+**When** the Viber action renders  
+**Then** the button uses the Viber brand token (`--viber`) and is full-width on narrow viewports (mirror WhatsAppButton UX-DR15)
+
+**Given** WhatsApp outreach remains on the same profile  
+**When** both panels render  
+**Then** WhatsApp and Viber are separate actions — neither replaces the other
+
+### Story 21.2: Viber follow-up status tracking
+
+As a **Tenant Admin or Member**,
+I want **to record Viber follow-up status on a Client after messaging**,
+So that **my team sees outreach history and avoids duplicate logging**.
+
+**Acceptance Criteria:**
+
+**Given** I contacted a Client via Viber  
+**When** I set follow-up status (`contacted` | `awaiting_reply`) with an optional note and save  
+**Then** `ViberFollowUpRecorded` appends to the timeline with timestamp and formatted status label (FR-15, NFR-8)  
+**And** save is blocked until status or note differs from the last saved baseline (UI guard)
+
+**Given** an identical follow-up status and note was recorded within the cooldown window  
+**When** the same follow-up POST is submitted again  
+**Then** API returns **409** with a clear message (mirror Epic 7.5 / WhatsApp dedup)
+
+**Given** integration tests for WhatsApp follow-up dedup exist  
+**When** Viber follow-up ships  
+**Then** parallel integration tests cover Viber dedup behavior
+
+### Story 21.3: Multi-channel follow-up coverage includes Viber
+
+As a **Tenant Admin**,
+I want **dashboard and report follow-up coverage to count Viber outreach alongside WhatsApp and email**,
+So that **coverage metrics reflect all messenger touch-points**.
+
+**Acceptance Criteria:**
+
+**Given** a Client with only `ViberInitiated` or `ViberFollowUpRecorded` timeline events (no email/WhatsApp outreach)  
+**When** dashboard follow-up coverage is computed  
+**Then** that Client counts as followed-up (same rule as WhatsApp-initiated / WhatsApp-follow-up)
+
+**Given** report queries that include follow-up coverage or outreach filters  
+**When** Viber events exist  
+**Then** Viber is included in the same predicates as WhatsApp timeline events
+
+**Given** the client profile timeline  
+**When** Viber events render  
+**Then** labels read **Viber initiated** and **Viber follow-up recorded** with human-readable status in the subject line
+
+**Parked (21.4 — post-profile):** Share-kit “Copy Viber message” for activities/homepage (Epic 16 parity); defer until Story 21.1–21.3 UAT passes.
 

@@ -147,6 +147,7 @@ await ApplyMigrationsAsync(app);
 await OperatorSeeder.SeedAsync(app.Services);
 await PlatformAdminSeeder.SeedAsync(app.Services);
 await SitePageSeeder.SeedAsync(app.Services);
+await DemoDataSeeder.SeedAsync(app.Services);
 await RunLoadTestSeedSafelyAsync(app);
 
 app.UseExceptionHandler();

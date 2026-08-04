@@ -76,7 +76,7 @@ public sealed class AuthServiceMembershipGuardTests
             emailConfirmed: true,
             roles: [OperatorSeeder.TenantAdminRole]);
 
-        var result = await harness.Auth.LoginAsync("orphan@test.local", "ChangeMe123!", "localhost");
+        var result = await harness.Auth.LoginAsync("orphan@test.local", "ChangeMe123!", "default.localhost");
 
         Assert.Null(result.Tokens);
         Assert.Equal("invalid_credentials", result.ErrorCode);
@@ -96,7 +96,7 @@ public sealed class AuthServiceMembershipGuardTests
             member.Id, TenantIds.Default, TenantMembershipRole.TenantMember);
         await harness.RemoveMembershipsAsync(member.Id);
 
-        var result = await harness.Auth.LoginAsync("member@test.local", "ChangeMe123!", "localhost");
+        var result = await harness.Auth.LoginAsync("member@test.local", "ChangeMe123!", "default.localhost");
 
         Assert.Null(result.Tokens);
         Assert.Equal("invalid_credentials", result.ErrorCode);
@@ -113,7 +113,7 @@ public sealed class AuthServiceMembershipGuardTests
             emailConfirmed: true,
             roles: [PlatformAdminSeeder.PlatformAdminRole]);
 
-        var result = await harness.Auth.LoginAsync("platform@test.local", "ChangeMe123!", "localhost");
+        var result = await harness.Auth.LoginAsync("platform@test.local", "ChangeMe123!", "default.localhost");
 
         Assert.NotNull(result.Tokens);
         Assert.Null(result.ErrorCode);
@@ -162,14 +162,14 @@ public sealed class AuthServiceMembershipGuardTests
         {
             var (tokens, _, _) = await harness.Auth.VerifyEmailAsync(
                 new VerifyEmailOtpRequest("pending@test.local", "000000"),
-                "localhost",
+                "default.localhost",
                 clientIp: "127.0.0.1");
             Assert.Null(tokens);
         }
 
         var (blockedTokens, blockedError, blockedCode) = await harness.Auth.VerifyEmailAsync(
             new VerifyEmailOtpRequest("pending@test.local", "000000"),
-            "localhost",
+            "default.localhost",
             clientIp: "127.0.0.1");
 
         Assert.Null(blockedTokens);
@@ -199,7 +199,7 @@ public sealed class AuthServiceMembershipGuardTests
 
         var (tokens, error, _) = await harness.Auth.VerifyEmailAsync(
             new VerifyEmailOtpRequest("pending@test.local", "123456"),
-            "localhost",
+            "default.localhost",
             clientIp: null);
 
         Assert.Null(tokens);
@@ -220,7 +220,7 @@ public sealed class AuthServiceMembershipGuardTests
         const string refreshToken = "orphan-refresh-token";
         await harness.RefreshTokens.StoreAsync(refreshToken, orphan.Id, tenantId: null, TimeSpan.FromHours(1));
 
-        var result = await harness.Auth.RefreshAsync(refreshToken, "localhost");
+        var result = await harness.Auth.RefreshAsync(refreshToken, "default.localhost");
 
         Assert.Null(result.Tokens);
         Assert.Equal("invalid_refresh_token", result.ErrorCode);
@@ -241,7 +241,7 @@ public sealed class AuthServiceMembershipGuardTests
         await harness.Membership.EnsureMembershipAsync(
             admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
 
-        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "default.localhost");
 
         Assert.NotNull(result.Tokens);
         Assert.Contains(TenantIds.Default.ToString(), result.Tokens!.AccessToken, StringComparison.Ordinal);
@@ -261,7 +261,7 @@ public sealed class AuthServiceMembershipGuardTests
         await harness.Membership.EnsureMembershipAsync(
             admin.Id, otherTenantId, TenantMembershipRole.TenantAdmin);
 
-        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "default.localhost");
 
         Assert.Null(result.Tokens);
         Assert.Equal("invalid_credentials", result.ErrorCode);
@@ -280,10 +280,10 @@ public sealed class AuthServiceMembershipGuardTests
         await harness.Membership.EnsureMembershipAsync(
             admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
 
-        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "default.localhost");
         Assert.NotNull(login.Tokens);
 
-        var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "localhost");
+        var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "default.localhost");
         Assert.NotNull(refreshed.Tokens);
         Assert.Contains(TenantIds.Default.ToString(), refreshed.Tokens!.AccessToken, StringComparison.Ordinal);
     }
@@ -300,12 +300,12 @@ public sealed class AuthServiceMembershipGuardTests
         await harness.Membership.EnsureMembershipAsync(
             admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
 
-        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "default.localhost");
         Assert.NotNull(login.Tokens);
 
         await harness.RemoveMembershipsAsync(admin.Id);
 
-        var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "localhost");
+        var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "default.localhost");
         Assert.Null(refreshed.Tokens);
         Assert.Equal("invalid_refresh_token", refreshed.ErrorCode);
     }
@@ -322,7 +322,7 @@ public sealed class AuthServiceMembershipGuardTests
         await harness.Membership.EnsureMembershipAsync(
             admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
 
-        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "default.localhost");
         Assert.NotNull(login.Tokens);
 
         var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "cohestra.app");

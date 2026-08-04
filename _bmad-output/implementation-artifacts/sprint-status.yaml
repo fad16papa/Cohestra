@@ -4,8 +4,8 @@
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–19) + Epic 20 activity capacity
-# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–20)
+# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–19) + Epic 20 activity capacity + Epic 21 Viber touch-base
+# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–21)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-02T06:15:00Z
+last_updated: 2026-08-02T08:00:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -222,6 +222,7 @@ development_status:
   15-5-plan-gated-reports-basic-fixed-core-queryable-pro: done
   15-6-pro-only-campaigns-and-per-tenant-email-branding: done
   15-7-suspended-maintenance-and-archived-404-public-states: done
+  15-8-pro-studio-video-embed-section: done
   epic-15-retrospective: done
 
   # Epic 16 v1 scope done (16.1–16.3); parked items (custom domain, thin email, tickets) remain in epics-cohestra-enterprise.md
@@ -256,6 +257,12 @@ development_status:
   epic-20: done
   20-1-optional-max-registrants-per-activity: done
   epic-20-retrospective: done
+
+  epic-21: in-progress
+  21-1-viber-click-to-message-from-client-profile: review
+  21-2-viber-follow-up-status-tracking: backlog
+  21-3-multi-channel-follow-up-coverage-includes-viber: backlog
+  epic-21-retrospective: optional
 
 action_items:
   - epic: 16

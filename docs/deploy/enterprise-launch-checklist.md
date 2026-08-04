@@ -183,7 +183,7 @@ Repeat on at least one **Basic** and one **Pro** tenant (e.g. `creativorare`):
 - [ ] Public registration + client dedup
 - [ ] Reports + CSV export (Pro / plan-gated as applicable)
 - [ ] Campaign send test (Pro) with tenant email branding
-- [ ] Website builder publish (Pro) or stub home (Basic)
+- [ ] Website builder publish (Core Essentials or Pro Studio) or stub home (Basic)
 - [ ] Suspended / archived tenant shows maintenance or 404 on public door
 
 ---

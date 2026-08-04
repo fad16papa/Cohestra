@@ -77,7 +77,9 @@ import {
   removeSectionFromDocument,
 } from "@/lib/site-sections/document-mutations";
 import {
-  ADDABLE_SECTION_TYPES,
+  getAddableSectionTypesForPlan,
+} from "@/lib/site-sections/plan-gate";
+import {
   type AddableSectionType,
 } from "@/lib/site-sections/registry";
 import { MAX_SECTIONS } from "@/lib/site-sections/limits";
@@ -233,6 +235,11 @@ export function WebsiteBuilderPage() {
 
     return serializeSiteDocument(draft) !== savedSnapshot;
   }, [draft, savedSnapshot]);
+
+  const addableSectionTypes = useMemo(
+    () => getAddableSectionTypesForPlan(shell?.plan ?? "Core"),
+    [shell?.plan],
+  );
 
   const draftFingerprint = useMemo(
     () => (draft ? serializeSiteDocument(draft) : ""),
@@ -985,53 +992,6 @@ export function WebsiteBuilderPage() {
     );
   }
 
-  if (adminData.builderLocked) {
-    const previewPayload = {
-      published: draft,
-      publishedAt: adminData.publishedAt,
-      upcomingActivities,
-    };
-
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Website"
-          description="Your Core plan includes a branded fixed homepage. Upgrade to Pro to customize sections and publish changes."
-        />
-        <UpgradePanel
-          title="Section composer unlocks on Pro"
-          description="Your Core plan already includes a fixed branded homepage. Pro unlocks the section composer, presets, and publish controls."
-          requiredPlan="Pro"
-          isTenantAdmin={shell?.isTenantAdmin ?? false}
-        />
-        <WebsiteHealthStrip
-          siteUrl={publicSiteUrl}
-          statusLabel={adminData.published ? "Live" : "Draft saved"}
-          statusClassName="bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
-          publishedAt={adminData.publishedAt}
-          upcomingActivityCount={upcomingActivities.length}
-          enabledSectionCount={enabledSectionCount}
-          publishBlockerCount={0}
-          checklistHidden
-          onCopyLink={() => {
-            void copyTextToClipboard(publicSiteUrl).then((copied) => {
-              if (copied) {
-                showToast("Link copied");
-              } else {
-                showErrorToast("Could not copy link.");
-              }
-            });
-          }}
-          onCopyWhatsApp={() => copyHomepageWhatsAppMessage(publicSiteUrl)}
-          onShowChecklist={() => undefined}
-        />
-        <WebsiteLivePreview deviceMode={deviceMode} onDeviceModeChange={setDeviceMode}>
-          <SitePageRenderer site={previewPayload} isPreview />
-        </WebsiteLivePreview>
-      </div>
-    );
-  }
-
   const previewPayload = {
     published: draft,
     publishedAt: adminData.publishedAt,
@@ -1200,7 +1160,7 @@ export function WebsiteBuilderPage() {
             <div className="space-y-2 border-t border-border-warm pt-4">
               <p className="text-sm font-medium text-text-warm">Add section</p>
               <div className="flex flex-wrap gap-2">
-                {ADDABLE_SECTION_TYPES.map((type) => (
+                {addableSectionTypes.map((type) => (
                   <Button
                     key={type}
                     type="button"
@@ -1234,6 +1194,7 @@ export function WebsiteBuilderPage() {
           <WebsiteTemplatesPanel
             adminData={adminData}
             draft={draft}
+            plan={shell?.plan ?? "Core"}
             disabled={editorDisabled}
             recoveryDisabled={templatesRecoveryDisabled}
             formatLastSaved={formatLastSaved}

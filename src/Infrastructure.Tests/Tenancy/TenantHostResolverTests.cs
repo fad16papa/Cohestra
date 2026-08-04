@@ -12,13 +12,32 @@ public sealed class TenantHostResolverTests
     [Theory]
     [InlineData("acme.cohestra.app", "acme")]
     [InlineData("acme.localhost:3000", "acme")]
-    [InlineData("localhost", "default")]
-    [InlineData("127.0.0.1", "default")]
-    [InlineData("[::1]:8080", "default")]
+    [InlineData("127.0.0.1", "")]
+    [InlineData("[::1]:8080", "")]
     public void ExtractSlug_follows_host_rules(string host, string expectedSlug)
     {
         var config = new ConfigurationBuilder().Build();
         Assert.Equal(expectedSlug, TenantHostResolver.ExtractSlug(host, config));
+    }
+
+    [Fact]
+    public void ExtractSlug_localhost_without_dev_override_is_marketing()
+    {
+        var config = new ConfigurationBuilder().Build();
+        Assert.Equal(string.Empty, TenantHostResolver.ExtractSlug("localhost", config));
+    }
+
+    [Fact]
+    public void ExtractSlug_localhost_with_dev_override_uses_slug()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["DEV_TENANT_SLUG"] = "default",
+            })
+            .Build();
+
+        Assert.Equal("default", TenantHostResolver.ExtractSlug("localhost", config));
     }
 
     [Theory]
@@ -42,9 +61,30 @@ public sealed class TenantHostResolverTests
     public void IsMarketingApexHost_detects_production_apex(string host)
     {
         Assert.True(TenantHostResolver.IsMarketingApexHost(host));
-        Assert.False(TenantHostResolver.IsMarketingApexHost("localhost"));
         Assert.False(TenantHostResolver.IsMarketingApexHost("acme.cohestra.app"));
         Assert.False(TenantHostResolver.IsMarketingApexHost("acme.129-212-235-2.nip.io"));
+    }
+
+    [Theory]
+    [InlineData("localhost")]
+    [InlineData("127.0.0.1")]
+    [InlineData("[::1]:8080")]
+    public void IsMarketingApexHost_treats_bare_localhost_as_marketing_without_dev_override(string host)
+    {
+        Assert.True(TenantHostResolver.IsMarketingApexHost(host));
+    }
+
+    [Fact]
+    public void IsMarketingApexHost_localhost_with_dev_override_is_not_marketing()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["DEV_TENANT_SLUG"] = "default",
+            })
+            .Build();
+
+        Assert.False(TenantHostResolver.IsMarketingApexHost("localhost", config));
     }
 
     [Theory]
@@ -70,7 +110,7 @@ public sealed class TenantHostResolverTests
     }
 
     [Fact]
-    public async Task ResolveAsync_maps_slug_to_tenant_id()
+    public async Task ResolveAsync_bare_localhost_is_marketing_without_dev_override()
     {
         await using var db = new CohestraDbContext(
             new DbContextOptionsBuilder<CohestraDbContext>()
@@ -92,6 +132,35 @@ public sealed class TenantHostResolverTests
 
         var resolver = new TenantHostResolver(db, new ConfigurationBuilder().Build());
         var result = await resolver.ResolveAsync("localhost");
+
+        Assert.False(result.Succeeded);
+        Assert.True(result.IsMarketingHost);
+        Assert.Null(result.TenantId);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_maps_default_subdomain_to_tenant_id()
+    {
+        await using var db = new CohestraDbContext(
+            new DbContextOptionsBuilder<CohestraDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options);
+
+        var now = DateTimeOffset.UtcNow;
+        db.Tenants.Add(new Tenant
+        {
+            Id = TenantIds.Default,
+            Slug = TenantIds.DefaultSlug,
+            Name = "Default",
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        var resolver = new TenantHostResolver(db, new ConfigurationBuilder().Build());
+        var result = await resolver.ResolveAsync("default.localhost");
 
         Assert.True(result.Succeeded);
         Assert.Equal(TenantIds.Default, result.TenantId);
@@ -179,7 +248,7 @@ public sealed class TenantHostResolverTests
         await db.SaveChangesAsync();
 
         var resolver = new TenantHostResolver(db, new ConfigurationBuilder().Build());
-        var result = await resolver.ResolveAsync("localhost");
+        var result = await resolver.ResolveAsync("default.localhost");
 
         Assert.False(result.Succeeded);
         Assert.False(result.IsMarketingHost);

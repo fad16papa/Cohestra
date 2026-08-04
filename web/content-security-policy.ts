@@ -14,12 +14,12 @@ const BASE_DIRECTIVES = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://images.unsplash.com",
+  "img-src 'self' data: blob:",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "frame-src https://www.google.com https://www.recaptcha.net",
+  "frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://player.vimeo.com",
 ] as const;
 
 /** Production / Docker (nginx-owned). API calls are same-origin via /api/ proxy. */

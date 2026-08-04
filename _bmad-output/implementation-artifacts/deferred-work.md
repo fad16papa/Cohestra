@@ -1,3 +1,8 @@
+## Deferred from: code review of 15-8-pro-studio-video-embed-section.md (2026-08-03)
+
+- No AdminSite integration test for video publish round-trip — story listed optional; matches existing builder test pattern
+- Duplicate YouTube/Vimeo parsers in C# and TypeScript — acceptable v1 drift risk; consolidate later if embed rules grow
+
 ## Deferred from: code review of 20-1-optional-max-registrants-per-activity.md (2026-08-01)
 
 - PUT full-replace clears cap when `maxRegistrants` omitted — pre-existing API pattern; current UI panels preserve value

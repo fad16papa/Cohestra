@@ -6,9 +6,22 @@ public sealed class DemoDataSeedSettings
 
     public bool Enabled { get; set; } = false;
 
-    public int CommunityCount { get; set; } = 6;
+    /// <summary>Communities created in addition to curated demo activities.</summary>
+    public int CommunityCount { get; set; } = 4;
 
-    public int ActivitiesPerCommunity { get; set; } = 10;
+    /// <summary>Published activities seeded per community (plus curated scenario activities).</summary>
+    public int ActivitiesPerCommunity { get; set; } = 3;
 
-    public int ClientCount { get; set; } = 100;
+    /// <summary>Total clients: curated personas first, then synthetic fill to this count.</summary>
+    public int ClientCount { get; set; } = 48;
+
+    /// <summary>Probability (0–1) that a synthetic client registers for a bulk activity.</summary>
+    public double RegistrationFillRate { get; set; } = 0.35;
+
+    public bool IncludeOutreachTimeline { get; set; } = true;
+
+    public bool IncludeCampaigns { get; set; } = true;
+
+    /// <summary>Upgrade default tenant to Pro so plan-gated admin features match typical UAT.</summary>
+    public bool PromoteDefaultTenantToPro { get; set; } = true;
 }

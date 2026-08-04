@@ -47,6 +47,12 @@ public static class ProductionSecurityValidator
                 "LoadTestSeed:Enabled must be false in non-Development environments.");
         }
 
+        if (configuration.GetValue("DemoDataSeed:Enabled", false))
+        {
+            throw new InvalidOperationException(
+                "DemoDataSeed:Enabled must be false in non-Development environments.");
+        }
+
         var postgres = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
         if (postgres.Contains("Password=crm", StringComparison.OrdinalIgnoreCase)
             || postgres.Contains("Username=crm", StringComparison.OrdinalIgnoreCase))
