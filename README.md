@@ -194,7 +194,7 @@ Each workspace is addressed by **Host**, not a path prefix:
 | Host | Resolves to |
 |------|-------------|
 | `cohestra.app` / `www.cohestra.app` | Marketing + signup only (no tenant SitePage) |
-| `localhost` (bare) | Default seed tenant (`default`) — Platform 0 dev fallback |
+| `localhost` (bare) | Marketing + signup (mirrors production apex) |
 | `{slug}.localhost` | Tenant workspace (public door, admin login, registration) |
 | `{slug}.cohestra.app` | Same as `{slug}.localhost` in production |
 
@@ -216,7 +216,7 @@ curl -s http://localhost/api/v1/public/door
 curl -s http://default.localhost/api/v1/public/door
 ```
 
-`kind` should be `"active"` (default tenant) or `"marketing"` — not `"unknown"`. Prefer `http://default.localhost/` for the seed workspace; bare `http://localhost/` also maps to the default tenant in local dev.
+`kind` should be `"marketing"` on bare localhost or `"active"` on `{slug}.localhost` — not `"unknown"`. Use `http://default.localhost/` for the seed workspace; bare `http://localhost/` shows the marketing landing page.
 
 ## Planning artifacts
 

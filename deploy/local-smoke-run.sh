@@ -26,7 +26,7 @@ else
   fail "API /ready unhealthy"
 fi
 
-# 2. Public door
+# 2. Public door (tenant host)
 DOOR=$(curl_api "${API}/api/v1/public/door" || true)
 if echo "$DOOR" | grep -q '"kind":"active"'; then
   pass "Public door active for ${TENANT_HOST}"
@@ -35,6 +35,14 @@ if echo "$DOOR" | grep -q '"kind":"active"'; then
   echo "   plan=${PLAN} slug=${SLUG}"
 else
   fail "Public door not active: ${DOOR}"
+fi
+
+# 2b. Marketing apex on bare localhost (local landing page UAT)
+MARKETING_DOOR=$(curl -sS -H "Host: localhost:8088" "${API}/api/v1/public/door" || true)
+if echo "$MARKETING_DOOR" | grep -q '"kind":"marketing"'; then
+  pass "Public door marketing for localhost:8088"
+else
+  fail "Bare localhost should return marketing door (rebuild api): ${MARKETING_DOOR}"
 fi
 
 # 3. Public site

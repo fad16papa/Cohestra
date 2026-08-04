@@ -17,7 +17,7 @@ public sealed class TenantHostResolver(
         string? hostHeader,
         CancellationToken cancellationToken = default)
     {
-        if (IsMarketingApexHost(hostHeader))
+        if (IsMarketingApexHost(hostHeader, configuration))
         {
             return TenantHostResolution.MarketingOnly();
         }
@@ -50,7 +50,7 @@ public sealed class TenantHostResolver(
         string? hostHeader,
         CancellationToken cancellationToken = default)
     {
-        if (IsMarketingApexHost(hostHeader))
+        if (IsMarketingApexHost(hostHeader, configuration))
         {
             return TenantDoorResolution.Marketing();
         }
@@ -84,9 +84,10 @@ public sealed class TenantHostResolver(
     }
 
     /// <summary>
-    /// Production apex/www — marketing-only (no tenant SitePage). Distinct from localhost Platform 0 fallback.
+    /// Production apex/www and local bare localhost — marketing-only (no tenant SitePage).
+    /// When <see cref="DevTenantSlugConfigKey"/> is set, bare localhost binds to that tenant instead.
     /// </summary>
-    public static bool IsMarketingApexHost(string? hostHeader)
+    public static bool IsMarketingApexHost(string? hostHeader, IConfiguration? configuration = null)
     {
         var host = NormalizeHost(hostHeader);
         if (host is "cohestra.app" or "www.cohestra.app")
@@ -98,6 +99,11 @@ public sealed class TenantHostResolver(
         {
             var without = host[..^".cohestra.app".Length];
             return without is "www" or "";
+        }
+
+        if (IsLocalDevApexHost(host) && !HasDevTenantSlugOverride(configuration))
+        {
+            return true;
         }
 
         if (IsNipIoMarketingApex(host))
@@ -121,7 +127,7 @@ public sealed class TenantHostResolver(
             return ResolveFallbackSlug(configuration);
         }
 
-        if (IsMarketingApexHost(hostHeader))
+        if (IsMarketingApexHost(hostHeader, configuration))
         {
             return string.Empty;
         }
@@ -207,6 +213,21 @@ public sealed class TenantHostResolver(
         }
 
         return raw;
+    }
+
+    private static bool IsLocalDevApexHost(string host) =>
+        host is "localhost" or "127.0.0.1" or "::1";
+
+    private static bool HasDevTenantSlugOverride(IConfiguration? configuration)
+    {
+        if (configuration is null)
+        {
+            return false;
+        }
+
+        var configured = configuration[DevTenantSlugConfigKey]
+            ?? configuration.GetSection("Tenancy")["DevTenantSlug"];
+        return !string.IsNullOrWhiteSpace(configured);
     }
 
     private static string ResolveFallbackSlug(IConfiguration configuration)

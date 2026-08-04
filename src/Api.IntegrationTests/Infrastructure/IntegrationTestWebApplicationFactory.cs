@@ -1,4 +1,5 @@
 using Cohestra.Application.Email;
+using Cohestra.Domain.Tenants;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -72,7 +73,8 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
 
     protected override void ConfigureClient(HttpClient client)
     {
-        client.BaseAddress = new Uri("http://localhost");
+        client.BaseAddress = new Uri($"http://{TenantIds.DefaultSlug}.localhost");
+        client.DefaultRequestHeaders.Host = $"{TenantIds.DefaultSlug}.localhost";
     }
 
     public async Task InitializeAsync()

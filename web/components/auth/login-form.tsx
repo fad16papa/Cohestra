@@ -6,7 +6,6 @@ import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   isPlatformAdminProfile,
@@ -26,7 +25,10 @@ type LoginFormProps = {
 };
 
 const fieldShellClassName =
-  "flex min-h-12 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30";
+  "flex min-h-11 items-center gap-3 rounded-[10px] border border-line bg-paper px-3 transition-colors focus-within:border-lagoon/40 focus-within:ring-2 focus-within:ring-lagoon/15";
+
+const loginInputClassName =
+  "auth-login-input min-h-0 h-auto w-full min-w-0 flex-1 appearance-none rounded-none border-0 bg-transparent px-0 py-0 text-base text-ink shadow-none outline-none focus-visible:border-0 focus-visible:ring-0 sm:text-sm placeholder:text-stone disabled:cursor-not-allowed disabled:opacity-50";
 
 export function LoginForm({
   audience = "operator",
@@ -143,17 +145,12 @@ export function LoginForm({
       ) : null}
 
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-text-warm">
+        <Label htmlFor="email" className="text-ink">
           Email address
         </Label>
-        <div
-          className={cn(
-            fieldShellClassName,
-            error ? "border-destructive/40 focus-within:ring-destructive/20" : null
-          )}
-        >
-          <Mail className="size-4 shrink-0 text-text-muted-warm" aria-hidden />
-          <Input
+        <div className={fieldShellClassName}>
+          <Mail className="size-4 shrink-0 text-stone" aria-hidden />
+          <input
             id="email"
             name="email"
             type="email"
@@ -162,26 +159,19 @@ export function LoginForm({
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            aria-invalid={error ? true : undefined}
-            className="min-h-0 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0 sm:text-sm"
+            className={loginInputClassName}
             placeholder={audience === "platform" ? "admin@cohestra.app" : "you@example.com"}
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password" className="text-text-warm">
+        <Label htmlFor="password" className="text-ink">
           Password
         </Label>
-        <div
-          className={cn(
-            fieldShellClassName,
-            "pr-1.5",
-            error ? "border-destructive/40 focus-within:ring-destructive/20" : null
-          )}
-        >
-          <Lock className="size-4 shrink-0 text-text-muted-warm" aria-hidden />
-          <Input
+        <div className={cn(fieldShellClassName, "pr-1.5")}>
+          <Lock className="size-4 shrink-0 text-stone" aria-hidden />
+          <input
             id="password"
             name="password"
             type={showPassword ? "text" : "password"}
@@ -189,8 +179,7 @@ export function LoginForm({
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            aria-invalid={error ? true : undefined}
-            className="min-h-0 flex-1 border-0 bg-transparent px-0 text-base shadow-none focus-visible:ring-0 sm:text-sm"
+            className={loginInputClassName}
             placeholder="Enter your password"
           />
           <button
@@ -198,8 +187,8 @@ export function LoginForm({
             onClick={() => setShowPassword((current) => !current)}
             className={cn(
               "flex size-9 shrink-0 items-center justify-center rounded-lg",
-              "text-text-muted-warm outline-none transition-colors hover:bg-muted/60 hover:text-text-warm",
-              "focus-visible:ring-2 focus-visible:ring-ring"
+              "text-stone outline-none transition-colors hover:bg-paper-warm hover:text-ink",
+              "focus-visible:ring-2 focus-visible:ring-lagoon/30"
             )}
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
@@ -215,7 +204,7 @@ export function LoginForm({
       {verificationRedirectPath ? (
         <p
           role="status"
-          className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-text-warm"
+          className="rounded-xl border border-lagoon/20 bg-lagoon/[0.06] px-4 py-3 text-sm text-ink"
         >
           Your email is not verified yet. Continue below to enter the code we sent you
           or request a new one.
@@ -223,16 +212,13 @@ export function LoginForm({
       ) : null}
 
       {error ? (
-        <div
-          role="alert"
-          className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-        >
+        <div role="alert" className="space-y-2 text-sm text-destructive">
           <p>{error}</p>
           {audience === "platform" && error.includes("operator workspace") ? (
             <p>
               <a
                 href={OPERATOR_LOGIN_PATH}
-                className="font-medium text-primary underline-offset-2 hover:underline"
+                className="font-medium text-lagoon underline-offset-2 hover:text-lagoon-deep hover:underline"
               >
                 Go to operator sign in
               </a>
@@ -244,9 +230,8 @@ export function LoginForm({
       <Button
         type="submit"
         className={cn(
-          "min-h-12 w-full rounded-xl text-base font-semibold shadow-md shadow-primary/20 sm:text-sm",
-          "bg-gradient-to-r from-primary to-accent text-primary-foreground",
-          "hover:from-primary/95 hover:to-accent/95",
+          "min-h-11 w-full rounded-[10px] text-sm font-semibold",
+          "bg-lagoon text-lagoon-fg hover:bg-lagoon-deep",
           "disabled:opacity-70"
         )}
         disabled={isSubmitting}

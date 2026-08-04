@@ -3,6 +3,7 @@ using System.Text.Json;
 using Cohestra.Application.Tenants;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Cohestra.Infrastructure.Tenancy;
@@ -29,7 +30,8 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         HttpContext context,
         ITenantHostResolver hostResolver,
         CurrentTenant currentTenant,
-        ILogger<TenantResolutionMiddleware> logger)
+        ILogger<TenantResolutionMiddleware> logger,
+        IConfiguration configuration)
     {
         // Never trust client X-Tenant-Id for tenancy decisions (AD-3).
         _ = context.Request.Headers.TryGetValue("X-Tenant-Id", out _);
@@ -38,7 +40,9 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
 
         if (IsSkipTenantRequirementPath(path))
         {
-            if (TenantHostResolver.IsMarketingApexHost(TenantRequestHost.GetEffectiveHost(context)))
+            if (TenantHostResolver.IsMarketingApexHost(
+                    TenantRequestHost.GetEffectiveHost(context),
+                    configuration))
             {
                 currentTenant.SetMarketingHost();
                 using (logger.BeginScope(new Dictionary<string, object?> { ["isMarketingHost"] = true }))
