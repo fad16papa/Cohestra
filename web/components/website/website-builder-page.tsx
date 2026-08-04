@@ -27,7 +27,13 @@ import {
   WebsiteSectionList,
 } from "@/components/website/website-section-fields";
 import { WebsiteSetupChecklist } from "@/components/website/website-setup-checklist";
-import { WebsiteHealthStrip } from "@/components/website/website-health-strip";
+import { WebsiteBuilderToolbar } from "@/components/website/website-builder-toolbar";
+import {
+  WebsiteBuilderEditorRail,
+} from "@/components/website/website-builder-editor-rail";
+import type { WebsiteBuilderEditorTab } from "@/lib/website-builder-tour";
+import { WebsiteBuilderOnboardingTour } from "@/components/website/website-builder-onboarding-tour";
+import { WebsitePublishReadinessPanel } from "@/components/website/website-publish-readiness-panel";
 import { WebsiteTemplatesPanel } from "@/components/website/website-templates-panel";
 import { WebsiteLivePreview } from "@/components/website/website-live-preview";
 import { WebsiteSharePreview } from "@/components/website/website-share-preview";
@@ -97,8 +103,9 @@ import {
   dismissSetupChecklist,
   markWebsiteBuilderVisited,
   readInitialChecklistVisibility,
+  shouldShowWebsiteBuilderTour,
 } from "@/lib/website-builder-preferences";
-import { cn } from "@/lib/utils";
+import { getWebsiteBuilderTourSteps } from "@/lib/website-builder-tour";
 import { isBasicPlan } from "@/lib/shell/tenant-shell-api";
 
 type DeviceMode = "phone" | "desktop";
@@ -214,8 +221,9 @@ export function WebsiteBuilderPage() {
   const [removeSectionDialogOpen, setRemoveSectionDialogOpen] = useState(false);
   const [checklistVisible, setChecklistVisible] = useState(false);
   const [checklistPrefsReady, setChecklistPrefsReady] = useState(false);
+  const [editorTab, setEditorTab] = useState<WebsiteBuilderEditorTab>("design");
+  const [tourOpen, setTourOpen] = useState(false);
   const brandingSectionRef = useRef<WebsiteBrandingSectionHandle>(null);
-  const siteNameSectionRef = useRef<HTMLElement>(null);
   const draftRef = useRef<SiteSectionsDocument | null>(null);
   const saveLockRef = useRef(false);
 
@@ -447,6 +455,20 @@ export function WebsiteBuilderPage() {
     setChecklistPrefsReady(true);
   }, []);
 
+  useEffect(() => {
+    if (!checklistPrefsReady || loading || !draft || !shouldShowWebsiteBuilderTour()) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => setTourOpen(true), 500);
+    return () => window.clearTimeout(timer);
+  }, [checklistPrefsReady, draft, loading]);
+
+  const tourSteps = useMemo(
+    () => getWebsiteBuilderTourSteps(shell?.plan ?? "Core"),
+    [shell?.plan]
+  );
+
   const enabledSectionCount = useMemo(
     () => draft?.sections.filter((section) => section.enabled).length ?? 0,
     [draft]
@@ -663,6 +685,7 @@ export function WebsiteBuilderPage() {
 
   const handleChecklistItemAction = (item: SetupChecklistItem) => {
     if (item.sectionId) {
+      setEditorTab("sections");
       setExpandedSectionId(item.sectionId);
       requestAnimationFrame(() => {
         document
@@ -672,19 +695,14 @@ export function WebsiteBuilderPage() {
       return;
     }
 
-    if (item.action === "branding") {
+    if (item.action === "branding" || item.action === "site-name") {
+      setEditorTab("design");
       document
         .getElementById("website-branding-section")
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
-    }
-
-    if (item.action === "site-name") {
-      siteNameSectionRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-      document.getElementById("site-name")?.focus();
+      if (item.action === "site-name") {
+        document.getElementById("site-name")?.focus();
+      }
       return;
     }
 
@@ -999,80 +1017,30 @@ export function WebsiteBuilderPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Website Builder"
-        description="Design and publish your public homepage — changes go live only when you publish."
-        actions={
-          <>
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
-                statusClassName,
-              )}
-            >
-              {statusLabel}
-            </span>
-            {autoSaveLabel ? (
-              <span
-                className={cn(
-                  "self-center text-xs",
-                  autoSaveStatus === "error"
-                    ? "text-destructive"
-                    : "text-text-muted-warm"
-                )}
-              >
-                {autoSaveLabel}
-              </span>
-            ) : null}
-            {adminData.draftUpdatedAt ? (
-              <span className="self-center text-xs text-text-muted-warm">
-                Last saved {formatLastSaved(adminData.draftUpdatedAt)}
-              </span>
-            ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              disabled={
-                isPreviewOpening ||
-                isDirty ||
-                autoSaveStatus === "pending" ||
-                autoSaveStatus === "saving"
-              }
-              onClick={() => void handlePreview()}
-            >
-              Preview
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={
-                !isDirty || isSaving || isHeroUploading || isLogoUploading
-              }
-              onClick={() => void handleSaveDraft()}
-            >
-              {isSaving ? "Saving…" : "Save draft"}
-            </Button>
-            <Button
-              type="button"
-              disabled={!canPublish || publishGate.blockers.length > 0}
-              onClick={() => void handleOpenPublishDialog()}
-            >
-              Publish homepage
-            </Button>
-          </>
-        }
-      />
-
-      <WebsiteHealthStrip
+    <div className="space-y-3">
+      <WebsiteBuilderToolbar
         siteUrl={publicSiteUrl}
         statusLabel={statusLabel}
         statusClassName={statusClassName}
+        autoSaveLabel={autoSaveLabel}
+        autoSaveStatus={autoSaveStatus}
+        lastSavedLabel={
+          adminData.draftUpdatedAt
+            ? `Last saved ${formatLastSaved(adminData.draftUpdatedAt)}`
+            : null
+        }
         publishedAt={adminData.publishedAt}
         upcomingActivityCount={upcomingActivities.length}
         enabledSectionCount={enabledSectionCount}
         publishBlockerCount={publishGate.blockers.length}
         checklistHidden={!checklistVisible}
+        isPreviewOpening={isPreviewOpening}
+        isDirty={isDirty}
+        canPublish={canPublish}
+        publishBlockers={publishGate.blockers.length}
+        isSaving={isSaving}
+        isHeroUploading={isHeroUploading}
+        isLogoUploading={isLogoUploading}
         onCopyLink={() => {
           void copyTextToClipboard(publicSiteUrl).then((copied) => {
             if (copied) {
@@ -1084,139 +1052,109 @@ export function WebsiteBuilderPage() {
         }}
         onCopyWhatsApp={() => copyHomepageWhatsAppMessage(publicSiteUrl)}
         onShowChecklist={() => setChecklistVisible(true)}
+        onPreview={() => void handlePreview()}
+        onSaveDraft={() => void handleSaveDraft()}
+        onPublish={() => void handleOpenPublishDialog()}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-        <div className="space-y-6">
-          {checklistPrefsReady && checklistVisible ? (
-            <WebsiteSetupChecklist
-              items={setupChecklist}
-              onItemAction={handleChecklistItemAction}
-              onDismiss={() => {
-                dismissSetupChecklist();
-                markWebsiteBuilderVisited();
-                setChecklistVisible(false);
-              }}
-            />
-          ) : null}
-
-          <div id="website-branding-section">
-            <WebsiteBrandingSection
-              ref={brandingSectionRef}
-              draft={draft}
-              disabled={editorDisabled}
-              onDraftChange={applyDraftChange}
-              onLogoUploadBusyChange={setIsLogoUploading}
-            />
-          </div>
-
-          <section
-            ref={siteNameSectionRef}
-            className="space-y-3 rounded-xl border border-border-warm bg-card p-4 sm:p-5"
-          >
-            <div>
-              <h3 className="text-section text-text-warm">Site name</h3>
-              <p className="mt-1 text-sm text-text-muted-warm">
-                Shown in the homepage header and browser title after publish.
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="site-name">Site name</Label>
-              <Input
-                id="site-name"
-                value={draft.siteName}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-start">
+        <WebsiteBuilderEditorRail
+          activeTab={editorTab}
+          onTabChange={setEditorTab}
+          topSlot={<WebsitePublishReadinessPanel gate={publishGate} />}
+          designPanel={
+            <>
+              {checklistPrefsReady && checklistVisible ? (
+                <WebsiteSetupChecklist
+                  items={setupChecklist}
+                  onItemAction={handleChecklistItemAction}
+                  onDismiss={() => {
+                    dismissSetupChecklist();
+                    markWebsiteBuilderVisited();
+                    setChecklistVisible(false);
+                  }}
+                />
+              ) : null}
+              <WebsiteBrandingSection
+                ref={brandingSectionRef}
+                draft={draft}
                 disabled={editorDisabled}
-                onChange={(event) =>
-                  setDraft((current) =>
-                    current
-                      ? updateSiteDocument(current, {
-                          siteName: event.target.value,
-                        })
-                      : current,
-                  )
-                }
+                onDraftChange={applyDraftChange}
+                onLogoUploadBusyChange={setIsLogoUploading}
               />
-            </div>
-          </section>
-
-          <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
-            <div>
-              <h3 className="text-section text-text-warm">Sections</h3>
-              <p className="mt-1 text-sm text-text-muted-warm">
-                Enable, reorder, and edit homepage sections.
-              </p>
-            </div>
-            <WebsiteSectionList
-              draft={draft}
-              expandedSectionId={expandedSectionId}
-              highlightedSectionId={expandedSectionId}
-              publishedActivities={publishedActivities}
-              disabled={editorDisabled}
-              onDraftChange={applyDraftChange}
-              onExpandedSectionChange={setExpandedSectionId}
-              onRemoveSection={handleRequestRemoveSection}
-              onHeroUploadBusyChange={setIsHeroUploading}
-            />
-            <div className="space-y-2 border-t border-border-warm pt-4">
-              <p className="text-sm font-medium text-text-warm">Add section</p>
-              <div className="flex flex-wrap gap-2">
-                {addableSectionTypes.map((type) => (
-                  <Button
-                    key={type}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={editorDisabled}
-                    onClick={() => handleAddSection(type)}
-                  >
-                    + {SECTION_TYPE_LABELS[type] ?? type}
-                  </Button>
-                ))}
-              </div>
-              <p className="text-xs text-text-muted-warm">
-                Homepage supports up to {MAX_SECTIONS} sections.
-              </p>
-            </div>
-          </section>
-
-          {publishGate.blockers.length > 0 || publishGate.warnings.length > 0 ? (
-            <section className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/50 dark:bg-amber-950/20 sm:p-5">
+            </>
+          }
+          sectionsPanel={
+            <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3 sm:p-4">
               <div>
-                <h3 className="text-section text-text-warm">Publish readiness</h3>
-                <p className="mt-1 text-sm text-text-muted-warm">
-                  Fix these before visitors see your changes.
+                <h3 className="text-section text-text-warm">Homepage sections</h3>
+                <p className="mt-0.5 text-xs text-text-muted-warm">
+                  Enable, reorder, and edit sections on your homepage.
                 </p>
               </div>
-              <WebsitePublishGateSummary gate={publishGate} />
+              <WebsiteSectionList
+                draft={draft}
+                expandedSectionId={expandedSectionId}
+                highlightedSectionId={expandedSectionId}
+                publishedActivities={publishedActivities}
+                disabled={editorDisabled}
+                onDraftChange={applyDraftChange}
+                onExpandedSectionChange={setExpandedSectionId}
+                onRemoveSection={handleRequestRemoveSection}
+                onHeroUploadBusyChange={setIsHeroUploading}
+              />
+              <div className="space-y-1.5 border-t border-border-warm pt-3">
+                <p className="text-sm font-medium text-text-warm">Add section</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {addableSectionTypes.map((type) => (
+                    <Button
+                      key={type}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8"
+                      disabled={editorDisabled}
+                      onClick={() => handleAddSection(type)}
+                    >
+                      + {SECTION_TYPE_LABELS[type] ?? type}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-text-muted-warm">
+                  Up to {MAX_SECTIONS} sections.
+                </p>
+              </div>
             </section>
-          ) : null}
-
-          <WebsiteTemplatesPanel
-            adminData={adminData}
-            draft={draft}
-            plan={shell?.plan ?? "Core"}
-            disabled={editorDisabled}
-            recoveryDisabled={templatesRecoveryDisabled}
-            formatLastSaved={formatLastSaved}
-            onApplyPreset={(presetId) => {
-              setPresetToApply(presetId);
-              setPresetDialogOpen(true);
-            }}
-            onSaveTemplate={() => {
-              setTemplateNameInput("");
-              setSaveTemplateDialogOpen(true);
-            }}
-            onApplySavedTemplate={(template) => {
-              setSavedTemplateToApply(template);
-              setApplySavedTemplateDialogOpen(true);
-            }}
-            onDeleteSavedTemplate={(template) => {
-              setSavedTemplateToDelete(template);
-              setDeleteSavedTemplateDialogOpen(true);
-            }}
-            onRevertPublished={() => setRevertDialogOpen(true)}
-          />
-        </div>
+          }
+          templatesPanel={
+            <WebsiteTemplatesPanel
+              embedded
+              adminData={adminData}
+              draft={draft}
+              plan={shell?.plan ?? "Core"}
+              disabled={editorDisabled}
+              recoveryDisabled={templatesRecoveryDisabled}
+              formatLastSaved={formatLastSaved}
+              onApplyPreset={(presetId) => {
+                setPresetToApply(presetId);
+                setPresetDialogOpen(true);
+              }}
+              onSaveTemplate={() => {
+                setTemplateNameInput("");
+                setSaveTemplateDialogOpen(true);
+              }}
+              onApplySavedTemplate={(template) => {
+                setSavedTemplateToApply(template);
+                setApplySavedTemplateDialogOpen(true);
+              }}
+              onDeleteSavedTemplate={(template) => {
+                setSavedTemplateToDelete(template);
+                setDeleteSavedTemplateDialogOpen(true);
+              }}
+              onRevertPublished={() => setRevertDialogOpen(true)}
+            />
+          }
+        />
 
         <WebsiteLivePreview
           deviceMode={deviceMode}
@@ -1225,6 +1163,13 @@ export function WebsiteBuilderPage() {
           <SitePageRenderer site={previewPayload} isPreview />
         </WebsiteLivePreview>
       </div>
+
+      <WebsiteBuilderOnboardingTour
+        steps={tourSteps}
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        onRequestTab={setEditorTab}
+      />
 
       <AlertDialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
         <AlertDialogContent>

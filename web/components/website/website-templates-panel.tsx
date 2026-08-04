@@ -21,6 +21,7 @@ type WebsiteTemplatesPanelProps = {
   disabled: boolean;
   recoveryDisabled: boolean;
   formatLastSaved: (iso: string) => string;
+  embedded?: boolean;
   onApplyPreset: (presetId: SiteBuiltInPresetId) => void;
   onSaveTemplate: () => void;
   onApplySavedTemplate: (template: SavedSiteTemplate) => void;
@@ -35,42 +36,19 @@ export function WebsiteTemplatesPanel({
   disabled,
   recoveryDisabled,
   formatLastSaved,
+  embedded = false,
   onApplyPreset,
   onSaveTemplate,
   onApplySavedTemplate,
   onDeleteSavedTemplate,
   onRevertPublished,
 }: WebsiteTemplatesPanelProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(embedded);
   const savedCount = adminData.savedTemplates.length;
+  const isOpen = embedded || open;
 
-  return (
-    <section className="overflow-hidden rounded-xl border border-border-warm bg-card">
-      <button
-        type="button"
-        className="flex w-full items-start justify-between gap-3 px-4 py-4 text-left sm:px-5"
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
-      >
-        <div>
-          <h3 className="text-section text-text-warm">Templates &amp; recovery</h3>
-          <p className="mt-1 text-sm text-text-muted-warm">
-            {open
-              ? "Built-in layouts, saved templates, and revert options"
-              : `${SITE_BUILT_IN_PRESETS.length} presets · ${savedCount} saved template${savedCount === 1 ? "" : "s"}`}
-          </p>
-        </div>
-        <ChevronDown
-          className={cn(
-            "mt-1 size-5 shrink-0 text-text-muted-warm transition-transform",
-            open && "rotate-180"
-          )}
-          aria-hidden
-        />
-      </button>
-
-      {open ? (
-        <div className="space-y-4 border-t border-border-warm px-4 py-4 sm:px-5">
+  const panelContent = (
+    <div className={cn("space-y-4", !embedded && "border-t border-border-warm px-4 py-4 sm:px-5")}>
           <div className="space-y-2">
             <p className="text-sm font-medium text-text-warm">Built-in presets</p>
             <div className="grid gap-2 sm:grid-cols-2">
@@ -194,8 +172,49 @@ export function WebsiteTemplatesPanel({
               </Button>
             </div>
           ) : null}
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <section className="space-y-4" data-tour="website-builder-templates-panel">
+        <div>
+          <h3 className="text-section text-text-warm">Templates &amp; recovery</h3>
+          <p className="mt-1 text-sm text-text-muted-warm">
+            Built-in layouts, saved templates, and revert options.
+          </p>
         </div>
-      ) : null}
+        {panelContent}
+      </section>
+    );
+  }
+
+  return (
+    <section className="overflow-hidden rounded-xl border border-border-warm bg-card">
+      <button
+        type="button"
+        className="flex w-full items-start justify-between gap-3 px-4 py-4 text-left sm:px-5"
+        aria-expanded={isOpen}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <div>
+          <h3 className="text-section text-text-warm">Templates &amp; recovery</h3>
+          <p className="mt-1 text-sm text-text-muted-warm">
+            {isOpen
+              ? "Built-in layouts, saved templates, and revert options"
+              : `${SITE_BUILT_IN_PRESETS.length} presets · ${savedCount} saved template${savedCount === 1 ? "" : "s"}`}
+          </p>
+        </div>
+        <ChevronDown
+          className={cn(
+            "mt-1 size-5 shrink-0 text-text-muted-warm transition-transform",
+            isOpen && "rotate-180"
+          )}
+          aria-hidden
+        />
+      </button>
+
+      {isOpen ? panelContent : null}
     </section>
   );
 }
