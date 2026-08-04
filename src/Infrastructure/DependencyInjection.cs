@@ -129,7 +129,9 @@ public static class DependencyInjection
 
         services.AddScoped<IEmailDeliveryStatusService, EmailDeliveryStatusService>();
 
-        services.AddScoped<IRefreshTokenStore, RedisRefreshTokenStore>();
+        services.AddScoped<RedisRefreshTokenStore>();
+        services.AddSingleton<InMemoryRefreshTokenStore>();
+        services.AddScoped<IRefreshTokenStore, ResilientRefreshTokenStore>();
         services.AddScoped<IAuthOtpStore, RedisOtpStore>();
         services.AddScoped<RedisAuthHandoffStore>();
         services.AddSingleton<InMemoryAuthHandoffStore>();

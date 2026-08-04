@@ -230,6 +230,28 @@ public sealed class AuthServiceMembershipGuardTests
     }
 
     [Fact]
+    public async Task Login_on_bare_localhost_with_dev_tenant_slug_returns_tokens_for_default_operator()
+    {
+        await using var harness = await AuthHarness.CreateAsync(devTenantSlug: "default");
+        var admin = await harness.CreateUserAsync(
+            "operator@cohestra.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var result = await harness.Auth.LoginAsync(
+            "operator@cohestra.local",
+            "ChangeMe123!",
+            "localhost");
+
+        Assert.NotNull(result.Tokens);
+        Assert.Null(result.HandoffCode);
+        Assert.Null(result.ErrorCode);
+    }
+
+    [Fact]
     public async Task Login_on_bare_localhost_with_dev_tenant_slug_resolves_other_membership()
     {
         await using var harness = await AuthHarness.CreateAsync(devTenantSlug: "default");
