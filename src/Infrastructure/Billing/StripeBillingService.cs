@@ -69,10 +69,9 @@ public sealed class StripeBillingService(
             throw new InvalidOperationException("Complimentary tenants do not use Stripe Checkout.");
         }
 
-        if (tenant.Plan is TenantPlan.Core or TenantPlan.Pro
-            && tenant.BillingStatus is BillingStatus.Trialing or BillingStatus.Active or BillingStatus.PastDue)
+        if (CanUpgradeExistingSubscription(tenant))
         {
-            throw new InvalidOperationException("Tenant already has an active paid subscription.");
+            return await UpgradeExistingSubscriptionAsync(tenant, command, cancellationToken);
         }
 
         if (!string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId))
@@ -159,6 +158,102 @@ public sealed class StripeBillingService(
             session.Url,
             projectedTrialEnd,
             includeTrial,
+            disclaimer);
+    }
+
+    private static bool CanUpgradeExistingSubscription(Tenant tenant) =>
+        !string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId)
+        && tenant.Plan is TenantPlan.Core or TenantPlan.Pro
+        && tenant.BillingStatus is BillingStatus.Trialing
+            or BillingStatus.Active
+            or BillingStatus.PastDue;
+
+    private async Task<CheckoutSessionDto> UpgradeExistingSubscriptionAsync(
+        Tenant tenant,
+        CreateCheckoutSessionCommand command,
+        CancellationToken cancellationToken)
+    {
+        if (StripeTenantBillingSync.IsPaidPlanDowngrade(tenant.Plan, command.Plan))
+        {
+            throw new InvalidOperationException(
+                "To downgrade your plan, open Manage billing in Settings and use the Stripe Customer Portal.");
+        }
+
+        var newPriceId = StripeTenantBillingSync.ResolvePriceId(command.Plan, command.Interval, _settings)
+            ?? throw new InvalidOperationException("Stripe price ID is not configured for the selected plan.");
+
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+        var subscriptionService = new SubscriptionService();
+
+        Subscription subscription;
+        try
+        {
+            subscription = await subscriptionService.GetAsync(
+                tenant.StripeSubscriptionId!,
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Could not load Stripe subscription {SubscriptionId} for tenant {TenantId}",
+                tenant.StripeSubscriptionId,
+                tenant.Id);
+            throw new InvalidOperationException("Could not load your current subscription. Try Manage billing in Settings.");
+        }
+
+        var currentItem = subscription.Items?.Data?.FirstOrDefault()
+            ?? throw new InvalidOperationException("Stripe subscription has no billable items.");
+
+        if (string.Equals(currentItem.Price?.Id, newPriceId, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Your workspace is already on the selected plan and billing interval.");
+        }
+
+        Subscription updated;
+        try
+        {
+            updated = await subscriptionService.UpdateAsync(
+                subscription.Id,
+                new SubscriptionUpdateOptions
+                {
+                    Items =
+                    [
+                        new SubscriptionItemOptions
+                        {
+                            Id = currentItem.Id,
+                            Price = newPriceId,
+                        },
+                    ],
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["tenant_id"] = tenant.Id.ToString(),
+                        ["tenant_slug"] = command.TenantSlug,
+                        ["plan"] = command.Plan.ToString(),
+                        ["interval"] = command.Interval.ToString(),
+                    },
+                    ProrationBehavior = "create_prorations",
+                },
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "Stripe subscription upgrade failed for tenant {TenantId}", tenant.Id);
+            throw new InvalidOperationException("Could not upgrade your subscription in Stripe. Try Manage billing in Settings.");
+        }
+
+        StripeTenantBillingSync.ApplySubscription(tenant, updated, _settings);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await EnsurePaidSitePageIfNeededAsync(tenant, cancellationToken);
+
+        var disclaimer = tenant.BillingStatus == BillingStatus.Trialing && tenant.TrialEndsAt is { } trialEnd
+            ? StripeTenantBillingSync.BuildTrialDisclaimer(trialEnd)
+            : "Your plan was updated. Stripe will prorate any price difference on your next invoice.";
+
+        return new CheckoutSessionDto(
+            command.SuccessUrl,
+            tenant.TrialEndsAt,
+            tenant.BillingStatus == BillingStatus.Trialing,
             disclaimer);
     }
 

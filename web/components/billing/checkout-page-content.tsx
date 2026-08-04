@@ -170,12 +170,20 @@ function CheckoutContent() {
           </p>
         </div>
 
-        {error ? (
-          <div className="flex w-full flex-col gap-3">
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-            <Button
+            {error ? (
+              <div className="flex w-full flex-col gap-3">
+                <p role="alert" className="text-sm text-destructive">
+                  {error}
+                </p>
+                {error.includes("Manage billing") ? (
+                  <Link
+                    href="/settings/billing"
+                    className={cn(buttonVariants({ size: "lg" }), "inline-flex justify-center")}
+                  >
+                    Open billing settings
+                  </Link>
+                ) : null}
+                <Button
               type="button"
               size="lg"
               disabled={starting}
@@ -192,7 +200,7 @@ function CheckoutContent() {
           </div>
         ) : (
           <p className="text-sm text-text-muted-warm" role="status">
-            Redirecting to Stripe…
+            Processing your plan change…
           </p>
         )}
       </div>

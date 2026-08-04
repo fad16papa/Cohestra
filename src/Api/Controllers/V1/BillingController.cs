@@ -170,12 +170,12 @@ public class BillingController(
                 session.TrialIncluded,
                 session.TrialDisclaimer));
         }
-        catch (InvalidOperationException)
+        catch (InvalidOperationException ex)
         {
             return BadRequest(new ProblemDetails
             {
                 Title = "Checkout unavailable",
-                Detail = "Could not start Stripe Checkout for this workspace.",
+                Detail = ex.Message,
                 Status = StatusCodes.Status400BadRequest,
             });
         }
