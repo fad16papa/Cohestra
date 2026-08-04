@@ -165,6 +165,25 @@ public class ClientsController(IClientService clientService) : ControllerBase
         }
     }
 
+    [HttpPost("{id:guid}/viber-initiated")]
+    [ProducesResponseType(typeof(ClientDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ClientDetailResponse>> RecordViberInitiated(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var client = await clientService.RecordViberInitiatedAsync(id, cancellationToken);
+            return client is null ? NotFound() : Ok(client);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequestProblem(ex.Message);
+        }
+    }
+
     [HttpPost("{id:guid}/whatsapp-follow-up")]
     [ProducesResponseType(typeof(ClientDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

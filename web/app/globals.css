@@ -66,6 +66,8 @@
   --color-status-inactive-foreground: var(--status-inactive-foreground);
   --color-whatsapp: var(--whatsapp);
   --color-whatsapp-foreground: var(--whatsapp-foreground);
+  --color-viber: var(--viber);
+  --color-viber-foreground: var(--viber-foreground);
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
