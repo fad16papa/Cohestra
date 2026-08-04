@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Activity } from "@/lib/activities-api";
 import { resolvePublicSiteUrl } from "@/lib/tenant-public-url";
-import { uploadCampaignAsset } from "@/lib/campaigns-api";
+import { uploadBrandingAsset } from "@/lib/campaigns-api";
 import type { SiteSection, SiteSectionsDocument } from "@/lib/public-site-api";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
 import {
@@ -225,7 +225,7 @@ export function WebsiteSectionFields({
               const uploadSeq = ++heroUploadSeqRef.current;
               setIsUploadingHero(true);
 
-              void uploadCampaignAsset(authFetch, file, "Site hero image")
+              void uploadBrandingAsset(authFetch, file, "Site hero image")
                 .then((asset) => {
                   if (uploadSeq !== heroUploadSeqRef.current) {
                     return;

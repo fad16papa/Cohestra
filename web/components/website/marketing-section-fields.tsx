@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Activity } from "@/lib/activities-api";
-import { uploadCampaignAsset } from "@/lib/campaigns-api";
+import { uploadBrandingAsset } from "@/lib/campaigns-api";
 import type { SiteSection } from "@/lib/public-site-api";
 import { readSectionVariant } from "@/lib/site-sections/limits";
 import { parseVideoEmbedUrl } from "@/lib/site-video-embed";
@@ -81,7 +81,7 @@ function AssetUploadButton({
           }
 
           setBusy(true);
-          void uploadCampaignAsset(authFetch, file, uploadLabel)
+          void uploadBrandingAsset(authFetch, file, uploadLabel)
             .then((asset) => onUploaded(asset.id))
             .catch((error) =>
               showErrorToast(error instanceof Error ? error.message : "Could not upload image.")
