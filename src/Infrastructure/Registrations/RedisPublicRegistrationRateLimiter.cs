@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Cohestra.Application.Registrations;
+using Cohestra.Infrastructure.RateLimiting;
 using Cohestra.Infrastructure.Tenancy;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
@@ -11,6 +12,7 @@ public sealed class RedisPublicRegistrationRateLimiter(
     IConnectionMultiplexer redis,
     IOptions<PublicRegistrationRateLimitOptions> options) : IPublicRegistrationRateLimiter
 {
+    private const string LimiterName = "PublicRegistration";
     private static readonly LuaScript SlidingWindowScript = LuaScript.Prepare("""
         local now = tonumber(@now)
         local windowMs = tonumber(@windowMs)
@@ -47,16 +49,16 @@ public sealed class RedisPublicRegistrationRateLimiter(
             HashIdentifier(clientIdentifier));
         var member = Guid.NewGuid().ToString("N");
 
-        var result = await SlidingWindowScript.EvaluateAsync(db, new
-        {
-            key,
-            now,
-            windowMs,
-            limit = settings.MaxRequests,
-            member,
-        });
-
-        return result is not null && (int)result == 1;
+        return await RedisRateLimiterOperations.EvaluateAllowAsync(
+            () => SlidingWindowScript.EvaluateAsync(db, new
+            {
+                key,
+                now,
+                windowMs,
+                limit = settings.MaxRequests,
+                member,
+            }),
+            LimiterName);
     }
 
     internal static string HashIdentifier(string value)

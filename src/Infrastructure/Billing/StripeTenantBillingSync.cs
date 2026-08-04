@@ -129,6 +129,9 @@ public static class StripeTenantBillingSync
             _ => false,
         };
 
+    public static bool IsPaidPlanDowngrade(TenantPlan current, TenantPlan target) =>
+        IsDowngrade(current, target);
+
     internal static bool CanApplyPlanEntitlement(string? status) =>
         status is "trialing" or "active" or "past_due";
 

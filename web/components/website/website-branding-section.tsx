@@ -24,7 +24,7 @@ import {
   presetIdForColor,
   type BrandAccentPresetId,
 } from "@/lib/brand-accent";
-import { uploadCampaignAsset } from "@/lib/campaigns-api";
+import { uploadBrandingAsset } from "@/lib/campaigns-api";
 import type { SiteSectionsDocument } from "@/lib/public-site-api";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
 import { updateSiteDocument } from "@/lib/site-draft-utils";
@@ -251,7 +251,7 @@ export const WebsiteBrandingSection = forwardRef<
             const uploadSeq = ++logoUploadSeqRef.current;
             setIsUploadingLogo(true);
 
-            void uploadCampaignAsset(authFetch, file, "Site logo")
+            void uploadBrandingAsset(authFetch, file, "Site logo")
               .then((asset) => {
                 if (uploadSeq !== logoUploadSeqRef.current) {
                   return;

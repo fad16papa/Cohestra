@@ -88,10 +88,27 @@ Idempotent retries with the same `Idempotency-Key` and payload return this same 
 |--------|------|
 | `400 Bad Request` | Missing `activitySlug`/`answers`, invalid `Idempotency-Key`, or answers fail schema validation |
 | `404 Not Found` | Unknown slug or activity not accepting registrations (draft/archived) |
-| `409 Conflict` | `Idempotency-Key` reused with a different registration payload, or client already registered for this activity |
+| `409 Conflict` | `Idempotency-Key` reused with a different registration payload, client already registered for this activity, or activity has reached its max registrants cap (Story 20.1) |
 | `429 Too Many Requests` | Per-IP sliding-window rate limit exceeded (Story 3.2, NFR-6) |
 
 Problem details follow the API-wide `application/problem+json` convention.
+
+### 409 Conflict — activity full (Story 20.1)
+
+When a published activity has `maxRegistrants` set and registration count has reached that cap, new submissions return:
+
+```json
+{
+  "title": "Activity full",
+  "detail": "This activity is no longer accepting registrations.",
+  "status": 409,
+  "errorCode": "activity_full"
+}
+```
+
+Duplicate-client checks run before the capacity check; an already-registered client still receives the existing already-registered `409` response.
+
+Public activity GET (`/api/v1/public/activities/{slug}`) exposes separate fields: `isRegistrationOpen` (published status), `isRegistrationFull`, `registrationCount`, and optional `maxRegistrants`.
 
 ## Authentication
 

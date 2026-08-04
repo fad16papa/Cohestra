@@ -163,6 +163,53 @@ public sealed class TenantMembershipServiceTests
         Assert.Contains("different role", mismatch.Detail, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task GetPendingVerificationTenantSlug_returns_non_default_admin_workspace()
+    {
+        await using var db = CreateDb();
+        await SeedDefaultTenantAsync(db);
+        var service = new TenantMembershipService(db);
+        var userId = Guid.NewGuid();
+
+        var selfServeTenant = Guid.CreateVersion7();
+        db.Tenants.Add(new Tenant
+        {
+            Id = selfServeTenant,
+            Slug = "creativorare",
+            Name = "Creativorare",
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        await service.CreateMembershipAsync(
+            userId, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+        await service.CreateMembershipAsync(
+            userId, selfServeTenant, TenantMembershipRole.TenantAdmin);
+
+        var slug = await service.GetPendingVerificationTenantSlugAsync(userId);
+
+        Assert.Equal("creativorare", slug);
+    }
+
+    [Fact]
+    public async Task GetPendingVerificationTenantSlug_returns_null_for_default_only_bootstrap()
+    {
+        await using var db = CreateDb();
+        await SeedDefaultTenantAsync(db);
+        var service = new TenantMembershipService(db);
+        var userId = Guid.NewGuid();
+
+        await service.CreateMembershipAsync(
+            userId, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var slug = await service.GetPendingVerificationTenantSlugAsync(userId);
+
+        Assert.Null(slug);
+    }
+
     private static async Task SeedDefaultTenantAsync(CohestraDbContext db)
     {
         var now = DateTimeOffset.UtcNow;

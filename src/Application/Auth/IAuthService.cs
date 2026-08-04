@@ -21,9 +21,10 @@ public interface IAuthService
         RegisterOperatorRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<(AuthTokenResponse? Tokens, string? Error)> VerifyEmailAsync(
+    Task<(AuthTokenResponse? Tokens, string? Error, string? ErrorCode)> VerifyEmailAsync(
         VerifyEmailOtpRequest request,
         string? host,
+        string? clientIp,
         CancellationToken cancellationToken = default);
 
     Task<(MessageResponse? Response, string? Error)> ResendOtpAsync(
@@ -34,8 +35,9 @@ public interface IAuthService
         ForgotPasswordRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<(MessageResponse? Response, string? Error)> ResetPasswordAsync(
+    Task<(MessageResponse? Response, string? Error, string? ErrorCode)> ResetPasswordAsync(
         ResetPasswordRequest request,
+        string? clientIp,
         CancellationToken cancellationToken = default);
 
     Task<(MessageResponse? Response, string? Error)> ChangePasswordAsync(

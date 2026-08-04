@@ -85,6 +85,9 @@ internal sealed class ActivityConfiguration : IEntityTypeConfiguration<Activity>
             .HasDefaultValue(true)
             .IsRequired();
 
+        builder.Property(activity => activity.MaxRegistrants)
+            .HasColumnName("max_registrants");
+
         builder.Property(activity => activity.CreatedAt).IsRequired();
         builder.Property(activity => activity.UpdatedAt).IsRequired();
     }

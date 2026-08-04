@@ -64,6 +64,16 @@ export default async function PublicRegistrationPage({
     );
   }
 
+  if (activity.isRegistrationFull) {
+    return (
+      <PublicRegistrationUnavailable
+        slug={slug}
+        activityName={activity.name}
+        reason="full"
+      />
+    );
+  }
+
   return (
     <PublicRegistrationOpen
       slug={activity.slug}

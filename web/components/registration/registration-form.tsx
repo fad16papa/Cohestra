@@ -100,6 +100,7 @@ export function RegistrationForm({
   const [errors, setErrors] = useState<FieldErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitErrorCode, setSubmitErrorCode] = useState<string | null>(null);
   const idempotencyKeyRef = useRef<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -158,6 +159,7 @@ export function RegistrationForm({
     }
 
     setSubmitError(null);
+    setSubmitErrorCode(null);
     onSubmitError?.(null);
     setIsSubmitting(true);
 
@@ -173,11 +175,14 @@ export function RegistrationForm({
         onSubmitted?.(result);
       })
       .catch((error) => {
+        const registrationError = error as Error & { errorCode?: string };
         const message =
-          error instanceof Error && error.message
-            ? error.message
+          registrationError instanceof Error && registrationError.message
+            ? registrationError.message
             : "Could not submit registration. Check your connection and try again.";
+        const errorCode = registrationError.errorCode ?? null;
         setSubmitError(message);
+        setSubmitErrorCode(errorCode);
         onSubmitError?.(message);
       })
       .finally(() => {
@@ -429,18 +434,32 @@ export function RegistrationForm({
       {submitError ? (
         <div
           role="alert"
-          className="space-y-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4"
+          className={cn(
+            "space-y-3 rounded-lg border p-4",
+            submitErrorCode === "activity_full"
+              ? "border-border-warm bg-muted/30"
+              : "border-destructive/30 bg-destructive/5"
+          )}
         >
-          <p className="text-sm text-destructive">{submitError}</p>
-          <Button
-            type="button"
-            variant="outline"
-            className={cn(isPublic && "min-h-12 w-full")}
-            disabled={isSubmitting}
-            onClick={performSubmit}
-          >
-            Try again
-          </Button>
+          {submitErrorCode === "activity_full" ? (
+            <>
+              <p className="text-sm font-medium text-text-warm">Activity full</p>
+              <p className="text-sm text-text-muted-warm">{submitError}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-destructive">{submitError}</p>
+              <Button
+                type="button"
+                variant="outline"
+                className={cn(isPublic && "min-h-12 w-full")}
+                disabled={isSubmitting}
+                onClick={performSubmit}
+              >
+                Try again
+              </Button>
+            </>
+          )}
         </div>
       ) : null}
 

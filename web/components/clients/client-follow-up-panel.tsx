@@ -9,11 +9,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-provider";
 import {
   leadStatusLabels,
-  recordWhatsAppInitiated,
   updateClientLeadStatus,
   type ClientDetail,
 } from "@/lib/clients-api";
-import { formatPhoneDisplay, toWhatsAppPhoneDigits } from "@/lib/phone-countries";
+import { formatPhoneDisplay } from "@/lib/phone-countries";
 import { cn } from "@/lib/utils";
 
 type ClientFollowUpPanelProps = {
@@ -50,7 +49,6 @@ export function ClientFollowUpPanel({
   const { showToast, showActionToast } = useToast();
   const [busy, setBusy] = useState(false);
 
-  const whatsAppPhone = toWhatsAppPhoneDigits(client.phone);
   const phoneLabel = formatPhoneDisplay(client.phone)?.display ?? null;
   const latestRegistration = formatLatestRegistration(client);
   const needsFollowUp = client.leadStatus === "new";
@@ -78,26 +76,6 @@ export function ClientFollowUpPanel({
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Could not update lead status."
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleOpenWhatsApp() {
-    if (!whatsAppPhone) {
-      showToast("This client has no phone number on file.");
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const updated = await recordWhatsAppInitiated(authFetch, client.id);
-      onUpdated(updated);
-      window.open(`https://wa.me/${whatsAppPhone}`, "_blank", "noopener,noreferrer");
-    } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : "Could not log WhatsApp initiation."
       );
     } finally {
       setBusy(false);
@@ -156,21 +134,14 @@ export function ClientFollowUpPanel({
               Mark contacted
             </Button>
           ) : null}
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!whatsAppPhone || busy}
-            onClick={() => void handleOpenWhatsApp()}
-          >
-            Open WhatsApp
-          </Button>
         </div>
       </div>
 
       {needsFollowUp ? (
         <p className="mt-4 text-xs text-text-muted-warm">
-          Tip: Mark as {leadStatusLabels.contacted.toLowerCase()} after your first touch — it
-          improves follow-up coverage on your dashboard.
+          Tip: Mark as {leadStatusLabels.contacted.toLowerCase()} after your first touch. Use
+          Messenger outreach below (review operator requirements before opening WhatsApp or
+          Viber).
         </p>
       ) : null}
     </section>

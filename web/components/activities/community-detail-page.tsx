@@ -190,7 +190,6 @@ export function CommunityDetailPage({ id }: CommunityDetailPageProps) {
           <span className="min-w-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm">
             Last registration
           </span>
-          <span className="sr-only">Open profile</span>
         </div>
 
         {error ? (

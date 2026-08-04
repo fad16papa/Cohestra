@@ -14,7 +14,7 @@ import {
 type PublicRegistrationUnavailableProps = {
   slug: string;
   activityName?: string;
-  reason: "not-found" | "unavailable" | "error";
+  reason: "not-found" | "unavailable" | "full" | "error";
 };
 
 const reasonCopy: Record<
@@ -28,6 +28,10 @@ const reasonCopy: Record<
   unavailable: {
     title: "Registration closed",
     description: "This activity is no longer accepting registrations.",
+  },
+  full: {
+    title: "Activity full",
+    description: "This activity has reached its registration limit and is no longer accepting sign-ups.",
   },
   error: {
     title: "Could not load registration",

@@ -76,7 +76,7 @@ public sealed class AuthServiceMembershipGuardTests
             emailConfirmed: true,
             roles: [OperatorSeeder.TenantAdminRole]);
 
-        var result = await harness.Auth.LoginAsync("orphan@test.local", "ChangeMe123!", "localhost");
+        var result = await harness.Auth.LoginAsync("orphan@test.local", "ChangeMe123!", "default.localhost");
 
         Assert.Null(result.Tokens);
         Assert.Equal("invalid_credentials", result.ErrorCode);
@@ -96,7 +96,7 @@ public sealed class AuthServiceMembershipGuardTests
             member.Id, TenantIds.Default, TenantMembershipRole.TenantMember);
         await harness.RemoveMembershipsAsync(member.Id);
 
-        var result = await harness.Auth.LoginAsync("member@test.local", "ChangeMe123!", "localhost");
+        var result = await harness.Auth.LoginAsync("member@test.local", "ChangeMe123!", "default.localhost");
 
         Assert.Null(result.Tokens);
         Assert.Equal("invalid_credentials", result.ErrorCode);
@@ -113,7 +113,7 @@ public sealed class AuthServiceMembershipGuardTests
             emailConfirmed: true,
             roles: [PlatformAdminSeeder.PlatformAdminRole]);
 
-        var result = await harness.Auth.LoginAsync("platform@test.local", "ChangeMe123!", "localhost");
+        var result = await harness.Auth.LoginAsync("platform@test.local", "ChangeMe123!", "default.localhost");
 
         Assert.NotNull(result.Tokens);
         Assert.Null(result.ErrorCode);
@@ -147,6 +147,37 @@ public sealed class AuthServiceMembershipGuardTests
     }
 
     [Fact]
+    public async Task VerifyEmail_returns_rate_limited_after_failed_otp_threshold()
+    {
+        await using var harness = await AuthHarness.CreateAsync(useCountingOtpLimiter: true);
+        var pending = await harness.CreateUserAsync(
+            "pending@test.local",
+            "ChangeMe123!",
+            emailConfirmed: false,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            pending.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        for (var i = 0; i < 3; i++)
+        {
+            var (tokens, _, _) = await harness.Auth.VerifyEmailAsync(
+                new VerifyEmailOtpRequest("pending@test.local", "000000"),
+                "default.localhost",
+                clientIp: "127.0.0.1");
+            Assert.Null(tokens);
+        }
+
+        var (blockedTokens, blockedError, blockedCode) = await harness.Auth.VerifyEmailAsync(
+            new VerifyEmailOtpRequest("pending@test.local", "000000"),
+            "default.localhost",
+            clientIp: "127.0.0.1");
+
+        Assert.Null(blockedTokens);
+        Assert.Equal(AuthErrorCodes.OtpVerifyRateLimited, blockedCode);
+        Assert.Contains("Too many verification attempts", blockedError, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task VerifyEmail_blocked_when_bootstrap_closed()
     {
         await using var harness = await AuthHarness.CreateAsync();
@@ -166,9 +197,10 @@ public sealed class AuthServiceMembershipGuardTests
         await harness.Membership.EnsureMembershipAsync(
             pending.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
 
-        var (tokens, error) = await harness.Auth.VerifyEmailAsync(
+        var (tokens, error, _) = await harness.Auth.VerifyEmailAsync(
             new VerifyEmailOtpRequest("pending@test.local", "123456"),
-            "localhost");
+            "default.localhost",
+            clientIp: null);
 
         Assert.Null(tokens);
         Assert.Contains("already has a tenant admin", error, StringComparison.OrdinalIgnoreCase);
@@ -188,7 +220,7 @@ public sealed class AuthServiceMembershipGuardTests
         const string refreshToken = "orphan-refresh-token";
         await harness.RefreshTokens.StoreAsync(refreshToken, orphan.Id, tenantId: null, TimeSpan.FromHours(1));
 
-        var result = await harness.Auth.RefreshAsync(refreshToken, "localhost");
+        var result = await harness.Auth.RefreshAsync(refreshToken, "default.localhost");
 
         Assert.Null(result.Tokens);
         Assert.Equal("invalid_refresh_token", result.ErrorCode);
@@ -209,7 +241,7 @@ public sealed class AuthServiceMembershipGuardTests
         await harness.Membership.EnsureMembershipAsync(
             admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
 
-        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "default.localhost");
 
         Assert.NotNull(result.Tokens);
         Assert.Contains(TenantIds.Default.ToString(), result.Tokens!.AccessToken, StringComparison.Ordinal);
@@ -229,7 +261,7 @@ public sealed class AuthServiceMembershipGuardTests
         await harness.Membership.EnsureMembershipAsync(
             admin.Id, otherTenantId, TenantMembershipRole.TenantAdmin);
 
-        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "default.localhost");
 
         Assert.Null(result.Tokens);
         Assert.Equal("invalid_credentials", result.ErrorCode);
@@ -248,10 +280,10 @@ public sealed class AuthServiceMembershipGuardTests
         await harness.Membership.EnsureMembershipAsync(
             admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
 
-        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "default.localhost");
         Assert.NotNull(login.Tokens);
 
-        var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "localhost");
+        var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "default.localhost");
         Assert.NotNull(refreshed.Tokens);
         Assert.Contains(TenantIds.Default.ToString(), refreshed.Tokens!.AccessToken, StringComparison.Ordinal);
     }
@@ -268,12 +300,12 @@ public sealed class AuthServiceMembershipGuardTests
         await harness.Membership.EnsureMembershipAsync(
             admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
 
-        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "default.localhost");
         Assert.NotNull(login.Tokens);
 
         await harness.RemoveMembershipsAsync(admin.Id);
 
-        var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "localhost");
+        var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "default.localhost");
         Assert.Null(refreshed.Tokens);
         Assert.Equal("invalid_refresh_token", refreshed.ErrorCode);
     }
@@ -290,7 +322,7 @@ public sealed class AuthServiceMembershipGuardTests
         await harness.Membership.EnsureMembershipAsync(
             admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
 
-        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
+        var login = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "default.localhost");
         Assert.NotNull(login.Tokens);
 
         var refreshed = await harness.Auth.RefreshAsync(login.Tokens!.RefreshToken, "cohestra.app");
@@ -320,7 +352,7 @@ public sealed class AuthServiceMembershipGuardTests
 
         public InMemoryRefreshTokenStore RefreshTokens { get; }
 
-        public static async Task<AuthHarness> CreateAsync()
+        public static async Task<AuthHarness> CreateAsync(bool useCountingOtpLimiter = false)
         {
             var services = new ServiceCollection();
             services.AddLogging();
@@ -349,6 +381,15 @@ public sealed class AuthServiceMembershipGuardTests
             services.AddSingleton<IRefreshTokenStore>(refreshStore);
             services.AddSingleton(refreshStore);
             services.AddSingleton<IAuthOtpStore>(new InMemoryOtpStore());
+            if (useCountingOtpLimiter)
+            {
+                services.AddSingleton<IAuthOtpVerifyRateLimiter>(
+                    new CountingAuthOtpVerifyRateLimiter(maxFailures: 3));
+            }
+            else
+            {
+                services.AddSingleton<IAuthOtpVerifyRateLimiter>(new NoOpAuthOtpVerifyRateLimiter());
+            }
             services.AddSingleton<IEmailSender>(new StubEmailSender());
             services.AddSingleton<IHostEnvironment>(new StubHostEnvironment());
             services.AddSingleton(Options.Create(new JwtSettings
@@ -506,6 +547,80 @@ public sealed class AuthServiceMembershipGuardTests
             _tokens.Remove(refreshToken);
             return Task.CompletedTask;
         }
+
+        public Task RevokeAllForUserAsync(Guid userId, CancellationToken cancellationToken = default)
+        {
+            var keysToRemove = _tokens
+                .Where(kvp => kvp.Value.UserId == userId)
+                .Select(kvp => kvp.Key)
+                .ToList();
+
+            foreach (var key in keysToRemove)
+            {
+                RevokeCount++;
+                _tokens.Remove(key);
+            }
+
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class NoOpAuthOtpVerifyRateLimiter : IAuthOtpVerifyRateLimiter
+    {
+        public Task<bool> AllowVerifyAsync(
+            string email,
+            string? clientIdentifier,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task RecordFailedVerifyAsync(
+            string email,
+            string? clientIdentifier,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task ClearFailuresAsync(
+            string email,
+            string? clientIdentifier,
+            CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+    }
+
+    private sealed class CountingAuthOtpVerifyRateLimiter(int maxFailures) : IAuthOtpVerifyRateLimiter
+    {
+        private readonly Dictionary<string, int> _failures = new(StringComparer.OrdinalIgnoreCase);
+
+        public Task<bool> AllowVerifyAsync(
+            string email,
+            string? clientIdentifier,
+            CancellationToken cancellationToken = default)
+        {
+            var key = BuildKey(email, clientIdentifier);
+            _failures.TryGetValue(key, out var count);
+            return Task.FromResult(count < maxFailures);
+        }
+
+        public Task RecordFailedVerifyAsync(
+            string email,
+            string? clientIdentifier,
+            CancellationToken cancellationToken = default)
+        {
+            var key = BuildKey(email, clientIdentifier);
+            _failures[key] = _failures.GetValueOrDefault(key) + 1;
+            return Task.CompletedTask;
+        }
+
+        public Task ClearFailuresAsync(
+            string email,
+            string? clientIdentifier,
+            CancellationToken cancellationToken = default)
+        {
+            _failures.Remove(BuildKey(email, clientIdentifier));
+            return Task.CompletedTask;
+        }
+
+        private static string BuildKey(string email, string? clientIdentifier) =>
+            $"{email.Trim().ToLowerInvariant()}|{clientIdentifier ?? "none"}";
     }
 
     private sealed class InMemoryOtpStore : IAuthOtpStore
@@ -523,7 +638,7 @@ public sealed class AuthServiceMembershipGuardTests
             OtpPurpose purpose,
             string code,
             CancellationToken cancellationToken = default) =>
-            Task.FromResult(true);
+            Task.FromResult(false);
 
         public Task<bool> TryRecordSendAttemptAsync(
             string email,

@@ -1,8 +1,11 @@
+using Cohestra.Api.Infrastructure;
 using Cohestra.Application.Auth;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Auth;
 using Cohestra.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.Security.Claims;
 
 namespace Cohestra.Api.Controllers.V1;
@@ -10,7 +13,13 @@ namespace Cohestra.Api.Controllers.V1;
 [ApiController]
 [Route("api/v1/auth")]
 [Produces("application/json")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController(
+    IAuthService authService,
+    IAuthHandoffStore authHandoffStore,
+    ICurrentTenant currentTenant,
+    IAuthResendOtpRateLimiter authResendOtpRateLimiter,
+    IOptions<AuthOtpVerifyRateLimitOptions> authOtpVerifyRateLimitOptions,
+    IOptions<AuthResendOtpRateLimitOptions> authResendOtpRateLimitOptions) : ControllerBase
 {
     [HttpGet("onboarding")]
     [ProducesResponseType(typeof(OnboardingStatusResponse), StatusCodes.Status200OK)]
@@ -51,6 +60,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpPost("verify-email")]
     [ProducesResponseType(typeof(AuthTokenResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<AuthTokenResponse>> VerifyEmail(
         [FromBody] VerifyEmailOtpRequest? request,
         CancellationToken cancellationToken)
@@ -60,21 +70,65 @@ public class AuthController(IAuthService authService) : ControllerBase
             return BadRequestProblem("Request body is required.");
         }
 
-        var (tokens, error) = await authService.VerifyEmailAsync(
+        var clientIp = PublicRegistrationRateLimitMiddleware.ResolveClientIdentifier(HttpContext);
+        var (tokens, error, errorCode) = await authService.VerifyEmailAsync(
             request,
             Request.Host.Value,
+            clientIp,
             cancellationToken);
         if (tokens is null)
         {
+            if (string.Equals(errorCode, AuthErrorCodes.OtpVerifyRateLimited, StringComparison.Ordinal))
+            {
+                return TooManyRequestsProblem(
+                    error ?? "Too many verification attempts. Try again later.",
+                    AuthErrorCodes.OtpVerifyRateLimited,
+                    "https://cohestra.app/errors/otp-verify-rate-limited");
+            }
+
             return BadRequestProblem(error ?? "Verification failed.");
         }
 
         return Ok(tokens);
     }
 
+    [HttpPost("handoff/exchange")]
+    [ProducesResponseType(typeof(AuthTokenResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<AuthTokenResponse>> ExchangeHandoff(
+        [FromBody] AuthHandoffExchangeRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.Code))
+        {
+            return BadRequestProblem("Invalid or expired handoff code.");
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        {
+            return BadRequestProblem("Invalid or expired handoff code.");
+        }
+
+        var payload = await authHandoffStore.ExchangeAsync(
+            request.Code.Trim(),
+            currentTenant.TenantId.Value,
+            cancellationToken);
+
+        if (payload is null)
+        {
+            return BadRequestProblem("Invalid or expired handoff code.");
+        }
+
+        return Ok(new AuthTokenResponse(
+            payload.AccessToken,
+            payload.RefreshToken,
+            payload.ExpiresInSeconds));
+    }
+
     [HttpPost("resend-otp")]
     [ProducesResponseType(typeof(MessageResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<MessageResponse>> ResendOtp(
         [FromBody] ResendOtpRequest? request,
         CancellationToken cancellationToken)
@@ -82,6 +136,21 @@ public class AuthController(IAuthService authService) : ControllerBase
         if (request is null)
         {
             return BadRequestProblem("Request body is required.");
+        }
+
+        var email = request.Email?.Trim() ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            var clientIp = PublicRegistrationRateLimitMiddleware.ResolveClientIdentifier(HttpContext);
+            if (!await authResendOtpRateLimiter.AllowResendAsync(email, clientIp, cancellationToken))
+            {
+                return TooManyRequestsResendProblem(
+                    "Too many resend attempts. Try again later.",
+                    AuthErrorCodes.ResendOtpRateLimited,
+                    "https://cohestra.app/errors/resend-otp-rate-limited");
+            }
+
+            await authResendOtpRateLimiter.RecordResendAsync(email, clientIp, cancellationToken);
         }
 
         var (response, error) = await authService.ResendOtpAsync(request, cancellationToken);
@@ -114,7 +183,10 @@ public class AuthController(IAuthService authService) : ControllerBase
             cancellationToken);
         if (result.Tokens is null)
         {
-            return UnauthorizedProblem(result.ErrorMessage ?? "Invalid email or password.", result.ErrorCode);
+            return UnauthorizedProblem(
+                result.ErrorMessage ?? "Invalid email or password.",
+                result.ErrorCode,
+                result.VerifyTenantSlug);
         }
 
         return Ok(result.Tokens);
@@ -163,6 +235,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     [HttpPost("reset-password")]
     [ProducesResponseType(typeof(MessageResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<MessageResponse>> ResetPassword(
         [FromBody] ResetPasswordRequest? request,
         CancellationToken cancellationToken)
@@ -172,9 +245,18 @@ public class AuthController(IAuthService authService) : ControllerBase
             return BadRequestProblem("Request body is required.");
         }
 
-        var (response, error) = await authService.ResetPasswordAsync(request, cancellationToken);
+        var clientIp = PublicRegistrationRateLimitMiddleware.ResolveClientIdentifier(HttpContext);
+        var (response, error, errorCode) = await authService.ResetPasswordAsync(request, clientIp, cancellationToken);
         if (response is null)
         {
+            if (string.Equals(errorCode, AuthErrorCodes.OtpVerifyRateLimited, StringComparison.Ordinal))
+            {
+                return TooManyRequestsProblem(
+                    error ?? "Too many verification attempts. Try again later.",
+                    AuthErrorCodes.OtpVerifyRateLimited,
+                    "https://cohestra.app/errors/otp-verify-rate-limited");
+            }
+
             return BadRequestProblem(error ?? "Could not reset password.");
         }
 
@@ -212,7 +294,10 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(response);
     }
 
-    private UnauthorizedObjectResult UnauthorizedProblem(string detail, string? errorCode = null)
+    private UnauthorizedObjectResult UnauthorizedProblem(
+        string detail,
+        string? errorCode = null,
+        string? verifyTenantSlug = null)
     {
         Response.ContentType = "application/problem+json";
 
@@ -227,6 +312,11 @@ public class AuthController(IAuthService authService) : ControllerBase
         if (!string.IsNullOrWhiteSpace(errorCode))
         {
             problem.Extensions["errorCode"] = errorCode;
+        }
+
+        if (!string.IsNullOrWhiteSpace(verifyTenantSlug))
+        {
+            problem.Extensions["verifyTenantSlug"] = verifyTenantSlug;
         }
 
         return Unauthorized(problem);
@@ -256,5 +346,47 @@ public class AuthController(IAuthService authService) : ControllerBase
             Detail = detail,
             Instance = HttpContext.Request.Path,
         });
+    }
+
+    private ObjectResult TooManyRequestsResendProblem(string detail, string errorCode, string? type = null)
+    {
+        Response.ContentType = "application/problem+json";
+
+        var windowMinutes = Math.Clamp(authResendOtpRateLimitOptions.Value.WindowMinutes, 1, 1440);
+        Response.Headers.RetryAfter = (windowMinutes * 60).ToString();
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Too many resend attempts",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+            Type = type,
+        };
+        problem.Extensions["errorCode"] = errorCode;
+        problem.Extensions["traceId"] = HttpContext.TraceIdentifier;
+
+        return StatusCode(StatusCodes.Status429TooManyRequests, problem);
+    }
+
+    private ObjectResult TooManyRequestsProblem(string detail, string errorCode, string? type = null)
+    {
+        Response.ContentType = "application/problem+json";
+
+        var windowMinutes = Math.Clamp(authOtpVerifyRateLimitOptions.Value.WindowMinutes, 1, 1440);
+        Response.Headers.RetryAfter = (windowMinutes * 60).ToString();
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Too many verification attempts",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+            Type = type,
+        };
+        problem.Extensions["errorCode"] = errorCode;
+        problem.Extensions["traceId"] = HttpContext.TraceIdentifier;
+
+        return StatusCode(StatusCodes.Status429TooManyRequests, problem);
     }
 }

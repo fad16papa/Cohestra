@@ -107,6 +107,17 @@ public class PublicRegistrationsController(
             });
         }
 
+        if (result.IsActivityFull)
+        {
+            return Conflict(new ProblemDetails
+            {
+                Title = "Activity full",
+                Detail = "This activity is no longer accepting registrations.",
+                Status = StatusCodes.Status409Conflict,
+                Extensions = { ["errorCode"] = "activity_full" },
+            });
+        }
+
         if (result.ValidationError is not null)
         {
             return BadRequest(new ProblemDetails

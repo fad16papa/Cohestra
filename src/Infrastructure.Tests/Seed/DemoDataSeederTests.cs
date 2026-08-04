@@ -1,3 +1,6 @@
+using Cohestra.Domain.Activities;
+using Cohestra.Domain.Clients;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Seed;
 using Microsoft.EntityFrameworkCore;
@@ -8,15 +11,16 @@ namespace Cohestra.Infrastructure.Tests.Seed;
 public sealed class DemoDataSeederTests
 {
     [Fact]
-    public async Task SeedDatabaseAsync_WhenEnabled_CreatesSixCommunitiesSixtyActivitiesAndSixThousandRegistrations()
+    public async Task SeedDatabaseAsync_WhenEnabled_SeedsProductionLikeScenarioMatrix()
     {
         await using var dbContext = CreateDbContext();
         var settings = new DemoDataSeedSettings
         {
             Enabled = true,
-            CommunityCount = 6,
-            ActivitiesPerCommunity = 10,
-            ClientCount = 100,
+            CommunityCount = 2,
+            ActivitiesPerCommunity = 1,
+            ClientCount = 20,
+            RegistrationFillRate = 0.25,
         };
 
         await DemoDataSeeder.SeedDatabaseAsync(
@@ -24,11 +28,40 @@ public sealed class DemoDataSeederTests
             settings,
             NullLogger.Instance);
 
-        Assert.Equal(6, await dbContext.Communities.CountAsync());
-        Assert.Equal(100, await dbContext.Clients.CountAsync());
-        Assert.Equal(6000, await dbContext.Registrations.CountAsync());
-        Assert.Equal(60, await dbContext.Activities.CountAsync());
-        Assert.Equal(3, await dbContext.Categories.CountAsync());
+        Assert.Equal(DemoDataSeedCatalog.Personas.Count, await dbContext.Clients
+            .CountAsync(client => DemoDataSeedCatalog.Personas.Select(persona => persona.FullName).Contains(client.FullName)));
+
+        var francis = await dbContext.Clients.SingleAsync(client => client.FullName == "Francis Decena");
+        Assert.Equal(LeadStatus.Active, francis.LeadStatus);
+        Assert.Equal("+6593395840", francis.Phone);
+        Assert.Contains(
+            await dbContext.ClientTimelineEvents
+                .Where(item => item.ClientId == francis.Id)
+                .Select(item => item.EventType)
+                .ToListAsync(),
+            type => type == ClientTimelineEventType.ViberInitiated);
+
+        Assert.True(await dbContext.Clients.AnyAsync(client => client.IsMergeSuspect));
+        Assert.True(await dbContext.Clients.AnyAsync(client => client.Phone == null));
+        Assert.False(await dbContext.Clients.AnyAsync(client => client.FullName == "James Patel" && client.ConsentGiven));
+
+        var fullActivity = await dbContext.Activities.SingleAsync(
+            activity => activity.Slug == "demo-ikigai-pickleball-intro");
+        Assert.Equal(5, fullActivity.MaxRegistrants);
+        Assert.Equal(5, await dbContext.Registrations.CountAsync(registration => registration.ActivityId == fullActivity.Id));
+
+        var draftActivity = await dbContext.Activities.SingleAsync(
+            activity => activity.Slug == "demo-runners-draft-clinic");
+        Assert.Equal(ActivityStatus.Draft, draftActivity.Status);
+        Assert.Equal(0, await dbContext.Registrations.CountAsync(registration => registration.ActivityId == draftActivity.Id));
+
+        Assert.True(await dbContext.EmailTemplates.AnyAsync());
+        Assert.True(await dbContext.Campaigns.AnyAsync());
+        Assert.True(await dbContext.ClientTimelineEvents.AnyAsync(
+            item => item.EventType == ClientTimelineEventType.EmailCampaignSent));
+
+        var tenant = await dbContext.Tenants.SingleAsync(item => item.Id == TenantIds.Default);
+        Assert.Equal(TenantPlan.Pro, tenant.Plan);
 
         var duplicateRegistrationPairs = await dbContext.Registrations
             .GroupBy(registration => new { registration.ClientId, registration.ActivityId })
@@ -36,20 +69,13 @@ public sealed class DemoDataSeederTests
             .CountAsync();
 
         Assert.Equal(0, duplicateRegistrationPairs);
-
-        var registrationNumbers = await dbContext.Registrations
-            .Select(registration => registration.RegistrationNumber)
-            .ToListAsync();
-
-        Assert.Equal(6000, registrationNumbers.Distinct(StringComparer.Ordinal).Count());
-        Assert.All(registrationNumbers, number => Assert.Matches("^REG\\d{14}$", number));
     }
 
     [Fact]
     public async Task SeedDatabaseAsync_WhenEnabled_WipesExistingBusinessDataBeforeReseeding()
     {
         await using var dbContext = CreateDbContext();
-        dbContext.Clients.Add(new Domain.Clients.Client
+        dbContext.Clients.Add(new Client
         {
             Id = Guid.NewGuid(),
             FullName = "Legacy Client",
@@ -63,7 +89,7 @@ public sealed class DemoDataSeederTests
             Enabled = true,
             CommunityCount = 1,
             ActivitiesPerCommunity = 1,
-            ClientCount = 1,
+            ClientCount = 12,
         };
 
         await DemoDataSeeder.SeedDatabaseAsync(
@@ -74,7 +100,7 @@ public sealed class DemoDataSeederTests
         Assert.DoesNotContain(
             await dbContext.Clients.Select(client => client.FullName).ToListAsync(),
             name => name == "Legacy Client");
-        Assert.Equal(1, await dbContext.Registrations.CountAsync());
+        Assert.True(await dbContext.Registrations.AnyAsync());
     }
 
     [Fact]
@@ -98,6 +124,16 @@ public sealed class DemoDataSeederTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new CohestraDbContext(options);
+        var dbContext = new CohestraDbContext(options);
+        dbContext.Tenants.Add(new Tenant
+        {
+            Id = TenantIds.Default,
+            Slug = TenantIds.DefaultSlug,
+            Name = "Default",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+        dbContext.SaveChanges();
+        return dbContext;
     }
 }

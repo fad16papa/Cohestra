@@ -73,18 +73,10 @@ export function ClientRow({
         {client.nationality ?? "—"}
       </RowLink>
 
-      <RowLink href={profileHref} className={clientsTableStatusColumnClassName}>
-        <LeadStatusBadge status={client.leadStatus} />
-      </RowLink>
-
-      <RowLink
-        href={profileHref}
-        className="min-w-0 truncate text-sm text-text-muted-warm group-hover:text-text-warm"
-      >
-        {formatLastActivityCaption(client)}
-      </RowLink>
-
-      <div className="flex min-w-0 items-center justify-end">
+      <div className={cn(clientsTableStatusColumnClassName, "gap-2")}>
+        <RowLink href={profileHref} className="min-w-0">
+          <LeadStatusBadge status={client.leadStatus} />
+        </RowLink>
         {showQuickContact ? (
           <Button
             type="button"
@@ -92,7 +84,7 @@ export function ClientRow({
             size="sm"
             disabled={isUpdating}
             className={cn(
-              "h-8 gap-1.5 border-primary/20 px-2 text-xs opacity-100 sm:opacity-0",
+              "h-8 shrink-0 gap-1.5 border-primary/20 px-2 text-xs opacity-100 sm:opacity-0",
               "sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
               "focus-visible:opacity-100"
             )}
@@ -104,16 +96,14 @@ export function ClientRow({
             <MessageCircle className="size-3.5" aria-hidden />
             <span className="hidden sm:inline">Contacted</span>
           </Button>
-        ) : (
-          <span className="hidden h-8 sm:block" aria-hidden />
-        )}
+        ) : null}
       </div>
 
-      <RowLink href={profileHref} className="flex justify-end">
-        <ChevronRight
-          className="size-4 shrink-0 text-text-muted-warm transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
-          aria-hidden
-        />
+      <RowLink
+        href={profileHref}
+        className="min-w-0 truncate text-sm text-text-muted-warm group-hover:text-text-warm"
+      >
+        {formatLastActivityCaption(client)}
       </RowLink>
     </div>
   );

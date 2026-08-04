@@ -27,7 +27,8 @@ storyCounts:
   epic14: 8
   epic15: 7
   epic16: parked
-updated: 2026-07-20
+  epic21: 3
+updated: 2026-08-02
 ---
 
 # cohestra — Epic Breakdown (Enterprise)
@@ -64,7 +65,7 @@ FR-10: Export and report isolation — CSV/reports include only authenticated te
 
 FR-11: Subdomain tenant routing — `{slug}.cohestra.app` for public + admin; apex marketing only; local `{slug}.localhost` or `DEV_TENANT_SLUG`.
 
-FR-12: Public site by plan — Basic stub (no SitePage); Core fixed SitePage (no composer); Pro full builder; upgrade paths seed/unlock SitePage.
+FR-12: Public site by plan — Basic stub (no SitePage); Core Essentials website builder; Pro adds Studio sections/presets; upgrade paths seed SitePage.
 
 FR-13: Per-tenant email branding — SendGrid From name/email per tenant within platform guardrails; block send if sender unverified.
 
@@ -966,27 +967,31 @@ So that I can register without a full website — and it still feels high-end.
 **When** opened
 **Then** UpgradePanel appears (not the builder)
 
-### Story 15.3: Core fixed SitePage and Pro builder unlock
+### Story 15.3: Core Essentials builder and Pro Studio unlock
 
 As a Tenant Admin on Core/Pro,
-I want a plan-appropriate public homepage,
-So that Core gets a branded fixed page and Pro can compose and publish.
+I want a plan-appropriate website builder,
+So that Core can compose Essentials layouts and Pro adds Studio sections.
 
 **Acceptance Criteria:**
 
 **Given** upgrade Basic → Core (or Core signup)
 **When** plan becomes Core
-**Then** a seeded fixed SitePage is created (`UNIQUE TenantId`); public `/` uses fixed template (name, accent, upcoming activities)
-**And** section composer remains locked
+**Then** a seeded SitePage is created (`UNIQUE TenantId`); public `/` uses published SitePage
+**And** Core admin gets full draft/publish composer with Essentials palette only (no Pro UpgradePanel)
 
 **Given** upgrade Core → Pro
 **When** plan becomes Pro
-**Then** the same SitePage unlocks the builder; draft/publish is tenant-scoped
-**And** Ikigai publish does not affect another tenant
+**Then** the same SitePage unlocks Studio sections and Showcase/Event hub presets
+**And** publish remains tenant-scoped (Ikigai publish does not affect another tenant)
 
 **Given** Basic tenant
 **When** SitePage APIs/builder routes are called
 **Then** upgrade CTA / 403 — no SitePage row
+
+**Given** Core tenant saves draft with Studio section
+**When** API validates plan
+**Then** 400 with upgrade hint — Studio sections require Pro
 
 **Given** Pro preview token
 **When** used
@@ -1127,3 +1132,352 @@ Share kit, custom domain, thin confirm/reminder/thank-you automations, paid tick
 | Thin email automations (confirm/reminder/thank-you) | One-stop Lite; not HubSpot-depth | After registration volume evidence |
 | Paid tickets (Stripe Checkout on activity) | v1.2 | After free registration product-market fit |
 | Seat add-ons (+$15) | P5 deferred | If Core→Pro seat pressure dominates upgrades |
+
+## Epic 17: P1 Launch Hardening
+
+Post–enterprise-launch-checklist security and abuse hardening required before public production launch. Sourced from Epic 12–14 retrospectives and `docs/deploy/enterprise-launch-checklist.md` P1 backlog.
+
+**FRs touched:** FR-26 (abuse controls), FR-4/5/7 (authz evidence), auth security NFR  
+**Not in scope:** Epic 16 parked items, reCAPTCHA prod key enable (ops), nip.io tightening (product)
+
+### Story 17.1: Auth handoff one-time code exchange
+
+As a **Tenant Admin completing paid signup**,
+I want **my session passed to checkout via a one-time server code instead of JWTs in the URL hash**,
+So that **tokens never appear in browser history, referrer headers, or server access logs**.
+
+**Acceptance Criteria:**
+
+**Given** successful signup email verification on a Core/Pro plan path  
+**When** the client redirects to `{tenant}/billing/checkout`  
+**Then** the redirect URL contains a short-lived `handoff` query code only — **no** `access_token`, `refresh_token`, or `expires_at` in the URL hash or query
+
+**Given** a valid unused handoff code on the correct tenant Host  
+**When** `POST /api/v1/auth/handoff/exchange` is called with the code  
+**Then** the API returns a normal `AuthTokenResponse` (access + refresh + expiry)  
+**And** the code is consumed (single-use)
+
+**Given** an expired, reused, or unknown handoff code  
+**When** exchange is attempted  
+**Then** the API returns 400 with ProblemDetails (no token leak)
+
+**Given** a handoff code issued for tenant A  
+**When** exchange is attempted on tenant B Host  
+**Then** the API returns 400/403 fail-closed
+
+**Given** Basic (free) signup verify success  
+**When** the user is redirected to the tenant dashboard  
+**Then** existing direct session behavior is unchanged (no handoff code required)
+
+**Given** the legacy hash-based handoff  
+**When** Epic 17.1 ships  
+**Then** `buildAuthHandoffUrl` / `consumeAuthHandoffFromHash` hash token path is removed or reduced to backward-compat shim with tests proving paid path uses code exchange only
+
+### Story 17.2: OTP verify brute-force throttling and signup abuse tests
+
+As a **platform operator**,
+I want **signup OTP verify brute-force protection and CI abuse coverage**,
+So that **attackers cannot guess verification codes and regressions are caught before launch**.
+
+**Acceptance Criteria:**
+
+**Given** repeated failed OTP verify attempts for the same email (and/or client IP)  
+**When** attempts exceed configured threshold within the window  
+**Then** further verify attempts return 429 with ProblemDetails (`errorCode` signup_verify_rate_limited or equivalent)  
+**And** successful verify still works after window expires (or after correct code before lockout)
+
+**Given** integration test stack (Postgres + Redis)  
+**When** abuse tests run in CI  
+**Then** cases cover at minimum:
+
+1. Invalid/missing CAPTCHA token → signup rejected  
+2. Signup IP rate limit → 429 after threshold  
+3. `registrationClosed=true` → signup 403  
+4. OTP verify brute-force → 429 after threshold
+
+**Given** existing successful-signup-only IP counter (Story 14.3)  
+**When** verify throttling ships  
+**Then** verify failures count toward abuse limits independently (documented in story/dev notes)
+
+### Story 17.3: Member JWT 403 integration matrix
+
+As a **platform operator**,
+I want **live-stack integration proof that Member and tenant JWTs cannot access forbidden routes**,
+So that **Epic 12 authz policies are evidenced beyond unit tests before launch**.
+
+**Acceptance Criteria:**
+
+**Given** a TenantMember JWT on the tenant Host  
+**When** calling admin-only routes (e.g. Team invite create, Billing checkout session, TenantAdmin settings)  
+**Then** each returns **403** with ProblemDetails
+
+**Given** a tenant-scoped JWT (Admin or Member)  
+**When** calling `/api/v1/platform/*` routes  
+**Then** each returns **403** (tenant JWT blocked from platform namespace)
+
+**Given** a Platform Admin JWT  
+**When** calling a representative platform route  
+**Then** request succeeds (positive control)
+
+**Given** CI integration job  
+**When** tests run  
+**Then** new cases use `[Trait("Category", "TenantIsolation")]` or dedicated `Authz` trait and are non-skipped when Postgres/Redis available
+
+## Epic 18: P2 Launch Hardening (done)
+
+Post–Epic 17 deferred CR items and resend-OTP gap. **Status: done** on `main` (PRs #33–#40).
+
+| Story | Summary |
+|-------|---------|
+| 18.1 | Resend OTP rate limiting (429 + Retry-After) |
+| 18.2 | CSP report-only baseline (nginx prod / Next dev) |
+| 18.3 | Security header ownership + `proxy_hide_header` |
+| 18.4 | Redis outage fail-closed 503 for limiters + OTP store |
+
+**Bonus shipped:** Unverified login → **Verify your account** (PR #37).
+
+**Local operator sign-off:** Launch checklist §1–§3 (Francis, 2026-08-01).
+
+**Deferred:** CSP enforce mode, httpOnly sessions → Epic 20+ candidates.
+
+## Epic 19: Production Launch Sign-off
+
+Close enterprise launch checklist **§4–§7** on UAT droplet after local §1–§3 sign-off. Sourced from Epic 18 retro, open checklist gates, and sprint-change-proposal-2026-08-01.
+
+**FRs touched:** FR-26 (abuse — reCAPTCHA prod), billing (FR-14+), deploy NFR  
+**Not in scope:** CSP enforce, httpOnly sessions, Epic 16 parked items, sender settings UI (product gate only)
+
+### Story 19.1: UAT droplet deploy and stack smoke
+
+As a **platform operator**,
+I want **Cohestra running on a UAT droplet with automated smoke passing**,
+So that **we have a live stack matching production topology before public launch**.
+
+**Acceptance Criteria:**
+
+**Given** DigitalOcean droplet provisioned per `docs/deploy/digitalocean-uat.md`  
+**When** `.env` is filled from `.env.uat.example` with strong secrets  
+**Then** `docker compose -f docker-compose.uat.yml up -d --build` succeeds  
+**And** firewall allows **22, 80, 443 only**
+
+**Given** deploy completes  
+**When** `bash deploy/uat-smoke.sh` runs with `PUBLIC_BASE_URL` set to the droplet URL  
+**Then** script completes without error (`/ready`, web home, auth onboarding, signup/pricing surfaces)
+
+**Given** production-minded UAT  
+**When** reviewing compose env  
+**Then** `DemoDataSeed__Enabled=false` and `OperatorSeed__Enabled=false` (or documented exception for bootstrap-only run)  
+**And** `DEV_TENANT_SLUG` is **not** set on production path
+
+**Given** DNS  
+**When** launch uses custom domain  
+**Then** apex + wildcard (or documented nip.io interim) point to droplet
+
+### Story 19.2: HTTPS edge and security header verify
+
+As a **platform operator**,
+I want **HTTPS serving with Epic 17/18 security headers on the public edge**,
+So that **production matches local header ownership and HSTS is present**.
+
+**Acceptance Criteria:**
+
+**Given** `deploy/nginx/app-ssl.conf.template` includes Epic 18 headers  
+**When** HTTPS is configured on the droplet  
+**Then** `active-ssl.conf` is regenerated (see deploy HTTPS scripts / ops notes)  
+**And** nginx is recreated/reloaded
+
+**Given** HTTPS public URL  
+**When** `curl -sI https://{tenant-host}/` runs  
+**Then** each of `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy-Report-Only` appears **once**  
+**And** `Strict-Transport-Security` is present (HTTPS template only)
+
+**Given** HTTP port  
+**When** accessed on production  
+**Then** redirects to HTTPS (or documented interim exception for nip.io bootstrap)
+
+### Story 19.3: reCAPTCHA production enablement
+
+As a **platform operator**,
+I want **reCAPTCHA enabled on public signup before launch**,
+So that **automated signup abuse is mitigated on the live apex path**.
+
+**Acceptance Criteria:**
+
+**Given** UAT/prod `.env`  
+**When** configuring signup  
+**Then** `SelfServeSignup__Recaptcha__Enabled=true` with valid site/secret keys  
+**And** web build receives `NEXT_PUBLIC_RECAPTCHA_ENABLED=true` + `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`  
+**And** web container is rebuilt after env change
+
+**Given** apex `/pricing` or signup route on live URL  
+**When** operator loads signup form  
+**Then** reCAPTCHA widget renders (or v3 flow completes)  
+**And** successful signup + OTP verify completes end-to-end
+
+**Given** checklist §3  
+**When** Epic 19.3 is done  
+**Then** reCAPTCHA items are checked off with evidence (date/URL in sign-off notes)
+
+### Story 19.4: Stripe billing UAT on droplet
+
+As a **platform operator**,
+I want **Stripe test-mode billing verified on the UAT droplet**,
+So that **checkout, webhooks, and plan gates work on a live URL before going live**.
+
+**Acceptance Criteria:**
+
+**Given** Stripe **test** keys on UAT (live keys only on production)  
+**When** env is configured  
+**Then** `Stripe__WebhookSecret` matches Stripe Dashboard endpoint for deploy URL  
+**And** `Stripe__PriceCore*` / `Stripe__PricePro*` match Stripe products
+
+**Given** tenant admin on Core or Pro path  
+**When** completing test checkout  
+**Then** checkout succeeds and plan reflects in tenant door/API  
+**And** webhook delivery succeeds (Stripe Dashboard or API logs)
+
+**Given** trial/delinquency background jobs (Epic 14.8)  
+**When** test subscription events fire  
+**Then** job logs show expected processing (no silent failures)
+
+### Story 19.5: Operator core flows and launch sign-off
+
+As a **platform operator**,
+I want **full §7 core flows verified on live UAT and sign-off recorded**,
+So that **stakeholders can approve public launch with evidence**.
+
+**Acceptance Criteria:**
+
+**Given** at least one **Basic** and one **Pro** tenant on the UAT droplet  
+**When** operator runs checklist §7 flows  
+**Then** each item is exercised or explicitly N/A with reason:
+
+1. Dashboard metrics load  
+2. Create activity → publish → share kit  
+3. Public registration + client dedup  
+4. Reports + CSV export (Pro)  
+5. Campaign send test (Pro) with tenant email branding  
+6. Website builder publish (Pro) or stub home (Basic)  
+7. Suspended/archived tenant → maintenance or 404 on public door
+
+**Given** SendGrid required for campaign test  
+**When** sending mail from UAT  
+**Then** SendGrid domain auth complete per `sendgrid-production.md` (or documented defer with product approval)
+
+**Given** all Epic 19 stories complete  
+**When** updating `docs/deploy/enterprise-launch-checklist.md` sign-off table  
+**Then** **Operator** and **PM** rows are filled with date and scope (UAT droplet URL)  
+**And** remaining §6 product gates are listed with owner if still open
+
+## Epic 20: Activity registration capacity
+
+Optional per-activity registrant cap. Sourced from product request and PRD "Capacity + waitlist" extension (waitlist out of v1 scope).
+
+**FRs touched:** activity registration, public door  
+**Not in scope:** waitlist, tenant plan limit changes, CSP/httpOnly
+
+### Story 20.1: Optional max registrants per activity
+
+As a **Tenant Admin**,
+I want **to optionally set a maximum number of registrants when creating or editing an activity**,
+So that **registration closes when the event is full without affecting unlimited activities**.
+
+**Acceptance Criteria:**
+
+**Given** max registrants is left blank  
+**When** activity is saved  
+**Then** registrations remain unlimited (backward compatible)
+
+**Given** max registrants is set to `N >= 1`  
+**When** registration count reaches `N`  
+**Then** new public submits return 409 `activity_full`  
+**And** public GET exposes `isRegistrationFull`, `registrationCount`, `maxRegistrants`  
+**And** concurrent last-spot submits are safe via DB transaction + row lock
+
+**Given** admin lowers cap below current count  
+**When** update is attempted  
+**Then** validation rejects the change
+
+See story file `20-1-optional-max-registrants-per-activity.md` for full AC and dev guardrails.
+
+## Epic 21: Viber client touch-base
+
+Extend client outreach beyond WhatsApp with **Viber click-to-message** on the client profile — same operator workflow as Platform 0 Epic 5 (FR-14, FR-15), without replacing WhatsApp or Epic 16 share-kit copy.
+
+**FRs touched:** FR-14 (click-to-message pattern), FR-15 (follow-up status + coverage metric), FR-7 (timeline)  
+**Platform 0 baseline:** Epic 5 Stories 5.6–5.7, Epic 7 Story 7.5 (server dedup)  
+**Not in scope:** Viber Business / Bot API, broadcast templates, share-kit “Copy Viber message” (park as 21.4 candidate after client-profile path ships)
+
+**Technical notes:**
+- Deep link: `viber://chat?number=%2B{E164}` (URL-encode leading `+` as `%2B`; reuse `toWhatsAppPhoneDigits` / E.164 normalization from `phone-countries.ts`, extended for Viber)
+- Fallback web link (desktop without app): `https://viber.me/{digitsWithoutPlus}` per Viber support docs
+- Brand token: Viber purple `#7360F2` — add `--viber` semantic token; never use for generic primary actions (mirror `--whatsapp`)
+- API routes mirror WhatsApp: `POST .../viber-initiated`, `POST .../viber-follow-up`
+- Timeline event types: `ViberInitiated`, `ViberFollowUpRecorded`
+- Follow-up dedup: 15-minute cooldown on identical status + note (mirror `RecordWhatsAppFollowUpAsync`)
+
+### Story 21.1: Viber click-to-message from client profile
+
+As a **Tenant Admin or Member**,
+I want **to open Viber with a Client's phone number pre-filled from their profile**,
+So that **I can reach clients on their preferred messenger without leaving Cohestra**.
+
+**Acceptance Criteria:**
+
+**Given** a Client with a registered mobile number in E.164 storage  
+**When** I click **Open Viber** on the client profile outreach panel  
+**Then** `viber://chat?number=%2B{digits}` opens in a new tab/app with the number pre-filled  
+**And** the API records `ViberInitiated` on the client timeline before navigation  
+**And** the button is disabled with helper text when the client has no phone on file
+
+**Given** the client profile on mobile  
+**When** the Viber action renders  
+**Then** the button uses the Viber brand token (`--viber`) and is full-width on narrow viewports (mirror WhatsAppButton UX-DR15)
+
+**Given** WhatsApp outreach remains on the same profile  
+**When** both panels render  
+**Then** WhatsApp and Viber are separate actions — neither replaces the other
+
+### Story 21.2: Viber follow-up status tracking
+
+As a **Tenant Admin or Member**,
+I want **to record Viber follow-up status on a Client after messaging**,
+So that **my team sees outreach history and avoids duplicate logging**.
+
+**Acceptance Criteria:**
+
+**Given** I contacted a Client via Viber  
+**When** I set follow-up status (`contacted` | `awaiting_reply`) with an optional note and save  
+**Then** `ViberFollowUpRecorded` appends to the timeline with timestamp and formatted status label (FR-15, NFR-8)  
+**And** save is blocked until status or note differs from the last saved baseline (UI guard)
+
+**Given** an identical follow-up status and note was recorded within the cooldown window  
+**When** the same follow-up POST is submitted again  
+**Then** API returns **409** with a clear message (mirror Epic 7.5 / WhatsApp dedup)
+
+**Given** integration tests for WhatsApp follow-up dedup exist  
+**When** Viber follow-up ships  
+**Then** parallel integration tests cover Viber dedup behavior
+
+### Story 21.3: Multi-channel follow-up coverage includes Viber
+
+As a **Tenant Admin**,
+I want **dashboard and report follow-up coverage to count Viber outreach alongside WhatsApp and email**,
+So that **coverage metrics reflect all messenger touch-points**.
+
+**Acceptance Criteria:**
+
+**Given** a Client with only `ViberInitiated` or `ViberFollowUpRecorded` timeline events (no email/WhatsApp outreach)  
+**When** dashboard follow-up coverage is computed  
+**Then** that Client counts as followed-up (same rule as WhatsApp-initiated / WhatsApp-follow-up)
+
+**Given** report queries that include follow-up coverage or outreach filters  
+**When** Viber events exist  
+**Then** Viber is included in the same predicates as WhatsApp timeline events
+
+**Given** the client profile timeline  
+**When** Viber events render  
+**Then** labels read **Viber initiated** and **Viber follow-up recorded** with human-readable status in the subject line
+
+**Parked (21.4 — post-profile):** Share-kit “Copy Viber message” for activities/homepage (Epic 16 parity); defer until Story 21.1–21.3 UAT passes.
+

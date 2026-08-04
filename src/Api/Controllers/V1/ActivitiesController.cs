@@ -289,6 +289,11 @@ public class ActivitiesController(IActivityService activityService) : Controller
             return "Category, schedule, location, and community label are required.";
         }
 
+        if (request.MaxRegistrants is int maxRegistrants && maxRegistrants < 1)
+        {
+            return "Max registrants must be at least 1 when set.";
+        }
+
         return null;
     }
 
@@ -305,6 +310,11 @@ public class ActivitiesController(IActivityService activityService) : Controller
             string.IsNullOrWhiteSpace(request.CommunityLabel))
         {
             return "Category, schedule, location, and community label are required.";
+        }
+
+        if (request.MaxRegistrants is int maxRegistrants && maxRegistrants < 1)
+        {
+            return "Max registrants must be at least 1 when set.";
         }
 
         return null;

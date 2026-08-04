@@ -6,6 +6,10 @@ import { SitePageRenderer } from "@/components/marketing/site-page-renderer";
 import { StubHome } from "@/components/public/stub-home";
 import { TenantMaintenancePage } from "@/components/public/tenant-maintenance-page";
 import { fetchPublicDoorServer } from "@/lib/public-door-api";
+import { shouldRenderMarketingHome } from "@/lib/marketing-apex";
+import {
+  getIncomingRequestHost,
+} from "@/lib/server-api-fetch";
 import {
   buildEnvLandingMetadata,
   buildPublishedSiteMetadata,
@@ -31,7 +35,15 @@ export async function generateMetadata({ searchParams }: HomePageProps): Promise
     return buildEnvLandingMetadata();
   }
 
-  const door = await fetchPublicDoorServer();
+  const [door, host] = await Promise.all([
+    fetchPublicDoorServer(),
+    getIncomingRequestHost(),
+  ]);
+
+  if (shouldRenderMarketingHome(host, door.kind)) {
+    return buildEnvLandingMetadata();
+  }
+
   if (door.kind === "active" && door.site) {
     return buildPublishedSiteMetadata({
       published: door.site.published,
@@ -59,7 +71,14 @@ export default async function Home({ searchParams }: HomePageProps) {
     return <SitePageRenderer site={site} isPreview />;
   }
 
-  const door = await fetchPublicDoorServer();
+  const [door, host] = await Promise.all([
+    fetchPublicDoorServer(),
+    getIncomingRequestHost(),
+  ]);
+
+  if (shouldRenderMarketingHome(host, door.kind)) {
+    return <SiteLandingPage />;
+  }
 
   switch (door.kind) {
     case "marketing":

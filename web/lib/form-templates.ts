@@ -2,7 +2,7 @@ import type { ActivityFormSchema, FormFieldDefinition } from "@/lib/activities-a
 
 export type FormTemplateId =
   | "tgh-tennis"
-  | "ikigai-pickleball"
+  | "pickleball-club"
   | "ikigai-board-game";
 
 export type FormTemplate = {
@@ -119,12 +119,12 @@ const tghTennisSchema: ActivityFormSchema = {
       placeholder: null,
       options: null,
       consentText:
-        "I agree to receive Golden Hour Club updates and event communications by email.",
+        "I agree to receive club updates and event communications by email.",
     }),
   ],
 };
 
-const ikigaiPickleballSchema: ActivityFormSchema = {
+const pickleballClubSchema: ActivityFormSchema = {
   version: 1,
   fields: [
     field({
@@ -217,7 +217,7 @@ const ikigaiPickleballSchema: ActivityFormSchema = {
       placeholder: null,
       options: null,
       consentText:
-        "I agree to receive Ikigai community updates and event communications by email.",
+        "I agree to receive community updates and event communications by email.",
     }),
   ],
 };
@@ -314,17 +314,17 @@ const ikigaiBoardGameSchema: ActivityFormSchema = {
 export const formTemplates: FormTemplate[] = [
   {
     id: "tgh-tennis",
-    name: "TGH Tennis",
+    name: "Tennis Club template",
     description:
-      "The Golden Hour Club — tennis level, clinic interest, referral source.",
+      "Tennis level, clinic interest, referral source, and community consent.",
     schema: tghTennisSchema,
   },
   {
-    id: "ikigai-pickleball",
-    name: "Ikigai Pickleball",
+    id: "pickleball-club",
+    name: "Pickle Ball Template",
     description:
-      "Dink & Drive — first-timer toggle, playing level, invited-by, referral.",
-    schema: ikigaiPickleballSchema,
+      "First-timer toggle, playing level, invited-by, referral, and consent.",
+    schema: pickleballClubSchema,
   },
   {
     id: "ikigai-board-game",

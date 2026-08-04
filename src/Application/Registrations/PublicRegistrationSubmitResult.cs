@@ -16,6 +16,8 @@ public sealed record PublicRegistrationSubmitResult
 
     public bool IsAlreadyRegistered { get; init; }
 
+    public bool IsActivityFull { get; init; }
+
     public bool ClientCreated { get; init; }
 
     public bool IsReplay { get; init; }
@@ -62,4 +64,7 @@ public sealed record PublicRegistrationSubmitResult
             RegistrationNumber = registrationNumber,
             ClientId = clientId,
         };
+
+    public static PublicRegistrationSubmitResult ActivityFull() =>
+        new() { IsActivityFull = true };
 }

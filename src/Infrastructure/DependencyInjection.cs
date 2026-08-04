@@ -37,13 +37,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 
 namespace Cohestra.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         var postgresConnection = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
@@ -78,7 +82,9 @@ public static class DependencyInjection
         services.Configure<OperatorSeedSettings>(configuration.GetSection(OperatorSeedSettings.SectionName));
         services.Configure<PlatformAdminSeedSettings>(configuration.GetSection(PlatformAdminSeedSettings.SectionName));
         services.Configure<AuthOtpSettings>(configuration.GetSection(AuthOtpSettings.SectionName));
+        services.Configure<AuthHandoffOptions>(configuration.GetSection(AuthHandoffOptions.SectionName));
         services.Configure<DemoDataSeedSettings>(configuration.GetSection(DemoDataSeedSettings.SectionName));
+        services.Configure<LoadTestDataSeedSettings>(configuration.GetSection(LoadTestDataSeedSettings.SectionName));
         services.Configure<PublicWebOptions>(configuration.GetSection(PublicWebOptions.SectionName));
         services.Configure<PublicRegistrationRateLimitOptions>(
             configuration.GetSection(PublicRegistrationRateLimitOptions.SectionName));
@@ -94,6 +100,14 @@ public static class DependencyInjection
         services.Configure<SelfServeSignupSettings>(configuration.GetSection(SelfServeSignupSettings.SectionName));
         services.Configure<PublicSignupRateLimitOptions>(
             configuration.GetSection(PublicSignupRateLimitOptions.SectionName));
+        services.Configure<PublicSignupVerifyRateLimitOptions>(
+            configuration.GetSection(PublicSignupVerifyRateLimitOptions.SectionName));
+        services.Configure<PublicSignupResendRateLimitOptions>(
+            configuration.GetSection(PublicSignupResendRateLimitOptions.SectionName));
+        services.Configure<AuthOtpVerifyRateLimitOptions>(
+            configuration.GetSection(AuthOtpVerifyRateLimitOptions.SectionName));
+        services.Configure<AuthResendOtpRateLimitOptions>(
+            configuration.GetSection(AuthResendOtpRateLimitOptions.SectionName));
         services.Configure<StripeSettings>(configuration.GetSection(StripeSettings.SectionName));
 
         services.AddHttpClient(nameof(GoogleRecaptchaVerifier));
@@ -102,7 +116,7 @@ public static class DependencyInjection
             ?? new SendGridSettings();
         SendGridSettingsValidator.ValidateForEnvironment(
             sendGridSettings,
-            configuration["ASPNETCORE_ENVIRONMENT"]);
+            environment.EnvironmentName);
 
         if (string.IsNullOrWhiteSpace(sendGridSettings.ApiKey))
         {
@@ -117,6 +131,7 @@ public static class DependencyInjection
 
         services.AddScoped<IRefreshTokenStore, RedisRefreshTokenStore>();
         services.AddScoped<IAuthOtpStore, RedisOtpStore>();
+        services.AddScoped<IAuthHandoffStore, RedisAuthHandoffStore>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ILegalComplianceService, LegalComplianceService>();
@@ -155,6 +170,10 @@ public static class DependencyInjection
         services.AddScoped<RegistrationNumberGenerator>();
         services.AddSingleton<IPublicRegistrationRateLimiter, RedisPublicRegistrationRateLimiter>();
         services.AddSingleton<IPublicSignupRateLimiter, RedisPublicSignupRateLimiter>();
+        services.AddSingleton<IPublicSignupVerifyRateLimiter, RedisPublicSignupVerifyRateLimiter>();
+        services.AddSingleton<IPublicSignupResendRateLimiter, RedisPublicSignupResendRateLimiter>();
+        services.AddSingleton<IAuthOtpVerifyRateLimiter, RedisAuthOtpVerifyRateLimiter>();
+        services.AddSingleton<IAuthResendOtpRateLimiter, RedisAuthResendOtpRateLimiter>();
         services.AddSingleton<IRegistrationIdempotencyStore, RedisRegistrationIdempotencyStore>();
         services.AddSingleton<RedisPublicActivityCache>();
         services.AddSingleton<RedisPublishedSiteCache>();

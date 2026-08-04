@@ -6,12 +6,14 @@ using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Cohestra.Infrastructure.Tests.Tenancy;
 
 public sealed class TenantResolutionMiddlewareTests
 {
+    private static readonly IConfiguration EmptyConfiguration = new ConfigurationBuilder().Build();
     [Fact]
     public async Task Admin_allows_matching_tenant_id_and_host_and_sets_context()
     {
@@ -35,7 +37,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(tenantId, "default")),
             current,
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.True(called);
         Assert.True(current.IsResolved);
@@ -58,7 +61,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(TenantIds.Default, "default")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
         Assert.Equal(TenantResolutionMiddleware.TenantMismatchErrorCode, ReadErrorCode(context));
@@ -80,7 +84,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(other, "acme")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
     }
@@ -100,7 +105,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Fail("unused")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
     }
@@ -120,7 +126,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(TenantIds.Default, "default")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(StatusCodes.Status401Unauthorized, context.Response.StatusCode);
     }
@@ -148,7 +155,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(tenantId, "acme")),
             current,
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.True(called);
         Assert.True(current.IsResolved);
@@ -171,7 +179,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Fail("Unknown tenant workspace 'unknown'.")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(StatusCodes.Status404NotFound, context.Response.StatusCode);
         Assert.Equal(TenantResolutionMiddleware.TenantUnresolvedErrorCode, ReadErrorCode(context));
@@ -193,7 +202,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.MarketingOnly()),
             current,
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(StatusCodes.Status404NotFound, context.Response.StatusCode);
         Assert.False(current.IsResolved);
@@ -223,7 +233,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Fail("unused")),
             current,
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.True(called);
         Assert.False(current.IsResolved);
@@ -252,7 +263,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Fail("unused")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.True(called);
     }
@@ -276,7 +288,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(TenantIds.Default, "default")),
             new CurrentTenant(),
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
     }
@@ -299,7 +312,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(tenantId, "acme")),
             current,
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.Equal(tenantId, current.TenantId);
         Assert.NotEqual(TenantIds.Default, current.TenantId);
@@ -328,7 +342,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.Ok(tenantId, "acme")),
             current,
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.True(called);
         Assert.True(current.IsResolved);
@@ -352,7 +367,8 @@ public sealed class TenantResolutionMiddlewareTests
             context,
             new StubHostResolver(TenantHostResolution.MarketingOnly()),
             current,
-            NullLogger<TenantResolutionMiddleware>.Instance);
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
 
         Assert.False(current.IsResolved);
         Assert.Null(current.TenantId);

@@ -59,6 +59,10 @@ namespace Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<int?>("MaxRegistrants")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_registrants");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
