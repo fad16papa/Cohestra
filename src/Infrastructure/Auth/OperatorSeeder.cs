@@ -1,6 +1,7 @@
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Seed;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -147,6 +148,11 @@ public static class OperatorSeeder
         foreach (var admin in admins)
         {
             if (await userManager.IsInRoleAsync(admin, PlatformAdminSeeder.PlatformAdminRole))
+            {
+                continue;
+            }
+
+            if (LoadTestDataSeeder.IsLoadTestAdminEmail(admin.Email))
             {
                 continue;
             }

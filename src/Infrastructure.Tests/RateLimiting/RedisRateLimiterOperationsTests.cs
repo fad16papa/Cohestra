@@ -42,11 +42,14 @@ public sealed class GlobalExceptionHandlerRateLimiterTests
         context.Request.Path = "/api/v1/auth/verify-email";
         context.Request.Method = HttpMethods.Post;
         context.Response.Body = new MemoryStream();
+        var hostEnvironment = new TestHostEnvironment();
         context.RequestServices = new ServiceCollection()
-            .AddSingleton<IHostEnvironment>(new TestHostEnvironment())
+            .AddSingleton<IHostEnvironment>(hostEnvironment)
             .BuildServiceProvider();
 
-        var handler = new GlobalExceptionHandler(NullLogger<GlobalExceptionHandler>.Instance);
+        var handler = new GlobalExceptionHandler(
+            NullLogger<GlobalExceptionHandler>.Instance,
+            hostEnvironment);
         var inner = new RedisException("Simulated outage");
         var exception = new RateLimiterUnavailableException("AuthOtpVerify", inner);
 

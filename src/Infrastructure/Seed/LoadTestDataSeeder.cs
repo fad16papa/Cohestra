@@ -27,6 +27,11 @@ public static class LoadTestDataSeeder
     public const string SlugPrefix = LoadTestTenantRules.SlugPrefix;
     public const string DefaultPassword = "LoadTest123!";
 
+    public static bool IsLoadTestAdminEmail(string? email) =>
+        !string.IsNullOrWhiteSpace(email)
+        && email.EndsWith($"@{EmailDomain}", StringComparison.OrdinalIgnoreCase)
+        && email.StartsWith("load.", StringComparison.OrdinalIgnoreCase);
+
     private static readonly string[] CategoryNames = ["Sports", "Social", "Wellness"];
 
     private static readonly string[] ActivityThemes =

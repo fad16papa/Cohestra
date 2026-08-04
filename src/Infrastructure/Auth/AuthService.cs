@@ -111,7 +111,17 @@ public sealed class AuthService(
             return InvalidCredentials();
         }
 
-        var session = await ResolveSessionBindingAsync(user, host, preferredTenantId: null, cancellationToken);
+        SessionBinding session;
+        try
+        {
+            session = await ResolveSessionBindingAsync(user, host, preferredTenantId: null, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Login session binding failed for {Email}", user.Email);
+            return LoginInfrastructureFailure(ex);
+        }
+
         if (session.ErrorCode is not null)
         {
             if (ShouldMaskAsInvalidCredentials(session.ErrorCode))
@@ -122,21 +132,15 @@ public sealed class AuthService(
             return new AuthLoginResult(null, session.ErrorCode, session.ErrorMessage);
         }
 
-        AuthLoginResult sessionResult;
         try
         {
-            sessionResult = await CompleteLoginSessionAsync(user, session, cancellationToken);
+            return await CompleteLoginSessionAsync(user, session, cancellationToken);
         }
-        catch (Exception ex) when (IsAuthPersistenceFailure(ex))
+        catch (Exception ex)
         {
             logger.LogError(ex, "Login session persistence failed for {Email}", user.Email);
-            return new AuthLoginResult(
-                null,
-                "service_unavailable",
-                "Sign-in is temporarily unavailable. Ensure Redis is running, then try again.");
+            return LoginInfrastructureFailure(ex);
         }
-
-        return sessionResult;
     }
 
     private async Task<AuthLoginResult> CompleteLoginSessionAsync(
@@ -631,6 +635,10 @@ public sealed class AuthService(
                 resolvedTenantSlug = hostResolution.Slug;
             }
         }
+        else if (TenantHostResolver.IsBareLocalDevHost(host))
+        {
+            return await ResolveBareLocalhostBindingAsync(user, host, isPlatformAdmin, isTenantAdmin, cancellationToken);
+        }
         else
         {
             var hostResolution = await tenantHostResolver.ResolveAsync(host, cancellationToken);
@@ -666,28 +674,6 @@ public sealed class AuthService(
         var membership = await tenantMembershipService.GetMembershipAsync(user.Id, tenantId, cancellationToken);
         if (membership is null)
         {
-            if (preferredTenantId is null
-                && TenantHostResolver.IsBareLocalDevHost(host))
-            {
-                var memberships = await tenantMembershipService.GetActiveMembershipsForUserAsync(
-                    user.Id,
-                    cancellationToken);
-
-                if (memberships.Count == 1)
-                {
-                    return SessionBinding.ForTenant(
-                        memberships[0].TenantId,
-                        memberships[0].Role,
-                        memberships[0].TenantSlug,
-                        requiresTenantHandoff: true);
-                }
-
-                if (memberships.Count > 1)
-                {
-                    return SessionBinding.Fail("multiple_workspaces", MultipleWorkspacesMessage);
-                }
-            }
-
             if (isPlatformAdmin)
             {
                 return SessionBinding.PlatformOnly();
@@ -706,6 +692,56 @@ public sealed class AuthService(
             membership.TenantId,
             membership.Role,
             resolvedTenantSlug,
+            requiresTenantHandoff);
+    }
+
+    /// <summary>
+    /// Bare <c>localhost</c> login is email-first: ignore <c>DEV_TENANT_SLUG</c> host remap for tenant binding.
+    /// Hand off to the user's workspace subdomain when it differs from the host-resolved tenant.
+    /// </summary>
+    private async Task<SessionBinding> ResolveBareLocalhostBindingAsync(
+        ApplicationUser user,
+        string? host,
+        bool isPlatformAdmin,
+        bool isTenantAdmin,
+        CancellationToken cancellationToken)
+    {
+        var memberships = await tenantMembershipService.GetActiveMembershipsForUserAsync(
+            user.Id,
+            cancellationToken);
+
+        if (memberships.Count == 0)
+        {
+            if (isPlatformAdmin)
+            {
+                return SessionBinding.PlatformOnly();
+            }
+
+            if (isTenantAdmin)
+            {
+                return SessionBinding.Fail("no_tenant_membership", OrphanMembershipMessage);
+            }
+
+            return SessionBinding.Fail(
+                "tenant_unresolved",
+                "Could not resolve tenant from Host.");
+        }
+
+        if (memberships.Count > 1)
+        {
+            return SessionBinding.Fail("multiple_workspaces", MultipleWorkspacesMessage);
+        }
+
+        var soleMembership = memberships[0];
+        var hostResolution = await tenantHostResolver.ResolveAsync(host, cancellationToken);
+        var requiresTenantHandoff = !hostResolution.Succeeded
+            || hostResolution.TenantId is null
+            || hostResolution.TenantId.Value != soleMembership.TenantId;
+
+        return SessionBinding.ForTenant(
+            soleMembership.TenantId,
+            soleMembership.Role,
+            soleMembership.TenantSlug,
             requiresTenantHandoff);
     }
 
@@ -896,6 +932,17 @@ public sealed class AuthService(
         or RedisConnectionException
         or RedisTimeoutException
         or TimeoutException;
+
+    private static AuthLoginResult LoginInfrastructureFailure(Exception exception) =>
+        IsAuthPersistenceFailure(exception)
+            ? new AuthLoginResult(
+                null,
+                "service_unavailable",
+                "Sign-in is temporarily unavailable. Ensure Redis is running, then try again.")
+            : new AuthLoginResult(
+                null,
+                "service_unavailable",
+                "Sign-in is temporarily unavailable. Try again shortly.");
 
     private static AuthLoginResult InvalidCredentials() =>
         new(null, "invalid_credentials", "Invalid email or password.");
