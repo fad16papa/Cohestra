@@ -8,7 +8,6 @@ import type { WebsiteBuilderEditorTab } from "@/lib/website-builder-tour";
 type WebsiteBuilderEditorRailProps = {
   activeTab: WebsiteBuilderEditorTab;
   onTabChange: (tab: WebsiteBuilderEditorTab) => void;
-  topSlot?: ReactNode;
   designPanel: ReactNode;
   sectionsPanel: ReactNode;
   templatesPanel: ReactNode;
@@ -23,15 +22,12 @@ const TABS: { id: WebsiteBuilderEditorTab; label: string; tourAttr?: string }[] 
 export function WebsiteBuilderEditorRail({
   activeTab,
   onTabChange,
-  topSlot,
   designPanel,
   sectionsPanel,
   templatesPanel,
 }: WebsiteBuilderEditorRailProps) {
   return (
-    <div className="flex min-h-0 flex-col gap-3">
-      {topSlot}
-
+    <div className="flex min-h-0 flex-col gap-2">
       <div
         className="inline-flex w-full rounded-lg border border-border-warm bg-card p-1"
         role="tablist"
@@ -59,7 +55,7 @@ export function WebsiteBuilderEditorRail({
         ))}
       </div>
 
-      <div className="min-h-0 space-y-3">
+      <div className="min-h-0 space-y-2">
         <TabPanel id="design" activeTab={activeTab}>
           {designPanel}
         </TabPanel>

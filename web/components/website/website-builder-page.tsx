@@ -1017,7 +1017,7 @@ export function WebsiteBuilderPage() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <WebsiteBuilderToolbar
         siteUrl={publicSiteUrl}
         statusLabel={statusLabel}
@@ -1057,11 +1057,12 @@ export function WebsiteBuilderPage() {
         onPublish={() => void handleOpenPublishDialog()}
       />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-start">
+      <WebsitePublishReadinessPanel gate={publishGate} />
+
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-start">
         <WebsiteBuilderEditorRail
           activeTab={editorTab}
           onTabChange={setEditorTab}
-          topSlot={<WebsitePublishReadinessPanel gate={publishGate} />}
           designPanel={
             <>
               {checklistPrefsReady && checklistVisible ? (
