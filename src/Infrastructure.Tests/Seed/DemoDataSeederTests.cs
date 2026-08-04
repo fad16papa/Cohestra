@@ -12,6 +12,36 @@ namespace Cohestra.Infrastructure.Tests.Seed;
 public sealed class DemoDataSeederTests
 {
     [Fact]
+    public void AllDemoSeedPhones_AreUniqueAcrossPersonasAndDefaultSyntheticFill()
+    {
+        var phones = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var persona in DemoDataSeedCatalog.Personas)
+        {
+            if (string.IsNullOrWhiteSpace(persona.Phone))
+            {
+                continue;
+            }
+
+            var normalizedPhone = ClientContactNormalizer.NormalizePhone(persona.Phone, persona.PhoneCountry);
+            Assert.NotNull(normalizedPhone);
+            Assert.True(
+                phones.Add(normalizedPhone!),
+                $"Duplicate normalized phone in demo personas: {persona.FullName} ({normalizedPhone})");
+        }
+
+        for (var clientIndex = DemoDataSeedCatalog.Personas.Count + 1; clientIndex <= 48; clientIndex++)
+        {
+            var phoneRaw = $"+6598{clientIndex:D7}";
+            var normalizedPhone = ClientContactNormalizer.NormalizePhone(phoneRaw, "SG");
+            Assert.NotNull(normalizedPhone);
+            Assert.True(
+                phones.Add(normalizedPhone!),
+                $"Duplicate normalized phone in demo synthetics: index {clientIndex} ({normalizedPhone})");
+        }
+    }
+
+    [Fact]
     public void Personas_HaveUniqueNormalizedPhonesAndEmailsPerTenantRules()
     {
         var phones = new HashSet<string>(StringComparer.Ordinal);

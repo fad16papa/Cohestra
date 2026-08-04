@@ -331,6 +331,8 @@ public static class DemoDataSeeder
                 now);
         }
 
+        ValidateUniqueDefaultTenantContacts(dbContext);
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation(
@@ -396,7 +398,7 @@ public static class DemoDataSeeder
         var firstName = FirstNames[(clientIndex - 1) % FirstNames.Length];
         var lastName = LastNames[(clientIndex + 3) % LastNames.Length];
         var email = $"demo.user{clientIndex:D3}@{DemoEmailDomain}";
-        var phoneRaw = $"+6591{clientIndex:D7}";
+        var phoneRaw = $"+6598{clientIndex:D7}";
 
         return new Client
         {
@@ -634,19 +636,63 @@ public static class DemoDataSeeder
         CohestraDbContext dbContext,
         CancellationToken cancellationToken = default)
     {
-        dbContext.CampaignRecipients.RemoveRange(await dbContext.CampaignRecipients.ToListAsync(cancellationToken));
-        dbContext.CampaignAssets.RemoveRange(await dbContext.CampaignAssets.ToListAsync(cancellationToken));
-        dbContext.Campaigns.RemoveRange(await dbContext.Campaigns.ToListAsync(cancellationToken));
+        // Ignore tenant filters — demo seed wipes business data for ALL tenants (see README).
+        dbContext.CampaignRecipients.RemoveRange(
+            await dbContext.IgnoreTenantFilters<CampaignRecipient>().ToListAsync(cancellationToken));
+        dbContext.CampaignAssets.RemoveRange(
+            await dbContext.IgnoreTenantFilters<CampaignAsset>().ToListAsync(cancellationToken));
+        dbContext.Campaigns.RemoveRange(
+            await dbContext.IgnoreTenantFilters<Campaign>().ToListAsync(cancellationToken));
         dbContext.ClientTimelineEvents.RemoveRange(
-            await dbContext.ClientTimelineEvents.ToListAsync(cancellationToken));
-        dbContext.Registrations.RemoveRange(await dbContext.Registrations.ToListAsync(cancellationToken));
-        dbContext.Clients.RemoveRange(await dbContext.Clients.ToListAsync(cancellationToken));
-        dbContext.Activities.RemoveRange(await dbContext.Activities.ToListAsync(cancellationToken));
-        dbContext.Communities.RemoveRange(await dbContext.Communities.ToListAsync(cancellationToken));
-        dbContext.Categories.RemoveRange(await dbContext.Categories.ToListAsync(cancellationToken));
-        dbContext.EmailTemplates.RemoveRange(await dbContext.EmailTemplates.ToListAsync(cancellationToken));
+            await dbContext.IgnoreTenantFilters<ClientTimelineEvent>().ToListAsync(cancellationToken));
+        dbContext.Registrations.RemoveRange(
+            await dbContext.IgnoreTenantFilters<Registration>().ToListAsync(cancellationToken));
+        dbContext.Clients.RemoveRange(
+            await dbContext.IgnoreTenantFilters<Client>().ToListAsync(cancellationToken));
+        dbContext.Activities.RemoveRange(
+            await dbContext.IgnoreTenantFilters<Activity>().ToListAsync(cancellationToken));
+        dbContext.Communities.RemoveRange(
+            await dbContext.IgnoreTenantFilters<Community>().ToListAsync(cancellationToken));
+        dbContext.Categories.RemoveRange(
+            await dbContext.IgnoreTenantFilters<Category>().ToListAsync(cancellationToken));
+        dbContext.EmailTemplates.RemoveRange(
+            await dbContext.IgnoreTenantFilters<EmailTemplate>().ToListAsync(cancellationToken));
 
         await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    internal static void ValidateUniqueDefaultTenantContacts(CohestraDbContext dbContext)
+    {
+        var pendingClients = dbContext.ChangeTracker
+            .Entries<Client>()
+            .Where(entry => entry.State is EntityState.Added or EntityState.Modified)
+            .Select(entry => entry.Entity)
+            .Where(client => client.TenantId == TenantIds.Default)
+            .ToList();
+
+        var duplicatePhone = pendingClients
+            .Where(client => !string.IsNullOrWhiteSpace(client.NormalizedPhone))
+            .GroupBy(client => client.NormalizedPhone!, StringComparer.Ordinal)
+            .FirstOrDefault(group => group.Count() > 1);
+
+        if (duplicatePhone is not null)
+        {
+            var names = string.Join(", ", duplicatePhone.Select(client => client.FullName));
+            throw new InvalidOperationException(
+                $"Demo seed would violate unique phone constraint for default tenant: {duplicatePhone.Key} ({names}).");
+        }
+
+        var duplicateEmail = pendingClients
+            .Where(client => !string.IsNullOrWhiteSpace(client.NormalizedEmail))
+            .GroupBy(client => client.NormalizedEmail!, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(group => group.Count() > 1);
+
+        if (duplicateEmail is not null)
+        {
+            var names = string.Join(", ", duplicateEmail.Select(client => client.FullName));
+            throw new InvalidOperationException(
+                $"Demo seed would violate unique email constraint for default tenant: {duplicateEmail.Key} ({names}).");
+        }
     }
 
     private static ActivityFormSchema CreateMinimalFormSchema()
