@@ -120,10 +120,10 @@ public sealed class AuthService(
         {
             logger.LogError(
                 ex,
-                "Login session binding failed for {Email} (host={Host}, type={ExceptionType})",
+                "Login session binding failed for {Email}: {Error} (host={Host})",
                 user.Email,
-                host,
-                ex.GetType().Name);
+                ex.Message,
+                host ?? "(null)");
             return LoginInfrastructureFailure(ex);
         }
 
