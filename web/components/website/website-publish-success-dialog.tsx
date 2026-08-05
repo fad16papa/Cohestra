@@ -3,6 +3,7 @@
 import { CheckCircle2, Copy, ExternalLink, MessageCircle } from "lucide-react";
 
 import { ExternalLinkButton } from "@/components/shared/external-link-button";
+import { publicSiteHostnameFromUrl } from "@/lib/tenant-public-url";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -17,26 +18,22 @@ type WebsitePublishSuccessDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   liveUrl: string;
+  liveDisplayUrl: string;
   onCopyLink: () => void;
   onCopyWhatsApp: () => void;
 };
-
-function formatDisplayHost(url: string): string {
-  try {
-    return new URL(url).host;
-  } catch {
-    return url;
-  }
-}
 
 export function WebsitePublishSuccessDialog({
   open,
   onOpenChange,
   liveUrl,
+  liveDisplayUrl,
   onCopyLink,
   onCopyWhatsApp,
 }: WebsitePublishSuccessDialogProps) {
-  const displayHost = liveUrl ? formatDisplayHost(liveUrl) : "your public homepage";
+  const displayHost = liveDisplayUrl
+    ? publicSiteHostnameFromUrl(liveDisplayUrl)
+    : "your public homepage";
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -67,9 +64,9 @@ export function WebsitePublishSuccessDialog({
             </p>
             <div className="rounded-lg border border-border-warm bg-surface-warm/40 px-3 py-2.5">
               <p className="break-all font-mono text-sm font-medium text-text-warm">
-                {liveUrl || "Resolving your public URL…"}
+                {liveDisplayUrl || "Resolving your public URL…"}
               </p>
-              {liveUrl ? (
+              {liveDisplayUrl ? (
                 <p className="mt-1 text-xs text-text-muted-warm">{displayHost}</p>
               ) : null}
             </div>
