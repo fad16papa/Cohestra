@@ -1179,6 +1179,7 @@ export function WebsiteBuilderPage() {
       <WebsiteBuilderOnboardingTour
         steps={tourSteps}
         open={tourOpen}
+        activeTab={editorTab}
         onClose={() => setTourOpen(false)}
         onRequestTab={setEditorTab}
       />

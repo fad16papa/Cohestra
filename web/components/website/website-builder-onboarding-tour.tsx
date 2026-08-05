@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 type WebsiteBuilderOnboardingTourProps = {
   steps: WebsiteBuilderTourStep[];
   open: boolean;
+  activeTab: WebsiteBuilderEditorTab;
   onClose: () => void;
   onRequestTab: (tab: WebsiteBuilderEditorTab) => void;
 };
@@ -22,9 +23,12 @@ type TargetRect = {
   height: number;
 };
 
+const MEASURE_RETRY_MS = 80;
+
 export function WebsiteBuilderOnboardingTour({
   steps,
   open,
+  activeTab,
   onClose,
   onRequestTab,
 }: WebsiteBuilderOnboardingTourProps) {
@@ -33,17 +37,25 @@ export function WebsiteBuilderOnboardingTour({
 
   const step = steps[stepIndex];
   const isLast = stepIndex >= steps.length - 1;
+  const tabReady = !step?.tab || step.tab === activeTab;
+
+  useEffect(() => {
+    if (open) {
+      setStepIndex(0);
+      setTargetRect(null);
+    }
+  }, [open]);
 
   const measureTarget = useCallback(() => {
     if (!open || !step) {
       setTargetRect(null);
-      return;
+      return false;
     }
 
     const element = document.querySelector(step.targetSelector);
-    if (!element) {
+    if (!element || !isElementVisible(element)) {
       setTargetRect(null);
-      return;
+      return false;
     }
 
     element.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
@@ -55,6 +67,7 @@ export function WebsiteBuilderOnboardingTour({
       width: rect.width + padding * 2,
       height: rect.height + padding * 2,
     });
+    return true;
   }, [open, step]);
 
   useLayoutEffect(() => {
@@ -62,19 +75,41 @@ export function WebsiteBuilderOnboardingTour({
       return;
     }
 
-    if (step.tab) {
+    if (step.tab && step.tab !== activeTab) {
       onRequestTab(step.tab);
+      setTargetRect(null);
+      return;
     }
 
+    let cancelled = false;
+    let retryTimer: number | undefined;
+
+    const attemptMeasure = (attempt = 0) => {
+      if (cancelled) {
+        return;
+      }
+
+      const found = measureTarget();
+      if (!found && attempt < 4) {
+        retryTimer = window.setTimeout(() => attemptMeasure(attempt + 1), MEASURE_RETRY_MS);
+      }
+    };
+
     const frame = window.requestAnimationFrame(() => {
-      measureTarget();
+      attemptMeasure();
     });
 
-    return () => window.cancelAnimationFrame(frame);
-  }, [measureTarget, onRequestTab, open, step, stepIndex]);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+      if (retryTimer !== undefined) {
+        window.clearTimeout(retryTimer);
+      }
+    };
+  }, [activeTab, measureTarget, onRequestTab, open, step, stepIndex]);
 
   useEffect(() => {
-    if (!open) {
+    if (!open || !tabReady) {
       return;
     }
 
@@ -86,7 +121,7 @@ export function WebsiteBuilderOnboardingTour({
       window.removeEventListener("resize", measureTarget);
       window.removeEventListener("scroll", measureTarget, true);
     };
-  }, [measureTarget, open, stepIndex]);
+  }, [measureTarget, open, stepIndex, tabReady]);
 
   function finishTour() {
     markWebsiteBuilderTourCompleted();
@@ -99,6 +134,7 @@ export function WebsiteBuilderOnboardingTour({
       return;
     }
 
+    setTargetRect(null);
     setStepIndex((current) => current + 1);
   }
 
@@ -165,6 +201,24 @@ export function WebsiteBuilderOnboardingTour({
   );
 }
 
+function isElementVisible(element: Element): boolean {
+  if (!(element instanceof HTMLElement)) {
+    return false;
+  }
+
+  if (element.hidden || element.getAttribute("aria-hidden") === "true") {
+    return false;
+  }
+
+  const style = window.getComputedStyle(element);
+  if (style.display === "none" || style.visibility === "hidden") {
+    return false;
+  }
+
+  const rect = element.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+}
+
 function getTooltipStyle(
   rect: TargetRect | null,
   placement: "top" | "bottom" | "left" | "right"
@@ -175,30 +229,32 @@ function getTooltipStyle(
 
   const gap = 12;
   const maxWidth = Math.min(352, window.innerWidth - 32);
+  const targetCenterX = rect.left + rect.width / 2;
+  const targetCenterY = rect.top + rect.height / 2;
 
   switch (placement) {
     case "top":
       return {
         top: Math.max(16, rect.top - gap),
-        left: clamp(rect.left, 16, window.innerWidth - maxWidth - 16),
+        left: clamp(targetCenterX - maxWidth / 2, 16, window.innerWidth - maxWidth - 16),
         transform: "translateY(-100%)",
       };
     case "left":
       return {
-        top: clamp(rect.top, 16, window.innerHeight - 200),
+        top: clamp(targetCenterY - 80, 16, window.innerHeight - 200),
         left: Math.max(16, rect.left - gap),
         transform: "translateX(-100%)",
       };
     case "right":
       return {
-        top: clamp(rect.top, 16, window.innerHeight - 200),
-        left: rect.left + rect.width + gap,
+        top: clamp(targetCenterY - 80, 16, window.innerHeight - 200),
+        left: Math.min(rect.left + rect.width + gap, window.innerWidth - maxWidth - 16),
       };
     case "bottom":
     default:
       return {
-        top: rect.top + rect.height + gap,
-        left: clamp(rect.left, 16, window.innerWidth - maxWidth - 16),
+        top: Math.min(rect.top + rect.height + gap, window.innerHeight - 180),
+        left: clamp(targetCenterX - maxWidth / 2, 16, window.innerWidth - maxWidth - 16),
       };
   }
 }

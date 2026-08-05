@@ -18,8 +18,8 @@ const BASE_TOUR_STEPS: WebsiteBuilderTourStep[] = [
     title: "Start with a template",
     body: "Pick a built-in layout or save your own. Templates set up sections so you are not staring at a blank page.",
     tab: "templates",
-    targetSelector: "#website-builder-tab-templates",
-    placement: "bottom",
+    targetSelector: '[data-tour="website-builder-templates-panel"]',
+    placement: "right",
   },
   {
     id: "branding",
@@ -33,7 +33,7 @@ const BASE_TOUR_STEPS: WebsiteBuilderTourStep[] = [
     id: "preview",
     title: "Preview as you edit",
     body: "Your draft updates here in real time. Switch between phone and desktop, or expand to fullscreen.",
-    targetSelector: '[data-site-preview-pane]',
+    targetSelector: "#website-builder-live-preview",
     placement: "left",
   },
   {
