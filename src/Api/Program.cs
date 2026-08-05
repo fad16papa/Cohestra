@@ -152,9 +152,13 @@ await PlatformAdminSeeder.SeedAsync(app.Services);
 await SitePageSeeder.SeedAsync(app.Services);
 await DemoDataSeeder.SeedAsync(app.Services);
 
-if (app.Configuration.GetValue("LoadTestSeed:Enabled", false))
+var loadTestSeedEnabled = app.Configuration.GetValue("LoadTestSeed:Enabled", false);
+
+if (loadTestSeedEnabled)
 {
-    await LoadTestDataSeeder.BootstrapLoginsAsync(app.Services);
+    app.Logger.LogInformation(
+        "Load test seed running synchronously before accepting traffic (first run or ForceReseed can take several minutes).");
+    await RunLoadTestSeedSafelyAsync(app);
 }
 
 await LogStartupLoginAccountsAsync(app);
@@ -197,21 +201,6 @@ if (app.Environment.IsDevelopment())
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     var stoppingToken = app.Lifetime.ApplicationStopping;
-
-    if (app.Configuration.GetValue("LoadTestSeed:Enabled", false))
-    {
-        _ = Task.Run(async () =>
-        {
-            if (stoppingToken.IsCancellationRequested)
-            {
-                return;
-            }
-
-            app.Logger.LogInformation(
-                "Load test seed running in background (API is already up; demo seed on default tenant is ready).");
-            await RunLoadTestSeedSafelyAsync(app);
-        }, stoppingToken);
-    }
 
     _ = Task.Run(async () =>
     {
@@ -333,7 +322,9 @@ static async Task LogStartupLoginAccountsAsync(WebApplication app)
         app.Logger.LogInformation(
             "Login readiness — load test {Email}: {Status} (password from LoadTestSeed__Password, default {DefaultPassword})",
             loadTestEmail,
-            loadTestUser?.EmailConfirmed == true ? "ready" : "still seeding — wait for background seed or check logs",
+            loadTestUser?.EmailConfirmed == true
+                ? "ready"
+                : "missing — check api logs for load test seed errors",
             LoadTestDataSeeder.DefaultPassword);
     }
 }

@@ -28,22 +28,21 @@ public sealed class TenantMembershipService(CohestraDbContext dbContext) : ITena
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var memberships = await dbContext.TenantMemberships
+        var rows = await dbContext.TenantMemberships
             .AsNoTracking()
             .Where(m => m.UserId == userId)
             .Join(
                 dbContext.Tenants.AsNoTracking().Where(t => t.Status == TenantStatus.Active),
                 membership => membership.TenantId,
                 tenant => tenant.Id,
-                (membership, tenant) => new UserTenantMembership(
-                    membership.TenantId,
-                    tenant.Slug,
-                    membership.Role))
-            .OrderByDescending(m => m.Role == TenantMembershipRole.TenantAdmin)
-            .ThenBy(m => m.TenantSlug)
+                (membership, tenant) => new { membership.TenantId, tenant.Slug, membership.Role })
             .ToListAsync(cancellationToken);
 
-        return memberships;
+        return rows
+            .Select(row => new UserTenantMembership(row.TenantId, row.Slug, row.Role))
+            .OrderByDescending(m => m.Role == TenantMembershipRole.TenantAdmin)
+            .ThenBy(m => m.TenantSlug)
+            .ToList();
     }
 
     public Task<TenantMembership?> GetMembershipAsync(

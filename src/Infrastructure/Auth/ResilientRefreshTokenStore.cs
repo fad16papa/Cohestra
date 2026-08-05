@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
@@ -9,6 +10,7 @@ namespace Cohestra.Infrastructure.Auth;
 public sealed class ResilientRefreshTokenStore(
     RedisRefreshTokenStore redisStore,
     InMemoryRefreshTokenStore memoryStore,
+    IHostEnvironment hostEnvironment,
     ILogger<ResilientRefreshTokenStore> logger) : IRefreshTokenStore
 {
     public async Task StoreAsync(
@@ -22,7 +24,7 @@ public sealed class ResilientRefreshTokenStore(
         {
             await redisStore.StoreAsync(refreshToken, userId, tenantId, ttl, cancellationToken);
         }
-        catch (Exception ex) when (IsRedisFailure(ex))
+        catch (Exception ex) when (ShouldFallback(ex))
         {
             logger.LogWarning(
                 ex,
@@ -44,7 +46,7 @@ public sealed class ResilientRefreshTokenStore(
                 return fromRedis;
             }
         }
-        catch (Exception ex) when (IsRedisFailure(ex))
+        catch (Exception ex) when (ShouldFallback(ex))
         {
             logger.LogWarning(ex, "Redis refresh token read failed; trying in-memory fallback.");
         }
@@ -64,7 +66,7 @@ public sealed class ResilientRefreshTokenStore(
                 return fromRedis;
             }
         }
-        catch (Exception ex) when (IsRedisFailure(ex))
+        catch (Exception ex) when (ShouldFallback(ex))
         {
             logger.LogWarning(ex, "Redis refresh token consume failed; trying in-memory fallback.");
         }
@@ -78,7 +80,7 @@ public sealed class ResilientRefreshTokenStore(
         {
             await redisStore.RevokeAsync(refreshToken, cancellationToken);
         }
-        catch (Exception ex) when (IsRedisFailure(ex))
+        catch (Exception ex) when (ShouldFallback(ex))
         {
             logger.LogWarning(ex, "Redis refresh token revoke failed; trying in-memory fallback.");
         }
@@ -92,7 +94,7 @@ public sealed class ResilientRefreshTokenStore(
         {
             await redisStore.RevokeAllForUserAsync(userId, cancellationToken);
         }
-        catch (Exception ex) when (IsRedisFailure(ex))
+        catch (Exception ex) when (ShouldFallback(ex))
         {
             logger.LogWarning(
                 ex,
@@ -102,6 +104,9 @@ public sealed class ResilientRefreshTokenStore(
 
         await memoryStore.RevokeAllForUserAsync(userId, cancellationToken);
     }
+
+    private bool ShouldFallback(Exception exception) =>
+        IsRedisFailure(exception) || hostEnvironment.IsDevelopment();
 
     private static bool IsRedisFailure(Exception exception) =>
         exception is RedisException

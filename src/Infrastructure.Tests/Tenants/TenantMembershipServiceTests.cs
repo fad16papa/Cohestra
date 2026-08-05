@@ -210,6 +210,38 @@ public sealed class TenantMembershipServiceTests
         Assert.Null(slug);
     }
 
+    [Fact]
+    public async Task GetActiveMembershipsForUser_orders_tenant_admin_first_then_slug()
+    {
+        await using var db = CreateDb();
+        await SeedDefaultTenantAsync(db);
+        var otherTenant = Guid.CreateVersion7();
+        db.Tenants.Add(new Tenant
+        {
+            Id = otherTenant,
+            Slug = "load-core-alpha",
+            Name = "Load Core Alpha",
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        var service = new TenantMembershipService(db);
+        var userId = Guid.NewGuid();
+
+        await service.CreateMembershipAsync(userId, otherTenant, TenantMembershipRole.TenantMember);
+        await service.CreateMembershipAsync(userId, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        var memberships = await service.GetActiveMembershipsForUserAsync(userId);
+
+        Assert.Equal(2, memberships.Count);
+        Assert.Equal(TenantIds.Default, memberships[0].TenantId);
+        Assert.Equal(TenantMembershipRole.TenantAdmin, memberships[0].Role);
+        Assert.Equal("load-core-alpha", memberships[1].TenantSlug);
+    }
+
     private static async Task SeedDefaultTenantAsync(CohestraDbContext db)
     {
         var now = DateTimeOffset.UtcNow;
