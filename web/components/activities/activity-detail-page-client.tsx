@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, MapPin } from "lucide-react";
 
 import { ActivityBrandingPanel } from "@/components/activities/activity-branding-panel";
@@ -26,6 +27,10 @@ const ACTIVITY_TABS: { id: ActivityDetailTab; label: string }[] = [
   { id: "registrations", label: "Registrations" },
   { id: "share", label: "Share kit" },
 ];
+
+function isActivityDetailTab(value: string | null): value is ActivityDetailTab {
+  return value === "overview" || value === "form" || value === "registrations" || value === "share";
+}
 
 type ActivityDetailPageClientProps = {
   id: string;
@@ -86,9 +91,20 @@ function ActivityQuickFacts({ activity }: { activity: Activity }) {
 
 export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) {
   const { authFetch } = useAuth();
+  const searchParams = useSearchParams();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<ActivityDetailTab>("overview");
+  const [activeTab, setActiveTab] = useState<ActivityDetailTab>(() => {
+    const tab = searchParams.get("tab");
+    return isActivityDetailTab(tab) ? tab : "overview";
+  });
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (isActivityDetailTab(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   useAdminPageMeta(
     activity ? { title: activity.name, breadcrumbTail: activity.name } : null

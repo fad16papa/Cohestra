@@ -5,6 +5,7 @@ import { useEffect } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { DashboardMetricsRefreshProvider } from "@/components/dashboard/dashboard-metrics-refresh-context";
+import { ActivityCalendarNudge } from "@/components/dashboard/activity-calendar-popout";
 import { AdminSidebar } from "@/components/layouts/admin-sidebar";
 import { AdminTopBar } from "@/components/layouts/admin-top-bar";
 import { AdminShellProvider } from "@/components/layouts/admin-shell-context";
@@ -78,6 +79,7 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
         >
           {children}
         </main>
+        <ActivityCalendarNudge />
       </div>
     </div>
   );
