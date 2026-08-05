@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
@@ -33,12 +39,20 @@ type TooltipPosition = {
   placement: ResolvedPlacement;
 };
 
-const MEASURE_RETRY_MS = 100;
-const MAX_MEASURE_ATTEMPTS = 12;
-const TOOLTIP_WIDTH = 352;
-const TOOLTIP_HEIGHT = 200;
+type ViewportBounds = {
+  width: number;
+  height: number;
+  offsetTop: number;
+  offsetLeft: number;
+};
+
+const MEASURE_RETRY_MS = 80;
+const MAX_MEASURE_ATTEMPTS = 16;
 const VIEWPORT_MARGIN = 16;
 const TOOLTIP_GAP = 12;
+const TARGET_PADDING = 8;
+const FALLBACK_TOOLTIP_WIDTH = 352;
+const FALLBACK_TOOLTIP_HEIGHT = 168;
 
 export function WebsiteBuilderOnboardingTour({
   steps,
@@ -49,7 +63,13 @@ export function WebsiteBuilderOnboardingTour({
 }: WebsiteBuilderOnboardingTourProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
+  const [viewport, setViewport] = useState<ViewportBounds>(() => readViewportBounds());
+  const [tooltipSize, setTooltipSize] = useState({
+    width: FALLBACK_TOOLTIP_WIDTH,
+    height: FALLBACK_TOOLTIP_HEIGHT,
+  });
   const [mounted, setMounted] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const step = steps[stepIndex];
   const isLast = stepIndex >= steps.length - 1;
@@ -66,6 +86,10 @@ export function WebsiteBuilderOnboardingTour({
     }
   }, [open]);
 
+  const syncViewport = useCallback(() => {
+    setViewport(readViewportBounds());
+  }, []);
+
   const measureTarget = useCallback(() => {
     if (!open || !step) {
       setTargetRect(null);
@@ -78,18 +102,24 @@ export function WebsiteBuilderOnboardingTour({
       return false;
     }
 
-    element.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
+    element.scrollIntoView({ behavior: "auto", block: "center", inline: "nearest" });
 
     const rect = element.getBoundingClientRect();
-    const padding = 8;
     setTargetRect({
-      top: rect.top - padding,
-      left: rect.left - padding,
-      width: rect.width + padding * 2,
-      height: rect.height + padding * 2,
+      top: rect.top - TARGET_PADDING,
+      left: rect.left - TARGET_PADDING,
+      width: rect.width + TARGET_PADDING * 2,
+      height: rect.height + TARGET_PADDING * 2,
     });
     return true;
   }, [open, step]);
+
+  const remeasure = useCallback(() => {
+    syncViewport();
+    window.requestAnimationFrame(() => {
+      measureTarget();
+    });
+  }, [measureTarget, syncViewport]);
 
   useLayoutEffect(() => {
     if (!open || !step) {
@@ -110,6 +140,7 @@ export function WebsiteBuilderOnboardingTour({
         return;
       }
 
+      syncViewport();
       const found = measureTarget();
       if (!found && attempt < MAX_MEASURE_ATTEMPTS) {
         retryTimer = window.setTimeout(
@@ -122,6 +153,7 @@ export function WebsiteBuilderOnboardingTour({
       if (found) {
         window.requestAnimationFrame(() => {
           if (!cancelled) {
+            syncViewport();
             measureTarget();
           }
         });
@@ -141,28 +173,52 @@ export function WebsiteBuilderOnboardingTour({
         window.clearTimeout(retryTimer);
       }
     };
-  }, [activeTab, measureTarget, onRequestTab, open, step, stepIndex]);
+  }, [activeTab, measureTarget, onRequestTab, open, step, stepIndex, syncViewport]);
+
+  useLayoutEffect(() => {
+    const node = tooltipRef.current;
+    if (!open || !node) {
+      return;
+    }
+
+    const syncTooltipSize = () => {
+      const rect = node.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        setTooltipSize({ width: rect.width, height: rect.height });
+      }
+    };
+
+    syncTooltipSize();
+
+    const observer = new ResizeObserver(syncTooltipSize);
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, [open, stepIndex, step?.body, step?.title, targetRect]);
 
   useEffect(() => {
     if (!open || !tabReady) {
       return;
     }
 
-    const remeasure = () => {
-      window.requestAnimationFrame(() => {
-        measureTarget();
-      });
-    };
-
     remeasure();
+
     window.addEventListener("resize", remeasure);
     window.addEventListener("scroll", remeasure, true);
+
+    const visualViewport = window.visualViewport;
+    visualViewport?.addEventListener("resize", remeasure);
+    visualViewport?.addEventListener("scroll", remeasure);
 
     return () => {
       window.removeEventListener("resize", remeasure);
       window.removeEventListener("scroll", remeasure, true);
+      visualViewport?.removeEventListener("resize", remeasure);
+      visualViewport?.removeEventListener("scroll", remeasure);
     };
-  }, [measureTarget, open, stepIndex, tabReady]);
+  }, [open, remeasure, stepIndex, tabReady]);
+
+  useObserveLayoutShifts(open && tabReady, step?.targetSelector ?? null, remeasure);
 
   function finishTour() {
     markWebsiteBuilderTourCompleted();
@@ -189,7 +245,9 @@ export function WebsiteBuilderOnboardingTour({
 
   const tooltipPosition = resolveTooltipPosition(
     targetRect,
-    step.placement ?? "bottom"
+    tooltipSize,
+    viewport,
+    step.placement
   );
 
   // Portal to document.body so fixed positioning uses the viewport. Admin <main>
@@ -204,7 +262,7 @@ export function WebsiteBuilderOnboardingTour({
 
       {targetRect ? (
         <div
-          className="pointer-events-none fixed rounded-xl ring-4 ring-primary/80 ring-offset-2 ring-offset-background transition-all duration-200"
+          className="pointer-events-none fixed rounded-xl ring-4 ring-primary/80 ring-offset-2 ring-offset-background transition-[top,left,width,height] duration-150"
           style={{
             top: targetRect.top,
             left: targetRect.left,
@@ -216,8 +274,9 @@ export function WebsiteBuilderOnboardingTour({
       ) : null}
 
       <div
+        ref={tooltipRef}
         className={cn(
-          "fixed z-[201] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl",
+          "fixed z-[201] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl transition-[top,left] duration-150",
           !targetRect && "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         )}
         style={
@@ -256,6 +315,56 @@ export function WebsiteBuilderOnboardingTour({
   );
 }
 
+function useObserveLayoutShifts(
+  enabled: boolean,
+  targetSelector: string | null,
+  onShift: () => void
+) {
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    const observer = new ResizeObserver(onShift);
+    const observed = new Set<Element>();
+
+    const attach = (element: Element | null) => {
+      if (!element || observed.has(element)) {
+        return;
+      }
+
+      observer.observe(element);
+      observed.add(element);
+    };
+
+    attach(document.querySelector("[data-admin-shell]"));
+    if (targetSelector) {
+      attach(document.querySelector(targetSelector));
+    }
+
+    return () => observer.disconnect();
+  }, [enabled, onShift, targetSelector]);
+}
+
+function readViewportBounds(): ViewportBounds {
+  const visualViewport = window.visualViewport;
+  if (visualViewport) {
+    return {
+      width: visualViewport.width,
+      height: visualViewport.height,
+      offsetTop: visualViewport.offsetTop,
+      offsetLeft: visualViewport.offsetLeft,
+    };
+  }
+
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+    offsetTop: 0,
+    offsetLeft: 0,
+  };
+}
+
 function isElementVisible(element: Element): boolean {
   if (!(element instanceof HTMLElement)) {
     return false;
@@ -281,38 +390,112 @@ function isElementVisible(element: Element): boolean {
 
 function resolveTooltipPosition(
   rect: TargetRect | null,
-  preferred: ResolvedPlacement
+  tooltipSize: { width: number; height: number },
+  viewport: ViewportBounds,
+  preferred?: ResolvedPlacement
 ): TooltipPosition {
   if (!rect) {
-    return { top: 0, left: 0, placement: preferred };
+    return {
+      top: viewport.offsetTop + viewport.height / 2,
+      left: viewport.offsetLeft + viewport.width / 2,
+      transform: "translate(-50%, -50%)",
+      placement: preferred ?? "bottom",
+    };
   }
 
-  const maxWidth = Math.min(TOOLTIP_WIDTH, window.innerWidth - VIEWPORT_MARGIN * 2);
-  const candidates: ResolvedPlacement[] = [
-    preferred,
-    "bottom",
-    "top",
-    "right",
-    "left",
-  ].filter((value, index, array) => array.indexOf(value) === index);
+  const tooltipWidth = Math.min(
+    tooltipSize.width,
+    viewport.width - VIEWPORT_MARGIN * 2
+  );
+  const tooltipHeight = tooltipSize.height;
+
+  const candidates = buildPlacementCandidates(rect, viewport, preferred);
 
   for (const placement of candidates) {
-    const position = computeTooltipPosition(rect, placement, maxWidth);
-    if (fitsViewport(position, maxWidth)) {
+    const position = computeTooltipPosition(
+      rect,
+      placement,
+      tooltipWidth,
+      tooltipHeight,
+      viewport
+    );
+    if (fitsViewport(position, tooltipWidth, tooltipHeight, viewport)) {
       return position;
     }
   }
 
-  return computeTooltipPosition(rect, "bottom", maxWidth);
+  return clampTooltipToViewport(
+    computeTooltipPosition(rect, "bottom", tooltipWidth, tooltipHeight, viewport),
+    tooltipWidth,
+    tooltipHeight,
+    viewport
+  );
+}
+
+function buildPlacementCandidates(
+  rect: TargetRect,
+  viewport: ViewportBounds,
+  preferred?: ResolvedPlacement
+): ResolvedPlacement[] {
+  const spaces = measureAvailableSpace(rect, viewport);
+  const isWideTarget = rect.width >= viewport.width * 0.55;
+  const isTallTarget = rect.height >= viewport.height * 0.45;
+
+  const ranked = (["top", "bottom", "left", "right"] as const)
+    .filter((placement) => {
+      if (isWideTarget && (placement === "left" || placement === "right")) {
+        return false;
+      }
+      if (isTallTarget && (placement === "top" || placement === "bottom")) {
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => spaces[b] - spaces[a]);
+
+  const ordered: ResolvedPlacement[] = [];
+  if (preferred) {
+    ordered.push(preferred);
+  }
+  for (const placement of ranked) {
+    if (!ordered.includes(placement)) {
+      ordered.push(placement);
+    }
+  }
+
+  return ordered;
+}
+
+function measureAvailableSpace(
+  rect: TargetRect,
+  viewport: ViewportBounds
+): Record<ResolvedPlacement, number> {
+  const viewTop = viewport.offsetTop + VIEWPORT_MARGIN;
+  const viewLeft = viewport.offsetLeft + VIEWPORT_MARGIN;
+  const viewBottom = viewport.offsetTop + viewport.height - VIEWPORT_MARGIN;
+  const viewRight = viewport.offsetLeft + viewport.width - VIEWPORT_MARGIN;
+
+  return {
+    top: Math.max(0, rect.top - viewTop),
+    bottom: Math.max(0, viewBottom - (rect.top + rect.height)),
+    left: Math.max(0, rect.left - viewLeft),
+    right: Math.max(0, viewRight - (rect.left + rect.width)),
+  };
 }
 
 function computeTooltipPosition(
   rect: TargetRect,
   placement: ResolvedPlacement,
-  maxWidth: number
+  tooltipWidth: number,
+  tooltipHeight: number,
+  viewport: ViewportBounds
 ): TooltipPosition {
   const targetCenterX = rect.left + rect.width / 2;
   const targetCenterY = rect.top + rect.height / 2;
+  const viewLeft = viewport.offsetLeft + VIEWPORT_MARGIN;
+  const viewTop = viewport.offsetTop + VIEWPORT_MARGIN;
+  const viewRight = viewport.offsetLeft + viewport.width - VIEWPORT_MARGIN;
+  const viewBottom = viewport.offsetTop + viewport.height - VIEWPORT_MARGIN;
 
   switch (placement) {
     case "top":
@@ -320,9 +503,9 @@ function computeTooltipPosition(
         placement,
         top: rect.top - TOOLTIP_GAP,
         left: clamp(
-          targetCenterX - maxWidth / 2,
-          VIEWPORT_MARGIN,
-          window.innerWidth - maxWidth - VIEWPORT_MARGIN
+          targetCenterX - tooltipWidth / 2,
+          viewLeft,
+          viewRight - tooltipWidth
         ),
         transform: "translateY(-100%)",
       };
@@ -330,9 +513,9 @@ function computeTooltipPosition(
       return {
         placement,
         top: clamp(
-          targetCenterY - TOOLTIP_HEIGHT / 2,
-          VIEWPORT_MARGIN,
-          window.innerHeight - TOOLTIP_HEIGHT - VIEWPORT_MARGIN
+          targetCenterY - tooltipHeight / 2,
+          viewTop,
+          viewBottom - tooltipHeight
         ),
         left: rect.left - TOOLTIP_GAP,
         transform: "translateX(-100%)",
@@ -341,9 +524,9 @@ function computeTooltipPosition(
       return {
         placement,
         top: clamp(
-          targetCenterY - TOOLTIP_HEIGHT / 2,
-          VIEWPORT_MARGIN,
-          window.innerHeight - TOOLTIP_HEIGHT - VIEWPORT_MARGIN
+          targetCenterY - tooltipHeight / 2,
+          viewTop,
+          viewBottom - tooltipHeight
         ),
         left: rect.left + rect.width + TOOLTIP_GAP,
       };
@@ -353,32 +536,93 @@ function computeTooltipPosition(
         placement: "bottom",
         top: rect.top + rect.height + TOOLTIP_GAP,
         left: clamp(
-          targetCenterX - maxWidth / 2,
-          VIEWPORT_MARGIN,
-          window.innerWidth - maxWidth - VIEWPORT_MARGIN
+          targetCenterX - tooltipWidth / 2,
+          viewLeft,
+          viewRight - tooltipWidth
         ),
       };
   }
 }
 
-function fitsViewport(position: TooltipPosition, maxWidth: number): boolean {
-  const height = TOOLTIP_HEIGHT;
+function fitsViewport(
+  position: TooltipPosition,
+  tooltipWidth: number,
+  tooltipHeight: number,
+  viewport: ViewportBounds
+): boolean {
+  const box = tooltipBox(position, tooltipWidth, tooltipHeight);
+  const viewLeft = viewport.offsetLeft + VIEWPORT_MARGIN;
+  const viewTop = viewport.offsetTop + VIEWPORT_MARGIN;
+  const viewRight = viewport.offsetLeft + viewport.width - VIEWPORT_MARGIN;
+  const viewBottom = viewport.offsetTop + viewport.height - VIEWPORT_MARGIN;
+
+  return (
+    box.left >= viewLeft
+    && box.top >= viewTop
+    && box.right <= viewRight
+    && box.bottom <= viewBottom
+  );
+}
+
+function clampTooltipToViewport(
+  position: TooltipPosition,
+  tooltipWidth: number,
+  tooltipHeight: number,
+  viewport: ViewportBounds
+): TooltipPosition {
+  const box = tooltipBox(position, tooltipWidth, tooltipHeight);
+  const viewLeft = viewport.offsetLeft + VIEWPORT_MARGIN;
+  const viewTop = viewport.offsetTop + VIEWPORT_MARGIN;
+  const viewRight = viewport.offsetLeft + viewport.width - VIEWPORT_MARGIN;
+  const viewBottom = viewport.offsetTop + viewport.height - VIEWPORT_MARGIN;
+
+  let deltaLeft = 0;
+  let deltaTop = 0;
+
+  if (box.left < viewLeft) {
+    deltaLeft = viewLeft - box.left;
+  } else if (box.right > viewRight) {
+    deltaLeft = viewRight - box.right;
+  }
+
+  if (box.top < viewTop) {
+    deltaTop = viewTop - box.top;
+  } else if (box.bottom > viewBottom) {
+    deltaTop = viewBottom - box.bottom;
+  }
+
+  return {
+    ...position,
+    left: position.left + deltaLeft,
+    top: position.top + deltaTop,
+  };
+}
+
+function tooltipBox(
+  position: TooltipPosition,
+  tooltipWidth: number,
+  tooltipHeight: number
+) {
   let left = position.left;
   let top = position.top;
 
   if (position.transform?.includes("translateX(-100%)")) {
-    left -= maxWidth;
+    left -= tooltipWidth;
   }
   if (position.transform?.includes("translateY(-100%)")) {
-    top -= height;
+    top -= tooltipHeight;
+  }
+  if (position.transform?.includes("translate(-50%, -50%)")) {
+    left -= tooltipWidth / 2;
+    top -= tooltipHeight / 2;
   }
 
-  return (
-    left >= VIEWPORT_MARGIN
-    && top >= VIEWPORT_MARGIN
-    && left + maxWidth <= window.innerWidth - VIEWPORT_MARGIN
-    && top + height <= window.innerHeight - VIEWPORT_MARGIN
-  );
+  return {
+    left,
+    top,
+    right: left + tooltipWidth,
+    bottom: top + tooltipHeight,
+  };
 }
 
 function clamp(value: number, min: number, max: number): number {
