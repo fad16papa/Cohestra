@@ -1,4 +1,5 @@
 using Cohestra.Application.Auth;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
@@ -10,6 +11,7 @@ namespace Cohestra.Infrastructure.Auth;
 public sealed class ResilientAuthHandoffStore(
     RedisAuthHandoffStore redisStore,
     InMemoryAuthHandoffStore memoryStore,
+    IHostEnvironment hostEnvironment,
     ILogger<ResilientAuthHandoffStore> logger) : IAuthHandoffStore
 {
     public async Task<(string Code, int ExpiresInSeconds)> CreateAsync(
@@ -20,7 +22,7 @@ public sealed class ResilientAuthHandoffStore(
         {
             return await redisStore.CreateAsync(payload, cancellationToken);
         }
-        catch (Exception ex) when (IsRedisFailure(ex))
+        catch (Exception ex) when (ShouldFallback(ex))
         {
             logger.LogWarning(
                 ex,
@@ -43,13 +45,16 @@ public sealed class ResilientAuthHandoffStore(
                 return fromRedis;
             }
         }
-        catch (Exception ex) when (IsRedisFailure(ex))
+        catch (Exception ex) when (ShouldFallback(ex))
         {
             logger.LogWarning(ex, "Redis auth handoff exchange failed; trying in-memory fallback.");
         }
 
         return await memoryStore.ExchangeAsync(code, expectedTenantId, cancellationToken);
     }
+
+    private bool ShouldFallback(Exception exception) =>
+        IsRedisFailure(exception) || hostEnvironment.IsDevelopment();
 
     private static bool IsRedisFailure(Exception exception) =>
         exception is RedisException

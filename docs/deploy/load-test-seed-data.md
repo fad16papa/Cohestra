@@ -12,7 +12,9 @@ LoadTestSeed__ForceReseed=false
 LoadTestSeed__Password=LoadTest123!
 ```
 
-Use `LoadTestSeed__ForceReseed=true` only when you need to wipe and recreate all `load-*` tenants (runs **synchronously** at startup — API stays down until seed finishes). Leave it `false` for day-to-day work.
+Use `LoadTestSeed__ForceReseed=true` only when you need to wipe and recreate all `load-*` tenants. Leave it `false` for day-to-day work.
+
+Load test seed runs **synchronously at API startup** before login is accepted. The first run (or a force reseed) can take several minutes — wait until `docker compose ps` shows all services healthy before signing in.
 
 Recreate the API after changing flags:
 
@@ -22,7 +24,9 @@ docker compose build api --no-cache
 docker compose up -d --force-recreate api web nginx
 ```
 
-With `ForceReseed=false`, load test seed runs **in the background** after logins are bootstrapped (Pro tenants can take several minutes). Watch progress:
+With `ForceReseed=false`, subsequent restarts skip heavy seeding when data is already present (startup stays fast).
+
+Watch progress during a long first run:
 
 ```bash
 docker compose logs -f api | grep -i "load test"
@@ -96,6 +100,6 @@ After logs show `Seeded load test tenant load-core-alpha ...`:
 
 - You can sign in at **http://localhost:8088/login** (email-based workspace resolution) or on a tenant subdomain.
 - `LoadTestSeed__ForceReseed=true` wipes existing `load-*` tenants and recreates them **before** the API accepts traffic (avoid leaving this on after the first reseed).
-- If login shows **"Service is temporarily unavailable"** (503): wait for background seed to finish (`docker compose logs api | grep -i "load test"`), confirm Redis/Postgres are up (`docker compose ps`), and set `LoadTestSeed__ForceReseed=false` after initial seed.
+- If login shows **"Service is temporarily unavailable"** (503): pull latest `main` (or PR #80), set `LoadTestSeed__ForceReseed=false`, rebuild the API, and wait until `docker compose ps` shows all containers healthy (first seed can take up to ~15 minutes). Check `docker compose logs api | grep -iE "Login readiness|load test|error"`.
 - Compatible with `DemoDataSeed__Enabled=true` (demo targets **default** tenant only; load test uses `load-*` tenants).
 - Implementation: `src/Infrastructure/Seed/LoadTestDataSeeder.cs`

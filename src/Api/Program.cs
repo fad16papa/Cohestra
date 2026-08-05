@@ -153,20 +153,12 @@ await SitePageSeeder.SeedAsync(app.Services);
 await DemoDataSeeder.SeedAsync(app.Services);
 
 var loadTestSeedEnabled = app.Configuration.GetValue("LoadTestSeed:Enabled", false);
-var loadTestForceReseed = app.Configuration.GetValue("LoadTestSeed:ForceReseed", false);
 
 if (loadTestSeedEnabled)
 {
-    if (loadTestForceReseed)
-    {
-        app.Logger.LogInformation(
-            "LoadTestSeed:ForceReseed=true — running full load test seed synchronously before accepting traffic.");
-        await RunLoadTestSeedSafelyAsync(app);
-    }
-    else
-    {
-        await LoadTestDataSeeder.BootstrapLoginsAsync(app.Services);
-    }
+    app.Logger.LogInformation(
+        "Load test seed running synchronously before accepting traffic (first run or ForceReseed can take several minutes).");
+    await RunLoadTestSeedSafelyAsync(app);
 }
 
 await LogStartupLoginAccountsAsync(app);
@@ -209,21 +201,6 @@ if (app.Environment.IsDevelopment())
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     var stoppingToken = app.Lifetime.ApplicationStopping;
-
-    if (loadTestSeedEnabled && !loadTestForceReseed)
-    {
-        _ = Task.Run(async () =>
-        {
-            if (stoppingToken.IsCancellationRequested)
-            {
-                return;
-            }
-
-            app.Logger.LogInformation(
-                "Load test seed running in background (logins bootstrapped; demo seed on default tenant is ready).");
-            await RunLoadTestSeedSafelyAsync(app);
-        }, stoppingToken);
-    }
 
     _ = Task.Run(async () =>
     {
@@ -347,9 +324,7 @@ static async Task LogStartupLoginAccountsAsync(WebApplication app)
             loadTestEmail,
             loadTestUser?.EmailConfirmed == true
                 ? "ready"
-                : app.Configuration.GetValue("LoadTestSeed:ForceReseed", false)
-                    ? "missing after force reseed — check api logs"
-                    : "still seeding — wait for background seed or check logs",
+                : "missing — check api logs for load test seed errors",
             LoadTestDataSeeder.DefaultPassword);
     }
 }
