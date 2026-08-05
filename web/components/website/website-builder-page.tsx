@@ -460,6 +460,7 @@ export function WebsiteBuilderPage() {
       return;
     }
 
+    setChecklistVisible(false);
     const timer = window.setTimeout(() => setTourOpen(true), 500);
     return () => window.clearTimeout(timer);
   }, [checklistPrefsReady, draft, loading]);

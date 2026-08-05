@@ -118,7 +118,10 @@ export function WebsiteBuilderToolbar({
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-wrap gap-2">
+        <div
+          id="website-builder-toolbar"
+          className="flex shrink-0 flex-wrap gap-2"
+        >
           {checklistHidden && onShowChecklist ? (
             <Button type="button" variant="ghost" size="sm" onClick={onShowChecklist}>
               <Sparkles className="size-4" aria-hidden />

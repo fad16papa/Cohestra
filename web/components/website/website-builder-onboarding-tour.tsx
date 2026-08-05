@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { markWebsiteBuilderTourCompleted } from "@/lib/website-builder-preferences";
@@ -23,7 +24,21 @@ type TargetRect = {
   height: number;
 };
 
-const MEASURE_RETRY_MS = 80;
+type ResolvedPlacement = "top" | "bottom" | "left" | "right";
+
+type TooltipPosition = {
+  top: number;
+  left: number;
+  transform?: string;
+  placement: ResolvedPlacement;
+};
+
+const MEASURE_RETRY_MS = 100;
+const MAX_MEASURE_ATTEMPTS = 12;
+const TOOLTIP_WIDTH = 352;
+const TOOLTIP_HEIGHT = 200;
+const VIEWPORT_MARGIN = 16;
+const TOOLTIP_GAP = 12;
 
 export function WebsiteBuilderOnboardingTour({
   steps,
@@ -34,10 +49,15 @@ export function WebsiteBuilderOnboardingTour({
 }: WebsiteBuilderOnboardingTourProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const step = steps[stepIndex];
   const isLast = stepIndex >= steps.length - 1;
   const tabReady = !step?.tab || step.tab === activeTab;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -58,7 +78,8 @@ export function WebsiteBuilderOnboardingTour({
       return false;
     }
 
-    element.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    element.scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
+
     const rect = element.getBoundingClientRect();
     const padding = 8;
     setTargetRect({
@@ -90,13 +111,27 @@ export function WebsiteBuilderOnboardingTour({
       }
 
       const found = measureTarget();
-      if (!found && attempt < 4) {
-        retryTimer = window.setTimeout(() => attemptMeasure(attempt + 1), MEASURE_RETRY_MS);
+      if (!found && attempt < MAX_MEASURE_ATTEMPTS) {
+        retryTimer = window.setTimeout(
+          () => attemptMeasure(attempt + 1),
+          MEASURE_RETRY_MS
+        );
+        return;
+      }
+
+      if (found) {
+        window.requestAnimationFrame(() => {
+          if (!cancelled) {
+            measureTarget();
+          }
+        });
       }
     };
 
     const frame = window.requestAnimationFrame(() => {
-      attemptMeasure();
+      window.requestAnimationFrame(() => {
+        attemptMeasure();
+      });
     });
 
     return () => {
@@ -113,13 +148,19 @@ export function WebsiteBuilderOnboardingTour({
       return;
     }
 
-    measureTarget();
-    window.addEventListener("resize", measureTarget);
-    window.addEventListener("scroll", measureTarget, true);
+    const remeasure = () => {
+      window.requestAnimationFrame(() => {
+        measureTarget();
+      });
+    };
+
+    remeasure();
+    window.addEventListener("resize", remeasure);
+    window.addEventListener("scroll", remeasure, true);
 
     return () => {
-      window.removeEventListener("resize", measureTarget);
-      window.removeEventListener("scroll", measureTarget, true);
+      window.removeEventListener("resize", remeasure);
+      window.removeEventListener("scroll", remeasure, true);
     };
   }, [measureTarget, open, stepIndex, tabReady]);
 
@@ -142,23 +183,28 @@ export function WebsiteBuilderOnboardingTour({
     finishTour();
   }
 
-  if (!open || !step || steps.length === 0) {
+  if (!open || !step || steps.length === 0 || !mounted) {
     return null;
   }
 
-  const tooltipStyle = getTooltipStyle(targetRect, step.placement ?? "bottom");
+  const tooltipPosition = resolveTooltipPosition(
+    targetRect,
+    step.placement ?? "bottom"
+  );
 
-  return (
-    <div className="fixed inset-0 z-[100]" aria-live="polite">
+  // Portal to document.body so fixed positioning uses the viewport. Admin <main>
+  // keeps a transform from page-enter animation, which would break in-tree fixed.
+  return createPortal(
+    <div className="fixed inset-0 z-[200]" aria-live="polite">
       <div
-        className="absolute inset-0 bg-black/55 transition-opacity"
+        className="fixed inset-0 bg-black/55"
         aria-hidden
         onClick={handleSkip}
       />
 
       {targetRect ? (
         <div
-          className="pointer-events-none absolute rounded-xl ring-4 ring-primary/80 ring-offset-2 ring-offset-background transition-all duration-200"
+          className="pointer-events-none fixed rounded-xl ring-4 ring-primary/80 ring-offset-2 ring-offset-background transition-all duration-200"
           style={{
             top: targetRect.top,
             left: targetRect.left,
@@ -171,10 +217,18 @@ export function WebsiteBuilderOnboardingTour({
 
       <div
         className={cn(
-          "absolute z-[101] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl",
+          "fixed z-[201] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl",
           !targetRect && "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         )}
-        style={targetRect ? tooltipStyle : undefined}
+        style={
+          targetRect
+            ? {
+                top: tooltipPosition.top,
+                left: tooltipPosition.left,
+                transform: tooltipPosition.transform,
+              }
+            : undefined
+        }
         role="dialog"
         aria-labelledby="website-builder-tour-title"
         aria-describedby="website-builder-tour-body"
@@ -197,7 +251,8 @@ export function WebsiteBuilderOnboardingTour({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -206,57 +261,124 @@ function isElementVisible(element: Element): boolean {
     return false;
   }
 
-  if (element.hidden || element.getAttribute("aria-hidden") === "true") {
-    return false;
-  }
+  let current: HTMLElement | null = element;
+  while (current) {
+    if (current.hidden || current.getAttribute("aria-hidden") === "true") {
+      return false;
+    }
 
-  const style = window.getComputedStyle(element);
-  if (style.display === "none" || style.visibility === "hidden") {
-    return false;
+    const style = window.getComputedStyle(current);
+    if (style.display === "none" || style.visibility === "hidden") {
+      return false;
+    }
+
+    current = current.parentElement;
   }
 
   const rect = element.getBoundingClientRect();
-  return rect.width > 0 && rect.height > 0;
+  return rect.width > 8 && rect.height > 8;
 }
 
-function getTooltipStyle(
+function resolveTooltipPosition(
   rect: TargetRect | null,
-  placement: "top" | "bottom" | "left" | "right"
-): CSSProperties | undefined {
+  preferred: ResolvedPlacement
+): TooltipPosition {
   if (!rect) {
-    return undefined;
+    return { top: 0, left: 0, placement: preferred };
   }
 
-  const gap = 12;
-  const maxWidth = Math.min(352, window.innerWidth - 32);
+  const maxWidth = Math.min(TOOLTIP_WIDTH, window.innerWidth - VIEWPORT_MARGIN * 2);
+  const candidates: ResolvedPlacement[] = [
+    preferred,
+    "bottom",
+    "top",
+    "right",
+    "left",
+  ].filter((value, index, array) => array.indexOf(value) === index);
+
+  for (const placement of candidates) {
+    const position = computeTooltipPosition(rect, placement, maxWidth);
+    if (fitsViewport(position, maxWidth)) {
+      return position;
+    }
+  }
+
+  return computeTooltipPosition(rect, "bottom", maxWidth);
+}
+
+function computeTooltipPosition(
+  rect: TargetRect,
+  placement: ResolvedPlacement,
+  maxWidth: number
+): TooltipPosition {
   const targetCenterX = rect.left + rect.width / 2;
   const targetCenterY = rect.top + rect.height / 2;
 
   switch (placement) {
     case "top":
       return {
-        top: Math.max(16, rect.top - gap),
-        left: clamp(targetCenterX - maxWidth / 2, 16, window.innerWidth - maxWidth - 16),
+        placement,
+        top: rect.top - TOOLTIP_GAP,
+        left: clamp(
+          targetCenterX - maxWidth / 2,
+          VIEWPORT_MARGIN,
+          window.innerWidth - maxWidth - VIEWPORT_MARGIN
+        ),
         transform: "translateY(-100%)",
       };
     case "left":
       return {
-        top: clamp(targetCenterY - 80, 16, window.innerHeight - 200),
-        left: Math.max(16, rect.left - gap),
+        placement,
+        top: clamp(
+          targetCenterY - TOOLTIP_HEIGHT / 2,
+          VIEWPORT_MARGIN,
+          window.innerHeight - TOOLTIP_HEIGHT - VIEWPORT_MARGIN
+        ),
+        left: rect.left - TOOLTIP_GAP,
         transform: "translateX(-100%)",
       };
     case "right":
       return {
-        top: clamp(targetCenterY - 80, 16, window.innerHeight - 200),
-        left: Math.min(rect.left + rect.width + gap, window.innerWidth - maxWidth - 16),
+        placement,
+        top: clamp(
+          targetCenterY - TOOLTIP_HEIGHT / 2,
+          VIEWPORT_MARGIN,
+          window.innerHeight - TOOLTIP_HEIGHT - VIEWPORT_MARGIN
+        ),
+        left: rect.left + rect.width + TOOLTIP_GAP,
       };
     case "bottom":
     default:
       return {
-        top: Math.min(rect.top + rect.height + gap, window.innerHeight - 180),
-        left: clamp(targetCenterX - maxWidth / 2, 16, window.innerWidth - maxWidth - 16),
+        placement: "bottom",
+        top: rect.top + rect.height + TOOLTIP_GAP,
+        left: clamp(
+          targetCenterX - maxWidth / 2,
+          VIEWPORT_MARGIN,
+          window.innerWidth - maxWidth - VIEWPORT_MARGIN
+        ),
       };
   }
+}
+
+function fitsViewport(position: TooltipPosition, maxWidth: number): boolean {
+  const height = TOOLTIP_HEIGHT;
+  let left = position.left;
+  let top = position.top;
+
+  if (position.transform?.includes("translateX(-100%)")) {
+    left -= maxWidth;
+  }
+  if (position.transform?.includes("translateY(-100%)")) {
+    top -= height;
+  }
+
+  return (
+    left >= VIEWPORT_MARGIN
+    && top >= VIEWPORT_MARGIN
+    && left + maxWidth <= window.innerWidth - VIEWPORT_MARGIN
+    && top + height <= window.innerHeight - VIEWPORT_MARGIN
+  );
 }
 
 function clamp(value: number, min: number, max: number): number {
