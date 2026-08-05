@@ -382,7 +382,7 @@ public static class LoadTestDataSeeder
                     Name = activityName,
                     Slug = activitySlug,
                     Category = CategoryNames[communityIndex % CategoryNames.Length],
-                    Schedule = $"Week {activityOrdinal}, Saturdays 10:00",
+                    Schedule = SeedActivityScheduleFormatter.FormatSaturdaySchedule(now, activityOrdinal),
                     Location = $"{communityName} Venue",
                     CommunityLabel = communityName,
                     Status = status,
