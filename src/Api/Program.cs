@@ -152,9 +152,21 @@ await PlatformAdminSeeder.SeedAsync(app.Services);
 await SitePageSeeder.SeedAsync(app.Services);
 await DemoDataSeeder.SeedAsync(app.Services);
 
-if (app.Configuration.GetValue("LoadTestSeed:Enabled", false))
+var loadTestSeedEnabled = app.Configuration.GetValue("LoadTestSeed:Enabled", false);
+var loadTestForceReseed = app.Configuration.GetValue("LoadTestSeed:ForceReseed", false);
+
+if (loadTestSeedEnabled)
 {
-    await LoadTestDataSeeder.BootstrapLoginsAsync(app.Services);
+    if (loadTestForceReseed)
+    {
+        app.Logger.LogInformation(
+            "LoadTestSeed:ForceReseed=true — running full load test seed synchronously before accepting traffic.");
+        await RunLoadTestSeedSafelyAsync(app);
+    }
+    else
+    {
+        await LoadTestDataSeeder.BootstrapLoginsAsync(app.Services);
+    }
 }
 
 await LogStartupLoginAccountsAsync(app);
@@ -198,7 +210,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
 {
     var stoppingToken = app.Lifetime.ApplicationStopping;
 
-    if (app.Configuration.GetValue("LoadTestSeed:Enabled", false))
+    if (loadTestSeedEnabled && !loadTestForceReseed)
     {
         _ = Task.Run(async () =>
         {
@@ -208,7 +220,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
             }
 
             app.Logger.LogInformation(
-                "Load test seed running in background (API is already up; demo seed on default tenant is ready).");
+                "Load test seed running in background (logins bootstrapped; demo seed on default tenant is ready).");
             await RunLoadTestSeedSafelyAsync(app);
         }, stoppingToken);
     }
@@ -333,7 +345,11 @@ static async Task LogStartupLoginAccountsAsync(WebApplication app)
         app.Logger.LogInformation(
             "Login readiness — load test {Email}: {Status} (password from LoadTestSeed__Password, default {DefaultPassword})",
             loadTestEmail,
-            loadTestUser?.EmailConfirmed == true ? "ready" : "still seeding — wait for background seed or check logs",
+            loadTestUser?.EmailConfirmed == true
+                ? "ready"
+                : app.Configuration.GetValue("LoadTestSeed:ForceReseed", false)
+                    ? "missing after force reseed — check api logs"
+                    : "still seeding — wait for background seed or check logs",
             LoadTestDataSeeder.DefaultPassword);
     }
 }

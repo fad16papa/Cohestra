@@ -8,9 +8,11 @@ Add to `.env`:
 
 ```env
 LoadTestSeed__Enabled=true
-LoadTestSeed__ForceReseed=true
+LoadTestSeed__ForceReseed=false
 LoadTestSeed__Password=LoadTest123!
 ```
+
+Use `LoadTestSeed__ForceReseed=true` only when you need to wipe and recreate all `load-*` tenants (runs **synchronously** at startup — API stays down until seed finishes). Leave it `false` for day-to-day work.
 
 Recreate the API after changing flags:
 
@@ -20,7 +22,7 @@ docker compose build api --no-cache
 docker compose up -d --force-recreate api web nginx
 ```
 
-Load test seed runs **in the background** after the API is healthy (Pro tenants can take several minutes). Watch progress:
+With `ForceReseed=false`, load test seed runs **in the background** after logins are bootstrapped (Pro tenants can take several minutes). Watch progress:
 
 ```bash
 docker compose logs -f api | grep -i "load test"
@@ -93,6 +95,7 @@ After logs show `Seeded load test tenant load-core-alpha ...`:
 ## Notes
 
 - You can sign in at **http://localhost:8088/login** (email-based workspace resolution) or on a tenant subdomain.
-- `LoadTestSeed__ForceReseed=true` wipes existing `load-*` tenants and recreates them on each API startup.
+- `LoadTestSeed__ForceReseed=true` wipes existing `load-*` tenants and recreates them **before** the API accepts traffic (avoid leaving this on after the first reseed).
+- If login shows **"Service is temporarily unavailable"** (503): wait for background seed to finish (`docker compose logs api | grep -i "load test"`), confirm Redis/Postgres are up (`docker compose ps`), and set `LoadTestSeed__ForceReseed=false` after initial seed.
 - Compatible with `DemoDataSeed__Enabled=true` (demo targets **default** tenant only; load test uses `load-*` tenants).
 - Implementation: `src/Infrastructure/Seed/LoadTestDataSeeder.cs`
