@@ -128,6 +128,7 @@ export function WebsiteLivePreview({
 
   return (
     <section
+      id="website-builder-live-preview"
       ref={shellRef}
       className="flex min-h-0 flex-col gap-2 xl:sticky xl:top-4 xl:self-start"
     >

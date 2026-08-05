@@ -460,6 +460,7 @@ export function WebsiteBuilderPage() {
       return;
     }
 
+    setChecklistVisible(false);
     const timer = window.setTimeout(() => setTourOpen(true), 500);
     return () => window.clearTimeout(timer);
   }, [checklistPrefsReady, draft, loading]);
@@ -1179,6 +1180,7 @@ export function WebsiteBuilderPage() {
       <WebsiteBuilderOnboardingTour
         steps={tourSteps}
         open={tourOpen}
+        activeTab={editorTab}
         onClose={() => setTourOpen(false)}
         onRequestTab={setEditorTab}
       />
