@@ -8,7 +8,6 @@ import {
   ExternalLink,
   Globe,
   Layers,
-  MessageCircle,
   Sparkles,
 } from "lucide-react";
 
@@ -18,6 +17,7 @@ import { cn } from "@/lib/utils";
 
 type WebsiteBuilderToolbarProps = {
   siteUrl: string;
+  siteDisplayUrl: string;
   statusLabel: string;
   statusClassName: string;
   autoSaveLabel: string | null;
@@ -36,7 +36,6 @@ type WebsiteBuilderToolbarProps = {
   isHeroUploading: boolean;
   isLogoUploading: boolean;
   onCopyLink: () => void;
-  onCopyWhatsApp?: () => void;
   onShowChecklist?: () => void;
   onPreview: () => void;
   onSaveDraft: () => void;
@@ -56,6 +55,7 @@ function formatPublished(iso: string | null): string {
 
 export function WebsiteBuilderToolbar({
   siteUrl,
+  siteDisplayUrl,
   statusLabel,
   statusClassName,
   autoSaveLabel,
@@ -74,7 +74,6 @@ export function WebsiteBuilderToolbar({
   isHeroUploading,
   isLogoUploading,
   onCopyLink,
-  onCopyWhatsApp,
   onShowChecklist,
   onPreview,
   onSaveDraft,
@@ -115,7 +114,7 @@ export function WebsiteBuilderToolbar({
           </p>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-text-muted-warm sm:text-sm">
             <Globe className="size-3.5 shrink-0 text-primary" aria-hidden />
-            <span className="break-all">{siteUrl}</span>
+            <span className="break-all">{siteDisplayUrl}</span>
           </div>
         </div>
 
@@ -130,12 +129,6 @@ export function WebsiteBuilderToolbar({
             <Copy className="size-4" aria-hidden />
             Copy link
           </Button>
-          {onCopyWhatsApp ? (
-            <Button type="button" variant="outline" size="sm" onClick={onCopyWhatsApp}>
-              <MessageCircle className="size-4" aria-hidden />
-              WhatsApp
-            </Button>
-          ) : null}
           <ExternalLinkButton href={siteUrl} variant="outline" size="sm">
             <ExternalLink className="size-4" aria-hidden />
             Open live

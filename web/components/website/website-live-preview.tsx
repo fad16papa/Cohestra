@@ -15,12 +15,14 @@ export type WebsitePreviewDeviceMode = "phone" | "desktop";
 type WebsiteLivePreviewProps = {
   deviceMode: WebsitePreviewDeviceMode;
   onDeviceModeChange: (mode: WebsitePreviewDeviceMode) => void;
+  siteHostname: string;
   children: ReactNode;
 };
 
 export function WebsiteLivePreview({
   deviceMode,
   onDeviceModeChange,
+  siteHostname,
   children,
 }: WebsiteLivePreviewProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -158,7 +160,9 @@ export function WebsiteLivePreview({
             data-site-preview-pane
           >
             <div className="flex items-center justify-between gap-2 border-b border-border-warm/60 bg-card/70 px-3 py-2">
-              <span className="text-[11px] font-medium text-text-muted-warm">Mobile</span>
+              <span className="min-w-0 flex-1 truncate text-center text-[11px] font-medium text-text-muted-warm">
+                {siteHostname}
+              </span>
               {deviceToggle}
             </div>
             <div className="flex flex-1 items-start justify-center overflow-auto p-4 sm:p-6">
@@ -195,7 +199,7 @@ export function WebsiteLivePreview({
                 <span className="size-2.5 rounded-full bg-emerald-400/90" />
               </span>
               <div className="mx-auto min-w-0 flex-1 truncate rounded-md bg-muted/60 px-3 py-1 text-center text-[11px] text-text-muted-warm">
-                yoursite.com
+                {siteHostname}
               </div>
               {deviceToggle}
             </div>

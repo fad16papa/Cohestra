@@ -47,7 +47,7 @@ import { copyTextToClipboard } from "@/lib/clipboard";
 import { fetchPublicDoorClient } from "@/lib/public-door-client-api";
 import { buildHomepageWhatsAppMessage } from "@/lib/share-kit-utils";
 import { parseTenantSlugFromOrigin } from "@/lib/tenant-host";
-import { resolvePublicSiteUrl } from "@/lib/tenant-public-url";
+import { resolvePublicSiteUrl, formatPublicSiteUrlForDisplay, publicSiteHostnameFromUrl } from "@/lib/tenant-public-url";
 import { openExternalUrl } from "@/lib/open-external-url";
 import type {
   PublicHomepageActivity,
@@ -476,14 +476,24 @@ export function WebsiteBuilderPage() {
 
   const [publicSiteUrl, setPublicSiteUrl] = useState(() => resolvePublicSiteUrl());
 
+  const publicSiteDisplayUrl = useMemo(
+    () => formatPublicSiteUrlForDisplay(publicSiteUrl),
+    [publicSiteUrl]
+  );
+
+  const publicSiteHostname = useMemo(
+    () => publicSiteHostnameFromUrl(publicSiteUrl),
+    [publicSiteUrl]
+  );
+
   const resolveWorkspaceLiveUrl = useCallback(async () => {
+    if (workspaceTenantSlug) {
+      return resolvePublicSiteUrl(workspaceTenantSlug);
+    }
+
     const slugFromHost = parseTenantSlugFromOrigin(window.location.origin);
     if (slugFromHost) {
       return resolvePublicSiteUrl(slugFromHost);
-    }
-
-    if (workspaceTenantSlug) {
-      return resolvePublicSiteUrl(workspaceTenantSlug);
     }
 
     const door = await fetchPublicDoorClient();
@@ -491,14 +501,14 @@ export function WebsiteBuilderPage() {
   }, [workspaceTenantSlug]);
 
   useEffect(() => {
-    const slugFromHost = parseTenantSlugFromOrigin(window.location.origin);
-    if (slugFromHost) {
-      setPublicSiteUrl(resolvePublicSiteUrl(slugFromHost));
+    if (workspaceTenantSlug) {
+      setPublicSiteUrl(resolvePublicSiteUrl(workspaceTenantSlug));
       return;
     }
 
-    if (workspaceTenantSlug) {
-      setPublicSiteUrl(resolvePublicSiteUrl(workspaceTenantSlug));
+    const slugFromHost = parseTenantSlugFromOrigin(window.location.origin);
+    if (slugFromHost) {
+      setPublicSiteUrl(resolvePublicSiteUrl(slugFromHost));
       return;
     }
 
@@ -587,8 +597,8 @@ export function WebsiteBuilderPage() {
       return null;
     }
 
-    return getSharePreviewFromDraft(draft, publicSiteUrl);
-  }, [draft, publicSiteUrl]);
+    return getSharePreviewFromDraft(draft, publicSiteDisplayUrl);
+  }, [draft, publicSiteDisplayUrl]);
 
   function copyHomepageWhatsAppMessage(url: string) {
     const message = buildHomepageWhatsAppMessage(url, {
@@ -1020,6 +1030,7 @@ export function WebsiteBuilderPage() {
     <div className="space-y-2">
       <WebsiteBuilderToolbar
         siteUrl={publicSiteUrl}
+        siteDisplayUrl={publicSiteDisplayUrl}
         statusLabel={statusLabel}
         statusClassName={statusClassName}
         autoSaveLabel={autoSaveLabel}
@@ -1050,7 +1061,6 @@ export function WebsiteBuilderPage() {
             }
           });
         }}
-        onCopyWhatsApp={() => copyHomepageWhatsAppMessage(publicSiteUrl)}
         onShowChecklist={() => setChecklistVisible(true)}
         onPreview={() => void handlePreview()}
         onSaveDraft={() => void handleSaveDraft()}
@@ -1160,6 +1170,7 @@ export function WebsiteBuilderPage() {
         <WebsiteLivePreview
           deviceMode={deviceMode}
           onDeviceModeChange={setDeviceMode}
+          siteHostname={publicSiteHostname}
         >
           <SitePageRenderer site={previewPayload} isPreview />
         </WebsiteLivePreview>
@@ -1177,12 +1188,12 @@ export function WebsiteBuilderPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Publish homepage?</AlertDialogTitle>
             <AlertDialogDescription>
-              Visitors will see these updates at {publicSiteUrl || "your public homepage"}.
+              Visitors will see these updates at {publicSiteDisplayUrl || "your public homepage"}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-4">
             {sharePreview ? (
-              <WebsiteSharePreview preview={sharePreview} siteName={draft.siteName} />
+              <WebsiteSharePreview preview={sharePreview} copyUrl={publicSiteUrl} />
             ) : null}
             <div>
               <p className="text-sm font-medium text-text-warm">What will change</p>
@@ -1221,6 +1232,7 @@ export function WebsiteBuilderPage() {
         open={successDialogOpen}
         onOpenChange={setSuccessDialogOpen}
         liveUrl={liveUrl}
+        liveDisplayUrl={formatPublicSiteUrlForDisplay(liveUrl)}
         onCopyLink={() => {
           void copyTextToClipboard(liveUrl).then((copied) => {
             if (copied) {
