@@ -28,22 +28,26 @@ public sealed class TenantMembershipService(CohestraDbContext dbContext) : ITena
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var memberships = await dbContext.TenantMemberships
+        // Order on entity columns (translatable SQL), then project — boolean OrderBy on
+        // projected DTOs fails on PostgreSQL ("could not be translated").
+        var rows = await dbContext.TenantMemberships
             .AsNoTracking()
             .Where(m => m.UserId == userId)
             .Join(
                 dbContext.Tenants.AsNoTracking().Where(t => t.Status == TenantStatus.Active),
                 membership => membership.TenantId,
                 tenant => tenant.Id,
-                (membership, tenant) => new UserTenantMembership(
-                    membership.TenantId,
-                    tenant.Slug,
-                    membership.Role))
-            .OrderByDescending(m => m.Role == TenantMembershipRole.TenantAdmin)
-            .ThenBy(m => m.TenantSlug)
+                (membership, tenant) => new { membership, tenant })
+            .OrderBy(x => x.membership.Role)
+            .ThenBy(x => x.tenant.Slug)
             .ToListAsync(cancellationToken);
 
-        return memberships;
+        return rows
+            .Select(x => new UserTenantMembership(
+                x.membership.TenantId,
+                x.tenant.Slug,
+                x.membership.Role))
+            .ToList();
     }
 
     public Task<TenantMembership?> GetMembershipAsync(
