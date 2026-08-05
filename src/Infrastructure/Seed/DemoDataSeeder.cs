@@ -168,14 +168,22 @@ public static class DemoDataSeeder
 
         var allClients = personaClients.Values.Concat(syntheticClients).ToList();
         var activitiesBySlug = new Dictionary<string, Activity>(StringComparer.Ordinal);
-        var totalActivities = 0;
+        var scheduleOrdinal = 0;
+        var expectedActivityCount =
+            DemoDataSeedCatalog.ScenarioActivities.Count
+            + (communityCount * activitiesPerCommunity);
 
         foreach (var spec in DemoDataSeedCatalog.ScenarioActivities)
         {
-            var activity = CreateActivityFromSpec(spec, formSchema, now);
+            scheduleOrdinal++;
+            var activity = CreateActivityFromSpec(
+                spec,
+                formSchema,
+                now,
+                scheduleOrdinal,
+                expectedActivityCount);
             activitiesBySlug[spec.Slug] = activity;
             dbContext.Activities.Add(activity);
-            totalActivities++;
         }
 
         for (var communityIndex = 0; communityIndex < communityCount; communityIndex++)
@@ -198,6 +206,7 @@ public static class DemoDataSeeder
             var communitySlug = ActivitySlugGenerator.Slugify(communityName);
             for (var activityIndex = 1; activityIndex <= activitiesPerCommunity; activityIndex++)
             {
+                scheduleOrdinal++;
                 var theme = ActivityThemes[(activityIndex - 1) % ActivityThemes.Length];
                 var activityName = $"{communityName} {theme}";
                 var activitySlug = $"demo-{communitySlug}-{activityIndex:D2}";
@@ -209,7 +218,10 @@ public static class DemoDataSeeder
                     Name = activityName,
                     Slug = activitySlug,
                     Category = CategoryNames[communityIndex % CategoryNames.Length],
-                    Schedule = SeedActivityScheduleFormatter.FormatSaturdaySchedule(now, activityIndex),
+                    Schedule = SeedActivityScheduleFormatter.FormatSpreadSchedule(
+                        now,
+                        scheduleOrdinal,
+                        expectedActivityCount),
                     Location = $"{communityName} Demo Venue",
                     CommunityLabel = communityName,
                     Status = ActivityStatus.Published,
@@ -221,7 +233,6 @@ public static class DemoDataSeeder
 
                 activitiesBySlug[activitySlug] = activity;
                 dbContext.Activities.Add(activity);
-                totalActivities++;
             }
 
             seededCommunities.Add(communityName);
@@ -338,7 +349,7 @@ public static class DemoDataSeeder
         logger.LogInformation(
             "Seeded demo data (production-like): {CommunityCount} communities, {ActivityCount} activities, {ClientCount} clients ({PersonaCount} personas), {RegistrationCount} registrations, timeline={Timeline}, campaign={Campaign}.",
             communityCount,
-            totalActivities,
+            scheduleOrdinal,
             allClients.Count,
             DemoDataSeedCatalog.Personas.Count,
             totalRegistrations,
@@ -423,7 +434,9 @@ public static class DemoDataSeeder
     private static Activity CreateActivityFromSpec(
         DemoDataSeedCatalog.ActivitySpec spec,
         ActivityFormSchema formSchema,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        int scheduleOrdinal,
+        int totalActivityCount)
     {
         return new Activity
         {
@@ -432,7 +445,10 @@ public static class DemoDataSeeder
             Name = spec.Name,
             Slug = spec.Slug,
             Category = spec.Category,
-            Schedule = SeedActivityScheduleFormatter.FormatFromCreatedDaysAgo(now, spec.CreatedDaysAgo),
+            Schedule = SeedActivityScheduleFormatter.FormatSpreadSchedule(
+                now,
+                scheduleOrdinal,
+                totalActivityCount),
             Location = $"{spec.CommunityLabel} venue",
             CommunityLabel = spec.CommunityLabel,
             Status = spec.Status,
