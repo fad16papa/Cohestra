@@ -250,8 +250,14 @@ public static class LoadTestDataSeeder
                     logger,
                     cancellationToken);
 
+                await BackfillAllLoadTestActivitySchedulesAsync(
+                    dbContext,
+                    DateTimeOffset.UtcNow,
+                    logger,
+                    cancellationToken);
+
                 logger.LogInformation(
-                    "Load test data already present ({Count} tenant(s)). Ensured admin users and memberships. Set LoadTestSeed:ForceReseed=true to replace data.",
+                    "Load test data already present ({Count} tenant(s)). Ensured admin users, memberships, and calendar schedules. Set LoadTestSeed:ForceReseed=true to replace data.",
                     existingSlugs.Count);
                 return;
             }
@@ -325,8 +331,15 @@ public static class LoadTestDataSeeder
                 .CountAsync(a => a.TenantId == tenantId, cancellationToken);
             if (existingActivities >= expectedActivities)
             {
+                await BackfillLoadTestActivitySchedulesAsync(
+                    dbContext,
+                    tenantId,
+                    now,
+                    logger,
+                    cancellationToken);
+
                 logger.LogInformation(
-                    "Skipping load test data seed for {Slug} — activities already present.",
+                    "Skipping load test data seed for {Slug} — activities already present (schedules backfilled for calendar).",
                     spec.Slug);
                 continue;
             }
@@ -382,7 +395,10 @@ public static class LoadTestDataSeeder
                     Name = activityName,
                     Slug = activitySlug,
                     Category = CategoryNames[communityIndex % CategoryNames.Length],
-                    Schedule = SeedActivityScheduleFormatter.FormatSaturdaySchedule(now, activityOrdinal),
+                    Schedule = SeedActivityScheduleFormatter.FormatSpreadSchedule(
+                        now,
+                        activityOrdinal,
+                        expectedActivities),
                     Location = $"{communityName} Venue",
                     CommunityLabel = communityName,
                     Status = status,
@@ -649,6 +665,91 @@ public static class LoadTestDataSeeder
             tenantId,
             tenantDisplayName,
             cancellationToken);
+    }
+
+    private static async Task BackfillAllLoadTestActivitySchedulesAsync(
+        CohestraDbContext dbContext,
+        DateTimeOffset now,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        foreach (var spec in TenantSpecs)
+        {
+            var tenant = await dbContext.Tenants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Slug == spec.Slug, cancellationToken);
+
+            if (tenant is null)
+            {
+                continue;
+            }
+
+            await BackfillLoadTestActivitySchedulesAsync(
+                dbContext,
+                tenant.Id,
+                now,
+                logger,
+                cancellationToken);
+        }
+    }
+
+    private static async Task BackfillLoadTestActivitySchedulesAsync(
+        CohestraDbContext dbContext,
+        Guid tenantId,
+        DateTimeOffset now,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var activities = await dbContext.Activities
+            .Where(a => a.TenantId == tenantId)
+            .OrderBy(a => a.CreatedAt)
+            .ThenBy(a => a.Name)
+            .ToListAsync(cancellationToken);
+
+        if (activities.Count == 0)
+        {
+            return;
+        }
+
+        var total = activities.Count;
+        var updated = 0;
+
+        for (var index = 0; index < activities.Count; index++)
+        {
+            var desired = SeedActivityScheduleFormatter.FormatSpreadSchedule(
+                now,
+                index + 1,
+                total,
+                minuteOffset: index % 4 * 15);
+
+            if (activities[index].Schedule == desired)
+            {
+                continue;
+            }
+
+            activities[index].Schedule = desired;
+            activities[index].UpdatedAt = now;
+            updated++;
+        }
+
+        if (updated == 0)
+        {
+            return;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var slug = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(t => t.Id == tenantId)
+            .Select(t => t.Slug)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Backfilled calendar schedules for {Updated}/{Total} activities on {Slug}.",
+            updated,
+            total,
+            slug ?? tenantId.ToString());
     }
 
     private static async Task EnsureLoadTestAdminUsersAsync(

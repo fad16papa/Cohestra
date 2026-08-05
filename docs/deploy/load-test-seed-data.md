@@ -70,6 +70,8 @@ All accounts are **TenantAdmin** on their respective workspace.
 
 **Also seeded per tenant:** categories (Sports, Social, Wellness), clients (enough for unique registrations), activities with form schemas, registrations dated within the current calendar month.
 
+**Calendar testing:** On API startup, load-test schedules are backfilled across a ~14-day past / 12-week future window so draft, published, and archived activities appear in the dashboard calendar for every profile below. Open the **Calendar** nudge (bottom-right) and browse the current month — you should see colored dots on most days.
+
 **Core + Pro only:** published site homepage (website builder unlocked for load-test slugs).
 
 **Basic:** stub public homepage (Basic plan — no full builder).
