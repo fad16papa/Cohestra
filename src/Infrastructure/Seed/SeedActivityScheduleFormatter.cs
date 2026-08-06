@@ -55,6 +55,15 @@ internal static class SeedActivityScheduleFormatter
         return FormatDisplayDateTime(target);
     }
 
+    /// <summary>
+    /// Fixed calendar date/time for deterministic seed scenarios (e.g. conflict testing).
+    /// </summary>
+    internal static string FormatExplicitSchedule(DateTime day, int hour, int minute)
+    {
+        var target = day.Date.AddHours(hour).AddMinutes(minute);
+        return FormatDisplayDateTime(target);
+    }
+
     private static string FormatDisplayDateTime(DateTime target) =>
         target.ToString("ddd, MMM d, yyyy, h:mm tt", CultureInfo.InvariantCulture);
 

@@ -26,6 +26,10 @@ public static class LoadTestDataSeeder
     public const string EmailDomain = "cohestra.local";
     public const string SlugPrefix = LoadTestTenantRules.SlugPrefix;
     public const string DefaultPassword = "LoadTest123!";
+    internal const string LoadCoreAlphaSlug = "load-core-alpha";
+
+    /// <summary>Days from seed anchor for calendar conflict sample activities.</summary>
+    internal const int CalendarConflictDayOffsetDays = 10;
 
     public static bool IsLoadTestAdminEmail(string? email) =>
         !string.IsNullOrWhiteSpace(email)
@@ -251,6 +255,12 @@ public static class LoadTestDataSeeder
                     cancellationToken);
 
                 await BackfillAllLoadTestActivitySchedulesAsync(
+                    dbContext,
+                    DateTimeOffset.UtcNow,
+                    logger,
+                    cancellationToken);
+
+                await EnsureLoadCoreAlphaCalendarConflictSchedulesAsync(
                     dbContext,
                     DateTimeOffset.UtcNow,
                     logger,
@@ -507,6 +517,15 @@ public static class LoadTestDataSeeder
 
             await dbContext.SaveChangesAsync(cancellationToken);
 
+            if (spec.Slug == LoadCoreAlphaSlug)
+            {
+                await EnsureLoadCoreAlphaCalendarConflictSchedulesAsync(
+                    dbContext,
+                    now,
+                    logger,
+                    cancellationToken);
+            }
+
             if (spec.Plan is TenantPlan.Core or TenantPlan.Pro)
             {
                 await EnsureLoadTestSitePageAsync(
@@ -691,6 +710,84 @@ public static class LoadTestDataSeeder
                 logger,
                 cancellationToken);
         }
+
+        await EnsureLoadCoreAlphaCalendarConflictSchedulesAsync(
+            dbContext,
+            now,
+            logger,
+            cancellationToken);
+    }
+
+    internal static async Task EnsureLoadCoreAlphaCalendarConflictSchedulesAsync(
+        CohestraDbContext dbContext,
+        DateTimeOffset now,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var tenantId = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(t => t.Slug == LoadCoreAlphaSlug)
+            .Select(t => t.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (tenantId == Guid.Empty)
+        {
+            return;
+        }
+
+        var publishedActivities = await dbContext.Activities
+            .Where(a => a.TenantId == tenantId && a.Status == ActivityStatus.Published)
+            .OrderBy(a => a.Name)
+            .Take(3)
+            .ToListAsync(cancellationToken);
+
+        if (publishedActivities.Count < 2)
+        {
+            logger.LogWarning(
+                "Skipping calendar conflict samples for {Slug}: need at least 2 published activities.",
+                LoadCoreAlphaSlug);
+            return;
+        }
+
+        var conflictDay = now.UtcDateTime.Date.AddDays(CalendarConflictDayOffsetDays);
+        var samples = new (int Hour, int Minute)[]
+        {
+            (13, 0),
+            (13, 30),
+            (15, 0),
+        };
+
+        var updated = 0;
+        for (var index = 0; index < publishedActivities.Count && index < samples.Length; index++)
+        {
+            var sample = samples[index];
+            var desired = SeedActivityScheduleFormatter.FormatExplicitSchedule(
+                conflictDay,
+                sample.Hour,
+                sample.Minute);
+
+            if (publishedActivities[index].Schedule == desired)
+            {
+                continue;
+            }
+
+            publishedActivities[index].Schedule = desired;
+            publishedActivities[index].UpdatedAt = now;
+            updated++;
+        }
+
+        if (updated == 0)
+        {
+            return;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Applied calendar conflict sample schedules for {Slug}: {Updated} activities on {ConflictDay:yyyy-MM-dd} (1:00 pm / 1:30 pm overlap, 3:00 pm same day).",
+            LoadCoreAlphaSlug,
+            updated,
+            conflictDay);
     }
 
     private static async Task BackfillLoadTestActivitySchedulesAsync(

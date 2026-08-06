@@ -27,4 +27,13 @@ public sealed class SeedActivityScheduleFormatterTests
             @"^[A-Z][a-z]{2}, [A-Z][a-z]{2} \d{1,2}, \d{4}, \d{1,2}:\d{2} [AP]M$",
             formatted);
     }
+
+    [Fact]
+    public void FormatExplicitSchedule_UsesRequestedDayAndTime()
+    {
+        var day = new DateTime(2026, 8, 13);
+        var formatted = SeedActivityScheduleFormatter.FormatExplicitSchedule(day, 13, 30);
+
+        Assert.Equal("Thu, Aug 13, 2026, 1:30 PM", formatted);
+    }
 }
