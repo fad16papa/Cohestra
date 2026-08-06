@@ -9,9 +9,11 @@ import { ActivityBrandingPanel } from "@/components/activities/activity-branding
 import { ActivityCapacityPanel } from "@/components/activities/activity-capacity-panel";
 import { ActivityFormTab } from "@/components/activities/activity-form-tab";
 import { ActivityPublishControls } from "@/components/activities/activity-publish-controls";
+import { ActivityScheduleConflictAlert } from "@/components/activities/activity-schedule-conflict-alert";
 import { ActivityShareKitPanel } from "@/components/activities/activity-share-kit-panel";
 import { ActivityRegistrationsTab } from "@/components/activities/activity-registrations-tab";
 import { ActivityStatusBadge } from "@/components/activities/activity-status-badge";
+import { useActivityScheduleConflicts } from "@/components/activities/use-activity-schedule-conflicts";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useAdminPageMeta } from "@/components/layouts/admin-shell-context";
 import { ProductErrorState } from "@/components/shared/product-error-state";
@@ -91,6 +93,7 @@ function ActivityQuickFacts({ activity }: { activity: Activity }) {
 
 export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) {
   const { authFetch } = useAuth();
+  const { getConflictsForActivity } = useActivityScheduleConflicts();
   const searchParams = useSearchParams();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -157,6 +160,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
   const publishGateIssues = getPublishGateIssues(activity.formSchema, {
     slug: activity.slug,
   });
+  const scheduleConflicts = getConflictsForActivity(activity.id);
 
   return (
     <div className="space-y-6">
@@ -171,6 +175,13 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
         </div>
         <ActivityStatusBadge status={activity.status} />
       </div>
+
+      {scheduleConflicts.length > 0 ? (
+        <ActivityScheduleConflictAlert
+          conflictingActivities={scheduleConflicts}
+          showLinks
+        />
+      ) : null}
 
       <nav
         role="tablist"
