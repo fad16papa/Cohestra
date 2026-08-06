@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  TriangleAlert,
   X,
 } from "lucide-react";
 
@@ -17,9 +18,12 @@ import { Button } from "@/components/ui/button";
 import { fetchAllActivities, type ActivityStatus } from "@/lib/activities-api";
 import {
   countActivitiesByStatusOnDay,
+  dayHasScheduleConflicts,
   enrichActivitiesForCalendar,
+  findActivityConflictsForDay,
   formatActivityTime,
   formatCalendarMonthLabel,
+  formatConflictSummary,
   formatDayHeading,
   fromDateKey,
   getMonthGridDays,
@@ -47,22 +51,46 @@ function activityFormHref(activityId: string): string {
 type ActivityCalendarItemProps = {
   activity: CalendarActivity;
   defaultExpanded?: boolean;
+  conflictingActivities?: CalendarActivity[];
 };
+
+function formatConflictMessage(conflicts: CalendarActivity[]): string {
+  if (conflicts.length === 0) {
+    return "";
+  }
+
+  if (conflicts.length === 1) {
+    return `Conflicts with ${conflicts[0].name}.`;
+  }
+
+  const preview = conflicts
+    .slice(0, 2)
+    .map((activity) => activity.name)
+    .join(", ");
+  const remainder = conflicts.length - 2;
+
+  return remainder > 0
+    ? `Conflicts with ${preview}, and ${remainder} more.`
+    : `Conflicts with ${preview}.`;
+}
 
 function ActivityCalendarItem({
   activity,
   defaultExpanded = false,
+  conflictingActivities = [],
 }: ActivityCalendarItemProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const timeLabel = activity.parsedSchedule
     ? formatActivityTime(activity.parsedSchedule)
     : "No time";
+  const hasConflict = conflictingActivities.length > 0;
 
   return (
     <div
       className={cn(
         "rounded-lg border border-border-warm bg-card/80 transition-colors",
         STATUS_RING_STYLES[activity.status],
+        hasConflict && "border-amber-300/80 dark:border-amber-800/80",
         expanded && "ring-1"
       )}
     >
@@ -102,6 +130,12 @@ function ActivityCalendarItem({
                   ? ` · ${activity.location.trim()}`
                   : null}
               </p>
+              {hasConflict ? (
+                <p className="mt-1 flex items-start gap-1 text-xs font-medium text-amber-800 dark:text-amber-200">
+                  <TriangleAlert className="mt-0.5 size-3 shrink-0" aria-hidden />
+                  <span>{formatConflictMessage(conflictingActivities)}</span>
+                </p>
+              ) : null}
             </div>
             <ActivityStatusBadge status={activity.status} className="shrink-0" />
           </div>
@@ -179,6 +213,11 @@ export function ActivityCalendarPopout({
 
   const selectedDayActivities = groupedByDay.get(selectedDateKey) ?? [];
   const selectedDate = fromDateKey(selectedDateKey);
+  const selectedDayConflicts = useMemo(
+    () => findActivityConflictsForDay(selectedDayActivities),
+    [selectedDayActivities]
+  );
+  const selectedDayConflictCount = selectedDayConflicts.size;
 
   function shiftMonth(delta: number) {
     const next = new Date(viewYear, viewMonth + delta, 1);
@@ -317,6 +356,8 @@ export function ActivityCalendarPopout({
                     const isToday = key === toDateKey(today);
                     const dayActivities = groupedByDay.get(key) ?? [];
                     const statusCounts = countActivitiesByStatusOnDay(dayActivities);
+                    const activityCount = dayActivities.length;
+                    const hasConflicts = dayHasScheduleConflicts(dayActivities);
 
                     return (
                       <button
@@ -328,25 +369,39 @@ export function ActivityCalendarPopout({
                           inMonth ? "text-text-warm" : "text-text-muted-warm/50",
                           isSelected && "bg-primary/15 ring-1 ring-primary/40",
                           !isSelected && isToday && "ring-1 ring-primary/25",
+                          !isSelected && hasConflicts && "ring-1 ring-amber-400/50",
                           !isSelected && "hover:bg-muted/50"
                         )}
                         aria-pressed={isSelected}
-                        aria-label={`${formatDayHeading(day)}${dayActivities.length ? `, ${dayActivities.length} activities` : ""}`}
+                        aria-label={`${formatDayHeading(day)}${activityCount ? `, ${activityCount} activities` : ""}${hasConflicts ? ", scheduling conflict" : ""}`}
                       >
                         <span className="font-medium">{day.getDate()}</span>
-                        <span className="mt-0.5 flex gap-0.5">
-                          {STATUS_FILTERS.map((filter) =>
-                            statusCounts[filter.id] > 0 ? (
-                              <span
-                                key={filter.id}
-                                className={cn(
-                                  "size-1.5 rounded-full",
-                                  STATUS_DOT_STYLES[filter.id]
-                                )}
-                                aria-hidden
-                              />
-                            ) : null
-                          )}
+                        <span className="mt-0.5 flex flex-col items-center gap-0.5">
+                          <span className="flex gap-0.5">
+                            {STATUS_FILTERS.map((filter) =>
+                              statusCounts[filter.id] > 0 ? (
+                                <span
+                                  key={filter.id}
+                                  className={cn(
+                                    "size-1.5 rounded-full",
+                                    STATUS_DOT_STYLES[filter.id]
+                                  )}
+                                  aria-hidden
+                                />
+                              ) : null
+                            )}
+                          </span>
+                          {activityCount > 1 ? (
+                            <span className="rounded-full bg-muted px-1 text-[9px] font-semibold leading-none text-text-muted-warm">
+                              {activityCount}
+                            </span>
+                          ) : null}
+                          {hasConflicts ? (
+                            <TriangleAlert
+                              className="size-3 text-amber-600 dark:text-amber-400"
+                              aria-hidden
+                            />
+                          ) : null}
                         </span>
                       </button>
                     );
@@ -359,10 +414,20 @@ export function ActivityCalendarPopout({
                   <h3 className="text-sm font-semibold text-text-warm">
                     {formatDayHeading(selectedDate)}
                   </h3>
-                  <span className="text-xs text-text-muted-warm">
-                    {selectedDayActivities.length} activit
-                    {selectedDayActivities.length === 1 ? "y" : "ies"}
-                  </span>
+                  <div className="text-right text-xs text-text-muted-warm">
+                    <p>
+                      {selectedDayActivities.length} activit
+                      {selectedDayActivities.length === 1 ? "y" : "ies"}
+                      {selectedDayActivities.length > 1 ? " on this day" : ""}
+                    </p>
+                    {selectedDayConflictCount > 0 ? (
+                      <p className="font-medium text-amber-800 dark:text-amber-200">
+                        {formatConflictSummary(selectedDayConflictCount)}
+                      </p>
+                    ) : selectedDayActivities.length > 1 ? (
+                      <p>No scheduling conflicts</p>
+                    ) : null}
+                  </div>
                 </div>
 
                 {selectedDayActivities.length === 0 ? (
@@ -372,7 +437,11 @@ export function ActivityCalendarPopout({
                 ) : (
                   <div className="space-y-2">
                     {selectedDayActivities.map((activity) => (
-                      <ActivityCalendarItem key={activity.id} activity={activity} />
+                      <ActivityCalendarItem
+                        key={activity.id}
+                        activity={activity}
+                        conflictingActivities={selectedDayConflicts.get(activity.id) ?? []}
+                      />
                     ))}
                   </div>
                 )}

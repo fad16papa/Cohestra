@@ -110,6 +110,89 @@ export const STATUS_RING_STYLES: Record<ActivityStatus, string> = {
   archived: "ring-status-inactive/40",
 };
 
+/** Assumed event length when checking schedule overlap (activities store start time only). */
+export const DEFAULT_ACTIVITY_DURATION_MINUTES = 60;
+
+export type ActivityConflictInfo = {
+  activityId: string;
+  conflictingActivities: CalendarActivity[];
+};
+
+export function getActivityEndTime(
+  start: Date,
+  durationMinutes = DEFAULT_ACTIVITY_DURATION_MINUTES
+): Date {
+  return new Date(start.getTime() + durationMinutes * 60_000);
+}
+
+export function activitiesScheduleOverlap(
+  left: CalendarActivity,
+  right: CalendarActivity,
+  durationMinutes = DEFAULT_ACTIVITY_DURATION_MINUTES
+): boolean {
+  if (!left.parsedSchedule || !right.parsedSchedule) {
+    return false;
+  }
+
+  if (left.id === right.id) {
+    return false;
+  }
+
+  const leftStart = left.parsedSchedule.getTime();
+  const rightStart = right.parsedSchedule.getTime();
+  const leftEnd = getActivityEndTime(left.parsedSchedule, durationMinutes).getTime();
+  const rightEnd = getActivityEndTime(right.parsedSchedule, durationMinutes).getTime();
+
+  return leftStart < rightEnd && rightStart < leftEnd;
+}
+
+export function findActivityConflictsForDay(
+  activities: CalendarActivity[],
+  durationMinutes = DEFAULT_ACTIVITY_DURATION_MINUTES
+): Map<string, CalendarActivity[]> {
+  const conflicts = new Map<string, CalendarActivity[]>();
+
+  for (let index = 0; index < activities.length; index += 1) {
+    for (let otherIndex = index + 1; otherIndex < activities.length; otherIndex += 1) {
+      const first = activities[index];
+      const second = activities[otherIndex];
+
+      if (!activitiesScheduleOverlap(first, second, durationMinutes)) {
+        continue;
+      }
+
+      const firstBucket = conflicts.get(first.id) ?? [];
+      if (!firstBucket.some((activity) => activity.id === second.id)) {
+        firstBucket.push(second);
+        conflicts.set(first.id, firstBucket);
+      }
+
+      const secondBucket = conflicts.get(second.id) ?? [];
+      if (!secondBucket.some((activity) => activity.id === first.id)) {
+        secondBucket.push(first);
+        conflicts.set(second.id, secondBucket);
+      }
+    }
+  }
+
+  return conflicts;
+}
+
+export function dayHasScheduleConflicts(
+  activities: CalendarActivity[],
+  durationMinutes = DEFAULT_ACTIVITY_DURATION_MINUTES
+): boolean {
+  return findActivityConflictsForDay(activities, durationMinutes).size > 0;
+}
+
+export function formatConflictSummary(count: number): string {
+  if (count <= 0) {
+    return "";
+  }
+
+  return count === 1 ? "1 scheduling conflict" : `${count} scheduling conflicts`;
+}
+
 export function countActivitiesByStatusOnDay(
   activities: CalendarActivity[]
 ): Record<ActivityStatus, number> {
