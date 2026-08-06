@@ -119,7 +119,8 @@ services:
     environment:
       NODE_ENV: production
       API_URL: http://api:8080
-      DEV_TENANT_SLUG: ${DEV_TENANT_SLUG:-default}
+      # Do not set DEV_TENANT_SLUG on web — bare localhost must render the marketing landing page.
+      # API keeps DEV_TENANT_SLUG for operator login on http://localhost:8088/login .
     depends_on:
       api:
         condition: service_healthy
