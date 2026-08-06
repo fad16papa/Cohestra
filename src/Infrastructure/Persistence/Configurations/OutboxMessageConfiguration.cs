@@ -28,7 +28,11 @@ internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outb
 
         builder.HasIndex(message => message.DedupeKey)
             .IsUnique()
-            .HasFilter("\"DedupeKey\" IS NOT NULL");
+            .HasFilter("\"DedupeKey\" IS NOT NULL AND \"Status\" <> 'Failed'");
+
+        builder.Property(message => message.ClaimedAt);
+
+        builder.Property(message => message.DispatchedAt);
 
         builder.Property(message => message.Status)
             .HasConversion<string>()

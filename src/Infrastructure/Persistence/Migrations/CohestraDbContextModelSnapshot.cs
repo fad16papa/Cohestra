@@ -205,12 +205,18 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<int>("AttemptCount")
                         .HasColumnType("integer");
 
+                    b.Property<DateTimeOffset?>("ClaimedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DedupeKey")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
+
+                    b.Property<DateTimeOffset?>("DispatchedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LastError")
                         .HasMaxLength(2000)
@@ -243,7 +249,7 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.HasIndex("DedupeKey")
                         .IsUnique()
-                        .HasFilter("\"DedupeKey\" IS NOT NULL");
+                        .HasFilter("\"DedupeKey\" IS NOT NULL AND \"Status\" <> 'Failed'");
 
                     b.HasIndex("TenantId");
 

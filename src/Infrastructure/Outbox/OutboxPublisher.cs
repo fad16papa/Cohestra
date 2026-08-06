@@ -27,14 +27,20 @@ public sealed class OutboxPublisher(
 
         if (!string.IsNullOrWhiteSpace(dedupeKey))
         {
+            var normalizedKey = dedupeKey.Trim();
             var alreadyQueued = dbContext.OutboxMessages.Local.Any(message =>
-                message.DedupeKey == dedupeKey
-                && message.Status != OutboxMessageStatus.Failed);
+                message.DedupeKey == normalizedKey
+                && message.Status != OutboxMessageStatus.Failed)
+                || dbContext.OutboxMessages.Any(message =>
+                    message.DedupeKey == normalizedKey
+                    && message.Status != OutboxMessageStatus.Failed);
 
             if (alreadyQueued)
             {
                 return;
             }
+
+            dedupeKey = normalizedKey;
         }
 
         var now = DateTimeOffset.UtcNow;

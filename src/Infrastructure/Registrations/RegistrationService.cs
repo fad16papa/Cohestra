@@ -273,12 +273,15 @@ public sealed class RegistrationService(
 
         dbContext.Registrations.Add(registration);
 
-        var payload = JsonSerializer.Serialize(new RegistrationConfirmationOutboxPayload(registration.Id));
-        outboxPublisher.Enqueue(
-            tenantId,
-            OutboxMessageTypes.RegistrationConfirmation,
-            payload,
-            $"registration:{registration.Id}:confirmation");
+        if (profile.Email is not null && !string.IsNullOrWhiteSpace(profile.Email.Trim()))
+        {
+            var payload = JsonSerializer.Serialize(new RegistrationConfirmationOutboxPayload(registration.Id));
+            outboxPublisher.Enqueue(
+                tenantId,
+                OutboxMessageTypes.RegistrationConfirmation,
+                payload,
+                $"registration:{registration.Id}:confirmation");
+        }
 
         try
         {

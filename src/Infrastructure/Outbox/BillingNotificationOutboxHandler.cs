@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Cohestra.Application.Email;
 using Cohestra.Domain.Outbox;
-using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,12 +14,22 @@ public sealed class BillingNotificationOutboxHandler(
 
     public async Task HandleAsync(OutboxMessage message, CancellationToken cancellationToken = default)
     {
+        if (message.DispatchedAt is not null)
+        {
+            return;
+        }
+
         var payload = JsonSerializer.Deserialize<BillingNotificationOutboxPayload>(message.PayloadJson)
             ?? throw new InvalidOperationException("Billing notification outbox payload is invalid.");
 
-        var tenant = await dbContext.Tenants
-            .FirstOrDefaultAsync(item => item.Id == payload.TenantId, cancellationToken)
-            ?? throw new InvalidOperationException($"Tenant {payload.TenantId} was not found for billing outbox message.");
+        var tenantExists = await dbContext.Tenants
+            .AsNoTracking()
+            .AnyAsync(item => item.Id == payload.TenantId, cancellationToken);
+
+        if (!tenantExists)
+        {
+            throw new InvalidOperationException($"Tenant {payload.TenantId} was not found for billing outbox message.");
+        }
 
         var sendResult = await emailSender.SendAsync(
             new EmailMessage(
@@ -36,26 +45,7 @@ public sealed class BillingNotificationOutboxHandler(
             throw new InvalidOperationException(sendResult.FailureReason ?? "Billing notification email failed.");
         }
 
-        var now = DateTimeOffset.UtcNow;
-        switch (payload.NoticeType)
-        {
-            case BillingNotificationNoticeTypes.TrialReminder:
-                tenant.LastTrialReminderSentAt = now;
-                break;
-            case BillingNotificationNoticeTypes.PastDue:
-                tenant.LastPastDueNoticeAt = now;
-                break;
-            case BillingNotificationNoticeTypes.OnHold:
-                tenant.LastOnHoldNoticeAt = now;
-                break;
-            case BillingNotificationNoticeTypes.Dormancy:
-                tenant.LastDormancyWarningAt = now;
-                break;
-            default:
-                throw new InvalidOperationException($"Unknown billing notice type '{payload.NoticeType}'.");
-        }
-
-        tenant.UpdatedAt = now;
+        message.DispatchedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

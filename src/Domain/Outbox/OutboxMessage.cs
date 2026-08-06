@@ -26,5 +26,9 @@ public sealed class OutboxMessage
 
     public DateTimeOffset? ProcessedAt { get; set; }
 
+    public DateTimeOffset? ClaimedAt { get; set; }
+
+    public DateTimeOffset? DispatchedAt { get; set; }
+
     public string? LastError { get; set; }
 }

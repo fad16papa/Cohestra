@@ -185,7 +185,8 @@ public sealed class BillingJobsHostedService(
             $"Trial ending soon — {tenant.Name}",
             plainBody,
             htmlBody,
-            $"billing:trial-reminder:{tenant.Id}:{now:yyyy-MM-dd}");
+            $"billing:trial-reminder:{tenant.Id}:{now:yyyy-MM-dd}",
+            now);
     }
 
     private static Task ProcessDelinquencyAsync(
@@ -230,7 +231,8 @@ public sealed class BillingJobsHostedService(
                 "Payment past due",
                 "Your last payment did not succeed. Update your payment method to keep full access.",
                 "<p>Your last payment did not succeed. Update your payment method to keep full access.</p>",
-                $"billing:past-due:{tenant.Id}:{now:yyyy-MM-dd}");
+                $"billing:past-due:{tenant.Id}:{now:yyyy-MM-dd}",
+                now);
             return Task.CompletedTask;
         }
 
@@ -248,7 +250,8 @@ public sealed class BillingJobsHostedService(
                 "Workspace on hold",
                 "Billing is on hold. The workspace is read-only until payment is restored.",
                 "<p>Billing is on hold. The workspace is read-only until payment is restored.</p>",
-                $"billing:on-hold:{tenant.Id}:{now:yyyy-MM-dd}");
+                $"billing:on-hold:{tenant.Id}:{now:yyyy-MM-dd}",
+                now);
         }
 
         return Task.CompletedTask;
@@ -298,7 +301,8 @@ public sealed class BillingJobsHostedService(
                 $"Inactive workspace — {tenant.Name}",
                 "Your free Basic workspace will archive in 7 days without admin activity or public registrations.",
                 "<p>Your free Basic workspace will archive in 7 days without admin activity or public registrations.</p>",
-                $"billing:dormancy:{tenant.Id}");
+                $"billing:dormancy:{tenant.Id}",
+                now);
         }
 
         return Task.CompletedTask;
@@ -311,7 +315,8 @@ public sealed class BillingJobsHostedService(
         string subject,
         string plainBody,
         string htmlBody,
-        string dedupeKey)
+        string dedupeKey,
+        DateTimeOffset now)
     {
         if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
         {
@@ -331,5 +336,23 @@ public sealed class BillingJobsHostedService(
             OutboxMessageTypes.BillingNotification,
             payload,
             dedupeKey);
+
+        switch (noticeType)
+        {
+            case BillingNotificationNoticeTypes.TrialReminder:
+                tenant.LastTrialReminderSentAt = now;
+                break;
+            case BillingNotificationNoticeTypes.PastDue:
+                tenant.LastPastDueNoticeAt = now;
+                break;
+            case BillingNotificationNoticeTypes.OnHold:
+                tenant.LastOnHoldNoticeAt = now;
+                break;
+            case BillingNotificationNoticeTypes.Dormancy:
+                tenant.LastDormancyWarningAt = now;
+                break;
+        }
+
+        tenant.UpdatedAt = now;
     }
 }

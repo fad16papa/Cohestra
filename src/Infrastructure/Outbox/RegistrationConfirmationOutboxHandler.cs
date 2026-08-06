@@ -6,16 +6,13 @@ using Cohestra.Domain.Outbox;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Cohestra.Infrastructure.Outbox;
 
 public sealed class RegistrationConfirmationOutboxHandler(
     CohestraDbContext dbContext,
     CurrentTenant currentTenant,
-    IRegistrationNotificationService registrationNotificationService,
-    ILogger<RegistrationConfirmationOutboxHandler> logger) : IOutboxMessageHandler
+    IRegistrationNotificationService registrationNotificationService) : IOutboxMessageHandler
 {
     public string MessageType => OutboxMessageTypes.RegistrationConfirmation;
 
@@ -37,9 +34,8 @@ public sealed class RegistrationConfirmationOutboxHandler(
 
         if (!result.Sent && result.RecipientEmail is not null)
         {
-            logger.LogWarning(
-                "Registration confirmation outbox handler did not send email for registration {RegistrationId}.",
-                payload.RegistrationId);
+            throw new InvalidOperationException(
+                $"Registration confirmation email was not sent for registration {payload.RegistrationId}.");
         }
     }
 }

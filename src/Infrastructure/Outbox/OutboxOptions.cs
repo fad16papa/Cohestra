@@ -13,4 +13,6 @@ public sealed class OutboxOptions
     public int MaxAttempts { get; set; } = 5;
 
     public int BaseRetryDelaySeconds { get; set; } = 30;
+
+    public int ProcessingTimeoutSeconds { get; set; } = 300;
 }
