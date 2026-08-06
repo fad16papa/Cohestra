@@ -14,6 +14,7 @@ public sealed class DashboardService(
     ICurrentTenant currentTenant) : IDashboardService
 {
     private const int NewLeadsPeriodDays = 7;
+    private const int TrendPeriodDays = 30;
 
     public async Task<DashboardMetricsResponse> GetMetricsAsync(
         CancellationToken cancellationToken = default)
@@ -86,6 +87,34 @@ public sealed class DashboardService(
             periodStart,
             cancellationToken);
 
+        var previousPeriodStart = periodStart.AddDays(-NewLeadsPeriodDays);
+
+        var registrationsInPeriod = await dbContext.Registrations
+            .AsNoTracking()
+            .CountAsync(
+                registration =>
+                    registration.TenantId == tenantId &&
+                    registration.CreatedAt >= periodStart,
+                cancellationToken);
+
+        var registrationsInPreviousPeriod = await dbContext.Registrations
+            .AsNoTracking()
+            .CountAsync(
+                registration =>
+                    registration.TenantId == tenantId &&
+                    registration.CreatedAt >= previousPeriodStart &&
+                    registration.CreatedAt < periodStart,
+                cancellationToken);
+
+        var registrationsTrend = await ComputeRegistrationsTrendAsync(
+            tenantId,
+            computedAt,
+            cancellationToken);
+
+        var leadStatusBreakdown = await ComputeLeadStatusBreakdownAsync(
+            tenantId,
+            cancellationToken);
+
         return new DashboardMetricsResponse(
             totalLeads,
             newLeadsInPeriod,
@@ -93,7 +122,80 @@ public sealed class DashboardService(
             activeActivitiesCount,
             followUpCoveragePercent,
             activityPerformance,
-            computedAt);
+            computedAt,
+            registrationsInPeriod,
+            registrationsInPreviousPeriod,
+            TrendPeriodDays,
+            registrationsTrend,
+            leadStatusBreakdown);
+    }
+
+    private async Task<IReadOnlyList<DashboardTrendPointResponse>> ComputeRegistrationsTrendAsync(
+        Guid tenantId,
+        DateTimeOffset computedAt,
+        CancellationToken cancellationToken)
+    {
+        var endDate = DateOnly.FromDateTime(computedAt.UtcDateTime);
+        var startDate = endDate.AddDays(-(TrendPeriodDays - 1));
+        var trendStart = new DateTimeOffset(
+            startDate.ToDateTime(TimeOnly.MinValue),
+            TimeSpan.Zero);
+
+        // Group in memory after a windowed fetch — timestamps are stored UTC and the
+        // window is at most TrendPeriodDays, so the row volume stays small.
+        var registrationTimestamps = await dbContext.Registrations
+            .AsNoTracking()
+            .Where(registration =>
+                registration.TenantId == tenantId &&
+                registration.CreatedAt >= trendStart)
+            .Select(registration => registration.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var clientTimestamps = await dbContext.Clients
+            .AsNoTracking()
+            .Where(client =>
+                client.TenantId == tenantId &&
+                client.CreatedAt >= trendStart)
+            .Select(client => client.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var registrationsLookup = registrationTimestamps
+            .GroupBy(createdAt => DateOnly.FromDateTime(createdAt.UtcDateTime))
+            .ToDictionary(group => group.Key, group => group.Count());
+        var clientsLookup = clientTimestamps
+            .GroupBy(createdAt => DateOnly.FromDateTime(createdAt.UtcDateTime))
+            .ToDictionary(group => group.Key, group => group.Count());
+
+        var points = new List<DashboardTrendPointResponse>(TrendPeriodDays);
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            points.Add(new DashboardTrendPointResponse(
+                date,
+                registrationsLookup.GetValueOrDefault(date),
+                clientsLookup.GetValueOrDefault(date)));
+        }
+
+        return points;
+    }
+
+    private async Task<DashboardLeadStatusBreakdownResponse> ComputeLeadStatusBreakdownAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var counts = await dbContext.Clients
+            .AsNoTracking()
+            .Where(client => client.TenantId == tenantId)
+            .GroupBy(client => client.LeadStatus)
+            .Select(group => new { Status = group.Key, Count = group.Count() })
+            .ToListAsync(cancellationToken);
+
+        var lookup = counts.ToDictionary(item => item.Status, item => item.Count);
+
+        return new DashboardLeadStatusBreakdownResponse(
+            lookup.GetValueOrDefault(LeadStatus.New),
+            lookup.GetValueOrDefault(LeadStatus.Contacted),
+            lookup.GetValueOrDefault(LeadStatus.Active),
+            lookup.GetValueOrDefault(LeadStatus.Inactive));
     }
 
     private async Task<IReadOnlyList<ActivityPerformanceItemResponse>> ComputeActivityPerformanceAsync(

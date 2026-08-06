@@ -14,10 +14,24 @@ type DashboardActivityPerformanceTableProps = {
   periodLabel: string;
 };
 
+function formatShare(count: number, total: number): string {
+  if (total === 0) {
+    return "—";
+  }
+
+  const percent = (count / total) * 100;
+  return `${percent >= 10 ? Math.round(percent) : percent.toFixed(1)}%`;
+}
+
 export function DashboardActivityPerformanceTable({
   items,
   periodLabel,
 }: DashboardActivityPerformanceTableProps) {
+  const totalRegistrations = items.reduce(
+    (sum, item) => sum + item.registrationCount,
+    0
+  );
+
   return (
     <DashboardPanelSection aria-labelledby="activity-performance-table-heading">
       <DashboardPanelHeader
@@ -54,6 +68,9 @@ export function DashboardActivityPerformanceTable({
                   <th scope="col" className="px-4 py-3 text-right font-medium sm:px-5">
                     Registrations
                   </th>
+                  <th scope="col" className="hidden px-4 py-3 text-right font-medium sm:table-cell sm:px-5">
+                    Share
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-warm">
@@ -82,13 +99,16 @@ export function DashboardActivityPerformanceTable({
                     <td className="px-4 py-3 text-right tabular-nums font-semibold text-text-warm sm:px-5">
                       {item.registrationCount}
                     </td>
+                    <td className="hidden px-4 py-3 text-right tabular-nums text-text-muted-warm sm:table-cell sm:px-5">
+                      {formatShare(item.registrationCount, totalRegistrations)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <div className="border-t border-border-warm px-4 py-3 sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-warm px-4 py-3 sm:px-5">
             <Link
               href="/activities"
               className={cn(
@@ -98,6 +118,11 @@ export function DashboardActivityPerformanceTable({
             >
               View all activities
             </Link>
+            <p className="text-xs tabular-nums text-text-muted-warm">
+              {items.length} activit{items.length === 1 ? "y" : "ies"} ·{" "}
+              {totalRegistrations} registration{totalRegistrations === 1 ? "" : "s"}{" "}
+              {periodLabel}
+            </p>
           </div>
         </div>
       )}

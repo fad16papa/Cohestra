@@ -8,6 +8,18 @@ public sealed record ActivityPerformanceItemResponse(
     string Status,
     int RegistrationCount);
 
+/// <summary>Daily point in the registrations trend series (UTC dates).</summary>
+public sealed record DashboardTrendPointResponse(
+    DateOnly Date,
+    int Registrations,
+    int NewClients);
+
+public sealed record DashboardLeadStatusBreakdownResponse(
+    int NewCount,
+    int ContactedCount,
+    int ActiveCount,
+    int InactiveCount);
+
 public sealed record DashboardMetricsResponse(
     int TotalLeads,
     int NewLeadsInPeriod,
@@ -15,4 +27,9 @@ public sealed record DashboardMetricsResponse(
     int ActiveActivitiesCount,
     double FollowUpCoveragePercent,
     IReadOnlyList<ActivityPerformanceItemResponse> ActivityPerformance,
-    DateTimeOffset ComputedAt);
+    DateTimeOffset ComputedAt,
+    int RegistrationsInPeriod,
+    int RegistrationsInPreviousPeriod,
+    int TrendDays,
+    IReadOnlyList<DashboardTrendPointResponse> RegistrationsTrend,
+    DashboardLeadStatusBreakdownResponse LeadStatusBreakdown);
