@@ -18,9 +18,10 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { fetchAllActivities, type ActivityStatus } from "@/lib/activities-api";
 import {
+  buildDayScheduleConflictMaps,
   countActivitiesByStatusOnDay,
   countScheduleConflictPairs,
-  dayHasScheduleConflicts,
+  dayKeyHasScheduleConflicts,
   enrichActivitiesForCalendar,
   findActivityConflictsForDay,
   formatActivityTime,
@@ -185,6 +186,11 @@ export function ActivityCalendarPopout({
     [filteredActivities]
   );
 
+  const dayConflictMaps = useMemo(
+    () => buildDayScheduleConflictMaps(activities),
+    [activities]
+  );
+
   const unscheduled = useMemo(
     () => getUnscheduledActivities(filteredActivities),
     [filteredActivities]
@@ -197,14 +203,14 @@ export function ActivityCalendarPopout({
 
   const selectedDayActivities = groupedByDay.get(selectedDateKey) ?? [];
   const selectedDate = fromDateKey(selectedDateKey);
-  const selectedDayConflicts = useMemo(
-    () => findActivityConflictsForDay(selectedDayActivities),
-    [selectedDayActivities]
+  const selectedDayConflicts =
+    dayConflictMaps.get(selectedDateKey) ?? new Map<string, CalendarActivity[]>();
+  const selectedDayConflictCount = countScheduleConflictPairs(selectedDayConflicts);
+  const selectedDayVisibleConflictCount = countScheduleConflictPairs(
+    findActivityConflictsForDay(selectedDayActivities)
   );
-  const selectedDayConflictCount = useMemo(
-    () => countScheduleConflictPairs(selectedDayConflicts),
-    [selectedDayConflicts]
-  );
+  const conflictsHiddenByFilters =
+    selectedDayConflictCount > 0 && selectedDayVisibleConflictCount === 0;
 
   function shiftMonth(delta: number) {
     const next = new Date(viewYear, viewMonth + delta, 1);
@@ -344,7 +350,7 @@ export function ActivityCalendarPopout({
                     const dayActivities = groupedByDay.get(key) ?? [];
                     const statusCounts = countActivitiesByStatusOnDay(dayActivities);
                     const activityCount = dayActivities.length;
-                    const hasConflicts = dayHasScheduleConflicts(dayActivities);
+                    const hasConflicts = dayKeyHasScheduleConflicts(dayConflictMaps, key);
 
                     return (
                       <button
@@ -355,7 +361,7 @@ export function ActivityCalendarPopout({
                           "flex min-h-11 flex-col items-center justify-start rounded-lg px-0.5 py-1 text-xs transition-colors",
                           inMonth ? "text-text-warm" : "text-text-muted-warm/50",
                           isSelected && "bg-primary/15 ring-1 ring-primary/40",
-                          !isSelected && isToday && "ring-1 ring-primary/25",
+                          !isSelected && isToday && "outline outline-1 outline-primary/40 -outline-offset-1",
                           !isSelected && hasConflicts && "ring-1 ring-amber-400/50",
                           !isSelected && "hover:bg-muted/50"
                         )}
@@ -412,6 +418,11 @@ export function ActivityCalendarPopout({
                         <p className="font-medium text-amber-800 dark:text-amber-200">
                           {formatConflictSummary(selectedDayConflictCount)}
                         </p>
+                        {conflictsHiddenByFilters ? (
+                          <p className="text-[11px] text-text-muted-warm">
+                            Some conflicts involve activities hidden by status filters.
+                          </p>
+                        ) : null}
                         <p className="text-[11px] text-text-muted-warm">
                           Overlap assumes 1-hour events.
                         </p>
