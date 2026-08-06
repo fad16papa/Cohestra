@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { fetchAllActivities } from "@/lib/activities-api";
@@ -15,9 +15,21 @@ export function useActivityScheduleConflicts() {
     Map<string, CalendarActivity[]>
   >(new Map());
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const refresh = useCallback(() => {
+    setReloadToken((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
+    const isInitialLoad = reloadToken === 0;
+
+    if (isInitialLoad) {
+      setReady(false);
+    }
+    setError(null);
 
     void fetchAllActivities(authFetch)
       .then((activities) => {
@@ -26,10 +38,16 @@ export function useActivityScheduleConflicts() {
         }
 
         setConflictIndex(buildActivityScheduleConflictIndex(activities));
+        setError(null);
       })
-      .catch(() => {
+      .catch((loadError) => {
         if (!cancelled) {
           setConflictIndex(new Map());
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Could not load schedule conflicts."
+          );
         }
       })
       .finally(() => {
@@ -41,7 +59,7 @@ export function useActivityScheduleConflicts() {
     return () => {
       cancelled = true;
     };
-  }, [authFetch]);
+  }, [authFetch, reloadToken]);
 
   const getConflictsForActivity = useMemo(
     () => (activityId: string) => conflictIndex.get(activityId) ?? [],
@@ -50,6 +68,8 @@ export function useActivityScheduleConflicts() {
 
   return {
     ready,
+    error,
+    refresh,
     conflictIndex,
     getConflictsForActivity,
   };

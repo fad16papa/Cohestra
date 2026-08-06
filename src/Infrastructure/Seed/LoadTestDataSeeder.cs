@@ -28,6 +28,13 @@ public static class LoadTestDataSeeder
     public const string DefaultPassword = "LoadTest123!";
     internal const string LoadCoreAlphaSlug = "load-core-alpha";
 
+    internal static readonly string[] LoadCoreAlphaCalendarConflictSampleSlugs =
+    [
+        "load-core-alpha-001",
+        "load-core-alpha-002",
+        "load-core-alpha-003",
+    ];
+
     /// <summary>Days from seed anchor for calendar conflict sample activities.</summary>
     internal const int CalendarConflictDayOffsetDays = 10;
 
@@ -735,17 +742,25 @@ public static class LoadTestDataSeeder
             return;
         }
 
-        var publishedActivities = await dbContext.Activities
-            .Where(a => a.TenantId == tenantId && a.Status == ActivityStatus.Published)
-            .OrderBy(a => a.Name)
-            .Take(3)
+        var sampleActivities = await dbContext.Activities
+            .Where(a =>
+                a.TenantId == tenantId
+                && a.Status == ActivityStatus.Published
+                && LoadCoreAlphaCalendarConflictSampleSlugs.Contains(a.Slug))
             .ToListAsync(cancellationToken);
+
+        var publishedActivities = LoadCoreAlphaCalendarConflictSampleSlugs
+            .Select(slug => sampleActivities.FirstOrDefault(activity => activity.Slug == slug))
+            .Where(activity => activity is not null)
+            .Cast<Activity>()
+            .ToList();
 
         if (publishedActivities.Count < 2)
         {
             logger.LogWarning(
-                "Skipping calendar conflict samples for {Slug}: need at least 2 published activities.",
-                LoadCoreAlphaSlug);
+                "Skipping calendar conflict samples for {Slug}: need at least 2 published sample activities ({Slugs}).",
+                LoadCoreAlphaSlug,
+                string.Join(", ", LoadCoreAlphaCalendarConflictSampleSlugs));
             return;
         }
 

@@ -4,7 +4,9 @@ import type { Activity } from "@/lib/activities-api";
 import {
   activitiesScheduleOverlap,
   buildActivityScheduleConflictIndex,
+  buildDayScheduleConflictMaps,
   countScheduleConflictPairs,
+  dayKeyHasScheduleConflicts,
   DEFAULT_ACTIVITY_DURATION_MINUTES,
   findActivityConflictsForDay,
   formatActivityConflictMessage,
@@ -97,6 +99,22 @@ describe("buildActivityScheduleConflictIndex", () => {
     expect(index.get("a")?.map((activity) => activity.id)).toEqual(["b"]);
     expect(index.get("b")?.map((activity) => activity.id)).toEqual(["a"]);
     expect(index.has("c")).toBe(false);
+  });
+});
+
+describe("buildDayScheduleConflictMaps", () => {
+  it("indexes conflicts by date key for calendar rendering", () => {
+    const first = calendarActivity("a", new Date(2026, 7, 13, 13, 0));
+    const second = calendarActivity("b", new Date(2026, 7, 13, 13, 30));
+    const third = calendarActivity("c", new Date(2026, 7, 20, 10, 0));
+
+    const maps = buildDayScheduleConflictMaps([first, second, third]);
+
+    expect(dayKeyHasScheduleConflicts(maps, "2026-08-13")).toBe(true);
+    expect(dayKeyHasScheduleConflicts(maps, "2026-08-20")).toBe(false);
+    expect(maps.get("2026-08-13")?.get("a")?.map((activity) => activity.id)).toEqual([
+      "b",
+    ]);
   });
 });
 

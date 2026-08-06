@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, MapPin } from "lucide-react";
@@ -93,10 +93,15 @@ function ActivityQuickFacts({ activity }: { activity: Activity }) {
 
 export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) {
   const { authFetch } = useAuth();
-  const { getConflictsForActivity } = useActivityScheduleConflicts();
+  const {
+    getConflictsForActivity,
+    ready: conflictsReady,
+    error: conflictError,
+    refresh,
+  } = useActivityScheduleConflicts();
   const searchParams = useSearchParams();
   const [activity, setActivity] = useState<Activity | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ActivityDetailTab>(() => {
     const tab = searchParams.get("tab");
     return isActivityDetailTab(tab) ? tab : "overview";
@@ -124,7 +129,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
       })
       .catch((loadError) => {
         if (!cancelled) {
-          setError(
+          setLoadError(
             loadError instanceof Error
               ? loadError.message
               : "Could not load activity."
@@ -137,10 +142,18 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     };
   }, [authFetch, id]);
 
-  if (error) {
+  const handleActivityUpdated = useCallback(
+    (updated: Activity) => {
+      setActivity(updated);
+      refresh();
+    },
+    [refresh]
+  );
+
+  if (loadError) {
     return (
       <ProductErrorState
-        message={error}
+        message={loadError}
         onRetry={() => window.location.reload()}
         backHref="/activities"
         backLabel="Back to activities"
@@ -160,7 +173,10 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
   const publishGateIssues = getPublishGateIssues(activity.formSchema, {
     slug: activity.slug,
   });
-  const scheduleConflicts = getConflictsForActivity(activity.id);
+  const scheduleConflicts =
+    conflictsReady && !conflictError
+      ? getConflictsForActivity(activity.id)
+      : [];
 
   return (
     <div className="space-y-6">
@@ -175,6 +191,12 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
         </div>
         <ActivityStatusBadge status={activity.status} />
       </div>
+
+      {conflictError ? (
+        <p role="status" className="text-sm text-text-muted-warm">
+          Schedule conflict check unavailable: {conflictError}
+        </p>
+      ) : null}
 
       {scheduleConflicts.length > 0 ? (
         <ActivityScheduleConflictAlert
@@ -211,17 +233,17 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
         <div className="space-y-8">
           <ActivityPublishControls
             activity={activity}
-            onActivityUpdated={setActivity}
+            onActivityUpdated={handleActivityUpdated}
           />
           <ActivityQuickFacts activity={activity} />
           <ActivityCapacityPanel
             activity={activity}
-            onActivityUpdated={setActivity}
+            onActivityUpdated={handleActivityUpdated}
           />
           <ActivityBrandingPanel
             key={activity.id}
             activity={activity}
-            onActivityUpdated={setActivity}
+            onActivityUpdated={handleActivityUpdated}
           />
         </div>
       ) : null}
@@ -230,7 +252,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
         <ActivityFormTab
           key={activity.id}
           activity={activity}
-          onActivityUpdated={setActivity}
+          onActivityUpdated={handleActivityUpdated}
         />
       </div>
 

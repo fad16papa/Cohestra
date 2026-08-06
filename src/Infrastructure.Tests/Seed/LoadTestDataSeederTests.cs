@@ -104,6 +104,14 @@ public sealed class LoadTestDataSeederTests
     }
 
     [Fact]
+    public void LoadCoreAlphaCalendarConflictSampleSlugs_AreStablePublishedFixtures()
+    {
+        Assert.Equal(3, LoadTestDataSeeder.LoadCoreAlphaCalendarConflictSampleSlugs.Length);
+        Assert.All(LoadTestDataSeeder.LoadCoreAlphaCalendarConflictSampleSlugs, slug =>
+            Assert.StartsWith("load-core-alpha-", slug, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void ResolveRegistrationAssignment_ThrowsWhenClientCapacityIsInsufficient()
     {
         var exception = Assert.Throws<InvalidOperationException>(() =>

@@ -180,6 +180,32 @@ export function dayHasScheduleConflicts(
   return countScheduleConflictPairs(findActivityConflictsForDay(activities, durationMinutes)) > 0;
 }
 
+export function buildDayScheduleConflictMaps(
+  activities: CalendarActivity[],
+  durationMinutes = DEFAULT_ACTIVITY_DURATION_MINUTES
+): Map<string, Map<string, CalendarActivity[]>> {
+  const groupedByDay = groupScheduledActivitiesByDay(activities);
+  const maps = new Map<string, Map<string, CalendarActivity[]>>();
+
+  for (const [dateKey, dayActivities] of groupedByDay) {
+    maps.set(dateKey, findActivityConflictsForDay(dayActivities, durationMinutes));
+  }
+
+  return maps;
+}
+
+export function dayKeyHasScheduleConflicts(
+  conflictMaps: Map<string, Map<string, CalendarActivity[]>>,
+  dateKey: string
+): boolean {
+  const dayConflicts = conflictMaps.get(dateKey);
+  if (!dayConflicts) {
+    return false;
+  }
+
+  return countScheduleConflictPairs(dayConflicts) > 0;
+}
+
 export function countScheduleConflictPairs(
   conflicts: Map<string, CalendarActivity[]>
 ): number {
