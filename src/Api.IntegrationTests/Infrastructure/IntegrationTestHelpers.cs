@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Cohestra.Application.Outbox;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Auth;
 using Cohestra.Contracts.Platform;
@@ -438,5 +439,29 @@ internal static class IntegrationTestHelpers
 
         return await response.Content.ReadFromJsonAsync<SubmitPublicRegistrationResponse>(JsonOptions)
             ?? throw new InvalidOperationException("Registration response body was empty.");
+    }
+
+    internal static async Task ProcessOutboxUntilIdleAsync(
+        IServiceProvider services,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(30));
+
+        while (DateTime.UtcNow < deadline)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            await using var scope = services.CreateAsyncScope();
+            var processor = scope.ServiceProvider.GetRequiredService<IOutboxProcessor>();
+            var processed = await processor.ProcessBatchAsync(cancellationToken);
+
+            if (processed == 0)
+            {
+                return;
+            }
+        }
+
+        throw new TimeoutException("Outbox did not drain within the allotted time.");
     }
 }
