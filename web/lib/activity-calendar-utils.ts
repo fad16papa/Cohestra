@@ -113,11 +113,6 @@ export const STATUS_RING_STYLES: Record<ActivityStatus, string> = {
 /** Assumed event length when checking schedule overlap (activities store start time only). */
 export const DEFAULT_ACTIVITY_DURATION_MINUTES = 60;
 
-export type ActivityConflictInfo = {
-  activityId: string;
-  conflictingActivities: CalendarActivity[];
-};
-
 export function getActivityEndTime(
   start: Date,
   durationMinutes = DEFAULT_ACTIVITY_DURATION_MINUTES
@@ -182,15 +177,26 @@ export function dayHasScheduleConflicts(
   activities: CalendarActivity[],
   durationMinutes = DEFAULT_ACTIVITY_DURATION_MINUTES
 ): boolean {
-  return findActivityConflictsForDay(activities, durationMinutes).size > 0;
+  return countScheduleConflictPairs(findActivityConflictsForDay(activities, durationMinutes)) > 0;
 }
 
-export function formatConflictSummary(count: number): string {
-  if (count <= 0) {
+export function countScheduleConflictPairs(
+  conflicts: Map<string, CalendarActivity[]>
+): number {
+  let edges = 0;
+  for (const conflictingActivities of conflicts.values()) {
+    edges += conflictingActivities.length;
+  }
+
+  return Math.floor(edges / 2);
+}
+
+export function formatConflictSummary(pairCount: number): string {
+  if (pairCount <= 0) {
     return "";
   }
 
-  return count === 1 ? "1 scheduling conflict" : `${count} scheduling conflicts`;
+  return pairCount === 1 ? "1 scheduling conflict" : `${pairCount} scheduling conflicts`;
 }
 
 export function countActivitiesByStatusOnDay(

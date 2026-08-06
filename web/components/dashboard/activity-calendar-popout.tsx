@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { fetchAllActivities, type ActivityStatus } from "@/lib/activities-api";
 import {
   countActivitiesByStatusOnDay,
+  countScheduleConflictPairs,
   dayHasScheduleConflicts,
   enrichActivitiesForCalendar,
   findActivityConflictsForDay,
@@ -217,7 +218,10 @@ export function ActivityCalendarPopout({
     () => findActivityConflictsForDay(selectedDayActivities),
     [selectedDayActivities]
   );
-  const selectedDayConflictCount = selectedDayConflicts.size;
+  const selectedDayConflictCount = useMemo(
+    () => countScheduleConflictPairs(selectedDayConflicts),
+    [selectedDayConflicts]
+  );
 
   function shiftMonth(delta: number) {
     const next = new Date(viewYear, viewMonth + delta, 1);
@@ -421,9 +425,14 @@ export function ActivityCalendarPopout({
                       {selectedDayActivities.length > 1 ? " on this day" : ""}
                     </p>
                     {selectedDayConflictCount > 0 ? (
-                      <p className="font-medium text-amber-800 dark:text-amber-200">
-                        {formatConflictSummary(selectedDayConflictCount)}
-                      </p>
+                      <div className="space-y-0.5">
+                        <p className="font-medium text-amber-800 dark:text-amber-200">
+                          {formatConflictSummary(selectedDayConflictCount)}
+                        </p>
+                        <p className="text-[11px] text-text-muted-warm">
+                          Overlap assumes 1-hour events.
+                        </p>
+                      </div>
                     ) : selectedDayActivities.length > 1 ? (
                       <p>No scheduling conflicts</p>
                     ) : null}
