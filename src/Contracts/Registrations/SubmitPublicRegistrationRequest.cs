@@ -20,8 +20,7 @@ public sealed record SubmitPublicRegistrationRequest(
 /// <param name="RegistrationNumber">Human-readable registration number for check-in.</param>
 /// <param name="ClientId">Master client record identifier (created or updated).</param>
 /// <param name="ConfirmationEmailSent">True when a confirmation email was delivered to the participant.</param>
-/// <param name="ConfirmationEmailQueued">True when a confirmation email was queued for async delivery.</param>
-/// <param name="ConfirmationEmail">Recipient address when an email was attempted, queued, or sent; null when no email on file.</param>
+/// <param name="ConfirmationEmail">Recipient address when an email was attempted or sent; null when no email on file.</param>
 public sealed record SubmitPublicRegistrationResponse(
     string Status,
     string Message,
@@ -29,5 +28,4 @@ public sealed record SubmitPublicRegistrationResponse(
     string RegistrationNumber,
     Guid ClientId,
     bool ConfirmationEmailSent = false,
-    bool ConfirmationEmailQueued = false,
     string? ConfirmationEmail = null);

@@ -4,7 +4,6 @@ namespace Cohestra.Domain.Campaigns;
 
 public enum CampaignRecipientStatus
 {
-    Queued,
     Sent,
     Failed,
     Skipped,

@@ -1,13 +1,9 @@
-using System.Text.Json;
 using Cohestra.Application.Campaigns;
 using Cohestra.Application.Email;
-using Cohestra.Application.Outbox;
 using Cohestra.Contracts.Campaigns;
 using Cohestra.Domain.Campaigns;
 using Cohestra.Domain.Clients;
-using Cohestra.Domain.Outbox;
 using Cohestra.Infrastructure.Email;
-using Cohestra.Infrastructure.Outbox;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -18,7 +14,6 @@ public sealed class CampaignService(
     CohestraDbContext dbContext,
     IClientSegmentService segmentService,
     IEmailSender emailSender,
-    IOutboxPublisher outboxPublisher,
     IOptions<SendGridSettings> sendGridOptions) : ICampaignService
 {
     private const int DefaultPageSize = 25;
@@ -80,23 +75,26 @@ public sealed class CampaignService(
                 "Configure a verified admin contact email for this workspace before sending campaigns.");
         }
 
+        var fromEmail = tenant.AdminContactEmail.Trim();
+        var fromName = string.IsNullOrWhiteSpace(tenant.Name) ? null : tenant.Name.Trim();
+
         var now = DateTimeOffset.UtcNow;
         var campaign = new Campaign
         {
             Id = Guid.NewGuid(),
-            TenantId = tenantId,
             Subject = subject,
             Body = processedBody.StoredBody,
             BodyFormat = processedBody.BodyFormat,
             EmailTemplateId = request.EmailTemplateId,
             CreatedAt = now,
             SentAt = now,
-            Status = CampaignStatus.Queued,
+            Status = CampaignStatus.Completed,
         };
 
         var results = new List<CampaignRecipientResultResponse>(clients.Count);
+        var sentCount = 0;
+        var failedCount = 0;
         var skippedCount = 0;
-        var queuedCount = 0;
 
         foreach (var client in clients)
         {
@@ -116,41 +114,59 @@ public sealed class CampaignService(
                 continue;
             }
 
-            var recipientId = Guid.NewGuid();
-            campaign.Recipients.Add(new CampaignRecipient
+            var sendResult = await emailSender.SendAsync(
+                new EmailMessage(
+                    client.Email,
+                    client.FullName,
+                    subject,
+                    processedBody.PlainTextBody,
+                    processedBody.HtmlBody,
+                    fromEmail,
+                    fromName),
+                cancellationToken);
+
+            if (sendResult.Success)
             {
-                Id = recipientId,
-                TenantId = tenantId,
-                CampaignId = campaign.Id,
-                ClientId = client.Id,
-                Email = client.Email,
-                Status = CampaignRecipientStatus.Queued,
-            });
+                sentCount++;
+                campaign.Recipients.Add(new CampaignRecipient
+                {
+                    Id = Guid.NewGuid(),
+                    CampaignId = campaign.Id,
+                    ClientId = client.Id,
+                    Email = client.Email,
+                    Status = CampaignRecipientStatus.Sent,
+                    ProviderMessageId = sendResult.ProviderMessageId,
+                });
 
-            var payload = JsonSerializer.Serialize(new CampaignRecipientOutboxPayload(campaign.Id, recipientId));
-            outboxPublisher.Enqueue(
-                tenantId,
-                OutboxMessageTypes.CampaignRecipient,
-                payload,
-                $"campaign:{campaign.Id}:recipient:{client.Id}");
+                dbContext.ClientTimelineEvents.Add(new ClientTimelineEvent
+                {
+                    Id = Guid.NewGuid(),
+                    ClientId = client.Id,
+                    EventType = ClientTimelineEventType.EmailCampaignSent,
+                    OccurredAt = now,
+                    Subject = subject,
+                    CampaignId = campaign.Id,
+                });
 
-            queuedCount++;
-            results.Add(new CampaignRecipientResultResponse(
-                client.Id,
-                client.FullName,
-                client.Email,
-                "queued",
-                null));
+                results.Add(new CampaignRecipientResultResponse(
+                    client.Id,
+                    client.FullName,
+                    client.Email,
+                    "sent",
+                    null));
+            }
+            else
+            {
+                failedCount++;
+                var failureReason = sendResult.FailureReason ?? "Email send failed.";
+                AddRecipient(campaign, results, client, CampaignRecipientStatus.Failed, failureReason);
+            }
         }
 
+        campaign.SentCount = sentCount;
+        campaign.FailedCount = failedCount;
         campaign.SkippedCount = skippedCount;
-        campaign.SentCount = 0;
-        campaign.FailedCount = 0;
-
-        if (queuedCount == 0)
-        {
-            campaign.Status = CampaignStatus.Failed;
-        }
+        campaign.Status = sentCount > 0 ? CampaignStatus.Completed : CampaignStatus.Failed;
 
         dbContext.Campaigns.Add(campaign);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -159,10 +175,9 @@ public sealed class CampaignService(
             campaign.Id,
             campaign.Subject,
             campaign.SentAt,
-            campaign.SentCount,
-            campaign.FailedCount,
-            campaign.SkippedCount,
-            campaign.Status.ToString().ToLowerInvariant(),
+            sentCount,
+            failedCount,
+            skippedCount,
             results);
     }
 
@@ -301,7 +316,6 @@ public sealed class CampaignService(
         campaign.Recipients.Add(new CampaignRecipient
         {
             Id = Guid.NewGuid(),
-            TenantId = campaign.TenantId,
             CampaignId = campaign.Id,
             ClientId = client.Id,
             Email = client.Email,

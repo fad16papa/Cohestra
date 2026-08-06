@@ -268,11 +268,7 @@ export function CampaignComposePage() {
         segment,
       });
       setSendResult(result);
-      showToast(
-        result.status === "queued" || result.status === "sending"
-          ? "Campaign queued — delivery in progress."
-          : `${result.sentCount} sent, ${result.failedCount} failed.`
-      );
+      showToast(`${result.sentCount} sent, ${result.failedCount} failed.`);
     } catch (sendError) {
       const message =
         sendError instanceof Error ? sendError.message : "Campaign send failed.";
