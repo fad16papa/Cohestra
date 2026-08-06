@@ -2,7 +2,9 @@ using Cohestra.Application.Compliance;
 using Cohestra.Application.Activities;
 using Cohestra.Application.Auth;
 using Cohestra.Application.Billing;
+using Cohestra.Application.Outbox;
 using Cohestra.Infrastructure.Billing;
+using Cohestra.Infrastructure.Outbox;
 using Cohestra.Application.Campaigns;
 using Cohestra.Application.Clients;
 using Cohestra.Application.Dashboard;
@@ -109,6 +111,7 @@ public static class DependencyInjection
         services.Configure<AuthResendOtpRateLimitOptions>(
             configuration.GetSection(AuthResendOtpRateLimitOptions.SectionName));
         services.Configure<StripeSettings>(configuration.GetSection(StripeSettings.SectionName));
+        services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
 
         services.AddHttpClient(nameof(GoogleRecaptchaVerifier));
 
@@ -143,6 +146,12 @@ public static class DependencyInjection
         services.AddScoped<IBillingService, StripeBillingService>();
         services.AddScoped<IStripeWebhookProcessor, StripeWebhookProcessor>();
         services.AddHostedService<BillingJobsHostedService>();
+        services.AddHostedService<OutboxDispatcherHostedService>();
+        services.AddScoped<IOutboxPublisher, OutboxPublisher>();
+        services.AddScoped<IOutboxProcessor, OutboxProcessor>();
+        services.AddScoped<IOutboxMessageHandler, RegistrationConfirmationOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, CampaignRecipientOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, BillingNotificationOutboxHandler>();
         services.AddScoped<ITenantShellService, TenantShellService>();
         services.AddScoped<ITenantAccessService, TenantAccessService>();
         services.AddScoped<IPublicDoorService, PublicDoorService>();
