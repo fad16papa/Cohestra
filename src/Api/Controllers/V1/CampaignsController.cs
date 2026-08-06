@@ -158,6 +158,7 @@ public class CampaignsController(
 
     [HttpPost("send")]
     [ProducesResponseType(typeof(SendCampaignResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SendCampaignResponse), StatusCodes.Status202Accepted)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<SendCampaignResponse>> Send(
         [FromBody] SendCampaignRequest? request,
@@ -176,6 +177,11 @@ public class CampaignsController(
         try
         {
             var result = await campaignService.SendAsync(request, cancellationToken);
+            if (string.Equals(result.Status, "queued", StringComparison.OrdinalIgnoreCase))
+            {
+                return AcceptedAtAction(nameof(GetById), new { id = result.CampaignId }, result);
+            }
+
             return Ok(result);
         }
         catch (ArgumentException ex)

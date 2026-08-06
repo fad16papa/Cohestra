@@ -26,6 +26,8 @@ public sealed record PublicRegistrationSubmitResult
 
     public bool ConfirmationEmailSent { get; init; }
 
+    public bool ConfirmationEmailQueued { get; init; }
+
     public string? ConfirmationEmail { get; init; }
 
     public static PublicRegistrationSubmitResult NotFound() =>
@@ -42,7 +44,9 @@ public sealed record PublicRegistrationSubmitResult
         string registrationNumber,
         Guid clientId,
         bool clientCreated,
-        bool isReplay = false) =>
+        bool isReplay = false,
+        bool confirmationEmailQueued = false,
+        string? confirmationEmail = null) =>
         new()
         {
             IsSuccess = true,
@@ -51,6 +55,8 @@ public sealed record PublicRegistrationSubmitResult
             ClientId = clientId,
             ClientCreated = clientCreated,
             IsReplay = isReplay,
+            ConfirmationEmailQueued = confirmationEmailQueued,
+            ConfirmationEmail = confirmationEmail,
         };
 
     public static PublicRegistrationSubmitResult AlreadyRegistered(
