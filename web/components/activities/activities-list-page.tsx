@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { ActivityCard } from "@/components/activities/activity-card";
+import { useActivityScheduleConflicts } from "@/components/activities/use-activity-schedule-conflicts";
 import { useAuth } from "@/components/auth/auth-provider";
 import { CardGridSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
@@ -79,6 +80,7 @@ function ActivitySearchInput({ committedValue, onCommit }: ActivitySearchInputPr
 
 export function ActivitiesListPage() {
   const { authFetch } = useAuth();
+  const { getConflictsForActivity } = useActivityScheduleConflicts();
   const searchParams = useSearchParams();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [page, setPage] = useState(1);
@@ -332,7 +334,11 @@ export function ActivitiesListPage() {
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {activities.map((activity) => (
-              <ActivityCard key={activity.id} activity={activity} />
+              <ActivityCard
+                key={activity.id}
+                activity={activity}
+                conflictingActivities={getConflictsForActivity(activity.id)}
+              />
             ))}
           </div>
 

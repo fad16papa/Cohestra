@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { ActivityStatusBadge } from "@/components/activities/activity-status-badge";
+import { ActivityScheduleConflictAlert } from "@/components/activities/activity-schedule-conflict-alert";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { fetchAllActivities, type ActivityStatus } from "@/lib/activities-api";
@@ -54,26 +55,6 @@ type ActivityCalendarItemProps = {
   defaultExpanded?: boolean;
   conflictingActivities?: CalendarActivity[];
 };
-
-function formatConflictMessage(conflicts: CalendarActivity[]): string {
-  if (conflicts.length === 0) {
-    return "";
-  }
-
-  if (conflicts.length === 1) {
-    return `Conflicts with ${conflicts[0].name}.`;
-  }
-
-  const preview = conflicts
-    .slice(0, 2)
-    .map((activity) => activity.name)
-    .join(", ");
-  const remainder = conflicts.length - 2;
-
-  return remainder > 0
-    ? `Conflicts with ${preview}, and ${remainder} more.`
-    : `Conflicts with ${preview}.`;
-}
 
 function ActivityCalendarItem({
   activity,
@@ -131,17 +112,19 @@ function ActivityCalendarItem({
                   ? ` · ${activity.location.trim()}`
                   : null}
               </p>
-              {hasConflict ? (
-                <p className="mt-1 flex items-start gap-1 text-xs font-medium text-amber-800 dark:text-amber-200">
-                  <TriangleAlert className="mt-0.5 size-3 shrink-0" aria-hidden />
-                  <span>{formatConflictMessage(conflictingActivities)}</span>
-                </p>
-              ) : null}
             </div>
             <ActivityStatusBadge status={activity.status} className="shrink-0" />
           </div>
         </Link>
       </div>
+      {hasConflict ? (
+        <div className="px-2 pb-2">
+          <ActivityScheduleConflictAlert
+            conflictingActivities={conflictingActivities}
+            variant="inline"
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

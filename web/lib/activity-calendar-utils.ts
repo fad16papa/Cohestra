@@ -199,6 +199,54 @@ export function formatConflictSummary(pairCount: number): string {
   return pairCount === 1 ? "1 scheduling conflict" : `${pairCount} scheduling conflicts`;
 }
 
+export function formatActivityConflictMessage(
+  conflicts: Array<Pick<CalendarActivity, "name">>
+): string {
+  if (conflicts.length === 0) {
+    return "";
+  }
+
+  if (conflicts.length === 1) {
+    return `Conflicts with ${conflicts[0].name}.`;
+  }
+
+  const preview = conflicts
+    .slice(0, 2)
+    .map((activity) => activity.name)
+    .join(", ");
+  const remainder = conflicts.length - 2;
+
+  return remainder > 0
+    ? `Conflicts with ${preview}, and ${remainder} more.`
+    : `Conflicts with ${preview}.`;
+}
+
+export function buildActivityScheduleConflictIndex(
+  activities: Activity[]
+): Map<string, CalendarActivity[]> {
+  const enriched = enrichActivitiesForCalendar(activities);
+  const groupedByDay = groupScheduledActivitiesByDay(enriched);
+  const index = new Map<string, CalendarActivity[]>();
+
+  for (const dayActivities of groupedByDay.values()) {
+    const dayConflicts = findActivityConflictsForDay(dayActivities);
+
+    for (const [activityId, conflictingActivities] of dayConflicts) {
+      const merged = index.get(activityId) ?? [];
+
+      for (const other of conflictingActivities) {
+        if (!merged.some((activity) => activity.id === other.id)) {
+          merged.push(other);
+        }
+      }
+
+      index.set(activityId, merged);
+    }
+  }
+
+  return index;
+}
+
 export function countActivitiesByStatusOnDay(
   activities: CalendarActivity[]
 ): Record<ActivityStatus, number> {

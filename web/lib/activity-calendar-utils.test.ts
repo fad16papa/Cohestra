@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import type { Activity } from "@/lib/activities-api";
 import {
   activitiesScheduleOverlap,
+  buildActivityScheduleConflictIndex,
   countScheduleConflictPairs,
   DEFAULT_ACTIVITY_DURATION_MINUTES,
   findActivityConflictsForDay,
+  formatActivityConflictMessage,
   formatConflictSummary,
   type CalendarActivity,
 } from "@/lib/activity-calendar-utils";
@@ -81,5 +83,27 @@ describe("countScheduleConflictPairs", () => {
     expect(formatConflictSummary(countScheduleConflictPairs(conflicts))).toBe(
       "1 scheduling conflict"
     );
+  });
+});
+
+describe("buildActivityScheduleConflictIndex", () => {
+  it("indexes conflicts across all scheduled days", () => {
+    const first = calendarActivity("a", new Date(2026, 7, 13, 13, 0));
+    const second = calendarActivity("b", new Date(2026, 7, 13, 13, 30));
+    const third = calendarActivity("c", new Date(2026, 7, 20, 10, 0));
+
+    const index = buildActivityScheduleConflictIndex([first, second, third]);
+
+    expect(index.get("a")?.map((activity) => activity.id)).toEqual(["b"]);
+    expect(index.get("b")?.map((activity) => activity.id)).toEqual(["a"]);
+    expect(index.has("c")).toBe(false);
+  });
+});
+
+describe("formatActivityConflictMessage", () => {
+  it("names a single conflicting activity", () => {
+    expect(
+      formatActivityConflictMessage([{ name: "Community Run" } as CalendarActivity])
+    ).toBe("Conflicts with Community Run.");
   });
 });
