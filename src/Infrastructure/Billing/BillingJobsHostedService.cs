@@ -1,11 +1,10 @@
-using System.Text.Json;
 using Cohestra.Application.Billing;
-using Cohestra.Application.Outbox;
+using Cohestra.Application.Email;
 using Cohestra.Application.Tenants;
 using Cohestra.Domain.Billing;
-using Cohestra.Domain.Outbox;
 using Cohestra.Domain.Tenants;
-using Cohestra.Infrastructure.Outbox;
+using Cohestra.Infrastructure.Billing;
+using Cohestra.Infrastructure.Email;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +22,6 @@ public sealed class BillingJobsHostedService(
     IOptions<StripeSettings> stripeOptions,
     ILogger<BillingJobsHostedService> logger) : BackgroundService
 {
-    private const long BillingJobsAdvisoryLockKey = 574839201234567890L;
     private static readonly TimeSpan RunInterval = TimeSpan.FromHours(24);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -49,67 +47,29 @@ public sealed class BillingJobsHostedService(
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
-        var outboxPublisher = scope.ServiceProvider.GetRequiredService<IOutboxPublisher>();
+        var emailSender = scope.ServiceProvider.GetRequiredService<IEmailSender>();
         var billingService = scope.ServiceProvider.GetRequiredService<IBillingService>();
         var accessService = scope.ServiceProvider.GetRequiredService<ITenantAccessService>();
 
-        if (!await TryAcquireBillingJobsLockAsync(db, cancellationToken))
-        {
-            logger.LogInformation("Billing daily jobs skipped — another instance holds the advisory lock.");
-            return;
-        }
+        var now = DateTimeOffset.UtcNow;
+        var tenants = await db.Tenants.ToListAsync(cancellationToken);
 
-        try
+        foreach (var tenant in tenants)
         {
-            var now = DateTimeOffset.UtcNow;
-            var tenants = await db.Tenants.ToListAsync(cancellationToken);
-
-            foreach (var tenant in tenants)
+            if (tenant.Status != TenantStatus.Active)
             {
-                if (tenant.Status != TenantStatus.Active)
-                {
-                    continue;
-                }
-
-                await ProcessTrialReminderAsync(
-                    tenant,
-                    db,
-                    outboxPublisher,
-                    billingService,
-                    now,
-                    cancellationToken);
-                await ProcessDelinquencyAsync(tenant, db, outboxPublisher, now, cancellationToken);
-                await ProcessDormancyAsync(tenant, db, outboxPublisher, now, cancellationToken);
-                await ApplyScheduledPlanIfDueAsync(tenant, db, now, cancellationToken);
-
-                _ = accessService;
+                continue;
             }
 
-            await db.SaveChangesAsync(cancellationToken);
-        }
-        finally
-        {
-            await ReleaseBillingJobsLockAsync(db, cancellationToken);
-        }
-    }
+            await ProcessTrialReminderAsync(tenant, db, emailSender, billingService, now, cancellationToken);
+            await ProcessDelinquencyAsync(tenant, db, emailSender, now, cancellationToken);
+            await ProcessDormancyAsync(tenant, db, emailSender, now, cancellationToken);
+            await ApplyScheduledPlanIfDueAsync(tenant, db, now, cancellationToken);
 
-    private static async Task<bool> TryAcquireBillingJobsLockAsync(
-        CohestraDbContext db,
-        CancellationToken cancellationToken)
-    {
-        return await db.Database
-            .SqlQueryRaw<bool>("SELECT pg_try_advisory_lock({0})", BillingJobsAdvisoryLockKey)
-            .SingleAsync(cancellationToken);
-    }
+            _ = accessService;
+        }
 
-    private static async Task ReleaseBillingJobsLockAsync(
-        CohestraDbContext db,
-        CancellationToken cancellationToken)
-    {
-        await db.Database.ExecuteSqlRawAsync(
-            "SELECT pg_advisory_unlock({0})",
-            [BillingJobsAdvisoryLockKey],
-            cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     private static async Task ApplyScheduledPlanIfDueAsync(
@@ -132,7 +92,7 @@ public sealed class BillingJobsHostedService(
     private async Task ProcessTrialReminderAsync(
         Tenant tenant,
         CohestraDbContext db,
-        IOutboxPublisher outboxPublisher,
+        IEmailSender emailSender,
         IBillingService billingService,
         DateTimeOffset now,
         CancellationToken cancellationToken)
@@ -176,29 +136,28 @@ public sealed class BillingJobsHostedService(
             ? "Manage billing from Settings → Billing in your workspace."
             : $"Manage billing: {portalUrl}";
 
-        var plainBody = $"Your Cohestra trial ends on {trialEnd:MMMM d, yyyy}. {portalLine}";
-        var htmlBody = $"<p>Your trial ends on <strong>{trialEnd:MMMM d, yyyy}</strong>.</p><p>{portalLine}</p>";
-        EnqueueBillingNotification(
-            outboxPublisher,
-            tenant,
-            BillingNotificationNoticeTypes.TrialReminder,
-            $"Trial ending soon — {tenant.Name}",
-            plainBody,
-            htmlBody,
-            $"billing:trial-reminder:{tenant.Id}:{now:yyyy-MM-dd}",
-            now);
+        await emailSender.SendAsync(
+            new EmailMessage(
+                tenant.AdminContactEmail,
+                null,
+                $"Trial ending soon — {tenant.Name}",
+                $"Your Cohestra trial ends on {trialEnd:MMMM d, yyyy}. {portalLine}",
+                $"<p>Your trial ends on <strong>{trialEnd:MMMM d, yyyy}</strong>.</p><p>{portalLine}</p>"),
+            cancellationToken);
+
+        tenant.LastTrialReminderSentAt = now;
     }
 
-    private static Task ProcessDelinquencyAsync(
+    private static async Task ProcessDelinquencyAsync(
         Tenant tenant,
         CohestraDbContext db,
-        IOutboxPublisher outboxPublisher,
+        IEmailSender emailSender,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
         if (tenant.IsComplimentary || tenant.DelinquencyStartedAt is not { } started)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         var days = (int)Math.Floor((now - started).TotalDays) + 1;
@@ -208,7 +167,7 @@ public sealed class BillingJobsHostedService(
             tenant.Status = TenantStatus.Archived;
             tenant.ArchivedAt = now;
             tenant.UpdatedAt = now;
-            return Task.CompletedTask;
+            return;
         }
 
         if (days >= 8 && tenant.BillingStatus == BillingStatus.PastDue)
@@ -221,46 +180,40 @@ public sealed class BillingJobsHostedService(
         {
             if (tenant.LastPastDueNoticeAt is { } last && last.Date == now.Date)
             {
-                return Task.CompletedTask;
+                return;
             }
 
-            EnqueueBillingNotification(
-                outboxPublisher,
+            await SendBillingNoticeAsync(
                 tenant,
-                BillingNotificationNoticeTypes.PastDue,
+                emailSender,
                 "Payment past due",
                 "Your last payment did not succeed. Update your payment method to keep full access.",
-                "<p>Your last payment did not succeed. Update your payment method to keep full access.</p>",
-                $"billing:past-due:{tenant.Id}:{now:yyyy-MM-dd}",
-                now);
-            return Task.CompletedTask;
+                cancellationToken);
+            tenant.LastPastDueNoticeAt = now;
+            return;
         }
 
         if (tenant.BillingStatus == BillingStatus.OnHold)
         {
             if (tenant.LastOnHoldNoticeAt is { } last && (now - last).TotalDays < 7)
             {
-                return Task.CompletedTask;
+                return;
             }
 
-            EnqueueBillingNotification(
-                outboxPublisher,
+            await SendBillingNoticeAsync(
                 tenant,
-                BillingNotificationNoticeTypes.OnHold,
+                emailSender,
                 "Workspace on hold",
                 "Billing is on hold. The workspace is read-only until payment is restored.",
-                "<p>Billing is on hold. The workspace is read-only until payment is restored.</p>",
-                $"billing:on-hold:{tenant.Id}:{now:yyyy-MM-dd}",
-                now);
+                cancellationToken);
+            tenant.LastOnHoldNoticeAt = now;
         }
-
-        return Task.CompletedTask;
     }
 
-    private static Task ProcessDormancyAsync(
+    private static async Task ProcessDormancyAsync(
         Tenant tenant,
         CohestraDbContext db,
-        IOutboxPublisher outboxPublisher,
+        IEmailSender emailSender,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
@@ -268,7 +221,7 @@ public sealed class BillingJobsHostedService(
             || tenant.Plan is not TenantPlan.Basic
             || tenant.BillingStatus is not BillingStatus.Free)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         var lastActivity = tenant.LastActivityAt ?? tenant.CreatedAt;
@@ -279,80 +232,48 @@ public sealed class BillingJobsHostedService(
             tenant.Status = TenantStatus.Archived;
             tenant.ArchivedAt = now;
             tenant.UpdatedAt = now;
-            return Task.CompletedTask;
+            return;
         }
 
         if (idleDays >= 83)
         {
             if (tenant.LastDormancyWarningAt is not null)
             {
-                return Task.CompletedTask;
+                return;
             }
 
             if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
             {
-                return Task.CompletedTask;
+                return;
             }
 
-            EnqueueBillingNotification(
-                outboxPublisher,
-                tenant,
-                BillingNotificationNoticeTypes.Dormancy,
-                $"Inactive workspace — {tenant.Name}",
-                "Your free Basic workspace will archive in 7 days without admin activity or public registrations.",
-                "<p>Your free Basic workspace will archive in 7 days without admin activity or public registrations.</p>",
-                $"billing:dormancy:{tenant.Id}",
-                now);
-        }
+            await emailSender.SendAsync(
+                new EmailMessage(
+                    tenant.AdminContactEmail,
+                    null,
+                    $"Inactive workspace — {tenant.Name}",
+                    "Your free Basic workspace will archive in 7 days without admin activity or public registrations.",
+                    "<p>Your free Basic workspace will archive in 7 days without admin activity or public registrations.</p>"),
+                cancellationToken);
 
-        return Task.CompletedTask;
+            tenant.LastDormancyWarningAt = now;
+        }
     }
 
-    private static void EnqueueBillingNotification(
-        IOutboxPublisher outboxPublisher,
+    private static async Task SendBillingNoticeAsync(
         Tenant tenant,
-        string noticeType,
+        IEmailSender emailSender,
         string subject,
-        string plainBody,
-        string htmlBody,
-        string dedupeKey,
-        DateTimeOffset now)
+        string body,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
         {
             return;
         }
 
-        var payload = JsonSerializer.Serialize(new BillingNotificationOutboxPayload(
-            tenant.Id,
-            noticeType,
-            tenant.AdminContactEmail.Trim(),
-            subject,
-            plainBody,
-            htmlBody));
-
-        outboxPublisher.Enqueue(
-            tenant.Id,
-            OutboxMessageTypes.BillingNotification,
-            payload,
-            dedupeKey);
-
-        switch (noticeType)
-        {
-            case BillingNotificationNoticeTypes.TrialReminder:
-                tenant.LastTrialReminderSentAt = now;
-                break;
-            case BillingNotificationNoticeTypes.PastDue:
-                tenant.LastPastDueNoticeAt = now;
-                break;
-            case BillingNotificationNoticeTypes.OnHold:
-                tenant.LastOnHoldNoticeAt = now;
-                break;
-            case BillingNotificationNoticeTypes.Dormancy:
-                tenant.LastDormancyWarningAt = now;
-                break;
-        }
-
-        tenant.UpdatedAt = now;
+        await emailSender.SendAsync(
+            new EmailMessage(tenant.AdminContactEmail, null, subject, body, $"<p>{body}</p>"),
+            cancellationToken);
     }
 }

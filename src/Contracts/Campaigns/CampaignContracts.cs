@@ -21,7 +21,6 @@ public sealed record SendCampaignResponse(
     int SentCount,
     int FailedCount,
     int SkippedCount,
-    string Status,
     IReadOnlyList<CampaignRecipientResultResponse> Results);
 
 public sealed record CampaignListItemResponse(

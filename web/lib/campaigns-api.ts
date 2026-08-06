@@ -114,7 +114,7 @@ export type CampaignRecipientResult = {
   clientId: string;
   fullName: string;
   email: string | null;
-  status: "queued" | "sent" | "failed" | "skipped";
+  status: "sent" | "failed" | "skipped";
   failureReason: string | null;
 };
 
@@ -125,7 +125,6 @@ export type SendCampaignResult = {
   sentCount: number;
   failedCount: number;
   skippedCount: number;
-  status: string;
   results: CampaignRecipientResult[];
 };
 
@@ -345,7 +344,7 @@ export async function sendCampaign(
     }
   );
 
-  if (!response.ok && response.status !== 202) {
+  if (!response.ok) {
     throw new Error(await parseProblemDetail(response));
   }
 
@@ -355,14 +354,13 @@ export async function sendCampaign(
     throw new Error("Invalid campaign send payload");
   }
 
-  const initial = {
+  return {
     campaignId: String(raw.campaignId ?? raw.CampaignId),
     subject: String(raw.subject ?? raw.Subject),
     sentAt: String(raw.sentAt ?? raw.SentAt),
     sentCount: Number(raw.sentCount ?? raw.SentCount ?? 0),
     failedCount: Number(raw.failedCount ?? raw.FailedCount ?? 0),
     skippedCount: Number(raw.skippedCount ?? raw.SkippedCount ?? 0),
-    status: String(raw.status ?? raw.Status ?? "completed"),
     results: results.map((item) => {
       const row = item as Record<string, unknown>;
       const status = row.status ?? row.Status;
@@ -370,10 +368,7 @@ export async function sendCampaign(
         clientId: String(row.clientId ?? row.ClientId),
         fullName: String(row.fullName ?? row.FullName),
         email: typeof row.email === "string" ? row.email : typeof row.Email === "string" ? row.Email : null,
-        status:
-          status === "queued" || status === "sent" || status === "failed" || status === "skipped"
-            ? status
-            : "failed",
+        status: status === "sent" || status === "failed" || status === "skipped" ? status : "failed",
         failureReason:
           typeof row.failureReason === "string"
             ? row.failureReason
@@ -382,41 +377,7 @@ export async function sendCampaign(
               : null,
       };
     }),
-  } satisfies SendCampaignResult;
-
-  if (initial.status !== "queued" && initial.status !== "sending") {
-    return initial;
-  }
-
-  return waitForCampaignDelivery(authFetch, initial.campaignId, initial);
-}
-
-async function waitForCampaignDelivery(
-  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
-  campaignId: string,
-  initial: SendCampaignResult
-): Promise<SendCampaignResult> {
-  const deadline = Date.now() + 60_000;
-
-  while (Date.now() < deadline) {
-    const detail = await fetchCampaignById(authFetch, campaignId);
-    if (detail.status === "completed" || detail.status === "failed") {
-      return {
-        campaignId: detail.id,
-        subject: detail.subject,
-        sentAt: detail.sentAt,
-        sentCount: detail.sentCount,
-        failedCount: detail.failedCount,
-        skippedCount: detail.skippedCount,
-        status: detail.status,
-        results: detail.results,
-      };
-    }
-
-    await new Promise((resolve) => window.setTimeout(resolve, 1500));
-  }
-
-  return initial;
+  };
 }
 
 export async function fetchCampaigns(
@@ -641,10 +602,7 @@ export async function fetchCampaignById(
         clientId: String(row.clientId ?? row.ClientId),
         fullName: String(row.fullName ?? row.FullName),
         email: typeof row.email === "string" ? row.email : typeof row.Email === "string" ? row.Email : null,
-        status:
-          status === "queued" || status === "sent" || status === "failed" || status === "skipped"
-            ? status
-            : "failed",
+        status: status === "sent" || status === "failed" || status === "skipped" ? status : "failed",
         failureReason:
           typeof row.failureReason === "string"
             ? row.failureReason
