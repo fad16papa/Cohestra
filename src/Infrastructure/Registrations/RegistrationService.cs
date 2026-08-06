@@ -1,12 +1,16 @@
 using Cohestra.Application.Activities;
+using Cohestra.Application.Outbox;
 using Cohestra.Application.Registrations;
 using Cohestra.Application.Tenants;
 using Cohestra.Domain.Activities;
+using Cohestra.Domain.Outbox;
 using Cohestra.Domain.Registrations;
 using Cohestra.Infrastructure.Activities;
+using Cohestra.Infrastructure.Outbox;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace Cohestra.Infrastructure.Registrations;
 
@@ -15,7 +19,7 @@ public sealed class RegistrationService(
     IRegistrationIdempotencyStore idempotencyStore,
     ClientDeduplicationService clientDeduplicationService,
     RegistrationNumberGenerator registrationNumberGenerator,
-    IRegistrationNotificationService registrationNotificationService,
+    IOutboxPublisher outboxPublisher,
     IActivityService activityService,
     ICurrentTenant currentTenant,
     ILogger<RegistrationService> logger) : IRegistrationService
@@ -113,29 +117,6 @@ public sealed class RegistrationService(
         try
         {
             var result = await SubmitCoreAsync(activitySlug, answers, tenantId, cancellationToken);
-
-            if (result.IsSuccess && !result.IsReplay)
-            {
-                try
-                {
-                    var confirmation = await registrationNotificationService.SendConfirmationIfApplicableAsync(
-                        result.RegistrationId,
-                        cancellationToken);
-
-                    result = result with
-                    {
-                        ConfirmationEmailSent = confirmation.Sent,
-                        ConfirmationEmail = confirmation.RecipientEmail,
-                    };
-                }
-                catch (Exception ex) when (ex is not OperationCanceledException)
-                {
-                    logger.LogWarning(
-                        ex,
-                        "Registration confirmation email failed after save for {RegistrationId}.",
-                        result.RegistrationId);
-                }
-            }
 
             if (result.IsSuccess &&
                 normalizedIdempotencyKey is not null &&
@@ -292,6 +273,13 @@ public sealed class RegistrationService(
 
         dbContext.Registrations.Add(registration);
 
+        var payload = JsonSerializer.Serialize(new RegistrationConfirmationOutboxPayload(registration.Id));
+        outboxPublisher.Enqueue(
+            tenantId,
+            OutboxMessageTypes.RegistrationConfirmation,
+            payload,
+            $"registration:{registration.Id}:confirmation");
+
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -326,7 +314,9 @@ public sealed class RegistrationService(
             registration.Id,
             registration.RegistrationNumber,
             client.Id,
-            clientCreated);
+            clientCreated,
+            confirmationEmailQueued: profile.Email is not null && !string.IsNullOrWhiteSpace(profile.Email.Trim()),
+            confirmationEmail: profile.Email?.Trim());
     }
 
     private async Task RefreshPublicActivityCacheBestEffortAsync(

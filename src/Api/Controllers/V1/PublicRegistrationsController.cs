@@ -140,6 +140,7 @@ public class PublicRegistrationsController(
             RegistrationNumber: result.RegistrationNumber,
             ClientId: result.ClientId,
             ConfirmationEmailSent: result.ConfirmationEmailSent,
+            ConfirmationEmailQueued: result.ConfirmationEmailQueued,
             ConfirmationEmail: result.ConfirmationEmail);
 
         return StatusCode(StatusCodes.Status201Created, response);
