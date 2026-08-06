@@ -93,11 +93,15 @@ function ActivityQuickFacts({ activity }: { activity: Activity }) {
 
 export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) {
   const { authFetch } = useAuth();
-  const { getConflictsForActivity, ready, error, refresh } =
-    useActivityScheduleConflicts();
+  const {
+    getConflictsForActivity,
+    ready: conflictsReady,
+    error: conflictError,
+    refresh,
+  } = useActivityScheduleConflicts();
   const searchParams = useSearchParams();
   const [activity, setActivity] = useState<Activity | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ActivityDetailTab>(() => {
     const tab = searchParams.get("tab");
     return isActivityDetailTab(tab) ? tab : "overview";
@@ -125,7 +129,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
       })
       .catch((loadError) => {
         if (!cancelled) {
-          setError(
+          setLoadError(
             loadError instanceof Error
               ? loadError.message
               : "Could not load activity."
@@ -146,10 +150,10 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     [refresh]
   );
 
-  if (error) {
+  if (loadError) {
     return (
       <ProductErrorState
-        message={error}
+        message={loadError}
         onRetry={() => window.location.reload()}
         backHref="/activities"
         backLabel="Back to activities"
@@ -170,7 +174,9 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     slug: activity.slug,
   });
   const scheduleConflicts =
-    ready && !error ? getConflictsForActivity(activity.id) : [];
+    conflictsReady && !conflictError
+      ? getConflictsForActivity(activity.id)
+      : [];
 
   return (
     <div className="space-y-6">
@@ -186,9 +192,9 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
         <ActivityStatusBadge status={activity.status} />
       </div>
 
-      {error ? (
+      {conflictError ? (
         <p role="status" className="text-sm text-text-muted-warm">
-          Schedule conflict check unavailable: {error}
+          Schedule conflict check unavailable: {conflictError}
         </p>
       ) : null}
 

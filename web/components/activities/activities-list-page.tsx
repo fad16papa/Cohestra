@@ -80,7 +80,11 @@ function ActivitySearchInput({ committedValue, onCommit }: ActivitySearchInputPr
 
 export function ActivitiesListPage() {
   const { authFetch } = useAuth();
-  const { getConflictsForActivity, ready, error } = useActivityScheduleConflicts();
+  const {
+    getConflictsForActivity,
+    ready: conflictsReady,
+    error: conflictError,
+  } = useActivityScheduleConflicts();
   const searchParams = useSearchParams();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [page, setPage] = useState(1);
@@ -299,9 +303,9 @@ export function ActivitiesListPage() {
         </p>
       ) : null}
 
-      {error ? (
+      {conflictError ? (
         <p role="status" className="text-sm text-text-muted-warm">
-          Schedule conflict check unavailable: {error}
+          Schedule conflict check unavailable: {conflictError}
         </p>
       ) : null}
 
@@ -344,7 +348,9 @@ export function ActivitiesListPage() {
                 key={activity.id}
                 activity={activity}
                 conflictingActivities={
-                  ready && !error ? getConflictsForActivity(activity.id) : []
+                  conflictsReady && !conflictError
+                    ? getConflictsForActivity(activity.id)
+                    : []
                 }
               />
             ))}

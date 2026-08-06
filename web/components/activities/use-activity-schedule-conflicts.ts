@@ -24,8 +24,11 @@ export function useActivityScheduleConflicts() {
 
   useEffect(() => {
     let cancelled = false;
+    const isInitialLoad = reloadToken === 0;
 
-    setReady(false);
+    if (isInitialLoad) {
+      setReady(false);
+    }
     setError(null);
 
     void fetchAllActivities(authFetch)

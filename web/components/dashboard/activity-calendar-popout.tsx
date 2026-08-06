@@ -360,7 +360,12 @@ export function ActivityCalendarPopout({
                         className={cn(
                           "flex min-h-11 flex-col items-center justify-start rounded-lg px-0.5 py-1 text-xs transition-colors",
                           inMonth ? "text-text-warm" : "text-text-muted-warm/50",
-                          isSelected && "bg-primary/15 ring-1 ring-primary/40",
+                          isSelected &&
+                            hasConflicts &&
+                            "bg-primary/15 ring-1 ring-amber-400/50",
+                          isSelected &&
+                            !hasConflicts &&
+                            "bg-primary/15 ring-1 ring-primary/40",
                           !isSelected && isToday && "outline outline-1 outline-primary/40 -outline-offset-1",
                           !isSelected && hasConflicts && "ring-1 ring-amber-400/50",
                           !isSelected && "hover:bg-muted/50"
