@@ -23,8 +23,8 @@ Technical mechanism decisions referenced by the PRD. Canonical architecture deci
 **Production:** `{tenant-slug}.cohestra.app` → nginx → web/API with `Host` header resolution.
 
 **Local development options:**
-1. `/etc/hosts` entries: `ikigai.localhost`, `tgh.localhost`
-2. Env override: `DEV_TENANT_SLUG=ikigai` when using plain `localhost`
+1. `/etc/hosts` entries: `ikigai.localhost`, `tgh.localhost` — preferred for tenant-scoped testing
+2. Env override: `DEV_TENANT_SLUG=ikigai` when using plain `localhost` (optional; **not** set in default Docker web container — bare `localhost` serves marketing apex)
 3. Document in README (spine AD-4 / local-dev convention)
 
 ## Identity model (ratified — AD-7)
@@ -60,6 +60,39 @@ Platform 0 Docker project name: `cohestra-infra` (local).
 | 13 API scoping | FR-9–10 |
 | 14 Onboarding + billing | FR-1, FR-6, FR-19–24, UJ-1–2 |
 | 15 Public surfaces | FR-11–13, FR-14 |
+| 22 Plan limit enforcement | FR-27 |
+| 23 Dashboard operator UX | FR-15 (UI extension) |
+| 28 Transactional outbox | FR-28 |
+
+## Dashboard metrics API (shipped 2026-08-07 — FR-15)
+
+**Endpoint:** `GET /api/v1/admin/dashboard/metrics`
+
+**Extended response fields (tenant-scoped):**
+- `registrationsTrend` — `{ date, count }[]` for last `trendDays` (default 30)
+- `registrationsInPeriod` / `registrationsInPreviousPeriod` — WoW delta inputs
+- `leadStatusBreakdown` — `{ new, contacted, active, inactive }`
+- Existing: KPI counts, `activityPerformance`, `followUpCoveragePercent`, `periodDays`, `computedAt`
+
+**Web:** Three views (Overview / Graphs / Tables) on `/dashboard`; view choice persisted in `localStorage`. Recharts for trend area, activity bar, lead pipeline donut (stacked layout in Graphs). 60s poll interval.
+
+## Plan limit enforcement (shipped 2026-08-07 — FR-27)
+
+**Backend:** `TenantPlanLimitValidator` — shared `used >= limit` checks for communities, publish, monthly registrations. Called from `ActivityService`, `CommunityService`, `RegistrationService`. `TenantAccessService` applies `ReadOnly_OverLimit` after downgrade (FR-24).
+
+**Frontend:** `PlanLimitAlert` on activities list, create activity, publish controls, communities page. `plan-limit-utils.ts` mirrors sidebar LimitMeter math.
+
+**Seat exception:** Invites block when **over** seat cap, not at exact cap.
+
+## Transactional outbox (shipped 2026-08 — FR-28)
+
+**Pattern:** `IOutboxPublisher` writes `OutboxMessages` in the same EF transaction as business mutations. Background worker claims with lease, dispatches via typed handlers.
+
+**Message types:** `RegistrationConfirmation`, `BillingNotification`, `CampaignRecipient`.
+
+**Campaigns:** Send API returns 202 + poll; completion when outbox item dispatched.
+
+**Idempotency:** Dedupe index on `(TenantId, MessageType, IdempotencyKey)` prevents double-send.
 
 ## Cloud development workflow
 

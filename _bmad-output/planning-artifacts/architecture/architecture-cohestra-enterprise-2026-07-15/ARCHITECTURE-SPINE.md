@@ -7,11 +7,12 @@ paradigm: layered (Api · Application · Domain · Infrastructure · Contracts) 
 scope: Tenancy spine, identity, routing, isolation — Epics 11–15 foundation
 status: final
 created: 2026-07-15
-updated: 2026-07-18
-binds: [FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7, FR-8, FR-9, FR-10, FR-11, FR-12, FR-13, FR-14, FR-19, FR-20, FR-21, FR-22, FR-23, FR-24]
+updated: 2026-08-07
+binds: [FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-7, FR-8, FR-9, FR-10, FR-11, FR-12, FR-13, FR-14, FR-15, FR-19, FR-20, FR-21, FR-22, FR-23, FR-24, FR-27, FR-28]
 sources:
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
+  - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/implementation-changelog-2026-08.md
   - _bmad-output/planning-artifacts/architecture.md
   - _bmad-output/planning-artifacts/architecture/architecture-website-builder-epic-9-2026-07-06/ARCHITECTURE-SPINE.md
 companions:
@@ -116,7 +117,19 @@ flowchart TB
 
 - **Binds:** Website builder, campaigns, seats, FR-12, §13.4 PRD
 - **Prevents:** UI-only tier enforcement bypass
-- **Rule:** `Tenant.Plan` ∈ `Basic`, `Core`, `Pro`, `Enterprise`. **Basic:** `BillingStatus = Free`, no Stripe, **no SitePage** (public stub), fixed simple reports + CSV. **Core:** fixed SitePage (no composer), queryable reports. **Pro:** SitePage builder + campaigns + campaign report analytics. Registration notifications on all tiers. Enforce limits per §13.4.
+- **Rule:** `Tenant.Plan` ∈ `Basic`, `Core`, `Pro`, `Enterprise`. **Basic:** `BillingStatus = Free`, no Stripe, **no SitePage** (public stub), fixed simple reports + CSV. **Core:** fixed SitePage (no composer), queryable reports. **Pro:** SitePage builder + campaigns + campaign report analytics. Registration notifications on all tiers. Enforce limits per §13.4 **at mutation time** (FR-27) — not display-only. See AD-12.
+
+### AD-12 — Plan usage limits enforced at mutation time
+
+- **Binds:** Communities, published activities, monthly registrations, seats, FR-27, §13.4 PRD
+- **Prevents:** Tenants exceeding tier caps via API bypass; UI-only LimitMeter without backend gate
+- **Rule:** `TenantPlanLimitValidator` centralizes capacity math (`used >= limit`). **Communities** and **publish activity** block at ≥100%. **Monthly public registrations** block at ≥100% with HTTP 409 `plan_registration_limit`. **Seats** block only when **over** capacity (exact cap still allows invite). **MaxRegistrants** per activity cannot exceed plan monthly registration limit (Epic 20). Admin UI mirrors enforcement via `PlanLimitAlert` + disabled controls. Over-limit after downgrade → `TenantAccessService` read-only (FR-24).
+
+### AD-13 — Transactional outbox for email side effects
+
+- **Binds:** Registration confirmation, billing notifications, async campaign sends, FR-28
+- **Prevents:** Lost emails when API process crashes after DB commit; double-send on retry without idempotency
+- **Rule:** `IOutboxPublisher` writes `OutboxMessages` in the **same EF transaction** as business mutations. `OutboxDispatcherHostedService` claims with lease, dispatches via typed `IOutboxMessageHandler` implementations. Dedupe index on `(TenantId, MessageType, IdempotencyKey)`. Campaign send API returns **202 Accepted** + poll URL; completion when outbox item dispatched. Redis outage policies for rate limiters unchanged (Epic 18); outbox survives API restart.
 
 ### AD-11 — Stripe billing with test/live environment split
 
@@ -174,6 +187,11 @@ src/
   Infrastructure/
     Tenancy/TenantResolutionMiddleware.cs
     Tenancy/TenantQueryFilterExtensions.cs
+    Tenants/TenantPlanLimitValidator.cs      # FR-27 capacity checks
+    Tenants/TenantAccessService.cs           # over-limit read-only (FR-24)
+    Outbox/OutboxPublisher.cs                # FR-28 same-transaction enqueue
+    Outbox/OutboxDispatcherHostedService.cs
+    Outbox/*OutboxHandler.cs
     Billing/BillingService.cs
     Billing/StripeWebhookHandler.cs
     Billing/TrialReminderJob.cs
@@ -227,8 +245,11 @@ erDiagram
 | Data isolation FR-8–10 | EF filters + middleware | AD-1, AD-10 |
 | Subdomain routing FR-11 | nginx + middleware + Next.js | AD-2 |
 | Per-tenant SitePage FR-12–13 | `SitePageService` | AD-4, AD-6, AD-8 |
-| Platform 0 features FR-14–16 | Existing services + `TenantId` | AD-1, AD-5 |
-| Plan gates §13.4 | `PlanGateFilter` or service checks | AD-8 |
+| Platform 0 features FR-14–16 | Existing services + `TenantId` | AD-1, AD-5, AD-12 |
+| Dashboard metrics FR-15 | `DashboardService` + Redis `tenant:{id}:dashboard:metrics` | AD-6 |
+| Plan limits §13.4 / FR-27 | `TenantPlanLimitValidator`, `TenantAccessService` | AD-8, AD-12 |
+| Transactional email FR-28 | `OutboxPublisher`, `OutboxDispatcherHostedService` | AD-13 |
+| Plan gates §13.4 | `PlanGateFilter` or service checks | AD-8, AD-12 |
 | Stripe billing FR-19–24 | `BillingService`, `StripeWebhookController`, Customer Portal, delinquency jobs | AD-11 |
 | Dual status / access FR-3 | Access gate = Status ∩ BillingStatus | AD-11 |
 | Trial reminders FR-21 | `TrialReminderJob` (daily) | AD-11 |
@@ -238,7 +259,7 @@ erDiagram
 
 | Environment | Docker project | Tenant routing |
 | --- | --- | --- |
-| Local dev | `cohestra-infra` | `{slug}.localhost` or `DEV_TENANT_SLUG` |
+| Local dev | `cohestra-infra` | `{slug}.localhost` preferred; bare `localhost` → marketing apex; optional `DEV_TENANT_SLUG` on **api** only |
 | Production | `cohestra-infra-uat` | `{slug}.cohestra.app` |
 | Marketing apex | Same stack | `cohestra.app` → marketing routes only |
 
@@ -252,3 +273,4 @@ erDiagram
 | Platform Admin impersonation | Audit complexity; v1 Platform Admin is metadata + lifecycle (Suspend/reactivate) only — no login-as-tenant (PRD A-5). **Suspend** break-glass remains in scope (UJ-4 / FR-2). |
 | Per-tenant SendGrid API keys | Shared platform key + per-tenant sender auth first |
 | Event sourcing / tenant audit export | Append-only logs sufficient for MVP |
+| Activities list data table view | Card grid ratified (20/page); table experiment reverted 2026-08-07 |

@@ -66,8 +66,8 @@ design: ./DESIGN.md
 | Surface | Route | Who | Plan notes |
 |---------|-------|-----|------------|
 | Login | `/login` | All roles | Tenant-scoped |
-| Dashboard | `/dashboard` | Admin, Member | Plan limits banners |
-| Activities / Communities / Categories | `/activities…` | Admin, Member | Cap warnings at 80% |
+| Dashboard | `/dashboard` | Admin, Member | Plan limits banners; **Overview / Graphs / Tables** view switcher |
+| Activities / Communities / Categories | `/activities…` | Admin, Member | **Card grid** 20/page; cap warnings at 80%; schedule conflict badges |
 | Clients | `/clients…` | Admin, Member | — |
 | Reports | `/reports` | Admin, Member | Basic = fixed + CSV; Core+ = queryable; Pro + campaigns |
 | Campaigns | `/campaigns…` | Admin, Member | **Pro only** — else UpgradePanel |
@@ -149,6 +149,8 @@ Behavioral. Visuals in `DESIGN.md`.
 | **SeatGate** | Soft-block invite when `active + pending ≥ seat cap`. Basic: disable + upgrade Core. |
 | **StubHome** | No SitePage entity; list published activities only; empty state: "No published activities yet." |
 | **LimitMeter** | Communities / published / regs — warn ≥80%, block at 100% with clear which dial |
+| **PlanLimitAlert** | Inline alert on create/publish/communities/activities list when dial at warn or block; mirrors LimitMeter copy |
+| **DashboardViewTabs** | Overview · Graphs · Tables — persisted in localStorage; Graphs lead pipeline = stacked donut + status rows |
 | **ToSCheckbox** | Signup blocked until checked; versions logged (FR-26a) |
 | **CaptchaGate** | Google reCAPTCHA always on self-serve signup (FR-26); must expose accessible challenge path |
 
@@ -160,7 +162,7 @@ Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless 
 |-------|-----------|
 | Basic empty tenant | Dashboard empty + CTA create Community/Activity; stub empty list |
 | At seat cap | SeatGate on Team |
-| At published/regs cap | LimitMeter block; cannot publish / public register rejects with friendly message |
+| At published/regs cap | LimitMeter block + **PlanLimitAlert** on gated forms; cannot publish / public register rejects `plan_registration_limit` |
 | Trialing | PlanBadge + trial end in BillingBanner (last 7 days) |
 | PastDue | Warn banner; full access until day 7 |
 | OnHold | Danger banner; admin read-only; public registration blocked |
