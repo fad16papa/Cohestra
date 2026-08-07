@@ -18,6 +18,10 @@ public sealed record PublicRegistrationSubmitResult
 
     public bool IsActivityFull { get; init; }
 
+    public bool IsPlanRegistrationLimitReached { get; init; }
+
+    public string? PlanLimitDetail { get; init; }
+
     public bool ClientCreated { get; init; }
 
     public bool IsReplay { get; init; }
@@ -73,4 +77,7 @@ public sealed record PublicRegistrationSubmitResult
 
     public static PublicRegistrationSubmitResult ActivityFull() =>
         new() { IsActivityFull = true };
+
+    public static PublicRegistrationSubmitResult PlanRegistrationLimitReached(string detail) =>
+        new() { IsPlanRegistrationLimitReached = true, PlanLimitDetail = detail };
 }

@@ -6,6 +6,7 @@ using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
 using Cohestra.Infrastructure.Tenancy;
+using Cohestra.Infrastructure.Tenants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Npgsql;
@@ -375,6 +376,14 @@ public sealed class ActivityService(
                 throw new InvalidOperationException(publishGateError);
             }
 
+            var publishLimitError = await ValidatePublishedActivityPlanLimitAsync(
+                activity.TenantId,
+                cancellationToken);
+            if (publishLimitError is not null)
+            {
+                throw new InvalidOperationException(publishLimitError);
+            }
+
             activity.Status = ActivityStatus.Published;
             activity.UpdatedAt = DateTimeOffset.UtcNow;
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -695,6 +704,31 @@ public sealed class ActivityService(
         return ActivityCapacityValidator.ValidateMaxRegistrantsAgainstPlanLimit(
             maxRegistrants,
             planLimit);
+    }
+
+    private async Task<string?> ValidatePublishedActivityPlanLimitAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return null;
+        }
+
+        var limits = TenantPlanLimits.For(tenant.Plan);
+        var publishedCount = await dbContext.Activities
+            .AsNoTracking()
+            .CountAsync(
+                item => item.TenantId == tenantId && item.Status == ActivityStatus.Published,
+                cancellationToken);
+
+        return TenantPlanLimitValidator.ValidateCanPublishActivity(
+            publishedCount,
+            limits.PublishedActivities);
     }
 
     private static ActivityStatus? ParseStatus(string? value)

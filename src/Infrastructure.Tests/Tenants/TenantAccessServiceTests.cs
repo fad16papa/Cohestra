@@ -21,7 +21,7 @@ public sealed class TenantAccessServiceTests
     }
 
     [Fact]
-    public void IsOverPlanLimits_AllowsAtCap()
+    public void IsOverPlanLimits_BlocksAtCapForResources()
     {
         var limits = TenantPlanLimits.For(TenantPlan.Core);
         var usage = new TenantUsageSnapshot(
@@ -29,6 +29,19 @@ public sealed class TenantAccessServiceTests
             limits.Communities,
             limits.PublishedActivities,
             limits.RegistrationsPerMonth);
+
+        Assert.True(TenantAccessService.IsOverPlanLimits(TenantPlan.Core, usage));
+    }
+
+    [Fact]
+    public void IsOverPlanLimits_AllowsSeatsAtCapacity()
+    {
+        var limits = TenantPlanLimits.For(TenantPlan.Core);
+        var usage = new TenantUsageSnapshot(
+            limits.Seats,
+            0,
+            0,
+            0);
 
         Assert.False(TenantAccessService.IsOverPlanLimits(TenantPlan.Core, usage));
     }

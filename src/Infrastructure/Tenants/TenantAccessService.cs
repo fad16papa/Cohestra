@@ -114,8 +114,8 @@ public sealed class TenantAccessService(CohestraDbContext dbContext) : ITenantAc
     {
         var limits = TenantPlanLimits.For(plan);
         return usage.SeatsUsed > limits.Seats
-            || usage.Communities > limits.Communities
-            || usage.PublishedActivities > limits.PublishedActivities
-            || usage.RegistrationsThisMonth > limits.RegistrationsPerMonth;
+            || usage.Communities >= limits.Communities
+            || usage.PublishedActivities >= limits.PublishedActivities
+            || usage.RegistrationsThisMonth >= limits.RegistrationsPerMonth;
     }
 }

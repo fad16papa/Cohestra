@@ -7,6 +7,8 @@ import { useSearchParams } from "next/navigation";
 import { ActivityCard } from "@/components/activities/activity-card";
 import { useActivityScheduleConflicts } from "@/components/activities/use-activity-schedule-conflicts";
 import { useAuth } from "@/components/auth/auth-provider";
+import { PlanLimitAlert } from "@/components/shell/plan-limit-alert";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { CardGridSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
@@ -20,6 +22,7 @@ import {
 } from "@/lib/activities-api";
 import { fetchCategories } from "@/lib/categories-api";
 import { fetchCommunities } from "@/lib/communities-api";
+import { getCreateActivityPlanWarnings } from "@/lib/plan-limit-utils";
 import { cn } from "@/lib/utils";
 import { CalendarDays } from "lucide-react";
 
@@ -80,6 +83,8 @@ function ActivitySearchInput({ committedValue, onCommit }: ActivitySearchInputPr
 
 export function ActivitiesListPage() {
   const { authFetch } = useAuth();
+  const { shell } = useTenantShell();
+  const planWarnings = getCreateActivityPlanWarnings(shell);
   const {
     getConflictsForActivity,
     ready: conflictsReady,
@@ -233,6 +238,14 @@ export function ActivitiesListPage() {
           </Link>
         }
       />
+
+      {planWarnings.length > 0 ? (
+        <div className="space-y-3">
+          {planWarnings.map((warning) => (
+            <PlanLimitAlert key={warning} message={warning} />
+          ))}
+        </div>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="space-y-2 sm:col-span-2 xl:col-span-1">
