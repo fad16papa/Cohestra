@@ -10,6 +10,20 @@ export type ActivityPerformanceItem = {
   registrationCount: number;
 };
 
+export type DashboardTrendPoint = {
+  /** ISO date (yyyy-MM-dd, UTC). */
+  date: string;
+  registrations: number;
+  newClients: number;
+};
+
+export type DashboardLeadStatusBreakdown = {
+  newCount: number;
+  contactedCount: number;
+  activeCount: number;
+  inactiveCount: number;
+};
+
 export type DashboardMetrics = {
   totalLeads: number;
   newLeadsInPeriod: number;
@@ -18,6 +32,11 @@ export type DashboardMetrics = {
   followUpCoveragePercent: number;
   activityPerformance: ActivityPerformanceItem[];
   computedAt: string;
+  registrationsInPeriod: number;
+  registrationsInPreviousPeriod: number;
+  trendDays: number;
+  registrationsTrend: DashboardTrendPoint[];
+  leadStatusBreakdown: DashboardLeadStatusBreakdown;
 };
 
 function parseActivityPerformanceItem(
@@ -51,6 +70,37 @@ function parseActivityPerformanceItem(
   };
 }
 
+function toFiniteNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function parseTrendPoint(raw: Record<string, unknown>): DashboardTrendPoint | null {
+  const date = raw.date ?? raw.Date;
+  if (typeof date !== "string" || date.length === 0) {
+    return null;
+  }
+
+  return {
+    date,
+    registrations: toFiniteNumber(raw.registrations ?? raw.Registrations),
+    newClients: toFiniteNumber(raw.newClients ?? raw.NewClients),
+  };
+}
+
+function parseLeadStatusBreakdown(raw: unknown): DashboardLeadStatusBreakdown {
+  if (typeof raw !== "object" || raw === null) {
+    return { newCount: 0, contactedCount: 0, activeCount: 0, inactiveCount: 0 };
+  }
+
+  const record = raw as Record<string, unknown>;
+  return {
+    newCount: toFiniteNumber(record.newCount ?? record.NewCount),
+    contactedCount: toFiniteNumber(record.contactedCount ?? record.ContactedCount),
+    activeCount: toFiniteNumber(record.activeCount ?? record.ActiveCount),
+    inactiveCount: toFiniteNumber(record.inactiveCount ?? record.InactiveCount),
+  };
+}
+
 function parseDashboardMetrics(raw: Record<string, unknown>): DashboardMetrics {
   const totalLeads = raw.totalLeads ?? raw.TotalLeads;
   const newLeadsInPeriod = raw.newLeadsInPeriod ?? raw.NewLeadsInPeriod;
@@ -76,6 +126,17 @@ function parseDashboardMetrics(raw: Record<string, unknown>): DashboardMetrics {
     throw new Error("Invalid dashboard metrics payload");
   }
 
+  const registrationsTrendRaw = raw.registrationsTrend ?? raw.RegistrationsTrend;
+  const registrationsTrend = Array.isArray(registrationsTrendRaw)
+    ? registrationsTrendRaw
+        .map((item) =>
+          typeof item === "object" && item !== null
+            ? parseTrendPoint(item as Record<string, unknown>)
+            : null
+        )
+        .filter((item): item is DashboardTrendPoint => item !== null)
+    : [];
+
   return {
     totalLeads,
     newLeadsInPeriod,
@@ -86,6 +147,17 @@ function parseDashboardMetrics(raw: Record<string, unknown>): DashboardMetrics {
       parseActivityPerformanceItem(item as Record<string, unknown>)
     ),
     computedAt,
+    registrationsInPeriod: toFiniteNumber(
+      raw.registrationsInPeriod ?? raw.RegistrationsInPeriod
+    ),
+    registrationsInPreviousPeriod: toFiniteNumber(
+      raw.registrationsInPreviousPeriod ?? raw.RegistrationsInPreviousPeriod
+    ),
+    trendDays: toFiniteNumber(raw.trendDays ?? raw.TrendDays),
+    registrationsTrend,
+    leadStatusBreakdown: parseLeadStatusBreakdown(
+      raw.leadStatusBreakdown ?? raw.LeadStatusBreakdown
+    ),
   };
 }
 

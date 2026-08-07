@@ -9,8 +9,10 @@ import { DashboardCommunityPulse } from "@/components/dashboard/dashboard-commun
 import { DashboardEmptyState } from "@/components/dashboard/dashboard-empty-state";
 import { DashboardFollowUpQueue } from "@/components/dashboard/dashboard-follow-up-queue";
 import { DashboardGreetingHeader } from "@/components/dashboard/dashboard-greeting-header";
+import { DashboardLeadStatusChart } from "@/components/dashboard/dashboard-lead-status-chart";
 import { DashboardMetricsGraphs } from "@/components/dashboard/dashboard-metrics-graphs";
 import { DashboardMetricsTable } from "@/components/dashboard/dashboard-metrics-table";
+import { DashboardRegistrationsTrendChart } from "@/components/dashboard/dashboard-registrations-trend-chart";
 import { DashboardTodayStrip } from "@/components/dashboard/dashboard-today-strip";
 import { useDashboardMetricsRefresh } from "@/components/dashboard/dashboard-metrics-refresh-context";
 import { DashboardQuickActions } from "@/components/dashboard/dashboard-quick-actions";
@@ -22,6 +24,7 @@ import { MetricSkeletonGrid } from "@/components/shared/list-skeleton";
 import { ProductErrorState } from "@/components/shared/product-error-state";
 import { fetchActivities } from "@/lib/activities-api";
 import { fetchDashboardMetrics, type DashboardMetrics } from "@/lib/dashboard-api";
+import { computeWowDeltaPercent } from "@/lib/dashboard-insights";
 import {
   readDashboardViewMode,
   writeDashboardViewMode,
@@ -169,6 +172,11 @@ export function DashboardPageClient() {
   const periodLabel =
     metrics.periodDays === 7 ? "this week" : `last ${metrics.periodDays} days`;
 
+  const registrationsWowDelta = computeWowDeltaPercent(
+    metrics.registrationsInPeriod,
+    metrics.registrationsInPreviousPeriod
+  );
+
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <DashboardGreetingHeader />
@@ -194,11 +202,14 @@ export function DashboardPageClient() {
               isRefreshing={isRefreshing}
             />
             <MetricTile
-              label={`New ${periodLabel}`}
-              value={String(metrics.newLeadsInPeriod)}
-              href={`/clients?registeredWithinDays=${metrics.periodDays}`}
-              ariaLabel={`View ${metrics.newLeadsInPeriod} clients with a recent registration ${periodLabel}`}
-              hint="Recent sign-ups"
+              label={`Registrations ${periodLabel}`}
+              value={String(metrics.registrationsInPeriod)}
+              href="/reports"
+              ariaLabel={`${metrics.registrationsInPeriod} registrations ${periodLabel} — open reports`}
+              delta={{
+                percent: registrationsWowDelta,
+                label: `vs previous ${metrics.periodDays} days (${metrics.registrationsInPreviousPeriod})`,
+              }}
               animationDelayMs={60}
               isRefreshing={isRefreshing}
             />
@@ -222,6 +233,12 @@ export function DashboardPageClient() {
             />
           </div>
 
+          <DashboardRegistrationsTrendChart
+            points={metrics.registrationsTrend}
+            trendDays={metrics.trendDays}
+            compact
+          />
+
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)] lg:items-start">
             <ActivityPerformanceSection
               items={metrics.activityPerformance}
@@ -241,13 +258,18 @@ export function DashboardPageClient() {
             periodLabel={periodLabel}
             isRefreshing={isRefreshing}
           />
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)] lg:items-start">
+          <DashboardRegistrationsTrendChart
+            points={metrics.registrationsTrend}
+            trendDays={metrics.trendDays}
+          />
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-start">
             <DashboardActivityPerformanceGraph
               items={metrics.activityPerformance}
               periodLabel={periodLabel}
             />
-            <DashboardCommunityPulse variant="graphs" />
+            <DashboardLeadStatusChart breakdown={metrics.leadStatusBreakdown} />
           </div>
+          <DashboardCommunityPulse variant="graphs" />
         </>
       ) : null}
 

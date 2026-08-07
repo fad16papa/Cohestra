@@ -101,6 +101,29 @@ public sealed class ReportDashboardTenantIsolationTests
     }
 
     [Fact]
+    public async Task GetMetrics_ForTenantA_TrendAndBreakdownExcludeTenantB()
+    {
+        var (_, _, current, db) = await SeedDualTenantAsync();
+        await using (db)
+        {
+            var service = new DashboardService(db, new NullDashboardMetricsCache(), current);
+
+            var metrics = await service.GetMetricsAsync();
+
+            Assert.Equal(30, metrics.TrendDays);
+            Assert.Equal(30, metrics.RegistrationsTrend.Count);
+            Assert.Equal(1, metrics.RegistrationsTrend.Sum(point => point.Registrations));
+            Assert.Equal(1, metrics.RegistrationsTrend.Sum(point => point.NewClients));
+            Assert.Equal(1, metrics.RegistrationsInPeriod);
+            Assert.Equal(0, metrics.RegistrationsInPreviousPeriod);
+            Assert.Equal(1, metrics.LeadStatusBreakdown.NewCount);
+            Assert.Equal(0, metrics.LeadStatusBreakdown.ContactedCount);
+            Assert.Equal(0, metrics.LeadStatusBreakdown.ActiveCount);
+            Assert.Equal(0, metrics.LeadStatusBreakdown.InactiveCount);
+        }
+    }
+
+    [Fact]
     public async Task ReportService_UnresolvedTenant_FailsClosed()
     {
         var current = new CurrentTenant();
