@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
+import { PlanLimitAlert } from "@/components/shell/plan-limit-alert";
 import { ActivityCountrySelect } from "@/components/activities/activity-country-select";
 import { ActivityLocationField } from "@/components/activities/activity-location-field";
 import { ActivitySchedulePicker } from "@/components/activities/activity-schedule-picker";
@@ -20,6 +21,7 @@ import {
   resolvePlanRegistrationLimit,
   validateActivityMaxRegistrantsAgainstPlan,
 } from "@/lib/activity-capacity-limits";
+import { getCreateActivityPlanWarnings } from "@/lib/plan-limit-utils";
 import { fetchCategories } from "@/lib/categories-api";
 import { fetchCommunities } from "@/lib/communities-api";
 import { buildActivityLocation, defaultCountryCode } from "@/lib/countries";
@@ -110,6 +112,7 @@ export function CreateActivityForm() {
     !shellLoading &&
     planRegistrationLimit == null &&
     shellError != null;
+  const planWarnings = getCreateActivityPlanWarnings(shell);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -289,6 +292,14 @@ export function CreateActivityForm() {
       <p className="rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm">
         This activity will be saved as <strong>Draft</strong>.
       </p>
+
+      {planWarnings.length > 0 ? (
+        <div className="space-y-3">
+          {planWarnings.map((warning) => (
+            <PlanLimitAlert key={warning} message={warning} />
+          ))}
+        </div>
+      ) : null}
 
       {catalogError ? (
         <p role="alert" className="text-sm text-destructive">

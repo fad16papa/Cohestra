@@ -8,6 +8,8 @@ import {
   type ArchiveActivityDialogVariant,
 } from "@/components/activities/archive-activity-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
+import { PlanLimitAlert } from "@/components/shell/plan-limit-alert";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -27,6 +29,7 @@ import {
 } from "@/lib/activities-api";
 import { isActivityScheduleUpcomingOrToday } from "@/lib/activity-schedule-utils";
 import { getPublishGateIssues } from "@/lib/form-schema-utils";
+import { getPublishedActivitiesLimitMessage } from "@/lib/plan-limit-utils";
 
 type ActivityPublishControlsProps = {
   activity: Activity;
@@ -38,6 +41,7 @@ export function ActivityPublishControls({
   onActivityUpdated,
 }: ActivityPublishControlsProps) {
   const { authFetch } = useAuth();
+  const { shell } = useTenantShell();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -53,6 +57,8 @@ export function ActivityPublishControls({
     slug: activity.slug,
   });
   const publishBlocked = publishGateIssues.length > 0;
+  const publishedLimitMessage = getPublishedActivitiesLimitMessage(shell);
+  const publishPlanBlocked = Boolean(publishedLimitMessage);
 
   async function performArchive() {
     setError(null);
@@ -167,7 +173,7 @@ export function ActivityPublishControls({
             {activity.status === "draft" ? (
               <Button
                 type="button"
-                disabled={isBusy || publishBlocked}
+                disabled={isBusy || publishBlocked || publishPlanBlocked}
                 onClick={() => void handlePublish()}
               >
                 {isPublishing ? "Publishing…" : "Publish"}
@@ -207,6 +213,10 @@ export function ActivityPublishControls({
             ) : null}
           </div>
         </div>
+
+        {activity.status === "draft" && publishPlanBlocked ? (
+          <PlanLimitAlert message={publishedLimitMessage ?? undefined} />
+        ) : null}
 
         {activity.status === "draft" && publishBlocked ? (
           <ul role="alert" className="list-disc space-y-0.5 pl-5 text-sm text-destructive">

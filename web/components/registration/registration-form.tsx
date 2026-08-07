@@ -436,7 +436,7 @@ export function RegistrationForm({
           role="alert"
           className={cn(
             "space-y-3 rounded-lg border p-4",
-            submitErrorCode === "activity_full"
+            submitErrorCode === "activity_full" || submitErrorCode === "plan_registration_limit"
               ? "border-border-warm bg-muted/30"
               : "border-destructive/30 bg-destructive/5"
           )}
@@ -444,6 +444,11 @@ export function RegistrationForm({
           {submitErrorCode === "activity_full" ? (
             <>
               <p className="text-sm font-medium text-text-warm">Activity full</p>
+              <p className="text-sm text-text-muted-warm">{submitError}</p>
+            </>
+          ) : submitErrorCode === "plan_registration_limit" ? (
+            <>
+              <p className="text-sm font-medium text-text-warm">Registration limit reached</p>
               <p className="text-sm text-text-muted-warm">{submitError}</p>
             </>
           ) : (

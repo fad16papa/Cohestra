@@ -118,6 +118,18 @@ public class PublicRegistrationsController(
             });
         }
 
+        if (result.IsPlanRegistrationLimitReached)
+        {
+            return Conflict(new ProblemDetails
+            {
+                Title = "Registration limit reached",
+                Detail = result.PlanLimitDetail
+                    ?? "This workspace has reached its monthly registration limit.",
+                Status = StatusCodes.Status409Conflict,
+                Extensions = { ["errorCode"] = "plan_registration_limit" },
+            });
+        }
+
         if (result.ValidationError is not null)
         {
             return BadRequest(new ProblemDetails

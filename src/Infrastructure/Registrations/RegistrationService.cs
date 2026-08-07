@@ -5,9 +5,11 @@ using Cohestra.Application.Tenants;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Outbox;
 using Cohestra.Domain.Registrations;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Outbox;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Tenants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -256,6 +258,35 @@ public sealed class RegistrationService(
             await transaction.RollbackAsync(cancellationToken);
             await RefreshPublicActivityCacheBestEffortAsync(tenantId, normalizedSlug, cancellationToken);
             return PublicRegistrationSubmitResult.ActivityFull();
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == tenantId, cancellationToken);
+
+        if (tenant is not null)
+        {
+            var limits = TenantPlanLimits.For(tenant.Plan);
+            var monthStart = new DateTimeOffset(
+                now.Year,
+                now.Month,
+                1,
+                0,
+                0,
+                0,
+                TimeSpan.Zero);
+            var registrationsThisMonth = await dbContext.Registrations
+                .CountAsync(
+                    item => item.TenantId == tenantId && item.CreatedAt >= monthStart,
+                    cancellationToken);
+            var planLimitError = TenantPlanLimitValidator.ValidateCanAcceptRegistration(
+                registrationsThisMonth,
+                limits.RegistrationsPerMonth);
+            if (planLimitError is not null)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return PublicRegistrationSubmitResult.PlanRegistrationLimitReached(planLimitError);
+            }
         }
 
         var registrationNumber = await registrationNumberGenerator.GenerateNextAsync(now, cancellationToken);

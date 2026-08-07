@@ -1,12 +1,17 @@
 using Cohestra.Application.Activities;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Activities;
 using Cohestra.Domain.Activities;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Tenants;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Activities;
 
-public sealed class CommunityService(CohestraDbContext dbContext) : ICommunityService
+public sealed class CommunityService(
+    CohestraDbContext dbContext,
+    ICurrentTenant currentTenant) : ICommunityService
 {
     public async Task<CommunityListResponse> ListAsync(CancellationToken cancellationToken = default)
     {
@@ -65,6 +70,12 @@ public sealed class CommunityService(CohestraDbContext dbContext) : ICommunitySe
         if (await NameExistsAsync(name, null, cancellationToken))
         {
             throw new ArgumentException("A community with this name already exists.");
+        }
+
+        var planLimitError = await ValidateCommunityPlanLimitAsync(cancellationToken);
+        if (planLimitError is not null)
+        {
+            throw new ArgumentException(planLimitError);
         }
 
         var now = DateTimeOffset.UtcNow;
@@ -203,5 +214,31 @@ public sealed class CommunityService(CohestraDbContext dbContext) : ICommunitySe
         }
 
         return name;
+    }
+
+    private async Task<string?> ValidateCommunityPlanLimitAsync(CancellationToken cancellationToken)
+    {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return null;
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return null;
+        }
+
+        var limits = TenantPlanLimits.For(tenant.Plan);
+        var communitiesUsed = await dbContext.Communities
+            .AsNoTracking()
+            .CountAsync(cancellationToken);
+
+        return TenantPlanLimitValidator.ValidateCanAddCommunity(
+            communitiesUsed,
+            limits.Communities);
     }
 }

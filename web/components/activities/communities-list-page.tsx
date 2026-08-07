@@ -6,6 +6,8 @@ import { Pencil, Trash2, Users } from "lucide-react";
 
 import { DeleteCatalogItemDialog } from "@/components/activities/delete-catalog-item-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
+import { PlanLimitAlert } from "@/components/shell/plan-limit-alert";
 import { useToast } from "@/components/ui/toast-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,12 +19,14 @@ import {
   updateCommunity,
   type CommunityListItem,
 } from "@/lib/communities-api";
+import { getCommunitiesLimitMessage, isCommunitiesBlocked } from "@/lib/plan-limit-utils";
 import { cn } from "@/lib/utils";
 
 const communitiesTableClassName = "w-full min-w-[36rem] border-collapse text-sm";
 
 export function CommunitiesListPage() {
   const { authFetch } = useAuth();
+  const { shell } = useTenantShell();
   const { showToast } = useToast();
   const [communities, setCommunities] = useState<CommunityListItem[]>([]);
   const [name, setName] = useState("");
@@ -34,6 +38,8 @@ export function CommunitiesListPage() {
   const [deleteTarget, setDeleteTarget] = useState<CommunityListItem | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const communitiesLimitMessage = getCommunitiesLimitMessage(shell);
+  const communitiesBlocked = isCommunitiesBlocked(shell);
 
   function openDeleteDialog(community: CommunityListItem) {
     if (deleteTarget !== null) {
@@ -73,6 +79,11 @@ export function CommunitiesListPage() {
 
   async function handleCreate(event: React.FormEvent) {
     event.preventDefault();
+    if (communitiesBlocked) {
+      showToast(communitiesLimitMessage ?? "Community limit reached on your current plan.");
+      return;
+    }
+
     if (!name.trim()) {
       showToast("Community name is required.");
       return;
@@ -155,6 +166,10 @@ export function CommunitiesListPage() {
         </p>
       </div>
 
+      {communitiesLimitMessage ? (
+        <PlanLimitAlert message={communitiesLimitMessage} />
+      ) : null}
+
       <form
         onSubmit={handleCreate}
         className="grid gap-4 rounded-xl border border-border-warm bg-card p-4 sm:grid-cols-[minmax(0,1fr)_auto]"
@@ -166,11 +181,12 @@ export function CommunitiesListPage() {
             value={name}
             maxLength={100}
             placeholder="e.g. Ikigai"
+            disabled={communitiesBlocked || saving}
             onChange={(event) => setName(event.target.value)}
           />
         </div>
         <div className="flex items-end">
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving || communitiesBlocked}>
             Add community
           </Button>
         </div>
