@@ -198,6 +198,8 @@ Composer (cloud agent)
 
 ## Change log
 
+- 2026-08-07: Architecture spine (AD-12 plan limits, AD-13 outbox) and launch checklist updated for August 2026 shipped features (#85–#92).
+
 - 2026-07-29: Code review patches applied — door test body read fix, StubActivities asserts, smoke port derivation, registration checklist item.
 
 ### Completion notes (code review)

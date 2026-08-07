@@ -4,7 +4,7 @@ Use before **public launch** or handing a production/UAT environment to operator
 
 Supersedes the single-operator **[UAT polish checklist](./uat-polish-checklist.md)** for Cohestra Enterprise. That doc remains useful as historical reference for Platform 0.
 
-**Related docs:** [SendGrid production setup](./sendgrid-production.md) · [DigitalOcean UAT](./digitalocean-uat.md) · [GitHub Actions CD](./github-actions-cd.md) · [Cloud / mobile testing](./cloud-mobile-testing.md) · [Database tools](./database-tools.md)
+**Related docs:** [SendGrid production setup](./sendgrid-production.md) · [DigitalOcean UAT](./digitalocean-uat.md) · [GitHub Actions CD](./github-actions-cd.md) · [Cloud / mobile testing](./cloud-mobile-testing.md) · [Database tools](./database-tools.md) · [Implementation changelog (Aug 2026)](../../_bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/implementation-changelog-2026-08.md)
 
 ---
 
@@ -27,9 +27,10 @@ docker compose up -d
 
 | Surface | URL | Pass criteria |
 |---------|-----|---------------|
+| Marketing apex (bare localhost) | `http://localhost:8088/` | Midnight Atelier marketing landing — **not** a tenant stub |
 | Tenant site (default) | `http://default.localhost:8088/` | Public door active; admin login works |
 | Tenant site (UAT tenant) | `http://creativorare.localhost:8088/` | Door active; activities/register flow |
-| Marketing apex | `http://cohestra.app:8088/` | Midnight Atelier marketing home |
+| Marketing apex (hosts entry) | `http://cohestra.app:8088/` | Same marketing home as bare localhost |
 | Pricing / signup | `http://cohestra.app:8088/pricing` | 200; self-serve signup UI |
 | Platform admin | `http://localhost:8088/platform` | Platform admin login + tenant directory |
 
@@ -44,6 +45,63 @@ PUBLIC_BASE_URL=http://localhost:8088 API_BASE=http://localhost:8088 \
 Optional apex check is included when `PUBLIC_BASE_URL` is set (see script section *Enterprise apex*).
 
 **Bootstrap reference:** [deploy/uat-bootstrap.sh](../../deploy/uat-bootstrap.sh) for seeded tenant + operator on fresh volumes.
+
+---
+
+## Plan limits & capacity (shipped 2026-08-07 — FR-27, Epic 20)
+
+Verify on a tenant near or at plan caps (load-test seed or manual setup):
+
+- [x] **Shipped (PR #92):** Publish blocked when published-activity count ≥ plan limit (API 400; publish button disabled + `PlanLimitAlert`)
+- [x] **Shipped (PR #92):** Community create blocked when community count ≥ plan limit (API 400; form disabled)
+- [x] **Shipped (PR #92):** Public registration returns **409** `plan_registration_limit` when monthly registration count ≥ plan limit; friendly message on registration form
+- [x] **Shipped (PR #92):** Draft activity create still allowed when published cap reached; warning on create form + activities list
+- [x] **Shipped (Epic 20):** Optional `MaxRegistrants` per activity; public registration returns **409** `activity_full` when full
+- [ ] Sidebar **LimitMeter** blocked state matches API enforcement (same used/limit math)
+- [ ] Over-limit workspace after downgrade shows `read_only_over_limit` banner (FR-24)
+
+**Unit tests (no Docker required):**
+
+```bash
+dotnet test src/Infrastructure.Tests --filter "FullyQualifiedName~TenantPlanLimitValidator"
+dotnet test src/Api.IntegrationTests --filter "FullyQualifiedName~ActivityCapacityPlanLimit"
+```
+
+---
+
+## Dashboard & activities UX (shipped 2026-08-07 — FR-15, FR-14)
+
+- [x] **Shipped (PR #86–#89):** Dashboard **Overview · Graphs · Tables** views switch and persist in localStorage
+- [x] **Shipped (PR #86):** Registrations trend chart, WoW delta on KPI tiles, lead pipeline donut, activity performance charts
+- [x] **Shipped (PR #89):** Graphs view lead pipeline uses stacked layout (large donut + status rows)
+- [x] **Shipped (PR #91):** Activities list is **card grid**, **20 per page** (not data table)
+- [ ] Schedule conflict badges appear on activity cards when overlapping published activities exist
+- [ ] Dashboard metrics API returns tenant-scoped data only (`GET /api/v1/admin/dashboard/metrics`)
+
+**Manual smoke (after login on `{slug}.localhost:8088`):**
+
+| Surface | Pass |
+|---------|------|
+| `/dashboard` — Overview | KPI tiles, 30-day trend chart, follow-up queue |
+| `/dashboard` — Graphs | Lead pipeline fills card; bar chart links to activity |
+| `/dashboard` — Tables | Bounded-scroll activity table; drill-down links work |
+| `/activities` | Card grid; pagination shows 20 per page; filters reset page |
+
+---
+
+## Transactional email outbox (shipped 2026-08 — FR-28)
+
+- [x] **Shipped (PR #85):** Registration confirmation enqueued in same DB transaction as registration row
+- [x] **Shipped (PR #85):** `OutboxDispatcherHostedService` processes pending messages after API restart
+- [x] **Shipped (PR #85):** Async campaign send returns **202 Accepted** + poll URL
+- [ ] Confirm registration email arrives after public registration (SendGrid configured)
+- [ ] No duplicate registration emails on retry (idempotency key / dedupe index)
+
+**Unit tests:**
+
+```bash
+dotnet test src/Infrastructure.Tests --filter "FullyQualifiedName~OutboxPublisher"
+```
 
 ---
 
@@ -167,7 +225,7 @@ dotnet test src/Api.IntegrationTests --filter "FullyQualifiedName~Resend_otp"
 
 - [ ] Know log command: `docker compose -f docker-compose.uat.yml logs -f api web`
 - [ ] Postgres backup tested once; rollback plan documented (previous git tag + rebuild)
-- [ ] **`DEV_TENANT_SLUG`** documented: local apex/`localhost` fallback only — **do not set in production** (use real subdomains). See [README](../../README.md) and `.env.example`.
+- [ ] **`DEV_TENANT_SLUG`** documented: optional on **api** service for single-host dev only — **do not set on web container** (bare `localhost` must serve marketing). **Do not set in production** — use real subdomains. See [README](../../README.md) and `.env.example`.
 - [x] **P1 shipped (Story 17.3):** Member JWT → 403 integration matrix on admin routes (see Isolation & security)
 - [ ] **Product gate:** nip.io apex tightening vs wildcard DNS — decision recorded
 - [ ] **Product gate:** Sender settings UI (15.6 defer) vs provisioned-email-only for v1 launch
@@ -178,11 +236,13 @@ dotnet test src/Api.IntegrationTests --filter "FullyQualifiedName~Resend_otp"
 
 Repeat on at least one **Basic** and one **Pro** tenant (e.g. `creativorare`):
 
-- [ ] Dashboard metrics load
+- [ ] Dashboard metrics load (**Overview / Graphs / Tables** views)
 - [ ] Create activity → form → publish → QR / share kit
+- [ ] Activities list shows card grid with pagination (20/page)
 - [ ] Public registration + client dedup
+- [ ] Plan limit warning visible when dial ≥80%; hard block at 100% on publish/register
 - [ ] Reports + CSV export (Pro / plan-gated as applicable)
-- [ ] Campaign send test (Pro) with tenant email branding
+- [ ] Campaign send test (Pro) with tenant email branding — async 202 + outbox dispatch
 - [ ] Website builder publish (Core Essentials or Pro Studio) or stub home (Basic)
 - [ ] Suspended / archived tenant shows maintenance or 404 on public door
 
@@ -192,6 +252,7 @@ Repeat on at least one **Basic** and one **Pro** tenant (e.g. `creativorare`):
 
 | Role | Name | Date | Notes |
 |------|------|------|-------|
+| Dev | Cursor / Amelia | 2026-08-07 | PRD + architecture synced for Aug 2026 ships (#85–#92): outbox, dashboard, plan limits, activities cards |
 | Dev | Cursor / Amelia | 2026-07-31 | Epic 17 P1 hardening merged (`23875d3`); SM-1 + abuse tests on main |
 | Operator | | | Multi-tenant UAT on local Docker + droplet |
 | PM | | | P1 dev items done; ops gates (reCAPTCHA, deploy) remain |
@@ -209,6 +270,6 @@ Track in sprint / deferred-work; do not block enterprise launch sign-off unless 
 | ~~Member JWT 403 integration matrix~~ (Story 17.3) | Dev |
 | ~~Operator auth OTP throttling + production guardrails~~ (Story 17.4) | Dev |
 | ~~resend-otp rate limiting~~ (Story 18.1) | Dev |
-| Platform async-action refactor (Epic 11 retro) | Dev |
+| ~~Platform async-action refactor (Epic 11 retro)~~ | Dev — **partial:** transactional outbox shipped (FR-28, PR #85) |
 | Close skippable platform integration tests in CI | Dev |
 | Sender settings UI vs provisioned email | Product |

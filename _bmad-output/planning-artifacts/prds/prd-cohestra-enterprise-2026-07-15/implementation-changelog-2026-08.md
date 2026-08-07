@@ -144,6 +144,8 @@ When this changelog changes, update:
 - [x] `addendum.md` — dashboard API, outbox, plan enforcement, local dev
 - [x] `epics-cohestra-enterprise.md` — FR-27/28 mapping, Epic 22–23
 - [x] `ux-cohestra-2026-07-18/EXPERIENCE.md` — dashboard views, activities list, limit alerts
+- [x] `architecture/.../ARCHITECTURE-SPINE.md` — AD-12, AD-13, capability map
+- [x] `docs/deploy/enterprise-launch-checklist.md` — plan limits, dashboard, outbox verify sections
 
 ---
 
