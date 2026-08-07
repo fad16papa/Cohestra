@@ -1069,7 +1069,7 @@ Full pricing page copy: `docs/marketing/pricing-tiers.md`
 | Capability | Retires | Notes |
 |------------|---------|--------|
 | Paid activity registration (Stripe Checkout per paid Activity) | Eventually / Peatix paid (SMB) | Price + capacity on Activity; not festival ticketing |
-| Capacity + waitlist | Event tools | Natural extension of published activities |
+| Capacity + waitlist | Event tools | **Capacity shipped (Epic 20);** waitlist still deferred |
 | Simple refund / cancel policy (documented + Stripe refunds) | Paid-event hygiene | Keep policy thin — not RegFox |
 
 #### Explicitly later / out of Option A

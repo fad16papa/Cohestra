@@ -253,6 +253,7 @@ UX-DR20: Key-screen fidelity — ship against ratified mocks `marketing-start-fr
 | FR-16 | Epic 15 | Pro-only campaigns |
 | FR-27 | Epic 22 | Plan limit API + admin warnings |
 | FR-28 | Infrastructure | Transactional outbox (cross-cutting) |
+| FR-15 (dashboard UI) | Epic 23 | Operator dashboard views + charts |
 | (parked) | Epic 16 | One-stop Lite — share kit, domain, thin email, paid tickets |
 
 **UX-DR coverage (planned):** UX-DR1–11,17–20 → Epic 14 · UX-DR12–14,18–20 → Epic 15 · UX-DR16 → Epic 11 · UX-DR15 → Epic 16 parked
