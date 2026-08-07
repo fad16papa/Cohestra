@@ -2,12 +2,13 @@
 title: Cohestra Enterprise — Multi-Tenant SaaS
 status: draft
 created: 2026-07-15
-updated: 2026-07-19
+updated: 2026-08-07
 gtm_pricing: section-13
 sources:
   - _bmad-output/planning-artifacts/sprint-change-proposal-2026-07-14.md
   - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md
   - _bmad-output/planning-artifacts/architecture.md
+  - _bmad-output/planning-artifacts/prds/prd-cohestra-enterprise-2026-07-15/implementation-changelog-2026-08.md
 product_boundary:
   cohestra: Multi-tenant enterprise SaaS (this PRD)
   lead_generation_crm: Single-operator product — separate repo, unchanged
@@ -349,10 +350,27 @@ SendGrid sender identity and email footer branding are configurable per **Tenant
 
 All Activity Engine capabilities (create activity, form schema, QR, public registration, registration numbers, dedup) operate within the resolved **Tenant**. Realizes UJ-3.
 
+**Activities list (operator UI — ratified 2026-08-07):**
+- **Card grid** on `/activities` (not a data table) — each card shows name, community, category, schedule, location, registration count, status, and created date.
+- **Server-side pagination:** **20 activities per page**; filters (status, community, category, search) reset to page 1.
+- **Server-side search** across name, community, category, and location (debounced).
+- Schedule conflict indicator on cards when overlapping published activities are detected.
+- Row/card navigation: entire card links to activity detail (`/activities/{id}`).
+
+**Activity create flow:**
+- New activities are always created as **Draft** (API rejects direct Published/Archived create).
+- **Plan limit warnings** on create form when published-activity or monthly-registration dials are at capacity (see FR-27); draft save remains allowed.
+
+**Per-activity capacity (Epic 20 — shipped):**
+- Optional `MaxRegistrants` per activity; public registration returns `409 activity_full` when full.
+- Activity cap cannot exceed tenant plan **registrations/month** limit at save time.
+
 **Consequences (testable):**
 - Activity slug unique per tenant, not globally.
 - Registration dedup matches clients within tenant only.
 - All Platform 0 registration ingestion tests pass with `TenantId` injected.
+- Activities list returns at most 20 items per page; total count accurate for pagination footer.
+- Publish blocked at published-activity plan cap (FR-27).
 
 #### FR-15: Tenant-scoped dashboard and plan-gated reports
 
@@ -364,11 +382,36 @@ Dashboard metrics and reports reflect only the current **Tenant** data. **Report
 | **Core** | **Queryable ops reports** — Platform 0 filters (date range, community, activity, lead status, referral) + aggregates/rankings + full CSV export of filtered results. |
 | **Pro** | Everything in Core **+ campaign analytics** + **saved report views** `[ASSUMPTION: saved views in v1]`. |
 
+**Operator dashboard UI (modernized — shipped 2026-08-07):**
+
+Three switchable views on `/dashboard` (**Overview · Graphs · Tables**), persisted in browser local storage:
+
+| View | Contents |
+|------|----------|
+| **Overview** | Today strip, follow-up queue, quick actions, KPI tiles (total leads, registrations in period with **week-over-week delta**, active activities, follow-up coverage), **30-day registrations trend** chart, activity performance ranked list (top 5 scroll panel), community pulse |
+| **Graphs** | KPI stat band, full **registrations trend** area chart, **activity performance** horizontal bar chart (top 10, click bar → activity), **lead pipeline** donut (stacked layout: large chart on top, status rows below), community pulse |
+| **Tables** | Key metrics table + lead pipeline table (drill-down links), bounded-scroll **activity performance table** (top 8 rows, sticky header, share bars) |
+
+**Dashboard metrics API** (`GET /api/v1/admin/dashboard/metrics`) returns tenant-scoped:
+- Core KPI counts and `periodDays` (default 7)
+- `registrationsTrend` — daily series for last `trendDays` (default 30)
+- `registrationsInPeriod` / `registrationsInPreviousPeriod` — for WoW delta chips
+- `leadStatusBreakdown` — new / contacted / active / inactive counts
+- `activityPerformance` — ranked activities with registration counts
+- `followUpCoveragePercent`, `computedAt`
+
+**UX notes:**
+- KPI tiles and charts link to drill-down routes (`/clients`, `/reports`, `/activities`, filtered client lists).
+- Lead pipeline chart uses tenant status color tokens; center shows total clients.
+- Dashboard polls metrics every 60s; subtle refresh animation on tiles.
+
 **Consequences (testable):**
 - Dashboard totals for tenant A unchanged when tenant B receives registrations.
 - Basic admin cannot open Core filter UI; API rejects advanced report query params with upgrade hint.
 - Core CSV respects filters; Basic CSV matches fixed columns only.
 - Cache TTL / polling preserved per tenant namespace.
+- Dashboard API returns only requesting tenant's data (integration tests).
+- Graphs view lead pipeline fills card without excessive empty space (stacked layout).
 
 #### FR-16: Tenant-scoped campaigns and templates (Pro)
 
@@ -538,6 +581,51 @@ Platform Admin **Suspend** (FR-3) remains the manual break-glass for confirmed a
 
 ---
 
+### 4.8 Plan limit enforcement (operational)
+
+**Description:** Usage limits in §13.4 are enforced in API and surfaced in admin UI — not display-only. Aligns with admin shell **LimitMeter** (Epic 14.5) and UX **UX-DR** at-cap behavior. Shipped 2026-08-07 (FR-27).
+
+#### FR-27: Plan usage limits — warn, block, and inform
+
+**Limit dials** (sidebar **Plan headroom**): team seats, communities, published activities (concurrent), registrations this month (UTC). **Warn at ≥80%**, **blocked at ≥100%** (seats block only when **over** capacity, not at exact cap).
+
+| Action | When blocked (used ≥ limit) | Admin UX | Public UX |
+|--------|----------------------------|----------|-----------|
+| **Create community** | Communities at cap | Form disabled + `PlanLimitAlert`; API 400 with capacity message | — |
+| **Publish activity** | Published activities at cap | Publish button disabled + alert on activity detail | — |
+| **Create activity (draft)** | Published at cap | Warning on create form + activities list: drafts allowed, publishing blocked until capacity freed | — |
+| **Public registration** | Monthly registrations at cap | Warning on create form when relevant | Registration rejected `409` `plan_registration_limit`; friendly message on form and registration page |
+| **Set activity max registrants** | Cap > plan monthly limit | Validation on create/edit activity | — |
+
+**Over-limit workspace (FR-24):** When usage exceeds plan caps after downgrade, `TenantAccessService` sets read-only + blocks public registration; **BillingBanner** variant `read_only_over_limit` lists the blocking dial.
+
+**Consequences (testable):**
+- Publish API returns 400 when published count ≥ plan limit.
+- Community create API returns 400 when community count ≥ plan limit.
+- Public registration API returns 409 `plan_registration_limit` when monthly count ≥ plan limit.
+- LimitMeter blocked state matches API enforcement (same used/limit math).
+- Admin sees consistent copy: *"Limit reached — upgrade or free capacity before adding more."*
+
+---
+
+### 4.9 Transactional email reliability
+
+**Description:** Registration confirmations, billing emails, and async campaign sends use a **PostgreSQL transactional outbox** so HTTP handlers commit business data and enqueue email in one transaction; a background dispatcher delivers with retries. Shipped 2026-08-07 (FR-28).
+
+#### FR-28: Transactional outbox for email delivery
+
+- **Outbox table** `OutboxMessages` — tenant-scoped; written in same DB transaction as registration/billing/campaign mutations.
+- **Dispatcher worker** claims messages with lease (`ClaimedAt`), marks `DispatchedAt` on success; idempotent dedupe index prevents duplicate sends.
+- **Async campaigns:** API returns **202 Accepted** + poll URL; completion when outbox item dispatched.
+- **Registration confirmation:** Enqueued on successful public registration when email field present.
+
+**Consequences (testable):**
+- Registration row exists iff outbox row committed (or neither).
+- Duplicate dispatch does not double-send (idempotency key / dedupe index).
+- Redis outage policies for rate limiters unchanged (Epic 18); outbox survives API process restart.
+
+---
+
 ## 5. Non-Goals (Explicit)
 
 - **Modifying lead-generation-crm** — separate product; no shared deployment requirement.
@@ -574,6 +662,11 @@ Platform Admin **Suspend** (FR-3) remains the manual break-glass for confirmed a
 - **Basic dormancy archive** after 90 days idle (FR-25)
 - **Signup CAPTCHA + rate limits** (FR-26)
 - **ToS/Privacy acceptance** at signup; Stripe Tax deferred (FR-26a)
+- **Operator dashboard modernization** — Overview / Graphs / Tables views, trend charts, lead pipeline, WoW deltas (FR-15; shipped 2026-08-07)
+- **Activities list card grid** — 20 per page, schedule conflict badges, draft-only create (FR-14; shipped 2026-08-07)
+- **Plan limit enforcement** — API block + admin `PlanLimitAlert` warnings at cap (FR-27; shipped 2026-08-07)
+- **Per-activity max registrants** — optional cap with `409 activity_full` (FR-14 / Epic 20)
+- **Transactional email outbox** — registration, billing, async campaigns (FR-28; shipped 2026-08)
 
 ### 6.2 Out of Scope for MVP
 
@@ -593,6 +686,8 @@ Platform Admin **Suspend** (FR-3) remains the manual break-glass for confirmed a
 ### 6.3 Platform 0 Baseline (Already Built)
 
 Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, reports, campaigns, SendGrid, website builder, landing sections. **No rollback.** Enterprise work adds tenancy layer and refactors scoping.
+
+**Post–Platform 0 shipped on `main` (see `implementation-changelog-2026-08.md`):** Epics 11–19 (tenancy, billing, public surfaces, launch hardening), Epic 20 (activity max registrants), dashboard modernization (FR-15), plan limit enforcement (FR-27), transactional outbox (FR-28). Epic 21 (Viber touch-base) in progress.
 
 ---
 
@@ -753,6 +848,12 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-34:** Role × plan (H5 Option A): Admin-only billing/team/settings; Member gets plan-allowed ops; upgrade CTAs Admin-only — FR-5
 - **A-35:** UJ-4 is break-glass Suspend only (H6); ordinary non-payment is FR-23 automation — FR-2, FR-3
 - **A-36:** One-stop = operator stack killer (GTM-A); post-MVP backlog in §13.11 — not discovery marketplace
+- **A-37:** Activities list UX = **card grid**, 20/page — not data table (table experiment reverted 2026-08-07) — FR-14
+- **A-38:** Dashboard operator UI = three persisted views (Overview / Graphs / Tables) with Recharts — FR-15
+- **A-39:** Plan limits enforced server-side at ≥100% (seats block when **over** only) — FR-27, §13.4
+- **A-40:** Registration/billing/campaign email via PostgreSQL transactional outbox — FR-28
+- **A-41:** Optional per-activity `MaxRegistrants` capped by plan monthly registration limit — FR-14 / Epic 20
+- **A-42:** Bare `localhost` serves marketing apex; tenant dev uses `{slug}.localhost` — addendum local dev
 
 ---
 
@@ -820,6 +921,8 @@ flowchart LR
 ### 13.4 Feature gates by tier
 
 **Usage limits (ratified):** Published activities = **concurrent Published status**. Registrations = **public registrations per calendar month (UTC)**. Warn at **80%**, block at **100%**. **Basic:** enforce immediately. **Paid tiers:** soft warn during trial, enforce after trial ends.
+
+**Enforcement (shipped — FR-27):** Limits are **not display-only**. API rejects over-cap mutations (publish, community create, public registration); admin UI shows `PlanLimitAlert` and disables gated actions. Seat cap blocks only when **over** capacity (invite at exact cap still allowed). See §4.8 for action matrix.
 
 | Capability | Basic | Core | Pro |
 |------------|:-----:|:----:|:---:|
@@ -940,6 +1043,8 @@ cohestra.app (apex marketing)
 | Communities | 1 | 3 | 10 |
 | Published activities (concurrent) | **3** | 12 | 50 |
 | Registrations / month (public) | 150 | 500 | 5,000 |
+
+**Enforcement API codes (FR-27):** Community create → HTTP 400 with capacity message. Publish activity → HTTP 400. Public registration at monthly cap → HTTP 409 `plan_registration_limit`. Per-activity full → HTTP 409 `activity_full` (Epic 20, independent of plan dial).
 
 **Basic rationale:** Minimum real product test — one operator, one community, three live events, 150 regs/mo, registration emails, **public stub** (no SitePage). No card required.
 

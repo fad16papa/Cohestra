@@ -28,7 +28,7 @@ storyCounts:
   epic15: 7
   epic16: parked
   epic21: 3
-updated: 2026-08-02
+updated: 2026-08-07
 ---
 
 # cohestra — Epic Breakdown (Enterprise)
@@ -69,9 +69,9 @@ FR-12: Public site by plan — Basic stub (no SitePage); Core Essentials website
 
 FR-13: Per-tenant email branding — SendGrid From name/email per tenant within platform guardrails; block send if sender unverified.
 
-FR-14: Tenant-scoped activity engine — create/form/QR/register/dedup within resolved Tenant; activity slug unique per tenant.
+FR-14: Tenant-scoped activity engine — create/form/QR/register/dedup within resolved Tenant; activity slug unique per tenant; **card grid list 20/page**; draft-only create; schedule conflict badges; optional MaxRegistrants (Epic 20); plan limit warnings (FR-27).
 
-FR-15: Tenant-scoped dashboard and plan-gated reports — Basic fixed report + CSV; Core queryable filters + CSV; Pro + campaign analytics + saved views; cache/polling per tenant namespace.
+FR-15: Tenant-scoped dashboard and plan-gated reports — Basic fixed report + CSV; Core queryable filters + CSV; Pro + campaign analytics + saved views; cache/polling per tenant namespace; **operator dashboard: Overview / Graphs / Tables views, trend charts, lead pipeline, WoW deltas** (shipped 2026-08-07).
 
 FR-16: Tenant-scoped campaigns and templates — Pro-only; Basic/Core UI/API upgrade CTA / 403; registration notification emails remain on all plans.
 
@@ -96,6 +96,10 @@ FR-25: Basic dormancy archive — Basic+Free idle 90 days (no login and no new r
 FR-26: Self-serve abuse controls — Google reCAPTCHA always on signup (accessible challenge); email verification; signup rate limit 5/IP/hour and 20/IP/day; public registration burst limit → 429; Suspend remains break-glass.
 
 FR-26a: Legal acceptance at signup — ToS + Privacy checkbox required; store AcceptedAt + TermsVersion + PrivacyVersion; serve `/terms` and `/privacy`; Stripe Tax deferred.
+
+FR-27: Plan usage limits — warn ≥80%, block ≥100% (seats block when over only); API enforcement on publish, community create, public registration; admin PlanLimitAlert UX; aligns with LimitMeter (shipped 2026-08-07).
+
+FR-28: Transactional outbox for email — OutboxMessages in same DB transaction as mutations; background dispatcher; registration, billing, async campaign sends (shipped 2026-08).
 
 ### NonFunctional Requirements
 
@@ -247,6 +251,8 @@ UX-DR20: Key-screen fidelity — ship against ratified mocks `marketing-start-fr
 | FR-14 | Epic 15 | Tenant-scoped activity engine / registration |
 | FR-15 | Epic 15 | Plan-gated dashboard reports |
 | FR-16 | Epic 15 | Pro-only campaigns |
+| FR-27 | Epic 22 | Plan limit API + admin warnings |
+| FR-28 | Infrastructure | Transactional outbox (cross-cutting) |
 | (parked) | Epic 16 | One-stop Lite — share kit, domain, thin email, paid tickets |
 
 **UX-DR coverage (planned):** UX-DR1–11,17–20 → Epic 14 · UX-DR12–14,18–20 → Epic 15 · UX-DR16 → Epic 11 · UX-DR15 → Epic 16 parked
@@ -1480,4 +1486,86 @@ So that **coverage metrics reflect all messenger touch-points**.
 **Then** labels read **Viber initiated** and **Viber follow-up recorded** with human-readable status in the subject line
 
 **Parked (21.4 — post-profile):** Share-kit “Copy Viber message” for activities/homepage (Epic 16 parity); defer until Story 21.1–21.3 UAT passes.
+
+## Epic 22: Plan limit enforcement (shipped 2026-08-07)
+
+**FRs touched:** FR-27, FR-24 (over-limit workspace), §13.4  
+**UX:** LimitMeter + PlanLimitAlert (UX-DR LimitMeter row)
+
+Enforce ratified usage limits server-side and surface consistent admin warnings. Replaces display-only meters with hard gates at capacity.
+
+### Story 22.1: API enforcement for communities, publish, and registrations
+
+As a **Platform operator**,
+I want **plan caps enforced at mutation time**,
+So that **tenants cannot exceed paid tier limits without upgrading**.
+
+**Acceptance Criteria:**
+
+**Given** published activity count ≥ plan limit  
+**When** admin attempts publish  
+**Then** API returns 400 with capacity message
+
+**Given** community count ≥ plan limit  
+**When** admin attempts create community  
+**Then** API returns 400
+
+**Given** monthly public registration count ≥ plan limit  
+**When** participant submits registration  
+**Then** API returns 409 `plan_registration_limit`
+
+**Given** seat count **over** plan limit  
+**When** admin invites a member  
+**Then** invite is blocked (exact cap still allows invite)
+
+### Story 22.2: Admin PlanLimitAlert warnings
+
+As a **Tenant Admin or Member**,
+I want **clear warnings before I hit a hard block**,
+So that **I know which dial to free or when to upgrade**.
+
+**Acceptance Criteria:**
+
+**Given** published-activity dial at ≥80%  
+**When** viewing activities list or create form  
+**Then** PlanLimitAlert shows warning; draft create still allowed
+
+**Given** published-activity dial at 100%  
+**When** viewing activity publish controls  
+**Then** publish button disabled + PlanLimitAlert
+
+**Given** communities dial at 100%  
+**When** viewing communities page  
+**Then** create form disabled + PlanLimitAlert
+
+## Epic 23: Dashboard operator UX modernization (shipped 2026-08-07)
+
+**FRs touched:** FR-15 (UI extension, not report tier gates)  
+**Depends on:** tenant-scoped metrics API, Redis cache namespace (Epic 13)
+
+Three switchable dashboard views with real charts and drill-down tables. Lead Pipeline uses stacked donut layout in Graphs view.
+
+### Story 23.1: Extended dashboard metrics API
+
+**Acceptance Criteria:**
+
+**Given** authenticated tenant admin  
+**When** `GET /api/v1/admin/dashboard/metrics`  
+**Then** response includes `registrationsTrend`, `registrationsInPeriod`, `registrationsInPreviousPeriod`, `leadStatusBreakdown` scoped to tenant only
+
+### Story 23.2: Overview / Graphs / Tables views
+
+**Acceptance Criteria:**
+
+**Given** operator on `/dashboard`  
+**When** switching views  
+**Then** choice persists in localStorage across sessions
+
+**Given** Graphs view  
+**When** lead pipeline renders  
+**Then** stacked layout: large donut on top, status rows below (fills card without excess whitespace)
+
+**Given** KPI tiles  
+**When** metrics refresh (60s poll)  
+**Then** registrations tile shows week-over-week delta chip
 
