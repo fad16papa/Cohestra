@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import { ActivitiesTable } from "@/components/activities/activities-table";
+import { ActivityCard } from "@/components/activities/activity-card";
 import { useActivityScheduleConflicts } from "@/components/activities/use-activity-schedule-conflicts";
 import { useAuth } from "@/components/auth/auth-provider";
+import { CardGridSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -22,7 +23,7 @@ import { fetchCommunities } from "@/lib/communities-api";
 import { cn } from "@/lib/utils";
 import { CalendarDays } from "lucide-react";
 
-const ACTIVITY_PAGE_SIZE = 50;
+const ACTIVITY_PAGE_SIZE = 20;
 const ACTIVITY_SEARCH_DEBOUNCE_MS = 400;
 
 const filterSelectClassName =
@@ -89,7 +90,6 @@ export function ActivitiesListPage() {
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [initialized, setInitialized] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ActivityStatus | "">(() =>
     parseStatusFilter(searchParams.get("status"))
@@ -145,8 +145,6 @@ export function ActivitiesListPage() {
   useEffect(() => {
     let cancelled = false;
 
-    setIsFetching(true);
-
     void fetchActivities(authFetch, {
       status: statusFilter,
       category: categoryFilter,
@@ -188,11 +186,6 @@ export function ActivitiesListPage() {
             : "Could not load activities."
         );
         setInitialized(true);
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsFetching(false);
-        }
       });
 
     return () => {
@@ -228,9 +221,6 @@ export function ActivitiesListPage() {
     Boolean(statusFilter) ||
     Boolean(categoryFilter) ||
     Boolean(communityFilter);
-
-  const showEmptyState =
-    initialized && !error && activities.length === 0 && !isFetching;
 
   return (
     <div className="space-y-6">
@@ -319,13 +309,15 @@ export function ActivitiesListPage() {
         </p>
       ) : null}
 
-      {error ? (
+      {!initialized ? <CardGridSkeleton count={6} /> : null}
+
+      {initialized && error ? (
         <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
       ) : null}
 
-      {showEmptyState ? (
+      {initialized && !error && activities.length === 0 ? (
         hasActiveFilters ? (
           <div className="rounded-xl border border-dashed border-border-warm px-6 py-10 text-center">
             <p className="text-sm text-text-muted-warm">
@@ -346,54 +338,58 @@ export function ActivitiesListPage() {
             secondaryLabel="Manage communities"
           />
         )
-      ) : (
-        <>
-          <ActivitiesTable
-            activities={activities}
-            getConflictsForActivity={
-              conflictsReady && !conflictError ? getConflictsForActivity : undefined
-            }
-            isLoading={!initialized}
-            isFetching={isFetching}
-            skeletonRows={10}
-          />
+      ) : null}
 
-          {initialized && totalCount > 0 ? (
-            <div className="flex flex-col gap-3 border-t border-border-warm pt-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-text-muted-warm">
-                Showing {(page - 1) * ACTIVITY_PAGE_SIZE + 1}-
-                {Math.min(page * ACTIVITY_PAGE_SIZE, totalCount)} of {totalCount}{" "}
-                activit{totalCount === 1 ? "y" : "ies"}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1 || isFetching}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-text-muted-warm">
-                  Page {page} of {totalPages}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages || isFetching}
-                  onClick={() =>
-                    setPage((current) => Math.min(totalPages, current + 1))
-                  }
-                >
-                  Next
-                </Button>
-              </div>
+      {initialized && !error && activities.length > 0 ? (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {activities.map((activity) => (
+              <ActivityCard
+                key={activity.id}
+                activity={activity}
+                conflictingActivities={
+                  conflictsReady && !conflictError
+                    ? getConflictsForActivity(activity.id)
+                    : []
+                }
+              />
+            ))}
+          </div>
+
+          <div className="flex flex-col gap-3 border-t border-border-warm pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-text-muted-warm">
+              {totalCount === 0
+                ? "No activities"
+                : `Showing ${(page - 1) * ACTIVITY_PAGE_SIZE + 1}-${Math.min(page * ACTIVITY_PAGE_SIZE, totalCount)} of ${totalCount}`}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-text-muted-warm">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() =>
+                  setPage((current) => Math.min(totalPages, current + 1))
+                }
+              >
+                Next
+              </Button>
             </div>
-          ) : null}
+          </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 }
