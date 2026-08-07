@@ -262,12 +262,17 @@ export function DashboardPageClient() {
             points={metrics.registrationsTrend}
             trendDays={metrics.trendDays}
           />
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-start">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-stretch">
             <DashboardActivityPerformanceGraph
               items={metrics.activityPerformance}
               periodLabel={periodLabel}
+              className="h-full"
             />
-            <DashboardLeadStatusChart breakdown={metrics.leadStatusBreakdown} />
+            <DashboardLeadStatusChart
+              breakdown={metrics.leadStatusBreakdown}
+              className="h-full"
+              fill
+            />
           </div>
           <DashboardCommunityPulse variant="graphs" />
         </>

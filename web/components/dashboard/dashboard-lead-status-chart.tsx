@@ -9,6 +9,7 @@ import {
   DashboardChartCard,
 } from "@/components/dashboard/dashboard-chart-card";
 import type { DashboardLeadStatusBreakdown } from "@/lib/dashboard-api";
+import { cn } from "@/lib/utils";
 
 type StatusSlice = {
   key: string;
@@ -21,6 +22,8 @@ type StatusSlice = {
 type DashboardLeadStatusChartProps = {
   breakdown: DashboardLeadStatusBreakdown;
   className?: string;
+  /** Stretch chart + legend to fill the card body (graphs view). */
+  fill?: boolean;
 };
 
 function buildSlices(breakdown: DashboardLeadStatusBreakdown): StatusSlice[] {
@@ -90,6 +93,7 @@ function StatusTooltip({ active, payload }: StatusTooltipProps) {
 export function DashboardLeadStatusChart({
   breakdown,
   className,
+  fill = false,
 }: DashboardLeadStatusChartProps) {
   const slices = useMemo(() => buildSlices(breakdown), [breakdown]);
   const total = slices.reduce((sum, slice) => sum + slice.value, 0);
@@ -103,14 +107,28 @@ export function DashboardLeadStatusChart({
       title="Lead pipeline"
       description="Client list by lead status — tap a status to open that segment."
       className={className}
+      contentClassName={fill ? "min-h-0" : undefined}
     >
       {total === 0 ? (
         <p className="rounded-lg border border-dashed border-border-warm px-6 py-10 text-center text-sm text-text-muted-warm">
           No clients yet. Your lead pipeline appears here after the first registration.
         </p>
       ) : (
-        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
-          <div className="relative h-44 w-44 shrink-0">
+        <div
+          className={cn(
+            fill
+              ? "grid min-h-[min(22rem,52vh)] flex-1 grid-cols-1 gap-6 sm:grid-cols-2 sm:items-stretch"
+              : "flex flex-col items-center gap-5 sm:flex-row sm:items-center"
+          )}
+        >
+          <div
+            className={cn(
+              "relative w-full",
+              fill
+                ? "min-h-[14rem] sm:min-h-0 sm:h-full"
+                : "h-44 w-44 shrink-0"
+            )}
+          >
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Tooltip content={<StatusTooltip />} />
@@ -118,8 +136,8 @@ export function DashboardLeadStatusChart({
                   data={chartData}
                   dataKey="value"
                   nameKey="label"
-                  innerRadius={56}
-                  outerRadius={82}
+                  innerRadius={fill ? "58%" : 56}
+                  outerRadius={fill ? "88%" : 82}
                   paddingAngle={chartData.length > 1 ? 2 : 0}
                   strokeWidth={0}
                 >
@@ -130,7 +148,12 @@ export function DashboardLeadStatusChart({
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="tabular-nums text-2xl font-semibold text-text-warm">
+              <span
+                className={cn(
+                  "tabular-nums font-semibold text-text-warm",
+                  fill ? "text-3xl sm:text-4xl" : "text-2xl"
+                )}
+              >
                 {total}
               </span>
               <span className="text-[11px] uppercase tracking-wide text-text-muted-warm">
@@ -139,24 +162,40 @@ export function DashboardLeadStatusChart({
             </div>
           </div>
 
-          <ul className="w-full space-y-2">
+          <ul
+            className={cn(
+              "w-full space-y-2",
+              fill && "flex h-full flex-col justify-center gap-2 sm:gap-3"
+            )}
+          >
             {slices.map((slice) => (
               <li key={slice.key}>
                 <Link
                   href={slice.href}
-                  className="group flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className={cn(
+                    "group flex items-center justify-between gap-3 rounded-lg px-2 transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    fill ? "py-2.5 sm:px-3 sm:py-3" : "py-1.5"
+                  )}
                   aria-label={`View ${slice.value} ${slice.label.toLowerCase()} clients`}
                 >
                   <span className="inline-flex min-w-0 items-center gap-2 text-sm text-text-warm">
                     <span
                       aria-hidden
-                      className="inline-block size-2.5 shrink-0 rounded-full"
+                      className={cn(
+                        "inline-block shrink-0 rounded-full",
+                        fill ? "size-3" : "size-2.5"
+                      )}
                       style={{ backgroundColor: slice.color }}
                     />
                     <span className="truncate group-hover:text-primary">{slice.label}</span>
                   </span>
                   <span className="flex shrink-0 items-baseline gap-2">
-                    <span className="tabular-nums text-sm font-semibold text-text-warm">
+                    <span
+                      className={cn(
+                        "tabular-nums font-semibold text-text-warm",
+                        fill ? "text-base" : "text-sm"
+                      )}
+                    >
                       {slice.value}
                     </span>
                     <span className="w-11 text-right tabular-nums text-xs text-text-muted-warm">
@@ -164,6 +203,20 @@ export function DashboardLeadStatusChart({
                     </span>
                   </span>
                 </Link>
+                {fill ? (
+                  <div
+                    className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted/50 sm:mt-2"
+                    aria-hidden
+                  >
+                    <div
+                      className="h-full rounded-full transition-[width] duration-300"
+                      style={{
+                        width: formatSharePercent(slice.value, total),
+                        backgroundColor: slice.color,
+                      }}
+                    />
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>
