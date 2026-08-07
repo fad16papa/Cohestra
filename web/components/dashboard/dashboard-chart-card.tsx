@@ -11,6 +11,7 @@ type DashboardChartCardProps = {
   children: ReactNode;
   headerAside?: ReactNode;
   className?: string;
+  contentClassName?: string;
 };
 
 /** Consistent card chrome for dashboard charts — quiet border, generous padding. */
@@ -21,12 +22,13 @@ export function DashboardChartCard({
   children,
   headerAside,
   className,
+  contentClassName,
 }: DashboardChartCardProps) {
   return (
     <section
       aria-labelledby={headingId}
       className={cn(
-        "rounded-xl border border-border-warm bg-card/90 backdrop-blur-sm",
+        "flex flex-col rounded-xl border border-border-warm bg-card/90 backdrop-blur-sm",
         className
       )}
     >
@@ -39,7 +41,9 @@ export function DashboardChartCard({
         </div>
         {headerAside ? <div className="shrink-0">{headerAside}</div> : null}
       </div>
-      <div className="p-4 sm:p-5">{children}</div>
+      <div className={cn("flex flex-1 flex-col p-4 sm:p-5", contentClassName)}>
+        {children}
+      </div>
     </section>
   );
 }
