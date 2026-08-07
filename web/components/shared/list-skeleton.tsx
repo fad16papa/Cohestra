@@ -74,3 +74,36 @@ export function CardGridSkeleton({ count = 6 }: CardGridSkeletonProps) {
     </div>
   );
 }
+
+type TableSkeletonProps = {
+  rows?: number;
+  columns?: number;
+  className?: string;
+};
+
+export function TableSkeleton({
+  rows = 8,
+  columns = 6,
+  className,
+}: TableSkeletonProps) {
+  return (
+    <div className={cn("divide-y divide-border-warm", className)} aria-hidden>
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <div
+          key={rowIndex}
+          className="flex animate-pulse items-center gap-4 px-4 py-3.5 sm:px-5"
+        >
+          {Array.from({ length: columns }).map((__, columnIndex) => (
+            <div
+              key={columnIndex}
+              className={cn(
+                "h-4 rounded-md bg-muted",
+                columnIndex === 0 ? "min-w-[8rem] flex-[1.4]" : "flex-1"
+              )}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
