@@ -18,15 +18,28 @@ export const leadStatusOptions: Array<{ value: LeadStatus; label: string }> = [
 
 export type ClientSortBy = "name" | "status" | "lastRegistrationDate";
 
+export type OutreachKind = "whatsapp" | "viber" | "email";
+
+export type ClientLeadStatusCounts = {
+  newCount: number;
+  contactedCount: number;
+  activeCount: number;
+  inactiveCount: number;
+  mergeSuspectCount: number;
+};
+
 export type ClientListItem = {
   id: string;
   fullName: string;
+  phone: string | null;
   email: string | null;
   consentGiven: boolean;
   nationality: string | null;
   leadStatus: LeadStatus;
   lastRegistrationAt: string | null;
   lastActivityName: string | null;
+  lastOutreachAt: string | null;
+  lastOutreachKind: OutreachKind | null;
 };
 
 export type ClientListResult = {
@@ -34,6 +47,7 @@ export type ClientListResult = {
   page: number;
   pageSize: number;
   totalCount: number;
+  statusCounts: ClientLeadStatusCounts;
 };
 
 export type ClientRegistrationAnswer = {
@@ -102,12 +116,15 @@ function parseLeadStatus(raw: unknown): LeadStatus {
 export function parseClientListItem(raw: Record<string, unknown>): ClientListItem {
   const id = raw.id ?? raw.Id;
   const fullName = raw.fullName ?? raw.FullName;
+  const phone = raw.phone ?? raw.Phone;
   const email = raw.email ?? raw.Email;
   const consentGiven = raw.consentGiven ?? raw.ConsentGiven;
   const nationality = raw.nationality ?? raw.Nationality;
   const leadStatus = raw.leadStatus ?? raw.LeadStatus;
   const lastRegistrationAt = raw.lastRegistrationAt ?? raw.LastRegistrationAt;
   const lastActivityName = raw.lastActivityName ?? raw.LastActivityName;
+  const lastOutreachAt = raw.lastOutreachAt ?? raw.LastOutreachAt;
+  const lastOutreachKind = raw.lastOutreachKind ?? raw.LastOutreachKind;
 
   if (
     (typeof id !== "string" && typeof id !== "number") ||
@@ -119,6 +136,7 @@ export function parseClientListItem(raw: Record<string, unknown>): ClientListIte
   return {
     id: String(id),
     fullName,
+    phone: typeof phone === "string" ? phone : null,
     email: typeof email === "string" ? email : null,
     consentGiven: Boolean(consentGiven),
     nationality: typeof nationality === "string" ? nationality : null,
@@ -127,6 +145,46 @@ export function parseClientListItem(raw: Record<string, unknown>): ClientListIte
       typeof lastRegistrationAt === "string" ? lastRegistrationAt : null,
     lastActivityName:
       typeof lastActivityName === "string" ? lastActivityName : null,
+    lastOutreachAt:
+      typeof lastOutreachAt === "string" ? lastOutreachAt : null,
+    lastOutreachKind: parseOutreachKind(lastOutreachKind),
+  };
+}
+
+function parseOutreachKind(raw: unknown): OutreachKind | null {
+  if (raw === "whatsapp" || raw === "viber" || raw === "email") {
+    return raw;
+  }
+
+  return null;
+}
+
+function parseClientLeadStatusCounts(
+  raw: Record<string, unknown> | undefined
+): ClientLeadStatusCounts {
+  if (!raw) {
+    return {
+      newCount: 0,
+      contactedCount: 0,
+      activeCount: 0,
+      inactiveCount: 0,
+      mergeSuspectCount: 0,
+    };
+  }
+
+  const newCount = raw.newCount ?? raw.NewCount;
+  const contactedCount = raw.contactedCount ?? raw.ContactedCount;
+  const activeCount = raw.activeCount ?? raw.ActiveCount;
+  const inactiveCount = raw.inactiveCount ?? raw.InactiveCount;
+  const mergeSuspectCount = raw.mergeSuspectCount ?? raw.MergeSuspectCount;
+
+  return {
+    newCount: typeof newCount === "number" ? newCount : 0,
+    contactedCount: typeof contactedCount === "number" ? contactedCount : 0,
+    activeCount: typeof activeCount === "number" ? activeCount : 0,
+    inactiveCount: typeof inactiveCount === "number" ? inactiveCount : 0,
+    mergeSuspectCount:
+      typeof mergeSuspectCount === "number" ? mergeSuspectCount : 0,
   };
 }
 
@@ -135,6 +193,7 @@ function parseClientList(raw: Record<string, unknown>): ClientListResult {
   const page = raw.page ?? raw.Page;
   const pageSize = raw.pageSize ?? raw.PageSize;
   const totalCount = raw.totalCount ?? raw.TotalCount;
+  const statusCounts = raw.statusCounts ?? raw.StatusCounts;
 
   if (
     !Array.isArray(items) ||
@@ -152,6 +211,9 @@ function parseClientList(raw: Record<string, unknown>): ClientListResult {
     page,
     pageSize,
     totalCount,
+    statusCounts: parseClientLeadStatusCounts(
+      statusCounts as Record<string, unknown> | undefined
+    ),
   };
 }
 
@@ -615,4 +677,41 @@ export function formatLastActivityCaption(client: ClientListItem): string {
   });
 
   return `${client.lastActivityName} · ${formattedDate}`;
+}
+
+const outreachKindLabels: Record<OutreachKind, string> = {
+  whatsapp: "WhatsApp",
+  viber: "Viber",
+  email: "Email",
+};
+
+export function formatLastOutreachCaption(client: ClientListItem): string {
+  if (!client.lastOutreachAt || !client.lastOutreachKind) {
+    return "No outreach yet";
+  }
+
+  const outreachAt = new Date(client.lastOutreachAt);
+  if (Number.isNaN(outreachAt.getTime())) {
+    return outreachKindLabels[client.lastOutreachKind];
+  }
+
+  const formattedDate = outreachAt.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return `${outreachKindLabels[client.lastOutreachKind]} · ${formattedDate}`;
+}
+
+export function formatClientContactLine(client: ClientListItem): string {
+  if (client.phone) {
+    return client.phone;
+  }
+
+  if (client.email) {
+    return client.email;
+  }
+
+  return "No contact on file";
 }

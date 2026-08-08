@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { ClientLeadQueueHeader } from "@/components/clients/client-lead-queue-header";
 import { ClientRow } from "@/components/clients/client-row";
 import {
   clientsTableGridClassName,
   clientsTableStatusColumnClassName,
 } from "@/components/clients/clients-table-layout";
+import { MessengerOpenConfirmDialog } from "@/components/clients/messenger-open-confirm-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import { ListSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
@@ -22,24 +24,37 @@ import {
   fetchClients,
   leadStatusLabels,
   leadStatusOptions,
+  recordWhatsAppInitiated,
   updateClientLeadStatus,
+  type ClientLeadStatusCounts,
   type ClientListItem,
   type ClientSortBy,
   type LeadStatus,
 } from "@/lib/clients-api";
+import { buildWhatsAppWebUrl } from "@/lib/messenger-links";
+import { formatPhoneDisplay } from "@/lib/phone-countries";
 import { cn } from "@/lib/utils";
 import { Users } from "lucide-react";
 
 const CLIENT_PAGE_SIZE = 25;
 const CLIENT_SEARCH_DEBOUNCE_MS = 400;
 
+const emptyStatusCounts: ClientLeadStatusCounts = {
+  newCount: 0,
+  contactedCount: 0,
+  activeCount: 0,
+  inactiveCount: 0,
+  mergeSuspectCount: 0,
+};
+
 type SortDirection = "asc" | "desc";
 
 const sortColumns: Array<{
   id: ClientSortBy;
   label: string;
+  headerLabel?: string;
 }> = [
-  { id: "name", label: "Name" },
+  { id: "name", label: "Name", headerLabel: "Contact" },
   { id: "status", label: "Status" },
   { id: "lastRegistrationDate", label: "Last registration" },
 ];
@@ -92,7 +107,7 @@ function ClientSearchInput({ committedValue, onCommit }: ClientSearchInputProps)
     <Input
       id="client-search"
       type="search"
-      placeholder="Search by name or nationality…"
+      placeholder="Search by name, phone, or email…"
       value={draft}
       onChange={(event) => setDraft(event.target.value)}
     />
@@ -115,6 +130,8 @@ export function ClientsListPage() {
   const nationalityFilter = searchParams.get("nationality")?.trim() ?? "";
   const searchFilter = searchParams.get("search")?.trim() ?? "";
   const [clients, setClients] = useState<ClientListItem[]>([]);
+  const [statusCounts, setStatusCounts] =
+    useState<ClientLeadStatusCounts>(emptyStatusCounts);
   const [nationalityOptions, setNationalityOptions] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -125,6 +142,10 @@ export function ClientsListPage() {
   const [updatingClientIds, setUpdatingClientIds] = useState<Set<string>>(
     () => new Set()
   );
+  const [messengerClient, setMessengerClient] = useState<ClientListItem | null>(
+    null
+  );
+  const [messengerBusy, setMessengerBusy] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / CLIENT_PAGE_SIZE));
 
@@ -199,6 +220,7 @@ export function ClientsListPage() {
         }
 
         setClients(result.items);
+        setStatusCounts(result.statusCounts);
         setTotalCount(result.totalCount);
         setError(null);
         setInitialized(true);
@@ -243,13 +265,47 @@ export function ClientsListPage() {
     setPage(1);
   }
 
-  function updateLeadStatusFilter(nextStatus: LeadStatus | "") {
+  function updateLeadStatusFilter(nextStatus: LeadStatus | null) {
     const params = new URLSearchParams(searchParams.toString());
 
     if (nextStatus) {
       params.set("leadStatus", nextStatus);
+      params.delete("mergeSuspect");
     } else {
       params.delete("leadStatus");
+    }
+
+    router.replace(
+      params.toString() ? `/clients?${params.toString()}` : "/clients"
+    );
+  }
+
+  function updateMergeSuspectFilter(active: boolean) {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (active) {
+      params.set("mergeSuspect", "true");
+      params.delete("leadStatus");
+      params.delete("registeredWithinDays");
+      params.delete("createdWithinDays");
+    } else {
+      params.delete("mergeSuspect");
+    }
+
+    router.replace(
+      params.toString() ? `/clients?${params.toString()}` : "/clients"
+    );
+  }
+
+  function updateRegisteredWithinDaysFilter(days: number | null) {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (days && days > 0) {
+      params.set("registeredWithinDays", String(days));
+      params.delete("mergeSuspect");
+      params.delete("createdWithinDays");
+    } else {
+      params.delete("registeredWithinDays");
     }
 
     router.replace(
@@ -347,16 +403,68 @@ export function ClientsListPage() {
     [authFetch, showActionToast, showToast]
   );
 
+  const handleOpenMessenger = useCallback((client: ClientListItem) => {
+    setMessengerClient(client);
+  }, []);
+
+  const handleConfirmOpenMessenger = useCallback(async () => {
+    if (!messengerClient?.phone) {
+      return;
+    }
+
+    const whatsAppUrl = buildWhatsAppWebUrl(messengerClient.phone);
+    if (!whatsAppUrl) {
+      showToast("Enter a valid phone number on the client profile first.");
+      return;
+    }
+
+    setMessengerBusy(true);
+    try {
+      await recordWhatsAppInitiated(authFetch, messengerClient.id);
+      window.open(whatsAppUrl, "_blank", "noopener,noreferrer");
+      setClients((current) =>
+        current.map((item) =>
+          item.id === messengerClient.id
+            ? {
+                ...item,
+                lastOutreachAt: new Date().toISOString(),
+                lastOutreachKind: "whatsapp",
+              }
+            : item
+        )
+      );
+      setMessengerClient(null);
+    } catch (openError) {
+      showToast(
+        openError instanceof Error
+          ? openError.message
+          : "Could not log WhatsApp initiation."
+      );
+    } finally {
+      setMessengerBusy(false);
+    }
+  }, [authFetch, messengerClient, showToast]);
+
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <PageHeader
         title="Clients"
-        description="One row per contact — repeat sign-ups on activities merge by phone or email. Use an activity's Registrations tab to see every form submission."
+        description="One row per contact — repeat sign-ups on activities merge by phone or email. Filter new leads, mark contacted, and open WhatsApp without leaving the queue."
+      />
+
+      <ClientLeadQueueHeader
+        statusCounts={statusCounts}
+        activeLeadStatus={leadStatusFilter}
+        mergeSuspectOnly={mergeSuspectOnly}
+        registeredWithinDays={registeredWithinDays}
+        onLeadStatusChange={updateLeadStatusFilter}
+        onMergeSuspectToggle={updateMergeSuspectFilter}
+        onRegisteredWithinDaysChange={updateRegisteredWithinDaysFilter}
       />
 
       <div className="grid gap-4 rounded-xl border border-border-warm bg-card p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_220px]">
         <div className="space-y-2 md:col-span-2 xl:col-span-1">
-          <Label htmlFor="client-search">Search by name or nationality</Label>
+          <Label htmlFor="client-search">Search</Label>
           <ClientSearchInput
             key={searchFilter}
             committedValue={searchFilter}
@@ -456,7 +564,7 @@ export function ClientsListPage() {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => updateLeadStatusFilter("")}
+            onClick={() => updateLeadStatusFilter(null)}
           >
             Clear status filter
           </Button>
@@ -484,19 +592,11 @@ export function ClientsListPage() {
         <div
           className={cn(
             clientsTableGridClassName,
-            "border-b border-border-warm bg-muted/30 py-3"
+            "hidden border-b border-border-warm bg-muted/30 py-3 sm:grid"
           )}
           role="row"
         >
-          <span className="min-w-0 pl-1 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm">
-            Name
-          </span>
-          <span className="min-w-0 text-center text-xs font-medium uppercase tracking-wide text-text-muted-warm">
-            Nationality
-          </span>
-          {sortColumns
-            .filter((column) => column.id !== "name")
-            .map((column) => {
+          {sortColumns.map((column) => {
             const isActive = sortBy === column.id;
             const directionLabel =
               isActive && sortDirection === "asc" ? "ascending" : "descending";
@@ -520,12 +620,18 @@ export function ClientsListPage() {
                   )}
                   onClick={() => handleSort(column.id)}
                 >
-                  {column.label}
+                  {column.headerLabel ?? column.label}
                   {isActive ? (sortDirection === "asc" ? " ↑" : " ↓") : null}
                 </button>
               </div>
             );
           })}
+          <span className="hidden min-w-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm sm:block">
+            Last outreach
+          </span>
+          <span className="hidden min-w-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm sm:block">
+            Actions
+          </span>
         </div>
 
         {error ? (
@@ -567,6 +673,7 @@ export function ClientsListPage() {
                 key={client.id}
                 client={client}
                 onMarkContacted={handleMarkContacted}
+                onOpenMessenger={handleOpenMessenger}
                 isUpdating={updatingClientIds.has(client.id)}
               />
             ))
@@ -609,6 +716,25 @@ export function ClientsListPage() {
           </Button>
         </div>
       </div>
+
+      <MessengerOpenConfirmDialog
+        channel={messengerClient ? "whatsapp" : null}
+        clientPhoneLabel={
+          messengerClient?.phone
+            ? formatPhoneDisplay(messengerClient.phone)
+            : null
+        }
+        open={messengerClient !== null}
+        busy={messengerBusy}
+        onOpenChange={(open) => {
+          if (!open) {
+            setMessengerClient(null);
+          }
+        }}
+        onConfirm={() => {
+          void handleConfirmOpenMessenger();
+        }}
+      />
     </div>
   );
 }

@@ -12,6 +12,14 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
     private const int DefaultPageSize = 25;
     private const int MaxPageSize = 100;
 
+    private static readonly ClientTimelineEventType[] OutreachEventTypes =
+    [
+        ClientTimelineEventType.WhatsAppInitiated,
+        ClientTimelineEventType.WhatsAppFollowUpRecorded,
+        ClientTimelineEventType.ViberInitiated,
+        ClientTimelineEventType.EmailCampaignSent,
+    ];
+
     public async Task<ClientListResponse> ListAsync(
         int page,
         int pageSize,
@@ -75,10 +83,16 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
         if (!string.IsNullOrWhiteSpace(search))
         {
             var normalizedSearch = search.Trim().ToLowerInvariant();
+            var normalizedPhoneSearch = ClientContactNormalizer.NormalizePhoneSearch(search);
             clientsQuery = clientsQuery.Where(client =>
                 client.FullName.ToLower().Contains(normalizedSearch) ||
                 (client.Email != null &&
                  client.Email.ToLower().Contains(normalizedSearch)) ||
+                (client.Phone != null &&
+                 client.Phone.ToLower().Contains(normalizedSearch)) ||
+                (normalizedPhoneSearch != null &&
+                 client.NormalizedPhone != null &&
+                 client.NormalizedPhone.Contains(normalizedPhoneSearch)) ||
                 (client.Nationality != null &&
                  client.Nationality.ToLower().Contains(normalizedSearch)));
         }
@@ -109,6 +123,7 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
             {
                 Id = client.Id,
                 FullName = client.FullName,
+                Phone = client.Phone,
                 Email = client.Email,
                 ConsentGiven = client.ConsentGiven,
                 Nationality = client.Nationality,
@@ -121,11 +136,22 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
                     .OrderByDescending(registration => registration.CreatedAt)
                     .Select(registration => registration.Activity.Name)
                     .FirstOrDefault(),
+                LastOutreachAt = client.TimelineEvents
+                    .Where(timelineEvent => OutreachEventTypes.Contains(timelineEvent.EventType))
+                    .OrderByDescending(timelineEvent => timelineEvent.OccurredAt)
+                    .Select(timelineEvent => (DateTimeOffset?)timelineEvent.OccurredAt)
+                    .FirstOrDefault(),
+                LastOutreachEventType = client.TimelineEvents
+                    .Where(timelineEvent => OutreachEventTypes.Contains(timelineEvent.EventType))
+                    .OrderByDescending(timelineEvent => timelineEvent.OccurredAt)
+                    .Select(timelineEvent => (ClientTimelineEventType?)timelineEvent.EventType)
+                    .FirstOrDefault(),
             });
 
         query = ApplySort(query, sortField, descending);
 
         var totalCount = await query.CountAsync(cancellationToken);
+        var statusCounts = await GetLeadStatusCountsAsync(cancellationToken);
         var items = await query
             .Skip((normalizedPage - 1) * normalizedPageSize)
             .Take(normalizedPageSize)
@@ -136,17 +162,57 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
                 .Select(item => new ClientListItemResponse(
                     item.Id,
                     item.FullName,
+                    item.Phone,
                     item.Email,
                     item.ConsentGiven,
                     item.Nationality,
                     item.LeadStatus.ToString().ToLowerInvariant(),
                     item.LastRegistrationAt,
-                    item.LastActivityName))
+                    item.LastActivityName,
+                    item.LastOutreachAt,
+                    MapOutreachKind(item.LastOutreachEventType)))
                 .ToList(),
             normalizedPage,
             normalizedPageSize,
-            totalCount);
+            totalCount,
+            statusCounts);
     }
+
+    private async Task<ClientLeadStatusCountsResponse> GetLeadStatusCountsAsync(
+        CancellationToken cancellationToken)
+    {
+        var counts = await dbContext.Clients
+            .AsNoTracking()
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                NewCount = group.Count(client => client.LeadStatus == LeadStatus.New),
+                ContactedCount = group.Count(client => client.LeadStatus == LeadStatus.Contacted),
+                ActiveCount = group.Count(client => client.LeadStatus == LeadStatus.Active),
+                InactiveCount = group.Count(client => client.LeadStatus == LeadStatus.Inactive),
+                MergeSuspectCount = group.Count(client => client.IsMergeSuspect),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return counts is null
+            ? new ClientLeadStatusCountsResponse(0, 0, 0, 0, 0)
+            : new ClientLeadStatusCountsResponse(
+                counts.NewCount,
+                counts.ContactedCount,
+                counts.ActiveCount,
+                counts.InactiveCount,
+                counts.MergeSuspectCount);
+    }
+
+    private static string? MapOutreachKind(ClientTimelineEventType? eventType) =>
+        eventType switch
+        {
+            ClientTimelineEventType.WhatsAppInitiated => "whatsapp",
+            ClientTimelineEventType.WhatsAppFollowUpRecorded => "whatsapp",
+            ClientTimelineEventType.ViberInitiated => "viber",
+            ClientTimelineEventType.EmailCampaignSent => "email",
+            _ => null,
+        };
 
     public async Task<IReadOnlyList<string>> ListNationalitiesAsync(
         CancellationToken cancellationToken = default) =>
@@ -563,6 +629,8 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
 
         public string FullName { get; init; } = string.Empty;
 
+        public string? Phone { get; init; }
+
         public string? Email { get; init; }
 
         public bool ConsentGiven { get; init; }
@@ -574,6 +642,10 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
         public DateTimeOffset? LastRegistrationAt { get; init; }
 
         public string? LastActivityName { get; init; }
+
+        public DateTimeOffset? LastOutreachAt { get; init; }
+
+        public ClientTimelineEventType? LastOutreachEventType { get; init; }
     }
 
     private enum ClientListSortBy
