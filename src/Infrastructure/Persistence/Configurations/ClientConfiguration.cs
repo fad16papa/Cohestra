@@ -70,6 +70,8 @@ internal sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
 
         builder.HasIndex(client => client.LeadStatus);
 
+        builder.Property(client => client.IsMergeSuspect).IsRequired();
+
         builder.Property(client => client.NextFollowUpAt);
 
         builder.HasIndex(client => client.NextFollowUpAt);

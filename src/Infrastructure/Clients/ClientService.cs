@@ -198,7 +198,8 @@ public sealed class ClientService(
         query = ApplySort(query, sortField, descending);
 
         var rows = await query.ToListAsync(cancellationToken);
-        var content = BuildClientsCsv(rows);
+        var timeZoneId = await GetTenantRegistrationTimeZoneIdAsync(cancellationToken);
+        var content = BuildClientsCsv(rows, timeZoneId);
         var fileName = $"clients-{DateTimeOffset.UtcNow:yyyy-MM-dd}.csv";
 
         return new ClientListCsvExportResponse(content, fileName, rows.Count);
@@ -363,7 +364,7 @@ public sealed class ClientService(
         return currentTenant.TenantId.Value;
     }
 
-    private static string BuildClientsCsv(IReadOnlyList<ClientListProjection> rows)
+    private static string BuildClientsCsv(IReadOnlyList<ClientListProjection> rows, string? timeZoneId)
     {
         var builder = new StringBuilder();
         builder.AppendLine("Name,Phone,Email,Status,Last activity,Last registration,Last outreach,Next follow-up,Consent");
@@ -380,11 +381,11 @@ public sealed class ClientService(
             builder.Append(',');
             builder.Append(EscapeCsvField(row.LastActivityName));
             builder.Append(',');
-            builder.Append(EscapeCsvField(FormatCsvDate(row.LastRegistrationAt)));
+            builder.Append(EscapeCsvField(FormatCsvDate(row.LastRegistrationAt, timeZoneId)));
             builder.Append(',');
-            builder.Append(EscapeCsvField(FormatCsvDate(row.LastOutreachAt)));
+            builder.Append(EscapeCsvField(FormatCsvDate(row.LastOutreachAt, timeZoneId)));
             builder.Append(',');
-            builder.Append(EscapeCsvField(FormatCsvDate(row.NextFollowUpAt)));
+            builder.Append(EscapeCsvField(FormatCsvDate(row.NextFollowUpAt, timeZoneId)));
             builder.Append(',');
             builder.Append(row.ConsentGiven ? "yes" : "no");
             builder.AppendLine();
@@ -393,8 +394,17 @@ public sealed class ClientService(
         return builder.ToString();
     }
 
-    private static string FormatCsvDate(DateTimeOffset? value) =>
-        value?.UtcDateTime.ToString("yyyy-MM-dd") ?? string.Empty;
+    private static string FormatCsvDate(DateTimeOffset? value, string? timeZoneId)
+    {
+        if (value is null)
+        {
+            return string.Empty;
+        }
+
+        var timeZone = RegistrationTimeZoneSupport.Resolve(timeZoneId);
+        var local = TimeZoneInfo.ConvertTime(value.Value, timeZone);
+        return local.ToString("yyyy-MM-dd");
+    }
 
     private static string EscapeCsvField(string? value)
     {

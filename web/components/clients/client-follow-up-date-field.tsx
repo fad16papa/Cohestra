@@ -23,7 +23,10 @@ type ClientFollowUpDateFieldProps = {
   className?: string;
 };
 
-function toDateInputValue(isoValue: string | null): string {
+function toDateInputValue(
+  isoValue: string | null,
+  timeZoneId?: string | null
+): string {
   if (!isoValue) {
     return "";
   }
@@ -33,10 +36,19 @@ function toDateInputValue(isoValue: string | null): string {
     return "";
   }
 
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: timeZoneId ?? "UTC",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  } catch {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
 }
 
 export function ClientFollowUpDateField({
@@ -47,7 +59,9 @@ export function ClientFollowUpDateField({
 }: ClientFollowUpDateFieldProps) {
   const { authFetch } = useAuth();
   const { showToast } = useToast();
-  const [draftDate, setDraftDate] = useState(() => toDateInputValue(client.nextFollowUpAt));
+  const [draftDate, setDraftDate] = useState(() =>
+    toDateInputValue(client.nextFollowUpAt, timeZoneId)
+  );
   const [busy, setBusy] = useState(false);
 
   const due = isFollowUpDue(client.nextFollowUpAt, timeZoneId);
@@ -61,7 +75,7 @@ export function ClientFollowUpDateField({
         nextValue.trim() ? nextValue.trim() : null
       );
       onUpdated(updated);
-      setDraftDate(toDateInputValue(updated.nextFollowUpAt));
+      setDraftDate(toDateInputValue(updated.nextFollowUpAt, timeZoneId));
       showToast(nextValue ? "Follow-up date saved." : "Follow-up date cleared.");
     } catch (error) {
       showToast(
@@ -99,7 +113,7 @@ export function ClientFollowUpDateField({
           <p className="text-sm text-text-muted-warm">
             Optional reminder date — overdue items appear on Dashboard and the Clients queue.
             {client.nextFollowUpAt
-              ? ` Currently ${formatNextFollowUpDate(client.nextFollowUpAt)}.`
+              ? ` Currently ${formatNextFollowUpDate(client.nextFollowUpAt, timeZoneId)}.`
               : ""}
           </p>
         </div>

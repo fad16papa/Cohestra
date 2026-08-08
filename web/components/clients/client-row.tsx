@@ -36,14 +36,17 @@ function RowLink({
   href,
   children,
   className,
+  title,
 }: {
   href: string;
   children: ReactNode;
   className?: string;
+  title?: string;
 }) {
   return (
     <Link
       href={href}
+      title={title}
       className={cn(
         "min-w-0 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm",
         className
@@ -123,7 +126,7 @@ export function ClientRow({
             </span>
             {client.nextFollowUpAt ? (
               <span className="block truncate text-xs text-text-muted-warm">
-                Next follow-up: {formatNextFollowUpDate(client.nextFollowUpAt)}
+                Next follow-up: {formatNextFollowUpDate(client.nextFollowUpAt, timeZoneId)}
               </span>
             ) : null}
           </span>
@@ -142,6 +145,7 @@ export function ClientRow({
         <RowLink
           href={profileHref}
           className="min-w-0 truncate text-sm text-text-muted-warm group-hover:text-text-warm"
+          title={formatLastActivityCaption(client)}
         >
           {formatLastActivityCaption(client)}
         </RowLink>

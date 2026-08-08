@@ -35,7 +35,7 @@ import {
   type ClientSortBy,
   type LeadStatus,
 } from "@/lib/clients-api";
-import { isProPlan } from "@/lib/shell/tenant-shell-api";
+import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
 import { buildWhatsAppWebUrl } from "@/lib/messenger-links";
 import { formatPhoneDisplay } from "@/lib/phone-countries";
 import { cn } from "@/lib/utils";
@@ -154,10 +154,15 @@ export function ClientsListPage() {
     null
   );
   const [messengerBusy, setMessengerBusy] = useState(false);
-  const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(
-    () => new Set()
-  );
+  const [selectedClientsById, setSelectedClientsById] = useState<
+    Map<string, ClientListItem>
+  >(() => new Map());
   const [isExporting, setIsExporting] = useState(false);
+
+  const selectedClientIds = useMemo(
+    () => new Set(selectedClientsById.keys()),
+    [selectedClientsById]
+  );
 
   const canUseCampaignHandoff = isProPlan(shell?.plan ?? "Basic");
 
@@ -287,6 +292,7 @@ export function ClientsListPage() {
     if (nextStatus) {
       params.set("leadStatus", nextStatus);
       params.delete("mergeSuspect");
+      params.delete("followUpDue");
     } else {
       params.delete("leadStatus");
     }
@@ -363,6 +369,14 @@ export function ClientsListPage() {
     );
   }
 
+  function clearCreatedWithinDaysFilter() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("createdWithinDays");
+    router.replace(
+      params.toString() ? `/clients?${params.toString()}` : "/clients"
+    );
+  }
+
   const hasActiveFilters =
     Boolean(searchFilter) ||
     Boolean(leadStatusFilter) ||
@@ -373,8 +387,8 @@ export function ClientsListPage() {
     Boolean(registeredWithinDays);
 
   const selectedClients = useMemo(
-    () => clients.filter((client) => selectedClientIds.has(client.id)),
-    [clients, selectedClientIds]
+    () => Array.from(selectedClientsById.values()),
+    [selectedClientsById]
   );
 
   const consentedSelectedCount = selectedClients.filter(
@@ -384,16 +398,31 @@ export function ClientsListPage() {
   const allPageSelected =
     clients.length > 0 && clients.every((client) => selectedClientIds.has(client.id));
 
+  useEffect(() => {
+    setSelectedClientsById(new Map());
+  }, [
+    page,
+    followUpDueOnly,
+    leadStatusFilter,
+    mergeSuspectOnly,
+    nationalityFilter,
+    searchFilter,
+    createdWithinDays,
+    registeredWithinDays,
+    sortBy,
+    sortDirection,
+  ]);
+
   const handleToggleSelectAll = useCallback(() => {
-    setSelectedClientIds((current) => {
-      const next = new Set(current);
+    setSelectedClientsById((current) => {
+      const next = new Map(current);
       if (allPageSelected) {
         for (const client of clients) {
           next.delete(client.id);
         }
       } else {
         for (const client of clients) {
-          next.add(client.id);
+          next.set(client.id, client);
         }
       }
       return next;
@@ -402,10 +431,10 @@ export function ClientsListPage() {
 
   const handleSelectedChange = useCallback(
     (client: ClientListItem, selected: boolean) => {
-      setSelectedClientIds((current) => {
-        const next = new Set(current);
+      setSelectedClientsById((current) => {
+        const next = new Map(current);
         if (selected) {
-          next.add(client.id);
+          next.set(client.id, client);
         } else {
           next.delete(client.id);
         }
@@ -418,16 +447,29 @@ export function ClientsListPage() {
   const handleExportCsv = useCallback(async () => {
     setIsExporting(true);
     try {
+      const plan = shell?.plan ?? "Basic";
+      const filteredExport = isCoreOrAbove(plan);
+
+      if (!filteredExport && hasActiveFilters) {
+        showToast(
+          "Exporting full client list. Upgrade to Core for filtered CSV export."
+        );
+      }
+
       const exportResult = await exportClientsCsv(authFetch, {
         sortBy,
         sortDirection,
-        mergeSuspect: mergeSuspectOnly ? true : undefined,
-        createdWithinDays: createdWithinDays ?? undefined,
-        registeredWithinDays: registeredWithinDays ?? undefined,
-        followUpDue: followUpDueOnly ? true : undefined,
-        leadStatus: leadStatusFilter ?? undefined,
-        nationality: nationalityFilter || undefined,
-        search: searchFilter || undefined,
+        ...(filteredExport
+          ? {
+              mergeSuspect: mergeSuspectOnly ? true : undefined,
+              createdWithinDays: createdWithinDays ?? undefined,
+              registeredWithinDays: registeredWithinDays ?? undefined,
+              followUpDue: followUpDueOnly ? true : undefined,
+              leadStatus: leadStatusFilter ?? undefined,
+              nationality: nationalityFilter || undefined,
+              search: searchFilter || undefined,
+            }
+          : {}),
       });
       downloadClientsCsvExport(exportResult);
       showToast(`Exported ${exportResult.rowCount} clients.`);
@@ -444,11 +486,13 @@ export function ClientsListPage() {
     authFetch,
     createdWithinDays,
     followUpDueOnly,
+    hasActiveFilters,
     leadStatusFilter,
     mergeSuspectOnly,
     nationalityFilter,
     registeredWithinDays,
     searchFilter,
+    shell?.plan,
     showToast,
     sortBy,
     sortDirection,
@@ -665,9 +709,14 @@ export function ClientsListPage() {
           className="flex flex-col gap-3 rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm sm:flex-row sm:items-center sm:justify-between"
         >
           <span>Showing clients with a follow-up due today or overdue.</span>
-          <Link href="/clients" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => updateFollowUpDueFilter(false)}
+          >
             Clear filter
-          </Link>
+          </Button>
         </div>
       ) : null}
 
@@ -677,9 +726,14 @@ export function ClientsListPage() {
           className="flex flex-col gap-3 rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm sm:flex-row sm:items-center sm:justify-between"
         >
           <span>Showing merge-suspect clients only.</span>
-          <Link href="/clients" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => updateMergeSuspectFilter(false)}
+          >
             Clear filter
-          </Link>
+          </Button>
         </div>
       ) : null}
 
@@ -693,9 +747,14 @@ export function ClientsListPage() {
             day
             {registeredWithinDays === 1 ? "" : "s"}.
           </span>
-          <Link href="/clients" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => updateRegisteredWithinDaysFilter(null)}
+          >
             Clear filter
-          </Link>
+          </Button>
         </div>
       ) : null}
 
@@ -708,9 +767,14 @@ export function ClientsListPage() {
             Showing clients created in the last {createdWithinDays} day
             {createdWithinDays === 1 ? "" : "s"}.
           </span>
-          <Link href="/clients" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearCreatedWithinDaysFilter}
+          >
             Clear filter
-          </Link>
+          </Button>
         </div>
       ) : null}
 
@@ -916,7 +980,7 @@ export function ClientsListPage() {
         consentedCount={consentedSelectedCount}
         excludedConsentCount={excludedConsentCount}
         canUseCampaignHandoff={canUseCampaignHandoff}
-        onClear={() => setSelectedClientIds(new Set())}
+        onClear={() => setSelectedClientsById(new Map())}
         onAddToCampaign={handleAddToCampaign}
       />
     </div>

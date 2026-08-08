@@ -187,11 +187,16 @@ public class ClientsController(IClientService clientService) : ControllerBase
         [FromBody] UpdateClientNextFollowUpRequest? request,
         CancellationToken cancellationToken)
     {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
         try
         {
             var client = await clientService.UpdateNextFollowUpAsync(
                 id,
-                request?.NextFollowUpDate,
+                request.NextFollowUpDate,
                 cancellationToken);
 
             return client is null ? NotFound() : Ok(client);

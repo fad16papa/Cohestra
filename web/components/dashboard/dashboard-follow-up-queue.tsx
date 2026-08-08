@@ -28,7 +28,8 @@ export function DashboardFollowUpQueue() {
   const { authFetch } = useAuth();
   const { shell } = useTenantShell();
   const [entries, setEntries] = useState<QueueEntry[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+  const [dueTotalCount, setDueTotalCount] = useState(0);
+  const [newTotalCount, setNewTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -69,13 +70,15 @@ export function DashboardFollowUpQueue() {
 
         const queueEntries = Array.from(merged.values()).slice(0, QUEUE_SIZE);
         setEntries(queueEntries);
-        setTotalCount(dueResult.totalCount + newResult.totalCount);
+        setDueTotalCount(dueResult.totalCount);
+        setNewTotalCount(newResult.totalCount);
         setLoading(false);
       })
       .catch(() => {
         if (!cancelled) {
           setEntries([]);
-          setTotalCount(0);
+          setDueTotalCount(0);
+          setNewTotalCount(0);
           setLoading(false);
         }
       });
@@ -86,12 +89,26 @@ export function DashboardFollowUpQueue() {
   }, [authFetch]);
 
   const subtitle = useMemo(() => {
-    if (totalCount === 0) {
+    if (dueTotalCount === 0 && newTotalCount === 0) {
       return "No new leads or overdue follow-ups.";
     }
 
-    return `${totalCount} item${totalCount === 1 ? "" : "s"} need attention`;
-  }, [totalCount]);
+    const parts: string[] = [];
+    if (dueTotalCount > 0) {
+      parts.push(
+        `${dueTotalCount} follow-up${dueTotalCount === 1 ? "" : "s"} due`
+      );
+    }
+    if (newTotalCount > 0) {
+      parts.push(`${newTotalCount} new lead${newTotalCount === 1 ? "" : "s"}`);
+    }
+
+    return parts.join(" · ");
+  }, [dueTotalCount, newTotalCount]);
+
+  const showReviewMore =
+    dueTotalCount + newTotalCount > QUEUE_SIZE ||
+    entries.length >= QUEUE_SIZE;
 
   if (loading) {
     return (
@@ -109,7 +126,7 @@ export function DashboardFollowUpQueue() {
     );
   }
 
-  if (totalCount === 0) {
+  if (dueTotalCount === 0 && newTotalCount === 0) {
     return (
       <section className="rounded-2xl border border-border-warm bg-card/80 p-5 shadow-sm">
         <div className="flex items-start gap-3">
@@ -140,7 +157,7 @@ export function DashboardFollowUpQueue() {
           <p className="mt-1 text-sm text-text-muted-warm">{subtitle}</p>
         </div>
         <Link
-          href="/clients?leadStatus=new"
+          href="/clients"
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-1")}
         >
           View queue
@@ -162,7 +179,7 @@ export function DashboardFollowUpQueue() {
                 </p>
                 <p className="truncate text-xs text-text-muted-warm">
                   {client.queueReason === "follow_up_due"
-                    ? `Follow-up due · ${formatNextFollowUpDate(client.nextFollowUpAt)}`
+                    ? `Follow-up due · ${formatNextFollowUpDate(client.nextFollowUpAt, shell?.registrationTimeZoneId)}`
                     : formatLastActivityCaption(client)}
                 </p>
               </div>
@@ -179,12 +196,12 @@ export function DashboardFollowUpQueue() {
         ))}
       </ul>
 
-      {totalCount > QUEUE_SIZE ? (
+      {showReviewMore ? (
         <Link
-          href="/clients?followUpDue=true"
+          href="/clients"
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}
         >
-          Review {totalCount - QUEUE_SIZE} more
+          Open clients queue
         </Link>
       ) : null}
     </section>
