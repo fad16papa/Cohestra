@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Check, Send } from "lucide-react";
+import { Check } from "lucide-react";
 
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import {
@@ -11,6 +11,10 @@ import {
   clientsTableTextColumnClassName,
 } from "@/components/clients/clients-table-layout";
 import { PersonAvatar } from "@/components/shared/person-avatar";
+import {
+  ViberBrandIcon,
+  WhatsAppBrandIcon,
+} from "@/components/shared/messenger-brand-icons";
 import { Button } from "@/components/ui/button";
 import {
   formatClientContactLine,
@@ -21,12 +25,17 @@ import {
   isFollowUpDue,
   type ClientListItem,
 } from "@/lib/clients-api";
+import {
+  buildViberAppDeepLink,
+  buildWhatsAppWebUrl,
+} from "@/lib/messenger-links";
+import type { MessengerChannel } from "@/lib/messenger-prerequisites";
 import { cn } from "@/lib/utils";
 
 type ClientRowProps = {
   client: ClientListItem;
   onMarkContacted?: (client: ClientListItem) => void;
-  onOpenMessenger?: (client: ClientListItem) => void;
+  onOpenMessenger?: (client: ClientListItem, channel: MessengerChannel) => void;
   isUpdating?: boolean;
   selectable?: boolean;
   selected?: boolean;
@@ -78,9 +87,11 @@ export function ClientRow({
   timeZoneId,
 }: ClientRowProps) {
   const profileHref = `/clients/${client.id}`;
+  const canWhatsApp = Boolean(client.phone && buildWhatsAppWebUrl(client.phone));
+  const canViber = Boolean(client.phone && buildViberAppDeepLink(client.phone));
   const showQuickActions =
-    client.leadStatus === "new" && (onMarkContacted || onOpenMessenger);
-  const canOpenMessenger = Boolean(client.phone && onOpenMessenger);
+    client.leadStatus === "new" &&
+    (onMarkContacted || (onOpenMessenger && (canWhatsApp || canViber)));
   const followUpDue = isFollowUpDue(client.nextFollowUpAt, timeZoneId);
   const lastActivityFull = formatLastActivityCaption(client);
   const lastActivityName = formatLastActivityName(client);
@@ -191,20 +202,36 @@ export function ClientRow({
                 <Check className="size-4" aria-hidden />
               </Button>
             ) : null}
-            {canOpenMessenger ? (
+            {canWhatsApp && onOpenMessenger ? (
               <Button
                 type="button"
                 size="icon"
                 disabled={isUpdating}
-                aria-label={`Open messenger for ${client.fullName}`}
-                title="Open messenger"
+                aria-label={`Open WhatsApp for ${client.fullName}`}
+                title="Open WhatsApp"
                 className="size-8 shrink-0 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
                 onClick={(event) => {
                   event.preventDefault();
-                  onOpenMessenger?.(client);
+                  onOpenMessenger(client, "whatsapp");
                 }}
               >
-                <Send className="size-4" aria-hidden />
+                <WhatsAppBrandIcon />
+              </Button>
+            ) : null}
+            {canViber && onOpenMessenger ? (
+              <Button
+                type="button"
+                size="icon"
+                disabled={isUpdating}
+                aria-label={`Open Viber for ${client.fullName}`}
+                title="Open Viber"
+                className="size-8 shrink-0 bg-viber text-viber-foreground hover:bg-viber/90"
+                onClick={(event) => {
+                  event.preventDefault();
+                  onOpenMessenger(client, "viber");
+                }}
+              >
+                <ViberBrandIcon />
               </Button>
             ) : null}
           </>

@@ -303,8 +303,8 @@ Behavioral. Visuals in `DESIGN.md`.
 | **LimitMeter** | Communities / published / regs — warn ≥80%, block at 100% with clear which dial |
 | **ToSCheckbox** | Signup blocked until checked; versions logged (FR-26a) |
 | **CaptchaGate** | Google reCAPTCHA always on self-serve signup (FR-26); must expose accessible challenge path |
-| **LeadQueueHeader** | Status count chips + quick filter chips; updates URL query params; active chip = lagoon |
-| **ClientQueueRow** | Desktop table row or mobile card; shows contact channel + last reg + last outreach |
+| **LeadQueueHeader** | Status + quick filter chips in labeled rows inside one card; fixed chip height; updates URL query params |
+| **ClientQueueRow** | Desktop table row; New rows show Mark contacted + WhatsApp + Viber brand icon actions when phone exists |
 | **LeadStatusBadge** | New=`{colors.lagoon}` tint · Contacted=`{colors.gold}` · Active=`{colors.success}` · Inactive=`{colors.stone}` |
 | **ClientOutreachBar** | Sticky on profile; WhatsApp/Viber/Mark contacted; disabled without phone |
 | **TimelinePreview** | Max 5 events; link to full timeline section |
