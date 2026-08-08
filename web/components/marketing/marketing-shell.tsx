@@ -89,7 +89,7 @@ export function MarketingShell({
             Sign in
           </Link>
           <Link href="/signup" className={marketingAtelierButtonClass("lagoon", "sm")}>
-            Start free
+            Sign up
           </Link>
         </nav>
       </header>
@@ -112,7 +112,7 @@ const FOOTER_COLUMNS = [
   {
     heading: "Get started",
     links: [
-      { label: "Start free", href: "/signup" },
+      { label: "Sign up", href: "/signup" },
       { label: "Start Core trial", href: "/signup?plan=core" },
       { label: "Start Pro trial", href: "/signup?plan=pro" },
       { label: "Sign in", href: "/login" },

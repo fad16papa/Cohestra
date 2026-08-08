@@ -32,7 +32,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
       "Registration email notifications",
       "Public stub page with org name and activity links",
     ],
-    ctaLabel: "Start free",
+    ctaLabel: "Sign up",
     ctaHref: "/signup",
   },
   {

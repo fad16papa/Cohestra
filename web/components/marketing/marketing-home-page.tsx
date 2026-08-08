@@ -105,7 +105,7 @@ export function MarketingHomePage() {
           <MarketingReveal immediate delayMs={380}>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/signup" className={marketingAtelierButtonClass("lagoon")}>
-                Start free
+                Sign up
               </Link>
               <Link href="#pricing" className={marketingAtelierButtonClass("ghost")}>
                 See pricing
@@ -555,7 +555,7 @@ export function MarketingHomePage() {
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/signup" className={marketingAtelierButtonClass("lagoon")}>
-                Start free
+                Sign up
               </Link>
               <Link
                 href="/login"

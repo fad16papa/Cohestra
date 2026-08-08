@@ -58,7 +58,7 @@ export function LegalDocumentPage({
 
         <MarketingReveal delayMs={400} className="mt-12">
           <Link href="/signup" className={marketingAtelierButtonClass("lagoon")}>
-            Back to Start free
+            Back to Sign up
           </Link>
         </MarketingReveal>
       </article>
