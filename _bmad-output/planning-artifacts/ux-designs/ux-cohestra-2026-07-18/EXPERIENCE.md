@@ -304,7 +304,7 @@ Behavioral. Visuals in `DESIGN.md`.
 | **ToSCheckbox** | Signup blocked until checked; versions logged (FR-26a) |
 | **CaptchaGate** | Google reCAPTCHA always on self-serve signup (FR-26); must expose accessible challenge path |
 | **LeadQueueHeader** | Status + quick filter chips on one row (inline labels, divider); horizontal scroll on narrow viewports |
-| **ClientQueueRow** | Desktop table row; New rows show Mark contacted + WhatsApp + Viber brand icon actions when phone exists |
+| **ClientQueueRow** | Desktop: balanced 6-column grid with equal last-reg/outreach width; mobile: card with contact + actions top row, metadata grid below |
 | **LeadStatusBadge** | New=`{colors.lagoon}` tint · Contacted=`{colors.gold}` · Active=`{colors.success}` · Inactive=`{colors.stone}` |
 | **ClientOutreachBar** | Sticky on profile; WhatsApp/Viber/Mark contacted; disabled without phone |
 | **TimelinePreview** | Max 5 events; link to full timeline section |
