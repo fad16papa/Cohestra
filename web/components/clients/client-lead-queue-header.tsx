@@ -1,7 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
-
 import { cn } from "@/lib/utils";
 import {
   leadStatusLabels,
@@ -57,20 +55,20 @@ function FilterChip({ chip }: { chip: LeadQueueFilterChip }) {
   );
 }
 
-function FilterRow({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+function FilterGroupLabel({ children }: { children: string }) {
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[5.75rem_minmax(0,1fr)] sm:items-center sm:gap-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
-        {label}
-      </p>
-      <div className="flex min-w-0 flex-wrap items-center gap-2">{children}</div>
-    </div>
+    <span className="shrink-0 text-[0.6875rem] font-medium uppercase tracking-wide text-text-muted-warm">
+      {children}
+    </span>
+  );
+}
+
+function FilterDivider() {
+  return (
+    <span
+      className="mx-1 hidden h-5 w-px shrink-0 bg-border-warm sm:block"
+      aria-hidden
+    />
   );
 }
 
@@ -101,8 +99,7 @@ export function ClientLeadQueueHeader({
           : status === "active"
             ? statusCounts.activeCount
             : statusCounts.inactiveCount,
-    active:
-      activeLeadStatus === status && !quickFilterActive,
+    active: activeLeadStatus === status && !quickFilterActive,
     onClick: () => {
       if (activeLeadStatus === status && !quickFilterActive) {
         onLeadStatusChange(null);
@@ -145,21 +142,20 @@ export function ClientLeadQueueHeader({
   return (
     <section
       aria-label="Lead queue filters"
-      className="rounded-xl border border-border-warm bg-card p-4"
+      className="rounded-xl border border-border-warm bg-card px-3 py-2.5 sm:px-4 sm:py-3"
     >
-      <div className="space-y-3">
-        <FilterRow label="Status">
-          {statusChips.map((chip) => (
-            <FilterChip key={chip.id} chip={chip} />
-          ))}
-        </FilterRow>
-        <div className="border-t border-border-warm/70 pt-3">
-          <FilterRow label="Quick">
-            {quickFilterChips.map((chip) => (
-              <FilterChip key={chip.id} chip={chip} />
-            ))}
-          </FilterRow>
-        </div>
+      <div className="flex items-center gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <FilterGroupLabel>Status</FilterGroupLabel>
+        {statusChips.map((chip) => (
+          <FilterChip key={chip.id} chip={chip} />
+        ))}
+
+        <FilterDivider />
+
+        <FilterGroupLabel>Quick</FilterGroupLabel>
+        {quickFilterChips.map((chip) => (
+          <FilterChip key={chip.id} chip={chip} />
+        ))}
       </div>
     </section>
   );
