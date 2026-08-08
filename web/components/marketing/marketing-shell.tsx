@@ -88,9 +88,6 @@ export function MarketingShell({
           <Link href="/login" className="text-sm font-medium text-stone hover:text-ink">
             Sign in
           </Link>
-          <Link href="/signup" className={marketingAtelierButtonClass("lagoon", "sm")}>
-            Sign up
-          </Link>
         </nav>
       </header>
       {children}
@@ -112,7 +109,7 @@ const FOOTER_COLUMNS = [
   {
     heading: "Get started",
     links: [
-      { label: "Sign up", href: "/signup" },
+      { label: "Start free", href: "/signup" },
       { label: "Start Core trial", href: "/signup?plan=core" },
       { label: "Start Pro trial", href: "/signup?plan=pro" },
       { label: "Sign in", href: "/login" },

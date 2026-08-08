@@ -177,7 +177,7 @@ export function SignupPageContent() {
 
       <section className="mx-auto max-w-xl flex-1 px-5 py-12 sm:px-8 lg:px-10 lg:py-16">
         <MarketingReveal immediate delayMs={80}>
-          <p className="text-section text-gold">Sign up</p>
+          <p className="text-section text-gold">Start free</p>
           <h1 className="text-marketing-section mt-4 text-ink">Open your atelier</h1>
           <p className="text-marketing-lead mt-4 text-stone">
             Basic is free forever — no card required. Verify your email before opening the dashboard.
@@ -294,7 +294,7 @@ export function SignupPageContent() {
               onClick={() => void handleSubmit()}
               className={marketingAtelierButtonClass("lagoon")}
             >
-              {submitting ? "Creating workspace…" : "Sign up"}
+              {submitting ? "Creating workspace…" : "Start free"}
             </button>
             <Link href="/pricing" className={marketingAtelierButtonClass("ghost")}>
               View pricing

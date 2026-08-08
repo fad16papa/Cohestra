@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { SignupPageContent } from "@/components/legal/signup-page-content";
 
 export const metadata: Metadata = {
-  title: "Sign up — Cohestra",
+  title: "Start free — Cohestra",
   description: "Create a free Basic workspace on Cohestra. No credit card required.",
 };
 
