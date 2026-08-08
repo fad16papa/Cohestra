@@ -28,6 +28,7 @@ import {
   fetchClients,
   leadStatusLabels,
   recordWhatsAppInitiated,
+  recordViberInitiated,
   updateClientLeadStatus,
   type ClientLeadStatusCounts,
   type ClientListItem,
@@ -35,7 +36,8 @@ import {
   type LeadStatus,
 } from "@/lib/clients-api";
 import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
-import { buildWhatsAppWebUrl } from "@/lib/messenger-links";
+import { buildViberAppDeepLink, buildWhatsAppWebUrl, openAppDeepLink } from "@/lib/messenger-links";
+import type { MessengerChannel } from "@/lib/messenger-prerequisites";
 import { formatPhoneDisplay } from "@/lib/phone-countries";
 import { cn } from "@/lib/utils";
 import { Download, Users } from "lucide-react";
@@ -172,9 +174,10 @@ export function ClientsListPage() {
   const [updatingClientIds, setUpdatingClientIds] = useState<Set<string>>(
     () => new Set()
   );
-  const [messengerClient, setMessengerClient] = useState<ClientListItem | null>(
-    null
-  );
+  const [messengerTarget, setMessengerTarget] = useState<{
+    client: ClientListItem;
+    channel: MessengerChannel;
+  } | null>(null);
   const [messengerBusy, setMessengerBusy] = useState(false);
   const [selectedClientsById, setSelectedClientsById] = useState<
     Map<string, ClientListItem>
@@ -607,50 +610,90 @@ export function ClientsListPage() {
     [authFetch, showActionToast, showToast]
   );
 
-  const handleOpenMessenger = useCallback((client: ClientListItem) => {
-    setMessengerClient(client);
-  }, []);
+  const handleOpenMessenger = useCallback(
+    (client: ClientListItem, channel: MessengerChannel) => {
+      setMessengerTarget({ client, channel });
+    },
+    []
+  );
 
   const handleConfirmOpenMessenger = useCallback(async () => {
-    if (!messengerClient?.phone) {
+    if (!messengerTarget?.client.phone) {
       return;
     }
 
-    const whatsAppUrl = buildWhatsAppWebUrl(messengerClient.phone);
-    if (!whatsAppUrl) {
+    const { client, channel } = messengerTarget;
+
+    if (channel === "whatsapp") {
+      const whatsAppUrl = buildWhatsAppWebUrl(client.phone);
+      if (!whatsAppUrl) {
+        showToast("Enter a valid phone number on the client profile first.");
+        return;
+      }
+
+      setMessengerBusy(true);
+      const whatsAppPopup = window.open(whatsAppUrl, "_blank", "noopener,noreferrer");
+      try {
+        await recordWhatsAppInitiated(authFetch, client.id);
+        if (!whatsAppPopup) {
+          showToast("Allow pop-ups to open WhatsApp.");
+        }
+        setClients((current) =>
+          current.map((item) =>
+            item.id === client.id
+              ? {
+                  ...item,
+                  lastOutreachAt: new Date().toISOString(),
+                  lastOutreachKind: "whatsapp",
+                }
+              : item
+          )
+        );
+        setMessengerTarget(null);
+      } catch (openError) {
+        showToast(
+          openError instanceof Error
+            ? openError.message
+            : "Could not log WhatsApp initiation."
+        );
+      } finally {
+        setMessengerBusy(false);
+      }
+      return;
+    }
+
+    const viberDeepLink = buildViberAppDeepLink(client.phone);
+    if (!viberDeepLink) {
       showToast("Enter a valid phone number on the client profile first.");
       return;
     }
 
     setMessengerBusy(true);
-    const whatsAppPopup = window.open(whatsAppUrl, "_blank", "noopener,noreferrer");
+    openAppDeepLink(viberDeepLink);
     try {
-      await recordWhatsAppInitiated(authFetch, messengerClient.id);
-      if (!whatsAppPopup) {
-        showToast("Allow pop-ups to open WhatsApp.");
-      }
+      await recordViberInitiated(authFetch, client.id);
       setClients((current) =>
         current.map((item) =>
-          item.id === messengerClient.id
+          item.id === client.id
             ? {
                 ...item,
                 lastOutreachAt: new Date().toISOString(),
-                lastOutreachKind: "whatsapp",
+                lastOutreachKind: "viber",
               }
             : item
         )
       );
-      setMessengerClient(null);
+      setMessengerTarget(null);
     } catch (openError) {
       showToast(
         openError instanceof Error
           ? openError.message
-          : "Could not log WhatsApp initiation."
+          : "Could not log Viber initiation."
       );
     } finally {
       setMessengerBusy(false);
     }
-  }, [authFetch, messengerClient, showToast]);
+  }, [authFetch, messengerTarget, showToast]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -966,17 +1009,17 @@ export function ClientsListPage() {
       </div>
 
       <MessengerOpenConfirmDialog
-        channel={messengerClient ? "whatsapp" : null}
+        channel={messengerTarget?.channel ?? null}
         clientPhoneLabel={
-          messengerClient?.phone
-            ? formatPhoneDisplay(messengerClient.phone)?.display ?? null
+          messengerTarget?.client.phone
+            ? formatPhoneDisplay(messengerTarget.client.phone)?.display ?? null
             : null
         }
-        open={messengerClient !== null}
+        open={messengerTarget !== null}
         busy={messengerBusy}
         onOpenChange={(open) => {
           if (!open) {
-            setMessengerClient(null);
+            setMessengerTarget(null);
           }
         }}
         onConfirm={() => {

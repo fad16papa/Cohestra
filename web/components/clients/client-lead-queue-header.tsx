@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { cn } from "@/lib/utils";
 import {
   leadStatusLabels,
@@ -34,17 +36,17 @@ function FilterChip({ chip }: { chip: LeadQueueFilterChip }) {
       aria-pressed={chip.active}
       onClick={chip.onClick}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors",
         chip.active
           ? "border-primary bg-primary/10 text-primary"
           : "border-border-warm bg-background text-text-muted-warm hover:border-primary/30 hover:text-text-warm"
       )}
     >
-      <span>{chip.label}</span>
+      <span className="whitespace-nowrap">{chip.label}</span>
       {typeof chip.count === "number" ? (
         <span
           className={cn(
-            "rounded-full px-1.5 py-0.5 text-xs tabular-nums",
+            "inline-flex min-w-[1.375rem] justify-center rounded-full px-1.5 py-0.5 text-xs tabular-nums leading-none",
             chip.active ? "bg-primary/15" : "bg-muted/70"
           )}
         >
@@ -52,6 +54,23 @@ function FilterChip({ chip }: { chip: LeadQueueFilterChip }) {
         </span>
       ) : null}
     </button>
+  );
+}
+
+function FilterRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-[5.75rem_minmax(0,1fr)] sm:items-center sm:gap-4">
+      <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+        {label}
+      </p>
+      <div className="flex min-w-0 flex-wrap items-center gap-2">{children}</div>
+    </div>
   );
 }
 
@@ -66,6 +85,9 @@ export function ClientLeadQueueHeader({
   onRegisteredWithinDaysChange,
   onFollowUpDueToggle,
 }: ClientLeadQueueHeaderProps) {
+  const quickFilterActive =
+    mergeSuspectOnly || followUpDueOnly || registeredWithinDays === 7;
+
   const statusChips: LeadQueueFilterChip[] = (
     ["new", "contacted", "active", "inactive"] as const
   ).map((status) => ({
@@ -79,9 +101,10 @@ export function ClientLeadQueueHeader({
           : status === "active"
             ? statusCounts.activeCount
             : statusCounts.inactiveCount,
-    active: activeLeadStatus === status && !mergeSuspectOnly && !followUpDueOnly,
+    active:
+      activeLeadStatus === status && !quickFilterActive,
     onClick: () => {
-      if (activeLeadStatus === status && !mergeSuspectOnly) {
+      if (activeLeadStatus === status && !quickFilterActive) {
         onLeadStatusChange(null);
         return;
       }
@@ -120,17 +143,24 @@ export function ClientLeadQueueHeader({
   ];
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        {statusChips.map((chip) => (
-          <FilterChip key={chip.id} chip={chip} />
-        ))}
+    <section
+      aria-label="Lead queue filters"
+      className="rounded-xl border border-border-warm bg-card p-4"
+    >
+      <div className="space-y-3">
+        <FilterRow label="Status">
+          {statusChips.map((chip) => (
+            <FilterChip key={chip.id} chip={chip} />
+          ))}
+        </FilterRow>
+        <div className="border-t border-border-warm/70 pt-3">
+          <FilterRow label="Quick">
+            {quickFilterChips.map((chip) => (
+              <FilterChip key={chip.id} chip={chip} />
+            ))}
+          </FilterRow>
+        </div>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {quickFilterChips.map((chip) => (
-          <FilterChip key={chip.id} chip={chip} />
-        ))}
-      </div>
-    </div>
+    </section>
   );
 }
