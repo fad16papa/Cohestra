@@ -8,7 +8,15 @@ import { ClientBulkSelectBar } from "@/components/clients/client-bulk-select-bar
 import { ClientLeadQueueHeader } from "@/components/clients/client-lead-queue-header";
 import { ClientRow } from "@/components/clients/client-row";
 import {
+  clientsTableActionsColumnClassName,
+  clientsTableContactColumnClassName,
   clientsTableGridClassName,
+  clientsTableHeaderButtonClassName,
+  clientsTableHeaderClassName,
+  clientsTableMinWidthClassName,
+  clientsTableOutreachColumnClassName,
+  clientsTableRegistrationColumnClassName,
+  clientsTableScrollClassName,
   clientsTableStatusColumnClassName,
 } from "@/components/clients/clients-table-layout";
 import { MessengerOpenConfirmDialog } from "@/components/clients/messenger-open-confirm-dialog";
@@ -78,16 +86,6 @@ function adjustStatusCounts(
 }
 
 type SortDirection = "asc" | "desc";
-
-const sortColumns: Array<{
-  id: ClientSortBy;
-  label: string;
-  headerLabel?: string;
-}> = [
-  { id: "name", label: "Name", headerLabel: "Contact" },
-  { id: "status", label: "Status" },
-  { id: "lastRegistrationDate", label: "Last registration" },
-];
 
 function parseLeadStatusFilter(value: string | null): LeadStatus | null {
   if (
@@ -867,59 +865,100 @@ export function ClientsListPage() {
       ) : null}
 
       <div className="overflow-hidden rounded-xl border border-border-warm bg-card shadow-sm">
-        <div
-          className={cn(
-            clientsTableGridClassName,
-            "hidden border-b border-border-warm bg-muted/30 py-3 sm:grid"
-          )}
-          role="row"
-        >
-          <div className="hidden sm:flex sm:items-center sm:justify-center">
-            <input
-              type="checkbox"
-              checked={allPageSelected}
-              aria-label="Select all clients on this page"
-              className="size-4 rounded border-input accent-primary"
-              onChange={handleToggleSelectAll}
-            />
-          </div>
-          {sortColumns.map((column) => {
-            const isActive = sortBy === column.id;
-            const directionLabel =
-              isActive && sortDirection === "asc" ? "ascending" : "descending";
-            const isStatusColumn = column.id === "status";
-
-            return (
-              <div
-                key={column.id}
-                className={cn(
-                  "min-w-0",
-                  isStatusColumn && clientsTableStatusColumnClassName
-                )}
-              >
+        <div className={clientsTableScrollClassName}>
+          <div className={clientsTableMinWidthClassName}>
+            <div
+              className={cn(
+                clientsTableGridClassName,
+                "hidden border-b border-border-warm bg-muted/30 sm:grid"
+              )}
+              role="row"
+            >
+              <div className="hidden sm:flex sm:items-center sm:justify-center">
+                <input
+                  type="checkbox"
+                  checked={allPageSelected}
+                  aria-label="Select all clients on this page"
+                  className="size-4 rounded border-input accent-primary"
+                  onChange={handleToggleSelectAll}
+                />
+              </div>
+              <div className={clientsTableContactColumnClassName}>
                 <button
                   type="button"
                   role="columnheader"
-                  aria-sort={isActive ? directionLabel : "none"}
+                  aria-sort={
+                    sortBy === "name"
+                      ? sortDirection === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : "none"
+                  }
                   className={cn(
-                    "w-full min-w-0 truncate p-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm transition-colors hover:text-text-warm",
-                    isActive && "text-text-warm"
+                    clientsTableHeaderButtonClassName,
+                    sortBy === "name" && "text-text-warm"
                   )}
-                  onClick={() => handleSort(column.id)}
+                  onClick={() => handleSort("name")}
                 >
-                  {column.headerLabel ?? column.label}
-                  {isActive ? (sortDirection === "asc" ? " ↑" : " ↓") : null}
+                  Contact
+                  {sortBy === "name" ? (sortDirection === "asc" ? " ↑" : " ↓") : null}
                 </button>
               </div>
-            );
-          })}
-          <span className="hidden min-w-0 truncate text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm sm:block">
-            Last outreach
-          </span>
-          <span className="hidden min-w-0 truncate text-right text-xs font-medium uppercase tracking-wide text-text-muted-warm sm:block">
-            Actions
-          </span>
-        </div>
+              <div className={clientsTableStatusColumnClassName}>
+                <button
+                  type="button"
+                  role="columnheader"
+                  aria-sort={
+                    sortBy === "status"
+                      ? sortDirection === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : "none"
+                  }
+                  className={cn(
+                    clientsTableHeaderButtonClassName,
+                    sortBy === "status" && "text-text-warm"
+                  )}
+                  onClick={() => handleSort("status")}
+                >
+                  Status
+                  {sortBy === "status" ? (sortDirection === "asc" ? " ↑" : " ↓") : null}
+                </button>
+              </div>
+              <div className={clientsTableRegistrationColumnClassName}>
+                <button
+                  type="button"
+                  role="columnheader"
+                  aria-sort={
+                    sortBy === "lastRegistrationDate"
+                      ? sortDirection === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : "none"
+                  }
+                  className={cn(
+                    clientsTableHeaderButtonClassName,
+                    sortBy === "lastRegistrationDate" && "text-text-warm"
+                  )}
+                  onClick={() => handleSort("lastRegistrationDate")}
+                >
+                  Last registration
+                  {sortBy === "lastRegistrationDate"
+                    ? sortDirection === "asc"
+                      ? " ↑"
+                      : " ↓"
+                    : null}
+                </button>
+              </div>
+              <div className={clientsTableOutreachColumnClassName}>
+                <span className={clientsTableHeaderClassName}>Last outreach</span>
+              </div>
+              <div className={clientsTableActionsColumnClassName}>
+                <span className={cn(clientsTableHeaderClassName, "text-right")}>
+                  Actions
+                </span>
+              </div>
+            </div>
 
         {error ? (
           <p role="alert" className="px-4 py-6 text-sm text-destructive">
@@ -975,6 +1014,8 @@ export function ClientsListPage() {
             <ListSkeleton rows={6} />
           </div>
         ) : null}
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
