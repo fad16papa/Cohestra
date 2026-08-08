@@ -23,6 +23,7 @@ public class ClientsController(IClientService clientService) : ControllerBase
         [FromQuery] bool? mergeSuspect = null,
         [FromQuery] int? createdWithinDays = null,
         [FromQuery] int? registeredWithinDays = null,
+        [FromQuery] bool? followUpDue = null,
         [FromQuery] string? leadStatus = null,
         [FromQuery] string? nationality = null,
         [FromQuery] string? search = null,
@@ -52,6 +53,7 @@ public class ClientsController(IClientService clientService) : ControllerBase
                 mergeSuspect,
                 createdWithinDays,
                 registeredWithinDays,
+                followUpDue,
                 leadStatus,
                 nationality,
                 search,
@@ -61,6 +63,65 @@ public class ClientsController(IClientService clientService) : ControllerBase
                 cancellationToken);
 
             return Ok(result);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequestProblem(ex.Message);
+        }
+    }
+
+    [HttpGet("export.csv")]
+    [Produces("text/csv")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ExportCsv(
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortDirection = null,
+        [FromQuery] bool? mergeSuspect = null,
+        [FromQuery] int? createdWithinDays = null,
+        [FromQuery] int? registeredWithinDays = null,
+        [FromQuery] bool? followUpDue = null,
+        [FromQuery] string? leadStatus = null,
+        [FromQuery] string? nationality = null,
+        [FromQuery] string? search = null,
+        [FromQuery] string? community = null,
+        [FromQuery] bool? consentOnly = null,
+        [FromQuery] string? excludeCommunity = null,
+        CancellationToken cancellationToken = default)
+    {
+        var validationError = ValidateListQuery(
+            sortBy,
+            sortDirection,
+            createdWithinDays,
+            registeredWithinDays,
+            leadStatus);
+        if (validationError is not null)
+        {
+            return BadRequestProblem(validationError);
+        }
+
+        try
+        {
+            var export = await clientService.ExportListCsvAsync(
+                sortBy,
+                sortDirection,
+                mergeSuspect,
+                createdWithinDays,
+                registeredWithinDays,
+                followUpDue,
+                leadStatus,
+                nationality,
+                search,
+                community,
+                consentOnly,
+                excludeCommunity,
+                cancellationToken);
+
+            Response.Headers["X-Client-Row-Count"] = export.RowCount.ToString();
+            return File(
+                System.Text.Encoding.UTF8.GetBytes(export.Content),
+                "text/csv",
+                export.FileName);
         }
         catch (ArgumentException ex)
         {
@@ -107,6 +168,30 @@ public class ClientsController(IClientService clientService) : ControllerBase
             var client = await clientService.UpdateLeadStatusAsync(
                 id,
                 request.LeadStatus,
+                cancellationToken);
+
+            return client is null ? NotFound() : Ok(client);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequestProblem(ex.Message);
+        }
+    }
+
+    [HttpPatch("{id:guid}/next-follow-up")]
+    [ProducesResponseType(typeof(ClientDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ClientDetailResponse>> UpdateNextFollowUp(
+        Guid id,
+        [FromBody] UpdateClientNextFollowUpRequest? request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var client = await clientService.UpdateNextFollowUpAsync(
+                id,
+                request?.NextFollowUpDate,
                 cancellationToken);
 
             return client is null ? NotFound() : Ok(client);

@@ -2,6 +2,7 @@ using Cohestra.Contracts.Clients;
 using Cohestra.Domain.Clients;
 using Cohestra.Infrastructure.Clients;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Tests.Clients;
@@ -26,7 +27,7 @@ public sealed class ClientServiceUpdateMasterProfileTests
         dbContext.Clients.Add(client);
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientService(dbContext);
+        var service = new ClientService(dbContext, new CurrentTenant());
         var result = await service.UpdateMasterProfileAsync(
             client.Id,
             new UpdateClientMasterProfileRequest(
@@ -77,7 +78,7 @@ public sealed class ClientServiceUpdateMasterProfileTests
         dbContext.Clients.AddRange(existing, target);
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientService(dbContext);
+        var service = new ClientService(dbContext, new CurrentTenant());
 
         var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
             service.UpdateMasterProfileAsync(

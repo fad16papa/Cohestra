@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { ClientBulkSelectBar } from "@/components/clients/client-bulk-select-bar";
 import { ClientLeadQueueHeader } from "@/components/clients/client-lead-queue-header";
 import { ClientRow } from "@/components/clients/client-row";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/components/clients/clients-table-layout";
 import { MessengerOpenConfirmDialog } from "@/components/clients/messenger-open-confirm-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { ListSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
@@ -20,6 +22,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast-provider";
 import {
+  downloadClientsCsvExport,
+  exportClientsCsv,
   fetchClientNationalities,
   fetchClients,
   leadStatusLabels,
@@ -31,10 +35,11 @@ import {
   type ClientSortBy,
   type LeadStatus,
 } from "@/lib/clients-api";
+import { isProPlan } from "@/lib/shell/tenant-shell-api";
 import { buildWhatsAppWebUrl } from "@/lib/messenger-links";
 import { formatPhoneDisplay } from "@/lib/phone-countries";
 import { cn } from "@/lib/utils";
-import { Users } from "lucide-react";
+import { Download, Users } from "lucide-react";
 
 const CLIENT_PAGE_SIZE = 25;
 const CLIENT_SEARCH_DEBOUNCE_MS = 400;
@@ -45,6 +50,7 @@ const emptyStatusCounts: ClientLeadStatusCounts = {
   activeCount: 0,
   inactiveCount: 0,
   mergeSuspectCount: 0,
+  followUpDueCount: 0,
 };
 
 type SortDirection = "asc" | "desc";
@@ -117,9 +123,11 @@ function ClientSearchInput({ committedValue, onCommit }: ClientSearchInputProps)
 export function ClientsListPage() {
   const router = useRouter();
   const { authFetch } = useAuth();
+  const { shell } = useTenantShell();
   const { showToast, showActionToast } = useToast();
   const searchParams = useSearchParams();
   const mergeSuspectOnly = searchParams.get("mergeSuspect") === "true";
+  const followUpDueOnly = searchParams.get("followUpDue") === "true";
   const createdWithinDays = parseCreatedWithinDays(
     searchParams.get("createdWithinDays")
   );
@@ -146,6 +154,12 @@ export function ClientsListPage() {
     null
   );
   const [messengerBusy, setMessengerBusy] = useState(false);
+  const [selectedClientIds, setSelectedClientIds] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [isExporting, setIsExporting] = useState(false);
+
+  const canUseCampaignHandoff = isProPlan(shell?.plan ?? "Basic");
 
   const totalPages = Math.max(1, Math.ceil(totalCount / CLIENT_PAGE_SIZE));
 
@@ -198,6 +212,7 @@ export function ClientsListPage() {
       mergeSuspect: mergeSuspectOnly ? true : undefined,
       createdWithinDays: createdWithinDays ?? undefined,
       registeredWithinDays: registeredWithinDays ?? undefined,
+      followUpDue: followUpDueOnly ? true : undefined,
       leadStatus: leadStatusFilter ?? undefined,
       nationality: nationalityFilter || undefined,
       search: searchFilter || undefined,
@@ -245,6 +260,7 @@ export function ClientsListPage() {
     authFetch,
     createdWithinDays,
     registeredWithinDays,
+    followUpDueOnly,
     leadStatusFilter,
     mergeSuspectOnly,
     nationalityFilter,
@@ -288,6 +304,7 @@ export function ClientsListPage() {
       params.delete("leadStatus");
       params.delete("registeredWithinDays");
       params.delete("createdWithinDays");
+      params.delete("followUpDue");
     } else {
       params.delete("mergeSuspect");
     }
@@ -304,8 +321,27 @@ export function ClientsListPage() {
       params.set("registeredWithinDays", String(days));
       params.delete("mergeSuspect");
       params.delete("createdWithinDays");
+      params.delete("followUpDue");
     } else {
       params.delete("registeredWithinDays");
+    }
+
+    router.replace(
+      params.toString() ? `/clients?${params.toString()}` : "/clients"
+    );
+  }
+
+  function updateFollowUpDueFilter(active: boolean) {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (active) {
+      params.set("followUpDue", "true");
+      params.delete("mergeSuspect");
+      params.delete("leadStatus");
+      params.delete("registeredWithinDays");
+      params.delete("createdWithinDays");
+    } else {
+      params.delete("followUpDue");
     }
 
     router.replace(
@@ -332,8 +368,104 @@ export function ClientsListPage() {
     Boolean(leadStatusFilter) ||
     Boolean(nationalityFilter) ||
     mergeSuspectOnly ||
+    followUpDueOnly ||
     Boolean(createdWithinDays) ||
     Boolean(registeredWithinDays);
+
+  const selectedClients = useMemo(
+    () => clients.filter((client) => selectedClientIds.has(client.id)),
+    [clients, selectedClientIds]
+  );
+
+  const consentedSelectedCount = selectedClients.filter(
+    (client) => client.consentGiven
+  ).length;
+  const excludedConsentCount = selectedClients.length - consentedSelectedCount;
+  const allPageSelected =
+    clients.length > 0 && clients.every((client) => selectedClientIds.has(client.id));
+
+  const handleToggleSelectAll = useCallback(() => {
+    setSelectedClientIds((current) => {
+      const next = new Set(current);
+      if (allPageSelected) {
+        for (const client of clients) {
+          next.delete(client.id);
+        }
+      } else {
+        for (const client of clients) {
+          next.add(client.id);
+        }
+      }
+      return next;
+    });
+  }, [allPageSelected, clients]);
+
+  const handleSelectedChange = useCallback(
+    (client: ClientListItem, selected: boolean) => {
+      setSelectedClientIds((current) => {
+        const next = new Set(current);
+        if (selected) {
+          next.add(client.id);
+        } else {
+          next.delete(client.id);
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  const handleExportCsv = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      const exportResult = await exportClientsCsv(authFetch, {
+        sortBy,
+        sortDirection,
+        mergeSuspect: mergeSuspectOnly ? true : undefined,
+        createdWithinDays: createdWithinDays ?? undefined,
+        registeredWithinDays: registeredWithinDays ?? undefined,
+        followUpDue: followUpDueOnly ? true : undefined,
+        leadStatus: leadStatusFilter ?? undefined,
+        nationality: nationalityFilter || undefined,
+        search: searchFilter || undefined,
+      });
+      downloadClientsCsvExport(exportResult);
+      showToast(`Exported ${exportResult.rowCount} clients.`);
+    } catch (exportError) {
+      showToast(
+        exportError instanceof Error
+          ? exportError.message
+          : "Could not export clients."
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [
+    authFetch,
+    createdWithinDays,
+    followUpDueOnly,
+    leadStatusFilter,
+    mergeSuspectOnly,
+    nationalityFilter,
+    registeredWithinDays,
+    searchFilter,
+    showToast,
+    sortBy,
+    sortDirection,
+  ]);
+
+  const handleAddToCampaign = useCallback(() => {
+    const consentedIds = selectedClients
+      .filter((client) => client.consentGiven)
+      .map((client) => client.id);
+
+    if (consentedIds.length === 0) {
+      showToast("Select at least one client with marketing consent.");
+      return;
+    }
+
+    router.push(`/campaigns/new?clientIds=${consentedIds.join(",")}`);
+  }, [router, selectedClients, showToast]);
 
   const nationalitySelectOptions = useMemo(() => {
     if (nationalityFilter && !nationalityOptions.includes(nationalityFilter)) {
@@ -450,6 +582,19 @@ export function ClientsListPage() {
       <PageHeader
         title="Clients"
         description="One row per contact — repeat sign-ups on activities merge by phone or email. Filter new leads, mark contacted, and open WhatsApp without leaving the queue."
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isExporting || totalCount === 0}
+            className="gap-2"
+            onClick={() => void handleExportCsv()}
+          >
+            <Download className="size-4" aria-hidden />
+            Export CSV
+          </Button>
+        }
       />
 
       <ClientLeadQueueHeader
@@ -457,9 +602,11 @@ export function ClientsListPage() {
         activeLeadStatus={leadStatusFilter}
         mergeSuspectOnly={mergeSuspectOnly}
         registeredWithinDays={registeredWithinDays}
+        followUpDueOnly={followUpDueOnly}
         onLeadStatusChange={updateLeadStatusFilter}
         onMergeSuspectToggle={updateMergeSuspectFilter}
         onRegisteredWithinDaysChange={updateRegisteredWithinDaysFilter}
+        onFollowUpDueToggle={updateFollowUpDueFilter}
       />
 
       <div className="grid gap-4 rounded-xl border border-border-warm bg-card p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_220px]">
@@ -511,6 +658,18 @@ export function ClientsListPage() {
           </select>
         </div>
       </div>
+
+      {followUpDueOnly ? (
+        <div
+          role="status"
+          className="flex flex-col gap-3 rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm sm:flex-row sm:items-center sm:justify-between"
+        >
+          <span>Showing clients with a follow-up due today or overdue.</span>
+          <Link href="/clients" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
+            Clear filter
+          </Link>
+        </div>
+      ) : null}
 
       {mergeSuspectOnly ? (
         <div
@@ -599,6 +758,15 @@ export function ClientsListPage() {
           )}
           role="row"
         >
+          <div className="hidden sm:flex sm:items-center sm:justify-center">
+            <input
+              type="checkbox"
+              checked={allPageSelected}
+              aria-label="Select all clients on this page"
+              className="size-4 rounded border-input accent-primary"
+              onChange={handleToggleSelectAll}
+            />
+          </div>
           {sortColumns.map((column) => {
             const isActive = sortBy === column.id;
             const directionLabel =
@@ -678,6 +846,10 @@ export function ClientsListPage() {
                 onMarkContacted={handleMarkContacted}
                 onOpenMessenger={handleOpenMessenger}
                 isUpdating={updatingClientIds.has(client.id)}
+                selectable
+                selected={selectedClientIds.has(client.id)}
+                onSelectedChange={handleSelectedChange}
+                timeZoneId={shell?.registrationTimeZoneId}
               />
             ))
           : null}
@@ -737,6 +909,15 @@ export function ClientsListPage() {
         onConfirm={() => {
           void handleConfirmOpenMessenger();
         }}
+      />
+
+      <ClientBulkSelectBar
+        selectedCount={selectedClients.length}
+        consentedCount={consentedSelectedCount}
+        excludedConsentCount={excludedConsentCount}
+        canUseCampaignHandoff={canUseCampaignHandoff}
+        onClear={() => setSelectedClientIds(new Set())}
+        onAddToCampaign={handleAddToCampaign}
       />
     </div>
   );

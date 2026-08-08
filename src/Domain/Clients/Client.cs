@@ -32,6 +32,8 @@ public class Client : ITenantScoped
 
     public bool IsMergeSuspect { get; set; }
 
+    public DateTimeOffset? NextFollowUpAt { get; set; }
+
     public string? Notes { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }

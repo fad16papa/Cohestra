@@ -5,4 +5,5 @@ public sealed record ClientLeadStatusCountsResponse(
     int ContactedCount,
     int ActiveCount,
     int InactiveCount,
-    int MergeSuspectCount);
+    int MergeSuspectCount,
+    int FollowUpDueCount);

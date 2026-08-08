@@ -1,14 +1,17 @@
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Clients;
 using Cohestra.Domain.Registrations;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Clients;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Tests.Clients;
 
 public sealed class ClientServiceListFilterTests
 {
+    private static readonly Guid TestTenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     [Fact]
     public async Task ListAsync_RegisteredWithinDays_IncludesReturningClientWithRecentRegistration()
     {
@@ -55,7 +58,7 @@ public sealed class ClientServiceListFilterTests
 
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientService(dbContext);
+        var service = CreateService(dbContext);
         var result = await service.ListAsync(
             page: 1,
             pageSize: 25,
@@ -64,6 +67,7 @@ public sealed class ClientServiceListFilterTests
             mergeSuspect: null,
             createdWithinDays: null,
             registeredWithinDays: 7,
+            followUpDue: null,
             leadStatus: null,
             nationality: null,
             search: null,
@@ -103,7 +107,7 @@ public sealed class ClientServiceListFilterTests
 
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientService(dbContext);
+        var service = CreateService(dbContext);
         var result = await service.ListAsync(
             page: 1,
             pageSize: 25,
@@ -112,6 +116,7 @@ public sealed class ClientServiceListFilterTests
             mergeSuspect: null,
             createdWithinDays: 7,
             registeredWithinDays: null,
+            followUpDue: null,
             leadStatus: null,
             nationality: null,
             search: null,
@@ -153,7 +158,7 @@ public sealed class ClientServiceListFilterTests
         dbContext.Clients.AddRange(matchingClient, otherClient);
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientService(dbContext);
+        var service = CreateService(dbContext);
         var result = await service.ListAsync(
             page: 1,
             pageSize: 25,
@@ -162,6 +167,7 @@ public sealed class ClientServiceListFilterTests
             mergeSuspect: null,
             createdWithinDays: null,
             registeredWithinDays: null,
+            followUpDue: null,
             leadStatus: null,
             nationality: null,
             search: "9123",
@@ -199,7 +205,7 @@ public sealed class ClientServiceListFilterTests
 
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientService(dbContext);
+        var service = CreateService(dbContext);
         var result = await service.ListAsync(
             page: 1,
             pageSize: 25,
@@ -208,6 +214,7 @@ public sealed class ClientServiceListFilterTests
             mergeSuspect: null,
             createdWithinDays: null,
             registeredWithinDays: null,
+            followUpDue: null,
             leadStatus: null,
             nationality: null,
             search: null,
@@ -253,7 +260,7 @@ public sealed class ClientServiceListFilterTests
 
         await dbContext.SaveChangesAsync();
 
-        var service = new ClientService(dbContext);
+        var service = CreateService(dbContext);
         var result = await service.ListAsync(
             page: 1,
             pageSize: 25,
@@ -262,6 +269,7 @@ public sealed class ClientServiceListFilterTests
             mergeSuspect: null,
             createdWithinDays: null,
             registeredWithinDays: null,
+            followUpDue: null,
             leadStatus: "new",
             nationality: null,
             search: null,
@@ -295,10 +303,32 @@ public sealed class ClientServiceListFilterTests
 
     private static CohestraDbContext CreateDbContext()
     {
+        var currentTenant = new CurrentTenant();
+        currentTenant.SetResolved(TestTenantId, "test");
+
         var options = new DbContextOptionsBuilder<CohestraDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        return new CohestraDbContext(options);
+        var dbContext = new CohestraDbContext(options, currentTenant);
+        var now = DateTimeOffset.UtcNow;
+        dbContext.Tenants.Add(new Tenant
+        {
+            Id = TestTenantId,
+            Slug = "test",
+            Name = "Test Tenant",
+            CreatedAt = now,
+            UpdatedAt = now,
+            RegistrationTimeZoneId = "UTC",
+        });
+        dbContext.SaveChanges();
+        return dbContext;
+    }
+
+    private static ClientService CreateService(CohestraDbContext dbContext)
+    {
+        var currentTenant = new CurrentTenant();
+        currentTenant.SetResolved(TestTenantId, "test");
+        return new ClientService(dbContext, currentTenant);
     }
 }
