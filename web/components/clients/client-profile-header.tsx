@@ -1,12 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, Check, Mail, Phone, Send } from "lucide-react";
+import { CalendarClock, Check, Mail, Phone } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import { MessengerOpenConfirmDialog } from "@/components/clients/messenger-open-confirm-dialog";
 import { PersonAvatar } from "@/components/shared/person-avatar";
+import {
+  ViberBrandIcon,
+  WhatsAppBrandIcon,
+} from "@/components/shared/messenger-brand-icons";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-provider";
 import {
@@ -210,7 +214,7 @@ export function ClientProfileHeader({
             onClick={() => setConfirmChannel("whatsapp")}
             className="gap-1.5 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
           >
-            <Send className="size-3.5" aria-hidden />
+            <WhatsAppBrandIcon className="size-3.5" />
             WhatsApp
           </Button>
           <Button
@@ -221,7 +225,7 @@ export function ClientProfileHeader({
             onClick={() => setConfirmChannel("viber")}
             className="gap-1.5 bg-viber text-viber-foreground hover:bg-viber/90"
           >
-            <Send className="size-3.5" aria-hidden />
+            <ViberBrandIcon className="size-3.5" />
             Viber
           </Button>
           {client.leadStatus === "new" ? (
