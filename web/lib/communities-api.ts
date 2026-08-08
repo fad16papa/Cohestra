@@ -1,6 +1,6 @@
 import { getPublicApiBaseUrl } from "@/lib/api";
 import {
-  parseClientListItem,
+  parseClientList,
   type ClientListItem,
   type ClientListResult,
 } from "@/lib/clients-api";
@@ -173,26 +173,7 @@ export async function fetchCommunityClients(
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
-  const items = raw.items ?? raw.Items;
-  const page = raw.page ?? raw.Page;
-  const pageSize = raw.pageSize ?? raw.PageSize;
-  const totalCount = raw.totalCount ?? raw.TotalCount;
-
-  if (
-    !Array.isArray(items) ||
-    typeof page !== "number" ||
-    typeof pageSize !== "number" ||
-    typeof totalCount !== "number"
-  ) {
-    throw new Error("Invalid community clients payload");
-  }
-
-  return {
-    items: items.map((item) => parseClientListItem(item as Record<string, unknown>)),
-    page,
-    pageSize,
-    totalCount,
-  };
+  return parseClientList(raw);
 }
 
 export type { ClientListItem };

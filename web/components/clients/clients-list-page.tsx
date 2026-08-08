@@ -494,9 +494,12 @@ export function ClientsListPage() {
           <select
             id="client-status-filter"
             value={leadStatusFilter ?? ""}
-            onChange={(event) =>
-              updateLeadStatusFilter(event.target.value as LeadStatus | "")
-            }
+            onChange={(event) => {
+              const value = event.target.value;
+              updateLeadStatusFilter(
+                value === "" ? null : (value as LeadStatus)
+              );
+            }}
             className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <option value="">All statuses</option>
@@ -721,7 +724,7 @@ export function ClientsListPage() {
         channel={messengerClient ? "whatsapp" : null}
         clientPhoneLabel={
           messengerClient?.phone
-            ? formatPhoneDisplay(messengerClient.phone)
+            ? formatPhoneDisplay(messengerClient.phone)?.display ?? null
             : null
         }
         open={messengerClient !== null}
