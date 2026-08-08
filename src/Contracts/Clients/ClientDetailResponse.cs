@@ -26,12 +26,20 @@ public sealed record ClientDetailResponse(
     string? Notes,
     string LeadStatus,
     bool IsMergeSuspect,
+    DateTimeOffset? NextFollowUpAt,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     IReadOnlyList<ClientRegistrationAnswerHistoryResponse> RegistrationHistory,
     IReadOnlyList<ClientTimelineItemResponse> Timeline);
 
 public sealed record UpdateClientLeadStatusRequest(string LeadStatus);
+
+public sealed record UpdateClientNextFollowUpRequest(string? NextFollowUpDate);
+
+public sealed record ClientListCsvExportResponse(
+    string Content,
+    string FileName,
+    int RowCount);
 
 public sealed record UpdateClientMasterProfileRequest(
     string FullName,

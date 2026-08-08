@@ -70,7 +70,9 @@ internal sealed class ClientConfiguration : IEntityTypeConfiguration<Client>
 
         builder.HasIndex(client => client.LeadStatus);
 
-        builder.Property(client => client.IsMergeSuspect).IsRequired();
+        builder.Property(client => client.NextFollowUpAt);
+
+        builder.HasIndex(client => client.NextFollowUpAt);
         builder.Property(client => client.ConsentGiven).IsRequired();
         builder.Property(client => client.CreatedAt).IsRequired();
         builder.Property(client => client.UpdatedAt).IsRequired();

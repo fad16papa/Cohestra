@@ -2,16 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { ClientFollowUpPanel } from "@/components/clients/client-follow-up-panel";
-import { ClientMessengerOutreach } from "@/components/clients/client-messenger-outreach";
-import { ClientLeadStatusControl } from "@/components/clients/client-lead-status-control";
+import { ClientFollowUpDateField } from "@/components/clients/client-follow-up-date-field";
 import { ClientMergeSuspectBanner } from "@/components/clients/client-merge-suspect-banner";
 import { ClientMasterFields } from "@/components/clients/client-master-fields";
+import { ClientOutreachBar } from "@/components/clients/client-outreach-bar";
 import { ClientProfileSection } from "@/components/clients/client-profile-motion";
 import { ClientRegistrationHistory } from "@/components/clients/client-registration-history";
 import { ClientRelationshipTimeline } from "@/components/clients/client-relationship-timeline";
+import { ClientTimelinePreview } from "@/components/clients/client-timeline-preview";
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import { useAdminPageMeta } from "@/components/layouts/admin-shell-context";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { ProductErrorState } from "@/components/shared/product-error-state";
 import { ProfileSkeleton } from "@/components/shared/profile-skeleton";
@@ -27,6 +28,7 @@ type ClientProfilePageProps = {
 
 export function ClientProfilePage({ id }: ClientProfilePageProps) {
   const { authFetch } = useAuth();
+  const { shell } = useTenantShell();
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
@@ -67,7 +69,7 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
     return loadClient();
   }, [loadClient, reloadToken]);
 
-  function handleLeadStatusUpdated(nextClient: ClientDetail) {
+  function handleUpdated(nextClient: ClientDetail) {
     setClient(nextClient);
   }
 
@@ -91,6 +93,8 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
     return <ProfileSkeleton />;
   }
 
+  const collapseRegistrationHistory = client.registrationHistory.length >= 10;
+
   return (
     <div className="space-y-6">
       <ClientProfileSection animationDelayMs={0}>
@@ -102,45 +106,49 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
               <LeadStatusBadge status={client.leadStatus} />
             </div>
             <p className="text-sm text-text-muted-warm">
-              Master profile, registration answers, and relationship timeline.
+              Act first — outreach and timeline above registration details.
             </p>
           </div>
-          <ClientLeadStatusControl
-            clientId={client.id}
-            leadStatus={client.leadStatus}
-            onUpdated={handleLeadStatusUpdated}
-          />
         </div>
       </ClientProfileSection>
 
-      <ClientProfileSection animationDelayMs={20}>
-        <ClientFollowUpPanel client={client} onUpdated={setClient} />
-      </ClientProfileSection>
-
       {client.isMergeSuspect ? (
-        <ClientProfileSection animationDelayMs={40}>
+        <ClientProfileSection animationDelayMs={20}>
           <ClientMergeSuspectBanner />
         </ClientProfileSection>
       ) : null}
 
-      <div className="space-y-6">
-        <ClientProfileSection animationDelayMs={80}>
-          <ClientMasterFields
-            client={client}
-            onUpdated={handleLeadStatusUpdated}
-          />
-        </ClientProfileSection>
-        <ClientProfileSection animationDelayMs={120}>
-          <ClientRegistrationHistory history={client.registrationHistory} />
-        </ClientProfileSection>
-      </div>
+      <ClientProfileSection animationDelayMs={40}>
+        <ClientOutreachBar client={client} onUpdated={handleUpdated} />
+      </ClientProfileSection>
+
+      <ClientProfileSection animationDelayMs={60}>
+        <ClientFollowUpDateField
+          client={client}
+          timeZoneId={shell?.registrationTimeZoneId}
+          onUpdated={handleUpdated}
+        />
+      </ClientProfileSection>
+
+      <ClientProfileSection animationDelayMs={80}>
+        <ClientTimelinePreview timeline={client.timeline} />
+      </ClientProfileSection>
+
+      <ClientProfileSection animationDelayMs={120}>
+        <ClientMasterFields client={client} onUpdated={handleUpdated} />
+      </ClientProfileSection>
 
       <ClientProfileSection animationDelayMs={160}>
-        <ClientMessengerOutreach client={client} onUpdated={setClient} />
+        <ClientRegistrationHistory
+          history={client.registrationHistory}
+          defaultCollapsed={collapseRegistrationHistory}
+        />
       </ClientProfileSection>
 
       <ClientProfileSection animationDelayMs={200}>
-        <ClientRelationshipTimeline timeline={client.timeline} />
+        <div id="client-full-timeline">
+          <ClientRelationshipTimeline timeline={client.timeline} />
+        </div>
       </ClientProfileSection>
     </div>
   );

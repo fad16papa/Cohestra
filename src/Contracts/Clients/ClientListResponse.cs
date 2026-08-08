@@ -11,7 +11,8 @@ public sealed record ClientListItemResponse(
     DateTimeOffset? LastRegistrationAt,
     string? LastActivityName,
     DateTimeOffset? LastOutreachAt,
-    string? LastOutreachKind);
+    string? LastOutreachKind,
+    DateTimeOffset? NextFollowUpAt);
 
 public sealed record ClientListResponse(
     IReadOnlyList<ClientListItemResponse> Items,

@@ -12,6 +12,7 @@ public interface IClientService
         bool? mergeSuspect,
         int? createdWithinDays,
         int? registeredWithinDays,
+        bool? followUpDue,
         string? leadStatus,
         string? nationality,
         string? search,
@@ -32,6 +33,11 @@ public interface IClientService
         string leadStatus,
         CancellationToken cancellationToken = default);
 
+    Task<ClientDetailResponse?> UpdateNextFollowUpAsync(
+        Guid id,
+        string? nextFollowUpDate,
+        CancellationToken cancellationToken = default);
+
     Task<ClientDetailResponse?> UpdateMasterProfileAsync(
         Guid id,
         UpdateClientMasterProfileRequest request,
@@ -49,5 +55,20 @@ public interface IClientService
         Guid id,
         string status,
         string? note,
+        CancellationToken cancellationToken = default);
+
+    Task<ClientListCsvExportResponse> ExportListCsvAsync(
+        string? sortBy,
+        string? sortDirection,
+        bool? mergeSuspect,
+        int? createdWithinDays,
+        int? registeredWithinDays,
+        bool? followUpDue,
+        string? leadStatus,
+        string? nationality,
+        string? search,
+        string? community,
+        bool? consentOnly = null,
+        string? excludeCommunity = null,
         CancellationToken cancellationToken = default);
 }

@@ -20,9 +20,11 @@ type ClientLeadQueueHeaderProps = {
   activeLeadStatus: LeadStatus | null;
   mergeSuspectOnly: boolean;
   registeredWithinDays: number | null;
+  followUpDueOnly: boolean;
   onLeadStatusChange: (status: LeadStatus | null) => void;
   onMergeSuspectToggle: (active: boolean) => void;
   onRegisteredWithinDaysChange: (days: number | null) => void;
+  onFollowUpDueToggle: (active: boolean) => void;
 };
 
 function FilterChip({ chip }: { chip: LeadQueueFilterChip }) {
@@ -58,9 +60,11 @@ export function ClientLeadQueueHeader({
   activeLeadStatus,
   mergeSuspectOnly,
   registeredWithinDays,
+  followUpDueOnly,
   onLeadStatusChange,
   onMergeSuspectToggle,
   onRegisteredWithinDaysChange,
+  onFollowUpDueToggle,
 }: ClientLeadQueueHeaderProps) {
   const statusChips: LeadQueueFilterChip[] = (
     ["new", "contacted", "active", "inactive"] as const
@@ -75,7 +79,7 @@ export function ClientLeadQueueHeader({
           : status === "active"
             ? statusCounts.activeCount
             : statusCounts.inactiveCount,
-    active: activeLeadStatus === status && !mergeSuspectOnly,
+    active: activeLeadStatus === status && !mergeSuspectOnly && !followUpDueOnly,
     onClick: () => {
       if (activeLeadStatus === status && !mergeSuspectOnly) {
         onLeadStatusChange(null);
@@ -87,6 +91,15 @@ export function ClientLeadQueueHeader({
   }));
 
   const quickFilterChips: LeadQueueFilterChip[] = [
+    {
+      id: "follow-up-due",
+      label: "Follow-up due",
+      count: statusCounts.followUpDueCount,
+      active: followUpDueOnly,
+      onClick: () => {
+        onFollowUpDueToggle(!followUpDueOnly);
+      },
+    },
     {
       id: "registered-week",
       label: "Registered this week",
