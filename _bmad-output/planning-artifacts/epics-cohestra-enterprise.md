@@ -1481,3 +1481,87 @@ So that **coverage metrics reflect all messenger touch-points**.
 
 **Parked (21.4 — post-profile):** Share-kit “Copy Viber message” for activities/homepage (Epic 16 parity); defer until Story 21.1–21.3 UAT passes.
 
+## Epic 23: Clients CRM lead queue
+
+Transform the **Clients** module from a passive directory into a daily **lead queue** for activity-led operators. Sourced from operator UAT on load-test profiles (5k clients) and PRD **§4.8 FR-29–32**, **UJ-5**.
+
+**FRs touched:** FR-29 (list queue), FR-30 (profile layout), FR-31 (campaign handoff, Pro), FR-32 (follow-up date)  
+**Platform 0 baseline:** FR-5–7 (master list), Epic 5 messenger outreach, Epic 7 dashboard follow-up queue  
+**Plan gates:** FR-31 Pro-only; FR-29 export matches FR-15 Basic vs Core+  
+**Not in scope:** Deal pipeline/kanban, lead scoring, auto-merge UI, client assignment, tags (v1.2 candidate)
+
+### Story 23.1: Clients lead queue list (FR-29)
+
+As a **Tenant Admin or Member**,
+I want **the Clients list to work as a lead queue with contact info and quick actions**,
+So that **I can run Monday outreach without opening every profile**.
+
+**Acceptance Criteria:**
+
+**Given** I open `/clients`  
+**Then** I see status count chips (New / Contacted / Active / Inactive) that apply filters  
+**And** quick chips for New, Registered this week, Merge suspects, Follow-up due (FR-32)
+
+**Given** the client list  
+**Then** each row shows name, phone or email, status, last registration (full text on hover), last outreach (or "Never")  
+**And** New rows expose Mark contacted + Open messenger (when phone exists) without hover-only on desktop
+
+**Given** Core+ plan and active filters  
+**When** I click Export  
+**Then** CSV reflects current filter set
+
+**Given** 5,000 clients (load-pro-alpha)  
+**When** I paginate and sort  
+**Then** list loads within SM-7 performance target
+
+### Story 23.2: Action-first client profile (FR-30)
+
+As a **Tenant Admin or Member**,
+I want **outreach actions and timeline preview above registration history**,
+So that **I act first and only drill into form answers when needed**.
+
+**Acceptance Criteria:**
+
+**Given** a client with 10+ registrations  
+**When** I open the profile  
+**Then** outreach bar and timeline preview (last 5 events) appear above the fold  
+**And** registration history is collapsed with search
+
+**Given** any client  
+**Then** only one lead status control is visible (no duplicate follow-up/status blocks)
+
+### Story 23.3: Bulk select → Campaign (FR-31, Pro)
+
+As a **Tenant Admin or Member on Pro**,
+I want **to add selected clients to a campaign from the list**,
+So that **email outreach does not require rebuilding segments manually**.
+
+**Acceptance Criteria:**
+
+**Given** Pro plan and selected clients with consent  
+**When** I choose Add to campaign  
+**Then** a draft campaign is created or appended with those clients as recipients
+
+**Given** clients without consent  
+**Then** they are excluded with an explanatory count
+
+**Given** Basic or Core  
+**Then** the action shows upgrade CTA (no API call)
+
+### Story 23.4: Next follow-up date (FR-32)
+
+As a **Tenant Admin or Member**,
+I want **to set a next follow-up date on a client**,
+So that **overdue leads surface on Dashboard and Clients filters**.
+
+**Acceptance Criteria:**
+
+**Given** I set `Next follow-up` to a future date on the profile  
+**Then** it persists and appears on the Clients list when column enabled  
+**And** Dashboard follow-up queue includes overdue items using tenant timezone (FR-27)
+
+**Given** Follow-up due filter on Clients  
+**Then** I see clients where next follow-up is today or past
+
+**Parked (23.5):** Manual merge UI for merge suspects — promote only if FR-29 merge-suspect chip insufficient in UAT.
+

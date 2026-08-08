@@ -72,7 +72,7 @@ These roles are mutually exclusive. Legacy Identity role name `Admin` is renamed
 
 ### Dev operator credentials (Docker Compose)
 
-Seeded on first API startup when no tenant admin exists:
+Seeded on first API startup when `OperatorSeed__Enabled=true`:
 
 | Setting | Default |
 |---------|---------|
@@ -80,6 +80,8 @@ Seeded on first API startup when no tenant admin exists:
 | Password | `ChangeMe123!` |
 
 Override via `OperatorSeed__Email` and `OperatorSeed__Password` in `.env` or `docker-compose.yml`. JWT signing key must be at least 32 characters (`Jwt__SigningKey`).
+
+**All local test login profiles:** copy `.env.local-docker.example` → `.env` (enables Operator + Platform Admin + Demo + LoadTest seeds). See that file and [docs/deploy/load-test-seed-data.md](docs/deploy/load-test-seed-data.md) for the credential table.
 
 ### Demo data seed (Development)
 

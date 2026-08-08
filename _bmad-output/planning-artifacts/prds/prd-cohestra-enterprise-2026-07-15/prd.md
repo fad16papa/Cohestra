@@ -2,7 +2,7 @@
 title: Cohestra Enterprise — Multi-Tenant SaaS
 status: draft
 created: 2026-07-15
-updated: 2026-07-19
+updated: 2026-08-08
 gtm_pricing: section-13
 sources:
   - _bmad-output/planning-artifacts/sprint-change-proposal-2026-07-14.md
@@ -115,6 +115,14 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
   - **Path:** Locates tenant → sets `Tenant.Status=Suspended` with reason → public pages show maintenance; tenant admins cannot log in (**Suspended always wins** over billing — FR-3).
   - **Climax:** Other tenants unaffected; audit log records actor, reason, timestamp.
   - **Resolution:** Platform Admin reactivates (`Status=Active`); prior `BillingStatus` unchanged unless separately adjusted. Unpaid collections remain automated (FR-23), not this journey.
+
+- **UJ-5. Marco runs Monday lead outreach from the Clients queue (Core+).**
+  - **Persona + context:** Marco, **Tenant Member** on Ikigai **Pro**, preparing follow-ups after a busy weekend of registrations.
+  - **Entry state:** Authenticated; Dashboard shows 14 **New** clients and follow-up coverage below target.
+  - **Path:** Opens **Clients** → applies **New** queue filter (or taps Dashboard segment) → scans list showing contact channel and last registration → opens profile → **WhatsApp** or **Viber** click-to-message → records follow-up status → marks **Contacted** → optionally adds **next follow-up date**.
+  - **Climax:** Client timeline shows outreach event; Dashboard follow-up coverage increases; Marco never exports a spreadsheet to find phone numbers.
+  - **Resolution:** Repeat for queue; bulk-select remaining **New** leads → **Add to campaign** (Pro) for email segment.
+  - **Edge cases:** Client with no phone — messenger actions disabled with helper text; consent false — excluded from campaign handoff with visible badge; merge suspect — flag visible in queue with filter chip.
 
 ---
 
@@ -538,6 +546,82 @@ Platform Admin **Suspend** (FR-3) remains the manual break-glass for confirmed a
 
 ---
 
+### 4.8 Client CRM & Lead Operations (Post-MVP v1.1)
+
+**Description:** Platform 0 ships a **Master Client List**, dedup, lead status, messenger-assisted outreach, and relationship timeline (inherited PRD FR-5–FR-7, FR-14–FR-15). Operators at scale (Core/Pro, 500–5,000 regs/month) need the **Clients** module to behave as a **lead queue** — not a passive directory — with action-first profiles and handoff to **Campaigns**. Realizes **UJ-5**. Does **not** introduce HubSpot-style deal pipelines or automated drip sequences (§5, §13.11).
+
+**Plan gates:**
+
+| Capability | Basic | Core | Pro |
+|------------|:-----:|:----:|:---:|
+| Clients lead queue (FR-29) | ✓ | ✓ | ✓ |
+| Action-first profile layout (FR-30) | ✓ | ✓ | ✓ |
+| Filtered CSV export from Clients list (FR-29) | Fixed columns only (matches FR-15 Basic report) | ✓ | ✓ |
+| Bulk select → Campaign (FR-31) | Upgrade CTA | Upgrade CTA | ✓ |
+| Next follow-up date + queue (FR-32) | ✓ | ✓ | ✓ |
+
+#### FR-27: Tenant registration timezone for monthly limits
+
+Each **Tenant** stores an IANA timezone (`RegistrationTimeZoneId`, default `UTC`) used to compute **calendar-month** public registration counts for plan limit enforcement (§13.10).
+
+**Consequences (testable):**
+- Monthly registration dial and enforcement use tenant-local month boundaries, not UTC-only.
+- Self-serve signup may capture browser timezone as an optional hint; **Tenant Admin** can view and edit timezone in organization settings.
+- Existing tenants backfill to `UTC` unless overridden.
+- Plan limit APIs and shell usage meters display the active timezone label.
+
+*Status: **Shipped** (2026-08-08). See addendum §Client CRM.*
+
+#### FR-29: Clients lead queue
+
+The **Clients** list presents a scannable **lead queue** for daily operator work — not only a sortable directory. Realizes UJ-5.
+
+**Consequences (testable):**
+- **Queue summary** at top of `/clients`: counts per **Lead Status** (New, Contacted, Active, Inactive) as tappable chips linking to filtered list.
+- **Quick filter chips** expose filters already supported by API/query string: **New**, **Registered this week** (`registeredWithinDays`), **Merge suspects** (`mergeSuspect`), **Created recently** (`createdWithinDays`) — not Dashboard-only deep links.
+- **List columns (minimum):** Name (avatar), **contact channel** (phone or email — whichever is present), **Lead Status**, **last registration** (activity name + date, non-truncated on hover/tooltip), **last outreach** (most recent timeline event of type messenger or campaign — or "Never").
+- **Referral source** and **consent** available as optional columns or filter (Core+); Basic may filter by lead status and search only.
+- **Row quick actions** (without opening profile): **Mark contacted** (when status = New), **Open messenger** (when phone present — mirrors profile deep link), **Open profile**.
+- **Search** covers name, email, phone (normalized), and nationality.
+- **Filtered export:** Core+ can export current list filters to CSV from Clients page; Basic export matches fixed report columns (FR-15).
+- List remains performant at **5,000+ clients** per tenant (pagination, no unbounded client-side load).
+
+#### FR-30: Action-first client profile layout
+
+The **Client** profile optimizes for **act → see history → edit details**, reordering Platform 0 sections for outreach workflows. Realizes UJ-5; extends inherited FR-7.
+
+**Consequences (testable):**
+- **Above the fold:** identity, lead status control, and **outreach action bar** (WhatsApp, Viber, Mark contacted, Add note — Pro: Add to campaign).
+- **Timeline preview:** last 5 relationship events inline with **View all** anchor — full timeline remains below or in tab.
+- **Registration history** is **collapsed by default** when more than 3 registrations; searchable and paginated; latest registration expanded.
+- **Master profile** fields remain editable (FR-5); edit affordance visible without scrolling past registration list.
+- Duplicate **Follow-up** / status UI removed — single lead status control + one follow-up summary strip.
+- Mobile: outreach actions in sticky footer or top action sheet; no horizontal scroll on master fields.
+
+#### FR-31: Clients list → Campaign handoff (Pro)
+
+A **Tenant Admin or Member** on **Pro** can multi-select **Clients** from the list (respecting consent) and hand off to **Campaigns**. Realizes UJ-5; extends FR-16.
+
+**Consequences (testable):**
+- Checkbox selection on Clients list with select-all on current page.
+- **Add to campaign** action: create new draft campaign with selected clients as segment **or** append to existing draft campaign.
+- Clients with `consentGiven = false` are excluded from selection with visible count ("3 excluded — no consent").
+- API enforces Pro plan; Basic/Core see upgrade CTA.
+- Campaign segment preview shows count before send; handoff does not auto-send.
+
+#### FR-32: Next follow-up date and follow-up queue
+
+Operators can optionally set a **next follow-up date** on a **Client** and see overdue items in Dashboard and Clients queue. Realizes UJ-5; extends FR-15 follow-up coverage metric.
+
+**Consequences (testable):**
+- Optional `NextFollowUpAt` (date, tenant-local) on Client — nullable.
+- Setting/updating appends timeline note event `[ASSUMPTION: event type FollowUpScheduled]`.
+- Dashboard **Follow-up queue** includes: (a) **New** leads without outreach, (b) **Overdue** where `NextFollowUpAt` &lt; today in tenant timezone (FR-27).
+- Clients filter chip **Follow-up due** surfaces overdue + due-today.
+- Clearing date or marking **Contacted** does not auto-clear follow-up date unless operator chooses.
+
+---
+
 ## 5. Non-Goals (Explicit)
 
 - **Modifying lead-generation-crm** — separate product; no shared deployment requirement.
@@ -606,6 +690,10 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 **Secondary**
 - **SM-4:** 90% of Platform 0 unit tests pass without modification after tenancy migration (remaining failures addressed in Epic 11–13). Validates brownfield preservation.
 - **SM-5:** On **Core+**, Tenant Admin invites member; member completes activity creation without admin intervention. Validates FR-6, FR-5. Basic invite soft-block covered by FR-6 seat gate.
+
+**Post-MVP (Client CRM — FR-29–32)**
+- **SM-6:** ≥70% of **New** clients receive a logged follow-up (messenger event, campaign send, or status → Contacted) within 7 days — measured per tenant, rolling 30-day window. Validates FR-29, FR-30, FR-32; aligns with Platform 0 SM-3.
+- **SM-7:** Clients list p95 load &lt; 2s with 5,000 clients and active filters (load-pro-alpha profile). Validates FR-29 NFR.
 
 **Counter-metrics (do not optimize)**
 - **SM-C1:** Total tenant count — do not optimize at expense of isolation test coverage (SM-1).
@@ -753,6 +841,10 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-34:** Role × plan (H5 Option A): Admin-only billing/team/settings; Member gets plan-allowed ops; upgrade CTAs Admin-only — FR-5
 - **A-35:** UJ-4 is break-glass Suspend only (H6); ordinary non-payment is FR-23 automation — FR-2, FR-3
 - **A-36:** One-stop = operator stack killer (GTM-A); post-MVP backlog in §13.11 — not discovery marketplace
+- **A-37:** Monthly registration limits use tenant IANA timezone (default UTC) — FR-27
+- **A-38:** Clients module v1.1 = lead queue UX, not deal pipeline — FR-29–32; HubSpot-depth deferred §13.11
+- **A-39:** `NextFollowUpAt` optional; Dashboard queue merges New + overdue follow-ups — FR-32
+- **A-40:** Bulk campaign handoff Pro-only; consent false always excluded — FR-31
 
 ---
 
@@ -819,7 +911,7 @@ flowchart LR
 
 ### 13.4 Feature gates by tier
 
-**Usage limits (ratified):** Published activities = **concurrent Published status**. Registrations = **public registrations per calendar month (UTC)**. Warn at **80%**, block at **100%**. **Basic:** enforce immediately. **Paid tiers:** soft warn during trial, enforce after trial ends.
+**Usage limits (ratified):** Published activities = **concurrent Published status**. Registrations = **public registrations per calendar month in the tenant's configured IANA timezone** (default UTC; set at signup from browser hint, editable in Settings). Warn at **80%**, block at **100%**.
 
 | Capability | Basic | Core | Pro |
 |------------|:-----:|:----:|:---:|
@@ -953,6 +1045,7 @@ Full pricing page copy: `docs/marketing/pricing-tiers.md`
 
 | Capability | Retires | Notes |
 |------------|---------|--------|
+| **Clients lead queue + action-first profiles (Epic 23, FR-29–32)** | Spreadsheet triage | Queue header, contact columns, messenger quick actions, profile reorder |
 | Product-grade marketing + stub / first-15-min guided setup | Forms inertia | UX polish; empty-state wizard: Community → Activity → QR → first reg |
 | Share kit (OG/share image, WhatsApp copy, QR pack download) | Linktree / IG bio | High perceived product; low domain risk |
 | Google Forms / CSV client+registration import | Migration fear | One-time importer |
@@ -973,11 +1066,13 @@ Full pricing page copy: `docs/marketing/pricing-tiers.md`
 |------------|----------------|
 | Cross-tenant discovery marketplace | Different GTM; dilutes CRM edge |
 | HubSpot-style pipelines / full marketing automation | Wrong ICP complexity |
+| Manual duplicate merge UI | `[NOTE FOR PM]` Promote from Phase 2 if merge-suspect pain persists after FR-29 queue filters |
+| Client tags / custom segments beyond lead status | Lightweight tags candidate for v1.2 — not FR-29 MVP |
 | Festival-grade ticketing (complex fees, multi-day) | RegFox altitude |
 | WhatsApp Business API broadcast | Keep click-to-message until demand proven |
 | Participant login / member portal | Still non-goal until pilots require it |
 
-**Epics note:** When running `bmad-create-epics-and-stories`, keep Epic 11–15 = v1 tenancy/billing only. Park §13.11 items as **Epic 16+** candidates (or a separate “One-stop Lite” epic set) after launch evidence.
+**Epics note:** When running `bmad-create-epics-and-stories`, keep Epic 11–15 = v1 tenancy/billing only. Park §13.11 items as **Epic 16+** candidates (or a separate “One-stop Lite” epic set) after launch evidence. **Epic 23: Clients CRM lead queue** captures FR-29–32.
 
 ---
 
@@ -987,7 +1082,9 @@ Full pricing page copy: `docs/marketing/pricing-tiers.md`
 |------------|-------------|--------|
 | `bmad-architecture` | Tenancy spine — isolation, routing, identity, migration | **Done** — `architecture/architecture-cohestra-enterprise-2026-07-15/` |
 | `bmad-ux` | Enterprise journeys — signup, team invite, platform admin | **Final** — `ux-designs/ux-cohestra-2026-07-18/` (RegFox-caliber craft + stack-killer mocks) |
+| `bmad-ux` (update) | Clients queue + profile — UJ-5, FR-29–32 | **Pending** — extend `EXPERIENCE.md` §Clients |
 | `bmad-create-epics-and-stories` | Epic 11–15 breakdown from this PRD | Pending |
+| `bmad-create-epics-and-stories` | Epic 23 — Clients CRM lead queue | **Draft in epics doc** |
 | `bmad-market-research` | List price / grandfathering (Q2/P9 — §13.9) | **Draft done** — research note; pilot WTP + list lock pending. Q5 limits ratified separately. |
 | `bmad-check-implementation-readiness` | Align PRD + architecture + UX before dev | After UX |
 | `bmad-sprint-planning` | Enterprise sprint status | After epics |
