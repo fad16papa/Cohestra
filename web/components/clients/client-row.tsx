@@ -8,12 +8,15 @@ import {
   clientsTableCheckboxColumnClassName,
   clientsTableGridClassName,
   clientsTableStatusColumnClassName,
+  clientsTableTextColumnClassName,
 } from "@/components/clients/clients-table-layout";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { Button } from "@/components/ui/button";
 import {
   formatClientContactLine,
   formatLastActivityCaption,
+  formatLastActivityDate,
+  formatLastActivityName,
   formatLastOutreachCaption,
   formatNextFollowUpDate,
   isFollowUpDue,
@@ -80,6 +83,10 @@ export function ClientRow({
     client.leadStatus === "new" && (onMarkContacted || onOpenMessenger);
   const canOpenMessenger = Boolean(client.phone && onOpenMessenger);
   const followUpDue = isFollowUpDue(client.nextFollowUpAt, timeZoneId);
+  const lastActivityFull = formatLastActivityCaption(client);
+  const lastActivityName = formatLastActivityName(client);
+  const lastActivityDate = formatLastActivityDate(client);
+  const lastOutreach = formatLastOutreachCaption(client);
 
   return (
     <div
@@ -106,18 +113,18 @@ export function ClientRow({
         <div className="hidden sm:block" aria-hidden />
       )}
 
-      <div className="min-w-0">
+      <div className={clientsTableTextColumnClassName}>
         <MobileLabel>Contact</MobileLabel>
         <RowLink href={profileHref} className="flex min-w-0 items-center gap-3">
           <PersonAvatar name={client.fullName} size="sm" />
-          <span className="min-w-0">
-            <span className="flex flex-wrap items-center gap-2">
+          <span className="min-w-0 overflow-hidden">
+            <span className="flex min-w-0 items-center gap-2">
               <span className="truncate font-semibold text-text-warm group-hover:text-primary">
                 {client.fullName}
               </span>
               {followUpDue ? (
-                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.6875rem] font-medium text-amber-700 dark:text-amber-300">
-                  Follow-up due
+                <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.6875rem] font-medium text-amber-700 dark:text-amber-300">
+                  Due
                 </span>
               ) : null}
             </span>
@@ -126,7 +133,7 @@ export function ClientRow({
             </span>
             {client.nextFollowUpAt ? (
               <span className="block truncate text-xs text-text-muted-warm">
-                Next follow-up: {formatNextFollowUpDate(client.nextFollowUpAt, timeZoneId)}
+                Next: {formatNextFollowUpDate(client.nextFollowUpAt, timeZoneId)}
               </span>
             ) : null}
           </span>
@@ -140,65 +147,73 @@ export function ClientRow({
         </RowLink>
       </div>
 
-      <div className="min-w-0">
+      <div className={clientsTableTextColumnClassName}>
         <MobileLabel>Last registration</MobileLabel>
         <RowLink
           href={profileHref}
-          className="min-w-0 truncate text-sm text-text-muted-warm group-hover:text-text-warm"
-          title={formatLastActivityCaption(client)}
+          className="block min-w-0 overflow-hidden"
+          title={lastActivityFull}
         >
-          {formatLastActivityCaption(client)}
+          <span className="block truncate text-sm text-text-muted-warm group-hover:text-text-warm">
+            {lastActivityName}
+          </span>
+          {lastActivityDate ? (
+            <span className="block truncate text-xs text-text-muted-warm">
+              {lastActivityDate}
+            </span>
+          ) : null}
         </RowLink>
       </div>
 
-      <div className="min-w-0">
+      <div className={clientsTableTextColumnClassName}>
         <MobileLabel>Last outreach</MobileLabel>
         <RowLink
           href={profileHref}
-          className="min-w-0 truncate text-sm text-text-muted-warm group-hover:text-text-warm"
+          className="block min-w-0 truncate text-sm text-text-muted-warm group-hover:text-text-warm"
+          title={lastOutreach}
         >
-          {formatLastOutreachCaption(client)}
+          {lastOutreach}
         </RowLink>
       </div>
 
-      {showQuickActions ? (
-        <div className={clientsTableActionsColumnClassName}>
-          <MobileLabel>Quick actions</MobileLabel>
-          {onMarkContacted ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={isUpdating}
-              className="h-8 shrink-0 gap-1.5 border-primary/20 px-2 text-xs"
-              onClick={(event) => {
-                event.preventDefault();
-                onMarkContacted(client);
-              }}
-            >
-              <MessageCircle className="size-3.5" aria-hidden />
-              Mark contacted
-            </Button>
-          ) : null}
-          {canOpenMessenger ? (
-            <Button
-              type="button"
-              size="sm"
-              disabled={isUpdating}
-              className="h-8 shrink-0 gap-1.5 bg-whatsapp px-2 text-xs text-whatsapp-foreground hover:bg-whatsapp/90"
-              onClick={(event) => {
-                event.preventDefault();
-                onOpenMessenger?.(client);
-              }}
-            >
-              <Send className="size-3.5" aria-hidden />
-              Open messenger
-            </Button>
-          ) : null}
-        </div>
-      ) : (
-        <div className="hidden sm:block" aria-hidden />
-      )}
+      <div className={clientsTableActionsColumnClassName}>
+        {showQuickActions ? (
+          <>
+            <MobileLabel>Quick actions</MobileLabel>
+            {onMarkContacted ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isUpdating}
+                className="h-8 shrink-0 gap-1 border-primary/20 px-2 text-xs"
+                onClick={(event) => {
+                  event.preventDefault();
+                  onMarkContacted(client);
+                }}
+              >
+                <MessageCircle className="size-3.5" aria-hidden />
+                Contacted
+              </Button>
+            ) : null}
+            {canOpenMessenger ? (
+              <Button
+                type="button"
+                size="sm"
+                disabled={isUpdating}
+                className="h-8 shrink-0 gap-1 bg-whatsapp px-2 text-xs text-whatsapp-foreground hover:bg-whatsapp/90"
+                onClick={(event) => {
+                  event.preventDefault();
+                  onOpenMessenger?.(client);
+                }}
+              >
+                <Send className="size-3.5" aria-hidden />
+                Message
+              </Button>
+            ) : null}
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }
