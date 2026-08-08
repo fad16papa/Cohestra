@@ -1,16 +1,24 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ChevronRight, MessageCircle } from "lucide-react";
+import { Check, Send } from "lucide-react";
 
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import {
+  clientsTableActionsColumnClassName,
+  clientsTableCheckboxColumnClassName,
   clientsTableGridClassName,
   clientsTableStatusColumnClassName,
+  clientsTableTextColumnClassName,
 } from "@/components/clients/clients-table-layout";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { Button } from "@/components/ui/button";
 import {
+  formatClientContactLine,
   formatLastActivityCaption,
+  formatLastActivityDate,
+  formatLastActivityName,
+  formatLastOutreachCaption,
+  isFollowUpDue,
   type ClientListItem,
 } from "@/lib/clients-api";
 import { cn } from "@/lib/utils";
@@ -18,21 +26,29 @@ import { cn } from "@/lib/utils";
 type ClientRowProps = {
   client: ClientListItem;
   onMarkContacted?: (client: ClientListItem) => void;
+  onOpenMessenger?: (client: ClientListItem) => void;
   isUpdating?: boolean;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectedChange?: (client: ClientListItem, selected: boolean) => void;
+  timeZoneId?: string | null;
 };
 
 function RowLink({
   href,
   children,
   className,
+  title,
 }: {
   href: string;
   children: ReactNode;
   className?: string;
+  title?: string;
 }) {
   return (
     <Link
       href={href}
+      title={title}
       className={cn(
         "min-w-0 outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm",
         className
@@ -43,68 +59,157 @@ function RowLink({
   );
 }
 
+function MobileLabel({ children }: { children: ReactNode }) {
+  return (
+    <span className="mb-1 block text-[0.6875rem] font-medium uppercase tracking-wide text-text-muted-warm sm:hidden">
+      {children}
+    </span>
+  );
+}
+
 export function ClientRow({
   client,
   onMarkContacted,
+  onOpenMessenger,
   isUpdating = false,
+  selectable = false,
+  selected = false,
+  onSelectedChange,
+  timeZoneId,
 }: ClientRowProps) {
   const profileHref = `/clients/${client.id}`;
-  const showQuickContact = client.leadStatus === "new" && onMarkContacted;
+  const showQuickActions =
+    client.leadStatus === "new" && (onMarkContacted || onOpenMessenger);
+  const canOpenMessenger = Boolean(client.phone && onOpenMessenger);
+  const followUpDue = isFollowUpDue(client.nextFollowUpAt, timeZoneId);
+  const lastActivityFull = formatLastActivityCaption(client);
+  const lastActivityName = formatLastActivityName(client);
+  const lastActivityDate = formatLastActivityDate(client);
+  const lastOutreach = formatLastOutreachCaption(client);
 
   return (
     <div
       className={cn(
         clientsTableGridClassName,
-        "group border-b border-border-warm border-l-4 border-l-transparent py-3 sm:py-4",
-        "transition-all hover:-translate-y-px hover:border-l-primary hover:bg-muted/40 hover:shadow-sm"
+        "group border-b border-border-warm border-l-4 border-l-transparent",
+        "transition-colors hover:border-l-primary hover:bg-muted/40",
+        selected && "border-l-primary bg-primary/5"
       )}
     >
-      <RowLink href={profileHref} className="flex min-w-0 items-center gap-3">
-        <PersonAvatar name={client.fullName} size="sm" />
-        <span className="min-w-0 truncate font-semibold text-text-warm group-hover:text-primary">
-          {client.fullName}
-        </span>
-      </RowLink>
+      {selectable ? (
+        <div className={clientsTableCheckboxColumnClassName}>
+          <input
+            type="checkbox"
+            checked={selected}
+            aria-label={`Select ${client.fullName}`}
+            className="size-4 rounded border-input accent-primary"
+            onChange={(event) =>
+              onSelectedChange?.(client, event.target.checked)
+            }
+          />
+        </div>
+      ) : (
+        <div className="hidden sm:block" aria-hidden />
+      )}
 
-      <RowLink
-        href={profileHref}
-        className="min-w-0 truncate text-center text-sm text-text-muted-warm group-hover:text-text-warm"
-      >
-        {client.nationality ?? "—"}
-      </RowLink>
+      <div className={clientsTableTextColumnClassName}>
+        <MobileLabel>Contact</MobileLabel>
+        <RowLink href={profileHref} className="flex min-w-0 items-center gap-3">
+          <PersonAvatar name={client.fullName} size="sm" />
+          <span className="min-w-0 overflow-hidden">
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="truncate text-sm font-semibold text-text-warm group-hover:text-primary">
+                {client.fullName}
+              </span>
+              {followUpDue ? (
+                <span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[0.65rem] font-medium text-amber-700 dark:text-amber-300">
+                  Due
+                </span>
+              ) : null}
+            </span>
+            <span className="block truncate text-[0.8125rem] text-text-muted-warm">
+              {formatClientContactLine(client)}
+            </span>
+          </span>
+        </RowLink>
+      </div>
 
-      <div className={cn(clientsTableStatusColumnClassName, "gap-2")}>
+      <div className={clientsTableStatusColumnClassName}>
+        <MobileLabel>Status</MobileLabel>
         <RowLink href={profileHref} className="min-w-0">
           <LeadStatusBadge status={client.leadStatus} />
         </RowLink>
-        {showQuickContact ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isUpdating}
-            className={cn(
-              "h-8 shrink-0 gap-1.5 border-primary/20 px-2 text-xs opacity-100 sm:opacity-0",
-              "sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
-              "focus-visible:opacity-100"
-            )}
-            onClick={(event) => {
-              event.preventDefault();
-              onMarkContacted(client);
-            }}
-          >
-            <MessageCircle className="size-3.5" aria-hidden />
-            <span className="hidden sm:inline">Contacted</span>
-          </Button>
-        ) : null}
       </div>
 
-      <RowLink
-        href={profileHref}
-        className="min-w-0 truncate text-sm text-text-muted-warm group-hover:text-text-warm"
-      >
-        {formatLastActivityCaption(client)}
-      </RowLink>
+      <div className={clientsTableTextColumnClassName}>
+        <MobileLabel>Last registration</MobileLabel>
+        <RowLink
+          href={profileHref}
+          className="block min-w-0 overflow-hidden"
+          title={lastActivityFull}
+        >
+          <span className="block truncate text-sm text-text-warm/80 group-hover:text-text-warm">
+            {lastActivityName}
+          </span>
+          {lastActivityDate ? (
+            <span className="block truncate text-xs text-text-muted-warm">
+              {lastActivityDate}
+            </span>
+          ) : null}
+        </RowLink>
+      </div>
+
+      <div className={clientsTableTextColumnClassName}>
+        <MobileLabel>Last outreach</MobileLabel>
+        <RowLink
+          href={profileHref}
+          className="block min-w-0 truncate text-sm text-text-muted-warm group-hover:text-text-warm"
+          title={lastOutreach}
+        >
+          {lastOutreach}
+        </RowLink>
+      </div>
+
+      <div className={clientsTableActionsColumnClassName}>
+        {showQuickActions ? (
+          <>
+            <MobileLabel>Quick actions</MobileLabel>
+            {onMarkContacted ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={isUpdating}
+                aria-label={`Mark ${client.fullName} as contacted`}
+                title="Mark contacted"
+                className="size-8 shrink-0 border-primary/25 text-primary hover:bg-primary/10 hover:text-primary"
+                onClick={(event) => {
+                  event.preventDefault();
+                  onMarkContacted(client);
+                }}
+              >
+                <Check className="size-4" aria-hidden />
+              </Button>
+            ) : null}
+            {canOpenMessenger ? (
+              <Button
+                type="button"
+                size="icon"
+                disabled={isUpdating}
+                aria-label={`Open messenger for ${client.fullName}`}
+                title="Open messenger"
+                className="size-8 shrink-0 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                onClick={(event) => {
+                  event.preventDefault();
+                  onOpenMessenger?.(client);
+                }}
+              >
+                <Send className="size-4" aria-hidden />
+              </Button>
+            ) : null}
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

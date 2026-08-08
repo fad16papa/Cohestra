@@ -23,6 +23,7 @@ internal static class ClientDetailMapper
             client.Notes,
             client.LeadStatus.ToString().ToLowerInvariant(),
             client.IsMergeSuspect,
+            client.NextFollowUpAt,
             client.CreatedAt,
             client.UpdatedAt,
             registrations

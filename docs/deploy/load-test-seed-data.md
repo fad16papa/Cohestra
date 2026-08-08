@@ -62,6 +62,15 @@ You can sign in at the **default URL** `http://localhost:8088/login` using any l
 
 All accounts are **TenantAdmin** on their respective workspace.
 
+### Other local seed logins (with `.env.local-docker.example`)
+
+| Profile | Email | Password | URL |
+|---------|-------|----------|-----|
+| Demo operator (default / Pro) | `operator@cohestra.local` | `ChangeMe123!` | http://default.localhost:8088/login |
+| Platform admin | `platform-admin@cohestra.local` | `ChangeMe123!` | http://localhost:8088/platform/login |
+
+Enable all of the above via `cp .env.local-docker.example .env` then recreate `api`.
+
 ---
 
 ## Data volumes per tenant

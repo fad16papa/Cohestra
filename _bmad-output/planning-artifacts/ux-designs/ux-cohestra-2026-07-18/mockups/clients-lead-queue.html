@@ -16,7 +16,7 @@
     }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: var(--sans); font-size: 14px; color: var(--ink); background: var(--paper2); line-height: 1.5; }
-    .stage { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+    .stage { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
     .note { font-size: 0.72rem; color: var(--stone); margin-bottom: 1rem; padding: 0.5rem 0.75rem; background: var(--paper); border: 1px dashed var(--line); border-radius: 8px; }
     .shell { display: grid; grid-template-columns: 220px 1fr; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; min-height: 680px; box-shadow: 0 24px 48px rgba(7,13,18,0.08); }
     .side { background: linear-gradient(185deg, #070D12, #0F161E); color: #fff; padding: 1.25rem 0.85rem; }
@@ -35,11 +35,11 @@
     .chip { font-size: 0.72rem; font-weight: 600; padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); cursor: pointer; }
     .chip.on { background: var(--lagoon); color: var(--lagoon-fg); border-color: var(--lagoon); }
     .chip .n { opacity: 0.85; margin-left: 0.15rem; }
-    .filters { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 0.75rem; padding: 1rem; background: var(--paper2); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 1rem; }
+    .filters { display: grid; grid-template-columns: 1fr 220px; gap: 0.75rem; padding: 1rem; background: var(--paper2); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 1rem; }
     .filters label { display: block; font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--stone); margin-bottom: 0.35rem; }
     .filters input, .filters select { width: 100%; padding: 0.45rem 0.6rem; border: 1px solid var(--line); border-radius: 8px; font: inherit; background: #fff; }
     .table { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; }
-    .thead, .row { display: grid; grid-template-columns: 1.4fr 0.9fr 1.1fr 0.9fr 0.7fr; gap: 0.75rem; align-items: center; padding: 0.65rem 1rem; }
+    .thead, .row { display: grid; grid-template-columns: 2.25rem minmax(12rem,1.4fr) 6.5rem minmax(0,1.2fr) minmax(0,0.9fr) 10.5rem; gap: 0.75rem; align-items: center; padding: 0.65rem 1rem; }
     .thead { background: var(--paper2); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--stone); border-bottom: 1px solid var(--line); }
     .row { border-bottom: 1px solid var(--line); border-left: 4px solid transparent; transition: background 0.15s; }
     .row:hover { background: var(--paper2); border-left-color: var(--lagoon); }
@@ -55,10 +55,11 @@
     .pill.active { background: rgba(31,122,92,0.12); color: var(--ok); }
     .pill.inactive { background: var(--paper2); color: var(--stone); }
     .btn-sm { font-size: 0.68rem; font-weight: 600; padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid rgba(11,107,99,0.25); background: #fff; color: var(--lagoon); cursor: pointer; white-space: nowrap; }
-    .meta { font-size: 0.78rem; color: var(--stone); }
-    .meta strong { color: var(--ink); font-weight: 500; }
+    .meta { font-size: 0.78rem; color: var(--stone); min-width: 0; overflow: hidden; }
+    .meta .line1 { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); font-weight: 500; }
+    .meta .line2 { display: block; font-size: 0.72rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .never { color: var(--stone); font-style: italic; }
-    .chev { color: var(--stone); text-align: right; }
+    .actions { display: flex; gap: 0.35rem; flex-wrap: wrap; min-width: 0; }
     .footer { display: flex; justify-content: space-between; margin-top: 1rem; font-size: 0.78rem; color: var(--stone); }
     @media (max-width: 900px) {
       .shell { grid-template-columns: 1fr; }
@@ -66,6 +67,7 @@
       .thead { display: none; }
       .row { grid-template-columns: 1fr; gap: 0.5rem; padding: 1rem; }
       .filters { grid-template-columns: 1fr; }
+      .thead, .row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -85,57 +87,59 @@
           <div class="badges"><span class="badge pro">Pro</span><span class="badge spon">Sponsored</span></div>
         </div>
         <h1>Clients</h1>
-        <p class="lede">One row per contact — repeat sign-ups on activities merge by phone or email.</p>
+        <p class="lede">One row per contact — repeat sign-ups merge by phone or email.</p>
 
         <div class="chips">
           <span class="chip on">New <span class="n">14</span></span>
           <span class="chip">Contacted <span class="n">892</span></span>
           <span class="chip">Active <span class="n">1,204</span></span>
           <span class="chip">Inactive <span class="n">2,890</span></span>
-          <span class="chip" style="margin-left:0.5rem;">Registered this week</span>
-          <span class="chip">Follow-up due</span>
+          <span class="chip" style="margin-left:0.5rem;">Follow-up due</span>
+          <span class="chip">Registered this week</span>
           <span class="chip">Merge suspects</span>
         </div>
 
         <div class="filters">
           <div><label>Search</label><input type="search" placeholder="Name, email, phone…" /></div>
-          <div><label>Lead status</label><select><option>New</option><option>All statuses</option></select></div>
-          <div><label>Referral source</label><select><option>All sources</option><option>Instagram</option></select></div>
+          <div><label>Nationality</label><select><option>All nationalities</option><option>Singaporean</option></select></div>
         </div>
 
         <div class="table">
           <div class="thead">
-            <span>Contact</span><span>Status</span><span>Last registration</span><span>Last outreach</span><span></span>
+            <span></span><span>Contact</span><span>Status</span><span>Last registration</span><span>Last outreach</span><span>Actions</span>
           </div>
           <div class="row">
+            <div><input type="checkbox" aria-label="Select" /></div>
             <div class="contact">
               <div class="av">AN</div>
-              <div><div class="name">Alexander Nguyen</div><div class="sub">+65 9200 0010</div></div>
+              <div style="min-width:0;overflow:hidden;"><div class="name">Alexander Nguyen</div><div class="sub">+65 9200 0010</div></div>
             </div>
-            <div class="status"><span class="pill new">New</span><button type="button" class="btn-sm">Mark contacted</button></div>
-            <div class="meta"><strong>Monthly Gathering 050</strong> · 8 Aug</div>
+            <div class="status"><span class="pill new">New</span></div>
+            <div class="meta" title="Load Test Pro Alpha Community 10 Monthly Gathering 050 · 8 Aug"><span class="line1">Monthly Gathering 050</span><span class="line2">8 Aug</span></div>
             <div class="meta never">Never</div>
-            <div class="chev">→</div>
+            <div class="actions"><button type="button" class="btn-sm">Contacted</button><button type="button" class="btn-sm">Message</button></div>
           </div>
           <div class="row">
+            <div><input type="checkbox" aria-label="Select" /></div>
             <div class="contact">
               <div class="av">ER</div>
-              <div><div class="name">Ella Rivera</div><div class="sub">ella.r@example.com</div></div>
+              <div style="min-width:0;overflow:hidden;"><div class="name">Ella Rivera</div><div class="sub">ella.r@example.com</div></div>
             </div>
             <div class="status"><span class="pill active">Active</span></div>
-            <div class="meta"><strong>Pickleball Intro</strong> · 5 Aug</div>
+            <div class="meta"><span class="line1">Pickleball Intro</span><span class="line2">5 Aug</span></div>
             <div class="meta">WhatsApp · 6 Aug</div>
-            <div class="chev">→</div>
+            <div class="actions"></div>
           </div>
           <div class="row">
+            <div><input type="checkbox" aria-label="Select" /></div>
             <div class="contact">
               <div class="av">MS</div>
-              <div><div class="name">Michael Santos</div><div class="sub">+65 9123 4567</div></div>
+              <div style="min-width:0;overflow:hidden;"><div class="name">Michael Santos</div><div class="sub">+65 9123 4567</div></div>
             </div>
             <div class="status"><span class="pill contacted">Contacted</span></div>
-            <div class="meta"><strong>Board Game Night</strong> · 2 Aug</div>
+            <div class="meta"><span class="line1">Board Game Night</span><span class="line2">2 Aug</span></div>
             <div class="meta">Campaign · 3 Aug</div>
-            <div class="chev">→</div>
+            <div class="actions"></div>
           </div>
         </div>
 

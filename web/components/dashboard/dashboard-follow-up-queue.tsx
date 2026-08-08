@@ -1,49 +1,84 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, UserRound } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   fetchClients,
   formatLastActivityCaption,
+  formatNextFollowUpDate,
+  isFollowUpDue,
   type ClientListItem,
 } from "@/lib/clients-api";
 import { cn } from "@/lib/utils";
 
 const QUEUE_SIZE = 5;
 
+type QueueEntry = ClientListItem & {
+  queueReason: "new" | "follow_up_due";
+};
+
 export function DashboardFollowUpQueue() {
   const { authFetch } = useAuth();
-  const [leads, setLeads] = useState<ClientListItem[]>([]);
-  const [totalNew, setTotalNew] = useState(0);
+  const { shell } = useTenantShell();
+  const [entries, setEntries] = useState<QueueEntry[]>([]);
+  const [dueTotalCount, setDueTotalCount] = useState(0);
+  const [newTotalCount, setNewTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
 
-    void fetchClients(authFetch, {
-      leadStatus: "new",
-      sortBy: "lastRegistrationDate",
-      sortDirection: "desc",
-      page: 1,
-      pageSize: QUEUE_SIZE,
-    })
-      .then((result) => {
-        if (!cancelled) {
-          setLeads(result.items);
-          setTotalNew(result.totalCount);
-          setLoading(false);
+    void Promise.all([
+      fetchClients(authFetch, {
+        followUpDue: true,
+        sortBy: "lastRegistrationDate",
+        sortDirection: "asc",
+        page: 1,
+        pageSize: QUEUE_SIZE,
+      }),
+      fetchClients(authFetch, {
+        leadStatus: "new",
+        sortBy: "lastRegistrationDate",
+        sortDirection: "desc",
+        page: 1,
+        pageSize: QUEUE_SIZE,
+      }),
+    ])
+      .then(([dueResult, newResult]) => {
+        if (cancelled) {
+          return;
         }
+
+        const merged = new Map<string, QueueEntry>();
+
+        for (const client of dueResult.items) {
+          merged.set(client.id, { ...client, queueReason: "follow_up_due" });
+        }
+
+        for (const client of newResult.items) {
+          if (!merged.has(client.id)) {
+            merged.set(client.id, { ...client, queueReason: "new" });
+          }
+        }
+
+        const queueEntries = Array.from(merged.values()).slice(0, QUEUE_SIZE);
+        setEntries(queueEntries);
+        setDueTotalCount(dueResult.totalCount);
+        setNewTotalCount(newResult.totalCount);
+        setLoading(false);
       })
       .catch(() => {
         if (!cancelled) {
-          setLeads([]);
-          setTotalNew(0);
+          setEntries([]);
+          setDueTotalCount(0);
+          setNewTotalCount(0);
           setLoading(false);
         }
       });
@@ -52,6 +87,28 @@ export function DashboardFollowUpQueue() {
       cancelled = true;
     };
   }, [authFetch]);
+
+  const subtitle = useMemo(() => {
+    if (dueTotalCount === 0 && newTotalCount === 0) {
+      return "No new leads or overdue follow-ups.";
+    }
+
+    const parts: string[] = [];
+    if (dueTotalCount > 0) {
+      parts.push(
+        `${dueTotalCount} follow-up${dueTotalCount === 1 ? "" : "s"} due`
+      );
+    }
+    if (newTotalCount > 0) {
+      parts.push(`${newTotalCount} new lead${newTotalCount === 1 ? "" : "s"}`);
+    }
+
+    return parts.join(" · ");
+  }, [dueTotalCount, newTotalCount]);
+
+  const showReviewMore =
+    dueTotalCount + newTotalCount > QUEUE_SIZE ||
+    entries.length >= QUEUE_SIZE;
 
   if (loading) {
     return (
@@ -69,7 +126,7 @@ export function DashboardFollowUpQueue() {
     );
   }
 
-  if (totalNew === 0) {
+  if (dueTotalCount === 0 && newTotalCount === 0) {
     return (
       <section className="rounded-2xl border border-border-warm bg-card/80 p-5 shadow-sm">
         <div className="flex items-start gap-3">
@@ -79,7 +136,7 @@ export function DashboardFollowUpQueue() {
           <div>
             <h3 className="text-section text-text-warm">Follow-up queue clear</h3>
             <p className="mt-1 text-sm text-text-muted-warm">
-              No new leads waiting — great job staying on top of outreach.
+              No new leads or overdue follow-ups — great job staying on top of outreach.
             </p>
           </div>
         </div>
@@ -97,21 +154,19 @@ export function DashboardFollowUpQueue() {
           <h3 id="follow-up-queue-heading" className="text-section text-text-warm">
             Needs follow-up
           </h3>
-          <p className="mt-1 text-sm text-text-muted-warm">
-            {totalNew} new lead{totalNew === 1 ? "" : "s"} waiting for first contact
-          </p>
+          <p className="mt-1 text-sm text-text-muted-warm">{subtitle}</p>
         </div>
         <Link
-          href="/clients?leadStatus=new"
+          href="/clients"
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-1")}
         >
-          View all
+          View queue
           <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>
 
       <ul className="space-y-2">
-        {leads.map((client) => (
+        {entries.map((client) => (
           <li key={client.id}>
             <Link
               href={`/clients/${client.id}`}
@@ -123,21 +178,30 @@ export function DashboardFollowUpQueue() {
                   {client.fullName}
                 </p>
                 <p className="truncate text-xs text-text-muted-warm">
-                  {formatLastActivityCaption(client)}
+                  {client.queueReason === "follow_up_due"
+                    ? `Follow-up due · ${formatNextFollowUpDate(client.nextFollowUpAt, shell?.registrationTimeZoneId)}`
+                    : formatLastActivityCaption(client)}
                 </p>
               </div>
-              <LeadStatusBadge status={client.leadStatus} />
+              {client.queueReason === "follow_up_due" ||
+              isFollowUpDue(client.nextFollowUpAt, shell?.registrationTimeZoneId) ? (
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.6875rem] font-medium text-amber-700 dark:text-amber-300">
+                  Due
+                </span>
+              ) : (
+                <LeadStatusBadge status={client.leadStatus} />
+              )}
             </Link>
           </li>
         ))}
       </ul>
 
-      {totalNew > QUEUE_SIZE ? (
+      {showReviewMore ? (
         <Link
-          href="/clients?leadStatus=new"
+          href="/clients"
           className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}
         >
-          Review {totalNew - QUEUE_SIZE} more
+          Open clients queue
         </Link>
       ) : null}
     </section>

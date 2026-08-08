@@ -18,4 +18,15 @@ internal static class ClientContactNormalizer
     /// </summary>
     public static string? NormalizePhone(string? phone, string? isoCountryCode = null) =>
         PhoneCountrySupport.NormalizePhone(phone, isoCountryCode);
+
+    public static string? NormalizePhoneSearch(string? search)
+    {
+        if (string.IsNullOrWhiteSpace(search))
+        {
+            return null;
+        }
+
+        var digits = new string(search.Where(char.IsDigit).ToArray());
+        return digits.Length >= 4 ? digits : null;
+    }
 }

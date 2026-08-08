@@ -1,16 +1,30 @@
+using System.Text;
 using Cohestra.Application.Clients;
+using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Clients;
 using Cohestra.Domain.Clients;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
+using Cohestra.Infrastructure.Tenants;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Clients;
 
-public sealed class ClientService(CohestraDbContext dbContext) : IClientService
+public sealed class ClientService(
+    CohestraDbContext dbContext,
+    ICurrentTenant currentTenant) : IClientService
 {
     private const int DefaultPageSize = 25;
     private const int MaxPageSize = 100;
+
+    private static readonly ClientTimelineEventType[] OutreachEventTypes =
+    [
+        ClientTimelineEventType.WhatsAppInitiated,
+        ClientTimelineEventType.WhatsAppFollowUpRecorded,
+        ClientTimelineEventType.ViberInitiated,
+        ClientTimelineEventType.EmailCampaignSent,
+    ];
 
     public async Task<ClientListResponse> ListAsync(
         int page,
@@ -20,6 +34,7 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
         bool? mergeSuspect,
         int? createdWithinDays,
         int? registeredWithinDays,
+        bool? followUpDue,
         string? leadStatus,
         string? nationality,
         string? search,
@@ -36,6 +51,173 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
         var descending = !string.Equals(sortDirection, "asc", StringComparison.OrdinalIgnoreCase);
         var sortField = ParseSortBy(sortBy);
 
+        var clientsQuery = await BuildFilteredClientsQueryAsync(
+            mergeSuspect,
+            createdWithinDays,
+            registeredWithinDays,
+            followUpDue,
+            leadStatus,
+            nationality,
+            search,
+            community,
+            consentOnly,
+            excludeCommunity,
+            cancellationToken);
+
+        var query = clientsQuery
+            .Select(client => new ClientListProjection
+            {
+                Id = client.Id,
+                FullName = client.FullName,
+                Phone = client.Phone,
+                Email = client.Email,
+                ConsentGiven = client.ConsentGiven,
+                Nationality = client.Nationality,
+                LeadStatus = client.LeadStatus,
+                NextFollowUpAt = client.NextFollowUpAt,
+                LastRegistrationAt = client.Registrations
+                    .OrderByDescending(registration => registration.CreatedAt)
+                    .Select(registration => (DateTimeOffset?)registration.CreatedAt)
+                    .FirstOrDefault(),
+                LastActivityName = client.Registrations
+                    .OrderByDescending(registration => registration.CreatedAt)
+                    .Select(registration => registration.Activity.Name)
+                    .FirstOrDefault(),
+                LastOutreachAt = client.TimelineEvents
+                    .Where(timelineEvent => OutreachEventTypes.Contains(timelineEvent.EventType))
+                    .OrderByDescending(timelineEvent => timelineEvent.OccurredAt)
+                    .Select(timelineEvent => (DateTimeOffset?)timelineEvent.OccurredAt)
+                    .FirstOrDefault(),
+                LastOutreachEventType = client.TimelineEvents
+                    .Where(timelineEvent => OutreachEventTypes.Contains(timelineEvent.EventType))
+                    .OrderByDescending(timelineEvent => timelineEvent.OccurredAt)
+                    .Select(timelineEvent => (ClientTimelineEventType?)timelineEvent.EventType)
+                    .FirstOrDefault(),
+            });
+
+        query = ApplySort(query, sortField, descending);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var statusCounts = await GetLeadStatusCountsAsync(cancellationToken);
+        var items = await query
+            .Skip((normalizedPage - 1) * normalizedPageSize)
+            .Take(normalizedPageSize)
+            .ToListAsync(cancellationToken);
+
+        return new ClientListResponse(
+            items
+                .Select(item => new ClientListItemResponse(
+                    item.Id,
+                    item.FullName,
+                    item.Phone,
+                    item.Email,
+                    item.ConsentGiven,
+                    item.Nationality,
+                    item.LeadStatus.ToString().ToLowerInvariant(),
+                    item.LastRegistrationAt,
+                    item.LastActivityName,
+                    item.LastOutreachAt,
+                    MapOutreachKind(item.LastOutreachEventType),
+                    item.NextFollowUpAt))
+                .ToList(),
+            normalizedPage,
+            normalizedPageSize,
+            totalCount,
+            statusCounts);
+    }
+
+    public async Task<ClientListCsvExportResponse> ExportListCsvAsync(
+        string? sortBy,
+        string? sortDirection,
+        bool? mergeSuspect,
+        int? createdWithinDays,
+        int? registeredWithinDays,
+        bool? followUpDue,
+        string? leadStatus,
+        string? nationality,
+        string? search,
+        string? community,
+        bool? consentOnly = null,
+        string? excludeCommunity = null,
+        CancellationToken cancellationToken = default)
+    {
+        var tenantId = RequireTenantId();
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstAsync(item => item.Id == tenantId, cancellationToken);
+
+        var applyFilters = tenant.Plan is TenantPlan.Core or TenantPlan.Pro or TenantPlan.Enterprise;
+        var clientsQuery = applyFilters
+            ? await BuildFilteredClientsQueryAsync(
+                mergeSuspect,
+                createdWithinDays,
+                registeredWithinDays,
+                followUpDue,
+                leadStatus,
+                nationality,
+                search,
+                community,
+                consentOnly,
+                excludeCommunity,
+                cancellationToken)
+            : dbContext.Clients.AsNoTracking();
+
+        var descending = !string.Equals(sortDirection, "asc", StringComparison.OrdinalIgnoreCase);
+        var sortField = ParseSortBy(sortBy);
+
+        var query = clientsQuery.Select(client => new ClientListProjection
+        {
+            Id = client.Id,
+            FullName = client.FullName,
+            Phone = client.Phone,
+            Email = client.Email,
+            ConsentGiven = client.ConsentGiven,
+            Nationality = client.Nationality,
+            LeadStatus = client.LeadStatus,
+            NextFollowUpAt = client.NextFollowUpAt,
+            LastRegistrationAt = client.Registrations
+                .OrderByDescending(registration => registration.CreatedAt)
+                .Select(registration => (DateTimeOffset?)registration.CreatedAt)
+                .FirstOrDefault(),
+            LastActivityName = client.Registrations
+                .OrderByDescending(registration => registration.CreatedAt)
+                .Select(registration => registration.Activity.Name)
+                .FirstOrDefault(),
+            LastOutreachAt = client.TimelineEvents
+                .Where(timelineEvent => OutreachEventTypes.Contains(timelineEvent.EventType))
+                .OrderByDescending(timelineEvent => timelineEvent.OccurredAt)
+                .Select(timelineEvent => (DateTimeOffset?)timelineEvent.OccurredAt)
+                .FirstOrDefault(),
+            LastOutreachEventType = client.TimelineEvents
+                .Where(timelineEvent => OutreachEventTypes.Contains(timelineEvent.EventType))
+                .OrderByDescending(timelineEvent => timelineEvent.OccurredAt)
+                .Select(timelineEvent => (ClientTimelineEventType?)timelineEvent.EventType)
+                .FirstOrDefault(),
+        });
+
+        query = ApplySort(query, sortField, descending);
+
+        var rows = await query.ToListAsync(cancellationToken);
+        var timeZoneId = await GetTenantRegistrationTimeZoneIdAsync(cancellationToken);
+        var content = BuildClientsCsv(rows, timeZoneId);
+        var fileName = $"clients-{DateTimeOffset.UtcNow:yyyy-MM-dd}.csv";
+
+        return new ClientListCsvExportResponse(content, fileName, rows.Count);
+    }
+
+    private async Task<IQueryable<Client>> BuildFilteredClientsQueryAsync(
+        bool? mergeSuspect,
+        int? createdWithinDays,
+        int? registeredWithinDays,
+        bool? followUpDue,
+        string? leadStatus,
+        string? nationality,
+        string? search,
+        string? community,
+        bool? consentOnly,
+        string? excludeCommunity,
+        CancellationToken cancellationToken)
+    {
         var clientsQuery = dbContext.Clients.AsNoTracking();
 
         if (mergeSuspect == true)
@@ -54,6 +236,17 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
             var periodStart = DateTimeOffset.UtcNow.AddDays(-registeredWithinDays.Value);
             clientsQuery = clientsQuery.Where(client =>
                 client.Registrations.Any(registration => registration.CreatedAt >= periodStart));
+        }
+
+        if (followUpDue == true)
+        {
+            var timeZoneId = await GetTenantRegistrationTimeZoneIdAsync(cancellationToken);
+            var dueBeforeUtc = RegistrationPeriod.GetStartOfTomorrowUtc(
+                DateTimeOffset.UtcNow,
+                timeZoneId);
+            clientsQuery = clientsQuery.Where(client =>
+                client.NextFollowUpAt != null &&
+                client.NextFollowUpAt < dueBeforeUtc);
         }
 
         if (!string.IsNullOrWhiteSpace(leadStatus))
@@ -75,10 +268,16 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
         if (!string.IsNullOrWhiteSpace(search))
         {
             var normalizedSearch = search.Trim().ToLowerInvariant();
+            var normalizedPhoneSearch = ClientContactNormalizer.NormalizePhoneSearch(search);
             clientsQuery = clientsQuery.Where(client =>
                 client.FullName.ToLower().Contains(normalizedSearch) ||
                 (client.Email != null &&
                  client.Email.ToLower().Contains(normalizedSearch)) ||
+                (client.Phone != null &&
+                 client.Phone.ToLower().Contains(normalizedSearch)) ||
+                (normalizedPhoneSearch != null &&
+                 client.NormalizedPhone != null &&
+                 client.NormalizedPhone.Contains(normalizedPhoneSearch)) ||
                 (client.Nationality != null &&
                  client.Nationality.ToLower().Contains(normalizedSearch)));
         }
@@ -104,49 +303,133 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
                     registration.Activity.CommunityLabel == excludedCommunity));
         }
 
-        var query = clientsQuery
-            .Select(client => new ClientListProjection
-            {
-                Id = client.Id,
-                FullName = client.FullName,
-                Email = client.Email,
-                ConsentGiven = client.ConsentGiven,
-                Nationality = client.Nationality,
-                LeadStatus = client.LeadStatus,
-                LastRegistrationAt = client.Registrations
-                    .OrderByDescending(registration => registration.CreatedAt)
-                    .Select(registration => (DateTimeOffset?)registration.CreatedAt)
-                    .FirstOrDefault(),
-                LastActivityName = client.Registrations
-                    .OrderByDescending(registration => registration.CreatedAt)
-                    .Select(registration => registration.Activity.Name)
-                    .FirstOrDefault(),
-            });
-
-        query = ApplySort(query, sortField, descending);
-
-        var totalCount = await query.CountAsync(cancellationToken);
-        var items = await query
-            .Skip((normalizedPage - 1) * normalizedPageSize)
-            .Take(normalizedPageSize)
-            .ToListAsync(cancellationToken);
-
-        return new ClientListResponse(
-            items
-                .Select(item => new ClientListItemResponse(
-                    item.Id,
-                    item.FullName,
-                    item.Email,
-                    item.ConsentGiven,
-                    item.Nationality,
-                    item.LeadStatus.ToString().ToLowerInvariant(),
-                    item.LastRegistrationAt,
-                    item.LastActivityName))
-                .ToList(),
-            normalizedPage,
-            normalizedPageSize,
-            totalCount);
+        return clientsQuery;
     }
+
+    private async Task<ClientLeadStatusCountsResponse> GetLeadStatusCountsAsync(
+        CancellationToken cancellationToken)
+    {
+        var timeZoneId = await GetTenantRegistrationTimeZoneIdAsync(cancellationToken);
+        var dueBeforeUtc = RegistrationPeriod.GetStartOfTomorrowUtc(
+            DateTimeOffset.UtcNow,
+            timeZoneId);
+
+        var counts = await dbContext.Clients
+            .AsNoTracking()
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                NewCount = group.Count(client => client.LeadStatus == LeadStatus.New),
+                ContactedCount = group.Count(client => client.LeadStatus == LeadStatus.Contacted),
+                ActiveCount = group.Count(client => client.LeadStatus == LeadStatus.Active),
+                InactiveCount = group.Count(client => client.LeadStatus == LeadStatus.Inactive),
+                MergeSuspectCount = group.Count(client => client.IsMergeSuspect),
+                FollowUpDueCount = group.Count(client =>
+                    client.NextFollowUpAt != null &&
+                    client.NextFollowUpAt < dueBeforeUtc),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return counts is null
+            ? new ClientLeadStatusCountsResponse(0, 0, 0, 0, 0, 0)
+            : new ClientLeadStatusCountsResponse(
+                counts.NewCount,
+                counts.ContactedCount,
+                counts.ActiveCount,
+                counts.InactiveCount,
+                counts.MergeSuspectCount,
+                counts.FollowUpDueCount);
+    }
+
+    private async Task<string> GetTenantRegistrationTimeZoneIdAsync(
+        CancellationToken cancellationToken)
+    {
+        var tenantId = RequireTenantId();
+        return await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => tenant.RegistrationTimeZoneId)
+            .FirstAsync(cancellationToken);
+    }
+
+    private Guid RequireTenantId()
+    {
+        if (!currentTenant.IsResolved
+            || currentTenant.TenantId is null
+            || currentTenant.TenantId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Tenant context is required for client operations.");
+        }
+
+        return currentTenant.TenantId.Value;
+    }
+
+    private static string BuildClientsCsv(IReadOnlyList<ClientListProjection> rows, string? timeZoneId)
+    {
+        var builder = new StringBuilder();
+        builder.AppendLine("Name,Phone,Email,Status,Last activity,Last registration,Last outreach,Next follow-up,Consent");
+
+        foreach (var row in rows)
+        {
+            builder.Append(EscapeCsvField(row.FullName));
+            builder.Append(',');
+            builder.Append(EscapeCsvField(row.Phone));
+            builder.Append(',');
+            builder.Append(EscapeCsvField(row.Email));
+            builder.Append(',');
+            builder.Append(EscapeCsvField(row.LeadStatus.ToString().ToLowerInvariant()));
+            builder.Append(',');
+            builder.Append(EscapeCsvField(row.LastActivityName));
+            builder.Append(',');
+            builder.Append(EscapeCsvField(FormatCsvDate(row.LastRegistrationAt, timeZoneId)));
+            builder.Append(',');
+            builder.Append(EscapeCsvField(FormatCsvDate(row.LastOutreachAt, timeZoneId)));
+            builder.Append(',');
+            builder.Append(EscapeCsvField(FormatCsvDate(row.NextFollowUpAt, timeZoneId)));
+            builder.Append(',');
+            builder.Append(row.ConsentGiven ? "yes" : "no");
+            builder.AppendLine();
+        }
+
+        return builder.ToString();
+    }
+
+    private static string FormatCsvDate(DateTimeOffset? value, string? timeZoneId)
+    {
+        if (value is null)
+        {
+            return string.Empty;
+        }
+
+        var timeZone = RegistrationTimeZoneSupport.Resolve(timeZoneId);
+        var local = TimeZoneInfo.ConvertTime(value.Value, timeZone);
+        return local.ToString("yyyy-MM-dd");
+    }
+
+    private static string EscapeCsvField(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+
+        if (value.Contains('"') || value.Contains(',') || value.Contains('\n') || value.Contains('\r'))
+        {
+            return $"\"{value.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
+        }
+
+        return value;
+    }
+
+    private static string? MapOutreachKind(ClientTimelineEventType? eventType) =>
+        eventType switch
+        {
+            ClientTimelineEventType.WhatsAppInitiated => "whatsapp",
+            ClientTimelineEventType.WhatsAppFollowUpRecorded => "whatsapp",
+            ClientTimelineEventType.ViberInitiated => "viber",
+            ClientTimelineEventType.EmailCampaignSent => "email",
+            _ => null,
+        };
 
     public async Task<IReadOnlyList<string>> ListNationalitiesAsync(
         CancellationToken cancellationToken = default) =>
@@ -218,6 +501,42 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
 
             await dbContext.SaveChangesAsync(cancellationToken);
         }
+
+        return ClientDetailMapper.ToResponse(
+            client,
+            client.Registrations.ToList(),
+            client.TimelineEvents.ToList());
+    }
+
+    public async Task<ClientDetailResponse?> UpdateNextFollowUpAsync(
+        Guid id,
+        string? nextFollowUpDate,
+        CancellationToken cancellationToken = default)
+    {
+        var client = await dbContext.Clients
+            .Include(item => item.Registrations)
+            .ThenInclude(registration => registration.Activity)
+            .Include(item => item.TimelineEvents)
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (client is null)
+        {
+            return null;
+        }
+
+        var timeZoneId = await GetTenantRegistrationTimeZoneIdAsync(cancellationToken);
+        DateTimeOffset? nextFollowUpAt = null;
+
+        if (!string.IsNullOrWhiteSpace(nextFollowUpDate))
+        {
+            nextFollowUpAt = RegistrationPeriod.ParseLocalDateToUtc(nextFollowUpDate, timeZoneId)
+                ?? throw new ArgumentException("Next follow-up must be a valid date (YYYY-MM-DD).");
+        }
+
+        client.NextFollowUpAt = nextFollowUpAt;
+        client.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return ClientDetailMapper.ToResponse(
             client,
@@ -563,6 +882,8 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
 
         public string FullName { get; init; } = string.Empty;
 
+        public string? Phone { get; init; }
+
         public string? Email { get; init; }
 
         public bool ConsentGiven { get; init; }
@@ -574,6 +895,12 @@ public sealed class ClientService(CohestraDbContext dbContext) : IClientService
         public DateTimeOffset? LastRegistrationAt { get; init; }
 
         public string? LastActivityName { get; init; }
+
+        public DateTimeOffset? NextFollowUpAt { get; init; }
+
+        public DateTimeOffset? LastOutreachAt { get; init; }
+
+        public ClientTimelineEventType? LastOutreachEventType { get; init; }
     }
 
     private enum ClientListSortBy

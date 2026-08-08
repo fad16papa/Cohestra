@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Send } from "lucide-react";
 
 import { EmailComposer, isEmailComposerEmpty } from "@/components/campaigns/email-composer";
@@ -46,9 +47,24 @@ import { cn } from "@/lib/utils";
 export function CampaignComposePage() {
   const { authFetch } = useAuth();
   const { showToast } = useToast();
+  const searchParams = useSearchParams();
+  const preselectedClientIds = useMemo(() => {
+    const raw = searchParams.get("clientIds");
+    if (!raw?.trim()) {
+      return [];
+    }
+
+    return raw
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+  }, [searchParams]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-  const [segment, setSegment] = useState<ClientSegmentQuery>({ consentOnly: true });
+  const [segment, setSegment] = useState<ClientSegmentQuery>(() => ({
+    consentOnly: true,
+    additionalClientIds: preselectedClientIds,
+  }));
   const [segmentPreview, setSegmentPreview] = useState<ClientSegmentPreview | null>(null);
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("<p></p>");

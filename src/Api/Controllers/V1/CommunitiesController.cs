@@ -65,6 +65,7 @@ public class CommunitiesController(
                 mergeSuspect: null,
                 createdWithinDays: null,
                 registeredWithinDays: null,
+                followUpDue: null,
                 leadStatus,
                 nationality: null,
                 search,

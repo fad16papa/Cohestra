@@ -2,17 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { ClientFollowUpPanel } from "@/components/clients/client-follow-up-panel";
-import { ClientMessengerOutreach } from "@/components/clients/client-messenger-outreach";
-import { ClientLeadStatusControl } from "@/components/clients/client-lead-status-control";
+import { ClientFollowUpDateField } from "@/components/clients/client-follow-up-date-field";
 import { ClientMergeSuspectBanner } from "@/components/clients/client-merge-suspect-banner";
 import { ClientMasterFields } from "@/components/clients/client-master-fields";
+import { ClientOutreachLogCard } from "@/components/clients/client-outreach-log-card";
+import { ClientProfileHeader } from "@/components/clients/client-profile-header";
 import { ClientProfileSection } from "@/components/clients/client-profile-motion";
 import { ClientRegistrationHistory } from "@/components/clients/client-registration-history";
 import { ClientRelationshipTimeline } from "@/components/clients/client-relationship-timeline";
-import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
+import { ClientTimelinePreview } from "@/components/clients/client-timeline-preview";
 import { useAdminPageMeta } from "@/components/layouts/admin-shell-context";
-import { PersonAvatar } from "@/components/shared/person-avatar";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { ProductErrorState } from "@/components/shared/product-error-state";
 import { ProfileSkeleton } from "@/components/shared/profile-skeleton";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -27,6 +27,7 @@ type ClientProfilePageProps = {
 
 export function ClientProfilePage({ id }: ClientProfilePageProps) {
   const { authFetch } = useAuth();
+  const { shell } = useTenantShell();
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
@@ -67,7 +68,7 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
     return loadClient();
   }, [loadClient, reloadToken]);
 
-  function handleLeadStatusUpdated(nextClient: ClientDetail) {
+  function handleUpdated(nextClient: ClientDetail) {
     setClient(nextClient);
   }
 
@@ -91,57 +92,67 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
     return <ProfileSkeleton />;
   }
 
-  return (
-    <div className="space-y-6">
-      <ClientProfileSection animationDelayMs={0}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 space-y-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <PersonAvatar name={client.fullName} size="md" />
-              <h2 className="text-display-sm text-text-warm">{client.fullName}</h2>
-              <LeadStatusBadge status={client.leadStatus} />
-            </div>
-            <p className="text-sm text-text-muted-warm">
-              Master profile, registration answers, and relationship timeline.
-            </p>
-          </div>
-          <ClientLeadStatusControl
-            clientId={client.id}
-            leadStatus={client.leadStatus}
-            onUpdated={handleLeadStatusUpdated}
-          />
-        </div>
-      </ClientProfileSection>
+  const collapseRegistrationHistory = client.registrationHistory.length >= 10;
+  const timeZoneId = shell?.registrationTimeZoneId;
 
-      <ClientProfileSection animationDelayMs={20}>
-        <ClientFollowUpPanel client={client} onUpdated={setClient} />
+  return (
+    <div className="mx-auto max-w-7xl space-y-5">
+      <ClientProfileSection animationDelayMs={0}>
+        <ClientProfileHeader
+          client={client}
+          timeZoneId={timeZoneId}
+          onUpdated={handleUpdated}
+        />
       </ClientProfileSection>
 
       {client.isMergeSuspect ? (
-        <ClientProfileSection animationDelayMs={40}>
+        <ClientProfileSection animationDelayMs={20}>
           <ClientMergeSuspectBanner />
         </ClientProfileSection>
       ) : null}
 
-      <div className="space-y-6">
-        <ClientProfileSection animationDelayMs={80}>
-          <ClientMasterFields
-            client={client}
-            onUpdated={handleLeadStatusUpdated}
-          />
-        </ClientProfileSection>
-        <ClientProfileSection animationDelayMs={120}>
-          <ClientRegistrationHistory history={client.registrationHistory} />
-        </ClientProfileSection>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] lg:items-start">
+        <div className="min-w-0 space-y-5">
+          <ClientProfileSection animationDelayMs={40}>
+            <ClientTimelinePreview timeline={client.timeline} />
+          </ClientProfileSection>
+
+          <ClientProfileSection animationDelayMs={80}>
+            <ClientRegistrationHistory
+              history={client.registrationHistory}
+              defaultCollapsed={collapseRegistrationHistory}
+            />
+          </ClientProfileSection>
+
+          <ClientProfileSection animationDelayMs={120}>
+            <div id="client-full-timeline">
+              <ClientRelationshipTimeline timeline={client.timeline} />
+            </div>
+          </ClientProfileSection>
+        </div>
+
+        <div className="min-w-0 space-y-5">
+          <ClientProfileSection animationDelayMs={60}>
+            <ClientFollowUpDateField
+              client={client}
+              timeZoneId={timeZoneId}
+              onUpdated={handleUpdated}
+            />
+          </ClientProfileSection>
+
+          <ClientProfileSection animationDelayMs={100}>
+            <ClientOutreachLogCard client={client} onUpdated={handleUpdated} />
+          </ClientProfileSection>
+
+          <ClientProfileSection animationDelayMs={140}>
+            <ClientMasterFields
+              client={client}
+              onUpdated={handleUpdated}
+              compact
+            />
+          </ClientProfileSection>
+        </div>
       </div>
-
-      <ClientProfileSection animationDelayMs={160}>
-        <ClientMessengerOutreach client={client} onUpdated={setClient} />
-      </ClientProfileSection>
-
-      <ClientProfileSection animationDelayMs={200}>
-        <ClientRelationshipTimeline timeline={client.timeline} />
-      </ClientProfileSection>
     </div>
   );
 }
