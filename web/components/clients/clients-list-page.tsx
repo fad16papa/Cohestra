@@ -827,7 +827,7 @@ export function ClientsListPage() {
                   role="columnheader"
                   aria-sort={isActive ? directionLabel : "none"}
                   className={cn(
-                    "w-full min-w-0 p-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm",
+                    "w-full min-w-0 truncate p-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm transition-colors hover:text-text-warm",
                     isActive && "text-text-warm"
                   )}
                   onClick={() => handleSort(column.id)}
@@ -838,10 +838,10 @@ export function ClientsListPage() {
               </div>
             );
           })}
-          <span className="hidden min-w-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm sm:block">
+          <span className="hidden min-w-0 truncate text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm sm:block">
             Last outreach
           </span>
-          <span className="hidden min-w-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm sm:block">
+          <span className="hidden min-w-0 truncate text-right text-xs font-medium uppercase tracking-wide text-text-muted-warm sm:block">
             Actions
           </span>
         </div>

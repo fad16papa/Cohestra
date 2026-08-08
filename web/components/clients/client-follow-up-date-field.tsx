@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast-provider";
 import {
-  formatNextFollowUpDate,
   isFollowUpDue,
   updateClientNextFollowUp,
   type ClientDetail,
@@ -65,6 +64,8 @@ export function ClientFollowUpDateField({
   const [busy, setBusy] = useState(false);
 
   const due = isFollowUpDue(client.nextFollowUpAt, timeZoneId);
+  const savedDate = toDateInputValue(client.nextFollowUpAt, timeZoneId);
+  const isDirty = draftDate !== savedDate;
 
   async function handleSave(nextValue: string) {
     setBusy(true);
@@ -89,36 +90,28 @@ export function ClientFollowUpDateField({
   return (
     <section
       className={cn(
-        "rounded-2xl border border-border-warm bg-card p-5 shadow-sm",
+        "rounded-2xl border border-border-warm bg-card p-4 shadow-sm",
         className
       )}
       aria-labelledby="client-follow-up-date-heading"
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 space-y-2">
-          <div className="flex items-center gap-2">
-            <CalendarClock className="size-4 text-primary" aria-hidden />
-            <h3
-              id="client-follow-up-date-heading"
-              className="text-sm font-semibold text-text-warm"
-            >
-              Next follow-up
-            </h3>
-            {due ? (
-              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
-                Due
-              </span>
-            ) : null}
-          </div>
-          <p className="text-sm text-text-muted-warm">
-            Optional reminder date — overdue items appear on Dashboard and the Clients queue.
-            {client.nextFollowUpAt
-              ? ` Currently ${formatNextFollowUpDate(client.nextFollowUpAt, timeZoneId)}.`
-              : ""}
-          </p>
-        </div>
+      <div className="mb-3 flex items-center gap-2">
+        <CalendarClock className="size-4 text-primary" aria-hidden />
+        <h3
+          id="client-follow-up-date-heading"
+          className="text-sm font-semibold text-text-warm"
+        >
+          Next follow-up
+        </h3>
+        {due ? (
+          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+            Due
+          </span>
+        ) : null}
+      </div>
 
-        <div className="flex w-full max-w-xs flex-col gap-2">
+      <div className="space-y-3">
+        <div className="space-y-1.5">
           <Label htmlFor="client-next-follow-up-date" className="sr-only">
             Next follow-up date
           </Label>
@@ -129,30 +122,35 @@ export function ClientFollowUpDateField({
             disabled={busy}
             onChange={(event) => setDraftDate(event.target.value)}
           />
-          <div className="flex gap-2">
+          <p className="text-xs text-text-muted-warm">
+            Overdue items surface on the Dashboard and Clients queue.
+          </p>
+        </div>
+
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            className="flex-1"
+            disabled={busy || !isDirty}
+            onClick={() => void handleSave(draftDate)}
+          >
+            Save
+          </Button>
+          {savedDate ? (
             <Button
               type="button"
               size="sm"
+              variant="outline"
               disabled={busy}
-              onClick={() => void handleSave(draftDate)}
+              onClick={() => {
+                setDraftDate("");
+                void handleSave("");
+              }}
             >
-              Save date
+              Clear
             </Button>
-            {draftDate ? (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={busy}
-                onClick={() => {
-                  setDraftDate("");
-                  void handleSave("");
-                }}
-              >
-                Clear
-              </Button>
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
     </section>

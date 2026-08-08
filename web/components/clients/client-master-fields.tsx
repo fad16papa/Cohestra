@@ -35,6 +35,8 @@ import { cn } from "@/lib/utils";
 type ClientMasterFieldsProps = {
   client: ClientDetail;
   onUpdated: (client: ClientDetail) => void;
+  /** Single-column layout for narrow sidebar placement. */
+  compact?: boolean;
 };
 
 type MasterProfileFormState = {
@@ -75,7 +77,11 @@ function displayValue(value: string | null | undefined, emptyLabel = "Not provid
   return value;
 }
 
-export function ClientMasterFields({ client, onUpdated }: ClientMasterFieldsProps) {
+export function ClientMasterFields({
+  client,
+  onUpdated,
+  compact = false,
+}: ClientMasterFieldsProps) {
   const { authFetch } = useAuth();
   const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -187,7 +193,12 @@ export function ClientMasterFields({ client, onUpdated }: ClientMasterFieldsProp
       </CardHeader>
       <CardContent>
         {!isEditing ? (
-          <dl className="grid gap-2 sm:grid-cols-2 sm:gap-4">
+          <dl
+            className={cn(
+              "grid gap-2",
+              compact ? "gap-3" : "sm:grid-cols-2 sm:gap-4"
+            )}
+          >
             {[
               { label: "Name", value: client.fullName },
               {
@@ -223,7 +234,7 @@ export function ClientMasterFields({ client, onUpdated }: ClientMasterFieldsProp
             ))}
           </dl>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className={cn("grid gap-4", !compact && "sm:grid-cols-2")}>
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="master-full-name">Name</Label>
               <Input

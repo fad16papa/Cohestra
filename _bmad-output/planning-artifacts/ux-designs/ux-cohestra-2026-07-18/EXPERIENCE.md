@@ -200,24 +200,29 @@ Each client = card:
 
 ### Client profile — `/clients/{id}` (FR-30)
 
-**Vertical order (top → bottom)**
+**CRM layout (ratified 2026-08-08 — replaces single-column stack)**
 
-1. **Identity row** — avatar, name, `LeadStatusBadge`, lead status dropdown (single control — no duplicate)
-2. **Outreach action bar** (sticky below admin top bar on scroll)
-   - Primary: **Open WhatsApp** · **Open Viber** (when phone)
-   - Secondary: **Mark contacted** · **Add note** · **Set follow-up date**
-   - Pro: **Add to campaign**
-   - Disabled states: no phone → messenger buttons disabled + *Add a phone number to message*
-3. **Follow-up summary** — one compact strip: last registration + last outreach + next follow-up date (editable inline)
-4. **Timeline preview** — last 5 events + **View full timeline** anchor
-5. **Master profile** — collapsible card; **Edit profile** visible in header
-6. **Registration history** — collapsed when &gt;3 items; search field; latest expanded
-7. **Full relationship timeline** — existing component, anchored from preview
+**Identity header card** (full width, top)
 
-**Sticky outreach bar**
+- Avatar (lg) + name + `LeadStatusBadge` + follow-up-due chip
+- Contact meta row: phone · email · next follow-up date (icons + muted text)
+- Action cluster (right): **WhatsApp** (green) · **Viber** (purple) · **Mark contacted** (New only) · lead status `<select>` — the **single** status control
+- No phone → messenger buttons disabled with `title` hint
+- Messenger prerequisites live **only** in the open-confirm dialog — never as an always-visible notice block
 
-- `position: sticky; top: [admin-header-height]`; `{colors.paper}` background + bottom border `{colors.line}`
-- On mobile: bar becomes horizontal scroll chip group; primary action = WhatsApp if only one fits
+**Two-column body** (`≥ lg`: `minmax(0,1fr) + 21rem` sidebar; stacks on mobile)
+
+| Main column (activity) | Sidebar (details & quick edits) |
+|------------------------|---------------------------------|
+| Timeline preview (last 5 + View all) | Next follow-up card — date input + Save/Clear, Due chip |
+| Registration history (collapsed at 10+, search) | Log outreach card — follow-up status + note |
+| Full relationship timeline | Master profile (compact single-column, Edit) |
+
+**Layout invariants**
+
+- One lead status control (header select). No duplicate status blocks anywhere.
+- Sidebar cards: `p-4`, compact headings with leading icon; primary buttons full-width.
+- Page container `max-w-7xl` matching the queue list.
 
 **Merge suspect banner**
 
@@ -443,6 +448,16 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 |---|----------|
 | Column collision | Last registration / last outreach must never overlap — `minmax(0,*)` + truncate + reserved actions width |
 | Last registration | Two-line cell: truncated activity name + short date; full string in `title` |
-| Actions column | Fixed width reserved on all rows; compact labels (**Contacted** / **Message**) |
+| Actions column | Fixed width reserved on all rows; **icon buttons** (check = mark contacted, send = messenger) with `aria-label` + `title` — never wrap |
 | Filter redundancy | Drop Lead status `<select>` — status chips only |
 | Page width | Clients queue uses `max-w-7xl` |
+
+## Ratified UX decisions (2026-08-08 — CRM profile redesign)
+
+| # | Decision |
+|---|----------|
+| Profile shape | Identity header card + two-column body (activity main / details sidebar) — real CRM detail page |
+| Header actions | WhatsApp · Viber · Mark contacted · status select in one cluster; single status control |
+| Prerequisites copy | Only in messenger confirm dialog; always-visible notice removed |
+| Sidebar cards | Next follow-up · Log outreach · Master profile (compact) — `21rem` at `lg+` |
+| Removed | Sticky outreach bar card, lone Lead-status card, giant full-width messenger buttons |
