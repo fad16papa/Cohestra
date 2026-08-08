@@ -45,6 +45,7 @@ export function DashboardFollowUpQueue() {
       }),
       fetchClients(authFetch, {
         leadStatus: "new",
+        withoutOutreach: true,
         sortBy: "lastRegistrationDate",
         sortDirection: "desc",
         page: 1,

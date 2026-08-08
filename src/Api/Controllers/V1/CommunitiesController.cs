@@ -66,6 +66,7 @@ public class CommunitiesController(
                 createdWithinDays: null,
                 registeredWithinDays: null,
                 followUpDue: null,
+                withoutOutreach: null,
                 leadStatus,
                 nationality: null,
                 search,

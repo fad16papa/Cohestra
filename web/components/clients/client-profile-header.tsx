@@ -103,10 +103,13 @@ export function ClientProfileHeader({
     }
 
     setBusy(true);
+    const whatsAppPopup = window.open(whatsAppUrl, "_blank", "noopener,noreferrer");
     try {
       const updated = await recordWhatsAppInitiated(authFetch, client.id);
       onUpdated(updated);
-      window.open(whatsAppUrl, "_blank", "noopener,noreferrer");
+      if (!whatsAppPopup) {
+        showToast("Allow pop-ups to open WhatsApp.");
+      }
     } catch (error) {
       showToast(
         error instanceof Error

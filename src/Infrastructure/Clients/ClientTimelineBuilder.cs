@@ -102,6 +102,20 @@ internal static class ClientTimelineBuilder
                         timelineEvent.Subject,
                         timelineEvent.Note));
                     break;
+
+                case ClientTimelineEventType.NextFollowUpChanged:
+                    items.Add(new ClientTimelineItemResponse(
+                        "next_follow_up_changed",
+                        timelineEvent.OccurredAt,
+                        timelineEvent.Subject ?? "Next follow-up changed",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        timelineEvent.Subject,
+                        timelineEvent.Note));
+                    break;
             }
         }
 

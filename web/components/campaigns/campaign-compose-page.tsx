@@ -44,21 +44,28 @@ import {
 } from "@/lib/campaigns-api";
 import { cn } from "@/lib/utils";
 
+const CLIENT_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function parsePreselectedClientIds(raw: string | null): string[] {
+  if (!raw?.trim()) {
+    return [];
+  }
+
+  return raw
+    .split(",")
+    .map((value) => value.trim())
+    .filter((value) => CLIENT_ID_PATTERN.test(value));
+}
+
 export function CampaignComposePage() {
   const { authFetch } = useAuth();
   const { showToast } = useToast();
   const searchParams = useSearchParams();
-  const preselectedClientIds = useMemo(() => {
-    const raw = searchParams.get("clientIds");
-    if (!raw?.trim()) {
-      return [];
-    }
-
-    return raw
-      .split(",")
-      .map((value) => value.trim())
-      .filter(Boolean);
-  }, [searchParams]);
+  const preselectedClientIds = useMemo(
+    () => parsePreselectedClientIds(searchParams.get("clientIds")),
+    [searchParams]
+  );
   const [activities, setActivities] = useState<Activity[]>([]);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [segment, setSegment] = useState<ClientSegmentQuery>(() => ({
@@ -83,6 +90,14 @@ export function CampaignComposePage() {
   const handlePreviewChange = useCallback((preview: ClientSegmentPreview | null) => {
     setSegmentPreview(preview);
   }, []);
+
+  useEffect(() => {
+    setSegment((current) => ({
+      ...current,
+      additionalClientIds:
+        preselectedClientIds.length > 0 ? preselectedClientIds : undefined,
+    }));
+  }, [preselectedClientIds]);
 
   useEffect(() => {
     let cancelled = false;
