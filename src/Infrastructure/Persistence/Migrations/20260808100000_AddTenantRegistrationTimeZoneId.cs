@@ -10,23 +10,24 @@ namespace Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "RegistrationTimeZoneId",
-                schema: "public",
-                table: "tenants",
-                type: "character varying(64)",
-                maxLength: 64,
-                nullable: false,
-                defaultValue: "UTC");
+            // Idempotent: local/dev DBs may already have this column from a manual
+            // ALTER TABLE used to unblock startup before the Designer-file fix shipped.
+            // Production paths that never hand-altered schema are unaffected.
+            migrationBuilder.Sql(
+                """
+                ALTER TABLE public.tenants
+                ADD COLUMN IF NOT EXISTS "RegistrationTimeZoneId" character varying(64) NOT NULL DEFAULT 'UTC';
+                """);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "RegistrationTimeZoneId",
-                schema: "public",
-                table: "tenants");
+            migrationBuilder.Sql(
+                """
+                ALTER TABLE public.tenants
+                DROP COLUMN IF EXISTS "RegistrationTimeZoneId";
+                """);
         }
     }
 }
