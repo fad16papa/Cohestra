@@ -2,7 +2,7 @@
 name: Cohestra Enterprise
 status: final
 created: 2026-07-18
-updated: 2026-07-20
+updated: 2026-08-08
 sources:
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
@@ -15,7 +15,7 @@ design: ./DESIGN.md
 
 > Multi-tenant SaaS UX. Visual identity → `DESIGN.md` (**Midnight Atelier** — premium community-ops craft). Platform 0 supplies inherited *ops module behaviors* only — not brand. Spines win on conflict with mocks.
 
-→ Key screens (GTM-A stack-killer): `mockups/marketing-start-free.html` · `mockups/basic-stub-home.html` · `mockups/admin-dashboard-basic.html` · `mockups/share-kit.html` · `mockups/team-seat-gate.html` · `mockups/platform-admin-suspend.html`
+→ Key screens (GTM-A stack-killer): `mockups/marketing-start-free.html` · `mockups/basic-stub-home.html` · `mockups/admin-dashboard-basic.html` · `mockups/share-kit.html` · `mockups/team-seat-gate.html` · `mockups/platform-admin-suspend.html` · `mockups/clients-lead-queue.html`
 
 ## Foundation
 
@@ -68,7 +68,8 @@ design: ./DESIGN.md
 | Login | `/login` | All roles | Tenant-scoped |
 | Dashboard | `/dashboard` | Admin, Member | Plan limits banners |
 | Activities / Communities / Categories | `/activities…` | Admin, Member | Cap warnings at 80% |
-| Clients | `/clients…` | Admin, Member | — |
+| Clients | `/clients` | Admin, Member | **Lead queue** (FR-29) — all plans |
+| Client profile | `/clients/{id}` | Admin, Member | Action-first layout (FR-30) |
 | Reports | `/reports` | Admin, Member | Basic = fixed + CSV; Core+ = queryable; Pro + campaigns |
 | Campaigns | `/campaigns…` | Admin, Member | **Pro only** — else UpgradePanel |
 | Website / Site | `/site` | Admin, Member | Basic → upgrade; Core fixed settings; Pro builder |
@@ -100,6 +101,135 @@ No impersonation in v1 (PRD A-5).
 | Billing self-serve | Settings → Billing → Customer Portal |
 | Plan upgrade | UpgradePanel / Pricing / Checkout |
 
+| Plan upgrade | UpgradePanel / Pricing / Checkout |
+| UJ-5 Monday outreach | Dashboard follow-up queue → `/clients?leadStatus=new` → profile outreach |
+
+## Clients module (FR-29–32)
+
+The **Clients** area is a **lead queue** for daily operator work — not a passive contact directory. Inherited Platform 0 master list + timeline rules apply; this section defines **presentation and interaction** only.
+
+→ Visual reference: `mockups/clients-lead-queue.html` · Profile reference: `mockups/clients-profile-action-first.html`
+
+### Mental model
+
+| Concept | UX treatment |
+|---------|----------------|
+| **Client** | One row per deduped person — not one row per registration |
+| **Lead status** | Flat pipeline: New → Contacted → Active → Inactive (no kanban in v1) |
+| **Last registration** | Most recent activity signup — acquisition signal |
+| **Last outreach** | Most recent messenger or campaign touch — operator action signal |
+| **Follow-up due** | Optional `NextFollowUpAt` — surfaces overdue on Dashboard + Clients |
+
+### Clients list — `/clients` (FR-29)
+
+**Page header**
+
+- Title: **Clients**
+- Description (one line): *One row per contact — repeat sign-ups merge by phone or email.*
+- No primary CTA in header — queue chips are the action surface.
+
+**Queue summary strip** (below header, above filters)
+
+| Element | Behavior |
+|---------|----------|
+| **Status chips** | Count badges: New · Contacted · Active · Inactive — tap toggles filter; active chip uses `{colors.lagoon}` fill |
+| **Quick chips** | New · Registered this week · Merge suspects · Follow-up due — map to existing query params |
+| **Export** | Core+ only — exports **current filter set** to CSV; Basic sees upgrade hint or fixed-column export per FR-15 |
+
+**Filter bar** (collapsible on mobile behind “Filters” toggle)
+
+| Control | Query param | Notes |
+|---------|-------------|-------|
+| Search | `search` | Name, email, phone (normalized), nationality |
+| Lead status | `leadStatus` | Dropdown — redundant with chips but kept for accessibility |
+| Nationality | `nationality` | Dropdown |
+| Referral source | `referralSource` | Core+ — text/select |
+| Registered within | `registeredWithinDays` | Presets: 7 / 30 |
+
+**Desktop table columns** (`≥ md`)
+
+| Column | Width priority | Content | Sort |
+|--------|----------------|---------|------|
+| **Contact** | Primary | Avatar + full name (semibold) + secondary line: phone **or** email (whichever exists; both if space) | Name |
+| **Status** | Fixed | `LeadStatusBadge` + inline **Mark contacted** when New | Status |
+| **Last registration** | Flex | Activity name (truncate with tooltip) + date · e.g. *Sunday clinic · 8 Aug* | Last registration |
+| **Last outreach** | Flex | *WhatsApp · 6 Aug* / *Campaign sent · 1 Aug* / **Never** (muted) | — |
+| **Actions** | Icon row | Messenger (if phone), chevron to profile | — |
+
+- Remove **Nationality** as default column — move to optional column toggle or filter-only (low signal in queue workflow).
+- Row hover: `{colors.paper-warm}` background + `{colors.lagoon}` left accent (4px) — inherit Platform 0 row lift.
+- **Mark contacted** and **Messenger** always visible on New rows at `≥ sm`; never hover-only-only on desktop.
+
+**Mobile card layout** (`< md`)
+
+Each client = card:
+
+```
+┌─────────────────────────────────────┐
+│ [AV] Alexander Nguyen    [New]      │
+│ +65 9200 0010                       │
+│ Last reg: Monthly Gathering · 8 Aug │
+│ Outreach: Never                     │
+│ [Mark contacted] [Message] [Open →] │
+└─────────────────────────────────────┘
+```
+
+- Cards stack; sticky filter chips horizontally scroll beneath page title.
+- Bulk select hidden on mobile in v1 `[ASSUMPTION]` — Pro handoff desktop-first.
+
+**Empty states**
+
+| Condition | Copy |
+|-----------|------|
+| No clients ever | ProductEmptyState → create activity (existing) |
+| Filters match zero | *No clients match your filters.* + Clear filters |
+| Merge suspects only | Banner: *Showing merge-suspect clients only.* |
+
+**Bulk select (Pro, FR-31)**
+
+- Checkbox column left of Contact; select-all applies to **current page** only.
+- Floating action bar when ≥1 selected: *N selected · Add to campaign · Clear*
+- Consent-false clients: checkbox disabled + tooltip *No email consent*
+
+### Client profile — `/clients/{id}` (FR-30)
+
+**Vertical order (top → bottom)**
+
+1. **Identity row** — avatar, name, `LeadStatusBadge`, lead status dropdown (single control — no duplicate)
+2. **Outreach action bar** (sticky below admin top bar on scroll)
+   - Primary: **Open WhatsApp** · **Open Viber** (when phone)
+   - Secondary: **Mark contacted** · **Add note** · **Set follow-up date**
+   - Pro: **Add to campaign**
+   - Disabled states: no phone → messenger buttons disabled + *Add a phone number to message*
+3. **Follow-up summary** — one compact strip: last registration + last outreach + next follow-up date (editable inline)
+4. **Timeline preview** — last 5 events + **View full timeline** anchor
+5. **Master profile** — collapsible card; **Edit profile** visible in header
+6. **Registration history** — collapsed when &gt;3 items; search field; latest expanded
+7. **Full relationship timeline** — existing component, anchored from preview
+
+**Sticky outreach bar**
+
+- `position: sticky; top: [admin-header-height]`; `{colors.paper}` background + bottom border `{colors.line}`
+- On mobile: bar becomes horizontal scroll chip group; primary action = WhatsApp if only one fits
+
+**Merge suspect banner**
+
+- Unchanged placement — between follow-up summary and master profile when `isMergeSuspect`
+
+### Follow-up date (FR-32)
+
+- Date picker on profile + optional column on list (hidden by default; toggle in column prefs `[ASSUMPTION]`)
+- **Follow-up due** chip on list = `NextFollowUpAt` ≤ today (tenant timezone FR-27)
+- Dashboard follow-up queue merges: (a) New without outreach, (b) overdue follow-up dates
+
+### Plan gates (Clients)
+
+| Feature | Basic | Core | Pro |
+|---------|:-----:|:----:|:---:|
+| Lead queue list + profile reorder | ✓ | ✓ | ✓ |
+| Referral filter + export filtered CSV | Fixed export | ✓ | ✓ |
+| Bulk → Campaign | UpgradePanel | UpgradePanel | ✓ |
+
 ## Voice and Tone
 
 Microcopy only. Aesthetic in `DESIGN.md`.
@@ -121,6 +251,16 @@ Microcopy only. Aesthetic in `DESIGN.md`.
 | "Settle your bill" + Portal link | "Account delinquent — contact support" as first step |
 | "Community" | "Club" as product label |
 | Member locked feature: "This feature needs Pro" | Member-facing "Upgrade billing" CTA |
+
+### Clients / lead queue
+
+| Do | Don't |
+|----|-------|
+| "Mark contacted" · "Open WhatsApp" | "Update lead status to contacted" |
+| "Last registration" vs "Last outreach" | One ambiguous "Last activity" |
+| "Never" for no outreach (muted) | "N/A" or empty without label |
+| "Follow-up due" · "Needs outreach" (New only) | "Hot lead" · emoji hype |
+| "3 excluded — no consent" on bulk campaign | Silent drop |
 
 ### Public stub
 
@@ -151,8 +291,15 @@ Behavioral. Visuals in `DESIGN.md`.
 | **LimitMeter** | Communities / published / regs — warn ≥80%, block at 100% with clear which dial |
 | **ToSCheckbox** | Signup blocked until checked; versions logged (FR-26a) |
 | **CaptchaGate** | Google reCAPTCHA always on self-serve signup (FR-26); must expose accessible challenge path |
+| **LeadQueueHeader** | Status count chips + quick filter chips; updates URL query params; active chip = lagoon |
+| **ClientQueueRow** | Desktop table row or mobile card; shows contact channel + last reg + last outreach |
+| **LeadStatusBadge** | New=`{colors.lagoon}` tint · Contacted=`{colors.gold}` · Active=`{colors.success}` · Inactive=`{colors.stone}` |
+| **ClientOutreachBar** | Sticky on profile; WhatsApp/Viber/Mark contacted; disabled without phone |
+| **TimelinePreview** | Max 5 events; link to full timeline section |
+| **BulkSelectBar** | Pro only; floating bottom bar when selection &gt; 0 |
+| **FollowUpDateField** | Optional date; tenant-local display (FR-27) |
 
-Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless gated above.
+Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above. **ClientRow** superseded by **ClientQueueRow** on list (FR-29).
 
 ## State Patterns
 
@@ -169,6 +316,9 @@ Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless 
 | Archived | Public 404; admin blocked |
 | Plan-locked module | UpgradePanel (not empty table) |
 | Complimentary (P12) | No delinquency banners; **SponsoredBadge** + PlanBadge (plan without Stripe) |
+| Clients list loading | Skeleton rows matching **ClientQueueRow** column layout |
+| Profile 50+ registrations | Registration history collapsed; search prominent |
+| No phone on client | Messenger buttons disabled; phone field highlighted in edit |
 
 ## Interaction Primitives
 
@@ -192,6 +342,9 @@ Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless 
 |------------|----------|
 | Admin `≥ lg` | Sidebar + PlanBadge in top bar |
 | Admin `sm` | Sidebar Sheet; BillingBanner stacks CTA under text |
+| Clients list `< md` | Card stack; horizontal scroll filter chips; no table horizontal scroll |
+| Clients list `≥ lg` | Full table; optional compact density toggle `[ASSUMPTION]` |
+| Client profile mobile | Sticky outreach bar; timeline preview before registrations |
 | Stub / SitePage | Mobile-first; stub is single column |
 | Registration | Platform 0 mobile-first unchanged |
 | Marketing | Desktop hero + stacked CTAs on `sm` — Start free primary |
@@ -237,11 +390,22 @@ Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless 
 3. **Climax:** Returns to app; BillingStatus/Plan reflect webhooks.
 4. Member never sees this entry point.
 
+### Flow F — UJ-5 Marco runs Monday outreach (Core+ / Pro)
+
+1. Marco opens Dashboard — **14 new leads** + follow-up coverage dial below target.
+2. Taps **View new leads** → `/clients?leadStatus=new` — queue header shows **14 New**.
+3. Scans list: phone visible on row; last registration = *Monthly Gathering · 8 Aug*; last outreach = **Never**.
+4. Taps **Open WhatsApp** on row → confirms prerequisites dialog → WhatsApp opens with E.164 number.
+5. Returns to Cohestra → opens profile → **Mark contacted** → status chip → Contacted; timeline adds event.
+6. Sets **Next follow-up** to Thursday for lukewarm leads.
+7. **Climax:** Selects 6 remaining New leads (Pro) → **Add to campaign** → draft email campaign with segment prefilled; consent-false excluded with count.
+8. Resolution: Dashboard follow-up coverage increases; no spreadsheet export needed.
+
 ## Inspiration & Anti-patterns
 
 **Borrow posture from:** editorial luxury restraint; calm ops density without purple glow; Stripe-hosted money UI rather than reinventing invoices; photography with meaning over flat white.
 
-**Anti-patterns:** Dashboard-first marketing hero; Basic stub with stats/promos; Member upgrade Checkout; Suspend-as-collections; card walls for activity lists on stub; Platform 0 forest green as Cohestra brand.
+**Anti-patterns:** Dashboard-first marketing hero; Basic stub with stats/promos; Member upgrade Checkout; Suspend-as-collections; card walls for activity lists on stub; Platform 0 forest green as Cohestra brand; **Nationality as primary list column**; **hover-only row actions on desktop**; **registration history above outreach on profile**; HubSpot-style deal pipeline columns.
 
 ## Ratified UX decisions (2026-07-18)
 
@@ -252,3 +416,16 @@ Platform 0 patterns (RegistrationForm, ClientRow, QrPanel, etc.) inherit unless 
 | Complimentary | **Sponsored** badge yes |
 | CAPTCHA | **Google reCAPTCHA** (standard, widely used, secured) + accessible path |
 | Key screens | **Original HTML mocks** in `mockups/` (this workspace) |
+
+## Ratified UX decisions (2026-08-08)
+
+| # | Decision |
+|---|----------|
+| Clients list | **Lead queue** — contact + last reg + last outreach columns (FR-29) |
+| Default column drop | Nationality removed from default table; filter-only |
+| Profile order | Outreach bar + timeline preview **above** registration history (FR-30) |
+| Row actions | Mark contacted + Messenger visible on New rows without hover-only |
+| Mobile clients | Card layout, not horizontal-scroll table |
+| Bulk campaign | Pro-only floating bar; consent-false excluded with count (FR-31) |
+| Follow-up date | Optional; **Follow-up due** chip + Dashboard queue (FR-32) |
+| Mockups | `clients-lead-queue.html` · `clients-profile-action-first.html` |
