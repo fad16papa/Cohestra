@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { MessageCircle, Send } from "lucide-react";
+import { Check, Send } from "lucide-react";
 
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import {
@@ -18,7 +18,6 @@ import {
   formatLastActivityDate,
   formatLastActivityName,
   formatLastOutreachCaption,
-  formatNextFollowUpDate,
   isFollowUpDue,
   type ClientListItem,
 } from "@/lib/clients-api";
@@ -93,7 +92,7 @@ export function ClientRow({
       className={cn(
         clientsTableGridClassName,
         "group border-b border-border-warm border-l-4 border-l-transparent",
-        "transition-all hover:-translate-y-px hover:border-l-primary hover:bg-muted/40 hover:shadow-sm",
+        "transition-colors hover:border-l-primary hover:bg-muted/40",
         selected && "border-l-primary bg-primary/5"
       )}
     >
@@ -119,28 +118,23 @@ export function ClientRow({
           <PersonAvatar name={client.fullName} size="sm" />
           <span className="min-w-0 overflow-hidden">
             <span className="flex min-w-0 items-center gap-2">
-              <span className="truncate font-semibold text-text-warm group-hover:text-primary">
+              <span className="truncate text-sm font-semibold text-text-warm group-hover:text-primary">
                 {client.fullName}
               </span>
               {followUpDue ? (
-                <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.6875rem] font-medium text-amber-700 dark:text-amber-300">
+                <span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[0.65rem] font-medium text-amber-700 dark:text-amber-300">
                   Due
                 </span>
               ) : null}
             </span>
-            <span className="block truncate text-sm text-text-muted-warm group-hover:text-text-warm">
+            <span className="block truncate text-[0.8125rem] text-text-muted-warm">
               {formatClientContactLine(client)}
             </span>
-            {client.nextFollowUpAt ? (
-              <span className="block truncate text-xs text-text-muted-warm">
-                Next: {formatNextFollowUpDate(client.nextFollowUpAt, timeZoneId)}
-              </span>
-            ) : null}
           </span>
         </RowLink>
       </div>
 
-      <div className={cn(clientsTableStatusColumnClassName, "gap-2")}>
+      <div className={clientsTableStatusColumnClassName}>
         <MobileLabel>Status</MobileLabel>
         <RowLink href={profileHref} className="min-w-0">
           <LeadStatusBadge status={client.leadStatus} />
@@ -154,7 +148,7 @@ export function ClientRow({
           className="block min-w-0 overflow-hidden"
           title={lastActivityFull}
         >
-          <span className="block truncate text-sm text-text-muted-warm group-hover:text-text-warm">
+          <span className="block truncate text-sm text-text-warm/80 group-hover:text-text-warm">
             {lastActivityName}
           </span>
           {lastActivityDate ? (
@@ -184,31 +178,33 @@ export function ClientRow({
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
+                size="icon"
                 disabled={isUpdating}
-                className="h-8 shrink-0 gap-1 border-primary/20 px-2 text-xs"
+                aria-label={`Mark ${client.fullName} as contacted`}
+                title="Mark contacted"
+                className="size-8 shrink-0 border-primary/25 text-primary hover:bg-primary/10 hover:text-primary"
                 onClick={(event) => {
                   event.preventDefault();
                   onMarkContacted(client);
                 }}
               >
-                <MessageCircle className="size-3.5" aria-hidden />
-                Contacted
+                <Check className="size-4" aria-hidden />
               </Button>
             ) : null}
             {canOpenMessenger ? (
               <Button
                 type="button"
-                size="sm"
+                size="icon"
                 disabled={isUpdating}
-                className="h-8 shrink-0 gap-1 bg-whatsapp px-2 text-xs text-whatsapp-foreground hover:bg-whatsapp/90"
+                aria-label={`Open messenger for ${client.fullName}`}
+                title="Open messenger"
+                className="size-8 shrink-0 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
                 onClick={(event) => {
                   event.preventDefault();
                   onOpenMessenger?.(client);
                 }}
               >
-                <Send className="size-3.5" aria-hidden />
-                Message
+                <Send className="size-4" aria-hidden />
               </Button>
             ) : null}
           </>
