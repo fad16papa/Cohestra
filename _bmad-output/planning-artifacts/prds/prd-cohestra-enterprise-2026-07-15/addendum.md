@@ -126,3 +126,58 @@ STRIPE_PRICE_CORE_ANNUAL=price_…
 STRIPE_PRICE_PRO_MONTHLY=price_…
 STRIPE_PRICE_PRO_ANNUAL=price_…
 ```
+
+## Client CRM & lead queue (FR-29–32 — Epic 23)
+
+### Relationship to Platform 0 PRD
+
+Inherited behavior remains authoritative for domain rules: master profile (FR-5), dedup (FR-6), relationship timeline (FR-7), WhatsApp/Viber click-to-message (FR-14/15 in Platform 0 numbering). Enterprise PRD **§4.8** adds **operator UX and Pro handoff** — not new dedup rules.
+
+### FR-27 (shipped 2026-08-08)
+
+- Column: `Tenants.RegistrationTimeZoneId` (varchar 64, IANA, default `UTC`)
+- Helper: `RegistrationPeriod.ForTenant(now, timeZoneId)` for calendar-month boundaries
+- Signup: optional browser timezone hint on `PublicSignupRequest`
+- Settings: Tenant Admin PATCH `/api/v1/admin/tenant/registration-timezone`
+- Shell/limit meter displays timezone label on registration dial
+
+### List API extensions (FR-29)
+
+Extend `GET /api/v1/clients` response items with:
+
+| Field | Source |
+|-------|--------|
+| `phone` | Master profile (masked optional in list — show full to authenticated operator) |
+| `lastOutreachAt` | Max occurred-at of timeline events: `whatsapp_*`, `viber_*`, `email_campaign_sent` |
+| `lastOutreachLabel` | Human label for tooltip |
+| `referralSource` | Master profile |
+| `nextFollowUpAt` | FR-32 — nullable date |
+
+Existing query params already wired in web: `mergeSuspect`, `createdWithinDays`, `registeredWithinDays`, `leadStatus`, `nationality`, `search`. FR-29 adds UI exposure + `referralSource` filter param + `followUpDue` boolean filter.
+
+### Profile layout (FR-30)
+
+No API change required — presentation reorder in `web/components/clients/*`. Timeline preview = first N events from existing `timeline` array.
+
+### Campaign handoff (FR-31)
+
+- `POST /api/v1/campaigns/draft/from-clients` with `{ clientIds: uuid[] }` → draft campaign + segment
+- Reuse consent filter server-side; 403 on Basic/Core with upgrade code
+
+### Follow-up date (FR-32)
+
+- Column: `Clients.NextFollowUpAt` (date, nullable)
+- PATCH on client update endpoint
+- Timeline event on change
+
+### UX companion
+
+Run `bmad-ux` update for `EXPERIENCE.md` §Clients — UJ-5 journey, queue/table column spec, mobile card layout, sticky outreach bar.
+
+### Out of scope (explicit)
+
+- Deal stages / kanban pipeline
+- Lead scoring
+- Per-client assignment (defer until multi-seat workflows mature)
+- One-click duplicate merge (remain flag-only unless promoted)
+- Automated messenger sends
