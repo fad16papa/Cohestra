@@ -188,7 +188,7 @@ function parseClientLeadStatusCounts(
   };
 }
 
-function parseClientList(raw: Record<string, unknown>): ClientListResult {
+export function parseClientList(raw: Record<string, unknown>): ClientListResult {
   const items = raw.items ?? raw.Items;
   const page = raw.page ?? raw.Page;
   const pageSize = raw.pageSize ?? raw.PageSize;
