@@ -26,6 +26,7 @@ import {
   submitPublicSignup,
   type SlugAvailability,
 } from "@/lib/signup/signup-api";
+import { getBrowserTimeZoneId } from "@/lib/timezone/browser-timezone";
 import { formatTrialDisclaimer } from "@/lib/billing/billing-api";
 
 function slugifyOrgName(value: string): string {
@@ -145,6 +146,7 @@ export function SignupPageContent() {
       email: email.trim(),
       password,
       captchaToken,
+      registrationTimeZoneId: getBrowserTimeZoneId(),
     });
 
     setSubmitting(false);

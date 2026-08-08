@@ -50,51 +50,29 @@ public sealed class TenantAccessService(CohestraDbContext dbContext) : ITenantAc
         Guid tenantId,
         CancellationToken cancellationToken = default)
     {
-        var monthStart = new DateTimeOffset(
-            DateTime.UtcNow.Year,
-            DateTime.UtcNow.Month,
-            1,
-            0,
-            0,
-            0,
-            TimeSpan.Zero);
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .Select(t => new { t.Id, t.RegistrationTimeZoneId })
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return new TenantUsageSnapshot(0, 0, 0, 0);
+        }
 
         var now = DateTimeOffset.UtcNow;
-
-        var activeMembers = await dbContext.TenantMemberships
-            .AsNoTracking()
-            .CountAsync(m => m.TenantId == tenantId, cancellationToken);
-
-        var pendingInvites = await dbContext.TenantInvites
-            .AsNoTracking()
-            .CountAsync(
-                i => i.TenantId == tenantId
-                    && i.RevokedAt == null
-                    && i.AcceptedAt == null
-                    && i.ExpiresAt > now,
-                cancellationToken);
-
-        var communities = await dbContext.Communities
-            .AsNoTracking()
-            .CountAsync(c => c.TenantId == tenantId, cancellationToken);
-
-        var publishedActivities = await dbContext.Activities
-            .AsNoTracking()
-            .CountAsync(
-                a => a.TenantId == tenantId && a.Status == Domain.Activities.ActivityStatus.Published,
-                cancellationToken);
-
-        var registrationsThisMonth = await dbContext.Registrations
-            .AsNoTracking()
-            .CountAsync(
-                r => r.TenantId == tenantId && r.CreatedAt >= monthStart,
-                cancellationToken);
+        var usage = await TenantShellService.ComputeUsageAsync(
+            dbContext,
+            tenantId,
+            tenant.RegistrationTimeZoneId,
+            now,
+            cancellationToken);
 
         return new TenantUsageSnapshot(
-            activeMembers + pendingInvites,
-            communities,
-            publishedActivities,
-            registrationsThisMonth);
+            usage.SeatsUsed,
+            usage.Communities,
+            usage.PublishedActivities,
+            usage.RegistrationsThisMonth);
     }
 
     public async Task TouchActivityAsync(Guid tenantId, CancellationToken cancellationToken = default)

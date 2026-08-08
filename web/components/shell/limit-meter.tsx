@@ -60,6 +60,8 @@ export function LimitMeter({ dials, compact = false, className }: LimitMeterProp
             <p className="text-[11px] text-destructive" role="status">
               Limit reached — upgrade or free capacity before adding more.
             </p>
+          ) : dial.hint ? (
+            <p className="text-[11px] text-text-muted-warm">{dial.hint}</p>
           ) : null}
         </div>
       ))}

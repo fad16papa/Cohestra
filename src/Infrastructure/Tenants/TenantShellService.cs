@@ -21,8 +21,11 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
             ?? throw new InvalidOperationException("Tenant not found.");
 
         var limits = TenantPlanLimits.For(tenant.Plan);
-        var usage = await ComputeUsageAsync(tenantId, cancellationToken);
-        var limitDials = BuildLimitDials(limits, usage);
+        var now = DateTimeOffset.UtcNow;
+        var timeZoneId = tenant.RegistrationTimeZoneId;
+        var usage = await ComputeUsageAsync(tenantId, timeZoneId, now, cancellationToken);
+        var nextReset = RegistrationPeriod.GetNextMonthStartUtc(now, timeZoneId);
+        var limitDials = BuildLimitDials(limits, usage, timeZoneId, nextReset);
         var billingBanner = BuildBillingBanner(tenant, limitDials, isTenantAdmin);
 
         return new TenantShellResponse(
@@ -34,6 +37,8 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
             isTenantAdmin,
             tenant.Slug,
             tenant.Name,
+            RegistrationTimeZoneSupport.Normalize(timeZoneId),
+            nextReset,
             new PlanLimitsResponse(
                 limits.Seats,
                 limits.Communities,
@@ -44,20 +49,14 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
             billingBanner);
     }
 
-    private async Task<PlanUsageResponse> ComputeUsageAsync(
+    internal static async Task<PlanUsageResponse> ComputeUsageAsync(
+        CohestraDbContext dbContext,
         Guid tenantId,
+        string? registrationTimeZoneId,
+        DateTimeOffset utcNow,
         CancellationToken cancellationToken)
     {
-        var monthStart = new DateTimeOffset(
-            DateTime.UtcNow.Year,
-            DateTime.UtcNow.Month,
-            1,
-            0,
-            0,
-            0,
-            TimeSpan.Zero);
-
-        var now = DateTimeOffset.UtcNow;
+        var monthStart = RegistrationPeriod.GetMonthStartUtc(utcNow, registrationTimeZoneId);
 
         var activeMembers = await dbContext.TenantMemberships
             .AsNoTracking()
@@ -69,7 +68,7 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
                 i => i.TenantId == tenantId
                     && i.RevokedAt == null
                     && i.AcceptedAt == null
-                    && i.ExpiresAt > now,
+                    && i.ExpiresAt > utcNow,
                 cancellationToken);
 
         var seatsUsed = activeMembers + pendingInvites;
@@ -93,23 +92,46 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
         return new PlanUsageResponse(seatsUsed, communities, publishedActivities, registrationsThisMonth);
     }
 
+    private Task<PlanUsageResponse> ComputeUsageAsync(
+        Guid tenantId,
+        string? registrationTimeZoneId,
+        DateTimeOffset utcNow,
+        CancellationToken cancellationToken) =>
+        ComputeUsageAsync(dbContext, tenantId, registrationTimeZoneId, utcNow, cancellationToken);
+
     internal static IReadOnlyList<LimitDialResponse> BuildLimitDials(
         PlanLimits limits,
-        PlanUsageResponse usage)
+        PlanUsageResponse usage,
+        string? registrationTimeZoneId,
+        DateTimeOffset registrationMonthResetsAt)
     {
+        var tzLabel = RegistrationTimeZoneSupport.GetDisplayLabel(registrationTimeZoneId);
+        var registrationHint = RegistrationTimeZoneSupport.FormatResetHint(
+            registrationMonthResetsAt,
+            registrationTimeZoneId);
+
         return
         [
             BuildDial("seats", "Team seats", usage.SeatsUsed, limits.Seats),
             BuildDial("communities", "Communities", usage.Communities, limits.Communities),
             BuildDial("published", "Published activities", usage.PublishedActivities, limits.PublishedActivities),
-            BuildDial("registrations", "Registrations this month", usage.RegistrationsThisMonth, limits.RegistrationsPerMonth),
+            BuildDial(
+                "registrations",
+                $"Registrations this month ({tzLabel})",
+                usage.RegistrationsThisMonth,
+                limits.RegistrationsPerMonth,
+                registrationHint),
         ];
     }
 
-    private static LimitDialResponse BuildDial(string key, string label, int used, int limit)
+    private static LimitDialResponse BuildDial(
+        string key,
+        string label,
+        int used,
+        int limit,
+        string? hint = null)
     {
         var percent = limit <= 0 ? 0 : (int)Math.Min(100, Math.Round(used * 100.0 / limit));
-        // Seats at plan capacity (e.g. Basic 1/1) are normal — only block when over capacity.
         var blocked = string.Equals(key, "seats", StringComparison.Ordinal)
             ? used > limit
             : used >= limit;
@@ -120,7 +142,8 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
             limit,
             percent,
             Warn: percent >= 80 && !blocked,
-            Blocked: blocked);
+            Blocked: blocked,
+            Hint: hint);
     }
 
     internal static BillingBannerResponse? BuildBillingBanner(

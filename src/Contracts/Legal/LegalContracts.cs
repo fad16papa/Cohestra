@@ -14,4 +14,5 @@ public sealed record PublicSignupRequest(
     string? Slug,
     string? Email,
     string? Password,
-    string? CaptchaToken);
+    string? CaptchaToken,
+    string? RegistrationTimeZoneId = null);
