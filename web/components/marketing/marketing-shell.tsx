@@ -88,9 +88,6 @@ export function MarketingShell({
           <Link href="/login" className="text-sm font-medium text-stone hover:text-ink">
             Sign in
           </Link>
-          <Link href="/signup" className={marketingAtelierButtonClass("lagoon", "sm")}>
-            Start free
-          </Link>
         </nav>
       </header>
       {children}
