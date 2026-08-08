@@ -14,6 +14,7 @@ using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Email;
 using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Tenants;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
@@ -162,6 +163,15 @@ public sealed class SelfServeSignupService(
                 "Email must be at most 320 characters.");
         }
 
+        var registrationTimeZoneId = RegistrationTimeZoneSupport.Normalize(request.RegistrationTimeZoneId);
+        var timeZoneError = RegistrationTimeZoneSupport.Validate(registrationTimeZoneId);
+        if (timeZoneError is not null)
+        {
+            return SelfServeSignupResult<PublicSignupResponse>.Fail(
+                SelfServeSignupError.Validation,
+                timeZoneError);
+        }
+
         var password = request.Password ?? string.Empty;
         if (string.IsNullOrWhiteSpace(password))
         {
@@ -233,6 +243,7 @@ public sealed class SelfServeSignupService(
             Plan = TenantPlan.Basic,
             Status = TenantStatus.Active,
             BillingStatus = BillingStatus.Free,
+            RegistrationTimeZoneId = registrationTimeZoneId,
             CreatedAt = now,
             UpdatedAt = now,
         };

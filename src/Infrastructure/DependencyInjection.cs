@@ -153,6 +153,7 @@ public static class DependencyInjection
         services.AddScoped<IOutboxMessageHandler, CampaignRecipientOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, BillingNotificationOutboxHandler>();
         services.AddScoped<ITenantShellService, TenantShellService>();
+        services.AddScoped<ITenantOrganizationService, TenantOrganizationService>();
         services.AddScoped<ITenantAccessService, TenantAccessService>();
         services.AddScoped<IPublicDoorService, PublicDoorService>();
         services.AddScoped<ICaptchaVerifier, GoogleRecaptchaVerifier>();

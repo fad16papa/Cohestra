@@ -9,6 +9,8 @@ public sealed record TenantShellResponse(
     bool IsTenantAdmin,
     string TenantSlug,
     string? TenantName,
+    string RegistrationTimeZoneId,
+    DateTimeOffset RegistrationMonthResetsAt,
     PlanLimitsResponse Limits,
     PlanUsageResponse Usage,
     IReadOnlyList<LimitDialResponse> LimitDials,
@@ -33,7 +35,8 @@ public sealed record LimitDialResponse(
     int Limit,
     int Percent,
     bool Warn,
-    bool Blocked);
+    bool Blocked,
+    string? Hint);
 
 public sealed record BillingBannerResponse(
     string Variant,

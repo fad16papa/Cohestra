@@ -71,4 +71,10 @@ public sealed class Tenant
     public DateTimeOffset? LastOnHoldNoticeAt { get; set; }
 
     public DateTimeOffset? LastDormancyWarningAt { get; set; }
+
+    /// <summary>
+    /// IANA timezone for monthly public registration limit windows (FR-27 Option C).
+    /// Default UTC. Server-owned — not client-supplied per request.
+    /// </summary>
+    public string RegistrationTimeZoneId { get; set; } = RegistrationTimeZoneDefaults.Utc;
 }

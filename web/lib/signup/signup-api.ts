@@ -106,6 +106,7 @@ export async function submitPublicSignup(payload: {
   email: string;
   password: string;
   captchaToken: string;
+  registrationTimeZoneId?: string;
 }): Promise<
   | { ok: true; result: PublicSignupResult }
   | { ok: false; message: string; suggestions: string[] }
@@ -122,6 +123,7 @@ export async function submitPublicSignup(payload: {
       email: payload.email,
       password: payload.password,
       captchaToken: payload.captchaToken,
+      registrationTimeZoneId: payload.registrationTimeZoneId ?? "UTC",
     }),
   });
 

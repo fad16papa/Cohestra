@@ -8,6 +8,7 @@ export type LimitDial = {
   percent: number;
   warn: boolean;
   blocked: boolean;
+  hint: string | null;
 };
 
 export type BillingBanner = {
@@ -28,6 +29,8 @@ export type TenantShell = {
   isTenantAdmin: boolean;
   tenantSlug: string;
   tenantName: string | null;
+  registrationTimeZoneId: string;
+  registrationMonthResetsAt: string | null;
   limits: {
     seats: number;
     communities: number;
@@ -63,6 +66,10 @@ function parseLimitDial(raw: Record<string, unknown>): LimitDial | null {
     percent: typeof percent === "number" ? percent : 0,
     warn: Boolean(raw.warn ?? raw.Warn),
     blocked: Boolean(raw.blocked ?? raw.Blocked),
+    hint:
+      typeof (raw.hint ?? raw.Hint) === "string"
+        ? String(raw.hint ?? raw.Hint)
+        : null,
   };
 }
 
@@ -121,6 +128,13 @@ export function parseTenantShell(raw: Record<string, unknown>): TenantShell {
     tenantName:
       typeof (raw.tenantName ?? raw.TenantName) === "string"
         ? String(raw.tenantName ?? raw.TenantName)
+        : null,
+    registrationTimeZoneId: String(
+      raw.registrationTimeZoneId ?? raw.RegistrationTimeZoneId ?? "UTC"
+    ),
+    registrationMonthResetsAt:
+      typeof (raw.registrationMonthResetsAt ?? raw.RegistrationMonthResetsAt) === "string"
+        ? String(raw.registrationMonthResetsAt ?? raw.RegistrationMonthResetsAt)
         : null,
     limits: {
       seats: Number(limitsRaw.seats ?? limitsRaw.Seats ?? 1),

@@ -267,14 +267,7 @@ public sealed class RegistrationService(
         if (tenant is not null)
         {
             var limits = TenantPlanLimits.For(tenant.Plan);
-            var monthStart = new DateTimeOffset(
-                now.Year,
-                now.Month,
-                1,
-                0,
-                0,
-                0,
-                TimeSpan.Zero);
+            var monthStart = RegistrationPeriod.GetMonthStartUtc(now, tenant.RegistrationTimeZoneId);
             var registrationsThisMonth = await dbContext.Registrations
                 .CountAsync(
                     item => item.TenantId == tenantId && item.CreatedAt >= monthStart,

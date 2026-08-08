@@ -77,5 +77,10 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
 
         builder.Property(tenant => tenant.PrivacyVersion)
             .HasMaxLength(32);
+
+        builder.Property(tenant => tenant.RegistrationTimeZoneId)
+            .HasMaxLength(64)
+            .IsRequired()
+            .HasDefaultValue("UTC");
     }
 }

@@ -6,18 +6,26 @@ namespace Cohestra.Infrastructure.Tests.Tenants;
 
 public sealed class TenantShellServiceTests
 {
+    private static readonly DateTimeOffset NextResetUtc =
+        RegistrationPeriod.GetNextMonthStartUtc(DateTimeOffset.UtcNow, RegistrationTimeZoneDefaults.Utc);
+
     [Fact]
     public void BuildLimitDials_WarnsAtEightyPercent()
     {
         var limits = TenantPlanLimits.For(TenantPlan.Basic);
         var usage = new Cohestra.Contracts.Admin.PlanUsageResponse(0, 0, 2, 121);
 
-        var dials = TenantShellService.BuildLimitDials(limits, usage);
+        var dials = TenantShellService.BuildLimitDials(
+            limits,
+            usage,
+            RegistrationTimeZoneDefaults.Utc,
+            NextResetUtc);
         var registrations = dials.Single(d => d.Key == "registrations");
 
         Assert.True(registrations.Warn);
         Assert.False(registrations.Blocked);
         Assert.Equal(81, registrations.Percent);
+        Assert.Contains("UTC", registrations.Label, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -26,7 +34,11 @@ public sealed class TenantShellServiceTests
         var limits = TenantPlanLimits.For(TenantPlan.Basic);
         var usage = new Cohestra.Contracts.Admin.PlanUsageResponse(1, 1, 3, 150);
 
-        var dials = TenantShellService.BuildLimitDials(limits, usage);
+        var dials = TenantShellService.BuildLimitDials(
+            limits,
+            usage,
+            RegistrationTimeZoneDefaults.Utc,
+            NextResetUtc);
         var seats = dials.Single(d => d.Key == "seats");
         var published = dials.Single(d => d.Key == "published");
         var registrations = dials.Single(d => d.Key == "registrations");
@@ -48,7 +60,11 @@ public sealed class TenantShellServiceTests
 
         var limits = TenantPlanLimits.For(TenantPlan.Basic);
         var usage = new Cohestra.Contracts.Admin.PlanUsageResponse(1, 0, 0, 0);
-        var dials = TenantShellService.BuildLimitDials(limits, usage);
+        var dials = TenantShellService.BuildLimitDials(
+            limits,
+            usage,
+            RegistrationTimeZoneDefaults.Utc,
+            NextResetUtc);
 
         Assert.Null(TenantShellService.BuildBillingBanner(tenant, dials, isTenantAdmin: true));
     }
@@ -127,7 +143,8 @@ public sealed class TenantShellServiceTests
             3,
             100,
             Warn: false,
-            Blocked: true);
+            Blocked: true,
+            Hint: null);
 
         var banner = TenantShellService.BuildBillingBanner(tenant, [blockedDial], isTenantAdmin: true);
 
@@ -151,7 +168,8 @@ public sealed class TenantShellServiceTests
             1,
             100,
             Warn: false,
-            Blocked: true);
+            Blocked: true,
+            Hint: null);
 
         var banner = TenantShellService.BuildBillingBanner(tenant, [blockedDial], isTenantAdmin: true);
 
@@ -176,7 +194,8 @@ public sealed class TenantShellServiceTests
             50,
             100,
             Warn: false,
-            Blocked: true);
+            Blocked: true,
+            Hint: null);
 
         var banner = TenantShellService.BuildBillingBanner(tenant, [blockedDial], isTenantAdmin: true);
 

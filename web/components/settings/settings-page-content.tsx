@@ -3,6 +3,7 @@
 import { AppearanceSection } from "@/components/settings/appearance-section";
 import { BrandAccentSection } from "@/components/settings/brand-accent-section";
 import { ChangePasswordSection } from "@/components/settings/change-password-section";
+import { OrganizationTimezoneSection } from "@/components/settings/organization-timezone-section";
 import { SettingsAdminLinks } from "@/components/settings/settings-admin-links";
 import { EmailDeliveryChecklist } from "@/components/campaigns/email-delivery-checklist";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
@@ -23,6 +24,7 @@ export function SettingsPageContent() {
           <AppearanceSection />
           <BrandAccentSection />
           <ChangePasswordSection />
+          {showEmailDelivery ? <OrganizationTimezoneSection /> : null}
         </CardContent>
       </Card>
 
