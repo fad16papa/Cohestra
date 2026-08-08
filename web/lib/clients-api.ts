@@ -252,6 +252,7 @@ export async function fetchClients(
     createdWithinDays?: number;
     registeredWithinDays?: number;
     followUpDue?: boolean;
+    withoutOutreach?: boolean;
     leadStatus?: LeadStatus;
     nationality?: string;
     search?: string;
@@ -286,6 +287,10 @@ export async function fetchClients(
 
   if (params.followUpDue === true) {
     searchParams.set("followUpDue", "true");
+  }
+
+  if (params.withoutOutreach === true) {
+    searchParams.set("withoutOutreach", "true");
   }
 
   if (params.leadStatus) {

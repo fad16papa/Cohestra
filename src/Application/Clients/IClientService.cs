@@ -13,6 +13,7 @@ public interface IClientService
         int? createdWithinDays,
         int? registeredWithinDays,
         bool? followUpDue,
+        bool? withoutOutreach,
         string? leadStatus,
         string? nationality,
         string? search,

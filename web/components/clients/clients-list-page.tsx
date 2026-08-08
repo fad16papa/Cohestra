@@ -52,6 +52,29 @@ const emptyStatusCounts: ClientLeadStatusCounts = {
   followUpDueCount: 0,
 };
 
+function adjustStatusCounts(
+  counts: ClientLeadStatusCounts,
+  from: LeadStatus,
+  to: LeadStatus
+): ClientLeadStatusCounts {
+  if (from === to) {
+    return counts;
+  }
+
+  const next = { ...counts };
+  if (from === "new") next.newCount = Math.max(0, next.newCount - 1);
+  if (from === "contacted") next.contactedCount = Math.max(0, next.contactedCount - 1);
+  if (from === "active") next.activeCount = Math.max(0, next.activeCount - 1);
+  if (from === "inactive") next.inactiveCount = Math.max(0, next.inactiveCount - 1);
+
+  if (to === "new") next.newCount += 1;
+  if (to === "contacted") next.contactedCount += 1;
+  if (to === "active") next.activeCount += 1;
+  if (to === "inactive") next.inactiveCount += 1;
+
+  return next;
+}
+
 type SortDirection = "asc" | "desc";
 
 const sortColumns: Array<{
@@ -534,6 +557,9 @@ export function ClientsListPage() {
 
       try {
         await updateClientLeadStatus(authFetch, client.id, "contacted");
+        setStatusCounts((current) =>
+          adjustStatusCounts(current, previousStatus, "contacted")
+        );
         showActionToast(
           `${client.fullName} marked as contacted`,
           "Undo",
@@ -544,6 +570,9 @@ export function ClientsListPage() {
                   ? { ...item, leadStatus: previousStatus }
                   : item
               )
+            );
+            setStatusCounts((current) =>
+              adjustStatusCounts(current, "contacted", previousStatus)
             );
 
             void updateClientLeadStatus(authFetch, client.id, previousStatus).catch(
@@ -594,9 +623,12 @@ export function ClientsListPage() {
     }
 
     setMessengerBusy(true);
+    const whatsAppPopup = window.open(whatsAppUrl, "_blank", "noopener,noreferrer");
     try {
       await recordWhatsAppInitiated(authFetch, messengerClient.id);
-      window.open(whatsAppUrl, "_blank", "noopener,noreferrer");
+      if (!whatsAppPopup) {
+        showToast("Allow pop-ups to open WhatsApp.");
+      }
       setClients((current) =>
         current.map((item) =>
           item.id === messengerClient.id

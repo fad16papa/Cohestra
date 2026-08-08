@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarClock } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
@@ -66,6 +66,10 @@ export function ClientFollowUpDateField({
   const due = isFollowUpDue(client.nextFollowUpAt, timeZoneId);
   const savedDate = toDateInputValue(client.nextFollowUpAt, timeZoneId);
   const isDirty = draftDate !== savedDate;
+
+  useEffect(() => {
+    setDraftDate(toDateInputValue(client.nextFollowUpAt, timeZoneId));
+  }, [client.nextFollowUpAt, timeZoneId]);
 
   async function handleSave(nextValue: string) {
     setBusy(true);

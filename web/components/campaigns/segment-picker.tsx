@@ -191,19 +191,24 @@ export function SegmentPicker({
   }
 
   function handleCommunityChange(communityName: string) {
-    setAdditionalClients([]);
+    const preservedAdditionalIds = valueRef.current.additionalClientIds;
+
     if (!communityName) {
+      setAdditionalClients([]);
       setNameDraft("");
       setNationalityDraft("");
       setProfessionDraft("");
-      onChange({ consentOnly: true });
+      onChange({
+        consentOnly: true,
+        additionalClientIds: preservedAdditionalIds,
+      });
       return;
     }
 
     onChange({
       community: communityName,
       consentOnly: true,
-      additionalClientIds: undefined,
+      additionalClientIds: preservedAdditionalIds,
     });
   }
 

@@ -35,6 +35,7 @@ public sealed class ClientService(
         int? createdWithinDays,
         int? registeredWithinDays,
         bool? followUpDue,
+        bool? withoutOutreach,
         string? leadStatus,
         string? nationality,
         string? search,
@@ -56,6 +57,7 @@ public sealed class ClientService(
             createdWithinDays,
             registeredWithinDays,
             followUpDue,
+            withoutOutreach,
             leadStatus,
             nationality,
             search,
@@ -153,6 +155,7 @@ public sealed class ClientService(
                 createdWithinDays,
                 registeredWithinDays,
                 followUpDue,
+                withoutOutreach: null,
                 leadStatus,
                 nationality,
                 search,
@@ -210,6 +213,7 @@ public sealed class ClientService(
         int? createdWithinDays,
         int? registeredWithinDays,
         bool? followUpDue,
+        bool? withoutOutreach,
         string? leadStatus,
         string? nationality,
         string? search,
@@ -247,6 +251,13 @@ public sealed class ClientService(
             clientsQuery = clientsQuery.Where(client =>
                 client.NextFollowUpAt != null &&
                 client.NextFollowUpAt < dueBeforeUtc);
+        }
+
+        if (withoutOutreach == true)
+        {
+            clientsQuery = clientsQuery.Where(client =>
+                !client.TimelineEvents.Any(timelineEvent =>
+                    OutreachEventTypes.Contains(timelineEvent.EventType)));
         }
 
         if (!string.IsNullOrWhiteSpace(leadStatus))
@@ -533,10 +544,25 @@ public sealed class ClientService(
                 ?? throw new ArgumentException("Next follow-up must be a valid date (YYYY-MM-DD).");
         }
 
-        client.NextFollowUpAt = nextFollowUpAt;
-        client.UpdatedAt = DateTimeOffset.UtcNow;
+        var previousFollowUpAt = client.NextFollowUpAt;
+        if (previousFollowUpAt != nextFollowUpAt)
+        {
+            var occurredAt = DateTimeOffset.UtcNow;
+            client.NextFollowUpAt = nextFollowUpAt;
+            client.UpdatedAt = occurredAt;
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+            dbContext.ClientTimelineEvents.Add(new ClientTimelineEvent
+            {
+                Id = Guid.NewGuid(),
+                ClientId = client.Id,
+                EventType = ClientTimelineEventType.NextFollowUpChanged,
+                OccurredAt = occurredAt,
+                Subject = nextFollowUpAt.HasValue ? "Next follow-up set" : "Next follow-up cleared",
+                Note = nextFollowUpAt.HasValue ? nextFollowUpDate!.Trim() : null,
+            });
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         return ClientDetailMapper.ToResponse(
             client,

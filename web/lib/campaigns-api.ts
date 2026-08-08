@@ -78,6 +78,7 @@ export function isValidSegmentQuery(segment: ClientSegmentQuery): boolean {
   return Boolean(
     segment.allClients ||
       (segment.clientIds && segment.clientIds.length > 0) ||
+      (segment.additionalClientIds && segment.additionalClientIds.length > 0) ||
       (segment.activityIds && segment.activityIds.length > 0) ||
       segment.leadStatus?.trim() ||
       segment.community?.trim() ||
