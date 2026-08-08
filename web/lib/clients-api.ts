@@ -874,7 +874,10 @@ export function formatClientContactLine(client: ClientListItem): string {
   return "No contact on file";
 }
 
-export function formatNextFollowUpDate(value: string | null): string {
+export function formatNextFollowUpDate(
+  value: string | null,
+  timeZoneId?: string | null
+): string {
   if (!value) {
     return "Not set";
   }
@@ -884,11 +887,20 @@ export function formatNextFollowUpDate(value: string | null): string {
     return "Not set";
   }
 
-  return date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  try {
+    return date.toLocaleDateString(undefined, {
+      timeZone: timeZoneId ?? undefined,
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
 }
 
 export function isFollowUpDue(
@@ -905,15 +917,19 @@ export function isFollowUpDue(
   }
 
   const now = new Date();
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timeZoneId ?? "UTC",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
+  try {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timeZoneId ?? "UTC",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
 
-  const todayKey = formatter.format(now);
-  const followUpKey = formatter.format(followUpDate);
+    const todayKey = formatter.format(now);
+    const followUpKey = formatter.format(followUpDate);
 
-  return followUpKey <= todayKey;
+    return followUpKey <= todayKey;
+  } catch {
+    return false;
+  }
 }

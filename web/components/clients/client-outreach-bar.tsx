@@ -4,7 +4,6 @@ import { MessageCircle } from "lucide-react";
 
 import { ClientLeadStatusControl } from "@/components/clients/client-lead-status-control";
 import { ClientMessengerOutreach } from "@/components/clients/client-messenger-outreach";
-import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-provider";
@@ -55,7 +54,6 @@ export function ClientOutreachBar({
       <section className="sticky top-4 z-10 rounded-2xl border border-border-warm bg-card/95 p-4 shadow-sm backdrop-blur-sm sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-3">
-            <LeadStatusBadge status={client.leadStatus} />
             <ClientLeadStatusControl
               clientId={client.id}
               leadStatus={client.leadStatus}

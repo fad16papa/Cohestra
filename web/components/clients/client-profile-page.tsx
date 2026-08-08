@@ -10,7 +10,6 @@ import { ClientProfileSection } from "@/components/clients/client-profile-motion
 import { ClientRegistrationHistory } from "@/components/clients/client-registration-history";
 import { ClientRelationshipTimeline } from "@/components/clients/client-relationship-timeline";
 import { ClientTimelinePreview } from "@/components/clients/client-timeline-preview";
-import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import { useAdminPageMeta } from "@/components/layouts/admin-shell-context";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { PersonAvatar } from "@/components/shared/person-avatar";
@@ -103,7 +102,6 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
             <div className="flex flex-wrap items-center gap-3">
               <PersonAvatar name={client.fullName} size="md" />
               <h2 className="text-display-sm text-text-warm">{client.fullName}</h2>
-              <LeadStatusBadge status={client.leadStatus} />
             </div>
             <p className="text-sm text-text-muted-warm">
               Act first — outreach and timeline above registration details.
