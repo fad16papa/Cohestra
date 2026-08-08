@@ -674,27 +674,43 @@ export async function recordWhatsAppFollowUp(
   return parseClientDetail((await response.json()) as Record<string, unknown>);
 }
 
-export function formatLastActivityCaption(client: ClientListItem): string {
-  if (!client.lastActivityName) {
-    return "No registrations yet";
-  }
+export function formatLastActivityName(client: ClientListItem): string {
+  return client.lastActivityName?.trim() || "No registrations yet";
+}
 
+export function formatLastActivityDate(client: ClientListItem): string | null {
   if (!client.lastRegistrationAt) {
-    return client.lastActivityName;
+    return null;
   }
 
   const registeredAt = new Date(client.lastRegistrationAt);
   if (Number.isNaN(registeredAt.getTime())) {
-    return client.lastActivityName;
+    return null;
   }
 
-  const formattedDate = registeredAt.toLocaleDateString(undefined, {
+  const now = new Date();
+  const sameYear = registeredAt.getFullYear() === now.getFullYear();
+
+  return registeredAt.toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
-    year: "numeric",
+    ...(sameYear ? {} : { year: "numeric" as const }),
   });
+}
 
-  return `${client.lastActivityName} · ${formattedDate}`;
+export function formatLastActivityCaption(client: ClientListItem): string {
+  const name = formatLastActivityName(client);
+  const date = formatLastActivityDate(client);
+
+  if (!client.lastActivityName) {
+    return name;
+  }
+
+  if (!date) {
+    return name;
+  }
+
+  return `${name} · ${date}`;
 }
 
 const outreachKindLabels: Record<OutreachKind, string> = {

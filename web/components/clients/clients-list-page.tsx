@@ -27,7 +27,6 @@ import {
   fetchClientNationalities,
   fetchClients,
   leadStatusLabels,
-  leadStatusOptions,
   recordWhatsAppInitiated,
   updateClientLeadStatus,
   type ClientLeadStatusCounts,
@@ -622,10 +621,10 @@ export function ClientsListPage() {
   }, [authFetch, messengerClient, showToast]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
         title="Clients"
-        description="One row per contact — repeat sign-ups on activities merge by phone or email. Filter new leads, mark contacted, and open WhatsApp without leaving the queue."
+        description="One row per contact — repeat sign-ups merge by phone or email."
         actions={
           <Button
             type="button"
@@ -653,8 +652,8 @@ export function ClientsListPage() {
         onFollowUpDueToggle={updateFollowUpDueFilter}
       />
 
-      <div className="grid gap-4 rounded-xl border border-border-warm bg-card p-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_220px]">
-        <div className="space-y-2 md:col-span-2 xl:col-span-1">
+      <div className="grid gap-4 rounded-xl border border-border-warm bg-card p-4 md:grid-cols-[minmax(0,1fr)_220px]">
+        <div className="space-y-2">
           <Label htmlFor="client-search">Search</Label>
           <ClientSearchInput
             key={searchFilter}
@@ -675,28 +674,6 @@ export function ClientsListPage() {
             {nationalitySelectOptions.map((option) => (
               <option key={option} value={option}>
                 {option}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="client-status-filter">Lead status</Label>
-          <select
-            id="client-status-filter"
-            value={leadStatusFilter ?? ""}
-            onChange={(event) => {
-              const value = event.target.value;
-              updateLeadStatusFilter(
-                value === "" ? null : (value as LeadStatus)
-              );
-            }}
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            <option value="">All statuses</option>
-            {leadStatusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
               </option>
             ))}
           </select>
