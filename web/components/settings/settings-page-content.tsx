@@ -1,40 +1,56 @@
 "use client";
 
 import { AppearanceSection } from "@/components/settings/appearance-section";
+import { AccountSection } from "@/components/settings/account-section";
 import { BrandAccentSection } from "@/components/settings/brand-accent-section";
 import { ChangePasswordSection } from "@/components/settings/change-password-section";
 import { OrganizationTimezoneSection } from "@/components/settings/organization-timezone-section";
-import { SettingsAdminLinks } from "@/components/settings/settings-admin-links";
-import { EmailDeliveryChecklist } from "@/components/campaigns/email-delivery-checklist";
+import { SettingsPlanUsageSection } from "@/components/settings/settings-plan-usage-section";
+import { SettingsSectionCard } from "@/components/settings/settings-section-card";
+import { SettingsWorkspaceNav } from "@/components/settings/settings-workspace-nav";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
-import { Card, CardContent } from "@/components/ui/card";
 
 export function SettingsPageContent() {
   const { shell } = useTenantShell();
-  const showEmailDelivery = shell?.isTenantAdmin ?? false;
+  const isTenantAdmin = shell?.isTenantAdmin ?? false;
 
   return (
-    <div className="space-y-6">
-      <Card className="border-border-warm">
-        <CardContent className="space-y-10 pt-6">
-          <p className="text-sm text-text-muted-warm">
-            Operator preferences for your admin workspace.
-            <SettingsAdminLinks />
-          </p>
-          <AppearanceSection />
-          <BrandAccentSection />
-          <ChangePasswordSection />
-          {showEmailDelivery ? <OrganizationTimezoneSection /> : null}
-        </CardContent>
-      </Card>
+    <div className="mx-auto w-full max-w-5xl space-y-6">
+      <div>
+        <p className="text-sm text-text-muted-warm">
+          Manage your operator account and workspace preferences. Campaign delivery and
+          infrastructure setup stay on the server — nothing for you to configure here.
+        </p>
+      </div>
 
-      {showEmailDelivery ? (
-        <Card className="border-border-warm">
-          <CardContent className="pt-6">
-            <EmailDeliveryChecklist variant="panel" showWhenReady />
-          </CardContent>
-        </Card>
+      {isTenantAdmin ? (
+        <>
+          <SettingsWorkspaceNav />
+          <SettingsSectionCard
+            title="Workspace"
+            description="Branding, registration limits, and plan headroom for this organization."
+          >
+            <SettingsPlanUsageSection />
+            <BrandAccentSection />
+            <OrganizationTimezoneSection />
+          </SettingsSectionCard>
+        </>
       ) : null}
+
+      <SettingsSectionCard
+        title="Your account"
+        description="Signed-in operator profile and security for this workspace."
+      >
+        <AccountSection embedded />
+        <ChangePasswordSection />
+      </SettingsSectionCard>
+
+      <SettingsSectionCard
+        title="Appearance"
+        description="How Cohestra looks on this device."
+      >
+        <AppearanceSection />
+      </SettingsSectionCard>
     </div>
   );
 }
