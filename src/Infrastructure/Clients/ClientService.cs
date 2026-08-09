@@ -143,6 +143,7 @@ public sealed class ClientService(
         string? community,
         bool? consentOnly = null,
         string? excludeCommunity = null,
+        Guid? activityId = null,
         CancellationToken cancellationToken = default)
     {
         var tenantId = RequireTenantId();
@@ -164,7 +165,7 @@ public sealed class ClientService(
                 community,
                 consentOnly,
                 excludeCommunity,
-                activityId: null,
+                activityId,
                 cancellationToken)
             : dbContext.Clients.AsNoTracking();
 

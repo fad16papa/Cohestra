@@ -106,6 +106,7 @@ export function ActivityCardQuickActions({
           className="gap-1.5"
           disabled
           title="Publish to get a registration link"
+          aria-label="Copy link — publish to get a registration link"
         >
           <Link2 className="size-3.5" aria-hidden />
           Copy link

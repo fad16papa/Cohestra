@@ -72,5 +72,6 @@ public interface IClientService
         string? community,
         bool? consentOnly = null,
         string? excludeCommunity = null,
+        Guid? activityId = null,
         CancellationToken cancellationToken = default);
 }
