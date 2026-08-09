@@ -1,7 +1,9 @@
 FROM node:22-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+# esbuild postinstall can race with npm extracting binaries (ETXTBSY in Docker).
+ENV npm_config_foreground_scripts=true
+RUN npm ci || (rm -rf node_modules && npm ci)
 
 FROM node:22-slim AS build
 WORKDIR /app
