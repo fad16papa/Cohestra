@@ -176,7 +176,7 @@ export function MarketingProductCarousel() {
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-section text-gold">Inside the workspace</p>
           <h2 className="text-marketing-section mt-4 text-balance text-ink">
-            One product for clients, follow-up, operations, and your public site
+            One product, one platform, covers all your need
           </h2>
           <p className="text-marketing-lead mt-4 text-stone">
             Browse each surface at full size — the same views your team uses every week.
@@ -186,7 +186,7 @@ export function MarketingProductCarousel() {
         <div
           role="tablist"
           aria-label="Product surfaces"
-          className="mt-10 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="mt-10 flex flex-wrap justify-center gap-2 pb-1"
         >
           {PRODUCT_SLIDES.map((item, index) => {
             const isActive = index === activeIndex;
