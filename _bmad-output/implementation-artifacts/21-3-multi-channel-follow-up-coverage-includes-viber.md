@@ -1,13 +1,13 @@
 ---
 epic: 21
 story: 3
-status: review
+status: done
 baseline_commit: 093678c263988c77e4873469c4bdb63ce0fa376a
 ---
 
 # Story 21.3: Multi-channel follow-up coverage includes Viber
 
-Status: review
+Status: done
 
 ## Story
 
@@ -54,8 +54,8 @@ So that **coverage metrics reflect all messenger touch-points**.
 
 ### Review Findings
 
-- [ ] [Review][Patch] Add dashboard test for `ViberFollowUpRecorded`-only client [`src/Infrastructure.Tests/Clients/FollowUpCoverageViberTests.cs`]
-- [ ] [Review][Patch] Add `withoutOutreach=true` test — Viber-only client excluded from queue [`src/Infrastructure.Tests/Clients/FollowUpCoverageViberTests.cs` or `ClientServiceListFilterTests.cs`]
+- [x] [Review][Patch] Add dashboard test for `ViberFollowUpRecorded`-only client [`src/Infrastructure.Tests/Clients/FollowUpCoverageViberTests.cs`]
+- [x] [Review][Patch] Add `withoutOutreach=true` test — Viber-only client excluded from queue [`src/Infrastructure.Tests/Clients/ClientServiceListFilterTests.cs`]
 - [x] [Review][Defer] `LeadStatus != New` counts as followed-up without outreach events [`DashboardService.cs:74`, `ReportService.cs:424`] — deferred, pre-existing predicate preserved by design
 - [x] [Review][Defer] Dashboard metrics cache 60s TTL may show stale coverage after Viber log [`RedisDashboardMetricsCache.cs`] — deferred, pre-existing accepted TTL
 - [x] [Review][Defer] `withoutOutreach` filter ignores lead status (Contacted + no events still in queue) [`ClientService.cs:255`] — deferred, pre-existing design mismatch vs coverage metric
@@ -67,6 +67,7 @@ So that **coverage metrics reflect all messenger touch-points**.
 - Extracted `ClientOutreachCoverage.FollowUpCoverageEventTypes` — single source for Dashboard, Report, and ClientService.
 - No frontend changes; coverage flows through existing API fields.
 - Three unit tests in `FollowUpCoverageViberTests.cs`.
+- Code review patches: dashboard `ViberFollowUpRecorded`-only test; `withoutOutreach` queue filter test in `ClientServiceListFilterTests.cs`.
 
 ### File List
 
@@ -77,3 +78,4 @@ So that **coverage metrics reflect all messenger touch-points**.
 - `src/Infrastructure/Dashboard/DashboardService.cs`
 - `src/Infrastructure/Reports/ReportService.cs`
 - `src/Infrastructure.Tests/Clients/FollowUpCoverageViberTests.cs`
+- `src/Infrastructure.Tests/Clients/ClientServiceListFilterTests.cs`

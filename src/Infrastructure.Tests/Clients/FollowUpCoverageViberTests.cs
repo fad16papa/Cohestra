@@ -46,6 +46,35 @@ public sealed class FollowUpCoverageViberTests
     }
 
     [Fact]
+    public async Task GetMetrics_ClientWithOnlyViberFollowUpRecorded_CountsAsFollowedUp()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var current = CreateCurrentTenant();
+        await using var db = CreateDb(current);
+        await SeedTenantAsync(db, now);
+
+        var untouched = CreateClient("Untouched Lead", now);
+        var viberFollowUpOnly = CreateClient("Viber Follow-up Only Lead", now);
+        db.Clients.AddRange(untouched, viberFollowUpOnly);
+        db.ClientTimelineEvents.Add(new ClientTimelineEvent
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TenantId,
+            ClientId = viberFollowUpOnly.Id,
+            EventType = ClientTimelineEventType.ViberFollowUpRecorded,
+            OccurredAt = now.AddMinutes(-30),
+            Subject = "Contacted",
+        });
+        await db.SaveChangesAsync();
+
+        var service = new DashboardService(db, new NullDashboardMetricsCache(), current);
+        var metrics = await service.GetMetricsAsync();
+
+        Assert.Equal(2, metrics.TotalLeads);
+        Assert.Equal(50.0, metrics.FollowUpCoveragePercent);
+    }
+
+    [Fact]
     public async Task GetReport_CohortWithOnlyViberFollowUp_CountsAsFollowedUp()
     {
         var now = DateTimeOffset.UtcNow;

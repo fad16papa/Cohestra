@@ -230,6 +230,60 @@ public sealed class ClientServiceListFilterTests
     }
 
     [Fact]
+    public async Task ListAsync_WithoutOutreach_ExcludesClientWithOnlyViberInitiated()
+    {
+        var now = DateTimeOffset.UtcNow;
+        await using var dbContext = CreateDbContext();
+
+        var noOutreach = new Client
+        {
+            Id = Guid.NewGuid(),
+            FullName = "No Outreach Lead",
+            CreatedAt = now,
+            UpdatedAt = now,
+            LeadStatus = LeadStatus.New,
+        };
+        var viberOnly = new Client
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Viber Only Lead",
+            CreatedAt = now,
+            UpdatedAt = now,
+            LeadStatus = LeadStatus.New,
+        };
+
+        dbContext.Clients.AddRange(noOutreach, viberOnly);
+        dbContext.ClientTimelineEvents.Add(new ClientTimelineEvent
+        {
+            Id = Guid.NewGuid(),
+            ClientId = viberOnly.Id,
+            EventType = ClientTimelineEventType.ViberInitiated,
+            OccurredAt = now.AddHours(-1),
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext);
+        var result = await service.ListAsync(
+            page: 1,
+            pageSize: 25,
+            sortBy: null,
+            sortDirection: null,
+            mergeSuspect: null,
+            createdWithinDays: null,
+            registeredWithinDays: null,
+            followUpDue: null,
+            withoutOutreach: true,
+            leadStatus: null,
+            nationality: null,
+            search: null,
+            community: null);
+
+        Assert.Equal(1, result.TotalCount);
+        Assert.Single(result.Items);
+        Assert.Equal(noOutreach.Id, result.Items[0].Id);
+    }
+
+    [Fact]
     public async Task ListAsync_StatusCounts_AreTenantWide()
     {
         var now = DateTimeOffset.UtcNow;
