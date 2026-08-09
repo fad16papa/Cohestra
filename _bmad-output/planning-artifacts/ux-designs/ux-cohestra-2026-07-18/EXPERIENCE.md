@@ -67,7 +67,7 @@ design: ./DESIGN.md
 |---------|-------|-----|------------|
 | Login | `/login` | All roles | Tenant-scoped |
 | Dashboard | `/dashboard` | Admin, Member | Plan limits banners |
-| Activities / Communities / Categories | `/activities…` | Admin, Member | Cap warnings at 80% |
+| Activities / Communities / Categories | `/activities…` | Admin, Member | **Activities list** — recovery at cap, URL filters, card quick actions (see §Activities module) |
 | Clients | `/clients` | Admin, Member | **Lead queue** (FR-29) — all plans |
 | Client profile | `/clients/{id}` | Admin, Member | Action-first layout (FR-30) |
 | Reports | `/reports` | Admin, Member | Basic = fixed + CSV; Core+ = queryable; Pro + campaigns |
@@ -143,6 +143,7 @@ The **Clients** area is a **lead queue** for daily operator work — not a passi
 | Search | `search` | Name, email, phone (normalized) |
 | Nationality | `nationality` | Dropdown — filter-only (not a table column) |
 | Registered within | `registeredWithinDays` | Presets via quick chip (7 days) |
+| Activity | `activityId` (+ optional `activityName`) | Set from Activities card **Clients (N)** quick action — see §Activities module |
 
 - **No Lead status dropdown** in the filter bar — status chips are the sole status control (keyboard-focusable buttons). Removes duplicate control clutter observed in UAT.
 - Referral source deferred (not in v1 queue bar).
@@ -269,6 +270,178 @@ Each client = card:
 | Referral filter + export filtered CSV | Fixed export | ✓ | ✓ |
 | Bulk → Campaign | UpgradePanel | UpgradePanel | ✓ |
 
+## Activities module (operator at scale)
+
+The **Activities** list is a **launch catalog** for operators managing many lead engines — find, triage capacity, recover published slots, and hand off to Clients. Inherited Platform 0 activity CRUD, publish/archive, and registration rules apply; this section defines **presentation and interaction** only.
+
+→ Cross-reference: **Clients module** (activity-scoped filter via `activityId` query param) · Dashboard **LimitMeter** / at-cap banners (deep-link `?status=published`)
+
+### Mental model
+
+| Concept | UX treatment |
+|---------|----------------|
+| **Activity** | One card per activity — launch engine with status, registrations, and share link |
+| **Published cap** | Tenant plan limit on live activities — blocks new publish until a slot is freed |
+| **Registration cap** | Tenant monthly sign-ups — pauses new public registrations when blocked |
+| **Recovery** | Operator frees a published slot via archive or unpublish on the activity detail — not billing-first |
+| **URL filters** | Bookmarkable list state — shareable with teammates |
+| **Sort** | Server-side ordering across the full filtered set — paginated card grid |
+
+### Activities list — `/activities`
+
+**Page header**
+
+- Title: **Activities**
+- Description (one line): *Launch and manage your lead engines.*
+- Primary CTA: **New activity** → `/activities/new`
+- When **published cap is blocked:** CTA becomes a secondary button (not a link) with title *Free a published slot first — use the Free a slot chip below*; `aria-describedby` points to the free-a-slot chip. Click focuses the chip — does not open the create wizard.
+
+**At-cap banner** (`ActivitiesAtCapBanner`)
+
+**Single compound alert** — never two stacked plan-limit banners on this page.
+
+| Variant | When | Styling |
+|---------|------|---------|
+| **blocked** | Any relevant dial at hard cap (100%) | Destructive red |
+| **warn** | Any dial ≥80% | Amber/gold; **Dismiss** per browser session (`sessionStorage`, tenant-scoped key) |
+
+| Condition | Primary line | Secondary line | Actions |
+|-----------|--------------|----------------|---------|
+| Published blocked | Published at capacity (used/limit). Archive or unpublish one to publish another. | — | **Review published** |
+| Registrations blocked | — | Monthly sign-ups paused (used/limit). | **View billing & upgrade** (tenant admin only); **Tenant Members** see copy only — no billing CTA |
+| Both blocked | Published line first (actionable on this page) | Registrations line second | Review published + billing (admin) or Review published only (Member) |
+| Published warn only | Softer published-capacity copy | — | **Review published**; **Dismiss** |
+| Registrations warn only | — | Softer monthly registration copy | **View billing & upgrade** (tenant admin only); **Dismiss**; **Tenant Members** see copy + Dismiss only |
+| Both warn | Published line first | Registrations line second | Review published + billing (admin) + Dismiss; Member sees Review published + Dismiss |
+
+- Banner uses `role="alert"`.
+- **Review published** applies `status=published` in the URL and scrolls to the activity grid — does **not** enable the recovery mode strip (only **Free a slot** does).
+- Limit copy is sourced from the same shell **usage** dials as admin **LimitMeter** — do not duplicate limit math in UI copy.
+
+**Recovery chip row** (`ActivitiesRecoveryChips`)
+
+Horizontal chip row **below banner, above filter bar**. Reuse Clients **FilterChip** visual language (rounded-full, `aria-pressed`, optional count badge).
+
+| Chip | Visible when | Behavior |
+|------|--------------|----------|
+| **Published only** | Published dial blocked or warn, **or** registration dial blocked | Toggles `status=published` in URL; count badge shows published usage from shell |
+| **Free a slot** | Published dial blocked only | Applies published filter, enables **recovery mode** helper strip, scrolls to grid |
+
+**Chip row visibility:** The row renders only when at least one chip is visible. When **only** the registration dial is at warn (not blocked) and the published dial is below warn, the at-cap banner may show but **neither chip appears** — operators use banner actions (billing for admin, Dismiss) instead.
+
+**Recovery mode strip** (inline, `role="status"` — not a modal):
+
+> You're at your published limit. Open an activity below and **archive** or **unpublish** it to free a slot.
+
+**Invariant:** **Free a slot** never navigates to billing. Upgrade remains a separate explicit action on the banner for registration-cap scenarios.
+
+**Filter bar** (URL-synced)
+
+All filter values are derived from URL `searchParams`. **Page number stays local state** (not in URL). Any filter or sort change resets page to 1.
+
+| Control | Query param | Notes |
+|---------|-------------|-------|
+| Search | `search` | Debounced 400ms commit → `router.replace`; server-side across name, community, category, location |
+| Status | `status` | `draft` · `published` · `archived` |
+| Community | `community` | Community label (matches API filter) |
+| Category | `category` | Category name |
+| Sort by | `sortBy` + `sortDirection` | Omitted from URL when default (`updatedAt` desc) |
+
+**Sort presets** (single `<select>`, implicit direction per field):
+
+| Preset value | Label |
+|--------------|-------|
+| `updatedAt:desc` | Last updated *(default)* |
+| `createdAt:desc` | Created |
+| `name:asc` | Name |
+| `registrationCount:desc` | Registrations |
+
+- **Clear filters** navigates to `/activities` with no query string (also clears recovery mode strip state).
+- **URL hygiene — sort:** Unknown `sortBy` / `sortDirection` tokens are removed via `router.replace` on load. Valid tokens that are **not** one of the four presets (e.g. `name:desc`) are **not** stripped — the server honors them, but the sort `<select>` falls back to the nearest preset for that field (or default). Prefer preset URLs when sharing links.
+- Layout on `≥ xl`: six-column CSS grid — search spans two columns; status, community, category, and sort each occupy one column (five controls total).
+
+**Activity card grid**
+
+Responsive card grid (`< sm`: 1 column · `sm`: 2 columns · `xl`: 3 columns). Each card (DOM order):
+
+| Region | Content |
+|--------|---------|
+| **Header** | Activity name (link to detail) · status badge · **Sign-ups paused** badge (when reg dial blocked) · community pill · category |
+| **Body** | Schedule · location · registration count line (includes per-activity `maxRegistrants` when published and configured) · created timestamp |
+| **Footer** | Quick actions row (see below) |
+| **Below footer** | Plan reg meter (published + reg dial warn/blocked) · schedule conflict alert (amber border on card + inline alert when detected) |
+
+**Card signals**
+
+| Signal | When shown | Region |
+|--------|------------|--------|
+| **Sign-ups paused** badge | Activity is published **and** tenant monthly registration dial is **blocked** (not warn-only) | Header (beside status badge) |
+| **Plan reg meter** | Activity is published **and** tenant registration dial is warn or blocked | Below quick actions |
+| **Schedule conflict** | Calendar conflict detected for this activity | Below quick actions (card also gets amber border); omitted while conflict check is loading or unavailable |
+
+**Card quick actions** (footer — clicks do not navigate the card)
+
+| Action | Behavior |
+|--------|----------|
+| **Copy link** | Published only — fetches and copies public registration URL; toast on success. Draft/archived: disabled with hint *Publish to get a registration link* |
+| **Registrations (N)** | → `/activities/{id}?tab=registrations` |
+| **Clients (N)** | → `/clients?activityId={id}&activityName={name}` — see **Clients module** filter bar |
+
+**Empty states**
+
+| Condition | Copy / action |
+|-----------|----------------|
+| No activities ever | ProductEmptyState — create first activity + link to manage communities |
+| Filters match zero | *No activities match your current filters.* + **Clear filters** |
+| Catalog load error | Inline alert when communities/categories catalog fails to load |
+
+**Pagination**
+
+- Local page state, 20 items per page.
+- Prev / Next controls below the grid.
+
+### Cross-module flows
+
+```
+Dashboard at-cap banner → Review published → /activities?status=published
+Free a slot chip → published filter + recovery strip → open card → archive/unpublish on detail
+Copy link → share public registration URL
+Clients (N) on card → Clients list filtered by activityId
+Sort registrationCount asc → identify lowest-traffic published activities to archive
+```
+
+Example bookmark URL:
+
+```
+/activities?status=published&sortBy=registrationCount&sortDirection=asc
+```
+
+### Plan gates (Activities)
+
+| Feature | Basic | Core | Pro |
+|---------|:-----:|:----:|:---:|
+| Activity list + URL filters + sort | ✓ | ✓ | ✓ |
+| At-cap banner + recovery chips | ✓ | ✓ | ✓ |
+| Card quick actions | ✓ | ✓ | ✓ |
+| Publish / new activity | Subject to plan published-activity limit | Same | Same |
+
+Limits are enforced from shell **usage** dials — same source as **LimitMeter** on the dashboard and admin shell.
+
+### Responsive notes
+
+| Breakpoint | Behavior |
+|------------|----------|
+| `< sm` | Single-column card grid; filter controls stack to one column; recovery chips wrap |
+| `sm` – `lg` | Two-column card grid; filter grid stacks to two columns |
+| `≥ xl` | Six-column filter row (search spans 2) + three-column card grid |
+
+### Accessibility invariants
+
+- Recovery chips: `aria-pressed`, keyboard focusable, chip ids for described-by wiring
+- At-cap banner: `role="alert"`
+- Recovery mode strip: `role="status"`
+- Blocked **New activity** button: `aria-describedby` → `#free-a-slot-chip`
+
 ## Voice and Tone
 
 Microcopy only. Aesthetic in `DESIGN.md`.
@@ -300,6 +473,16 @@ Microcopy only. Aesthetic in `DESIGN.md`.
 | "Never" for no outreach (muted) | "N/A" or empty without label |
 | "Follow-up due" · "Needs outreach" (New only) | "Hot lead" · emoji hype |
 | "3 excluded — no consent" on bulk campaign | Silent drop |
+
+### Activities / launch catalog
+
+| Do | Don't |
+|----|-------|
+| "Review published" · "Free a slot" | "Upgrade now" as the only recovery path on the list |
+| "Archive or unpublish one to publish another" | Two separate red plan-limit banners stacked |
+| "Sign-ups paused" on the card when reg cap hit | Plan usage / upgrade language on **public** registration surfaces |
+| "No activities match your current filters." + Clear filters | Empty grid with no recovery action when filters active |
+| Bookmarkable filter URLs for teammates | Filters trapped in React state only |
 
 ### Public stub
 
@@ -339,6 +522,9 @@ Behavioral. Visuals in `DESIGN.md`.
 | **ClientRegistrationHistory** | Master/detail list + selected answers; expand/collapse; search at 5+ entries; email/consent full-width in answer grid |
 | **ClientRelationshipTimeline** | Single expandable feed; scroll capped when expanded; no preview duplicate |
 | **BulkSelectBar** | Pro only; floating bottom bar when selection &gt; 0 |
+| **ActivitiesAtCapBanner** | Single compound alert at cap/warn; Review published CTA; admin-only billing link for reg cap; warn dismiss per session |
+| **ActivitiesRecoveryChips** | Published only + Free a slot chips; recovery mode strip; never routes Free a slot to billing |
+| **ActivityCardQuickActions** | Copy link (published) · Registrations tab · Clients filter handoff; stopPropagation on card |
 
 Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above. **ClientRow** superseded by **ClientQueueRow** on list (FR-29).
 
@@ -348,7 +534,7 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 |-------|-----------|
 | Basic empty tenant | Dashboard empty + CTA create Community/Activity; stub empty list |
 | At seat cap | SeatGate on Team |
-| At published/regs cap | LimitMeter block; cannot publish / public register rejects with friendly message |
+| At published/regs cap | LimitMeter block on dashboard; **Activities** list shows compound banner + recovery chips; cannot publish / public register rejects with registrant-safe message |
 | Trialing | PlanBadge + trial end in BillingBanner (last 7 days) |
 | PastDue | Warn banner; full access until day 7 |
 | OnHold | Danger banner; admin read-only; public registration blocked |
@@ -360,6 +546,9 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 | Clients list loading | Skeleton rows matching **ClientQueueRow** column layout |
 | Profile 50+ registrations | Registration history collapsed; search prominent |
 | No phone on client | Messenger buttons disabled; phone field highlighted in edit |
+| Activities list loading | Card grid skeleton (6 cards) |
+| Activities filters active, zero results | Dashed empty state + Clear filters |
+| Activities published cap blocked | New activity CTA softened; Free a slot chip + recovery strip |
 
 ## Interaction Primitives
 
@@ -383,6 +572,9 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 |------------|----------|
 | Admin `≥ lg` | Sidebar + PlanBadge in top bar |
 | Admin `sm` | Sidebar Sheet; BillingBanner stacks CTA under text |
+| Activities list `< sm` | Single-column cards; filter controls stack one column; chips wrap |
+| Activities list `sm` – `lg` | Two-column card grid; filter grid two columns; chips wrap |
+| Activities list `≥ xl` | Six-column filter row (search spans 2) + three-column card grid |
 | Clients list `< md` | Card stack; horizontal scroll filter chips; no table horizontal scroll |
 | Clients list `≥ lg` | Full table; optional compact density toggle `[ASSUMPTION]` |
 | Client profile mobile | Header actions wrap; master profile first; registration + timeline stack; sidebar cards below |
@@ -446,7 +638,7 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 
 **Borrow posture from:** editorial luxury restraint; calm ops density without purple glow; Stripe-hosted money UI rather than reinventing invoices; photography with meaning over flat white.
 
-**Anti-patterns:** Dashboard-first marketing hero; Basic stub with stats/promos; Member upgrade Checkout; Suspend-as-collections; card walls for activity lists on stub; Platform 0 forest green as Cohestra brand; **Nationality as primary list column**; **hover-only row actions on desktop**; **registration history above outreach on profile**; HubSpot-style deal pipeline columns.
+**Anti-patterns:** Dashboard-first marketing hero; Basic stub with stats/promos; Member upgrade Checkout; Suspend-as-collections; card walls for activity lists on stub; Platform 0 forest green as Cohestra brand; **Nationality as primary list column**; **hover-only row actions on desktop**; **registration history above outreach on profile**; HubSpot-style deal pipeline columns; **stacked duplicate plan-limit banners on Activities**; **billing-first recovery** when published cap is blocked.
 
 ## Ratified UX decisions (2026-07-18)
 
@@ -493,3 +685,16 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 | Timeline | Single expandable relationship timeline; no redundant preview block |
 | Registration answers | Email + consent full-width rows; long values never overlap adjacent columns |
 | Removed | Sticky outreach bar card, lone Lead-status card, giant full-width messenger buttons |
+
+## Ratified UX decisions (2026-08-09 — Activities list operator at scale)
+
+| # | Decision |
+|---|----------|
+| Activities list posture | **Launch catalog** — recovery at cap, URL-sync filters, server-side sort, card quick actions |
+| At-cap presentation | **Single compound banner** — never two stacked plan-limit alerts on `/activities` |
+| Recovery chips | **Published only** + **Free a slot**; Free a slot never navigates to billing |
+| URL contract | All list filters + sort in query params; page local only; clear → `/activities` |
+| Sort control | Single select with four presets; default `updatedAt` desc omitted from URL |
+| Card handoff | Quick actions: Copy link · Registrations tab · Clients list via `activityId` filter |
+| Reg cap on card | **Sign-ups paused** badge when reg dial blocked; plan reg meter when reg dial warn or blocked |
+| Public registration | Registrant-safe copy when limits hit — no plan upgrade language (separate from admin list) |
