@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-09T15:36:00Z
+# last_updated: 2026-08-09T15:42:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-09T15:36:00Z
+last_updated: 2026-08-09T15:42:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -277,7 +277,7 @@ development_status:
   23-2-action-first-client-profile: done
   23-3-bulk-select-campaign: done
   23-4-next-follow-up-date: done
-  epic-23-retrospective: optional
+  epic-23-retrospective: done
 
 action_items:
   - epic: 16
@@ -500,4 +500,26 @@ action_items:
   - epic: 21
     action: "Document dashboard metrics cache lag in operator FAQ or plan invalidation story"
     owner: Product
+    status: open
+
+  # Epic 23 retrospective action items (2026-08-09)
+  - epic: 23
+    action: "Operator UAT — /clients lead queue at 5k scale (paginate, sort, filtered CSV export)"
+    owner: Operator
+    status: open
+  - epic: 23
+    action: "Decide bulk-select spine — hide checkbox column on Basic/Core or update EXPERIENCE.md"
+    owner: Product
+    status: open
+  - epic: 23
+    action: "Close draft brainstorm PRs #117–#126 (Epic 24 artifacts superseded)"
+    owner: Dev
+    status: open
+  - epic: 23
+    action: "Mobile filter collapse or ratify always-visible filters in EXPERIENCE.md"
+    owner: Dev
+    status: open
+  - epic: 23
+    action: "Retroactively create story files 23.1–23.4 in implementation-artifacts (optional)"
+    owner: Dev
     status: open
