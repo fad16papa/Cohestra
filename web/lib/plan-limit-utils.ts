@@ -166,3 +166,30 @@ export function getActivitiesAtCapBannerState(
     showUpgradeLink: registrationsBlocked || registrationsWarn,
   };
 }
+
+export function getRegistrationsDialForCards(
+  shell: TenantShell | null | undefined
+): LimitDial | null {
+  const dial = findLimitDial(shell, "registrations");
+  if (!dial || (!dial.warn && !dial.blocked)) {
+    return null;
+  }
+
+  return dial;
+}
+
+export function shouldShowPlanRegCapOnActivityCard(
+  activityStatus: string,
+  dial: LimitDial | null | undefined
+): boolean {
+  return (
+    activityStatus === "published" && Boolean(dial && (dial.warn || dial.blocked))
+  );
+}
+
+export function shouldShowSignUpsPausedBadge(
+  activityStatus: string,
+  dial: LimitDial | null | undefined
+): boolean {
+  return activityStatus === "published" && Boolean(dial?.blocked);
+}

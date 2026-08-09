@@ -26,6 +26,7 @@ import { fetchCommunities } from "@/lib/communities-api";
 import {
   getActivitiesAtCapBannerState,
   getPublishedActivitiesUsageCount,
+  getRegistrationsDialForCards,
   isPublishedActivitiesBlocked,
   shouldShowActivitiesRecoveryChips,
   shouldShowPublishedOnlyChip,
@@ -98,6 +99,7 @@ export function ActivitiesListPage() {
   const showPublishedOnlyChip = shouldShowPublishedOnlyChip(shell);
   const publishedBlocked = isPublishedActivitiesBlocked(shell);
   const publishedCount = getPublishedActivitiesUsageCount(shell);
+  const planRegistrationsDial = getRegistrationsDialForCards(shell);
   const {
     getConflictsForActivity,
     ready: conflictsReady,
@@ -470,6 +472,7 @@ export function ActivitiesListPage() {
               <ActivityCard
                 key={activity.id}
                 activity={activity}
+                planRegistrationsDial={planRegistrationsDial}
                 conflictingActivities={
                   conflictsReady && !conflictError
                     ? getConflictsForActivity(activity.id)
