@@ -1,7 +1,7 @@
 ---
 epic: 21
 story: 2
-status: review
+status: done
 baseline_commit: 24a4d3f263988c77e4873469c4bdb63ce0fa376a
 ---
 
@@ -72,10 +72,10 @@ So that **my team sees outreach history and avoids duplicate logging**.
 
 ### Review Findings
 
-- [ ] [Review][Patch] Channel switch keeps per-channel drafts (decision: option 2) — stash status/note per channel on toggle; restore stash or baseline; clear draft on successful save [`web/components/clients/client-outreach-log-card.tsx`]
-- [ ] [Review][Patch] Dirty guard ignores last saved note — enables Save that 409s when same note is retyped [`web/components/clients/client-outreach-log-card.tsx:155`]
-- [ ] [Review][Patch] Add cross-channel isolation unit test (identical WhatsApp follow-up must not 409 Viber) [`src/Infrastructure.Tests/Clients/ViberFollowUpDeduplicationTests.cs`]
-- [ ] [Review][Patch] Channel toggle a11y: use `radiogroup` / `role="radio"` exclusive pattern [`web/components/clients/client-outreach-log-card.tsx:214`]
+- [x] [Review][Patch] Channel switch keeps per-channel drafts (decision: option 2) — stash status/note per channel on toggle; restore stash or baseline; clear draft on successful save [`web/components/clients/client-outreach-log-card.tsx`]
+- [x] [Review][Patch] Dirty guard ignores last saved note — enables Save that 409s when same note is retyped [`web/components/clients/client-outreach-log-card.tsx:155`]
+- [x] [Review][Patch] Add cross-channel isolation unit test (identical WhatsApp follow-up must not 409 Viber) [`src/Infrastructure.Tests/Clients/ViberFollowUpDeduplicationTests.cs`]
+- [x] [Review][Patch] Channel toggle a11y: use `radiogroup` / `role="radio"` exclusive pattern [`web/components/clients/client-outreach-log-card.tsx:214`]
 - [x] [Review][Defer] Concurrent identical POSTs can both succeed — deferred, pre-existing WhatsApp race [`src/Infrastructure/Clients/ClientService.cs`]
 - [x] [Review][Defer] First Contacted+empty note blocked by synthetic baseline — deferred, pre-existing WhatsApp dirty pattern [`web/components/clients/client-outreach-log-card.tsx`]
 - [x] [Review][Defer] No web tests for channel toggle / default channel — deferred, follow-up coverage [`web/components/clients/client-outreach-log-card.tsx`]
@@ -109,7 +109,8 @@ Composer
 
 - Implemented Viber follow-up API mirroring WhatsApp (15-min dedup, 409 on duplicate).
 - Extended Log outreach card with WhatsApp | Viber channel toggle; per-channel baseline; brand tokens on active segment.
-- Unit tests (3) and integration dedup tests (2) added. Web build + unit tests pass.
+- Code review patches: per-channel drafts on switch, note-aware dirty guard, cross-channel dedup unit test, radiogroup a11y.
+- Unit tests (4) and integration dedup tests (2) added. Web build + unit tests pass.
 
 ### File List
 
@@ -131,3 +132,4 @@ Composer
 ### Change Log
 
 - 2026-08-09: Story 21.2 — Viber follow-up status tracking (Epic 21)
+- 2026-08-09: Code review patches — per-channel drafts, note baseline guard, cross-channel test, radiogroup a11y

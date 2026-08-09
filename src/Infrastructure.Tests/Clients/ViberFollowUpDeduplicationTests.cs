@@ -90,4 +90,32 @@ public sealed class ViberFollowUpDeduplicationTests
             "Contacted",
             "Old note");
     }
+
+    [Fact]
+    public void EnsureViberFollowUpIsNotDuplicate_IgnoresRecentWhatsAppMatch()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var client = new Client
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Test Client",
+            TimelineEvents =
+            [
+                new ClientTimelineEvent
+                {
+                    Id = Guid.NewGuid(),
+                    ClientId = Guid.NewGuid(),
+                    EventType = ClientTimelineEventType.WhatsAppFollowUpRecorded,
+                    OccurredAt = now.AddMinutes(-1),
+                    Subject = "Contacted",
+                    Note = "Same note",
+                },
+            ],
+        };
+
+        ClientService.EnsureViberFollowUpIsNotDuplicate(
+            client,
+            "Contacted",
+            "Same note");
+    }
 }

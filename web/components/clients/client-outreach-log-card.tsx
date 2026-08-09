@@ -21,6 +21,13 @@ export type { OutreachLogStatus };
 
 export type OutreachChannel = "whatsapp" | "viber";
 
+type ChannelDraft = {
+  status: OutreachLogStatus;
+  note: string;
+};
+
+type ChannelDrafts = Record<OutreachChannel, ChannelDraft | null>;
+
 type ClientOutreachLogCardProps = {
   client: ClientDetail;
   onUpdated: (client: ClientDetail) => void;
@@ -37,6 +44,10 @@ const followUpEventTypeByChannel: Record<
   whatsapp: "whatsapp_follow_up_recorded",
   viber: "viber_follow_up_recorded",
 };
+
+function emptyChannelDrafts(): ChannelDrafts {
+  return { whatsapp: null, viber: null };
+}
 
 function parseOutreachStatusFromTimeline(
   subject: string | null | undefined
@@ -57,23 +68,38 @@ function parseOutreachStatusFromTimeline(
   return null;
 }
 
-function getLatestOutreachStatus(
+function getLatestFollowUpEvent(
   client: ClientDetail,
   channel: OutreachChannel
-): OutreachLogStatus {
+): ClientTimelineItem | undefined {
   const eventType = followUpEventTypeByChannel[channel];
-  const latestFollowUp = client.timeline
+
+  return client.timeline
     .filter((item: ClientTimelineItem) => item.eventType === eventType)
     .sort(
       (left, right) =>
         new Date(right.occurredAt).getTime() -
         new Date(left.occurredAt).getTime()
     )[0];
+}
+
+function getLatestOutreachStatus(
+  client: ClientDetail,
+  channel: OutreachChannel
+): OutreachLogStatus {
+  const latestFollowUp = getLatestFollowUpEvent(client, channel);
 
   return (
     parseOutreachStatusFromTimeline(latestFollowUp?.campaignSubject) ??
     "contacted"
   );
+}
+
+function getLatestOutreachNote(
+  client: ClientDetail,
+  channel: OutreachChannel
+): string {
+  return getLatestFollowUpEvent(client, channel)?.note?.trim() ?? "";
 }
 
 function getDefaultOutreachChannel(client: ClientDetail): OutreachChannel {
@@ -110,6 +136,36 @@ function getDefaultOutreachChannel(client: ClientDetail): OutreachChannel {
   return viberTime > whatsappTime ? "viber" : "whatsapp";
 }
 
+function resolveChannelForm(
+  client: ClientDetail,
+  channel: OutreachChannel,
+  draft: ChannelDraft | null
+): {
+  outreachStatus: OutreachLogStatus;
+  outreachNote: string;
+  baselineStatus: OutreachLogStatus;
+  baselineNote: string;
+} {
+  const baselineStatus = getLatestOutreachStatus(client, channel);
+  const baselineNote = getLatestOutreachNote(client, channel);
+
+  if (draft) {
+    return {
+      outreachStatus: draft.status,
+      outreachNote: draft.note,
+      baselineStatus,
+      baselineNote,
+    };
+  }
+
+  return {
+    outreachStatus: baselineStatus,
+    outreachNote: "",
+    baselineStatus,
+    baselineNote,
+  };
+}
+
 export function ClientOutreachLogCard({
   client,
   onUpdated,
@@ -117,25 +173,32 @@ export function ClientOutreachLogCard({
 }: ClientOutreachLogCardProps) {
   const { authFetch } = useAuth();
   const { showToast } = useToast();
-  const [channel, setChannel] = useState<OutreachChannel>(() =>
-    getDefaultOutreachChannel(client)
+  const initialChannel = getDefaultOutreachChannel(client);
+  const initialForm = resolveChannelForm(client, initialChannel, null);
+  const [channel, setChannel] = useState<OutreachChannel>(initialChannel);
+  const [channelDrafts, setChannelDrafts] = useState<ChannelDrafts>(
+    emptyChannelDrafts
   );
-  const [baselineStatus, setBaselineStatus] = useState<OutreachLogStatus>(() =>
-    getLatestOutreachStatus(client, getDefaultOutreachChannel(client))
+  const [baselineStatus, setBaselineStatus] = useState<OutreachLogStatus>(
+    initialForm.baselineStatus
   );
-  const [outreachStatus, setOutreachStatus] =
-    useState<OutreachLogStatus>(baselineStatus);
-  const [outreachNote, setOutreachNote] = useState("");
+  const [baselineNote, setBaselineNote] = useState(initialForm.baselineNote);
+  const [outreachStatus, setOutreachStatus] = useState<OutreachLogStatus>(
+    initialForm.outreachStatus
+  );
+  const [outreachNote, setOutreachNote] = useState(initialForm.outreachNote);
   const [busy, setBusy] = useState(false);
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     const nextChannel = getDefaultOutreachChannel(client);
-    const nextStatus = getLatestOutreachStatus(client, nextChannel);
+    const nextForm = resolveChannelForm(client, nextChannel, null);
+    setChannelDrafts(emptyChannelDrafts());
     setChannel(nextChannel);
-    setBaselineStatus(nextStatus);
-    setOutreachStatus(nextStatus);
-    setOutreachNote("");
+    setBaselineStatus(nextForm.baselineStatus);
+    setBaselineNote(nextForm.baselineNote);
+    setOutreachStatus(nextForm.outreachStatus);
+    setOutreachNote(nextForm.outreachNote);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client.id]);
 
@@ -144,15 +207,30 @@ export function ClientOutreachLogCard({
       return;
     }
 
-    const nextStatus = getLatestOutreachStatus(client, nextChannel);
+    const nextDrafts: ChannelDrafts = {
+      ...channelDrafts,
+      [channel]: {
+        status: outreachStatus,
+        note: outreachNote,
+      },
+    };
+    const nextForm = resolveChannelForm(
+      client,
+      nextChannel,
+      nextDrafts[nextChannel]
+    );
+
+    setChannelDrafts(nextDrafts);
     setChannel(nextChannel);
-    setBaselineStatus(nextStatus);
-    setOutreachStatus(nextStatus);
-    setOutreachNote("");
+    setBaselineStatus(nextForm.baselineStatus);
+    setBaselineNote(nextForm.baselineNote);
+    setOutreachStatus(nextForm.outreachStatus);
+    setOutreachNote(nextForm.outreachNote);
   }
 
   const trimmedNote = outreachNote.trim();
-  const isDirty = outreachStatus !== baselineStatus || trimmedNote.length > 0;
+  const isDirty =
+    outreachStatus !== baselineStatus || trimmedNote !== baselineNote;
   const canSave = isDirty && !busy;
 
   async function handleSaveOutreachLog() {
@@ -173,7 +251,12 @@ export function ClientOutreachLogCard({
           : await recordWhatsAppFollowUp(authFetch, client.id, payload);
       onUpdated(updated);
       setBaselineStatus(outreachStatus);
+      setBaselineNote(trimmedNote);
       setOutreachNote("");
+      setChannelDrafts((current) => ({
+        ...current,
+        [channel]: null,
+      }));
 
       if (onOutreachSaved) {
         onOutreachSaved({ client: updated, status: outreachStatus });
@@ -214,14 +297,15 @@ export function ClientOutreachLogCard({
         <div className="space-y-1.5">
           <Label id="client-outreach-channel-label">Channel</Label>
           <div
-            role="group"
+            role="radiogroup"
             aria-labelledby="client-outreach-channel-label"
             className="flex overflow-hidden rounded-lg border border-input"
           >
             <button
               type="button"
+              role="radio"
               disabled={busy}
-              aria-pressed={channel === "whatsapp"}
+              aria-checked={channel === "whatsapp"}
               onClick={() => handleChannelChange("whatsapp")}
               className={cn(
                 "flex-1 px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
@@ -234,8 +318,9 @@ export function ClientOutreachLogCard({
             </button>
             <button
               type="button"
+              role="radio"
               disabled={busy}
-              aria-pressed={channel === "viber"}
+              aria-checked={channel === "viber"}
               onClick={() => handleChannelChange("viber")}
               className={cn(
                 "flex-1 px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
