@@ -5,6 +5,12 @@ import { BarChart3, LayoutDashboard, Mail } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+const LADDER_STEPS = [
+  { top: "top-0", left: "left-0", width: "w-[88%]" },
+  { top: "top-[8rem] sm:top-[8.5rem]", left: "left-[4%] sm:left-[5%]", width: "w-[88%]" },
+  { top: "top-[16rem] sm:top-[17rem]", left: "left-[8%] sm:left-[10%]", width: "w-[88%]" },
+] as const;
+
 function StackBrowserChrome({
   path,
   children,
@@ -61,13 +67,7 @@ function DashboardStackMock() {
   const metrics = [
     { value: "248", label: "Total leads" },
     { value: "36", label: "Registrations this week" },
-    { value: "4", label: "Active activities" },
     { value: "82%", label: "Follow-up coverage" },
-  ] as const;
-
-  const queue = [
-    { name: "Jordan K.", tag: "New" },
-    { name: "Sam R.", tag: "Returning" },
   ] as const;
 
   return (
@@ -75,49 +75,42 @@ function DashboardStackMock() {
       path="yourclub.cohestra.app/dashboard"
       className="shadow-[0_40px_80px_rgba(7,13,18,0.16)]"
     >
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <div>
           <p className="font-[family-name:var(--font-fraunces)] text-base font-medium tracking-[-0.02em] text-ink sm:text-lg">
             Good morning, Alex
           </p>
           <p className="mt-0.5 text-[0.6875rem] text-stone sm:text-xs">
-            Sunday clinic is tonight — 12 registered so far.
+            Sunday clinic tonight — 12 registered.
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {metrics.map((metric) => (
             <div
               key={metric.label}
-              className="rounded-[10px] border border-line bg-paper px-2.5 py-2 sm:px-3 sm:py-2.5"
+              className="rounded-[10px] border border-line bg-paper px-2 py-2 sm:px-2.5 sm:py-2.5"
             >
-              <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium tracking-[-0.02em] text-ink sm:text-xl">
+              <p className="font-[family-name:var(--font-fraunces)] text-base font-medium tracking-[-0.02em] text-ink sm:text-lg">
                 {metric.value}
               </p>
-              <p className="mt-0.5 text-[0.625rem] leading-snug text-stone sm:text-[0.6875rem]">
+              <p className="mt-0.5 text-[0.5625rem] leading-snug text-stone sm:text-[0.625rem]">
                 {metric.label}
               </p>
             </div>
           ))}
         </div>
 
-        <div className="rounded-[10px] border border-line bg-paper p-2.5 sm:p-3">
+        <div className="rounded-[10px] border border-line bg-paper px-2.5 py-2 sm:p-3">
           <p className="text-[0.625rem] font-semibold tracking-wide text-gold uppercase">
             Needs follow-up
           </p>
-          <ul className="mt-2 space-y-1.5">
-            {queue.map((row) => (
-              <li
-                key={row.name}
-                className="flex items-center justify-between gap-2 text-[0.6875rem] sm:text-xs"
-              >
-                <span className="font-medium text-ink">{row.name}</span>
-                <span className="rounded-sm bg-lagoon/10 px-1.5 py-0.5 text-[0.5625rem] font-bold tracking-wide text-lagoon uppercase">
-                  {row.tag}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-2 flex items-center justify-between gap-2 text-[0.6875rem] sm:text-xs">
+            <span className="font-medium text-ink">Jordan K.</span>
+            <span className="rounded-sm bg-lagoon/10 px-1.5 py-0.5 text-[0.5625rem] font-bold tracking-wide text-lagoon uppercase">
+              New
+            </span>
+          </div>
         </div>
       </div>
     </StackBrowserChrome>
@@ -128,7 +121,6 @@ function CampaignsStackMock() {
   const rows = [
     { subject: "Sunday clinic reminder", sent: "Mar 8" },
     { subject: "New board games night", sent: "Mar 5" },
-    { subject: "Summer camp early access", sent: "Feb 28" },
   ] as const;
 
   return (
@@ -225,7 +217,7 @@ function ReportsStackMock() {
           ))}
         </div>
 
-        <div className="flex h-10 items-end gap-1 rounded-[8px] border border-line bg-paper px-2 py-1.5">
+        <div className="flex h-9 items-end gap-1 rounded-[8px] border border-line bg-paper px-2 py-1.5 sm:h-10">
           {[42, 58, 36, 72, 48, 64, 36].map((height, index) => (
             <span
               key={index}
@@ -239,48 +231,71 @@ function ReportsStackMock() {
   );
 }
 
+type LadderCardProps = {
+  children: ReactNode;
+  label: string;
+  icon: typeof LayoutDashboard;
+  step: 0 | 1 | 2;
+  labelClassName: string;
+};
+
+function LadderCard({ children, label, icon, step, labelClassName }: LadderCardProps) {
+  const position = LADDER_STEPS[step];
+
+  return (
+    <div
+      className={cn(
+        "marketing-hero-stack-card absolute",
+        position.top,
+        position.left,
+        position.width
+      )}
+      style={{ zIndex: step + 1 }}
+    >
+      <div className="relative">
+        {children}
+        <StackLabel icon={icon} label={label} className={labelClassName} />
+      </div>
+    </div>
+  );
+}
+
 export function MarketingHeroProductStack({ className }: { className?: string }) {
   return (
     <div
-      className={cn("marketing-product-lift relative mx-auto w-full max-w-[520px]", className)}
+      className={cn("marketing-product-lift relative mx-auto w-full max-w-[560px]", className)}
       aria-label="Cohestra product preview: dashboard, email campaigns, and reports"
     >
-      <div className="relative flex flex-col">
-        <div className="marketing-hero-stack-card relative z-[1] w-[92%] -mb-24 sm:-mb-28">
-          <div className="relative">
-            <ReportsStackMock />
-            <StackLabel
-              icon={BarChart3}
-              label="Reports"
-              className="absolute -right-1 top-3 sm:-right-2 sm:top-4"
-            />
-          </div>
-        </div>
+      <div className="relative h-[27rem] sm:h-[29rem]">
+        <LadderCard
+          step={0}
+          label="Reports"
+          icon={BarChart3}
+          labelClassName="absolute -right-1 top-3 sm:-right-2 sm:top-4"
+        >
+          <ReportsStackMock />
+        </LadderCard>
 
-        <div className="marketing-hero-stack-card relative z-[2] ml-auto w-[92%] -mb-24 sm:-mb-28">
-          <div className="relative">
-            <CampaignsStackMock />
-            <StackLabel
-              icon={Mail}
-              label="Campaigns"
-              className="absolute -left-1 top-3 sm:-left-2 sm:top-4"
-            />
-          </div>
-        </div>
+        <LadderCard
+          step={1}
+          label="Campaigns"
+          icon={Mail}
+          labelClassName="absolute -left-1 top-3 sm:-left-2 sm:top-4"
+        >
+          <CampaignsStackMock />
+        </LadderCard>
 
-        <div className="marketing-hero-stack-card relative z-[3] ml-6 w-[calc(100%-1.5rem)] sm:ml-10 sm:w-[calc(100%-2.5rem)]">
-          <div className="relative">
-            <DashboardStackMock />
-            <StackLabel
-              icon={LayoutDashboard}
-              label="Dashboard"
-              className="absolute -right-1 -bottom-3 sm:-right-2 sm:-bottom-4"
-            />
-          </div>
-        </div>
+        <LadderCard
+          step={2}
+          label="Dashboard"
+          icon={LayoutDashboard}
+          labelClassName="absolute -right-1 -bottom-3 sm:-right-2 sm:-bottom-4"
+        >
+          <DashboardStackMock />
+        </LadderCard>
       </div>
 
-      <p className="mx-auto mt-6 max-w-[34ch] text-center text-sm leading-relaxed text-stone">
+      <p className="mx-auto mt-4 max-w-[34ch] text-center text-sm leading-relaxed text-stone">
         Dashboard, campaigns, and reports in one workspace — no spreadsheets or patchwork tools.
       </p>
     </div>
