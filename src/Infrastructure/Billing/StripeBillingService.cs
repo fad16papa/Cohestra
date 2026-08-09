@@ -267,7 +267,6 @@ public sealed class StripeBillingService(
         }
 
         var tenant = await dbContext.Tenants
-            .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == command.TenantId, cancellationToken)
             ?? throw new InvalidOperationException("Tenant not found.");
 
@@ -276,10 +275,7 @@ public sealed class StripeBillingService(
             throw new InvalidOperationException("Complimentary tenants do not use Stripe Portal.");
         }
 
-        if (string.IsNullOrWhiteSpace(tenant.StripeCustomerId))
-        {
-            throw new InvalidOperationException("Tenant has no Stripe customer yet.");
-        }
+        await EnsureStripeCustomerAsync(tenant, cancellationToken);
 
         StripeConfiguration.ApiKey = _settings.SecretKey;
         var portalService = new Stripe.BillingPortal.SessionService();
@@ -352,7 +348,7 @@ public sealed class StripeBillingService(
     /// </summary>
     private static bool ClearUnverifiedPaidPlan(Tenant tenant)
     {
-        if (tenant.IsComplimentary)
+        if (tenant.IsComplimentary || LoadTestTenantRules.IsLoadTestSlug(tenant.Slug))
         {
             return false;
         }
@@ -484,6 +480,56 @@ public sealed class StripeBillingService(
                 tenant.Id);
             return null;
         }
+    }
+
+    private async Task EnsureStripeCustomerAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(tenant.StripeCustomerId))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
+        {
+            throw new InvalidOperationException(
+                "Tenant has no Stripe customer yet. Add an admin contact email in workspace settings.");
+        }
+
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+        var customerService = new CustomerService();
+
+        Customer customer;
+        try
+        {
+            customer = await customerService.CreateAsync(
+                new CustomerCreateOptions
+                {
+                    Email = tenant.AdminContactEmail,
+                    Name = tenant.Name,
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["tenant_id"] = tenant.Id.ToString(),
+                        ["tenant_slug"] = tenant.Slug,
+                    },
+                },
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "Stripe customer creation failed for tenant {TenantId}", tenant.Id);
+            throw new InvalidOperationException("Could not create Stripe customer for this workspace.");
+        }
+
+        if (string.IsNullOrWhiteSpace(customer.Id))
+        {
+            throw new InvalidOperationException("Stripe did not return a customer id.");
+        }
+
+        tenant.StripeCustomerId = customer.Id;
+        tenant.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private async Task EnsurePaidSitePageIfNeededAsync(
