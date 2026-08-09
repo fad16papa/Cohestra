@@ -76,3 +76,93 @@ export function getCreateActivityPlanWarnings(
 
   return warnings;
 }
+
+export type ActivitiesAtCapBannerState = {
+  variant: "blocked" | "warn";
+  publishedLine: string | null;
+  registrationsLine: string | null;
+  showReviewPublished: boolean;
+  showUpgradeLink: boolean;
+};
+
+function isDialAtCapOrWarn(dial: LimitDial | undefined): boolean {
+  return Boolean(dial?.blocked || dial?.warn);
+}
+
+export function shouldShowActivitiesRecoveryChips(
+  shell: TenantShell | null | undefined
+): boolean {
+  const publishedDial = findLimitDial(shell, "published");
+  const registrationsDial = findLimitDial(shell, "registrations");
+
+  return (
+    isDialAtCapOrWarn(publishedDial) || isDialAtCapOrWarn(registrationsDial)
+  );
+}
+
+export function shouldShowPublishedOnlyChip(
+  shell: TenantShell | null | undefined
+): boolean {
+  const publishedDial = findLimitDial(shell, "published");
+  const registrationsDial = findLimitDial(shell, "registrations");
+
+  return (
+    isDialAtCapOrWarn(publishedDial) || Boolean(registrationsDial?.blocked)
+  );
+}
+
+export function getPublishedActivitiesUsageCount(
+  shell: TenantShell | null | undefined
+): number {
+  return (
+    findLimitDial(shell, "published")?.used ??
+    shell?.usage.publishedActivities ??
+    0
+  );
+}
+
+export function getActivitiesAtCapBannerState(
+  shell: TenantShell | null | undefined
+): ActivitiesAtCapBannerState | null {
+  const publishedDial = findLimitDial(shell, "published");
+  const registrationsDial = findLimitDial(shell, "registrations");
+
+  const publishedBlocked = publishedDial?.blocked ?? false;
+  const publishedWarn = publishedDial?.warn ?? false;
+  const registrationsBlocked = registrationsDial?.blocked ?? false;
+  const registrationsWarn = registrationsDial?.warn ?? false;
+
+  if (
+    !publishedBlocked &&
+    !publishedWarn &&
+    !registrationsBlocked &&
+    !registrationsWarn
+  ) {
+    return null;
+  }
+
+  const variant =
+    publishedBlocked || registrationsBlocked ? "blocked" : "warn";
+
+  let publishedLine: string | null = null;
+  if (publishedBlocked && publishedDial) {
+    publishedLine = `Published activities at capacity (${publishedDial.used}/${publishedDial.limit}). Archive or unpublish one to publish another.`;
+  } else if (publishedWarn && publishedDial) {
+    publishedLine = `Published activities at ${publishedDial.percent}% of your plan limit (${publishedDial.used}/${publishedDial.limit}). Consider freeing a slot before you hit capacity.`;
+  }
+
+  let registrationsLine: string | null = null;
+  if (registrationsBlocked && registrationsDial) {
+    registrationsLine = `Monthly sign-ups paused (${registrationsDial.used.toLocaleString()}/${registrationsDial.limit.toLocaleString()}). Public sign-ups are blocked until next month or you upgrade your plan.`;
+  } else if (registrationsWarn && registrationsDial) {
+    registrationsLine = `Monthly registrations at ${registrationsDial.percent}% of your plan limit (${registrationsDial.used.toLocaleString()}/${registrationsDial.limit.toLocaleString()}).`;
+  }
+
+  return {
+    variant,
+    publishedLine,
+    registrationsLine,
+    showReviewPublished: publishedBlocked || publishedWarn,
+    showUpgradeLink: registrationsBlocked || registrationsWarn,
+  };
+}
