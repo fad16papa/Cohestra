@@ -36,6 +36,17 @@ export type InvitePreview = {
   expiresAt: string;
 };
 
+export function formatInviteRole(role: string): string {
+  switch (role) {
+    case "TenantAdmin":
+      return "admin";
+    case "TenantMember":
+      return "member";
+    default:
+      return role.replace(/^Tenant/i, "").trim() || "member";
+  }
+}
+
 function parseTeamOverview(raw: Record<string, unknown>): TeamOverview {
   const membersRaw = raw.members ?? raw.Members;
   const invitesRaw = raw.invites ?? raw.Invites;
