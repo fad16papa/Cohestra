@@ -1,3 +1,4 @@
+using Cohestra.Application.Clients;
 using Cohestra.Application.Dashboard;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Dashboard;
@@ -73,9 +74,8 @@ public sealed class DashboardService(
                     (client.LeadStatus != LeadStatus.New ||
                     client.TimelineEvents.Any(timelineEvent =>
                         timelineEvent.TenantId == tenantId &&
-                        (timelineEvent.EventType == ClientTimelineEventType.EmailCampaignSent ||
-                        timelineEvent.EventType == ClientTimelineEventType.WhatsAppInitiated ||
-                        timelineEvent.EventType == ClientTimelineEventType.WhatsAppFollowUpRecorded))),
+                        ClientOutreachCoverage.FollowUpCoverageEventTypes.Contains(
+                            timelineEvent.EventType))),
                 cancellationToken);
 
         var followUpCoveragePercent = totalLeads == 0

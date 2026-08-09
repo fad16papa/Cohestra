@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Cohestra.Application.Clients;
 using Cohestra.Application.Reports;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Reports;
@@ -423,9 +424,8 @@ public sealed class ReportService(
                     (client.LeadStatus != LeadStatus.New ||
                      client.TimelineEvents.Any(timelineEvent =>
                          timelineEvent.TenantId == tenantId &&
-                         (timelineEvent.EventType == ClientTimelineEventType.EmailCampaignSent ||
-                         timelineEvent.EventType == ClientTimelineEventType.WhatsAppInitiated ||
-                         timelineEvent.EventType == ClientTimelineEventType.WhatsAppFollowUpRecorded))),
+                         ClientOutreachCoverage.FollowUpCoverageEventTypes.Contains(
+                             timelineEvent.EventType))),
                 cancellationToken);
 
         var coveragePercent = cohortTotal == 0

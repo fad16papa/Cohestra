@@ -269,7 +269,7 @@ development_status:
   epic-21: in-progress
   21-1-viber-click-to-message-from-client-profile: done
   21-2-viber-follow-up-status-tracking: done
-  21-3-multi-channel-follow-up-coverage-includes-viber: backlog
+  21-3-multi-channel-follow-up-coverage-includes-viber: review
   epic-21-retrospective: optional
 
 action_items:
