@@ -19,7 +19,7 @@ using Microsoft.Extensions.Options;
 namespace Cohestra.Infrastructure.Seed;
 
 /// <summary>
-/// Seeds five complimentary load-test tenants (2 Core, 2 Pro, 1 Basic) with realistic volumes.
+/// Seeds five load-test tenants (2 Core, 2 Pro, 1 Basic) with realistic volumes.
 /// </summary>
 public static class LoadTestDataSeeder
 {
@@ -164,6 +164,8 @@ public static class LoadTestDataSeeder
 
         await OperatorSeeder.EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
 
+        await EnsureLoadTestTenantsNotComplimentaryAsync(dbContext, logger, cancellationToken);
+
         var password = string.IsNullOrWhiteSpace(settings.Password) ? DefaultPassword : settings.Password;
         var now = DateTimeOffset.UtcNow;
 
@@ -183,7 +185,7 @@ public static class LoadTestDataSeeder
                     Plan = spec.Plan,
                     Status = TenantStatus.Active,
                     BillingStatus = BillingStatus.Free,
-                    IsComplimentary = true,
+                    IsComplimentary = false,
                     LegalAcceptedAt = now,
                     TermsVersion = "2026-load-test",
                     PrivacyVersion = "2026-load-test",
@@ -239,6 +241,8 @@ public static class LoadTestDataSeeder
         var membershipService = scope.ServiceProvider.GetRequiredService<ITenantMembershipService>();
 
         await OperatorSeeder.EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
+
+        await EnsureLoadTestTenantsNotComplimentaryAsync(dbContext, logger, cancellationToken);
 
         var password = string.IsNullOrWhiteSpace(settings.Password) ? DefaultPassword : settings.Password;
 
@@ -318,7 +322,7 @@ public static class LoadTestDataSeeder
                     Plan = spec.Plan,
                     Status = TenantStatus.Active,
                     BillingStatus = BillingStatus.Free,
-                    IsComplimentary = true,
+                    IsComplimentary = false,
                     LegalAcceptedAt = now,
                     TermsVersion = "2026-load-test",
                     PrivacyVersion = "2026-load-test",
@@ -590,6 +594,38 @@ public static class LoadTestDataSeeder
         }
 
         return (activityIndex, clientIndex);
+    }
+
+    /// <summary>
+    /// Load-test workspaces are paid-plan QA fixtures — not platform-sponsored tenants.
+    /// Clears legacy complimentary flags so billing UI and Stripe portal behave like real customers.
+    /// </summary>
+    private static async Task EnsureLoadTestTenantsNotComplimentaryAsync(
+        CohestraDbContext dbContext,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        var loadTestSlugs = TenantSpecs.Select(spec => spec.Slug).ToArray();
+        var complimentary = await dbContext.Tenants
+            .Where(t => loadTestSlugs.Contains(t.Slug) && t.IsComplimentary)
+            .ToListAsync(cancellationToken);
+
+        if (complimentary.Count == 0)
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        foreach (var tenant in complimentary)
+        {
+            tenant.IsComplimentary = false;
+            tenant.UpdatedAt = now;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        logger.LogInformation(
+            "Cleared complimentary flag on {Count} load-test tenant(s) for billing QA.",
+            complimentary.Count);
     }
 
     private static async Task<bool> IsLoadTestSeedCompleteAsync(

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, Mail, Shield } from "lucide-react";
+import { Mail, Shield } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 
 type AccountSectionProps = {
   /** When true, hides redundant navigation (e.g. on the settings page itself). */
@@ -12,7 +12,7 @@ type AccountSectionProps = {
 };
 
 export function AccountSection({ embedded = false }: AccountSectionProps) {
-  const { profile, logout } = useAuth();
+  const { profile } = useAuth();
 
   if (!profile) {
     return null;
@@ -30,7 +30,13 @@ export function AccountSection({ embedded = false }: AccountSectionProps) {
       ) : null}
 
       <div className="rounded-xl border border-border-warm bg-muted/20 p-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div
+          className={
+            embedded
+              ? "min-w-0 space-y-2"
+              : "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+          }
+        >
           <div className="min-w-0 space-y-2">
             <p className="flex items-center gap-2 text-sm text-text-warm">
               <Mail className="size-4 shrink-0 text-text-muted-warm" aria-hidden />
@@ -48,17 +54,11 @@ export function AccountSection({ embedded = false }: AccountSectionProps) {
               </p>
             ) : null}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {!embedded ? (
-              <Link href="/settings" className={buttonVariants({ variant: "outline" })}>
-                Workspace settings
-              </Link>
-            ) : null}
-            <Button type="button" variant="destructive" className="gap-2" onClick={logout}>
-              <LogOut className="size-4" aria-hidden />
-              Sign out
-            </Button>
-          </div>
+          {!embedded ? (
+            <Link href="/settings" className={buttonVariants({ variant: "outline" })}>
+              Workspace settings
+            </Link>
+          ) : null}
         </div>
       </div>
     </section>

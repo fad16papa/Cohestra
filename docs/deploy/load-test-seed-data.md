@@ -1,6 +1,6 @@
 # Load test seed data (local Docker)
 
-Five complimentary workspaces for volume and UX testing — **Development only** (blocked in production when enabled).
+Five load-test workspaces for volume and UX testing — **Development only** (blocked in production when enabled).
 
 ## Enable
 
