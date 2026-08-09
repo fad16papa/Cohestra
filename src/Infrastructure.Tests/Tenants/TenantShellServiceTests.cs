@@ -13,7 +13,7 @@ public sealed class TenantShellServiceTests
     public void BuildLimitDials_WarnsAtEightyPercent()
     {
         var limits = TenantPlanLimits.For(TenantPlan.Basic);
-        var usage = new Cohestra.Contracts.Admin.PlanUsageResponse(0, 0, 2, 121);
+        var usage = new Cohestra.Contracts.Admin.PlanUsageResponse(0, 0, 3, 203);
 
         var dials = TenantShellService.BuildLimitDials(
             limits,
@@ -32,7 +32,7 @@ public sealed class TenantShellServiceTests
     public void BuildLimitDials_BlocksAtCapacity()
     {
         var limits = TenantPlanLimits.For(TenantPlan.Basic);
-        var usage = new Cohestra.Contracts.Admin.PlanUsageResponse(1, 1, 3, 150);
+        var usage = new Cohestra.Contracts.Admin.PlanUsageResponse(1, 1, 4, 250);
 
         var dials = TenantShellService.BuildLimitDials(
             limits,

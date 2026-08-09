@@ -143,7 +143,7 @@ export const LANDING_FAQ: LandingFaqItem[] = [
   {
     question: "Is Basic really free?",
     answer:
-      "Yes. Basic stays free with 1 community, 3 published activities, and 150 registrations per month. No credit card required.",
+      "Yes. Basic stays free with 1 community, 4 published activities, and 250 registrations per month. No credit card required.",
   },
   {
     question: "Do my clients need an app?",

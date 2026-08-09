@@ -139,9 +139,9 @@ export function parseTenantShell(raw: Record<string, unknown>): TenantShell {
     limits: {
       seats: Number(limitsRaw.seats ?? limitsRaw.Seats ?? 1),
       communities: Number(limitsRaw.communities ?? limitsRaw.Communities ?? 1),
-      publishedActivities: Number(limitsRaw.publishedActivities ?? limitsRaw.PublishedActivities ?? 3),
+      publishedActivities: Number(limitsRaw.publishedActivities ?? limitsRaw.PublishedActivities ?? 4),
       registrationsPerMonth: Number(
-        limitsRaw.registrationsPerMonth ?? limitsRaw.RegistrationsPerMonth ?? 150
+        limitsRaw.registrationsPerMonth ?? limitsRaw.RegistrationsPerMonth ?? 250
       ),
     },
     usage: {

@@ -58,10 +58,10 @@ public sealed class LoadTestDataSeederTests
             LoadTestDataSeeder.TenantSpecs,
             spec => spec.Plan == TenantPlan.Basic);
         Assert.Equal(1, basicTenant.Communities);
-        Assert.Equal(3, basicTenant.PublishedActivities);
+        Assert.Equal(4, basicTenant.PublishedActivities);
         Assert.Equal(10, basicTenant.DraftActivities);
         Assert.Equal(10, basicTenant.ArchivedActivities);
-        Assert.Equal(150, basicTenant.RegistrationsThisMonth);
+        Assert.Equal(250, basicTenant.RegistrationsThisMonth);
     }
 
     [Fact]

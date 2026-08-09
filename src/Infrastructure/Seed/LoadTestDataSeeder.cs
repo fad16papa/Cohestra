@@ -139,10 +139,10 @@ public static class LoadTestDataSeeder
             TenantPlan.Basic,
             "load.basic.alpha@cohestra.local",
             Communities: 1,
-            PublishedActivities: 3,
+            PublishedActivities: 4,
             DraftActivities: 10,
             ArchivedActivities: 10,
-            RegistrationsThisMonth: 150),
+            RegistrationsThisMonth: 250),
     ];
 
     public static async Task BootstrapLoginsAsync(

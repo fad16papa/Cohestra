@@ -81,7 +81,7 @@ Enable all of the above via `cp .env.local-docker.example .env` then recreate `a
 | load-core-beta | Core | 3 | 12 | 10 | 15 | 1,000 |
 | load-pro-alpha | Pro | 10 | 50 | 20 | 30 | 5,000 |
 | load-pro-beta | Pro | 10 | 50 | 20 | 30 | 5,000 |
-| load-basic-alpha | Basic | 1 | 3 | 10 | 10 | 150 |
+| load-basic-alpha | Basic | 1 | 4 | 10 | 10 | 250 |
 
 **Also seeded per tenant:** categories (Sports, Social, Wellness), clients (enough for unique registrations), activities with form schemas, registrations dated within the current calendar month.
 
