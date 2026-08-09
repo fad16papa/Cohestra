@@ -70,6 +70,18 @@ So that **my team sees outreach history and avoids duplicate logging**.
 - [x] **Task 5 — List outreach mapping** (AC: 1)
   - [x] Include `ViberFollowUpRecorded` in outreach event types + `MapOutreachKind` → `viber`
 
+### Review Findings
+
+- [ ] [Review][Decision] Channel switch discards unsaved edits — Toggling WhatsApp ↔ Viber resets status/note with no dirty warning. Choose: warn & confirm, keep per-channel drafts, or keep current discard.
+- [ ] [Review][Patch] Dirty guard ignores last saved note — enables Save that 409s when same note is retyped [`web/components/clients/client-outreach-log-card.tsx:155`]
+- [ ] [Review][Patch] Add cross-channel isolation unit test (identical WhatsApp follow-up must not 409 Viber) [`src/Infrastructure.Tests/Clients/ViberFollowUpDeduplicationTests.cs`]
+- [ ] [Review][Patch] Channel toggle a11y: use `radiogroup` / `role="radio"` exclusive pattern [`web/components/clients/client-outreach-log-card.tsx:214`]
+- [x] [Review][Defer] Concurrent identical POSTs can both succeed — deferred, pre-existing WhatsApp race [`src/Infrastructure/Clients/ClientService.cs`]
+- [x] [Review][Defer] First Contacted+empty note blocked by synthetic baseline — deferred, pre-existing WhatsApp dirty pattern [`web/components/clients/client-outreach-log-card.tsx`]
+- [x] [Review][Defer] No web tests for channel toggle / default channel — deferred, follow-up coverage [`web/components/clients/client-outreach-log-card.tsx`]
+- [x] [Review][Defer] Note length not validated before DB max 500 — deferred, pre-existing WhatsApp path [`src/Infrastructure/Clients/ClientService.cs`]
+- [x] [Review][Defer] Integration tests omit success-body timeline assertions — deferred, dedup coverage sufficient for AC-3 [`src/Api.IntegrationTests/ViberFollowUpDedupIntegrationTests.cs`]
+
 ## Dev Notes
 
 ### Mirror WhatsApp follow-up
