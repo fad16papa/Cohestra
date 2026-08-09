@@ -12,6 +12,7 @@ import {
   marketingAtelierButtonClass,
 } from "@/components/marketing/marketing-shell";
 import { MarketingCrmShowcase } from "@/components/marketing/marketing-crm-showcase";
+import { MarketingHeroProductStack } from "@/components/marketing/marketing-hero-product-stack";
 import {
   MarketingReveal,
   marketingRevealDelay,
@@ -32,12 +33,6 @@ import {
 import { LANDING_IMAGES } from "@/lib/marketing/landing-images";
 import { resolvePostLoginPath } from "@/lib/auth-api";
 import { cn } from "@/lib/utils";
-
-const FLOAT_ROWS = [
-  { name: "Elena M.", meta: "Sunday clinic", pill: "New" },
-  { name: "Sam R.", meta: "Clinic, also board games", pill: "Returning" },
-  { name: "Jordan K.", meta: "Youth open play", pill: "New" },
-] as const;
 
 const HERO_STATS = [
   { value: "Under 1 hr", label: "typical setup time" },
@@ -134,52 +129,7 @@ export function MarketingHomePage() {
           </MarketingReveal>
         </div>
 
-        <div className="marketing-product-lift relative">
-          <figure className="relative aspect-[4/5] max-h-[640px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)]">
-            <Image
-              src={LANDING_IMAGES.hero.src}
-              alt={LANDING_IMAGES.hero.alt}
-              fill
-              priority
-              className="object-cover saturate-[0.92] contrast-[1.05]"
-              sizes="(max-width: 1024px) 100vw, 540px"
-            />
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-gradient-to-b from-ink/[0.05] to-ink/45"
-            />
-            <figcaption className="absolute inset-x-6 bottom-6 z-[2] text-paper">
-              <span className="text-section mb-2 block text-gold">Sunday clinic</span>
-              <span className="font-[family-name:var(--font-fraunces)] text-lg leading-snug tracking-[-0.02em]">
-                New and returning clients in one list.
-              </span>
-            </figcaption>
-          </figure>
-
-          <aside
-            aria-label="Live clients preview"
-            className={cn(
-              "absolute z-[3] w-[min(100%,300px)] rounded-[16px] border border-line bg-paper p-4 shadow-[0_28px_60px_rgba(7,13,18,0.2)]",
-              "right-0 bottom-[18%] max-lg:relative max-lg:mx-4 max-lg:-mt-12 max-lg:mb-0 max-lg:w-auto max-lg:max-w-none"
-            )}
-          >
-            <p className="text-label mb-3 text-gold">Tonight&apos;s clients</p>
-            {FLOAT_ROWS.map((row) => (
-              <div
-                key={row.name}
-                className="flex items-baseline justify-between border-t border-line py-2.5 first:border-t-0 first:pt-0"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-ink">{row.name}</p>
-                  <p className="text-xs text-stone">{row.meta}</p>
-                </div>
-                <span className="rounded-sm bg-lagoon/10 px-2 py-0.5 text-[0.625rem] font-bold tracking-wide text-lagoon uppercase">
-                  {row.pill}
-                </span>
-              </div>
-            ))}
-          </aside>
-        </div>
+        <MarketingHeroProductStack />
       </section>
 
       {/* ── Audience strip ───────────────────────────────────── */}
