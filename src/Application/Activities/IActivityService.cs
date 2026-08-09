@@ -17,6 +17,8 @@ public interface IActivityService
         string? search,
         int page,
         int pageSize,
+        string? sortBy = null,
+        string? sortDirection = null,
         CancellationToken cancellationToken = default);
 
     Task<ActivityResponse?> UpdateAsync(

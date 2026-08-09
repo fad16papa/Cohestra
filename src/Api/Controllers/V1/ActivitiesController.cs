@@ -21,12 +21,20 @@ public class ActivitiesController(IActivityService activityService) : Controller
         [FromQuery] string? search,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         if (!string.IsNullOrWhiteSpace(status) &&
             !Enum.TryParse<Domain.Activities.ActivityStatus>(status, ignoreCase: true, out _))
         {
             return BadRequestProblem("Status must be draft, published, or archived.");
+        }
+
+        var sortValidationError = ValidateListSortQuery(sortBy, sortDirection);
+        if (sortValidationError is not null)
+        {
+            return BadRequestProblem(sortValidationError);
         }
 
         var result = await activityService.ListAsync(
@@ -36,6 +44,8 @@ public class ActivitiesController(IActivityService activityService) : Controller
             search,
             page,
             pageSize,
+            sortBy,
+            sortDirection,
             cancellationToken);
 
         return Ok(result);
@@ -272,6 +282,30 @@ public class ActivitiesController(IActivityService activityService) : Controller
         {
             return BadRequestProblem(ex.Message);
         }
+    }
+
+    private static string? ValidateListSortQuery(string? sortBy, string? sortDirection)
+    {
+        if (!string.IsNullOrWhiteSpace(sortBy))
+        {
+            var normalized = sortBy.Trim().ToLowerInvariant();
+            if (normalized is not ("name" or "createdat" or "created_at" or "updatedat" or "updated_at" or "registrationcount" or "registration_count"))
+            {
+                return "sortBy must be name, createdAt, updatedAt, or registrationCount.";
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(sortDirection))
+        {
+            var normalizedDirection = sortDirection.Trim();
+            if (!string.Equals(normalizedDirection, "asc", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(normalizedDirection, "desc", StringComparison.OrdinalIgnoreCase))
+            {
+                return "sortDirection must be asc or desc.";
+            }
+        }
+
+        return null;
     }
 
     private static string? ValidateCreateRequest(CreateActivityRequest? request)

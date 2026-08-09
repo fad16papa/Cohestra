@@ -249,6 +249,63 @@ async function parseProblemDetail(response: Response): Promise<string> {
   return `Request failed (${response.status})`;
 }
 
+export type ActivitySortBy = "name" | "createdAt" | "updatedAt" | "registrationCount";
+export type ActivitySortDirection = "asc" | "desc";
+
+export const DEFAULT_ACTIVITY_SORT_BY: ActivitySortBy = "updatedAt";
+export const DEFAULT_ACTIVITY_SORT_DIRECTION: ActivitySortDirection = "desc";
+
+export function defaultActivitySortDirection(
+  sortBy: ActivitySortBy
+): ActivitySortDirection {
+  return sortBy === "name" ? "asc" : "desc";
+}
+
+export function parseActivitySortBy(value: string | null): ActivitySortBy | null {
+  if (
+    value === "name" ||
+    value === "createdAt" ||
+    value === "updatedAt" ||
+    value === "registrationCount"
+  ) {
+    return value;
+  }
+
+  return null;
+}
+
+export function parseActivitySortDirection(
+  value: string | null
+): ActivitySortDirection | null {
+  if (value === "asc" || value === "desc") {
+    return value;
+  }
+
+  return null;
+}
+
+export function parseActivitySortFromSearchParams(
+  sortByParam: string | null,
+  sortDirectionParam: string | null
+): { sortBy: ActivitySortBy; sortDirection: ActivitySortDirection } {
+  const sortBy = parseActivitySortBy(sortByParam) ?? DEFAULT_ACTIVITY_SORT_BY;
+  const sortDirection =
+    parseActivitySortDirection(sortDirectionParam) ??
+    defaultActivitySortDirection(sortBy);
+
+  return { sortBy, sortDirection };
+}
+
+export function isDefaultActivitySort(
+  sortBy: ActivitySortBy,
+  sortDirection: ActivitySortDirection
+): boolean {
+  return (
+    sortBy === DEFAULT_ACTIVITY_SORT_BY &&
+    sortDirection === DEFAULT_ACTIVITY_SORT_DIRECTION
+  );
+}
+
 export async function fetchActivities(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>,
   params: {
@@ -258,6 +315,8 @@ export async function fetchActivities(
     search?: string;
     page?: number;
     pageSize?: number;
+    sortBy?: ActivitySortBy;
+    sortDirection?: ActivitySortDirection;
   } = {}
 ): Promise<ActivityListResult> {
   const searchParams = new URLSearchParams();
@@ -278,6 +337,14 @@ export async function fetchActivities(
 
   if (params.search?.trim()) {
     searchParams.set("search", params.search.trim());
+  }
+
+  if (params.sortBy) {
+    searchParams.set("sortBy", params.sortBy);
+    searchParams.set(
+      "sortDirection",
+      params.sortDirection ?? defaultActivitySortDirection(params.sortBy)
+    );
   }
 
   const response = await authFetch(
