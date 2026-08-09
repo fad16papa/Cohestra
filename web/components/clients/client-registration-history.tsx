@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ClientPhoneDisplay } from "@/components/clients/client-phone-display";
-import { clientProfileCardClassName } from "@/components/clients/client-profile-motion";
+import { clientProfileCardClassName, ClientProfileExpandableRegion } from "@/components/clients/client-profile-motion";
 import type { ClientRegistrationHistoryItem } from "@/lib/clients-api";
 import { looksLikePhoneValue } from "@/lib/phone-countries";
 import { cn } from "@/lib/utils";
@@ -167,97 +167,103 @@ export function ClientRegistrationHistory({
         </div>
       </CardHeader>
       <CardContent>
-        {!expanded ? (
-          <p className="text-sm text-text-muted-warm">
-            Registration history collapsed — expand to browse form answers from each activity.
-          </p>
-        ) : history.length === 0 ? (
+        {history.length === 0 ? (
           <p className="text-sm text-text-muted-warm">
             No registrations recorded for this client yet.
           </p>
         ) : (
-          <div className="space-y-4">
-            {history.length >= 5 ? (
-              <div className="relative max-w-md">
-                <Search
-                  className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-muted-warm"
-                  aria-hidden
-                />
-                <Input
-                  type="search"
-                  placeholder="Search activities or answers…"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  className="pl-9"
-                />
-              </div>
+          <>
+            {!expanded ? (
+              <p className="text-sm text-text-muted-warm">
+                Registration history collapsed — expand to browse form answers from each activity.
+              </p>
             ) : null}
 
-            {filteredHistory.length === 0 ? (
-              <p className="text-sm text-text-muted-warm">
-                No registrations match your search.
-              </p>
-            ) : filteredHistory.length === 1 && selectedEntry ? (
-              <RegistrationAnswersDetail entry={selectedEntry} />
-            ) : (
-              <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
-                <div
-                  role="listbox"
-                  aria-label="Activity registrations"
-                  className="flex max-h-[min(28rem,50vh)] flex-col gap-1 overflow-y-auto rounded-lg border border-border-warm bg-card p-1"
-                >
-                  {filteredHistory.map((entry) => {
-                    const isSelected =
-                      entry.registrationId === selectedEntry?.registrationId;
-
-                    return (
-                      <button
-                        key={entry.registrationId}
-                        type="button"
-                        role="option"
-                        aria-selected={isSelected}
-                        onClick={() => setSelectedId(entry.registrationId)}
-                        className={cn(
-                          "flex w-full items-start gap-2 rounded-md px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          isSelected
-                            ? "border-l-4 border-l-primary bg-primary/5"
-                            : "border-l-4 border-l-transparent hover:bg-muted/50"
-                        )}
-                      >
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium text-text-warm">
-                            {entry.activityName}
-                          </span>
-                          <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-text-muted-warm">
-                            <CalendarDays className="size-3 shrink-0" aria-hidden />
-                            {formatRegisteredAt(entry.registeredAt)}
-                          </span>
-                          <span className="mt-0.5 block truncate font-mono text-[11px] text-text-muted-warm">
-                            {entry.registrationNumber}
-                          </span>
-                          <span className="mt-1 block text-xs text-text-muted-warm">
-                            {entry.answers.length}{" "}
-                            {entry.answers.length === 1 ? "field" : "fields"}
-                          </span>
-                        </span>
-                        <ChevronRight
-                          className={cn(
-                            "mt-0.5 size-4 shrink-0 text-text-muted-warm",
-                            isSelected && "text-primary"
-                          )}
-                          aria-hidden
-                        />
-                      </button>
-                    );
-                  })}
+            <ClientProfileExpandableRegion expanded={expanded}>
+              <div className="space-y-4">
+              {history.length >= 5 ? (
+                <div className="relative max-w-md">
+                  <Search
+                    className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-muted-warm"
+                    aria-hidden
+                  />
+                  <Input
+                    type="search"
+                    placeholder="Search activities or answers…"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    className="pl-9"
+                  />
                 </div>
+              ) : null}
 
-                {selectedEntry ? (
-                  <RegistrationAnswersDetail entry={selectedEntry} />
-                ) : null}
-              </div>
-            )}
-          </div>
+              {filteredHistory.length === 0 ? (
+                <p className="text-sm text-text-muted-warm">
+                  No registrations match your search.
+                </p>
+              ) : filteredHistory.length === 1 && selectedEntry ? (
+                <RegistrationAnswersDetail entry={selectedEntry} />
+              ) : (
+                <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+                  <div
+                    role="listbox"
+                    aria-label="Activity registrations"
+                    className="flex max-h-[min(28rem,50vh)] flex-col gap-1 overflow-y-auto rounded-lg border border-border-warm bg-card p-1"
+                  >
+                    {filteredHistory.map((entry) => {
+                      const isSelected =
+                        entry.registrationId === selectedEntry?.registrationId;
+
+                      return (
+                        <button
+                          key={entry.registrationId}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => setSelectedId(entry.registrationId)}
+                          className={cn(
+                            "flex w-full items-start gap-2 rounded-md px-3 py-2.5 text-left transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            isSelected
+                              ? "border-l-4 border-l-primary bg-primary/5"
+                              : "border-l-4 border-l-transparent hover:bg-muted/50"
+                          )}
+                        >
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-medium text-text-warm">
+                              {entry.activityName}
+                            </span>
+                            <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-text-muted-warm">
+                              <CalendarDays className="size-3 shrink-0" aria-hidden />
+                              {formatRegisteredAt(entry.registeredAt)}
+                            </span>
+                            <span className="mt-0.5 block truncate font-mono text-[11px] text-text-muted-warm">
+                              {entry.registrationNumber}
+                            </span>
+                            <span className="mt-1 block text-xs text-text-muted-warm">
+                              {entry.answers.length}{" "}
+                              {entry.answers.length === 1 ? "field" : "fields"}
+                            </span>
+                          </span>
+                          <ChevronRight
+                            className={cn(
+                              "mt-0.5 size-4 shrink-0 text-text-muted-warm",
+                              isSelected && "text-primary"
+                            )}
+                            aria-hidden
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedEntry ? (
+                    <RegistrationAnswersDetail entry={selectedEntry} />
+                  ) : null}
+                </div>
+              )}
+            </div>
+            </ClientProfileExpandableRegion>
+          </>
         )}
       </CardContent>
     </Card>

@@ -212,21 +212,27 @@ Each client = card:
 
 **Two-column body** (`≥ lg`: `minmax(0,1fr) + 21rem` sidebar; stacks on mobile)
 
+**Master profile card** (full width, directly under header / merge banner)
+
+- Two-column field grid on `sm+`; Edit profile in card header
+- Always first content block after identity — consolidated contact record before drill-down
+
 | Main column (activity) | Sidebar (details & quick edits) |
 |------------------------|---------------------------------|
-| Timeline preview (last 5 + View all) | Next follow-up card — date input + Save/Clear, Due chip |
-| Registration history (collapsed at 10+, search) | Log outreach card — follow-up status + note |
-| Full relationship timeline | Master profile (compact single-column, Edit) |
+| Registration history (expand/collapse; collapsed at 10+, search) | Next follow-up card — date input + Save/Clear, Due chip |
+| Relationship timeline (expand/collapse; collapsed at 5+ events) | Log outreach card — follow-up status + note |
 
 **Layout invariants**
 
 - One lead status control (header select). No duplicate status blocks anywhere.
+- No separate timeline preview — relationship timeline is the single activity feed.
+- Expand/collapse cards animate height (`ClientProfileExpandableRegion`); staggered section enter on load.
 - Sidebar cards: `p-4`, compact headings with leading icon; primary buttons full-width.
 - Page container `max-w-7xl` matching the queue list.
 
 **Merge suspect banner**
 
-- Unchanged placement — between follow-up summary and master profile when `isMergeSuspect`
+- Between identity header and master profile when `isMergeSuspect`
 
 ### Follow-up date (FR-32)
 
@@ -307,7 +313,7 @@ Behavioral. Visuals in `DESIGN.md`.
 | **ClientQueueRow** | Desktop: balanced 6-column grid with equal last-reg/outreach width; mobile: card with contact + actions top row, metadata grid below |
 | **LeadStatusBadge** | New=`{colors.lagoon}` tint · Contacted=`{colors.gold}` · Active=`{colors.success}` · Inactive=`{colors.stone}` |
 | **ClientOutreachBar** | Sticky on profile; WhatsApp/Viber/Mark contacted; disabled without phone |
-| **TimelinePreview** | Max 5 events; link to full timeline section |
+| **TimelinePreview** | Removed — relationship timeline is the single feed (expand/collapse) |
 | **BulkSelectBar** | Pro only; floating bottom bar when selection &gt; 0 |
 | **FollowUpDateField** | Optional date; tenant-local display (FR-27) |
 
@@ -459,5 +465,7 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 | Profile shape | Identity header card + two-column body (activity main / details sidebar) — real CRM detail page |
 | Header actions | WhatsApp · Viber · Mark contacted · status select in one cluster; single status control |
 | Prerequisites copy | Only in messenger confirm dialog; always-visible notice removed |
-| Sidebar cards | Next follow-up · Log outreach · Master profile (compact) — `21rem` at `lg+` |
+| Sidebar cards | Next follow-up · Log outreach — `21rem` at `lg+` |
+| Master profile | Full-width card at top (under header); two-column fields on `sm+` |
+| Timeline | Single expandable relationship timeline; no redundant preview block |
 | Removed | Sticky outreach bar card, lone Lead-status card, giant full-width messenger buttons |

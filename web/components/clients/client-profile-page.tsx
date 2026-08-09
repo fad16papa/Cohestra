@@ -10,7 +10,6 @@ import { ClientProfileHeader } from "@/components/clients/client-profile-header"
 import { ClientProfileSection } from "@/components/clients/client-profile-motion";
 import { ClientRegistrationHistory } from "@/components/clients/client-registration-history";
 import { ClientRelationshipTimeline } from "@/components/clients/client-relationship-timeline";
-import { ClientTimelinePreview } from "@/components/clients/client-timeline-preview";
 import { useAdminPageMeta } from "@/components/layouts/admin-shell-context";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { ProductErrorState } from "@/components/shared/product-error-state";
@@ -93,6 +92,7 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
   }
 
   const collapseRegistrationHistory = client.registrationHistory.length >= 10;
+  const collapseTimeline = client.timeline.length >= 5;
   const timeZoneId = shell?.registrationTimeZoneId;
 
   return (
@@ -111,28 +111,29 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
         </ClientProfileSection>
       ) : null}
 
+      <ClientProfileSection animationDelayMs={40}>
+        <ClientMasterFields client={client} onUpdated={handleUpdated} />
+      </ClientProfileSection>
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] lg:items-start">
         <div className="min-w-0 space-y-5">
-          <ClientProfileSection animationDelayMs={40}>
-            <ClientTimelinePreview timeline={client.timeline} />
-          </ClientProfileSection>
-
-          <ClientProfileSection animationDelayMs={80}>
+          <ClientProfileSection animationDelayMs={60}>
             <ClientRegistrationHistory
               history={client.registrationHistory}
               defaultCollapsed={collapseRegistrationHistory}
             />
           </ClientProfileSection>
 
-          <ClientProfileSection animationDelayMs={120}>
-            <div id="client-full-timeline">
-              <ClientRelationshipTimeline timeline={client.timeline} />
-            </div>
+          <ClientProfileSection animationDelayMs={100}>
+            <ClientRelationshipTimeline
+              timeline={client.timeline}
+              defaultCollapsed={collapseTimeline}
+            />
           </ClientProfileSection>
         </div>
 
         <div className="min-w-0 space-y-5">
-          <ClientProfileSection animationDelayMs={60}>
+          <ClientProfileSection animationDelayMs={80}>
             <ClientFollowUpDateField
               client={client}
               timeZoneId={timeZoneId}
@@ -140,16 +141,8 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
             />
           </ClientProfileSection>
 
-          <ClientProfileSection animationDelayMs={100}>
+          <ClientProfileSection animationDelayMs={120}>
             <ClientOutreachLogCard client={client} onUpdated={handleUpdated} />
-          </ClientProfileSection>
-
-          <ClientProfileSection animationDelayMs={140}>
-            <ClientMasterFields
-              client={client}
-              onUpdated={handleUpdated}
-              compact
-            />
           </ClientProfileSection>
         </div>
       </div>
