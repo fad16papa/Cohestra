@@ -13,8 +13,9 @@ import {
   type ClientDetail,
   type ClientTimelineItem,
 } from "@/lib/clients-api";
+import type { OutreachLogStatus } from "@/lib/client-follow-up-date";
 
-export type OutreachLogStatus = "contacted" | "awaiting_reply";
+export type { OutreachLogStatus };
 
 type ClientOutreachLogCardProps = {
   client: ClientDetail;
@@ -45,10 +46,16 @@ function parseOutreachStatusFromTimeline(
 }
 
 function getLatestOutreachStatus(client: ClientDetail): OutreachLogStatus {
-  const latestFollowUp = client.timeline.find(
-    (item: ClientTimelineItem) =>
-      item.eventType === "whatsapp_follow_up_recorded"
-  );
+  const latestFollowUp = client.timeline
+    .filter(
+      (item: ClientTimelineItem) =>
+        item.eventType === "whatsapp_follow_up_recorded"
+    )
+    .sort(
+      (left, right) =>
+        new Date(right.occurredAt).getTime() -
+        new Date(left.occurredAt).getTime()
+    )[0];
 
   return (
     parseOutreachStatusFromTimeline(latestFollowUp?.campaignSubject) ??

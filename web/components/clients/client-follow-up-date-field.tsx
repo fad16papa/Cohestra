@@ -14,9 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast-provider";
-import {
-  toDateInputValue,
-} from "@/lib/client-follow-up-date";
+import { toDateInputValue } from "@/lib/client-follow-up-date";
 import {
   isFollowUpDue,
   updateClientNextFollowUp,
@@ -46,24 +44,38 @@ export const ClientFollowUpDateField = forwardRef<
   const { showToast } = useToast();
   const sectionRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const savedDateRef = useRef("");
   const [draftDate, setDraftDate] = useState(() =>
     toDateInputValue(client.nextFollowUpAt, timeZoneId)
   );
   const [busy, setBusy] = useState(false);
+  const [highlighted, setHighlighted] = useState(false);
 
   const due = isFollowUpDue(client.nextFollowUpAt, timeZoneId);
   const savedDate = toDateInputValue(client.nextFollowUpAt, timeZoneId);
+  savedDateRef.current = savedDate;
   const isDirty = draftDate !== savedDate;
 
   useImperativeHandle(
     ref,
     () => ({
       focusAndSuggestDate(suggestedDate: string) {
-        setDraftDate(suggestedDate);
+        setDraftDate((current) =>
+          current !== savedDateRef.current ? current : suggestedDate
+        );
+
+        setHighlighted(true);
+        window.setTimeout(() => setHighlighted(false), 2000);
+
+        const prefersReducedMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)"
+        ).matches;
+
         sectionRef.current?.scrollIntoView({
-          behavior: "smooth",
+          behavior: prefersReducedMotion ? "auto" : "smooth",
           block: "nearest",
         });
+
         window.requestAnimationFrame(() => {
           inputRef.current?.focus({ preventScroll: true });
         });
@@ -101,7 +113,9 @@ export const ClientFollowUpDateField = forwardRef<
       ref={sectionRef}
       id="client-next-follow-up-card"
       className={cn(
-        "rounded-2xl border border-border-warm bg-card p-4 shadow-sm motion-safe:transition-shadow motion-safe:duration-300",
+        "rounded-2xl border border-border-warm bg-card p-4 shadow-sm motion-safe:transition-[box-shadow,border-color] motion-safe:duration-300",
+        highlighted &&
+          "border-primary ring-2 ring-primary/25 motion-safe:transition-[box-shadow,border-color]",
         className
       )}
       aria-labelledby="client-follow-up-date-heading"
@@ -169,3 +183,5 @@ export const ClientFollowUpDateField = forwardRef<
     </section>
   );
 });
+
+ClientFollowUpDateField.displayName = "ClientFollowUpDateField";

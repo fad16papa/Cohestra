@@ -10,7 +10,6 @@ import { ClientMergeSuspectBanner } from "@/components/clients/client-merge-susp
 import { ClientMasterFields } from "@/components/clients/client-master-fields";
 import {
   ClientOutreachLogCard,
-  type OutreachLogStatus,
 } from "@/components/clients/client-outreach-log-card";
 import { ClientProfileHeader } from "@/components/clients/client-profile-header";
 import { ClientProfileSection } from "@/components/clients/client-profile-motion";
@@ -24,7 +23,9 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import {
   addDaysToDateInputValue,
+  shouldNudgeFollowUpDateAfterOutreach,
   toDateInputValue,
+  type OutreachLogStatus,
 } from "@/lib/client-follow-up-date";
 import {
   fetchClientById,
@@ -93,28 +94,36 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
       status: OutreachLogStatus;
     }) => {
       const timeZoneId = shell?.registrationTimeZoneId;
-      const shouldNudge =
-        !updatedClient.nextFollowUpAt || status === "awaiting_reply";
+      const shouldNudge = shouldNudgeFollowUpDateAfterOutreach(
+        updatedClient.nextFollowUpAt,
+        status,
+        timeZoneId
+      );
 
       if (!shouldNudge) {
         showSuccessToast("Outreach log saved.");
         return;
       }
 
-      showActionToast("Outreach logged.", "Set follow-up date", () => {
+      showActionToast("Outreach log saved.", "Set follow-up date", () => {
+        if (!followUpDateRef.current) {
+          showSuccessToast("Use Next follow-up above to set a date.");
+          return;
+        }
+
         if (!updatedClient.nextFollowUpAt && status === "awaiting_reply") {
-          followUpDateRef.current?.focusAndSuggestDate(
+          followUpDateRef.current.focusAndSuggestDate(
             addDaysToDateInputValue(3, timeZoneId)
           );
           return;
         }
 
         if (!updatedClient.nextFollowUpAt) {
-          followUpDateRef.current?.focusAndSuggestDate("");
+          followUpDateRef.current.focusAndSuggestDate("");
           return;
         }
 
-        followUpDateRef.current?.focusAndSuggestDate(
+        followUpDateRef.current.focusAndSuggestDate(
           toDateInputValue(updatedClient.nextFollowUpAt, timeZoneId)
         );
       });

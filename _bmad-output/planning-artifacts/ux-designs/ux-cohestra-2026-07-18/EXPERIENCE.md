@@ -226,9 +226,10 @@ Each client = card:
 
 | Trigger | Behavior |
 |---------|----------|
-| After **Save outreach log** succeeds | Toast: *Outreach logged.* with action **Set follow-up date** when no date is set **or** status is **Awaiting reply** |
-| Toast action | Scroll/focus **Next follow-up** card; pre-fill **+3 days** draft when Awaiting reply and no saved date — operator still clicks **Save date** |
+| After **Save outreach log** succeeds | Toast: *Outreach log saved.* with action **Set follow-up date** when no date is set, or status is **Awaiting reply** and follow-up is due/overdue |
+| Toast action | Scroll/focus **Next follow-up** card (12s timeout); pre-fill **+3 days** draft when Awaiting reply and no saved date — operator still clicks **Save date** |
 | When date already set and status is Contacted | Success toast only — no nudge |
+| When Awaiting reply with a future follow-up date | Success toast only — no repeat nudge until due |
 
 **Log outreach vs Next follow-up** remain separate data: outreach log → timeline `whatsapp_follow_up_recorded`; date save → `next_follow_up_changed`.
 
@@ -332,11 +333,12 @@ Behavioral. Visuals in `DESIGN.md`.
 | **LeadQueueHeader** | Status + quick filter chips on one row (inline labels, divider); horizontal scroll on narrow viewports |
 | **ClientQueueRow** | Desktop: balanced 6-column grid with equal last-reg/outreach width; mobile: card with contact + actions top row, metadata grid below |
 | **LeadStatusBadge** | New=`{colors.lagoon}` tint · Contacted=`{colors.gold}` · Active=`{colors.success}` · Inactive=`{colors.stone}` |
-| **ClientOutreachBar** | Outreach actions live in **ClientProfileHeader** (WhatsApp · Viber · Mark contacted); not a separate sticky bar |
+| **ClientProfileHeader** | Identity + WhatsApp · Viber · Mark contacted · lead status select — single status control |
+| **ClientOutreachLogCard** | Outreach status + note; **Save outreach log**; post-save nudge via parent toast when `shouldNudgeFollowUpDateAfterOutreach` |
+| **FollowUpDateField** | Optional date (FR-27); **Save date** / Clear; tenant-local display; imperative focus + suggest; highlight ring on nudge |
 | **ClientRegistrationHistory** | Master/detail list + selected answers; expand/collapse; search at 5+ entries; email/consent full-width in answer grid |
 | **ClientRelationshipTimeline** | Single expandable feed; scroll capped when expanded; no preview duplicate |
 | **BulkSelectBar** | Pro only; floating bottom bar when selection &gt; 0 |
-| **FollowUpDateField** | Optional date; tenant-local display (FR-27) |
 
 Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above. **ClientRow** superseded by **ClientQueueRow** on list (FR-29).
 

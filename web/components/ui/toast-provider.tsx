@@ -34,13 +34,15 @@ type ToastContextValue = {
   showActionToast: (
     message: string,
     actionLabel: string,
-    onAction: () => void
+    onAction: () => void,
+    options?: { durationMs?: number }
   ) => void;
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const TOAST_DURATION_MS = 6000;
+const ACTION_TOAST_DURATION_MS = 12000;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -65,7 +67,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const pushToast = useCallback(
-    (toast: Omit<ToastItem, "id">) => {
+    (toast: Omit<ToastItem, "id">, durationMs = TOAST_DURATION_MS) => {
       const dedupeKey = `${toast.variant}:${toast.message}`;
       if (!toast.actionLabel && visibleMessagesRef.current.has(dedupeKey)) {
         return;
@@ -80,7 +82,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
       const timer = window.setTimeout(() => {
         dismissToast(id);
-      }, TOAST_DURATION_MS);
+      }, durationMs);
 
       timersRef.current.set(id, timer);
     },
@@ -109,8 +111,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   );
 
   const showActionToast = useCallback(
-    (message: string, actionLabel: string, onAction: () => void) => {
-      pushToast({ message, actionLabel, onAction, variant: "default" });
+    (
+      message: string,
+      actionLabel: string,
+      onAction: () => void,
+      options?: { durationMs?: number }
+    ) => {
+      pushToast(
+        { message, actionLabel, onAction, variant: "default" },
+        options?.durationMs ?? ACTION_TOAST_DURATION_MS
+      );
     },
     [pushToast]
   );
