@@ -52,6 +52,14 @@ So that **coverage metrics reflect all messenger touch-points**.
 - [x] **Task 4 — AC3 verify** (AC: 3)
   - [x] Confirmed `ClientTimelineBuilder` labels unchanged from 21.1/21.2
 
+### Review Findings
+
+- [ ] [Review][Patch] Add dashboard test for `ViberFollowUpRecorded`-only client [`src/Infrastructure.Tests/Clients/FollowUpCoverageViberTests.cs`]
+- [ ] [Review][Patch] Add `withoutOutreach=true` test — Viber-only client excluded from queue [`src/Infrastructure.Tests/Clients/FollowUpCoverageViberTests.cs` or `ClientServiceListFilterTests.cs`]
+- [x] [Review][Defer] `LeadStatus != New` counts as followed-up without outreach events [`DashboardService.cs:74`, `ReportService.cs:424`] — deferred, pre-existing predicate preserved by design
+- [x] [Review][Defer] Dashboard metrics cache 60s TTL may show stale coverage after Viber log [`RedisDashboardMetricsCache.cs`] — deferred, pre-existing accepted TTL
+- [x] [Review][Defer] `withoutOutreach` filter ignores lead status (Contacted + no events still in queue) [`ClientService.cs:255`] — deferred, pre-existing design mismatch vs coverage metric
+
 ## Dev Agent Record
 
 ### Completion Notes List
