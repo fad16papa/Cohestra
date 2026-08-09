@@ -44,6 +44,7 @@ import {
   type LeadStatus,
 } from "@/lib/clients-api";
 import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
+import { fetchActivityById } from "@/lib/activities-api";
 import { buildViberAppDeepLink, buildWhatsAppWebUrl, openAppDeepLink } from "@/lib/messenger-links";
 import type { MessengerChannel } from "@/lib/messenger-prerequisites";
 import { formatPhoneDisplay } from "@/lib/phone-countries";
@@ -159,6 +160,9 @@ export function ClientsListPage() {
   const leadStatusFilter = parseLeadStatusFilter(searchParams.get("leadStatus"));
   const nationalityFilter = searchParams.get("nationality")?.trim() ?? "";
   const searchFilter = searchParams.get("search")?.trim() ?? "";
+  const activityIdFilter = searchParams.get("activityId")?.trim() ?? "";
+  const activityNameFilter = searchParams.get("activityName")?.trim() ?? "";
+  const [resolvedActivityName, setResolvedActivityName] = useState("");
   const [clients, setClients] = useState<ClientListItem[]>([]);
   const [statusCounts, setStatusCounts] =
     useState<ClientLeadStatusCounts>(emptyStatusCounts);
@@ -230,6 +234,31 @@ export function ClientsListPage() {
   }, [authFetch]);
 
   useEffect(() => {
+    if (!activityIdFilter || activityNameFilter) {
+      setResolvedActivityName("");
+      return;
+    }
+
+    let cancelled = false;
+
+    void fetchActivityById(authFetch, activityIdFilter)
+      .then((activity) => {
+        if (!cancelled) {
+          setResolvedActivityName(activity.name);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setResolvedActivityName("");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activityIdFilter, activityNameFilter, authFetch]);
+
+  useEffect(() => {
     let cancelled = false;
 
     void fetchClients(authFetch, {
@@ -244,6 +273,7 @@ export function ClientsListPage() {
       leadStatus: leadStatusFilter ?? undefined,
       nationality: nationalityFilter || undefined,
       search: searchFilter || undefined,
+      activityId: activityIdFilter || undefined,
     })
       .then((result) => {
         if (cancelled) {
@@ -286,6 +316,7 @@ export function ClientsListPage() {
     };
   }, [
     authFetch,
+    activityIdFilter,
     createdWithinDays,
     registeredWithinDays,
     followUpDueOnly,
@@ -400,10 +431,22 @@ export function ClientsListPage() {
     );
   }
 
+  function clearActivityFilter() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("activityId");
+    params.delete("activityName");
+    router.replace(
+      params.toString() ? `/clients?${params.toString()}` : "/clients"
+    );
+  }
+
+  const activityFilterLabel = activityNameFilter || resolvedActivityName;
+
   const hasActiveFilters =
     Boolean(searchFilter) ||
     Boolean(leadStatusFilter) ||
     Boolean(nationalityFilter) ||
+    Boolean(activityIdFilter) ||
     mergeSuspectOnly ||
     followUpDueOnly ||
     Boolean(createdWithinDays) ||
@@ -425,6 +468,7 @@ export function ClientsListPage() {
     setSelectedClientsById(new Map());
   }, [
     page,
+    activityIdFilter,
     followUpDueOnly,
     leadStatusFilter,
     mergeSuspectOnly,
@@ -491,6 +535,7 @@ export function ClientsListPage() {
               leadStatus: leadStatusFilter ?? undefined,
               nationality: nationalityFilter || undefined,
               search: searchFilter || undefined,
+              activityId: activityIdFilter || undefined,
             }
           : {}),
       });
@@ -507,6 +552,7 @@ export function ClientsListPage() {
     }
   }, [
     authFetch,
+    activityIdFilter,
     createdWithinDays,
     followUpDueOnly,
     hasActiveFilters,
@@ -860,6 +906,26 @@ export function ClientsListPage() {
             onClick={() => updateNationalityFilter("")}
           >
             Clear nationality filter
+          </Button>
+        </div>
+      ) : null}
+
+      {activityIdFilter ? (
+        <div
+          role="status"
+          className="flex flex-col gap-3 rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm sm:flex-row sm:items-center sm:justify-between"
+        >
+          <span>
+            Filtered by activity
+            {activityFilterLabel ? `: ${activityFilterLabel}` : ""}.
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearActivityFilter}
+          >
+            Clear filter
           </Button>
         </div>
       ) : null}

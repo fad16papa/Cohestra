@@ -31,6 +31,7 @@ public class ClientsController(IClientService clientService) : ControllerBase
         [FromQuery] string? community = null,
         [FromQuery] bool? consentOnly = null,
         [FromQuery] string? excludeCommunity = null,
+        [FromQuery] Guid? activityId = null,
         CancellationToken cancellationToken = default)
     {
         var validationError = ValidateListQuery(
@@ -62,6 +63,7 @@ public class ClientsController(IClientService clientService) : ControllerBase
                 community,
                 consentOnly,
                 excludeCommunity,
+                activityId,
                 cancellationToken);
 
             return Ok(result);
@@ -89,6 +91,7 @@ public class ClientsController(IClientService clientService) : ControllerBase
         [FromQuery] string? community = null,
         [FromQuery] bool? consentOnly = null,
         [FromQuery] string? excludeCommunity = null,
+        [FromQuery] Guid? activityId = null,
         CancellationToken cancellationToken = default)
     {
         var validationError = ValidateListQuery(
@@ -117,6 +120,7 @@ public class ClientsController(IClientService clientService) : ControllerBase
                 community,
                 consentOnly,
                 excludeCommunity,
+                activityId,
                 cancellationToken);
 
             Response.Headers["X-Client-Row-Count"] = export.RowCount.ToString();

@@ -73,6 +73,7 @@ public class CommunitiesController(
                 community: community.Name,
                 consentOnly: null,
                 excludeCommunity: null,
+                activityId: null,
                 cancellationToken);
 
             return Ok(result);

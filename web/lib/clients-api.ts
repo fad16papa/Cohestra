@@ -260,6 +260,7 @@ export async function fetchClients(
     community?: string;
     consentOnly?: boolean;
     excludeCommunity?: string;
+    activityId?: string;
   } = {}
 ): Promise<ClientListResult> {
   const searchParams = new URLSearchParams();
@@ -316,6 +317,10 @@ export async function fetchClients(
 
   if (params.excludeCommunity?.trim()) {
     searchParams.set("excludeCommunity", params.excludeCommunity.trim());
+  }
+
+  if (params.activityId?.trim()) {
+    searchParams.set("activityId", params.activityId.trim());
   }
 
   const response = await authFetch(
@@ -783,6 +788,7 @@ export async function exportClientsCsv(
     community?: string;
     consentOnly?: boolean;
     excludeCommunity?: string;
+    activityId?: string;
   } = {}
 ): Promise<ClientCsvExportResult> {
   const searchParams = new URLSearchParams();
@@ -833,6 +839,10 @@ export async function exportClientsCsv(
 
   if (params.excludeCommunity?.trim()) {
     searchParams.set("excludeCommunity", params.excludeCommunity.trim());
+  }
+
+  if (params.activityId?.trim()) {
+    searchParams.set("activityId", params.activityId.trim());
   }
 
   const response = await authFetch(

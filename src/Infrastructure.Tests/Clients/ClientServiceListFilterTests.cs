@@ -286,6 +286,76 @@ public sealed class ClientServiceListFilterTests
         Assert.Equal(1, result.StatusCounts.MergeSuspectCount);
     }
 
+    [Fact]
+    public async Task ListAsync_ActivityId_IncludesOnlyClientsRegisteredForActivity()
+    {
+        var now = DateTimeOffset.UtcNow;
+        await using var dbContext = CreateDbContext();
+        var targetActivity = SeedActivity(dbContext, now.AddDays(-30));
+        var otherActivity = SeedActivity(dbContext, now.AddDays(-20));
+
+        var matchingClient = new Client
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Target Activity Client",
+            CreatedAt = now.AddDays(-10),
+            UpdatedAt = now.AddDays(-1),
+            LeadStatus = LeadStatus.New,
+        };
+
+        var otherClient = new Client
+        {
+            Id = Guid.NewGuid(),
+            FullName = "Other Activity Client",
+            CreatedAt = now.AddDays(-10),
+            UpdatedAt = now.AddDays(-1),
+            LeadStatus = LeadStatus.New,
+        };
+
+        dbContext.Clients.AddRange(matchingClient, otherClient);
+        dbContext.Registrations.AddRange(
+            new Registration
+            {
+                Id = Guid.NewGuid(),
+                RegistrationNumber = "REG20260101000010",
+                ActivityId = targetActivity.Id,
+                ClientId = matchingClient.Id,
+                CreatedAt = now.AddDays(-1),
+            },
+            new Registration
+            {
+                Id = Guid.NewGuid(),
+                RegistrationNumber = "REG20260101000011",
+                ActivityId = otherActivity.Id,
+                ClientId = otherClient.Id,
+                CreatedAt = now.AddDays(-1),
+            });
+
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext);
+        var result = await service.ListAsync(
+            page: 1,
+            pageSize: 25,
+            sortBy: null,
+            sortDirection: null,
+            mergeSuspect: null,
+            createdWithinDays: null,
+            registeredWithinDays: null,
+            followUpDue: null,
+            withoutOutreach: null,
+            leadStatus: null,
+            nationality: null,
+            search: null,
+            community: null,
+            activityId: targetActivity.Id);
+
+        Assert.Equal(1, result.TotalCount);
+        Assert.Single(result.Items);
+        Assert.Equal(matchingClient.Id, result.Items[0].Id);
+        Assert.Equal(2, result.StatusCounts.NewCount);
+    }
+
     private static Activity SeedActivity(CohestraDbContext dbContext, DateTimeOffset createdAt)
     {
         var activity = new Activity

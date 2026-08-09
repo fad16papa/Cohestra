@@ -20,6 +20,7 @@ public interface IClientService
         string? community,
         bool? consentOnly = null,
         string? excludeCommunity = null,
+        Guid? activityId = null,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<string>> ListNationalitiesAsync(
@@ -71,5 +72,6 @@ public interface IClientService
         string? community,
         bool? consentOnly = null,
         string? excludeCommunity = null,
+        Guid? activityId = null,
         CancellationToken cancellationToken = default);
 }
