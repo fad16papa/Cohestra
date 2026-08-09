@@ -18,15 +18,6 @@ public sealed class ClientService(
     private const int DefaultPageSize = 25;
     private const int MaxPageSize = 100;
 
-    private static readonly ClientTimelineEventType[] OutreachEventTypes =
-    [
-        ClientTimelineEventType.WhatsAppInitiated,
-        ClientTimelineEventType.WhatsAppFollowUpRecorded,
-        ClientTimelineEventType.ViberInitiated,
-        ClientTimelineEventType.ViberFollowUpRecorded,
-        ClientTimelineEventType.EmailCampaignSent,
-    ];
-
     public async Task<ClientListResponse> ListAsync(
         int page,
         int pageSize,
@@ -89,12 +80,12 @@ public sealed class ClientService(
                     .Select(registration => registration.Activity.Name)
                     .FirstOrDefault(),
                 LastOutreachAt = client.TimelineEvents
-                    .Where(timelineEvent => OutreachEventTypes.Contains(timelineEvent.EventType))
+                    .Where(timelineEvent => ClientOutreachCoverage.FollowUpCoverageEventTypes.Contains(timelineEvent.EventType))
                     .OrderByDescending(timelineEvent => timelineEvent.OccurredAt)
                     .Select(timelineEvent => (DateTimeOffset?)timelineEvent.OccurredAt)
                     .FirstOrDefault(),
                 LastOutreachEventType = client.TimelineEvents
-                    .Where(timelineEvent => OutreachEventTypes.Contains(timelineEvent.EventType))
+                    .Where(timelineEvent => ClientOutreachCoverage.FollowUpCoverageEventTypes.Contains(timelineEvent.EventType))
                     .OrderByDescending(timelineEvent => timelineEvent.OccurredAt)
                     .Select(timelineEvent => (ClientTimelineEventType?)timelineEvent.EventType)
                     .FirstOrDefault(),
@@ -192,12 +183,12 @@ public sealed class ClientService(
                 .Select(registration => registration.Activity.Name)
                 .FirstOrDefault(),
             LastOutreachAt = client.TimelineEvents
-                .Where(timelineEvent => OutreachEventTypes.Contains(timelineEvent.EventType))
+                .Where(timelineEvent => ClientOutreachCoverage.FollowUpCoverageEventTypes.Contains(timelineEvent.EventType))
                 .OrderByDescending(timelineEvent => timelineEvent.OccurredAt)
                 .Select(timelineEvent => (DateTimeOffset?)timelineEvent.OccurredAt)
                 .FirstOrDefault(),
             LastOutreachEventType = client.TimelineEvents
-                .Where(timelineEvent => OutreachEventTypes.Contains(timelineEvent.EventType))
+                .Where(timelineEvent => ClientOutreachCoverage.FollowUpCoverageEventTypes.Contains(timelineEvent.EventType))
                 .OrderByDescending(timelineEvent => timelineEvent.OccurredAt)
                 .Select(timelineEvent => (ClientTimelineEventType?)timelineEvent.EventType)
                 .FirstOrDefault(),
@@ -263,7 +254,7 @@ public sealed class ClientService(
         {
             clientsQuery = clientsQuery.Where(client =>
                 !client.TimelineEvents.Any(timelineEvent =>
-                    OutreachEventTypes.Contains(timelineEvent.EventType)));
+                    ClientOutreachCoverage.FollowUpCoverageEventTypes.Contains(timelineEvent.EventType)));
         }
 
         if (!string.IsNullOrWhiteSpace(leadStatus))
