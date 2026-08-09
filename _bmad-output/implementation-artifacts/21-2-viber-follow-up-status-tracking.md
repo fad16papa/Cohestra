@@ -72,7 +72,7 @@ So that **my team sees outreach history and avoids duplicate logging**.
 
 ### Review Findings
 
-- [ ] [Review][Decision] Channel switch discards unsaved edits — Toggling WhatsApp ↔ Viber resets status/note with no dirty warning. Choose: warn & confirm, keep per-channel drafts, or keep current discard.
+- [ ] [Review][Patch] Channel switch keeps per-channel drafts (decision: option 2) — stash status/note per channel on toggle; restore stash or baseline; clear draft on successful save [`web/components/clients/client-outreach-log-card.tsx`]
 - [ ] [Review][Patch] Dirty guard ignores last saved note — enables Save that 409s when same note is retyped [`web/components/clients/client-outreach-log-card.tsx:155`]
 - [ ] [Review][Patch] Add cross-channel isolation unit test (identical WhatsApp follow-up must not 409 Viber) [`src/Infrastructure.Tests/Clients/ViberFollowUpDeduplicationTests.cs`]
 - [ ] [Review][Patch] Channel toggle a11y: use `radiogroup` / `role="radio"` exclusive pattern [`web/components/clients/client-outreach-log-card.tsx:214`]
