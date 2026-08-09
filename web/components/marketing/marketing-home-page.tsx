@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 
@@ -30,7 +29,6 @@ import {
   LANDING_STEPS,
   LANDING_TESTIMONIALS,
 } from "@/lib/marketing/landing-content";
-import { LANDING_IMAGES } from "@/lib/marketing/landing-images";
 import { resolvePostLoginPath } from "@/lib/auth-api";
 import { cn } from "@/lib/utils";
 
@@ -38,20 +36,6 @@ const HERO_STATS = [
   { value: "Under 1 hr", label: "typical setup time" },
   { value: "1 list", label: "for all your activities" },
   { value: "0 apps", label: "for your clients to install" },
-] as const;
-
-const OUTREACH_POINTS = [
-  "Open WhatsApp or Viber from any client profile",
-  "Save each message on the client timeline",
-  "Status flags so the team does not double message",
-  "Dashboard shows who still needs a reply",
-] as const;
-
-const WEBSITE_POINTS = [
-  "Homepage at your org subdomain on cohestra.app",
-  "Upcoming activities update from your workspace",
-  "Draft, preview, and publish without a developer",
-  "Share kit with QR, link, and WhatsApp text to paste",
 ] as const;
 
 export function MarketingHomePage() {
@@ -281,89 +265,6 @@ export function MarketingHomePage() {
             </MarketingReveal>
           ))}
         </ol>
-      </section>
-
-      {/* ── Product highlight: outreach ──────────────────────── */}
-      <section className="border-t border-line bg-paper-warm">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:px-10 lg:py-24">
-          <MarketingReveal delayMs={marketingRevealDelay(0)}>
-            <p className="text-section text-gold">Client outreach</p>
-            <h2 className="text-marketing-section mt-4 max-w-[16ch] text-ink">
-              Message clients where they already are
-            </h2>
-            <p className="text-marketing-lead mt-4 max-w-[44ch] text-stone">
-              WhatsApp and Viber open from the client profile. Cohestra logs what you sent so the
-              team stays aligned.
-            </p>
-            <ul className="mt-8 space-y-3">
-              {OUTREACH_POINTS.map((point) => (
-                <li key={point} className="flex items-start gap-3 text-[0.95rem] text-ink/85">
-                  <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-lagoon/12 text-lagoon">
-                    <Check className="size-3.5" aria-hidden />
-                  </span>
-                  {point}
-                </li>
-              ))}
-            </ul>
-          </MarketingReveal>
-
-          <MarketingReveal delayMs={marketingRevealDelay(2)} className="relative">
-            <figure className="relative aspect-[4/3] overflow-hidden rounded-[20px] shadow-[0_32px_64px_rgba(7,13,18,0.14)]">
-              <Image
-                src={LANDING_IMAGES.outreach.src}
-                alt={LANDING_IMAGES.outreach.alt}
-                fill
-                className="object-cover saturate-[0.9]"
-                sizes="(max-width: 1024px) 100vw, 520px"
-              />
-              <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/35 to-transparent" />
-            </figure>
-            <div className="absolute -bottom-5 left-5 z-[2] flex items-center gap-3 rounded-[14px] border border-line bg-paper px-4 py-3 shadow-[0_20px_44px_rgba(7,13,18,0.16)]">
-              <span className="inline-flex size-2.5 rounded-full bg-lagoon" aria-hidden />
-              <p className="text-sm font-medium text-ink">Saved on client timeline</p>
-            </div>
-          </MarketingReveal>
-        </div>
-      </section>
-
-      {/* ── Product highlight: public site ───────────────────── */}
-      <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:px-10 lg:py-24">
-        <MarketingReveal delayMs={marketingRevealDelay(0)} className="relative lg:order-2">
-          <figure className="relative aspect-[4/3] overflow-hidden rounded-[20px] shadow-[0_32px_64px_rgba(7,13,18,0.14)]">
-            <Image
-              src={LANDING_IMAGES.website.src}
-              alt={LANDING_IMAGES.website.alt}
-              fill
-              className="object-cover saturate-[0.9]"
-              sizes="(max-width: 1024px) 100vw, 520px"
-            />
-            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/35 to-transparent" />
-          </figure>
-          <div className="absolute -bottom-5 right-5 z-[2] rounded-[14px] border border-line bg-paper px-4 py-3 shadow-[0_20px_44px_rgba(7,13,18,0.16)]">
-            <p className="font-mono text-xs text-stone">yourclub.cohestra.app</p>
-          </div>
-        </MarketingReveal>
-
-        <MarketingReveal delayMs={marketingRevealDelay(1)} className="lg:order-1">
-          <p className="text-section text-gold">Public site</p>
-          <h2 className="text-marketing-section mt-4 max-w-[16ch] text-ink">
-            A public site tied to your activities
-          </h2>
-          <p className="text-marketing-lead mt-4 max-w-[44ch] text-stone">
-            Your homepage stays current because activities and registration come from the same
-            system.
-          </p>
-          <ul className="mt-8 space-y-3">
-            {WEBSITE_POINTS.map((point) => (
-              <li key={point} className="flex items-start gap-3 text-[0.95rem] text-ink/85">
-                <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-lagoon/12 text-lagoon">
-                  <Check className="size-3.5" aria-hidden />
-                </span>
-                {point}
-              </li>
-            ))}
-          </ul>
-        </MarketingReveal>
       </section>
 
       {/* ── Testimonials ─────────────────────────────────────── */}

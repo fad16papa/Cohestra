@@ -8,11 +8,19 @@ import { MarketingCrmShowcase } from "@/components/marketing/marketing-crm-showc
 import {
   CampaignsShowcaseMock,
   DashboardShowcaseMock,
+  OutreachShowcaseMock,
   ReportsShowcaseMock,
+  WebsiteBuilderShowcaseMock,
 } from "@/components/marketing/marketing-product-showcase-mocks";
 import { cn } from "@/lib/utils";
 
-type ProductSlideId = "clients" | "dashboard" | "campaigns" | "reports";
+type ProductSlideId =
+  | "clients"
+  | "outreach"
+  | "dashboard"
+  | "campaigns"
+  | "reports"
+  | "website";
 
 type ProductSlide = {
   id: ProductSlideId;
@@ -38,6 +46,20 @@ const PRODUCT_SLIDES: ProductSlide[] = [
       "WhatsApp and Viber open from the profile with messages saved automatically",
     ],
     visual: <MarketingCrmShowcase compact />,
+  },
+  {
+    id: "outreach",
+    navLabel: "Follow-up",
+    eyebrow: "Client outreach",
+    title: "Message clients on WhatsApp and Viber",
+    lead: "Open the channel your community already uses. Cohestra logs what you sent so the team stays aligned and nobody gets double messaged.",
+    points: [
+      "WhatsApp and Viber open from any client profile",
+      "Each message saved on the client timeline automatically",
+      "Status flags show who still needs a reply",
+      "Dashboard follow-up queue surfaces the next person to contact",
+    ],
+    visual: <OutreachShowcaseMock />,
   },
   {
     id: "dashboard",
@@ -80,6 +102,20 @@ const PRODUCT_SLIDES: ProductSlide[] = [
       "Saved views for recurring check-ins",
     ],
     visual: <ReportsShowcaseMock />,
+  },
+  {
+    id: "website",
+    navLabel: "Website",
+    eyebrow: "Website builder · Pro",
+    title: "Publish a public site tied to your activities",
+    lead: "Pro unlocks the full website builder — draft, preview, and publish a homepage at your org subdomain with activities that stay in sync.",
+    points: [
+      "Studio sections: carousel, testimonials, FAQ, and more",
+      "Upcoming activities update from your workspace automatically",
+      "Draft, preview on desktop and mobile, then publish in one click",
+      "Share kit with QR, link, and WhatsApp text ready to paste",
+    ],
+    visual: <WebsiteBuilderShowcaseMock />,
   },
 ];
 
@@ -140,7 +176,7 @@ export function MarketingProductCarousel() {
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-section text-gold">Inside the workspace</p>
           <h2 className="text-marketing-section mt-4 text-balance text-ink">
-            One product for clients, dashboard, campaigns, and reports
+            One product for clients, follow-up, operations, and your public site
           </h2>
           <p className="text-marketing-lead mt-4 text-stone">
             Browse each surface at full size — the same views your team uses every week.
