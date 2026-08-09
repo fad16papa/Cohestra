@@ -688,7 +688,7 @@ public sealed class ActivityService(
         Guid tenantId,
         CancellationToken cancellationToken)
     {
-        if (!response.IsRegistrationOpen || response.IsRegistrationFull)
+        if (!response.IsRegistrationOpen)
         {
             return response;
         }

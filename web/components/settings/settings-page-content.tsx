@@ -28,7 +28,7 @@ export function SettingsPageContent() {
           <SettingsWorkspaceNav />
           <SettingsSectionCard
             title="Workspace"
-            description="Branding, registration limits, and plan headroom for this organization."
+            description="Branding, plan usage, and registration month timezone for this organization."
           >
             <SettingsPlanUsageSection />
             <BrandAccentSection />

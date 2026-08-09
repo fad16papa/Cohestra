@@ -36,7 +36,9 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
   const status = raw.status ?? raw.Status;
   const isRegistrationOpen = raw.isRegistrationOpen ?? raw.IsRegistrationOpen;
   const isRegistrationFull = raw.isRegistrationFull ?? raw.IsRegistrationFull;
-  const isRegistrationPaused = raw.isRegistrationPaused ?? raw.IsRegistrationPaused;
+  const isRegistrationPausedRaw = raw.isRegistrationPaused ?? raw.IsRegistrationPaused;
+  const isRegistrationPaused =
+    typeof isRegistrationPausedRaw === "boolean" ? isRegistrationPausedRaw : false;
   const maxRegistrantsRaw = raw.maxRegistrants ?? raw.MaxRegistrants;
   const registrationCountRaw = raw.registrationCount ?? raw.RegistrationCount;
   const schedule = raw.schedule ?? raw.Schedule;
@@ -51,7 +53,6 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
     typeof name !== "string" ||
     typeof isRegistrationOpen !== "boolean" ||
     typeof isRegistrationFull !== "boolean" ||
-    typeof isRegistrationPaused !== "boolean" ||
     typeof registrationCountRaw !== "number" ||
     typeof schedule !== "string" ||
     typeof location !== "string" ||

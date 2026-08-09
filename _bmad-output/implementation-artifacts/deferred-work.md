@@ -1,3 +1,10 @@
+## Deferred from: code review of PRs 152-154 (2026-08-09)
+
+- Invite form `minLength={8}` blocks legacy accounts with shorter passwords — pre-existing validation; needs product call
+- `AccountSection` returns null until profile hydrates — brief empty card on settings first paint
+- Admin workspace sections hidden while tenant shell is null on first paint — resolves when shell loads
+- Invite consumed but post-accept auto-login fails — user may believe invite failed with no retry path; pre-existing auth flow edge case
+
 ## Deferred from: code review of 21-3-multi-channel-follow-up-coverage-includes-viber.md (2026-08-09)
 
 - `LeadStatus != New` counts as followed-up without outreach events — pre-existing predicate preserved by design
