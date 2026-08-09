@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-04T13:40:00Z
+# last_updated: 2026-08-09T10:10:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-04T13:40:00Z
+last_updated: 2026-08-09T10:10:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -258,6 +258,14 @@ development_status:
   20-1-optional-max-registrants-per-activity: done
   epic-20-retrospective: done
 
+  epic-24: done
+  24-1-activities-at-cap-recovery-ux: done
+  24-2-activity-card-reg-cap-badge: done
+  24-3-activity-card-quick-actions: done
+  24-4-activities-url-filters-sort: done
+  24-5-experience-activities-module: review
+  epic-24-retrospective: done
+
   epic-21: in-progress
   21-1-viber-click-to-message-from-client-profile: review
   21-2-viber-follow-up-status-tracking: backlog
@@ -431,4 +439,30 @@ action_items:
   - epic: 20
     action: "Align create endpoint validation errors to 400 vs 409 (InvalidOperationException taxonomy)"
     owner: Dev
+    status: open
+
+  # Epic 24 retrospective action items (2026-08-09)
+  - epic: 24
+    action: "Merge PR #127 (Story 24.5 EXPERIENCE.md Activities module)"
+    owner: Dev
+    status: open
+  - epic: 24
+    action: "Close draft brainstorm PRs #117–#126 (artifacts merged or superseded)"
+    owner: Dev
+    status: open
+  - epic: 24
+    action: "Deploy Epic 24 to operator environment — smoke-test recovery chips and URL bookmarks"
+    owner: Operator
+    status: open
+  - epic: 24
+    action: "Consider ActivityService Redis test double for ListAsync unit tests"
+    owner: Dev
+    status: open
+  - epic: 24
+    action: "Add controller test for activities list sort 400 validation"
+    owner: Dev
+    status: open
+  - epic: 24
+    action: "Schedule doc story upfront in future multi-story UI epics"
+    owner: Product
     status: open
