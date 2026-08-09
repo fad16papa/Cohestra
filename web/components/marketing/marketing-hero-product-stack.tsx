@@ -1,11 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  BarChart3,
-  LayoutDashboard,
-  Mail,
-} from "lucide-react";
+import { BarChart3, LayoutDashboard, Mail } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -22,7 +18,7 @@ function StackBrowserChrome({
     <div
       aria-hidden
       className={cn(
-        "overflow-hidden rounded-[18px] border border-line bg-paper shadow-[0_32px_64px_rgba(7,13,18,0.14)]",
+        "overflow-hidden rounded-[18px] border border-line bg-paper shadow-[0_24px_48px_rgba(7,13,18,0.12)]",
         className
       )}
     >
@@ -75,7 +71,10 @@ function DashboardStackMock() {
   ] as const;
 
   return (
-    <StackBrowserChrome path="yourclub.cohestra.app/dashboard">
+    <StackBrowserChrome
+      path="yourclub.cohestra.app/dashboard"
+      className="shadow-[0_40px_80px_rgba(7,13,18,0.16)]"
+    >
       <div className="space-y-3">
         <div>
           <p className="font-[family-name:var(--font-fraunces)] text-base font-medium tracking-[-0.02em] text-ink sm:text-lg">
@@ -127,9 +126,9 @@ function DashboardStackMock() {
 
 function CampaignsStackMock() {
   const rows = [
-    { subject: "Sunday clinic reminder", sent: "Mar 8", delivered: true },
-    { subject: "New board games night", sent: "Mar 5", delivered: true },
-    { subject: "Summer camp early access", sent: "Feb 28", delivered: true },
+    { subject: "Sunday clinic reminder", sent: "Mar 8" },
+    { subject: "New board games night", sent: "Mar 5" },
+    { subject: "Summer camp early access", sent: "Feb 28" },
   ] as const;
 
   return (
@@ -240,61 +239,45 @@ function ReportsStackMock() {
   );
 }
 
-type StackCardProps = {
-  children: ReactNode;
-  label: string;
-  icon: typeof LayoutDashboard;
-  depth: "back" | "middle" | "front";
-  className?: string;
-};
-
-function StackCard({ children, label, icon, depth, className }: StackCardProps) {
-  const depthStyles = {
-    back: "z-[1] -translate-x-3 -translate-y-10 scale-[0.86] opacity-[0.7] sm:-translate-x-4 sm:-translate-y-12 sm:scale-[0.88]",
-    middle: "z-[2] translate-x-4 -translate-y-5 scale-[0.93] opacity-[0.86] sm:translate-x-5 sm:-translate-y-6 sm:scale-[0.94]",
-    front: "z-[3] translate-y-0 scale-100 opacity-100",
-  } as const;
-
-  const labelStyles = {
-    back: "absolute -left-1 top-2 sm:-left-2",
-    middle: "absolute -right-1 top-10 sm:-right-2",
-    front: "absolute -left-1 -bottom-3 sm:-left-2 sm:-bottom-4",
-  } as const;
-
-  return (
-    <div
-      className={cn(
-        "marketing-hero-stack-card absolute inset-x-0 top-0",
-        depthStyles[depth],
-        className
-      )}
-    >
-      <div className="relative origin-top">
-        {children}
-        <StackLabel icon={icon} label={label} className={labelStyles[depth]} />
-      </div>
-    </div>
-  );
-}
-
 export function MarketingHeroProductStack({ className }: { className?: string }) {
   return (
     <div
-      className={cn("marketing-product-lift relative mx-auto w-full max-w-[500px]", className)}
+      className={cn("marketing-product-lift relative mx-auto w-full max-w-[520px]", className)}
       aria-label="Cohestra product preview: dashboard, email campaigns, and reports"
     >
-      <div className="relative aspect-[4/5] min-h-[420px] sm:min-h-[480px]">
-        <StackCard depth="back" label="Reports" icon={BarChart3}>
-          <ReportsStackMock />
-        </StackCard>
+      <div className="relative flex flex-col">
+        <div className="marketing-hero-stack-card relative z-[1] w-[92%] -mb-24 sm:-mb-28">
+          <div className="relative">
+            <ReportsStackMock />
+            <StackLabel
+              icon={BarChart3}
+              label="Reports"
+              className="absolute -right-1 top-3 sm:-right-2 sm:top-4"
+            />
+          </div>
+        </div>
 
-        <StackCard depth="middle" label="Campaigns" icon={Mail}>
-          <CampaignsStackMock />
-        </StackCard>
+        <div className="marketing-hero-stack-card relative z-[2] ml-auto w-[92%] -mb-24 sm:-mb-28">
+          <div className="relative">
+            <CampaignsStackMock />
+            <StackLabel
+              icon={Mail}
+              label="Campaigns"
+              className="absolute -left-1 top-3 sm:-left-2 sm:top-4"
+            />
+          </div>
+        </div>
 
-        <StackCard depth="front" label="Dashboard" icon={LayoutDashboard}>
-          <DashboardStackMock />
-        </StackCard>
+        <div className="marketing-hero-stack-card relative z-[3] ml-6 w-[calc(100%-1.5rem)] sm:ml-10 sm:w-[calc(100%-2.5rem)]">
+          <div className="relative">
+            <DashboardStackMock />
+            <StackLabel
+              icon={LayoutDashboard}
+              label="Dashboard"
+              className="absolute -right-1 -bottom-3 sm:-right-2 sm:-bottom-4"
+            />
+          </div>
+        </div>
       </div>
 
       <p className="mx-auto mt-6 max-w-[34ch] text-center text-sm leading-relaxed text-stone">
