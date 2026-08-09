@@ -110,9 +110,7 @@ export function ActivitiesListPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [initialized, setInitialized] = useState(false);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ActivityStatus | "">(() =>
-    parseStatusFilter(searchParams.get("status"))
-  );
+  const statusFilter = parseStatusFilter(searchParams.get("status"));
   const [categoryFilter, setCategoryFilter] = useState(
     () => searchParams.get("category") ?? ""
   );
@@ -161,10 +159,19 @@ export function ActivitiesListPage() {
   }, []);
 
   const applyPublishedFilter = useCallback(() => {
-    setStatusFilter("published");
     setPage(1);
     syncStatusToUrl("published");
   }, [syncStatusToUrl]);
+
+  useEffect(() => {
+    if (statusFilter !== "published") {
+      setRecoveryMode(false);
+    }
+  }, [statusFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -249,7 +256,6 @@ export function ActivitiesListPage() {
 
   function clearFilters() {
     setSearch("");
-    setStatusFilter("");
     setCategoryFilter("");
     setCommunityFilter("");
     setRecoveryMode(false);
@@ -258,7 +264,6 @@ export function ActivitiesListPage() {
   }
 
   function updateStatusFilter(nextStatus: ActivityStatus | "") {
-    setStatusFilter(nextStatus);
     setPage(1);
     syncStatusToUrl(nextStatus);
 
@@ -339,6 +344,7 @@ export function ActivitiesListPage() {
         <ActivitiesAtCapBanner
           state={atCapBannerState}
           showUpgradeLink={shell?.isTenantAdmin ?? false}
+          tenantSlug={shell?.tenantSlug ?? "unknown"}
           onReviewPublished={handleReviewPublished}
         />
       ) : null}
@@ -440,34 +446,33 @@ export function ActivitiesListPage() {
       ) : null}
 
       {initialized && !error && activities.length === 0 ? (
-        hasActiveFilters ? (
-          <div className="rounded-xl border border-dashed border-border-warm px-6 py-10 text-center">
-            <p className="text-sm text-text-muted-warm">
-              No activities match your current filters.
-            </p>
-            <Button variant="outline" className="mt-4" onClick={clearFilters}>
-              Clear filters
-            </Button>
-          </div>
-        ) : (
-          <ProductEmptyState
-            icon={CalendarDays}
-            title="No activities yet"
-            description="Create your first activity to get a registration form, QR code, and shareable link for your next community event."
-            primaryHref="/activities/new"
-            primaryLabel="Create your first activity"
-            secondaryHref="/activities/communities"
-            secondaryLabel="Manage communities"
-          />
-        )
+        <div ref={activityGridRef}>
+          {hasActiveFilters ? (
+            <div className="rounded-xl border border-dashed border-border-warm px-6 py-10 text-center">
+              <p className="text-sm text-text-muted-warm">
+                No activities match your current filters.
+              </p>
+              <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            </div>
+          ) : (
+            <ProductEmptyState
+              icon={CalendarDays}
+              title="No activities yet"
+              description="Create your first activity to get a registration form, QR code, and shareable link for your next community event."
+              primaryHref="/activities/new"
+              primaryLabel="Create your first activity"
+              secondaryHref="/activities/communities"
+              secondaryLabel="Manage communities"
+            />
+          )}
+        </div>
       ) : null}
 
       {initialized && !error && activities.length > 0 ? (
-        <>
-          <div
-            ref={activityGridRef}
-            className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
-          >
+        <div ref={activityGridRef}>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {activities.map((activity) => (
               <ActivityCard
                 key={activity.id}
@@ -514,7 +519,7 @@ export function ActivitiesListPage() {
               </Button>
             </div>
           </div>
-        </>
+        </div>
       ) : null}
     </div>
   );
