@@ -17,9 +17,11 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  applyActivitySortToSearchParams,
   fetchActivities,
   isDefaultActivitySort,
   parseActivitySortFromSearchParams,
+  resolveActivityListSort,
   type Activity,
   type ActivitySortBy,
   type ActivitySortDirection,
@@ -68,6 +70,23 @@ function parseStatusFilter(value: string | null): ActivityStatus | "" {
   }
 
   return "";
+}
+
+function resolveSortSelectValue(
+  sortBy: ActivitySortBy,
+  sortDirection: ActivitySortDirection
+): `${ActivitySortBy}:${ActivitySortDirection}` {
+  const candidate = `${sortBy}:${sortDirection}` as `${ActivitySortBy}:${ActivitySortDirection}`;
+
+  if (sortFilterOptions.some((option) => option.value === candidate)) {
+    return candidate;
+  }
+
+  const presetForField = sortFilterOptions.find((option) =>
+    option.value.startsWith(`${sortBy}:`)
+  );
+
+  return presetForField?.value ?? "updatedAt:desc";
 }
 
 type ActivitySearchInputProps = {
@@ -131,7 +150,7 @@ export function ActivitiesListPage() {
     searchParams.get("sortBy"),
     searchParams.get("sortDirection")
   );
-  const sortSelectValue = `${sortBy}:${sortDirection}` as `${ActivitySortBy}:${ActivitySortDirection}`;
+  const sortSelectValue = resolveSortSelectValue(sortBy, sortDirection);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [communities, setCommunities] = useState<Array<{ id: string; name: string }>>([]);
@@ -139,6 +158,15 @@ export function ActivitiesListPage() {
   const [error, setError] = useState<string | null>(null);
   const activityGridRef = useRef<HTMLDivElement>(null);
   const recoveryChipsRef = useRef<HTMLDivElement>(null);
+  const listQueryKey = [
+    statusFilter,
+    searchFilter,
+    categoryFilter,
+    communityFilter,
+    sortBy,
+    sortDirection,
+  ].join("\0");
+  const listQueryKeyRef = useRef(listQueryKey);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / ACTIVITY_PAGE_SIZE));
 
@@ -149,7 +177,6 @@ export function ActivitiesListPage() {
       router.replace(
         params.toString() ? `/activities?${params.toString()}` : "/activities"
       );
-      setPage(1);
     },
     [router, searchParams]
   );
@@ -190,36 +217,12 @@ export function ActivitiesListPage() {
   }, [statusFilter]);
 
   useEffect(() => {
-    let cancelled = false;
+    if (listQueryKeyRef.current !== listQueryKey) {
+      listQueryKeyRef.current = listQueryKey;
+      setPage(1);
+      return;
+    }
 
-    void Promise.all([fetchCommunities(authFetch), fetchCategories(authFetch)])
-      .then(([communityItems, categoryItems]) => {
-        if (cancelled) {
-          return;
-        }
-
-        setCommunities(communityItems);
-        setCategories(categoryItems);
-        setCatalogError(null);
-      })
-      .catch((loadError) => {
-        if (cancelled) {
-          return;
-        }
-
-        setCatalogError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Could not load communities and categories."
-        );
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [authFetch]);
-
-  useEffect(() => {
     let cancelled = false;
 
     void fetchActivities(authFetch, {
@@ -242,6 +245,7 @@ export function ActivitiesListPage() {
           Math.ceil(result.totalCount / ACTIVITY_PAGE_SIZE)
         );
         if (page > nextTotalPages) {
+          setActivities([]);
           setTotalCount(result.totalCount);
           setError(null);
           setInitialized(true);
@@ -274,6 +278,7 @@ export function ActivitiesListPage() {
     authFetch,
     categoryFilter,
     communityFilter,
+    listQueryKey,
     page,
     searchFilter,
     sortBy,
@@ -281,9 +286,56 @@ export function ActivitiesListPage() {
     statusFilter,
   ]);
 
+  useEffect(() => {
+    const { sortBy: resolvedSortBy, sortDirection: resolvedSortDirection, hadInvalidSortParams } =
+      resolveActivityListSort(
+        searchParams.get("sortBy"),
+        searchParams.get("sortDirection")
+      );
+
+    if (!hadInvalidSortParams) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    applyActivitySortToSearchParams(params, resolvedSortBy, resolvedSortDirection);
+    router.replace(
+      params.toString() ? `/activities?${params.toString()}` : "/activities"
+    );
+  }, [router, searchParams]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void Promise.all([fetchCommunities(authFetch), fetchCategories(authFetch)])
+      .then(([communityItems, categoryItems]) => {
+        if (cancelled) {
+          return;
+        }
+
+        setCommunities(communityItems);
+        setCategories(categoryItems);
+        setCatalogError(null);
+      })
+      .catch((loadError) => {
+        if (cancelled) {
+          return;
+        }
+
+        setCatalogError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Could not load communities and categories."
+        );
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authFetch]);
+
   function clearFilters() {
     setRecoveryMode(false);
-    setPage(1);
     router.replace("/activities");
   }
 
@@ -328,13 +380,7 @@ export function ActivitiesListPage() {
     ];
 
     replaceListParams((params) => {
-      if (isDefaultActivitySort(nextSortBy, nextSortDirection)) {
-        params.delete("sortBy");
-        params.delete("sortDirection");
-      } else {
-        params.set("sortBy", nextSortBy);
-        params.set("sortDirection", nextSortDirection);
-      }
+      applyActivitySortToSearchParams(params, nextSortBy, nextSortDirection);
     });
   }
 

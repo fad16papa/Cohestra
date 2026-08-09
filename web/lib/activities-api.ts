@@ -262,13 +262,14 @@ export function defaultActivitySortDirection(
 }
 
 export function parseActivitySortBy(value: string | null): ActivitySortBy | null {
+  const trimmed = value?.trim();
   if (
-    value === "name" ||
-    value === "createdAt" ||
-    value === "updatedAt" ||
-    value === "registrationCount"
+    trimmed === "name" ||
+    trimmed === "createdAt" ||
+    trimmed === "updatedAt" ||
+    trimmed === "registrationCount"
   ) {
-    return value;
+    return trimmed;
   }
 
   return null;
@@ -277,8 +278,9 @@ export function parseActivitySortBy(value: string | null): ActivitySortBy | null
 export function parseActivitySortDirection(
   value: string | null
 ): ActivitySortDirection | null {
-  if (value === "asc" || value === "desc") {
-    return value;
+  const trimmed = value?.trim().toLowerCase();
+  if (trimmed === "asc" || trimmed === "desc") {
+    return trimmed;
   }
 
   return null;
@@ -288,12 +290,49 @@ export function parseActivitySortFromSearchParams(
   sortByParam: string | null,
   sortDirectionParam: string | null
 ): { sortBy: ActivitySortBy; sortDirection: ActivitySortDirection } {
-  const sortBy = parseActivitySortBy(sortByParam) ?? DEFAULT_ACTIVITY_SORT_BY;
-  const sortDirection =
-    parseActivitySortDirection(sortDirectionParam) ??
-    defaultActivitySortDirection(sortBy);
+  const { sortBy, sortDirection } = resolveActivityListSort(
+    sortByParam,
+    sortDirectionParam
+  );
 
   return { sortBy, sortDirection };
+}
+
+export function resolveActivityListSort(
+  sortByParam: string | null,
+  sortDirectionParam: string | null
+): {
+  sortBy: ActivitySortBy;
+  sortDirection: ActivitySortDirection;
+  hadInvalidSortParams: boolean;
+} {
+  const trimmedSortBy = sortByParam?.trim() ?? "";
+  const trimmedDirection = sortDirectionParam?.trim() ?? "";
+  const parsedSortBy = parseActivitySortBy(trimmedSortBy || null);
+  const parsedDirection = parseActivitySortDirection(trimmedDirection || null);
+  const hadInvalidSortParams =
+    (trimmedSortBy.length > 0 && parsedSortBy === null) ||
+    (trimmedDirection.length > 0 && parsedDirection === null);
+  const sortBy = parsedSortBy ?? DEFAULT_ACTIVITY_SORT_BY;
+  const sortDirection =
+    parsedDirection ?? defaultActivitySortDirection(sortBy);
+
+  return { sortBy, sortDirection, hadInvalidSortParams };
+}
+
+export function applyActivitySortToSearchParams(
+  params: URLSearchParams,
+  sortBy: ActivitySortBy,
+  sortDirection: ActivitySortDirection
+): void {
+  if (isDefaultActivitySort(sortBy, sortDirection)) {
+    params.delete("sortBy");
+    params.delete("sortDirection");
+    return;
+  }
+
+  params.set("sortBy", sortBy);
+  params.set("sortDirection", sortDirection);
 }
 
 export function isDefaultActivitySort(
