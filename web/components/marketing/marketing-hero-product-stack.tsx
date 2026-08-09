@@ -13,11 +13,27 @@ const FLOAT_ROWS = [
   { name: "Jordan K.", meta: "Youth open play", pill: "New" },
 ] as const;
 
-const LADDER_STEPS = [
-  { top: "top-0", left: "left-0", width: "w-[88%]" },
-  { top: "top-[7rem] sm:top-[7.5rem]", left: "left-[4%] sm:left-[5%]", width: "w-[88%]" },
-  { top: "top-[14rem] sm:top-[15rem]", left: "left-[8%] sm:left-[10%]", width: "w-[88%]" },
-] as const;
+/** Bottom-anchored offsets: each layer stacks upward from the photo base. */
+const STACK_LAYERS = {
+  dashboard: {
+    bottom: "bottom-[2.5rem] sm:bottom-[3rem]",
+    left: "left-0",
+    width: "w-[90%]",
+    zIndex: 2,
+  },
+  campaigns: {
+    bottom: "bottom-[9.5rem] sm:bottom-[10.5rem]",
+    left: "left-[5%] sm:left-[6%]",
+    width: "w-[90%]",
+    zIndex: 3,
+  },
+  reports: {
+    bottom: "bottom-[16.5rem] sm:bottom-[18rem]",
+    left: "left-[10%] sm:left-[12%]",
+    width: "w-[90%]",
+    zIndex: 4,
+  },
+} as const;
 
 function StackBrowserChrome({
   path,
@@ -239,26 +255,36 @@ function ReportsStackMock() {
   );
 }
 
+type StackLayerKey = keyof typeof STACK_LAYERS;
+
 type LadderCardProps = {
   children: ReactNode;
   label: string;
   icon: typeof LayoutDashboard;
-  step: 0 | 1 | 2;
+  layer: StackLayerKey;
   labelClassName: string;
+  animationOrder: number;
 };
 
-function LadderCard({ children, label, icon, step, labelClassName }: LadderCardProps) {
-  const position = LADDER_STEPS[step];
+function LadderCard({
+  children,
+  label,
+  icon,
+  layer,
+  labelClassName,
+  animationOrder,
+}: LadderCardProps) {
+  const position = STACK_LAYERS[layer];
 
   return (
     <div
       className={cn(
         "marketing-hero-stack-card absolute",
-        position.top,
+        position.bottom,
         position.left,
         position.width
       )}
-      style={{ zIndex: step + 1 }}
+      style={{ zIndex: position.zIndex, animationDelay: `${0.35 + animationOrder * 0.2}s` }}
     >
       <div className="relative">
         {children}
@@ -270,7 +296,7 @@ function LadderCard({ children, label, icon, step, labelClassName }: LadderCardP
 
 function HeroCommunityPhoto() {
   return (
-    <figure className="relative aspect-[4/5] max-h-[520px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)]">
+    <figure className="absolute inset-x-0 bottom-0 z-[1] aspect-[4/5] max-h-[480px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)]">
       <Image
         src={LANDING_IMAGES.hero.src}
         alt={LANDING_IMAGES.hero.alt}
@@ -295,9 +321,8 @@ function HeroClientsPreview() {
     <aside
       aria-label="Live clients preview"
       className={cn(
-        "z-[6] w-full rounded-[16px] border border-line bg-paper p-4 shadow-[0_28px_60px_rgba(7,13,18,0.2)]",
-        "relative mx-auto -mt-10 mb-2 max-w-[300px] lg:absolute lg:mx-0 lg:-mt-0 lg:mb-0",
-        "lg:right-4 lg:top-8 lg:w-[min(100%,260px)]"
+        "absolute z-[6] w-[min(100%,260px)] rounded-[16px] border border-line bg-paper p-4 shadow-[0_28px_60px_rgba(7,13,18,0.2)]",
+        "right-2 bottom-[21rem] sm:right-4 sm:bottom-[24rem]"
       )}
     >
       <p className="text-label mb-3 text-gold">Tonight&apos;s clients</p>
@@ -325,40 +350,40 @@ export function MarketingHeroProductStack({ className }: { className?: string })
       className={cn("marketing-product-lift relative mx-auto w-full max-w-[560px]", className)}
       aria-label="Cohestra community photo with dashboard, email campaigns, and reports previews"
     >
-      <div className="relative pb-[13.5rem] sm:pb-[14.5rem]">
+      <div className="relative h-[34rem] sm:h-[36rem]">
         <HeroCommunityPhoto />
+
+        <LadderCard
+          layer="dashboard"
+          label="Dashboard"
+          icon={LayoutDashboard}
+          animationOrder={0}
+          labelClassName="absolute -right-1 -bottom-3 sm:-right-2 sm:-bottom-4"
+        >
+          <DashboardStackMock />
+        </LadderCard>
+
+        <LadderCard
+          layer="campaigns"
+          label="Campaigns"
+          icon={Mail}
+          animationOrder={1}
+          labelClassName="absolute -left-1 top-3 sm:-left-2 sm:top-4"
+        >
+          <CampaignsStackMock />
+        </LadderCard>
+
+        <LadderCard
+          layer="reports"
+          label="Reports"
+          icon={BarChart3}
+          animationOrder={2}
+          labelClassName="absolute -right-1 top-3 sm:-right-2 sm:top-4"
+        >
+          <ReportsStackMock />
+        </LadderCard>
+
         <HeroClientsPreview />
-
-        <div className="absolute inset-x-0 bottom-0 z-[8] px-1 sm:px-2">
-          <div className="relative h-[24rem] sm:h-[25rem]">
-            <LadderCard
-              step={0}
-              label="Reports"
-              icon={BarChart3}
-              labelClassName="absolute -right-1 top-3 sm:-right-2 sm:top-4"
-            >
-              <ReportsStackMock />
-            </LadderCard>
-
-            <LadderCard
-              step={1}
-              label="Campaigns"
-              icon={Mail}
-              labelClassName="absolute -left-1 top-3 sm:-left-2 sm:top-4"
-            >
-              <CampaignsStackMock />
-            </LadderCard>
-
-            <LadderCard
-              step={2}
-              label="Dashboard"
-              icon={LayoutDashboard}
-              labelClassName="absolute -right-1 -bottom-3 sm:-right-2 sm:-bottom-4"
-            >
-              <DashboardStackMock />
-            </LadderCard>
-          </div>
-        </div>
       </div>
 
       <p className="mx-auto mt-4 max-w-[36ch] text-center text-sm leading-relaxed text-stone">
