@@ -17,7 +17,7 @@ Start **free** on Basic. Upgrade when you need a public homepage, richer reports
 **For:** Trying Cohestra with the smallest real setup.
 
 **Includes:**
-- **1** operator seat · **1** community · **3** published activities · **150** registrations / month
+- **1** operator seat · **1** community · **4** published activities · **250** registrations / month
 - QR codes + public registration
 - Registration email notifications
 - Client list with dedup + timeline
@@ -79,8 +79,8 @@ Custom limits, domain, SSO. [Book a demo →](#)
 | Price | **Free** | $29/mo | $79/mo |
 | Operator seats | 1 | 3 | 10 |
 | Communities | 1 | 3 | 10 |
-| Published activities | 3 | 12 | 50 |
-| Registrations / month | 150 | 500 | 5,000 |
+| Published activities | 4 | 12 | 50 |
+| Registrations / month | 250 | 500 | 5,000 |
 | Registration email notifications | ✓ | ✓ | ✓ |
 | Reports | Simple + CSV | Queryable + export | + Campaigns + saved views |
 | Public site | Stub only | Builder (Essentials) | Builder (Studio) |
