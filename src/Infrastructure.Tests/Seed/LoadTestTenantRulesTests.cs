@@ -6,10 +6,10 @@ public sealed class LoadTestTenantRulesTests
 {
     [Theory]
     [InlineData("load-core-alpha", true, true)]
-    [InlineData("load-pro-beta", true, true)]
+    [InlineData("load-pro-beta", false, true)]
     [InlineData("acme-corp", true, false)]
-    [InlineData("load-core-alpha", false, false)]
-    public void UnlocksWebsiteBuilder_matches_load_test_complimentary_workspaces(
+    [InlineData("load-core-alpha", false, true)]
+    public void UnlocksWebsiteBuilder_matches_load_test_workspaces(
         string slug,
         bool isComplimentary,
         bool expected)
