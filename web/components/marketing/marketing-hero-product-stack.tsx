@@ -13,14 +13,14 @@ const FLOAT_ROWS = [
 
 function HeroCommunityPhoto() {
   return (
-    <figure className="relative aspect-[4/5] max-h-[520px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)]">
+    <figure className="relative aspect-[4/5] w-full max-h-[520px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)] sm:max-h-[580px] lg:aspect-[3/4] lg:max-h-none lg:min-h-[700px] xl:min-h-[760px]">
       <Image
         src={LANDING_IMAGES.hero.src}
         alt={LANDING_IMAGES.hero.alt}
         fill
         priority
         className="object-cover saturate-[0.92] contrast-[1.05]"
-        sizes="(max-width: 1024px) 100vw, 560px"
+        sizes="(max-width: 1024px) 100vw, 50vw"
       />
       <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-ink/[0.04] via-ink/15 to-ink/55" />
       <figcaption className="absolute inset-x-6 bottom-6 z-[2] max-w-[18ch] text-paper">
@@ -38,7 +38,7 @@ function HeroClientsPreview() {
     <aside
       aria-label="Live clients preview"
       className={cn(
-        "absolute z-[3] w-[min(100%,300px)] rounded-[16px] border border-line bg-paper p-4 shadow-[0_28px_60px_rgba(7,13,18,0.2)]",
+        "absolute z-[3] w-[min(100%,320px)] rounded-[16px] border border-line bg-paper p-4 shadow-[0_28px_60px_rgba(7,13,18,0.2)]",
         "right-0 bottom-[18%] max-lg:relative max-lg:mx-4 max-lg:-mt-12 max-lg:mb-0 max-lg:w-auto max-lg:max-w-none"
       )}
     >
@@ -64,7 +64,10 @@ function HeroClientsPreview() {
 export function MarketingHeroProductStack({ className }: { className?: string }) {
   return (
     <div
-      className={cn("marketing-product-lift relative mx-auto w-full max-w-[560px]", className)}
+      className={cn(
+        "marketing-product-lift relative mx-auto w-full max-w-[640px] lg:flex lg:h-full lg:max-w-none lg:flex-col lg:justify-end",
+        className
+      )}
       aria-label="Community photo with live clients preview"
     >
       <HeroCommunityPhoto />
