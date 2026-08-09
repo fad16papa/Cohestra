@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
+import { ActivitiesAtCapBanner } from "@/components/activities/activities-at-cap-banner";
+import { ActivitiesRecoveryChips } from "@/components/activities/activities-recovery-chips";
 import { ActivityCard } from "@/components/activities/activity-card";
 import { useActivityScheduleConflicts } from "@/components/activities/use-activity-schedule-conflicts";
 import { useAuth } from "@/components/auth/auth-provider";
-import { PlanLimitAlert } from "@/components/shell/plan-limit-alert";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { CardGridSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
@@ -22,7 +23,13 @@ import {
 } from "@/lib/activities-api";
 import { fetchCategories } from "@/lib/categories-api";
 import { fetchCommunities } from "@/lib/communities-api";
-import { getCreateActivityPlanWarnings } from "@/lib/plan-limit-utils";
+import {
+  getActivitiesAtCapBannerState,
+  getPublishedActivitiesUsageCount,
+  isPublishedActivitiesBlocked,
+  shouldShowActivitiesRecoveryChips,
+  shouldShowPublishedOnlyChip,
+} from "@/lib/plan-limit-utils";
 import { cn } from "@/lib/utils";
 import { CalendarDays } from "lucide-react";
 
@@ -84,13 +91,18 @@ function ActivitySearchInput({ committedValue, onCommit }: ActivitySearchInputPr
 export function ActivitiesListPage() {
   const { authFetch } = useAuth();
   const { shell } = useTenantShell();
-  const planWarnings = getCreateActivityPlanWarnings(shell);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const atCapBannerState = getActivitiesAtCapBannerState(shell);
+  const showRecoveryChips = shouldShowActivitiesRecoveryChips(shell);
+  const showPublishedOnlyChip = shouldShowPublishedOnlyChip(shell);
+  const publishedBlocked = isPublishedActivitiesBlocked(shell);
+  const publishedCount = getPublishedActivitiesUsageCount(shell);
   const {
     getConflictsForActivity,
     ready: conflictsReady,
     error: conflictError,
   } = useActivityScheduleConflicts();
-  const searchParams = useSearchParams();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -105,17 +117,52 @@ export function ActivitiesListPage() {
   const [communityFilter, setCommunityFilter] = useState(
     () => searchParams.get("community") ?? ""
   );
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [communities, setCommunities] = useState<Array<{ id: string; name: string }>>([]);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const activityGridRef = useRef<HTMLDivElement>(null);
+  const recoveryChipsRef = useRef<HTMLDivElement>(null);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / ACTIVITY_PAGE_SIZE));
+
+  const syncStatusToUrl = useCallback(
+    (nextStatus: ActivityStatus | "") => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (nextStatus) {
+        params.set("status", nextStatus);
+      } else {
+        params.delete("status");
+      }
+
+      router.replace(
+        params.toString() ? `/activities?${params.toString()}` : "/activities"
+      );
+    },
+    [router, searchParams]
+  );
 
   const commitSearch = useCallback((value: string) => {
     setSearch(value.trim());
     setPage(1);
   }, []);
+
+  const scrollToActivityGrid = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      activityGridRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }, []);
+
+  const applyPublishedFilter = useCallback(() => {
+    setStatusFilter("published");
+    setPage(1);
+    syncStatusToUrl("published");
+  }, [syncStatusToUrl]);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,12 +250,19 @@ export function ActivitiesListPage() {
     setStatusFilter("");
     setCategoryFilter("");
     setCommunityFilter("");
+    setRecoveryMode(false);
     setPage(1);
+    syncStatusToUrl("");
   }
 
   function updateStatusFilter(nextStatus: ActivityStatus | "") {
     setStatusFilter(nextStatus);
     setPage(1);
+    syncStatusToUrl(nextStatus);
+
+    if (nextStatus !== "published") {
+      setRecoveryMode(false);
+    }
   }
 
   function updateCategoryFilter(nextCategory: string) {
@@ -219,6 +273,34 @@ export function ActivitiesListPage() {
   function updateCommunityFilter(nextCommunity: string) {
     setCommunityFilter(nextCommunity);
     setPage(1);
+  }
+
+  function handleReviewPublished() {
+    applyPublishedFilter();
+    scrollToActivityGrid();
+  }
+
+  function handlePublishedOnlyClick() {
+    if (statusFilter === "published") {
+      updateStatusFilter("");
+      return;
+    }
+
+    applyPublishedFilter();
+  }
+
+  function handleFreeASlotClick() {
+    setRecoveryMode(true);
+    applyPublishedFilter();
+    scrollToActivityGrid();
+  }
+
+  function focusFreeASlotChip() {
+    document.getElementById("free-a-slot-chip")?.focus();
+    recoveryChipsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
   }
 
   const hasActiveFilters =
@@ -233,18 +315,43 @@ export function ActivitiesListPage() {
         title="Activities"
         description="Launch and manage your lead engines."
         actions={
-          <Link href="/activities/new" className={cn(buttonVariants())}>
-            New activity
-          </Link>
+          publishedBlocked ? (
+            <Button
+              type="button"
+              variant="secondary"
+              title="Free a published slot first — use the Free a slot chip below"
+              aria-describedby="free-a-slot-chip"
+              onClick={focusFreeASlotChip}
+            >
+              New activity
+            </Button>
+          ) : (
+            <Link href="/activities/new" className={cn(buttonVariants())}>
+              New activity
+            </Link>
+          )
         }
       />
 
-      {planWarnings.length > 0 ? (
-        <div className="space-y-3">
-          {planWarnings.map((warning) => (
-            <PlanLimitAlert key={warning} message={warning} />
-          ))}
-        </div>
+      {atCapBannerState ? (
+        <ActivitiesAtCapBanner
+          state={atCapBannerState}
+          showUpgradeLink={shell?.isTenantAdmin ?? false}
+          onReviewPublished={handleReviewPublished}
+        />
+      ) : null}
+
+      {showRecoveryChips ? (
+        <ActivitiesRecoveryChips
+          ref={recoveryChipsRef}
+          publishedCount={publishedCount}
+          publishedFilterActive={statusFilter === "published"}
+          showPublishedOnlyChip={showPublishedOnlyChip}
+          showFreeASlotChip={publishedBlocked}
+          recoveryMode={recoveryMode}
+          onPublishedOnlyClick={handlePublishedOnlyClick}
+          onFreeASlotClick={handleFreeASlotClick}
+        />
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -355,7 +462,10 @@ export function ActivitiesListPage() {
 
       {initialized && !error && activities.length > 0 ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div
+            ref={activityGridRef}
+            className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+          >
             {activities.map((activity) => (
               <ActivityCard
                 key={activity.id}
