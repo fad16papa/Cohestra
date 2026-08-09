@@ -1,14 +1,22 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { BarChart3, LayoutDashboard, Mail } from "lucide-react";
 
+import { LANDING_IMAGES } from "@/lib/marketing/landing-images";
 import { cn } from "@/lib/utils";
+
+const FLOAT_ROWS = [
+  { name: "Elena M.", meta: "Sunday clinic", pill: "New" },
+  { name: "Sam R.", meta: "Clinic, also board games", pill: "Returning" },
+  { name: "Jordan K.", meta: "Youth open play", pill: "New" },
+] as const;
 
 const LADDER_STEPS = [
   { top: "top-0", left: "left-0", width: "w-[88%]" },
-  { top: "top-[8rem] sm:top-[8.5rem]", left: "left-[4%] sm:left-[5%]", width: "w-[88%]" },
-  { top: "top-[16rem] sm:top-[17rem]", left: "left-[8%] sm:left-[10%]", width: "w-[88%]" },
+  { top: "top-[7rem] sm:top-[7.5rem]", left: "left-[4%] sm:left-[5%]", width: "w-[88%]" },
+  { top: "top-[14rem] sm:top-[15rem]", left: "left-[8%] sm:left-[10%]", width: "w-[88%]" },
 ] as const;
 
 function StackBrowserChrome({
@@ -260,43 +268,101 @@ function LadderCard({ children, label, icon, step, labelClassName }: LadderCardP
   );
 }
 
+function HeroCommunityPhoto() {
+  return (
+    <figure className="relative aspect-[4/5] max-h-[520px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)]">
+      <Image
+        src={LANDING_IMAGES.hero.src}
+        alt={LANDING_IMAGES.hero.alt}
+        fill
+        priority
+        className="object-cover saturate-[0.92] contrast-[1.05]"
+        sizes="(max-width: 1024px) 100vw, 560px"
+      />
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-ink/[0.04] via-ink/15 to-ink/55" />
+      <figcaption className="absolute inset-x-5 bottom-5 z-[2] max-w-[18ch] text-paper sm:inset-x-6 sm:bottom-6">
+        <span className="text-section mb-2 block text-gold">Sunday clinic</span>
+        <span className="font-[family-name:var(--font-fraunces)] text-base leading-snug tracking-[-0.02em] sm:text-lg">
+          New and returning clients in one list.
+        </span>
+      </figcaption>
+    </figure>
+  );
+}
+
+function HeroClientsPreview() {
+  return (
+    <aside
+      aria-label="Live clients preview"
+      className={cn(
+        "z-[6] w-full rounded-[16px] border border-line bg-paper p-4 shadow-[0_28px_60px_rgba(7,13,18,0.2)]",
+        "relative mx-auto -mt-10 mb-2 max-w-[300px] lg:absolute lg:mx-0 lg:-mt-0 lg:mb-0",
+        "lg:right-4 lg:top-8 lg:w-[min(100%,260px)]"
+      )}
+    >
+      <p className="text-label mb-3 text-gold">Tonight&apos;s clients</p>
+      {FLOAT_ROWS.map((row) => (
+        <div
+          key={row.name}
+          className="flex items-baseline justify-between border-t border-line py-2.5 first:border-t-0 first:pt-0"
+        >
+          <div>
+            <p className="text-sm font-semibold text-ink">{row.name}</p>
+            <p className="text-xs text-stone">{row.meta}</p>
+          </div>
+          <span className="rounded-sm bg-lagoon/10 px-2 py-0.5 text-[0.625rem] font-bold tracking-wide text-lagoon uppercase">
+            {row.pill}
+          </span>
+        </div>
+      ))}
+    </aside>
+  );
+}
+
 export function MarketingHeroProductStack({ className }: { className?: string }) {
   return (
     <div
       className={cn("marketing-product-lift relative mx-auto w-full max-w-[560px]", className)}
-      aria-label="Cohestra product preview: dashboard, email campaigns, and reports"
+      aria-label="Cohestra community photo with dashboard, email campaigns, and reports previews"
     >
-      <div className="relative h-[27rem] sm:h-[29rem]">
-        <LadderCard
-          step={0}
-          label="Reports"
-          icon={BarChart3}
-          labelClassName="absolute -right-1 top-3 sm:-right-2 sm:top-4"
-        >
-          <ReportsStackMock />
-        </LadderCard>
+      <div className="relative pb-[13.5rem] sm:pb-[14.5rem]">
+        <HeroCommunityPhoto />
+        <HeroClientsPreview />
 
-        <LadderCard
-          step={1}
-          label="Campaigns"
-          icon={Mail}
-          labelClassName="absolute -left-1 top-3 sm:-left-2 sm:top-4"
-        >
-          <CampaignsStackMock />
-        </LadderCard>
+        <div className="absolute inset-x-0 bottom-0 z-[8] px-1 sm:px-2">
+          <div className="relative h-[24rem] sm:h-[25rem]">
+            <LadderCard
+              step={0}
+              label="Reports"
+              icon={BarChart3}
+              labelClassName="absolute -right-1 top-3 sm:-right-2 sm:top-4"
+            >
+              <ReportsStackMock />
+            </LadderCard>
 
-        <LadderCard
-          step={2}
-          label="Dashboard"
-          icon={LayoutDashboard}
-          labelClassName="absolute -right-1 -bottom-3 sm:-right-2 sm:-bottom-4"
-        >
-          <DashboardStackMock />
-        </LadderCard>
+            <LadderCard
+              step={1}
+              label="Campaigns"
+              icon={Mail}
+              labelClassName="absolute -left-1 top-3 sm:-left-2 sm:top-4"
+            >
+              <CampaignsStackMock />
+            </LadderCard>
+
+            <LadderCard
+              step={2}
+              label="Dashboard"
+              icon={LayoutDashboard}
+              labelClassName="absolute -right-1 -bottom-3 sm:-right-2 sm:-bottom-4"
+            >
+              <DashboardStackMock />
+            </LadderCard>
+          </div>
+        </div>
       </div>
 
-      <p className="mx-auto mt-4 max-w-[34ch] text-center text-sm leading-relaxed text-stone">
-        Dashboard, campaigns, and reports in one workspace — no spreadsheets or patchwork tools.
+      <p className="mx-auto mt-4 max-w-[36ch] text-center text-sm leading-relaxed text-stone">
+        Real community moments plus dashboard, campaigns, and reports in one workspace.
       </p>
     </div>
   );
