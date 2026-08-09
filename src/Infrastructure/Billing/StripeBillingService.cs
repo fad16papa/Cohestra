@@ -3,6 +3,7 @@ using Cohestra.Domain.Billing;
 using Cohestra.Domain.Site;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Registrations;
 using Cohestra.Infrastructure.Seed;
 using Cohestra.Infrastructure.Site;
 using Microsoft.EntityFrameworkCore;
@@ -513,6 +514,8 @@ public sealed class StripeBillingService(
         Guid tenantId,
         string? name,
         string? email,
+        string? phoneCountry,
+        string? phoneLocal,
         CancellationToken cancellationToken = default)
     {
         if (!_settings.IsConfigured)
@@ -543,9 +546,41 @@ public sealed class StripeBillingService(
             tenant.AdminContactEmail = email.Trim();
         }
 
-        if (options.Name is null && options.Email is null)
+        var hasPhoneUpdate = phoneCountry is not null || phoneLocal is not null;
+        if (hasPhoneUpdate)
         {
-            throw new InvalidOperationException("Provide a name or email to update.");
+            var localDigits = string.IsNullOrWhiteSpace(phoneLocal) ? string.Empty : phoneLocal.Trim();
+            if (localDigits.Length == 0)
+            {
+                options.Phone = string.Empty;
+            }
+            else
+            {
+                var country = PhoneCountrySupport.ResolveIsoCountryCode(phoneCountry);
+                if (!PhoneCountrySupport.IsSupportedIsoCode(country))
+                {
+                    throw new InvalidOperationException("Select a supported mobile country.");
+                }
+
+                var validationError = PhoneCountrySupport.ValidateLocalMobileNumber(country, localDigits);
+                if (validationError is not null)
+                {
+                    throw new InvalidOperationException(validationError);
+                }
+
+                var normalized = PhoneCountrySupport.NormalizePhone(localDigits, country);
+                if (string.IsNullOrWhiteSpace(normalized))
+                {
+                    throw new InvalidOperationException("Enter a valid mobile number.");
+                }
+
+                options.Phone = normalized;
+            }
+        }
+
+        if (options.Name is null && options.Email is null && !hasPhoneUpdate)
+        {
+            throw new InvalidOperationException("Provide a name, email, or mobile number to update.");
         }
 
         StripeConfiguration.ApiKey = _settings.SecretKey;
@@ -626,7 +661,7 @@ public sealed class StripeBillingService(
     }
 
     private static BillingContactDto BuildLocalContact(Tenant tenant) =>
-        new(tenant.Name, tenant.AdminContactEmail ?? string.Empty);
+        new(tenant.Name, tenant.AdminContactEmail ?? string.Empty, null);
 
     private static BillingSubscriptionDetailsDto? BuildLocalSubscription(Tenant tenant)
     {
@@ -652,7 +687,8 @@ public sealed class StripeBillingService(
             var customer = await customerService.GetAsync(customerId, cancellationToken: cancellationToken);
             return new BillingContactDto(
                 customer.Name ?? string.Empty,
-                customer.Email ?? string.Empty);
+                customer.Email ?? string.Empty,
+                string.IsNullOrWhiteSpace(customer.Phone) ? null : customer.Phone);
         }
         catch (StripeException ex)
         {

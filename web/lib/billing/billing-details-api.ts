@@ -6,6 +6,7 @@ import { mapBillingSummary } from "@/lib/billing/billing-api";
 export type BillingContact = {
   name: string;
   email: string;
+  phone: string | null;
 };
 
 export type BillingPaymentMethod = {
@@ -61,9 +62,11 @@ function parseProblem(raw: Record<string, unknown>): string {
 }
 
 function mapContact(raw: Record<string, unknown>): BillingContact {
+  const phoneRaw = raw.phone ?? raw.Phone;
   return {
     name: String(raw.name ?? raw.Name ?? ""),
     email: String(raw.email ?? raw.Email ?? ""),
+    phone: typeof phoneRaw === "string" && phoneRaw.trim() ? phoneRaw.trim() : null,
   };
 }
 
@@ -193,12 +196,17 @@ export async function confirmPaymentMethodSetupWithAuth(
 
 export async function updateBillingContactWithAuth(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>,
-  payload: { name?: string; email?: string }
+  payload: { name?: string; email?: string; phoneCountry?: string; phoneLocal?: string }
 ): Promise<void> {
   const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/admin/billing/contact`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      name: payload.name,
+      email: payload.email,
+      phoneCountry: payload.phoneCountry,
+      phoneLocal: payload.phoneLocal,
+    }),
   });
 
   if (response.status === 204) {

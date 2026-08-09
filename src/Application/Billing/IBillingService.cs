@@ -38,6 +38,8 @@ public interface IBillingService
         Guid tenantId,
         string? name,
         string? email,
+        string? phoneCountry,
+        string? phoneLocal,
         CancellationToken cancellationToken = default);
 
     Task CancelSubscriptionAtPeriodEndAsync(
@@ -81,7 +83,7 @@ public sealed record CreatePortalSessionCommand(
 
 public sealed record PortalSessionDto(string PortalUrl);
 
-public sealed record BillingContactDto(string Name, string Email);
+public sealed record BillingContactDto(string Name, string Email, string? Phone);
 
 public sealed record BillingPaymentMethodDto(
     string Id,

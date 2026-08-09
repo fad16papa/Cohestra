@@ -13,7 +13,7 @@ updated: 2026-08-09
 
 1. **Plan summary** — plan, status, trial end, scheduled cancellation
 2. **Payment method** — card on file or add CTA
-3. **Billing information** — name + email inline edit
+3. **Billing information** — name, email, and mobile (country first → auto prefix → local number)
 4. **Invoice history** — list with PDF download
 5. **Plan management** — change plan (checkout), cancel / resume subscription
 

@@ -29,7 +29,7 @@ public sealed record SyncBillingRequest(string? CheckoutSessionId);
 
 public sealed record PortalSessionResponse(string PortalUrl);
 
-public sealed record BillingContactResponse(string Name, string Email);
+public sealed record BillingContactResponse(string Name, string Email, string? Phone);
 
 public sealed record BillingPaymentMethodResponse(
     string Id,
@@ -64,4 +64,8 @@ public sealed record SetupIntentResponse(string ClientSecret, string Publishable
 
 public sealed record ConfirmSetupIntentRequest(string SetupIntentId);
 
-public sealed record UpdateBillingContactRequest(string? Name, string? Email);
+public sealed record UpdateBillingContactRequest(
+    string? Name,
+    string? Email,
+    string? PhoneCountry,
+    string? PhoneLocal);
