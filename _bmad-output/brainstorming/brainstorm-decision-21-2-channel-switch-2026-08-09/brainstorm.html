@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Decision — Channel switch dirty behavior</title>
+  <style>
+    :root { --bg:#121018; --card:#1c1826; --text:#f3eefc; --muted:#9a91ad; --viber:#7360f2; --wa:#25d366; --win:#3d9a6a; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--text); padding: 2rem 1.25rem 3rem; }
+    .wrap { max-width: 40rem; margin: 0 auto; }
+    h1 { font-size: 1.75rem; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+    .sub { color: var(--muted); font-family: system-ui, sans-serif; font-size: 0.9rem; margin-bottom: 2rem; }
+    .winner { border: 1px solid rgba(61,154,106,0.5); background: linear-gradient(135deg, rgba(61,154,106,0.15), rgba(115,96,242,0.12)); border-radius: 1rem; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+    .winner strong { color: #8fd4ad; font-family: system-ui, sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; }
+    .winner h2 { margin: 0.4rem 0 0.6rem; font-size: 1.35rem; }
+    .winner p { font-family: system-ui, sans-serif; font-size: 0.95rem; line-height: 1.5; color: #e2dcec; }
+    table { width: 100%; border-collapse: collapse; font-family: system-ui, sans-serif; font-size: 0.85rem; margin-bottom: 1.5rem; }
+    th, td { text-align: left; padding: 0.55rem 0.4rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    th { color: var(--muted); font-weight: 500; }
+    tr.win td { color: #8fd4ad; }
+    .jobs { display: grid; gap: 0.75rem; }
+    .job { background: var(--card); border-radius: 0.75rem; padding: 0.9rem 1rem; font-family: system-ui, sans-serif; font-size: 0.88rem; border-left: 3px solid var(--viber); }
+    .job.wa { border-left-color: var(--wa); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Channel switch: keep drafts</h1>
+    <p class="sub">Story 21.2 review decision · brainstorm 2026-08-09</p>
+
+    <div class="winner">
+      <strong>Recommended</strong>
+      <h2>Option 2 — Per-channel drafts</h2>
+      <p>WhatsApp and Viber are independent streams. Stashing status + note per channel matches that model, stops silent note loss on peek/mis-tap, and adds no modal chrome to the dense sidebar card.</p>
+    </div>
+
+    <table>
+      <tr><th>Option</th><th>Silent loss</th><th>Speed</th><th>Fit</th></tr>
+      <tr><td>1 Warn &amp; confirm</td><td>Medium</td><td>Slow</td><td>Heavy</td></tr>
+      <tr class="win"><td>2 Per-channel drafts</td><td>Prevented</td><td>Fast</td><td>No new UI</td></tr>
+      <tr><td>3 Keep discard</td><td>Silent wipe</td><td>Fast</td><td>Simplest</td></tr>
+    </table>
+
+    <div class="jobs">
+      <div class="job wa">Peek Viber baseline, return to finish WhatsApp note → drafts win</div>
+      <div class="job">Mobile mis-tap on toggle → drafts win</div>
+      <div class="job wa">Intentional WA → Viber handoff → drafts still fine (fresh Viber baseline loads)</div>
+    </div>
+  </div>
+</body>
+</html>
