@@ -93,7 +93,8 @@ export type ClientTimelineEventType =
   | "email_campaign_sent"
   | "whatsapp_initiated"
   | "whatsapp_follow_up_recorded"
-  | "viber_initiated";
+  | "viber_initiated"
+  | "next_follow_up_changed";
 
 export type ClientTimelineItem = {
   eventType: ClientTimelineEventType;
@@ -406,7 +407,8 @@ function parseTimelineEventType(raw: unknown): ClientTimelineEventType {
     raw === "email_campaign_sent" ||
     raw === "whatsapp_initiated" ||
     raw === "whatsapp_follow_up_recorded" ||
-    raw === "viber_initiated"
+    raw === "viber_initiated" ||
+    raw === "next_follow_up_changed"
   ) {
     return raw;
   }
