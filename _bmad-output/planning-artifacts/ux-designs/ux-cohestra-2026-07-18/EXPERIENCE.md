@@ -156,7 +156,7 @@ The **Clients** area is a **lead queue** for daily operator work — not a passi
 | **Status** | `6.5rem` fixed | `LeadStatusBadge` only | Status |
 | **Last registration** | `minmax(0,1.2fr)` | **Two lines:** activity name (truncate + `title` tooltip) · short date below | Last registration |
 | **Last outreach** | `minmax(0,0.9fr)` | *WhatsApp · 6 Aug* / **Never** — truncate; never visually collide with last registration | — |
-| **Actions** | `10.5rem` fixed | New rows: compact **Contacted** + **Message** buttons; other rows: empty reserved space | — |
+| **Actions** | `6.75rem` fixed | **New** rows: Mark contacted + WhatsApp + Viber (when phone). **Contacted / Active / Inactive:** WhatsApp + Viber only. No phone → reserved empty space | — |
 
 **Layout invariants (UAT 2026-08-08)**
 
@@ -165,7 +165,7 @@ The **Clients** area is a **lead queue** for daily operator work — not a passi
 - Page container widens to `max-w-7xl` for the queue (was `max-w-6xl`).
 - Remove **Nationality** as default column — filter-only.
 - Row hover: `{colors.paper-warm}` background + `{colors.lagoon}` left accent (4px).
-- **Mark contacted** and **Messenger** always visible on New rows at `≥ sm`; never hover-only on desktop.
+- **Mark contacted** on **New** rows only; **WhatsApp + Viber** on New and on Contacted / Active / Inactive when phone present — always visible at `≥ sm`, never hover-only on desktop.
 
 **Mobile card layout** (`< md`)
 
@@ -331,7 +331,7 @@ Behavioral. Visuals in `DESIGN.md`.
 | **ToSCheckbox** | Signup blocked until checked; versions logged (FR-26a) |
 | **CaptchaGate** | Google reCAPTCHA always on self-serve signup (FR-26); must expose accessible challenge path |
 | **LeadQueueHeader** | Status + quick filter chips on one row (inline labels, divider); horizontal scroll on narrow viewports |
-| **ClientQueueRow** | Desktop: balanced 6-column grid with equal last-reg/outreach width; mobile: card with contact + actions top row, metadata grid below |
+| **ClientQueueRow** | Desktop: balanced grid; **New** = mark contacted + messengers; **Contacted/Active/Inactive** = messenger icons when phone; mobile card mirrors same rules |
 | **LeadStatusBadge** | New=`{colors.lagoon}` tint · Contacted=`{colors.gold}` · Active=`{colors.success}` · Inactive=`{colors.stone}` |
 | **ClientProfileHeader** | Identity + WhatsApp · Viber · Mark contacted · lead status select — single status control |
 | **ClientOutreachLogCard** | Outreach status + note; **Save outreach log**; post-save nudge via parent toast when `shouldNudgeFollowUpDateAfterOutreach` |
@@ -465,7 +465,7 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 | Clients list | **Lead queue** — contact + last reg + last outreach columns (FR-29) |
 | Default column drop | Nationality removed from default table; filter-only |
 | Profile order | ~~Outreach bar + timeline preview above registration history~~ **Superseded** — see CRM profile redesign (master profile top, expandable timeline) |
-| Row actions | Mark contacted + Messenger visible on New rows without hover-only |
+| Row actions | New: Mark contacted + messengers. Contacted / Active / Inactive: WhatsApp + Viber when phone — visible without hover |
 | Mobile clients | Card layout, not horizontal-scroll table |
 | Bulk campaign | Pro-only floating bar; consent-false excluded with count (FR-31) |
 | Follow-up date | Optional; **Follow-up due** chip + Dashboard queue (FR-32) |
