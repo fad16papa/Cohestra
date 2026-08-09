@@ -82,7 +82,8 @@ type ClientRowActionsProps = {
   client: ClientListItem;
   canWhatsApp: boolean;
   canViber: boolean;
-  showQuickActions: boolean;
+  showMarkContacted: boolean;
+  showMessengerActions: boolean;
   isUpdating: boolean;
   onMarkContacted?: (client: ClientListItem) => void;
   onOpenMessenger?: (client: ClientListItem, channel: MessengerChannel) => void;
@@ -93,19 +94,20 @@ function ClientRowActions({
   client,
   canWhatsApp,
   canViber,
-  showQuickActions,
+  showMarkContacted,
+  showMessengerActions,
   isUpdating,
   onMarkContacted,
   onOpenMessenger,
   className,
 }: ClientRowActionsProps) {
-  if (!showQuickActions) {
+  if (!showMarkContacted && !showMessengerActions) {
     return null;
   }
 
   return (
     <div className={cn(clientsTableActionsColumnClassName, className)}>
-      {onMarkContacted ? (
+      {showMarkContacted && onMarkContacted ? (
         <Button
           type="button"
           variant="outline"
@@ -122,7 +124,7 @@ function ClientRowActions({
           <Check className="size-4" aria-hidden />
         </Button>
       ) : null}
-      {canWhatsApp && onOpenMessenger ? (
+      {showMessengerActions && canWhatsApp && onOpenMessenger ? (
         <Button
           type="button"
           size="icon"
@@ -138,7 +140,7 @@ function ClientRowActions({
           <WhatsAppBrandIcon />
         </Button>
       ) : null}
-      {canViber && onOpenMessenger ? (
+      {showMessengerActions && canViber && onOpenMessenger ? (
         <Button
           type="button"
           size="icon"
@@ -171,9 +173,14 @@ export function ClientRow({
   const profileHref = `/clients/${client.id}`;
   const canWhatsApp = Boolean(client.phone && buildWhatsAppWebUrl(client.phone));
   const canViber = Boolean(client.phone && buildViberAppDeepLink(client.phone));
-  const showQuickActions =
-    client.leadStatus === "new" &&
-    Boolean(onMarkContacted || (onOpenMessenger && (canWhatsApp || canViber)));
+  const isNew = client.leadStatus === "new";
+  const showMarkContacted = isNew && Boolean(onMarkContacted);
+  const showMessengerActions =
+    (isNew ||
+      client.leadStatus === "contacted" ||
+      client.leadStatus === "active" ||
+      client.leadStatus === "inactive") &&
+    Boolean(onOpenMessenger && (canWhatsApp || canViber));
   const followUpDue = isFollowUpDue(client.nextFollowUpAt, timeZoneId);
   const lastActivityFull = formatLastActivityCaption(client);
   const lastActivityName = formatLastActivityName(client);
@@ -230,7 +237,8 @@ export function ClientRow({
             client={client}
             canWhatsApp={canWhatsApp}
             canViber={canViber}
-            showQuickActions={showQuickActions}
+            showMarkContacted={showMarkContacted}
+            showMessengerActions={showMessengerActions}
             isUpdating={isUpdating}
             onMarkContacted={onMarkContacted}
             onOpenMessenger={onOpenMessenger}
@@ -323,7 +331,8 @@ export function ClientRow({
           client={client}
           canWhatsApp={canWhatsApp}
           canViber={canViber}
-          showQuickActions={showQuickActions}
+          showMarkContacted={showMarkContacted}
+          showMessengerActions={showMessengerActions}
           isUpdating={isUpdating}
           onMarkContacted={onMarkContacted}
           onOpenMessenger={onOpenMessenger}
