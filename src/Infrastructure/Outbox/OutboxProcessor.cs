@@ -92,11 +92,11 @@ public sealed class OutboxProcessor(
         await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"""
             UPDATE public.outbox_messages
-            SET status = {pendingStatus},
-                claimed_at = NULL
-            WHERE status = {processingStatus}
-              AND claimed_at IS NOT NULL
-              AND claimed_at < {staleBefore}
+            SET "Status" = {pendingStatus},
+                "ClaimedAt" = NULL
+            WHERE "Status" = {processingStatus}
+              AND "ClaimedAt" IS NOT NULL
+              AND "ClaimedAt" < {staleBefore}
             """,
             cancellationToken);
 
@@ -104,9 +104,9 @@ public sealed class OutboxProcessor(
             .FromSqlInterpolated($"""
                 SELECT *
                 FROM public.outbox_messages
-                WHERE status = {pendingStatus}
-                  AND next_attempt_at <= {now}
-                ORDER BY created_at
+                WHERE "Status" = {pendingStatus}
+                  AND "NextAttemptAt" <= {now}
+                ORDER BY "CreatedAt"
                 LIMIT {batchSize}
                 FOR UPDATE SKIP LOCKED
                 """)
