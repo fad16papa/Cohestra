@@ -341,6 +341,462 @@ public sealed class StripeBillingService(
         return await GetSummaryAsync(tenantId, cancellationToken);
     }
 
+    public async Task<BillingDetailsDto> GetDetailsAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        var summary = await GetSummaryAsync(tenantId, cancellationToken);
+
+        if (tenant.IsComplimentary || !_settings.IsConfigured)
+        {
+            return new BillingDetailsDto(
+                summary,
+                BuildLocalContact(tenant),
+                null,
+                BuildLocalSubscription(tenant),
+                []);
+        }
+
+        var tracked = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        await EnsureStripeCustomerAsync(tracked, cancellationToken);
+
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+
+        var contact = await FetchStripeContactAsync(tracked.StripeCustomerId!, cancellationToken)
+            ?? BuildLocalContact(tracked);
+        var paymentMethod = await FetchDefaultPaymentMethodAsync(tracked.StripeCustomerId!, cancellationToken);
+        var subscription = await FetchSubscriptionDetailsAsync(tracked, cancellationToken)
+            ?? BuildLocalSubscription(tracked);
+        var invoices = await FetchInvoicesAsync(tracked.StripeCustomerId!, cancellationToken);
+
+        return new BillingDetailsDto(summary, contact, paymentMethod, subscription, invoices);
+    }
+
+    public async Task<SetupIntentDto> CreateSetupIntentAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_settings.IsConfigured)
+        {
+            throw new InvalidOperationException("Stripe is not configured.");
+        }
+
+        if (string.IsNullOrWhiteSpace(_settings.PublishableKey))
+        {
+            throw new InvalidOperationException("Stripe publishable key is not configured.");
+        }
+
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        if (tenant.IsComplimentary)
+        {
+            throw new InvalidOperationException("Complimentary tenants do not manage payment methods.");
+        }
+
+        await EnsureStripeCustomerAsync(tenant, cancellationToken);
+
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+        var setupIntentService = new SetupIntentService();
+
+        SetupIntent setupIntent;
+        try
+        {
+            setupIntent = await setupIntentService.CreateAsync(
+                new SetupIntentCreateOptions
+                {
+                    Customer = tenant.StripeCustomerId,
+                    PaymentMethodTypes = ["card"],
+                    Usage = "off_session",
+                },
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "SetupIntent creation failed for tenant {TenantId}", tenant.Id);
+            throw new InvalidOperationException("Could not start payment method setup.");
+        }
+
+        if (string.IsNullOrWhiteSpace(setupIntent.ClientSecret))
+        {
+            throw new InvalidOperationException("Stripe did not return a setup client secret.");
+        }
+
+        return new SetupIntentDto(setupIntent.ClientSecret, _settings.PublishableKey);
+    }
+
+    public async Task ConfirmSetupIntentAsync(
+        Guid tenantId,
+        string setupIntentId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_settings.IsConfigured)
+        {
+            throw new InvalidOperationException("Stripe is not configured.");
+        }
+
+        if (string.IsNullOrWhiteSpace(setupIntentId))
+        {
+            throw new InvalidOperationException("Setup intent id is required.");
+        }
+
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        if (tenant.IsComplimentary)
+        {
+            throw new InvalidOperationException("Complimentary tenants do not manage payment methods.");
+        }
+
+        await EnsureStripeCustomerAsync(tenant, cancellationToken);
+
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+        var setupIntentService = new SetupIntentService();
+        SetupIntent setupIntent;
+        try
+        {
+            setupIntent = await setupIntentService.GetAsync(setupIntentId, cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "SetupIntent fetch failed for tenant {TenantId}", tenant.Id);
+            throw new InvalidOperationException("Could not confirm payment method setup.");
+        }
+
+        if (!string.Equals(setupIntent.CustomerId, tenant.StripeCustomerId, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Setup intent does not belong to this workspace.");
+        }
+
+        if (setupIntent.Status is not ("succeeded" or "processing"))
+        {
+            throw new InvalidOperationException("Payment method setup is not complete yet.");
+        }
+
+        if (string.IsNullOrWhiteSpace(setupIntent.PaymentMethodId))
+        {
+            throw new InvalidOperationException("Setup intent did not return a payment method.");
+        }
+
+        var customerService = new CustomerService();
+        try
+        {
+            await customerService.UpdateAsync(
+                tenant.StripeCustomerId,
+                new CustomerUpdateOptions
+                {
+                    InvoiceSettings = new CustomerInvoiceSettingsOptions
+                    {
+                        DefaultPaymentMethod = setupIntent.PaymentMethodId,
+                    },
+                },
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "Default payment method update failed for tenant {TenantId}", tenant.Id);
+            throw new InvalidOperationException("Could not save payment method as default.");
+        }
+    }
+
+    public async Task UpdateBillingContactAsync(
+        Guid tenantId,
+        string? name,
+        string? email,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_settings.IsConfigured)
+        {
+            throw new InvalidOperationException("Stripe is not configured.");
+        }
+
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        if (tenant.IsComplimentary)
+        {
+            throw new InvalidOperationException("Complimentary tenants do not manage billing contact.");
+        }
+
+        await EnsureStripeCustomerAsync(tenant, cancellationToken);
+
+        var options = new CustomerUpdateOptions();
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            options.Name = name.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            options.Email = email.Trim();
+            tenant.AdminContactEmail = email.Trim();
+        }
+
+        if (options.Name is null && options.Email is null)
+        {
+            throw new InvalidOperationException("Provide a name or email to update.");
+        }
+
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+        var customerService = new CustomerService();
+        try
+        {
+            await customerService.UpdateAsync(tenant.StripeCustomerId, options, cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "Billing contact update failed for tenant {TenantId}", tenant.Id);
+            throw new InvalidOperationException("Could not update billing contact.");
+        }
+
+        tenant.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task CancelSubscriptionAtPeriodEndAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        await UpdateSubscriptionCancelAtPeriodEndAsync(tenantId, cancelAtPeriodEnd: true, cancellationToken);
+    }
+
+    public async Task ResumeSubscriptionAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        await UpdateSubscriptionCancelAtPeriodEndAsync(tenantId, cancelAtPeriodEnd: false, cancellationToken);
+    }
+
+    private async Task UpdateSubscriptionCancelAtPeriodEndAsync(
+        Guid tenantId,
+        bool cancelAtPeriodEnd,
+        CancellationToken cancellationToken)
+    {
+        if (!_settings.IsConfigured)
+        {
+            throw new InvalidOperationException("Stripe is not configured.");
+        }
+
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        if (tenant.IsComplimentary)
+        {
+            throw new InvalidOperationException("Complimentary tenants do not manage subscriptions.");
+        }
+
+        if (string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId))
+        {
+            throw new InvalidOperationException("This workspace has no active Stripe subscription.");
+        }
+
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+        var subscriptionService = new SubscriptionService();
+        Subscription updated;
+        try
+        {
+            updated = await subscriptionService.UpdateAsync(
+                tenant.StripeSubscriptionId,
+                new SubscriptionUpdateOptions { CancelAtPeriodEnd = cancelAtPeriodEnd },
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Subscription cancel-at-period-end update failed for tenant {TenantId}",
+                tenant.Id);
+            throw new InvalidOperationException("Could not update subscription cancellation.");
+        }
+
+        StripeTenantBillingSync.ApplySubscription(tenant, updated, _settings);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static BillingContactDto BuildLocalContact(Tenant tenant) =>
+        new(tenant.Name, tenant.AdminContactEmail ?? string.Empty);
+
+    private static BillingSubscriptionDetailsDto? BuildLocalSubscription(Tenant tenant)
+    {
+        if (tenant.Plan is TenantPlan.Basic)
+        {
+            return null;
+        }
+
+        return new BillingSubscriptionDetailsDto(
+            tenant.ScheduledPlan == TenantPlan.Basic && tenant.ScheduledPlanEffectiveAt is not null,
+            tenant.ScheduledPlanEffectiveAt,
+            tenant.ScheduledPlan?.ToString(),
+            tenant.ScheduledPlanEffectiveAt);
+    }
+
+    private async Task<BillingContactDto?> FetchStripeContactAsync(
+        string customerId,
+        CancellationToken cancellationToken)
+    {
+        var customerService = new CustomerService();
+        try
+        {
+            var customer = await customerService.GetAsync(customerId, cancellationToken: cancellationToken);
+            return new BillingContactDto(
+                customer.Name ?? string.Empty,
+                customer.Email ?? string.Empty);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "Could not fetch Stripe customer {CustomerId}", customerId);
+            return null;
+        }
+    }
+
+    private async Task<BillingPaymentMethodDto?> FetchDefaultPaymentMethodAsync(
+        string customerId,
+        CancellationToken cancellationToken)
+    {
+        var customerService = new CustomerService();
+        Customer customer;
+        try
+        {
+            customer = await customerService.GetAsync(
+                customerId,
+                new CustomerGetOptions
+                {
+                    Expand = ["invoice_settings.default_payment_method"],
+                },
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "Could not fetch Stripe customer {CustomerId}", customerId);
+            return null;
+        }
+
+        if (customer.InvoiceSettings?.DefaultPaymentMethod is PaymentMethod paymentMethod)
+        {
+            return MapPaymentMethod(paymentMethod);
+        }
+
+        if (customer.InvoiceSettings?.DefaultPaymentMethodId is string paymentMethodId)
+        {
+            var paymentMethodService = new PaymentMethodService();
+            try
+            {
+                var fetched = await paymentMethodService.GetAsync(
+                    paymentMethodId,
+                    cancellationToken: cancellationToken);
+                return MapPaymentMethod(fetched);
+            }
+            catch (StripeException ex)
+            {
+                logger.LogWarning(ex, "Could not fetch payment method {PaymentMethodId}", paymentMethodId);
+            }
+        }
+
+        var paymentMethods = await new PaymentMethodService().ListAsync(
+            new PaymentMethodListOptions
+            {
+                Customer = customerId,
+                Type = "card",
+                Limit = 1,
+            },
+            cancellationToken: cancellationToken);
+
+        return paymentMethods.Data.FirstOrDefault() is { } fallback
+            ? MapPaymentMethod(fallback)
+            : null;
+    }
+
+    private static BillingPaymentMethodDto MapPaymentMethod(PaymentMethod paymentMethod)
+    {
+        var card = paymentMethod.Card
+            ?? throw new InvalidOperationException("Payment method is not a card.");
+
+        return new BillingPaymentMethodDto(
+            paymentMethod.Id,
+            card.Brand ?? "card",
+            card.Last4 ?? "????",
+            (int)card.ExpMonth,
+            (int)card.ExpYear);
+    }
+
+    private async Task<BillingSubscriptionDetailsDto?> FetchSubscriptionDetailsAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId))
+        {
+            return BuildLocalSubscription(tenant);
+        }
+
+        var subscriptionService = new SubscriptionService();
+        try
+        {
+            var subscription = await subscriptionService.GetAsync(
+                tenant.StripeSubscriptionId,
+                cancellationToken: cancellationToken);
+            var periodEnd = StripeTenantBillingSync.ResolvePeriodEnd(subscription);
+            return new BillingSubscriptionDetailsDto(
+                subscription.CancelAtPeriodEnd,
+                periodEnd,
+                tenant.ScheduledPlan?.ToString(),
+                tenant.ScheduledPlanEffectiveAt);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Could not fetch subscription {SubscriptionId} for tenant {TenantId}",
+                tenant.StripeSubscriptionId,
+                tenant.Id);
+            return BuildLocalSubscription(tenant);
+        }
+    }
+
+    private async Task<IReadOnlyList<BillingInvoiceDto>> FetchInvoicesAsync(
+        string customerId,
+        CancellationToken cancellationToken)
+    {
+        var invoiceService = new InvoiceService();
+        try
+        {
+            var invoices = await invoiceService.ListAsync(
+                new InvoiceListOptions
+                {
+                    Customer = customerId,
+                    Limit = 24,
+                },
+                cancellationToken: cancellationToken);
+
+            return invoices.Data
+                .Select(invoice => new BillingInvoiceDto(
+                    invoice.Id,
+                    new DateTimeOffset(DateTime.SpecifyKind(invoice.Created, DateTimeKind.Utc)),
+                    invoice.AmountDue,
+                    invoice.Currency ?? "usd",
+                    invoice.Status ?? "unknown",
+                    invoice.InvoicePdf,
+                    invoice.HostedInvoiceUrl))
+                .ToList();
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "Could not list invoices for customer {CustomerId}", customerId);
+            return [];
+        }
+    }
+
     /// <summary>
     /// Heals Plan=Pro/Core + Billing=Free with no live Stripe subscription
     /// (e.g. abandoned Checkout that previously granted a plan from metadata).

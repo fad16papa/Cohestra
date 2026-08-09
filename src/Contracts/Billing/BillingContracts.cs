@@ -28,3 +28,40 @@ public sealed record CreatePortalSessionRequest(string? ReturnUrl);
 public sealed record SyncBillingRequest(string? CheckoutSessionId);
 
 public sealed record PortalSessionResponse(string PortalUrl);
+
+public sealed record BillingContactResponse(string Name, string Email);
+
+public sealed record BillingPaymentMethodResponse(
+    string Id,
+    string Brand,
+    string Last4,
+    int ExpMonth,
+    int ExpYear);
+
+public sealed record BillingSubscriptionDetailsResponse(
+    bool CancelAtPeriodEnd,
+    DateTimeOffset? CurrentPeriodEnd,
+    string? ScheduledPlan,
+    DateTimeOffset? ScheduledPlanEffectiveAt);
+
+public sealed record BillingInvoiceResponse(
+    string Id,
+    DateTimeOffset CreatedAt,
+    long AmountDueCents,
+    string Currency,
+    string Status,
+    string? PdfUrl,
+    string? HostedInvoiceUrl);
+
+public sealed record BillingDetailsResponse(
+    BillingSummaryResponse Summary,
+    BillingContactResponse? Contact,
+    BillingPaymentMethodResponse? PaymentMethod,
+    BillingSubscriptionDetailsResponse? Subscription,
+    IReadOnlyList<BillingInvoiceResponse> Invoices);
+
+public sealed record SetupIntentResponse(string ClientSecret, string PublishableKey);
+
+public sealed record ConfirmSetupIntentRequest(string SetupIntentId);
+
+public sealed record UpdateBillingContactRequest(string? Name, string? Email);
