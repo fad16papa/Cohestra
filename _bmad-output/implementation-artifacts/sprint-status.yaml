@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-09T15:05:00Z
+# last_updated: 2026-08-09T15:33:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -263,7 +263,7 @@ development_status:
   24-2-activity-card-reg-cap-badge: done
   24-3-activity-card-quick-actions: done
   24-4-activities-url-filters-sort: done
-  24-5-experience-activities-module: review
+  24-5-experience-activities-module: done
   epic-24-retrospective: done
 
   epic-21: done
@@ -445,7 +445,8 @@ action_items:
   - epic: 24
     action: "Merge PR #127 (Story 24.5 EXPERIENCE.md Activities module)"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Merged 2026-08-09 (85c6b20 on main)"
   - epic: 24
     action: "Close draft brainstorm PRs #117–#126 (artifacts merged or superseded)"
     owner: Dev
