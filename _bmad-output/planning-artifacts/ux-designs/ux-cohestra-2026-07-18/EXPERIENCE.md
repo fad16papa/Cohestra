@@ -2,7 +2,7 @@
 name: Cohestra Enterprise
 status: final
 created: 2026-07-18
-updated: 2026-08-08
+updated: 2026-08-09
 sources:
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/prd.md
   - {planning_artifacts}/prds/prd-cohestra-enterprise-2026-07-15/addendum.md
@@ -222,6 +222,16 @@ Each client = card:
 | Registration history (expand/collapse; collapsed at 10+, search) | Next follow-up card — date input + Save/Clear, Due chip |
 | Relationship timeline (expand/collapse; collapsed at 5+ events) | Log outreach card — follow-up status + note |
 
+**Registration answers — field layout**
+
+| Rule | Treatment |
+|------|-----------|
+| Email fields | Full width (`sm:col-span-2`); `break-all` + monospace for long addresses — never share a row with another field |
+| Consent fields | Full width on its own row — label/value must not collide with adjacent columns |
+| Long text (`>48` chars) | Full width row |
+| Default fields | Two-column grid on `sm+`; each cell `min-w-0` |
+| Phone values | `ClientPhoneDisplay` component |
+
 **Layout invariants**
 
 - One lead status control (header select). No duplicate status blocks anywhere.
@@ -312,8 +322,9 @@ Behavioral. Visuals in `DESIGN.md`.
 | **LeadQueueHeader** | Status + quick filter chips on one row (inline labels, divider); horizontal scroll on narrow viewports |
 | **ClientQueueRow** | Desktop: balanced 6-column grid with equal last-reg/outreach width; mobile: card with contact + actions top row, metadata grid below |
 | **LeadStatusBadge** | New=`{colors.lagoon}` tint · Contacted=`{colors.gold}` · Active=`{colors.success}` · Inactive=`{colors.stone}` |
-| **ClientOutreachBar** | Sticky on profile; WhatsApp/Viber/Mark contacted; disabled without phone |
-| **TimelinePreview** | Removed — relationship timeline is the single feed (expand/collapse) |
+| **ClientOutreachBar** | Outreach actions live in **ClientProfileHeader** (WhatsApp · Viber · Mark contacted); not a separate sticky bar |
+| **ClientRegistrationHistory** | Master/detail list + selected answers; expand/collapse; search at 5+ entries; email/consent full-width in answer grid |
+| **ClientRelationshipTimeline** | Single expandable feed; scroll capped when expanded; no preview duplicate |
 | **BulkSelectBar** | Pro only; floating bottom bar when selection &gt; 0 |
 | **FollowUpDateField** | Optional date; tenant-local display (FR-27) |
 
@@ -362,7 +373,7 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 | Admin `sm` | Sidebar Sheet; BillingBanner stacks CTA under text |
 | Clients list `< md` | Card stack; horizontal scroll filter chips; no table horizontal scroll |
 | Clients list `≥ lg` | Full table; optional compact density toggle `[ASSUMPTION]` |
-| Client profile mobile | Sticky outreach bar; timeline preview before registrations |
+| Client profile mobile | Header actions wrap; master profile first; registration + timeline stack; sidebar cards below |
 | Stub / SitePage | Mobile-first; stub is single column |
 | Registration | Platform 0 mobile-first unchanged |
 | Marketing | Desktop hero + stacked CTAs on `sm` — Start free primary |
@@ -441,7 +452,7 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 |---|----------|
 | Clients list | **Lead queue** — contact + last reg + last outreach columns (FR-29) |
 | Default column drop | Nationality removed from default table; filter-only |
-| Profile order | Outreach bar + timeline preview **above** registration history (FR-30) |
+| Profile order | ~~Outreach bar + timeline preview above registration history~~ **Superseded** — see CRM profile redesign (master profile top, expandable timeline) |
 | Row actions | Mark contacted + Messenger visible on New rows without hover-only |
 | Mobile clients | Card layout, not horizontal-scroll table |
 | Bulk campaign | Pro-only floating bar; consent-false excluded with count (FR-31) |
@@ -468,4 +479,5 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 | Sidebar cards | Next follow-up · Log outreach — `21rem` at `lg+` |
 | Master profile | Full-width card at top (under header); two-column fields on `sm+` |
 | Timeline | Single expandable relationship timeline; no redundant preview block |
+| Registration answers | Email + consent full-width rows; long values never overlap adjacent columns |
 | Removed | Sticky outreach bar card, lone Lead-status card, giant full-width messenger buttons |
