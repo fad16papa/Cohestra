@@ -124,6 +124,10 @@
     animation: marketing-product-lift 1.1s 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
+  .marketing-hero-showcase-panel {
+    animation: marketing-hero-stack-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
   @keyframes marketing-hero-stack-rise {
     from {
       opacity: 0;
