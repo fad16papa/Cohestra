@@ -42,6 +42,7 @@ public sealed class ClientService(
         string? community,
         bool? consentOnly = null,
         string? excludeCommunity = null,
+        Guid? activityId = null,
         CancellationToken cancellationToken = default)
     {
         var normalizedPage = page < 1 ? 1 : page;
@@ -64,6 +65,7 @@ public sealed class ClientService(
             community,
             consentOnly,
             excludeCommunity,
+            activityId,
             cancellationToken);
 
         var query = clientsQuery
@@ -162,6 +164,7 @@ public sealed class ClientService(
                 community,
                 consentOnly,
                 excludeCommunity,
+                activityId: null,
                 cancellationToken)
             : dbContext.Clients.AsNoTracking();
 
@@ -220,6 +223,7 @@ public sealed class ClientService(
         string? community,
         bool? consentOnly,
         string? excludeCommunity,
+        Guid? activityId,
         CancellationToken cancellationToken)
     {
         var clientsQuery = dbContext.Clients.AsNoTracking();
@@ -312,6 +316,13 @@ public sealed class ClientService(
             clientsQuery = clientsQuery.Where(client =>
                 !client.Registrations.Any(registration =>
                     registration.Activity.CommunityLabel == excludedCommunity));
+        }
+
+        if (activityId is Guid filteredActivityId)
+        {
+            clientsQuery = clientsQuery.Where(client =>
+                client.Registrations.Any(registration =>
+                    registration.ActivityId == filteredActivityId));
         }
 
         return clientsQuery;

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ActivityCardQuickActions } from "@/components/activities/activity-card-quick-actions";
 import { ActivityPlanRegCapIndicator } from "@/components/activities/activity-plan-reg-cap-indicator";
 import { ActivityScheduleConflictAlert } from "@/components/activities/activity-schedule-conflict-alert";
 import { ActivitySignUpsPausedBadge } from "@/components/activities/activity-sign-ups-paused-badge";
@@ -106,6 +107,7 @@ export function ActivityCard({
           </p>
         </CardContent>
       </Link>
+      <ActivityCardQuickActions activity={activity} />
       {showPlanRegCap && planRegistrationsDial ? (
         <ActivityPlanRegCapIndicator dial={planRegistrationsDial} />
       ) : null}
