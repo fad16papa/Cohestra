@@ -13,17 +13,22 @@ import {
   type ClientDetail,
   type ClientTimelineItem,
 } from "@/lib/clients-api";
+import type { OutreachLogStatus } from "@/lib/client-follow-up-date";
+
+export type { OutreachLogStatus };
 
 type ClientOutreachLogCardProps = {
   client: ClientDetail;
   onUpdated: (client: ClientDetail) => void;
+  onOutreachSaved?: (payload: {
+    client: ClientDetail;
+    status: OutreachLogStatus;
+  }) => void;
 };
 
-type FollowUpStatus = "contacted" | "awaiting_reply";
-
-function parseFollowUpStatusFromTimeline(
+function parseOutreachStatusFromTimeline(
   subject: string | null | undefined
-): FollowUpStatus | null {
+): OutreachLogStatus | null {
   if (!subject) {
     return null;
   }
@@ -40,14 +45,20 @@ function parseFollowUpStatusFromTimeline(
   return null;
 }
 
-function getLatestFollowUpStatus(client: ClientDetail): FollowUpStatus {
-  const latestFollowUp = client.timeline.find(
-    (item: ClientTimelineItem) =>
-      item.eventType === "whatsapp_follow_up_recorded"
-  );
+function getLatestOutreachStatus(client: ClientDetail): OutreachLogStatus {
+  const latestFollowUp = client.timeline
+    .filter(
+      (item: ClientTimelineItem) =>
+        item.eventType === "whatsapp_follow_up_recorded"
+    )
+    .sort(
+      (left, right) =>
+        new Date(right.occurredAt).getTime() -
+        new Date(left.occurredAt).getTime()
+    )[0];
 
   return (
-    parseFollowUpStatusFromTimeline(latestFollowUp?.campaignSubject) ??
+    parseOutreachStatusFromTimeline(latestFollowUp?.campaignSubject) ??
     "contacted"
   );
 }
@@ -55,31 +66,32 @@ function getLatestFollowUpStatus(client: ClientDetail): FollowUpStatus {
 export function ClientOutreachLogCard({
   client,
   onUpdated,
+  onOutreachSaved,
 }: ClientOutreachLogCardProps) {
   const { authFetch } = useAuth();
   const { showToast } = useToast();
-  const [baselineStatus, setBaselineStatus] = useState<FollowUpStatus>(() =>
-    getLatestFollowUpStatus(client)
+  const [baselineStatus, setBaselineStatus] = useState<OutreachLogStatus>(() =>
+    getLatestOutreachStatus(client)
   );
-  const [followUpStatus, setFollowUpStatus] =
-    useState<FollowUpStatus>(baselineStatus);
-  const [followUpNote, setFollowUpNote] = useState("");
+  const [outreachStatus, setOutreachStatus] =
+    useState<OutreachLogStatus>(baselineStatus);
+  const [outreachNote, setOutreachNote] = useState("");
   const [busy, setBusy] = useState(false);
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
-    const nextStatus = getLatestFollowUpStatus(client);
+    const nextStatus = getLatestOutreachStatus(client);
     setBaselineStatus(nextStatus);
-    setFollowUpStatus(nextStatus);
-    setFollowUpNote("");
+    setOutreachStatus(nextStatus);
+    setOutreachNote("");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client.id]);
 
-  const trimmedNote = followUpNote.trim();
-  const isDirty = followUpStatus !== baselineStatus || trimmedNote.length > 0;
+  const trimmedNote = outreachNote.trim();
+  const isDirty = outreachStatus !== baselineStatus || trimmedNote.length > 0;
   const canSave = isDirty && !busy;
 
-  async function handleRecordFollowUp() {
+  async function handleSaveOutreachLog() {
     if (!canSave || isSubmittingRef.current) {
       return;
     }
@@ -88,16 +100,21 @@ export function ClientOutreachLogCard({
     setBusy(true);
     try {
       const updated = await recordWhatsAppFollowUp(authFetch, client.id, {
-        status: followUpStatus,
+        status: outreachStatus,
         note: trimmedNote || undefined,
       });
       onUpdated(updated);
-      setBaselineStatus(followUpStatus);
-      setFollowUpNote("");
-      showToast("Follow-up recorded.");
+      setBaselineStatus(outreachStatus);
+      setOutreachNote("");
+
+      if (onOutreachSaved) {
+        onOutreachSaved({ client: updated, status: outreachStatus });
+      } else {
+        showToast("Outreach log saved.");
+      }
     } catch (error) {
       showToast(
-        error instanceof Error ? error.message : "Could not record follow-up."
+        error instanceof Error ? error.message : "Could not save outreach log."
       );
     } finally {
       setBusy(false);
@@ -120,15 +137,20 @@ export function ClientOutreachLogCard({
         </h3>
       </div>
 
+      <p className="mb-3 text-xs text-text-muted-warm">
+        Record what happened after messaging. To schedule a return visit, use
+        Next follow-up above.
+      </p>
+
       <div className="space-y-3">
         <div className="space-y-1.5">
-          <Label htmlFor="whatsapp-follow-up-status">Follow-up status</Label>
+          <Label htmlFor="client-outreach-status">Outreach status</Label>
           <select
-            id="whatsapp-follow-up-status"
-            value={followUpStatus}
+            id="client-outreach-status"
+            value={outreachStatus}
             disabled={busy}
             onChange={(event) =>
-              setFollowUpStatus(event.target.value as FollowUpStatus)
+              setOutreachStatus(event.target.value as OutreachLogStatus)
             }
             className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -138,13 +160,13 @@ export function ClientOutreachLogCard({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="whatsapp-follow-up-note">Note (optional)</Label>
+          <Label htmlFor="client-outreach-note">Note (optional)</Label>
           <Input
-            id="whatsapp-follow-up-note"
-            value={followUpNote}
+            id="client-outreach-note"
+            value={outreachNote}
             disabled={busy}
-            onChange={(event) => setFollowUpNote(event.target.value)}
-            placeholder="Brief follow-up note"
+            onChange={(event) => setOutreachNote(event.target.value)}
+            placeholder="Brief outreach note"
           />
         </div>
 
@@ -153,9 +175,9 @@ export function ClientOutreachLogCard({
           size="sm"
           className="w-full"
           disabled={!canSave}
-          onClick={() => void handleRecordFollowUp()}
+          onClick={() => void handleSaveOutreachLog()}
         >
-          {busy ? "Saving…" : "Save follow-up"}
+          {busy ? "Saving…" : "Save outreach log"}
         </Button>
       </div>
     </section>

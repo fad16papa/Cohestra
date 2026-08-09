@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { CalendarClock } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
@@ -8,12 +14,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast-provider";
+import { toDateInputValue } from "@/lib/client-follow-up-date";
 import {
   isFollowUpDue,
   updateClientNextFollowUp,
   type ClientDetail,
 } from "@/lib/clients-api";
 import { cn } from "@/lib/utils";
+
+export type ClientFollowUpDateFieldHandle = {
+  focusAndSuggestDate: (suggestedDate: string) => void;
+};
 
 type ClientFollowUpDateFieldProps = {
   client: ClientDetail;
@@ -22,50 +33,56 @@ type ClientFollowUpDateFieldProps = {
   className?: string;
 };
 
-function toDateInputValue(
-  isoValue: string | null,
-  timeZoneId?: string | null
-): string {
-  if (!isoValue) {
-    return "";
-  }
-
-  const date = new Date(isoValue);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  try {
-    return new Intl.DateTimeFormat("en-CA", {
-      timeZone: timeZoneId ?? "UTC",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(date);
-  } catch {
-    const year = date.getUTCFullYear();
-    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-    const day = String(date.getUTCDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-}
-
-export function ClientFollowUpDateField({
-  client,
-  timeZoneId,
-  onUpdated,
-  className,
-}: ClientFollowUpDateFieldProps) {
+export const ClientFollowUpDateField = forwardRef<
+  ClientFollowUpDateFieldHandle,
+  ClientFollowUpDateFieldProps
+>(function ClientFollowUpDateField(
+  { client, timeZoneId, onUpdated, className },
+  ref
+) {
   const { authFetch } = useAuth();
   const { showToast } = useToast();
+  const sectionRef = useRef<HTMLElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const savedDateRef = useRef("");
   const [draftDate, setDraftDate] = useState(() =>
     toDateInputValue(client.nextFollowUpAt, timeZoneId)
   );
   const [busy, setBusy] = useState(false);
+  const [highlighted, setHighlighted] = useState(false);
 
   const due = isFollowUpDue(client.nextFollowUpAt, timeZoneId);
   const savedDate = toDateInputValue(client.nextFollowUpAt, timeZoneId);
+  savedDateRef.current = savedDate;
   const isDirty = draftDate !== savedDate;
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      focusAndSuggestDate(suggestedDate: string) {
+        setDraftDate((current) =>
+          current !== savedDateRef.current ? current : suggestedDate
+        );
+
+        setHighlighted(true);
+        window.setTimeout(() => setHighlighted(false), 2000);
+
+        const prefersReducedMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)"
+        ).matches;
+
+        sectionRef.current?.scrollIntoView({
+          behavior: prefersReducedMotion ? "auto" : "smooth",
+          block: "nearest",
+        });
+
+        window.requestAnimationFrame(() => {
+          inputRef.current?.focus({ preventScroll: true });
+        });
+      },
+    }),
+    []
+  );
 
   useEffect(() => {
     setDraftDate(toDateInputValue(client.nextFollowUpAt, timeZoneId));
@@ -93,8 +110,12 @@ export function ClientFollowUpDateField({
 
   return (
     <section
+      ref={sectionRef}
+      id="client-next-follow-up-card"
       className={cn(
-        "rounded-2xl border border-border-warm bg-card p-4 shadow-sm",
+        "rounded-2xl border border-border-warm bg-card p-4 shadow-sm motion-safe:transition-[box-shadow,border-color] motion-safe:duration-300",
+        highlighted &&
+          "border-primary ring-2 ring-primary/25 motion-safe:transition-[box-shadow,border-color]",
         className
       )}
       aria-labelledby="client-follow-up-date-heading"
@@ -120,6 +141,7 @@ export function ClientFollowUpDateField({
             Next follow-up date
           </Label>
           <Input
+            ref={inputRef}
             id="client-next-follow-up-date"
             type="date"
             value={draftDate}
@@ -127,7 +149,8 @@ export function ClientFollowUpDateField({
             onChange={(event) => setDraftDate(event.target.value)}
           />
           <p className="text-xs text-text-muted-warm">
-            Overdue items surface on the Dashboard and Clients queue.
+            Schedule when to check back. Overdue items surface on the Dashboard
+            and Clients queue.
           </p>
         </div>
 
@@ -139,7 +162,7 @@ export function ClientFollowUpDateField({
             disabled={busy || !isDirty}
             onClick={() => void handleSave(draftDate)}
           >
-            Save
+            Save date
           </Button>
           {savedDate ? (
             <Button
@@ -159,4 +182,6 @@ export function ClientFollowUpDateField({
       </div>
     </section>
   );
-}
+});
+
+ClientFollowUpDateField.displayName = "ClientFollowUpDateField";
