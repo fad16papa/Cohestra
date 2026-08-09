@@ -219,8 +219,18 @@ Each client = card:
 
 | Main column (activity) | Sidebar (details & quick edits) |
 |------------------------|---------------------------------|
-| Registration history (expand/collapse; collapsed at 10+, search) | Next follow-up card — date input + Save/Clear, Due chip |
-| Relationship timeline (expand/collapse; collapsed at 5+ events) | Log outreach card — follow-up status + note |
+| Registration history (expand/collapse; collapsed at 10+, search) | Next follow-up card — date input + Save date/Clear, Due chip |
+| Relationship timeline (expand/collapse; collapsed at 5+ events) | Log outreach card — outreach status + note; **Save outreach log** (not “Save follow-up”) |
+
+**Outreach log → follow-up date nudge**
+
+| Trigger | Behavior |
+|---------|----------|
+| After **Save outreach log** succeeds | Toast: *Outreach logged.* with action **Set follow-up date** when no date is set **or** status is **Awaiting reply** |
+| Toast action | Scroll/focus **Next follow-up** card; pre-fill **+3 days** draft when Awaiting reply and no saved date — operator still clicks **Save date** |
+| When date already set and status is Contacted | Success toast only — no nudge |
+
+**Log outreach vs Next follow-up** remain separate data: outreach log → timeline `whatsapp_follow_up_recorded`; date save → `next_follow_up_changed`.
 
 **Registration answers — field layout**
 

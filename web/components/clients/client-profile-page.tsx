@@ -1,11 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { ClientFollowUpDateField } from "@/components/clients/client-follow-up-date-field";
+import {
+  ClientFollowUpDateField,
+  type ClientFollowUpDateFieldHandle,
+} from "@/components/clients/client-follow-up-date-field";
 import { ClientMergeSuspectBanner } from "@/components/clients/client-merge-suspect-banner";
 import { ClientMasterFields } from "@/components/clients/client-master-fields";
-import { ClientOutreachLogCard } from "@/components/clients/client-outreach-log-card";
+import {
+  ClientOutreachLogCard,
+  type OutreachLogStatus,
+} from "@/components/clients/client-outreach-log-card";
 import { ClientProfileHeader } from "@/components/clients/client-profile-header";
 import { ClientProfileSection } from "@/components/clients/client-profile-motion";
 import { ClientRegistrationHistory } from "@/components/clients/client-registration-history";
@@ -15,6 +21,11 @@ import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { ProductErrorState } from "@/components/shared/product-error-state";
 import { ProfileSkeleton } from "@/components/shared/profile-skeleton";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useToast } from "@/components/ui/toast-provider";
+import {
+  addDaysToDateInputValue,
+  toDateInputValue,
+} from "@/lib/client-follow-up-date";
 import {
   fetchClientById,
   type ClientDetail,
@@ -27,6 +38,8 @@ type ClientProfilePageProps = {
 export function ClientProfilePage({ id }: ClientProfilePageProps) {
   const { authFetch } = useAuth();
   const { shell } = useTenantShell();
+  const { showActionToast, showSuccessToast } = useToast();
+  const followUpDateRef = useRef<ClientFollowUpDateFieldHandle>(null);
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
@@ -70,6 +83,44 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
   function handleUpdated(nextClient: ClientDetail) {
     setClient(nextClient);
   }
+
+  const handleOutreachSaved = useCallback(
+    ({
+      client: updatedClient,
+      status,
+    }: {
+      client: ClientDetail;
+      status: OutreachLogStatus;
+    }) => {
+      const timeZoneId = shell?.registrationTimeZoneId;
+      const shouldNudge =
+        !updatedClient.nextFollowUpAt || status === "awaiting_reply";
+
+      if (!shouldNudge) {
+        showSuccessToast("Outreach log saved.");
+        return;
+      }
+
+      showActionToast("Outreach logged.", "Set follow-up date", () => {
+        if (!updatedClient.nextFollowUpAt && status === "awaiting_reply") {
+          followUpDateRef.current?.focusAndSuggestDate(
+            addDaysToDateInputValue(3, timeZoneId)
+          );
+          return;
+        }
+
+        if (!updatedClient.nextFollowUpAt) {
+          followUpDateRef.current?.focusAndSuggestDate("");
+          return;
+        }
+
+        followUpDateRef.current?.focusAndSuggestDate(
+          toDateInputValue(updatedClient.nextFollowUpAt, timeZoneId)
+        );
+      });
+    },
+    [shell?.registrationTimeZoneId, showActionToast, showSuccessToast]
+  );
 
   function handleRetry() {
     setError(null);
@@ -135,6 +186,7 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
         <div className="min-w-0 space-y-5">
           <ClientProfileSection animationDelayMs={80}>
             <ClientFollowUpDateField
+              ref={followUpDateRef}
               client={client}
               timeZoneId={timeZoneId}
               onUpdated={handleUpdated}
@@ -142,7 +194,11 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
           </ClientProfileSection>
 
           <ClientProfileSection animationDelayMs={120}>
-            <ClientOutreachLogCard client={client} onUpdated={handleUpdated} />
+            <ClientOutreachLogCard
+              client={client}
+              onUpdated={handleUpdated}
+              onOutreachSaved={handleOutreachSaved}
+            />
           </ClientProfileSection>
         </div>
       </div>
