@@ -1,3 +1,9 @@
+## Deferred from: code review of 21-3-multi-channel-follow-up-coverage-includes-viber.md (2026-08-09)
+
+- `LeadStatus != New` counts as followed-up without outreach events — pre-existing predicate preserved by design
+- Dashboard metrics cache 60s TTL may show stale coverage after Viber log — pre-existing accepted TTL
+- `withoutOutreach` filter ignores lead status (Contacted + no events still in queue) — pre-existing design mismatch vs coverage metric
+
 ## Deferred from: code review of 15-8-pro-studio-video-embed-section.md (2026-08-03)
 
 - No AdminSite integration test for video publish round-trip — story listed optional; matches existing builder test pattern
