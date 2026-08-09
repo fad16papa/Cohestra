@@ -2,7 +2,7 @@
 title: Cohestra Enterprise — Multi-Tenant SaaS
 status: draft
 created: 2026-07-15
-updated: 2026-08-08
+updated: 2026-08-09
 gtm_pricing: section-13
 sources:
   - _bmad-output/planning-artifacts/sprint-change-proposal-2026-07-14.md
@@ -88,7 +88,7 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
 - **UJ-1. Priya starts free on Basic (primary signup).**
   - **Persona + context:** Priya, operations lead at Ikigai Sports, trying Cohestra without a card (P6 **Start free**).
   - **Entry state:** Unauthenticated; marketing site → **Start free** signup (CAPTCHA + ToS/Privacy acceptance — FR-26 / FR-26a).
-  - **Path:** Organization name, **Tenant Slug**, admin email, password → email OTP verify → lands in empty **Basic** tenant dashboard (Plan=Basic, BillingStatus=Free, no Stripe, no SitePage) → creates first **Community** (within 1-community cap) and first **Activity** → publishes (within 3 published cap) → copies QR / register link.
+  - **Path:** Organization name, **Tenant Slug**, admin email, password → email OTP verify → lands in empty **Basic** tenant dashboard (Plan=Basic, BillingStatus=Free, no Stripe, no SitePage) → creates first **Community** (within 1-community cap) and first **Activity** → publishes (within 4 published cap) → copies QR / register link.
   - **Climax:** Public stub at `https://ikigai.cohestra.app/` shows org display name + published activities; `/register/{activity-slug}` accepts participants; Priya is sole **Tenant Admin** (1 seat).
   - **Resolution:** Workspace ready for real ops on Basic footprint (activities, clients, registration emails, fixed report + CSV). Site Page builder / fixed SitePage and Team invites are Core+ upgrade CTAs (FR-12, FR-6).
   - **Edge cases:** Slug collision — system suggests alternatives before commit. Direct Core/Pro trial is a secondary path (FR-19), not this journey.
@@ -823,7 +823,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-16:** Monthly + annual billing; annual ≈ 2 months free — FR-22
 - **A-17:** Delinquency (P3): 7d PastDue daily → 21d OnHold weekly → archive; starts at `payment_failed` (trial or renewal) — FR-23
 - **A-18:** Open self-serve signup at launch — §13.7
-- **A-19:** Usage limits (communities / published activities / regs per month): Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — seats separate (1 / 3 / 10); full table §13.4 / §13.10
+- **A-19:** Usage limits (communities / published activities / regs per month): Basic 1 / **4** / 250 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — seats separate (1 / 3 / 10); full table §13.4 / §13.10
 - **A-20:** Official term **Community** (not "club") in UI, PRD, pricing limits — §3 glossary; marketing may use "club" as example name only
 - **A-21:** Dual status model (P1 Option A): `Tenant.Status` ops + `BillingStatus` money; access matrix in FR-3
 - **A-22:** Public site (P2 Option D): Basic stub / Core fixed SitePage / Pro builder — FR-12
@@ -923,8 +923,8 @@ flowchart LR
 | **Email campaigns** | — | — | ✓ |
 | **Operator seats** | **1** | **3** | **10** |
 | **Communities** | **1** | **3** | **10** |
-| **Published activities (concurrent)** | **3** | **12** | **50** |
-| **Registrations / month (public)** | **150** | **500** | **5,000** |
+| **Published activities (concurrent)** | **4** | **12** | **50** |
+| **Registrations / month (public)** | **250** | **500** | **5,000** |
 | Public site — **stub** (no SitePage) | ✓ | — | — |
 | Public site — **fixed Site Page** | — | ✓ | — |
 | Public site — **website builder** | — | — | ✓ |
@@ -933,7 +933,7 @@ flowchart LR
 | Reports — **+ campaign analytics + saved views** | — | — | ✓ |
 | Custom domain / SSO / SLA | — | — | Enterprise |
 
-**Basic tier purpose:** Let potential users **test the real product** — QR, client list, registration emails, simple registration report, public stub — at the **smallest safe footprint** without payment friction. No Site Page, no advanced reports.
+**Basic tier purpose:** Let potential users **test the real product** — QR, client list, registration emails, simple registration report, public stub — at a **generous free footprint** (250 regs/mo, 4 concurrent published activities) without payment friction. No Site Page, no advanced reports. Limits revised 2026-08-09 after pricing/competitive review (activation-first free tier — see addendum).
 
 **Email:** Registration notifications on **all tiers**. Campaigns **Pro only**.
 
@@ -1030,10 +1030,10 @@ cohestra.app (apex marketing)
 |-------|:------------:|:----:|:---:|
 | Operator seats | 1 | 3 | 10 |
 | Communities | 1 | 3 | 10 |
-| Published activities (concurrent) | **3** | 12 | 50 |
-| Registrations / month (public) | 150 | 500 | 5,000 |
+| Published activities (concurrent) | **4** | 12 | 50 |
+| Registrations / month (public) | 250 | 500 | 5,000 |
 
-**Basic rationale:** Minimum real product test — one operator, one community, three live events, 150 regs/mo, registration emails, **public stub** (no SitePage). No card required.
+**Basic rationale:** Activation-first free tier — one operator, one community, **four** concurrent published activities, **250** regs/mo (half of Core cap), registration emails, **public stub** (no SitePage). Supports event-heavy ICP (weekly clinic + one-off workshop) without early public-registration blocks. No card required. **Ratified 2026-08-09** — implemented in `TenantPlanLimits` (PR #150).
 
 Full pricing page copy: `docs/marketing/pricing-tiers.md`
 

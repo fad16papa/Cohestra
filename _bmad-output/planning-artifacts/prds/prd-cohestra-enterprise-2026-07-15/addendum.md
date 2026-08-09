@@ -181,3 +181,19 @@ Run `bmad-ux` update for `EXPERIENCE.md` §Clients — UJ-5 journey, queue/table
 - Per-client assignment (defer until multi-seat workflows mature)
 - One-click duplicate merge (remain flag-only unless promoted)
 - Automated messenger sends
+
+## Basic tier usage limits revision (2026-08-09)
+
+**Change:** Basic published activities **3 → 4**; registrations/month **150 → 250**.
+
+**Trigger:** Pricing competitive review + tier-limits brainstorm (activation-first path). Marketing landing updated; code enforced in `TenantPlanLimits.cs` (merged PR #150).
+
+**Rationale:**
+- Event-heavy ICP (Built for **Events** first) often runs weekly series + one-offs — 150 regs/mo and 3 activities caused early blocks before CRM/follow-up aha.
+- 250 regs remains **half of Core** (500) — upgrade path preserved.
+- Core/Pro limits unchanged; pricing ($29 / $79) unchanged.
+
+**Deferred (not in this change):**
+- Graceful public page at 100% reg cap (waitlist / contact organizer)
+- Stronger 80% limit upgrade messaging in admin shell
+- Pricing page competitive positioning copy (“priced on registrations, not database size”)
