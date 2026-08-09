@@ -249,6 +249,102 @@ async function parseProblemDetail(response: Response): Promise<string> {
   return `Request failed (${response.status})`;
 }
 
+export type ActivitySortBy = "name" | "createdAt" | "updatedAt" | "registrationCount";
+export type ActivitySortDirection = "asc" | "desc";
+
+export const DEFAULT_ACTIVITY_SORT_BY: ActivitySortBy = "updatedAt";
+export const DEFAULT_ACTIVITY_SORT_DIRECTION: ActivitySortDirection = "desc";
+
+export function defaultActivitySortDirection(
+  sortBy: ActivitySortBy
+): ActivitySortDirection {
+  return sortBy === "name" ? "asc" : "desc";
+}
+
+export function parseActivitySortBy(value: string | null): ActivitySortBy | null {
+  const trimmed = value?.trim();
+  if (
+    trimmed === "name" ||
+    trimmed === "createdAt" ||
+    trimmed === "updatedAt" ||
+    trimmed === "registrationCount"
+  ) {
+    return trimmed;
+  }
+
+  return null;
+}
+
+export function parseActivitySortDirection(
+  value: string | null
+): ActivitySortDirection | null {
+  const trimmed = value?.trim().toLowerCase();
+  if (trimmed === "asc" || trimmed === "desc") {
+    return trimmed;
+  }
+
+  return null;
+}
+
+export function parseActivitySortFromSearchParams(
+  sortByParam: string | null,
+  sortDirectionParam: string | null
+): { sortBy: ActivitySortBy; sortDirection: ActivitySortDirection } {
+  const { sortBy, sortDirection } = resolveActivityListSort(
+    sortByParam,
+    sortDirectionParam
+  );
+
+  return { sortBy, sortDirection };
+}
+
+export function resolveActivityListSort(
+  sortByParam: string | null,
+  sortDirectionParam: string | null
+): {
+  sortBy: ActivitySortBy;
+  sortDirection: ActivitySortDirection;
+  hadInvalidSortParams: boolean;
+} {
+  const trimmedSortBy = sortByParam?.trim() ?? "";
+  const trimmedDirection = sortDirectionParam?.trim() ?? "";
+  const parsedSortBy = parseActivitySortBy(trimmedSortBy || null);
+  const parsedDirection = parseActivitySortDirection(trimmedDirection || null);
+  const hadInvalidSortParams =
+    (trimmedSortBy.length > 0 && parsedSortBy === null) ||
+    (trimmedDirection.length > 0 && parsedDirection === null);
+  const sortBy = parsedSortBy ?? DEFAULT_ACTIVITY_SORT_BY;
+  const sortDirection =
+    parsedDirection ?? defaultActivitySortDirection(sortBy);
+
+  return { sortBy, sortDirection, hadInvalidSortParams };
+}
+
+export function applyActivitySortToSearchParams(
+  params: URLSearchParams,
+  sortBy: ActivitySortBy,
+  sortDirection: ActivitySortDirection
+): void {
+  if (isDefaultActivitySort(sortBy, sortDirection)) {
+    params.delete("sortBy");
+    params.delete("sortDirection");
+    return;
+  }
+
+  params.set("sortBy", sortBy);
+  params.set("sortDirection", sortDirection);
+}
+
+export function isDefaultActivitySort(
+  sortBy: ActivitySortBy,
+  sortDirection: ActivitySortDirection
+): boolean {
+  return (
+    sortBy === DEFAULT_ACTIVITY_SORT_BY &&
+    sortDirection === DEFAULT_ACTIVITY_SORT_DIRECTION
+  );
+}
+
 export async function fetchActivities(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>,
   params: {
@@ -258,6 +354,8 @@ export async function fetchActivities(
     search?: string;
     page?: number;
     pageSize?: number;
+    sortBy?: ActivitySortBy;
+    sortDirection?: ActivitySortDirection;
   } = {}
 ): Promise<ActivityListResult> {
   const searchParams = new URLSearchParams();
@@ -278,6 +376,14 @@ export async function fetchActivities(
 
   if (params.search?.trim()) {
     searchParams.set("search", params.search.trim());
+  }
+
+  if (params.sortBy) {
+    searchParams.set("sortBy", params.sortBy);
+    searchParams.set(
+      "sortDirection",
+      params.sortDirection ?? defaultActivitySortDirection(params.sortBy)
+    );
   }
 
   const response = await authFetch(

@@ -17,8 +17,14 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  applyActivitySortToSearchParams,
   fetchActivities,
+  isDefaultActivitySort,
+  parseActivitySortFromSearchParams,
+  resolveActivityListSort,
   type Activity,
+  type ActivitySortBy,
+  type ActivitySortDirection,
   type ActivityStatus,
 } from "@/lib/activities-api";
 import { fetchCategories } from "@/lib/categories-api";
@@ -48,12 +54,39 @@ const statusFilterOptions: Array<{ value: ActivityStatus | ""; label: string }> 
     { value: "archived", label: "Archived" },
   ];
 
+const sortFilterOptions: Array<{
+  value: `${ActivitySortBy}:${ActivitySortDirection}`;
+  label: string;
+}> = [
+  { value: "updatedAt:desc", label: "Last updated" },
+  { value: "createdAt:desc", label: "Created" },
+  { value: "name:asc", label: "Name" },
+  { value: "registrationCount:desc", label: "Registrations" },
+];
+
 function parseStatusFilter(value: string | null): ActivityStatus | "" {
   if (value === "draft" || value === "published" || value === "archived") {
     return value;
   }
 
   return "";
+}
+
+function resolveSortSelectValue(
+  sortBy: ActivitySortBy,
+  sortDirection: ActivitySortDirection
+): `${ActivitySortBy}:${ActivitySortDirection}` {
+  const candidate = `${sortBy}:${sortDirection}` as `${ActivitySortBy}:${ActivitySortDirection}`;
+
+  if (sortFilterOptions.some((option) => option.value === candidate)) {
+    return candidate;
+  }
+
+  const presetForField = sortFilterOptions.find((option) =>
+    option.value.startsWith(`${sortBy}:`)
+  );
+
+  return presetForField?.value ?? "updatedAt:desc";
 }
 
 type ActivitySearchInputProps = {
@@ -109,14 +142,15 @@ export function ActivitiesListPage() {
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [initialized, setInitialized] = useState(false);
-  const [search, setSearch] = useState("");
   const statusFilter = parseStatusFilter(searchParams.get("status"));
-  const [categoryFilter, setCategoryFilter] = useState(
-    () => searchParams.get("category") ?? ""
+  const searchFilter = searchParams.get("search")?.trim() ?? "";
+  const categoryFilter = searchParams.get("category")?.trim() ?? "";
+  const communityFilter = searchParams.get("community")?.trim() ?? "";
+  const { sortBy, sortDirection } = parseActivitySortFromSearchParams(
+    searchParams.get("sortBy"),
+    searchParams.get("sortDirection")
   );
-  const [communityFilter, setCommunityFilter] = useState(
-    () => searchParams.get("community") ?? ""
-  );
+  const sortSelectValue = resolveSortSelectValue(sortBy, sortDirection);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [communities, setCommunities] = useState<Array<{ id: string; name: string }>>([]);
@@ -124,19 +158,22 @@ export function ActivitiesListPage() {
   const [error, setError] = useState<string | null>(null);
   const activityGridRef = useRef<HTMLDivElement>(null);
   const recoveryChipsRef = useRef<HTMLDivElement>(null);
+  const listQueryKey = [
+    statusFilter,
+    searchFilter,
+    categoryFilter,
+    communityFilter,
+    sortBy,
+    sortDirection,
+  ].join("\0");
+  const listQueryKeyRef = useRef(listQueryKey);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / ACTIVITY_PAGE_SIZE));
 
-  const syncStatusToUrl = useCallback(
-    (nextStatus: ActivityStatus | "") => {
+  const replaceListParams = useCallback(
+    (mutator: (params: URLSearchParams) => void) => {
       const params = new URLSearchParams(searchParams.toString());
-
-      if (nextStatus) {
-        params.set("status", nextStatus);
-      } else {
-        params.delete("status");
-      }
-
+      mutator(params);
       router.replace(
         params.toString() ? `/activities?${params.toString()}` : "/activities"
       );
@@ -144,10 +181,19 @@ export function ActivitiesListPage() {
     [router, searchParams]
   );
 
-  const commitSearch = useCallback((value: string) => {
-    setSearch(value.trim());
-    setPage(1);
-  }, []);
+  const commitSearch = useCallback(
+    (value: string) => {
+      replaceListParams((params) => {
+        const trimmed = value.trim();
+        if (trimmed) {
+          params.set("search", trimmed);
+        } else {
+          params.delete("search");
+        }
+      });
+    },
+    [replaceListParams]
+  );
 
   const scrollToActivityGrid = useCallback(() => {
     window.requestAnimationFrame(() => {
@@ -159,9 +205,10 @@ export function ActivitiesListPage() {
   }, []);
 
   const applyPublishedFilter = useCallback(() => {
-    setPage(1);
-    syncStatusToUrl("published");
-  }, [syncStatusToUrl]);
+    replaceListParams((params) => {
+      params.set("status", "published");
+    });
+  }, [replaceListParams]);
 
   useEffect(() => {
     if (statusFilter !== "published") {
@@ -170,8 +217,92 @@ export function ActivitiesListPage() {
   }, [statusFilter]);
 
   useEffect(() => {
-    setPage(1);
-  }, [statusFilter]);
+    if (listQueryKeyRef.current !== listQueryKey) {
+      listQueryKeyRef.current = listQueryKey;
+      setPage(1);
+      return;
+    }
+
+    let cancelled = false;
+
+    void fetchActivities(authFetch, {
+      status: statusFilter,
+      category: categoryFilter,
+      community: communityFilter,
+      search: searchFilter || undefined,
+      sortBy,
+      sortDirection,
+      page,
+      pageSize: ACTIVITY_PAGE_SIZE,
+    })
+      .then((result) => {
+        if (cancelled) {
+          return;
+        }
+
+        const nextTotalPages = Math.max(
+          1,
+          Math.ceil(result.totalCount / ACTIVITY_PAGE_SIZE)
+        );
+        if (page > nextTotalPages) {
+          setActivities([]);
+          setTotalCount(result.totalCount);
+          setError(null);
+          setInitialized(true);
+          setPage(nextTotalPages);
+          return;
+        }
+
+        setActivities(result.items);
+        setTotalCount(result.totalCount);
+        setError(null);
+        setInitialized(true);
+      })
+      .catch((loadError) => {
+        if (cancelled) {
+          return;
+        }
+
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Could not load activities."
+        );
+        setInitialized(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    authFetch,
+    categoryFilter,
+    communityFilter,
+    listQueryKey,
+    page,
+    searchFilter,
+    sortBy,
+    sortDirection,
+    statusFilter,
+  ]);
+
+  useEffect(() => {
+    const { sortBy: resolvedSortBy, sortDirection: resolvedSortDirection, hadInvalidSortParams } =
+      resolveActivityListSort(
+        searchParams.get("sortBy"),
+        searchParams.get("sortDirection")
+      );
+
+    if (!hadInvalidSortParams) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+    applyActivitySortToSearchParams(params, resolvedSortBy, resolvedSortDirection);
+    router.replace(
+      params.toString() ? `/activities?${params.toString()}` : "/activities"
+    );
+  }, [router, searchParams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,69 +334,19 @@ export function ActivitiesListPage() {
     };
   }, [authFetch]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    void fetchActivities(authFetch, {
-      status: statusFilter,
-      category: categoryFilter,
-      community: communityFilter,
-      search: search || undefined,
-      page,
-      pageSize: ACTIVITY_PAGE_SIZE,
-    })
-      .then((result) => {
-        if (cancelled) {
-          return;
-        }
-
-        const nextTotalPages = Math.max(
-          1,
-          Math.ceil(result.totalCount / ACTIVITY_PAGE_SIZE)
-        );
-        if (page > nextTotalPages) {
-          setTotalCount(result.totalCount);
-          setError(null);
-          setInitialized(true);
-          setPage(nextTotalPages);
-          return;
-        }
-
-        setActivities(result.items);
-        setTotalCount(result.totalCount);
-        setError(null);
-        setInitialized(true);
-      })
-      .catch((loadError) => {
-        if (cancelled) {
-          return;
-        }
-
-        setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Could not load activities."
-        );
-        setInitialized(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [authFetch, categoryFilter, communityFilter, page, search, statusFilter]);
-
   function clearFilters() {
-    setSearch("");
-    setCategoryFilter("");
-    setCommunityFilter("");
     setRecoveryMode(false);
-    setPage(1);
-    syncStatusToUrl("");
+    router.replace("/activities");
   }
 
   function updateStatusFilter(nextStatus: ActivityStatus | "") {
-    setPage(1);
-    syncStatusToUrl(nextStatus);
+    replaceListParams((params) => {
+      if (nextStatus) {
+        params.set("status", nextStatus);
+      } else {
+        params.delete("status");
+      }
+    });
 
     if (nextStatus !== "published") {
       setRecoveryMode(false);
@@ -273,13 +354,34 @@ export function ActivitiesListPage() {
   }
 
   function updateCategoryFilter(nextCategory: string) {
-    setCategoryFilter(nextCategory);
-    setPage(1);
+    replaceListParams((params) => {
+      if (nextCategory) {
+        params.set("category", nextCategory);
+      } else {
+        params.delete("category");
+      }
+    });
   }
 
   function updateCommunityFilter(nextCommunity: string) {
-    setCommunityFilter(nextCommunity);
-    setPage(1);
+    replaceListParams((params) => {
+      if (nextCommunity) {
+        params.set("community", nextCommunity);
+      } else {
+        params.delete("community");
+      }
+    });
+  }
+
+  function updateSortFilter(value: `${ActivitySortBy}:${ActivitySortDirection}`) {
+    const [nextSortBy, nextSortDirection] = value.split(":") as [
+      ActivitySortBy,
+      ActivitySortDirection,
+    ];
+
+    replaceListParams((params) => {
+      applyActivitySortToSearchParams(params, nextSortBy, nextSortDirection);
+    });
   }
 
   function handleReviewPublished() {
@@ -311,10 +413,11 @@ export function ActivitiesListPage() {
   }
 
   const hasActiveFilters =
-    Boolean(search) ||
+    Boolean(searchFilter) ||
     Boolean(statusFilter) ||
     Boolean(categoryFilter) ||
-    Boolean(communityFilter);
+    Boolean(communityFilter) ||
+    !isDefaultActivitySort(sortBy, sortDirection);
 
   return (
     <div className="space-y-6">
@@ -362,12 +465,12 @@ export function ActivitiesListPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="space-y-2 sm:col-span-2 xl:col-span-1">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="space-y-2 sm:col-span-2 xl:col-span-2">
           <Label htmlFor="activity-search">Search</Label>
           <ActivitySearchInput
-            key={search}
-            committedValue={search}
+            key={searchFilter}
+            committedValue={searchFilter}
             onCommit={commitSearch}
           />
           <p className="text-xs text-text-muted-warm">
@@ -419,6 +522,25 @@ export function ActivitiesListPage() {
             {categories.map((category) => (
               <option key={category.id} value={category.name}>
                 {category.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="activity-sort">Sort by</Label>
+          <select
+            id="activity-sort"
+            value={sortSelectValue}
+            onChange={(event) =>
+              updateSortFilter(
+                event.target.value as `${ActivitySortBy}:${ActivitySortDirection}`
+              )
+            }
+            className={filterSelectClassName}
+          >
+            {sortFilterOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>

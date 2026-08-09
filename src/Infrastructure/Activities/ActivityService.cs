@@ -123,12 +123,16 @@ public sealed class ActivityService(
         string? search,
         int page,
         int pageSize,
+        string? sortBy = null,
+        string? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         var normalizedPage = page < 1 ? 1 : page;
         var normalizedPageSize = pageSize < 1
             ? DefaultPageSize
             : Math.Min(pageSize, MaxPageSize);
+        var sortField = ParseListSortBy(sortBy);
+        var descending = ResolveListSortDescending(sortField, sortDirection);
 
         var query = dbContext.Activities.AsNoTracking();
 
@@ -160,8 +164,8 @@ public sealed class ActivityService(
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
+        query = ApplyListSort(query, sortField, descending);
         var activities = await query
-            .OrderByDescending(activity => activity.UpdatedAt)
             .Skip((normalizedPage - 1) * normalizedPageSize)
             .Take(normalizedPageSize)
             .ToListAsync(cancellationToken);
@@ -759,5 +763,55 @@ public sealed class ActivityService(
         exception.InnerException is PostgresException
         {
             SqlState: PostgresErrorCodes.UniqueViolation,
+        };
+
+    private enum ActivityListSortBy
+    {
+        Name,
+        CreatedAt,
+        UpdatedAt,
+        RegistrationCount,
+    }
+
+    private static ActivityListSortBy ParseListSortBy(string? sortBy) =>
+        sortBy?.Trim().ToLowerInvariant() switch
+        {
+            "name" => ActivityListSortBy.Name,
+            "createdat" or "created_at" => ActivityListSortBy.CreatedAt,
+            "updatedat" or "updated_at" => ActivityListSortBy.UpdatedAt,
+            "registrationcount" or "registration_count" => ActivityListSortBy.RegistrationCount,
+            null or "" => ActivityListSortBy.UpdatedAt,
+            _ => ActivityListSortBy.UpdatedAt,
+        };
+
+    private static bool ResolveListSortDescending(
+        ActivityListSortBy sortBy,
+        string? sortDirection)
+    {
+        if (!string.IsNullOrWhiteSpace(sortDirection))
+        {
+            return !string.Equals(sortDirection.Trim(), "asc", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return sortBy != ActivityListSortBy.Name;
+    }
+
+    private IQueryable<Activity> ApplyListSort(
+        IQueryable<Activity> query,
+        ActivityListSortBy sortBy,
+        bool descending) =>
+        (sortBy, descending) switch
+        {
+            (ActivityListSortBy.Name, false) => query.OrderBy(activity => activity.Name),
+            (ActivityListSortBy.Name, true) => query.OrderByDescending(activity => activity.Name),
+            (ActivityListSortBy.CreatedAt, false) => query.OrderBy(activity => activity.CreatedAt),
+            (ActivityListSortBy.CreatedAt, true) => query.OrderByDescending(activity => activity.CreatedAt),
+            (ActivityListSortBy.UpdatedAt, false) => query.OrderBy(activity => activity.UpdatedAt),
+            (ActivityListSortBy.UpdatedAt, true) => query.OrderByDescending(activity => activity.UpdatedAt),
+            (ActivityListSortBy.RegistrationCount, false) => query.OrderBy(activity =>
+                dbContext.Registrations.Count(registration => registration.ActivityId == activity.Id)),
+            (ActivityListSortBy.RegistrationCount, true) => query.OrderByDescending(activity =>
+                dbContext.Registrations.Count(registration => registration.ActivityId == activity.Id)),
+            _ => query.OrderByDescending(activity => activity.UpdatedAt),
         };
 }
