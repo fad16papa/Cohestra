@@ -128,6 +128,21 @@
     animation: marketing-hero-stack-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
+  @keyframes marketing-product-carousel-enter {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 12px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  .marketing-product-carousel-enter {
+    animation: marketing-product-carousel-enter 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
   @keyframes marketing-hero-stack-rise {
     from {
       opacity: 0;
@@ -303,7 +318,8 @@
     .animate-fade-in-up,
     .marketing-hero-enter,
     .marketing-product-lift,
-    .marketing-hero-stack-card {
+    .marketing-hero-stack-card,
+    .marketing-product-carousel-enter {
       animation: none;
       opacity: 1;
       transform: none;

@@ -11,8 +11,8 @@ import {
   MarketingShell,
   marketingAtelierButtonClass,
 } from "@/components/marketing/marketing-shell";
-import { MarketingCrmShowcase } from "@/components/marketing/marketing-crm-showcase";
 import { MarketingHeroProductStack } from "@/components/marketing/marketing-hero-product-stack";
+import { MarketingProductCarousel } from "@/components/marketing/marketing-product-carousel";
 import {
   MarketingReveal,
   marketingRevealDelay,
@@ -47,13 +47,6 @@ const OUTREACH_POINTS = [
   "Dashboard shows who still needs a reply",
 ] as const;
 
-const CRM_POINTS = [
-  "Search and filter by status, nationality, or recent signup",
-  "Lead status badges so the team knows who still needs a reply",
-  "Full profile with contact details, registration history, and timeline",
-  "WhatsApp and Viber open from the profile with messages saved automatically",
-] as const;
-
 const WEBSITE_POINTS = [
   "Homepage at your org subdomain on cohestra.app",
   "Upcoming activities update from your workspace",
@@ -77,7 +70,7 @@ export function MarketingHomePage() {
       <div ref={anchorRef} aria-hidden className="pointer-events-none absolute top-0 h-px w-full" />
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="mx-auto grid max-w-6xl gap-10 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14 lg:px-10 lg:pb-20 lg:pt-12">
+      <section className="mx-auto grid max-w-6xl gap-10 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end lg:gap-14 lg:px-10 lg:pb-20 lg:pt-12">
         <div>
           <MarketingReveal immediate delayMs={50}>
             <p className="text-section text-gold">Community operations software</p>
@@ -259,40 +252,7 @@ export function MarketingHomePage() {
         </div>
       </section>
 
-      {/* ── Product highlight: client CRM ────────────────────── */}
-      <section id="crm" className="scroll-mt-24 border-t border-line bg-paper-warm">
-        <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] lg:gap-12 lg:px-10 lg:py-20">
-          <div className="text-center lg:text-left">
-            <MarketingReveal delayMs={marketingRevealDelay(0)}>
-              <p className="text-section text-gold">Client CRM</p>
-              <h2 className="text-marketing-section mx-auto mt-4 max-w-[18ch] text-balance text-ink lg:mx-0">
-                A client list your team actually uses
-              </h2>
-              <p className="text-marketing-lead mx-auto mt-4 max-w-xl text-stone lg:mx-0">
-                Every registration builds one profile. Search the list, open a client, see their
-                history, and message them without leaving Cohestra.
-              </p>
-            </MarketingReveal>
-
-            <MarketingReveal delayMs={marketingRevealDelay(1)}>
-              <ul className="mt-8 space-y-3 text-left text-[0.95rem]">
-                {CRM_POINTS.map((point) => (
-                  <li key={point} className="flex items-start gap-3 text-ink/85">
-                    <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-lagoon/12 text-lagoon">
-                      <Check className="size-3.5" aria-hidden />
-                    </span>
-                    {point}
-                  </li>
-                ))}
-              </ul>
-            </MarketingReveal>
-          </div>
-
-          <MarketingReveal delayMs={marketingRevealDelay(2)} className="min-w-0">
-            <MarketingCrmShowcase compact />
-          </MarketingReveal>
-        </div>
-      </section>
+      <MarketingProductCarousel />
 
       {/* ── How it works ─────────────────────────────────────── */}
       <section id="how-it-works" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-16 sm:px-8 lg:px-10 lg:py-24">
