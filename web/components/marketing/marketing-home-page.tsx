@@ -54,7 +54,7 @@ export function MarketingHomePage() {
       <div ref={anchorRef} aria-hidden className="pointer-events-none absolute top-0 h-px w-full" />
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="mx-auto grid max-w-6xl gap-10 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-end lg:gap-14 lg:px-10 lg:pb-20 lg:pt-12">
+      <section className="mx-auto grid max-w-6xl gap-10 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-2 lg:items-stretch lg:gap-12 lg:px-10 lg:pb-20 lg:pt-12">
         <div>
           <MarketingReveal immediate delayMs={50}>
             <p className="text-section text-gold">Community operations software</p>

@@ -13,14 +13,14 @@ const FLOAT_ROWS = [
 
 function HeroCommunityPhoto() {
   return (
-    <figure className="relative aspect-[4/5] w-full max-h-[560px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)] sm:max-h-[600px] lg:max-h-[680px]">
+    <figure className="relative aspect-[4/5] w-full max-h-[520px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)] sm:max-h-[580px] lg:aspect-[3/4] lg:max-h-none lg:min-h-[700px] xl:min-h-[760px]">
       <Image
         src={LANDING_IMAGES.hero.src}
         alt={LANDING_IMAGES.hero.alt}
         fill
         priority
         className="object-cover saturate-[0.92] contrast-[1.05]"
-        sizes="(max-width: 1024px) 100vw, 680px"
+        sizes="(max-width: 1024px) 100vw, 50vw"
       />
       <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-ink/[0.04] via-ink/15 to-ink/55" />
       <figcaption className="absolute inset-x-6 bottom-6 z-[2] max-w-[18ch] text-paper">
@@ -65,7 +65,7 @@ export function MarketingHeroProductStack({ className }: { className?: string })
   return (
     <div
       className={cn(
-        "marketing-product-lift relative mx-auto w-full max-w-[640px] lg:mx-0 lg:max-w-none",
+        "marketing-product-lift relative mx-auto w-full max-w-[640px] lg:flex lg:h-full lg:max-w-none lg:flex-col lg:justify-end",
         className
       )}
       aria-label="Community photo with live clients preview"
