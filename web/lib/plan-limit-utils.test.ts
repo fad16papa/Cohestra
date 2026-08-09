@@ -4,8 +4,11 @@ import type { TenantShell } from "@/lib/shell/tenant-shell-api";
 import {
   getActivitiesAtCapBannerState,
   getPublishedActivitiesUsageCount,
+  getRegistrationsDialForCards,
   shouldShowActivitiesRecoveryChips,
+  shouldShowPlanRegCapOnActivityCard,
   shouldShowPublishedOnlyChip,
+  shouldShowSignUpsPausedBadge,
 } from "@/lib/plan-limit-utils";
 
 function shellWithDials(
@@ -138,5 +141,63 @@ describe("getPublishedActivitiesUsageCount", () => {
         shellWithDials({ used: 42, limit: 50 })
       )
     ).toBe(42);
+  });
+});
+
+describe("getRegistrationsDialForCards", () => {
+  it("returns null below warn threshold", () => {
+    expect(
+      getRegistrationsDialForCards(
+        shellWithDials({ used: 10, limit: 50 }, { used: 100, limit: 5000 })
+      )
+    ).toBeNull();
+  });
+
+  it("returns dial when warn or blocked", () => {
+    const blocked = getRegistrationsDialForCards(
+      shellWithDials(
+        { used: 10, limit: 50 },
+        { used: 5000, limit: 5000, blocked: true }
+      )
+    );
+    expect(blocked?.used).toBe(5000);
+
+    const warn = getRegistrationsDialForCards(
+      shellWithDials(
+        { used: 10, limit: 50 },
+        { used: 4200, limit: 5000, warn: true }
+      )
+    );
+    expect(warn?.used).toBe(4200);
+  });
+});
+
+describe("activity card plan reg cap visibility", () => {
+  const blockedDial = shellWithDials(
+    { used: 10, limit: 50 },
+    { used: 5000, limit: 5000, blocked: true }
+  ).limitDials.find((dial) => dial.key === "registrations")!;
+
+  const warnDial = shellWithDials(
+    { used: 10, limit: 50 },
+    { used: 4200, limit: 5000, warn: true }
+  ).limitDials.find((dial) => dial.key === "registrations")!;
+
+  it("shows plan reg cap on published only", () => {
+    expect(shouldShowPlanRegCapOnActivityCard("published", blockedDial)).toBe(
+      true
+    );
+    expect(shouldShowPlanRegCapOnActivityCard("draft", blockedDial)).toBe(
+      false
+    );
+    expect(shouldShowPlanRegCapOnActivityCard("archived", warnDial)).toBe(
+      false
+    );
+  });
+
+  it("shows paused badge only when published and blocked", () => {
+    expect(shouldShowSignUpsPausedBadge("published", blockedDial)).toBe(true);
+    expect(shouldShowSignUpsPausedBadge("published", warnDial)).toBe(false);
+    expect(shouldShowSignUpsPausedBadge("draft", blockedDial)).toBe(false);
   });
 });

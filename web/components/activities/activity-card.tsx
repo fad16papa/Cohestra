@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { ActivityPlanRegCapIndicator } from "@/components/activities/activity-plan-reg-cap-indicator";
 import { ActivityScheduleConflictAlert } from "@/components/activities/activity-schedule-conflict-alert";
+import { ActivitySignUpsPausedBadge } from "@/components/activities/activity-sign-ups-paused-badge";
 import { ActivityStatusBadge } from "@/components/activities/activity-status-badge";
 import {
   Card,
@@ -11,11 +13,17 @@ import {
 } from "@/components/ui/card";
 import type { Activity } from "@/lib/activities-api";
 import type { CalendarActivity } from "@/lib/activity-calendar-utils";
+import {
+  shouldShowPlanRegCapOnActivityCard,
+  shouldShowSignUpsPausedBadge,
+} from "@/lib/plan-limit-utils";
+import type { LimitDial } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
 
 type ActivityCardProps = {
   activity: Activity;
   conflictingActivities?: CalendarActivity[];
+  planRegistrationsDial?: LimitDial | null;
   className?: string;
 };
 
@@ -34,12 +42,34 @@ function formatCreatedAt(value: string): string {
   });
 }
 
+function formatRegistrationLine(activity: Activity): string {
+  if (
+    activity.status === "published" &&
+    activity.maxRegistrants != null
+  ) {
+    return `${activity.registrationCount} / ${activity.maxRegistrants} activity registrations`;
+  }
+
+  return `${activity.registrationCount} registration${
+    activity.registrationCount === 1 ? "" : "s"
+  }`;
+}
+
 export function ActivityCard({
   activity,
   conflictingActivities = [],
+  planRegistrationsDial = null,
   className,
 }: ActivityCardProps) {
   const hasConflict = conflictingActivities.length > 0;
+  const showPlanRegCap = shouldShowPlanRegCapOnActivityCard(
+    activity.status,
+    planRegistrationsDial
+  );
+  const showSignUpsPaused = shouldShowSignUpsPausedBadge(
+    activity.status,
+    planRegistrationsDial
+  );
 
   return (
     <Card
@@ -55,7 +85,10 @@ export function ActivityCard({
             <CardTitle className="text-section text-text-warm">
               {activity.name}
             </CardTitle>
-            <ActivityStatusBadge status={activity.status} />
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              <ActivityStatusBadge status={activity.status} />
+              {showSignUpsPaused ? <ActivitySignUpsPausedBadge /> : null}
+            </div>
           </div>
           <CardDescription className="flex flex-wrap items-center gap-2 text-text-muted-warm">
             <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground">
@@ -67,15 +100,15 @@ export function ActivityCard({
         <CardContent className="space-y-2 pb-4 text-sm text-text-muted-warm">
           <p>{activity.schedule}</p>
           <p>{activity.location}</p>
-          <p className="text-xs">
-            {activity.registrationCount} registration
-            {activity.registrationCount === 1 ? "" : "s"}
-          </p>
+          <p className="text-xs">{formatRegistrationLine(activity)}</p>
           <p className="text-xs">
             Created {formatCreatedAt(activity.createdAt)}
           </p>
         </CardContent>
       </Link>
+      {showPlanRegCap && planRegistrationsDial ? (
+        <ActivityPlanRegCapIndicator dial={planRegistrationsDial} />
+      ) : null}
       {hasConflict ? (
         <div className="border-t border-amber-100/90 px-4 pb-4 pt-3 dark:border-amber-900/40 sm:px-6">
           <ActivityScheduleConflictAlert

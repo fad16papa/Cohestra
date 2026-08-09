@@ -7,11 +7,17 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import type { ActivitiesAtCapBannerState } from "@/lib/plan-limit-utils";
 import { cn } from "@/lib/utils";
 
-const WARN_DISMISS_STORAGE_KEY = "cohestra.activities-at-cap-banner-warn-dismissed";
+const WARN_DISMISS_STORAGE_KEY_PREFIX =
+  "cohestra.activities-at-cap-banner-warn-dismissed";
+
+function warnDismissStorageKey(tenantSlug: string): string {
+  return `${WARN_DISMISS_STORAGE_KEY_PREFIX}:${tenantSlug}`;
+}
 
 type ActivitiesAtCapBannerProps = {
   state: ActivitiesAtCapBannerState;
   showUpgradeLink: boolean;
+  tenantSlug: string;
   onReviewPublished: () => void;
   className?: string;
 };
@@ -19,10 +25,12 @@ type ActivitiesAtCapBannerProps = {
 export function ActivitiesAtCapBanner({
   state,
   showUpgradeLink,
+  tenantSlug,
   onReviewPublished,
   className,
 }: ActivitiesAtCapBannerProps) {
   const [warnDismissed, setWarnDismissed] = useState(false);
+  const dismissStorageKey = warnDismissStorageKey(tenantSlug);
 
   useEffect(() => {
     if (state.variant !== "warn") {
@@ -30,9 +38,9 @@ export function ActivitiesAtCapBanner({
     }
 
     setWarnDismissed(
-      window.sessionStorage.getItem(WARN_DISMISS_STORAGE_KEY) === "true"
+      window.sessionStorage.getItem(dismissStorageKey) === "true"
     );
-  }, [state.variant]);
+  }, [dismissStorageKey, state.variant]);
 
   if (state.variant === "warn" && warnDismissed) {
     return null;
@@ -41,7 +49,7 @@ export function ActivitiesAtCapBanner({
   const isBlocked = state.variant === "blocked";
 
   function dismissWarnBanner() {
-    window.sessionStorage.setItem(WARN_DISMISS_STORAGE_KEY, "true");
+    window.sessionStorage.setItem(dismissStorageKey, "true");
     setWarnDismissed(true);
   }
 
