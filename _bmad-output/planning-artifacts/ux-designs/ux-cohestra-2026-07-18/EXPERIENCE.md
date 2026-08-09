@@ -272,7 +272,7 @@ Each client = card:
 
 ## Activities module (operator at scale)
 
-The **Activities** list is a **launchpad catalog** for operators managing many lead engines — find, triage capacity, recover published slots, and hand off to Clients. Inherited Platform 0 activity CRUD, publish/archive, and registration rules apply; this section defines **presentation and interaction** only.
+The **Activities** list is a **launch catalog** for operators managing many lead engines — find, triage capacity, recover published slots, and hand off to Clients. Inherited Platform 0 activity CRUD, publish/archive, and registration rules apply; this section defines **presentation and interaction** only.
 
 → Cross-reference: **Clients module** (activity-scoped filter via `activityId` query param) · Dashboard **LimitMeter** / at-cap banners (deep-link `?status=published`)
 
@@ -308,12 +308,14 @@ The **Activities** list is a **launchpad catalog** for operators managing many l
 | Condition | Primary line | Secondary line | Actions |
 |-----------|--------------|----------------|---------|
 | Published blocked | Published at capacity (used/limit). Archive or unpublish one to publish another. | — | **Review published** |
-| Registrations blocked | — | Monthly sign-ups paused (used/limit). | **View billing & upgrade** (tenant admin only) |
-| Both blocked | Published line first (actionable on this page) | Registrations line second | Review published + billing |
-| Warn only | Softer capacity copy for the dial(s) in warn state | Optional second dial line | Review published; Dismiss (warn only) |
+| Registrations blocked | — | Monthly sign-ups paused (used/limit). | **View billing & upgrade** (tenant admin only); **Tenant Members** see copy only — no billing CTA |
+| Both blocked | Published line first (actionable on this page) | Registrations line second | Review published + billing (admin) or Review published only (Member) |
+| Published warn only | Softer published-capacity copy | — | **Review published**; **Dismiss** |
+| Registrations warn only | — | Softer monthly registration copy | **View billing & upgrade** (tenant admin only); **Dismiss**; **Tenant Members** see copy + Dismiss only |
+| Both warn | Published line first | Registrations line second | Review published + billing (admin) + Dismiss; Member sees Review published + Dismiss |
 
 - Banner uses `role="alert"`.
-- **Review published** applies `status=published` in the URL and scrolls to the activity grid.
+- **Review published** applies `status=published` in the URL and scrolls to the activity grid — does **not** enable the recovery mode strip (only **Free a slot** does).
 - Limit copy is sourced from the same shell **usage** dials as admin **LimitMeter** — do not duplicate limit math in UI copy.
 
 **Recovery chip row** (`ActivitiesRecoveryChips`)
@@ -324,6 +326,8 @@ Horizontal chip row **below banner, above filter bar**. Reuse Clients **FilterCh
 |------|--------------|----------|
 | **Published only** | Published dial blocked or warn, **or** registration dial blocked | Toggles `status=published` in URL; count badge shows published usage from shell |
 | **Free a slot** | Published dial blocked only | Applies published filter, enables **recovery mode** helper strip, scrolls to grid |
+
+**Chip row visibility:** The row renders only when at least one chip is visible. When **only** the registration dial is at warn (not blocked) and the published dial is below warn, the at-cap banner may show but **neither chip appears** — operators use banner actions (billing for admin, Dismiss) instead.
 
 **Recovery mode strip** (inline, `role="status"` — not a modal):
 
@@ -352,28 +356,28 @@ All filter values are derived from URL `searchParams`. **Page number stays local
 | `name:asc` | Name |
 | `registrationCount:desc` | Registrations |
 
-- **Clear filters** navigates to `/activities` with no query string.
-- Invalid sort params in the URL are sanitized on load (removed via replace).
-- Layout: five-control grid on `xl` (search spans two columns).
+- **Clear filters** navigates to `/activities` with no query string (also clears recovery mode strip state).
+- **URL hygiene — sort:** Unknown `sortBy` / `sortDirection` tokens are removed via `router.replace` on load. Valid tokens that are **not** one of the four presets (e.g. `name:desc`) are **not** stripped — the server honors them, but the sort `<select>` falls back to the nearest preset for that field (or default). Prefer preset URLs when sharing links.
+- Layout on `≥ xl`: six-column CSS grid — search spans two columns; status, community, category, and sort each occupy one column (five controls total).
 
 **Activity card grid**
 
-Responsive card grid (`sm`: 2 columns · `xl`: 3 columns). Each card:
+Responsive card grid (`< sm`: 1 column · `sm`: 2 columns · `xl`: 3 columns). Each card (DOM order):
 
 | Region | Content |
 |--------|---------|
-| **Header** | Activity name (link to detail) · status badge · schedule / location meta · created timestamp |
-| **Body** | Registration count line; optional per-activity max when published |
-| **Signals** | See table below |
+| **Header** | Activity name (link to detail) · status badge · **Sign-ups paused** badge (when reg dial blocked) · community pill · category |
+| **Body** | Schedule · location · registration count line (includes per-activity `maxRegistrants` when published and configured) · created timestamp |
 | **Footer** | Quick actions row (see below) |
+| **Below footer** | Plan reg meter (published + reg dial warn/blocked) · schedule conflict alert (amber border on card + inline alert when detected) |
 
 **Card signals**
 
-| Signal | When shown |
-|--------|------------|
-| **Sign-ups paused** badge | Activity is published **and** tenant monthly registration dial is blocked |
-| **Plan reg meter** | Activity is published **and** tenant registration dial is warn or blocked — monthly usage indicator on card |
-| **Schedule conflict** | Amber border + inline alert when calendar conflict detected for this activity |
+| Signal | When shown | Region |
+|--------|------------|--------|
+| **Sign-ups paused** badge | Activity is published **and** tenant monthly registration dial is **blocked** (not warn-only) | Header (beside status badge) |
+| **Plan reg meter** | Activity is published **and** tenant registration dial is warn or blocked | Below quick actions |
+| **Schedule conflict** | Calendar conflict detected for this activity | Below quick actions (card also gets amber border); omitted while conflict check is loading or unavailable |
 
 **Card quick actions** (footer — clicks do not navigate the card)
 
@@ -403,13 +407,13 @@ Dashboard at-cap banner → Review published → /activities?status=published
 Free a slot chip → published filter + recovery strip → open card → archive/unpublish on detail
 Copy link → share public registration URL
 Clients (N) on card → Clients list filtered by activityId
-Sort registrationCount desc → identify lowest-traffic published activities to archive
+Sort registrationCount asc → identify lowest-traffic published activities to archive
 ```
 
 Example bookmark URL:
 
 ```
-/activities?status=published&sortBy=registrationCount&sortDirection=desc
+/activities?status=published&sortBy=registrationCount&sortDirection=asc
 ```
 
 ### Plan gates (Activities)
@@ -427,8 +431,9 @@ Limits are enforced from shell **usage** dials — same source as **LimitMeter**
 
 | Breakpoint | Behavior |
 |------------|----------|
-| `< sm` | Filter controls stack; recovery chips wrap |
-| `≥ xl` | Five-column filter row + three-column card grid |
+| `< sm` | Single-column card grid; filter controls stack to one column; recovery chips wrap |
+| `sm` – `lg` | Two-column card grid; filter grid stacks to two columns |
+| `≥ xl` | Six-column filter row (search spans 2) + three-column card grid |
 
 ### Accessibility invariants
 
@@ -567,8 +572,9 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 |------------|----------|
 | Admin `≥ lg` | Sidebar + PlanBadge in top bar |
 | Admin `sm` | Sidebar Sheet; BillingBanner stacks CTA under text |
-| Activities list `< xl` | Filter grid stacks to two columns; chips wrap |
-| Activities list `≥ xl` | Five-filter row + three-column card grid |
+| Activities list `< sm` | Single-column cards; filter controls stack one column; chips wrap |
+| Activities list `sm` – `lg` | Two-column card grid; filter grid two columns; chips wrap |
+| Activities list `≥ xl` | Six-column filter row (search spans 2) + three-column card grid |
 | Clients list `< md` | Card stack; horizontal scroll filter chips; no table horizontal scroll |
 | Clients list `≥ lg` | Full table; optional compact density toggle `[ASSUMPTION]` |
 | Client profile mobile | Header actions wrap; master profile first; registration + timeline stack; sidebar cards below |
@@ -690,5 +696,5 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 | URL contract | All list filters + sort in query params; page local only; clear → `/activities` |
 | Sort control | Single select with four presets; default `updatedAt` desc omitted from URL |
 | Card handoff | Quick actions: Copy link · Registrations tab · Clients list via `activityId` filter |
-| Reg cap on card | **Sign-ups paused** badge + plan reg meter when tenant dial warn/blocked |
+| Reg cap on card | **Sign-ups paused** badge when reg dial blocked; plan reg meter when reg dial warn or blocked |
 | Public registration | Registrant-safe copy when limits hit — no plan upgrade language (separate from admin list) |
