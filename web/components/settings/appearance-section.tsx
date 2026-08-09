@@ -31,13 +31,9 @@ export function AppearanceSection() {
 
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-section text-text-warm">Appearance</h2>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Choose how Cohestra looks on this device. Changes sync with the
-          top-bar theme control instantly.
-        </p>
-      </div>
+      <p className="text-sm text-text-muted-warm">
+        Changes sync with the top-bar theme control instantly.
+      </p>
 
       <div
         role="radiogroup"

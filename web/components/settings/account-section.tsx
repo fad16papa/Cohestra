@@ -6,7 +6,12 @@ import { LogOut, Mail, Shield } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
 
-export function AccountSection() {
+type AccountSectionProps = {
+  /** When true, hides redundant navigation (e.g. on the settings page itself). */
+  embedded?: boolean;
+};
+
+export function AccountSection({ embedded = false }: AccountSectionProps) {
   const { profile, logout } = useAuth();
 
   if (!profile) {
@@ -15,12 +20,14 @@ export function AccountSection() {
 
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-section text-text-warm">Account</h2>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Your signed-in operator profile for this workspace.
-        </p>
-      </div>
+      {!embedded ? (
+        <div>
+          <h2 className="text-section text-text-warm">Account</h2>
+          <p className="mt-1 text-sm text-text-muted-warm">
+            Your signed-in operator profile for this workspace.
+          </p>
+        </div>
+      ) : null}
 
       <div className="rounded-xl border border-border-warm bg-muted/20 p-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -42,9 +49,11 @@ export function AccountSection() {
             ) : null}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/settings" className={buttonVariants({ variant: "outline" })}>
-              Workspace settings
-            </Link>
+            {!embedded ? (
+              <Link href="/settings" className={buttonVariants({ variant: "outline" })}>
+                Workspace settings
+              </Link>
+            ) : null}
             <Button type="button" variant="destructive" className="gap-2" onClick={logout}>
               <LogOut className="size-4" aria-hidden />
               Sign out

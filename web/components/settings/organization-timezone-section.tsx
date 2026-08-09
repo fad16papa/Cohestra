@@ -64,12 +64,12 @@ export function OrganizationTimezoneSection() {
   const dirty = settings !== null && selectedId !== settings.registrationTimeZoneId;
 
   return (
-    <section className="space-y-4 border-t border-border-warm pt-8">
+    <section className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-ink">Registration month timezone</h2>
+        <h2 className="text-section text-text-warm">Registration month timezone</h2>
         <p className="mt-1 text-sm text-text-muted-warm">
           Monthly registration limits reset at midnight on the 1st in this timezone.
-          Used for Plan headroom and public registration caps.
+          Used for plan headroom and public registration caps.
         </p>
       </div>
 
