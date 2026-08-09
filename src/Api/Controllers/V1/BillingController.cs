@@ -240,6 +240,227 @@ public class BillingController(
         }
     }
 
+    [HttpGet("details")]
+    [ProducesResponseType(typeof(BillingDetailsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<BillingDetailsResponse>> GetDetails(CancellationToken cancellationToken)
+    {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        var details = await billingService.GetDetailsAsync(tenantId, cancellationToken);
+        return Ok(MapDetails(details));
+    }
+
+    [HttpPost("payment-method/setup")]
+    [ProducesResponseType(typeof(SetupIntentResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<SetupIntentResponse>> CreatePaymentMethodSetup(
+        CancellationToken cancellationToken)
+    {
+        if (!stripeOptions.Value.IsConfigured)
+        {
+            return StripeUnavailable();
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            var setup = await billingService.CreateSetupIntentAsync(tenantId, cancellationToken);
+            return Ok(new SetupIntentResponse(setup.ClientSecret, setup.PublishableKey));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BillingBadRequest("Payment method setup unavailable", ex.Message);
+        }
+    }
+
+    [HttpPost("payment-method/confirm")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> ConfirmPaymentMethodSetup(
+        [FromBody] ConfirmSetupIntentRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (!stripeOptions.Value.IsConfigured)
+        {
+            return StripeUnavailable();
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        if (string.IsNullOrWhiteSpace(request?.SetupIntentId))
+        {
+            return BillingBadRequest("Invalid setup intent", "Setup intent id is required.");
+        }
+
+        try
+        {
+            await billingService.ConfirmSetupIntentAsync(
+                tenantId,
+                request.SetupIntentId,
+                cancellationToken);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BillingBadRequest("Payment method setup unavailable", ex.Message);
+        }
+    }
+
+    [HttpPatch("contact")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> UpdateContact(
+        [FromBody] UpdateBillingContactRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (!stripeOptions.Value.IsConfigured)
+        {
+            return StripeUnavailable();
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await billingService.UpdateBillingContactAsync(
+                tenantId,
+                request?.Name,
+                request?.Email,
+                cancellationToken);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BillingBadRequest("Billing contact unavailable", ex.Message);
+        }
+    }
+
+    [HttpPost("subscription/cancel")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> CancelSubscription(CancellationToken cancellationToken)
+    {
+        if (!stripeOptions.Value.IsConfigured)
+        {
+            return StripeUnavailable();
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await billingService.CancelSubscriptionAtPeriodEndAsync(tenantId, cancellationToken);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BillingBadRequest("Subscription update unavailable", ex.Message);
+        }
+    }
+
+    [HttpPost("subscription/resume")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> ResumeSubscription(CancellationToken cancellationToken)
+    {
+        if (!stripeOptions.Value.IsConfigured)
+        {
+            return StripeUnavailable();
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await billingService.ResumeSubscriptionAsync(tenantId, cancellationToken);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BillingBadRequest("Subscription update unavailable", ex.Message);
+        }
+    }
+
+    private ObjectResult StripeUnavailable() =>
+        StatusCode(
+            StatusCodes.Status503ServiceUnavailable,
+            new ProblemDetails
+            {
+                Title = "Billing unavailable",
+                Detail = "Stripe is not configured in this environment.",
+                Status = StatusCodes.Status503ServiceUnavailable,
+            });
+
+    private BadRequestObjectResult BillingBadRequest(string title, string detail) =>
+        BadRequest(new ProblemDetails
+        {
+            Title = title,
+            Detail = detail,
+            Status = StatusCodes.Status400BadRequest,
+        });
+
+    private static BillingDetailsResponse MapDetails(BillingDetailsDto details) =>
+        new(
+            MapSummary(details.Summary),
+            details.Contact is null
+                ? null
+                : new BillingContactResponse(details.Contact.Name, details.Contact.Email),
+            details.PaymentMethod is null
+                ? null
+                : new BillingPaymentMethodResponse(
+                    details.PaymentMethod.Id,
+                    details.PaymentMethod.Brand,
+                    details.PaymentMethod.Last4,
+                    details.PaymentMethod.ExpMonth,
+                    details.PaymentMethod.ExpYear),
+            details.Subscription is null
+                ? null
+                : new BillingSubscriptionDetailsResponse(
+                    details.Subscription.CancelAtPeriodEnd,
+                    details.Subscription.CurrentPeriodEnd,
+                    details.Subscription.ScheduledPlan,
+                    details.Subscription.ScheduledPlanEffectiveAt),
+            details.Invoices
+                .Select(invoice => new BillingInvoiceResponse(
+                    invoice.Id,
+                    invoice.CreatedAt,
+                    invoice.AmountDueCents,
+                    invoice.Currency,
+                    invoice.Status,
+                    invoice.PdfUrl,
+                    invoice.HostedInvoiceUrl))
+                .ToList());
+
     private static bool IsAllowedReturnUrl(string url, string tenantBase)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var returnUri)

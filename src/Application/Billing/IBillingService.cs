@@ -22,6 +22,31 @@ public interface IBillingService
         Guid tenantId,
         string? checkoutSessionId = null,
         CancellationToken cancellationToken = default);
+
+    Task<BillingDetailsDto> GetDetailsAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
+    Task<SetupIntentDto> CreateSetupIntentAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
+    Task ConfirmSetupIntentAsync(
+        Guid tenantId,
+        string setupIntentId,
+        CancellationToken cancellationToken = default);
+
+    Task UpdateBillingContactAsync(
+        Guid tenantId,
+        string? name,
+        string? email,
+        CancellationToken cancellationToken = default);
+
+    Task CancelSubscriptionAtPeriodEndAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
+    Task ResumeSubscriptionAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record BillingSummaryDto(
@@ -55,3 +80,36 @@ public sealed record CreatePortalSessionCommand(
     string ReturnUrl);
 
 public sealed record PortalSessionDto(string PortalUrl);
+
+public sealed record BillingContactDto(string Name, string Email);
+
+public sealed record BillingPaymentMethodDto(
+    string Id,
+    string Brand,
+    string Last4,
+    int ExpMonth,
+    int ExpYear);
+
+public sealed record BillingSubscriptionDetailsDto(
+    bool CancelAtPeriodEnd,
+    DateTimeOffset? CurrentPeriodEnd,
+    string? ScheduledPlan,
+    DateTimeOffset? ScheduledPlanEffectiveAt);
+
+public sealed record BillingInvoiceDto(
+    string Id,
+    DateTimeOffset CreatedAt,
+    long AmountDueCents,
+    string Currency,
+    string Status,
+    string? PdfUrl,
+    string? HostedInvoiceUrl);
+
+public sealed record BillingDetailsDto(
+    BillingSummaryDto Summary,
+    BillingContactDto? Contact,
+    BillingPaymentMethodDto? PaymentMethod,
+    BillingSubscriptionDetailsDto? Subscription,
+    IReadOnlyList<BillingInvoiceDto> Invoices);
+
+public sealed record SetupIntentDto(string ClientSecret, string PublishableKey);

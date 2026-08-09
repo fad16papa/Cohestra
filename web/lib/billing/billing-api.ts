@@ -135,7 +135,7 @@ export async function createBillingCheckoutWithAuth(
   };
 }
 
-function mapBillingSummary(raw: Record<string, unknown>): BillingSummary {
+export function mapBillingSummary(raw: Record<string, unknown>): BillingSummary {
   return {
     plan: String(raw.plan ?? raw.Plan ?? "Basic"),
     billingStatus: String(raw.billingStatus ?? raw.BillingStatus ?? "Free"),
