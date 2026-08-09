@@ -37,6 +37,37 @@ function formatRegisteredAt(value: string) {
   });
 }
 
+function looksLikeEmailValue(value: string | null | undefined) {
+  if (!value?.trim()) {
+    return false;
+  }
+
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function isEmailAnswer(label: string, value: string | null | undefined) {
+  return /email/i.test(label) || looksLikeEmailValue(value);
+}
+
+function isConsentAnswer(label: string) {
+  return /consent/i.test(label);
+}
+
+function registrationAnswerSpanClass(
+  label: string,
+  value: string | null | undefined
+) {
+  if (
+    isEmailAnswer(label, value) ||
+    isConsentAnswer(label) ||
+    (value?.trim().length ?? 0) > 48
+  ) {
+    return "sm:col-span-2";
+  }
+
+  return undefined;
+}
+
 function RegistrationAnswersDetail({
   entry,
 }: {
@@ -61,13 +92,25 @@ function RegistrationAnswersDetail({
           No answers stored for this registration.
         </p>
       ) : (
-        <dl className="mt-4 grid max-h-[min(28rem,50vh)] gap-3 overflow-y-auto sm:grid-cols-2">
+        <dl className="mt-4 grid max-h-[min(28rem,50vh)] gap-x-4 gap-y-3 overflow-y-auto sm:grid-cols-2">
           {entry.answers.map((answer) => (
-            <div key={`${entry.registrationId}-${answer.fieldId}`}>
+            <div
+              key={`${entry.registrationId}-${answer.fieldId}`}
+              className={cn(
+                "min-w-0",
+                registrationAnswerSpanClass(answer.label, answer.value)
+              )}
+            >
               <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
                 {answer.label}
               </dt>
-              <dd className="mt-1 text-sm text-text-warm">
+              <dd
+                className={cn(
+                  "mt-1 text-sm text-text-warm",
+                  isEmailAnswer(answer.label, answer.value) &&
+                    "break-all font-mono text-[0.8125rem] leading-relaxed"
+                )}
+              >
                 {looksLikePhoneValue(answer.value) ? (
                   <ClientPhoneDisplay phone={answer.value} />
                 ) : (
