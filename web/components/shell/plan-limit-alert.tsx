@@ -26,7 +26,7 @@ export function PlanLimitAlert({
     message ??
     (dial
       ? variant === "warn" && !dial.blocked
-        ? `${dial.label} is at ${dial.percent}% of your plan limit (${dial.used}/${dial.limit}). Consider upgrading before you hit capacity.`
+        ? `${dial.label} is at ${dial.percent}% of your plan limit (${dial.used}/${dial.limit}). Upgrade before you hit capacity.`
         : formatLimitDialCapacityMessage(dial)
       : null);
 
@@ -48,12 +48,15 @@ export function PlanLimitAlert({
       )}
     >
       <p>{copy}</p>
-      {showUpgradeLink && isBlocked ? (
+      {showUpgradeLink && (isBlocked || variant === "warn") ? (
         <Link
           href="/settings/billing"
           className={cn(
             buttonVariants({ variant: "outline", size: "sm" }),
-            "mt-3 border-destructive/30 bg-background/80 hover:bg-background"
+            "mt-3 bg-background/80 hover:bg-background",
+            isBlocked
+              ? "border-destructive/30"
+              : "border-gold/40"
           )}
         >
           View billing &amp; upgrade

@@ -15,7 +15,7 @@ import {
   type PricingInterval,
 } from "@/components/marketing/marketing-pricing-cards";
 import { useMarketingHeaderScroll } from "@/components/marketing/use-marketing-header-scroll";
-import { PRICING_COMPARE_ROWS, PRICING_FAQ } from "@/lib/marketing/pricing-plans";
+import { PRICING_COMPARE_ROWS, PRICING_FAQ, PRICING_POSITIONING_LINE } from "@/lib/marketing/pricing-plans";
 
 export function PricingPageContent() {
   const { scrolled, anchorRef } = useMarketingHeaderScroll(true);
@@ -34,6 +34,9 @@ export function PricingPageContent() {
           <p className="text-marketing-lead mt-4 max-w-2xl text-stone">
             Start free on Basic. Upgrade when you need a public homepage, richer reports, a team,
             or Pro marketing tools.
+          </p>
+          <p className="mt-3 max-w-2xl text-sm font-medium text-lagoon">
+            {PRICING_POSITIONING_LINE}
           </p>
         </MarketingReveal>
 

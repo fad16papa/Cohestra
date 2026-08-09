@@ -427,7 +427,10 @@ public sealed class ActivityService(
         var cached = await publicActivityCache.GetAsync(tenantId, normalizedSlug, cancellationToken);
         if (cached is not null)
         {
-            return ResolvePublicResponse(cached);
+            return await EnrichWithRegistrationPauseStateAsync(
+                ResolvePublicResponse(cached),
+                tenantId,
+                cancellationToken);
         }
 
         var activity = await dbContext.Activities
@@ -448,7 +451,7 @@ public sealed class ActivityService(
             await publicActivityCache.SetAsync(tenantId, normalizedSlug, response, cancellationToken);
         }
 
-        return response;
+        return await EnrichWithRegistrationPauseStateAsync(response, tenantId, cancellationToken);
     }
 
     public async Task RefreshPublicActivityCacheBySlugAsync(
@@ -676,7 +679,44 @@ public sealed class ActivityService(
                 : null,
             activity.MaxRegistrants,
             registrationCount,
-            ActivityCapacityValidator.IsRegistrationFull(activity.MaxRegistrants, registrationCount));
+            ActivityCapacityValidator.IsRegistrationFull(activity.MaxRegistrants, registrationCount),
+            IsRegistrationPaused: false);
+    }
+
+    private async Task<PublicActivityResponse> EnrichWithRegistrationPauseStateAsync(
+        PublicActivityResponse response,
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        if (!response.IsRegistrationOpen || response.IsRegistrationFull)
+        {
+            return response;
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(item => item.Id == tenantId)
+            .Select(item => new { item.RegistrationTimeZoneId, item.Plan })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (tenant is null)
+        {
+            return response;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var monthStart = RegistrationPeriod.GetMonthStartUtc(now, tenant.RegistrationTimeZoneId);
+        var registrationsThisMonth = await dbContext.Registrations
+            .AsNoTracking()
+            .CountAsync(
+                registration => registration.TenantId == tenantId && registration.CreatedAt >= monthStart,
+                cancellationToken);
+        var limit = TenantPlanLimits.For(tenant.Plan).RegistrationsPerMonth;
+        var isPaused = registrationsThisMonth >= limit;
+
+        return isPaused
+            ? response with { IsRegistrationPaused = true }
+            : response;
     }
 
     private PublicActivityResponse ResolvePublicResponse(PublicActivityResponse response) =>

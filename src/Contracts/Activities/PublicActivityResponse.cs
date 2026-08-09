@@ -13,5 +13,6 @@ public sealed record PublicActivityResponse(
     ActivityFormSchemaDto? FormSchema,
     int? MaxRegistrants,
     int RegistrationCount,
-    bool IsRegistrationFull);
+    bool IsRegistrationFull,
+    bool IsRegistrationPaused);
 

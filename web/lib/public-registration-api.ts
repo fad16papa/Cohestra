@@ -11,6 +11,7 @@ export type PublicActivity = {
   status: ActivityStatus;
   isRegistrationOpen: boolean;
   isRegistrationFull: boolean;
+  isRegistrationPaused: boolean;
   maxRegistrants: number | null;
   registrationCount: number;
   schedule: string;
@@ -35,6 +36,7 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
   const status = raw.status ?? raw.Status;
   const isRegistrationOpen = raw.isRegistrationOpen ?? raw.IsRegistrationOpen;
   const isRegistrationFull = raw.isRegistrationFull ?? raw.IsRegistrationFull;
+  const isRegistrationPaused = raw.isRegistrationPaused ?? raw.IsRegistrationPaused;
   const maxRegistrantsRaw = raw.maxRegistrants ?? raw.MaxRegistrants;
   const registrationCountRaw = raw.registrationCount ?? raw.RegistrationCount;
   const schedule = raw.schedule ?? raw.Schedule;
@@ -49,6 +51,7 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
     typeof name !== "string" ||
     typeof isRegistrationOpen !== "boolean" ||
     typeof isRegistrationFull !== "boolean" ||
+    typeof isRegistrationPaused !== "boolean" ||
     typeof registrationCountRaw !== "number" ||
     typeof schedule !== "string" ||
     typeof location !== "string" ||
@@ -63,6 +66,7 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
     status: parseActivityStatus(status),
     isRegistrationOpen,
     isRegistrationFull,
+    isRegistrationPaused,
     maxRegistrants:
       typeof maxRegistrantsRaw === "number" && Number.isFinite(maxRegistrantsRaw)
         ? maxRegistrantsRaw

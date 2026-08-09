@@ -3,6 +3,9 @@ import type { LimitDial, TenantShell } from "@/lib/shell/tenant-shell-api";
 export const PLAN_LIMIT_REACHED_SUFFIX =
   "Limit reached — upgrade or free capacity before adding more.";
 
+export const PLAN_LIMIT_WARN_UPGRADE_HINT =
+  "Upgrade your plan to avoid pausing public sign-ups.";
+
 export function findLimitDial(
   shell: TenantShell | null | undefined,
   key: string
@@ -148,14 +151,14 @@ export function getActivitiesAtCapBannerState(
   if (publishedBlocked && publishedDial) {
     publishedLine = `Published activities at capacity (${publishedDial.used}/${publishedDial.limit}). Archive or unpublish one to publish another.`;
   } else if (publishedWarn && publishedDial) {
-    publishedLine = `Published activities at ${publishedDial.percent}% of your plan limit (${publishedDial.used}/${publishedDial.limit}). Consider freeing a slot before you hit capacity.`;
+    publishedLine = `Published activities at ${publishedDial.percent}% of your plan limit (${publishedDial.used}/${publishedDial.limit}). Archive or unpublish one before you hit capacity, or upgrade for more slots.`;
   }
 
   let registrationsLine: string | null = null;
   if (registrationsBlocked && registrationsDial) {
     registrationsLine = `Monthly sign-ups paused (${registrationsDial.used.toLocaleString()}/${registrationsDial.limit.toLocaleString()}). Public sign-ups are blocked until next month or you upgrade your plan.`;
   } else if (registrationsWarn && registrationsDial) {
-    registrationsLine = `Monthly registrations at ${registrationsDial.percent}% of your plan limit (${registrationsDial.used.toLocaleString()}/${registrationsDial.limit.toLocaleString()}).`;
+    registrationsLine = `Monthly registrations at ${registrationsDial.percent}% of your plan limit (${registrationsDial.used.toLocaleString()}/${registrationsDial.limit.toLocaleString()}). ${PLAN_LIMIT_WARN_UPGRADE_HINT}`;
   }
 
   return {
