@@ -15,12 +15,35 @@ export function ClientProfileSection({
   return (
     <div
       className={cn(
-        "animate-fade-in-up motion-safe:transition-[transform,box-shadow] motion-safe:duration-300 motion-safe:hover:-translate-y-px",
+        "animate-fade-in-up motion-safe:transition-[transform,box-shadow,opacity] motion-safe:duration-300 motion-safe:hover:-translate-y-px",
         className
       )}
       style={{ animationDelay: `${animationDelayMs}ms` }}
     >
       {children}
+    </div>
+  );
+}
+
+/** Smooth height expand/collapse for profile cards (respects reduced motion). */
+export function ClientProfileExpandableRegion({
+  expanded,
+  children,
+  className,
+}: {
+  expanded: boolean;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none",
+        expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+        className
+      )}
+    >
+      <div className="min-h-0 overflow-hidden">{children}</div>
     </div>
   );
 }
