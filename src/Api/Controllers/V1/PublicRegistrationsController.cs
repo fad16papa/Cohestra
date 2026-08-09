@@ -122,9 +122,8 @@ public class PublicRegistrationsController(
         {
             return Conflict(new ProblemDetails
             {
-                Title = "Registration limit reached",
-                Detail = result.PlanLimitDetail
-                    ?? "This workspace has reached its monthly registration limit.",
+                Title = PublicRegistrationMessages.PlanLimitReachedTitle,
+                Detail = PublicRegistrationMessages.PlanLimitReachedDetail,
                 Status = StatusCodes.Status409Conflict,
                 Extensions = { ["errorCode"] = "plan_registration_limit" },
             });

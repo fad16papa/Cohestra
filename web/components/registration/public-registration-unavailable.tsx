@@ -11,6 +11,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+import { PUBLIC_PLAN_REGISTRATION_LIMIT_COPY } from "@/lib/public-registration-messages";
+
 type PublicRegistrationUnavailableProps = {
   slug: string;
   activityName?: string;
@@ -34,9 +36,8 @@ const reasonCopy: Record<
     description: "This activity has reached its registration limit and is no longer accepting sign-ups.",
   },
   "plan-limit": {
-    title: "Registration limit reached",
-    description:
-      "This organizer has reached their monthly registration limit. Please try again later or contact the event organizer.",
+    title: PUBLIC_PLAN_REGISTRATION_LIMIT_COPY.title,
+    description: PUBLIC_PLAN_REGISTRATION_LIMIT_COPY.description,
   },
   error: {
     title: "Could not load registration",

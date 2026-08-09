@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import type { ActivityFormSchema, FormFieldDefinition } from "@/lib/activities-api";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
 import { validatePhoneLocalNumber } from "@/lib/phone-countries";
+import { PUBLIC_PLAN_REGISTRATION_LIMIT_COPY } from "@/lib/public-registration-messages";
 import {
   submitPublicRegistration,
   type PublicRegistrationSubmitResult,
@@ -448,8 +449,12 @@ export function RegistrationForm({
             </>
           ) : submitErrorCode === "plan_registration_limit" ? (
             <>
-              <p className="text-sm font-medium text-text-warm">Registration limit reached</p>
-              <p className="text-sm text-text-muted-warm">{submitError}</p>
+              <p className="text-sm font-medium text-text-warm">
+                {PUBLIC_PLAN_REGISTRATION_LIMIT_COPY.title}
+              </p>
+              <p className="text-sm text-text-muted-warm">
+                {PUBLIC_PLAN_REGISTRATION_LIMIT_COPY.description}
+              </p>
             </>
           ) : (
             <>

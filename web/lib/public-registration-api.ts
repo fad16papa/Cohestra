@@ -3,6 +3,7 @@ import { parseFormSchema } from "@/lib/activities-api";
 import { getPublicApiBaseUrl } from "@/lib/api";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
 import { parseProblemFields } from "@/lib/problem-details";
+import { PUBLIC_PLAN_REGISTRATION_LIMIT_COPY } from "@/lib/public-registration-messages";
 
 export type PublicActivity = {
   slug: string;
@@ -199,6 +200,10 @@ export async function submitPublicRegistration(
       errorCode = parsed.errorCode;
     } catch {
       // Keep generic message when problem details are unavailable.
+    }
+
+    if (errorCode === "plan_registration_limit") {
+      message = PUBLIC_PLAN_REGISTRATION_LIMIT_COPY.description;
     }
 
     const error = new Error(message) as Error & { errorCode?: string };
