@@ -92,6 +92,7 @@ export type LandingAudience = {
 };
 
 export const LANDING_AUDIENCES: LandingAudience[] = [
+  { label: "Events" },
   { label: "Community clubs" },
   { label: "Sports clubs" },
   { label: "Workshops" },
