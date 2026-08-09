@@ -94,6 +94,7 @@ export type ClientTimelineEventType =
   | "whatsapp_initiated"
   | "whatsapp_follow_up_recorded"
   | "viber_initiated"
+  | "viber_follow_up_recorded"
   | "next_follow_up_changed";
 
 export type ClientTimelineItem = {
@@ -413,6 +414,7 @@ function parseTimelineEventType(raw: unknown): ClientTimelineEventType {
     raw === "whatsapp_initiated" ||
     raw === "whatsapp_follow_up_recorded" ||
     raw === "viber_initiated" ||
+    raw === "viber_follow_up_recorded" ||
     raw === "next_follow_up_changed"
   ) {
     return raw;
@@ -668,6 +670,31 @@ export async function recordWhatsAppFollowUp(
 ): Promise<ClientDetail> {
   const response = await authFetch(
     `${getPublicApiBaseUrl()}/api/v1/admin/clients/${id}/whatsapp-follow-up`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (response.status === 404) {
+    throw new Error("Client not found.");
+  }
+
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+
+  return parseClientDetail((await response.json()) as Record<string, unknown>);
+}
+
+export async function recordViberFollowUp(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  id: string,
+  payload: { status: "contacted" | "awaiting_reply"; note?: string }
+): Promise<ClientDetail> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/clients/${id}/viber-follow-up`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

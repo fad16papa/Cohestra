@@ -7,5 +7,6 @@ public enum ClientTimelineEventType
     WhatsAppInitiated,
     WhatsAppFollowUpRecorded,
     ViberInitiated,
+    ViberFollowUpRecorded,
     NextFollowUpChanged,
 }
