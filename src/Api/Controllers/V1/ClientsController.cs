@@ -315,6 +315,41 @@ public class ClientsController(IClientService clientService) : ControllerBase
         }
     }
 
+    [HttpPost("{id:guid}/viber-follow-up")]
+    [ProducesResponseType(typeof(ClientDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ClientDetailResponse>> RecordViberFollowUp(
+        Guid id,
+        [FromBody] RecordViberFollowUpRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.Status))
+        {
+            return BadRequestProblem("Follow-up status is required.");
+        }
+
+        try
+        {
+            var client = await clientService.RecordViberFollowUpAsync(
+                id,
+                request.Status,
+                request.Note,
+                cancellationToken);
+
+            return client is null ? NotFound() : Ok(client);
+        }
+        catch (DuplicateViberFollowUpException ex)
+        {
+            return ConflictProblem(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequestProblem(ex.Message);
+        }
+    }
+
     private static string? ValidateListQuery(
         string? sortBy,
         string? sortDirection,

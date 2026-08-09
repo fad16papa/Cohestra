@@ -59,6 +59,12 @@ public interface IClientService
         string? note,
         CancellationToken cancellationToken = default);
 
+    Task<ClientDetailResponse?> RecordViberFollowUpAsync(
+        Guid id,
+        string status,
+        string? note,
+        CancellationToken cancellationToken = default);
+
     Task<ClientListCsvExportResponse> ExportListCsvAsync(
         string? sortBy,
         string? sortDirection,

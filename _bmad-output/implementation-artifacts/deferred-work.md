@@ -480,3 +480,11 @@
 - Full UAT checklist sign-off — `docs/deploy/uat-polish-checklist.md`
 - Epic 7 retrospective optional — can run after UAT window
 - Party-mode follow-ups: campaign cards grid, registration wizard, empty-state illustrations
+
+## Deferred from: code review of 21-2-viber-follow-up-status-tracking.md (2026-08-09)
+
+- Concurrent identical Viber/WhatsApp follow-up POSTs can both succeed (check-then-act; pre-existing race)
+- First Contacted + empty note blocked by synthetic baseline when channel has no prior follow-ups (pre-existing WhatsApp dirty pattern)
+- No web tests for channel toggle / default-channel selection
+- Follow-up note length not validated before DB MaxLength(500) (pre-existing WhatsApp path)
+- Integration tests omit success-body timeline assertions (dedup coverage meets AC-3)

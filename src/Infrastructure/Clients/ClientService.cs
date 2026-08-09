@@ -23,6 +23,7 @@ public sealed class ClientService(
         ClientTimelineEventType.WhatsAppInitiated,
         ClientTimelineEventType.WhatsAppFollowUpRecorded,
         ClientTimelineEventType.ViberInitiated,
+        ClientTimelineEventType.ViberFollowUpRecorded,
         ClientTimelineEventType.EmailCampaignSent,
     ];
 
@@ -450,6 +451,7 @@ public sealed class ClientService(
             ClientTimelineEventType.WhatsAppInitiated => "whatsapp",
             ClientTimelineEventType.WhatsAppFollowUpRecorded => "whatsapp",
             ClientTimelineEventType.ViberInitiated => "viber",
+            ClientTimelineEventType.ViberFollowUpRecorded => "viber",
             ClientTimelineEventType.EmailCampaignSent => "email",
             _ => null,
         };
@@ -815,6 +817,50 @@ public sealed class ClientService(
             client.TimelineEvents.ToList());
     }
 
+    public async Task<ClientDetailResponse?> RecordViberFollowUpAsync(
+        Guid id,
+        string status,
+        string? note,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedStatus = NormalizeWhatsAppFollowUpStatus(status);
+        var normalizedNote = NormalizeWhatsAppFollowUpNote(note);
+        var formattedStatus = FormatWhatsAppFollowUpStatus(normalizedStatus);
+
+        var client = await dbContext.Clients
+            .Include(item => item.Registrations)
+            .ThenInclude(registration => registration.Activity)
+            .Include(item => item.TimelineEvents)
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (client is null)
+        {
+            return null;
+        }
+
+        EnsureViberFollowUpIsNotDuplicate(client, formattedStatus, normalizedNote);
+
+        var occurredAt = DateTimeOffset.UtcNow;
+        client.UpdatedAt = occurredAt;
+
+        dbContext.ClientTimelineEvents.Add(new ClientTimelineEvent
+        {
+            Id = Guid.NewGuid(),
+            ClientId = client.Id,
+            EventType = ClientTimelineEventType.ViberFollowUpRecorded,
+            OccurredAt = occurredAt,
+            Subject = formattedStatus,
+            Note = normalizedNote,
+        });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return ClientDetailMapper.ToResponse(
+            client,
+            client.Registrations.ToList(),
+            client.TimelineEvents.ToList());
+    }
+
     private static readonly TimeSpan WhatsAppFollowUpDuplicateCooldown = TimeSpan.FromMinutes(15);
 
     internal static void EnsureWhatsAppFollowUpIsNotDuplicate(
@@ -851,6 +897,42 @@ public sealed class ClientService(
         }
 
         throw new DuplicateWhatsAppFollowUpException();
+    }
+
+    internal static void EnsureViberFollowUpIsNotDuplicate(
+        Client client,
+        string formattedStatus,
+        string? normalizedNote)
+    {
+        var latestFollowUp = client.TimelineEvents
+            .Where(item => item.EventType == ClientTimelineEventType.ViberFollowUpRecorded)
+            .OrderByDescending(item => item.OccurredAt)
+            .FirstOrDefault();
+
+        if (latestFollowUp is null)
+        {
+            return;
+        }
+
+        if (!string.Equals(latestFollowUp.Subject, formattedStatus, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (!string.Equals(
+                NormalizeWhatsAppFollowUpNote(latestFollowUp.Note),
+                normalizedNote,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        if (DateTimeOffset.UtcNow - latestFollowUp.OccurredAt > WhatsAppFollowUpDuplicateCooldown)
+        {
+            return;
+        }
+
+        throw new DuplicateViberFollowUpException();
     }
 
     private static string? NormalizeWhatsAppFollowUpNote(string? note) =>

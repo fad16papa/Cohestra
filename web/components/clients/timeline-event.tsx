@@ -58,6 +58,10 @@ function formatTimelineSummary(item: ClientTimelineItem) {
     return item.campaignSubject ?? "Follow-up recorded";
   }
 
+  if (item.eventType === "viber_follow_up_recorded") {
+    return item.campaignSubject ?? "Follow-up recorded";
+  }
+
   if (item.eventType === "next_follow_up_changed") {
     return item.note ? `Follow-up date: ${item.note}` : "Follow-up date cleared";
   }
