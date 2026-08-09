@@ -157,7 +157,7 @@ public sealed class BillingJobsHostedService(
         }
 
         string? portalUrl = null;
-        if (stripeOptions.Value.IsConfigured && !string.IsNullOrWhiteSpace(tenant.StripeCustomerId))
+        if (stripeOptions.Value.IsConfigured)
         {
             try
             {
