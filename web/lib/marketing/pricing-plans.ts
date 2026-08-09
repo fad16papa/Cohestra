@@ -124,3 +124,6 @@ export const PRICING_FAQ = [
     answer: "Not as add ons today. Upgrade the plan instead: Basic has 1 seat, Core has 3, Pro has 10.",
   },
 ] as const;
+
+export const PRICING_POSITIONING_LINE =
+  "Priced on registrations, not database size — grow your community without paying for contacts you never use.";

@@ -1,6 +1,9 @@
 "use client";
 
+import Link from "next/link";
+
 import type { LimitDial } from "@/lib/shell/tenant-shell-api";
+import { PLAN_LIMIT_WARN_UPGRADE_HINT } from "@/lib/plan-limit-utils";
 import { cn } from "@/lib/utils";
 
 type LimitMeterProps = {
@@ -59,6 +62,10 @@ export function LimitMeter({ dials, compact = false, className }: LimitMeterProp
           {dial.blocked ? (
             <p className="text-[11px] text-destructive" role="status">
               Limit reached — upgrade or free capacity before adding more.
+            </p>
+          ) : dial.warn && dial.key !== "seats" ? (
+            <p className="text-[11px] text-gold" role="status">
+              {PLAN_LIMIT_WARN_UPGRADE_HINT}
             </p>
           ) : dial.hint ? (
             <p className="text-[11px] text-text-muted-warm">{dial.hint}</p>

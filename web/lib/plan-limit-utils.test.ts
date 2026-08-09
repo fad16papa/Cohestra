@@ -100,6 +100,19 @@ describe("getActivitiesAtCapBannerState", () => {
 
     expect(state?.variant).toBe("warn");
     expect(state?.publishedLine).toContain("80%");
+    expect(state?.publishedLine).toContain("upgrade");
+  });
+
+  it("includes upgrade hint when registrations are approaching capacity", () => {
+    const state = getActivitiesAtCapBannerState(
+      shellWithDials(
+        { used: 10, limit: 50 },
+        { used: 4200, limit: 5000, warn: true }
+      )
+    );
+
+    expect(state?.variant).toBe("warn");
+    expect(state?.registrationsLine).toContain("Upgrade your plan");
   });
 });
 

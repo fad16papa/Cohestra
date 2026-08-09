@@ -29,6 +29,7 @@ import {
   LANDING_STEPS,
   LANDING_TESTIMONIALS,
 } from "@/lib/marketing/landing-content";
+import { PRICING_POSITIONING_LINE } from "@/lib/marketing/pricing-plans";
 import { resolvePostLoginPath } from "@/lib/auth-api";
 import { cn } from "@/lib/utils";
 
@@ -307,6 +308,9 @@ export function MarketingHomePage() {
           <p className="text-marketing-lead mt-4 max-w-2xl text-stone">
             Basic is free. Core and Pro include a 30 day trial. You are not charged until the trial
             ends.
+          </p>
+          <p className="mt-3 max-w-2xl text-sm font-medium text-lagoon">
+            {PRICING_POSITIONING_LINE}
           </p>
         </MarketingReveal>
 

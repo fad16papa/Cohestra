@@ -64,6 +64,16 @@ export default async function PublicRegistrationPage({
     );
   }
 
+  if (activity.isRegistrationPaused) {
+    return (
+      <PublicRegistrationUnavailable
+        slug={slug}
+        activityName={activity.name}
+        reason="plan-limit"
+      />
+    );
+  }
+
   if (activity.isRegistrationFull) {
     return (
       <PublicRegistrationUnavailable
