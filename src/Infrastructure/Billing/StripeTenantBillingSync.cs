@@ -149,6 +149,17 @@ public static class StripeTenantBillingSync
     public static bool IsPaidPlanDowngrade(TenantPlan current, TenantPlan target) =>
         IsDowngrade(current, target);
 
+    public static bool IsBillingIntervalDowngrade(BillingInterval? current, BillingInterval target) =>
+        current == BillingInterval.Annual && target == BillingInterval.Monthly;
+
+    public static bool ShouldDeferPlanChange(
+        TenantPlan currentPlan,
+        BillingInterval? currentInterval,
+        TenantPlan targetPlan,
+        BillingInterval targetInterval) =>
+        IsPaidPlanDowngrade(currentPlan, targetPlan)
+        || (currentPlan == targetPlan && IsBillingIntervalDowngrade(currentInterval, targetInterval));
+
     internal static bool CanApplyPlanEntitlement(string? status) =>
         status is "trialing" or "active" or "past_due";
 

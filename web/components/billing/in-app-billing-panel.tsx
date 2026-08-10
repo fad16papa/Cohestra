@@ -8,6 +8,16 @@ import { PhoneCountrySelect } from "@/components/activities/phone-country-select
 import { useAuth } from "@/components/auth/auth-provider";
 import { BillingPaymentMethodDialog } from "@/components/billing/billing-payment-method-dialog";
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   cancelSubscriptionWithAuth,
@@ -81,6 +91,8 @@ export function InAppBillingPanel({
   const [contactPhoneError, setContactPhoneError] = useState<string | null>(null);
   const [contactSaving, setContactSaving] = useState(false);
   const [subscriptionUpdating, setSubscriptionUpdating] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [undoScheduledConfirmOpen, setUndoScheduledConfirmOpen] = useState(false);
 
   const applyContactForm = useCallback((contact: BillingDetails["contact"]) => {
     setContactName(contact?.name ?? "");
@@ -215,21 +227,9 @@ export function InAppBillingPanel({
               variant="outline"
               size="sm"
               disabled={subscriptionUpdating}
-              onClick={() => {
-                setSubscriptionUpdating(true);
-                void cancelScheduledPlanChangeWithAuth(authFetch)
-                  .then(() => refreshAll())
-                  .catch((err) => {
-                    setError(
-                      err instanceof Error
-                        ? err.message
-                        : "Could not cancel the scheduled plan change."
-                    );
-                  })
-                  .finally(() => setSubscriptionUpdating(false));
-              }}
+              onClick={() => setUndoScheduledConfirmOpen(true)}
             >
-              {subscriptionUpdating ? "Updating…" : "Undo scheduled downgrade"}
+              Undo scheduled change
             </Button>
           </div>
         ) : null}
@@ -494,17 +494,9 @@ export function InAppBillingPanel({
                     variant="destructive"
                     size="sm"
                     disabled={subscriptionUpdating}
-                    onClick={() => {
-                      setSubscriptionUpdating(true);
-                      void cancelSubscriptionWithAuth(authFetch)
-                        .then(() => refreshAll())
-                        .catch((err) => {
-                          setError(err instanceof Error ? err.message : "Could not schedule cancellation.");
-                        })
-                        .finally(() => setSubscriptionUpdating(false));
-                    }}
+                    onClick={() => setCancelConfirmOpen(true)}
                   >
-                    {subscriptionUpdating ? "Updating…" : "Cancel at period end"}
+                    Cancel at period end
                   </Button>
                 )}
               </div>
@@ -529,6 +521,92 @@ export function InAppBillingPanel({
         onClose={() => setPaymentDialogOpen(false)}
         onSaved={() => void loadDetails()}
       />
+
+      <AlertDialog open={undoScheduledConfirmOpen} onOpenChange={setUndoScheduledConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Undo scheduled plan change?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your switch to {subscription?.scheduledPlan} on{" "}
+              {subscription?.scheduledPlanEffectiveAt
+                ? new Date(subscription.scheduledPlanEffectiveAt).toLocaleDateString(undefined, {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "the scheduled date"}{" "}
+              will be cancelled. You will stay on {shellPlan} at your current billing interval.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={subscriptionUpdating}>Keep scheduled change</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={subscriptionUpdating}
+              onClick={() => {
+                setSubscriptionUpdating(true);
+                void cancelScheduledPlanChangeWithAuth(authFetch)
+                  .then(() => refreshAll())
+                  .catch((err) => {
+                    setError(
+                      err instanceof Error
+                        ? err.message
+                        : "Could not cancel the scheduled plan change."
+                    );
+                  })
+                  .finally(() => {
+                    setSubscriptionUpdating(false);
+                    setUndoScheduledConfirmOpen(false);
+                  });
+              }}
+            >
+              {subscriptionUpdating ? "Updating…" : "Undo scheduled change"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={cancelConfirmOpen} onOpenChange={setCancelConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel subscription at period end?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You keep {shellPlan} access until{" "}
+              {subscription?.currentPeriodEnd
+                ? new Date(subscription.currentPeriodEnd).toLocaleDateString(undefined, {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "the end of your current billing period"}
+              . After that, your workspace moves to Basic unless you choose Keep subscription before
+              then.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={subscriptionUpdating}>Keep subscription</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={subscriptionUpdating}
+              onClick={() => {
+                setSubscriptionUpdating(true);
+                void cancelSubscriptionWithAuth(authFetch)
+                  .then(() => refreshAll())
+                  .catch((err) => {
+                    setError(
+                      err instanceof Error ? err.message : "Could not schedule cancellation."
+                    );
+                  })
+                  .finally(() => {
+                    setSubscriptionUpdating(false);
+                    setCancelConfirmOpen(false);
+                  });
+              }}
+            >
+              {subscriptionUpdating ? "Updating…" : "Cancel at period end"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

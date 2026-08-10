@@ -2,7 +2,7 @@
 title: In-app billing (replace Stripe Customer Portal)
 status: final
 created: 2026-08-09
-updated: 2026-08-09
+updated: 2026-08-10
 ---
 
 # PRD — In-app billing
@@ -23,6 +23,8 @@ Epic 14 Story 14.7 originally specified Stripe-hosted portal for money UX. This 
 - FR-IB-4: List recent invoices with PDF / hosted links (Stripe-hosted PDF URLs only — no invoice storage in Cohestra DB).
 - FR-IB-5: Cancel subscription at period end and undo cancellation in-app.
 - FR-IB-6: Portal API remains for backward compatibility / jobs but is not linked from UI.
+- FR-IB-7: Destructive subscription actions require confirmation — **Cancel at period end** and **Undo scheduled downgrade** open confirm dialogs before calling Stripe.
+- FR-IB-8: Checkout shows an inline **Undo scheduled downgrade** when a plan switch is already scheduled (same API as Settings → Billing).
 
 ## Non-goals (v1)
 
@@ -39,3 +41,4 @@ Epic 14 Story 14.7 originally specified Stripe-hosted portal for money UX. This 
 
 - ~~Plan downgrade scheduling UI (Core ↔ Pro interval change) — defer; use checkout upgrade path + cancel for now.~~ **Superseded** — see `prd-billing-trust-downgrade-notifications-2026-08-10/addendum.md`
 - Downgrade / billing-trust email matrix — see same addendum
+- ~~Checkout scheduled-change banner only links to Settings~~ → **Shipped** — inline undo on checkout + confirm modals in Settings (Aug 2026)

@@ -221,12 +221,22 @@ public sealed class StripeBillingService(
         CreateCheckoutSessionCommand command,
         CancellationToken cancellationToken)
     {
-        if (StripeTenantBillingSync.IsPaidPlanDowngrade(tenant.Plan, command.Plan))
+        if (StripeTenantBillingSync.ShouldDeferPlanChange(
+                tenant.Plan,
+                tenant.BillingInterval,
+                command.Plan,
+                command.Interval))
         {
             return await ScheduleDowngradeExistingSubscriptionAsync(
                 tenant,
                 command,
                 cancellationToken);
+        }
+
+        if (StripeSubscriptionDowngradeScheduler.HasActiveScheduledPaidDowngrade(tenant))
+        {
+            throw new InvalidOperationException(
+                "A plan change is already scheduled. Undo it on the checkout page or in Settings → Billing before choosing a different plan.");
         }
 
         var newPriceId = StripeTenantBillingSync.ResolvePriceId(command.Plan, command.Interval, _settings)
@@ -318,7 +328,7 @@ public sealed class StripeBillingService(
         if (StripeSubscriptionDowngradeScheduler.HasActiveScheduledPaidDowngrade(tenant))
         {
             throw new InvalidOperationException(
-                "A plan change is already scheduled. Open Settings → Billing and cancel the scheduled change before choosing a different plan.");
+                "A plan change is already scheduled. Undo it on the checkout page or in Settings → Billing before choosing a different plan.");
         }
 
         var newPriceId = StripeTenantBillingSync.ResolvePriceId(command.Plan, command.Interval, _settings)
@@ -421,16 +431,33 @@ public sealed class StripeBillingService(
         var effectiveAt = tenant.ScheduledPlanEffectiveAt ?? periodEnd;
         var currentPlanName = tenant.Plan.ToString();
         var targetPlanName = command.Plan.ToString();
-        var disclaimer =
-            $"Your plan will change to {targetPlanName} on {effectiveAt:MMMM d, yyyy}. "
-            + $"You keep {currentPlanName} access until then.";
+        var tierDowngrade = StripeTenantBillingSync.IsPaidPlanDowngrade(tenant.Plan, command.Plan);
+        var intervalDowngrade = StripeTenantBillingSync.IsBillingIntervalDowngrade(
+            tenant.BillingInterval,
+            command.Interval);
+        var intervalOnlyChange = tenant.Plan == command.Plan && intervalDowngrade;
+        var disclaimer = intervalOnlyChange
+            ? $"Your billing interval will change to monthly on {effectiveAt:MMMM d, yyyy}. "
+              + $"You keep {currentPlanName} access on yearly billing until then."
+            : tierDowngrade && intervalDowngrade
+                ? $"Your plan will change to {targetPlanName} on monthly billing on {effectiveAt:MMMM d, yyyy}. "
+                  + $"You keep {currentPlanName} access until then."
+                : tierDowngrade
+                    ? $"Your plan will change to {targetPlanName} on {effectiveAt:MMMM d, yyyy}. "
+                      + $"You keep {currentPlanName} access until then."
+                    : $"Your plan will change to {targetPlanName} on {effectiveAt:MMMM d, yyyy}. "
+                      + $"You keep {currentPlanName} access until then.";
 
         var usage = await tenantAccessService.GetUsageAsync(tenant.Id, cancellationToken);
-        var warnings = BillingDowngradeLimitWarnings.Build(usage, command.Plan);
+        var warnings = tierDowngrade
+            ? BillingDowngradeLimitWarnings.Build(usage, command.Plan)
+            : Array.Empty<string>();
         BillingNotificationComposer.EnqueueScheduledDowngradeConfirmation(
             outboxPublisher,
             tenant,
             command.Plan,
+            command.Interval,
+            intervalOnlyChange,
             effectiveAt,
             warnings,
             publicWebOptions.Value,

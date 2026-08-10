@@ -9,18 +9,33 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   createBillingCheckoutWithAuth,
   fetchBillingSummaryWithAuth,
   type BillingSummary,
 } from "@/lib/billing/billing-api";
+import { cancelScheduledPlanChangeWithAuth } from "@/lib/billing/billing-details-api";
 import {
   checkoutActionLabel,
   checkoutIntroCopy,
   checkoutPriceCaption,
   hasActivePaidSubscription,
+  isDeferredPlanChange,
   isPaidPlanDowngrade,
+  isBillingIntervalDowngrade,
   isSamePlanAndInterval,
+  matchesScheduledPlanChange,
   normalizeBillingInterval,
+  normalizePlanId,
   type BillingIntervalId,
   type PaidPlanId,
 } from "@/lib/billing/checkout-validation";
@@ -69,6 +84,8 @@ function CheckoutContent() {
   const [billingLoading, setBillingLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(autoStart && !canceled);
+  const [undoingScheduledChange, setUndoingScheduledChange] = useState(false);
+  const [deferredConfirmOpen, setDeferredConfirmOpen] = useState(false);
   const [handoffPending, setHandoffPending] = useState(
     () => (searchParams.get("handoff")?.trim().length ?? 0) > 0
   );
@@ -163,24 +180,35 @@ function CheckoutContent() {
       if (
         billingSummary.scheduledPlan
         && billingSummary.scheduledPlan !== "Basic"
-        && billingSummary.scheduledPlan.toLowerCase() !== selectedPlan
+        && billingSummary.scheduledPlanEffectiveAt
+        && !matchesScheduledPlanChange(
+          billingSummary.scheduledPlan,
+          billingSummary.scheduledBillingInterval,
+          selectedPlan,
+          selectedInterval
+        )
       ) {
         setError(
-          "A plan change is already scheduled. Open Settings → Billing and cancel the scheduled change before choosing a different plan."
+          "A plan change is already scheduled. Undo it below or in Settings → Billing before choosing a different plan."
         );
         return;
       }
     }
 
-    const isDowngrade =
+    const isDeferred =
       billingSummary !== null
-      && isPaidPlanDowngrade(billingSummary.plan, selectedPlan);
-    if (isDowngrade && billingLoading) {
+      && isDeferredPlanChange(
+        billingSummary.plan,
+        billingSummary.billingInterval,
+        selectedPlan,
+        selectedInterval
+      );
+    if (isDeferred && billingLoading) {
       setError("Still loading billing details. Try again in a moment.");
       return;
     }
 
-    if (isDowngrade && shellLoading && !billingSummary?.usage) {
+    if (isDeferred && shellLoading && !billingSummary?.usage) {
       setError("Still loading workspace usage. Try again in a moment.");
       return;
     }
@@ -229,9 +257,15 @@ function CheckoutContent() {
       return;
     }
 
-    const wouldDowngrade =
-      billingSummary !== null && isPaidPlanDowngrade(billingSummary.plan, plan);
-    if (wouldDowngrade) {
+    const wouldDefer =
+      billingSummary !== null
+      && isDeferredPlanChange(
+        billingSummary.plan,
+        billingSummary.billingInterval,
+        plan,
+        interval
+      );
+    if (wouldDefer) {
       setStarting(false);
       return;
     }
@@ -280,14 +314,24 @@ function CheckoutContent() {
     );
   }
 
-  const effectivePlan = plan ?? "core";
+  const effectivePlan =
+    plan ?? normalizePlanId(billingSummary?.plan ?? "") ?? ("core" as PaidPlanId);
   const effectiveMeta = MARKETING_PLANS.find((p) => p.id === effectivePlan) ?? planOptions[0];
   const priceLabel = priceFor(effectivePlan, interval);
   const currentPlan = billingSummary?.plan ?? "Basic";
   const billingStatus = billingSummary?.billingStatus ?? "Free";
-  const isDowngradeSelection =
+  const isDeferredSelection =
+    billingSummary !== null
+    && isDeferredPlanChange(currentPlan, billingSummary.billingInterval, effectivePlan, interval);
+  const isTierDowngradeSelection =
     billingSummary !== null && isPaidPlanDowngrade(currentPlan, effectivePlan);
-  const downgradeLimitWarnings = isDowngradeSelection
+  const isIntervalDowngradeSelection =
+    billingSummary !== null
+    && normalizePlanId(currentPlan) === effectivePlan
+    && isBillingIntervalDowngrade(billingSummary.billingInterval, interval);
+  const isCombinedTierAndIntervalDowngrade =
+    isTierDowngradeSelection && isIntervalDowngradeSelection;
+  const downgradeLimitWarnings = isTierDowngradeSelection
     ? getDowngradeLimitWarnings(shell, effectivePlan, {
         usage: billingSummary?.usage,
         coreLimits: billingSummary?.coreLimits,
@@ -298,6 +342,14 @@ function CheckoutContent() {
     billingSummary?.scheduledPlan
     && billingSummary.scheduledPlan !== "Basic"
     && billingSummary.scheduledPlanEffectiveAt;
+  const matchesExistingSchedule =
+    billingSummary?.scheduledPlan
+    && matchesScheduledPlanChange(
+      billingSummary.scheduledPlan,
+      billingSummary.scheduledBillingInterval,
+      effectivePlan,
+      interval
+    );
   const isSameSelection =
     billingSummary !== null
     && isSamePlanAndInterval(currentPlan, billingSummary.billingInterval, effectivePlan, interval);
@@ -330,12 +382,22 @@ function CheckoutContent() {
   const submitDisabled =
     starting
     || isSameSelection
-    || Boolean(hasScheduledPlanChange)
-    || (isDowngradeSelection && shellLoading && !billingSummary?.usage);
+    || Boolean(matchesExistingSchedule)
+    || (Boolean(hasScheduledPlanChange) && !matchesExistingSchedule)
+    || (isDeferredSelection && shellLoading && !billingSummary?.usage);
   const isPaidTenant = hasActivePaidSubscription(billingStatus);
 
+  function requestPlanChange() {
+    if (isDeferredSelection) {
+      setDeferredConfirmOpen(true);
+      return;
+    }
+
+    void startCheckout(effectivePlan, interval);
+  }
+
   // Plan + interval already chosen on the upgrade gate — go straight to Stripe (upgrades only).
-  if (autoStart && !canceled && plan && !isDowngradeSelection) {
+  if (autoStart && !canceled && plan && !isDeferredSelection) {
     const meta = MARKETING_PLANS.find((p) => p.id === plan);
     const adjustHref = `/billing/checkout?plan=${plan}&interval=${interval}`;
     const alreadyOnPlan = error?.includes("already on the selected plan");
@@ -348,8 +410,8 @@ function CheckoutContent() {
               ? alreadyOnPlan
                 ? "You're already on this plan"
                 : "Could not start checkout"
-              : isDowngradeSelection
-                ? `Scheduling switch to ${meta?.name ?? "plan"}`
+              : isDeferredSelection
+                ? `Scheduling plan change`
                 : `Starting ${meta?.name ?? "plan"} ${billingSummary?.hasConsumedTrial ? "subscription" : "trial"}`}
           </h1>
           <p className="text-sm leading-relaxed text-text-muted-warm">
@@ -357,7 +419,7 @@ function CheckoutContent() {
               ? alreadyOnPlan
                 ? "Pick a different plan or billing interval, or go back to billing settings."
                 : "Something went wrong starting your plan. You can try again or pick a different plan."
-              : isDowngradeSelection
+              : isDeferredSelection
                 ? "Your current plan stays active until the end of this billing period."
                 : `${priceFor(plan, interval)} ${billingSummary?.hasConsumedTrial ? "starting today" : "after trial"} · uses your saved card when on file · cancel anytime before trial ends.`}
           </p>
@@ -453,28 +515,60 @@ function CheckoutContent() {
       ) : null}
 
       {hasScheduledPlanChange ? (
-        <p
+        <div
           role="status"
           className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
         >
-          A switch to {billingSummary?.scheduledPlan} is already scheduled for{" "}
-          {new Date(billingSummary!.scheduledPlanEffectiveAt!).toLocaleDateString(undefined, {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
-          . Cancel it in Settings → Billing before choosing a different plan.
-        </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              A switch to {billingSummary?.scheduledPlan} is already scheduled for{" "}
+              {new Date(billingSummary!.scheduledPlanEffectiveAt!).toLocaleDateString(undefined, {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+              . Undo it here to choose a different plan, or manage it in Settings → Billing.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={undoingScheduledChange || starting}
+              onClick={() => {
+                setUndoingScheduledChange(true);
+                setError(null);
+                void cancelScheduledPlanChangeWithAuth(authFetch)
+                  .then(() => fetchBillingSummaryWithAuth(authFetch))
+                  .then((summary) => {
+                    setBillingSummary(summary);
+                  })
+                  .catch((err) => {
+                    setError(
+                      err instanceof Error
+                        ? err.message
+                        : "Could not cancel the scheduled plan change."
+                    );
+                  })
+                  .finally(() => setUndoingScheduledChange(false));
+              }}
+            >
+              {undoingScheduledChange ? "Updating…" : "Undo scheduled change"}
+            </Button>
+          </div>
+        </div>
       ) : null}
 
-      {isDowngradeSelection ? (
+      {isDeferredSelection ? (
         <div
           role="status"
           className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
         >
           <p>
-            Downgrades take effect at the end of your current billing period. You keep{" "}
-            {currentPlan} access until then.
+            {isCombinedTierAndIntervalDowngrade
+              ? `This change takes effect at the end of your current billing period. You will switch to ${effectiveMeta?.name ?? "the selected plan"} on monthly billing. You keep ${currentPlan} access until then.`
+              : isTierDowngradeSelection
+                ? `This change takes effect at the end of your current billing period. You keep ${currentPlan} access until then.`
+                : "Switching from yearly to monthly billing takes effect at the end of your current billing period. You keep your current plan and yearly rate until then."}
           </p>
           {downgradeLimitWarnings.length > 0 ? (
             <div className="mt-3 space-y-2">
@@ -491,12 +585,20 @@ function CheckoutContent() {
                 the lower plan takes effect.
               </p>
             </div>
-          ) : (
+          ) : isTierDowngradeSelection ? (
             <p className="mt-2">
               Your current usage fits within {effectiveMeta?.name ?? "the selected plan"} limits.
             </p>
-          )}
+          ) : null}
         </div>
+      ) : isPaidTenant && !isSameSelection ? (
+        <p
+          role="status"
+          className="rounded-xl border border-border-warm bg-muted/30 px-4 py-3 text-sm text-text-muted-warm"
+        >
+          This change applies immediately. Stripe will prorate any price difference on your next
+          invoice.
+        </p>
       ) : null}
 
       <section className="space-y-6 rounded-2xl border border-border-warm bg-card p-5 shadow-sm sm:p-8 lg:p-10">
@@ -607,11 +709,23 @@ function CheckoutContent() {
             size="lg"
             className="w-full sm:w-auto sm:min-w-[14rem]"
             disabled={submitDisabled}
-            onClick={() => void startCheckout(effectivePlan, interval)}
+            onClick={requestPlanChange}
           >
             {starting ? "Processing…" : actionLabel}
           </Button>
         </div>
+
+        {matchesExistingSchedule ? (
+          <p role="status" className="text-sm text-text-muted-warm">
+            This plan change is already scheduled for{" "}
+            {new Date(billingSummary!.scheduledPlanEffectiveAt!).toLocaleDateString(undefined, {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+            . Undo it above to pick a different option.
+          </p>
+        ) : null}
 
         {isSameSelection ? (
           <p role="status" className="text-sm text-text-muted-warm">
@@ -634,6 +748,33 @@ function CheckoutContent() {
           {isPaidTenant ? "Keep current plan" : "Stay on Basic for now"}
         </Link>
       </div>
+
+      <AlertDialog open={deferredConfirmOpen} onOpenChange={setDeferredConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Schedule this plan change?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isCombinedTierAndIntervalDowngrade
+                ? `Your workspace will switch to ${effectiveMeta?.name ?? "the selected plan"} on monthly billing at the end of your current billing period. You keep ${currentPlan} access until then.`
+                : isTierDowngradeSelection
+                  ? `Your workspace will switch to ${effectiveMeta?.name ?? "the selected plan"} at the end of your current billing period. You keep ${currentPlan} access until then.`
+                  : "Your billing interval will switch to monthly at the end of your current billing period. You keep your current plan and yearly rate until then."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={starting}>Keep current plan</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={starting}
+              onClick={() => {
+                setDeferredConfirmOpen(false);
+                void startCheckout(effectivePlan, interval);
+              }}
+            >
+              {starting ? "Processing…" : "Schedule change"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

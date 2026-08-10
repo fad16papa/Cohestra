@@ -29,6 +29,26 @@ export function isPaidPlanDowngrade(currentPlan: string, targetPlan: PaidPlanId)
   return currentRank > targetRank;
 }
 
+export function isBillingIntervalDowngrade(
+  currentInterval: string | null | undefined,
+  targetInterval: BillingIntervalId
+): boolean {
+  return normalizeBillingInterval(currentInterval) === "annual" && targetInterval === "monthly";
+}
+
+export function isDeferredPlanChange(
+  currentPlan: string,
+  currentInterval: string | null | undefined,
+  targetPlan: PaidPlanId,
+  targetInterval: BillingIntervalId
+): boolean {
+  return (
+    isPaidPlanDowngrade(currentPlan, targetPlan)
+    || (normalizePlanId(currentPlan) === targetPlan
+      && isBillingIntervalDowngrade(currentInterval, targetInterval))
+  );
+}
+
 export function isSamePlanAndInterval(
   currentPlan: string,
   currentInterval: string | null | undefined,
@@ -39,6 +59,24 @@ export function isSamePlanAndInterval(
     currentPlan.trim().toLowerCase() === targetPlan
     && normalizeBillingInterval(currentInterval) === targetInterval
   );
+}
+
+export function matchesScheduledPlanChange(
+  scheduledPlan: string,
+  scheduledInterval: string | null | undefined,
+  targetPlan: PaidPlanId,
+  targetInterval: BillingIntervalId
+): boolean {
+  if (scheduledPlan.trim().toLowerCase() !== targetPlan) {
+    return false;
+  }
+
+  const normalizedScheduled = scheduledInterval?.trim().toLowerCase() ?? "";
+  if (!normalizedScheduled) {
+    return false;
+  }
+
+  return normalizeBillingInterval(scheduledInterval) === targetInterval;
 }
 
 export function hasActivePaidSubscription(billingStatus: string): boolean {
@@ -61,17 +99,21 @@ export function checkoutActionLabel(input: {
     return "Already on this plan";
   }
 
-  if (isPaidPlanDowngrade(currentPlan, targetPlan)) {
-    return `Switch to ${capitalizePlan(targetPlan)} at period end`;
+  if (isDeferredPlanChange(currentPlan, currentInterval, targetPlan, targetInterval)) {
+    if (isPaidPlanDowngrade(currentPlan, targetPlan)) {
+      return `Switch to ${capitalizePlan(targetPlan)} at period end`;
+    }
+
+    return "Switch to monthly billing at period end";
   }
 
   const sameTier = normalizePlanId(currentPlan) === targetPlan;
   if (sameTier && normalizeBillingInterval(currentInterval) !== targetInterval) {
-    return targetInterval === "annual" ? "Switch to yearly billing" : "Switch to monthly billing";
+    return targetInterval === "annual" ? "Switch to yearly billing now" : "Switch to monthly billing now";
   }
 
   if (hasActivePaidSubscription(billingStatus)) {
-    return `Upgrade to ${capitalizePlan(targetPlan)}`;
+    return `Switch to ${capitalizePlan(targetPlan)} now`;
   }
 
   if (hasConsumedTrial) {
@@ -123,7 +165,7 @@ export function checkoutIntroCopy(input: {
   }
 
   if (hasActivePaidSubscription(billingStatus)) {
-    return `You are on ${currentPlan}. Upgrades apply immediately with prorated billing. Downgrades take effect at the end of your current billing period.`;
+    return `You are on ${currentPlan}. Plan upgrades and yearly billing apply immediately with prorated billing. Tier downgrades and monthly billing switches take effect at the end of your current billing period. Core and Pro follow the same rules.`;
   }
 
   if (hasConsumedTrial) {
