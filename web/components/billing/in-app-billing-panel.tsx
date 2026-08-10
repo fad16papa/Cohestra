@@ -14,6 +14,7 @@ import {
   fetchBillingDetailsWithAuth,
   formatCardBrand,
   formatInvoiceAmount,
+  cancelScheduledPlanChangeWithAuth,
   resumeSubscriptionWithAuth,
   updateBillingContactWithAuth,
   type BillingDetails,
@@ -195,6 +196,42 @@ export function InAppBillingPanel({
             })}
             .
           </p>
+        ) : null}
+        {subscription?.scheduledPlan
+        && subscription.scheduledPlan !== "Basic"
+        && subscription.scheduledPlanEffectiveAt ? (
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-amber-800 dark:text-amber-200">
+              Switch to {subscription.scheduledPlan} scheduled for{" "}
+              {new Date(subscription.scheduledPlanEffectiveAt).toLocaleDateString(undefined, {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+              .
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={subscriptionUpdating}
+              onClick={() => {
+                setSubscriptionUpdating(true);
+                void cancelScheduledPlanChangeWithAuth(authFetch)
+                  .then(() => refreshAll())
+                  .catch((err) => {
+                    setError(
+                      err instanceof Error
+                        ? err.message
+                        : "Could not cancel the scheduled plan change."
+                    );
+                  })
+                  .finally(() => setSubscriptionUpdating(false));
+              }}
+            >
+              {subscriptionUpdating ? "Updating…" : "Undo scheduled downgrade"}
+            </Button>
+          </div>
         ) : null}
       </div>
 

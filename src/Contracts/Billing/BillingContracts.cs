@@ -1,5 +1,17 @@
 namespace Cohestra.Contracts.Billing;
 
+public sealed record BillingUsageResponse(
+    int SeatsUsed,
+    int Communities,
+    int PublishedActivities,
+    int RegistrationsThisMonth);
+
+public sealed record BillingPlanLimitsResponse(
+    int Seats,
+    int Communities,
+    int PublishedActivities,
+    int RegistrationsPerMonth);
+
 public sealed record BillingSummaryResponse(
     string Plan,
     string BillingStatus,
@@ -9,7 +21,13 @@ public sealed record BillingSummaryResponse(
     bool StripeConfigured,
     string? PublishableKey,
     int TrialPeriodDays,
-    bool IsComplimentary);
+    bool IsComplimentary,
+    BillingUsageResponse? Usage = null,
+    BillingPlanLimitsResponse? CoreLimits = null,
+    BillingPlanLimitsResponse? ProLimits = null,
+    string? ScheduledPlan = null,
+    DateTimeOffset? ScheduledPlanEffectiveAt = null,
+    string? ScheduledBillingInterval = null);
 
 public sealed record CreateCheckoutSessionRequest(
     string Plan,
@@ -22,7 +40,8 @@ public sealed record CheckoutSessionResponse(
     DateTimeOffset? TrialEndsAt,
     bool TrialIncluded,
     string TrialDisclaimer,
-    bool CompletedInApp = false);
+    bool CompletedInApp = false,
+    IReadOnlyList<string>? Warnings = null);
 
 public sealed record CreatePortalSessionRequest(string? ReturnUrl);
 

@@ -62,7 +62,24 @@ public interface IBillingService
         Guid tenantId,
         string operatorEmail,
         CancellationToken cancellationToken = default);
+
+    Task CancelScheduledPlanChangeAsync(
+        Guid tenantId,
+        string operatorEmail,
+        CancellationToken cancellationToken = default);
 }
+
+public sealed record BillingUsageDto(
+    int SeatsUsed,
+    int Communities,
+    int PublishedActivities,
+    int RegistrationsThisMonth);
+
+public sealed record BillingPlanLimitsDto(
+    int Seats,
+    int Communities,
+    int PublishedActivities,
+    int RegistrationsPerMonth);
 
 public sealed record BillingSummaryDto(
     TenantPlan Plan,
@@ -73,7 +90,13 @@ public sealed record BillingSummaryDto(
     bool StripeConfigured,
     string? PublishableKey,
     int TrialPeriodDays,
-    bool IsComplimentary);
+    bool IsComplimentary,
+    BillingUsageDto? Usage = null,
+    BillingPlanLimitsDto? CoreLimits = null,
+    BillingPlanLimitsDto? ProLimits = null,
+    TenantPlan? ScheduledPlan = null,
+    DateTimeOffset? ScheduledPlanEffectiveAt = null,
+    BillingInterval? ScheduledBillingInterval = null);
 
 public sealed record CreateCheckoutSessionCommand(
     Guid TenantId,
@@ -89,7 +112,8 @@ public sealed record CheckoutSessionDto(
     DateTimeOffset? TrialEndsAt,
     bool TrialIncluded,
     string TrialDisclaimer,
-    bool CompletedInApp = false);
+    bool CompletedInApp = false,
+    IReadOnlyList<string>? Warnings = null);
 
 public sealed record CreatePortalSessionCommand(
     Guid TenantId,

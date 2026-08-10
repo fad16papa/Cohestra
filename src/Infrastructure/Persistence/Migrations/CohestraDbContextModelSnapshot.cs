@@ -828,6 +828,10 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("ScheduledPlanEffectiveAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("ScheduledBillingInterval")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(48)
@@ -843,6 +847,10 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(255)");
 
                     b.Property<string>("StripeSubscriptionId")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("StripeSubscriptionScheduleId")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 

@@ -22,5 +22,6 @@ public sealed class StripeTenantBillingSyncScheduleTests
         Assert.Equal(TenantPlan.Basic, tenant.Plan);
         Assert.Equal(BillingStatus.Free, tenant.BillingStatus);
         Assert.Null(tenant.ScheduledPlan);
+        Assert.Null(tenant.ScheduledBillingInterval);
     }
 }

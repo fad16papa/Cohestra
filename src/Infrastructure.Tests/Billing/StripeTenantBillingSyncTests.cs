@@ -219,6 +219,153 @@ public sealed class StripeTenantBillingSyncTests
         Assert.True(tenant.HasConsumedTrial);
     }
 
+    [Fact]
+    public void ApplySubscription_Downgrade_SchedulesPlanAtPeriodEnd()
+    {
+        var settings = CreateSettings();
+        var periodEnd = DateTimeOffset.UtcNow.AddDays(14);
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Slug = "pro-shop",
+            Name = "Pro Shop",
+            Plan = TenantPlan.Pro,
+            BillingStatus = BillingStatus.Trialing,
+            BillingInterval = BillingInterval.Monthly,
+            StripeSubscriptionId = "sub_pro",
+        };
+
+        var subscription = new Subscription
+        {
+            Id = "sub_pro",
+            CustomerId = "cus_pro",
+            Status = "trialing",
+            TrialEnd = DateTime.UtcNow.AddDays(14),
+            Items = new StripeList<SubscriptionItem>
+            {
+                Data =
+                [
+                    new SubscriptionItem
+                    {
+                        CurrentPeriodEnd = periodEnd.UtcDateTime,
+                        Price = new Price { Id = settings.PriceCoreMonthly },
+                    },
+                ],
+            },
+        };
+
+        StripeTenantBillingSync.ApplySubscription(tenant, subscription, settings);
+
+        Assert.Equal(TenantPlan.Pro, tenant.Plan);
+        Assert.Equal(TenantPlan.Core, tenant.ScheduledPlan);
+        Assert.Equal(BillingInterval.Monthly, tenant.ScheduledBillingInterval);
+        Assert.Equal(periodEnd, tenant.ScheduledPlanEffectiveAt);
+    }
+
+    [Fact]
+    public void ApplySubscription_RevertScheduledDowngrade_ClearsSchedule()
+    {
+        var settings = CreateSettings();
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Slug = "pro-shop",
+            Name = "Pro Shop",
+            Plan = TenantPlan.Pro,
+            BillingStatus = BillingStatus.Trialing,
+            BillingInterval = BillingInterval.Monthly,
+            ScheduledPlan = TenantPlan.Core,
+            ScheduledPlanEffectiveAt = DateTimeOffset.UtcNow.AddDays(14),
+        };
+
+        var subscription = new Subscription
+        {
+            Id = "sub_pro",
+            CustomerId = "cus_pro",
+            Status = "trialing",
+            Items = new StripeList<SubscriptionItem>
+            {
+                Data =
+                [
+                    new SubscriptionItem
+                    {
+                        Price = new Price { Id = settings.PriceProMonthly },
+                    },
+                ],
+            },
+        };
+
+        StripeTenantBillingSync.ApplySubscription(tenant, subscription, settings);
+
+        Assert.Equal(TenantPlan.Pro, tenant.Plan);
+        Assert.Null(tenant.ScheduledPlan);
+        Assert.Null(tenant.ScheduledPlanEffectiveAt);
+    }
+
+    [Fact]
+    public void ApplyScheduledPlan_DowngradeToCore_AppliesScheduledBillingInterval()
+    {
+        var tenant = new Tenant
+        {
+            Plan = TenantPlan.Pro,
+            BillingStatus = BillingStatus.Active,
+            BillingInterval = BillingInterval.Monthly,
+            ScheduledPlan = TenantPlan.Core,
+            ScheduledBillingInterval = BillingInterval.Annual,
+            ScheduledPlanEffectiveAt = DateTimeOffset.UtcNow.AddMinutes(-1),
+        };
+
+        StripeTenantBillingSync.ApplyScheduledPlan(tenant, TenantPlan.Core);
+
+        Assert.Equal(TenantPlan.Core, tenant.Plan);
+        Assert.Equal(BillingInterval.Annual, tenant.BillingInterval);
+        Assert.Null(tenant.ScheduledBillingInterval);
+        Assert.Null(tenant.StripeSubscriptionScheduleId);
+    }
+
+    [Fact]
+    public void ApplySubscription_PreservesScheduledDowngradeWhenScheduleActive()
+    {
+        var settings = CreateSettings();
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Slug = "pro-shop",
+            Name = "Pro Shop",
+            Plan = TenantPlan.Pro,
+            BillingStatus = BillingStatus.Trialing,
+            BillingInterval = BillingInterval.Monthly,
+            ScheduledPlan = TenantPlan.Core,
+            ScheduledBillingInterval = BillingInterval.Annual,
+            ScheduledPlanEffectiveAt = DateTimeOffset.UtcNow.AddDays(14),
+            StripeSubscriptionScheduleId = "sub_sched_123",
+        };
+
+        var subscription = new Subscription
+        {
+            Id = "sub_pro",
+            CustomerId = "cus_pro",
+            Status = "trialing",
+            Items = new StripeList<SubscriptionItem>
+            {
+                Data =
+                [
+                    new SubscriptionItem
+                    {
+                        Price = new Price { Id = settings.PriceProMonthly },
+                    },
+                ],
+            },
+        };
+
+        StripeTenantBillingSync.ApplySubscription(tenant, subscription, settings);
+
+        Assert.Equal(TenantPlan.Pro, tenant.Plan);
+        Assert.Equal(TenantPlan.Core, tenant.ScheduledPlan);
+        Assert.Equal(BillingInterval.Annual, tenant.ScheduledBillingInterval);
+        Assert.Equal("sub_sched_123", tenant.StripeSubscriptionScheduleId);
+    }
+
     [Theory]
     [InlineData("trialing", true)]
     [InlineData("active", true)]

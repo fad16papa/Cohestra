@@ -57,11 +57,20 @@ public static class StripeTenantBillingSync
         {
             tenant.ScheduledPlan = targetPlan;
             tenant.ScheduledPlanEffectiveAt = periodEnd;
+            if (mappedInterval is not null)
+            {
+                tenant.ScheduledBillingInterval = mappedInterval;
+            }
         }
         else
         {
-            tenant.ScheduledPlan = null;
-            tenant.ScheduledPlanEffectiveAt = null;
+            if (!StripeSubscriptionDowngradeScheduler.HasActiveScheduledPaidDowngrade(tenant))
+            {
+                tenant.ScheduledPlan = null;
+                tenant.ScheduledPlanEffectiveAt = null;
+                tenant.ScheduledBillingInterval = null;
+                tenant.StripeSubscriptionScheduleId = null;
+            }
 
             // Incomplete / abandoned Checkout must not grant a paid plan badge.
             if (CanApplyPlanEntitlement(subscription.Status))
@@ -106,8 +115,16 @@ public static class StripeTenantBillingSync
     public static void ApplyScheduledPlan(Tenant tenant, TenantPlan scheduledPlan)
     {
         tenant.Plan = scheduledPlan;
+        if (scheduledPlan is TenantPlan.Core or TenantPlan.Pro
+            && tenant.ScheduledBillingInterval is { } scheduledInterval)
+        {
+            tenant.BillingInterval = scheduledInterval;
+        }
+
         tenant.ScheduledPlan = null;
         tenant.ScheduledPlanEffectiveAt = null;
+        tenant.ScheduledBillingInterval = null;
+        tenant.StripeSubscriptionScheduleId = null;
 
         if (scheduledPlan == TenantPlan.Basic)
         {
@@ -162,6 +179,8 @@ public static class StripeTenantBillingSync
         tenant.DelinquencyStartedAt = null;
         tenant.ScheduledPlan = null;
         tenant.ScheduledPlanEffectiveAt = null;
+        tenant.ScheduledBillingInterval = null;
+        tenant.StripeSubscriptionScheduleId = null;
         tenant.UpdatedAt = DateTimeOffset.UtcNow;
     }
 
