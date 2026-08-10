@@ -319,7 +319,10 @@ public sealed class StripeBillingService(
         var currentItem = subscription.Items?.Data?.FirstOrDefault()
             ?? throw new InvalidOperationException("Stripe subscription has no billable items.");
 
-        if (string.Equals(currentItem.Price?.Id, newPriceId, StringComparison.Ordinal))
+        var currentPriceId = currentItem.Price?.Id
+            ?? throw new InvalidOperationException("Stripe subscription item has no price.");
+
+        if (string.Equals(currentPriceId, newPriceId, StringComparison.Ordinal))
         {
             throw new InvalidOperationException("Your workspace is already on the selected plan and billing interval.");
         }
@@ -328,31 +331,23 @@ public sealed class StripeBillingService(
             ?? throw new InvalidOperationException(
                 "Could not determine when your current billing period ends. Open Settings → Billing and try again.");
 
-        Subscription updated;
+        SubscriptionSchedule schedule;
         try
         {
-            updated = await subscriptionService.UpdateAsync(
-                subscription.Id,
-                new SubscriptionUpdateOptions
+            schedule = await StripeSubscriptionDowngradeScheduler.SchedulePaidDowngradeAtPeriodEndAsync(
+                subscription,
+                currentPriceId,
+                newPriceId,
+                new Dictionary<string, string>
                 {
-                    Items =
-                    [
-                        new SubscriptionItemOptions
-                        {
-                            Id = currentItem.Id,
-                            Price = newPriceId,
-                        },
-                    ],
-                    Metadata = new Dictionary<string, string>
-                    {
-                        ["tenant_id"] = tenant.Id.ToString(),
-                        ["tenant_slug"] = command.TenantSlug,
-                        ["plan"] = command.Plan.ToString(),
-                        ["interval"] = command.Interval.ToString(),
-                    },
-                    ProrationBehavior = "none",
+                    ["tenant_id"] = tenant.Id.ToString(),
+                    ["tenant_slug"] = command.TenantSlug,
+                    ["plan"] = command.Plan.ToString(),
+                    ["interval"] = command.Interval.ToString(),
+                    ["scheduled_plan"] = command.Plan.ToString(),
+                    ["scheduled_interval"] = command.Interval.ToString(),
                 },
-                cancellationToken: cancellationToken);
+                cancellationToken);
         }
         catch (StripeException ex)
         {
@@ -361,14 +356,45 @@ public sealed class StripeBillingService(
                 "Could not schedule your plan change. Open Settings → Billing and try again.");
         }
 
-        StripeTenantBillingSync.ApplySubscription(tenant, updated, _settings);
+        StripeSubscriptionDowngradeScheduler.ApplyScheduledDowngradeState(
+            tenant,
+            command.Plan,
+            command.Interval,
+            periodEnd,
+            schedule.Id);
+
+        Subscription refreshed;
+        try
+        {
+            refreshed = await subscriptionService.GetAsync(
+                tenant.StripeSubscriptionId!,
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Could not refresh Stripe subscription {SubscriptionId} after scheduling downgrade for tenant {TenantId}",
+                tenant.StripeSubscriptionId,
+                tenant.Id);
+            refreshed = subscription;
+        }
+
+        StripeTenantBillingSync.ApplySubscription(tenant, refreshed, _settings);
+        StripeSubscriptionDowngradeScheduler.ApplyScheduledDowngradeState(
+            tenant,
+            command.Plan,
+            command.Interval,
+            periodEnd,
+            schedule.Id);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var effectiveAt = tenant.ScheduledPlanEffectiveAt ?? periodEnd;
+        var currentPlanName = tenant.Plan.ToString();
         var targetPlanName = command.Plan.ToString();
         var disclaimer =
             $"Your plan will change to {targetPlanName} on {effectiveAt:MMMM d, yyyy}. "
-            + $"You keep {tenant.Plan} access until then.";
+            + $"You keep {currentPlanName} access until then.";
 
         return new CheckoutSessionDto(
             BuildInAppSuccessUrl(command.SuccessUrl),
@@ -954,51 +980,88 @@ public sealed class StripeBillingService(
         var currentItem = subscription.Items?.Data?.FirstOrDefault()
             ?? throw new InvalidOperationException("Stripe subscription has no billable items.");
 
-        if (string.Equals(currentItem.Price?.Id, restorePriceId, StringComparison.Ordinal))
+        var scheduleId = tenant.StripeSubscriptionScheduleId ?? subscription.ScheduleId;
+        if (!string.IsNullOrWhiteSpace(scheduleId))
         {
-            tenant.ScheduledPlan = null;
-            tenant.ScheduledPlanEffectiveAt = null;
-            tenant.UpdatedAt = DateTimeOffset.UtcNow;
-            await dbContext.SaveChangesAsync(cancellationToken);
-            return;
+            try
+            {
+                await StripeSubscriptionDowngradeScheduler.ReleaseScheduleAsync(
+                    scheduleId,
+                    cancellationToken);
+            }
+            catch (StripeException ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Stripe subscription schedule release failed for tenant {TenantId}",
+                    tenant.Id);
+                throw new InvalidOperationException(
+                    "Could not cancel the scheduled plan change. Open Settings → Billing and try again.");
+            }
+        }
+        else if (!string.Equals(currentItem.Price?.Id, restorePriceId, StringComparison.Ordinal))
+        {
+            try
+            {
+                var updated = await subscriptionService.UpdateAsync(
+                    subscription.Id,
+                    new SubscriptionUpdateOptions
+                    {
+                        Items =
+                        [
+                            new SubscriptionItemOptions
+                            {
+                                Id = currentItem.Id,
+                                Price = restorePriceId,
+                            },
+                        ],
+                        Metadata = new Dictionary<string, string>
+                        {
+                            ["tenant_id"] = tenant.Id.ToString(),
+                            ["plan"] = tenant.Plan.ToString(),
+                            ["interval"] = restoreInterval.ToString(),
+                        },
+                        ProrationBehavior = "none",
+                    },
+                    cancellationToken: cancellationToken);
+
+                StripeTenantBillingSync.ApplySubscription(tenant, updated, _settings);
+                StripeSubscriptionDowngradeScheduler.ClearScheduledDowngradeState(tenant);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                return;
+            }
+            catch (StripeException ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Stripe subscription restore failed for tenant {TenantId}",
+                    tenant.Id);
+                throw new InvalidOperationException(
+                    "Could not cancel the scheduled plan change. Open Settings → Billing and try again.");
+            }
         }
 
-        Subscription updated;
+        StripeSubscriptionDowngradeScheduler.ClearScheduledDowngradeState(tenant);
+
+        Subscription refreshed;
         try
         {
-            updated = await subscriptionService.UpdateAsync(
-                subscription.Id,
-                new SubscriptionUpdateOptions
-                {
-                    Items =
-                    [
-                        new SubscriptionItemOptions
-                        {
-                            Id = currentItem.Id,
-                            Price = restorePriceId,
-                        },
-                    ],
-                    Metadata = new Dictionary<string, string>
-                    {
-                        ["tenant_id"] = tenant.Id.ToString(),
-                        ["plan"] = tenant.Plan.ToString(),
-                        ["interval"] = restoreInterval.ToString(),
-                    },
-                    ProrationBehavior = "none",
-                },
+            refreshed = await subscriptionService.GetAsync(
+                tenant.StripeSubscriptionId,
                 cancellationToken: cancellationToken);
         }
         catch (StripeException ex)
         {
             logger.LogWarning(
                 ex,
-                "Stripe subscription restore failed for tenant {TenantId}",
+                "Could not refresh Stripe subscription {SubscriptionId} after canceling schedule for tenant {TenantId}",
+                tenant.StripeSubscriptionId,
                 tenant.Id);
-            throw new InvalidOperationException(
-                "Could not cancel the scheduled plan change. Open Settings → Billing and try again.");
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return;
         }
 
-        StripeTenantBillingSync.ApplySubscription(tenant, updated, _settings);
+        StripeTenantBillingSync.ApplySubscription(tenant, refreshed, _settings);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
@@ -1259,6 +1322,8 @@ public sealed class StripeBillingService(
         tenant.TrialEndsAt = null;
         tenant.ScheduledPlan = null;
         tenant.ScheduledPlanEffectiveAt = null;
+        tenant.ScheduledBillingInterval = null;
+        tenant.StripeSubscriptionScheduleId = null;
         tenant.UpdatedAt = DateTimeOffset.UtcNow;
         return true;
     }

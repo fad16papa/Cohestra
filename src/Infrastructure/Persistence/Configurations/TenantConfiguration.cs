@@ -51,6 +51,9 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(tenant => tenant.StripeSubscriptionId)
             .HasMaxLength(255);
 
+        builder.Property(tenant => tenant.StripeSubscriptionScheduleId)
+            .HasMaxLength(255);
+
         builder.Property(tenant => tenant.BillingInterval)
             .HasConversion<string>()
             .HasMaxLength(20);

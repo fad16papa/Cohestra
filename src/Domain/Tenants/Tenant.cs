@@ -61,6 +61,12 @@ public sealed class Tenant
 
     public DateTimeOffset? ScheduledPlanEffectiveAt { get; set; }
 
+    /// <summary>Billing interval to apply when <see cref="ScheduledPlan"/> takes effect.</summary>
+    public BillingInterval? ScheduledBillingInterval { get; set; }
+
+    /// <summary>Stripe Subscription Schedule controlling a pending downgrade.</summary>
+    public string? StripeSubscriptionScheduleId { get; set; }
+
     /// <summary>FR-25: max(last admin/member login, last public registration) for dormancy.</summary>
     public DateTimeOffset? LastActivityAt { get; set; }
 
