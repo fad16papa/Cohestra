@@ -80,9 +80,20 @@ public sealed class BillingJobsHostedService(
                     cancellationToken);
                 await ProcessDelinquencyAsync(tenant, db, outboxPublisher, now, cancellationToken);
                 await ProcessDormancyAsync(tenant, db, outboxPublisher, now, cancellationToken);
-                await ApplyScheduledPlanIfDueAsync(tenant, db, now, cancellationToken);
-
-                _ = accessService;
+                await ProcessScheduledDowngradeRemindersAsync(
+                    tenant,
+                    outboxPublisher,
+                    accessService,
+                    publicWebOptions.Value,
+                    now,
+                    cancellationToken);
+                await ApplyScheduledPlanIfDueAsync(
+                    tenant,
+                    db,
+                    outboxPublisher,
+                    publicWebOptions.Value,
+                    now,
+                    cancellationToken);
             }
 
             await db.SaveChangesAsync(cancellationToken);
@@ -115,6 +126,8 @@ public sealed class BillingJobsHostedService(
     private static async Task ApplyScheduledPlanIfDueAsync(
         Tenant tenant,
         CohestraDbContext db,
+        IOutboxPublisher outboxPublisher,
+        PublicWebOptions publicWebOptions,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
@@ -127,6 +140,53 @@ public sealed class BillingJobsHostedService(
 
         StripeTenantBillingSync.ApplyScheduledPlan(tenant, scheduled);
         await db.SaveChangesAsync(cancellationToken);
+
+        BillingNotificationComposer.EnqueueScheduledDowngradeApplied(
+            outboxPublisher,
+            tenant,
+            scheduled,
+            publicWebOptions,
+            now);
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task ProcessScheduledDowngradeRemindersAsync(
+        Tenant tenant,
+        IOutboxPublisher outboxPublisher,
+        ITenantAccessService accessService,
+        PublicWebOptions publicWebOptions,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        if (!BillingNotificationComposer.HasScheduledPaidDowngrade(tenant)
+            || tenant.ScheduledPlan is not TenantPlan targetPlan
+            || tenant.ScheduledPlanEffectiveAt is not { } effectiveAt)
+        {
+            return;
+        }
+
+        var reminderDays = BillingNotificationComposer.ResolveScheduledDowngradeReminderDays(now, effectiveAt);
+        if (reminderDays is null)
+        {
+            return;
+        }
+
+        var usage = await accessService.GetUsageAsync(tenant.Id, cancellationToken);
+        var warnings = BillingDowngradeLimitWarnings.Build(usage, targetPlan);
+        if (warnings.Count == 0)
+        {
+            return;
+        }
+
+        BillingNotificationComposer.EnqueueScheduledDowngradeReminder(
+            outboxPublisher,
+            tenant,
+            targetPlan,
+            effectiveAt,
+            reminderDays.Value,
+            warnings,
+            publicWebOptions,
+            now);
     }
 
     private Task ProcessTrialReminderAsync(

@@ -1,8 +1,10 @@
 using Cohestra.Application.Billing;
+using Cohestra.Application.Outbox;
 using Cohestra.Application.Tenants;
 using Cohestra.Domain.Billing;
 using Cohestra.Domain.Site;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Registrations;
 using Cohestra.Infrastructure.Seed;
@@ -21,6 +23,8 @@ public sealed class StripeBillingService(
     IOptions<SiteLandingSeedSettings> landingSeedSettings,
     IOptions<StripeSettings> stripeOptions,
     ITenantAccessService tenantAccessService,
+    IOutboxPublisher outboxPublisher,
+    IOptions<PublicWebOptions> publicWebOptions,
     ILogger<StripeBillingService> logger) : IBillingService
 {
     private readonly StripeSettings _settings = stripeOptions.Value;
@@ -423,6 +427,15 @@ public sealed class StripeBillingService(
 
         var usage = await tenantAccessService.GetUsageAsync(tenant.Id, cancellationToken);
         var warnings = BillingDowngradeLimitWarnings.Build(usage, command.Plan);
+        BillingNotificationComposer.EnqueueScheduledDowngradeConfirmation(
+            outboxPublisher,
+            tenant,
+            command.Plan,
+            effectiveAt,
+            warnings,
+            publicWebOptions.Value,
+            DateTimeOffset.UtcNow);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new CheckoutSessionDto(
             BuildInAppSuccessUrl(command.SuccessUrl, disclaimer),
