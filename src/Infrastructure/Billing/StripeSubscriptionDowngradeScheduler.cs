@@ -104,6 +104,30 @@ internal static class StripeSubscriptionDowngradeScheduler
         && tenant.ScheduledPlanEffectiveAt > DateTimeOffset.UtcNow
         && !string.IsNullOrWhiteSpace(tenant.StripeSubscriptionScheduleId);
 
+    internal static string? ResolveScheduleId(Tenant tenant, Subscription subscription) =>
+        !string.IsNullOrWhiteSpace(subscription.ScheduleId)
+            ? subscription.ScheduleId
+            : string.IsNullOrWhiteSpace(tenant.StripeSubscriptionScheduleId)
+                ? null
+                : tenant.StripeSubscriptionScheduleId;
+
+    internal static bool ShouldReleaseScheduleBeforeCancelAtPeriodEnd(
+        bool cancelAtPeriodEnd,
+        string? scheduleId) =>
+        cancelAtPeriodEnd && !string.IsNullOrWhiteSpace(scheduleId);
+
+    internal static async Task ReleaseScheduleIfPresentAsync(
+        string scheduleId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(scheduleId))
+        {
+            return;
+        }
+
+        await ReleaseScheduleAsync(scheduleId, cancellationToken);
+    }
+
     private static async Task<SubscriptionSchedule> GetOrCreateScheduleAsync(
         SubscriptionScheduleService scheduleService,
         Subscription subscription,

@@ -580,6 +580,15 @@ export function InAppBillingPanel({
                 : "the end of your current billing period"}
               . After that, your workspace moves to Basic unless you choose Keep subscription before
               then.
+              {subscription?.scheduledPlan
+              && subscription.scheduledPlan !== "Basic"
+              && subscription.scheduledPlanEffectiveAt ? (
+                <>
+                  {" "}
+                  Your scheduled switch to {subscription.scheduledPlan} will be cancelled — this
+                  action ends your paid subscription instead.
+                </>
+              ) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
