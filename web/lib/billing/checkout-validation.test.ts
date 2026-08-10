@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   checkoutActionLabel,
+  formatScheduledChangeLabel,
   hasActivePaidSubscription,
+  hasPendingPaidScheduleChange,
   isBillingIntervalDowngrade,
   isDeferredPlanChange,
   isPaidPlanDowngrade,
@@ -88,5 +90,27 @@ describe("checkout-validation", () => {
   it("recognizes active paid subscription statuses", () => {
     expect(hasActivePaidSubscription("Trialing")).toBe(true);
     expect(hasActivePaidSubscription("Free")).toBe(false);
+  });
+
+  it("detects pending paid schedule changes for resume confirm", () => {
+    expect(
+      hasPendingPaidScheduleChange({
+        scheduledPlan: "Core",
+        scheduledPlanEffectiveAt: "2026-09-01T00:00:00Z",
+      })
+    ).toBe(true);
+    expect(
+      hasPendingPaidScheduleChange({
+        scheduledPlan: "Basic",
+        scheduledPlanEffectiveAt: "2026-09-01T00:00:00Z",
+      })
+    ).toBe(false);
+    expect(hasPendingPaidScheduleChange(null)).toBe(false);
+  });
+
+  it("formats interval-only scheduled change labels", () => {
+    expect(formatScheduledChangeLabel("Pro", "Monthly", "Pro")).toBe("monthly billing");
+    expect(formatScheduledChangeLabel("Pro", "Annual", "Pro")).toBe("yearly billing");
+    expect(formatScheduledChangeLabel("Core", "Monthly", "Pro")).toBe("Core");
   });
 });

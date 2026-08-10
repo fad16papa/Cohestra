@@ -57,4 +57,63 @@ public sealed class StripeSubscriptionDowngradeSchedulerTests
             "sub_sched_sub",
             StripeSubscriptionDowngradeScheduler.ResolveScheduleId(tenant, subscription));
     }
+
+    [Fact]
+    public void SubscriptionHasCancelAtPeriodEnd_reflectsStripeFlag()
+    {
+        Assert.True(
+            StripeSubscriptionDowngradeScheduler.SubscriptionHasCancelAtPeriodEnd(
+                new Subscription { CancelAtPeriodEnd = true }));
+        Assert.False(
+            StripeSubscriptionDowngradeScheduler.SubscriptionHasCancelAtPeriodEnd(
+                new Subscription { CancelAtPeriodEnd = false }));
+    }
+
+    [Fact]
+    public void ShouldClearStaleScheduledStateOnResume_trueWhenNoStripeScheduleButTenantScheduled()
+    {
+        var tenant = new Tenant
+        {
+            ScheduledPlan = TenantPlan.Core,
+            ScheduledPlanEffectiveAt = DateTimeOffset.UtcNow.AddDays(14),
+        };
+
+        Assert.True(
+            StripeSubscriptionDowngradeScheduler.ShouldClearStaleScheduledStateOnResume(
+                cancelAtPeriodEnd: false,
+                scheduleId: null,
+                tenant));
+    }
+
+    [Fact]
+    public void ShouldClearStaleScheduledStateOnResume_falseWhenStripeScheduleStillActive()
+    {
+        var tenant = new Tenant
+        {
+            ScheduledPlan = TenantPlan.Core,
+            ScheduledPlanEffectiveAt = DateTimeOffset.UtcNow.AddDays(14),
+        };
+
+        Assert.False(
+            StripeSubscriptionDowngradeScheduler.ShouldClearStaleScheduledStateOnResume(
+                cancelAtPeriodEnd: false,
+                scheduleId: "sub_sched_123",
+                tenant));
+    }
+
+    [Fact]
+    public void ShouldClearStaleScheduledStateOnResume_falseWhenCanceling()
+    {
+        var tenant = new Tenant
+        {
+            ScheduledPlan = TenantPlan.Core,
+            ScheduledPlanEffectiveAt = DateTimeOffset.UtcNow.AddDays(14),
+        };
+
+        Assert.False(
+            StripeSubscriptionDowngradeScheduler.ShouldClearStaleScheduledStateOnResume(
+                cancelAtPeriodEnd: true,
+                scheduleId: null,
+                tenant));
+    }
 }

@@ -31,6 +31,10 @@ import {
 } from "@/lib/billing/billing-details-api";
 import { syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
 import {
+  formatScheduledChangeLabel,
+  hasPendingPaidScheduleChange,
+} from "@/lib/billing/checkout-validation";
+import {
   formatPhoneDisplay,
   getPhonePlaceholder,
   getPhonePrefixLabel,
@@ -92,6 +96,7 @@ export function InAppBillingPanel({
   const [contactSaving, setContactSaving] = useState(false);
   const [subscriptionUpdating, setSubscriptionUpdating] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const [resumeConfirmOpen, setResumeConfirmOpen] = useState(false);
   const [undoScheduledConfirmOpen, setUndoScheduledConfirmOpen] = useState(false);
 
   const applyContactForm = useCallback((contact: BillingDetails["contact"]) => {
@@ -179,6 +184,28 @@ export function InAppBillingPanel({
     shellBillingStatus === "Trialing"
     || shellBillingStatus === "Active"
     || shellBillingStatus === "PastDue";
+  const pendingPaidScheduleChange = hasPendingPaidScheduleChange(subscription);
+  const scheduledChangeLabel =
+    subscription?.scheduledPlan && pendingPaidScheduleChange
+      ? formatScheduledChangeLabel(
+          subscription.scheduledPlan,
+          details?.summary.scheduledBillingInterval,
+          shellPlan
+        )
+      : null;
+
+  const performResumeSubscription = () => {
+    setSubscriptionUpdating(true);
+    void resumeSubscriptionWithAuth(authFetch)
+      .then(() => refreshAll())
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Could not resume subscription.");
+      })
+      .finally(() => {
+        setSubscriptionUpdating(false);
+        setResumeConfirmOpen(false);
+      });
+  };
 
   return (
     <div className="space-y-4">
@@ -477,13 +504,12 @@ export function InAppBillingPanel({
                     size="sm"
                     disabled={subscriptionUpdating}
                     onClick={() => {
-                      setSubscriptionUpdating(true);
-                      void resumeSubscriptionWithAuth(authFetch)
-                        .then(() => refreshAll())
-                        .catch((err) => {
-                          setError(err instanceof Error ? err.message : "Could not resume subscription.");
-                        })
-                        .finally(() => setSubscriptionUpdating(false));
+                      if (pendingPaidScheduleChange) {
+                        setResumeConfirmOpen(true);
+                        return;
+                      }
+
+                      performResumeSubscription();
                     }}
                   >
                     {subscriptionUpdating ? "Updating…" : "Keep subscription"}
@@ -560,6 +586,38 @@ export function InAppBillingPanel({
               }}
             >
               {subscriptionUpdating ? "Updating…" : "Undo scheduled change"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={resumeConfirmOpen} onOpenChange={setResumeConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Keep your paid subscription?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are undoing cancellation at period end. Your workspace stays on {shellPlan}.
+              {scheduledChangeLabel && subscription?.scheduledPlanEffectiveAt ? (
+                <>
+                  {" "}
+                  Your scheduled switch to {scheduledChangeLabel} on{" "}
+                  {new Date(subscription.scheduledPlanEffectiveAt).toLocaleDateString(undefined, {
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}{" "}
+                  will still apply at period end.
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={subscriptionUpdating}>Go back</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={subscriptionUpdating}
+              onClick={() => performResumeSubscription()}
+            >
+              {subscriptionUpdating ? "Updating…" : "Keep subscription"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

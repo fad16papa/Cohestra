@@ -116,6 +116,18 @@ internal static class StripeSubscriptionDowngradeScheduler
         string? scheduleId) =>
         cancelAtPeriodEnd && !string.IsNullOrWhiteSpace(scheduleId);
 
+    internal static bool ShouldClearStaleScheduledStateOnResume(
+        bool cancelAtPeriodEnd,
+        string? scheduleId,
+        Tenant tenant) =>
+        !cancelAtPeriodEnd
+        && string.IsNullOrWhiteSpace(scheduleId)
+        && tenant.ScheduledPlan is TenantPlan.Core or TenantPlan.Pro
+        && tenant.ScheduledPlanEffectiveAt is not null;
+
+    internal static bool SubscriptionHasCancelAtPeriodEnd(Subscription subscription) =>
+        subscription.CancelAtPeriodEnd;
+
     internal static async Task ReleaseScheduleIfPresentAsync(
         string scheduleId,
         CancellationToken cancellationToken)

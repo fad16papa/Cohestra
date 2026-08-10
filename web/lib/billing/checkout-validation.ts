@@ -79,6 +79,32 @@ export function matchesScheduledPlanChange(
   return normalizeBillingInterval(scheduledInterval) === targetInterval;
 }
 
+export function hasPendingPaidScheduleChange(input: {
+  scheduledPlan: string | null | undefined;
+  scheduledPlanEffectiveAt: string | null | undefined;
+} | null | undefined): boolean {
+  const scheduledPlan = input?.scheduledPlan?.trim() ?? "";
+  return (
+    scheduledPlan.length > 0
+    && scheduledPlan.toLowerCase() !== "basic"
+    && Boolean(input?.scheduledPlanEffectiveAt)
+  );
+}
+
+export function formatScheduledChangeLabel(
+  scheduledPlan: string,
+  scheduledBillingInterval: string | null | undefined,
+  currentPlan: string
+): string {
+  if (scheduledPlan.trim().toLowerCase() !== currentPlan.trim().toLowerCase()) {
+    return scheduledPlan;
+  }
+
+  return normalizeBillingInterval(scheduledBillingInterval) === "annual"
+    ? "yearly billing"
+    : "monthly billing";
+}
+
 export function hasActivePaidSubscription(billingStatus: string): boolean {
   const normalized = billingStatus.trim();
   return normalized === "Trialing" || normalized === "Active" || normalized === "PastDue";

@@ -366,6 +366,29 @@ public sealed class StripeBillingService(
             throw new InvalidOperationException("Your workspace is already on the selected plan and billing interval.");
         }
 
+        if (StripeSubscriptionDowngradeScheduler.SubscriptionHasCancelAtPeriodEnd(subscription))
+        {
+            try
+            {
+                subscription = await subscriptionService.UpdateAsync(
+                    subscription.Id,
+                    new SubscriptionUpdateOptions { CancelAtPeriodEnd = false },
+                    cancellationToken: cancellationToken);
+            }
+            catch (StripeException ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Could not clear cancel-at-period-end before scheduling downgrade for tenant {TenantId}",
+                    tenant.Id);
+                throw new InvalidOperationException(
+                    "Could not schedule your plan change while cancellation is pending. Open Settings → Billing and try again.");
+            }
+
+            StripeTenantBillingSync.ApplySubscription(tenant, subscription, _settings);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
         var periodEnd = StripeTenantBillingSync.ResolvePeriodEnd(subscription)
             ?? throw new InvalidOperationException(
                 "Could not determine when your current billing period ends. Open Settings → Billing and try again.");
@@ -1260,6 +1283,14 @@ public sealed class StripeBillingService(
         }
         else if (cancelAtPeriodEnd
             && StripeSubscriptionDowngradeScheduler.HasActiveScheduledPaidDowngrade(tenant))
+        {
+            StripeSubscriptionDowngradeScheduler.ClearScheduledDowngradeState(tenant);
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        else if (StripeSubscriptionDowngradeScheduler.ShouldClearStaleScheduledStateOnResume(
+                     cancelAtPeriodEnd,
+                     scheduleId,
+                     tenant))
         {
             StripeSubscriptionDowngradeScheduler.ClearScheduledDowngradeState(tenant);
             await dbContext.SaveChangesAsync(cancellationToken);
