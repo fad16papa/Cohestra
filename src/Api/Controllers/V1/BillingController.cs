@@ -35,6 +35,12 @@ public class BillingController(
             return Forbid();
         }
 
+        var denied = await EnsureBillingAccessAsync(tenantId, cancellationToken);
+        if (denied is not null)
+        {
+            return denied;
+        }
+
         var summary = await billingService.GetSummaryAsync(tenantId, cancellationToken);
         return Ok(MapSummary(summary));
     }
@@ -62,6 +68,12 @@ public class BillingController(
         if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
         {
             return Forbid();
+        }
+
+        var denied = await EnsureBillingAccessAsync(tenantId, cancellationToken);
+        if (denied is not null)
+        {
+            return denied;
         }
 
         var summary = await billingService.SyncFromStripeAsync(
@@ -119,9 +131,13 @@ public class BillingController(
             });
         }
 
-        var email = User.FindFirst(JwtRegisteredClaimNames.Email)?.Value
-            ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
-            ?? string.Empty;
+        var denied = await EnsureBillingAccessAsync(tenantId, cancellationToken);
+        if (denied is not null)
+        {
+            return denied;
+        }
+
+        var email = GetOperatorEmail() ?? string.Empty;
 
         var tenantBase = $"{Request.Scheme}://{Request.Host.Value}";
         if (!string.IsNullOrWhiteSpace(request.SuccessUrl) && !IsAllowedReturnUrl(request.SuccessUrl, tenantBase))
@@ -250,8 +266,16 @@ public class BillingController(
             return Forbid();
         }
 
-        var details = await billingService.GetDetailsAsync(tenantId, cancellationToken);
-        return Ok(MapDetails(details));
+        var operatorEmail = GetOperatorEmail() ?? string.Empty;
+        try
+        {
+            var details = await billingService.GetDetailsAsync(tenantId, operatorEmail, cancellationToken);
+            return Ok(MapDetails(details));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BillingAccessDenied(ex);
+        }
     }
 
     [HttpPost("payment-method/setup")]
@@ -272,10 +296,15 @@ public class BillingController(
             return Forbid();
         }
 
+        var operatorEmail = GetOperatorEmail() ?? string.Empty;
         try
         {
-            var setup = await billingService.CreateSetupIntentAsync(tenantId, cancellationToken);
+            var setup = await billingService.CreateSetupIntentAsync(tenantId, operatorEmail, cancellationToken);
             return Ok(new SetupIntentResponse(setup.ClientSecret, setup.PublishableKey));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BillingAccessDenied(ex);
         }
         catch (InvalidOperationException ex)
         {
@@ -311,9 +340,14 @@ public class BillingController(
         {
             await billingService.ConfirmSetupIntentAsync(
                 tenantId,
+                GetOperatorEmail() ?? string.Empty,
                 request.SetupIntentId,
                 cancellationToken);
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BillingAccessDenied(ex);
         }
         catch (InvalidOperationException ex)
         {
@@ -344,12 +378,17 @@ public class BillingController(
         {
             await billingService.UpdateBillingContactAsync(
                 tenantId,
+                GetOperatorEmail() ?? string.Empty,
                 request?.Name,
                 request?.Email,
                 request?.PhoneCountry,
                 request?.PhoneLocal,
                 cancellationToken);
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BillingAccessDenied(ex);
         }
         catch (InvalidOperationException ex)
         {
@@ -376,8 +415,15 @@ public class BillingController(
 
         try
         {
-            await billingService.CancelSubscriptionAtPeriodEndAsync(tenantId, cancellationToken);
+            await billingService.CancelSubscriptionAtPeriodEndAsync(
+                tenantId,
+                GetOperatorEmail() ?? string.Empty,
+                cancellationToken);
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BillingAccessDenied(ex);
         }
         catch (InvalidOperationException ex)
         {
@@ -404,14 +450,50 @@ public class BillingController(
 
         try
         {
-            await billingService.ResumeSubscriptionAsync(tenantId, cancellationToken);
+            await billingService.ResumeSubscriptionAsync(
+                tenantId,
+                GetOperatorEmail() ?? string.Empty,
+                cancellationToken);
             return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BillingAccessDenied(ex);
         }
         catch (InvalidOperationException ex)
         {
             return BillingBadRequest("Subscription update unavailable", ex.Message);
         }
     }
+
+    private string? GetOperatorEmail() =>
+        User.FindFirst(JwtRegisteredClaimNames.Email)?.Value
+        ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+
+    private async Task<ActionResult?> EnsureBillingAccessAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await billingService.ValidateBillingAccessAsync(tenantId, GetOperatorEmail(), cancellationToken);
+            return null;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BillingAccessDenied(ex);
+        }
+    }
+
+    private ObjectResult BillingAccessDenied(UnauthorizedAccessException ex) =>
+        StatusCode(
+            StatusCodes.Status403Forbidden,
+            new ProblemDetails
+            {
+                Title = "Billing restricted",
+                Detail = ex.Message,
+                Status = StatusCodes.Status403Forbidden,
+            });
 
     private ObjectResult StripeUnavailable() =>
         StatusCode(

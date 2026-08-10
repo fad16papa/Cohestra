@@ -27,6 +27,8 @@ export type TenantShell = {
   trialEndsAt: string | null;
   isComplimentary: boolean;
   isTenantAdmin: boolean;
+  isBillingOwner: boolean;
+  billingOwnerEmail: string | null;
   tenantSlug: string;
   tenantName: string | null;
   registrationTimeZoneId: string;
@@ -124,6 +126,11 @@ export function parseTenantShell(raw: Record<string, unknown>): TenantShell {
         : null,
     isComplimentary: Boolean(raw.isComplimentary ?? raw.IsComplimentary),
     isTenantAdmin: Boolean(raw.isTenantAdmin ?? raw.IsTenantAdmin),
+    isBillingOwner: Boolean(raw.isBillingOwner ?? raw.IsBillingOwner),
+    billingOwnerEmail:
+      typeof (raw.billingOwnerEmail ?? raw.BillingOwnerEmail) === "string"
+        ? String(raw.billingOwnerEmail ?? raw.BillingOwnerEmail)
+        : null,
     tenantSlug: String(raw.tenantSlug ?? raw.TenantSlug ?? ""),
     tenantName:
       typeof (raw.tenantName ?? raw.TenantName) === "string"

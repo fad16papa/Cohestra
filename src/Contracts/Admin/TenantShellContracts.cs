@@ -7,6 +7,8 @@ public sealed record TenantShellResponse(
     DateTimeOffset? TrialEndsAt,
     bool IsComplimentary,
     bool IsTenantAdmin,
+    bool IsBillingOwner,
+    string? BillingOwnerEmail,
     string TenantSlug,
     string? TenantName,
     string RegistrationTimeZoneId,

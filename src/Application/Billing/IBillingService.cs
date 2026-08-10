@@ -23,19 +23,30 @@ public interface IBillingService
         string? checkoutSessionId = null,
         CancellationToken cancellationToken = default);
 
-    Task<BillingDetailsDto> GetDetailsAsync(Guid tenantId, CancellationToken cancellationToken = default);
+    Task ValidateBillingAccessAsync(
+        Guid tenantId,
+        string? operatorEmail,
+        CancellationToken cancellationToken = default);
+
+    Task<BillingDetailsDto> GetDetailsAsync(
+        Guid tenantId,
+        string operatorEmail,
+        CancellationToken cancellationToken = default);
 
     Task<SetupIntentDto> CreateSetupIntentAsync(
         Guid tenantId,
+        string operatorEmail,
         CancellationToken cancellationToken = default);
 
     Task ConfirmSetupIntentAsync(
         Guid tenantId,
+        string operatorEmail,
         string setupIntentId,
         CancellationToken cancellationToken = default);
 
     Task UpdateBillingContactAsync(
         Guid tenantId,
+        string operatorEmail,
         string? name,
         string? email,
         string? phoneCountry,
@@ -44,10 +55,12 @@ public interface IBillingService
 
     Task CancelSubscriptionAtPeriodEndAsync(
         Guid tenantId,
+        string operatorEmail,
         CancellationToken cancellationToken = default);
 
     Task ResumeSubscriptionAsync(
         Guid tenantId,
+        string operatorEmail,
         CancellationToken cancellationToken = default);
 }
 

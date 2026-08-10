@@ -58,7 +58,7 @@ export function InAppBillingPanel({
   shellTrialEndsAt,
   onRefreshShell,
 }: InAppBillingPanelProps) {
-  const { authFetch } = useAuth();
+  const { authFetch, profile } = useAuth();
   const [details, setDetails] = useState<BillingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +66,6 @@ export function InAppBillingPanel({
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState(false);
   const [contactName, setContactName] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
   const [contactPhoneCountry, setContactPhoneCountry] = useState("SG");
   const [contactPhoneLocal, setContactPhoneLocal] = useState("");
   const [contactPhoneError, setContactPhoneError] = useState<string | null>(null);
@@ -75,12 +74,13 @@ export function InAppBillingPanel({
 
   const applyContactForm = useCallback((contact: BillingDetails["contact"]) => {
     setContactName(contact?.name ?? "");
-    setContactEmail(contact?.email ?? "");
     const parsed = parsePhoneForEdit(contact?.phone);
     setContactPhoneCountry(parsed.countryCode);
     setContactPhoneLocal(parsed.localNumber);
     setContactPhoneError(null);
   }, []);
+
+  const operatorEmail = profile?.email ?? "";
 
   const loadDetails = useCallback(async () => {
     setLoading(true);
@@ -237,7 +237,6 @@ export function InAppBillingPanel({
                   setContactPhoneError(null);
                   void updateBillingContactWithAuth(authFetch, {
                     name: contactName.trim() || undefined,
-                    email: contactEmail.trim() || undefined,
                     phoneCountry: contactPhoneCountry,
                     phoneLocal: contactPhoneLocal.trim(),
                   })
@@ -263,10 +262,14 @@ export function InAppBillingPanel({
                   <span className="text-xs text-text-muted-warm">Email</span>
                   <input
                     type="email"
-                    value={contactEmail}
-                    onChange={(event) => setContactEmail(event.target.value)}
-                    className="w-full rounded-lg border border-border-warm bg-background px-3 py-2 text-sm"
+                    value={operatorEmail}
+                    readOnly
+                    disabled
+                    className="w-full rounded-lg border border-border-warm bg-muted/30 px-3 py-2 text-sm text-text-muted-warm"
                   />
+                  <p className="text-xs text-text-muted-warm">
+                    Billing uses your signed-in account email.
+                  </p>
                 </label>
                 <PhoneCountrySelect
                   id="billing-phone-country"
@@ -327,7 +330,7 @@ export function InAppBillingPanel({
                   </p>
                   <p className="flex items-center gap-2">
                     <Mail className="size-4 text-text-muted-warm" aria-hidden />
-                    {contact?.email?.trim() || "—"}
+                    {operatorEmail || contact?.email?.trim() || "—"}
                   </p>
                   <p className="flex items-center gap-2">
                     <Phone className="size-4 text-text-muted-warm" aria-hidden />

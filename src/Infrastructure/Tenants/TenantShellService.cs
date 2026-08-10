@@ -3,6 +3,7 @@ using Cohestra.Contracts.Admin;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Billing;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Billing;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,6 +14,7 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
     public async Task<TenantShellResponse> GetShellAsync(
         Guid tenantId,
         bool isTenantAdmin,
+        string? operatorEmail = null,
         CancellationToken cancellationToken = default)
     {
         var tenant = await dbContext.Tenants
@@ -27,6 +29,7 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
         var nextReset = RegistrationPeriod.GetNextMonthStartUtc(now, timeZoneId);
         var limitDials = BuildLimitDials(limits, usage, timeZoneId, nextReset);
         var billingBanner = BuildBillingBanner(tenant, limitDials, isTenantAdmin);
+        var isBillingOwner = TenantBillingAccess.IsBillingOwner(tenant, operatorEmail);
 
         return new TenantShellResponse(
             tenant.Plan.ToString(),
@@ -35,6 +38,8 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
             tenant.TrialEndsAt,
             tenant.IsComplimentary,
             isTenantAdmin,
+            isBillingOwner,
+            string.IsNullOrWhiteSpace(tenant.AdminContactEmail) ? null : tenant.AdminContactEmail.Trim(),
             tenant.Slug,
             tenant.Name,
             RegistrationTimeZoneSupport.Normalize(timeZoneId),

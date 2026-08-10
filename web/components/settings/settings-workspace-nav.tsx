@@ -28,6 +28,17 @@ export function SettingsWorkspaceNav() {
     return null;
   }
 
+  const showBilling =
+    shell.plan === "Basic" || shell.isBillingOwner;
+
+  const visibleItems = navItems.filter((item) =>
+    item.href === "/settings/billing" ? showBilling : true
+  );
+
+  if (visibleItems.length === 0) {
+    return null;
+  }
+
   return (
     <section className="space-y-4">
       <div>
@@ -38,7 +49,7 @@ export function SettingsWorkspaceNav() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {navItems.map((item) => (
+        {visibleItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}

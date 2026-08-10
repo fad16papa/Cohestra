@@ -276,7 +276,10 @@ public sealed class StripeBillingService(
             throw new InvalidOperationException("Complimentary tenants do not use Stripe Portal.");
         }
 
-        await EnsureStripeCustomerAsync(tenant, cancellationToken);
+        var billingEmail = tenant.AdminContactEmail
+            ?? throw new InvalidOperationException("Workspace billing owner email is not configured.");
+
+        await EnsureStripeCustomerForOperatorAsync(tenant, billingEmail, cancellationToken);
 
         StripeConfiguration.ApiKey = _settings.SecretKey;
         var portalService = new Stripe.BillingPortal.SessionService();
@@ -342,10 +345,38 @@ public sealed class StripeBillingService(
         return await GetSummaryAsync(tenantId, cancellationToken);
     }
 
-    public async Task<BillingDetailsDto> GetDetailsAsync(
+    public async Task ValidateBillingAccessAsync(
         Guid tenantId,
+        string? operatorEmail,
         CancellationToken cancellationToken = default)
     {
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        if (TenantBillingAccess.CanManageBilling(tenant, operatorEmail, isTenantAdmin: true))
+        {
+            return;
+        }
+
+        var owner = string.IsNullOrWhiteSpace(tenant.AdminContactEmail)
+            ? "the workspace owner"
+            : tenant.AdminContactEmail.Trim();
+
+        throw new UnauthorizedAccessException(
+            TenantBillingAccess.RequiresBillingOwner(tenant.Plan)
+                ? $"Billing is managed by {owner}."
+                : "You do not have permission to manage billing for this workspace.");
+    }
+
+    public async Task<BillingDetailsDto> GetDetailsAsync(
+        Guid tenantId,
+        string operatorEmail,
+        CancellationToken cancellationToken = default)
+    {
+        await ValidateBillingAccessAsync(tenantId, operatorEmail, cancellationToken);
+
         var tenant = await dbContext.Tenants
             .AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
@@ -367,7 +398,7 @@ public sealed class StripeBillingService(
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
             ?? throw new InvalidOperationException("Tenant not found.");
 
-        await EnsureStripeCustomerAsync(tracked, cancellationToken);
+        await EnsureStripeCustomerForOperatorAsync(tracked, operatorEmail, cancellationToken);
 
         StripeConfiguration.ApiKey = _settings.SecretKey;
 
@@ -383,8 +414,11 @@ public sealed class StripeBillingService(
 
     public async Task<SetupIntentDto> CreateSetupIntentAsync(
         Guid tenantId,
+        string operatorEmail,
         CancellationToken cancellationToken = default)
     {
+        await ValidateBillingAccessAsync(tenantId, operatorEmail, cancellationToken);
+
         if (!_settings.IsConfigured)
         {
             throw new InvalidOperationException("Stripe is not configured.");
@@ -404,7 +438,7 @@ public sealed class StripeBillingService(
             throw new InvalidOperationException("Complimentary tenants do not manage payment methods.");
         }
 
-        await EnsureStripeCustomerAsync(tenant, cancellationToken);
+        await EnsureStripeCustomerForOperatorAsync(tenant, operatorEmail, cancellationToken);
 
         StripeConfiguration.ApiKey = _settings.SecretKey;
         var setupIntentService = new SetupIntentService();
@@ -437,9 +471,12 @@ public sealed class StripeBillingService(
 
     public async Task ConfirmSetupIntentAsync(
         Guid tenantId,
+        string operatorEmail,
         string setupIntentId,
         CancellationToken cancellationToken = default)
     {
+        await ValidateBillingAccessAsync(tenantId, operatorEmail, cancellationToken);
+
         if (!_settings.IsConfigured)
         {
             throw new InvalidOperationException("Stripe is not configured.");
@@ -459,7 +496,7 @@ public sealed class StripeBillingService(
             throw new InvalidOperationException("Complimentary tenants do not manage payment methods.");
         }
 
-        await EnsureStripeCustomerAsync(tenant, cancellationToken);
+        await EnsureStripeCustomerForOperatorAsync(tenant, operatorEmail, cancellationToken);
 
         StripeConfiguration.ApiKey = _settings.SecretKey;
         var setupIntentService = new SetupIntentService();
@@ -512,12 +549,15 @@ public sealed class StripeBillingService(
 
     public async Task UpdateBillingContactAsync(
         Guid tenantId,
+        string operatorEmail,
         string? name,
         string? email,
         string? phoneCountry,
         string? phoneLocal,
         CancellationToken cancellationToken = default)
     {
+        await ValidateBillingAccessAsync(tenantId, operatorEmail, cancellationToken);
+
         if (!_settings.IsConfigured)
         {
             throw new InvalidOperationException("Stripe is not configured.");
@@ -532,7 +572,7 @@ public sealed class StripeBillingService(
             throw new InvalidOperationException("Complimentary tenants do not manage billing contact.");
         }
 
-        await EnsureStripeCustomerAsync(tenant, cancellationToken);
+        await EnsureStripeCustomerForOperatorAsync(tenant, operatorEmail, cancellationToken);
 
         var options = new CustomerUpdateOptions();
         if (!string.IsNullOrWhiteSpace(name))
@@ -540,11 +580,7 @@ public sealed class StripeBillingService(
             options.Name = name.Trim();
         }
 
-        if (!string.IsNullOrWhiteSpace(email))
-        {
-            options.Email = email.Trim();
-            tenant.AdminContactEmail = email.Trim();
-        }
+        options.Email = operatorEmail.Trim();
 
         var hasPhoneUpdate = phoneCountry is not null || phoneLocal is not null;
         if (hasPhoneUpdate)
@@ -578,9 +614,9 @@ public sealed class StripeBillingService(
             }
         }
 
-        if (options.Name is null && options.Email is null && !hasPhoneUpdate)
+        if (options.Name is null && !hasPhoneUpdate)
         {
-            throw new InvalidOperationException("Provide a name, email, or mobile number to update.");
+            throw new InvalidOperationException("Provide a name or mobile number to update.");
         }
 
         StripeConfiguration.ApiKey = _settings.SecretKey;
@@ -601,23 +637,36 @@ public sealed class StripeBillingService(
 
     public async Task CancelSubscriptionAtPeriodEndAsync(
         Guid tenantId,
+        string operatorEmail,
         CancellationToken cancellationToken = default)
     {
-        await UpdateSubscriptionCancelAtPeriodEndAsync(tenantId, cancelAtPeriodEnd: true, cancellationToken);
+        await UpdateSubscriptionCancelAtPeriodEndAsync(
+            tenantId,
+            operatorEmail,
+            cancelAtPeriodEnd: true,
+            cancellationToken);
     }
 
     public async Task ResumeSubscriptionAsync(
         Guid tenantId,
+        string operatorEmail,
         CancellationToken cancellationToken = default)
     {
-        await UpdateSubscriptionCancelAtPeriodEndAsync(tenantId, cancelAtPeriodEnd: false, cancellationToken);
+        await UpdateSubscriptionCancelAtPeriodEndAsync(
+            tenantId,
+            operatorEmail,
+            cancelAtPeriodEnd: false,
+            cancellationToken);
     }
 
     private async Task UpdateSubscriptionCancelAtPeriodEndAsync(
         Guid tenantId,
+        string operatorEmail,
         bool cancelAtPeriodEnd,
         CancellationToken cancellationToken)
     {
+        await ValidateBillingAccessAsync(tenantId, operatorEmail, cancellationToken);
+
         if (!_settings.IsConfigured)
         {
             throw new InvalidOperationException("Stripe is not configured.");
@@ -974,54 +1023,82 @@ public sealed class StripeBillingService(
         }
     }
 
-    private async Task EnsureStripeCustomerAsync(
+    private async Task EnsureStripeCustomerForOperatorAsync(
         Tenant tenant,
+        string operatorEmail,
         CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrWhiteSpace(tenant.StripeCustomerId))
+        if (string.IsNullOrWhiteSpace(operatorEmail))
         {
-            return;
+            throw new InvalidOperationException("Signed-in operator email is required.");
         }
 
-        if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
-        {
-            throw new InvalidOperationException(
-                "Tenant has no Stripe customer yet. Add an admin contact email in workspace settings.");
-        }
-
+        var normalizedEmail = operatorEmail.Trim();
         StripeConfiguration.ApiKey = _settings.SecretKey;
         var customerService = new CustomerService();
 
-        Customer customer;
+        if (string.IsNullOrWhiteSpace(tenant.StripeCustomerId))
+        {
+            Customer customer;
+            try
+            {
+                customer = await customerService.CreateAsync(
+                    new CustomerCreateOptions
+                    {
+                        Email = normalizedEmail,
+                        Name = tenant.Name,
+                        Metadata = new Dictionary<string, string>
+                        {
+                            ["tenant_id"] = tenant.Id.ToString(),
+                            ["tenant_slug"] = tenant.Slug,
+                        },
+                    },
+                    cancellationToken: cancellationToken);
+            }
+            catch (StripeException ex)
+            {
+                logger.LogWarning(ex, "Stripe customer creation failed for tenant {TenantId}", tenant.Id);
+                throw new InvalidOperationException("Could not create Stripe customer for this workspace.");
+            }
+
+            if (string.IsNullOrWhiteSpace(customer.Id))
+            {
+                throw new InvalidOperationException("Stripe did not return a customer id.");
+            }
+
+            tenant.StripeCustomerId = customer.Id;
+            tenant.UpdatedAt = DateTimeOffset.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
         try
         {
-            customer = await customerService.CreateAsync(
-                new CustomerCreateOptions
+            var existing = await customerService.GetAsync(
+                tenant.StripeCustomerId,
+                cancellationToken: cancellationToken);
+            if (string.Equals(existing.Email, normalizedEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            await customerService.UpdateAsync(
+                tenant.StripeCustomerId,
+                new CustomerUpdateOptions
                 {
-                    Email = tenant.AdminContactEmail,
-                    Name = tenant.Name,
-                    Metadata = new Dictionary<string, string>
-                    {
-                        ["tenant_id"] = tenant.Id.ToString(),
-                        ["tenant_slug"] = tenant.Slug,
-                    },
+                    Email = normalizedEmail,
+                    Name = string.IsNullOrWhiteSpace(existing.Name) ? tenant.Name : existing.Name,
                 },
                 cancellationToken: cancellationToken);
         }
         catch (StripeException ex)
         {
-            logger.LogWarning(ex, "Stripe customer creation failed for tenant {TenantId}", tenant.Id);
-            throw new InvalidOperationException("Could not create Stripe customer for this workspace.");
+            logger.LogWarning(
+                ex,
+                "Stripe customer email sync failed for tenant {TenantId}",
+                tenant.Id);
+            throw new InvalidOperationException("Could not sync billing email for this workspace.");
         }
-
-        if (string.IsNullOrWhiteSpace(customer.Id))
-        {
-            throw new InvalidOperationException("Stripe did not return a customer id.");
-        }
-
-        tenant.StripeCustomerId = customer.Id;
-        tenant.UpdatedAt = DateTimeOffset.UtcNow;
-        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private async Task EnsurePaidSitePageIfNeededAsync(

@@ -19,6 +19,8 @@ updated: 2026-08-09
 
 Basic tenants: existing upgrade panel unchanged.
 
+**Access:** On Core/Pro, only the workspace billing owner (`AdminContactEmail` matching the signed-in account) can open billing. Invited tenant admins see a read-only message. Billing email and Stripe customer email always use the signed-in operator account.
+
 ## Key flow — Priya adds a card
 
 1. Priya opens Settings → Billing on `load-pro-alpha`.
