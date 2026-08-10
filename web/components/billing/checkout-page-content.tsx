@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Check } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   createBillingCheckoutWithAuth,
@@ -23,6 +24,7 @@ import {
   type BillingIntervalId,
   type PaidPlanId,
 } from "@/lib/billing/checkout-validation";
+import { getDowngradeLimitWarnings } from "@/lib/billing/downgrade-limit-warnings";
 import { exchangeAuthHandoff } from "@/lib/auth-handoff";
 import { setAuthSession } from "@/lib/auth-storage";
 import { MARKETING_PLANS } from "@/lib/marketing/pricing-plans";
@@ -49,6 +51,7 @@ function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { authFetch, status } = useAuth();
+  const { shell } = useTenantShell();
 
   const planParam = searchParams.get("plan");
   const intervalParam = searchParams.get("interval") ?? "monthly";
@@ -242,6 +245,9 @@ function CheckoutContent() {
   const billingStatus = billingSummary?.billingStatus ?? "Free";
   const isDowngradeSelection =
     billingSummary !== null && isPaidPlanDowngrade(currentPlan, effectivePlan);
+  const downgradeLimitWarnings = isDowngradeSelection
+    ? getDowngradeLimitWarnings(shell, effectivePlan)
+    : [];
   const isSameSelection =
     billingSummary !== null
     && isSamePlanAndInterval(currentPlan, billingSummary.billingInterval, effectivePlan, interval);
@@ -393,14 +399,35 @@ function CheckoutContent() {
       ) : null}
 
       {isDowngradeSelection ? (
-        <p
+        <div
           role="status"
           className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
         >
-          Downgrades take effect at the end of your current billing period. You keep{" "}
-          {currentPlan} access until then. Plan limits on your current plan still apply until the
-          switch date.
-        </p>
+          <p>
+            Downgrades take effect at the end of your current billing period. You keep{" "}
+            {currentPlan} access until then.
+          </p>
+          {downgradeLimitWarnings.length > 0 ? (
+            <div className="mt-3 space-y-2">
+              <p className="font-medium text-amber-900 dark:text-amber-100">
+                Your current usage exceeds {effectiveMeta?.name ?? "the selected plan"} limits:
+              </p>
+              <ul className="list-disc space-y-1 pl-5 text-amber-900/90 dark:text-amber-100/90">
+                {downgradeLimitWarnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+              <p>
+                Reduce usage before the switch date, or your workspace may become read-only when
+                the lower plan takes effect.
+              </p>
+            </div>
+          ) : (
+            <p className="mt-2">
+              Your current usage fits within {effectiveMeta?.name ?? "the selected plan"} limits.
+            </p>
+          )}
+        </div>
       ) : null}
 
       <section className="space-y-6 rounded-2xl border border-border-warm bg-card p-5 shadow-sm sm:p-8 lg:p-10">

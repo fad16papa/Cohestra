@@ -467,6 +467,41 @@ public class BillingController(
         }
     }
 
+    [HttpPost("subscription/cancel-scheduled-change")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> CancelScheduledPlanChange(CancellationToken cancellationToken)
+    {
+        if (!stripeOptions.Value.IsConfigured)
+        {
+            return StripeUnavailable();
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            await billingService.CancelScheduledPlanChangeAsync(
+                tenantId,
+                GetOperatorEmail() ?? string.Empty,
+                cancellationToken);
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return BillingAccessDenied(ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BillingBadRequest("Subscription update unavailable", ex.Message);
+        }
+    }
+
     private string? GetOperatorEmail() =>
         User.FindFirst(JwtRegisteredClaimNames.Email)?.Value
         ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;

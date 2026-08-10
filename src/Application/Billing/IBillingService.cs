@@ -62,6 +62,11 @@ public interface IBillingService
         Guid tenantId,
         string operatorEmail,
         CancellationToken cancellationToken = default);
+
+    Task CancelScheduledPlanChangeAsync(
+        Guid tenantId,
+        string operatorEmail,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record BillingSummaryDto(

@@ -261,6 +261,46 @@ public sealed class StripeTenantBillingSyncTests
         Assert.Equal(periodEnd, tenant.ScheduledPlanEffectiveAt);
     }
 
+    [Fact]
+    public void ApplySubscription_RevertScheduledDowngrade_ClearsSchedule()
+    {
+        var settings = CreateSettings();
+        var tenant = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Slug = "pro-shop",
+            Name = "Pro Shop",
+            Plan = TenantPlan.Pro,
+            BillingStatus = BillingStatus.Trialing,
+            BillingInterval = BillingInterval.Monthly,
+            ScheduledPlan = TenantPlan.Core,
+            ScheduledPlanEffectiveAt = DateTimeOffset.UtcNow.AddDays(14),
+        };
+
+        var subscription = new Subscription
+        {
+            Id = "sub_pro",
+            CustomerId = "cus_pro",
+            Status = "trialing",
+            Items = new StripeList<SubscriptionItem>
+            {
+                Data =
+                [
+                    new SubscriptionItem
+                    {
+                        Price = new Price { Id = settings.PriceProMonthly },
+                    },
+                ],
+            },
+        };
+
+        StripeTenantBillingSync.ApplySubscription(tenant, subscription, settings);
+
+        Assert.Equal(TenantPlan.Pro, tenant.Plan);
+        Assert.Null(tenant.ScheduledPlan);
+        Assert.Null(tenant.ScheduledPlanEffectiveAt);
+    }
+
     [Theory]
     [InlineData("trialing", true)]
     [InlineData("active", true)]

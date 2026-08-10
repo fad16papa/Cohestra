@@ -247,6 +247,22 @@ export async function resumeSubscriptionWithAuth(
   throw new Error(parseProblem(raw));
 }
 
+export async function cancelScheduledPlanChangeWithAuth(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>
+): Promise<void> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/billing/subscription/cancel-scheduled-change`,
+    { method: "POST" }
+  );
+
+  if (response.status === 204) {
+    return;
+  }
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  throw new Error(parseProblem(raw));
+}
+
 export function formatInvoiceAmount(amountCents: number, currency: string): string {
   return new Intl.NumberFormat(undefined, {
     style: "currency",

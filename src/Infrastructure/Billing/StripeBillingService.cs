@@ -890,6 +890,118 @@ public sealed class StripeBillingService(
             cancellationToken);
     }
 
+    public async Task CancelScheduledPlanChangeAsync(
+        Guid tenantId,
+        string operatorEmail,
+        CancellationToken cancellationToken = default)
+    {
+        await ValidateBillingAccessAsync(tenantId, operatorEmail, cancellationToken);
+
+        if (!_settings.IsConfigured)
+        {
+            throw new InvalidOperationException("Stripe is not configured.");
+        }
+
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        if (tenant.IsComplimentary)
+        {
+            throw new InvalidOperationException("Complimentary tenants do not manage subscriptions.");
+        }
+
+        if (tenant.ScheduledPlan is null or TenantPlan.Basic)
+        {
+            throw new InvalidOperationException("No scheduled plan change to cancel.");
+        }
+
+        if (tenant.Plan is not (TenantPlan.Core or TenantPlan.Pro))
+        {
+            throw new InvalidOperationException("This workspace has no paid plan to restore.");
+        }
+
+        if (string.IsNullOrWhiteSpace(tenant.StripeSubscriptionId))
+        {
+            throw new InvalidOperationException("This workspace has no active Stripe subscription.");
+        }
+
+        var restoreInterval = tenant.BillingInterval ?? BillingInterval.Monthly;
+        var restorePriceId = StripeTenantBillingSync.ResolvePriceId(tenant.Plan, restoreInterval, _settings)
+            ?? throw new InvalidOperationException("Stripe price ID is not configured for your current plan.");
+
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+        var subscriptionService = new SubscriptionService();
+
+        Subscription subscription;
+        try
+        {
+            subscription = await subscriptionService.GetAsync(
+                tenant.StripeSubscriptionId,
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Could not load Stripe subscription {SubscriptionId} for tenant {TenantId}",
+                tenant.StripeSubscriptionId,
+                tenant.Id);
+            throw new InvalidOperationException(
+                "Could not load your current subscription. Open Settings → Billing and try again.");
+        }
+
+        var currentItem = subscription.Items?.Data?.FirstOrDefault()
+            ?? throw new InvalidOperationException("Stripe subscription has no billable items.");
+
+        if (string.Equals(currentItem.Price?.Id, restorePriceId, StringComparison.Ordinal))
+        {
+            tenant.ScheduledPlan = null;
+            tenant.ScheduledPlanEffectiveAt = null;
+            tenant.UpdatedAt = DateTimeOffset.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
+        Subscription updated;
+        try
+        {
+            updated = await subscriptionService.UpdateAsync(
+                subscription.Id,
+                new SubscriptionUpdateOptions
+                {
+                    Items =
+                    [
+                        new SubscriptionItemOptions
+                        {
+                            Id = currentItem.Id,
+                            Price = restorePriceId,
+                        },
+                    ],
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["tenant_id"] = tenant.Id.ToString(),
+                        ["plan"] = tenant.Plan.ToString(),
+                        ["interval"] = restoreInterval.ToString(),
+                    },
+                    ProrationBehavior = "none",
+                },
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Stripe subscription restore failed for tenant {TenantId}",
+                tenant.Id);
+            throw new InvalidOperationException(
+                "Could not cancel the scheduled plan change. Open Settings → Billing and try again.");
+        }
+
+        StripeTenantBillingSync.ApplySubscription(tenant, updated, _settings);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     private async Task UpdateSubscriptionCancelAtPeriodEndAsync(
         Guid tenantId,
         string operatorEmail,
