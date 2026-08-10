@@ -24,7 +24,7 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
   const searchParams = useSearchParams();
   const { authFetch } = useAuth();
   const { shell, refreshShell } = useTenantShell();
-  const { showToast } = useToast();
+  const { showSuccessToast, showToast } = useToast();
 
   useEffect(() => {
     const billingSuccess = searchParams.get("billing") === "success";
@@ -46,7 +46,7 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
       if (!cancelled) {
         await refreshShell();
         if (billingMessage) {
-          showToast({ variant: "success", message: billingMessage });
+          showSuccessToast(billingMessage);
         }
 
         try {
@@ -55,10 +55,9 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
             sessionStorage.removeItem("billing_downgrade_warnings");
             const warnings = JSON.parse(storedWarnings) as string[];
             if (Array.isArray(warnings) && warnings.length > 0) {
-              showToast({
-                variant: "default",
-                message: `Usage exceeds your upcoming plan limits: ${warnings[0]}`,
-              });
+              showToast(
+                `Usage exceeds your upcoming plan limits: ${warnings[0]}`
+              );
             }
           }
         } catch {
@@ -72,7 +71,7 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
     return () => {
       cancelled = true;
     };
-  }, [authFetch, refreshShell, searchParams, showToast]);
+  }, [authFetch, refreshShell, searchParams, showSuccessToast, showToast]);
 
   return (
     <div
