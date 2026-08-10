@@ -113,4 +113,18 @@ describe("checkout-validation", () => {
     expect(formatScheduledChangeLabel("Pro", "Annual", "Pro")).toBe("yearly billing");
     expect(formatScheduledChangeLabel("Core", "Monthly", "Pro")).toBe("Core");
   });
+
+  it("supports cancel confirm copy for interval-only vs tier schedules", () => {
+    const intervalLabel = formatScheduledChangeLabel(
+      "Pro",
+      "Monthly",
+      "Pro"
+    );
+    expect(`Your scheduled switch to ${intervalLabel} will be cancelled`).toContain(
+      "monthly billing"
+    );
+
+    const tierLabel = formatScheduledChangeLabel("Core", "Monthly", "Pro");
+    expect(tierLabel).toBe("Core");
+  });
 });
