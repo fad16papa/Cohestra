@@ -221,7 +221,11 @@ public sealed class StripeBillingService(
         CreateCheckoutSessionCommand command,
         CancellationToken cancellationToken)
     {
-        if (StripeTenantBillingSync.IsPaidPlanDowngrade(tenant.Plan, command.Plan))
+        if (StripeTenantBillingSync.ShouldDeferPlanChange(
+                tenant.Plan,
+                tenant.BillingInterval,
+                command.Plan,
+                command.Interval))
         {
             return await ScheduleDowngradeExistingSubscriptionAsync(
                 tenant,
@@ -421,12 +425,22 @@ public sealed class StripeBillingService(
         var effectiveAt = tenant.ScheduledPlanEffectiveAt ?? periodEnd;
         var currentPlanName = tenant.Plan.ToString();
         var targetPlanName = command.Plan.ToString();
-        var disclaimer =
-            $"Your plan will change to {targetPlanName} on {effectiveAt:MMMM d, yyyy}. "
-            + $"You keep {currentPlanName} access until then.";
+        var tierDowngrade = StripeTenantBillingSync.IsPaidPlanDowngrade(tenant.Plan, command.Plan);
+        var intervalOnlyChange = tenant.Plan == command.Plan
+            && StripeTenantBillingSync.IsBillingIntervalDowngrade(tenant.BillingInterval, command.Interval);
+        var disclaimer = tierDowngrade
+            ? $"Your plan will change to {targetPlanName} on {effectiveAt:MMMM d, yyyy}. "
+              + $"You keep {currentPlanName} access until then."
+            : intervalOnlyChange
+                ? $"Your billing interval will change to monthly on {effectiveAt:MMMM d, yyyy}. "
+                  + $"You keep {currentPlanName} access on yearly billing until then."
+                : $"Your plan will change to {targetPlanName} on {effectiveAt:MMMM d, yyyy}. "
+                  + $"You keep {currentPlanName} access until then.";
 
         var usage = await tenantAccessService.GetUsageAsync(tenant.Id, cancellationToken);
-        var warnings = BillingDowngradeLimitWarnings.Build(usage, command.Plan);
+        var warnings = tierDowngrade
+            ? BillingDowngradeLimitWarnings.Build(usage, command.Plan)
+            : Array.Empty<string>();
         BillingNotificationComposer.EnqueueScheduledDowngradeConfirmation(
             outboxPublisher,
             tenant,

@@ -229,7 +229,7 @@ export function InAppBillingPanel({
               disabled={subscriptionUpdating}
               onClick={() => setUndoScheduledConfirmOpen(true)}
             >
-              Undo scheduled downgrade
+              Undo scheduled change
             </Button>
           </div>
         ) : null}
@@ -559,7 +559,7 @@ export function InAppBillingPanel({
                   });
               }}
             >
-              {subscriptionUpdating ? "Updating…" : "Undo scheduled downgrade"}
+              {subscriptionUpdating ? "Updating…" : "Undo scheduled change"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

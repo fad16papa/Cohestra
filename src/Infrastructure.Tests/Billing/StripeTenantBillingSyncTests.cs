@@ -35,6 +35,40 @@ public sealed class StripeTenantBillingSyncTests
     }
 
     [Fact]
+    public void ShouldDeferPlanChange_DefersTierAndIntervalDowngradesForCoreAndPro()
+    {
+        Assert.True(StripeTenantBillingSync.ShouldDeferPlanChange(
+            TenantPlan.Pro,
+            BillingInterval.Monthly,
+            TenantPlan.Core,
+            BillingInterval.Monthly));
+
+        Assert.False(StripeTenantBillingSync.ShouldDeferPlanChange(
+            TenantPlan.Core,
+            BillingInterval.Monthly,
+            TenantPlan.Pro,
+            BillingInterval.Monthly));
+
+        Assert.True(StripeTenantBillingSync.ShouldDeferPlanChange(
+            TenantPlan.Pro,
+            BillingInterval.Annual,
+            TenantPlan.Pro,
+            BillingInterval.Monthly));
+
+        Assert.True(StripeTenantBillingSync.ShouldDeferPlanChange(
+            TenantPlan.Core,
+            BillingInterval.Annual,
+            TenantPlan.Core,
+            BillingInterval.Monthly));
+
+        Assert.False(StripeTenantBillingSync.ShouldDeferPlanChange(
+            TenantPlan.Core,
+            BillingInterval.Monthly,
+            TenantPlan.Core,
+            BillingInterval.Annual));
+    }
+
+    [Fact]
     public void TryMapPrice_ResolvesCoreAndProPrices()
     {
         var settings = CreateSettings();

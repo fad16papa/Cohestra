@@ -18,7 +18,7 @@ Documents shipped behavior after PR #166 and follow-up hardening (Aug 2026). Doe
 | Basic → Core/Pro | Stripe Checkout (or saved-card subscribe in-app) |
 | Core → Pro upgrade | In-app subscription update; prorated on next invoice |
 | Pro → Core downgrade | Stripe Subscription Schedule at period end; **in-app confirm + toast** |
-| Monthly ↔ yearly (same tier) | In-app price swap |
+| Monthly ↔ yearly (same tier) | Yearly **now** (prorated); monthly **at period end** for both Core and Pro |
 | Cancel subscription | Cancel at period end in Settings → Billing |
 
 **Principle:** Hosted Stripe Checkout only when establishing a new paid subscription or adding a card. Existing subscribers change plan via Stripe API + in-app UX.
@@ -30,7 +30,9 @@ Documents shipped behavior after PR #166 and follow-up hardening (Aug 2026). Doe
 - Checkout response includes server-side `warnings[]` for downgrades
 - Settings → Billing: **Undo scheduled downgrade** (distinct from **Keep subscription**)
 - Settings → Billing: confirm dialogs before **Cancel at period end** and **Undo scheduled downgrade**
-- Checkout: inline **Undo scheduled downgrade** on scheduled-change banner (no Settings detour required)
+- Checkout: inline **Undo scheduled change** on scheduled-change banner (no Settings detour required)
+- Checkout: confirm dialog before any deferred change (tier downgrade or yearly→monthly)
+- Symmetric action labels: **Switch to {plan} now** / **at period end** for Core and Pro
 - Dashboard toast from `billing_message` after in-app plan changes
 
 ## Email notification matrix (Aug 2026)
