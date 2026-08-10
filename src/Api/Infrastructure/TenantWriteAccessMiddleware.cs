@@ -77,7 +77,7 @@ public sealed class TenantWriteAccessMiddleware(
         }
 
         // Operator profile preferences (theme, accent) are user-scoped — not tenant workspace writes.
-        if (path.StartsWith("/api/v1/admin/me/appearance", StringComparison.OrdinalIgnoreCase))
+        if (path.Equals("/api/v1/admin/me/appearance", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
