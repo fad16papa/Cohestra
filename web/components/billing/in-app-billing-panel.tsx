@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { CreditCard, Download, Mail, Pencil, User } from "lucide-react";
+import { CreditCard, Download, Mail, Pencil, Phone, User } from "lucide-react";
 
+import { PhoneCountrySelect } from "@/components/activities/phone-country-select";
 import { useAuth } from "@/components/auth/auth-provider";
 import { BillingPaymentMethodDialog } from "@/components/billing/billing-payment-method-dialog";
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
@@ -18,6 +19,13 @@ import {
   type BillingDetails,
 } from "@/lib/billing/billing-details-api";
 import { syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
+import {
+  formatPhoneDisplay,
+  getPhonePlaceholder,
+  getPhonePrefixLabel,
+  parsePhoneForEdit,
+  validatePhoneLocalNumber,
+} from "@/lib/phone-countries";
 import { cn } from "@/lib/utils";
 
 type InAppBillingPanelProps = {
@@ -59,8 +67,20 @@ export function InAppBillingPanel({
   const [editingContact, setEditingContact] = useState(false);
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [contactPhoneCountry, setContactPhoneCountry] = useState("SG");
+  const [contactPhoneLocal, setContactPhoneLocal] = useState("");
+  const [contactPhoneError, setContactPhoneError] = useState<string | null>(null);
   const [contactSaving, setContactSaving] = useState(false);
   const [subscriptionUpdating, setSubscriptionUpdating] = useState(false);
+
+  const applyContactForm = useCallback((contact: BillingDetails["contact"]) => {
+    setContactName(contact?.name ?? "");
+    setContactEmail(contact?.email ?? "");
+    const parsed = parsePhoneForEdit(contact?.phone);
+    setContactPhoneCountry(parsed.countryCode);
+    setContactPhoneLocal(parsed.localNumber);
+    setContactPhoneError(null);
+  }, []);
 
   const loadDetails = useCallback(async () => {
     setLoading(true);
@@ -68,14 +88,13 @@ export function InAppBillingPanel({
     try {
       const next = await fetchBillingDetailsWithAuth(authFetch);
       setDetails(next);
-      setContactName(next.contact?.name ?? "");
-      setContactEmail(next.contact?.email ?? "");
+      applyContactForm(next.contact);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load billing details.");
     } finally {
       setLoading(false);
     }
-  }, [authFetch]);
+  }, [authFetch, applyContactForm]);
 
   useEffect(() => {
     void loadDetails();
@@ -204,10 +223,23 @@ export function InAppBillingPanel({
                 className="space-y-3"
                 onSubmit={(event) => {
                   event.preventDefault();
+                  const phoneError = validatePhoneLocalNumber(
+                    contactPhoneCountry,
+                    contactPhoneLocal,
+                    false
+                  );
+                  if (phoneError) {
+                    setContactPhoneError(phoneError);
+                    return;
+                  }
+
                   setContactSaving(true);
+                  setContactPhoneError(null);
                   void updateBillingContactWithAuth(authFetch, {
                     name: contactName.trim() || undefined,
                     email: contactEmail.trim() || undefined,
+                    phoneCountry: contactPhoneCountry,
+                    phoneLocal: contactPhoneLocal.trim(),
                   })
                     .then(() => {
                       setEditingContact(false);
@@ -236,6 +268,39 @@ export function InAppBillingPanel({
                     className="w-full rounded-lg border border-border-warm bg-background px-3 py-2 text-sm"
                   />
                 </label>
+                <PhoneCountrySelect
+                  id="billing-phone-country"
+                  value={contactPhoneCountry}
+                  label="Mobile country"
+                  helperText="Choose your country first — the calling code fills in automatically."
+                  onChange={(value) => {
+                    setContactPhoneError(null);
+                    setContactPhoneCountry(value);
+                  }}
+                />
+                <label className="block space-y-1">
+                  <span className="text-xs text-text-muted-warm">Mobile number</span>
+                  <div className="flex overflow-hidden rounded-lg border border-border-warm bg-background focus-within:border-lagoon/40 focus-within:ring-2 focus-within:ring-lagoon/20">
+                    <span className="flex min-h-10 items-center border-r border-border-warm bg-muted/40 px-3 text-sm text-text-muted-warm">
+                      {getPhonePrefixLabel(contactPhoneCountry)}
+                    </span>
+                    <input
+                      type="tel"
+                      autoComplete="tel-national"
+                      value={contactPhoneLocal}
+                      placeholder={getPhonePlaceholder(contactPhoneCountry)}
+                      aria-invalid={contactPhoneError ? true : undefined}
+                      onChange={(event) => {
+                        setContactPhoneError(null);
+                        setContactPhoneLocal(event.target.value);
+                      }}
+                      className="min-h-10 w-full bg-transparent px-3 py-2 text-sm outline-none"
+                    />
+                  </div>
+                  {contactPhoneError ? (
+                    <p className="text-xs text-destructive">{contactPhoneError}</p>
+                  ) : null}
+                </label>
                 <div className="flex gap-2">
                   <Button type="submit" size="sm" disabled={contactSaving}>
                     {contactSaving ? "Saving…" : "Save"}
@@ -246,8 +311,7 @@ export function InAppBillingPanel({
                     size="sm"
                     onClick={() => {
                       setEditingContact(false);
-                      setContactName(contact?.name ?? "");
-                      setContactEmail(contact?.email ?? "");
+                      applyContactForm(contact ?? null);
                     }}
                   >
                     Cancel
@@ -264,6 +328,10 @@ export function InAppBillingPanel({
                   <p className="flex items-center gap-2">
                     <Mail className="size-4 text-text-muted-warm" aria-hidden />
                     {contact?.email?.trim() || "—"}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Phone className="size-4 text-text-muted-warm" aria-hidden />
+                    {formatPhoneDisplay(contact?.phone)?.display ?? "—"}
                   </p>
                 </div>
                 <Button

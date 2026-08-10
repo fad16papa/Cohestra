@@ -346,6 +346,8 @@ public class BillingController(
                 tenantId,
                 request?.Name,
                 request?.Email,
+                request?.PhoneCountry,
+                request?.PhoneLocal,
                 cancellationToken);
             return NoContent();
         }
@@ -434,7 +436,7 @@ public class BillingController(
             MapSummary(details.Summary),
             details.Contact is null
                 ? null
-                : new BillingContactResponse(details.Contact.Name, details.Contact.Email),
+                : new BillingContactResponse(details.Contact.Name, details.Contact.Email, details.Contact.Phone),
             details.PaymentMethod is null
                 ? null
                 : new BillingPaymentMethodResponse(
