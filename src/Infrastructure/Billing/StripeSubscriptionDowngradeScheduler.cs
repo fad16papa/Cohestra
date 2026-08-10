@@ -105,9 +105,11 @@ internal static class StripeSubscriptionDowngradeScheduler
         && !string.IsNullOrWhiteSpace(tenant.StripeSubscriptionScheduleId);
 
     internal static string? ResolveScheduleId(Tenant tenant, Subscription subscription) =>
-        string.IsNullOrWhiteSpace(tenant.StripeSubscriptionScheduleId)
+        !string.IsNullOrWhiteSpace(subscription.ScheduleId)
             ? subscription.ScheduleId
-            : tenant.StripeSubscriptionScheduleId;
+            : string.IsNullOrWhiteSpace(tenant.StripeSubscriptionScheduleId)
+                ? null
+                : tenant.StripeSubscriptionScheduleId;
 
     internal static bool ShouldReleaseScheduleBeforeCancelAtPeriodEnd(
         bool cancelAtPeriodEnd,

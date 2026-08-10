@@ -1220,10 +1220,14 @@ public sealed class StripeBillingService(
                 await StripeSubscriptionDowngradeScheduler.ReleaseScheduleIfPresentAsync(
                     scheduleId!,
                     cancellationToken);
-                StripeSubscriptionDowngradeScheduler.ClearScheduledDowngradeState(tenant);
-                subscription = await subscriptionService.GetAsync(
-                    tenant.StripeSubscriptionId,
-                    cancellationToken: cancellationToken);
+            }
+            catch (StripeException ex) when (IsMissingStripeResource(ex))
+            {
+                logger.LogInformation(
+                    ex,
+                    "Stripe subscription schedule {ScheduleId} already released before cancel-at-period-end for tenant {TenantId}",
+                    scheduleId,
+                    tenant.Id);
             }
             catch (StripeException ex)
             {
@@ -1234,6 +1238,31 @@ public sealed class StripeBillingService(
                 throw new InvalidOperationException(
                     "Could not clear the scheduled plan change before canceling. Undo the scheduled change and try again.");
             }
+
+            StripeSubscriptionDowngradeScheduler.ClearScheduledDowngradeState(tenant);
+            releasedSchedule = true;
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            try
+            {
+                subscription = await subscriptionService.GetAsync(
+                    tenant.StripeSubscriptionId,
+                    cancellationToken: cancellationToken);
+            }
+            catch (StripeException ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Could not refresh Stripe subscription {SubscriptionId} after releasing schedule for tenant {TenantId}",
+                    tenant.StripeSubscriptionId,
+                    tenant.Id);
+            }
+        }
+        else if (cancelAtPeriodEnd
+            && StripeSubscriptionDowngradeScheduler.HasActiveScheduledPaidDowngrade(tenant))
+        {
+            StripeSubscriptionDowngradeScheduler.ClearScheduledDowngradeState(tenant);
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         Subscription updated;
@@ -1251,7 +1280,7 @@ public sealed class StripeBillingService(
                 "Subscription cancel-at-period-end update failed for tenant {TenantId}",
                 tenant.Id);
             throw new InvalidOperationException(
-                scheduleId is not null
+                !releasedSchedule && scheduleId is not null
                     ? "Could not schedule cancellation while a plan change is pending. Undo the scheduled change and try again."
                     : "Could not update subscription cancellation.");
         }
@@ -1672,4 +1701,7 @@ public sealed class StripeBillingService(
             tenant.Name,
             cancellationToken);
     }
+
+    private static bool IsMissingStripeResource(StripeException ex) =>
+        ex.StripeError?.Code is "resource_missing";
 }

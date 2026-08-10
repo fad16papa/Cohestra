@@ -26,10 +26,21 @@ public sealed class StripeSubscriptionDowngradeSchedulerTests
     }
 
     [Fact]
-    public void ResolveScheduleId_prefersTenantScheduleId()
+    public void ResolveScheduleId_prefersSubscriptionScheduleId()
     {
         var tenant = new Tenant { StripeSubscriptionScheduleId = "sub_sched_tenant" };
         var subscription = new Subscription { ScheduleId = "sub_sched_sub" };
+
+        Assert.Equal(
+            "sub_sched_sub",
+            StripeSubscriptionDowngradeScheduler.ResolveScheduleId(tenant, subscription));
+    }
+
+    [Fact]
+    public void ResolveScheduleId_fallsBackToTenantScheduleIdWhenSubscriptionHasNone()
+    {
+        var tenant = new Tenant { StripeSubscriptionScheduleId = "sub_sched_tenant" };
+        var subscription = new Subscription();
 
         Assert.Equal(
             "sub_sched_tenant",
