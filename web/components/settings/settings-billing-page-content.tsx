@@ -7,6 +7,10 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
 
+function isPaidPlan(plan: string): boolean {
+  return plan === "Core" || plan === "Pro";
+}
+
 export function SettingsBillingPageContent() {
   const { authFetch } = useAuth();
   const { shell, refreshShell } = useTenantShell();
@@ -28,6 +32,22 @@ export function SettingsBillingPageContent() {
       <p className="text-sm text-text-muted-warm">
         Billing settings are available to tenant admins only.
       </p>
+    );
+  }
+
+  if (isPaidPlan(shell.plan) && !shell.isBillingOwner) {
+    return (
+      <div className="mx-auto w-full max-w-5xl space-y-3">
+        <h1 className="text-xl font-semibold text-text-warm sm:text-2xl">Billing</h1>
+        <p className="text-sm text-text-muted-warm">
+          Billing for this workspace is managed by{" "}
+          <span className="font-medium text-text-warm">
+            {shell.billingOwnerEmail ?? "the workspace owner"}
+          </span>
+          . Invited admins can use the rest of Cohestra, but plan and payment changes stay with
+          the owner account.
+        </p>
+      </div>
     );
   }
 

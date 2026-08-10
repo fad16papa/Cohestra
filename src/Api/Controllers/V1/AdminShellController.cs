@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Admin;
 using Cohestra.Infrastructure.Auth;
@@ -27,7 +28,14 @@ public sealed class AdminShellController(
         var isTenantAdmin = TenantProfileRoles.FromPrincipal(User)
             .Any(r => string.Equals(r, "TenantAdmin", StringComparison.OrdinalIgnoreCase));
 
-        var shell = await tenantShellService.GetShellAsync(tenantId, isTenantAdmin, cancellationToken);
+        var operatorEmail = User.FindFirst(JwtRegisteredClaimNames.Email)?.Value
+            ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+
+        var shell = await tenantShellService.GetShellAsync(
+            tenantId,
+            isTenantAdmin,
+            operatorEmail,
+            cancellationToken);
         return Ok(shell);
     }
 }

@@ -18,9 +18,11 @@ type BillingPaymentMethodDialogProps = {
 };
 
 function PaymentMethodForm({
+  operatorEmail,
   onClose,
   onSaved,
 }: {
+  operatorEmail: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -67,7 +69,21 @@ function PaymentMethodForm({
           .finally(() => setSubmitting(false));
       }}
     >
-      <PaymentElement options={{ layout: "tabs" }} />
+      <PaymentElement
+        options={{
+          layout: "tabs",
+          defaultValues: {
+            billingDetails: {
+              email: operatorEmail,
+            },
+          },
+          fields: {
+            billingDetails: {
+              email: "never",
+            },
+          },
+        }}
+      />
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
@@ -86,7 +102,7 @@ export function BillingPaymentMethodDialog({
   onClose,
   onSaved,
 }: BillingPaymentMethodDialogProps) {
-  const { authFetch } = useAuth();
+  const { authFetch, profile } = useAuth();
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -128,15 +144,21 @@ export function BillingPaymentMethodDialog({
           Add payment method
         </h3>
         <p className="mt-1 text-sm text-text-muted-warm">
-          Card details are processed securely by Stripe. Cohestra never stores your full card number.
+          Card details are processed securely by Stripe for{" "}
+          <span className="font-medium text-text-warm">{profile?.email ?? "your account"}</span>.
+          Cohestra never stores your full card number.
         </p>
 
         <div className="mt-5">
           {loading ? <p className="text-sm text-text-muted-warm">Loading secure form…</p> : null}
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          {!loading && !error && stripePromise && clientSecret ? (
+          {!loading && !error && stripePromise && clientSecret && profile?.email ? (
             <Elements stripe={stripePromise} options={{ clientSecret }}>
-              <PaymentMethodForm onClose={onClose} onSaved={onSaved} />
+              <PaymentMethodForm
+                operatorEmail={profile.email}
+                onClose={onClose}
+                onSaved={onSaved}
+              />
             </Elements>
           ) : null}
         </div>

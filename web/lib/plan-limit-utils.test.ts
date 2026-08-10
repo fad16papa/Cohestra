@@ -27,6 +27,8 @@ function shellWithDials(
     trialEndsAt: null,
     isComplimentary: false,
     isTenantAdmin: true,
+    isBillingOwner: true,
+    billingOwnerEmail: "admin@demo.local",
     tenantSlug: "demo",
     tenantName: "Demo",
     registrationTimeZoneId: "UTC",
