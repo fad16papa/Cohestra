@@ -58,6 +58,10 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .HasConversion<string>()
             .HasMaxLength(20);
 
+        builder.Property(tenant => tenant.ScheduledBillingInterval)
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
         builder.Property(tenant => tenant.HasConsumedTrial)
             .IsRequired()
             .HasDefaultValue(false);
