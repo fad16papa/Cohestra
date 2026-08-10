@@ -35,6 +35,15 @@ type InAppBillingPanelProps = {
   onRefreshShell: () => Promise<void>;
 };
 
+function checkoutPlanParam(plan: string): "core" | "pro" {
+  return plan.toLowerCase() === "core" ? "core" : "pro";
+}
+
+function checkoutIntervalParam(interval: string | null | undefined): "monthly" | "annual" {
+  const normalized = interval?.trim().toLowerCase() ?? "";
+  return normalized === "annual" || normalized === "yearly" ? "annual" : "monthly";
+}
+
 function BillingSection({
   title,
   children,
@@ -152,6 +161,11 @@ export function InAppBillingPanel({
   const subscription = details?.subscription;
   const invoices = details?.invoices ?? [];
   const stripeConfigured = details?.summary.stripeConfigured ?? false;
+  const changePlanHref = `/billing/checkout?plan=${checkoutPlanParam(shellPlan)}&interval=${checkoutIntervalParam(details?.summary.billingInterval)}`;
+  const hasActivePaidSubscription =
+    shellBillingStatus === "Trialing"
+    || shellBillingStatus === "Active"
+    || shellBillingStatus === "PastDue";
 
   return (
     <div className="space-y-4">
@@ -411,12 +425,12 @@ export function InAppBillingPanel({
           <BillingSection title="Plan management">
             <div className="space-y-3 text-sm text-text-muted-warm">
               <p>
-                Change plan or billing interval. If a payment method is saved above, subscription
-                starts in Cohestra using that card. Otherwise you will continue to Stripe Checkout
-                once to add a card.
+                {hasActivePaidSubscription
+                  ? "Compare Core and Pro or switch between monthly and yearly billing."
+                  : "Change plan or billing interval. If a payment method is saved above, subscription starts in Cohestra using that card. Otherwise you will continue to Stripe Checkout once to add a card."}
               </p>
               <div className="flex flex-wrap gap-2">
-                <Link href="/billing/checkout?plan=pro&interval=monthly&start=1" className={buttonVariants({ size: "sm" })}>
+                <Link href={changePlanHref} className={buttonVariants({ size: "sm" })}>
                   Change plan
                 </Link>
                 {subscription?.cancelAtPeriodEnd ? (

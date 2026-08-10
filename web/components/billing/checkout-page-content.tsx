@@ -156,25 +156,34 @@ function CheckoutContent() {
   if (autoStart && !canceled && plan) {
     const meta = MARKETING_PLANS.find((p) => p.id === plan);
     const adjustHref = `/billing/checkout?plan=${plan}&interval=${interval}`;
+    const alreadyOnPlan = error?.includes("already on the selected plan");
 
     return (
       <div className="mx-auto flex min-h-[50vh] w-full max-w-md flex-col items-center justify-center gap-5 p-8 text-center">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-tight text-text-warm">
-            {error ? "Could not start checkout" : `Starting ${meta?.name ?? "plan"} trial`}
+            {error
+              ? alreadyOnPlan
+                ? "You're already on this plan"
+                : "Could not start checkout"
+              : `Starting ${meta?.name ?? "plan"} trial`}
           </h1>
           <p className="text-sm leading-relaxed text-text-muted-warm">
             {error
-              ? "Something went wrong starting your plan. You can try again or pick a different plan."
+              ? alreadyOnPlan
+                ? "Pick a different plan or billing interval, or go back to billing settings."
+                : "Something went wrong starting your plan. You can try again or pick a different plan."
               : `${priceFor(plan, interval)} after trial · uses your saved card when on file · cancel anytime before trial ends.`}
           </p>
         </div>
 
             {error ? (
               <div className="flex w-full flex-col gap-3">
-                <p role="alert" className="text-sm text-destructive">
-                  {error}
-                </p>
+                {!alreadyOnPlan ? (
+                  <p role="alert" className="text-sm text-destructive">
+                    {error}
+                  </p>
+                ) : null}
                 {error.includes("Manage billing") ? (
                   <Link
                     href="/settings/billing"
@@ -183,14 +192,23 @@ function CheckoutContent() {
                     Open billing settings
                   </Link>
                 ) : null}
-                <Button
-              type="button"
-              size="lg"
-              disabled={starting}
-              onClick={() => void startCheckout(plan, interval)}
-            >
-              {starting ? "Retrying…" : "Try again"}
-            </Button>
+                {!alreadyOnPlan ? (
+                  <Button
+                    type="button"
+                    size="lg"
+                    disabled={starting}
+                    onClick={() => void startCheckout(plan, interval)}
+                  >
+                    {starting ? "Retrying…" : "Try again"}
+                  </Button>
+                ) : (
+                  <Link
+                    href="/settings/billing"
+                    className={cn(buttonVariants({ size: "lg" }), "inline-flex justify-center")}
+                  >
+                    Back to billing
+                  </Link>
+                )}
             <Link
               href={adjustHref}
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "inline-flex justify-center")}
