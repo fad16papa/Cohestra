@@ -184,7 +184,8 @@ public class BillingController(
                 session.CheckoutUrl,
                 session.TrialEndsAt,
                 session.TrialIncluded,
-                session.TrialDisclaimer));
+                session.TrialDisclaimer,
+                session.CompletedInApp));
         }
         catch (InvalidOperationException ex)
         {

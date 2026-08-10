@@ -189,6 +189,10 @@ export function InAppBillingPanel({
       ) : (
         <>
           <BillingSection title="Payment method">
+            <p className="mb-3 text-sm text-text-muted-warm">
+              Add your card once here. When you change plan, Cohestra uses this card on file — you
+              will not enter it again unless you continue to Stripe without a saved card.
+            </p>
             {paymentMethod ? (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="flex items-center gap-2 text-sm text-text-warm">
@@ -406,7 +410,11 @@ export function InAppBillingPanel({
 
           <BillingSection title="Plan management">
             <div className="space-y-3 text-sm text-text-muted-warm">
-              <p>Upgrade plan or change billing interval from checkout.</p>
+              <p>
+                Change plan or billing interval. If a payment method is saved above, subscription
+                starts in Cohestra using that card. Otherwise you will continue to Stripe Checkout
+                once to add a card.
+              </p>
               <div className="flex flex-wrap gap-2">
                 <Link href="/billing/checkout?plan=pro&interval=monthly&start=1" className={buttonVariants({ size: "sm" })}>
                   Change plan

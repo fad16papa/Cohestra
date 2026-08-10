@@ -165,8 +165,8 @@ function CheckoutContent() {
           </h1>
           <p className="text-sm leading-relaxed text-text-muted-warm">
             {error
-              ? "Something went wrong opening Stripe. You can try again or pick a different plan."
-              : `${priceFor(plan, interval)} after trial · card required · cancel anytime before trial ends.`}
+              ? "Something went wrong starting your plan. You can try again or pick a different plan."
+              : `${priceFor(plan, interval)} after trial · uses your saved card when on file · cancel anytime before trial ends.`}
           </p>
         </div>
 
@@ -336,7 +336,7 @@ function CheckoutContent() {
             disabled={starting}
             onClick={() => void startCheckout(effectivePlan, interval)}
           >
-            {starting ? "Redirecting to Stripe…" : `Start ${effectiveMeta?.name ?? "plan"} trial`}
+            {starting ? "Starting…" : `Start ${effectiveMeta?.name ?? "plan"} trial`}
           </Button>
         </div>
 
