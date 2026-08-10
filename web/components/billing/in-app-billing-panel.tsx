@@ -196,6 +196,19 @@ export function InAppBillingPanel({
             .
           </p>
         ) : null}
+        {subscription?.scheduledPlan
+        && subscription.scheduledPlan !== "Basic"
+        && subscription.scheduledPlanEffectiveAt ? (
+          <p className="mt-2 text-amber-800 dark:text-amber-200">
+            Switch to {subscription.scheduledPlan} scheduled for{" "}
+            {new Date(subscription.scheduledPlanEffectiveAt).toLocaleDateString(undefined, {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+            .
+          </p>
+        ) : null}
       </div>
 
       {!stripeConfigured ? (

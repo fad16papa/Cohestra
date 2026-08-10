@@ -200,8 +200,10 @@ public sealed class StripeBillingService(
     {
         if (StripeTenantBillingSync.IsPaidPlanDowngrade(tenant.Plan, command.Plan))
         {
-            throw new InvalidOperationException(
-                "To downgrade your plan, open Manage billing in Settings and use the Stripe Customer Portal.");
+            return await ScheduleDowngradeExistingSubscriptionAsync(
+                tenant,
+                command,
+                cancellationToken);
         }
 
         var newPriceId = StripeTenantBillingSync.ResolvePriceId(command.Plan, command.Interval, _settings)
@@ -224,7 +226,8 @@ public sealed class StripeBillingService(
                 "Could not load Stripe subscription {SubscriptionId} for tenant {TenantId}",
                 tenant.StripeSubscriptionId,
                 tenant.Id);
-            throw new InvalidOperationException("Could not load your current subscription. Try Manage billing in Settings.");
+            throw new InvalidOperationException(
+                "Could not load your current subscription. Open Settings → Billing and try again.");
         }
 
         var currentItem = subscription.Items?.Data?.FirstOrDefault()
@@ -264,7 +267,8 @@ public sealed class StripeBillingService(
         catch (StripeException ex)
         {
             logger.LogWarning(ex, "Stripe subscription upgrade failed for tenant {TenantId}", tenant.Id);
-            throw new InvalidOperationException("Could not upgrade your subscription in Stripe. Try Manage billing in Settings.");
+            throw new InvalidOperationException(
+                "Could not update your subscription. Open Settings → Billing and try again.");
         }
 
         StripeTenantBillingSync.ApplySubscription(tenant, updated, _settings);
@@ -274,6 +278,97 @@ public sealed class StripeBillingService(
         var disclaimer = tenant.BillingStatus == BillingStatus.Trialing && tenant.TrialEndsAt is { } trialEnd
             ? StripeTenantBillingSync.BuildTrialDisclaimer(trialEnd)
             : "Your plan was updated. Stripe will prorate any price difference on your next invoice.";
+
+        return new CheckoutSessionDto(
+            BuildInAppSuccessUrl(command.SuccessUrl),
+            tenant.TrialEndsAt,
+            tenant.BillingStatus == BillingStatus.Trialing,
+            disclaimer,
+            CompletedInApp: true);
+    }
+
+    private async Task<CheckoutSessionDto> ScheduleDowngradeExistingSubscriptionAsync(
+        Tenant tenant,
+        CreateCheckoutSessionCommand command,
+        CancellationToken cancellationToken)
+    {
+        var newPriceId = StripeTenantBillingSync.ResolvePriceId(command.Plan, command.Interval, _settings)
+            ?? throw new InvalidOperationException("Stripe price ID is not configured for the selected plan.");
+
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+        var subscriptionService = new SubscriptionService();
+
+        Subscription subscription;
+        try
+        {
+            subscription = await subscriptionService.GetAsync(
+                tenant.StripeSubscriptionId!,
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Could not load Stripe subscription {SubscriptionId} for tenant {TenantId}",
+                tenant.StripeSubscriptionId,
+                tenant.Id);
+            throw new InvalidOperationException(
+                "Could not load your current subscription. Open Settings → Billing and try again.");
+        }
+
+        var currentItem = subscription.Items?.Data?.FirstOrDefault()
+            ?? throw new InvalidOperationException("Stripe subscription has no billable items.");
+
+        if (string.Equals(currentItem.Price?.Id, newPriceId, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Your workspace is already on the selected plan and billing interval.");
+        }
+
+        var periodEnd = StripeTenantBillingSync.ResolvePeriodEnd(subscription)
+            ?? throw new InvalidOperationException(
+                "Could not determine when your current billing period ends. Open Settings → Billing and try again.");
+
+        Subscription updated;
+        try
+        {
+            updated = await subscriptionService.UpdateAsync(
+                subscription.Id,
+                new SubscriptionUpdateOptions
+                {
+                    Items =
+                    [
+                        new SubscriptionItemOptions
+                        {
+                            Id = currentItem.Id,
+                            Price = newPriceId,
+                        },
+                    ],
+                    Metadata = new Dictionary<string, string>
+                    {
+                        ["tenant_id"] = tenant.Id.ToString(),
+                        ["tenant_slug"] = command.TenantSlug,
+                        ["plan"] = command.Plan.ToString(),
+                        ["interval"] = command.Interval.ToString(),
+                    },
+                    ProrationBehavior = "none",
+                },
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(ex, "Stripe subscription downgrade scheduling failed for tenant {TenantId}", tenant.Id);
+            throw new InvalidOperationException(
+                "Could not schedule your plan change. Open Settings → Billing and try again.");
+        }
+
+        StripeTenantBillingSync.ApplySubscription(tenant, updated, _settings);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var effectiveAt = tenant.ScheduledPlanEffectiveAt ?? periodEnd;
+        var targetPlanName = command.Plan.ToString();
+        var disclaimer =
+            $"Your plan will change to {targetPlanName} on {effectiveAt:MMMM d, yyyy}. "
+            + $"You keep {tenant.Plan} access until then.";
 
         return new CheckoutSessionDto(
             BuildInAppSuccessUrl(command.SuccessUrl),

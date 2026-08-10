@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Cohestra.Application.Billing;
 using Cohestra.Application.Outbox;
 using Cohestra.Application.Tenants;
 using Cohestra.Domain.Billing;
@@ -11,7 +10,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Cohestra.Infrastructure.Billing;
 
@@ -20,7 +18,6 @@ namespace Cohestra.Infrastructure.Billing;
 /// </summary>
 public sealed class BillingJobsHostedService(
     IServiceScopeFactory scopeFactory,
-    IOptions<StripeSettings> stripeOptions,
     ILogger<BillingJobsHostedService> logger) : BackgroundService
 {
     private const long BillingJobsAdvisoryLockKey = 574839201234567890L;
@@ -50,7 +47,6 @@ public sealed class BillingJobsHostedService(
         await using var scope = scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var outboxPublisher = scope.ServiceProvider.GetRequiredService<IOutboxPublisher>();
-        var billingService = scope.ServiceProvider.GetRequiredService<IBillingService>();
         var accessService = scope.ServiceProvider.GetRequiredService<ITenantAccessService>();
 
         if (!await TryAcquireBillingJobsLockAsync(db, cancellationToken))
@@ -75,7 +71,6 @@ public sealed class BillingJobsHostedService(
                     tenant,
                     db,
                     outboxPublisher,
-                    billingService,
                     now,
                     cancellationToken);
                 await ProcessDelinquencyAsync(tenant, db, outboxPublisher, now, cancellationToken);
@@ -129,11 +124,10 @@ public sealed class BillingJobsHostedService(
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task ProcessTrialReminderAsync(
+    private Task ProcessTrialReminderAsync(
         Tenant tenant,
         CohestraDbContext db,
         IOutboxPublisher outboxPublisher,
-        IBillingService billingService,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
@@ -143,41 +137,23 @@ public sealed class BillingJobsHostedService(
             || trialEnd <= now
             || trialEnd > now.AddDays(7))
         {
-            return;
+            return Task.CompletedTask;
         }
 
         if (tenant.LastTrialReminderSentAt is { } last && last.Date == now.Date)
         {
-            return;
+            return Task.CompletedTask;
         }
 
         if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
         {
-            return;
+            return Task.CompletedTask;
         }
 
-        string? portalUrl = null;
-        if (stripeOptions.Value.IsConfigured)
-        {
-            try
-            {
-                var portal = await billingService.CreatePortalSessionAsync(
-                    new CreatePortalSessionCommand(tenant.Id, "https://cohestra.app/settings/billing"),
-                    cancellationToken);
-                portalUrl = portal.PortalUrl;
-            }
-            catch (Exception ex)
-            {
-                logger.LogDebug(ex, "Portal session unavailable for trial reminder tenant {TenantId}", tenant.Id);
-            }
-        }
+        const string billingLine = "Manage billing from Settings → Billing in your workspace.";
 
-        var portalLine = portalUrl is null
-            ? "Manage billing from Settings → Billing in your workspace."
-            : $"Manage billing: {portalUrl}";
-
-        var plainBody = $"Your Cohestra trial ends on {trialEnd:MMMM d, yyyy}. {portalLine}";
-        var htmlBody = $"<p>Your trial ends on <strong>{trialEnd:MMMM d, yyyy}</strong>.</p><p>{portalLine}</p>";
+        var plainBody = $"Your Cohestra trial ends on {trialEnd:MMMM d, yyyy}. {billingLine}";
+        var htmlBody = $"<p>Your trial ends on <strong>{trialEnd:MMMM d, yyyy}</strong>.</p><p>{billingLine}</p>";
         EnqueueBillingNotification(
             outboxPublisher,
             tenant,
@@ -187,6 +163,7 @@ public sealed class BillingJobsHostedService(
             htmlBody,
             $"billing:trial-reminder:{tenant.Id}:{now:yyyy-MM-dd}",
             now);
+        return Task.CompletedTask;
     }
 
     private static Task ProcessDelinquencyAsync(

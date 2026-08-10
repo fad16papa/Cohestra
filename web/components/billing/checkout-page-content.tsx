@@ -9,17 +9,26 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   createBillingCheckoutWithAuth,
-  formatTrialDisclaimer,
+  fetchBillingSummaryWithAuth,
+  type BillingSummary,
 } from "@/lib/billing/billing-api";
+import {
+  checkoutActionLabel,
+  checkoutIntroCopy,
+  checkoutPriceCaption,
+  hasActivePaidSubscription,
+  isPaidPlanDowngrade,
+  isSamePlanAndInterval,
+  normalizeBillingInterval,
+  type BillingIntervalId,
+  type PaidPlanId,
+} from "@/lib/billing/checkout-validation";
 import { exchangeAuthHandoff } from "@/lib/auth-handoff";
 import { setAuthSession } from "@/lib/auth-storage";
 import { MARKETING_PLANS } from "@/lib/marketing/pricing-plans";
 import { cn } from "@/lib/utils";
 
-type PlanId = "core" | "pro";
-type IntervalId = "monthly" | "annual";
-
-function priceFor(planId: PlanId, interval: IntervalId): string {
+function priceFor(planId: PaidPlanId, interval: BillingIntervalId): string {
   const meta = MARKETING_PLANS.find((p) => p.id === planId);
   if (!meta) {
     return "";
@@ -46,13 +55,15 @@ function CheckoutContent() {
   const canceled = searchParams.get("canceled") === "1";
   const autoStart = searchParams.get("start") === "1";
 
-  const initialPlan: PlanId | null =
+  const initialPlan: PaidPlanId | null =
     planParam === "pro" ? "pro" : planParam === "core" ? "core" : null;
-  const initialInterval: IntervalId =
+  const initialInterval: BillingIntervalId =
     intervalParam === "annual" ? "annual" : "monthly";
 
-  const [plan, setPlan] = useState<PlanId | null>(initialPlan);
-  const [interval, setInterval] = useState<IntervalId>(initialInterval);
+  const [plan, setPlan] = useState<PaidPlanId | null>(initialPlan);
+  const [interval, setInterval] = useState<BillingIntervalId>(initialInterval);
+  const [billingSummary, setBillingSummary] = useState<BillingSummary | null>(null);
+  const [billingLoading, setBillingLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(autoStart && !canceled);
   const [handoffPending, setHandoffPending] = useState(
@@ -60,7 +71,6 @@ function CheckoutContent() {
   );
   const [handoffFailed, setHandoffFailed] = useState(false);
 
-  const trialCopy = useMemo(() => formatTrialDisclaimer(30), []);
   const planOptions = MARKETING_PLANS.filter((p) => p.id === "core" || p.id === "pro");
 
   useEffect(() => {
@@ -103,7 +113,51 @@ function CheckoutContent() {
     setInterval(initialInterval);
   }, [initialInterval, initialPlan]);
 
-  async function startCheckout(selectedPlan: PlanId, selectedInterval: IntervalId) {
+  useEffect(() => {
+    if (status !== "authenticated") {
+      setBillingLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    void fetchBillingSummaryWithAuth(authFetch)
+      .then((summary) => {
+        if (!cancelled) {
+          setBillingSummary(summary);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setBillingSummary(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setBillingLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authFetch, status]);
+
+  async function startCheckout(selectedPlan: PaidPlanId, selectedInterval: BillingIntervalId) {
+    if (billingSummary) {
+      if (
+        isSamePlanAndInterval(
+          billingSummary.plan,
+          billingSummary.billingInterval,
+          selectedPlan,
+          selectedInterval
+        )
+      ) {
+        setError("Your workspace is already on the selected plan and billing interval.");
+        return;
+      }
+    }
+
     setStarting(true);
     setError(null);
 
@@ -133,11 +187,40 @@ function CheckoutContent() {
       return;
     }
 
+    if (billingLoading) {
+      return;
+    }
+
+    if (
+      billingSummary
+      && isSamePlanAndInterval(
+        billingSummary.plan,
+        billingSummary.billingInterval,
+        plan,
+        interval
+      )
+    ) {
+      setStarting(false);
+      setError("Your workspace is already on the selected plan and billing interval.");
+      return;
+    }
+
     void startCheckout(plan, interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot auto start from query
-  }, [autoStart, canceled, handoffFailed, handoffPending, interval, plan, router, status]);
+  }, [
+    autoStart,
+    billingLoading,
+    billingSummary,
+    canceled,
+    handoffFailed,
+    handoffPending,
+    interval,
+    plan,
+    router,
+    status,
+  ]);
 
-  if (handoffPending || status === "loading") {
+  if (handoffPending || status === "loading" || (billingLoading && status === "authenticated")) {
     return <p className="p-8 text-sm text-text-muted-warm">Loading checkout…</p>;
   }
 
@@ -151,6 +234,45 @@ function CheckoutContent() {
       </div>
     );
   }
+
+  const effectivePlan = plan ?? "core";
+  const effectiveMeta = MARKETING_PLANS.find((p) => p.id === effectivePlan) ?? planOptions[0];
+  const priceLabel = priceFor(effectivePlan, interval);
+  const currentPlan = billingSummary?.plan ?? "Basic";
+  const billingStatus = billingSummary?.billingStatus ?? "Free";
+  const isDowngradeSelection =
+    billingSummary !== null && isPaidPlanDowngrade(currentPlan, effectivePlan);
+  const isSameSelection =
+    billingSummary !== null
+    && isSamePlanAndInterval(currentPlan, billingSummary.billingInterval, effectivePlan, interval);
+  const actionLabel = billingSummary
+    ? checkoutActionLabel({
+        billingStatus,
+        currentPlan,
+        hasConsumedTrial: billingSummary.hasConsumedTrial,
+        targetPlan: effectivePlan,
+        targetInterval: interval,
+        currentInterval: billingSummary.billingInterval,
+      })
+    : `Start ${effectiveMeta?.name ?? "plan"} trial`;
+  const introCopy = billingSummary
+    ? checkoutIntroCopy({
+        billingStatus,
+        currentPlan,
+        trialEndsAt: billingSummary.trialEndsAt,
+        hasConsumedTrial: billingSummary.hasConsumedTrial,
+        trialPeriodDays: billingSummary.trialPeriodDays,
+      })
+    : null;
+  const priceCaption = billingSummary
+    ? checkoutPriceCaption({
+        billingStatus,
+        trialEndsAt: billingSummary.trialEndsAt,
+        hasConsumedTrial: billingSummary.hasConsumedTrial,
+      })
+    : "After trial";
+  const submitDisabled = starting || isSameSelection;
+  const isPaidTenant = hasActivePaidSubscription(billingStatus);
 
   // Plan + interval already chosen on the upgrade gate — go straight to Stripe.
   if (autoStart && !canceled && plan) {
@@ -166,49 +288,45 @@ function CheckoutContent() {
               ? alreadyOnPlan
                 ? "You're already on this plan"
                 : "Could not start checkout"
-              : `Starting ${meta?.name ?? "plan"} trial`}
+              : isDowngradeSelection
+                ? `Scheduling switch to ${meta?.name ?? "plan"}`
+                : `Starting ${meta?.name ?? "plan"} ${billingSummary?.hasConsumedTrial ? "subscription" : "trial"}`}
           </h1>
           <p className="text-sm leading-relaxed text-text-muted-warm">
             {error
               ? alreadyOnPlan
                 ? "Pick a different plan or billing interval, or go back to billing settings."
                 : "Something went wrong starting your plan. You can try again or pick a different plan."
-              : `${priceFor(plan, interval)} after trial · uses your saved card when on file · cancel anytime before trial ends.`}
+              : isDowngradeSelection
+                ? "Your current plan stays active until the end of this billing period."
+                : `${priceFor(plan, interval)} ${billingSummary?.hasConsumedTrial ? "starting today" : "after trial"} · uses your saved card when on file · cancel anytime before trial ends.`}
           </p>
         </div>
 
-            {error ? (
-              <div className="flex w-full flex-col gap-3">
-                {!alreadyOnPlan ? (
-                  <p role="alert" className="text-sm text-destructive">
-                    {error}
-                  </p>
-                ) : null}
-                {error.includes("Manage billing") ? (
-                  <Link
-                    href="/settings/billing"
-                    className={cn(buttonVariants({ size: "lg" }), "inline-flex justify-center")}
-                  >
-                    Open billing settings
-                  </Link>
-                ) : null}
-                {!alreadyOnPlan ? (
-                  <Button
-                    type="button"
-                    size="lg"
-                    disabled={starting}
-                    onClick={() => void startCheckout(plan, interval)}
-                  >
-                    {starting ? "Retrying…" : "Try again"}
-                  </Button>
-                ) : (
-                  <Link
-                    href="/settings/billing"
-                    className={cn(buttonVariants({ size: "lg" }), "inline-flex justify-center")}
-                  >
-                    Back to billing
-                  </Link>
-                )}
+        {error ? (
+          <div className="flex w-full flex-col gap-3">
+            {!alreadyOnPlan ? (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
+            {!alreadyOnPlan ? (
+              <Button
+                type="button"
+                size="lg"
+                disabled={starting}
+                onClick={() => void startCheckout(plan, interval)}
+              >
+                {starting ? "Retrying…" : "Try again"}
+              </Button>
+            ) : (
+              <Link
+                href="/settings/billing"
+                className={cn(buttonVariants({ size: "lg" }), "inline-flex justify-center")}
+              >
+                Back to billing
+              </Link>
+            )}
             <Link
               href={adjustHref}
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "inline-flex justify-center")}
@@ -225,10 +343,6 @@ function CheckoutContent() {
     );
   }
 
-  const effectivePlan = plan ?? "core";
-  const effectiveMeta = MARKETING_PLANS.find((p) => p.id === effectivePlan) ?? planOptions[0];
-  const priceLabel = priceFor(effectivePlan, interval);
-
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8">
       <div>
@@ -243,9 +357,31 @@ function CheckoutContent() {
           Confirm your plan
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-text-muted-warm sm:text-base">
-          {trialCopy}
+          {introCopy}
         </p>
       </div>
+
+      {billingSummary && isPaidTenant ? (
+        <p
+          role="status"
+          className="rounded-xl border border-border-warm bg-muted/30 px-4 py-3 text-sm text-text-warm"
+        >
+          Current plan: <span className="font-medium">{currentPlan}</span>
+          {" · "}
+          Status: <span className="font-medium">{billingStatus}</span>
+          {billingSummary.billingInterval ? (
+            <>
+              {" · "}
+              Billing:{" "}
+              <span className="font-medium">
+                {normalizeBillingInterval(billingSummary.billingInterval) === "annual"
+                  ? "Yearly"
+                  : "Monthly"}
+              </span>
+            </>
+          ) : null}
+        </p>
+      ) : null}
 
       {canceled ? (
         <p
@@ -253,6 +389,17 @@ function CheckoutContent() {
           className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
         >
           Checkout was canceled. Adjust your plan or billing interval and try again.
+        </p>
+      ) : null}
+
+      {isDowngradeSelection ? (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
+        >
+          Downgrades take effect at the end of your current billing period. You keep{" "}
+          {currentPlan} access until then. Plan limits on your current plan still apply until the
+          switch date.
         </p>
       ) : null}
 
@@ -298,7 +445,15 @@ function CheckoutContent() {
         >
           {planOptions.map((meta) => {
             const active = effectivePlan === meta.id;
-            const cardPrice = priceFor(meta.id as PlanId, interval);
+            const cardPrice = priceFor(meta.id as PaidPlanId, interval);
+            const isCurrentPlan =
+              billingSummary !== null
+              && isSamePlanAndInterval(
+                currentPlan,
+                billingSummary.billingInterval,
+                meta.id as PaidPlanId,
+                interval
+              );
 
             return (
               <button
@@ -307,18 +462,22 @@ function CheckoutContent() {
                 role="radio"
                 aria-checked={active}
                 disabled={starting}
-                onClick={() => setPlan(meta.id as PlanId)}
+                onClick={() => setPlan(meta.id as PaidPlanId)}
                 className={cn(
                   "flex h-full flex-col rounded-2xl border p-5 text-left transition-colors sm:p-6",
                   active
                     ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                    : "border-border-warm hover:border-primary/40"
+                    : "border-border-warm hover:border-primary/40",
+                  isCurrentPlan && !active && "opacity-80"
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-lg font-semibold text-text-warm">{meta.name}</p>
                     <p className="mt-1 text-sm text-text-muted-warm">{meta.headline}</p>
+                    {isCurrentPlan ? (
+                      <p className="mt-2 text-xs font-medium text-primary">Current plan</p>
+                    ) : null}
                   </div>
                   {active ? <Check className="mt-1 size-5 shrink-0 text-primary" aria-hidden /> : null}
                 </div>
@@ -341,7 +500,7 @@ function CheckoutContent() {
 
         <div className="flex flex-col gap-4 border-t border-border-warm pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-text-muted-warm">After trial</p>
+            <p className="text-sm text-text-muted-warm">{priceCaption}</p>
             <p className="mt-1 text-lg font-semibold text-text-warm">{priceLabel}</p>
             <p className="mt-1 text-xs text-text-muted-warm">
               Billed in USD. Stripe may show a local currency estimate at checkout.
@@ -351,12 +510,18 @@ function CheckoutContent() {
             type="button"
             size="lg"
             className="w-full sm:w-auto sm:min-w-[14rem]"
-            disabled={starting}
+            disabled={submitDisabled}
             onClick={() => void startCheckout(effectivePlan, interval)}
           >
-            {starting ? "Starting…" : `Start ${effectiveMeta?.name ?? "plan"} trial`}
+            {starting ? "Processing…" : actionLabel}
           </Button>
         </div>
+
+        {isSameSelection ? (
+          <p role="status" className="text-sm text-text-muted-warm">
+            You are already on this plan and billing interval. Choose a different option to continue.
+          </p>
+        ) : null}
 
         {error ? (
           <p role="alert" className="text-sm text-destructive">
@@ -369,8 +534,8 @@ function CheckoutContent() {
         <Link href="/pricing" className="text-text-muted-warm hover:text-text-warm">
           Compare plans
         </Link>
-        <Link href="/dashboard" className="text-text-muted-warm hover:text-text-warm">
-          Stay on Basic for now
+        <Link href={isPaidTenant ? "/settings/billing" : "/dashboard"} className="text-text-muted-warm hover:text-text-warm">
+          {isPaidTenant ? "Keep current plan" : "Stay on Basic for now"}
         </Link>
       </div>
     </div>
