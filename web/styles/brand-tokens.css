@@ -174,7 +174,7 @@
   font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
   font-size: clamp(3.75rem, 9vw, 5.75rem);
   font-weight: 500;
-  line-height: 0.92;
+  line-height: 1.06;
   letter-spacing: -0.045em;
 }
 
