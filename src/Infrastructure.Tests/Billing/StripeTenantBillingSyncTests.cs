@@ -66,6 +66,28 @@ public sealed class StripeTenantBillingSyncTests
             BillingInterval.Monthly,
             TenantPlan.Core,
             BillingInterval.Annual));
+
+        Assert.False(StripeTenantBillingSync.ShouldDeferPlanChange(
+            TenantPlan.Core,
+            BillingInterval.Annual,
+            TenantPlan.Pro,
+            BillingInterval.Monthly));
+    }
+
+    [Theory]
+    [InlineData(TenantPlan.Pro, BillingInterval.Annual, TenantPlan.Pro, BillingInterval.Monthly)]
+    [InlineData(TenantPlan.Core, BillingInterval.Annual, TenantPlan.Core, BillingInterval.Monthly)]
+    public void ShouldDeferPlanChange_DefersIntervalDowngradesOnBothTiers(
+        TenantPlan currentPlan,
+        BillingInterval currentInterval,
+        TenantPlan targetPlan,
+        BillingInterval targetInterval)
+    {
+        Assert.True(StripeTenantBillingSync.ShouldDeferPlanChange(
+            currentPlan,
+            currentInterval,
+            targetPlan,
+            targetInterval));
     }
 
     [Fact]

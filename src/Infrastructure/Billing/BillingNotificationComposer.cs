@@ -1,6 +1,7 @@
 using System.Text;
 using Cohestra.Application.Outbox;
 using Cohestra.Application.Tenants;
+using Cohestra.Domain.Billing;
 using Cohestra.Domain.Outbox;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
@@ -15,6 +16,8 @@ internal static class BillingNotificationComposer
         IOutboxPublisher outboxPublisher,
         Tenant tenant,
         TenantPlan targetPlan,
+        BillingInterval targetInterval,
+        bool intervalOnlyChange,
         DateTimeOffset effectiveAt,
         IReadOnlyList<string> limitWarnings,
         PublicWebOptions publicWebOptions,
@@ -29,24 +32,61 @@ internal static class BillingNotificationComposer
         var currentPlan = tenant.Plan.ToString();
         var targetPlanName = targetPlan.ToString();
         var effectiveLabel = effectiveAt.ToString("MMMM d, yyyy");
+        var intervalDowngrade = StripeTenantBillingSync.IsBillingIntervalDowngrade(
+            tenant.BillingInterval,
+            targetInterval);
+        var subjectSuffix = intervalOnlyChange
+            ? "Billing interval change scheduled"
+            : "Plan change scheduled";
 
         var plain = new StringBuilder();
-        plain.Append(
-            $"Your {tenant.Name} workspace plan will change from {currentPlan} to {targetPlanName} on {effectiveLabel}. ");
-        plain.Append($"You keep {currentPlan} access until then. ");
-        plain.Append("No charge today — your saved payment method will be billed at the new plan price from that date. ");
-        plain.Append($"Manage billing at {billingUrl}.");
-
         var html = new StringBuilder();
-        html.Append("<p>Your workspace plan will change from <strong>");
-        html.Append(currentPlan);
-        html.Append("</strong> to <strong>");
-        html.Append(targetPlanName);
-        html.Append("</strong> on <strong>");
-        html.Append(effectiveLabel);
-        html.Append("</strong>.</p><p>You keep ");
-        html.Append(currentPlan);
-        html.Append(" access until then. No charge today — your saved payment method will be billed at the new plan price from that date.</p>");
+
+        if (intervalOnlyChange)
+        {
+            plain.Append(
+                $"Your {tenant.Name} workspace billing interval will change from yearly to monthly on {effectiveLabel}. ");
+            plain.Append($"You keep {currentPlan} access until then. ");
+            html.Append("<p>Your workspace billing interval will change from <strong>yearly</strong> to <strong>monthly</strong> on <strong>");
+            html.Append(effectiveLabel);
+            html.Append("</strong>.</p><p>You keep ");
+            html.Append(currentPlan);
+            html.Append(" access until then.</p>");
+        }
+        else if (StripeTenantBillingSync.IsPaidPlanDowngrade(tenant.Plan, targetPlan) && intervalDowngrade)
+        {
+            plain.Append(
+                $"Your {tenant.Name} workspace plan will change from {currentPlan} to {targetPlanName} on monthly billing on {effectiveLabel}. ");
+            plain.Append($"You keep {currentPlan} access until then. ");
+            html.Append("<p>Your workspace plan will change from <strong>");
+            html.Append(currentPlan);
+            html.Append("</strong> to <strong>");
+            html.Append(targetPlanName);
+            html.Append("</strong> on <strong>monthly</strong> billing on <strong>");
+            html.Append(effectiveLabel);
+            html.Append("</strong>.</p><p>You keep ");
+            html.Append(currentPlan);
+            html.Append(" access until then.</p>");
+        }
+        else
+        {
+            plain.Append(
+                $"Your {tenant.Name} workspace plan will change from {currentPlan} to {targetPlanName} on {effectiveLabel}. ");
+            plain.Append($"You keep {currentPlan} access until then. ");
+            html.Append("<p>Your workspace plan will change from <strong>");
+            html.Append(currentPlan);
+            html.Append("</strong> to <strong>");
+            html.Append(targetPlanName);
+            html.Append("</strong> on <strong>");
+            html.Append(effectiveLabel);
+            html.Append("</strong>.</p><p>You keep ");
+            html.Append(currentPlan);
+            html.Append(" access until then.</p>");
+        }
+
+        plain.Append("No charge today — your saved payment method will be billed at the new price from that date. ");
+        plain.Append($"Manage billing at {billingUrl}.");
+        html.Append("<p>No charge today — your saved payment method will be billed at the new price from that date.</p>");
         html.Append("<p><a href=\"");
         html.Append(billingUrl);
         html.Append("\">Manage billing</a></p>");
@@ -57,10 +97,10 @@ internal static class BillingNotificationComposer
             outboxPublisher,
             tenant,
             BillingNotificationNoticeTypes.ScheduledDowngrade,
-            $"Plan change scheduled — {tenant.Name}",
+            $"{subjectSuffix} — {tenant.Name}",
             plain.ToString(),
             html.ToString(),
-            $"billing:scheduled-downgrade:{tenant.Id}:{effectiveAt:yyyy-MM-dd}:{targetPlan}",
+            $"billing:scheduled-downgrade:{tenant.Id}:{effectiveAt:yyyy-MM-dd}:{targetPlan}:{targetInterval}",
             now);
     }
 

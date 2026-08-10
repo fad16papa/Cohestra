@@ -67,10 +67,16 @@ export function matchesScheduledPlanChange(
   targetPlan: PaidPlanId,
   targetInterval: BillingIntervalId
 ): boolean {
-  return (
-    scheduledPlan.trim().toLowerCase() === targetPlan
-    && normalizeBillingInterval(scheduledInterval) === targetInterval
-  );
+  if (scheduledPlan.trim().toLowerCase() !== targetPlan) {
+    return false;
+  }
+
+  const normalizedScheduled = scheduledInterval?.trim().toLowerCase() ?? "";
+  if (!normalizedScheduled) {
+    return false;
+  }
+
+  return normalizeBillingInterval(scheduledInterval) === targetInterval;
 }
 
 export function hasActivePaidSubscription(billingStatus: string): boolean {

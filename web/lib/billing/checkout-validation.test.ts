@@ -38,6 +38,12 @@ describe("checkout-validation", () => {
   it("matches scheduled plan and interval", () => {
     expect(matchesScheduledPlanChange("Core", "Monthly", "core", "monthly")).toBe(true);
     expect(matchesScheduledPlanChange("Core", "Annual", "core", "monthly")).toBe(false);
+    expect(matchesScheduledPlanChange("Core", null, "core", "monthly")).toBe(false);
+    expect(matchesScheduledPlanChange("Core", "", "core", "monthly")).toBe(false);
+  });
+
+  it("does not defer tier upgrade with interval downgrade combo", () => {
+    expect(isDeferredPlanChange("Core", "Annual", "pro", "monthly")).toBe(false);
   });
 
   it("labels deferred tier change at period end", () => {

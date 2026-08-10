@@ -31,6 +31,7 @@ import {
   hasActivePaidSubscription,
   isDeferredPlanChange,
   isPaidPlanDowngrade,
+  isBillingIntervalDowngrade,
   isSamePlanAndInterval,
   matchesScheduledPlanChange,
   normalizeBillingInterval,
@@ -324,6 +325,12 @@ function CheckoutContent() {
     && isDeferredPlanChange(currentPlan, billingSummary.billingInterval, effectivePlan, interval);
   const isTierDowngradeSelection =
     billingSummary !== null && isPaidPlanDowngrade(currentPlan, effectivePlan);
+  const isIntervalDowngradeSelection =
+    billingSummary !== null
+    && normalizePlanId(currentPlan) === effectivePlan
+    && isBillingIntervalDowngrade(billingSummary.billingInterval, interval);
+  const isCombinedTierAndIntervalDowngrade =
+    isTierDowngradeSelection && isIntervalDowngradeSelection;
   const downgradeLimitWarnings = isTierDowngradeSelection
     ? getDowngradeLimitWarnings(shell, effectivePlan, {
         usage: billingSummary?.usage,
@@ -376,6 +383,7 @@ function CheckoutContent() {
     starting
     || isSameSelection
     || Boolean(matchesExistingSchedule)
+    || (Boolean(hasScheduledPlanChange) && !matchesExistingSchedule)
     || (isDeferredSelection && shellLoading && !billingSummary?.usage);
   const isPaidTenant = hasActivePaidSubscription(billingStatus);
 
@@ -556,9 +564,11 @@ function CheckoutContent() {
           className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
         >
           <p>
-            {isTierDowngradeSelection
-              ? `This change takes effect at the end of your current billing period. You keep ${currentPlan} access until then.`
-              : "Switching from yearly to monthly billing takes effect at the end of your current billing period. You keep your current plan and yearly rate until then."}
+            {isCombinedTierAndIntervalDowngrade
+              ? `This change takes effect at the end of your current billing period. You will switch to ${effectiveMeta?.name ?? "the selected plan"} on monthly billing. You keep ${currentPlan} access until then.`
+              : isTierDowngradeSelection
+                ? `This change takes effect at the end of your current billing period. You keep ${currentPlan} access until then.`
+                : "Switching from yearly to monthly billing takes effect at the end of your current billing period. You keep your current plan and yearly rate until then."}
           </p>
           {downgradeLimitWarnings.length > 0 ? (
             <div className="mt-3 space-y-2">
@@ -744,9 +754,11 @@ function CheckoutContent() {
           <AlertDialogHeader>
             <AlertDialogTitle>Schedule this plan change?</AlertDialogTitle>
             <AlertDialogDescription>
-              {isTierDowngradeSelection
-                ? `Your workspace will switch to ${effectiveMeta?.name ?? "the selected plan"} at the end of your current billing period. You keep ${currentPlan} access until then.`
-                : "Your billing interval will switch to monthly at the end of your current billing period. You keep your current plan and yearly rate until then."}
+              {isCombinedTierAndIntervalDowngrade
+                ? `Your workspace will switch to ${effectiveMeta?.name ?? "the selected plan"} on monthly billing at the end of your current billing period. You keep ${currentPlan} access until then.`
+                : isTierDowngradeSelection
+                  ? `Your workspace will switch to ${effectiveMeta?.name ?? "the selected plan"} at the end of your current billing period. You keep ${currentPlan} access until then.`
+                  : "Your billing interval will switch to monthly at the end of your current billing period. You keep your current plan and yearly rate until then."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
