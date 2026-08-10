@@ -1190,6 +1190,52 @@ public sealed class StripeBillingService(
 
         StripeConfiguration.ApiKey = _settings.SecretKey;
         var subscriptionService = new SubscriptionService();
+
+        Subscription subscription;
+        try
+        {
+            subscription = await subscriptionService.GetAsync(
+                tenant.StripeSubscriptionId,
+                cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Could not load Stripe subscription {SubscriptionId} for tenant {TenantId}",
+                tenant.StripeSubscriptionId,
+                tenant.Id);
+            throw new InvalidOperationException(
+                "Could not load your current subscription. Open Settings → Billing and try again.");
+        }
+
+        var scheduleId = StripeSubscriptionDowngradeScheduler.ResolveScheduleId(tenant, subscription);
+        var releasedSchedule = false;
+        if (StripeSubscriptionDowngradeScheduler.ShouldReleaseScheduleBeforeCancelAtPeriodEnd(
+                cancelAtPeriodEnd,
+                scheduleId))
+        {
+            try
+            {
+                await StripeSubscriptionDowngradeScheduler.ReleaseScheduleIfPresentAsync(
+                    scheduleId!,
+                    cancellationToken);
+                StripeSubscriptionDowngradeScheduler.ClearScheduledDowngradeState(tenant);
+                subscription = await subscriptionService.GetAsync(
+                    tenant.StripeSubscriptionId,
+                    cancellationToken: cancellationToken);
+            }
+            catch (StripeException ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Stripe subscription schedule release failed before cancel-at-period-end for tenant {TenantId}",
+                    tenant.Id);
+                throw new InvalidOperationException(
+                    "Could not clear the scheduled plan change before canceling. Undo the scheduled change and try again.");
+            }
+        }
+
         Subscription updated;
         try
         {
@@ -1204,7 +1250,10 @@ public sealed class StripeBillingService(
                 ex,
                 "Subscription cancel-at-period-end update failed for tenant {TenantId}",
                 tenant.Id);
-            throw new InvalidOperationException("Could not update subscription cancellation.");
+            throw new InvalidOperationException(
+                scheduleId is not null
+                    ? "Could not schedule cancellation while a plan change is pending. Undo the scheduled change and try again."
+                    : "Could not update subscription cancellation.");
         }
 
         StripeTenantBillingSync.ApplySubscription(tenant, updated, _settings);
