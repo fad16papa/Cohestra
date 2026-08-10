@@ -13,7 +13,7 @@ const FLOAT_ROWS = [
 
 function HeroCommunityPhoto() {
   return (
-    <figure className="relative aspect-[4/5] w-full max-h-[520px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)] sm:max-h-[580px] lg:aspect-[3/4] lg:max-h-none lg:min-h-[700px] xl:min-h-[760px]">
+    <figure className="relative aspect-[4/5] w-full max-h-[520px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)] sm:max-h-[580px] lg:aspect-auto lg:h-full lg:max-h-none lg:min-h-0">
       <Image
         src={LANDING_IMAGES.hero.src}
         alt={LANDING_IMAGES.hero.alt}
@@ -65,7 +65,7 @@ export function MarketingHeroProductStack({ className }: { className?: string })
   return (
     <div
       className={cn(
-        "marketing-product-lift relative mx-auto w-full max-w-[640px] lg:flex lg:h-full lg:max-w-none lg:flex-col lg:justify-end",
+        "marketing-product-lift relative mx-auto w-full max-w-[640px] lg:mx-0 lg:flex lg:h-full lg:min-h-0 lg:max-w-none lg:flex-col",
         className
       )}
       aria-label="Community photo with live clients preview"
