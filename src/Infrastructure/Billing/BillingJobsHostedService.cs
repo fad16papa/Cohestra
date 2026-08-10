@@ -4,12 +4,15 @@ using Cohestra.Application.Tenants;
 using Cohestra.Domain.Billing;
 using Cohestra.Domain.Outbox;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Outbox;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Cohestra.Infrastructure.Billing;
 
@@ -18,6 +21,7 @@ namespace Cohestra.Infrastructure.Billing;
 /// </summary>
 public sealed class BillingJobsHostedService(
     IServiceScopeFactory scopeFactory,
+    IOptions<PublicWebOptions> publicWebOptions,
     ILogger<BillingJobsHostedService> logger) : BackgroundService
 {
     private const long BillingJobsAdvisoryLockKey = 574839201234567890L;
@@ -71,6 +75,7 @@ public sealed class BillingJobsHostedService(
                     tenant,
                     db,
                     outboxPublisher,
+                    publicWebOptions.Value,
                     now,
                     cancellationToken);
                 await ProcessDelinquencyAsync(tenant, db, outboxPublisher, now, cancellationToken);
@@ -128,6 +133,7 @@ public sealed class BillingJobsHostedService(
         Tenant tenant,
         CohestraDbContext db,
         IOutboxPublisher outboxPublisher,
+        PublicWebOptions publicWebOptions,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
@@ -150,10 +156,15 @@ public sealed class BillingJobsHostedService(
             return Task.CompletedTask;
         }
 
-        const string billingLine = "Manage billing from Settings → Billing in your workspace.";
+        var billingUrl = TenantPublicWebUrlBuilder.BuildTenantPath(
+            publicWebOptions.BaseUrl,
+            tenant.Slug,
+            "/settings/billing");
+        var billingLine = $"Manage billing at {billingUrl}";
 
         var plainBody = $"Your Cohestra trial ends on {trialEnd:MMMM d, yyyy}. {billingLine}";
-        var htmlBody = $"<p>Your trial ends on <strong>{trialEnd:MMMM d, yyyy}</strong>.</p><p>{billingLine}</p>";
+        var htmlBody =
+            $"<p>Your trial ends on <strong>{trialEnd:MMMM d, yyyy}</strong>.</p><p><a href=\"{billingUrl}\">Manage billing</a> in your workspace.</p>";
         EnqueueBillingNotification(
             outboxPublisher,
             tenant,

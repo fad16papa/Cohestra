@@ -38,7 +38,27 @@ describe("downgrade-limit-warnings", () => {
         publishedActivities: 5,
         registrationsThisMonth: 100,
       }),
-      "core"
+      "core",
+      {
+        usage: {
+          seatsUsed: 2,
+          communities: 10,
+          publishedActivities: 5,
+          registrationsThisMonth: 100,
+        },
+        coreLimits: {
+          seats: 3,
+          communities: 3,
+          publishedActivities: 12,
+          registrationsPerMonth: 500,
+        },
+        proLimits: {
+          seats: 10,
+          communities: 10,
+          publishedActivities: 50,
+          registrationsPerMonth: 5000,
+        },
+      }
     );
 
     expect(warnings.some((line) => line.includes("Communities"))).toBe(true);
@@ -52,7 +72,27 @@ describe("downgrade-limit-warnings", () => {
         publishedActivities: 5,
         registrationsThisMonth: 100,
       }),
-      "core"
+      "core",
+      {
+        usage: {
+          seatsUsed: 2,
+          communities: 2,
+          publishedActivities: 5,
+          registrationsThisMonth: 100,
+        },
+        coreLimits: {
+          seats: 3,
+          communities: 3,
+          publishedActivities: 12,
+          registrationsPerMonth: 500,
+        },
+        proLimits: {
+          seats: 10,
+          communities: 10,
+          publishedActivities: 50,
+          registrationsPerMonth: 5000,
+        },
+      }
     );
 
     expect(warnings).toEqual([]);

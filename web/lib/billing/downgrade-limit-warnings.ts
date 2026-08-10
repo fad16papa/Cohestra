@@ -1,18 +1,13 @@
+import type { BillingPlanLimits, BillingUsage } from "@/lib/billing/billing-api";
 import type { TenantShell } from "@/lib/shell/tenant-shell-api";
 
 import type { PaidPlanId } from "@/lib/billing/checkout-validation";
 
-type PlanTierLimits = {
+export type PlanTierLimits = {
   seats: number;
   communities: number;
   publishedActivities: number;
   registrationsPerMonth: number;
-};
-
-const PLAN_TIER_LIMITS: Record<PaidPlanId | "basic", PlanTierLimits> = {
-  basic: { seats: 1, communities: 1, publishedActivities: 4, registrationsPerMonth: 250 },
-  core: { seats: 3, communities: 3, publishedActivities: 12, registrationsPerMonth: 500 },
-  pro: { seats: 10, communities: 10, publishedActivities: 50, registrationsPerMonth: 5000 },
 };
 
 function planLabel(plan: PaidPlanId): string {
@@ -27,16 +22,77 @@ function exceedsCapacityLimit(used: number, limit: number): boolean {
   return used >= limit;
 }
 
+function mapApiLimits(limits: BillingPlanLimits): PlanTierLimits {
+  return {
+    seats: limits.seats,
+    communities: limits.communities,
+    publishedActivities: limits.publishedActivities,
+    registrationsPerMonth: limits.registrationsPerMonth,
+  };
+}
+
+function resolveUsage(
+  shell: TenantShell | null | undefined,
+  usage: BillingUsage | null | undefined
+): BillingUsage | null {
+  if (usage) {
+    return usage;
+  }
+
+  if (!shell) {
+    return null;
+  }
+
+  return {
+    seatsUsed: shell.usage.seatsUsed,
+    communities: shell.usage.communities,
+    publishedActivities: shell.usage.publishedActivities,
+    registrationsThisMonth: shell.usage.registrationsThisMonth,
+  };
+}
+
+function resolveLimitsForPlan(
+  targetPlan: PaidPlanId,
+  shell: TenantShell | null | undefined,
+  coreLimits: BillingPlanLimits | null | undefined,
+  proLimits: BillingPlanLimits | null | undefined
+): PlanTierLimits | null {
+  if (targetPlan === "core" && coreLimits) {
+    return mapApiLimits(coreLimits);
+  }
+
+  if (targetPlan === "pro" && proLimits) {
+    return mapApiLimits(proLimits);
+  }
+
+  if (!shell) {
+    return null;
+  }
+
+  return null;
+}
+
 export function getDowngradeLimitWarnings(
   shell: TenantShell | null | undefined,
-  targetPlan: PaidPlanId
+  targetPlan: PaidPlanId,
+  options?: {
+    usage?: BillingUsage | null;
+    coreLimits?: BillingPlanLimits | null;
+    proLimits?: BillingPlanLimits | null;
+  }
 ): string[] {
-  if (!shell) {
+  const usage = resolveUsage(shell, options?.usage);
+  const limits = resolveLimitsForPlan(
+    targetPlan,
+    shell,
+    options?.coreLimits,
+    options?.proLimits
+  );
+
+  if (!usage || !limits) {
     return [];
   }
 
-  const limits = PLAN_TIER_LIMITS[targetPlan];
-  const usage = shell.usage;
   const warnings: string[] = [];
   const label = planLabel(targetPlan);
 
@@ -69,7 +125,12 @@ export function getDowngradeLimitWarnings(
 
 export function hasDowngradeLimitWarnings(
   shell: TenantShell | null | undefined,
-  targetPlan: PaidPlanId
+  targetPlan: PaidPlanId,
+  options?: {
+    usage?: BillingUsage | null;
+    coreLimits?: BillingPlanLimits | null;
+    proLimits?: BillingPlanLimits | null;
+  }
 ): boolean {
-  return getDowngradeLimitWarnings(shell, targetPlan).length > 0;
+  return getDowngradeLimitWarnings(shell, targetPlan, options).length > 0;
 }

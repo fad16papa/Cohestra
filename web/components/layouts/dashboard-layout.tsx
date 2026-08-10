@@ -11,6 +11,7 @@ import { AdminTopBar } from "@/components/layouts/admin-top-bar";
 import { AdminShellProvider } from "@/components/layouts/admin-shell-context";
 import { BillingBannerBar } from "@/components/shell/billing-banner";
 import { TenantShellProvider, useTenantShell } from "@/components/shell/tenant-shell-provider";
+import { useToast } from "@/components/ui/toast-provider";
 import { syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
 import { cn } from "@/lib/utils";
 
@@ -23,10 +24,12 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
   const searchParams = useSearchParams();
   const { authFetch } = useAuth();
   const { shell, refreshShell } = useTenantShell();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const billingSuccess = searchParams.get("billing") === "success";
     const checkoutSessionId = searchParams.get("session_id");
+    const billingMessage = searchParams.get("billing_message");
     if (!billingSuccess && !checkoutSessionId) {
       return;
     }
@@ -42,6 +45,25 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
 
       if (!cancelled) {
         await refreshShell();
+        if (billingMessage) {
+          showToast({ variant: "success", message: billingMessage });
+        }
+
+        try {
+          const storedWarnings = sessionStorage.getItem("billing_downgrade_warnings");
+          if (storedWarnings) {
+            sessionStorage.removeItem("billing_downgrade_warnings");
+            const warnings = JSON.parse(storedWarnings) as string[];
+            if (Array.isArray(warnings) && warnings.length > 0) {
+              showToast({
+                variant: "default",
+                message: `Usage exceeds your upcoming plan limits: ${warnings[0]}`,
+              });
+            }
+          }
+        } catch {
+          // Ignore malformed storage payloads.
+        }
       }
     }
 
@@ -50,7 +72,7 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
     return () => {
       cancelled = true;
     };
-  }, [authFetch, refreshShell, searchParams]);
+  }, [authFetch, refreshShell, searchParams, showToast]);
 
   return (
     <div

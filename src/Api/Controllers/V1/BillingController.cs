@@ -185,7 +185,8 @@ public class BillingController(
                 session.TrialEndsAt,
                 session.TrialIncluded,
                 session.TrialDisclaimer,
-                session.CompletedInApp));
+                session.CompletedInApp,
+                session.Warnings));
         }
         catch (InvalidOperationException ex)
         {
@@ -603,7 +604,31 @@ public class BillingController(
             summary.StripeConfigured,
             summary.PublishableKey,
             summary.TrialPeriodDays,
-            summary.IsComplimentary);
+            summary.IsComplimentary,
+            summary.Usage is null
+                ? null
+                : new BillingUsageResponse(
+                    summary.Usage.SeatsUsed,
+                    summary.Usage.Communities,
+                    summary.Usage.PublishedActivities,
+                    summary.Usage.RegistrationsThisMonth),
+            summary.CoreLimits is null
+                ? null
+                : new BillingPlanLimitsResponse(
+                    summary.CoreLimits.Seats,
+                    summary.CoreLimits.Communities,
+                    summary.CoreLimits.PublishedActivities,
+                    summary.CoreLimits.RegistrationsPerMonth),
+            summary.ProLimits is null
+                ? null
+                : new BillingPlanLimitsResponse(
+                    summary.ProLimits.Seats,
+                    summary.ProLimits.Communities,
+                    summary.ProLimits.PublishedActivities,
+                    summary.ProLimits.RegistrationsPerMonth),
+            summary.ScheduledPlan?.ToString(),
+            summary.ScheduledPlanEffectiveAt,
+            summary.ScheduledBillingInterval?.ToString());
 
     private static bool TryParsePlan(string? value, out TenantPlan plan)
     {

@@ -51,7 +51,7 @@ function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { authFetch, status } = useAuth();
-  const { shell } = useTenantShell();
+  const { shell, loading: shellLoading } = useTenantShell();
 
   const planParam = searchParams.get("plan");
   const intervalParam = searchParams.get("interval") ?? "monthly";
@@ -159,6 +159,30 @@ function CheckoutContent() {
         setError("Your workspace is already on the selected plan and billing interval.");
         return;
       }
+
+      if (
+        billingSummary.scheduledPlan
+        && billingSummary.scheduledPlan !== "Basic"
+        && billingSummary.scheduledPlan.toLowerCase() !== selectedPlan
+      ) {
+        setError(
+          "A plan change is already scheduled. Open Settings → Billing and cancel the scheduled change before choosing a different plan."
+        );
+        return;
+      }
+    }
+
+    const isDowngrade =
+      billingSummary !== null
+      && isPaidPlanDowngrade(billingSummary.plan, selectedPlan);
+    if (isDowngrade && billingLoading) {
+      setError("Still loading billing details. Try again in a moment.");
+      return;
+    }
+
+    if (isDowngrade && shellLoading && !billingSummary?.usage) {
+      setError("Still loading workspace usage. Try again in a moment.");
+      return;
     }
 
     setStarting(true);
@@ -177,6 +201,17 @@ function CheckoutContent() {
       return;
     }
 
+    if (checkout.result.warnings.length > 0) {
+      try {
+        sessionStorage.setItem(
+          "billing_downgrade_warnings",
+          JSON.stringify(checkout.result.warnings)
+        );
+      } catch {
+        // Ignore storage failures; checkout still proceeds.
+      }
+    }
+
     window.location.href = checkout.result.checkoutUrl;
   }
 
@@ -191,6 +226,13 @@ function CheckoutContent() {
     }
 
     if (billingLoading) {
+      return;
+    }
+
+    const wouldDowngrade =
+      billingSummary !== null && isPaidPlanDowngrade(billingSummary.plan, plan);
+    if (wouldDowngrade) {
+      setStarting(false);
       return;
     }
 
@@ -246,8 +288,16 @@ function CheckoutContent() {
   const isDowngradeSelection =
     billingSummary !== null && isPaidPlanDowngrade(currentPlan, effectivePlan);
   const downgradeLimitWarnings = isDowngradeSelection
-    ? getDowngradeLimitWarnings(shell, effectivePlan)
+    ? getDowngradeLimitWarnings(shell, effectivePlan, {
+        usage: billingSummary?.usage,
+        coreLimits: billingSummary?.coreLimits,
+        proLimits: billingSummary?.proLimits,
+      })
     : [];
+  const hasScheduledPlanChange =
+    billingSummary?.scheduledPlan
+    && billingSummary.scheduledPlan !== "Basic"
+    && billingSummary.scheduledPlanEffectiveAt;
   const isSameSelection =
     billingSummary !== null
     && isSamePlanAndInterval(currentPlan, billingSummary.billingInterval, effectivePlan, interval);
@@ -277,11 +327,15 @@ function CheckoutContent() {
         hasConsumedTrial: billingSummary.hasConsumedTrial,
       })
     : "After trial";
-  const submitDisabled = starting || isSameSelection;
+  const submitDisabled =
+    starting
+    || isSameSelection
+    || Boolean(hasScheduledPlanChange)
+    || (isDowngradeSelection && shellLoading && !billingSummary?.usage);
   const isPaidTenant = hasActivePaidSubscription(billingStatus);
 
-  // Plan + interval already chosen on the upgrade gate — go straight to Stripe.
-  if (autoStart && !canceled && plan) {
+  // Plan + interval already chosen on the upgrade gate — go straight to Stripe (upgrades only).
+  if (autoStart && !canceled && plan && !isDowngradeSelection) {
     const meta = MARKETING_PLANS.find((p) => p.id === plan);
     const adjustHref = `/billing/checkout?plan=${plan}&interval=${interval}`;
     const alreadyOnPlan = error?.includes("already on the selected plan");
@@ -395,6 +449,21 @@ function CheckoutContent() {
           className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
         >
           Checkout was canceled. Adjust your plan or billing interval and try again.
+        </p>
+      ) : null}
+
+      {hasScheduledPlanChange ? (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
+        >
+          A switch to {billingSummary?.scheduledPlan} is already scheduled for{" "}
+          {new Date(billingSummary!.scheduledPlanEffectiveAt!).toLocaleDateString(undefined, {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })}
+          . Cancel it in Settings → Billing before choosing a different plan.
         </p>
       ) : null}
 

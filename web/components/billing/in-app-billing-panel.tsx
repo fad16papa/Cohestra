@@ -229,7 +229,7 @@ export function InAppBillingPanel({
                   .finally(() => setSubscriptionUpdating(false));
               }}
             >
-              {subscriptionUpdating ? "Updating…" : "Keep current plan"}
+              {subscriptionUpdating ? "Updating…" : "Undo scheduled downgrade"}
             </Button>
           </div>
         ) : null}

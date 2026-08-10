@@ -1,5 +1,19 @@
 import { getPublicApiBaseUrl } from "@/lib/api";
 
+export type BillingUsage = {
+  seatsUsed: number;
+  communities: number;
+  publishedActivities: number;
+  registrationsThisMonth: number;
+};
+
+export type BillingPlanLimits = {
+  seats: number;
+  communities: number;
+  publishedActivities: number;
+  registrationsPerMonth: number;
+};
+
 export type BillingSummary = {
   plan: string;
   billingStatus: string;
@@ -10,6 +24,12 @@ export type BillingSummary = {
   publishableKey: string | null;
   trialPeriodDays: number;
   isComplimentary: boolean;
+  usage: BillingUsage | null;
+  coreLimits: BillingPlanLimits | null;
+  proLimits: BillingPlanLimits | null;
+  scheduledPlan: string | null;
+  scheduledPlanEffectiveAt: string | null;
+  scheduledBillingInterval: string | null;
 };
 
 export type CheckoutSessionResult = {
@@ -18,6 +38,7 @@ export type CheckoutSessionResult = {
   trialIncluded: boolean;
   trialDisclaimer: string;
   completedInApp: boolean;
+  warnings: string[];
 };
 
 function parseProblem(raw: Record<string, unknown>): string {
@@ -133,8 +154,63 @@ export async function createBillingCheckoutWithAuth(
       trialIncluded: Boolean(raw.trialIncluded ?? raw.TrialIncluded),
       trialDisclaimer,
       completedInApp: Boolean(raw.completedInApp ?? raw.CompletedInApp),
+      warnings: parseStringArray(raw.warnings ?? raw.Warnings),
     },
   };
+}
+
+function parsePlanLimits(raw: unknown): BillingPlanLimits | null {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const seats = record.seats ?? record.Seats;
+  const communities = record.communities ?? record.Communities;
+  const publishedActivities = record.publishedActivities ?? record.PublishedActivities;
+  const registrationsPerMonth = record.registrationsPerMonth ?? record.RegistrationsPerMonth;
+
+  if (
+    typeof seats !== "number"
+    || typeof communities !== "number"
+    || typeof publishedActivities !== "number"
+    || typeof registrationsPerMonth !== "number"
+  ) {
+    return null;
+  }
+
+  return { seats, communities, publishedActivities, registrationsPerMonth };
+}
+
+function parseUsage(raw: unknown): BillingUsage | null {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const seatsUsed = record.seatsUsed ?? record.SeatsUsed;
+  const communities = record.communities ?? record.Communities;
+  const publishedActivities = record.publishedActivities ?? record.PublishedActivities;
+  const registrationsThisMonth = record.registrationsThisMonth ?? record.RegistrationsThisMonth;
+
+  if (
+    typeof seatsUsed !== "number"
+    || typeof communities !== "number"
+    || typeof publishedActivities !== "number"
+    || typeof registrationsThisMonth !== "number"
+  ) {
+    return null;
+  }
+
+  return { seatsUsed, communities, publishedActivities, registrationsThisMonth };
+}
+
+function parseStringArray(raw: unknown): string[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw.filter((item): item is string => typeof item === "string");
 }
 
 export function mapBillingSummary(raw: Record<string, unknown>): BillingSummary {
@@ -157,6 +233,21 @@ export function mapBillingSummary(raw: Record<string, unknown>): BillingSummary 
         : null,
     trialPeriodDays: Number(raw.trialPeriodDays ?? raw.TrialPeriodDays ?? 30),
     isComplimentary: Boolean(raw.isComplimentary ?? raw.IsComplimentary),
+    usage: parseUsage(raw.usage ?? raw.Usage),
+    coreLimits: parsePlanLimits(raw.coreLimits ?? raw.CoreLimits),
+    proLimits: parsePlanLimits(raw.proLimits ?? raw.ProLimits),
+    scheduledPlan:
+      typeof (raw.scheduledPlan ?? raw.ScheduledPlan) === "string"
+        ? String(raw.scheduledPlan ?? raw.ScheduledPlan)
+        : null,
+    scheduledPlanEffectiveAt:
+      typeof (raw.scheduledPlanEffectiveAt ?? raw.ScheduledPlanEffectiveAt) === "string"
+        ? String(raw.scheduledPlanEffectiveAt ?? raw.ScheduledPlanEffectiveAt)
+        : null,
+    scheduledBillingInterval:
+      typeof (raw.scheduledBillingInterval ?? raw.ScheduledBillingInterval) === "string"
+        ? String(raw.scheduledBillingInterval ?? raw.ScheduledBillingInterval)
+        : null,
   };
 }
 
