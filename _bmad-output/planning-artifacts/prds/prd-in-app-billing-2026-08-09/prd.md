@@ -37,4 +37,5 @@ Epic 14 Story 14.7 originally specified Stripe-hosted portal for money UX. This 
 
 ## Open items
 
-- Plan downgrade scheduling UI (Core ↔ Pro interval change) — defer; use checkout upgrade path + cancel for now.
+- ~~Plan downgrade scheduling UI (Core ↔ Pro interval change) — defer; use checkout upgrade path + cancel for now.~~ **Superseded** — see `prd-billing-trust-downgrade-notifications-2026-08-10/addendum.md`
+- Downgrade / billing-trust email matrix — see same addendum

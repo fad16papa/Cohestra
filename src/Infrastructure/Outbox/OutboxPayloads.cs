@@ -20,4 +20,7 @@ public static class BillingNotificationNoticeTypes
     public const string PastDue = "past_due";
     public const string OnHold = "on_hold";
     public const string Dormancy = "dormancy";
+    public const string ScheduledDowngrade = "scheduled_downgrade";
+    public const string ScheduledDowngradeReminder = "scheduled_downgrade_reminder";
+    public const string ScheduledDowngradeApplied = "scheduled_downgrade_applied";
 }
