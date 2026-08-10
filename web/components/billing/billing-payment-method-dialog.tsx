@@ -5,6 +5,7 @@ import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-
 import { loadStripe, type Stripe } from "@stripe/stripe-js";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button } from "@/components/ui/button";
 import {
   confirmPaymentMethodSetupWithAuth,
@@ -72,6 +73,9 @@ function PaymentMethodForm({
       <PaymentElement
         options={{
           layout: "tabs",
+          wallets: {
+            link: "never",
+          },
           defaultValues: {
             billingDetails: {
               email: operatorEmail,
@@ -103,6 +107,8 @@ export function BillingPaymentMethodDialog({
   onSaved,
 }: BillingPaymentMethodDialogProps) {
   const { authFetch, profile } = useAuth();
+  const { shell } = useTenantShell();
+  const workspaceLabel = shell?.tenantName?.trim() || "this workspace";
   const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -144,18 +150,18 @@ export function BillingPaymentMethodDialog({
           Add payment method
         </h3>
         <p className="mt-1 text-sm text-text-muted-warm">
-          Card details are processed securely by Stripe for{" "}
-          <span className="font-medium text-text-warm">{profile?.email ?? "your account"}</span>.
-          Cohestra never stores your full card number.
+          Card details are processed securely by Stripe and saved to workspace{" "}
+          <span className="font-medium text-text-warm">{workspaceLabel}</span>. Cohestra never
+          stores your full card number.
         </p>
 
         <div className="mt-5">
           {loading ? <p className="text-sm text-text-muted-warm">Loading secure form…</p> : null}
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          {!loading && !error && stripePromise && clientSecret && profile?.email ? (
+          {!loading && !error && stripePromise && clientSecret ? (
             <Elements stripe={stripePromise} options={{ clientSecret }}>
               <PaymentMethodForm
-                operatorEmail={profile.email}
+                operatorEmail={profile?.email ?? ""}
                 onClose={onClose}
                 onSaved={onSaved}
               />
