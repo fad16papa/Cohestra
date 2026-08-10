@@ -21,7 +21,8 @@ public sealed record CheckoutSessionResponse(
     string CheckoutUrl,
     DateTimeOffset? TrialEndsAt,
     bool TrialIncluded,
-    string TrialDisclaimer);
+    string TrialDisclaimer,
+    bool CompletedInApp = false);
 
 public sealed record CreatePortalSessionRequest(string? ReturnUrl);
 

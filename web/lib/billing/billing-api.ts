@@ -17,6 +17,7 @@ export type CheckoutSessionResult = {
   trialEndsAt: string | null;
   trialIncluded: boolean;
   trialDisclaimer: string;
+  completedInApp: boolean;
 };
 
 function parseProblem(raw: Record<string, unknown>): string {
@@ -131,6 +132,7 @@ export async function createBillingCheckoutWithAuth(
           : null,
       trialIncluded: Boolean(raw.trialIncluded ?? raw.TrialIncluded),
       trialDisclaimer,
+      completedInApp: Boolean(raw.completedInApp ?? raw.CompletedInApp),
     },
   };
 }

@@ -80,12 +80,36 @@ public sealed class StripeBillingService(
             throw new InvalidOperationException("Tenant already has a Stripe subscription in progress.");
         }
 
+        StripeConfiguration.ApiKey = _settings.SecretKey;
+
+        if (string.IsNullOrWhiteSpace(tenant.StripeCustomerId))
+        {
+            if (string.IsNullOrWhiteSpace(command.AdminEmail))
+            {
+                throw new InvalidOperationException("Admin email is required to start Checkout.");
+            }
+
+            await EnsureStripeCustomerForOperatorAsync(tenant, command.AdminEmail, cancellationToken);
+        }
+
+        var savedPaymentMethod = await FetchDefaultPaymentMethodAsync(
+            tenant.StripeCustomerId!,
+            cancellationToken);
+        if (savedPaymentMethod is not null)
+        {
+            return await SubscribeWithSavedPaymentMethodAsync(
+                tenant,
+                command,
+                priceId,
+                savedPaymentMethod,
+                cancellationToken);
+        }
+
         if (string.IsNullOrWhiteSpace(tenant.StripeCustomerId) && string.IsNullOrWhiteSpace(command.AdminEmail))
         {
             throw new InvalidOperationException("Admin email is required to start Checkout.");
         }
 
-        StripeConfiguration.ApiKey = _settings.SecretKey;
         var sessionService = new SessionService();
 
         var includeTrial = !tenant.HasConsumedTrial;
@@ -132,7 +156,7 @@ public sealed class StripeBillingService(
             },
             SuccessUrl = command.SuccessUrl,
             CancelUrl = command.CancelUrl,
-            PaymentMethodCollection = "always",
+            PaymentMethodCollection = "if_required",
         };
 
         Session session;
@@ -252,10 +276,122 @@ public sealed class StripeBillingService(
             : "Your plan was updated. Stripe will prorate any price difference on your next invoice.";
 
         return new CheckoutSessionDto(
-            command.SuccessUrl,
+            BuildInAppSuccessUrl(command.SuccessUrl),
             tenant.TrialEndsAt,
             tenant.BillingStatus == BillingStatus.Trialing,
-            disclaimer);
+            disclaimer,
+            CompletedInApp: true);
+    }
+
+    private async Task<CheckoutSessionDto> SubscribeWithSavedPaymentMethodAsync(
+        Tenant tenant,
+        CreateCheckoutSessionCommand command,
+        string priceId,
+        BillingPaymentMethodDto paymentMethod,
+        CancellationToken cancellationToken)
+    {
+        var includeTrial = !tenant.HasConsumedTrial;
+        DateTimeOffset? projectedTrialEnd = includeTrial
+            ? DateTimeOffset.UtcNow.AddDays(_settings.TrialPeriodDays)
+            : null;
+
+        var subscriptionService = new SubscriptionService();
+        var options = new SubscriptionCreateOptions
+        {
+            Customer = tenant.StripeCustomerId,
+            DefaultPaymentMethod = paymentMethod.Id,
+            Items =
+            [
+                new SubscriptionItemOptions
+                {
+                    Price = priceId,
+                },
+            ],
+            Metadata = new Dictionary<string, string>
+            {
+                ["tenant_id"] = tenant.Id.ToString(),
+                ["tenant_slug"] = command.TenantSlug,
+                ["plan"] = command.Plan.ToString(),
+                ["interval"] = command.Interval.ToString(),
+            },
+        };
+
+        if (includeTrial)
+        {
+            options.TrialPeriodDays = _settings.TrialPeriodDays;
+        }
+
+        Subscription subscription;
+        try
+        {
+            subscription = await subscriptionService.CreateAsync(options, cancellationToken: cancellationToken);
+        }
+        catch (StripeException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Subscription create with saved payment method failed for tenant {TenantId}",
+                tenant.Id);
+            throw new InvalidOperationException(
+                "Could not start your subscription with the saved payment method. Add a card in billing settings or continue to Stripe Checkout.");
+        }
+
+        if (subscription.Status is "incomplete" or "incomplete_expired")
+        {
+            throw new InvalidOperationException(
+                "Your saved card requires additional verification. Remove it and add your card again, or continue to Stripe Checkout.");
+        }
+
+        StripeTenantBillingSync.ApplySubscription(tenant, subscription, _settings);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await EnsurePaidSitePageIfNeededAsync(tenant, cancellationToken);
+
+        var disclaimer = projectedTrialEnd is null
+            ? "Your subscription is active. Stripe will charge your saved payment method."
+            : StripeTenantBillingSync.BuildTrialDisclaimer(projectedTrialEnd.Value);
+
+        return new CheckoutSessionDto(
+            BuildInAppSuccessUrl(command.SuccessUrl),
+            tenant.TrialEndsAt ?? projectedTrialEnd,
+            includeTrial,
+            disclaimer,
+            CompletedInApp: true);
+    }
+
+    private static string BuildInAppSuccessUrl(string successUrl)
+    {
+        if (string.IsNullOrWhiteSpace(successUrl))
+        {
+            return successUrl;
+        }
+
+        var withoutPlaceholder = successUrl.Replace(
+            "{CHECKOUT_SESSION_ID}",
+            string.Empty,
+            StringComparison.Ordinal);
+
+        var questionIndex = withoutPlaceholder.IndexOf('?', StringComparison.Ordinal);
+        if (questionIndex < 0)
+        {
+            return withoutPlaceholder;
+        }
+
+        var baseUrl = withoutPlaceholder[..questionIndex];
+        var keptQuery = withoutPlaceholder[(questionIndex + 1)..]
+            .Split('&', StringSplitOptions.RemoveEmptyEntries)
+            .Where(part =>
+            {
+                if (!part.StartsWith("session_id=", StringComparison.Ordinal))
+                {
+                    return true;
+                }
+
+                var value = part["session_id=".Length..];
+                return !string.IsNullOrWhiteSpace(value);
+            });
+
+        var rebuilt = string.Join("&", keptQuery);
+        return rebuilt.Length == 0 ? baseUrl : $"{baseUrl}?{rebuilt}";
     }
 
     public async Task<PortalSessionDto> CreatePortalSessionAsync(
