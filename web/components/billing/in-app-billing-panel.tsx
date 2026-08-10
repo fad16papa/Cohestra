@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { CreditCard, Download, Mail, Pencil, Phone, User } from "lucide-react";
+import { CreditCard, Mail, Pencil, Phone, User } from "lucide-react";
 
 import { PhoneCountrySelect } from "@/components/activities/phone-country-select";
 import { useAuth } from "@/components/auth/auth-provider";
+import { BillingInvoiceHistorySection } from "@/components/billing/billing-invoice-history-section";
 import { BillingPaymentMethodDialog } from "@/components/billing/billing-payment-method-dialog";
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
 import {
@@ -23,7 +24,6 @@ import {
   cancelSubscriptionWithAuth,
   fetchBillingDetailsWithAuth,
   formatCardBrand,
-  formatInvoiceAmount,
   cancelScheduledPlanChangeWithAuth,
   resumeSubscriptionWithAuth,
   updateBillingContactWithAuth,
@@ -433,59 +433,6 @@ export function InAppBillingPanel({
             )}
           </BillingSection>
 
-          <BillingSection title="Invoice history">
-            {invoices.length === 0 ? (
-              <p className="text-sm text-text-muted-warm">No invoice history yet.</p>
-            ) : (
-              <ul className="divide-y divide-border-warm">
-                {invoices.map((invoice) => (
-                  <li
-                    key={invoice.id}
-                    className="flex flex-col gap-2 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div>
-                      <p className="font-medium text-text-warm">
-                        {formatInvoiceAmount(invoice.amountDueCents, invoice.currency)}
-                      </p>
-                      <p className="text-text-muted-warm">
-                        {new Date(invoice.createdAt).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                        {" · "}
-                        {invoice.status}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      {invoice.pdfUrl ? (
-                        <a
-                          href={invoice.pdfUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-2")}
-                        >
-                          <Download className="size-4" aria-hidden />
-                          PDF
-                        </a>
-                      ) : null}
-                      {invoice.hostedInvoiceUrl ? (
-                        <a
-                          href={invoice.hostedInvoiceUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className={buttonVariants({ variant: "ghost", size: "sm" })}
-                        >
-                          View
-                        </a>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </BillingSection>
-
           <BillingSection title="Plan management">
             <div className="space-y-3 text-sm text-text-muted-warm">
               <p>
@@ -528,6 +475,8 @@ export function InAppBillingPanel({
               </div>
             </div>
           </BillingSection>
+
+          <BillingInvoiceHistorySection invoices={invoices} />
         </>
       )}
 
