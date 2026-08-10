@@ -29,6 +29,8 @@ Documents shipped behavior after PR #166 and follow-up hardening (Aug 2026). Doe
 - `GET /api/v1/admin/billing` returns usage, Core/Pro limits, scheduled plan fields
 - Checkout response includes server-side `warnings[]` for downgrades
 - Settings → Billing: **Undo scheduled downgrade** (distinct from **Keep subscription**)
+- Settings → Billing: confirm dialogs before **Cancel at period end** and **Undo scheduled downgrade**
+- Checkout: inline **Undo scheduled downgrade** on scheduled-change banner (no Settings detour required)
 - Dashboard toast from `billing_message` after in-app plan changes
 
 ## Email notification matrix (Aug 2026)

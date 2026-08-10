@@ -13,6 +13,7 @@ import {
   fetchBillingSummaryWithAuth,
   type BillingSummary,
 } from "@/lib/billing/billing-api";
+import { cancelScheduledPlanChangeWithAuth } from "@/lib/billing/billing-details-api";
 import {
   checkoutActionLabel,
   checkoutIntroCopy,
@@ -69,6 +70,7 @@ function CheckoutContent() {
   const [billingLoading, setBillingLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(autoStart && !canceled);
+  const [undoingScheduledChange, setUndoingScheduledChange] = useState(false);
   const [handoffPending, setHandoffPending] = useState(
     () => (searchParams.get("handoff")?.trim().length ?? 0) > 0
   );
@@ -166,7 +168,7 @@ function CheckoutContent() {
         && billingSummary.scheduledPlan.toLowerCase() !== selectedPlan
       ) {
         setError(
-          "A plan change is already scheduled. Open Settings → Billing and cancel the scheduled change before choosing a different plan."
+          "A plan change is already scheduled. Undo it below or in Settings → Billing before choosing a different plan."
         );
         return;
       }
@@ -453,18 +455,47 @@ function CheckoutContent() {
       ) : null}
 
       {hasScheduledPlanChange ? (
-        <p
+        <div
           role="status"
           className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
         >
-          A switch to {billingSummary?.scheduledPlan} is already scheduled for{" "}
-          {new Date(billingSummary!.scheduledPlanEffectiveAt!).toLocaleDateString(undefined, {
-            month: "long",
-            day: "numeric",
-            year: "numeric",
-          })}
-          . Cancel it in Settings → Billing before choosing a different plan.
-        </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              A switch to {billingSummary?.scheduledPlan} is already scheduled for{" "}
+              {new Date(billingSummary!.scheduledPlanEffectiveAt!).toLocaleDateString(undefined, {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+              . Undo it here to choose a different plan, or manage it in Settings → Billing.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={undoingScheduledChange || starting}
+              onClick={() => {
+                setUndoingScheduledChange(true);
+                setError(null);
+                void cancelScheduledPlanChangeWithAuth(authFetch)
+                  .then(() => fetchBillingSummaryWithAuth(authFetch))
+                  .then((summary) => {
+                    setBillingSummary(summary);
+                  })
+                  .catch((err) => {
+                    setError(
+                      err instanceof Error
+                        ? err.message
+                        : "Could not cancel the scheduled plan change."
+                    );
+                  })
+                  .finally(() => setUndoingScheduledChange(false));
+              }}
+            >
+              {undoingScheduledChange ? "Updating…" : "Undo scheduled downgrade"}
+            </Button>
+          </div>
+        </div>
       ) : null}
 
       {isDowngradeSelection ? (
