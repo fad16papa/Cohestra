@@ -4,7 +4,6 @@ import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 
 import { ReportDonutChart } from "@/components/reports/report-donut-chart";
-import { ReportHorizontalRankingChart } from "@/components/reports/report-horizontal-ranking-chart";
 import {
   formatSharePercent,
   REPORT_RANKING_TOP_COUNT,
@@ -33,27 +32,19 @@ export function ReportActivityRankingChart({ items }: ReportActivityRankingChart
   const topCount = visibleItems[0]?.registrationCount ?? 0;
   const totalRegistrations = items.reduce((sum, item) => sum + item.registrationCount, 0);
 
-  const chartItems = visibleItems.map((item, index) => ({
+  const donutSlices = visibleItems.map((item, index) => ({
     id: item.activityId,
-    shortLabel: `#${index + 1}`,
+    label: truncateReportLabel(item.activityName, 28),
     fullLabel: item.activityName,
     value: item.registrationCount,
     color: CHART_COLORS[index % CHART_COLORS.length],
-  }));
-
-  const donutSlices = chartItems.map((item) => ({
-    id: item.id,
-    label: truncateReportLabel(item.fullLabel, 28),
-    fullLabel: item.fullLabel,
-    value: item.value,
-    color: item.color,
   }));
 
   return (
     <ReportDepthCard accent="lagoon" className="flex h-full flex-col overflow-hidden">
       <ReportPanelHeader
         title="Top activities"
-        description="Where registrations concentrated — chart by rank, names in the list below."
+        description="Where registrations concentrated — hover segments for share, details in the list below."
         aside={
           visibleItems.length > 0 ? (
             <p className="text-right text-sm font-semibold tabular-nums text-text-warm">
@@ -70,13 +61,12 @@ export function ReportActivityRankingChart({ items }: ReportActivityRankingChart
           </p>
         ) : (
           <>
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_9rem] lg:items-center">
-              <ReportHorizontalRankingChart items={chartItems} />
+            <div className="flex justify-center py-2">
               <ReportDonutChart
                 slices={donutSlices}
                 centerValue={String(topCount)}
                 centerLabel="Top activity"
-                size="md"
+                size="lg"
               />
             </div>
 
