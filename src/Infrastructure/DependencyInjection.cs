@@ -146,6 +146,9 @@ public static class DependencyInjection
         services.AddScoped<IBillingService, StripeBillingService>();
         services.AddScoped<IStripeWebhookProcessor, StripeWebhookProcessor>();
         services.AddHostedService<BillingJobsHostedService>();
+        services.Configure<FollowUpDigestOptions>(
+            configuration.GetSection(FollowUpDigestOptions.SectionName));
+        services.AddHostedService<FollowUpDigestHostedService>();
         services.AddHostedService<OutboxDispatcherHostedService>();
         services.AddScoped<IOutboxPublisher, OutboxPublisher>();
         services.AddScoped<IOutboxProcessor, OutboxProcessor>();

@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { ClientBulkSelectBar } from "@/components/clients/client-bulk-select-bar";
 import { ClientLeadQueueHeader } from "@/components/clients/client-lead-queue-header";
 import { ClientRow } from "@/components/clients/client-row";
+import { ClientsFilterBanners } from "@/components/clients/clients-filter-banners";
 import {
   clientsTableActionsColumnClassName,
   clientsTableContactColumnClassName,
@@ -20,12 +20,13 @@ import {
   clientsTableStatusColumnClassName,
 } from "@/components/clients/clients-table-layout";
 import { MessengerOpenConfirmDialog } from "@/components/clients/messenger-open-confirm-dialog";
+import { useClientsListFilters } from "@/components/clients/use-clients-list-filters";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { ListSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast-provider";
@@ -34,7 +35,6 @@ import {
   exportClientsCsv,
   fetchClientNationalities,
   fetchClients,
-  leadStatusLabels,
   recordWhatsAppInitiated,
   recordViberInitiated,
   updateClientLeadStatus,
@@ -49,7 +49,7 @@ import { buildViberAppDeepLink, buildWhatsAppWebUrl, openAppDeepLink } from "@/l
 import type { MessengerChannel } from "@/lib/messenger-prerequisites";
 import { formatPhoneDisplay } from "@/lib/phone-countries";
 import { cn } from "@/lib/utils";
-import { Download, Users } from "lucide-react";
+import { ChevronDown, Download, Users } from "lucide-react";
 
 const CLIENT_PAGE_SIZE = 25;
 const CLIENT_SEARCH_DEBOUNCE_MS = 400;
@@ -88,28 +88,6 @@ function adjustStatusCounts(
 
 type SortDirection = "asc" | "desc";
 
-function parseLeadStatusFilter(value: string | null): LeadStatus | null {
-  if (
-    value === "new" ||
-    value === "contacted" ||
-    value === "active" ||
-    value === "inactive"
-  ) {
-    return value;
-  }
-
-  return null;
-}
-
-function parseCreatedWithinDays(value: string | null): number | null {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
-
 type ClientSearchInputProps = {
   committedValue: string;
   onCommit: (value: string) => void;
@@ -141,6 +119,52 @@ function ClientSearchInput({ committedValue, onCommit }: ClientSearchInputProps)
       onChange={(event) => setDraft(event.target.value)}
     />
   );
+};
+
+type ClientSearchNationalityFiltersProps = {
+  searchFilter: string;
+  nationalityFilter: string;
+  nationalitySelectOptions: string[];
+  onSearchCommit: (value: string) => void;
+  onNationalityChange: (value: string) => void;
+};
+
+function ClientSearchNationalityFilters({
+  searchFilter,
+  nationalityFilter,
+  nationalitySelectOptions,
+  onSearchCommit,
+  onNationalityChange,
+}: ClientSearchNationalityFiltersProps) {
+  return (
+    <>
+      <div className="space-y-2">
+        <Label htmlFor="client-search">Search</Label>
+        <ClientSearchInput
+          key={searchFilter}
+          committedValue={searchFilter}
+          onCommit={onSearchCommit}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="client-nationality-filter">Nationality</Label>
+        <select
+          id="client-nationality-filter"
+          value={nationalityFilter}
+          onChange={(event) => onNationalityChange(event.target.value)}
+          className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        >
+          <option value="">All nationalities</option>
+          {nationalitySelectOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+    </>
+  );
 }
 
 export function ClientsListPage() {
@@ -148,20 +172,31 @@ export function ClientsListPage() {
   const { authFetch } = useAuth();
   const { shell } = useTenantShell();
   const { showToast, showActionToast } = useToast();
-  const searchParams = useSearchParams();
-  const mergeSuspectOnly = searchParams.get("mergeSuspect") === "true";
-  const followUpDueOnly = searchParams.get("followUpDue") === "true";
-  const createdWithinDays = parseCreatedWithinDays(
-    searchParams.get("createdWithinDays")
-  );
-  const registeredWithinDays = parseCreatedWithinDays(
-    searchParams.get("registeredWithinDays")
-  );
-  const leadStatusFilter = parseLeadStatusFilter(searchParams.get("leadStatus"));
-  const nationalityFilter = searchParams.get("nationality")?.trim() ?? "";
-  const searchFilter = searchParams.get("search")?.trim() ?? "";
-  const activityIdFilter = searchParams.get("activityId")?.trim() ?? "";
-  const activityNameFilter = searchParams.get("activityName")?.trim() ?? "";
+  const {
+    filters,
+    hasActiveFilters,
+    updateSearch,
+    updateLeadStatus,
+    updateNationality,
+    updateFollowUpDue,
+    updateMergeSuspect,
+    updateRegisteredWithinDays,
+    updateCreatedWithinDays,
+    clearActivityFilter,
+  } = useClientsListFilters();
+
+  const {
+    search: searchFilter,
+    leadStatus: leadStatusFilter,
+    nationality: nationalityFilter,
+    followUpDue: followUpDueOnly,
+    mergeSuspect: mergeSuspectOnly,
+    createdWithinDays,
+    registeredWithinDays,
+    activityId: activityIdFilter,
+    activityName: activityNameFilter,
+  } = filters;
+
   const [resolvedActivityName, setResolvedActivityName] = useState("");
   const [clients, setClients] = useState<ClientListItem[]>([]);
   const [statusCounts, setStatusCounts] =
@@ -185,6 +220,7 @@ export function ClientsListPage() {
     Map<string, ClientListItem>
   >(() => new Map());
   const [isExporting, setIsExporting] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const selectedClientIds = useMemo(
     () => new Set(selectedClientsById.keys()),
@@ -194,24 +230,6 @@ export function ClientsListPage() {
   const canUseCampaignHandoff = isProPlan(shell?.plan ?? "Basic");
 
   const totalPages = Math.max(1, Math.ceil(totalCount / CLIENT_PAGE_SIZE));
-
-  const commitSearch = useCallback(
-    (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      const trimmed = value.trim();
-
-      if (trimmed) {
-        params.set("search", trimmed);
-      } else {
-        params.delete("search");
-      }
-
-      router.replace(
-        params.toString() ? `/clients?${params.toString()}` : "/clients"
-      );
-    },
-    [router, searchParams]
-  );
 
   useEffect(() => {
     let cancelled = false;
@@ -340,117 +358,7 @@ export function ClientsListPage() {
     setPage(1);
   }
 
-  function updateLeadStatusFilter(nextStatus: LeadStatus | null) {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (nextStatus) {
-      params.set("leadStatus", nextStatus);
-      params.delete("mergeSuspect");
-      params.delete("followUpDue");
-    } else {
-      params.delete("leadStatus");
-    }
-
-    router.replace(
-      params.toString() ? `/clients?${params.toString()}` : "/clients"
-    );
-  }
-
-  function updateMergeSuspectFilter(active: boolean) {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (active) {
-      params.set("mergeSuspect", "true");
-      params.delete("leadStatus");
-      params.delete("registeredWithinDays");
-      params.delete("createdWithinDays");
-      params.delete("followUpDue");
-    } else {
-      params.delete("mergeSuspect");
-    }
-
-    router.replace(
-      params.toString() ? `/clients?${params.toString()}` : "/clients"
-    );
-  }
-
-  function updateRegisteredWithinDaysFilter(days: number | null) {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (days && days > 0) {
-      params.set("registeredWithinDays", String(days));
-      params.delete("mergeSuspect");
-      params.delete("createdWithinDays");
-      params.delete("followUpDue");
-    } else {
-      params.delete("registeredWithinDays");
-    }
-
-    router.replace(
-      params.toString() ? `/clients?${params.toString()}` : "/clients"
-    );
-  }
-
-  function updateFollowUpDueFilter(active: boolean) {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (active) {
-      params.set("followUpDue", "true");
-      params.delete("mergeSuspect");
-      params.delete("leadStatus");
-      params.delete("registeredWithinDays");
-      params.delete("createdWithinDays");
-    } else {
-      params.delete("followUpDue");
-    }
-
-    router.replace(
-      params.toString() ? `/clients?${params.toString()}` : "/clients"
-    );
-  }
-
-  function updateNationalityFilter(nextNationality: string) {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (nextNationality) {
-      params.set("nationality", nextNationality);
-    } else {
-      params.delete("nationality");
-    }
-
-    router.replace(
-      params.toString() ? `/clients?${params.toString()}` : "/clients"
-    );
-  }
-
-  function clearCreatedWithinDaysFilter() {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("createdWithinDays");
-    router.replace(
-      params.toString() ? `/clients?${params.toString()}` : "/clients"
-    );
-  }
-
-  function clearActivityFilter() {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("activityId");
-    params.delete("activityName");
-    router.replace(
-      params.toString() ? `/clients?${params.toString()}` : "/clients"
-    );
-  }
-
   const activityFilterLabel = activityNameFilter || resolvedActivityName;
-
-  const hasActiveFilters =
-    Boolean(searchFilter) ||
-    Boolean(leadStatusFilter) ||
-    Boolean(nationalityFilter) ||
-    Boolean(activityIdFilter) ||
-    mergeSuspectOnly ||
-    followUpDueOnly ||
-    Boolean(createdWithinDays) ||
-    Boolean(registeredWithinDays);
 
   const selectedClients = useMemo(
     () => Array.from(selectedClientsById.values()),
@@ -739,6 +647,16 @@ export function ClientsListPage() {
     }
   }, [authFetch, messengerTarget, showToast]);
 
+  const searchNationalityFilters = (
+    <ClientSearchNationalityFilters
+      searchFilter={searchFilter}
+      nationalityFilter={nationalityFilter}
+      nationalitySelectOptions={nationalitySelectOptions}
+      onSearchCommit={updateSearch}
+      onNationalityChange={updateNationality}
+    />
+  );
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
@@ -765,170 +683,61 @@ export function ClientsListPage() {
         mergeSuspectOnly={mergeSuspectOnly}
         registeredWithinDays={registeredWithinDays}
         followUpDueOnly={followUpDueOnly}
-        onLeadStatusChange={updateLeadStatusFilter}
-        onMergeSuspectToggle={updateMergeSuspectFilter}
-        onRegisteredWithinDaysChange={updateRegisteredWithinDaysFilter}
-        onFollowUpDueToggle={updateFollowUpDueFilter}
+        onLeadStatusChange={updateLeadStatus}
+        onMergeSuspectToggle={updateMergeSuspect}
+        onRegisteredWithinDaysChange={updateRegisteredWithinDays}
+        onFollowUpDueToggle={updateFollowUpDue}
       />
 
-      <div className="grid gap-4 rounded-xl border border-border-warm bg-card p-4 md:grid-cols-[minmax(0,1fr)_220px]">
-        <div className="space-y-2">
-          <Label htmlFor="client-search">Search</Label>
-          <ClientSearchInput
-            key={searchFilter}
-            committedValue={searchFilter}
-            onCommit={commitSearch}
-          />
+      <div className="rounded-xl border border-border-warm bg-card p-4">
+        <div className="md:hidden">
+          <button
+            type="button"
+            className="flex w-full items-center justify-between gap-2 text-sm font-medium text-text-warm"
+            aria-expanded={mobileFiltersOpen}
+            onClick={() => setMobileFiltersOpen((current) => !current)}
+          >
+            <span>
+              Search & filters
+              {hasActiveFilters && (searchFilter || nationalityFilter)
+                ? " (active)"
+                : ""}
+            </span>
+            <ChevronDown
+              className={cn(
+                "size-4 shrink-0 text-text-muted-warm transition-transform",
+                mobileFiltersOpen && "rotate-180"
+              )}
+              aria-hidden
+            />
+          </button>
+          {mobileFiltersOpen ? (
+            <div className="mt-4 grid gap-4">{searchNationalityFilters}</div>
+          ) : null}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="client-nationality-filter">Nationality</Label>
-          <select
-            id="client-nationality-filter"
-            value={nationalityFilter}
-            onChange={(event) => updateNationalityFilter(event.target.value)}
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            <option value="">All nationalities</option>
-            {nationalitySelectOptions.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+        <div className="hidden gap-4 md:grid md:grid-cols-[minmax(0,1fr)_220px]">
+          {searchNationalityFilters}
         </div>
       </div>
 
-      {followUpDueOnly ? (
-        <div
-          role="status"
-          className="flex flex-col gap-3 rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm sm:flex-row sm:items-center sm:justify-between"
-        >
-          <span>Showing clients with a follow-up due today or overdue.</span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => updateFollowUpDueFilter(false)}
-          >
-            Clear filter
-          </Button>
-        </div>
-      ) : null}
-
-      {mergeSuspectOnly ? (
-        <div
-          role="status"
-          className="flex flex-col gap-3 rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm sm:flex-row sm:items-center sm:justify-between"
-        >
-          <span>Showing merge-suspect clients only.</span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => updateMergeSuspectFilter(false)}
-          >
-            Clear filter
-          </Button>
-        </div>
-      ) : null}
-
-      {registeredWithinDays ? (
-        <div
-          role="status"
-          className="flex flex-col gap-3 rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm sm:flex-row sm:items-center sm:justify-between"
-        >
-          <span>
-            Showing clients with a registration in the last {registeredWithinDays}{" "}
-            day
-            {registeredWithinDays === 1 ? "" : "s"}.
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => updateRegisteredWithinDaysFilter(null)}
-          >
-            Clear filter
-          </Button>
-        </div>
-      ) : null}
-
-      {createdWithinDays && !registeredWithinDays ? (
-        <div
-          role="status"
-          className="flex flex-col gap-3 rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm sm:flex-row sm:items-center sm:justify-between"
-        >
-          <span>
-            Showing clients created in the last {createdWithinDays} day
-            {createdWithinDays === 1 ? "" : "s"}.
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={clearCreatedWithinDaysFilter}
-          >
-            Clear filter
-          </Button>
-        </div>
-      ) : null}
-
-      {leadStatusFilter && !mergeSuspectOnly && !createdWithinDays && !registeredWithinDays ? (
-        <div
-          role="status"
-          className="flex flex-col gap-3 rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm sm:flex-row sm:items-center sm:justify-between"
-        >
-          <span>
-            Showing clients with status {leadStatusLabels[leadStatusFilter]}.
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => updateLeadStatusFilter(null)}
-          >
-            Clear status filter
-          </Button>
-        </div>
-      ) : null}
-
-      {nationalityFilter && !mergeSuspectOnly && !createdWithinDays && !registeredWithinDays ? (
-        <div
-          role="status"
-          className="flex flex-col gap-3 rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm sm:flex-row sm:items-center sm:justify-between"
-        >
-          <span>Showing clients with nationality {nationalityFilter}.</span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => updateNationalityFilter("")}
-          >
-            Clear nationality filter
-          </Button>
-        </div>
-      ) : null}
-
-      {activityIdFilter ? (
-        <div
-          role="status"
-          className="flex flex-col gap-3 rounded-lg border border-border-warm bg-muted/40 px-4 py-3 text-sm text-text-muted-warm sm:flex-row sm:items-center sm:justify-between"
-        >
-          <span>
-            Filtered by activity
-            {activityFilterLabel ? `: ${activityFilterLabel}` : ""}.
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={clearActivityFilter}
-          >
-            Clear filter
-          </Button>
-        </div>
-      ) : null}
+      <ClientsFilterBanners
+        followUpDue={followUpDueOnly}
+        mergeSuspect={mergeSuspectOnly}
+        registeredWithinDays={registeredWithinDays}
+        createdWithinDays={createdWithinDays}
+        leadStatus={leadStatusFilter}
+        nationality={nationalityFilter}
+        activityId={activityIdFilter}
+        activityLabel={activityFilterLabel}
+        onClearFollowUpDue={() => updateFollowUpDue(false)}
+        onClearMergeSuspect={() => updateMergeSuspect(false)}
+        onClearRegisteredWithinDays={() => updateRegisteredWithinDays(null)}
+        onClearCreatedWithinDays={() => updateCreatedWithinDays(null)}
+        onClearLeadStatus={() => updateLeadStatus(null)}
+        onClearNationality={() => updateNationality("")}
+        onClearActivity={clearActivityFilter}
+      />
 
       <div className="overflow-hidden rounded-xl border border-border-warm bg-card shadow-sm">
         <div className={clientsTableScrollClassName}>

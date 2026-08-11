@@ -15,6 +15,7 @@ import { DashboardMetricsTable } from "@/components/dashboard/dashboard-metrics-
 import { DashboardRegistrationsTrendChart } from "@/components/dashboard/dashboard-registrations-trend-chart";
 import { DashboardTodayStrip } from "@/components/dashboard/dashboard-today-strip";
 import { useDashboardMetricsRefresh } from "@/components/dashboard/dashboard-metrics-refresh-context";
+import { DashboardOnboardingChecklist } from "@/components/dashboard/dashboard-onboarding-checklist";
 import { DashboardQuickActions } from "@/components/dashboard/dashboard-quick-actions";
 import { DashboardRecentCampaignsSection } from "@/components/dashboard/dashboard-recent-campaigns-section";
 import { DashboardViewSwitcher } from "@/components/dashboard/dashboard-view-switcher";
@@ -30,6 +31,11 @@ import {
   writeDashboardViewMode,
   type DashboardViewMode,
 } from "@/lib/dashboard-view-mode";
+import {
+  buildDashboardOnboardingItems,
+  isDashboardOnboardingDismissed,
+  shouldShowDashboardOnboarding,
+} from "@/lib/dashboard-onboarding";
 
 const METRICS_POLL_INTERVAL_MS = 60_000;
 
@@ -43,6 +49,8 @@ export function DashboardPageClient() {
   const setLastUpdatedAt = refreshContext?.setLastUpdatedAt;
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [hasActivities, setHasActivities] = useState<boolean | null>(null);
+  const [totalActivityCount, setTotalActivityCount] = useState(0);
+  const [showOnboardingChecklist, setShowOnboardingChecklist] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +86,14 @@ export function DashboardPageClient() {
 
         setMetrics(metricsResult);
         setHasActivities(activitiesResult.totalCount > 0);
+        setTotalActivityCount(activitiesResult.totalCount);
+        setShowOnboardingChecklist(
+          shouldShowDashboardOnboarding(
+            metricsResult,
+            activitiesResult.totalCount,
+            isDashboardOnboardingDismissed()
+          )
+        );
         setError(null);
         setInitialized(true);
         setLastUpdatedAt?.(new Date(metricsResult.computedAt));
@@ -119,6 +135,13 @@ export function DashboardPageClient() {
 
           setMetrics(result);
           setLastUpdatedAt?.(new Date(result.computedAt));
+          setShowOnboardingChecklist(
+            shouldShowDashboardOnboarding(
+              result,
+              totalActivityCount,
+              isDashboardOnboardingDismissed()
+            )
+          );
         })
         .catch(() => {
           // Keep showing the last successful metrics during background polls.
@@ -134,7 +157,7 @@ export function DashboardPageClient() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [authFetch, error, initialized, setLastUpdatedAt, status]);
+  }, [authFetch, error, initialized, setLastUpdatedAt, status, totalActivityCount]);
 
   if (status === "loading" || !initialized) {
     return (
@@ -187,6 +210,12 @@ export function DashboardPageClient() {
 
       {viewMode === "overview" ? (
         <>
+          {showOnboardingChecklist ? (
+            <DashboardOnboardingChecklist
+              items={buildDashboardOnboardingItems(metrics, totalActivityCount)}
+              onDismiss={() => setShowOnboardingChecklist(false)}
+            />
+          ) : null}
           <DashboardTodayStrip metrics={metrics} periodLabel={periodLabel} />
           <DashboardFollowUpQueue />
           <DashboardQuickActions />

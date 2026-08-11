@@ -4,8 +4,9 @@ import {
   buildReportInsights,
   buildReportNarrativeSummary,
   priorPeriodComparisonLabel,
+  reportFiltersToClientsHref,
 } from "@/lib/report-insights";
-import type { ReportResult } from "@/lib/reports-api";
+import type { ReportFilters, ReportResult } from "@/lib/reports-api";
 
 function baseReport(overrides: Partial<ReportResult> = {}): ReportResult {
   return {
@@ -72,5 +73,55 @@ describe("report-insights", () => {
     expect(priorPeriodComparisonLabel("weekly")).toBe("vs prior week window");
     expect(priorPeriodComparisonLabel("monthly")).toBe("vs prior month window");
     expect(priorPeriodComparisonLabel("custom")).toBe("vs prior period");
+  });
+
+  it("adds lead growth and community ranking insights", () => {
+    const insights = buildReportInsights(baseReport());
+
+    expect(insights.some((insight) => insight.id === "lead-growth")).toBe(true);
+    expect(insights.some((insight) => insight.id === "top-community")).toBe(true);
+
+    const leadGrowth = insights.find((insight) => insight.id === "lead-growth");
+    expect(leadGrowth?.headline).toContain("12 new leads");
+    expect(leadGrowth?.detail).toContain("up");
+    expect(leadGrowth?.actionHref).toBe("/clients?leadStatus=new");
+
+    const topCommunity = insights.find((insight) => insight.id === "top-community");
+    expect(topCommunity?.headline).toContain("Sports club");
+  });
+
+  it("adds action links on follow-up and top activity insights", () => {
+    const insights = buildReportInsights(baseReport());
+
+    const followUp = insights.find((insight) => insight.id === "follow-up");
+    expect(followUp?.actionHref).toBe("/clients?leadStatus=new");
+    expect(followUp?.actionLabel).toBe("View new leads");
+
+    const topActivity = insights.find((insight) => insight.id === "top-activity");
+    expect(topActivity?.actionHref).toBe("/clients?activityId=a1");
+    expect(topActivity?.actionLabel).toBe("View registrants");
+  });
+
+  it("maps extended report filters to clients href", () => {
+    const filters: ReportFilters = {
+      preset: "weekly",
+      from: "",
+      to: "",
+      activityId: "a1",
+      community: "",
+      leadStatus: "new",
+      referralSource: "",
+      followUpDue: true,
+      mergeSuspect: false,
+      nationality: "Philippines",
+      search: "maria",
+    };
+
+    const href = reportFiltersToClientsHref(filters);
+    expect(href).toContain("leadStatus=new");
+    expect(href).toContain("followUpDue=true");
+    expect(href).toContain("nationality=Philippines");
+    expect(href).toContain("search=maria");
+    expect(href).toContain("activityId=a1");
   });
 });

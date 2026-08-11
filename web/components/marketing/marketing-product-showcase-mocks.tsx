@@ -337,7 +337,7 @@ export function ReportsShowcaseMock() {
   const summary = [
     { label: "Registrations", value: "36" },
     { label: "Unique clients", value: "28" },
-    { label: "Top activity", value: "Sunday clinic" },
+    { label: "Follow-up coverage", value: "82%" },
   ] as const;
 
   return (
@@ -346,13 +346,20 @@ export function ReportsShowcaseMock() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium tracking-[-0.02em] text-ink sm:text-xl">
-              Reports
+              Living Reports
             </p>
-            <p className="mt-1 text-sm text-stone">Filter, compare, and export CSV</p>
+            <p className="mt-1 text-sm text-stone">Narrative insights, charts, and CSV export</p>
           </div>
           <span className="shrink-0 rounded-[8px] border border-line bg-paper px-3 py-1.5 text-xs font-semibold text-ink">
             Export CSV
           </span>
+        </div>
+
+        <div className="rounded-[10px] border border-line bg-paper px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-lagoon">This week</p>
+          <p className="mt-1 font-[family-name:var(--font-fraunces)] text-base font-medium text-ink">
+            36 registrations · 82% follow-up coverage
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -385,14 +392,36 @@ export function ReportsShowcaseMock() {
           ))}
         </div>
 
-        <div className="flex h-12 items-end gap-1.5 rounded-[10px] border border-line bg-paper px-3 py-2">
-          {[42, 58, 36, 72, 48, 64, 36].map((height, index) => (
-            <span
-              key={index}
-              className="flex-1 rounded-sm bg-lagoon/20"
-              style={{ height: `${height}%` }}
-            />
-          ))}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-[10px] border border-line bg-paper p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-stone">
+              Top activities
+            </p>
+            <div className="mt-3 flex justify-center">
+              <div className="relative flex size-24 items-center justify-center rounded-full border-[12px] border-lagoon/40 border-t-[var(--chart-1)] border-r-[var(--chart-2)] border-b-[var(--chart-4)]">
+                <div className="text-center">
+                  <span className="font-[family-name:var(--font-fraunces)] text-lg font-medium text-ink">
+                    15
+                  </span>
+                  <p className="text-[9px] uppercase tracking-wide text-stone">Top activity</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-[10px] border border-line bg-paper p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-stone">
+              Follow-up pipeline
+            </p>
+            <div className="mt-3 flex h-24 items-end gap-2 px-1">
+              {[3, 4, 2, 1].map((height, index) => (
+                <span
+                  key={index}
+                  className="flex-1 rounded-t-sm bg-lagoon/30"
+                  style={{ height: `${height * 18}%` }}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </ShowcaseBrowserChrome>

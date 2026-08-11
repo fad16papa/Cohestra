@@ -11,6 +11,10 @@ export type ReportFilters = {
   community: string;
   leadStatus: LeadStatus | "";
   referralSource: string;
+  followUpDue?: boolean;
+  mergeSuspect?: boolean;
+  nationality?: string;
+  search?: string;
 };
 
 export type ReportPeriod = {

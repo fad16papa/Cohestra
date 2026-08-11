@@ -166,13 +166,26 @@ export function ReportsPageClient() {
     !isExporting;
 
   async function handleExportCsv() {
-    if (!canExport) {
+    if (!canExport || !report) {
       return;
+    }
+
+    if (report.registrations > 5000) {
+      const confirmed = window.confirm(
+        `This export includes ${report.registrations.toLocaleString()} registrations and may take a moment. Continue?`
+      );
+      if (!confirmed) {
+        return;
+      }
     }
 
     setIsExporting(true);
 
     try {
+      if (report.registrations > 5000) {
+        showToast(`Exporting all ${report.registrations.toLocaleString()} registrations…`);
+      }
+
       const exportResult = await exportReportCsv(authFetch, filters);
       downloadReportCsvExport(exportResult);
 

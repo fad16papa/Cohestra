@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Link2 } from "lucide-react";
+import { Link2, MessageCircle } from "lucide-react";
 
 import { ShareLinkPreview } from "@/components/shared/share-link-preview";
 import { Button } from "@/components/ui/button";
@@ -11,15 +11,32 @@ import type { SharePreviewData } from "@/lib/site-builder-utils";
 type WebsiteSharePreviewProps = {
   preview: SharePreviewData;
   copyUrl: string;
+  whatsAppMessage?: string;
 };
 
-export function WebsiteSharePreview({ preview, copyUrl }: WebsiteSharePreviewProps) {
+export function WebsiteSharePreview({
+  preview,
+  copyUrl,
+  whatsAppMessage,
+}: WebsiteSharePreviewProps) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   async function handleCopyLink() {
     setStatusMessage(null);
     const copied = await copyTextToClipboard(copyUrl);
     setStatusMessage(copied ? "Link copied." : "Select the URL and copy manually.");
+  }
+
+  async function handleCopyWhatsApp() {
+    if (!whatsAppMessage) {
+      return;
+    }
+
+    setStatusMessage(null);
+    const copied = await copyTextToClipboard(whatsAppMessage);
+    setStatusMessage(
+      copied ? "WhatsApp message copied." : "Select the message and copy manually."
+    );
   }
 
   return (
@@ -34,6 +51,12 @@ export function WebsiteSharePreview({ preview, copyUrl }: WebsiteSharePreviewPro
           <Link2 className="size-4" aria-hidden />
           Copy link
         </Button>
+        {whatsAppMessage ? (
+          <Button type="button" size="sm" variant="outline" onClick={() => void handleCopyWhatsApp()}>
+            <MessageCircle className="size-4" aria-hidden />
+            Copy WhatsApp message
+          </Button>
+        ) : null}
       </div>
       {statusMessage ? (
         <p role="status" className="text-xs text-text-muted-warm">

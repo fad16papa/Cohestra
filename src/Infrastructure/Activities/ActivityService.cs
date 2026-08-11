@@ -53,6 +53,15 @@ public sealed class ActivityService(
             throw new InvalidOperationException(planLimitError);
         }
 
+        var catalogError = await ValidateActivityCatalogAsync(
+            request.Category,
+            request.CommunityLabel,
+            cancellationToken);
+        if (catalogError is not null)
+        {
+            throw new InvalidOperationException(catalogError);
+        }
+
         var now = DateTimeOffset.UtcNow;
         const int maxAttempts = 3;
 
@@ -242,6 +251,15 @@ public sealed class ActivityService(
             {
                 throw new InvalidOperationException(planLimitError);
             }
+        }
+
+        var catalogError = await ValidateActivityCatalogAsync(
+            request.Category,
+            request.CommunityLabel,
+            cancellationToken);
+        if (catalogError is not null)
+        {
+            throw new InvalidOperationException(catalogError);
         }
 
         activity.Name = request.Name.Trim();
@@ -724,6 +742,44 @@ public sealed class ActivityService(
         {
             HeroImageUrl = ResolveHeroImageUrl(response.HeroImageUrl),
         };
+
+    private async Task<string?> ValidateActivityCatalogAsync(
+        string category,
+        string communityLabel,
+        CancellationToken cancellationToken)
+    {
+        var normalizedCategory = category?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedCategory))
+        {
+            return "Category is required.";
+        }
+
+        var categoryExists = await dbContext.Categories
+            .AsNoTracking()
+            .AnyAsync(item => item.Name == normalizedCategory, cancellationToken);
+
+        if (!categoryExists)
+        {
+            return $"Category '{normalizedCategory}' is not in your catalog. Add it under Categories first.";
+        }
+
+        var normalizedCommunity = communityLabel?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedCommunity))
+        {
+            return "Community is required.";
+        }
+
+        var communityExists = await dbContext.Communities
+            .AsNoTracking()
+            .AnyAsync(item => item.Name == normalizedCommunity, cancellationToken);
+
+        if (!communityExists)
+        {
+            return $"Community '{normalizedCommunity}' is not in your catalog. Add it under Communities first.";
+        }
+
+        return null;
+    }
 
     private async Task<string?> ValidateMaxRegistrantsAgainstTenantPlanAsync(
         int? maxRegistrants,

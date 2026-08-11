@@ -4,6 +4,7 @@ import { AppearanceSection } from "@/components/settings/appearance-section";
 import { AccountSection } from "@/components/settings/account-section";
 import { BrandAccentSection } from "@/components/settings/brand-accent-section";
 import { ChangePasswordSection } from "@/components/settings/change-password-section";
+import { CustomDomainSection } from "@/components/settings/custom-domain-section";
 import { OrganizationTimezoneSection } from "@/components/settings/organization-timezone-section";
 import { SettingsPlanUsageSection } from "@/components/settings/settings-plan-usage-section";
 import { SettingsSectionCard } from "@/components/settings/settings-section-card";
@@ -34,6 +35,7 @@ export function SettingsPageContent() {
             <BrandAccentSection />
             <OrganizationTimezoneSection />
           </SettingsSectionCard>
+          <CustomDomainSection />
         </>
       ) : null}
 

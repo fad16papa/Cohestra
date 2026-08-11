@@ -1195,7 +1195,14 @@ export function WebsiteBuilderPage() {
           </AlertDialogHeader>
           <div className="space-y-4">
             {sharePreview ? (
-              <WebsiteSharePreview preview={sharePreview} copyUrl={publicSiteUrl} />
+              <WebsiteSharePreview
+                preview={sharePreview}
+                copyUrl={publicSiteUrl}
+                whatsAppMessage={buildHomepageWhatsAppMessage(publicSiteUrl, {
+                  siteName: draft.siteName,
+                  headline: sharePreview.title,
+                })}
+              />
             ) : null}
             <div>
               <p className="text-sm font-medium text-text-warm">What will change</p>

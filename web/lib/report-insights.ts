@@ -8,6 +8,8 @@ export type ReportInsight = {
   tone: ReportInsightTone;
   headline: string;
   detail: string;
+  actionHref?: string;
+  actionLabel?: string;
 };
 
 function formatDeltaPhrase(current: number, previous: number, unit: string): string | null {
@@ -86,7 +88,39 @@ export function buildReportInsights(report: ReportResult): ReportInsight[] {
       coverage >= 75
         ? `Strong outreach — ${report.followUpStatus.contactedCount + report.followUpStatus.activeCount} clients are contacted or active.${coverageDelta ? ` Coverage is ${coverageDelta}.` : ""}`
         : `${report.followUpStatus.newCount} clients still marked New. Coverage ${coverageDelta ?? "needs a prior baseline to trend"}.`,
+    actionHref: report.followUpStatus.newCount > 0 ? "/clients?leadStatus=new" : undefined,
+    actionLabel: report.followUpStatus.newCount > 0 ? "View new leads" : undefined,
   });
+
+  const newLeadsInPeriod = report.leadGrowth.newLeadsInPeriod;
+  const leadGrowthDelta = formatDeltaPhrase(
+    newLeadsInPeriod,
+    report.priorPeriod.newLeads,
+    "new leads"
+  );
+
+  if (newLeadsInPeriod > 0 || report.priorPeriod.newLeads > 0) {
+    insights.push({
+      id: "lead-growth",
+      tone:
+        leadGrowthDelta?.startsWith("up")
+          ? "positive"
+          : leadGrowthDelta?.startsWith("down")
+            ? "attention"
+            : "neutral",
+      headline:
+        newLeadsInPeriod === 1
+          ? `1 new lead ${periodLabel}`
+          : `${newLeadsInPeriod} new leads ${periodLabel}`,
+      detail:
+        leadGrowthDelta ??
+        (newLeadsInPeriod > 0
+          ? "First new leads captured in this comparison window."
+          : "No new leads in this period."),
+      actionHref: newLeadsInPeriod > 0 ? "/clients?leadStatus=new" : undefined,
+      actionLabel: newLeadsInPeriod > 0 ? "Review new leads" : undefined,
+    });
+  }
 
   if (report.repeatParticipants > 0) {
     insights.push({
@@ -106,6 +140,18 @@ export function buildReportInsights(report: ReportResult): ReportInsight[] {
       detail: top.communityLabel
         ? `Top activity in ${top.communityLabel}.`
         : "Your busiest activity in this report.",
+      actionHref: `/clients?activityId=${encodeURIComponent(top.activityId)}`,
+      actionLabel: "View registrants",
+    });
+  }
+
+  if (report.communityRanking.length > 0) {
+    const topCommunity = report.communityRanking[0];
+    insights.push({
+      id: "top-community",
+      tone: "neutral",
+      headline: `${topCommunity.communityLabel} led communities with ${topCommunity.registrationCount} registrations`,
+      detail: "Your strongest community in this filtered cohort.",
     });
   }
 
@@ -133,8 +179,31 @@ export function priorPeriodComparisonLabel(preset: string): string {
 
 export function reportFiltersToClientsHref(filters: ReportFilters): string {
   const params = new URLSearchParams();
+
   if (filters.leadStatus) {
     params.set("leadStatus", filters.leadStatus);
+  }
+
+  if (filters.followUpDue) {
+    params.set("followUpDue", "true");
+  }
+
+  if (filters.mergeSuspect) {
+    params.set("mergeSuspect", "true");
+  }
+
+  const nationality = filters.nationality?.trim();
+  if (nationality) {
+    params.set("nationality", nationality);
+  }
+
+  const search = filters.search?.trim();
+  if (search) {
+    params.set("search", search);
+  }
+
+  if (filters.activityId) {
+    params.set("activityId", filters.activityId);
   }
 
   const query = params.toString();

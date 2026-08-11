@@ -27,7 +27,7 @@ import {
   LANDING_FAQ,
   LANDING_FEATURES,
   LANDING_STEPS,
-  LANDING_TESTIMONIALS,
+  LANDING_OUTCOMES,
 } from "@/lib/marketing/landing-content";
 import { PRICING_POSITIONING_LINE } from "@/lib/marketing/pricing-plans";
 import { resolvePostLoginPath } from "@/lib/auth-api";
@@ -268,30 +268,29 @@ export function MarketingHomePage() {
         </ol>
       </section>
 
-      {/* ── Testimonials ─────────────────────────────────────── */}
+      {/* ── Operator outcomes ─────────────────────────────────── */}
       <section className="border-t border-line bg-ink">
         <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:px-10 lg:py-24">
           <MarketingReveal delayMs={marketingRevealDelay(0)}>
-            <p className="text-section text-gold">From operators</p>
-            <h2 className="text-marketing-section mt-4 max-w-[18ch] text-paper">
-              Used by clubs, workshops, and groups that run weekly sessions
+            <p className="text-section text-gold">Why operators switch</p>
+            <h2 className="text-marketing-section mt-4 max-w-[22ch] text-paper">
+              Built for clubs, workshops, and groups that run weekly sessions
             </h2>
           </MarketingReveal>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            {LANDING_TESTIMONIALS.map((testimonial, index) => (
+            {LANDING_OUTCOMES.map((outcome, index) => (
               <MarketingReveal
-                key={testimonial.name}
+                key={outcome.headline}
                 delayMs={marketingRevealDelay(index + 1)}
                 className="flex h-full flex-col rounded-[16px] border border-paper/10 bg-paper/[0.04] p-6"
               >
-                <blockquote className="flex-1 text-[0.98rem] leading-relaxed text-paper/85">
-                  &ldquo;{testimonial.quote}&rdquo;
-                </blockquote>
-                <footer className="mt-6 border-t border-paper/10 pt-4">
-                  <p className="text-sm font-semibold text-paper">{testimonial.name}</p>
-                  <p className="mt-0.5 text-xs text-paper/55">{testimonial.role}</p>
-                </footer>
+                <h3 className="font-[family-name:var(--font-fraunces)] text-lg font-medium tracking-[-0.02em] text-paper">
+                  {outcome.headline}
+                </h3>
+                <p className="mt-3 flex-1 text-[0.98rem] leading-relaxed text-paper/80">
+                  {outcome.description}
+                </p>
               </MarketingReveal>
             ))}
           </div>

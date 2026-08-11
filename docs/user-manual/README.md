@@ -1,4 +1,4 @@
-# Activity Lead — Operator User Manual
+# Cohestra — Operator User Manual
 
 End-user documentation for operators (no technical or deployment content).
 
@@ -6,9 +6,9 @@ End-user documentation for operators (no technical or deployment content).
 
 | File | Format |
 |------|--------|
-| [Activity-Lead-Operator-Manual.docx](./Activity-Lead-Operator-Manual.docx) | Microsoft Word |
-| [Activity-Lead-Operator-Manual.pdf](./Activity-Lead-Operator-Manual.pdf) | PDF |
-| [activity-lead-operator-manual.md](./activity-lead-operator-manual.md) | Source (Markdown) |
+| [Cohestra-Operator-Manual.docx](./Cohestra-Operator-Manual.docx) | Microsoft Word |
+| [Cohestra-Operator-Manual.pdf](./Cohestra-Operator-Manual.pdf) | PDF |
+| [cohestra-operator-manual.md](./cohestra-operator-manual.md) | Source (Markdown) |
 
 ## Regenerate DOCX and PDF
 

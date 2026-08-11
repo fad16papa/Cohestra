@@ -102,30 +102,27 @@ export const LANDING_AUDIENCES: LandingAudience[] = [
   { label: "Yoga and wellness studios" },
 ];
 
-export type LandingTestimonial = {
-  quote: string;
-  name: string;
-  role: string;
+export type LandingOutcome = {
+  headline: string;
+  description: string;
 };
 
-export const LANDING_TESTIMONIALS: LandingTestimonial[] = [
+/** Operator outcomes — no attributed quotes until real customer stories are collected. */
+export const LANDING_OUTCOMES: LandingOutcome[] = [
   {
-    quote:
-      "We ran three groups on Google Forms and WhatsApp. I still open one screen before clinic night and I know who is new, who is returning, and who I have not heard from.",
-    name: "Marco L.",
-    role: "Community sports club, Manila",
+    headline: "One list instead of scattered forms",
+    description:
+      "Registrations from every activity merge into one client profile. Your team stops reconciling spreadsheets before every session.",
   },
   {
-    quote:
-      "The QR at the door is what sold us. People register on their phone and they are in the client list by the time I sit down on Monday.",
-    name: "Priya S.",
-    role: "Weekend wellness studio, Singapore",
+    headline: "Follow-up the whole team can see",
+    description:
+      "WhatsApp and Viber outreach is logged on each profile. Status flags show who still needs a reply — no more duplicate messages in the group chat.",
   },
   {
-    quote:
-      "We stopped losing new signups in the group chat. The dashboard shows who still needs a message, and the whole team can see it.",
-    name: "Daniel T.",
-    role: "Social sports club, Cebu",
+    headline: "Reports that answer “so what?”",
+    description:
+      "Living Reports highlight top activities, community share, and follow-up coverage — with CSV export when the board wants a spreadsheet.",
   },
 ];
 
