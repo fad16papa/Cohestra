@@ -13,8 +13,11 @@ import {
 
 import {
   ChartTooltipFrame,
-  DashboardChartCard,
 } from "@/components/dashboard/dashboard-chart-card";
+import {
+  ReportDepthCard,
+  ReportPanelHeader,
+} from "@/components/reports/report-visual-primitives";
 import type { ReportFollowUpStatus } from "@/lib/reports-api";
 
 const STATUS_COLORS = [
@@ -58,16 +61,17 @@ export function ReportFollowUpChart({ followUpStatus }: ReportFollowUpChartProps
   const total = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <DashboardChartCard
-      headingId="report-follow-up-chart-heading"
-      title="Follow-up pipeline"
-      description="Current lead status for clients in this report cohort."
-      headerAside={
-        <p className="text-right text-sm font-semibold text-text-warm">
-          {total} clients
-        </p>
-      }
-    >
+    <ReportDepthCard accent="neutral" className="overflow-hidden">
+      <ReportPanelHeader
+        title="Follow-up pipeline"
+        description="Current lead status for clients in this report cohort."
+        aside={
+          <p className="text-right text-sm font-semibold tabular-nums text-text-warm">
+            {total} clients
+          </p>
+        }
+      />
+      <div className="p-4 sm:p-5">
       {total === 0 ? (
         <p className="rounded-lg border border-dashed border-border-warm px-6 py-10 text-center text-sm text-text-muted-warm">
           No clients in this cohort yet.
@@ -104,6 +108,7 @@ export function ReportFollowUpChart({ followUpStatus }: ReportFollowUpChartProps
           </ResponsiveContainer>
         </div>
       )}
-    </DashboardChartCard>
+      </div>
+    </ReportDepthCard>
   );
 }
