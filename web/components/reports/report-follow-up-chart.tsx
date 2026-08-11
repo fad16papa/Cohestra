@@ -13,7 +13,6 @@ import {
 } from "recharts";
 
 import { ChartTooltipFrame } from "@/components/dashboard/dashboard-chart-card";
-import { ReportDonutChart } from "@/components/reports/report-donut-chart";
 import {
   formatSharePercent,
   ReportDepthCard,
@@ -102,7 +101,7 @@ export function ReportFollowUpChart({ followUpStatus }: ReportFollowUpChartProps
         description="Lead status mix for this cohort — coverage shows who has been contacted or progressed."
         aside={
           <p className="text-right text-sm font-semibold tabular-nums text-text-warm">
-            {total} clients
+            {coverageLabel} coverage · {total} clients
           </p>
         }
       />
@@ -114,50 +113,35 @@ export function ReportFollowUpChart({ followUpStatus }: ReportFollowUpChartProps
           </p>
         ) : (
           <>
-            <div className="grid gap-4 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
-              <ReportDonutChart
-                slices={slices.map((slice) => ({
-                  id: slice.key,
-                  label: slice.label,
-                  fullLabel: slice.label,
-                  value: slice.value,
-                  color: slice.color,
-                }))}
-                centerValue={coverageLabel}
-                centerLabel="Coverage"
-                valueLabel="Clients"
-                size="md"
-              />
-              <div style={{ height: 200 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={barData} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-                    <CartesianGrid
-                      stroke="var(--border-warm)"
-                      strokeDasharray="4 4"
-                      vertical={false}
-                    />
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fill: "var(--text-muted-warm)", fontSize: 11 }}
-                      tickLine={false}
-                      axisLine={{ stroke: "var(--border-warm)" }}
-                    />
-                    <YAxis
-                      allowDecimals={false}
-                      tick={{ fill: "var(--text-muted-warm)", fontSize: 11 }}
-                      tickLine={false}
-                      axisLine={false}
-                      width={32}
-                    />
-                    <Tooltip content={<BarTooltip />} cursor={{ fill: "var(--muted)" }} />
-                    <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                      {barData.map((item) => (
-                        <Cell key={item.key} fill={item.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+            <div className="h-[220px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barData} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
+                  <CartesianGrid
+                    stroke="var(--border-warm)"
+                    strokeDasharray="4 4"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fill: "var(--text-muted-warm)", fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={{ stroke: "var(--border-warm)" }}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{ fill: "var(--text-muted-warm)", fontSize: 11 }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={32}
+                  />
+                  <Tooltip content={<BarTooltip />} cursor={{ fill: "var(--muted)" }} />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                    {barData.map((item) => (
+                      <Cell key={item.key} fill={item.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
 
             <ul className="divide-y divide-border-warm/70 border-t border-border-warm/70">

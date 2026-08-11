@@ -3,7 +3,6 @@
 import { Layers3 } from "lucide-react";
 
 import { ReportDonutChart } from "@/components/reports/report-donut-chart";
-import { ReportHorizontalRankingChart } from "@/components/reports/report-horizontal-ranking-chart";
 import {
   formatSharePercent,
   REPORT_RANKING_TOP_COUNT,
@@ -35,27 +34,19 @@ export function ReportCommunityRankingPanel({
   const visibleItems = items.slice(0, REPORT_RANKING_TOP_COUNT);
   const topCount = visibleItems[0]?.registrationCount ?? 0;
 
-  const chartItems = visibleItems.map((item, index) => ({
+  const donutSlices = visibleItems.map((item, index) => ({
     id: `${item.communityLabel}-${index}`,
-    shortLabel: `#${index + 1}`,
+    label: truncateReportLabel(item.communityLabel, 28),
     fullLabel: item.communityLabel,
     value: item.registrationCount,
     color: CHART_COLORS[index % CHART_COLORS.length],
-  }));
-
-  const donutSlices = chartItems.map((item) => ({
-    id: item.id,
-    label: truncateReportLabel(item.fullLabel, 28),
-    fullLabel: item.fullLabel,
-    value: item.value,
-    color: item.color,
   }));
 
   return (
     <ReportDepthCard accent="lagoon" className="flex h-full flex-col overflow-hidden">
       <ReportPanelHeader
         title="Community ranking"
-        description="Communities driving registrations — share of report in chart and list."
+        description="Communities driving registrations — hover segments for share, details in the list below."
         aside={
           visibleItems.length > 0 ? (
             <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-text-warm">
@@ -73,13 +64,12 @@ export function ReportCommunityRankingPanel({
           </p>
         ) : (
           <>
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_9rem] lg:items-center">
-              <ReportHorizontalRankingChart items={chartItems} />
+            <div className="flex justify-center py-2">
               <ReportDonutChart
                 slices={donutSlices}
                 centerValue={formatSharePercent(topCount, totalRegistrations)}
                 centerLabel="Leader share"
-                size="md"
+                size="lg"
               />
             </div>
 

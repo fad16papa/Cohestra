@@ -12,7 +12,6 @@ import {
 } from "recharts";
 
 import { ChartTooltipFrame } from "@/components/dashboard/dashboard-chart-card";
-import { ReportDonutChart } from "@/components/reports/report-donut-chart";
 import {
   formatSharePercent,
   ReportDepthCard,
@@ -63,11 +62,6 @@ export function ReportLeadGrowthPanel({ report }: ReportLeadGrowthPanelProps) {
   const retentionRate =
     cohortTotal > 0 ? Math.round((repeat / cohortTotal) * 100) : 0;
 
-  const compositionSlices = [
-    { id: "new", label: "New in period", value: newLeads, color: "var(--chart-1)" },
-    { id: "existing", label: "Existing clients", value: existing, color: "var(--chart-2)" },
-  ].filter((slice) => slice.value > 0);
-
   const engagementBars: GrowthBarItem[] = [
     { id: "repeat", label: "Repeat", value: repeat, color: "var(--chart-1)" },
     { id: "inactive", label: "Inactive", value: inactive, color: "var(--chart-4)" },
@@ -93,18 +87,12 @@ export function ReportLeadGrowthPanel({ report }: ReportLeadGrowthPanelProps) {
           <p className="text-sm text-text-muted-warm">No clients in this cohort yet.</p>
         ) : (
           <>
-            <div className="grid gap-4 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
-              <ReportDonutChart
-                slices={compositionSlices.map((slice) => ({
-                  ...slice,
-                  fullLabel: slice.label,
-                }))}
-                centerValue={String(cohortTotal)}
-                centerLabel="In cohort"
-                valueLabel="Clients"
-                size="md"
-              />
-              <div style={{ height: 200 }}>
+            {barData.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border-warm px-4 py-10 text-center text-sm text-text-muted-warm">
+                No engagement signals in this period yet.
+              </p>
+            ) : (
+              <div className="h-[220px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barData} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
                     <CartesianGrid
@@ -134,7 +122,7 @@ export function ReportLeadGrowthPanel({ report }: ReportLeadGrowthPanelProps) {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            )}
 
             <dl className="grid grid-cols-2 gap-3 border-t border-border-warm/70 pt-4">
               <div className="rounded-lg border border-border-warm/70 bg-lagoon/[0.05] px-3 py-2.5">
