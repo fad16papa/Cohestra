@@ -1,6 +1,8 @@
 import { MetricTile } from "@/components/dashboard/metric-tile";
 import { ReportActivityRankingChart } from "@/components/reports/report-activity-ranking-chart";
+import { ReportCommunityRankingPanel } from "@/components/reports/report-community-ranking-panel";
 import { ReportFollowUpChart } from "@/components/reports/report-follow-up-chart";
+import { ReportLeadGrowthPanel } from "@/components/reports/report-lead-growth-panel";
 import { ReportNarrativeHero } from "@/components/reports/report-narrative-hero";
 import { ReportRegistrationsTrendChart } from "@/components/reports/report-registrations-trend-chart";
 import { ReportTrustBar } from "@/components/reports/report-trust-bar";
@@ -140,51 +142,11 @@ export function ReportResults({ report, filters }: ReportResultsProps) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-border-warm">
-          <CardHeader>
-            <CardTitle className="text-section text-text-warm">Lead growth</CardTitle>
-            <CardDescription className="text-text-muted-warm">
-              Cohort scoped to filtered registrations.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 text-sm text-text-muted-warm">
-            <p>New leads in period: {report.leadGrowth.newLeadsInPeriod}</p>
-            <p>Clients in cohort: {report.leadGrowth.totalLeadsAtEnd}</p>
-            <p>Existing before period: {report.leadGrowth.totalLeadsBeforePeriod}</p>
-            <p>Repeat participants: {report.repeatParticipants}</p>
-            <p>Inactive clients in cohort: {report.inactiveClients}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border-warm">
-          <CardHeader>
-            <CardTitle className="text-section text-text-warm">Community ranking</CardTitle>
-            <CardDescription className="text-text-muted-warm">
-              Registration volume grouped by community label.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {report.communityRanking.length === 0 ? (
-              <p className="text-sm text-text-muted-warm">
-                Community rankings appear when activities include community labels.
-              </p>
-            ) : (
-              <ul className="space-y-3">
-                {report.communityRanking.map((item, index) => (
-                  <li
-                    key={`${item.communityLabel}-${index}`}
-                    className="flex items-center justify-between rounded-lg border border-border-warm px-4 py-3 text-sm"
-                  >
-                    <span className="text-text-warm">
-                      #{index + 1} {item.communityLabel}
-                    </span>
-                    <span className="text-text-muted-warm">{item.registrationCount}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+        <ReportLeadGrowthPanel report={report} />
+        <ReportCommunityRankingPanel
+          items={report.communityRanking}
+          totalRegistrations={report.registrations}
+        />
       </div>
 
       {report.campaignResults.available ? (
