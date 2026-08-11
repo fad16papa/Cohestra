@@ -46,6 +46,7 @@ export function ReportCommunityRankingPanel({
   const donutSlices = chartItems.map((item) => ({
     id: item.id,
     label: truncateReportLabel(item.fullLabel, 28),
+    fullLabel: item.fullLabel,
     value: item.value,
     color: item.color,
   }));

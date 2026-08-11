@@ -119,11 +119,13 @@ export function ReportFollowUpChart({ followUpStatus }: ReportFollowUpChartProps
                 slices={slices.map((slice) => ({
                   id: slice.key,
                   label: slice.label,
+                  fullLabel: slice.label,
                   value: slice.value,
                   color: slice.color,
                 }))}
                 centerValue={coverageLabel}
                 centerLabel="Coverage"
+                valueLabel="Clients"
                 size="md"
               />
               <div style={{ height: 200 }}>
