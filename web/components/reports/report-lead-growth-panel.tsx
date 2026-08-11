@@ -95,9 +95,13 @@ export function ReportLeadGrowthPanel({ report }: ReportLeadGrowthPanelProps) {
           <>
             <div className="grid gap-4 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
               <ReportDonutChart
-                slices={compositionSlices}
+                slices={compositionSlices.map((slice) => ({
+                  ...slice,
+                  fullLabel: slice.label,
+                }))}
                 centerValue={String(cohortTotal)}
                 centerLabel="In cohort"
+                valueLabel="Clients"
                 size="md"
               />
               <div style={{ height: 200 }}>

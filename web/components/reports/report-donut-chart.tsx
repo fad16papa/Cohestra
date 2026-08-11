@@ -3,12 +3,15 @@
 import { useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 
+import { ChartTooltipFrame } from "@/components/dashboard/dashboard-chart-card";
 import { formatSharePercent } from "@/components/reports/report-visual-primitives";
 import { cn } from "@/lib/utils";
 
 export type ReportDonutSlice = {
   id: string;
   label: string;
+  /** Full name for hover tooltip; defaults to `label`. */
+  fullLabel?: string;
   value: number;
   color: string;
 };
@@ -17,6 +20,8 @@ type ReportDonutChartProps = {
   slices: ReportDonutSlice[];
   centerValue: string;
   centerLabel: string;
+  /** Metric label in hover tooltip rows (e.g. Registrations, Clients). */
+  valueLabel?: string;
   size?: "md" | "lg";
   emptyMessage?: string;
 };
@@ -27,6 +32,7 @@ export function ReportDonutChart({
   slices,
   centerValue,
   centerLabel,
+  valueLabel = "Registrations",
   size = "md",
   emptyMessage = "No data yet.",
 }: ReportDonutChartProps) {
@@ -70,31 +76,32 @@ export function ReportDonutChart({
           </Pie>
         </PieChart>
       </ResponsiveContainer>
-      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center px-3 text-center">
+      <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-1">
         {activeSlice ? (
-          <>
-            <span
-              className="line-clamp-2 text-[11px] font-semibold leading-snug text-text-warm"
-              title={activeSlice.label}
-            >
-              {activeSlice.label}
-            </span>
-            <span className={cn("mt-1 tabular-nums font-semibold text-text-warm", valueClass)}>
-              {activeSlice.value}
-            </span>
-            <span className="mt-0.5 text-[11px] uppercase tracking-wide text-text-muted-warm">
-              {formatSharePercent(activeSlice.value, activeSlice.total)} share
-            </span>
-          </>
+          <ChartTooltipFrame
+            className="min-w-0 max-w-full px-2.5 py-2 shadow-lg [&>p]:line-clamp-2"
+            title={activeSlice.fullLabel ?? activeSlice.label}
+            rows={[
+              {
+                label: valueLabel,
+                value: String(activeSlice.value),
+                color: activeSlice.color,
+              },
+              {
+                label: "Share",
+                value: formatSharePercent(activeSlice.value, activeSlice.total),
+              },
+            ]}
+          />
         ) : (
-          <>
+          <div className="flex flex-col items-center px-3 text-center">
             <span className={cn("tabular-nums font-semibold text-text-warm", valueClass)}>
               {centerValue}
             </span>
             <span className="text-[11px] uppercase tracking-wide text-text-muted-warm">
               {centerLabel}
             </span>
-          </>
+          </div>
         )}
       </div>
     </div>

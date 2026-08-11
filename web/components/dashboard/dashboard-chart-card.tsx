@@ -57,12 +57,18 @@ type ChartTooltipRow = {
 type ChartTooltipFrameProps = {
   title: string;
   rows: ChartTooltipRow[];
+  className?: string;
 };
 
 /** Recharts tooltip content styled with brand tokens (works in light + dark). */
-export function ChartTooltipFrame({ title, rows }: ChartTooltipFrameProps) {
+export function ChartTooltipFrame({ title, rows, className }: ChartTooltipFrameProps) {
   return (
-    <div className="min-w-[10rem] rounded-lg border border-border-warm bg-popover px-3 py-2.5 text-popover-foreground shadow-md">
+    <div
+      className={cn(
+        "min-w-[10rem] rounded-lg border border-border-warm bg-popover px-3 py-2.5 text-popover-foreground shadow-md",
+        className
+      )}
+    >
       <p className="text-xs font-semibold text-text-warm">{title}</p>
       <ul className="mt-1.5 space-y-1">
         {rows.map((row) => (
