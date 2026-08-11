@@ -1288,7 +1288,7 @@ So that **production matches local header ownership and HSTS is present**.
 
 **Given** HTTPS public URL  
 **When** `curl -sI https://{tenant-host}/` runs  
-**Then** each of `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy-Report-Only` appears **once**  
+**Then** each of `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy` appears **once**  
 **And** `Strict-Transport-Security` is present (HTTPS template only)
 
 **Given** HTTP port  
