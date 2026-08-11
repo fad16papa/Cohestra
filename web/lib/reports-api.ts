@@ -52,6 +52,21 @@ export type ReportCampaignResults = {
   campaignsFailed: number;
 };
 
+export type ReportPriorPeriod = {
+  startAt: string;
+  endAt: string;
+  registrations: number;
+  newLeads: number;
+  activitiesHosted: number;
+  followUpCoveragePercent: number;
+};
+
+export type ReportTrendPoint = {
+  date: string;
+  registrations: number;
+  newClients: number;
+};
+
 export type ReportResult = {
   period: ReportPeriod;
   activitiesHosted: number;
@@ -64,6 +79,8 @@ export type ReportResult = {
   repeatParticipants: number;
   inactiveClients: number;
   campaignResults: ReportCampaignResults;
+  priorPeriod: ReportPriorPeriod;
+  dailyTrend: ReportTrendPoint[];
 };
 
 function parseReportPeriod(raw: Record<string, unknown>): ReportPeriod {
@@ -178,6 +195,52 @@ function parseCampaignResults(raw: Record<string, unknown>): ReportCampaignResul
   return { available, campaignsSent, campaignsFailed };
 }
 
+function parsePriorPeriod(raw: Record<string, unknown>): ReportPriorPeriod {
+  const startAt = raw.startAt ?? raw.StartAt;
+  const endAt = raw.endAt ?? raw.EndAt;
+  const registrations = raw.registrations ?? raw.Registrations;
+  const newLeads = raw.newLeads ?? raw.NewLeads;
+  const activitiesHosted = raw.activitiesHosted ?? raw.ActivitiesHosted;
+  const followUpCoveragePercent =
+    raw.followUpCoveragePercent ?? raw.FollowUpCoveragePercent;
+
+  if (
+    typeof startAt !== "string" ||
+    typeof endAt !== "string" ||
+    typeof registrations !== "number" ||
+    typeof newLeads !== "number" ||
+    typeof activitiesHosted !== "number" ||
+    typeof followUpCoveragePercent !== "number"
+  ) {
+    throw new Error("Invalid report prior period payload");
+  }
+
+  return {
+    startAt,
+    endAt,
+    registrations,
+    newLeads,
+    activitiesHosted,
+    followUpCoveragePercent,
+  };
+}
+
+function parseTrendPoint(raw: Record<string, unknown>): ReportTrendPoint | null {
+  const date = raw.date ?? raw.Date;
+  const registrations = raw.registrations ?? raw.Registrations;
+  const newClients = raw.newClients ?? raw.NewClients;
+
+  if (
+    typeof date !== "string" ||
+    typeof registrations !== "number" ||
+    typeof newClients !== "number"
+  ) {
+    return null;
+  }
+
+  return { date, registrations, newClients };
+}
+
 function parseReport(raw: Record<string, unknown>): ReportResult {
   const periodRaw = raw.period ?? raw.Period;
   const activitiesHosted = raw.activitiesHosted ?? raw.ActivitiesHosted;
@@ -190,6 +253,8 @@ function parseReport(raw: Record<string, unknown>): ReportResult {
   const repeatParticipants = raw.repeatParticipants ?? raw.RepeatParticipants;
   const inactiveClients = raw.inactiveClients ?? raw.InactiveClients;
   const campaignResultsRaw = raw.campaignResults ?? raw.CampaignResults;
+  const priorPeriodRaw = raw.priorPeriod ?? raw.PriorPeriod;
+  const dailyTrendRaw = raw.dailyTrend ?? raw.DailyTrend;
 
   if (
     typeof periodRaw !== "object" ||
@@ -206,7 +271,10 @@ function parseReport(raw: Record<string, unknown>): ReportResult {
     typeof repeatParticipants !== "number" ||
     typeof inactiveClients !== "number" ||
     typeof campaignResultsRaw !== "object" ||
-    campaignResultsRaw === null
+    campaignResultsRaw === null ||
+    typeof priorPeriodRaw !== "object" ||
+    priorPeriodRaw === null ||
+    !Array.isArray(dailyTrendRaw)
   ) {
     throw new Error("Invalid report payload");
   }
@@ -231,6 +299,10 @@ function parseReport(raw: Record<string, unknown>): ReportResult {
     campaignResults: parseCampaignResults(
       campaignResultsRaw as Record<string, unknown>
     ),
+    priorPeriod: parsePriorPeriod(priorPeriodRaw as Record<string, unknown>),
+    dailyTrend: dailyTrendRaw
+      .map((item) => parseTrendPoint(item as Record<string, unknown>))
+      .filter((item): item is ReportTrendPoint => item !== null),
   };
 }
 

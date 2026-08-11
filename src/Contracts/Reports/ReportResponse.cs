@@ -44,4 +44,6 @@ public sealed record ReportResponse(
     IReadOnlyList<ReportCommunityRankingItemResponse> CommunityRanking,
     int RepeatParticipants,
     int InactiveClients,
-    ReportCampaignResultsResponse CampaignResults);
+    ReportCampaignResultsResponse CampaignResults,
+    ReportPriorPeriodResponse PriorPeriod,
+    IReadOnlyList<ReportTrendPointResponse> DailyTrend);
