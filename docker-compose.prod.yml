@@ -1,16 +1,22 @@
-# Production overlay — use with:
+# Launch-hardening overlay — use with:
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
-# Enables launch-hardening defaults: reCAPTCHA on signup, demo seeds off.
+# Enables reCAPTCHA on signup and disables demo/load seeds.
+# Keeps Development environment so local Docker credentials still work.
+#
+# For true production (DigitalOcean/UAT with real secrets), set in .env:
+#   ASPNETCORE_ENVIRONMENT=Production
+#   Jwt__SigningKey=<strong secret>
+#   POSTGRES_PASSWORD=<strong secret>
+# See docs/deploy/enterprise-launch-checklist.md
 
 services:
   api:
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
       DemoDataSeed__Enabled: "false"
       LoadTestSeed__Enabled: "false"
       SelfServeSignup__Recaptcha__Enabled: ${SelfServeSignup__Recaptcha__Enabled:-true}
-      FollowUpDigest__Enabled: ${FollowUpDigest__Enabled:-true}
+      FollowUpDigest__Enabled: ${FollowUpDigest__Enabled:-false}
 
   web:
     build:
