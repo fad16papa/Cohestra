@@ -110,6 +110,26 @@ public sealed class ReportService(
                 cancellationToken)
             : new ReportCampaignResultsResponse(false, 0, 0);
 
+        var (priorStartAt, priorEndAt) = ResolvePriorPeriod(startAt, endAt);
+        var priorRegistrationsInPeriod = BuildFilteredRegistrationsQuery(
+            tenantId,
+            query,
+            priorStartAt,
+            priorEndAt);
+
+        var priorPeriod = await BuildPriorPeriodAsync(
+            tenantId,
+            priorRegistrationsInPeriod,
+            priorStartAt,
+            priorEndAt,
+            cancellationToken);
+
+        var dailyTrend = await BuildDailyTrendAsync(
+            registrationsInPeriod,
+            startAt,
+            endAt,
+            cancellationToken);
+
         return new ReportResponse(
             new ReportPeriodResponse(normalizedPreset, startAt, endAt, computedAt),
             activitiesHosted,
@@ -121,7 +141,101 @@ public sealed class ReportService(
             communityRanking,
             repeatParticipants,
             inactiveClients,
-            campaignResults);
+            campaignResults,
+            priorPeriod,
+            dailyTrend);
+    }
+
+    private static (DateTimeOffset PriorStartAt, DateTimeOffset PriorEndAt) ResolvePriorPeriod(
+        DateTimeOffset startAt,
+        DateTimeOffset endAt)
+    {
+        var duration = endAt - startAt;
+        var priorEndAt = startAt.AddTicks(-1);
+        var priorStartAt = priorEndAt - duration;
+        return (priorStartAt, priorEndAt);
+    }
+
+    private async Task<ReportPriorPeriodResponse> BuildPriorPeriodAsync(
+        Guid tenantId,
+        IQueryable<Domain.Registrations.Registration> priorRegistrationsInPeriod,
+        DateTimeOffset priorStartAt,
+        DateTimeOffset priorEndAt,
+        CancellationToken cancellationToken)
+    {
+        var priorRegistrationCount = await priorRegistrationsInPeriod.CountAsync(cancellationToken);
+
+        var priorActivitiesHosted = await priorRegistrationsInPeriod
+            .Select(registration => registration.ActivityId)
+            .Distinct()
+            .CountAsync(cancellationToken);
+
+        var priorCohortClientIds = priorRegistrationsInPeriod
+            .Select(registration => registration.ClientId)
+            .Distinct();
+
+        var priorNewLeads = await dbContext.Clients
+            .AsNoTracking()
+            .CountAsync(
+                client =>
+                    client.TenantId == tenantId &&
+                    priorCohortClientIds.Contains(client.Id) &&
+                    client.CreatedAt >= priorStartAt &&
+                    client.CreatedAt <= priorEndAt,
+                cancellationToken);
+
+        var priorFollowUpStatus = await BuildFollowUpStatusAsync(
+            tenantId,
+            priorRegistrationsInPeriod,
+            cancellationToken);
+
+        return new ReportPriorPeriodResponse(
+            priorStartAt,
+            priorEndAt,
+            priorRegistrationCount,
+            priorNewLeads,
+            priorActivitiesHosted,
+            priorFollowUpStatus.CoveragePercent);
+    }
+
+    private async Task<IReadOnlyList<ReportTrendPointResponse>> BuildDailyTrendAsync(
+        IQueryable<Domain.Registrations.Registration> registrationsInPeriod,
+        DateTimeOffset startAt,
+        DateTimeOffset endAt,
+        CancellationToken cancellationToken)
+    {
+        var registrationRows = await registrationsInPeriod
+            .Select(registration => new
+            {
+                registration.CreatedAt,
+                registration.ClientId,
+                ClientCreatedAt = registration.Client.CreatedAt,
+            })
+            .ToListAsync(cancellationToken);
+
+        var startDate = DateOnly.FromDateTime(startAt.UtcDateTime);
+        var endDate = DateOnly.FromDateTime(endAt.UtcDateTime);
+
+        var registrationsByDate = registrationRows
+            .GroupBy(row => DateOnly.FromDateTime(row.CreatedAt.UtcDateTime))
+            .ToDictionary(group => group.Key, group => group.Count());
+
+        var newClientsByDate = registrationRows
+            .Where(row => DateOnly.FromDateTime(row.ClientCreatedAt.UtcDateTime) ==
+                          DateOnly.FromDateTime(row.CreatedAt.UtcDateTime))
+            .GroupBy(row => DateOnly.FromDateTime(row.CreatedAt.UtcDateTime))
+            .ToDictionary(group => group.Key, group => group.Select(row => row.ClientId).Distinct().Count());
+
+        var points = new List<ReportTrendPointResponse>();
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            points.Add(new ReportTrendPointResponse(
+                date,
+                registrationsByDate.GetValueOrDefault(date),
+                newClientsByDate.GetValueOrDefault(date)));
+        }
+
+        return points;
     }
 
     private async Task<ReportCampaignResultsResponse> BuildCampaignResultsAsync(

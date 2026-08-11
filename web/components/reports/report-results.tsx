@@ -1,7 +1,9 @@
-import Link from "next/link";
-import type { ReactNode } from "react";
-
 import { MetricTile } from "@/components/dashboard/metric-tile";
+import { ReportActivityRankingChart } from "@/components/reports/report-activity-ranking-chart";
+import { ReportFollowUpChart } from "@/components/reports/report-follow-up-chart";
+import { ReportNarrativeHero } from "@/components/reports/report-narrative-hero";
+import { ReportRegistrationsTrendChart } from "@/components/reports/report-registrations-trend-chart";
+import { ReportTrustBar } from "@/components/reports/report-trust-bar";
 import {
   Card,
   CardContent,
@@ -9,10 +11,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { ReportResult } from "@/lib/reports-api";
+import { computeWowDeltaPercent } from "@/lib/dashboard-insights";
+import {
+  priorPeriodComparisonLabel,
+  reportFiltersToActivitiesHref,
+  reportFiltersToClientsHref,
+} from "@/lib/report-insights";
+import type { ReportFilters, ReportResult } from "@/lib/reports-api";
 
 type ReportResultsProps = {
   report: ReportResult;
+  filters: ReportFilters;
 };
 
 function formatCoveragePercent(value: number): string {
@@ -31,50 +40,39 @@ function formatDateRange(startAt: string, endAt: string): string {
   return `${formatter.format(start)} – ${formatter.format(end)}`;
 }
 
-const RANKING_VISIBLE_COUNT = 5;
-
-/** ~one ranked row (py-3 + border) × 5 + gaps between rows */
-const rankingListScrollClassName =
-  "max-h-[17.5rem] overflow-y-auto overscroll-y-contain pr-1 [-ms-overflow-style:auto] [scrollbar-gutter:stable]";
-
-type ReportRankingScrollListProps = {
-  itemCount: number;
-  children: ReactNode;
-};
-
-function ReportRankingScrollList({
-  itemCount,
-  children,
-}: ReportRankingScrollListProps) {
-  return (
-    <div className="space-y-2">
-      {itemCount > RANKING_VISIBLE_COUNT ? (
-        <p className="text-xs text-text-muted-warm">
-          Showing top {RANKING_VISIBLE_COUNT} — scroll for{" "}
-          {itemCount - RANKING_VISIBLE_COUNT} more
-        </p>
-      ) : null}
-      <div className={rankingListScrollClassName}>
-        <div className="space-y-3">{children}</div>
-      </div>
-    </div>
-  );
+function periodLabel(preset: string): string {
+  switch (preset) {
+    case "monthly":
+      return "this month";
+    case "custom":
+      return "this period";
+    default:
+      return "this week";
+  }
 }
 
-export function ReportResults({ report }: ReportResultsProps) {
+export function ReportResults({ report, filters }: ReportResultsProps) {
+  const comparisonLabel = priorPeriodComparisonLabel(report.period.preset);
+
   if (report.registrations === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border-warm px-6 py-10 text-center">
-        <p className="text-sm text-text-warm">No registrations in this period.</p>
-        <p className="mt-2 text-sm text-text-muted-warm">
-          Adjust your date range or filters to widen the report.
-        </p>
+      <div className="space-y-6">
+        <ReportTrustBar report={report} filters={filters} />
+        <div className="rounded-xl border border-dashed border-border-warm px-6 py-10 text-center">
+          <p className="text-sm text-text-warm">No registrations in this period.</p>
+          <p className="mt-2 text-sm text-text-muted-warm">
+            Adjust your date range or filters to widen the report.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <ReportTrustBar report={report} filters={filters} />
+      <ReportNarrativeHero report={report} />
+
       <p className="text-sm text-text-muted-warm">
         Period: {formatDateRange(report.period.startAt, report.period.endAt)}
       </p>
@@ -83,27 +81,62 @@ export function ReportResults({ report }: ReportResultsProps) {
         <MetricTile
           label="Registrations"
           value={String(report.registrations)}
-          href="/clients"
+          href={reportFiltersToClientsHref(filters)}
           ariaLabel={`${report.registrations} registrations in report period`}
+          delta={{
+            percent: computeWowDeltaPercent(
+              report.registrations,
+              report.priorPeriod.registrations
+            ),
+            label: comparisonLabel,
+          }}
         />
         <MetricTile
           label="New leads"
           value={String(report.newLeads)}
-          href="/clients"
+          href={reportFiltersToClientsHref(filters)}
           ariaLabel={`${report.newLeads} new leads in report period`}
+          delta={{
+            percent: computeWowDeltaPercent(report.newLeads, report.priorPeriod.newLeads),
+            label: comparisonLabel,
+          }}
         />
         <MetricTile
           label="Activities hosted"
           value={String(report.activitiesHosted)}
-          href="/activities"
+          href={reportFiltersToActivitiesHref()}
           ariaLabel={`${report.activitiesHosted} activities hosted in report period`}
+          delta={{
+            percent: computeWowDeltaPercent(
+              report.activitiesHosted,
+              report.priorPeriod.activitiesHosted
+            ),
+            label: comparisonLabel,
+          }}
         />
         <MetricTile
           label="Follow-up coverage"
           value={formatCoveragePercent(report.followUpStatus.coveragePercent)}
-          href="/clients?leadStatus=new"
+          href={reportFiltersToClientsHref({ ...filters, leadStatus: "new" })}
           ariaLabel={`Follow-up coverage ${formatCoveragePercent(report.followUpStatus.coveragePercent)}`}
+          delta={{
+            percent: computeWowDeltaPercent(
+              report.followUpStatus.coveragePercent,
+              report.priorPeriod.followUpCoveragePercent
+            ),
+            label: comparisonLabel,
+          }}
         />
+      </div>
+
+      <ReportRegistrationsTrendChart
+        points={report.dailyTrend}
+        periodLabel={periodLabel(report.period.preset)}
+      />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ReportFollowUpChart followUpStatus={report.followUpStatus} />
+        <ReportActivityRankingChart items={report.activityRanking} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -125,69 +158,31 @@ export function ReportResults({ report }: ReportResultsProps) {
 
         <Card className="border-border-warm">
           <CardHeader>
-            <CardTitle className="text-section text-text-warm">Follow-up status</CardTitle>
+            <CardTitle className="text-section text-text-warm">Community ranking</CardTitle>
             <CardDescription className="text-text-muted-warm">
-              Current status for clients in this report cohort.
+              Registration volume grouped by community label.
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-2 text-sm text-text-muted-warm">
-            <p>New: {report.followUpStatus.newCount}</p>
-            <p>Contacted: {report.followUpStatus.contactedCount}</p>
-            <p>Active: {report.followUpStatus.activeCount}</p>
-            <p>Inactive: {report.followUpStatus.inactiveCount}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="border-border-warm">
-          <CardHeader>
-            <CardTitle className="text-section text-text-warm">
-              Activity ranking
-            </CardTitle>
-          </CardHeader>
           <CardContent>
-            <ReportRankingScrollList itemCount={report.activityRanking.length}>
-              {report.activityRanking.map((item, index) => (
-                <Link
-                  key={item.activityId}
-                  href={`/activities/${item.activityId}`}
-                  className="flex items-center justify-between rounded-lg border border-border-warm px-4 py-3 text-sm transition-colors hover:bg-muted/40"
-                >
-                  <span className="text-text-warm">
-                    #{index + 1} {item.activityName}
-                  </span>
-                  <span className="text-text-muted-warm">
-                    {item.registrationCount}
-                  </span>
-                </Link>
-              ))}
-            </ReportRankingScrollList>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border-warm">
-          <CardHeader>
-            <CardTitle className="text-section text-text-warm">
-              Community ranking
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ReportRankingScrollList itemCount={report.communityRanking.length}>
-              {report.communityRanking.map((item, index) => (
-                <div
-                  key={`${item.communityLabel}-${index}`}
-                  className="flex items-center justify-between rounded-lg border border-border-warm px-4 py-3 text-sm"
-                >
-                  <span className="text-text-warm">
-                    #{index + 1} {item.communityLabel}
-                  </span>
-                  <span className="text-text-muted-warm">
-                    {item.registrationCount}
-                  </span>
-                </div>
-              ))}
-            </ReportRankingScrollList>
+            {report.communityRanking.length === 0 ? (
+              <p className="text-sm text-text-muted-warm">
+                Community rankings appear when activities include community labels.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {report.communityRanking.map((item, index) => (
+                  <li
+                    key={`${item.communityLabel}-${index}`}
+                    className="flex items-center justify-between rounded-lg border border-border-warm px-4 py-3 text-sm"
+                  >
+                    <span className="text-text-warm">
+                      #{index + 1} {item.communityLabel}
+                    </span>
+                    <span className="text-text-muted-warm">{item.registrationCount}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -196,6 +191,9 @@ export function ReportResults({ report }: ReportResultsProps) {
         <Card>
           <CardHeader>
             <CardTitle>Campaign results</CardTitle>
+            <CardDescription className="text-text-muted-warm">
+              Outreach volume for this period on Pro and Enterprise.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p className="text-text-muted-warm">

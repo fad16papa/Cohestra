@@ -213,7 +213,7 @@ export function ReportsPageClient() {
         <div>
           <h2 className="text-display-sm text-text-warm">Reports</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
-            Weekly and monthly performance with conjunctive filters.
+            Understand what happened, why it matters, and export the same numbers your team trusts.
           </p>
         </div>
         <Button
@@ -239,7 +239,7 @@ export function ReportsPageClient() {
       ) : null}
 
       {!awaitingCustomDates && !error && report && reportMatchesFilters ? (
-        <ReportResults report={report} />
+        <ReportResults report={report} filters={filters} />
       ) : null}
     </div>
   );
