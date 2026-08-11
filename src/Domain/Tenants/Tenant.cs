@@ -83,4 +83,10 @@ public sealed class Tenant
     /// Default UTC. Server-owned — not client-supplied per request.
     /// </summary>
     public string RegistrationTimeZoneId { get; set; } = RegistrationTimeZoneDefaults.Utc;
+
+    /// <summary>Enterprise custom domain hostname (e.g. events.example.com).</summary>
+    public string? CustomDomain { get; set; }
+
+    /// <summary>Set when DNS verification succeeds for <see cref="CustomDomain"/>.</summary>
+    public DateTimeOffset? CustomDomainVerifiedAt { get; set; }
 }

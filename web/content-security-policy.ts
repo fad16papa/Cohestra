@@ -1,9 +1,8 @@
 /**
- * Baseline Content-Security-Policy (report-only) for the Cohestra web app.
+ * Baseline Content-Security-Policy for the Cohestra web app.
  *
- * v1 ships report-only so violations are visible in DevTools without blocking
- * Next.js inline scripts/styles. Tighten directives and switch to enforce mode
- * after reviewing violation reports (see docs/deploy/enterprise-launch-checklist.md).
+ * v2 ships **enforce** mode after launch checklist CSP audit (Aug 2026).
+ * Report-only variants remain exported for staged rollouts.
  *
  * Production: nginx adds this header (deploy/nginx/app.conf, app-ssl.conf.template).
  * Development: Next.js adds it when nginx is not in front (next.config.ts).
@@ -14,7 +13,7 @@ const BASE_DIRECTIVES = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://images.unsplash.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -23,27 +22,45 @@ const BASE_DIRECTIVES = [
 ] as const;
 
 /** Production / Docker (nginx-owned). API calls are same-origin via /api/ proxy. */
-export const contentSecurityPolicyReportOnlyValue = [
+export const contentSecurityPolicyValue = [
   ...BASE_DIRECTIVES,
   "connect-src 'self' https://nominatim.openstreetmap.org",
 ].join("; ");
 
 /** Local `next dev` — allow HMR websockets. */
-export const contentSecurityPolicyReportOnlyDevValue = [
+export const contentSecurityPolicyDevValue = [
   ...BASE_DIRECTIVES,
   "connect-src 'self' ws: wss: https://nominatim.openstreetmap.org",
 ].join("; ");
 
+/** @deprecated Use contentSecurityPolicyHeader — kept for staged rollback. */
+export const contentSecurityPolicyReportOnlyValue = contentSecurityPolicyValue;
+
+/** @deprecated Use contentSecurityPolicyDevHeader. */
+export const contentSecurityPolicyReportOnlyDevValue = contentSecurityPolicyDevValue;
+
+export const contentSecurityPolicyHeader = {
+  key: "Content-Security-Policy",
+  value: contentSecurityPolicyValue,
+} as const;
+
+export const contentSecurityPolicyDevHeader = {
+  key: "Content-Security-Policy",
+  value: contentSecurityPolicyDevValue,
+} as const;
+
 export const contentSecurityPolicyReportOnlyHeader = {
   key: "Content-Security-Policy-Report-Only",
-  value: contentSecurityPolicyReportOnlyValue,
+  value: contentSecurityPolicyValue,
 } as const;
 
 export const contentSecurityPolicyReportOnlyDevHeader = {
   key: "Content-Security-Policy-Report-Only",
-  value: contentSecurityPolicyReportOnlyDevValue,
+  value: contentSecurityPolicyDevValue,
 } as const;
 
-/** Nginx `add_header` value — keep in sync with contentSecurityPolicyReportOnlyValue. */
-export const nginxContentSecurityPolicyReportOnly =
-  contentSecurityPolicyReportOnlyValue;
+/** Nginx `add_header` value — keep in sync with contentSecurityPolicyValue. */
+export const nginxContentSecurityPolicy = contentSecurityPolicyValue;
+
+/** @deprecated Use nginxContentSecurityPolicy. */
+export const nginxContentSecurityPolicyReportOnly = contentSecurityPolicyValue;

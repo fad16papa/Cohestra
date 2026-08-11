@@ -1,6 +1,6 @@
-# Activity Lead — Operator User Manual
+# Cohestra — Operator User Manual
 
-**Product:** Activity Lead by Creativorare  
+**Product:** Cohestra by Creativorare  
 **Audience:** Community operators and event organisers  
 **Version:** 1.0  
 **Last updated:** June 2026
@@ -9,7 +9,7 @@
 
 ## About this manual
 
-This guide explains how to use **Activity Lead** from sign-in through daily operations: running events, collecting registrations, following up with leads, sending email campaigns, and reporting results.
+This guide explains how to use **Cohestra** from sign-in through daily operations: running events, collecting registrations, following up with leads, sending email campaigns, and reporting results.
 
 It does **not** cover installation, servers, or technical setup. Everything here is what you see and click in the application.
 
@@ -19,7 +19,7 @@ It does **not** cover installation, servers, or technical setup. Everything here
 
 ## Table of contents
 
-1. [What Activity Lead does](#what-activity-lead-does)
+1. [What Cohestra does](#what-cohestra-does)
 2. [Signing in and your account](#signing-in-and-your-account)
 3. [Navigating the application](#navigating-the-application)
 4. [Dashboard](#dashboard)
@@ -40,9 +40,9 @@ It does **not** cover installation, servers, or technical setup. Everything here
 
 ---
 
-## What Activity Lead does
+## What Cohestra does
 
-Activity Lead helps you:
+Cohestra helps you:
 
 - **Create activities** (events, sessions, sign-up drives) with custom registration forms
 - **Publish a link or QR code** so people can register on their phone
@@ -769,4 +769,4 @@ Complete any **action required** items with your email provider before large cam
 
 ---
 
-*Activity Lead — Operator User Manual — Creativorare*
+*Cohestra — Operator User Manual — Creativorare*

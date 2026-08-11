@@ -23,27 +23,39 @@ public sealed class TenantHostResolver(
         }
 
         var slug = ExtractSlug(hostHeader, configuration);
-        if (string.IsNullOrWhiteSpace(slug))
+        if (!string.IsNullOrWhiteSpace(slug))
         {
-            return TenantHostResolution.Fail("Could not resolve tenant from Host.");
+            var normalized = slug.Trim().ToLowerInvariant();
+            var tenant = await dbContext.Tenants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Slug == normalized, cancellationToken);
+
+            if (tenant is null)
+            {
+                return TenantHostResolution.Fail($"Unknown tenant workspace '{normalized}'.");
+            }
+
+            if (tenant.Status != TenantStatus.Active)
+            {
+                return TenantHostResolution.Fail($"Tenant workspace '{normalized}' is not available.");
+            }
+
+            return TenantHostResolution.Ok(tenant.Id, tenant.Slug);
         }
 
-        var normalized = slug.Trim().ToLowerInvariant();
-        var tenant = await dbContext.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Slug == normalized, cancellationToken);
-
-        if (tenant is null)
+        var customDomainTenant = await ResolveByVerifiedCustomDomainAsync(hostHeader, cancellationToken);
+        if (customDomainTenant is not null)
         {
-            return TenantHostResolution.Fail($"Unknown tenant workspace '{normalized}'.");
+            if (customDomainTenant.Status != TenantStatus.Active)
+            {
+                return TenantHostResolution.Fail(
+                    $"Tenant workspace '{customDomainTenant.Slug}' is not available.");
+            }
+
+            return TenantHostResolution.Ok(customDomainTenant.Id, customDomainTenant.Slug);
         }
 
-        if (tenant.Status != TenantStatus.Active)
-        {
-            return TenantHostResolution.Fail($"Tenant workspace '{normalized}' is not available.");
-        }
-
-        return TenantHostResolution.Ok(tenant.Id, tenant.Slug);
+        return TenantHostResolution.Fail("Could not resolve tenant from Host.");
     }
 
     public async Task<TenantDoorResolution> ResolveDoorAsync(
@@ -56,22 +68,52 @@ public sealed class TenantHostResolver(
         }
 
         var slug = ExtractSlug(hostHeader, configuration);
-        if (string.IsNullOrWhiteSpace(slug))
+        if (!string.IsNullOrWhiteSpace(slug))
         {
-            return TenantDoorResolution.Unknown("Could not resolve tenant from Host.");
+            var normalized = slug.Trim().ToLowerInvariant();
+            var tenant = await dbContext.Tenants
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Slug == normalized, cancellationToken);
+
+            if (tenant is null)
+            {
+                return TenantDoorResolution.Unknown($"Unknown tenant workspace '{normalized}'.");
+            }
+
+            return ResolveDoorForTenant(tenant);
         }
 
-        var normalized = slug.Trim().ToLowerInvariant();
-        var tenant = await dbContext.Tenants
+        var customDomainTenant = await ResolveByVerifiedCustomDomainAsync(hostHeader, cancellationToken);
+        if (customDomainTenant is not null)
+        {
+            return ResolveDoorForTenant(customDomainTenant);
+        }
+
+        return TenantDoorResolution.Unknown("Could not resolve tenant from Host.");
+    }
+
+    private async Task<Tenant?> ResolveByVerifiedCustomDomainAsync(
+        string? hostHeader,
+        CancellationToken cancellationToken)
+    {
+        var host = NormalizeHost(hostHeader);
+        if (string.IsNullOrWhiteSpace(host))
+        {
+            return null;
+        }
+
+        return await dbContext.Tenants
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Slug == normalized, cancellationToken);
+            .FirstOrDefaultAsync(
+                tenant =>
+                    tenant.CustomDomainVerifiedAt != null
+                    && tenant.CustomDomain != null
+                    && tenant.CustomDomain.ToLower() == host,
+                cancellationToken);
+    }
 
-        if (tenant is null)
-        {
-            return TenantDoorResolution.Unknown($"Unknown tenant workspace '{normalized}'.");
-        }
-
-        return tenant.Status switch
+    private static TenantDoorResolution ResolveDoorForTenant(Tenant tenant) =>
+        tenant.Status switch
         {
             TenantStatus.Suspended => TenantDoorResolution.Suspended(
                 tenant.Id, tenant.Slug, tenant.Name, tenant.Plan),
@@ -79,9 +121,8 @@ public sealed class TenantHostResolver(
                 tenant.Id, tenant.Slug, tenant.Name),
             TenantStatus.Active => TenantDoorResolution.Active(
                 tenant.Id, tenant.Slug, tenant.Name, tenant.Plan, tenant.BillingStatus),
-            _ => TenantDoorResolution.Unknown($"Tenant workspace '{normalized}' is not available."),
+            _ => TenantDoorResolution.Unknown($"Tenant workspace '{tenant.Slug}' is not available."),
         };
-    }
 
     /// <summary>
     /// Production apex/www and local bare localhost — marketing-only (no tenant SitePage).

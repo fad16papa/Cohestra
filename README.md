@@ -158,7 +158,7 @@ docker compose -f docker-compose.uat.yml up -d --build
 Cohestra.sln
 src/
   Api/              # ASP.NET Core Web API (controllers, health, JWT auth)
-  Application/      # Use cases (Activities, Clients, Campaigns, Reports stubs)
+  Application/      # Use cases (Activities, Clients, Campaigns, Reports)
   Domain/           # Entities and domain rules
   Infrastructure/   # EF Core, Redis, SendGrid (later stories)
   Contracts/        # DTOs for API wire contract

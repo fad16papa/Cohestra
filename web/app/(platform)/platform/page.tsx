@@ -4,6 +4,14 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import {
+  PlatformDataTable,
+  PlatformDataTableBody,
+  PlatformDataTableCell,
+  PlatformDataTableHead,
+  PlatformDataTableHeaderCell,
+  PlatformDataTableRow,
+} from "@/components/platform/platform-data-table";
 import { listPlatformTenants, type TenantListItem } from "@/lib/platform-api";
 
 export default function PlatformTenantDirectoryPage() {
@@ -97,56 +105,55 @@ export default function PlatformTenantDirectoryPage() {
       {loading ? (
         <p className="text-sm text-[var(--plat-stone)]">Loading directory…</p>
       ) : (
-        <div className="overflow-x-auto border-y border-[var(--plat-line)]">
-          <table className="w-full min-w-[720px] border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-[var(--plat-line)] text-xs uppercase tracking-[0.06em] text-[var(--plat-stone)]">
-                <th className="py-3 pr-4 font-semibold">Slug</th>
-                <th className="py-3 pr-4 font-semibold">Name</th>
-                <th className="py-3 pr-4 font-semibold">Status</th>
-                <th className="py-3 pr-4 font-semibold">Created</th>
-                <th className="py-3 pr-4 font-semibold">Admin</th>
-                <th className="py-3 pr-4 font-semibold">Activities</th>
-                <th className="py-3 font-semibold">Clients</th>
+        <PlatformDataTable>
+          <PlatformDataTableHead>
+            <PlatformDataTableHeaderCell>Slug</PlatformDataTableHeaderCell>
+            <PlatformDataTableHeaderCell>Name</PlatformDataTableHeaderCell>
+            <PlatformDataTableHeaderCell>Status</PlatformDataTableHeaderCell>
+            <PlatformDataTableHeaderCell>Created</PlatformDataTableHeaderCell>
+            <PlatformDataTableHeaderCell>Admin</PlatformDataTableHeaderCell>
+            <PlatformDataTableHeaderCell>Activities</PlatformDataTableHeaderCell>
+            <PlatformDataTableHeaderCell className="pr-0">Clients</PlatformDataTableHeaderCell>
+          </PlatformDataTableHead>
+          <PlatformDataTableBody>
+            {items.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="py-8 text-[var(--plat-stone)]">
+                  No tenants match this search.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-8 text-[var(--plat-stone)]">
-                    No tenants match this search.
-                  </td>
-                </tr>
-              ) : (
-                items.map((tenant) => (
-                  <tr
-                    key={tenant.id}
-                    className="border-b border-[var(--plat-line)]/80 transition-colors hover:bg-white/60"
-                  >
-                    <td className="py-3.5 pr-4">
-                      <Link
-                        href={`/platform/tenants/${tenant.id}`}
-                        className="font-semibold text-[var(--plat-lagoon)] underline-offset-4 hover:underline"
-                      >
-                        {tenant.slug}
-                      </Link>
-                    </td>
-                    <td className="py-3.5 pr-4 text-[var(--plat-ink-soft)]">{tenant.name}</td>
-                    <td className="py-3.5 pr-4">{tenant.status}</td>
-                    <td className="py-3.5 pr-4 tabular-nums text-[var(--plat-stone)]">
-                      {formatDate(tenant.createdAt)}
-                    </td>
-                    <td className="py-3.5 pr-4 text-[var(--plat-ink-soft)]">
-                      {tenant.adminContactEmail ?? "—"}
-                    </td>
-                    <td className="py-3.5 pr-4 tabular-nums">{tenant.activityCount}</td>
-                    <td className="py-3.5 tabular-nums">{tenant.clientCount}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+            ) : (
+              items.map((tenant) => (
+                <PlatformDataTableRow key={tenant.id}>
+                  <PlatformDataTableCell>
+                    <Link
+                      href={`/platform/tenants/${tenant.id}`}
+                      className="font-semibold text-[var(--plat-lagoon)] underline-offset-4 hover:underline"
+                    >
+                      {tenant.slug}
+                    </Link>
+                  </PlatformDataTableCell>
+                  <PlatformDataTableCell className="text-[var(--plat-ink-soft)]">
+                    {tenant.name}
+                  </PlatformDataTableCell>
+                  <PlatformDataTableCell>{tenant.status}</PlatformDataTableCell>
+                  <PlatformDataTableCell className="tabular-nums text-[var(--plat-stone)]">
+                    {formatDate(tenant.createdAt)}
+                  </PlatformDataTableCell>
+                  <PlatformDataTableCell className="text-[var(--plat-ink-soft)]">
+                    {tenant.adminContactEmail ?? "—"}
+                  </PlatformDataTableCell>
+                  <PlatformDataTableCell className="tabular-nums">
+                    {tenant.activityCount}
+                  </PlatformDataTableCell>
+                  <PlatformDataTableCell className="tabular-nums pr-0">
+                    {tenant.clientCount}
+                  </PlatformDataTableCell>
+                </PlatformDataTableRow>
+              ))
+            )}
+          </PlatformDataTableBody>
+        </PlatformDataTable>
       )}
 
       <div className="flex items-center justify-between gap-4 text-sm text-[var(--plat-stone)]">

@@ -269,4 +269,36 @@ public sealed class TenantHostResolverTests
         Assert.False(result.Succeeded);
         Assert.Contains("Unknown", result.ErrorDetail, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public async Task ResolveAsync_verified_custom_domain_sets_tenant()
+    {
+        await using var db = new CohestraDbContext(
+            new DbContextOptionsBuilder<CohestraDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options);
+
+        var tenantId = Guid.CreateVersion7();
+        var now = DateTimeOffset.UtcNow;
+        db.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Slug = "acme",
+            Name = "Acme",
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            CustomDomain = "events.acme.example",
+            CustomDomainVerifiedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        var resolver = new TenantHostResolver(db, new ConfigurationBuilder().Build());
+        var result = await resolver.ResolveAsync("events.acme.example");
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(tenantId, result.TenantId);
+        Assert.Equal("acme", result.Slug);
+    }
 }

@@ -1,0 +1,18 @@
+# Production overlay — use with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Enables launch-hardening defaults: reCAPTCHA on signup, demo seeds off.
+
+services:
+  api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      DemoDataSeed__Enabled: "false"
+      LoadTestSeed__Enabled: "false"
+      SelfServeSignup__Recaptcha__Enabled: ${SelfServeSignup__Recaptcha__Enabled:-true}
+      FollowUpDigest__Enabled: ${FollowUpDigest__Enabled:-true}
+
+  web:
+    build:
+      args:
+        NEXT_PUBLIC_RECAPTCHA_ENABLED: ${NEXT_PUBLIC_RECAPTCHA_ENABLED:-true}

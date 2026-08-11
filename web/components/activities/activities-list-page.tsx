@@ -38,7 +38,7 @@ import {
   shouldShowPublishedOnlyChip,
 } from "@/lib/plan-limit-utils";
 import { cn } from "@/lib/utils";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, ChevronDown } from "lucide-react";
 
 const ACTIVITY_PAGE_SIZE = 20;
 const ACTIVITY_SEARCH_DEBOUNCE_MS = 400;
@@ -156,6 +156,7 @@ export function ActivitiesListPage() {
   const [communities, setCommunities] = useState<Array<{ id: string; name: string }>>([]);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const activityGridRef = useRef<HTMLDivElement>(null);
   const recoveryChipsRef = useRef<HTMLDivElement>(null);
   const listQueryKey = [
@@ -465,7 +466,33 @@ export function ActivitiesListPage() {
         />
       ) : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="rounded-xl border border-border-warm bg-card p-4 md:border-0 md:bg-transparent md:p-0">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-2 text-sm font-medium text-text-warm md:hidden"
+          aria-expanded={mobileFiltersOpen}
+          onClick={() => setMobileFiltersOpen((current) => !current)}
+        >
+          <span>
+            Filters
+            {hasActiveFilters ? " (active)" : ""}
+          </span>
+          <ChevronDown
+            className={cn(
+              "size-4 shrink-0 text-text-muted-warm transition-transform",
+              mobileFiltersOpen && "rotate-180"
+            )}
+            aria-hidden
+          />
+        </button>
+
+        <div
+          className={cn(
+            "grid gap-4 sm:grid-cols-2 xl:grid-cols-5",
+            !mobileFiltersOpen && "hidden md:grid",
+            mobileFiltersOpen && "mt-4 md:mt-0"
+          )}
+        >
         <div className="space-y-2 sm:col-span-2 xl:col-span-2">
           <Label htmlFor="activity-search">Search</Label>
           <ActivitySearchInput
@@ -544,6 +571,7 @@ export function ActivitiesListPage() {
               </option>
             ))}
           </select>
+        </div>
         </div>
       </div>
 

@@ -60,7 +60,7 @@ Optional apex check is included when `PUBLIC_BASE_URL` is set (see script sectio
 - [x] **P1 shipped (Story 17.3):** Member JWT → 403 on admin-only routes; tenant JWT → 403 on `/platform/*`; platform admin positive control
 - [x] **P1 shipped (Story 17.4):** Operator auth OTP verify throttling; refresh revoke-all; production secret validation; security headers; OpenAPI dev-only; HtmlSanitizer ≥ 9.0.892
 - [x] **P2 shipped (Story 18.3):** Security header ownership — **nginx** owns headers in Docker/production (`app.conf`, `app-ssl.conf.template`); **Next.js** emits them only in `next dev` (`web/security-headers.ts`). Nginx `proxy_hide_header` strips upstream duplicates on `/`.
-- [x] **P2 shipped (Story 18.2):** CSP baseline — **report-only** policy (`Content-Security-Policy-Report-Only`) owned by nginx in Docker/production; Next.js emits dev variant in `next dev`. Canonical policy in `web/content-security-policy.ts`.
+- [x] **P2 shipped (Story 18.2):** CSP baseline — **enforce** policy (`Content-Security-Policy`) owned by nginx in Docker/production; Next.js emits dev variant in `next dev`. Canonical policy in `web/content-security-policy.ts`.
 
 **Verify single header values (Docker on port 8088):**
 

@@ -89,5 +89,14 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .HasMaxLength(64)
             .IsRequired()
             .HasDefaultValue("UTC");
+
+        builder.Property(tenant => tenant.CustomDomain)
+            .HasMaxLength(253);
+
+        builder.Property(tenant => tenant.CustomDomainVerifiedAt);
+
+        builder.HasIndex(tenant => tenant.CustomDomain)
+            .IsUnique()
+            .HasFilter("\"CustomDomain\" IS NOT NULL");
     }
 }

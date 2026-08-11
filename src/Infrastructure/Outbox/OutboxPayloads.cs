@@ -23,4 +23,5 @@ public static class BillingNotificationNoticeTypes
     public const string ScheduledDowngrade = "scheduled_downgrade";
     public const string ScheduledDowngradeReminder = "scheduled_downgrade_reminder";
     public const string ScheduledDowngradeApplied = "scheduled_downgrade_applied";
+    public const string FollowUpDigest = "follow_up_digest";
 }

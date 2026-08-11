@@ -1,6 +1,6 @@
 # Cohestra
 
-Cohestra (a.k.a. Activity Lead) — API-first community events + lead-generation platform.
+Cohestra — multi-tenant community events + lead-generation platform.
 See `README.md` for the full product overview, endpoints, and Docker Compose workflow.
 
 ## Cursor Cloud specific instructions

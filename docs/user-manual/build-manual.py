@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build Activity Lead operator manual as DOCX and PDF from markdown source."""
+"""Build Cohestra operator manual as DOCX and PDF from markdown source."""
 
 from __future__ import annotations
 
@@ -13,9 +13,9 @@ from docx.shared import Inches, Pt, RGBColor
 from docx.oxml.ns import qn
 
 ROOT = Path(__file__).resolve().parent
-SOURCE = ROOT / "activity-lead-operator-manual.md"
-DOCX_OUT = ROOT / "Activity-Lead-Operator-Manual.docx"
-PDF_OUT = ROOT / "Activity-Lead-Operator-Manual.pdf"
+SOURCE = ROOT / "cohestra-operator-manual.md"
+DOCX_OUT = ROOT / "Cohestra-Operator-Manual.docx"
+PDF_OUT = ROOT / "Cohestra-Operator-Manual.pdf"
 IMAGE_PATTERN = re.compile(r"^!\[([^\]]*)\]\(([^)]+)\)$")
 MISSING_IMAGES: list[str] = []
 
