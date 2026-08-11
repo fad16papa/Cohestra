@@ -6,6 +6,7 @@ import { ReportDonutChart } from "@/components/reports/report-donut-chart";
 import { ReportHorizontalRankingChart } from "@/components/reports/report-horizontal-ranking-chart";
 import {
   formatSharePercent,
+  REPORT_RANKING_TOP_COUNT,
   ReportDepthCard,
   ReportPanelHeader,
   ReportRankBadge,
@@ -31,7 +32,7 @@ export function ReportCommunityRankingPanel({
   items,
   totalRegistrations,
 }: ReportCommunityRankingPanelProps) {
-  const visibleItems = items.slice(0, 6);
+  const visibleItems = items.slice(0, REPORT_RANKING_TOP_COUNT);
   const topCount = visibleItems[0]?.registrationCount ?? 0;
 
   const chartItems = visibleItems.map((item, index) => ({
@@ -42,7 +43,7 @@ export function ReportCommunityRankingPanel({
     color: CHART_COLORS[index % CHART_COLORS.length],
   }));
 
-  const donutSlices = chartItems.slice(0, 4).map((item) => ({
+  const donutSlices = chartItems.map((item) => ({
     id: item.id,
     label: truncateReportLabel(item.fullLabel, 28),
     value: item.value,

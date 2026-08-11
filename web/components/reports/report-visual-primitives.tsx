@@ -129,3 +129,6 @@ export function formatSharePercent(value: number, total: number): string {
   const percent = (value / total) * 100;
   return `${percent >= 10 ? Math.round(percent) : percent.toFixed(1)}%`;
 }
+
+/** Default number of ranked rows/charts shown in activity and community panels. */
+export const REPORT_RANKING_TOP_COUNT = 5;

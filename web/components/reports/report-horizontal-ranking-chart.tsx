@@ -12,6 +12,7 @@ import {
 } from "recharts";
 
 import { ChartTooltipFrame } from "@/components/dashboard/dashboard-chart-card";
+import { REPORT_RANKING_TOP_COUNT } from "@/components/reports/report-visual-primitives";
 
 export type ReportRankingChartItem = {
   id: string;
@@ -59,7 +60,7 @@ export function ReportHorizontalRankingChart({
   emptyMessage = "No data for this period.",
   height,
 }: ReportHorizontalRankingChartProps) {
-  const visibleItems = items.slice(0, 6);
+  const visibleItems = items.slice(0, REPORT_RANKING_TOP_COUNT);
   const total = visibleItems.reduce((sum, item) => sum + item.value, 0);
   const chartData = visibleItems.map((item) => ({ ...item, total }));
   const chartHeight = height ?? Math.max(160, visibleItems.length * 36);
