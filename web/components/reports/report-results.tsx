@@ -136,17 +136,17 @@ export function ReportResults({ report, filters }: ReportResultsProps) {
         periodLabel={periodLabel(report.period.preset)}
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ReportFollowUpChart followUpStatus={report.followUpStatus} />
+      <div className="grid items-stretch gap-4 lg:grid-cols-2">
         <ReportActivityRankingChart items={report.activityRanking} />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ReportLeadGrowthPanel report={report} />
         <ReportCommunityRankingPanel
           items={report.communityRanking}
           totalRegistrations={report.registrations}
         />
+      </div>
+
+      <div className="grid items-stretch gap-4 lg:grid-cols-2">
+        <ReportFollowUpChart followUpStatus={report.followUpStatus} />
+        <ReportLeadGrowthPanel report={report} />
       </div>
 
       {report.campaignResults.available ? (
