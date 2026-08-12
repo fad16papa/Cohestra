@@ -24,6 +24,10 @@ PUBLIC_BASE_URL=http://localhost:8088 npm run test:e2e
 
 The tenant subdomain test uses `default.localhost:8088` and skips automatically when that host is unreachable (for example, if nginx is not running).
 
+## CI
+
+Every PR runs `deploy/ci-docker-smoke.sh` via the **Docker stack smoke** job in `.github/workflows/ci.yml` (builds compose on `:8088`, API smoke, security headers, Playwright).
+
 ## Configuration
 
 - `PUBLIC_BASE_URL` — base URL for tests (defaults to `http://localhost:8088`).

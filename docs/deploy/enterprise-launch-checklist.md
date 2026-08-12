@@ -15,6 +15,7 @@ Add to your hosts file (Windows: `C:\Windows\System32\drivers\etc\hosts`):
 ```
 127.0.0.1 creativorare.localhost
 127.0.0.1 cohestra.app
+127.0.0.1 default.localhost
 ```
 
 Start stack:
@@ -23,6 +24,12 @@ Start stack:
 cp .env.example .env   # edit secrets as needed
 docker compose build web api --no-cache   # after Dockerfile or dependency changes
 docker compose up -d
+```
+
+Launch overlay (reCAPTCHA on, demo seeds off — keeps Development env for local Docker creds):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
 | Surface | URL | Pass criteria |
@@ -39,9 +46,13 @@ docker compose up -d
 PUBLIC_BASE_URL=http://localhost:8088 API_BASE=http://localhost:8088 \
   TENANT_HOST=default.localhost:8088 \
   bash deploy/local-smoke-run.sh
+
+bash deploy/verify-security-headers.sh http://localhost:8088
 ```
 
 Optional apex check is included when `PUBLIC_BASE_URL` is set (see script section *Enterprise apex*).
+
+**Database migrations:** apply on deploy (`20260811140000_AddTenantCustomDomain`, `20260811160000_BackfillActivityCatalogPerTenant`). The catalog backfill prevents activity edit failures after community/category validation shipped in P2.
 
 **Bootstrap reference:** [deploy/uat-bootstrap.sh](../../deploy/uat-bootstrap.sh) for seeded tenant + operator on fresh volumes.
 
@@ -65,18 +76,22 @@ Optional apex check is included when `PUBLIC_BASE_URL` is set (see script sectio
 **Verify single header values (Docker on port 8088):**
 
 ```bash
-curl -sI http://default.localhost:8088/ | grep -E '^(X-Frame-Options|X-Content-Type-Options|Referrer-Policy|Permissions-Policy|Content-Security-Policy-Report-Only):'
+bash deploy/verify-security-headers.sh http://localhost:8088
+# Or manually:
+curl -sI -H "Host: default.localhost:8088" http://localhost:8088/ | grep -E '^(X-Frame-Options|X-Content-Type-Options|Referrer-Policy|Permissions-Policy|Content-Security-Policy):'
 ```
 
 Each name should appear **once**. After HTTPS setup, repeat against `https://…` and confirm `Strict-Transport-Security` is present (HTTPS template only).
 
-### CSP (Story 18.2)
+### CSP (Story 18.2 — enforce mode shipped)
 
-v1 ships **report-only** — violations appear in browser DevTools console but do **not** block pages. Upgrade path:
+v1 ships **enforce** — `Content-Security-Policy` (not Report-Only). Canonical policy in `web/content-security-policy.ts`; nginx owns it in Docker/production.
 
-1. **Observe** — smoke core flows (login, dashboard, website builder, public registration) with DevTools → Console open; note CSP report-only violations.
-2. **Tighten** — adjust directives in `web/content-security-policy.ts` and mirror the same string in nginx templates.
-3. **Enforce** — rename header to `Content-Security-Policy` in nginx + Next dev once reports are clean.
+**Before launch:**
+
+1. **Smoke** — run `bash deploy/verify-security-headers.sh` on HTTP and HTTPS URLs.
+2. **Flows** — login, dashboard, website builder, public registration, marketing home with DevTools console open; fix any blocked resources in `content-security-policy.ts` + nginx templates together.
+3. **CI** — `deploy/ci-docker-smoke.sh` runs header + Playwright smoke on every PR.
 
 **CSP smoke (manual, Docker 8088):**
 
@@ -89,8 +104,8 @@ v1 ships **report-only** — violations appear in browser DevTools console but d
 | Marketing | `http://cohestra.app:8088/` | Home + fonts/images |
 
 ```bash
-curl -sI http://default.localhost:8088/ | grep -i content-security-policy
-# Expect: Content-Security-Policy-Report-Only: ...
+curl -sI -H "Host: default.localhost:8088" http://localhost:8088/ | grep -i content-security-policy
+# Expect: Content-Security-Policy: ... (NOT Report-Only)
 ```
 
 Run SM-1 locally (Postgres + Redis required):
@@ -153,8 +168,11 @@ dotnet test src/Api.IntegrationTests --filter "FullyQualifiedName~Resend_otp"
 - [ ] DigitalOcean firewall: **22, 80, 443 only** (no 5432/6379/3000/8080)
 - [ ] DNS: apex `cohestra.app`, wildcard `*.cohestra.app` → droplet (or documented nip.io interim)
 - [ ] `.env` filled with strong secrets (not dev defaults) — copy from [.env.uat.example](../../.env.uat.example)
+- [ ] `bash deploy/preflight-launch.sh --strict-recaptcha` passes before first deploy
 - [ ] `docker compose -f docker-compose.uat.yml up -d --build` succeeds
-- [ ] `bash deploy/uat-smoke.sh` passes on server
+- [ ] `bash deploy/uat-smoke.sh --full` passes on server
+- [ ] **`SMOKE_TENANT_HOST` set** when `PUBLIC_BASE_URL` is apex or bare IP (e.g. `creativorare.cohestra.app` or `creativorare.YOUR_NIP_IO`) — required for tenant door/login checks in `--full` mode
+- [ ] `bash deploy/verify-security-headers.sh https://YOUR_TENANT_HOST` passes after HTTPS
 - [ ] `curl ${PUBLIC_BASE_URL}/ready` healthy (postgres + redis)
 - [ ] HTTPS — [temporary-https-nipio.md](./temporary-https-nipio.md) or client domain
 - [ ] **SendGrid domain auth complete** — [sendgrid-production.md](./sendgrid-production.md)
@@ -192,9 +210,10 @@ Repeat on at least one **Basic** and one **Pro** tenant (e.g. `creativorare`):
 
 | Role | Name | Date | Notes |
 |------|------|------|-------|
+| Dev | Cursor / Amelia | 2026-08-11 | Epic 19 production-readiness: catalog backfill migration, preflight + header verify scripts, CI Docker smoke, CSP enforce docs |
 | Dev | Cursor / Amelia | 2026-07-31 | Epic 17 P1 hardening merged (`23875d3`); SM-1 + abuse tests on main |
 | Operator | | | Multi-tenant UAT on local Docker + droplet |
-| PM | | | P1 dev items done; ops gates (reCAPTCHA, deploy) remain |
+| PM | | | Epic 19 stories 19.1–19.5 ops gates remain (reCAPTCHA keys, droplet, Stripe UAT, operator sign-off) |
 
 ---
 

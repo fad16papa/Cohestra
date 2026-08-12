@@ -37,12 +37,13 @@ else
   fail "Public door not active: ${DOOR}"
 fi
 
-# 2b. Marketing apex on bare localhost (local landing page UAT)
-MARKETING_DOOR=$(curl -sS -H "Host: localhost:8088" "${API}/api/v1/public/door" || true)
+# 2b. Marketing apex door (cohestra.app — canonical marketing host)
+MARKETING_DOOR_HOST="${SMOKE_MARKETING_HOST:-cohestra.app}"
+MARKETING_DOOR=$(curl -sS -H "Host: ${MARKETING_DOOR_HOST}" "${API}/api/v1/public/door" || true)
 if echo "$MARKETING_DOOR" | grep -q '"kind":"marketing"'; then
-  pass "Public door marketing for localhost:8088"
+  pass "Public door marketing for ${MARKETING_DOOR_HOST}"
 else
-  fail "Bare localhost should return marketing door (rebuild api): ${MARKETING_DOOR}"
+  fail "Marketing apex should return marketing door (${MARKETING_DOOR_HOST}): ${MARKETING_DOOR:0:200}"
 fi
 
 # 3. Public site
@@ -120,7 +121,7 @@ if [[ -n "${SLUG:-}" ]]; then
     -H "Content-Type: application/json" \
     -H "Host: ${TENANT_HOST}" \
     -H "Idempotency-Key: smoke-$(date +%s)-$RANDOM" \
-    -d "{\"activitySlug\":\"${SLUG}\",\"answers\":{\"name\":\"Smoke Tester\",\"email\":\"smoke+$RANDOM@example.com\",\"phone\":\"91234567\",\"phoneCountry\":\"SG\"}}" || true)
+    -d "{\"activitySlug\":\"${SLUG}\",\"answers\":{\"full_name\":\"Smoke Tester\",\"email\":\"smoke+$RANDOM@example.com\",\"phone\":\"91234567\",\"phoneCountry\":\"SG\",\"consent\":true}}" || true)
   if echo "$REG" | grep -q 'registrationNumber'; then
     pass "Public registration submit"
     REG_NUM=$(echo "$REG" | python3 -c "import sys,json; print(json.load(sys.stdin).get('registrationNumber',''))" 2>/dev/null || true)

@@ -1,3 +1,9 @@
+## Deferred from: code review of 19-0-production-readiness-dev.md (2026-08-12)
+
+- Migration `Down()` is no-op (irreversible catalog backfill) — acceptable for data-only migrations
+- Header verifier checks `/` only, not `/api/*` duplicate-header edge — pre-existing nginx header ownership design
+- Case-sensitive catalog backfill may leave duplicate casing variants — low likelihood in seeded/demo data
+
 ## Deferred from: code review of PRs 152-154 (2026-08-09)
 
 - Invite form `minLength={8}` blocks legacy accounts with shorter passwords — pre-existing validation; needs product call
