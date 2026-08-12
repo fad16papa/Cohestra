@@ -22,6 +22,7 @@ type ArchiveActivityDialogProps = {
   activitySchedule: string;
   registrationPath: string;
   isArchiving: boolean;
+  error?: string | null;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 };
@@ -33,6 +34,7 @@ export function ArchiveActivityDialog({
   activitySchedule,
   registrationPath,
   isArchiving,
+  error = null,
   onOpenChange,
   onConfirm,
 }: ArchiveActivityDialogProps) {
@@ -106,6 +108,12 @@ export function ArchiveActivityDialog({
             </div>
           </div>
         </AlertDialogHeader>
+
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isArchiving}>Cancel</AlertDialogCancel>
