@@ -51,7 +51,8 @@ public sealed class TenantAccessService(CohestraDbContext dbContext) : ITenantAc
                 PublicRegistrationAllowed: !IsOverAnyPlanLimit(tenant.Plan, usage),
                 PublicSurface: evaluation.PublicSurface,
                 ShowSettleBanner: evaluation.ShowSettleBanner,
-                ReadOnlyReason: TenantReadOnlyReason.OverPlanLimits);
+                ReadOnlyReason: TenantReadOnlyReason.OverPlanLimits,
+                AllowLimitRecoveryWrites: true);
         }
 
         if (IsOverRegistrationLimit(tenant.Plan, usage))

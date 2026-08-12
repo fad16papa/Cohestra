@@ -41,8 +41,9 @@ export function ActivityPublishControls({
   onActivityUpdated,
 }: ActivityPublishControlsProps) {
   const { authFetch } = useAuth();
-  const { shell } = useTenantShell();
+  const { shell, refreshShell } = useTenantShell();
   const [error, setError] = useState<string | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUnpublishing, setIsUnpublishing] = useState(false);
@@ -62,6 +63,7 @@ export function ActivityPublishControls({
 
   async function performArchive() {
     setError(null);
+    setArchiveError(null);
     setSuccess(null);
     setIsArchiving(true);
 
@@ -69,19 +71,23 @@ export function ActivityPublishControls({
       const updated = await archiveActivity(authFetch, activity.id);
       onActivityUpdated(updated);
       setArchiveDialogOpen(false);
+      await refreshShell();
       setSuccess("Activity archived.");
     } catch (archiveError) {
-      setError(
+      const message =
         archiveError instanceof Error
           ? archiveError.message
-          : "Could not archive activity."
-      );
+          : "Could not archive activity.";
+      setArchiveError(message);
+      setError(message);
     } finally {
       setIsArchiving(false);
     }
   }
 
   function requestArchive() {
+    setArchiveError(null);
+    setError(null);
     if (activity.status === "draft") {
       void performArchive();
       return;
@@ -126,6 +132,7 @@ export function ActivityPublishControls({
       const updated = await unpublishActivity(authFetch, activity.id);
       onActivityUpdated(updated);
       setUnpublishDialogOpen(false);
+      await refreshShell();
       setSuccess("Activity is offline until you publish again.");
     } catch (unpublishError) {
       setError(
@@ -246,7 +253,13 @@ export function ActivityPublishControls({
         activitySchedule={activity.schedule}
         registrationPath={`/register/${activity.slug}`}
         isArchiving={isArchiving}
-        onOpenChange={setArchiveDialogOpen}
+        error={archiveError}
+        onOpenChange={(open) => {
+          setArchiveDialogOpen(open);
+          if (!open) {
+            setArchiveError(null);
+          }
+        }}
         onConfirm={() => void performArchive()}
       />
 

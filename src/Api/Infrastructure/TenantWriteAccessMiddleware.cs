@@ -34,7 +34,7 @@ public sealed partial class TenantWriteAccessMiddleware(
             if (evaluation.AdminAccess == TenantAccessMode.ReadOnly)
             {
                 var path = context.Request.Path.Value ?? string.Empty;
-                if (evaluation.ReadOnlyReason == TenantReadOnlyReason.OverPlanLimits
+                if (evaluation.AllowLimitRecoveryWrites
                     && IsLimitRecoveryWrite(context.Request.Method, path))
                 {
                     await next(context);
