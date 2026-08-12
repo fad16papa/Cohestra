@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Cohestra.Application.Tenants;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Tenancy;
@@ -8,8 +9,9 @@ namespace Cohestra.Api.Infrastructure;
 
 /// <summary>
 /// Blocks mutating admin API calls when tenant is read-only (OnHold or ReadOnly_OverLimit).
+/// Limit-recovery writes (archive, unpublish, remove member) remain allowed when over plan caps.
 /// </summary>
-public sealed class TenantWriteAccessMiddleware(
+public sealed partial class TenantWriteAccessMiddleware(
     RequestDelegate next,
     ILogger<TenantWriteAccessMiddleware> logger)
 {
@@ -31,11 +33,20 @@ public sealed class TenantWriteAccessMiddleware(
             var evaluation = await accessService.EvaluateAsync(tenantId, context.RequestAborted);
             if (evaluation.AdminAccess == TenantAccessMode.ReadOnly)
             {
+                var path = context.Request.Path.Value ?? string.Empty;
+                if (evaluation.ReadOnlyReason == TenantReadOnlyReason.OverPlanLimits
+                    && IsLimitRecoveryWrite(context.Request.Method, path))
+                {
+                    await next(context);
+                    return;
+                }
+
                 logger.LogInformation(
-                    "Blocked write {Method} {Path} for tenant {TenantId} (read-only)",
+                    "Blocked write {Method} {Path} for tenant {TenantId} (read-only: {Reason})",
                     context.Request.Method,
-                    context.Request.Path,
-                    tenantId);
+                    path,
+                    tenantId,
+                    evaluation.ReadOnlyReason);
 
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 context.Response.ContentType = "application/problem+json";
@@ -43,11 +54,24 @@ public sealed class TenantWriteAccessMiddleware(
                 {
                     Status = StatusCodes.Status403Forbidden,
                     Title = "Read-only workspace",
-                    Detail = "Billing or plan limits require read-only mode. Settle billing or reduce usage to restore writes.",
+                    Detail = evaluation.ReadOnlyReason switch
+                    {
+                        TenantReadOnlyReason.BillingOnHold =>
+                            "Billing is on hold. Open Billing and restore payment to unlock workspace writes.",
+                        TenantReadOnlyReason.OverPlanLimits =>
+                            "Plan limits require read-only mode. Archive, unpublish, or remove members to get back under your plan limits.",
+                        _ =>
+                            "Billing or plan limits require read-only mode. Settle billing or reduce usage to restore writes.",
+                    },
                     Instance = context.Request.Path,
                     Extensions =
                     {
-                        ["errorCode"] = "read_only",
+                        ["errorCode"] = evaluation.ReadOnlyReason switch
+                        {
+                            TenantReadOnlyReason.BillingOnHold => "billing_on_hold",
+                            TenantReadOnlyReason.OverPlanLimits => "read_only_over_limit",
+                            _ => "read_only",
+                        },
                     },
                 });
                 return;
@@ -55,6 +79,31 @@ public sealed class TenantWriteAccessMiddleware(
         }
 
         await next(context);
+    }
+
+    public static bool IsLimitRecoveryWrite(string method, string path)
+    {
+        if (!MutatingMethods.Contains(method))
+        {
+            return false;
+        }
+
+        if (ActivityArchiveOrUnpublish().IsMatch(path))
+        {
+            return HttpMethods.Post.Equals(method, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (TeamMemberRemove().IsMatch(path) || TeamInviteRevoke().IsMatch(path))
+        {
+            return HttpMethods.Delete.Equals(method, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (CommunityDelete().IsMatch(path))
+        {
+            return HttpMethods.Delete.Equals(method, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
     }
 
     private static bool ShouldCheckWriteAccess(HttpContext context)
@@ -84,6 +133,26 @@ public sealed class TenantWriteAccessMiddleware(
 
         return true;
     }
+
+    [GeneratedRegex(
+        "^/api/v1/admin/activities/[0-9a-fA-F-]{36}/(?:archive|unpublish)$",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    private static partial Regex ActivityArchiveOrUnpublish();
+
+    [GeneratedRegex(
+        "^/api/v1/admin/team/members/[0-9a-fA-F-]{36}$",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    private static partial Regex TeamMemberRemove();
+
+    [GeneratedRegex(
+        "^/api/v1/admin/team/invites/[0-9a-fA-F-]{36}$",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    private static partial Regex TeamInviteRevoke();
+
+    [GeneratedRegex(
+        "^/api/v1/admin/communities/[0-9a-fA-F-]{36}$",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    private static partial Regex CommunityDelete();
 }
 
 public static class TenantWriteAccessMiddlewareExtensions
