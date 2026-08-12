@@ -16,6 +16,11 @@ internal static class RegistrationAnswerValidator
 
         foreach (var field in schema.Fields)
         {
+            if (FormFieldTypes.NonInput.Contains(field.Type))
+            {
+                continue;
+            }
+
             answers.TryGetValue(field.Id, out var rawValue);
             var fieldError = ValidateField(field, rawValue);
             if (fieldError is not null)
@@ -29,6 +34,11 @@ internal static class RegistrationAnswerValidator
 
     private static string? ValidateField(FormFieldDefinition field, object? rawValue)
     {
+        if (FormFieldTypes.NonInput.Contains(field.Type))
+        {
+            return null;
+        }
+
         if (field.Type is FormFieldTypes.Checkbox or FormFieldTypes.Consent)
         {
             if (!TryGetBoolean(rawValue, out var boolValue))

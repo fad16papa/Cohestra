@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ActivityFormSchema, FormFieldDefinition } from "@/lib/activities-api";
+import { isNonInputFieldType } from "@/lib/form-schema-utils";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
 import { validatePhoneLocalNumber } from "@/lib/phone-countries";
 import { PUBLIC_PLAN_REGISTRATION_LIMIT_COPY } from "@/lib/public-registration-messages";
@@ -53,6 +54,10 @@ function validatePhoneField(
 }
 
 function validateField(field: FormFieldDefinition, value: unknown): string | null {
+  if (isNonInputFieldType(field.type)) {
+    return null;
+  }
+
   if (field.type === "checkbox" || field.type === "consent") {
     if (field.required && value !== true) {
       return field.type === "consent"
@@ -137,6 +142,10 @@ export function RegistrationForm({
     const nextTouched: Record<string, boolean> = {};
 
     for (const field of schema.fields) {
+      if (isNonInputFieldType(field.type)) {
+        continue;
+      }
+
       nextTouched[field.id] = true;
       const message = validateField(field, values[field.id]);
       if (message) {
@@ -213,6 +222,15 @@ export function RegistrationForm({
   }
 
   function renderField(field: FormFieldDefinition) {
+    if (field.type === "section_header") {
+      const heading = field.label.trim() || "Section";
+      return (
+        <div key={field.id} className="border-t border-border-warm pt-5 first:border-t-0 first:pt-0">
+          <h3 className="text-sm font-semibold text-text-warm">{heading}</h3>
+        </div>
+      );
+    }
+
     const error = touched[field.id] ? errors[field.id] : undefined;
     const fieldId = `registration-${field.id}`;
     const errorDescribedBy = error ? `${fieldId}-error` : undefined;

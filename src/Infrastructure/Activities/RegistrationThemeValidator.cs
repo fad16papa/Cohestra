@@ -20,6 +20,10 @@ internal static class RegistrationThemeValidator
             ?? ActivityBrandingValidator.ValidateHeroImageUrl(theme.HeroImageUrl);
     }
 
+    public static string? ValidateThemeAccent(RegistrationTheme? theme) =>
+        Validate(theme)
+        ?? ActivityBrandingContrastValidator.ValidateAccentContrastForWhiteText(theme?.AccentColor);
+
     public static RegistrationTheme Normalize(RegistrationTheme theme)
     {
         return new RegistrationTheme

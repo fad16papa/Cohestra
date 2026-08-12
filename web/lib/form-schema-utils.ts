@@ -17,6 +17,7 @@ export const formFieldTypeLabels: Record<FormFieldType, string> = {
   checkbox: "Checkbox",
   consent: "Consent",
   referral_source: "Referral source",
+  section_header: "Section header",
 };
 
 export const formFieldTypeOptions: FormFieldType[] = [
@@ -27,10 +28,11 @@ export const formFieldTypeOptions: FormFieldType[] = [
   "checkbox",
   "consent",
   "referral_source",
+  "section_header",
 ];
 
 export function emptyFormSchema(): ActivityFormSchema {
-  return { version: 1, fields: [] };
+  return { version: 1, meta: null, fields: [] };
 }
 
 export function normalizeFormSchema(
@@ -42,6 +44,7 @@ export function normalizeFormSchema(
 
   return {
     version: schema.version,
+    meta: schema.meta ?? null,
     fields: schema.fields.map((field) => applyPhoneFieldDefaults({ ...field })),
   };
 }
@@ -127,6 +130,14 @@ export function createDefaultField(
       consentText: null,
       phoneCountry: null,
     },
+    section_header: {
+      label: "Section title",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
   };
 
   return {
@@ -171,6 +182,10 @@ export function fieldNeedsOptions(type: FormFieldType): boolean {
 
 export function fieldNeedsConsentText(type: FormFieldType): boolean {
   return type === "consent";
+}
+
+export function isNonInputFieldType(type: FormFieldType): boolean {
+  return type === "section_header";
 }
 
 const FIELD_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
@@ -221,6 +236,22 @@ export function getFormSchemaClientIssues(
 
     if (fieldNeedsConsentText(field.type) && !field.consentText?.trim()) {
       issues.push(`Consent field "${field.label}" requires consent text.`);
+    }
+
+    if (isNonInputFieldType(field.type)) {
+      if (field.required) {
+        issues.push(`Section header "${field.label}" cannot be marked required.`);
+      }
+
+      if (field.placeholder?.trim()) {
+        issues.push(`Section header "${field.label}" cannot have a placeholder.`);
+      }
+
+      if (!field.label.trim()) {
+        issues.push(`Section header "${field.id}" requires a heading label.`);
+      }
+
+      continue;
     }
 
     if (field.type === "phone") {

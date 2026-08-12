@@ -20,6 +20,7 @@ import {
   formFieldTypeLabels,
   formFieldTypeOptions,
   getDuplicateFieldIds,
+  isNonInputFieldType,
   isValidFieldId,
   reorderFields,
 } from "@/lib/form-schema-utils";
@@ -129,6 +130,14 @@ export function FormFieldEditor({
 
         if (!fieldNeedsConsentText(patch.type)) {
           updated.consentText = null;
+        }
+
+        if (isNonInputFieldType(patch.type)) {
+          updated.required = false;
+          updated.placeholder = null;
+          updated.options = null;
+          updated.consentText = null;
+          updated.phoneCountry = null;
         }
       }
 
@@ -522,7 +531,9 @@ function FieldPropertiesEditor({
           ) : null}
         </div>
 
-        {!fieldNeedsOptions(field.type) && !fieldNeedsConsentText(field.type) ? (
+        {!fieldNeedsOptions(field.type) &&
+        !fieldNeedsConsentText(field.type) &&
+        !isNonInputFieldType(field.type) ? (
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor={`field-placeholder-${index}`}>Placeholder</Label>
             <Input
@@ -573,17 +584,23 @@ function FieldPropertiesEditor({
           </div>
         ) : null}
 
-        <div className="flex items-center gap-2 sm:col-span-2">
-          <input
-            id={`field-required-${index}`}
-            type="checkbox"
-            checked={field.required}
-            disabled={disabled}
-            onChange={(event) => onUpdate({ required: event.target.checked })}
-            className="size-4 rounded border-input"
-          />
-          <Label htmlFor={`field-required-${index}`}>Required field</Label>
-        </div>
+        {!isNonInputFieldType(field.type) ? (
+          <div className="flex items-center gap-2 sm:col-span-2">
+            <input
+              id={`field-required-${index}`}
+              type="checkbox"
+              checked={field.required}
+              disabled={disabled}
+              onChange={(event) => onUpdate({ required: event.target.checked })}
+              className="size-4 rounded border-input"
+            />
+            <Label htmlFor={`field-required-${index}`}>Required field</Label>
+          </div>
+        ) : (
+          <p className="text-xs text-text-muted-warm sm:col-span-2">
+            Section headers are display-only dividers between field groups.
+          </p>
+        )}
       </div>
 
       {fieldNeedsOptions(field.type) ? (

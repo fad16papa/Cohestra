@@ -10,7 +10,8 @@ export type FormFieldType =
   | "select"
   | "checkbox"
   | "consent"
-  | "referral_source";
+  | "referral_source"
+  | "section_header";
 
 export type FormFieldOption = {
   value: string;
@@ -28,8 +29,13 @@ export type FormFieldDefinition = {
   phoneCountry?: string | null;
 };
 
+export type FormSchemaMeta = {
+  introMarkdown: string | null;
+};
+
 export type ActivityFormSchema = {
   version: number;
+  meta?: FormSchemaMeta | null;
   fields: FormFieldDefinition[];
 };
 
@@ -108,13 +114,27 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
   const schema = raw as Record<string, unknown>;
   const version = schema.version ?? schema.Version;
   const fields = schema.fields ?? schema.Fields;
+  const metaRaw = schema.meta ?? schema.Meta;
 
   if (typeof version !== "number" || !Array.isArray(fields)) {
     throw new Error("Invalid activity form schema payload");
   }
 
+  let meta: FormSchemaMeta | null = null;
+  if (metaRaw && typeof metaRaw === "object") {
+    const metaRecord = metaRaw as Record<string, unknown>;
+    const introMarkdown = metaRecord.introMarkdown ?? metaRecord.IntroMarkdown;
+    meta = {
+      introMarkdown:
+        typeof introMarkdown === "string" && introMarkdown.trim()
+          ? introMarkdown
+          : null,
+    };
+  }
+
   return {
     version,
+    meta,
     fields: fields.map((field) => {
       const item = field as Record<string, unknown>;
       const id = item.id ?? item.Id;

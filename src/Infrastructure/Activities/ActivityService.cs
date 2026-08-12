@@ -288,7 +288,7 @@ public sealed class ActivityService(
         if (request.RegistrationTheme is not null)
         {
             var theme = RegistrationThemeMapper.FromDto(request.RegistrationTheme);
-            var themeError = RegistrationThemeValidator.Validate(theme);
+            var themeError = RegistrationThemeValidator.ValidateThemeAccent(theme);
             if (themeError is not null)
             {
                 throw new InvalidOperationException(themeError);

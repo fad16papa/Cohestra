@@ -13,6 +13,8 @@ internal static partial class FormSchemaValidator
     private const int MaxConsentTextLength = 2000;
     private const int MaxOptionCount = 50;
 
+    private const int MaxIntroMarkdownLength = 4000;
+
     public static string? ValidateDto(ActivityFormSchemaDto? schema)
     {
         if (schema is null)
@@ -45,6 +47,11 @@ internal static partial class FormSchemaValidator
             return $"Form schema cannot contain more than {MaxFields} fields.";
         }
 
+        if (schema.Meta?.IntroMarkdown is { Length: > MaxIntroMarkdownLength } intro)
+        {
+            return $"Intro copy cannot exceed {MaxIntroMarkdownLength} characters.";
+        }
+
         var seenIds = new HashSet<string>(StringComparer.Ordinal);
 
         for (var index = 0; index < schema.Fields.Count; index++)
@@ -71,6 +78,14 @@ internal static partial class FormSchemaValidator
         return new ActivityFormSchema
         {
             Version = schema.Version,
+            Meta = schema.Meta is null
+                ? null
+                : new FormSchemaMeta
+                {
+                    IntroMarkdown = string.IsNullOrWhiteSpace(schema.Meta.IntroMarkdown)
+                        ? null
+                        : schema.Meta.IntroMarkdown.Trim(),
+                },
             Fields = schema.Fields
                 .Select(field => new FormFieldDefinition
                 {
@@ -125,7 +140,37 @@ internal static partial class FormSchemaValidator
 
         if (string.IsNullOrWhiteSpace(field.Type) || !FormFieldTypes.All.Contains(field.Type))
         {
-            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source.";
+            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header.";
+        }
+
+        if (field.Type == FormFieldTypes.SectionHeader)
+        {
+            if (field.Required)
+            {
+                return $"{fieldPath}.required must be false for section_header fields.";
+            }
+
+            if (field.Placeholder is not null)
+            {
+                return $"{fieldPath}.placeholder is not allowed for section_header fields.";
+            }
+
+            if (field.Options is { Count: > 0 })
+            {
+                return $"{fieldPath}.options is not allowed for section_header fields.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(field.ConsentText))
+            {
+                return $"{fieldPath}.consentText is not allowed for section_header fields.";
+            }
+
+            if (!string.IsNullOrWhiteSpace(field.PhoneCountry))
+            {
+                return $"{fieldPath}.phoneCountry is not allowed for section_header fields.";
+            }
+
+            return null;
         }
 
         if (string.IsNullOrWhiteSpace(field.Label))
