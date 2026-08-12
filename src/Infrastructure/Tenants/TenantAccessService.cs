@@ -42,14 +42,21 @@ public sealed class TenantAccessService(CohestraDbContext dbContext) : ITenantAc
             return evaluation with { ReadOnlyReason = TenantReadOnlyReason.BillingOnHold };
         }
 
-        if (IsOverPlanLimits(tenant.Plan, await GetUsageAsync(tenantId, cancellationToken)))
+        var usage = await GetUsageAsync(tenantId, cancellationToken);
+
+        if (IsOverAdminRecoverableLimits(tenant.Plan, usage))
         {
             return new TenantAccessEvaluation(
                 AdminAccess: TenantAccessMode.ReadOnly,
-                PublicRegistrationAllowed: false,
+                PublicRegistrationAllowed: !IsOverAnyPlanLimit(tenant.Plan, usage),
                 PublicSurface: evaluation.PublicSurface,
                 ShowSettleBanner: evaluation.ShowSettleBanner,
                 ReadOnlyReason: TenantReadOnlyReason.OverPlanLimits);
+        }
+
+        if (IsOverRegistrationLimit(tenant.Plan, usage))
+        {
+            return evaluation with { PublicRegistrationAllowed = false };
         }
 
         return evaluation;
@@ -97,12 +104,24 @@ public sealed class TenantAccessService(CohestraDbContext dbContext) : ITenantAc
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    internal static bool IsOverPlanLimits(TenantPlan plan, TenantUsageSnapshot usage)
+    internal static bool IsOverAnyPlanLimit(TenantPlan plan, TenantUsageSnapshot usage) =>
+        IsOverAdminRecoverableLimits(plan, usage)
+        || IsOverRegistrationLimit(plan, usage);
+
+    internal static bool IsOverAdminRecoverableLimits(TenantPlan plan, TenantUsageSnapshot usage)
     {
         var limits = TenantPlanLimits.For(plan);
         return usage.SeatsUsed > limits.Seats
             || usage.Communities >= limits.Communities
-            || usage.PublishedActivities >= limits.PublishedActivities
-            || usage.RegistrationsThisMonth >= limits.RegistrationsPerMonth;
+            || usage.PublishedActivities >= limits.PublishedActivities;
     }
+
+    internal static bool IsOverRegistrationLimit(TenantPlan plan, TenantUsageSnapshot usage)
+    {
+        var limits = TenantPlanLimits.For(plan);
+        return usage.RegistrationsThisMonth >= limits.RegistrationsPerMonth;
+    }
+
+    internal static bool IsOverPlanLimits(TenantPlan plan, TenantUsageSnapshot usage) =>
+        IsOverAnyPlanLimit(plan, usage);
 }

@@ -204,10 +204,16 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
         {
             var canUpgrade = tenant.Plan is TenantPlan.Basic or TenantPlan.Core;
             var upgradePlan = SuggestUpgradePlanSlug(tenant.Plan);
+            var isRegistrationCap = string.Equals(
+                overLimitDial.Key,
+                "registrations",
+                StringComparison.Ordinal);
             return new BillingBannerResponse(
-                "read_only_over_limit",
-                "Plan limit reached",
-                $"{overLimitDial.Label} is at capacity ({overLimitDial.Used}/{overLimitDial.Limit}). Archive or unpublish items{(canUpgrade ? ", or upgrade your plan" : "")}.",
+                isRegistrationCap ? "registration_cap" : "read_only_over_limit",
+                isRegistrationCap ? "Monthly registration cap reached" : "Plan limit reached",
+                isRegistrationCap
+                    ? $"{overLimitDial.Label} is at capacity ({overLimitDial.Used:N0}/{overLimitDial.Limit:N0}). Public sign-ups are paused until the next reset{(canUpgrade ? " or you upgrade" : "")}."
+                    : $"{overLimitDial.Label} is at capacity ({overLimitDial.Used}/{overLimitDial.Limit}). Archive or unpublish items{(canUpgrade ? ", or upgrade your plan" : "")}.",
                 isTenantAdmin && canUpgrade ? "Upgrade plan" : null,
                 isTenantAdmin && canUpgrade ? $"/billing/checkout?plan={upgradePlan}&interval=monthly&start=1" : null,
                 AdminOnlyCta: true);
