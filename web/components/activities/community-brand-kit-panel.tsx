@@ -119,6 +119,7 @@ export function CommunityBrandKitPanel({
 
     void updateCommunity(authFetch, community.id, {
       name: community.name,
+      brandKitIncluded: true,
       logoAssetId: logoAssetId.trim() || null,
       accentColor: accentColor.trim() || null,
       defaultHeroImageUrl: defaultHeroImageUrl.trim() || null,

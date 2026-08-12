@@ -43,7 +43,8 @@ public sealed class ActivityRegistrationThemeIntegrationTests(IntegrationTestFix
                 communityName,
                 LogoAssetId: logoId,
                 AccentColor: "#2d6a4f",
-                DefaultHeroImageUrl: "https://example.com/community-hero.jpg"),
+                DefaultHeroImageUrl: "https://example.com/community-hero.jpg",
+                BrandKitIncluded: true),
             IntegrationTestHelpers.JsonOptions);
         brandUpdateResponse.EnsureSuccessStatusCode();
 

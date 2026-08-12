@@ -107,27 +107,35 @@ public sealed class CommunityService(
             throw new ArgumentException("A community with this name already exists.");
         }
 
-        var (logoAssetId, accentColor, defaultHeroImageUrl) = CommunityBrandingValidator.NormalizeBrandKit(
-            request.LogoAssetId,
-            request.AccentColor,
-            request.DefaultHeroImageUrl);
+        var (logoAssetId, accentColor, defaultHeroImageUrl) = request.BrandKitIncluded
+            ? CommunityBrandingValidator.NormalizeBrandKit(
+                request.LogoAssetId,
+                request.AccentColor,
+                request.DefaultHeroImageUrl)
+            : (
+                community.LogoAssetId,
+                community.AccentColor,
+                community.DefaultHeroImageUrl);
 
-        var validationError = CommunityBrandingValidator.ValidateBrandKit(
-            logoAssetId,
-            accentColor,
-            defaultHeroImageUrl);
-
-        if (validationError is not null)
+        if (request.BrandKitIncluded)
         {
-            throw new ArgumentException(validationError);
-        }
+            var validationError = CommunityBrandingValidator.ValidateBrandKit(
+                logoAssetId,
+                accentColor,
+                defaultHeroImageUrl);
 
-        if (logoAssetId is not null)
-        {
-            var planGateError = await ValidateCommunityLogoPlanGateAsync(cancellationToken);
-            if (planGateError is not null)
+            if (validationError is not null)
             {
-                throw new CommunityPlanLockedException(planGateError);
+                throw new ArgumentException(validationError);
+            }
+
+            if (logoAssetId is not null)
+            {
+                var planGateError = await ValidateCommunityLogoPlanGateAsync(cancellationToken);
+                if (planGateError is not null)
+                {
+                    throw new CommunityPlanLockedException(planGateError);
+                }
             }
         }
 

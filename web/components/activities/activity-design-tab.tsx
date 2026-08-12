@@ -75,11 +75,11 @@ export function ActivityDesignTab({
     if (inherit) {
       accent =
         accent ??
-        (savedTheme.inheritCommunityBrand ? communityResolved.accentColor : null) ??
+        communityResolved.accentColor ??
         activity.accentColor;
       hero =
         hero ??
-        (savedTheme.inheritCommunityBrand ? communityResolved.heroImageUrl : null) ??
+        communityResolved.heroImageUrl ??
         activity.heroImageUrl;
       logo = communityResolved.logoAssetId;
     } else {

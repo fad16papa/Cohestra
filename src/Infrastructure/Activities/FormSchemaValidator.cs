@@ -145,6 +145,16 @@ internal static partial class FormSchemaValidator
 
         if (field.Type == FormFieldTypes.SectionHeader)
         {
+            if (string.IsNullOrWhiteSpace(field.Label))
+            {
+                return $"{fieldPath}.label is required for section_header fields.";
+            }
+
+            if (field.Label.Length > MaxLabelLength)
+            {
+                return $"{fieldPath}.label cannot exceed {MaxLabelLength} characters.";
+            }
+
             if (field.Required)
             {
                 return $"{fieldPath}.required must be false for section_header fields.";

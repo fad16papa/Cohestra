@@ -119,6 +119,7 @@ export async function fetchCommunityById(
 
 export type UpdateCommunityPayload = {
   name: string;
+  brandKitIncluded?: boolean;
   logoAssetId?: string | null;
   accentColor?: string | null;
   defaultHeroImageUrl?: string | null;
@@ -151,9 +152,12 @@ export async function updateCommunity(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       name: payload.name,
-      logoAssetId: payload.logoAssetId ?? null,
-      accentColor: payload.accentColor ?? null,
-      defaultHeroImageUrl: payload.defaultHeroImageUrl ?? null,
+      ...(payload.brandKitIncluded ? { brandKitIncluded: true } : {}),
+      ...(payload.logoAssetId !== undefined ? { logoAssetId: payload.logoAssetId } : {}),
+      ...(payload.accentColor !== undefined ? { accentColor: payload.accentColor } : {}),
+      ...(payload.defaultHeroImageUrl !== undefined
+        ? { defaultHeroImageUrl: payload.defaultHeroImageUrl }
+        : {}),
     }),
   });
 

@@ -38,7 +38,8 @@ public sealed class CommunityBrandKitIntegrationTests(IntegrationTestFixture fix
                 communityName,
                 LogoAssetId: null,
                 AccentColor: "#2d6a4f",
-                DefaultHeroImageUrl: "https://example.com/hero.jpg"),
+                DefaultHeroImageUrl: "https://example.com/hero.jpg",
+                BrandKitIncluded: true),
             IntegrationTestHelpers.JsonOptions);
         updateResponse.EnsureSuccessStatusCode();
 
@@ -76,10 +77,58 @@ public sealed class CommunityBrandKitIntegrationTests(IntegrationTestFixture fix
 
         var updateResponse = await client.PatchAsJsonAsync(
             $"/api/v1/admin/communities/{created.Id}",
-            new UpdateCommunityRequest(communityName, AccentColor: "not-hex"),
+            new UpdateCommunityRequest(communityName, AccentColor: "not-hex", BrandKitIncluded: true),
             IntegrationTestHelpers.JsonOptions);
 
         Assert.Equal(HttpStatusCode.BadRequest, updateResponse.StatusCode);
+
+        await client.DeleteAsync($"/api/v1/admin/communities/{created.Id}");
+    }
+
+    [SkippableFact]
+    public async Task CommunityBrandKit_RenameOnly_PreservesBrandKit()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var communityName = $"Rename Preserve {Guid.NewGuid():N}";
+
+        using var client = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(client);
+        IntegrationTestHelpers.UseBearerToken(client, accessToken);
+
+        var createResponse = await client.PostAsJsonAsync(
+            "/api/v1/admin/communities",
+            new CreateCommunityRequest(communityName),
+            IntegrationTestHelpers.JsonOptions);
+        createResponse.EnsureSuccessStatusCode();
+
+        var created = await createResponse.Content.ReadFromJsonAsync<CommunityResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(created);
+
+        var brandUpdateResponse = await client.PatchAsJsonAsync(
+            $"/api/v1/admin/communities/{created.Id}",
+            new UpdateCommunityRequest(
+                communityName,
+                AccentColor: "#2d6a4f",
+                DefaultHeroImageUrl: "https://example.com/hero.jpg",
+                BrandKitIncluded: true),
+            IntegrationTestHelpers.JsonOptions);
+        brandUpdateResponse.EnsureSuccessStatusCode();
+
+        var renamed = $"{communityName} Renamed";
+        var renameResponse = await client.PatchAsJsonAsync(
+            $"/api/v1/admin/communities/{created.Id}",
+            new UpdateCommunityRequest(renamed),
+            IntegrationTestHelpers.JsonOptions);
+        renameResponse.EnsureSuccessStatusCode();
+
+        var updated = await renameResponse.Content.ReadFromJsonAsync<CommunityResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(updated);
+        Assert.Equal(renamed, updated.Name);
+        Assert.Equal("#2d6a4f", updated.AccentColor);
+        Assert.Equal("https://example.com/hero.jpg", updated.DefaultHeroImageUrl);
 
         await client.DeleteAsync($"/api/v1/admin/communities/{created.Id}");
     }

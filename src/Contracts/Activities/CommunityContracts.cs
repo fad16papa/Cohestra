@@ -27,4 +27,5 @@ public sealed record UpdateCommunityRequest(
     string Name,
     string? LogoAssetId = null,
     string? AccentColor = null,
-    string? DefaultHeroImageUrl = null);
+    string? DefaultHeroImageUrl = null,
+    bool BrandKitIncluded = false);

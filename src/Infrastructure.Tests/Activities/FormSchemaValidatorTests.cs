@@ -102,6 +102,29 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void ValidateModel_RejectsSectionHeaderWithEmptyLabel()
+    {
+        var schema = new ActivityFormSchema
+        {
+            Fields =
+            [
+                new FormFieldDefinition
+                {
+                    Id = "section",
+                    Type = FormFieldTypes.SectionHeader,
+                    Label = "   ",
+                    Required = false,
+                },
+            ],
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("label is required", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void MapToDomain_TrimsIntroMarkdown()
     {
         var dto = new ActivityFormSchemaDto(

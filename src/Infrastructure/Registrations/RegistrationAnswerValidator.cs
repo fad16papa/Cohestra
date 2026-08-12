@@ -110,6 +110,11 @@ internal static class RegistrationAnswerValidator
 
         foreach (var field in schema.Fields)
         {
+            if (FormFieldTypes.NonInput.Contains(field.Type))
+            {
+                continue;
+            }
+
             if (!answers.TryGetValue(field.Id, out var rawValue))
             {
                 continue;
