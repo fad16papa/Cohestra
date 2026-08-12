@@ -1,0 +1,6 @@
+# CI smoke overlay — force empty DEV_TENANT_SLUG so bare localhost is marketing-only.
+# Base compose uses ${DEV_TENANT_SLUG:-default}, which treats unset/empty host env as "default".
+services:
+  api:
+    environment:
+      DEV_TENANT_SLUG: ""

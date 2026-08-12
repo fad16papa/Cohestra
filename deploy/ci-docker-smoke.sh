@@ -10,15 +10,15 @@ export PUBLIC_BASE_URL=http://localhost:8088
 export OperatorSeed__Enabled=true
 export DemoDataSeed__Enabled=true
 export DemoDataSeed__ClientCount=8
-# Bare localhost must resolve to marketing door (not default tenant via DEV_TENANT_SLUG).
-export DEV_TENANT_SLUG=
 export POSTGRES_PASSWORD=crm
 export POSTGRES_USER=crm
 export POSTGRES_DB=cohestra
 
+COMPOSE_FILES="-f docker-compose.yml -f docker-compose.ci-smoke.yml"
+
 echo "== Building and starting Docker stack on :8088 =="
-docker compose build api web
-docker compose up -d postgres redis api web nginx
+docker compose $COMPOSE_FILES build api web
+docker compose $COMPOSE_FILES up -d postgres redis api web nginx
 
 echo "== Waiting for /ready =="
 for i in $(seq 1 60); do
@@ -28,7 +28,7 @@ for i in $(seq 1 60); do
   fi
   if [[ "$i" -eq 60 ]]; then
     echo "Stack did not become healthy in time"
-    docker compose logs --tail=50 api nginx
+    docker compose $COMPOSE_FILES logs --tail=50 api nginx
     exit 1
   fi
   sleep 5

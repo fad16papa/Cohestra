@@ -1,7 +1,7 @@
 # Story 19.0: Production readiness (dev deliverables)
 
 **Epic:** 19 — Production Launch Sign-off  
-**Status:** in-progress (dev complete; ops gates remain)  
+**Status:** in-progress (CI smoke still red; patch findings below)  
 **Date:** 2026-08-11
 
 ## Goal
@@ -22,8 +22,9 @@ Close code/doc/CI gaps identified in post-roadmap production review before Epic 
 
 ## CI smoke fix (2026-08-12)
 
-- `deploy/ci-docker-smoke.sh` — clear `DEV_TENANT_SLUG` so bare localhost returns marketing door
-- `deploy/local-smoke-run.sh` — registration answers use `full_name` (matches form schema)
+- `docker-compose.ci-smoke.yml` — force `DEV_TENANT_SLUG: ""` (compose `:-default` ignores empty host export)
+- `deploy/local-smoke-run.sh` — `full_name` + `consent`; marketing door via `cohestra.app` host
+- `deploy/uat-smoke.sh` — `--full` captures nested exit code in summary
 
 ## Ops gates (stories 19.1–19.5 — not automatable in repo)
 
@@ -49,3 +50,15 @@ PUBLIC_BASE_URL=https://YOUR_URL SMOKE_TENANT_HOST=tenant.YOUR_URL bash deploy/u
 
 - `docs/deploy/enterprise-launch-checklist.md`
 - `_bmad-output/planning-artifacts/epics-cohestra-enterprise.md` (Epic 19)
+
+### Review Findings
+
+- [ ] [Review][Patch] `DEV_TENANT_SLUG=` export ineffective — compose `${DEV_TENANT_SLUG:-default}` treats empty as unset; CI marketing-door check still fails [`deploy/ci-docker-smoke.sh:14`, `docker-compose.yml:42`]
+- [ ] [Review][Patch] Registration smoke missing `consent: true` — demo forms require consent; CI fails with 400 [`deploy/local-smoke-run.sh:123`]
+- [ ] [Review][Patch] Marketing-door probe hardcodes `Host: localhost:8088` — breaks `--full` on non-8088 UAT URLs [`deploy/local-smoke-run.sh:41`]
+- [ ] [Review][Decision] Preflight exits 0 with reCAPTCHA disabled (warn-only) — should default `--strict-recaptcha` for launch checklist path? [`deploy/preflight-launch.sh:92-103`]
+- [ ] [Review][Patch] `uat-smoke.sh --full` aborts via `set -e` before summary when nested smoke fails [`deploy/uat-smoke.sh:107-110`]
+- [ ] [Review][Patch] Document/require `SMOKE_TENANT_HOST` in checklist when `PUBLIC_BASE_URL` is apex IP/domain [`deploy/uat-smoke.sh:27-37`]
+- [x] [Review][Defer] Migration `Down()` is no-op (irreversible backfill) — acceptable for data migrations [`20260811160000_BackfillActivityCatalogPerTenant.cs:49`]
+- [x] [Review][Defer] Header verifier checks `/` only, not `/api/*` duplicate-header paths — pre-existing nginx design [`deploy/verify-security-headers.sh:24`]
+- [x] [Review][Defer] Case-sensitive catalog backfill may leave duplicate casing variants — low likelihood in seeded data [`20260811160000_BackfillActivityCatalogPerTenant.cs:16`]

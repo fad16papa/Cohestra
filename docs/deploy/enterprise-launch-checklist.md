@@ -170,7 +170,8 @@ dotnet test src/Api.IntegrationTests --filter "FullyQualifiedName~Resend_otp"
 - [ ] `.env` filled with strong secrets (not dev defaults) — copy from [.env.uat.example](../../.env.uat.example)
 - [ ] `bash deploy/preflight-launch.sh --strict-recaptcha` passes before first deploy
 - [ ] `docker compose -f docker-compose.uat.yml up -d --build` succeeds
-- [ ] `bash deploy/uat-smoke.sh --full` passes on server (`SMOKE_TENANT_HOST` = tenant subdomain if not localhost)
+- [ ] `bash deploy/uat-smoke.sh --full` passes on server
+- [ ] **`SMOKE_TENANT_HOST` set** when `PUBLIC_BASE_URL` is apex or bare IP (e.g. `creativorare.cohestra.app` or `creativorare.YOUR_NIP_IO`) — required for tenant door/login checks in `--full` mode
 - [ ] `bash deploy/verify-security-headers.sh https://YOUR_TENANT_HOST` passes after HTTPS
 - [ ] `curl ${PUBLIC_BASE_URL}/ready` healthy (postgres + redis)
 - [ ] HTTPS — [temporary-https-nipio.md](./temporary-https-nipio.md) or client domain

@@ -107,7 +107,15 @@ fi
 if [[ "$FULL_SMOKE" == true ]]; then
   echo ""
   echo "== Full API smoke (local-smoke-run.sh) =="
+  set +e
   API_BASE="${BASE_URL}" TENANT_HOST="${TENANT_HOST}" bash deploy/local-smoke-run.sh
+  FULL_EXIT=$?
+  set -e
+  if [[ "$FULL_EXIT" -ne 0 ]]; then
+    fail "Full API smoke (exit ${FULL_EXIT})"
+  else
+    pass "Full API smoke"
+  fi
 fi
 
 echo ""
