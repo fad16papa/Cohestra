@@ -10,6 +10,8 @@ export PUBLIC_BASE_URL=http://localhost:8088
 export OperatorSeed__Enabled=true
 export DemoDataSeed__Enabled=true
 export DemoDataSeed__ClientCount=8
+# Bare localhost must resolve to marketing door (not default tenant via DEV_TENANT_SLUG).
+export DEV_TENANT_SLUG=
 export POSTGRES_PASSWORD=crm
 export POSTGRES_USER=crm
 export POSTGRES_DB=cohestra

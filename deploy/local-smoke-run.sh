@@ -120,7 +120,7 @@ if [[ -n "${SLUG:-}" ]]; then
     -H "Content-Type: application/json" \
     -H "Host: ${TENANT_HOST}" \
     -H "Idempotency-Key: smoke-$(date +%s)-$RANDOM" \
-    -d "{\"activitySlug\":\"${SLUG}\",\"answers\":{\"name\":\"Smoke Tester\",\"email\":\"smoke+$RANDOM@example.com\",\"phone\":\"91234567\",\"phoneCountry\":\"SG\"}}" || true)
+    -d "{\"activitySlug\":\"${SLUG}\",\"answers\":{\"full_name\":\"Smoke Tester\",\"email\":\"smoke+$RANDOM@example.com\",\"phone\":\"91234567\",\"phoneCountry\":\"SG\"}}" || true)
   if echo "$REG" | grep -q 'registrationNumber'; then
     pass "Public registration submit"
     REG_NUM=$(echo "$REG" | python3 -c "import sys,json; print(json.load(sys.stdin).get('registrationNumber',''))" 2>/dev/null || true)

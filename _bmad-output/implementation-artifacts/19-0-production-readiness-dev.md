@@ -20,6 +20,11 @@ Close code/doc/CI gaps identified in post-roadmap production review before Epic 
 | Launch checklist | `docs/deploy/enterprise-launch-checklist.md` — CSP enforce, preflight, migration note |
 | UAT env docs | `.env.uat.example` — reCAPTCHA production block |
 
+## CI smoke fix (2026-08-12)
+
+- `deploy/ci-docker-smoke.sh` — clear `DEV_TENANT_SLUG` so bare localhost returns marketing door
+- `deploy/local-smoke-run.sh` — registration answers use `full_name` (matches form schema)
+
 ## Ops gates (stories 19.1–19.5 — not automatable in repo)
 
 - **19.1** — Provision droplet, fill `.env`, `docker compose -f docker-compose.uat.yml up`, `uat-smoke.sh --full`
