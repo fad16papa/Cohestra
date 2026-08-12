@@ -17,6 +17,7 @@ const VARIANT_ICONS = {
   past_due: CreditCard,
   on_hold: Lock,
   read_only_over_limit: AlertCircle,
+  registration_cap: AlertCircle,
 } as const;
 
 const VARIANT_STYLES = {
@@ -24,6 +25,7 @@ const VARIANT_STYLES = {
   past_due: "border-gold/40 bg-gold/5 text-text-warm",
   on_hold: "border-destructive/30 bg-destructive/5 text-text-warm",
   read_only_over_limit: "border-destructive/30 bg-destructive/5 text-text-warm",
+  registration_cap: "border-gold/40 bg-gold/5 text-text-warm",
 } as const;
 
 export function BillingBannerBar({ banner, isTenantAdmin, className }: BillingBannerProps) {

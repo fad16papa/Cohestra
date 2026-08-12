@@ -202,4 +202,30 @@ public sealed class TenantShellServiceTests
         Assert.NotNull(banner);
         Assert.Null(banner!.CtaHref);
     }
+
+    [Fact]
+    public void BuildBillingBanner_RegistrationCap_UsesResetCopy()
+    {
+        var tenant = new Tenant
+        {
+            Plan = TenantPlan.Pro,
+            BillingStatus = BillingStatus.Active,
+        };
+
+        var blockedDial = new Cohestra.Contracts.Admin.LimitDialResponse(
+            "registrations",
+            "Registrations this month (Singapore)",
+            5000,
+            5000,
+            100,
+            Warn: false,
+            Blocked: true,
+            Hint: "Resets Apr 1");
+
+        var banner = TenantShellService.BuildBillingBanner(tenant, [blockedDial], isTenantAdmin: true);
+
+        Assert.NotNull(banner);
+        Assert.Equal("registration_cap", banner!.Variant);
+        Assert.Contains("Public sign-ups are paused", banner.Message, StringComparison.Ordinal);
+    }
 }
