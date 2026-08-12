@@ -53,12 +53,12 @@ PUBLIC_BASE_URL=https://YOUR_URL SMOKE_TENANT_HOST=tenant.YOUR_URL bash deploy/u
 
 ### Review Findings
 
-- [ ] [Review][Patch] `DEV_TENANT_SLUG=` export ineffective — compose `${DEV_TENANT_SLUG:-default}` treats empty as unset; CI marketing-door check still fails [`deploy/ci-docker-smoke.sh:14`, `docker-compose.yml:42`]
-- [ ] [Review][Patch] Registration smoke missing `consent: true` — demo forms require consent; CI fails with 400 [`deploy/local-smoke-run.sh:123`]
-- [ ] [Review][Patch] Marketing-door probe hardcodes `Host: localhost:8088` — breaks `--full` on non-8088 UAT URLs [`deploy/local-smoke-run.sh:41`]
-- [ ] [Review][Decision] Preflight exits 0 with reCAPTCHA disabled (warn-only) — should default `--strict-recaptcha` for launch checklist path? [`deploy/preflight-launch.sh:92-103`]
-- [ ] [Review][Patch] `uat-smoke.sh --full` aborts via `set -e` before summary when nested smoke fails [`deploy/uat-smoke.sh:107-110`]
-- [ ] [Review][Patch] Document/require `SMOKE_TENANT_HOST` in checklist when `PUBLIC_BASE_URL` is apex IP/domain [`deploy/uat-smoke.sh:27-37`]
+- [x] [Review][Patch] `DEV_TENANT_SLUG=` export ineffective — fixed via `docker-compose.ci-smoke.yml` overlay
+- [x] [Review][Patch] Registration smoke missing `consent: true` — added to `local-smoke-run.sh`
+- [x] [Review][Patch] Marketing-door probe hardcoded `localhost:8088` — uses `SMOKE_MARKETING_HOST` (default `cohestra.app`)
+- [ ] [Review][Decision] Preflight exits 0 with reCAPTCHA disabled (warn-only) — should default `--strict-recaptcha` for launch checklist path?
+- [x] [Review][Patch] `uat-smoke.sh --full` aborts via `set -e` before summary — nested exit captured
+- [x] [Review][Patch] Document/require `SMOKE_TENANT_HOST` in checklist when apex/IP URL — checklist updated
 - [x] [Review][Defer] Migration `Down()` is no-op (irreversible backfill) — acceptable for data migrations [`20260811160000_BackfillActivityCatalogPerTenant.cs:49`]
 - [x] [Review][Defer] Header verifier checks `/` only, not `/api/*` duplicate-header paths — pre-existing nginx design [`deploy/verify-security-headers.sh:24`]
 - [x] [Review][Defer] Case-sensitive catalog backfill may leave duplicate casing variants — low likelihood in seeded data [`20260811160000_BackfillActivityCatalogPerTenant.cs:16`]
