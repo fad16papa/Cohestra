@@ -63,6 +63,10 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("max_registrants");
 
+                    b.Property<string>("RegistrationTheme")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("registration_theme");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -145,8 +149,20 @@ namespace Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AccentColor")
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DefaultHeroImageUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("LogoAssetId")
+                        .HasMaxLength(36)
+                        .HasColumnType("character varying(36)");
 
                     b.Property<string>("Name")
                         .IsRequired()

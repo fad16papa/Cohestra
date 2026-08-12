@@ -26,6 +26,9 @@ internal static class FormSchemaMapper
                         .ToList(),
                     field.ConsentText,
                     field.PhoneCountry))
-                .ToList());
+                .ToList(),
+            schema.Meta is null
+                ? null
+                : new FormSchemaMetaDto(schema.Meta.IntroMarkdown));
     }
 }

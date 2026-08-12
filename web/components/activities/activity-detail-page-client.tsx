@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Calendar, MapPin } from "lucide-react";
 
-import { ActivityBrandingPanel } from "@/components/activities/activity-branding-panel";
+import { ActivityDesignTab } from "@/components/activities/activity-design-tab";
 import { ActivityCapacityPanel } from "@/components/activities/activity-capacity-panel";
 import { ActivityFormTab } from "@/components/activities/activity-form-tab";
 import { ActivityPublishControls } from "@/components/activities/activity-publish-controls";
@@ -21,17 +21,24 @@ import { fetchActivityById, type Activity } from "@/lib/activities-api";
 import { getPublishGateIssues } from "@/lib/form-schema-utils";
 import { cn } from "@/lib/utils";
 
-type ActivityDetailTab = "overview" | "form" | "registrations" | "share";
+type ActivityDetailTab = "overview" | "design" | "form" | "registrations" | "share";
 
 const ACTIVITY_TABS: { id: ActivityDetailTab; label: string }[] = [
   { id: "overview", label: "Overview" },
+  { id: "design", label: "Design" },
   { id: "form", label: "Form" },
   { id: "registrations", label: "Registrations" },
   { id: "share", label: "Share kit" },
 ];
 
 function isActivityDetailTab(value: string | null): value is ActivityDetailTab {
-  return value === "overview" || value === "form" || value === "registrations" || value === "share";
+  return (
+    value === "overview" ||
+    value === "design" ||
+    value === "form" ||
+    value === "registrations" ||
+    value === "share"
+  );
 }
 
 type ActivityDetailPageClientProps = {
@@ -240,13 +247,16 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
             activity={activity}
             onActivityUpdated={handleActivityUpdated}
           />
-          <ActivityBrandingPanel
-            key={activity.id}
-            activity={activity}
-            onActivityUpdated={handleActivityUpdated}
-          />
         </div>
       ) : null}
+
+      <div hidden={activeTab !== "design"}>
+        <ActivityDesignTab
+          key={activity.id}
+          activity={activity}
+          onActivityUpdated={handleActivityUpdated}
+        />
+      </div>
 
       <div hidden={activeTab !== "form"}>
         <ActivityFormTab

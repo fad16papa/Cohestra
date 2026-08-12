@@ -10,7 +10,8 @@ export type FormFieldType =
   | "select"
   | "checkbox"
   | "consent"
-  | "referral_source";
+  | "referral_source"
+  | "section_header";
 
 export type FormFieldOption = {
   value: string;
@@ -28,9 +29,27 @@ export type FormFieldDefinition = {
   phoneCountry?: string | null;
 };
 
+export type FormSchemaMeta = {
+  introMarkdown: string | null;
+};
+
 export type ActivityFormSchema = {
   version: number;
+  meta?: FormSchemaMeta | null;
   fields: FormFieldDefinition[];
+};
+
+export type RegistrationThemePreset = "classic" | "card" | "immersive" | "compact";
+
+export type RegistrationTheme = {
+  preset: RegistrationThemePreset;
+  inheritCommunityBrand: boolean;
+  accentColor: string | null;
+  heroImageUrl: string | null;
+};
+
+export type ResolvedRegistrationTheme = RegistrationTheme & {
+  logoAssetId: string | null;
 };
 
 export type Activity = {
@@ -43,6 +62,8 @@ export type Activity = {
   communityLabel: string;
   heroImageUrl: string | null;
   accentColor: string | null;
+  registrationTheme: RegistrationTheme | null;
+  resolvedRegistrationTheme: ResolvedRegistrationTheme;
   showOnHomepage: boolean;
   status: ActivityStatus;
   formSchema: ActivityFormSchema | null;
@@ -78,6 +99,7 @@ export type UpdateActivityInput = {
   heroImageUrl?: string | null;
   accentColor?: string | null;
   maxRegistrants?: number | null;
+  registrationTheme?: RegistrationTheme | null;
 };
 
 export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
@@ -92,13 +114,27 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
   const schema = raw as Record<string, unknown>;
   const version = schema.version ?? schema.Version;
   const fields = schema.fields ?? schema.Fields;
+  const metaRaw = schema.meta ?? schema.Meta;
 
   if (typeof version !== "number" || !Array.isArray(fields)) {
     throw new Error("Invalid activity form schema payload");
   }
 
+  let meta: FormSchemaMeta | null = null;
+  if (metaRaw && typeof metaRaw === "object") {
+    const metaRecord = metaRaw as Record<string, unknown>;
+    const introMarkdown = metaRecord.introMarkdown ?? metaRecord.IntroMarkdown;
+    meta = {
+      introMarkdown:
+        typeof introMarkdown === "string" && introMarkdown.trim()
+          ? introMarkdown
+          : null,
+    };
+  }
+
   return {
     version,
+    meta,
     fields: fields.map((field) => {
       const item = field as Record<string, unknown>;
       const id = item.id ?? item.Id;
@@ -154,6 +190,60 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
   };
 }
 
+function parseRegistrationTheme(raw: unknown): RegistrationTheme | null {
+  if (raw === null || raw === undefined) {
+    return null;
+  }
+
+  if (typeof raw !== "object") {
+    throw new Error("Invalid registration theme payload");
+  }
+
+  const theme = raw as Record<string, unknown>;
+  const preset = theme.preset ?? theme.Preset;
+  const inheritCommunityBrand = theme.inheritCommunityBrand ?? theme.InheritCommunityBrand;
+  const accentColor = theme.accentColor ?? theme.AccentColor;
+  const heroImageUrl = theme.heroImageUrl ?? theme.HeroImageUrl;
+
+  if (
+    (preset !== "classic" &&
+      preset !== "card" &&
+      preset !== "immersive" &&
+      preset !== "compact") ||
+    typeof inheritCommunityBrand !== "boolean"
+  ) {
+    throw new Error("Invalid registration theme payload");
+  }
+
+  return {
+    preset,
+    inheritCommunityBrand,
+    accentColor: typeof accentColor === "string" ? accentColor : null,
+    heroImageUrl: typeof heroImageUrl === "string" ? heroImageUrl : null,
+  };
+}
+
+function parseResolvedRegistrationTheme(raw: unknown): ResolvedRegistrationTheme {
+  const theme = parseRegistrationTheme(raw);
+  if (!theme || typeof raw !== "object") {
+    return {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      logoAssetId: null,
+    };
+  }
+
+  const record = raw as Record<string, unknown>;
+  const logoAssetId = record.logoAssetId ?? record.LogoAssetId;
+
+  return {
+    ...theme,
+    logoAssetId: typeof logoAssetId === "string" ? logoAssetId : null,
+  };
+}
+
 function parseActivity(raw: Record<string, unknown>): Activity {
   const id = raw.id ?? raw.Id;
   const name = raw.name ?? raw.Name;
@@ -167,6 +257,9 @@ function parseActivity(raw: Record<string, unknown>): Activity {
   const showOnHomepage = raw.showOnHomepage ?? raw.ShowOnHomepage;
   const status = raw.status ?? raw.Status;
   const formSchemaRaw = raw.formSchema ?? raw.FormSchema;
+  const registrationThemeRaw = raw.registrationTheme ?? raw.RegistrationTheme;
+  const resolvedThemeRaw =
+    raw.resolvedRegistrationTheme ?? raw.ResolvedRegistrationTheme;
   const registrationCount = raw.registrationCount ?? raw.RegistrationCount;
   const maxRegistrantsRaw = raw.maxRegistrants ?? raw.MaxRegistrants;
   const createdAt = raw.createdAt ?? raw.CreatedAt;
@@ -199,6 +292,8 @@ function parseActivity(raw: Record<string, unknown>): Activity {
     communityLabel,
     heroImageUrl: typeof heroImageUrl === "string" ? heroImageUrl : null,
     accentColor: typeof accentColor === "string" ? accentColor : null,
+    registrationTheme: parseRegistrationTheme(registrationThemeRaw),
+    resolvedRegistrationTheme: parseResolvedRegistrationTheme(resolvedThemeRaw),
     showOnHomepage,
     status: status as ActivityStatus,
     formSchema: parseFormSchema(formSchemaRaw),
@@ -487,6 +582,7 @@ export async function updateActivity(
         heroImageUrl: input.heroImageUrl?.trim() || null,
         accentColor: input.accentColor?.trim() || null,
         maxRegistrants: input.maxRegistrants ?? null,
+        registrationTheme: input.registrationTheme ?? null,
       }),
     }
   );

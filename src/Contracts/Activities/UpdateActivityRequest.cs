@@ -8,4 +8,5 @@ public sealed record UpdateActivityRequest(
     string CommunityLabel,
     string? HeroImageUrl,
     string? AccentColor,
-    int? MaxRegistrants = null);
+    int? MaxRegistrants = null,
+    RegistrationThemeDto? RegistrationTheme = null);

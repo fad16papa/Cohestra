@@ -93,6 +93,8 @@ export default async function PublicRegistrationPage({
       communityLabel={activity.communityLabel}
       heroImageUrl={activity.heroImageUrl}
       accentColor={activity.accentColor}
+      logoAssetId={activity.logoAssetId}
+      preset={activity.preset}
       formSchema={activity.formSchema}
       websiteLink={websiteLink}
     />

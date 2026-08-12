@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-11T16:00:00Z
+# last_updated: 2026-08-12T16:30:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-11T16:00:00Z
+last_updated: 2026-08-12T16:45:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -278,6 +278,14 @@ development_status:
   23-3-bulk-select-campaign: done
   23-4-next-follow-up-date: done
   epic-23-retrospective: done
+
+  epic-25: in-progress
+  25-1-community-brand-kit: review
+  25-2-activity-registration-theme: review
+  25-3-public-registration-preset-renderer: review
+  25-4-admin-design-tab-live-preview: review
+  25-5-intro-copy-section-headers: review
+  epic-25-retrospective: optional
 
 action_items:
   - epic: 16

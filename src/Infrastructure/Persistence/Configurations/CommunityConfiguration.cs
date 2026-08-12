@@ -28,6 +28,15 @@ public sealed class CommunityConfiguration : IEntityTypeConfiguration<Community>
             .HasMaxLength(100)
             .IsRequired();
 
+        builder.Property(community => community.LogoAssetId)
+            .HasMaxLength(36);
+
+        builder.Property(community => community.AccentColor)
+            .HasMaxLength(7);
+
+        builder.Property(community => community.DefaultHeroImageUrl)
+            .HasMaxLength(2048);
+
         builder.HasIndex(community => new { community.TenantId, community.Name })
             .IsUnique();
 

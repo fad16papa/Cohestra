@@ -14,7 +14,11 @@ export type CommunityListItem = {
   updatedAt: string;
 };
 
-export type CommunityDetail = CommunityListItem;
+export type CommunityDetail = CommunityListItem & {
+  logoAssetId: string | null;
+  accentColor: string | null;
+  defaultHeroImageUrl: string | null;
+};
 
 async function parseProblemDetail(response: Response): Promise<string> {
   try {
@@ -28,6 +32,35 @@ async function parseProblemDetail(response: Response): Promise<string> {
   }
 
   return `Request failed (${response.status})`;
+}
+
+function parseCommunityDetail(raw: Record<string, unknown>): CommunityDetail {
+  const base = parseCommunity(raw);
+  const logoAssetId = raw.logoAssetId ?? raw.LogoAssetId;
+  const accentColor = raw.accentColor ?? raw.AccentColor;
+  const defaultHeroImageUrl = raw.defaultHeroImageUrl ?? raw.DefaultHeroImageUrl;
+
+  return {
+    ...base,
+    logoAssetId:
+      logoAssetId === null || logoAssetId === undefined
+        ? null
+        : typeof logoAssetId === "string"
+          ? logoAssetId
+          : null,
+    accentColor:
+      accentColor === null || accentColor === undefined
+        ? null
+        : typeof accentColor === "string"
+          ? accentColor
+          : null,
+    defaultHeroImageUrl:
+      defaultHeroImageUrl === null || defaultHeroImageUrl === undefined
+        ? null
+        : typeof defaultHeroImageUrl === "string"
+          ? defaultHeroImageUrl
+          : null,
+  };
 }
 
 function parseCommunity(raw: Record<string, unknown>): CommunityListItem {
@@ -81,8 +114,16 @@ export async function fetchCommunityById(
     throw new Error(await parseProblemDetail(response));
   }
 
-  return parseCommunity((await response.json()) as Record<string, unknown>);
+  return parseCommunityDetail((await response.json()) as Record<string, unknown>);
 }
+
+export type UpdateCommunityPayload = {
+  name: string;
+  brandKitIncluded?: boolean;
+  logoAssetId?: string | null;
+  accentColor?: string | null;
+  defaultHeroImageUrl?: string | null;
+};
 
 export async function createCommunity(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>,
@@ -98,25 +139,33 @@ export async function createCommunity(
     throw new Error(await parseProblemDetail(response));
   }
 
-  return parseCommunity((await response.json()) as Record<string, unknown>);
+  return parseCommunityDetail((await response.json()) as Record<string, unknown>);
 }
 
 export async function updateCommunity(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>,
   id: string,
-  name: string
+  payload: UpdateCommunityPayload
 ): Promise<CommunityDetail> {
   const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/admin/communities/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({
+      name: payload.name,
+      ...(payload.brandKitIncluded ? { brandKitIncluded: true } : {}),
+      ...(payload.logoAssetId !== undefined ? { logoAssetId: payload.logoAssetId } : {}),
+      ...(payload.accentColor !== undefined ? { accentColor: payload.accentColor } : {}),
+      ...(payload.defaultHeroImageUrl !== undefined
+        ? { defaultHeroImageUrl: payload.defaultHeroImageUrl }
+        : {}),
+    }),
   });
 
   if (!response.ok) {
     throw new Error(await parseProblemDetail(response));
   }
 
-  return parseCommunity((await response.json()) as Record<string, unknown>);
+  return parseCommunityDetail((await response.json()) as Record<string, unknown>);
 }
 
 export async function deleteCommunity(

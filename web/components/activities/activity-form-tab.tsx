@@ -6,6 +6,7 @@ import { LayoutTemplate } from "lucide-react";
 import { FormFieldEditor } from "@/components/activities/form-field-editor";
 import { FormTemplatePicker } from "@/components/activities/form-template-picker";
 import { RegistrationForm } from "@/components/registration/registration-form";
+import { RegistrationIntroCopy } from "@/components/registration/registration-intro-copy";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,6 +73,7 @@ export function ActivityFormTab({
   const previewKey = draftSchema.fields
     .map((field) => `${field.id}:${field.type}`)
     .join("|");
+  const introMarkdown = draftSchema.meta?.introMarkdown ?? null;
 
   const showPublishGate =
     isDraft &&
@@ -228,6 +230,34 @@ export function ActivityFormTab({
         />
       ) : null}
 
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+        <div>
+          <h3 className="text-section text-text-warm">Intro copy</h3>
+          <p className="mt-0.5 text-sm text-text-muted-warm">
+            Optional welcome text shown above the registration fields on the public page.
+          </p>
+        </div>
+        <textarea
+          id="form-intro-markdown"
+          rows={4}
+          maxLength={4000}
+          value={introMarkdown ?? ""}
+          disabled={isArchived || isSaving}
+          placeholder="Welcome! Tell registrants what to expect…"
+          className="flex min-h-[5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+          onChange={(event) => {
+            const nextIntro = event.target.value.trim() ? event.target.value : null;
+            setDraftSchema((current) => ({
+              ...current,
+              meta: nextIntro ? { introMarkdown: nextIntro } : null,
+            }));
+          }}
+        />
+        <p className="text-xs text-text-muted-warm">
+          Plain text and paragraph breaks only. HTML is stripped on the public page.
+        </p>
+      </section>
+
       <FormFieldEditor
         schema={draftSchema}
         onChange={setDraftSchema}
@@ -246,6 +276,12 @@ export function ActivityFormTab({
           Preview
         </h3>
         <div className="max-h-[min(36rem,70dvh)] overflow-y-auto overscroll-y-contain rounded-xl border border-border-warm bg-muted/20 p-4 [-webkit-overflow-scrolling:touch] sm:p-5">
+          {introMarkdown ? (
+            <RegistrationIntroCopy
+              introMarkdown={introMarkdown}
+              className="mb-4 space-y-3"
+            />
+          ) : null}
           <RegistrationForm
             key={previewKey}
             schema={draftSchema}

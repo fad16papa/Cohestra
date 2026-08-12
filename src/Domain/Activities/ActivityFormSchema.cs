@@ -4,7 +4,14 @@ public sealed class ActivityFormSchema
 {
     public int Version { get; set; } = 1;
 
+    public FormSchemaMeta? Meta { get; set; }
+
     public List<FormFieldDefinition> Fields { get; set; } = [];
+}
+
+public sealed class FormSchemaMeta
+{
+    public string? IntroMarkdown { get; set; }
 }
 
 public sealed class FormFieldDefinition

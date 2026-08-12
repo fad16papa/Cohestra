@@ -1,4 +1,4 @@
-import type { ActivityFormSchema, ActivityStatus } from "@/lib/activities-api";
+import type { ActivityFormSchema, ActivityStatus, RegistrationThemePreset } from "@/lib/activities-api";
 import { parseFormSchema } from "@/lib/activities-api";
 import { getPublicApiBaseUrl } from "@/lib/api";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
@@ -19,6 +19,8 @@ export type PublicActivity = {
   communityLabel: string;
   heroImageUrl: string | null;
   accentColor: string | null;
+  preset: RegistrationThemePreset;
+  logoAssetId: string | null;
   formSchema: ActivityFormSchema | null;
 };
 
@@ -46,6 +48,8 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
   const communityLabel = raw.communityLabel ?? raw.CommunityLabel;
   const heroImageUrl = raw.heroImageUrl ?? raw.HeroImageUrl;
   const accentColor = raw.accentColor ?? raw.AccentColor;
+  const presetRaw = raw.preset ?? raw.Preset;
+  const logoAssetId = raw.logoAssetId ?? raw.LogoAssetId;
   const formSchema = raw.formSchema ?? raw.FormSchema;
 
   if (
@@ -60,6 +64,14 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
   ) {
     throw new Error("Invalid public activity payload");
   }
+
+  const preset: RegistrationThemePreset =
+    presetRaw === "card" ||
+    presetRaw === "immersive" ||
+    presetRaw === "compact" ||
+    presetRaw === "classic"
+      ? presetRaw
+      : "classic";
 
   return {
     slug,
@@ -78,6 +90,8 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
     communityLabel,
     heroImageUrl: typeof heroImageUrl === "string" ? heroImageUrl : null,
     accentColor: typeof accentColor === "string" ? accentColor : null,
+    preset,
+    logoAssetId: typeof logoAssetId === "string" ? logoAssetId : null,
     formSchema:
       formSchema === null || formSchema === undefined
         ? null

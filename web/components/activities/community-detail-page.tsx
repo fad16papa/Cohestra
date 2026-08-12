@@ -8,6 +8,7 @@ import {
   clientsTableGridClassName,
   clientsTableStatusColumnClassName,
 } from "@/components/clients/clients-table-layout";
+import { CommunityBrandKitPanel } from "@/components/activities/community-brand-kit-panel";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,6 +130,8 @@ export function CommunityDetailPage({ id }: CommunityDetailPageProps) {
           {community.activityCount} activit{community.activityCount === 1 ? "y" : "ies"}
         </p>
       </div>
+
+      <CommunityBrandKitPanel community={community} onCommunityUpdated={setCommunity} />
 
       <div className="grid gap-4 rounded-xl border border-border-warm bg-card p-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2 sm:col-span-2 lg:col-span-1">

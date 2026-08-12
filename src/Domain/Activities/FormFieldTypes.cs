@@ -9,6 +9,7 @@ public static class FormFieldTypes
     public const string Checkbox = "checkbox";
     public const string Consent = "consent";
     public const string ReferralSource = "referral_source";
+    public const string SectionHeader = "section_header";
 
     public static readonly HashSet<string> All =
     [
@@ -19,5 +20,11 @@ public static class FormFieldTypes
         Checkbox,
         Consent,
         ReferralSource,
+        SectionHeader,
+    ];
+
+    public static readonly HashSet<string> NonInput =
+    [
+        SectionHeader,
     ];
 }

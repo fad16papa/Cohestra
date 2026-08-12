@@ -10,6 +10,12 @@ public class Community : ITenantScoped
 
     public string Name { get; set; } = string.Empty;
 
+    public string? LogoAssetId { get; set; }
+
+    public string? AccentColor { get; set; }
+
+    public string? DefaultHeroImageUrl { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }

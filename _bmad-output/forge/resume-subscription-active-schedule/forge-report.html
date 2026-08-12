@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forge Report — B2 Resume + Active Schedule</title>
+  <style>
+    :root {
+      --ink: #0f1419;
+      --paper: #faf8f5;
+      --gold: #b8956a;
+      --lagoon: #1a7a7a;
+      --crack: #c44;
+      --lock: #2a6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.55;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+    h1 { font-size: 1.75rem; letter-spacing: -0.02em; margin-bottom: 0.25rem; }
+    .meta { font-size: 0.9rem; color: #666; margin-bottom: 2rem; }
+    .seal-wrap { text-align: center; margin: 2rem 0; }
+    .seal {
+      display: inline-block;
+      border: 3px double var(--gold);
+      border-radius: 50%;
+      width: 140px;
+      height: 140px;
+      line-height: 140px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--gold);
+      transform: rotate(-8deg);
+    }
+    section { margin: 2rem 0; }
+    h2 {
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--lagoon);
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 0.35rem;
+    }
+    .killed { color: var(--crack); }
+    .locked { color: var(--lock); }
+    ul { padding-left: 1.25rem; }
+    li { margin: 0.6rem 0; }
+    .room {
+      background: #fff;
+      border-left: 4px solid var(--gold);
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      font-style: italic;
+    }
+    .room cite { display: block; margin-top: 0.75rem; font-style: normal; font-size: 0.85rem; color: #666; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { border: 1px solid #ddd; padding: 0.5rem 0.75rem; text-align: left; }
+    th { background: #f0ebe3; }
+  </style>
+</head>
+<body>
+  <h1>B2 — Resume Subscription + Active Schedule</h1>
+  <p class="meta">Forged 2026-08-10 · Outcome: <strong>HARDENED</strong> (brainstorm Option 1 revised)</p>
+
+  <div class="seal-wrap">
+    <svg width="160" height="160" viewBox="0 0 160 160" aria-label="HARDENED seal">
+      <circle cx="80" cy="80" r="72" fill="none" stroke="#b8956a" stroke-width="3" stroke-dasharray="4 2"/>
+      <circle cx="80" cy="80" r="58" fill="none" stroke="#b8956a" stroke-width="2"/>
+      <text x="80" y="76" text-anchor="middle" font-family="Georgia, serif" font-size="13" font-weight="bold" fill="#b8956a" letter-spacing="2">HARDENED</text>
+      <text x="80" y="94" text-anchor="middle" font-family="Georgia, serif" font-size="9" fill="#b8956a">B2 FORGE</text>
+    </svg>
+  </div>
+
+  <section>
+    <h2>Verdict</h2>
+    <p>The brainstorm recommendation — <em>auto-release schedule on resume</em> — <strong class="killed">does not survive</strong>. It destroys a valid user path: cancel-to-Basic, then schedule a paid downgrade instead, then Keep subscription to undo Basic while keeping Core.</p>
+    <p class="locked">Surviving design: <strong>clear cancel at schedule time</strong> + <strong>confirm on resume when both states exist</strong>. Resume never releases schedule.</p>
+  </section>
+
+  <section>
+    <h2 class="killed">Killed</h2>
+    <ul>
+      <li>Auto-release schedule on every resume</li>
+      <li>Block resume until schedule undone</li>
+      <li>Resume mirrors cancel release path</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2 class="locked">Locked (load-bearing)</h2>
+    <ol>
+      <li><strong>Dual state is real</strong> — cancel first, schedule Core second; Stripe keeps both flags today.</li>
+      <li><strong>Resume clears cancel only</strong> — schedule stays; paid change still applies at period end.</li>
+      <li><strong>Fix at source</strong> — scheduling paid change clears <code>cancel_at_period_end</code> before creating schedule.</li>
+      <li><strong>Confirm on Keep subscription</strong> when cancel + pending schedule — no silent surprise.</li>
+      <li><strong>Orphan cleanup</strong> — stale tenant schedule fields cleared when Stripe has no schedule (no release call).</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>The room</h2>
+    <div class="room">
+      "Keep subscription isn't 'undo everything.' It's 'I don't want Basic.' If they already chose Core at period end, releasing the schedule on resume is vandalism dressed as symmetry."
+      <cite>📋 John (PM) + Stripe Billing Survivor (ad-hoc persona)</cite>
+    </div>
+    <div class="room">
+      "Cancel and resume share infrastructure but not intent. Cancel ends the relationship. Resume continues it. A pending downgrade is still a continuing relationship — just a cheaper one."
+      <cite>🏗️ Winston (Architect)</cite>
+    </div>
+    <div class="room">
+      "The one-click Keep subscription with zero copy while two amber banners scream different futures — that's the UX crack. Confirm dialog is cheaper than a support ticket."
+      <cite>🎨 Sally (UX Designer)</cite>
+    </div>
+  </section>
+
+  <section>
+    <h2>Test matrix</h2>
+    <table>
+      <tr><th>Flow</th><th>Expected</th></tr>
+      <tr><td>Cancel → schedule Core → resume</td><td>Confirm shown; cancel cleared; schedule intact</td></tr>
+      <tr><td>Schedule Core → cancel (#170)</td><td>Schedule released on cancel</td></tr>
+      <tr><td>Schedule while cancel pending</td><td>Cancel flag cleared when schedule created</td></tr>
+      <tr><td>Resume, no schedule</td><td>Unchanged</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Next</h2>
+    <p><code>bmad-create-story</code> → B2 with locks above · Pair with B1 interval confirm · <code>bmad-checkpoint-preview</code> after dev</p>
+  </section>
+</body>
+</html>

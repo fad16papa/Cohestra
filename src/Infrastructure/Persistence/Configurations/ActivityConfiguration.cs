@@ -59,6 +59,19 @@ internal sealed class ActivityConfiguration : IEntityTypeConfiguration<Activity>
         builder.Property(activity => activity.AccentColor)
             .HasMaxLength(7);
 
+        builder.Property(activity => activity.RegistrationTheme)
+            .HasColumnName("registration_theme")
+            .HasColumnType("jsonb")
+            .HasConversion(
+                theme => theme == null
+                    ? null
+                    : JsonSerializer.Serialize(theme, RegistrationThemeJson.SerializerOptions),
+                json => string.IsNullOrWhiteSpace(json)
+                    ? null
+                    : JsonSerializer.Deserialize<RegistrationTheme>(
+                        json,
+                        RegistrationThemeJson.SerializerOptions));
+
         builder.Property(activity => activity.Status)
             .HasConversion<string>()
             .HasMaxLength(20)

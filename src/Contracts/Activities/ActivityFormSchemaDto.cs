@@ -3,9 +3,12 @@ namespace Cohestra.Contracts.Activities;
 /// <summary>
 /// Activity registration form schema (v1). See docs/contracts/activity-form-schema-v1.md.
 /// </summary>
+public sealed record FormSchemaMetaDto(string? IntroMarkdown);
+
 public sealed record ActivityFormSchemaDto(
     int Version,
-    IReadOnlyList<FormFieldDefinitionDto> Fields);
+    IReadOnlyList<FormFieldDefinitionDto> Fields,
+    FormSchemaMetaDto? Meta = null);
 
 /// <summary>
 /// Single field in an activity form schema. <c>type</c> must be one of the v1 field types documented in the contract.

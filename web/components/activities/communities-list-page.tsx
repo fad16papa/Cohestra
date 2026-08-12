@@ -112,7 +112,9 @@ export function CommunitiesListPage() {
 
     setSaving(true);
     try {
-      const updated = await updateCommunity(authFetch, communityId, editingName.trim());
+      const updated = await updateCommunity(authFetch, communityId, {
+        name: editingName.trim(),
+      });
       setCommunities((current) =>
         current
           .map((item) => (item.id === updated.id ? updated : item))

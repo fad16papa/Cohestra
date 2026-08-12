@@ -1565,3 +1565,109 @@ So that **overdue leads surface on Dashboard and Clients filters**.
 
 **Parked (23.5):** Manual merge UI for merge suspects — promote only if FR-29 merge-suspect chip insufficient in UAT.
 
+## Epic 25: Registration Experience Studio
+
+Community-aware registration page design — **Community Brand Kit + Activity theme presets + live preview**. Sourced from PRD `prd-registration-experience-studio-2026-08-12` and UX `ux-registration-experience-studio-2026-08-12`.
+
+**FRs touched:** FR-RES-1..5 (PRD Registration Experience Studio)  
+**Platform baseline:** Epic 3 activity branding, Epic 6 communities catalog, Epic 9 campaign assets  
+**Not in scope:** Custom fonts, CSS injection, embed widget, conditional logic, website-builder section import (P2)
+
+**Technical notes:**
+- Community fields: `LogoAssetId`, `AccentColor`, `DefaultHeroImageUrl` (nullable)
+- Activity `registration_theme` JSON column (separate from `form_schema`) — Story 25.2
+- Presets: Classic, Card, Immersive Hero, Compact — platform typography unchanged (NFR-12)
+- Logo upload Core+; Basic gets accent + presets only
+- Reuse `ActivityBrandingValidator` rules for accent/hero; campaign-assets for uploads
+
+### Story 25.1: Community brand kit
+
+As a **Tenant Admin or Member**,
+I want **to set logo, accent, and default hero on a community**,
+So that **activities in that program inherit consistent branding without repeating setup**.
+
+**Acceptance Criteria:**
+
+**Given** a community on Core+ plan  
+**When** I upload a logo, set accent `#2d6a4f`, and set a default hero  
+**Then** PATCH `/api/v1/admin/communities/{id}` persists all three fields  
+**And** GET returns the saved brand kit on `CommunityResponse`
+
+**Given** a community on Basic plan  
+**When** I attempt to set `logoAssetId`  
+**Then** API returns 403 with `plan_locked`  
+**And** accent and default hero still save successfully
+
+**Given** invalid accent or hero URL  
+**When** I save the brand kit  
+**Then** API returns 400 with validation detail (mirror activity branding rules)
+
+**Given** community detail page in admin  
+**When** I edit brand kit fields and save  
+**Then** UI reflects persisted values with upload/remove for logo and hero
+
+See story file `25-1-community-brand-kit.md` for dev guardrails.
+
+### Story 25.2: Activity registration theme JSON
+
+As a **Tenant Admin or Member**,
+I want **each activity to store a registration theme with preset and inherit flag**,
+So that **public pages resolve community kit + activity overrides predictably**.
+
+**Acceptance Criteria:**
+
+**Given** an activity with a community label matching a brand kit  
+**When** `inheritCommunityBrand` is true (default)  
+**Then** resolved theme uses community logo/accent/hero where activity fields are null
+
+**Given** activity update with `registrationTheme` JSON  
+**When** saved  
+**Then** column persists separately from `form_schema`
+
+### Story 25.3: Public registration preset renderer
+
+As a **prospective registrant**,
+I want **the registration page layout to match the operator's chosen preset**,
+So that **the page feels intentional and trustworthy on mobile**.
+
+**Acceptance Criteria:**
+
+**Given** preset Classic  
+**Then** current hero + form layout unchanged (backward compatible)
+
+**Given** preset Card or Compact  
+**Then** layout matches DESIGN.md component tokens
+
+**Given** resolved accent  
+**Then** CSS `--primary` applies on registration root
+
+### Story 25.4: Admin Design tab + live preview
+
+As a **Tenant Admin or Member**,
+I want **a Design tab with mobile/desktop preview**,
+So that **I see the registration page before publishing**.
+
+**Acceptance Criteria:**
+
+**Given** activity detail Design tab  
+**When** I change preset or overrides  
+**Then** preview updates using `PublicRegistrationOpen variant="preview"`
+
+**Given** accent fails WCAG AA  
+**Then** contrast warning displays before save
+
+### Story 25.5: Intro copy + section headers
+
+As a **Tenant Admin or Member**,
+I want **intro markdown and section dividers in long forms**,
+So that **registrants understand what to expect**.
+
+**Acceptance Criteria:**
+
+**Given** `form_schema.meta.introMarkdown`  
+**When** public registration renders  
+**Then** intro appears above fields (sanitized markdown subset)
+
+**Given** section header field type or meta divider  
+**Then** form renders non-input section headings between field groups
+
