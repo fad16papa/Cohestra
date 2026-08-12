@@ -94,7 +94,7 @@ public sealed class ActivityService(
             try
             {
                 await dbContext.SaveChangesAsync(cancellationToken);
-                return ToActivityResponse(activity);
+                return await ToActivityResponseAsync(activity, cancellationToken: cancellationToken);
             }
             catch (DbUpdateException ex) when (IsUniqueSlugViolation(ex) && attempt < maxAttempts - 1)
             {
@@ -122,7 +122,7 @@ public sealed class ActivityService(
             .AsNoTracking()
             .CountAsync(registration => registration.ActivityId == id, cancellationToken);
 
-        return ToActivityResponse(activity, registrationCount);
+        return await ToActivityResponseAsync(activity, registrationCount, cancellationToken);
     }
 
     public async Task<ActivityListResponse> ListAsync(
@@ -189,9 +189,22 @@ public sealed class ActivityService(
                 .Select(group => new { ActivityId = group.Key, Count = group.Count() })
                 .ToDictionaryAsync(item => item.ActivityId, item => item.Count, cancellationToken);
 
+        var communityLabels = activities
+            .Select(activity => activity.CommunityLabel)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+        var communities = communityLabels.Count == 0
+            ? new Dictionary<string, Community>(StringComparer.Ordinal)
+            : await dbContext.Communities
+                .AsNoTracking()
+                .Where(community => communityLabels.Contains(community.Name))
+                .ToDictionaryAsync(community => community.Name, cancellationToken);
+
         var items = activities
             .Select(activity => ToActivityResponse(
                 activity,
+                ResolveRegistrationTheme(activity, communities.GetValueOrDefault(activity.CommunityLabel)),
                 registrationCounts.GetValueOrDefault(activity.Id)))
             .ToList();
 
@@ -271,12 +284,25 @@ public sealed class ActivityService(
         activity.HeroImageUrl = ActivityBrandingValidator.NormalizeHeroImageUrl(request.HeroImageUrl);
         activity.AccentColor = ActivityBrandingValidator.NormalizeAccentColor(request.AccentColor);
         activity.MaxRegistrants = request.MaxRegistrants;
+
+        if (request.RegistrationTheme is not null)
+        {
+            var theme = RegistrationThemeMapper.FromDto(request.RegistrationTheme);
+            var themeError = RegistrationThemeValidator.Validate(theme);
+            if (themeError is not null)
+            {
+                throw new InvalidOperationException(themeError);
+            }
+
+            activity.RegistrationTheme = RegistrationThemeValidator.Normalize(theme!);
+        }
+
         activity.UpdatedAt = DateTimeOffset.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         await SyncPublicActivityCacheAsync(activity, cancellationToken);
 
-        return ToActivityResponse(activity, registrationCount);
+        return await ToActivityResponseAsync(activity, registrationCount, cancellationToken);
     }
 
     public async Task<ActivityResponse?> UpdateShowOnHomepageAsync(
@@ -310,7 +336,7 @@ public sealed class ActivityService(
         await dbContext.SaveChangesAsync(cancellationToken);
         await SyncPublicActivityCacheAsync(activity, cancellationToken);
 
-        return ToActivityResponse(activity);
+        return await ToActivityResponseAsync(activity, cancellationToken: cancellationToken);
     }
 
     public async Task<ActivityResponse?> ArchiveAsync(
@@ -334,7 +360,7 @@ public sealed class ActivityService(
             await SyncPublicActivityCacheAsync(activity, cancellationToken);
         }
 
-        return ToActivityResponse(activity);
+        return await ToActivityResponseAsync(activity, cancellationToken: cancellationToken);
     }
 
     public async Task<ActivityResponse?> UnpublishAsync(
@@ -363,7 +389,7 @@ public sealed class ActivityService(
             await SyncPublicActivityCacheAsync(activity, cancellationToken);
         }
 
-        return ToActivityResponse(activity);
+        return await ToActivityResponseAsync(activity, cancellationToken: cancellationToken);
     }
 
     public async Task<ActivityResponse?> PublishAsync(
@@ -422,7 +448,7 @@ public sealed class ActivityService(
             await SyncPublicActivityCacheAsync(activity, cancellationToken);
         }
 
-        return ToActivityResponse(activity);
+        return await ToActivityResponseAsync(activity, cancellationToken: cancellationToken);
     }
 
     public async Task<PublicActivityResponse?> GetPublicBySlugAsync(
@@ -529,7 +555,7 @@ public sealed class ActivityService(
         await dbContext.SaveChangesAsync(cancellationToken);
         await SyncPublicActivityCacheAsync(activity, cancellationToken);
 
-        return ToActivityResponse(activity);
+        return await ToActivityResponseAsync(activity, cancellationToken: cancellationToken);
     }
 
     public async Task<ActivityRegistrationLinkResponse?> GetRegistrationLinkAsync(
@@ -661,11 +687,52 @@ public sealed class ActivityService(
         return new ActivityRegistrationLinkResponse(url, slug, path);
     }
 
-    private ActivityResponse ToActivityResponse(Activity activity, int registrationCount = 0) =>
+    private async Task<ActivityResponse> ToActivityResponseAsync(
+        Activity activity,
+        int registrationCount = 0,
+        CancellationToken cancellationToken = default)
+    {
+        var community = await LoadCommunityByLabelAsync(activity.CommunityLabel, cancellationToken);
+        var resolved = ResolveRegistrationTheme(activity, community);
+        return ToActivityResponse(activity, resolved, registrationCount);
+    }
+
+    private static ActivityResponse ToActivityResponse(
+        Activity activity,
+        ResolvedRegistrationThemeDto resolvedTheme,
+        int registrationCount = 0) =>
         ActivityMapper.ToResponse(
             activity,
+            ResolveRegistrationThemeForBrowser(resolvedTheme),
             registrationCount,
             ResolveHeroImageUrl(activity.HeroImageUrl));
+
+    private static ResolvedRegistrationThemeDto ResolveRegistrationTheme(
+        Activity activity,
+        Community? community) =>
+        RegistrationThemeResolver.Resolve(activity.RegistrationTheme, community, activity);
+
+    private static ResolvedRegistrationThemeDto ResolveRegistrationThemeForBrowser(
+        ResolvedRegistrationThemeDto resolvedTheme) =>
+        resolvedTheme with
+        {
+            HeroImageUrl = ResolveHeroImageUrl(resolvedTheme.HeroImageUrl),
+        };
+
+    private async Task<Community?> LoadCommunityByLabelAsync(
+        string communityLabel,
+        CancellationToken cancellationToken)
+    {
+        var normalized = communityLabel?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return null;
+        }
+
+        return await dbContext.Communities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(community => community.Name == normalized, cancellationToken);
+    }
 
     private static string? ResolveHeroImageUrl(string? heroImageUrl) =>
         ActivityHeroImageUrlResolver.ResolveForBrowser(heroImageUrl);
@@ -682,6 +749,10 @@ public sealed class ActivityService(
                 .CountAsync(registration => registration.ActivityId == activity.Id, cancellationToken);
         }
 
+        var community = await LoadCommunityByLabelAsync(activity.CommunityLabel, cancellationToken);
+        var resolved = ResolveRegistrationThemeForBrowser(
+            ResolveRegistrationTheme(activity, community));
+
         return new PublicActivityResponse(
             activity.Slug,
             activity.Name,
@@ -690,8 +761,10 @@ public sealed class ActivityService(
             activity.Schedule,
             activity.Location,
             activity.CommunityLabel,
-            ResolveHeroImageUrl(activity.HeroImageUrl),
-            activity.AccentColor,
+            resolved.HeroImageUrl,
+            resolved.AccentColor,
+            resolved.Preset,
+            resolved.LogoAssetId,
             activity.Status == ActivityStatus.Published
                 ? FormSchemaMapper.ToDto(activity.FormSchema)
                 : null,

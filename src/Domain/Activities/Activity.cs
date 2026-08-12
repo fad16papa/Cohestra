@@ -24,6 +24,8 @@ public class Activity : ITenantScoped
 
     public string? AccentColor { get; set; }
 
+    public RegistrationTheme? RegistrationTheme { get; set; }
+
     public ActivityStatus Status { get; set; } = ActivityStatus.Draft;
 
     public ActivityFormSchema? FormSchema { get; set; }

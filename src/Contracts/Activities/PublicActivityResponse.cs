@@ -10,6 +10,8 @@ public sealed record PublicActivityResponse(
     string CommunityLabel,
     string? HeroImageUrl,
     string? AccentColor,
+    string Preset,
+    string? LogoAssetId,
     ActivityFormSchemaDto? FormSchema,
     int? MaxRegistrants,
     int RegistrationCount,

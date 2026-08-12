@@ -10,6 +10,8 @@ public sealed record ActivityResponse(
     string CommunityLabel,
     string? HeroImageUrl,
     string? AccentColor,
+    RegistrationThemeDto? RegistrationTheme,
+    ResolvedRegistrationThemeDto ResolvedRegistrationTheme,
     string Status,
     bool ShowOnHomepage,
     ActivityFormSchemaDto? FormSchema,
