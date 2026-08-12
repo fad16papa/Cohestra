@@ -2,6 +2,7 @@ using Cohestra.Application.Activities;
 using Cohestra.Application.Clients;
 using Cohestra.Contracts.Activities;
 using Cohestra.Contracts.Clients;
+using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -126,6 +127,10 @@ public class CommunitiesController(
             var community = await communityService.UpdateAsync(id, request, cancellationToken);
             return community is null ? NotFound() : Ok(community);
         }
+        catch (CommunityPlanLockedException ex)
+        {
+            return PlanLockedProblem(ex.Message);
+        }
         catch (ArgumentException ex)
         {
             return BadRequestProblem(ex.Message);
@@ -162,6 +167,25 @@ public class CommunitiesController(
         })
         {
             StatusCode = StatusCodes.Status400BadRequest,
+        };
+    }
+
+    private ObjectResult PlanLockedProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status403Forbidden,
+            Title = "Forbidden",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        };
+        problem.Extensions["errorCode"] = "plan_locked";
+
+        return new ObjectResult(problem)
+        {
+            StatusCode = StatusCodes.Status403Forbidden,
         };
     }
 }

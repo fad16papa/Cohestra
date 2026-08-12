@@ -52,13 +52,7 @@ public sealed class CommunityService(
 
         var counts = await GetCountsAsync(community.Name, cancellationToken);
 
-        return new CommunityResponse(
-            community.Id,
-            community.Name,
-            counts.ActivityCount,
-            counts.LeadCount,
-            community.CreatedAt,
-            community.UpdatedAt);
+        return ToResponse(community, counts.ActivityCount, counts.LeadCount);
     }
 
     public async Task<CommunityResponse> CreateAsync(
@@ -90,7 +84,7 @@ public sealed class CommunityService(
         dbContext.Communities.Add(community);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return new CommunityResponse(community.Id, community.Name, 0, 0, community.CreatedAt, community.UpdatedAt);
+        return ToResponse(community, 0, 0);
     }
 
     public async Task<CommunityResponse?> UpdateAsync(
@@ -113,6 +107,30 @@ public sealed class CommunityService(
             throw new ArgumentException("A community with this name already exists.");
         }
 
+        var (logoAssetId, accentColor, defaultHeroImageUrl) = CommunityBrandingValidator.NormalizeBrandKit(
+            request.LogoAssetId,
+            request.AccentColor,
+            request.DefaultHeroImageUrl);
+
+        var validationError = CommunityBrandingValidator.ValidateBrandKit(
+            logoAssetId,
+            accentColor,
+            defaultHeroImageUrl);
+
+        if (validationError is not null)
+        {
+            throw new ArgumentException(validationError);
+        }
+
+        if (logoAssetId is not null)
+        {
+            var planGateError = await ValidateCommunityLogoPlanGateAsync(cancellationToken);
+            if (planGateError is not null)
+            {
+                throw new CommunityPlanLockedException(planGateError);
+            }
+        }
+
         var previousName = community.Name;
 
         if (!string.Equals(previousName, nextName, StringComparison.Ordinal))
@@ -129,18 +147,15 @@ public sealed class CommunityService(
         }
 
         community.Name = nextName;
+        community.LogoAssetId = logoAssetId;
+        community.AccentColor = accentColor;
+        community.DefaultHeroImageUrl = defaultHeroImageUrl;
         community.UpdatedAt = DateTimeOffset.UtcNow;
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var counts = await GetCountsAsync(community.Name, cancellationToken);
 
-        return new CommunityResponse(
-            community.Id,
-            community.Name,
-            counts.ActivityCount,
-            counts.LeadCount,
-            community.CreatedAt,
-            community.UpdatedAt);
+        return ToResponse(community, counts.ActivityCount, counts.LeadCount);
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -241,4 +256,45 @@ public sealed class CommunityService(
             communitiesUsed,
             limits.Communities);
     }
+
+    private async Task<string?> ValidateCommunityLogoPlanGateAsync(CancellationToken cancellationToken)
+    {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return null;
+        }
+
+        var plan = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => (TenantPlan?)tenant.Plan)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (plan is null)
+        {
+            return null;
+        }
+
+        if (plan is TenantPlan.Basic)
+        {
+            return "Community logo upload requires Core plan or above.";
+        }
+
+        return null;
+    }
+
+    private static CommunityResponse ToResponse(
+        Community community,
+        int activityCount,
+        int leadCount) =>
+        new(
+            community.Id,
+            community.Name,
+            activityCount,
+            leadCount,
+            community.LogoAssetId,
+            community.AccentColor,
+            community.DefaultHeroImageUrl,
+            community.CreatedAt,
+            community.UpdatedAt);
 }
