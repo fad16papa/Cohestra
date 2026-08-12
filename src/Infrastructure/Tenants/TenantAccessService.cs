@@ -27,11 +27,19 @@ public sealed class TenantAccessService(CohestraDbContext dbContext) : ITenantAc
 
         var evaluation = TenantAccessEvaluator.Evaluate(tenant);
 
-        if (tenant.IsComplimentary
-            || evaluation.AdminAccess is TenantAccessMode.Blocked
-            || evaluation.AdminAccess is TenantAccessMode.ReadOnly)
+        if (tenant.IsComplimentary)
         {
             return evaluation;
+        }
+
+        if (evaluation.AdminAccess is TenantAccessMode.Blocked)
+        {
+            return evaluation;
+        }
+
+        if (evaluation.AdminAccess is TenantAccessMode.ReadOnly)
+        {
+            return evaluation with { ReadOnlyReason = TenantReadOnlyReason.BillingOnHold };
         }
 
         if (IsOverPlanLimits(tenant.Plan, await GetUsageAsync(tenantId, cancellationToken)))
@@ -40,7 +48,8 @@ public sealed class TenantAccessService(CohestraDbContext dbContext) : ITenantAc
                 AdminAccess: TenantAccessMode.ReadOnly,
                 PublicRegistrationAllowed: false,
                 PublicSurface: evaluation.PublicSurface,
-                ShowSettleBanner: evaluation.ShowSettleBanner);
+                ShowSettleBanner: evaluation.ShowSettleBanner,
+                ReadOnlyReason: TenantReadOnlyReason.OverPlanLimits);
         }
 
         return evaluation;

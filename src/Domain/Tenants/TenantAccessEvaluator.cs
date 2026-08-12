@@ -10,7 +10,8 @@ public readonly record struct TenantAccessEvaluation(
     TenantAccessMode AdminAccess,
     bool PublicRegistrationAllowed,
     TenantPublicSurface PublicSurface,
-    bool ShowSettleBanner);
+    bool ShowSettleBanner,
+    TenantReadOnlyReason ReadOnlyReason = TenantReadOnlyReason.None);
 
 /// <summary>
 /// Canonical FR-3 access matrix. Suspended always wins over billing.

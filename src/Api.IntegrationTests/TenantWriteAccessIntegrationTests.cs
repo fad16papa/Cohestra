@@ -118,6 +118,66 @@ public sealed class TenantWriteAccessIntegrationTests(IntegrationTestFixture fix
         }
     }
 
+    [SkippableFact]
+    public async Task TenantAdmin_CanArchiveActivity_WhenOverPlanLimits()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+
+        var seededCommunityIds = await SeedDefaultTenantCommunitiesToProCapAsync();
+
+        try
+        {
+            using var client = Factory.CreateClient();
+            var token = await IntegrationTestHelpers.LoginAsOperatorAsync(client);
+            IntegrationTestHelpers.UseBearerToken(client, token);
+
+            using var createResponse = await client.PostAsJsonAsync(
+                "/api/v1/admin/activities",
+                new CreateActivityRequest(
+                    Name: $"Recovery archive {Guid.NewGuid():N}"[..32],
+                    Category: "Test",
+                    Schedule: "Saturday 10:00",
+                    Location: "Test Court",
+                    CommunityLabel: "Integration Community",
+                    Status: ActivityStatus.Draft.ToString().ToLowerInvariant(),
+                    MaxRegistrants: null),
+                IntegrationTestHelpers.JsonOptions);
+
+            Assert.Equal(HttpStatusCode.Forbidden, createResponse.StatusCode);
+
+            var activityId = await FindPublishedActivityIdAsync();
+            Assert.NotEqual(Guid.Empty, activityId);
+
+            using var archiveResponse = await client.PostAsync(
+                $"/api/v1/admin/activities/{activityId}/archive",
+                null);
+
+            Assert.Equal(HttpStatusCode.OK, archiveResponse.StatusCode);
+        }
+        finally
+        {
+            await DeleteCommunitiesAsync(seededCommunityIds);
+        }
+    }
+
+    private async Task<Guid> FindPublishedActivityIdAsync()
+    {
+        await using var scope = Factory.Services.CreateAsyncScope();
+        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
+
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var activityId = await dbContext.Activities
+            .AsNoTracking()
+            .Where(a => a.TenantId == TenantIds.Default && a.Status == ActivityStatus.Published)
+            .Select(a => a.Id)
+            .FirstOrDefaultAsync();
+
+        return activityId == Guid.Empty
+            ? throw new InvalidOperationException("Expected at least one published activity for recovery test.")
+            : activityId;
+    }
+
     private async Task<HttpClient> CreateTenantMemberClientAsync()
     {
         var email = $"member-{Guid.NewGuid():N}@example.com";
