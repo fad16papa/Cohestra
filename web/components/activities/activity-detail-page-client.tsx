@@ -191,14 +191,14 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     <div className="space-y-6">
       <ActivityBackLink />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
         <div>
           <h2 className="text-display-sm text-text-warm">{activity.name}</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
             {activity.communityLabel} · {activity.category}
           </p>
         </div>
-        <ActivityStatusBadge status={activity.status} />
+        <ActivityStatusBadge status={activity.status} className="shrink-0 self-start" />
       </div>
 
       {conflictError ? (
