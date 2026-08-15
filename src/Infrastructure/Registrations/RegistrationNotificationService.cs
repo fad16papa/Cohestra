@@ -1,6 +1,7 @@
 using Cohestra.Application.Campaigns;
 using Cohestra.Application.Email;
 using Cohestra.Application.Registrations;
+using Cohestra.Domain.Activities;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Email;
@@ -73,17 +74,26 @@ public sealed class RegistrationNotificationService(
 
         var branding = brandingOptions.Value;
         var brandName = string.IsNullOrWhiteSpace(fromName) ? branding.FooterLegalName : fromName!;
-        var logoUrl = ResolveLogoUrl(branding, publicWebOptions.Value);
+        var logoUrl = ResolveLogoUrlForEmail(branding, publicWebOptions.Value);
         var websiteUrl = (branding.WebsiteUrl ?? string.Empty).Trim();
         var footerLegalName = (branding.FooterLegalName ?? brandName).Trim();
 
+        var community = await LoadCommunityAsync(
+            registration.TenantId,
+            registration.Activity.CommunityLabel,
+            cancellationToken);
+        var resolvedHeroImageUrl = RegistrationThemeResolver.Resolve(
+            registration.Activity.RegistrationTheme,
+            community,
+            registration.Activity).HeroImageUrl;
+
         var heroInlineAttachment = await TryLoadHeroInlineAttachmentAsync(
-            registration.Activity.HeroImageUrl,
+            resolvedHeroImageUrl,
             cancellationToken);
         var heroImageUrl = heroInlineAttachment is not null
             ? $"cid:{HeroInlineContentId}"
             : ResolveHeroImageUrlForEmail(
-                registration.Activity.HeroImageUrl,
+                resolvedHeroImageUrl,
                 tenant?.Slug);
 
         var emailContent = RegistrationConfirmationEmailBuilder.Build(
@@ -130,6 +140,24 @@ public sealed class RegistrationNotificationService(
             recipientEmail);
 
         return new RegistrationConfirmationSendResult(true, recipientEmail);
+    }
+
+    private async Task<Community?> LoadCommunityAsync(
+        Guid tenantId,
+        string communityLabel,
+        CancellationToken cancellationToken)
+    {
+        var normalized = communityLabel?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return null;
+        }
+
+        return await dbContext.Communities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                item => item.TenantId == tenantId && item.Name == normalized,
+                cancellationToken);
     }
 
     private async Task<EmailInlineAttachment?> TryLoadHeroInlineAttachmentAsync(
@@ -189,5 +217,24 @@ public sealed class RegistrationNotificationService(
         }
 
         return $"{baseUrl}{EmailBrandingSettings.DefaultLogoPath}";
+    }
+
+    internal static string? ResolveLogoUrlForEmail(
+        EmailBrandingSettings branding,
+        PublicWebOptions publicWeb)
+    {
+        var logoUrl = ResolveLogoUrl(branding, publicWeb);
+        if (string.IsNullOrWhiteSpace(logoUrl))
+        {
+            return null;
+        }
+
+        // SVG logos render as broken images in most email clients; fall back to text.
+        if (logoUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return logoUrl;
     }
 }

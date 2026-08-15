@@ -70,6 +70,108 @@ public sealed class RegistrationNotificationServiceTests
     }
 
     [Fact]
+    public async Task SendConfirmationIfApplicableAsync_UsesResolvedRegistrationThemeHero()
+    {
+        const string themeAssetId = "22222222-2222-2222-2222-222222222222";
+        await using var dbContext = CreateDbContext();
+        var tenantId = TenantIds.Default;
+        var activityId = Guid.NewGuid();
+        var clientId = Guid.NewGuid();
+        var registrationId = Guid.NewGuid();
+
+        dbContext.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Slug = "creativorare",
+            Name = "Creativorare",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Communities.Add(new Community
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Name = "Ikigai",
+            DefaultHeroImageUrl = "/api/v1/public/campaign-assets/99999999-9999-9999-9999-999999999999",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Activities.Add(new Activity
+        {
+            Id = activityId,
+            TenantId = tenantId,
+            Name = "Sunday Pickleball Clinic",
+            Slug = "pickleball",
+            Category = "Sports",
+            Schedule = "Sun 9:00 AM",
+            Location = "Ikigai Studio",
+            CommunityLabel = "Ikigai",
+            HeroImageUrl = null,
+            RegistrationTheme = new RegistrationTheme
+            {
+                InheritCommunityBrand = true,
+                HeroImageUrl = $"/api/v1/public/campaign-assets/{themeAssetId}",
+            },
+            Status = ActivityStatus.Published,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Clients.Add(new Client
+        {
+            Id = clientId,
+            TenantId = tenantId,
+            FullName = "Elena Santos",
+            Email = "elena@example.com",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Registrations.Add(new Registration
+        {
+            Id = registrationId,
+            TenantId = tenantId,
+            RegistrationNumber = "REG20260616000042",
+            ActivityId = activityId,
+            ClientId = clientId,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        await dbContext.SaveChangesAsync();
+
+        var sender = new CapturingEmailSender();
+        var assets = new StubCampaignAssetService(
+            Guid.Parse(themeAssetId),
+            [0x89, 0x50, 0x4E, 0x47],
+            "image/png",
+            "theme-hero.png");
+
+        var service = CreateService(
+            dbContext,
+            sender,
+            assets,
+            publicWebBaseUrl: "http://localhost:8088");
+        var result = await service.SendConfirmationIfApplicableAsync(registrationId);
+
+        Assert.True(result.Sent);
+        Assert.Single(sender.Messages);
+        Assert.Contains("cid:registration-hero", sender.Messages[0].HtmlBody);
+        Assert.DoesNotContain("99999999-9999-9999-9999-999999999999", sender.Messages[0].HtmlBody);
+    }
+
+    [Fact]
+    public void ResolveLogoUrlForEmail_SkipsSvgLogo()
+    {
+        var url = RegistrationNotificationService.ResolveLogoUrlForEmail(
+            new EmailBrandingSettings(),
+            new PublicWebOptions { BaseUrl = "https://cohestra.app" });
+
+        Assert.Null(url);
+    }
+
+    [Fact]
     public async Task SendConfirmationIfApplicableAsync_SkipsWhenClientHasNoEmail()
     {
         await using var dbContext = CreateDbContext();
