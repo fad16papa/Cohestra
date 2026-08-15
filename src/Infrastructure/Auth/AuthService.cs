@@ -654,25 +654,26 @@ public sealed class AuthService(
             }
             else
             {
-                var memberships = ApexLoginMembershipFilter.ForEmailFirstLogin(
-                    await tenantMembershipService.GetActiveMembershipsForUserAsync(
-                        user.Id,
-                        cancellationToken));
+                var allMemberships = await tenantMembershipService.GetActiveMembershipsForUserAsync(
+                    user.Id,
+                    cancellationToken);
+                var primaryMembership = ApexLoginMembershipFilter.ResolvePrimaryForEmailFirstLogin(
+                    allMemberships);
 
-                if (memberships.Count == 0)
+                if (primaryMembership is null)
                 {
-                    return SessionBinding.Fail(
-                        "tenant_unresolved",
-                        hostResolution.ErrorDetail ?? "Could not resolve tenant from Host.");
-                }
+                    if (allMemberships.Count == 0)
+                    {
+                        return SessionBinding.Fail(
+                            "tenant_unresolved",
+                            hostResolution.ErrorDetail ?? "Could not resolve tenant from Host.");
+                    }
 
-                if (memberships.Count > 1)
-                {
                     return SessionBinding.Fail("multiple_workspaces", MultipleWorkspacesMessage);
                 }
 
-                tenantId = memberships[0].TenantId;
-                resolvedTenantSlug = memberships[0].TenantSlug;
+                tenantId = primaryMembership.TenantId;
+                resolvedTenantSlug = primaryMembership.TenantSlug;
                 requiresTenantHandoff = hostResolution.IsMarketingHost || !hostResolution.Succeeded;
             }
         }
@@ -712,43 +713,42 @@ public sealed class AuthService(
         bool isTenantAdmin,
         CancellationToken cancellationToken)
     {
-        var memberships = ApexLoginMembershipFilter.ForEmailFirstLogin(
-            await tenantMembershipService.GetActiveMembershipsForUserAsync(
-                user.Id,
-                cancellationToken));
+        var allMemberships = await tenantMembershipService.GetActiveMembershipsForUserAsync(
+            user.Id,
+            cancellationToken);
+        var primaryMembership = ApexLoginMembershipFilter.ResolvePrimaryForEmailFirstLogin(allMemberships);
 
-        if (memberships.Count == 0)
+        if (primaryMembership is null)
         {
-            if (isPlatformAdmin)
+            if (allMemberships.Count == 0)
             {
-                return SessionBinding.PlatformOnly();
+                if (isPlatformAdmin)
+                {
+                    return SessionBinding.PlatformOnly();
+                }
+
+                if (isTenantAdmin)
+                {
+                    return SessionBinding.Fail("no_tenant_membership", OrphanMembershipMessage);
+                }
+
+                return SessionBinding.Fail(
+                    "tenant_unresolved",
+                    "Could not resolve tenant from Host.");
             }
 
-            if (isTenantAdmin)
-            {
-                return SessionBinding.Fail("no_tenant_membership", OrphanMembershipMessage);
-            }
-
-            return SessionBinding.Fail(
-                "tenant_unresolved",
-                "Could not resolve tenant from Host.");
-        }
-
-        if (memberships.Count > 1)
-        {
             return SessionBinding.Fail("multiple_workspaces", MultipleWorkspacesMessage);
         }
 
-        var soleMembership = memberships[0];
         var hostResolution = await tenantHostResolver.ResolveAsync(host, cancellationToken);
         var requiresTenantHandoff = !hostResolution.Succeeded
             || hostResolution.TenantId is null
-            || hostResolution.TenantId.Value != soleMembership.TenantId;
+            || hostResolution.TenantId.Value != primaryMembership.TenantId;
 
         return SessionBinding.ForTenant(
-            soleMembership.TenantId,
-            soleMembership.Role,
-            soleMembership.TenantSlug,
+            primaryMembership.TenantId,
+            primaryMembership.Role,
+            primaryMembership.TenantSlug,
             requiresTenantHandoff);
     }
 

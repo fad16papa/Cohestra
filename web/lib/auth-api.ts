@@ -254,9 +254,14 @@ export async function loginWithPassword(
   password: string
 ): Promise<LoginResult> {
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (typeof window !== "undefined" && window.location.host) {
+      headers["X-Forwarded-Host"] = window.location.host;
+    }
+
     const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ email, password }),
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });

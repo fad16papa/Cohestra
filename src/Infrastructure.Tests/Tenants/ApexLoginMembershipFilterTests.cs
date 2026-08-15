@@ -67,4 +67,34 @@ public sealed class ApexLoginMembershipFilterTests
         Assert.Single(result);
         Assert.Equal(TenantIds.DefaultSlug, result[0].TenantSlug);
     }
+
+    [Fact]
+    public void ResolvePrimary_prefers_real_workspace_over_load_test_and_default()
+    {
+        var input = new[]
+        {
+            new UserTenantMembership(DefaultId, TenantIds.DefaultSlug, TenantMembershipRole.TenantAdmin),
+            new UserTenantMembership(CreativorareId, "creativorare", TenantMembershipRole.TenantAdmin),
+            new UserTenantMembership(AcmeId, "load-core-alpha", TenantMembershipRole.TenantAdmin),
+        };
+
+        var result = ApexLoginMembershipFilter.ResolvePrimaryForEmailFirstLogin(input);
+
+        Assert.NotNull(result);
+        Assert.Equal("creativorare", result!.TenantSlug);
+    }
+
+    [Fact]
+    public void ResolvePrimary_returns_null_for_multiple_real_workspaces()
+    {
+        var input = new[]
+        {
+            new UserTenantMembership(CreativorareId, "creativorare", TenantMembershipRole.TenantAdmin),
+            new UserTenantMembership(AcmeId, "acme", TenantMembershipRole.TenantAdmin),
+        };
+
+        var result = ApexLoginMembershipFilter.ResolvePrimaryForEmailFirstLogin(input);
+
+        Assert.Null(result);
+    }
 }

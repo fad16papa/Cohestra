@@ -347,6 +347,32 @@ public sealed class AuthServiceMembershipGuardTests
     }
 
     [Fact]
+    public async Task Login_on_bare_localhost_prefers_real_workspace_over_load_test_membership()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var creativorareId = await harness.SeedTenantAsync("creativorare", "Creativorare");
+        var loadTestId = await harness.SeedTenantAsync("load-core-alpha", "Load Core Alpha");
+        var admin = await harness.CreateUserAsync(
+            "operator@example.com",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, creativorareId, TenantMembershipRole.TenantAdmin);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, loadTestId, TenantMembershipRole.TenantAdmin);
+
+        var result = await harness.Auth.LoginAsync("operator@example.com", "ChangeMe123!", "localhost");
+
+        Assert.Null(result.Tokens);
+        Assert.Null(result.ErrorCode);
+        Assert.Equal("creativorare", result.TenantSlug);
+        Assert.False(string.IsNullOrWhiteSpace(result.HandoffCode));
+    }
+
+    [Fact]
     public async Task Login_on_marketing_apex_allows_user_with_other_tenant_membership_only()
     {
         await using var harness = await AuthHarness.CreateAsync();

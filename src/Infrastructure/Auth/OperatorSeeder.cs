@@ -39,6 +39,7 @@ public static class OperatorSeeder
         }
 
         await BackfillDefaultTenantAdminMembershipsAsync(userManager, db, logger, cancellationToken);
+        await CleanupStaleDefaultTenantAdminMembershipsAsync(userManager, db, logger, cancellationToken);
     }
 
     private static async Task SeedOperatorUserAsync(
@@ -192,6 +193,68 @@ public static class OperatorSeeder
             logger.LogInformation(
                 "Backfilled {Count} TenantAdmin membership(s) on default tenant.",
                 linked);
+        }
+    }
+
+    /// <summary>
+    /// Removes default-tenant TenantAdmin memberships when the operator already administers
+    /// a real workspace — the backfill artifact blocks apex localhost login.
+    /// </summary>
+    public static async Task CleanupStaleDefaultTenantAdminMembershipsAsync(
+        UserManager<ApplicationUser> userManager,
+        CohestraDbContext db,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+    {
+        var admins = await userManager.GetUsersInRoleAsync(TenantAdminRole);
+        var removed = 0;
+
+        foreach (var admin in admins)
+        {
+            if (await userManager.IsInRoleAsync(admin, PlatformAdminSeeder.PlatformAdminRole))
+            {
+                continue;
+            }
+
+            var memberships = await db.TenantMemberships
+                .Where(m => m.UserId == admin.Id)
+                .Join(
+                    db.Tenants,
+                    membership => membership.TenantId,
+                    tenant => tenant.Id,
+                    (membership, tenant) => new { membership, tenant.Slug, tenant.Status })
+                .Where(row => row.Status == TenantStatus.Active)
+                .ToListAsync(cancellationToken);
+
+            var hasRealWorkspace = memberships.Any(row =>
+                row.membership.Role == TenantMembershipRole.TenantAdmin
+                && row.membership.TenantId != TenantIds.Default
+                && !row.Slug.StartsWith("load-", StringComparison.OrdinalIgnoreCase));
+
+            if (!hasRealWorkspace)
+            {
+                continue;
+            }
+
+            var defaultMembership = memberships.FirstOrDefault(row =>
+                row.membership.TenantId == TenantIds.Default
+                && row.membership.Role == TenantMembershipRole.TenantAdmin);
+
+            if (defaultMembership is null)
+            {
+                continue;
+            }
+
+            db.TenantMemberships.Remove(defaultMembership.membership);
+            removed++;
+        }
+
+        if (removed > 0)
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            logger.LogInformation(
+                "Removed {Count} stale default TenantAdmin membership(s) for real-workspace operators.",
+                removed);
         }
     }
 
