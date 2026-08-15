@@ -6,7 +6,15 @@
 
 ## Verdict
 
-**Approve with patches recommended.** Pointer-based reorder solves the mobile gap; two medium/high reliability issues should be patched before the next release if operators report flaky drags.
+**Approve — review patches applied.**
+
+## Patch status
+
+| Finding | Status |
+|---------|--------|
+| Fast pointerup before listeners attach | ✅ Fixed — synchronous `attachPointerListeners` in `startPointerDrag`; grip `onPointerUp` / `onLostPointerCapture` |
+| `dropTargetRef` stale on pointerup | ✅ Fixed — ref updated synchronously in `onPointerMove` |
+| `moveSection` stale indices | ✅ Fixed — indices recomputed inside `onDraftChange` updater |
 
 ## Layer summary
 
