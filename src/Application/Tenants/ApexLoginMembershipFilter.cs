@@ -41,7 +41,7 @@ public static class ApexLoginMembershipFilter
     public static UserTenantMembership? ResolvePrimaryForEmailFirstLogin(
         IReadOnlyList<UserTenantMembership> memberships)
     {
-        var candidates = ForEmailFirstLogin(memberships);
+        var candidates = PreferRealWorkspaces(ForEmailFirstLogin(memberships));
         if (candidates.Count == 0)
         {
             return null;
@@ -57,7 +57,7 @@ public static class ApexLoginMembershipFilter
             .ToList();
         if (tenantAdmins.Count > 0)
         {
-            candidates = tenantAdmins;
+            candidates = PreferRealWorkspaces(tenantAdmins);
         }
 
         if (candidates.Count == 1)
@@ -65,15 +65,7 @@ public static class ApexLoginMembershipFilter
             return candidates[0];
         }
 
-        var realWorkspaces = candidates
-            .Where(m => !IsLoadTestSlug(m.TenantSlug))
-            .ToList();
-        if (realWorkspaces.Count == 1)
-        {
-            return realWorkspaces[0];
-        }
-
-        if (realWorkspaces.Count > 1)
+        if (candidates.Any(m => !IsLoadTestSlug(m.TenantSlug)))
         {
             return null;
         }
@@ -82,6 +74,16 @@ public static class ApexLoginMembershipFilter
         return candidates
             .OrderBy(m => m.TenantSlug, StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault();
+    }
+
+    private static List<UserTenantMembership> PreferRealWorkspaces(
+        IReadOnlyList<UserTenantMembership> memberships)
+    {
+        var realWorkspaces = memberships
+            .Where(m => !IsLoadTestSlug(m.TenantSlug))
+            .ToList();
+
+        return realWorkspaces.Count > 0 ? realWorkspaces : memberships.ToList();
     }
 
     private static bool IsLoadTestSlug(string slug) =>
