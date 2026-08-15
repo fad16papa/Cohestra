@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ResponsiveBannerImage } from "@/components/ui/responsive-banner-image";
 import {
   ChevronDown,
+  ChevronUp,
   GripVertical,
   HelpCircle,
   ImageIcon,
@@ -552,6 +553,96 @@ export function WebsiteSectionList({
     sectionId: string;
     position: "before" | "after";
   } | null>(null);
+  const draggedSectionIdRef = useRef<string | null>(null);
+  const dropTargetRef = useRef<typeof dropTarget>(null);
+  const pointerDragRef = useRef(false);
+
+  useEffect(() => {
+    draggedSectionIdRef.current = draggedSectionId;
+  }, [draggedSectionId]);
+
+  useEffect(() => {
+    dropTargetRef.current = dropTarget;
+  }, [dropTarget]);
+
+  useEffect(() => {
+    if (!draggedSectionId || !pointerDragRef.current) {
+      return;
+    }
+
+    function resolveDropTarget(clientX: number, clientY: number) {
+      const draggedId = draggedSectionIdRef.current;
+      if (!draggedId) {
+        return null;
+      }
+
+      const element = document.elementFromPoint(clientX, clientY);
+      const row = element?.closest("[data-website-section-id]");
+      if (!row) {
+        return null;
+      }
+
+      const sectionId = row.getAttribute("data-website-section-id");
+      if (!sectionId || sectionId === draggedId) {
+        return null;
+      }
+
+      const rect = row.getBoundingClientRect();
+      const position: "before" | "after" =
+        clientY < rect.top + rect.height / 2 ? "before" : "after";
+      return { sectionId, position };
+    }
+
+    function onPointerMove(event: PointerEvent) {
+      event.preventDefault();
+      setDropTarget(resolveDropTarget(event.clientX, event.clientY));
+    }
+
+    function finishPointerDrag() {
+      const draggedId = draggedSectionIdRef.current;
+      const target = dropTargetRef.current;
+      pointerDragRef.current = false;
+
+      if (!draggedId || !target) {
+        setDraggedSectionId(null);
+        setDropTarget(null);
+        return;
+      }
+
+      onDraftChange((current) => {
+        const sorted = [...current.sections].sort((left, right) => left.order - right.order);
+        const fromIndex = sorted.findIndex((section) => section.id === draggedId);
+        const overIndex = sorted.findIndex((section) => section.id === target.sectionId);
+        if (fromIndex < 0 || overIndex < 0) {
+          return current;
+        }
+
+        let toIndex = target.position === "after" ? overIndex + 1 : overIndex;
+        if (fromIndex < toIndex) {
+          toIndex -= 1;
+        }
+
+        return reorderSections(current, fromIndex, toIndex);
+      });
+
+      setDraggedSectionId(null);
+      setDropTarget(null);
+    }
+
+    function onPointerUp() {
+      finishPointerDrag();
+    }
+
+    document.addEventListener("pointermove", onPointerMove, { passive: false });
+    document.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointercancel", onPointerUp);
+
+    return () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+      document.removeEventListener("pointercancel", onPointerUp);
+    };
+  }, [draggedSectionId, onDraftChange]);
 
   useEffect(() => {
     if (!expandedSectionId || !expandedRef.current) {
@@ -562,8 +653,23 @@ export function WebsiteSectionList({
   }, [expandedSectionId]);
 
   function clearDragState() {
+    pointerDragRef.current = false;
     setDraggedSectionId(null);
     setDropTarget(null);
+  }
+
+  function moveSection(sectionId: string, direction: -1 | 1) {
+    if (disabled) {
+      return;
+    }
+
+    const currentIndex = sections.findIndex((section) => section.id === sectionId);
+    const toIndex = currentIndex + direction;
+    if (currentIndex < 0 || toIndex < 0 || toIndex >= sections.length) {
+      return;
+    }
+
+    onDraftChange((current) => reorderSections(current, currentIndex, toIndex));
   }
 
   function handleDrop(sectionId: string) {
@@ -598,6 +704,7 @@ export function WebsiteSectionList({
         const isHighlighted = highlightedSectionId === section.id;
         const summary = getSectionSummary(section);
         const isDragging = draggedSectionId === section.id;
+        const sectionIndex = sections.findIndex((entry) => entry.id === section.id);
         const showDropBefore =
           dropTarget?.sectionId === section.id && dropTarget.position === "before";
         const showDropAfter =
@@ -666,6 +773,16 @@ export function WebsiteSectionList({
                     ? "cursor-not-allowed opacity-50"
                     : "cursor-grab hover:bg-muted/60 hover:text-text-warm active:cursor-grabbing"
                 )}
+                onPointerDown={(event) => {
+                  if (disabled || event.button !== 0) {
+                    return;
+                  }
+
+                  pointerDragRef.current = true;
+                  setDraggedSectionId(section.id);
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  event.preventDefault();
+                }}
                 onKeyDown={(event) => {
                   if (disabled) {
                     return;
@@ -691,7 +808,7 @@ export function WebsiteSectionList({
                   }
                 }}
                 onDragStart={(event) => {
-                  if (disabled) {
+                  if (disabled || pointerDragRef.current) {
                     event.preventDefault();
                     return;
                   }
@@ -723,6 +840,28 @@ export function WebsiteSectionList({
               </button>
               </div>
               <div className="flex shrink-0 items-center justify-between gap-2 sm:justify-end">
+              <div className="flex items-center gap-0.5 lg:hidden">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled={disabled || sectionIndex <= 0}
+                  aria-label={`Move ${label} up`}
+                  onClick={() => moveSection(section.id, -1)}
+                >
+                  <ChevronUp className="size-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  disabled={disabled || sectionIndex >= sections.length - 1}
+                  aria-label={`Move ${label} down`}
+                  onClick={() => moveSection(section.id, 1)}
+                >
+                  <ChevronDown className="size-4" />
+                </Button>
+              </div>
               <label className="flex items-center gap-1.5 text-xs text-text-muted-warm">
                 <input
                   type="checkbox"
