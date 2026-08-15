@@ -652,7 +652,8 @@ export function WebsiteSectionList({
                 className="absolute inset-x-0 bottom-0 z-10 h-0.5 bg-primary"
               />
             ) : null}
-            <div className="flex items-center gap-2 py-2.5 pl-1 pr-3">
+            <div className="flex flex-col gap-2 py-2.5 pl-1 pr-3 sm:flex-row sm:items-center sm:gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
               <div
                 role="button"
                 tabIndex={disabled ? -1 : 0}
@@ -720,7 +721,9 @@ export function WebsiteSectionList({
                   {summary}
                 </span>
               </button>
-              <label className="flex shrink-0 items-center gap-1.5 text-xs text-text-muted-warm">
+              </div>
+              <div className="flex shrink-0 items-center justify-between gap-2 sm:justify-end">
+              <label className="flex items-center gap-1.5 text-xs text-text-muted-warm">
                 <input
                   type="checkbox"
                   checked={section.enabled}
@@ -769,6 +772,7 @@ export function WebsiteSectionList({
                     )}
                   />
                 </Button>
+              </div>
               </div>
             </div>
             {isExpanded ? (

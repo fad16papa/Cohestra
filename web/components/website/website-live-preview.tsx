@@ -9,6 +9,7 @@ import {
   PREVIEW_PHONE_WIDTH,
   SitePreviewLayoutProvider,
 } from "@/lib/site-preview-layout";
+import { cn } from "@/lib/utils";
 
 export type WebsitePreviewDeviceMode = "phone" | "desktop";
 
@@ -17,6 +18,8 @@ type WebsiteLivePreviewProps = {
   onDeviceModeChange: (mode: WebsitePreviewDeviceMode) => void;
   siteHostname: string;
   children: ReactNode;
+  /** Mobile preview tab — use more of the viewport height. */
+  fillViewport?: boolean;
 };
 
 export function WebsiteLivePreview({
@@ -24,12 +27,16 @@ export function WebsiteLivePreview({
   onDeviceModeChange,
   siteHostname,
   children,
+  fillViewport = false,
 }: WebsiteLivePreviewProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [desktopScale, setDesktopScale] = useState(1);
+  const [phoneScale, setPhoneScale] = useState(1);
   const [scaledCanvasHeight, setScaledCanvasHeight] = useState<number | null>(null);
+  const [scaledPhoneHeight, setScaledPhoneHeight] = useState<number | null>(null);
+  const phoneFrameRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const updateDesktopScale = useCallback(() => {
@@ -42,8 +49,20 @@ export function WebsiteLivePreview({
     setDesktopScale(nextScale);
   }, [deviceMode]);
 
+  const updatePhoneScale = useCallback(() => {
+    const viewport = viewportRef.current;
+    if (!viewport || deviceMode !== "phone") {
+      return;
+    }
+
+    const frameWidth = PREVIEW_PHONE_WIDTH + 20;
+    const nextScale = Math.min(1, Math.max(0.55, (viewport.clientWidth - 16) / frameWidth));
+    setPhoneScale(nextScale);
+  }, [deviceMode]);
+
   useEffect(() => {
     updateDesktopScale();
+    updatePhoneScale();
 
     const viewport = viewportRef.current;
     if (!viewport) {
@@ -52,11 +71,12 @@ export function WebsiteLivePreview({
 
     const observer = new ResizeObserver(() => {
       updateDesktopScale();
+      updatePhoneScale();
     });
     observer.observe(viewport);
 
     return () => observer.disconnect();
-  }, [updateDesktopScale, isFullscreen]);
+  }, [updateDesktopScale, updatePhoneScale, isFullscreen, deviceMode]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -76,6 +96,25 @@ export function WebsiteLivePreview({
 
     return () => observer.disconnect();
   }, [deviceMode, desktopScale]);
+
+  useEffect(() => {
+    const frame = phoneFrameRef.current;
+    if (!frame || deviceMode !== "phone") {
+      setScaledPhoneHeight(null);
+      return;
+    }
+
+    const syncHeight = () => {
+      setScaledPhoneHeight(frame.offsetHeight * phoneScale);
+    };
+
+    syncHeight();
+
+    const observer = new ResizeObserver(syncHeight);
+    observer.observe(frame);
+
+    return () => observer.disconnect();
+  }, [deviceMode, phoneScale]);
 
   useEffect(() => {
     const onFullscreenChange = () => {
@@ -130,7 +169,7 @@ export function WebsiteLivePreview({
     <section
       id="website-builder-live-preview"
       ref={shellRef}
-      className="flex min-h-0 flex-col gap-2 xl:sticky xl:top-4 xl:self-start"
+      className="flex min-h-0 min-w-0 flex-col gap-2 lg:sticky lg:top-4 lg:self-start"
     >
       <div className="flex items-center justify-between gap-2 px-0.5">
         <p className="text-sm font-medium text-text-warm">Live preview</p>
@@ -151,7 +190,12 @@ export function WebsiteLivePreview({
       </div>
 
       <div
-        className="flex min-h-[min(78dvh,860px)] flex-1 flex-col overflow-hidden rounded-xl border border-border-warm bg-muted/30 shadow-sm ring-1 ring-border-warm/60"
+        className={cn(
+          "flex flex-1 flex-col overflow-hidden rounded-xl border border-border-warm bg-muted/30 shadow-sm ring-1 ring-border-warm/60",
+          fillViewport
+            ? "min-h-[min(72dvh,720px)]"
+            : "min-h-[min(48dvh,520px)] sm:min-h-[min(58dvh,680px)] lg:min-h-[min(68dvh,780px)] xl:min-h-[min(78dvh,860px)]"
+        )}
         data-site-preview-pane
       >
         {deviceMode === "phone" ? (
@@ -166,27 +210,39 @@ export function WebsiteLivePreview({
               </span>
               {deviceToggle}
             </div>
-            <div className="flex flex-1 items-start justify-center overflow-auto p-4 sm:p-6">
+            <div className="flex flex-1 items-start justify-center overflow-auto p-2 sm:p-4 lg:p-6">
               <div
-                className="flex flex-col overflow-hidden rounded-[2rem] border-[10px] border-zinc-800 bg-zinc-800 shadow-2xl"
-                style={{ width: PREVIEW_PHONE_WIDTH + 20 }}
+                className="mx-auto"
+                style={{
+                  width: (PREVIEW_PHONE_WIDTH + 20) * phoneScale,
+                  height: scaledPhoneHeight ?? undefined,
+                }}
               >
-                <div className="flex items-center justify-center gap-2 bg-zinc-800 px-4 py-2">
-                  <span className="h-1.5 w-12 rounded-full bg-zinc-600" aria-hidden />
-                </div>
                 <div
-                  className="max-h-[min(68dvh,760px)] overflow-x-hidden overflow-y-auto bg-background"
-                  style={{ width: PREVIEW_PHONE_WIDTH }}
+                  ref={phoneFrameRef}
+                  className="origin-top flex flex-col overflow-hidden rounded-[1.75rem] border-[8px] border-zinc-800 bg-zinc-800 shadow-2xl sm:rounded-[2rem] sm:border-[10px]"
+                  style={{
+                    width: PREVIEW_PHONE_WIDTH + 20,
+                    transform: `scale(${phoneScale})`,
+                  }}
                 >
-                  <SitePreviewLayoutProvider mode="phone">
-                    <section
-                      className="pointer-events-none select-none"
-                      inert
-                      aria-label="Read-only homepage preview"
-                    >
-                      {children}
-                    </section>
-                  </SitePreviewLayoutProvider>
+                  <div className="flex items-center justify-center gap-2 bg-zinc-800 px-4 py-2">
+                    <span className="h-1.5 w-12 rounded-full bg-zinc-600" aria-hidden />
+                  </div>
+                  <div
+                    className="max-h-[min(56dvh,640px)] overflow-x-hidden overflow-y-auto bg-background sm:max-h-[min(68dvh,760px)]"
+                    style={{ width: PREVIEW_PHONE_WIDTH }}
+                  >
+                    <SitePreviewLayoutProvider mode="phone">
+                      <section
+                        className="pointer-events-none select-none"
+                        inert
+                        aria-label="Read-only homepage preview"
+                      >
+                        {children}
+                      </section>
+                    </SitePreviewLayoutProvider>
+                  </div>
                 </div>
               </div>
             </div>
