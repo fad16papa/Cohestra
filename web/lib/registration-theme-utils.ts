@@ -1,4 +1,5 @@
-import type { RegistrationThemePreset } from "@/lib/activities-api";
+import type { Activity, RegistrationThemePreset } from "@/lib/activities-api";
+import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
 
 export const registrationPresetLabels: Record<RegistrationThemePreset, string> = {
   classic: "Classic",
@@ -64,4 +65,18 @@ export function accentMeetsWcagAaOnWhiteText(accentColor: string | null | undefi
 
 export function campaignAssetPath(assetId: string): string {
   return `/api/v1/public/campaign-assets/${assetId}`;
+}
+
+/** Resolved hero for registration surfaces (design override → community → activity). */
+export function resolveRegistrationHeroImageUrl(
+  activity: Pick<Activity, "heroImageUrl"> & {
+    resolvedRegistrationTheme?: Pick<
+      Activity["resolvedRegistrationTheme"],
+      "heroImageUrl"
+    > | null;
+  }
+): string | null {
+  const resolvedHero =
+    activity.resolvedRegistrationTheme?.heroImageUrl ?? activity.heroImageUrl;
+  return resolveHeroImageUrl(resolvedHero);
 }
