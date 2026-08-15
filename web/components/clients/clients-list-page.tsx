@@ -756,8 +756,6 @@ export function ClientsListPage() {
                 description="Publish an activity and share your registration link or QR code — new sign-ups appear here automatically."
                 primaryHref="/activities/new"
                 primaryLabel="Create an activity"
-                secondaryHref="/clients?leadStatus=new"
-                secondaryLabel="View new leads filter"
                 className="border-solid"
               />
             </div>
@@ -898,11 +896,10 @@ export function ClientsListPage() {
       </div>
       )}
 
+      {totalCount > 0 ? (
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-text-muted-warm">
-          {totalCount === 0
-            ? "0 clients"
-            : `Showing ${(page - 1) * CLIENT_PAGE_SIZE + 1}-${Math.min(page * CLIENT_PAGE_SIZE, totalCount)} of ${totalCount}`}
+          {`Showing ${(page - 1) * CLIENT_PAGE_SIZE + 1}-${Math.min(page * CLIENT_PAGE_SIZE, totalCount)} of ${totalCount}`}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -928,6 +925,7 @@ export function ClientsListPage() {
           </Button>
         </div>
       </div>
+      ) : null}
 
       <MessengerOpenConfirmDialog
         channel={messengerTarget?.channel ?? null}
