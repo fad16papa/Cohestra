@@ -657,6 +657,9 @@ export function ClientsListPage() {
     />
   );
 
+  const showClientsEmptyPanel =
+    !error && initialized && clients.length === 0 && totalCount === 0;
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
@@ -739,6 +742,26 @@ export function ClientsListPage() {
         onClearActivity={clearActivityFilter}
       />
 
+      {showClientsEmptyPanel ? (
+        <div className="overflow-hidden rounded-xl border border-border-warm bg-card shadow-sm">
+          {hasActiveFilters ? (
+            <p className="px-4 py-10 text-center text-sm text-text-muted-warm">
+              No clients match your search or filters.
+            </p>
+          ) : (
+            <div className="p-4">
+              <ProductEmptyState
+                icon={Users}
+                title="No clients yet"
+                description="Publish an activity and share your registration link or QR code — new sign-ups appear here automatically."
+                primaryHref="/activities/new"
+                primaryLabel="Create an activity"
+                className="border-solid"
+              />
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="overflow-hidden rounded-xl border border-border-warm bg-card shadow-sm">
         <div className={clientsTableScrollClassName}>
           <div className={clientsTableMinWidthClassName}>
@@ -841,27 +864,6 @@ export function ClientsListPage() {
           </p>
         ) : null}
 
-        {!error && initialized && clients.length === 0 && totalCount === 0 ? (
-          hasActiveFilters ? (
-            <p className="px-4 py-10 text-center text-sm text-text-muted-warm">
-              No clients match your search or filters.
-            </p>
-          ) : (
-            <div className="p-4">
-              <ProductEmptyState
-                icon={Users}
-                title="No clients yet"
-                description="Publish an activity and share your registration link or QR code — new sign-ups appear here automatically."
-                primaryHref="/activities/new"
-                primaryLabel="Create an activity"
-                secondaryHref="/clients?leadStatus=new"
-                secondaryLabel="View new leads filter"
-                className="border-solid"
-              />
-            </div>
-          )
-        ) : null}
-
         {!error && initialized && clients.length === 0 && totalCount > 0 ? (
           <p className="px-4 py-10 text-center text-sm text-text-muted-warm">
             No clients on this page.
@@ -892,12 +894,12 @@ export function ClientsListPage() {
           </div>
         </div>
       </div>
+      )}
 
+      {totalCount > 0 ? (
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-text-muted-warm">
-          {totalCount === 0
-            ? "0 clients"
-            : `Showing ${(page - 1) * CLIENT_PAGE_SIZE + 1}-${Math.min(page * CLIENT_PAGE_SIZE, totalCount)} of ${totalCount}`}
+          {`Showing ${(page - 1) * CLIENT_PAGE_SIZE + 1}-${Math.min(page * CLIENT_PAGE_SIZE, totalCount)} of ${totalCount}`}
         </p>
         <div className="flex items-center gap-2">
           <Button
@@ -923,6 +925,7 @@ export function ClientsListPage() {
           </Button>
         </div>
       </div>
+      ) : null}
 
       <MessengerOpenConfirmDialog
         channel={messengerTarget?.channel ?? null}
