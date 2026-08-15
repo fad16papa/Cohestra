@@ -180,8 +180,8 @@ export function ActivityDesignTab({
         </Button>
       </div>
 
-      <div className="space-y-3">
-        <Label>Layout preset</Label>
+      <div className="space-y-4">
+        <Label className="block">Layout preset</Label>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {registrationPresetOptions.map((preset) => (
             <button
@@ -213,8 +213,8 @@ export function ActivityDesignTab({
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-4 rounded-xl border border-border-warm bg-card p-4">
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <div className="space-y-4 self-start rounded-xl border border-border-warm bg-card p-4">
           <div className="flex items-center justify-between gap-3">
             <Label htmlFor="inherit-community-brand">Inherit community brand</Label>
             <input
