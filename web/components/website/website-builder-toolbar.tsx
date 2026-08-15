@@ -125,21 +125,25 @@ export function WebsiteBuilderToolbar({
           {checklistHidden && onShowChecklist ? (
             <Button type="button" variant="ghost" size="sm" onClick={onShowChecklist}>
               <Sparkles className="size-4" aria-hidden />
-              Setup guide
+              <span className="hidden sm:inline sm:ml-1.5">Setup guide</span>
+              <span className="sr-only sm:hidden">Setup guide</span>
             </Button>
           ) : null}
           <Button type="button" variant="outline" size="sm" onClick={onCopyLink}>
             <Copy className="size-4" aria-hidden />
-            Copy link
+            <span className="hidden sm:inline sm:ml-1.5">Copy link</span>
+            <span className="sr-only sm:hidden">Copy link</span>
           </Button>
           <ExternalLinkButton href={siteUrl} variant="outline" size="sm">
             <ExternalLink className="size-4" aria-hidden />
-            Open live
+            <span className="hidden sm:inline sm:ml-1.5">Open live</span>
+            <span className="sr-only sm:hidden">Open live site</span>
           </ExternalLinkButton>
           <Button
             type="button"
             variant="outline"
             size="sm"
+            className="hidden sm:inline-flex"
             disabled={
               isPreviewOpening ||
               isDirty ||

@@ -99,6 +99,7 @@ import {
   autoSaveStatusLabel,
   useWebsiteAutoSave,
 } from "@/hooks/use-website-auto-save";
+import { useSyncMedia } from "@/hooks/use-sync-media";
 import {
   dismissSetupChecklist,
   markWebsiteBuilderVisited,
@@ -107,8 +108,10 @@ import {
 } from "@/lib/website-builder-preferences";
 import { getWebsiteBuilderTourSteps } from "@/lib/website-builder-tour";
 import { isBasicPlan } from "@/lib/shell/tenant-shell-api";
+import { cn } from "@/lib/utils";
 
 type DeviceMode = "phone" | "desktop";
+type MobileWorkspace = "edit" | "preview";
 
 function formatLastSaved(iso: string): string {
   return new Intl.DateTimeFormat(undefined, {
@@ -190,6 +193,8 @@ export function WebsiteBuilderPage() {
     null,
   );
   const [deviceMode, setDeviceMode] = useState<DeviceMode>("desktop");
+  const [mobileWorkspace, setMobileWorkspace] = useState<MobileWorkspace>("edit");
+  const isWideLayout = useSyncMedia("(min-width: 1024px)");
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isPreviewOpening, setIsPreviewOpening] = useState(false);
@@ -226,6 +231,12 @@ export function WebsiteBuilderPage() {
   const brandingSectionRef = useRef<WebsiteBrandingSectionHandle>(null);
   const draftRef = useRef<SiteSectionsDocument | null>(null);
   const saveLockRef = useRef(false);
+
+  useEffect(() => {
+    if (!isWideLayout) {
+      setDeviceMode("phone");
+    }
+  }, [isWideLayout]);
 
   const ACCENT_INVALID_MESSAGE =
     "Enter a valid accent color (#RGB or #RRGGBB) before saving.";
@@ -996,9 +1007,9 @@ export function WebsiteBuilderPage() {
           title="Website Builder"
           description="Customize your public homepage"
         />
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-          <div className="h-96 animate-pulse rounded-xl border border-border-warm bg-muted/30" />
-          <div className="h-96 animate-pulse rounded-xl border border-border-warm bg-muted/30" />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+          <div className="h-72 animate-pulse rounded-xl border border-border-warm bg-muted/30 sm:h-96" />
+          <div className="h-72 animate-pulse rounded-xl border border-border-warm bg-muted/30 sm:h-96" />
         </div>
       </div>
     );
@@ -1070,7 +1081,57 @@ export function WebsiteBuilderPage() {
 
       <WebsitePublishReadinessPanel gate={publishGate} />
 
-      <div className="grid gap-3 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-start">
+      {!isWideLayout ? (
+        <div
+          className="inline-flex w-full rounded-lg border border-border-warm bg-card p-1 lg:hidden"
+          role="tablist"
+          aria-label="Builder workspace"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobileWorkspace === "edit"}
+            className={cn(
+              "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              mobileWorkspace === "edit"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-text-muted-warm hover:bg-muted/60 hover:text-text-warm"
+            )}
+            onClick={() => setMobileWorkspace("edit")}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mobileWorkspace === "preview"}
+            className={cn(
+              "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              mobileWorkspace === "preview"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-text-muted-warm hover:bg-muted/60 hover:text-text-warm"
+            )}
+            onClick={() => setMobileWorkspace("preview")}
+          >
+            Preview
+          </button>
+        </div>
+      ) : null}
+
+      <div
+        className={cn(
+          "grid gap-3",
+          isWideLayout &&
+            "lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start"
+        )}
+      >
+        <div
+          className={cn(
+            "min-w-0",
+            !isWideLayout && mobileWorkspace !== "edit" && "hidden",
+            isWideLayout && "lg:max-h-[calc(100dvh-11rem)] lg:overflow-y-auto lg:overscroll-y-contain lg:pr-1"
+          )}
+        >
         <WebsiteBuilderEditorRail
           activeTab={editorTab}
           onTabChange={setEditorTab}
@@ -1167,14 +1228,23 @@ export function WebsiteBuilderPage() {
             />
           }
         />
+        </div>
 
+        <div
+          className={cn(
+            "min-w-0",
+            !isWideLayout && mobileWorkspace !== "preview" && "hidden"
+          )}
+        >
         <WebsiteLivePreview
           deviceMode={deviceMode}
           onDeviceModeChange={setDeviceMode}
           siteHostname={publicSiteHostname}
+          fillViewport={!isWideLayout && mobileWorkspace === "preview"}
         >
           <SitePageRenderer site={previewPayload} isPreview />
         </WebsiteLivePreview>
+        </div>
       </div>
 
       <WebsiteBuilderOnboardingTour
