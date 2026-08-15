@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { AuthFlowShell } from "@/components/auth/auth-flow-shell";
 import { LoginForm } from "@/components/auth/login-form";
 import { LoginWorkspaceNotice } from "@/components/auth/login-workspace-notice";
-import { SESSION_EXPIRED_MESSAGE, useAuth } from "@/components/auth/auth-provider";
+import { useAuth } from "@/components/auth/auth-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import { fetchOnboardingStatus } from "@/lib/auth-api";
 import { clearAuthSession } from "@/lib/auth-storage";
@@ -33,12 +33,6 @@ function LoginPageContent({
   const invitedEmail = searchParams.get("email")?.trim() ?? "";
   const invitedAccept = searchParams.get("invited") === "1";
   const showSessionExpiredNotice = reason === "session-expired";
-
-  useEffect(() => {
-    if (reason === "session-expired") {
-      showToast(SESSION_EXPIRED_MESSAGE);
-    }
-  }, [reason, showToast]);
 
   useEffect(() => {
     if (reset === "1") {

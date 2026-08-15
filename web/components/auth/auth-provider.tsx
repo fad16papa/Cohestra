@@ -19,7 +19,11 @@ import {
   validateStoredSession,
   type AdminProfile,
 } from "@/lib/auth-api";
-import { clearAuthSession } from "@/lib/auth-storage";
+import {
+  AUTH_SESSION_STORAGE_KEY,
+  clearAuthSession,
+  getAuthSession,
+} from "@/lib/auth-storage";
 
 export const SESSION_EXPIRED_MESSAGE =
   "Session expired — sign in again." as const;
@@ -61,9 +65,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    const refreshTokenAtStart = getAuthSession()?.refreshToken ?? null;
 
     void validateStoredSession().then((nextProfile) => {
       if (cancelled) {
+        return;
+      }
+
+      const refreshTokenNow = getAuthSession()?.refreshToken ?? null;
+      if (
+        !nextProfile
+        && refreshTokenAtStart !== refreshTokenNow
+        && refreshTokenNow !== null
+      ) {
+        // Stale validation failed after a concurrent login replaced the session.
         return;
       }
 
@@ -80,6 +95,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    function onStorage(event: StorageEvent) {
+      if (event.key !== AUTH_SESSION_STORAGE_KEY) {
+        return;
+      }
+
+      if (!event.newValue) {
+        setProfile(null);
+        setStatus("unauthenticated");
+        return;
+      }
+
+      const refreshTokenAtEvent = getAuthSession()?.refreshToken ?? null;
+
+      void validateStoredSession().then((nextProfile) => {
+        const refreshTokenNow = getAuthSession()?.refreshToken ?? null;
+        if (
+          !nextProfile
+          && refreshTokenAtEvent !== refreshTokenNow
+          && refreshTokenNow !== null
+        ) {
+          return;
+        }
+
+        if (nextProfile) {
+          setProfile(nextProfile);
+          setStatus("authenticated");
+          return;
+        }
+
+        setProfile(null);
+        setStatus("unauthenticated");
+      });
+    }
+
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
