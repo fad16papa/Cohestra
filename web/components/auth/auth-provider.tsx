@@ -73,8 +73,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       const refreshTokenNow = getAuthSession()?.refreshToken ?? null;
-      if (refreshTokenAtStart !== refreshTokenNow && refreshTokenNow !== null) {
-        // A concurrent login replaced the session while validation ran.
+      if (
+        !nextProfile
+        && refreshTokenAtStart !== refreshTokenNow
+        && refreshTokenNow !== null
+      ) {
+        // Stale validation failed after a concurrent login replaced the session.
         return;
       }
 
@@ -105,7 +109,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      const refreshTokenAtEvent = getAuthSession()?.refreshToken ?? null;
+
       void validateStoredSession().then((nextProfile) => {
+        const refreshTokenNow = getAuthSession()?.refreshToken ?? null;
+        if (
+          !nextProfile
+          && refreshTokenAtEvent !== refreshTokenNow
+          && refreshTokenNow !== null
+        ) {
+          return;
+        }
+
         if (nextProfile) {
           setProfile(nextProfile);
           setStatus("authenticated");
