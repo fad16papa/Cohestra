@@ -42,11 +42,13 @@ const publishedTemplateLockReason =
 type ActivityFormTabProps = {
   activity: Activity;
   onActivityUpdated: (activity: Activity) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 export function ActivityFormTab({
   activity,
   onActivityUpdated,
+  onDirtyChange,
 }: ActivityFormTabProps) {
   const { authFetch } = useAuth();
   const [draftSchema, setDraftSchema] = useState<ActivityFormSchema>(() =>
@@ -62,6 +64,11 @@ export function ActivityFormTab({
   const isPublished = activity.status === "published";
   const savedSchema = normalizeFormSchema(activity.formSchema);
   const isDirty = JSON.stringify(draftSchema) !== JSON.stringify(savedSchema);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
   const clientIssues = getFormSchemaClientIssues(draftSchema);
   const hasClientIssues = clientIssues.length > 0;
   const draftPublishGateIssues = getPublishGateIssues(draftSchema, {

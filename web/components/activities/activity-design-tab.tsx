@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 type ActivityDesignTabProps = {
   activity: Activity;
   onActivityUpdated: (activity: Activity) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 type PreviewViewport = "mobile" | "desktop";
@@ -44,6 +45,7 @@ function themeFromActivity(activity: Activity): RegistrationTheme {
 export function ActivityDesignTab({
   activity,
   onActivityUpdated,
+  onDirtyChange,
 }: ActivityDesignTabProps) {
   const { authFetch } = useAuth();
   const heroFileInputRef = useRef<HTMLInputElement>(null);
@@ -63,6 +65,10 @@ export function ActivityDesignTab({
   const isArchived = activity.status === "archived";
   const savedTheme = themeFromActivity(activity);
   const isDirty = JSON.stringify(draftTheme) !== JSON.stringify(savedTheme);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const previewResolved = useMemo(() => {
     const inherit = draftTheme.inheritCommunityBrand;

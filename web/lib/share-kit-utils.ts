@@ -1,5 +1,5 @@
 import type { Activity } from "@/lib/activities-api";
-import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
+import { resolveRegistrationHeroImageUrl } from "@/lib/registration-theme-utils";
 import type { SharePreviewData } from "@/lib/site-builder-utils";
 
 export function buildHomepageWhatsAppMessage(
@@ -38,7 +38,9 @@ export function buildActivitySharePreview(
   activity: Pick<
     Activity,
     "name" | "schedule" | "location" | "communityLabel" | "heroImageUrl"
-  >,
+  > & {
+    resolvedRegistrationTheme?: Activity["resolvedRegistrationTheme"];
+  },
   registrationUrl: string
 ): SharePreviewData {
   const descriptionParts = [
@@ -56,7 +58,7 @@ export function buildActivitySharePreview(
     url: registrationUrl,
     title: activity.name,
     description: description.slice(0, 200),
-    imageUrl: resolveHeroImageUrl(activity.heroImageUrl),
+    imageUrl: resolveRegistrationHeroImageUrl(activity),
   };
 }
 

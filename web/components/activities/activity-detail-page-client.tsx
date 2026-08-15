@@ -109,6 +109,8 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
   const searchParams = useSearchParams();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [formDirty, setFormDirty] = useState(false);
+  const [designDirty, setDesignDirty] = useState(false);
   const [activeTab, setActiveTab] = useState<ActivityDetailTab>(() => {
     const tab = searchParams.get("tab");
     return isActivityDetailTab(tab) ? tab : "overview";
@@ -241,6 +243,10 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
           <ActivityPublishControls
             activity={activity}
             onActivityUpdated={handleActivityUpdated}
+            unsavedTabs={{
+              form: formDirty,
+              design: designDirty,
+            }}
           />
           <ActivityQuickFacts activity={activity} />
           <ActivityCapacityPanel
@@ -255,6 +261,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
           key={activity.id}
           activity={activity}
           onActivityUpdated={handleActivityUpdated}
+          onDirtyChange={setDesignDirty}
         />
       </div>
 
@@ -263,6 +270,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
           key={activity.id}
           activity={activity}
           onActivityUpdated={handleActivityUpdated}
+          onDirtyChange={setFormDirty}
         />
       </div>
 

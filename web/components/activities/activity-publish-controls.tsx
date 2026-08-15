@@ -34,11 +34,16 @@ import { getPublishedActivitiesLimitMessage } from "@/lib/plan-limit-utils";
 type ActivityPublishControlsProps = {
   activity: Activity;
   onActivityUpdated: (activity: Activity) => void;
+  unsavedTabs?: {
+    form?: boolean;
+    design?: boolean;
+  };
 };
 
 export function ActivityPublishControls({
   activity,
   onActivityUpdated,
+  unsavedTabs,
 }: ActivityPublishControlsProps) {
   const { authFetch } = useAuth();
   const { shell, refreshShell } = useTenantShell();
@@ -57,8 +62,12 @@ export function ActivityPublishControls({
   const publishGateIssues = getPublishGateIssues(activity.formSchema, {
     slug: activity.slug,
   });
-  const publishBlocked = publishGateIssues.length > 0;
+  const unsavedPublishIssues = [
+    unsavedTabs?.form ? "Save your form on the Form tab before publishing." : null,
+    unsavedTabs?.design ? "Save your design on the Design tab before publishing." : null,
+  ].filter((issue): issue is string => issue !== null);
   const publishedLimitMessage = getPublishedActivitiesLimitMessage(shell);
+  const publishBlocked = publishGateIssues.length > 0 || unsavedPublishIssues.length > 0;
   const publishPlanBlocked = Boolean(publishedLimitMessage);
 
   async function performArchive() {
@@ -227,6 +236,9 @@ export function ActivityPublishControls({
 
         {activity.status === "draft" && publishBlocked ? (
           <ul role="alert" className="list-disc space-y-0.5 pl-5 text-sm text-destructive">
+            {unsavedPublishIssues.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
             {publishGateIssues.map((issue) => (
               <li key={issue}>{issue}</li>
             ))}
