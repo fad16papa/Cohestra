@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ResponsiveBannerImage } from "@/components/ui/responsive-banner-image";
 import {
   ChevronDown,
@@ -556,93 +556,124 @@ export function WebsiteSectionList({
   const draggedSectionIdRef = useRef<string | null>(null);
   const dropTargetRef = useRef<typeof dropTarget>(null);
   const pointerDragRef = useRef(false);
+  const onDraftChangeRef = useRef(onDraftChange);
+  const pointerHandlersRef = useRef<{
+    move: (event: PointerEvent) => void;
+    up: (event: PointerEvent) => void;
+  } | null>(null);
 
-  useEffect(() => {
-    draggedSectionIdRef.current = draggedSectionId;
-  }, [draggedSectionId]);
+  onDraftChangeRef.current = onDraftChange;
 
-  useEffect(() => {
-    dropTargetRef.current = dropTarget;
-  }, [dropTarget]);
+  const resolveDropTarget = useCallback((clientX: number, clientY: number) => {
+    const draggedId = draggedSectionIdRef.current;
+    if (!draggedId) {
+      return null;
+    }
 
-  useEffect(() => {
-    if (!draggedSectionId || !pointerDragRef.current) {
+    const element = document.elementFromPoint(clientX, clientY);
+    const row = element?.closest("[data-website-section-id]");
+    if (!row) {
+      return null;
+    }
+
+    const sectionId = row.getAttribute("data-website-section-id");
+    if (!sectionId || sectionId === draggedId) {
+      return null;
+    }
+
+    const rect = row.getBoundingClientRect();
+    const position: "before" | "after" =
+      clientY < rect.top + rect.height / 2 ? "before" : "after";
+    return { sectionId, position };
+  }, []);
+
+  const detachPointerListeners = useCallback(() => {
+    const handlers = pointerHandlersRef.current;
+    if (!handlers) {
       return;
     }
 
-    function resolveDropTarget(clientX: number, clientY: number) {
-      const draggedId = draggedSectionIdRef.current;
-      if (!draggedId) {
-        return null;
-      }
+    document.removeEventListener("pointermove", handlers.move);
+    document.removeEventListener("pointerup", handlers.up);
+    document.removeEventListener("pointercancel", handlers.up);
+    pointerHandlersRef.current = null;
+  }, []);
 
-      const element = document.elementFromPoint(clientX, clientY);
-      const row = element?.closest("[data-website-section-id]");
-      if (!row) {
-        return null;
-      }
-
-      const sectionId = row.getAttribute("data-website-section-id");
-      if (!sectionId || sectionId === draggedId) {
-        return null;
-      }
-
-      const rect = row.getBoundingClientRect();
-      const position: "before" | "after" =
-        clientY < rect.top + rect.height / 2 ? "before" : "after";
-      return { sectionId, position };
+  const finishPointerDrag = useCallback(() => {
+    if (!pointerDragRef.current) {
+      return;
     }
 
-    function onPointerMove(event: PointerEvent) {
-      event.preventDefault();
-      setDropTarget(resolveDropTarget(event.clientX, event.clientY));
-    }
+    const draggedId = draggedSectionIdRef.current;
+    const target = dropTargetRef.current;
+    pointerDragRef.current = false;
+    detachPointerListeners();
 
-    function finishPointerDrag() {
-      const draggedId = draggedSectionIdRef.current;
-      const target = dropTargetRef.current;
-      pointerDragRef.current = false;
-
-      if (!draggedId || !target) {
-        setDraggedSectionId(null);
-        setDropTarget(null);
-        return;
-      }
-
-      onDraftChange((current) => {
-        const sorted = [...current.sections].sort((left, right) => left.order - right.order);
-        const fromIndex = sorted.findIndex((section) => section.id === draggedId);
-        const overIndex = sorted.findIndex((section) => section.id === target.sectionId);
-        if (fromIndex < 0 || overIndex < 0) {
-          return current;
-        }
-
-        let toIndex = target.position === "after" ? overIndex + 1 : overIndex;
-        if (fromIndex < toIndex) {
-          toIndex -= 1;
-        }
-
-        return reorderSections(current, fromIndex, toIndex);
-      });
-
+    if (!draggedId || !target) {
+      draggedSectionIdRef.current = null;
+      dropTargetRef.current = null;
       setDraggedSectionId(null);
       setDropTarget(null);
+      return;
     }
 
-    function onPointerUp() {
+    onDraftChangeRef.current((current) => {
+      const sorted = [...current.sections].sort((left, right) => left.order - right.order);
+      const fromIndex = sorted.findIndex((section) => section.id === draggedId);
+      const overIndex = sorted.findIndex((section) => section.id === target.sectionId);
+      if (fromIndex < 0 || overIndex < 0) {
+        return current;
+      }
+
+      let toIndex = target.position === "after" ? overIndex + 1 : overIndex;
+      if (fromIndex < toIndex) {
+        toIndex -= 1;
+      }
+
+      return reorderSections(current, fromIndex, toIndex);
+    });
+
+    draggedSectionIdRef.current = null;
+    dropTargetRef.current = null;
+    setDraggedSectionId(null);
+    setDropTarget(null);
+  }, [detachPointerListeners]);
+
+  const attachPointerListeners = useCallback(() => {
+    if (pointerHandlersRef.current) {
+      return;
+    }
+
+    const onPointerMove = (event: PointerEvent) => {
+      event.preventDefault();
+      const next = resolveDropTarget(event.clientX, event.clientY);
+      dropTargetRef.current = next;
+      setDropTarget(next);
+    };
+
+    const onPointerUp = () => {
       finishPointerDrag();
-    }
+    };
 
+    pointerHandlersRef.current = { move: onPointerMove, up: onPointerUp };
     document.addEventListener("pointermove", onPointerMove, { passive: false });
     document.addEventListener("pointerup", onPointerUp);
     document.addEventListener("pointercancel", onPointerUp);
+  }, [finishPointerDrag, resolveDropTarget]);
 
-    return () => {
-      document.removeEventListener("pointermove", onPointerMove);
-      document.removeEventListener("pointerup", onPointerUp);
-      document.removeEventListener("pointercancel", onPointerUp);
-    };
-  }, [draggedSectionId, onDraftChange]);
+  const startPointerDrag = useCallback(
+    (sectionId: string) => {
+      pointerDragRef.current = true;
+      draggedSectionIdRef.current = sectionId;
+      dropTargetRef.current = null;
+      setDraggedSectionId(sectionId);
+      setDropTarget(null);
+      attachPointerListeners();
+    },
+    [attachPointerListeners]
+  );
+
+  useEffect(() => () => detachPointerListeners(), [detachPointerListeners]);
 
   useEffect(() => {
     if (!expandedSectionId || !expandedRef.current) {
@@ -654,6 +685,9 @@ export function WebsiteSectionList({
 
   function clearDragState() {
     pointerDragRef.current = false;
+    draggedSectionIdRef.current = null;
+    dropTargetRef.current = null;
+    detachPointerListeners();
     setDraggedSectionId(null);
     setDropTarget(null);
   }
@@ -663,13 +697,16 @@ export function WebsiteSectionList({
       return;
     }
 
-    const currentIndex = sections.findIndex((section) => section.id === sectionId);
-    const toIndex = currentIndex + direction;
-    if (currentIndex < 0 || toIndex < 0 || toIndex >= sections.length) {
-      return;
-    }
+    onDraftChange((current) => {
+      const sorted = [...current.sections].sort((left, right) => left.order - right.order);
+      const fromIndex = sorted.findIndex((section) => section.id === sectionId);
+      const toIndex = fromIndex + direction;
+      if (fromIndex < 0 || toIndex < 0 || toIndex >= sorted.length) {
+        return current;
+      }
 
-    onDraftChange((current) => reorderSections(current, currentIndex, toIndex));
+      return reorderSections(current, fromIndex, toIndex);
+    });
   }
 
   function handleDrop(sectionId: string) {
@@ -774,14 +811,25 @@ export function WebsiteSectionList({
                     : "cursor-grab hover:bg-muted/60 hover:text-text-warm active:cursor-grabbing"
                 )}
                 onPointerDown={(event) => {
-                  if (disabled || event.button !== 0) {
+                  if (disabled || event.button !== 0 || sections.length <= 1) {
                     return;
                   }
 
-                  pointerDragRef.current = true;
-                  setDraggedSectionId(section.id);
+                  startPointerDrag(section.id);
                   event.currentTarget.setPointerCapture(event.pointerId);
                   event.preventDefault();
+                }}
+                onPointerUp={() => {
+                  if (draggedSectionIdRef.current !== section.id) {
+                    return;
+                  }
+
+                  finishPointerDrag();
+                }}
+                onLostPointerCapture={() => {
+                  if (draggedSectionIdRef.current === section.id && pointerDragRef.current) {
+                    finishPointerDrag();
+                  }
                 }}
                 onKeyDown={(event) => {
                   if (disabled) {
