@@ -136,6 +136,35 @@
   --chart-5: var(--stone);
 }
 
+/**
+ * Registration live preview inside operator admin (dark mode).
+ * Public registration always renders on light surfaces; reset semantic tokens
+ * so WYSIWYG preview matches the published page regardless of admin theme.
+ */
+.registration-preview-surface {
+  color-scheme: light;
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper-warm);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --secondary: var(--paper-warm);
+  --secondary-foreground: var(--ink);
+  --muted: var(--paper-warm);
+  --muted-foreground: var(--stone);
+  --accent: var(--lagoon-deep);
+  --accent-foreground: var(--lagoon-fg);
+  --destructive: var(--danger);
+  --border: var(--line);
+  --input: var(--line-strong);
+  --ring: var(--lagoon);
+  --surface-warm: var(--paper-warm);
+  --border-warm: var(--line);
+  --text-warm: var(--ink);
+  --text-muted-warm: var(--stone);
+}
+
 @utility text-display {
   font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
   font-size: 48px;

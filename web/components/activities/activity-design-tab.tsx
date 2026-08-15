@@ -368,7 +368,7 @@ export function ActivityDesignTab({
           </div>
           <div
             className={cn(
-              "mx-auto overflow-hidden rounded-xl border border-border-warm bg-background p-4",
+              "registration-preview-surface mx-auto overflow-hidden rounded-xl border border-border-warm bg-background p-4",
               previewViewport === "mobile" ? "max-w-[375px]" : "max-w-3xl"
             )}
           >

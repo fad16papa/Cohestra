@@ -275,7 +275,7 @@ export function ActivityFormTab({
         >
           Preview
         </h3>
-        <div className="max-h-[min(36rem,70dvh)] overflow-y-auto overscroll-y-contain rounded-xl border border-border-warm bg-muted/20 p-4 [-webkit-overflow-scrolling:touch] sm:p-5">
+        <div className="registration-preview-surface max-h-[min(36rem,70dvh)] overflow-y-auto overscroll-y-contain rounded-xl border border-border-warm bg-background p-4 [-webkit-overflow-scrolling:touch] sm:p-5">
           {introMarkdown ? (
             <RegistrationIntroCopy
               introMarkdown={introMarkdown}
