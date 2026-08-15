@@ -172,6 +172,16 @@ public sealed class RegistrationNotificationServiceTests
     }
 
     [Fact]
+    public void ResolveLogoUrlForEmail_SkipsSvgLogoWithQueryString()
+    {
+        var url = RegistrationNotificationService.ResolveLogoUrlForEmail(
+            new EmailBrandingSettings { LogoUrl = "https://cdn.example.com/logo.svg?v=1" },
+            new PublicWebOptions { BaseUrl = "https://cohestra.app" });
+
+        Assert.Null(url);
+    }
+
+    [Fact]
     public async Task SendConfirmationIfApplicableAsync_SkipsWhenClientHasNoEmail()
     {
         await using var dbContext = CreateDbContext();

@@ -230,7 +230,10 @@ public sealed class RegistrationNotificationService(
         }
 
         // SVG logos render as broken images in most email clients; fall back to text.
-        if (logoUrl.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
+        var path = Uri.TryCreate(logoUrl, UriKind.Absolute, out var uri)
+            ? uri.AbsolutePath
+            : logoUrl.Split('?', '#')[0];
+        if (path.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
         {
             return null;
         }
