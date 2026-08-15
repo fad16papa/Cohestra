@@ -654,9 +654,10 @@ public sealed class AuthService(
             }
             else
             {
-                var memberships = await tenantMembershipService.GetActiveMembershipsForUserAsync(
-                    user.Id,
-                    cancellationToken);
+                var memberships = ApexLoginMembershipFilter.ForEmailFirstLogin(
+                    await tenantMembershipService.GetActiveMembershipsForUserAsync(
+                        user.Id,
+                        cancellationToken));
 
                 if (memberships.Count == 0)
                 {
@@ -711,9 +712,10 @@ public sealed class AuthService(
         bool isTenantAdmin,
         CancellationToken cancellationToken)
     {
-        var memberships = await tenantMembershipService.GetActiveMembershipsForUserAsync(
-            user.Id,
-            cancellationToken);
+        var memberships = ApexLoginMembershipFilter.ForEmailFirstLogin(
+            await tenantMembershipService.GetActiveMembershipsForUserAsync(
+                user.Id,
+                cancellationToken));
 
         if (memberships.Count == 0)
         {

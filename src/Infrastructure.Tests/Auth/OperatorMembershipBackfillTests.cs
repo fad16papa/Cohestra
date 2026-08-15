@@ -77,6 +77,73 @@ public sealed class OperatorMembershipBackfillTests
         Assert.Equal(1, await db.TenantMemberships.CountAsync());
     }
 
+    [Fact]
+    public async Task Backfill_skips_TenantAdmin_with_existing_non_default_membership()
+    {
+        await using var provider = BuildIdentity();
+        var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = provider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        var db = provider.GetRequiredService<CohestraDbContext>();
+
+        await roleManager.CreateAsync(new IdentityRole<Guid>(OperatorSeeder.TenantAdminRole));
+
+        var now = DateTimeOffset.UtcNow;
+        db.Tenants.Add(new Tenant
+        {
+            Id = TenantIds.Default,
+            Slug = TenantIds.DefaultSlug,
+            Name = "Default",
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        var creativorareId = Guid.CreateVersion7();
+        db.Tenants.Add(new Tenant
+        {
+            Id = creativorareId,
+            Slug = "creativorare",
+            Name = "Creativorare",
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        var operatorUser = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = "operator@example.com",
+            Email = "operator@example.com",
+            EmailConfirmed = true,
+        };
+        Assert.True((await userManager.CreateAsync(operatorUser, "ChangeMe123!")).Succeeded);
+        Assert.True((await userManager.AddToRoleAsync(operatorUser, OperatorSeeder.TenantAdminRole)).Succeeded);
+
+        db.TenantMemberships.Add(new TenantMembership
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = operatorUser.Id,
+            TenantId = creativorareId,
+            Role = TenantMembershipRole.TenantAdmin,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        await OperatorSeeder.BackfillDefaultTenantAdminMembershipsAsync(
+            userManager,
+            db,
+            NullLogger.Instance);
+
+        var memberships = await db.TenantMemberships
+            .Where(m => m.UserId == operatorUser.Id)
+            .ToListAsync();
+        Assert.Single(memberships);
+        Assert.Equal(creativorareId, memberships[0].TenantId);
+    }
+
     private static ServiceProvider BuildIdentity()
     {
         var services = new ServiceCollection();

@@ -304,22 +304,46 @@ public sealed class AuthServiceMembershipGuardTests
     public async Task Login_on_marketing_apex_fails_when_user_has_multiple_workspaces()
     {
         await using var harness = await AuthHarness.CreateAsync();
-        var otherTenantId = await harness.SeedTenantAsync("other", "Other");
+        var tenantA = await harness.SeedTenantAsync("workspace-a", "Workspace A");
+        var tenantB = await harness.SeedTenantAsync("workspace-b", "Workspace B");
         var admin = await harness.CreateUserAsync(
             "admin@test.local",
             "ChangeMe123!",
             emailConfirmed: true,
             roles: [OperatorSeeder.TenantAdminRole]);
         await harness.Membership.EnsureMembershipAsync(
-            admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+            admin.Id, tenantA, TenantMembershipRole.TenantAdmin);
         await harness.Membership.EnsureMembershipAsync(
-            admin.Id, otherTenantId, TenantMembershipRole.TenantAdmin);
+            admin.Id, tenantB, TenantMembershipRole.TenantAdmin);
 
         var result = await harness.Auth.LoginAsync("admin@test.local", "ChangeMe123!", "localhost");
 
         Assert.Null(result.Tokens);
         Assert.Equal("multiple_workspaces", result.ErrorCode);
         Assert.Contains("multiple workspaces", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Login_on_bare_localhost_ignores_default_backfill_when_real_workspace_exists()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var creativorareId = await harness.SeedTenantAsync("creativorare", "Creativorare");
+        var admin = await harness.CreateUserAsync(
+            "operator@example.com",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+        await harness.Membership.EnsureMembershipAsync(
+            admin.Id, creativorareId, TenantMembershipRole.TenantAdmin);
+
+        var result = await harness.Auth.LoginAsync("operator@example.com", "ChangeMe123!", "localhost");
+
+        Assert.Null(result.Tokens);
+        Assert.Null(result.ErrorCode);
+        Assert.Equal("creativorare", result.TenantSlug);
+        Assert.False(string.IsNullOrWhiteSpace(result.HandoffCode));
     }
 
     [Fact]

@@ -157,6 +157,14 @@ public static class OperatorSeeder
                 continue;
             }
 
+            var hasNonDefaultMembership = await db.TenantMemberships.AnyAsync(
+                m => m.UserId == admin.Id && m.TenantId != TenantIds.Default,
+                cancellationToken);
+            if (hasNonDefaultMembership)
+            {
+                continue;
+            }
+
             var exists = await db.TenantMemberships.AnyAsync(
                 m => m.UserId == admin.Id && m.TenantId == TenantIds.Default,
                 cancellationToken);
