@@ -9,6 +9,7 @@ import {
 import { normalizeBrandAccentColor } from "@/lib/brand-accent";
 import {
   clearAuthSession,
+  clearAuthSessionIfRefreshTokenMatches,
   createAuthSession,
   getAuthSession,
   isAccessTokenExpired,
@@ -311,17 +312,19 @@ export async function refreshAuthSession(): Promise<AuthSession | null> {
       return null;
     }
 
+    const refreshTokenAtStart = current.refreshToken;
+
     try {
       const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken: current.refreshToken }),
+        body: JSON.stringify({ refreshToken: refreshTokenAtStart }),
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
 
       if (!response.ok) {
         if (isAuthFailureStatus(response.status)) {
-          clearAuthSession();
+          clearAuthSessionIfRefreshTokenMatches(refreshTokenAtStart);
         }
 
         return null;
@@ -467,7 +470,7 @@ export async function validateStoredSession(): Promise<AdminProfile | null> {
       return await fetchSessionProfile(refreshed.accessToken);
     } catch (retryError) {
       if (isAuthFailureStatus(getErrorStatus(retryError))) {
-        clearAuthSession();
+        clearAuthSessionIfRefreshTokenMatches(refreshed.refreshToken);
       }
 
       return null;
@@ -517,8 +520,10 @@ export async function fetchWithAuth(
 
   response = await attempt(session.accessToken);
   if (response.status === 401) {
-    clearAuthSession();
-    onSessionExpired?.();
+    clearAuthSessionIfRefreshTokenMatches(session.refreshToken);
+    if (!getAuthSession()) {
+      onSessionExpired?.();
+    }
     throw new Error("Session expired");
   }
 

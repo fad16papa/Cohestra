@@ -4,7 +4,8 @@ export type AuthSession = {
   expiresAt: number;
 };
 
-const STORAGE_KEY = "auth_session";
+export const AUTH_SESSION_STORAGE_KEY = "auth_session";
+const STORAGE_KEY = AUTH_SESSION_STORAGE_KEY;
 const EXPIRY_BUFFER_MS = 30_000;
 
 export function getAuthSession(): AuthSession | null {
@@ -39,6 +40,23 @@ export function setAuthSession(session: AuthSession): void {
 
 export function clearAuthSession(): void {
   localStorage.removeItem(STORAGE_KEY);
+}
+
+/** Clear stored session only when the refresh token still matches (avoids wiping a newer login). */
+export function clearAuthSessionIfRefreshTokenMatches(
+  refreshToken: string | null | undefined
+): boolean {
+  if (!refreshToken) {
+    return false;
+  }
+
+  const current = getAuthSession();
+  if (!current || current.refreshToken !== refreshToken) {
+    return false;
+  }
+
+  clearAuthSession();
+  return true;
 }
 
 export function isAccessTokenExpired(

@@ -1,26 +1,17 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { AuthFlowShell } from "@/components/auth/auth-flow-shell";
 import { LoginForm } from "@/components/auth/login-form";
-import { SESSION_EXPIRED_MESSAGE } from "@/components/auth/auth-provider";
-import { useToast } from "@/components/ui/toast-provider";
 import { OPERATOR_LOGIN_PATH } from "@/lib/auth-api";
 
 function PlatformLoginPageContent() {
   const searchParams = useSearchParams();
-  const { showToast } = useToast();
   const reason = searchParams.get("reason");
   const showSessionExpiredNotice = reason === "session-expired";
-
-  useEffect(() => {
-    if (reason === "session-expired") {
-      showToast(SESSION_EXPIRED_MESSAGE);
-    }
-  }, [reason, showToast]);
 
   return (
     <AuthFlowShell
