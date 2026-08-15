@@ -141,13 +141,27 @@ function isAuthFailureStatus(status: number | undefined): boolean {
   return status === 401 || status === 403;
 }
 
+/** Forward browser host so API tenant resolution matches the page the user is on. */
+function buildClientAuthHeaders(extra?: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...extra,
+  };
+
+  if (typeof window !== "undefined" && window.location.host) {
+    headers["X-Forwarded-Host"] = window.location.host;
+  }
+
+  return headers;
+}
+
 async function postAuthTokens(
   path: string,
   body: Record<string, string>
 ): Promise<AuthSession> {
   const response = await fetch(`${getPublicApiBaseUrl()}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildClientAuthHeaders(),
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
@@ -254,14 +268,9 @@ export async function loginWithPassword(
   password: string
 ): Promise<LoginResult> {
   try {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (typeof window !== "undefined" && window.location.host) {
-      headers["X-Forwarded-Host"] = window.location.host;
-    }
-
     const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/login`, {
       method: "POST",
-      headers,
+      headers: buildClientAuthHeaders(),
       body: JSON.stringify({ email, password }),
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
@@ -322,7 +331,7 @@ export async function refreshAuthSession(): Promise<AuthSession | null> {
     try {
       const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/refresh`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: buildClientAuthHeaders(),
         body: JSON.stringify({ refreshToken: refreshTokenAtStart }),
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
@@ -626,7 +635,7 @@ export async function registerOperator(input: {
 }): Promise<{ email: string; otpExpiresInSeconds: number; message: string }> {
   const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/register`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildClientAuthHeaders(),
     body: JSON.stringify(input),
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
@@ -658,7 +667,7 @@ export async function verifyEmailOtp(
   try {
     const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/verify-email`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: buildClientAuthHeaders(),
       body: JSON.stringify({ email, code }),
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
@@ -691,7 +700,7 @@ export async function resendAuthOtp(
 ): Promise<string> {
   const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/resend-otp`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildClientAuthHeaders(),
     body: JSON.stringify({ email, purpose }),
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
@@ -708,7 +717,7 @@ export async function resendAuthOtp(
 export async function forgotPassword(email: string): Promise<string> {
   const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/forgot-password`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildClientAuthHeaders(),
     body: JSON.stringify({ email }),
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
@@ -729,7 +738,7 @@ export async function resetPassword(input: {
 }): Promise<string> {
   const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/reset-password`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildClientAuthHeaders(),
     body: JSON.stringify(input),
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
