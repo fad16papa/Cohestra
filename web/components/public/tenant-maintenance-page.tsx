@@ -14,7 +14,9 @@ export function TenantMaintenancePage({ tenantName }: TenantMaintenancePageProps
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-stone">
           Access is temporarily frozen while a platform review or support matter is resolved.
-          This is not ordinary billing — contact support if you believe this is a mistake.
+          This is not ordinary billing. Signed-in operators can open{" "}
+          <strong className="font-medium text-ink">Settings → Help &amp; support</strong> to reach
+          Creativorare with a screenshot and support ID.
         </p>
       </div>
     </main>

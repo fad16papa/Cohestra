@@ -197,6 +197,8 @@ public static class DependencyInjection
         services.AddScoped<SupportIssueTechEmailBuilder>();
         services.AddScoped<SupportIssueConfirmationEmailBuilder>();
         services.AddScoped<ISupportIssueService, SupportIssueService>();
+        services.AddScoped<IPlatformSupportIssueService, PlatformSupportIssueService>();
+        services.AddScoped<IPlatformSupportReportService, PlatformSupportReportService>();
         services.AddSingleton<ISupportSubmissionRateLimiter, RedisSupportSubmissionRateLimiter>();
         services.AddSingleton<IPublicRegistrationRateLimiter, RedisPublicRegistrationRateLimiter>();
         services.AddSingleton<IPublicSignupRateLimiter, RedisPublicSignupRateLimiter>();

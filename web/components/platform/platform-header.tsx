@@ -12,6 +12,7 @@ export function PlatformHeader() {
 
   const links = [
     { href: "/platform", label: "Tenants" },
+    { href: "/platform/support", label: "Support" },
   ];
 
   return (
