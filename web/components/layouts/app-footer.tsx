@@ -11,7 +11,7 @@ type AppFooterProps = {
 export function AppFooter({ className }: AppFooterProps) {
   const pathname = usePathname();
 
-  const marketingRoutes = ["/", "/pricing", "/terms", "/privacy", "/signup"];
+  const marketingRoutes = ["/", "/pricing", "/terms", "/privacy", "/signup", "/docs"];
   const authRoutes = [
     "/login",
     "/platform/login",
