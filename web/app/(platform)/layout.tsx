@@ -1,22 +1,11 @@
 import type { CSSProperties, ReactNode } from "react";
-import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 
 import { PlatformRouteGuard } from "@/components/auth/platform-route-guard";
 import { PlatformHeader } from "@/components/platform/platform-header";
 
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-plat-display",
-  weight: ["500", "600"],
-});
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-plat-body",
-  weight: ["400", "500", "600", "700"],
-});
-
 const platformSurfaceStyle = {
+  "--font-plat-display": "var(--font-fraunces)",
+  "--font-plat-body": "var(--font-jakarta)",
   "--plat-ink": "#070D12",
   "--plat-ink-soft": "#141C24",
   "--plat-paper": "#FAFBFC",
@@ -43,7 +32,7 @@ export default function PlatformRootLayout({
 }>) {
   return (
     <div
-      className={`${fraunces.variable} ${jakarta.variable} platform-console min-h-0 flex-1`}
+      className="platform-console min-h-0 flex-1"
       style={platformSurfaceStyle}
     >
       <PlatformRouteGuard>

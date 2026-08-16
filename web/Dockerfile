@@ -29,6 +29,7 @@ ENV NEXT_PUBLIC_RECAPTCHA_SITE_KEY=$NEXT_PUBLIC_RECAPTCHA_SITE_KEY
 ENV NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN=$NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN
 ENV NEXT_TELEMETRY_DISABLED=1
 # node:22-slim (glibc) — Turbopack native bindings fail on Alpine musl with "platform not supported".
+# Fraunces is self-hosted (web/fonts/fraunces) so this step does not fetch fonts.gstatic.com.
 RUN npm run build
 
 FROM node:22-alpine AS final
