@@ -8,6 +8,7 @@ import {
   MarketingShell,
   marketingAtelierButtonClass,
 } from "@/components/marketing/marketing-shell";
+import { MarketingAmbientScene } from "@/components/marketing/marketing-ambient-scene";
 import { MarketingReveal, marketingRevealDelay } from "@/components/marketing/marketing-reveal";
 import {
   PricingIntervalToggle,
@@ -25,7 +26,9 @@ export function PricingPageContent() {
     <MarketingShell scrolled={scrolled}>
       <div ref={anchorRef} aria-hidden className="pointer-events-none absolute top-0 h-px w-full" />
 
-      <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8 lg:px-10 lg:py-16">
+      <section className="relative mx-auto max-w-6xl px-5 py-12 sm:px-8 lg:px-10 lg:py-16">
+        <MarketingAmbientScene variant="pricing" className="opacity-55" />
+        <div className="relative z-[1]">
         <MarketingReveal immediate delayMs={80}>
           <p className="text-section text-gold">Pricing</p>
           <h1 className="text-marketing-section mt-4 max-w-[18ch] text-ink">
@@ -46,6 +49,7 @@ export function PricingPageContent() {
 
         <div className="mt-10">
           <PricingPlanGrid interval={interval} />
+        </div>
         </div>
       </section>
 

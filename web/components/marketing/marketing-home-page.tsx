@@ -10,6 +10,7 @@ import {
   MarketingShell,
   marketingAtelierButtonClass,
 } from "@/components/marketing/marketing-shell";
+import { MarketingAmbientScene } from "@/components/marketing/marketing-ambient-scene";
 import { MarketingHeroProductStack } from "@/components/marketing/marketing-hero-product-stack";
 import { MarketingProductCarousel } from "@/components/marketing/marketing-product-carousel";
 import {
@@ -55,8 +56,9 @@ export function MarketingHomePage() {
       <div ref={anchorRef} aria-hidden className="pointer-events-none absolute top-0 h-px w-full" />
 
       {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="mx-auto grid max-w-6xl gap-10 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-2 lg:items-stretch lg:gap-12 lg:px-10 lg:pb-20 lg:pt-12">
-        <div>
+      <section className="relative mx-auto grid max-w-6xl gap-10 px-5 pb-16 pt-8 sm:px-8 lg:grid-cols-2 lg:items-stretch lg:gap-12 lg:px-10 lg:pb-20 lg:pt-12">
+        <MarketingAmbientScene variant="hero" className="opacity-80" />
+        <div className="relative z-[1]">
           <MarketingReveal immediate delayMs={50}>
             <p className="text-section text-gold">Community operations software</p>
           </MarketingReveal>
@@ -107,7 +109,9 @@ export function MarketingHomePage() {
           </MarketingReveal>
         </div>
 
+        <div className="relative z-[1]">
         <MarketingHeroProductStack />
+        </div>
       </section>
 
       {/* ── Audience strip ───────────────────────────────────── */}
@@ -298,7 +302,12 @@ export function MarketingHomePage() {
       </section>
 
       {/* ── Pricing ──────────────────────────────────────────── */}
-      <section id="pricing" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-16 sm:px-8 lg:px-10 lg:py-24">
+      <section
+        id="pricing"
+        className="relative mx-auto max-w-6xl scroll-mt-24 px-5 py-16 sm:px-8 lg:px-10 lg:py-24"
+      >
+        <MarketingAmbientScene variant="pricing" className="opacity-60" />
+        <div className="relative z-[1]">
         <MarketingReveal delayMs={marketingRevealDelay(0)}>
           <p className="text-section text-gold">Pricing</p>
           <h2 className="text-marketing-section mt-4 max-w-[18ch] text-ink">
@@ -330,6 +339,7 @@ export function MarketingHomePage() {
             <ArrowRight className="size-4" aria-hidden />
           </Link>
         </MarketingReveal>
+        </div>
       </section>
 
       {/* ── FAQ ──────────────────────────────────────────────── */}

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { MarketingAmbientScene } from "@/components/marketing/marketing-ambient-scene";
+import { MarketingCookieConsent } from "@/components/marketing/marketing-cookie-consent";
 import { cn } from "@/lib/utils";
 
 const MARKETING_ROUTES = ["/", "/pricing", "/terms", "/privacy", "/signup"];
@@ -60,7 +62,8 @@ export function MarketingShell({
   scrolled?: boolean;
 }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-paper text-ink">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-x-clip bg-paper text-ink">
+      <MarketingAmbientScene variant="default" className="opacity-70" />
       <header
         className={cn(
           "sticky top-0 z-30 flex items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-10",
@@ -90,7 +93,8 @@ export function MarketingShell({
           </Link>
         </nav>
       </header>
-      {children}
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">{children}</div>
+      <MarketingCookieConsent />
     </div>
   );
 }

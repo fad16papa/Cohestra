@@ -342,5 +342,9 @@
     .marketing-eyebrow-shimmer {
       animation: none;
     }
+
+    [style*="translateZ"] {
+      transform: none !important;
+    }
   }
 }
