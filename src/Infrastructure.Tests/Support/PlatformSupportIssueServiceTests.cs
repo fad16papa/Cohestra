@@ -62,6 +62,36 @@ public sealed class PlatformSupportIssueServiceTests
         var persisted = await db.IgnoreTenantFilters<SupportIssue>().SingleAsync(item => item.Id == issue.Id);
         Assert.Equal(SupportIssueStatus.InProgress, persisted.Status);
         Assert.Equal("Needs billing check", persisted.InternalNote);
+        Assert.True(persisted.UpdatedAt > now);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_internal_note_only_does_not_bump_updated_at()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.CreateVersion7();
+        var now = DateTimeOffset.UtcNow;
+        var issue = CreateIssue(
+            tenantId,
+            "SUP20260816000004",
+            "delta",
+            "dana@example.com",
+            SupportIssueStatus.Resolved,
+            now);
+        db.SupportIssues.Add(issue);
+        await db.SaveChangesAsync();
+        var originalUpdatedAt = issue.UpdatedAt;
+
+        var service = CreateService(db);
+        var updated = await service.UpdateAsync(
+            issue.Id,
+            new UpdatePlatformSupportIssueRequest(null, "Follow up next week"));
+
+        Assert.NotNull(updated);
+        Assert.Equal("Follow up next week", updated!.InternalNote);
+
+        var persisted = await db.IgnoreTenantFilters<SupportIssue>().SingleAsync(item => item.Id == issue.Id);
+        Assert.Equal(originalUpdatedAt, persisted.UpdatedAt);
     }
 
     private static SupportIssue CreateIssue(

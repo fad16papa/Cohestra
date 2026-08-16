@@ -71,6 +71,11 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
             return BadRequestProblem("Provide status and/or internalNote to update.");
         }
 
+        if (request.Status is not null && string.IsNullOrWhiteSpace(request.Status))
+        {
+            return BadRequestProblem("Status cannot be empty.");
+        }
+
         try
         {
             var result = await platformSupportIssueService.UpdateAsync(id, request, cancellationToken);

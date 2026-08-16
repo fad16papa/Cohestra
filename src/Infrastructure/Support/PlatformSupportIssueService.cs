@@ -110,7 +110,8 @@ public sealed class PlatformSupportIssueService(
             return null;
         }
 
-        var changed = false;
+        var statusChanged = false;
+        var noteChanged = false;
 
         if (!string.IsNullOrWhiteSpace(request.Status))
         {
@@ -122,7 +123,7 @@ public sealed class PlatformSupportIssueService(
             if (issue.Status != parsedStatus)
             {
                 issue.Status = parsedStatus;
-                changed = true;
+                statusChanged = true;
             }
         }
 
@@ -138,13 +139,17 @@ public sealed class PlatformSupportIssueService(
             if (issue.InternalNote != normalizedNote)
             {
                 issue.InternalNote = normalizedNote;
-                changed = true;
+                noteChanged = true;
             }
         }
 
-        if (changed)
+        if (statusChanged || noteChanged)
         {
-            issue.UpdatedAt = DateTimeOffset.UtcNow;
+            if (statusChanged)
+            {
+                issue.UpdatedAt = DateTimeOffset.UtcNow;
+            }
+
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 

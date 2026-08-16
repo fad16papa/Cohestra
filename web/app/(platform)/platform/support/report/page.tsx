@@ -28,7 +28,16 @@ export default function PlatformSupportReportPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
+  const customRangeReady = preset !== "custom" || (from.length > 0 && to.length > 0);
+
   useEffect(() => {
+    if (!customRangeReady) {
+      setLoading(false);
+      setReport(null);
+      setError(null);
+      return;
+    }
+
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -57,7 +66,7 @@ export default function PlatformSupportReportPage() {
     return () => {
       cancelled = true;
     };
-  }, [authFetch, preset, from, to]);
+  }, [authFetch, customRangeReady, preset, from, to]);
 
   function handlePresetChange(event: React.ChangeEvent<HTMLSelectElement>) {
     setPreset(event.target.value as PlatformSupportReportPreset);
@@ -69,6 +78,11 @@ export default function PlatformSupportReportPage() {
   }
 
   async function handleExport() {
+    if (!customRangeReady) {
+      setError("Choose a from and to date before exporting.");
+      return;
+    }
+
     setExporting(true);
     setError(null);
     try {
@@ -112,7 +126,7 @@ export default function PlatformSupportReportPage() {
         </div>
         <button
           type="button"
-          disabled={exporting || loading}
+          disabled={exporting || loading || !customRangeReady}
           onClick={() => void handleExport()}
           className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] px-4 text-sm font-semibold text-[var(--plat-ink)] transition-colors hover:bg-white disabled:opacity-50"
         >
@@ -181,7 +195,11 @@ export default function PlatformSupportReportPage() {
         </p>
       ) : null}
 
-      {loading ? (
+      {!customRangeReady ? (
+        <p className="text-sm text-[var(--plat-stone)]">
+          Choose a from and to date, then click Apply.
+        </p>
+      ) : loading ? (
         <p className="text-sm text-[var(--plat-stone)]">Loading report…</p>
       ) : report ? (
         <div className="space-y-6">

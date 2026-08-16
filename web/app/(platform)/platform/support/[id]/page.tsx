@@ -154,11 +154,10 @@ export default function PlatformSupportDetailPage() {
               <ul className="mt-3 space-y-2">
                 {issue.attachments.map((attachment) => (
                   <li key={attachment.id}>
-                    <a
-                      href={platformSupportAttachmentUrl(issue.id, attachment.id)}
+                    <button
+                      type="button"
                       className="text-sm font-semibold text-[var(--plat-lagoon)] underline-offset-4 hover:underline"
-                      onClick={async (event) => {
-                        event.preventDefault();
+                      onClick={async () => {
                         try {
                           const response = await authFetch(
                             platformSupportAttachmentUrl(issue.id, attachment.id)
@@ -179,7 +178,7 @@ export default function PlatformSupportDetailPage() {
                       }}
                     >
                       {attachment.fileName}
-                    </a>
+                    </button>
                     <span className="ml-2 text-xs text-[var(--plat-stone)]">
                       {formatBytes(attachment.sizeBytes)}
                     </span>
