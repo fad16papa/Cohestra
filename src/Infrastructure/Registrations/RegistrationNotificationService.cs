@@ -22,6 +22,7 @@ public sealed class RegistrationNotificationService(
     ILogger<RegistrationNotificationService> logger) : IRegistrationNotificationService
 {
     internal const string HeroInlineContentId = "registration-hero";
+    internal const string LogoInlineContentId = "cohestra-brand-logo";
     public async Task<RegistrationConfirmationSendResult> SendConfirmationIfApplicableAsync(
         Guid registrationId,
         CancellationToken cancellationToken = default)
@@ -92,13 +93,21 @@ public sealed class RegistrationNotificationService(
                 resolvedHeroImageUrl,
                 tenant?.Slug);
 
+        EmailInlineAttachment? logoInlineAttachment = null;
         if (string.IsNullOrWhiteSpace(heroImageUrl))
         {
-            logger.LogWarning(
-                "Registration confirmation email for {RegistrationId} has no hero image after resolution (activity {ActivityId}, community {CommunityLabel}).",
-                registrationId,
-                registration.Activity.Id,
-                registration.Activity.CommunityLabel);
+            logoInlineAttachment = TryLoadPlatformLogoInlineAttachment();
+            if (logoInlineAttachment is not null)
+            {
+                logoUrl = $"cid:{LogoInlineContentId}";
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(heroImageUrl))
+        {
+            logger.LogInformation(
+                "Registration confirmation email for {RegistrationId} uses platform logo banner (no activity hero).",
+                registrationId);
         }
         else if (heroInlineAttachment is null && !string.IsNullOrWhiteSpace(resolvedHeroImageUrl))
         {
@@ -122,6 +131,8 @@ public sealed class RegistrationNotificationService(
                 LogoUrl: logoUrl,
                 HeroImageUrl: heroImageUrl));
 
+        var inlineAttachments = BuildInlineAttachments(heroInlineAttachment, logoInlineAttachment);
+
         var sendResult = await emailSender.SendAsync(
             new EmailMessage(
                 recipientEmail,
@@ -131,9 +142,7 @@ public sealed class RegistrationNotificationService(
                 emailContent.HtmlBody,
                 FromEmail: fromEmail,
                 FromName: fromName,
-                InlineAttachments: heroInlineAttachment is null
-                    ? null
-                    : [heroInlineAttachment]),
+                InlineAttachments: inlineAttachments),
             cancellationToken);
 
         if (!sendResult.Success)
@@ -152,6 +161,44 @@ public sealed class RegistrationNotificationService(
             recipientEmail);
 
         return new RegistrationConfirmationSendResult(true, recipientEmail);
+    }
+
+    private static EmailInlineAttachment? TryLoadPlatformLogoInlineAttachment()
+    {
+        var content = PlatformBrandAssets.TryLoadLogoPng();
+        if (content is null || content.Length == 0)
+        {
+            return null;
+        }
+
+        return new EmailInlineAttachment(
+            LogoInlineContentId,
+            content,
+            "image/png",
+            "cohestra-logo.png");
+    }
+
+    private static IReadOnlyList<EmailInlineAttachment>? BuildInlineAttachments(
+        EmailInlineAttachment? heroInlineAttachment,
+        EmailInlineAttachment? logoInlineAttachment)
+    {
+        if (heroInlineAttachment is null && logoInlineAttachment is null)
+        {
+            return null;
+        }
+
+        var attachments = new List<EmailInlineAttachment>(2);
+        if (heroInlineAttachment is not null)
+        {
+            attachments.Add(heroInlineAttachment);
+        }
+
+        if (logoInlineAttachment is not null)
+        {
+            attachments.Add(logoInlineAttachment);
+        }
+
+        return attachments;
     }
 
     private async Task<EmailInlineAttachment?> TryLoadHeroInlineAttachmentAsync(
@@ -217,21 +264,28 @@ public sealed class RegistrationNotificationService(
         EmailBrandingSettings branding,
         PublicWebOptions publicWeb)
     {
-        var logoUrl = ResolveLogoUrl(branding, publicWeb);
-        if (string.IsNullOrWhiteSpace(logoUrl))
+        var configured = branding.LogoUrl?.Trim();
+        if (!string.IsNullOrWhiteSpace(configured) &&
+            !IsSvgPath(configured))
+        {
+            return configured;
+        }
+
+        var baseUrl = publicWeb.BaseUrl?.Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
         {
             return null;
         }
 
-        // SVG logos render as broken images in most email clients; fall back to text.
-        var path = Uri.TryCreate(logoUrl, UriKind.Absolute, out var uri)
+        return $"{baseUrl}{EmailBrandingSettings.DefaultLogoEmailPath}";
+    }
+
+    private static bool IsSvgPath(string pathOrUrl)
+    {
+        var path = Uri.TryCreate(pathOrUrl, UriKind.Absolute, out var uri)
             ? uri.AbsolutePath
-            : logoUrl.Split('?', '#')[0];
-        if (path.EndsWith(".svg", StringComparison.OrdinalIgnoreCase))
-        {
-            return null;
-        }
+            : pathOrUrl.Split('?', '#')[0];
 
-        return logoUrl;
+        return path.EndsWith(".svg", StringComparison.OrdinalIgnoreCase);
     }
 }

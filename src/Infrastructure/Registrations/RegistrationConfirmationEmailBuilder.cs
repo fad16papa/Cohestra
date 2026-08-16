@@ -27,6 +27,8 @@ internal static class RegistrationConfirmationEmailBuilder
     internal const string BackgroundColor = "#fafaf8";
     internal const string TextColor = "#1a1714";
     internal const string MutedTextColor = "#6b6560";
+    internal const string EmailBannerBackground = "#f3f5f7";
+    internal const string EmailBannerBorder = "#e6e9ed";
 
     public static RegistrationConfirmationEmailContent Build(RegistrationConfirmationEmailModel model)
     {
@@ -91,13 +93,13 @@ internal static class RegistrationConfirmationEmailBuilder
         var websiteHref = EncodeAttribute(model.WebsiteUrl);
 
         var headerBlock = string.IsNullOrWhiteSpace(model.LogoUrl)
-            ? $"""<p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;letter-spacing:0.02em;">{encodedBrand}</p>"""
-            : $"""<img src="{EncodeAttribute(model.LogoUrl)}" alt="{encodedBrand}" width="200" style="display:block;max-width:200px;height:auto;margin:0 auto;" />""";
+            ? $"""<p style="margin:0;font-size:22px;font-weight:700;color:{TextColor};letter-spacing:0.02em;">{encodedBrand}</p>"""
+            : $"""<img src="{EncodeAttribute(model.LogoUrl)}" alt="{encodedBrand}" width="96" style="display:block;max-width:96px;height:auto;margin:0 auto;" />""";
 
         var topBlock = string.IsNullOrWhiteSpace(model.HeroImageUrl)
             ? $"""
               <tr>
-                <td style="background-color:#000000;padding:28px 24px;text-align:center;">
+                <td style="background-color:{EmailBannerBackground};border-bottom:1px solid {EmailBannerBorder};padding:36px 24px 32px;text-align:center;">
                   {headerBlock}
                 </td>
               </tr>
