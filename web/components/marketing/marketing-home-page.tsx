@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, BookOpen, Check } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import {
@@ -31,6 +31,7 @@ import {
   LANDING_STEPS,
   LANDING_OUTCOMES,
 } from "@/lib/marketing/landing-content";
+import { PRODUCT_DOCS_START_PATHS } from "@/lib/marketing/product-docs-content";
 import { PRICING_POSITIONING_LINE } from "@/lib/marketing/pricing-plans";
 import { resolvePostLoginPath } from "@/lib/auth-api";
 import { cn } from "@/lib/utils";
@@ -239,6 +240,56 @@ export function MarketingHomePage() {
               </Link>
             </MarketingReveal>
           </div>
+        </div>
+      </section>
+
+      <section id="document" className="scroll-mt-24 border-t border-line">
+        <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:px-10 lg:py-24">
+          <MarketingReveal delayMs={marketingRevealDelay(0)}>
+            <p className="text-section text-gold">Document</p>
+            <h2 className="text-marketing-section mt-4 max-w-[18ch] text-ink">
+              The official Cohestra user manual
+            </h2>
+            <p className="text-marketing-lead mt-4 max-w-2xl text-stone">
+              Short sentences. Numbered steps. The same kind of guide modern products keep next to
+              Features — so you can run an event without guessing.
+            </p>
+          </MarketingReveal>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {PRODUCT_DOCS_START_PATHS.map((path, index) => (
+              <MarketingReveal
+                key={path.href}
+                delayMs={marketingRevealDelay(index + 1, 80, 40)}
+              >
+                <Link
+                  href={path.href}
+                  className={marketingCardClass(
+                    "default",
+                    "flex h-full flex-col p-5 hover:border-lagoon/40"
+                  )}
+                >
+                  <span className="inline-flex size-9 items-center justify-center rounded-[10px] bg-lagoon/10 text-lagoon">
+                    <BookOpen className="size-4" aria-hidden />
+                  </span>
+                  <h3 className="mt-4 font-[family-name:var(--font-fraunces)] text-[1.15rem] font-medium tracking-[-0.02em] text-ink">
+                    {path.title}
+                  </h3>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-stone">{path.detail}</p>
+                  <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-lagoon">
+                    Open chapter
+                    <ArrowRight className="size-4" aria-hidden />
+                  </span>
+                </Link>
+              </MarketingReveal>
+            ))}
+          </div>
+
+          <MarketingReveal delayMs={marketingRevealDelay(6)} className="mt-8">
+            <Link href="/docs" className={marketingAtelierButtonClass("lagoon")}>
+              Open the full Document
+            </Link>
+          </MarketingReveal>
         </div>
       </section>
 
