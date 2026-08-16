@@ -9,7 +9,7 @@ import { CohestraLogo } from "@/components/marketing/cohestra-logo";
 import { PlatformByline } from "@/components/layouts/platform-byline";
 import { cn } from "@/lib/utils";
 
-const MARKETING_ROUTES = ["/", "/pricing", "/terms", "/privacy", "/signup"];
+const MARKETING_ROUTES = ["/", "/pricing", "/terms", "/privacy", "/signup", "/docs"];
 
 export function isMarketingRoute(pathname: string | null): boolean {
   if (!pathname) {
@@ -59,6 +59,7 @@ export function MarketingWordmark({ className }: { className?: string }) {
 
 const MARKETING_NAV_LINKS = [
   { label: "Features", href: "/#features" },
+  { label: "Document", href: "/docs" },
   { label: "Clients", href: "/#crm" },
   { label: "How it works", href: "/#how-it-works" },
   { label: "Pricing", href: "/pricing" },
@@ -115,6 +116,7 @@ const FOOTER_COLUMNS = [
     heading: "Product",
     links: [
       { label: "Features", href: "/#features" },
+      { label: "Document", href: "/docs" },
       { label: "Clients", href: "/#crm" },
       { label: "How it works", href: "/#how-it-works" },
       { label: "Pricing", href: "/pricing" },
