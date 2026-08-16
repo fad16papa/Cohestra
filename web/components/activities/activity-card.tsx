@@ -75,12 +75,12 @@ export function ActivityCard({
   return (
     <Card
       className={cn(
-        "border-border-warm transition-shadow hover:shadow-md",
+        "h-full border-border-warm transition-shadow hover:shadow-md",
         hasConflict && "border-amber-200/80 dark:border-amber-900/50",
         className
       )}
     >
-      <Link href={`/activities/${activity.id}`} className="block">
+      <Link href={`/activities/${activity.id}`} className="flex flex-1 flex-col">
         <CardHeader className="gap-3">
           <div className="flex items-start justify-between gap-3">
             <CardTitle className="text-section text-text-warm">
@@ -98,7 +98,7 @@ export function ActivityCard({
             <span>{activity.category}</span>
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2 pb-4 text-sm text-text-muted-warm">
+        <CardContent className="flex-1 space-y-2 pb-4 text-sm text-text-muted-warm">
           <p>{activity.schedule}</p>
           <p>{activity.location}</p>
           <p className="text-xs">{formatRegistrationLine(activity)}</p>
@@ -107,18 +107,23 @@ export function ActivityCard({
           </p>
         </CardContent>
       </Link>
-      <ActivityCardQuickActions activity={activity} />
-      {showPlanRegCap && planRegistrationsDial ? (
-        <ActivityPlanRegCapIndicator dial={planRegistrationsDial} />
-      ) : null}
-      {hasConflict ? (
-        <div className="border-t border-amber-100/90 px-4 pb-4 pt-3 dark:border-amber-900/40 sm:px-6">
-          <ActivityScheduleConflictAlert
-            conflictingActivities={conflictingActivities}
-            variant="compact"
+      <div className="mt-auto divide-y divide-border-warm border-t border-border-warm">
+        <ActivityCardQuickActions activity={activity} className="border-0" />
+        {showPlanRegCap && planRegistrationsDial ? (
+          <ActivityPlanRegCapIndicator
+            dial={planRegistrationsDial}
+            className="border-0"
           />
-        </div>
-      ) : null}
+        ) : null}
+        {hasConflict ? (
+          <div className="px-4 py-3 sm:px-6">
+            <ActivityScheduleConflictAlert
+              conflictingActivities={conflictingActivities}
+              variant="compact"
+            />
+          </div>
+        ) : null}
+      </div>
     </Card>
   );
 }

@@ -78,10 +78,13 @@ export function ActivityCardQuickActions({
     event.stopPropagation();
   }
 
+  const actionButtonClassName =
+    "min-w-0 flex-1 justify-center gap-1.5 px-2 sm:px-3";
+
   return (
     <div
       className={cn(
-        "flex flex-wrap gap-2 border-t border-border-warm px-4 py-3 sm:px-6",
+        "grid grid-cols-3 gap-2 border-t border-border-warm px-4 py-3 sm:px-6",
         className
       )}
       onClick={stopCardNavigation}
@@ -91,44 +94,50 @@ export function ActivityCardQuickActions({
           type="button"
           variant="outline"
           size="sm"
-          className="gap-1.5"
+          className={actionButtonClassName}
           disabled={isCopying}
           onClick={(event) => void handleCopyLink(event)}
         >
-          <Link2 className="size-3.5" aria-hidden />
-          {isCopying ? "Copying…" : "Copy link"}
+          <Link2 className="size-3.5 shrink-0" aria-hidden />
+          <span className="truncate">{isCopying ? "Copying…" : "Copy link"}</span>
         </Button>
       ) : (
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="gap-1.5"
+          className={actionButtonClassName}
           disabled
           title="Publish to get a registration link"
           aria-label="Copy link — publish to get a registration link"
         >
-          <Link2 className="size-3.5" aria-hidden />
-          Copy link
+          <Link2 className="size-3.5 shrink-0" aria-hidden />
+          <span className="truncate">Copy link</span>
         </Button>
       )}
 
       <Link
         href={`/activities/${activity.id}?tab=registrations`}
-        className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
+        className={cn(
+          buttonVariants({ variant: "outline", size: "sm" }),
+          actionButtonClassName
+        )}
         onClick={stopCardNavigation}
       >
-        <List className="size-3.5" aria-hidden />
-        {registrationsLabel}
+        <List className="size-3.5 shrink-0" aria-hidden />
+        <span className="truncate">{registrationsLabel}</span>
       </Link>
 
       <Link
         href={buildClientsHref(activity)}
-        className={cn(buttonVariants({ variant: "outline", size: "sm" }), "gap-1.5")}
+        className={cn(
+          buttonVariants({ variant: "outline", size: "sm" }),
+          actionButtonClassName
+        )}
         onClick={stopCardNavigation}
       >
-        <Users className="size-3.5" aria-hidden />
-        {clientsLabel}
+        <Users className="size-3.5 shrink-0" aria-hidden />
+        <span className="truncate">{clientsLabel}</span>
       </Link>
     </div>
   );
