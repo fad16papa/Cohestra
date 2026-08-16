@@ -304,6 +304,7 @@ export function ClientsListPage() {
         );
         if (page > nextTotalPages) {
           setTotalCount(result.totalCount);
+          setClients([]);
           setError(null);
           setInitialized(true);
           setPage(nextTotalPages);

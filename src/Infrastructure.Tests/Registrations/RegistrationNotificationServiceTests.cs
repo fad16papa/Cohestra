@@ -172,6 +172,93 @@ public sealed class RegistrationNotificationServiceTests
     }
 
     [Fact]
+    public async Task SendConfirmationIfApplicableAsync_UsesCommunityDefaultHeroWhenThemeInherits()
+    {
+        const string communityAssetId = "33333333-3333-3333-3333-333333333333";
+        await using var dbContext = CreateDbContext();
+        var tenantId = TenantIds.Default;
+        var activityId = Guid.NewGuid();
+        var clientId = Guid.NewGuid();
+        var registrationId = Guid.NewGuid();
+
+        dbContext.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Slug = "creativorare",
+            Name = "Creativorare",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Communities.Add(new Community
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Name = "Ikigai",
+            DefaultHeroImageUrl = $"/api/v1/public/campaign-assets/{communityAssetId}",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Activities.Add(new Activity
+        {
+            Id = activityId,
+            TenantId = tenantId,
+            Name = "Sunday Pickleball Clinic",
+            Slug = "pickleball",
+            Category = "Sports",
+            Schedule = "Sun 9:00 AM",
+            Location = "Ikigai Studio",
+            CommunityLabel = "Ikigai",
+            HeroImageUrl = null,
+            RegistrationTheme = new RegistrationTheme { InheritCommunityBrand = true },
+            Status = ActivityStatus.Published,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Clients.Add(new Client
+        {
+            Id = clientId,
+            TenantId = tenantId,
+            FullName = "Elena Santos",
+            Email = "elena@example.com",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Registrations.Add(new Registration
+        {
+            Id = registrationId,
+            TenantId = tenantId,
+            RegistrationNumber = "REG20260616000042",
+            ActivityId = activityId,
+            ClientId = clientId,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        await dbContext.SaveChangesAsync();
+
+        var sender = new CapturingEmailSender();
+        var assets = new StubCampaignAssetService(
+            Guid.Parse(communityAssetId),
+            [0x89, 0x50, 0x4E, 0x47],
+            "image/png",
+            "community-hero.png");
+
+        var service = CreateService(
+            dbContext,
+            sender,
+            assets,
+            publicWebBaseUrl: "http://localhost:8088");
+        var result = await service.SendConfirmationIfApplicableAsync(registrationId);
+
+        Assert.True(result.Sent);
+        Assert.Single(sender.Messages);
+        Assert.Contains("cid:registration-hero", sender.Messages[0].HtmlBody);
+    }
+
+    [Fact]
     public void ResolveLogoUrlForEmail_SkipsSvgLogoWithQueryString()
     {
         var url = RegistrationNotificationService.ResolveLogoUrlForEmail(
