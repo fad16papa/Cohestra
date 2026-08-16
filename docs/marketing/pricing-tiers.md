@@ -68,7 +68,16 @@ Start **free** on Basic. Upgrade when you need a public homepage, richer reports
 
 ### Enterprise — Custom
 
-Custom limits, domain, SSO. [Book a demo →](#)
+Everything in Pro, plus custom limits, domain, and SSO.
+
+**Includes:**
+- Everything in Pro
+- **Custom** registration, seat, and activity limits
+- **Custom domain**
+- **SSO**
+- **Dedicated support and onboarding**
+
+[Book a demo →](#)
 
 ---
 
