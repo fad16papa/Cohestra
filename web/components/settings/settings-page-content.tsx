@@ -4,6 +4,7 @@ import { AppearanceSection } from "@/components/settings/appearance-section";
 import { AccountSection } from "@/components/settings/account-section";
 import { BrandAccentSection } from "@/components/settings/brand-accent-section";
 import { ChangePasswordSection } from "@/components/settings/change-password-section";
+import { HelpSupportSection } from "@/components/settings/help-support-section";
 import { CustomDomainSection } from "@/components/settings/custom-domain-section";
 import { OrganizationTimezoneSection } from "@/components/settings/organization-timezone-section";
 import { SettingsPlanUsageSection } from "@/components/settings/settings-plan-usage-section";
@@ -45,6 +46,13 @@ export function SettingsPageContent() {
       >
         <AccountSection embedded />
         <ChangePasswordSection />
+      </SettingsSectionCard>
+
+      <SettingsSectionCard
+        title="Help & support"
+        description="Contact Creativorare and track your recent support requests."
+      >
+        <HelpSupportSection />
       </SettingsSectionCard>
 
       <SettingsSectionCard

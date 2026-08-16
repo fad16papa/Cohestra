@@ -18,6 +18,7 @@ public sealed class TenantAuthControllerPolicyTests
     [InlineData(typeof(AdminSiteController), TenantAuthPolicies.TenantOperator, false)]
     [InlineData(typeof(AdminController), TenantAuthPolicies.TenantOperator, false)]
     [InlineData(typeof(BrandingAssetsController), TenantAuthPolicies.TenantOperator, false)]
+    [InlineData(typeof(SupportIssuesController), TenantAuthPolicies.TenantOperator, false)]
     [InlineData(typeof(CampaignsController), TenantAuthPolicies.TenantOperator, true)]
     [InlineData(typeof(EmailTemplatesController), TenantAuthPolicies.TenantOperator, true)]
     [InlineData(typeof(EmailDeliveryController), TenantAuthPolicies.TenantAdminOnly, false)]
