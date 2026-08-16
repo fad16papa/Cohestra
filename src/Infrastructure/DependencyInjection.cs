@@ -3,6 +3,7 @@ using Cohestra.Application.Activities;
 using Cohestra.Application.Auth;
 using Cohestra.Application.Billing;
 using Cohestra.Application.Outbox;
+using Cohestra.Application.Support;
 using Cohestra.Infrastructure.Billing;
 using Cohestra.Infrastructure.Outbox;
 using Cohestra.Application.Campaigns;
@@ -32,6 +33,7 @@ using Cohestra.Infrastructure.Registrations;
 using Cohestra.Infrastructure.Reports;
 using Cohestra.Infrastructure.Signup;
 using Cohestra.Infrastructure.Site;
+using Cohestra.Infrastructure.Support;
 using Cohestra.Infrastructure.Team;
 using Cohestra.Infrastructure.Tenants;
 using Cohestra.Infrastructure.Tenancy;
@@ -112,6 +114,9 @@ public static class DependencyInjection
             configuration.GetSection(AuthResendOtpRateLimitOptions.SectionName));
         services.Configure<StripeSettings>(configuration.GetSection(StripeSettings.SectionName));
         services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
+        services.Configure<SupportSettings>(configuration.GetSection(SupportSettings.SectionName));
+        services.Configure<SupportSubmissionRateLimitOptions>(
+            configuration.GetSection(SupportSubmissionRateLimitOptions.SectionName));
 
         services.AddHttpClient(nameof(GoogleRecaptchaVerifier));
 
@@ -155,6 +160,8 @@ public static class DependencyInjection
         services.AddScoped<IOutboxMessageHandler, RegistrationConfirmationOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, CampaignRecipientOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, BillingNotificationOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, SupportIssueTechOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, SupportIssueConfirmationOutboxHandler>();
         services.AddScoped<ITenantShellService, TenantShellService>();
         services.AddScoped<ITenantOrganizationService, TenantOrganizationService>();
         services.AddScoped<ITenantAccessService, TenantAccessService>();
@@ -185,6 +192,12 @@ public static class DependencyInjection
         services.AddSingleton<SitePreviewTokenService>();
         services.AddScoped<ClientDeduplicationService>();
         services.AddScoped<RegistrationNumberGenerator>();
+        services.AddScoped<SupportIssueNumberGenerator>();
+        services.AddScoped<SupportAttachmentService>();
+        services.AddScoped<SupportIssueTechEmailBuilder>();
+        services.AddScoped<SupportIssueConfirmationEmailBuilder>();
+        services.AddScoped<ISupportIssueService, SupportIssueService>();
+        services.AddSingleton<ISupportSubmissionRateLimiter, RedisSupportSubmissionRateLimiter>();
         services.AddSingleton<IPublicRegistrationRateLimiter, RedisPublicRegistrationRateLimiter>();
         services.AddSingleton<IPublicSignupRateLimiter, RedisPublicSignupRateLimiter>();
         services.AddSingleton<IPublicSignupVerifyRateLimiter, RedisPublicSignupVerifyRateLimiter>();

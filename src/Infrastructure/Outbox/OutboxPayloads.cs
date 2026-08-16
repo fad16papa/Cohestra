@@ -14,6 +14,8 @@ public sealed record BillingNotificationOutboxPayload(
     string PlainBody,
     string HtmlBody);
 
+public sealed record SupportIssueOutboxPayload(Guid IssueId, string IssueNumber);
+
 public static class BillingNotificationNoticeTypes
 {
     public const string TrialReminder = "trial_reminder";

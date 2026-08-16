@@ -50,6 +50,11 @@ public sealed class SendGridEmailSender(
             message.PlainTextBody,
             message.HtmlBody);
 
+        if (!string.IsNullOrWhiteSpace(message.ReplyToEmail))
+        {
+            mail.ReplyTo = new EmailAddress(message.ReplyToEmail.Trim());
+        }
+
         if (settings.UseSandbox)
         {
             mail.SetSandBoxMode(true);
@@ -66,6 +71,20 @@ public sealed class SendGridEmailSender(
                     Filename = attachment.FileName,
                     Disposition = "inline",
                     ContentId = attachment.ContentId,
+                });
+            }
+        }
+
+        if (message.FileAttachments is { Count: > 0 })
+        {
+            foreach (var attachment in message.FileAttachments)
+            {
+                mail.AddAttachment(new Attachment
+                {
+                    Content = Convert.ToBase64String(attachment.Content),
+                    Type = attachment.ContentType,
+                    Filename = attachment.FileName,
+                    Disposition = "attachment",
                 });
             }
         }

@@ -8,6 +8,7 @@ using Cohestra.Domain.Clients;
 using Cohestra.Domain.Registrations;
 using Cohestra.Domain.Site;
 using Cohestra.Domain.Outbox;
+using Cohestra.Domain.Support;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -96,6 +97,10 @@ public class CohestraDbContext : IdentityDbContext<ApplicationUser, IdentityRole
     public DbSet<StripeWebhookEvent> StripeWebhookEvents => Set<StripeWebhookEvent>();
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
+    public DbSet<SupportIssue> SupportIssues => Set<SupportIssue>();
+
+    public DbSet<SupportIssueAttachment> SupportIssueAttachments => Set<SupportIssueAttachment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
