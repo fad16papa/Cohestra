@@ -68,7 +68,7 @@ export function AuthFlowShell({
             </p>
           </div>
 
-          <div className="rounded-[16px] border border-line bg-paper p-6 shadow-[0_20px_40px_rgba(7,13,18,0.05)] sm:p-8">
+          <div className="rounded-[16px] border border-line bg-paper p-6 shadow-[0_20px_40px_rgba(7,13,18,0.05)] dark:shadow-[0_24px_48px_rgba(0,0,0,0.35)] sm:p-8">
             {children}
           </div>
 
