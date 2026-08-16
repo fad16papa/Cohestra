@@ -64,6 +64,15 @@ public sealed class SupportIssuesController(
             return BadRequestProblem($"You can attach up to {settings.MaxFiles} screenshots.");
         }
 
+        var reservation = await rateLimiter.TryReserveSubmissionAsync(
+            tenantId,
+            operatorUserId.Value,
+            cancellationToken);
+        if (reservation is null)
+        {
+            return RateLimitedProblem();
+        }
+
         var operatorDisplayName = User.FindFirst(JwtRegisteredClaimNames.Name)?.Value
             ?? User.FindFirst(ClaimTypes.Name)?.Value
             ?? operatorEmail;
@@ -76,6 +85,12 @@ public sealed class SupportIssuesController(
                 continue;
             }
 
+            if (file.Length > settings.MaxFileBytes)
+            {
+                await rateLimiter.ReleaseSubmissionAsync(reservation, cancellationToken);
+                return BadRequestProblem("Each screenshot must be 2MB or smaller.");
+            }
+
             await using var stream = file.OpenReadStream();
             using var buffer = new MemoryStream();
             await stream.CopyToAsync(buffer, cancellationToken);
@@ -83,11 +98,6 @@ public sealed class SupportIssuesController(
                 buffer.ToArray(),
                 file.FileName,
                 file.ContentType ?? "application/octet-stream"));
-        }
-
-        if (!await rateLimiter.IsSubmissionAllowedAsync(tenantId, operatorUserId.Value, cancellationToken))
-        {
-            return RateLimitedProblem();
         }
 
         try
@@ -104,11 +114,6 @@ public sealed class SupportIssuesController(
                     preparedFiles),
                 cancellationToken);
 
-            await rateLimiter.RecordSuccessfulSubmissionAsync(
-                tenantId,
-                operatorUserId.Value,
-                cancellationToken);
-
             var response = new SupportIssueResponse(
                 result.Id,
                 result.IssueNumber,
@@ -119,7 +124,13 @@ public sealed class SupportIssuesController(
         }
         catch (ArgumentException ex)
         {
+            await rateLimiter.ReleaseSubmissionAsync(reservation, cancellationToken);
             return BadRequestProblem(ex.Message);
+        }
+        catch
+        {
+            await rateLimiter.ReleaseSubmissionAsync(reservation, cancellationToken);
+            throw;
         }
     }
 

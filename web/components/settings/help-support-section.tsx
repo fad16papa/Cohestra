@@ -116,7 +116,10 @@ export function HelpSupportSection() {
       setSubject("");
       setDescription("");
       setFiles([]);
-      showToast("Support request submitted. You'll receive a confirmation email shortly.");
+      const operatorEmail = profile?.email ?? "your operator address";
+      showToast(
+        `Support request submitted. A confirmation email will be sent to ${operatorEmail}.`
+      );
       await loadRecent();
     } catch (submitError) {
       setError(

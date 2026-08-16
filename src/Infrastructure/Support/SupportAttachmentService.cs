@@ -43,19 +43,10 @@ public sealed class SupportAttachmentService(IOptions<SupportSettings> options)
         EnsureIssueDirectory(issueId);
 
         var attachmentId = Guid.CreateVersion7();
-        var extension = Path.GetExtension(fileName);
-        if (string.IsNullOrWhiteSpace(extension))
-        {
-            extension = normalizedContentType switch
-            {
-                "image/png" => ".png",
-                "image/jpeg" => ".jpg",
-                "image/webp" => ".webp",
-                _ => ".bin",
-            };
-        }
+        var extension = ExtensionForContentType(normalizedContentType);
+        var safeFileName = BuildSafeFileName(fileName, extension);
 
-        var relativePath = Path.Combine(issueId.ToString("D"), $"{attachmentId:N}{extension.ToLowerInvariant()}");
+        var relativePath = Path.Combine(issueId.ToString("D"), $"{attachmentId:N}{extension}");
         var absolutePath = GetAbsolutePath(relativePath);
         await File.WriteAllBytesAsync(absolutePath, content, cancellationToken);
 
@@ -63,7 +54,7 @@ public sealed class SupportAttachmentService(IOptions<SupportSettings> options)
         {
             Id = attachmentId,
             SupportIssueId = issueId,
-            FileName = TruncateFileName(Path.GetFileName(fileName)),
+            FileName = TruncateFileName(safeFileName),
             ContentType = normalizedContentType,
             SizeBytes = content.Length,
             RelativePath = relativePath.Replace('\\', '/'),
@@ -122,6 +113,26 @@ public sealed class SupportAttachmentService(IOptions<SupportSettings> options)
         fileName.Length <= MaxFileNameLength
             ? fileName
             : fileName[..MaxFileNameLength];
+
+    private static string ExtensionForContentType(string normalizedContentType) =>
+        normalizedContentType switch
+        {
+            "image/png" => ".png",
+            "image/jpeg" => ".jpg",
+            "image/webp" => ".webp",
+            _ => ".bin",
+        };
+
+    private static string BuildSafeFileName(string fileName, string extension)
+    {
+        var baseName = Path.GetFileNameWithoutExtension(fileName);
+        if (string.IsNullOrWhiteSpace(baseName))
+        {
+            baseName = "screenshot";
+        }
+
+        return $"{baseName}{extension}";
+    }
 
     private static string NormalizeContentType(string contentType)
     {
