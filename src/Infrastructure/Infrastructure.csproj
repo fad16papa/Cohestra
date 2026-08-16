@@ -36,4 +36,8 @@
     <InternalsVisibleTo Include="Infrastructure.Tests" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\cohestra-logo.png" />
+  </ItemGroup>
+
 </Project>

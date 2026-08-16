@@ -64,12 +64,14 @@ public sealed class RegistrationConfirmationEmailBuilderTests
     }
 
     [Fact]
-    public void Build_UsesLogoHeaderWhenHeroMissing()
+    public void Build_UsesSoftLogoBannerWhenHeroMissing()
     {
         var content = RegistrationConfirmationEmailBuilder.Build(CreateModel());
 
-        Assert.Contains("background-color:#000000", content.HtmlBody);
+        Assert.Contains(RegistrationConfirmationEmailBuilder.EmailBannerBackground, content.HtmlBody);
+        Assert.DoesNotContain("background-color:#000000", content.HtmlBody);
         Assert.Contains("https://example.com/brand/logo.png", content.HtmlBody);
+        Assert.Contains("width=\"96\"", content.HtmlBody);
     }
 
     [Fact]

@@ -162,13 +162,13 @@ public sealed class RegistrationNotificationServiceTests
     }
 
     [Fact]
-    public void ResolveLogoUrlForEmail_SkipsSvgLogo()
+    public void ResolveLogoUrlForEmail_UsesPngWhenSvgIsDefault()
     {
         var url = RegistrationNotificationService.ResolveLogoUrlForEmail(
             new EmailBrandingSettings(),
             new PublicWebOptions { BaseUrl = "https://cohestra.app" });
 
-        Assert.Null(url);
+        Assert.Equal("https://cohestra.app/brand/cohestra-logo-email.png", url);
     }
 
     [Fact]
@@ -259,13 +259,33 @@ public sealed class RegistrationNotificationServiceTests
     }
 
     [Fact]
-    public void ResolveLogoUrlForEmail_SkipsSvgLogoWithQueryString()
+    public void ResolveLogoUrlForEmail_FallsBackToPngWhenConfiguredLogoIsSvg()
     {
         var url = RegistrationNotificationService.ResolveLogoUrlForEmail(
             new EmailBrandingSettings { LogoUrl = "https://cdn.example.com/logo.svg?v=1" },
             new PublicWebOptions { BaseUrl = "https://cohestra.app" });
 
-        Assert.Null(url);
+        Assert.Equal("https://cohestra.app/brand/cohestra-logo-email.png", url);
+    }
+
+    [Fact]
+    public async Task SendConfirmationIfApplicableAsync_EmbedsPlatformLogoWhenNoHero()
+    {
+        await using var dbContext = CreateDbContext();
+        var (registrationId, _) = await SeedRegistrationAsync(dbContext, "elena@example.com");
+        var sender = new CapturingEmailSender();
+
+        var service = CreateService(dbContext, sender);
+        var result = await service.SendConfirmationIfApplicableAsync(registrationId);
+
+        Assert.True(result.Sent);
+        Assert.Single(sender.Messages);
+        Assert.Contains("cid:cohestra-brand-logo", sender.Messages[0].HtmlBody);
+        Assert.NotNull(sender.Messages[0].InlineAttachments);
+        Assert.Contains(
+            sender.Messages[0].InlineAttachments!,
+            attachment => attachment.ContentId == "cohestra-brand-logo");
+        Assert.DoesNotContain("background-color:#000000", sender.Messages[0].HtmlBody);
     }
 
     [Fact]

@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import { MarketingAmbientScene } from "@/components/marketing/marketing-ambient-scene";
 import { MarketingCookieConsent } from "@/components/marketing/marketing-cookie-consent";
+import { CohestraLogo } from "@/components/marketing/cohestra-logo";
 import { cn } from "@/lib/utils";
 
 const MARKETING_ROUTES = ["/", "/pricing", "/terms", "/privacy", "/signup"];
@@ -52,17 +53,7 @@ export function marketingCardSurfaceClass(extra?: string) {
 }
 
 export function MarketingWordmark({ className }: { className?: string }) {
-  return (
-    <Link
-      href="/"
-      className={cn(
-        "font-[family-name:var(--font-fraunces)] text-[1.55rem] font-medium tracking-[-0.04em] text-ink",
-        className
-      )}
-    >
-      Cohestra
-    </Link>
-  );
+  return <CohestraLogo href="/" size="md" wordmarkClassName={className} />;
 }
 
 const MARKETING_NAV_LINKS = [
