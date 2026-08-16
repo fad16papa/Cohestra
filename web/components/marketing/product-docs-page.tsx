@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { ArrowLeft, ArrowRight, BookOpen, Search } from "lucide-react";
 
 import {
   MarketingFooter,
@@ -8,15 +10,18 @@ import {
   marketingAtelierButtonClass,
   marketingCardClass,
 } from "@/components/marketing/marketing-shell";
-import { MarketingReveal } from "@/components/marketing/marketing-reveal";
 import { useMarketingHeaderScroll } from "@/components/marketing/use-marketing-header-scroll";
 import {
   PRODUCT_DOCS_EYEBROW,
+  PRODUCT_DOCS_GROUPS,
   PRODUCT_DOCS_INTRO,
   PRODUCT_DOCS_SECTIONS,
+  PRODUCT_DOCS_START_PATHS,
   PRODUCT_DOCS_TITLE,
   type DocsBlock,
+  type DocsSection,
 } from "@/lib/marketing/product-docs-content";
+import { cn } from "@/lib/utils";
 
 function DocsBlockView({ block }: { block: DocsBlock }) {
   if (block.type === "p") {
@@ -83,52 +88,181 @@ function DocsBlockView({ block }: { block: DocsBlock }) {
   );
 }
 
+function sectionMatchesQuery(section: DocsSection, query: string): boolean {
+  if (!query) {
+    return true;
+  }
+
+  const haystack = [
+    section.title,
+    ...section.blocks.flatMap((block) => {
+      if (block.type === "p" || block.type === "note") {
+        return [block.text];
+      }
+      if (block.type === "steps" || block.type === "list") {
+        return block.items;
+      }
+      return [...block.headers, ...block.rows.flat()];
+    }),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  return haystack.includes(query);
+}
+
 export function ProductDocsPage() {
   const { scrolled, anchorRef } = useMarketingHeaderScroll(true);
+  const [query, setQuery] = useState("");
+  const [activeId, setActiveId] = useState(PRODUCT_DOCS_SECTIONS[0]?.id ?? "");
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const visibleSections = useMemo(
+    () =>
+      PRODUCT_DOCS_SECTIONS.filter((section) =>
+        sectionMatchesQuery(section, normalizedQuery)
+      ),
+    [normalizedQuery]
+  );
+
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (hash && PRODUCT_DOCS_SECTIONS.some((section) => section.id === hash)) {
+      setActiveId(hash);
+    }
+
+    const headings = PRODUCT_DOCS_SECTIONS.map((section) =>
+      document.getElementById(section.id)
+    ).filter((node): node is HTMLElement => Boolean(node));
+
+    if (headings.length === 0) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.id) {
+          setActiveId(visible.target.id);
+        }
+      },
+      { rootMargin: "-20% 0px -65% 0px", threshold: [0.15, 0.4, 0.7] }
+    );
+
+    headings.forEach((heading) => observer.observe(heading));
+    return () => observer.disconnect();
+  }, []);
+
+  const activeIndex = PRODUCT_DOCS_SECTIONS.findIndex((section) => section.id === activeId);
+  const previous = activeIndex > 0 ? PRODUCT_DOCS_SECTIONS[activeIndex - 1] : null;
+  const next =
+    activeIndex >= 0 && activeIndex < PRODUCT_DOCS_SECTIONS.length - 1
+      ? PRODUCT_DOCS_SECTIONS[activeIndex + 1]
+      : null;
 
   return (
     <MarketingShell scrolled={scrolled}>
       <div ref={anchorRef} aria-hidden className="pointer-events-none absolute top-0 h-px w-full" />
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-5 py-12 sm:px-8 lg:flex-row lg:px-10 lg:py-16">
-        <aside className="lg:sticky lg:top-24 lg:h-fit lg:w-64 lg:shrink-0">
-          <p className="text-section text-gold">{PRODUCT_DOCS_EYEBROW}</p>
-          <p className="mt-2 text-sm text-stone">Jump to a part</p>
-          <nav aria-label="Document sections" className="mt-4">
-            <ol className="space-y-1.5 text-sm">
-              {PRODUCT_DOCS_SECTIONS.map((section) => (
-                <li key={section.id}>
-                  <a
-                    href={`#${section.id}`}
-                    className="text-stone hover:text-ink"
-                  >
-                    {section.title}
-                  </a>
-                </li>
-              ))}
-            </ol>
+      <div className="border-b border-line bg-paper-warm">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
+          <div className="flex items-start gap-3">
+            <span className="mt-1 inline-flex size-10 shrink-0 items-center justify-center rounded-[12px] bg-lagoon/10 text-lagoon">
+              <BookOpen className="size-5" aria-hidden />
+            </span>
+            <div>
+              <p className="text-section text-gold">{PRODUCT_DOCS_EYEBROW}</p>
+              <h1 className="text-marketing-section mt-2 text-ink">{PRODUCT_DOCS_TITLE}</h1>
+              <p className="mt-3 max-w-2xl text-base leading-relaxed text-stone">
+                {PRODUCT_DOCS_INTRO} This is the official Cohestra user manual.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {PRODUCT_DOCS_START_PATHS.map((path) => (
+              <a
+                key={path.href}
+                href={path.href}
+                className={marketingCardClass(
+                  "default",
+                  "block p-4 transition-colors hover:border-lagoon/40"
+                )}
+              >
+                <p className="font-semibold text-ink">{path.title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-stone">{path.detail}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-5 py-10 sm:px-8 lg:flex-row lg:px-10 lg:py-12">
+        <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] lg:w-64 lg:shrink-0 lg:overflow-y-auto">
+          <label className="relative block">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone"
+              aria-hidden
+            />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search the manual"
+              className="h-10 w-full rounded-xl border-0 bg-muted/55 pr-3 pl-9 text-sm text-ink outline-none ring-0 placeholder:text-stone focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-lagoon/30"
+            />
+            <span className="sr-only">Search the Document</span>
+          </label>
+
+          <nav aria-label="Document chapters" className="mt-6 space-y-5">
+            {PRODUCT_DOCS_GROUPS.map((group) => {
+              const items = visibleSections.filter((section) => section.group === group.id);
+              if (items.length === 0) {
+                return null;
+              }
+
+              return (
+                <div key={group.id}>
+                  <p className="text-[11px] font-semibold tracking-[0.14em] text-gold uppercase">
+                    {group.label}
+                  </p>
+                  <ol className="mt-2 space-y-0.5">
+                    {items.map((section) => (
+                      <li key={section.id}>
+                        <a
+                          href={`#${section.id}`}
+                          onClick={() => setActiveId(section.id)}
+                          className={cn(
+                            "block rounded-lg px-2.5 py-1.5 text-sm leading-snug",
+                            activeId === section.id
+                              ? "bg-lagoon/10 font-medium text-lagoon-deep"
+                              : "text-stone hover:bg-muted/60 hover:text-ink"
+                          )}
+                        >
+                          {section.title}
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              );
+            })}
           </nav>
         </aside>
 
         <article className="min-w-0 flex-1">
-          <MarketingReveal immediate delayMs={80}>
-            <h1 className="text-marketing-section text-ink">{PRODUCT_DOCS_TITLE}</h1>
-            <p className="mt-4 max-w-2xl text-base leading-relaxed text-stone">
-              {PRODUCT_DOCS_INTRO}
-            </p>
-          </MarketingReveal>
-
-          <div className="mt-10 space-y-10">
-            {PRODUCT_DOCS_SECTIONS.map((section, index) => (
-              <MarketingReveal key={section.id} delayMs={100 + index * 20}>
-                <section
-                  id={section.id}
-                  className={`${marketingCardClass("default")} scroll-mt-28 p-5 sm:p-7`}
-                >
-                  <h2 className="font-[family-name:var(--font-fraunces)] text-2xl font-medium tracking-[-0.03em] text-ink">
+          {visibleSections.length === 0 ? (
+            <p className="text-sm text-stone">No chapters match that search. Try a shorter word.</p>
+          ) : (
+            <div className="space-y-14">
+              {visibleSections.map((section) => (
+                <section key={section.id} id={section.id} className="scroll-mt-28">
+                  <h2 className="font-[family-name:var(--font-fraunces)] text-2xl font-medium tracking-[-0.03em] text-ink sm:text-[1.75rem]">
                     {section.title}
                   </h2>
-                  <div className="mt-4 space-y-4 text-sm leading-relaxed text-stone sm:text-[0.9375rem]">
+                  <div className="mt-5 space-y-4 text-[0.95rem] leading-relaxed text-stone">
                     {section.blocks.map((block, blockIndex) => (
                       <DocsBlockView
                         key={`${section.id}-${block.type}-${blockIndex}`}
@@ -137,18 +271,50 @@ export function ProductDocsPage() {
                     ))}
                   </div>
                 </section>
-              </MarketingReveal>
-            ))}
+              ))}
+            </div>
+          )}
+
+          <div className="mt-14 grid gap-3 border-t border-line pt-8 sm:grid-cols-2">
+            {previous ? (
+              <a
+                href={`#${previous.id}`}
+                className={marketingCardClass("default", "block p-4 hover:border-lagoon/40")}
+              >
+                <p className="inline-flex items-center gap-1 text-xs font-medium text-stone">
+                  <ArrowLeft className="size-3.5" aria-hidden />
+                  Previous
+                </p>
+                <p className="mt-1 font-medium text-ink">{previous.title}</p>
+              </a>
+            ) : (
+              <div />
+            )}
+            {next ? (
+              <a
+                href={`#${next.id}`}
+                className={marketingCardClass(
+                  "default",
+                  "block p-4 text-right hover:border-lagoon/40 sm:justify-self-end sm:text-right"
+                )}
+              >
+                <p className="inline-flex items-center justify-end gap-1 text-xs font-medium text-stone">
+                  Next
+                  <ArrowRight className="size-3.5" aria-hidden />
+                </p>
+                <p className="mt-1 font-medium text-ink">{next.title}</p>
+              </a>
+            ) : null}
           </div>
 
-          <MarketingReveal delayMs={200} className="mt-12 flex flex-wrap gap-3">
+          <div className="mt-10 flex flex-wrap gap-3">
             <Link href="/signup" className={marketingAtelierButtonClass("lagoon")}>
               Start free
             </Link>
             <Link href="/login" className={marketingAtelierButtonClass("ghost")}>
               Sign in
             </Link>
-          </MarketingReveal>
+          </div>
         </article>
       </div>
 

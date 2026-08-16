@@ -8,8 +8,42 @@ export type DocsBlock =
 export type DocsSection = {
   id: string;
   title: string;
+  group: "start" | "events" | "grow" | "account";
   blocks: DocsBlock[];
 };
+
+export const PRODUCT_DOCS_GROUPS: Array<{
+  id: DocsSection["group"];
+  label: string;
+}> = [
+  { id: "start", label: "Start here" },
+  { id: "events", label: "Run events" },
+  { id: "grow", label: "Keep and grow" },
+  { id: "account", label: "Account and plans" },
+];
+
+export const PRODUCT_DOCS_START_PATHS = [
+  {
+    href: "/docs#first-ten-minutes",
+    title: "First ten minutes",
+    detail: "Create an account and publish your first activity.",
+  },
+  {
+    href: "/docs#create-an-activity",
+    title: "Create an activity",
+    detail: "Name it, set the form, then share a QR code.",
+  },
+  {
+    href: "/docs#clients",
+    title: "Your people list",
+    detail: "Find someone, change their status, say hello.",
+  },
+  {
+    href: "/docs#plans",
+    title: "Plans in plain words",
+    detail: "What Basic, Core, and Pro include.",
+  },
+] as const;
 
 export const PRODUCT_DOCS_TITLE = "How to use Cohestra";
 export const PRODUCT_DOCS_EYEBROW = "Document";
@@ -20,6 +54,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "what-is-cohestra",
     title: "1. What is Cohestra?",
+    group: "start",
     blocks: [
       {
         type: "p",
@@ -48,6 +83,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "two-kinds-of-people",
     title: "2. Two kinds of people",
+    group: "start",
     blocks: [
       {
         type: "p",
@@ -78,6 +114,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "first-ten-minutes",
     title: "3. Your first ten minutes",
+    group: "start",
     blocks: [
       {
         type: "p",
@@ -103,6 +140,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "sign-up-and-sign-in",
     title: "4. Sign up and sign in",
+    group: "start",
     blocks: [
       {
         type: "p",
@@ -136,6 +174,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "the-left-menu",
     title: "5. The left menu",
+    group: "start",
     blocks: [
       {
         type: "p",
@@ -162,6 +201,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "dashboard",
     title: "6. Dashboard",
+    group: "events",
     blocks: [
       {
         type: "p",
@@ -185,6 +225,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "communities-and-categories",
     title: "7. Communities and categories",
+    group: "events",
     blocks: [
       {
         type: "p",
@@ -216,6 +257,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "create-an-activity",
     title: "8. Create an activity",
+    group: "events",
     blocks: [
       {
         type: "p",
@@ -242,6 +284,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "build-the-form",
     title: "9. Build the sign-up form",
+    group: "events",
     blocks: [
       {
         type: "p",
@@ -282,6 +325,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "publish-and-share",
     title: "10. Publish and share",
+    group: "events",
     blocks: [
       {
         type: "p",
@@ -317,6 +361,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "what-guests-see",
     title: "11. What guests see",
+    group: "events",
     blocks: [
       {
         type: "p",
@@ -346,6 +391,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "clients",
     title: "12. Clients — your people list",
+    group: "grow",
     blocks: [
       {
         type: "p",
@@ -386,6 +432,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "website",
     title: "13. Your public website",
+    group: "grow",
     blocks: [
       {
         type: "p",
@@ -412,6 +459,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "campaigns",
     title: "14. Email campaigns",
+    group: "grow",
     blocks: [
       {
         type: "p",
@@ -435,6 +483,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "reports",
     title: "15. Reports",
+    group: "grow",
     blocks: [
       {
         type: "p",
@@ -465,6 +514,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "settings-team-billing",
     title: "16. Settings, team, and billing",
+    group: "account",
     blocks: [
       {
         type: "p",
@@ -489,6 +539,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "plans",
     title: "17. Plans in plain words",
+    group: "account",
     blocks: [
       {
         type: "table",
@@ -525,6 +576,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "if-something-goes-wrong",
     title: "18. If something goes wrong",
+    group: "account",
     blocks: [
       {
         type: "table",
@@ -561,6 +613,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "words-we-use",
     title: "19. Words we use",
+    group: "account",
     blocks: [
       {
         type: "table",
