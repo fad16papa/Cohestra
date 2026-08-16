@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, ArrowRight, BookOpen, Search } from "lucide-react";
+import { BookOpen, Search } from "lucide-react";
 
 import {
   MarketingFooter,
   MarketingShell,
-  marketingAtelierButtonClass,
   marketingCardClass,
 } from "@/components/marketing/marketing-shell";
 import { useMarketingHeaderScroll } from "@/components/marketing/use-marketing-header-scroll";
@@ -155,13 +153,6 @@ export function ProductDocsPage() {
     return () => observer.disconnect();
   }, []);
 
-  const activeIndex = PRODUCT_DOCS_SECTIONS.findIndex((section) => section.id === activeId);
-  const previous = activeIndex > 0 ? PRODUCT_DOCS_SECTIONS[activeIndex - 1] : null;
-  const next =
-    activeIndex >= 0 && activeIndex < PRODUCT_DOCS_SECTIONS.length - 1
-      ? PRODUCT_DOCS_SECTIONS[activeIndex + 1]
-      : null;
-
   return (
     <MarketingShell scrolled={scrolled}>
       <div ref={anchorRef} aria-hidden className="pointer-events-none absolute top-0 h-px w-full" />
@@ -274,47 +265,6 @@ export function ProductDocsPage() {
               ))}
             </div>
           )}
-
-          <div className="mt-14 grid gap-3 border-t border-line pt-8 sm:grid-cols-2">
-            {previous ? (
-              <a
-                href={`#${previous.id}`}
-                className={marketingCardClass("default", "block p-4 hover:border-lagoon/40")}
-              >
-                <p className="inline-flex items-center gap-1 text-xs font-medium text-stone">
-                  <ArrowLeft className="size-3.5" aria-hidden />
-                  Previous
-                </p>
-                <p className="mt-1 font-medium text-ink">{previous.title}</p>
-              </a>
-            ) : (
-              <div />
-            )}
-            {next ? (
-              <a
-                href={`#${next.id}`}
-                className={marketingCardClass(
-                  "default",
-                  "block p-4 text-right hover:border-lagoon/40 sm:justify-self-end sm:text-right"
-                )}
-              >
-                <p className="inline-flex items-center justify-end gap-1 text-xs font-medium text-stone">
-                  Next
-                  <ArrowRight className="size-3.5" aria-hidden />
-                </p>
-                <p className="mt-1 font-medium text-ink">{next.title}</p>
-              </a>
-            ) : null}
-          </div>
-
-          <div className="mt-10 flex flex-wrap gap-3">
-            <Link href="/signup" className={marketingAtelierButtonClass("lagoon")}>
-              Start free
-            </Link>
-            <Link href="/login" className={marketingAtelierButtonClass("ghost")}>
-              Sign in
-            </Link>
-          </div>
         </article>
       </div>
 
