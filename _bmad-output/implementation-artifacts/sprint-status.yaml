@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-12T16:45:00Z
+last_updated: 2026-08-16T07:40:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -279,13 +279,13 @@ development_status:
   23-4-next-follow-up-date: done
   epic-23-retrospective: done
 
-  epic-25: in-progress
-  25-1-community-brand-kit: review
-  25-2-activity-registration-theme: review
-  25-3-public-registration-preset-renderer: review
-  25-4-admin-design-tab-live-preview: review
-  25-5-intro-copy-section-headers: review
-  epic-25-retrospective: optional
+  epic-25: done
+  25-1-community-brand-kit: done
+  25-2-activity-registration-theme: done
+  25-3-public-registration-preset-renderer: done
+  25-4-admin-design-tab-live-preview: done
+  25-5-intro-copy-section-headers: done
+  epic-25-retrospective: done
 
 action_items:
   - epic: 16
@@ -531,3 +531,30 @@ action_items:
     action: "Retroactively create story files 23.1–23.4 in implementation-artifacts (optional)"
     owner: Dev
     status: open
+
+  # Epic 25 retrospective action items (2026-08-16)
+  - epic: 25
+    action: "Operator UAT — Design tab presets, publish gate, confirmation email hero on Docker/droplet"
+    owner: Operator
+    status: open
+  - epic: 25
+    action: "Add EXPERIENCE.md Registration module (presets, inherit, touchpoints contract)"
+    owner: Dev
+    status: open
+  - epic: 25
+    action: "Invalidate public activity cache when community brand kit changes"
+    owner: Dev
+    status: open
+  - epic: 25
+    action: "Tenant ownership check on logo asset public URLs"
+    owner: Dev
+    status: open
+  - epic: 25
+    action: "Sync sprint-status.yaml on merge day for future epics (checklist or automation)"
+    owner: Product
+    status: open
+  - epic: 25
+    action: "Extend RegistrationThemeResolver for new touchpoints (SMS, calendar) — no forked hero logic"
+    owner: Dev
+    status: open
+    note: "Team agreement — not a single task until channel stories exist"
