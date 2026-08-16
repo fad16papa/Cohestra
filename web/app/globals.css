@@ -219,6 +219,103 @@
     transform: translateY(-1px);
   }
 
+  /* ── Marketing card hover system ───────────────────────────── */
+  .marketing-card {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    transition:
+      transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+      border-color 0.28s ease,
+      background-color 0.28s ease;
+  }
+
+  .marketing-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(
+      145deg,
+      color-mix(in oklch, var(--lagoon) 9%, transparent) 0%,
+      transparent 58%
+    );
+    opacity: 0;
+    transition: opacity 0.38s ease;
+    pointer-events: none;
+  }
+
+  .marketing-card > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .marketing-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 22px 46px rgba(7, 13, 18, 0.09);
+      border-color: color-mix(in oklch, var(--lagoon) 22%, var(--line));
+    }
+
+    .marketing-card:hover::before {
+      opacity: 1;
+    }
+
+    .marketing-card--highlighted:hover {
+      box-shadow:
+        0 28px 58px rgba(7, 13, 18, 0.11),
+        0 0 0 1px color-mix(in oklch, var(--lagoon) 28%, transparent);
+      border-color: var(--lagoon);
+    }
+
+    .marketing-card--dark::before {
+      background: linear-gradient(
+        145deg,
+        color-mix(in oklch, var(--gold) 12%, transparent) 0%,
+        transparent 60%
+      );
+    }
+
+    .marketing-card--dark:hover {
+      transform: translateY(-4px);
+      border-color: color-mix(in oklch, var(--paper) 22%, transparent);
+      background-color: color-mix(in oklch, var(--paper) 7%, transparent);
+      box-shadow: 0 20px 44px rgba(0, 0, 0, 0.28);
+    }
+
+    .marketing-card--accent:hover {
+      border-color: color-mix(in oklch, var(--lagoon) 55%, var(--line));
+      box-shadow: 0 22px 46px rgba(7, 13, 18, 0.08);
+    }
+
+    .marketing-card:hover .marketing-card-icon {
+      transform: scale(1.08);
+      background-color: color-mix(in oklch, var(--lagoon) 16%, transparent);
+    }
+  }
+
+  .marketing-card-icon {
+    transition:
+      transform 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+      background-color 0.28s ease;
+  }
+
+  .marketing-card-surface {
+    transition:
+      transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+      border-color 0.25s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .marketing-card-surface:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 32px rgba(7, 13, 18, 0.07);
+      border-color: color-mix(in oklch, var(--lagoon) 18%, var(--line));
+    }
+  }
+
   .marketing-scroll-rise {
     opacity: 1;
   }
@@ -327,6 +424,15 @@
     }
 
     .marketing-atelier-btn:hover {
+      transform: none;
+    }
+
+    .marketing-card:hover,
+    .marketing-card-surface:hover {
+      transform: none;
+    }
+
+    .marketing-card:hover .marketing-card-icon {
       transform: none;
     }
 

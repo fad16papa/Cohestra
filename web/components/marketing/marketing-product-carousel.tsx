@@ -133,7 +133,7 @@ function CarouselIconButton({
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="inline-flex size-10 items-center justify-center rounded-[10px] border border-line bg-paper text-ink transition-colors hover:border-ink/25 hover:bg-paper-warm"
+      className="inline-flex size-10 items-center justify-center rounded-[10px] border border-line bg-paper text-ink transition-[transform,colors,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-ink/25 hover:bg-paper-warm hover:shadow-[0_10px_24px_rgba(7,13,18,0.06)]"
     >
       {children}
     </button>
@@ -183,11 +183,12 @@ export function MarketingProductCarousel() {
           </p>
         </div>
 
-        <div
-          role="tablist"
-          aria-label="Product surfaces"
-          className="mt-10 flex flex-wrap justify-center gap-2 pb-1"
-        >
+        <div className="-mx-5 mt-10 overflow-x-auto px-5 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
+          <div
+            role="tablist"
+            aria-label="Product surfaces"
+            className="flex w-max min-w-full flex-nowrap justify-start gap-2 sm:w-auto sm:flex-wrap sm:justify-center"
+          >
           {PRODUCT_SLIDES.map((item, index) => {
             const isActive = index === activeIndex;
 
@@ -201,16 +202,17 @@ export function MarketingProductCarousel() {
                 aria-controls={`product-carousel-panel-${item.id}`}
                 onClick={() => goTo(index)}
                 className={cn(
-                  "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
+                  "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-[transform,colors,box-shadow] duration-300",
                   isActive
-                    ? "border-ink bg-ink text-paper"
-                    : "border-line bg-paper text-stone hover:border-ink/25 hover:text-ink"
+                    ? "border-ink bg-ink text-paper shadow-[0_8px_20px_rgba(7,13,18,0.12)]"
+                    : "border-line bg-paper text-stone hover:-translate-y-0.5 hover:border-ink/25 hover:text-ink hover:shadow-[0_10px_24px_rgba(7,13,18,0.06)]"
                 )}
               >
                 {item.navLabel}
               </button>
             );
           })}
+          </div>
         </div>
 
         <p className="sr-only" aria-live="polite" aria-atomic="true">
@@ -221,7 +223,7 @@ export function MarketingProductCarousel() {
           role="tabpanel"
           id={`product-carousel-panel-${slide.id}`}
           aria-labelledby={`product-carousel-tab-${slide.id}`}
-          className="mt-8 grid items-center gap-10 lg:grid-cols-[minmax(0,2.8fr)_minmax(0,3.2fr)] lg:gap-12"
+          className="mt-8 grid items-center gap-8 lg:grid-cols-[minmax(0,2.8fr)_minmax(0,3.2fr)] lg:gap-12"
         >
           <div
             key={`copy-${slide.id}`}
@@ -252,7 +254,7 @@ export function MarketingProductCarousel() {
           <div
             key={`visual-${slide.id}`}
             className={cn(
-              "min-h-[420px] min-w-0 sm:min-h-[460px] lg:min-h-[520px]",
+              "min-h-[360px] min-w-0 sm:min-h-[420px] lg:min-h-[520px]",
               !reducedMotion && "marketing-product-carousel-enter"
             )}
           >

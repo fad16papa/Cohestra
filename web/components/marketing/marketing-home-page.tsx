@@ -9,6 +9,7 @@ import {
   MarketingFooter,
   MarketingShell,
   marketingAtelierButtonClass,
+  marketingCardClass,
 } from "@/components/marketing/marketing-shell";
 import { MarketingAmbientScene } from "@/components/marketing/marketing-ambient-scene";
 import { MarketingHeroProductStack } from "@/components/marketing/marketing-hero-product-stack";
@@ -95,7 +96,7 @@ export function MarketingHomePage() {
           </MarketingReveal>
 
           <MarketingReveal immediate delayMs={520}>
-            <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-line pt-6">
+            <dl className="mt-10 grid grid-cols-3 gap-2 border-t border-line pt-6 sm:gap-4">
               {HERO_STATS.map((stat) => (
                 <div key={stat.label}>
                   <dt className="sr-only">{stat.label}</dt>
@@ -204,9 +205,9 @@ export function MarketingHomePage() {
                 <MarketingReveal
                   key={feature.title}
                   delayMs={marketingRevealDelay(index, 80, 45)}
-                  className="group rounded-[16px] border border-line bg-paper p-6 transition-shadow hover:shadow-[0_20px_44px_rgba(7,13,18,0.08)]"
+                  className={marketingCardClass("default", "p-6")}
                 >
-                  <span className="inline-flex size-11 items-center justify-center rounded-[12px] bg-lagoon/10 text-lagoon">
+                  <span className="marketing-card-icon inline-flex size-11 items-center justify-center rounded-[12px] bg-lagoon/10 text-lagoon">
                     <Icon className="size-5" aria-hidden />
                   </span>
                   <h3 className="mt-4 font-[family-name:var(--font-fraunces)] text-[1.2rem] font-medium tracking-[-0.02em] text-ink">
@@ -218,7 +219,7 @@ export function MarketingHomePage() {
             })}
             <MarketingReveal
               delayMs={marketingRevealDelay(LANDING_FEATURES.length, 80, 45)}
-              className="flex flex-col justify-between rounded-[16px] border border-lagoon/40 bg-lagoon/[0.06] p-6"
+              className={marketingCardClass("accent", "flex flex-col justify-between p-6")}
             >
               <div>
                 <h3 className="font-[family-name:var(--font-fraunces)] text-[1.2rem] font-medium tracking-[-0.02em] text-ink">
@@ -287,7 +288,7 @@ export function MarketingHomePage() {
               <MarketingReveal
                 key={outcome.headline}
                 delayMs={marketingRevealDelay(index + 1)}
-                className="flex h-full flex-col rounded-[16px] border border-paper/10 bg-paper/[0.04] p-6"
+                className={marketingCardClass("dark", "flex h-full flex-col p-6")}
               >
                 <h3 className="font-[family-name:var(--font-fraunces)] text-lg font-medium tracking-[-0.02em] text-paper">
                   {outcome.headline}
@@ -353,7 +354,7 @@ export function MarketingHomePage() {
           <dl className="mt-10 space-y-6">
             {LANDING_FAQ.map((item, index) => (
               <MarketingReveal key={item.question} delayMs={marketingRevealDelay(index + 1)}>
-                <div className="rounded-[14px] border border-line bg-paper p-5">
+                <div className={marketingCardClass("default", "p-5")}>
                   <dt className="font-semibold text-ink">{item.question}</dt>
                   <dd className="mt-2 text-sm leading-relaxed text-stone">{item.answer}</dd>
                 </div>

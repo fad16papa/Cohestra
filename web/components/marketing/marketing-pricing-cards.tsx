@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { marketingAtelierButtonClass } from "@/components/marketing/marketing-shell";
+import { marketingAtelierButtonClass, marketingCardClass } from "@/components/marketing/marketing-shell";
 import { MarketingReveal, marketingRevealDelay } from "@/components/marketing/marketing-reveal";
 import { MARKETING_PLANS } from "@/lib/marketing/pricing-plans";
 import { cn } from "@/lib/utils";
@@ -35,7 +35,7 @@ export function PricingIntervalToggle({
     <div
       role="radiogroup"
       aria-label="Billing interval"
-      className="inline-flex rounded-[12px] border border-line bg-paper-warm p-1"
+      className="inline-flex max-w-full flex-wrap rounded-[12px] border border-line bg-paper-warm p-1"
     >
       {(["monthly", "annual"] as const).map((value) => {
         const active = interval === value;
@@ -64,7 +64,7 @@ export function PricingIntervalToggle({
 
 export function PricingPlanGrid({ interval }: { interval: PricingInterval }) {
   return (
-    <div className="grid items-stretch gap-6 lg:grid-cols-2 xl:grid-cols-4">
+    <div className="grid items-stretch gap-5 sm:grid-cols-2 sm:gap-6 xl:grid-cols-4">
       {MARKETING_PLANS.map((plan, index) => {
         const showAnnual = interval === "annual" && Boolean(plan.annualMonthlyEquivalent);
         const pricePrimary = showAnnual ? plan.annualMonthlyEquivalent : plan.monthlyPrice;
@@ -79,10 +79,11 @@ export function PricingPlanGrid({ interval }: { interval: PricingInterval }) {
             key={plan.id}
             delayMs={marketingRevealDelay(index, 120, 70)}
             className={cn(
-              "relative grid h-full min-h-[520px] grid-rows-[auto_auto_1fr_auto] rounded-[16px] border bg-paper p-6",
-              plan.highlighted
-                ? "border-lagoon shadow-[0_28px_60px_rgba(7,13,18,0.08)]"
-                : "border-line"
+              marketingCardClass(
+                plan.highlighted ? "highlighted" : "default",
+                "relative grid h-full min-h-0 grid-rows-[auto_auto_1fr_auto] p-6 sm:min-h-[480px] xl:min-h-[520px]"
+              ),
+              plan.highlighted && "shadow-[0_28px_60px_rgba(7,13,18,0.08)]"
             )}
           >
             {plan.highlighted ? (

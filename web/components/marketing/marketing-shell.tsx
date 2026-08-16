@@ -32,6 +32,25 @@ export function marketingAtelierButtonClass(
   );
 }
 
+/** Shared card surface with lift, glow, and gradient hover (desktop pointer only). */
+export function marketingCardClass(
+  variant: "default" | "highlighted" | "dark" | "accent" = "default",
+  extra?: string
+) {
+  return cn(
+    "marketing-card rounded-[16px] border",
+    variant === "default" && "border-line bg-paper",
+    variant === "highlighted" && "marketing-card--highlighted border-lagoon bg-paper",
+    variant === "dark" && "marketing-card--dark border-paper/10 bg-paper/[0.04]",
+    variant === "accent" && "marketing-card--accent border-lagoon/40 bg-lagoon/[0.06]",
+    extra
+  );
+}
+
+export function marketingCardSurfaceClass(extra?: string) {
+  return cn("marketing-card-surface rounded-[14px] border border-line bg-paper", extra);
+}
+
 export function MarketingWordmark({ className }: { className?: string }) {
   return (
     <Link

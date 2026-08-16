@@ -5,6 +5,7 @@ import { MessageCircle, Search, Users } from "lucide-react";
 
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import { PersonAvatar } from "@/components/shared/person-avatar";
+import { marketingCardSurfaceClass } from "@/components/marketing/marketing-shell";
 import type { LeadStatus } from "@/lib/clients-api";
 import { cn } from "@/lib/utils";
 
@@ -198,7 +199,7 @@ function ShowcaseClientProfile({ compact = false }: { compact?: boolean }) {
         <LeadStatusBadge status={selected.status} />
       </div>
 
-      <div className="mt-5 rounded-[14px] border border-line bg-paper p-4 sm:p-5">
+      <div className={marketingCardSurfaceClass("mt-5 p-4 sm:p-5")}>
         <p className="text-[0.6875rem] font-semibold tracking-wide text-stone uppercase">
           Contact
         </p>
@@ -216,7 +217,7 @@ function ShowcaseClientProfile({ compact = false }: { compact?: boolean }) {
         </span>
       </div>
 
-      <div className="mt-5 flex-1 rounded-[14px] border border-line bg-paper p-4 sm:p-5">
+      <div className={marketingCardSurfaceClass("mt-5 flex-1 p-4 sm:p-5")}>
         <p className="text-[0.6875rem] font-semibold tracking-wide text-stone uppercase">
           Relationship timeline
         </p>
