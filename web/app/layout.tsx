@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Fraunces, Geist, Geist_Mono, Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Geist, Geist_Mono, Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { fraunces } from "@/lib/fonts";
 import { BrandAccentSync } from "@/components/theme/brand-accent-sync";
 import { MarketingThemeLock } from "@/components/theme/marketing-theme-lock";
 import { ThemeProvider } from "@/components/theme/theme-provider";
@@ -23,12 +24,6 @@ const geistMono = Geist_Mono({
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-});
-
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
 });
 
 const jakarta = Plus_Jakarta_Sans({
