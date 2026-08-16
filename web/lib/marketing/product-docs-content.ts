@@ -606,6 +606,10 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
             "The website still shows the old page",
             "You must Publish the website draft. Saving a draft does not change the live site.",
           ],
+          [
+            "Still stuck?",
+            "Open Settings → Help & support, attach a screenshot, and save your support ID.",
+          ],
         ],
       },
     ],

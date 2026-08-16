@@ -297,6 +297,340 @@ export async function setPlatformTenantComplimentary(
   return parseTenant(asRecord(await response.json()));
 }
 
+export type PlatformSupportIssueListItem = {
+  id: string;
+  issueNumber: string;
+  tenantSlug: string;
+  operatorEmail: string;
+  subject: string;
+  status: string;
+  createdAt: string;
+};
+
+export type PlatformSupportIssueListResponse = {
+  items: PlatformSupportIssueListItem[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+};
+
+export type PlatformSupportAttachment = {
+  id: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  createdAt: string;
+};
+
+export type PlatformSupportIssueDetail = {
+  id: string;
+  issueNumber: string;
+  tenantId: string;
+  tenantSlug: string;
+  tenantName: string;
+  plan: string;
+  operatorEmail: string;
+  operatorDisplayName: string;
+  subject: string;
+  description: string;
+  status: string;
+  userAgent: string | null;
+  internalNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+  attachments: PlatformSupportAttachment[];
+};
+
+export type PlatformSupportReportPreset = "weekly" | "monthly" | "custom";
+
+export type PlatformSupportReportPeriod = {
+  preset: string;
+  startAt: string;
+  endAt: string;
+  computedAt: string;
+};
+
+export type PlatformSupportReport = {
+  period: PlatformSupportReportPeriod;
+  openedInPeriod: number;
+  resolvedOrClosedInPeriod: number;
+  stillOpen: number;
+  countsByStatus: Array<{ status: string; count: number }>;
+  topTenants: Array<{ tenantSlug: string; tenantName: string; count: number }>;
+  dailyOpenedTrend: Array<{ date: string; openedCount: number }>;
+};
+
+export const PLATFORM_SUPPORT_STATUSES = [
+  "Open",
+  "InProgress",
+  "WaitingOnOperator",
+  "Resolved",
+  "Closed",
+] as const;
+
+function parseSupportListItem(raw: Record<string, unknown>): PlatformSupportIssueListItem {
+  const id = pickString(raw, "id", "Id");
+  const issueNumber = pickString(raw, "issueNumber", "IssueNumber");
+  const tenantSlug = pickString(raw, "tenantSlug", "TenantSlug");
+  const operatorEmail = pickString(raw, "operatorEmail", "OperatorEmail");
+  const subject = pickString(raw, "subject", "Subject");
+  const status = pickString(raw, "status", "Status");
+  const createdAt = pickString(raw, "createdAt", "CreatedAt");
+  if (!id || !issueNumber || !tenantSlug || !operatorEmail || !subject || !status || !createdAt) {
+    throw new Error("Invalid support issue list item");
+  }
+  return { id, issueNumber, tenantSlug, operatorEmail, subject, status, createdAt };
+}
+
+function parseSupportAttachment(raw: Record<string, unknown>): PlatformSupportAttachment {
+  const id = pickString(raw, "id", "Id");
+  const fileName = pickString(raw, "fileName", "FileName");
+  const contentType = pickString(raw, "contentType", "ContentType");
+  const createdAt = pickString(raw, "createdAt", "CreatedAt");
+  if (!id || !fileName || !contentType || !createdAt) {
+    throw new Error("Invalid support attachment");
+  }
+  return {
+    id,
+    fileName,
+    contentType,
+    sizeBytes: pickNumber(raw, "sizeBytes", "SizeBytes"),
+    createdAt,
+  };
+}
+
+function parseSupportDetail(raw: Record<string, unknown>): PlatformSupportIssueDetail {
+  const id = pickString(raw, "id", "Id");
+  const issueNumber = pickString(raw, "issueNumber", "IssueNumber");
+  const tenantId = pickString(raw, "tenantId", "TenantId");
+  const tenantSlug = pickString(raw, "tenantSlug", "TenantSlug");
+  const tenantName = pickString(raw, "tenantName", "TenantName");
+  const plan = pickString(raw, "plan", "Plan");
+  const operatorEmail = pickString(raw, "operatorEmail", "OperatorEmail");
+  const operatorDisplayName = pickString(raw, "operatorDisplayName", "OperatorDisplayName");
+  const subject = pickString(raw, "subject", "Subject");
+  const description = pickString(raw, "description", "Description");
+  const status = pickString(raw, "status", "Status");
+  const createdAt = pickString(raw, "createdAt", "CreatedAt");
+  const updatedAt = pickString(raw, "updatedAt", "UpdatedAt");
+  if (
+    !id ||
+    !issueNumber ||
+    !tenantId ||
+    !tenantSlug ||
+    !tenantName ||
+    !plan ||
+    !operatorEmail ||
+    !operatorDisplayName ||
+    !subject ||
+    !description ||
+    !status ||
+    !createdAt ||
+    !updatedAt
+  ) {
+    throw new Error("Invalid support issue detail");
+  }
+
+  const attachmentsRaw = raw.attachments ?? raw.Attachments;
+  return {
+    id,
+    issueNumber,
+    tenantId,
+    tenantSlug,
+    tenantName,
+    plan,
+    operatorEmail,
+    operatorDisplayName,
+    subject,
+    description,
+    status,
+    userAgent: pickString(raw, "userAgent", "UserAgent"),
+    internalNote: pickString(raw, "internalNote", "InternalNote"),
+    createdAt,
+    updatedAt,
+    attachments: Array.isArray(attachmentsRaw)
+      ? attachmentsRaw.map((item) => parseSupportAttachment(asRecord(item)))
+      : [],
+  };
+}
+
+function parseSupportReport(raw: Record<string, unknown>): PlatformSupportReport {
+  const periodRaw = asRecord(raw.period ?? raw.Period);
+  const preset = pickString(periodRaw, "preset", "Preset");
+  const startAt = pickString(periodRaw, "startAt", "StartAt");
+  const endAt = pickString(periodRaw, "endAt", "EndAt");
+  const computedAt = pickString(periodRaw, "computedAt", "ComputedAt");
+  if (!preset || !startAt || !endAt || !computedAt) {
+    throw new Error("Invalid support report period");
+  }
+
+  const countsRaw = raw.countsByStatus ?? raw.CountsByStatus;
+  const topTenantsRaw = raw.topTenants ?? raw.TopTenants;
+  const trendRaw = raw.dailyOpenedTrend ?? raw.DailyOpenedTrend;
+
+  return {
+    period: { preset, startAt, endAt, computedAt },
+    openedInPeriod: pickNumber(raw, "openedInPeriod", "OpenedInPeriod"),
+    resolvedOrClosedInPeriod: pickNumber(
+      raw,
+      "resolvedOrClosedInPeriod",
+      "ResolvedOrClosedInPeriod"
+    ),
+    stillOpen: pickNumber(raw, "stillOpen", "StillOpen"),
+    countsByStatus: Array.isArray(countsRaw)
+      ? countsRaw.map((item) => {
+          const row = asRecord(item);
+          return {
+            status: pickString(row, "status", "Status") ?? "Unknown",
+            count: pickNumber(row, "count", "Count"),
+          };
+        })
+      : [],
+    topTenants: Array.isArray(topTenantsRaw)
+      ? topTenantsRaw.map((item) => {
+          const row = asRecord(item);
+          return {
+            tenantSlug: pickString(row, "tenantSlug", "TenantSlug") ?? "",
+            tenantName: pickString(row, "tenantName", "TenantName") ?? "",
+            count: pickNumber(row, "count", "Count"),
+          };
+        })
+      : [],
+    dailyOpenedTrend: Array.isArray(trendRaw)
+      ? trendRaw.map((item) => {
+          const row = asRecord(item);
+          return {
+            date: pickString(row, "date", "Date") ?? "",
+            openedCount: pickNumber(row, "openedCount", "OpenedCount"),
+          };
+        })
+      : [],
+  };
+}
+
+function buildSupportReportParams(options: {
+  preset: PlatformSupportReportPreset;
+  from?: string;
+  to?: string;
+}): URLSearchParams {
+  const params = new URLSearchParams();
+  params.set("preset", options.preset);
+  if (options.preset === "custom") {
+    if (options.from) {
+      params.set("from", options.from);
+    }
+    if (options.to) {
+      params.set("to", options.to);
+    }
+  }
+  return params;
+}
+
+export async function listPlatformSupportIssues(
+  authFetch: AuthFetch,
+  options: { search?: string; status?: string; page?: number; pageSize?: number } = {}
+): Promise<PlatformSupportIssueListResponse> {
+  const params = new URLSearchParams();
+  if (options.search?.trim()) {
+    params.set("search", options.search.trim());
+  }
+  if (options.status?.trim()) {
+    params.set("status", options.status.trim());
+  }
+  params.set("page", String(options.page ?? 1));
+  params.set("pageSize", String(options.pageSize ?? 25));
+
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/support-issues?${params.toString()}`
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+
+  const raw = asRecord(await response.json());
+  const itemsRaw = raw.items ?? raw.Items;
+  return {
+    items: Array.isArray(itemsRaw)
+      ? itemsRaw.map((item) => parseSupportListItem(asRecord(item)))
+      : [],
+    page: pickNumber(raw, "page", "Page") || 1,
+    pageSize: pickNumber(raw, "pageSize", "PageSize") || 25,
+    totalCount: pickNumber(raw, "totalCount", "TotalCount"),
+  };
+}
+
+export async function getPlatformSupportIssue(
+  authFetch: AuthFetch,
+  issueId: string
+): Promise<PlatformSupportIssueDetail> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/support-issues/${issueId}`
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return parseSupportDetail(asRecord(await response.json()));
+}
+
+export async function updatePlatformSupportIssue(
+  authFetch: AuthFetch,
+  issueId: string,
+  body: { status?: string; internalNote?: string | null }
+): Promise<PlatformSupportIssueDetail> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/support-issues/${issueId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: body.status,
+        internalNote: body.internalNote,
+      }),
+    }
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return parseSupportDetail(asRecord(await response.json()));
+}
+
+export function platformSupportAttachmentUrl(issueId: string, attachmentId: string): string {
+  return `${getPublicApiBaseUrl()}/api/v1/platform/support-issues/${issueId}/attachments/${attachmentId}`;
+}
+
+export async function getPlatformSupportReport(
+  authFetch: AuthFetch,
+  options: { preset: PlatformSupportReportPreset; from?: string; to?: string }
+): Promise<PlatformSupportReport> {
+  const params = buildSupportReportParams(options);
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/reports/support?${params.toString()}`
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return parseSupportReport(asRecord(await response.json()));
+}
+
+export async function exportPlatformSupportReportCsv(
+  authFetch: AuthFetch,
+  options: { preset: PlatformSupportReportPreset; from?: string; to?: string }
+): Promise<{ blob: Blob; fileName: string }> {
+  const params = buildSupportReportParams(options);
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/reports/support/export?${params.toString()}`
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get("content-disposition") ?? "";
+  const match = /filename="?([^";]+)"?/i.exec(disposition);
+  const fileName = match?.[1] ?? "support-report.csv";
+  return { blob, fileName };
+}
+
 /** Convenience when a component does not already have authFetch from context. */
 export function platformAuthFetch(
   onSessionExpired?: () => void

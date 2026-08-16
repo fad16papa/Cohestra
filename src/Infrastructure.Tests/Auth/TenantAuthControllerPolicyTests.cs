@@ -64,7 +64,13 @@ public sealed class TenantAuthControllerPolicyTests
     [Fact]
     public void Platform_controllers_use_PlatformAdminOnly_policy()
     {
-        foreach (var type in new[] { typeof(PlatformMeController), typeof(PlatformTenantsController) })
+        foreach (var type in new[]
+                 {
+                     typeof(PlatformMeController),
+                     typeof(PlatformTenantsController),
+                     typeof(PlatformSupportIssuesController),
+                     typeof(PlatformSupportReportsController),
+                 })
         {
             var authorize = type.GetCustomAttributes<AuthorizeAttribute>(inherit: true).ToArray();
             Assert.Contains(authorize, a => a.Policy == TenantAuthPolicies.PlatformAdminOnly);
