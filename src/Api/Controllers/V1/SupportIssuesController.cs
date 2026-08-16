@@ -20,7 +20,8 @@ public sealed class SupportIssuesController(
     ISupportIssueService supportIssueService,
     ISupportSubmissionRateLimiter rateLimiter,
     ICurrentTenant currentTenant,
-    IOptions<SupportSettings> supportSettings) : ControllerBase
+    IOptions<SupportSettings> supportSettings,
+    IOptions<SupportSubmissionRateLimitOptions> rateLimitOptions) : ControllerBase
 {
     [HttpPost]
     [RequestSizeLimit(8 * 1024 * 1024)]
@@ -56,12 +57,6 @@ public sealed class SupportIssuesController(
             return BadRequestProblem("Subject and description are required.");
         }
 
-        var clientIp = PublicRegistrationRateLimitMiddleware.ResolveClientIdentifier(HttpContext);
-        if (!await rateLimiter.AllowSubmissionAsync(tenantId, operatorUserId.Value, clientIp, cancellationToken))
-        {
-            return RateLimitedProblem();
-        }
-
         var settings = supportSettings.Value;
         var uploadFiles = files ?? [];
         if (uploadFiles.Count > settings.MaxFiles)
@@ -81,11 +76,18 @@ public sealed class SupportIssuesController(
                 continue;
             }
 
+            await using var stream = file.OpenReadStream();
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer, cancellationToken);
             preparedFiles.Add(new SupportIssueUploadFile(
-                file.OpenReadStream(),
+                buffer.ToArray(),
                 file.FileName,
-                file.ContentType ?? "application/octet-stream",
-                file.Length));
+                file.ContentType ?? "application/octet-stream"));
+        }
+
+        if (!await rateLimiter.IsSubmissionAllowedAsync(tenantId, operatorUserId.Value, cancellationToken))
+        {
+            return RateLimitedProblem();
         }
 
         try
@@ -102,13 +104,18 @@ public sealed class SupportIssuesController(
                     preparedFiles),
                 cancellationToken);
 
+            await rateLimiter.RecordSuccessfulSubmissionAsync(
+                tenantId,
+                operatorUserId.Value,
+                cancellationToken);
+
             var response = new SupportIssueResponse(
                 result.Id,
                 result.IssueNumber,
                 result.Status,
                 result.CreatedAt);
 
-            return CreatedAtAction(nameof(List), response);
+            return CreatedAtAction(nameof(List), null, response);
         }
         catch (ArgumentException ex)
         {
@@ -173,12 +180,17 @@ public sealed class SupportIssuesController(
     private ObjectResult RateLimitedProblem()
     {
         Response.ContentType = "application/problem+json";
+        var limits = rateLimitOptions.Value;
+        var windowLabel = limits.WindowSeconds >= 3600 && limits.WindowSeconds % 3600 == 0
+            ? $"{limits.WindowSeconds / 3600} hour{(limits.WindowSeconds / 3600 == 1 ? "" : "s")}"
+            : $"{limits.WindowSeconds} seconds";
 
         return new ObjectResult(new ProblemDetails
         {
             Status = StatusCodes.Status429TooManyRequests,
             Title = "Too many support requests",
-            Detail = "You can submit up to 5 support requests per hour. Please wait before trying again.",
+            Detail =
+                $"You can submit up to {limits.MaxSubmissions} support requests per {windowLabel}. Please wait before trying again.",
             Instance = HttpContext.Request.Path,
         })
         {

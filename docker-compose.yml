@@ -37,6 +37,7 @@ services:
       - "8080"
     volumes:
       - campaign_assets_data:/app/data/campaign-assets
+      - support_attachments_data:/app/data/support-attachments
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       DEV_TENANT_SLUG: ${DEV_TENANT_SLUG:-default}
@@ -57,6 +58,7 @@ services:
       PublicWeb__BaseUrl: ${PUBLIC_BASE_URL:-http://localhost}
       CampaignAssets__StoragePath: /app/data/campaign-assets
       CampaignAssets__PublicApiBaseUrl: ${PUBLIC_BASE_URL:-http://localhost}
+      Support__AttachmentStoragePath: /app/data/support-attachments
       Cors__AllowedOrigins__0: ${PUBLIC_BASE_URL:-http://localhost}
       SendGrid__ApiKey: ${SendGrid__ApiKey:-}
       SendGrid__FromEmail: ${SendGrid__FromEmail:-noreply@cohestra.app}
@@ -156,4 +158,5 @@ services:
 volumes:
   postgres_data:
   campaign_assets_data:
+  support_attachments_data:
 

@@ -7,6 +7,7 @@ using Cohestra.Infrastructure.Outbox;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 
 namespace Cohestra.Infrastructure.Support;
 
@@ -17,6 +18,10 @@ public sealed class SupportIssueService(
     IOutboxPublisher outboxPublisher,
     ILogger<SupportIssueService> logger) : ISupportIssueService
 {
+    private const int MaxIssueNumberAttempts = 3;
+    private const int MaxOperatorDisplayNameLength = 200;
+    private const int MaxUserAgentLength = 512;
+
     public async Task<SupportIssueCreateResult> CreateAsync(
         SupportIssueCreateRequest request,
         CancellationToken cancellationToken = default)
@@ -41,69 +46,99 @@ public sealed class SupportIssueService(
             ?? throw new InvalidOperationException($"Tenant {request.TenantId} was not found.");
 
         var now = DateTimeOffset.UtcNow;
-        var issueId = Guid.CreateVersion7();
-        var issueNumber = await numberGenerator.GenerateNextAsync(now, cancellationToken);
-
-        var issue = new SupportIssue
-        {
-            Id = issueId,
-            TenantId = request.TenantId,
-            IssueNumber = issueNumber,
-            SubmittedByUserId = request.OperatorUserId,
-            Subject = request.Subject.Trim(),
-            Description = request.Description.Trim(),
-            Status = SupportIssueStatus.Open,
-            OperatorEmail = request.OperatorEmail.Trim(),
-            OperatorDisplayName = string.IsNullOrWhiteSpace(request.OperatorDisplayName)
+        var operatorDisplayName = Truncate(
+            string.IsNullOrWhiteSpace(request.OperatorDisplayName)
                 ? request.OperatorEmail.Trim()
                 : request.OperatorDisplayName.Trim(),
-            TenantSlug = tenant.Slug,
-            TenantName = tenant.Name,
-            Plan = tenant.Plan,
-            UserAgent = string.IsNullOrWhiteSpace(request.UserAgent) ? null : request.UserAgent.Trim(),
-            CreatedAt = now,
-            UpdatedAt = now,
-        };
+            MaxOperatorDisplayNameLength);
+        var userAgent = string.IsNullOrWhiteSpace(request.UserAgent)
+            ? null
+            : Truncate(request.UserAgent.Trim(), MaxUserAgentLength);
 
-        foreach (var file in request.Files)
+        for (var attempt = 0; attempt < MaxIssueNumberAttempts; attempt++)
         {
-            var attachment = await attachmentService.SaveAsync(
-                issueId,
-                file.Content,
-                file.FileName,
-                file.ContentType,
-                cancellationToken);
-            issue.Attachments.Add(attachment);
+            var issueId = Guid.CreateVersion7();
+            var issueNumber = await numberGenerator.GenerateNextAsync(now, cancellationToken);
+
+            try
+            {
+                var issue = new SupportIssue
+                {
+                    Id = issueId,
+                    TenantId = request.TenantId,
+                    IssueNumber = issueNumber,
+                    SubmittedByUserId = request.OperatorUserId,
+                    Subject = request.Subject.Trim(),
+                    Description = request.Description.Trim(),
+                    Status = SupportIssueStatus.Open,
+                    OperatorEmail = request.OperatorEmail.Trim(),
+                    OperatorDisplayName = operatorDisplayName,
+                    TenantSlug = tenant.Slug,
+                    TenantName = tenant.Name,
+                    Plan = tenant.Plan,
+                    UserAgent = userAgent,
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                };
+
+                foreach (var file in request.Files)
+                {
+                    var attachment = await attachmentService.SaveAsync(
+                        issueId,
+                        file.Content,
+                        file.FileName,
+                        file.ContentType,
+                        cancellationToken);
+                    issue.Attachments.Add(attachment);
+                }
+
+                dbContext.SupportIssues.Add(issue);
+
+                var techPayload = JsonSerializer.Serialize(new SupportIssueOutboxPayload(issueId, issueNumber));
+                outboxPublisher.Enqueue(
+                    request.TenantId,
+                    OutboxMessageTypes.SupportIssueTech,
+                    techPayload,
+                    $"support:{issueId:D}:tech");
+
+                outboxPublisher.Enqueue(
+                    request.TenantId,
+                    OutboxMessageTypes.SupportIssueConfirmation,
+                    techPayload,
+                    $"support:{issueId:D}:confirmation");
+
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                logger.LogInformation(
+                    "Created support issue {IssueNumber} for tenant {TenantId} by operator {OperatorUserId}.",
+                    issueNumber,
+                    request.TenantId,
+                    request.OperatorUserId);
+
+                return new SupportIssueCreateResult(
+                    issue.Id,
+                    issue.IssueNumber,
+                    issue.Status.ToString(),
+                    issue.CreatedAt);
+            }
+            catch (DbUpdateException ex) when (IsIssueNumberUniqueViolation(ex) && attempt < MaxIssueNumberAttempts - 1)
+            {
+                dbContext.ChangeTracker.Clear();
+                attachmentService.DeleteIssueAttachments(issueId);
+                logger.LogWarning(
+                    "Issue number collision for {IssueNumber}; retrying support issue create (attempt {Attempt}).",
+                    issueNumber,
+                    attempt + 2);
+            }
+            catch
+            {
+                dbContext.ChangeTracker.Clear();
+                attachmentService.DeleteIssueAttachments(issueId);
+                throw;
+            }
         }
 
-        dbContext.SupportIssues.Add(issue);
-
-        var techPayload = JsonSerializer.Serialize(new SupportIssueOutboxPayload(issueId, issueNumber));
-        outboxPublisher.Enqueue(
-            request.TenantId,
-            OutboxMessageTypes.SupportIssueTech,
-            techPayload,
-            $"support:{issueId:D}:tech");
-
-        outboxPublisher.Enqueue(
-            request.TenantId,
-            OutboxMessageTypes.SupportIssueConfirmation,
-            techPayload,
-            $"support:{issueId:D}:confirmation");
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        logger.LogInformation(
-            "Created support issue {IssueNumber} for tenant {TenantId} by operator {OperatorUserId}.",
-            issueNumber,
-            request.TenantId,
-            request.OperatorUserId);
-
-        return new SupportIssueCreateResult(
-            issue.Id,
-            issue.IssueNumber,
-            issue.Status.ToString(),
-            issue.CreatedAt);
+        throw new InvalidOperationException("Could not allocate a unique support issue number.");
     }
 
     public async Task<IReadOnlyList<SupportIssueSummary>> ListMineAsync(
@@ -132,4 +167,13 @@ public sealed class SupportIssueService(
                 issue.CreatedAt))
             .ToListAsync(cancellationToken);
     }
+
+    private static string Truncate(string value, int maxLength) =>
+        value.Length <= maxLength ? value : value[..maxLength];
+
+    private static bool IsIssueNumberUniqueViolation(DbUpdateException exception) =>
+        exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation,
+        };
 }

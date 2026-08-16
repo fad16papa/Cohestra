@@ -24,10 +24,9 @@ public sealed record SupportIssueCreateRequest(
     IReadOnlyList<SupportIssueUploadFile> Files);
 
 public sealed record SupportIssueUploadFile(
-    Stream Content,
+    byte[] Content,
     string FileName,
-    string ContentType,
-    long SizeBytes);
+    string ContentType);
 
 public sealed record SupportIssueCreateResult(
     Guid Id,

@@ -39,7 +39,13 @@ public sealed class SupportIssueTechOutboxHandler(
             var bytes = await attachmentService.ReadBytesAsync(attachment, cancellationToken);
             if (bytes is null || bytes.Length == 0)
             {
-                continue;
+                logger.LogError(
+                    "Support attachment {AttachmentId} for issue {IssueNumber} is missing on disk at {RelativePath}.",
+                    attachment.Id,
+                    issue.IssueNumber,
+                    attachment.RelativePath);
+                throw new InvalidOperationException(
+                    $"Support attachment {attachment.FileName} for issue {issue.IssueNumber} could not be read.");
             }
 
             fileAttachments.Add(new EmailFileAttachment(

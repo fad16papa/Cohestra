@@ -2,9 +2,13 @@ namespace Cohestra.Application.Support;
 
 public interface ISupportSubmissionRateLimiter
 {
-    Task<bool> AllowSubmissionAsync(
+    Task<bool> IsSubmissionAllowedAsync(
         Guid tenantId,
         Guid operatorUserId,
-        string clientIdentifier,
+        CancellationToken cancellationToken = default);
+
+    Task RecordSuccessfulSubmissionAsync(
+        Guid tenantId,
+        Guid operatorUserId,
         CancellationToken cancellationToken = default);
 }

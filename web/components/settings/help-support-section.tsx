@@ -116,7 +116,7 @@ export function HelpSupportSection() {
       setSubject("");
       setDescription("");
       setFiles([]);
-      showToast("Confirmation email sent to your operator address.");
+      showToast("Support request submitted. You'll receive a confirmation email shortly.");
       await loadRecent();
     } catch (submitError) {
       setError(

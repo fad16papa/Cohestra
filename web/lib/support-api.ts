@@ -31,15 +31,6 @@ function parseListItem(raw: Record<string, unknown>): SupportIssueListItem | nul
   const status = raw.status ?? raw.Status;
   const createdAt = raw.createdAt ?? raw.CreatedAt;
 
-  if (
-    typeof id !== "string" &&
-    typeof id !== "number" &&
-    typeof issueNumber !== "string" &&
-    typeof subject !== "string"
-  ) {
-    // keep parsing leniently
-  }
-
   if (!id || !issueNumber || !subject) {
     return null;
   }
@@ -56,6 +47,32 @@ function parseListItem(raw: Record<string, unknown>): SupportIssueListItem | nul
 function parseProblem(raw: Record<string, unknown>, fallback: string): string {
   const detail = raw.detail ?? raw.Detail;
   return typeof detail === "string" ? detail : fallback;
+}
+
+async function readJsonBody(response: Response): Promise<Record<string, unknown>> {
+  const text = await response.text();
+  if (!text.trim()) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+function errorMessage(
+  response: Response,
+  raw: Record<string, unknown>,
+  fallback: string
+): string {
+  const detail = parseProblem(raw, fallback);
+  if (detail !== fallback) {
+    return detail;
+  }
+
+  return `${fallback} (HTTP ${response.status})`;
 }
 
 export async function createSupportIssue(
@@ -82,9 +99,9 @@ export async function createSupportIssue(
     }
   );
 
-  const raw = (await response.json()) as Record<string, unknown>;
+  const raw = await readJsonBody(response);
   if (!response.ok) {
-    throw new Error(parseProblem(raw, "Could not submit support request."));
+    throw new Error(errorMessage(response, raw, "Could not submit support request."));
   }
 
   return parseIssue(raw);
@@ -96,10 +113,10 @@ export async function fetchSupportIssues(
   const response = await authFetch(
     `${getPublicApiBaseUrl()}/api/v1/admin/support-issues`
   );
-  const raw = (await response.json()) as Record<string, unknown>;
+  const raw = await readJsonBody(response);
 
   if (!response.ok) {
-    throw new Error(parseProblem(raw, "Could not load support requests."));
+    throw new Error(errorMessage(response, raw, "Could not load support requests."));
   }
 
   const itemsRaw = raw.items ?? raw.Items;

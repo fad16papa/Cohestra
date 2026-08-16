@@ -5,6 +5,8 @@ namespace Cohestra.Infrastructure.Support;
 
 public sealed class SupportAttachmentService(IOptions<SupportSettings> options)
 {
+    private const int MaxFileNameLength = 255;
+
     private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
     {
         "image/png",
@@ -15,7 +17,7 @@ public sealed class SupportAttachmentService(IOptions<SupportSettings> options)
 
     public async Task<SupportIssueAttachment> SaveAsync(
         Guid issueId,
-        Stream content,
+        byte[] content,
         string fileName,
         string contentType,
         CancellationToken cancellationToken = default)
@@ -28,15 +30,12 @@ public sealed class SupportAttachmentService(IOptions<SupportSettings> options)
             throw new ArgumentException("Only PNG, JPEG, or WEBP images are allowed.");
         }
 
-        await using var buffer = new MemoryStream();
-        await content.CopyToAsync(buffer, cancellationToken);
-
-        if (buffer.Length == 0)
+        if (content.Length == 0)
         {
             throw new ArgumentException("Image file is empty.");
         }
 
-        if (buffer.Length > settings.MaxFileBytes)
+        if (content.Length > settings.MaxFileBytes)
         {
             throw new ArgumentException("Each screenshot must be 2MB or smaller.");
         }
@@ -58,15 +57,15 @@ public sealed class SupportAttachmentService(IOptions<SupportSettings> options)
 
         var relativePath = Path.Combine(issueId.ToString("D"), $"{attachmentId:N}{extension.ToLowerInvariant()}");
         var absolutePath = GetAbsolutePath(relativePath);
-        await File.WriteAllBytesAsync(absolutePath, buffer.ToArray(), cancellationToken);
+        await File.WriteAllBytesAsync(absolutePath, content, cancellationToken);
 
         return new SupportIssueAttachment
         {
             Id = attachmentId,
             SupportIssueId = issueId,
-            FileName = Path.GetFileName(fileName),
+            FileName = TruncateFileName(Path.GetFileName(fileName)),
             ContentType = normalizedContentType,
-            SizeBytes = buffer.Length,
+            SizeBytes = content.Length,
             RelativePath = relativePath.Replace('\\', '/'),
             CreatedAt = DateTimeOffset.UtcNow,
         };
@@ -85,6 +84,28 @@ public sealed class SupportAttachmentService(IOptions<SupportSettings> options)
         return await File.ReadAllBytesAsync(absolutePath, cancellationToken);
     }
 
+    public void DeleteIssueAttachments(Guid issueId)
+    {
+        var issueDirectory = Path.Combine(options.Value.AttachmentStoragePath, issueId.ToString("D"));
+        if (!Directory.Exists(issueDirectory))
+        {
+            return;
+        }
+
+        try
+        {
+            Directory.Delete(issueDirectory, recursive: true);
+        }
+        catch (IOException)
+        {
+            // Best-effort cleanup after failed create.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Best-effort cleanup after failed create.
+        }
+    }
+
     private void EnsureIssueDirectory(Guid issueId)
     {
         var path = Path.Combine(options.Value.AttachmentStoragePath, issueId.ToString("D"));
@@ -96,6 +117,11 @@ public sealed class SupportAttachmentService(IOptions<SupportSettings> options)
 
     private string GetAbsolutePath(string relativePath) =>
         Path.Combine(options.Value.AttachmentStoragePath, relativePath);
+
+    private static string TruncateFileName(string fileName) =>
+        fileName.Length <= MaxFileNameLength
+            ? fileName
+            : fileName[..MaxFileNameLength];
 
     private static string NormalizeContentType(string contentType)
     {

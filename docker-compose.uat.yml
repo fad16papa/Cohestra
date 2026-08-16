@@ -49,6 +49,7 @@ services:
       - "8080"
     volumes:
       - campaign_assets_data:/app/data/campaign-assets
+      - support_attachments_data:/app/data/support-attachments
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-cohestra};Username=${POSTGRES_USER:-crm};Password=${POSTGRES_PASSWORD}
@@ -62,6 +63,7 @@ services:
       PublicWeb__BaseUrl: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
       CampaignAssets__StoragePath: /app/data/campaign-assets
       CampaignAssets__PublicApiBaseUrl: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
+      Support__AttachmentStoragePath: /app/data/support-attachments
       Cors__AllowedOrigins__0: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
       SendGrid__ApiKey: ${SendGrid__ApiKey:?Set SendGrid__ApiKey in .env (live Mail Send key)}
       SendGrid__FromEmail: ${SendGrid__FromEmail:-noreply@cohestra.app}
@@ -163,6 +165,7 @@ volumes:
   postgres_data:
   redis_data:
   campaign_assets_data:
+  support_attachments_data:
   certbot_www:
   certbot_certs:
 
