@@ -1,10 +1,10 @@
-import Link from "next/link";
 import Image from "next/image";
 
+import { PlatformByline } from "@/components/layouts/platform-byline";
 import { MarketingWordmark } from "@/components/marketing/marketing-shell";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import type { PublishedSiteBranding } from "@/lib/site-seo-metadata";
-import { PLATFORM_LOGO_PATH, PLATFORM_NAME } from "@/lib/brand-assets";
+import { PLATFORM_LOGO_PATH } from "@/lib/brand-assets";
 import { cn } from "@/lib/utils";
 
 type AuthFlowShellProps = {
@@ -78,16 +78,15 @@ export function AuthFlowShell({
         </div>
       </main>
 
-      <footer className="border-t border-line px-5 py-4 text-center text-xs text-stone sm:px-8">
-        <Link href="/" className="font-medium hover:text-ink">
-          Back to cohestra.app
-        </Link>
-        {!isTenantBranded ? null : (
-          <p className="mt-1">
-            Powered by{" "}
-            <span className="font-medium text-ink">{PLATFORM_NAME}</span>
+      <footer className="border-t border-line">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-stone sm:px-8 lg:px-10">
+          <p>
+            © {new Date().getFullYear()}{" "}
+            <PlatformByline linkClassName="text-stone hover:text-ink" />
+            . All rights reserved.
           </p>
-        )}
+          <p>Built for community operators.</p>
+        </div>
       </footer>
     </div>
   );
