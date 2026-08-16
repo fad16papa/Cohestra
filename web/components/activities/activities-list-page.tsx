@@ -14,6 +14,7 @@ import { CardGridSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -42,9 +43,6 @@ import { CalendarDays, ChevronDown } from "lucide-react";
 
 const ACTIVITY_PAGE_SIZE = 20;
 const ACTIVITY_SEARCH_DEBOUNCE_MS = 400;
-
-const filterSelectClassName =
-  "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 const statusFilterOptions: Array<{ value: ActivityStatus | ""; label: string }> =
   [
@@ -488,46 +486,43 @@ export function ActivitiesListPage() {
 
         <div
           className={cn(
-            "grid gap-4 sm:grid-cols-2 xl:grid-cols-5",
+            "grid gap-4 sm:grid-cols-2 lg:grid-cols-6 lg:items-end",
             !mobileFiltersOpen && "hidden md:grid",
             mobileFiltersOpen && "mt-4 md:mt-0"
           )}
         >
-        <div className="space-y-2 sm:col-span-2 xl:col-span-2">
+        <div className="space-y-2 sm:col-span-2 lg:col-span-2">
           <Label htmlFor="activity-search">Search</Label>
           <ActivitySearchInput
             key={searchFilter}
             committedValue={searchFilter}
             onCommit={commitSearch}
           />
-          <p className="text-xs text-text-muted-warm">
-            Search runs on the server across all activities.
-          </p>
         </div>
         <div className="space-y-2">
           <Label htmlFor="activity-status">Status</Label>
-          <select
+          <FilterSelect
             id="activity-status"
             value={statusFilter}
+            active={statusFilter !== ""}
             onChange={(event) =>
               updateStatusFilter(event.target.value as ActivityStatus | "")
             }
-            className={filterSelectClassName}
           >
             {statusFilterOptions.map((option) => (
               <option key={option.label} value={option.value}>
                 {option.label}
               </option>
             ))}
-          </select>
+          </FilterSelect>
         </div>
         <div className="space-y-2">
           <Label htmlFor="activity-community">Community</Label>
-          <select
+          <FilterSelect
             id="activity-community"
             value={communityFilter}
+            active={communityFilter !== ""}
             onChange={(event) => updateCommunityFilter(event.target.value)}
-            className={filterSelectClassName}
           >
             <option value="">All communities</option>
             {communities.map((community) => (
@@ -535,15 +530,15 @@ export function ActivitiesListPage() {
                 {community.name}
               </option>
             ))}
-          </select>
+          </FilterSelect>
         </div>
         <div className="space-y-2">
           <Label htmlFor="activity-category">Category</Label>
-          <select
+          <FilterSelect
             id="activity-category"
             value={categoryFilter}
+            active={categoryFilter !== ""}
             onChange={(event) => updateCategoryFilter(event.target.value)}
-            className={filterSelectClassName}
           >
             <option value="">All categories</option>
             {categories.map((category) => (
@@ -551,28 +546,31 @@ export function ActivitiesListPage() {
                 {category.name}
               </option>
             ))}
-          </select>
+          </FilterSelect>
         </div>
         <div className="space-y-2">
           <Label htmlFor="activity-sort">Sort by</Label>
-          <select
+          <FilterSelect
             id="activity-sort"
             value={sortSelectValue}
+            active={!isDefaultActivitySort(sortBy, sortDirection)}
             onChange={(event) =>
               updateSortFilter(
                 event.target.value as `${ActivitySortBy}:${ActivitySortDirection}`
               )
             }
-            className={filterSelectClassName}
           >
             {sortFilterOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
-          </select>
+          </FilterSelect>
         </div>
         </div>
+        <p className="text-xs text-text-muted-warm md:mt-1">
+          Search runs on the server across all activities.
+        </p>
       </div>
 
       {catalogError ? (
@@ -622,7 +620,7 @@ export function ActivitiesListPage() {
 
       {initialized && !error && activities.length > 0 ? (
         <div ref={activityGridRef}>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {activities.map((activity) => (
               <ActivityCard
                 key={activity.id}
