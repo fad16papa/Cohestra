@@ -3,6 +3,9 @@ export const PLATFORM_NAME = "Cohestra";
 
 export const PLATFORM_VENDOR = "Creativorare";
 
+/** Public website for the platform vendor (studio credit in footers). */
+export const PLATFORM_VENDOR_URL = "https://creativorare.com";
+
 export const PLATFORM_TAGLINE = "Community events. Meaningful connections.";
 
 /** Official mark — SVG for web (crisp at any size). */
