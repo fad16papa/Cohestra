@@ -1,6 +1,7 @@
 "use client";
 
 import { AdminNavLinks } from "@/components/layouts/admin-nav-links";
+import { CohestraLogo } from "@/components/marketing/cohestra-logo";
 import { LimitMeter } from "@/components/shell/limit-meter";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { cn } from "@/lib/utils";
@@ -21,12 +22,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
       )}
     >
       <div className="flex h-14 items-center gap-3 border-b border-border-warm px-3 lg:px-4">
-        <span
-          aria-hidden
-          className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-sm font-bold text-primary-foreground shadow-sm"
-        >
-          CO
-        </span>
+        <CohestraLogo href={null} showWordmark={false} size="sm" />
         <div className="hidden min-w-0 lg:block">
           <p className="truncate text-sm font-semibold text-text-warm">Cohestra</p>
           <p className="truncate text-xs text-text-muted-warm">Community platform</p>

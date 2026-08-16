@@ -55,7 +55,6 @@ import {
   useSitePreviewLayout,
   type SitePreviewLayoutMode,
 } from "@/lib/site-preview-layout";
-import { PLATFORM_LOGO_PATH } from "@/lib/brand-assets";
 import { cn } from "@/lib/utils";
 
 const HIGHLIGHT_ICONS: Record<string, LucideIcon> = {
@@ -671,14 +670,13 @@ export function SitePageRenderer({
   const siteLogoUrl = useMemo(() => {
     const assetId = published.logoAssetId?.trim();
     if (!assetId) {
-      return PLATFORM_LOGO_PATH;
+      return null;
     }
 
-    return (
-      resolveHeroImageUrl(`/api/v1/public/campaign-assets/${assetId}`) ??
-      PLATFORM_LOGO_PATH
-    );
+    return resolveHeroImageUrl(`/api/v1/public/campaign-assets/${assetId}`);
   }, [published.logoAssetId]);
+
+  const siteLogoInitial = published.siteName.trim().charAt(0).toUpperCase() || "?";
 
   const heroBlock = sections.filter((section) => section.type.toLowerCase() === "hero");
   const highlightsBlock = sections.filter((section) => section.type.toLowerCase() === "highlights");
@@ -738,14 +736,26 @@ export function SitePageRenderer({
                 : "bg-card/90 shadow-sm ring-1 ring-border-warm/80 backdrop-blur-sm"
             )}
           >
-            <Image
-              src={siteLogoUrl}
-              alt=""
-              width={28}
-              height={28}
-              className="size-6 object-contain sm:size-7"
-              unoptimized={siteLogoUrl.startsWith("http") || siteLogoUrl.includes("/api/")}
-            />
+            {siteLogoUrl ? (
+              <Image
+                src={siteLogoUrl}
+                alt=""
+                width={28}
+                height={28}
+                className="size-6 object-contain sm:size-7"
+                unoptimized={siteLogoUrl.startsWith("http") || siteLogoUrl.includes("/api/")}
+              />
+            ) : (
+              <span
+                aria-hidden
+                className={cn(
+                  "text-sm font-semibold tracking-tight sm:text-base",
+                  headerOverHero ? "text-white" : "text-text-warm"
+                )}
+              >
+                {siteLogoInitial}
+              </span>
+            )}
           </span>
           <div className="min-w-0">
             <p

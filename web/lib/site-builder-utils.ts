@@ -90,7 +90,7 @@ export function getSetupChecklist(
     {
       id: "logo",
       label: "Upload your logo",
-      detail: logoAssetId ? "Logo added" : "Replace the default platform mark",
+      detail: logoAssetId ? "Logo added" : "Upload a logo for your site header",
       done: Boolean(logoAssetId),
       action: "branding",
     },

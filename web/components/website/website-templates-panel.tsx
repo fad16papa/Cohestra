@@ -90,7 +90,7 @@ export function WebsiteTemplatesPanel({
             ) : null}
             <p className="text-xs text-text-muted-warm">
               Applies to your draft only. Site name, hero image, and accent are kept;
-              your logo returns to the default platform mark.
+              your logo is cleared from the draft.
             </p>
           </div>
 

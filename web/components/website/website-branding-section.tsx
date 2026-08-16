@@ -252,7 +252,7 @@ export const WebsiteBrandingSection = forwardRef<
           </div>
         ) : (
           <p className="text-sm text-text-muted-warm">
-            No site logo uploaded. The default platform mark is used until you publish a logo.
+            No site logo uploaded. Your site header shows your site name until you add a logo.
           </p>
         )}
         <input
