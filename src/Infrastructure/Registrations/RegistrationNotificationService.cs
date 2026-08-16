@@ -1,7 +1,6 @@
 using Cohestra.Application.Campaigns;
 using Cohestra.Application.Email;
 using Cohestra.Application.Registrations;
-using Cohestra.Domain.Activities;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Email;
@@ -78,14 +77,11 @@ public sealed class RegistrationNotificationService(
         var websiteUrl = (branding.WebsiteUrl ?? string.Empty).Trim();
         var footerLegalName = (branding.FooterLegalName ?? brandName).Trim();
 
-        var community = await LoadCommunityAsync(
-            registration.TenantId,
-            registration.Activity.CommunityLabel,
+        var resolvedTheme = await RegistrationThemeQueries.ResolveForActivityAsync(
+            dbContext,
+            registration.Activity,
             cancellationToken);
-        var resolvedHeroImageUrl = RegistrationThemeResolver.Resolve(
-            registration.Activity.RegistrationTheme,
-            community,
-            registration.Activity).HeroImageUrl;
+        var resolvedHeroImageUrl = resolvedTheme.HeroImageUrl;
 
         var heroInlineAttachment = await TryLoadHeroInlineAttachmentAsync(
             resolvedHeroImageUrl,
@@ -95,6 +91,22 @@ public sealed class RegistrationNotificationService(
             : ResolveHeroImageUrlForEmail(
                 resolvedHeroImageUrl,
                 tenant?.Slug);
+
+        if (string.IsNullOrWhiteSpace(heroImageUrl))
+        {
+            logger.LogWarning(
+                "Registration confirmation email for {RegistrationId} has no hero image after resolution (activity {ActivityId}, community {CommunityLabel}).",
+                registrationId,
+                registration.Activity.Id,
+                registration.Activity.CommunityLabel);
+        }
+        else if (heroInlineAttachment is null && !string.IsNullOrWhiteSpace(resolvedHeroImageUrl))
+        {
+            logger.LogWarning(
+                "Registration confirmation email for {RegistrationId} uses URL hero fallback for asset {HeroImageUrl}.",
+                registrationId,
+                resolvedHeroImageUrl);
+        }
 
         var emailContent = RegistrationConfirmationEmailBuilder.Build(
             new RegistrationConfirmationEmailModel(
@@ -140,24 +152,6 @@ public sealed class RegistrationNotificationService(
             recipientEmail);
 
         return new RegistrationConfirmationSendResult(true, recipientEmail);
-    }
-
-    private async Task<Community?> LoadCommunityAsync(
-        Guid tenantId,
-        string communityLabel,
-        CancellationToken cancellationToken)
-    {
-        var normalized = communityLabel?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            return null;
-        }
-
-        return await dbContext.Communities
-            .AsNoTracking()
-            .FirstOrDefaultAsync(
-                item => item.TenantId == tenantId && item.Name == normalized,
-                cancellationToken);
     }
 
     private async Task<EmailInlineAttachment?> TryLoadHeroInlineAttachmentAsync(

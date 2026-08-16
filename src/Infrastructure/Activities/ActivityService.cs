@@ -204,7 +204,9 @@ public sealed class ActivityService(
         var items = activities
             .Select(activity => ToActivityResponse(
                 activity,
-                ResolveRegistrationTheme(activity, communities.GetValueOrDefault(activity.CommunityLabel)),
+                RegistrationThemeQueries.ResolveForActivity(
+                    activity,
+                    communities.GetValueOrDefault(activity.CommunityLabel)),
                 registrationCounts.GetValueOrDefault(activity.Id)))
             .ToList();
 
@@ -692,8 +694,11 @@ public sealed class ActivityService(
         int registrationCount = 0,
         CancellationToken cancellationToken = default)
     {
-        var community = await LoadCommunityByLabelAsync(activity.CommunityLabel, cancellationToken);
-        var resolved = ResolveRegistrationTheme(activity, community);
+        var community = await LoadCommunityByLabelAsync(
+            activity.TenantId,
+            activity.CommunityLabel,
+            cancellationToken);
+        var resolved = RegistrationThemeQueries.ResolveForActivity(activity, community);
         return ToActivityResponse(activity, resolved, registrationCount);
     }
 
@@ -707,11 +712,6 @@ public sealed class ActivityService(
             registrationCount,
             ResolveHeroImageUrl(activity.HeroImageUrl));
 
-    private static ResolvedRegistrationThemeDto ResolveRegistrationTheme(
-        Activity activity,
-        Community? community) =>
-        RegistrationThemeResolver.Resolve(activity.RegistrationTheme, community, activity);
-
     private static ResolvedRegistrationThemeDto ResolveRegistrationThemeForBrowser(
         ResolvedRegistrationThemeDto resolvedTheme) =>
         resolvedTheme with
@@ -719,20 +719,18 @@ public sealed class ActivityService(
             HeroImageUrl = ResolveHeroImageUrl(resolvedTheme.HeroImageUrl),
         };
 
-    private async Task<Community?> LoadCommunityByLabelAsync(
+    private static Task<Community?> LoadCommunityByLabelAsync(
+        CohestraDbContext dbContext,
+        Guid tenantId,
         string communityLabel,
-        CancellationToken cancellationToken)
-    {
-        var normalized = communityLabel?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            return null;
-        }
+        CancellationToken cancellationToken) =>
+        CommunityQueries.GetByLabelAsync(dbContext, tenantId, communityLabel, cancellationToken);
 
-        return await dbContext.Communities
-            .AsNoTracking()
-            .FirstOrDefaultAsync(community => community.Name == normalized, cancellationToken);
-    }
+    private Task<Community?> LoadCommunityByLabelAsync(
+        Guid tenantId,
+        string communityLabel,
+        CancellationToken cancellationToken) =>
+        LoadCommunityByLabelAsync(dbContext, tenantId, communityLabel, cancellationToken);
 
     private static string? ResolveHeroImageUrl(string? heroImageUrl) =>
         ActivityHeroImageUrlResolver.ResolveForBrowser(heroImageUrl);
@@ -749,9 +747,12 @@ public sealed class ActivityService(
                 .CountAsync(registration => registration.ActivityId == activity.Id, cancellationToken);
         }
 
-        var community = await LoadCommunityByLabelAsync(activity.CommunityLabel, cancellationToken);
+        var community = await LoadCommunityByLabelAsync(
+            activity.TenantId,
+            activity.CommunityLabel,
+            cancellationToken);
         var resolved = ResolveRegistrationThemeForBrowser(
-            ResolveRegistrationTheme(activity, community));
+            RegistrationThemeQueries.ResolveForActivity(activity, community));
 
         return new PublicActivityResponse(
             activity.Slug,
