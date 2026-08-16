@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { useState } from "react";
 
 import { AdminNavLinks } from "@/components/layouts/admin-nav-links";
+import { CohestraLogo } from "@/components/marketing/cohestra-logo";
 import { LimitMeter } from "@/components/shell/limit-meter";
 import { PlanBadge } from "@/components/shell/plan-badge";
 import { SponsoredBadge } from "@/components/shell/sponsored-badge";
@@ -38,9 +39,7 @@ export function AdminMobileNav() {
       <SheetContent side="left" className="w-72 p-0">
         <SheetHeader className="border-b border-border-warm text-left">
           <SheetTitle className="flex items-center gap-2 text-section">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-xs font-bold text-primary-foreground">
-              AL
-            </span>
+            <CohestraLogo href={null} showWordmark={false} size="sm" />
             Cohestra
           </SheetTitle>
           {shell ? (

@@ -1342,9 +1342,8 @@ export function WebsiteBuilderPage() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               This replaces section layout and copy in your draft. Your site
-              name, hero image, and accent are kept. Your logo resets to the
-              default platform mark. Publish when you are ready to update the
-              live site.
+              name, hero image, and accent are kept. Your logo is cleared from the
+              draft. Publish when you are ready to update the live site.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1422,8 +1421,8 @@ export function WebsiteBuilderPage() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               This replaces section layout in your draft. Your site name, hero
-              image, and accent are kept. Your logo resets to the default
-              platform mark. Publish when you are ready to update the live site.
+              image, and accent are kept. Your logo is cleared from the draft.
+              Publish when you are ready to update the live site.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
