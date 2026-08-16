@@ -2,13 +2,14 @@
 
 import { usePathname } from "next/navigation";
 
+import { PlatformByline } from "@/components/layouts/platform-byline";
+
 type AppFooterProps = {
   className?: string;
 };
 
 export function AppFooter({ className }: AppFooterProps) {
   const pathname = usePathname();
-  const year = new Date().getFullYear();
 
   const marketingRoutes = ["/", "/pricing", "/terms", "/privacy", "/signup"];
   const authRoutes = [
@@ -36,10 +37,7 @@ export function AppFooter({ className }: AppFooterProps) {
         .join(" ")}
     >
       <p className="text-center text-xs leading-relaxed text-muted-foreground sm:text-sm">
-        Powered by{" "}
-        <span className="font-medium text-foreground/80">Cohestra</span>
-        <span aria-hidden="true"> · </span>
-        <span>{year}</span>
+        <PlatformByline showYear />
       </p>
     </footer>
   );

@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { MarketingAmbientScene } from "@/components/marketing/marketing-ambient-scene";
 import { MarketingCookieConsent } from "@/components/marketing/marketing-cookie-consent";
 import { CohestraLogo } from "@/components/marketing/cohestra-logo";
+import { PlatformByline } from "@/components/layouts/platform-byline";
 import { cn } from "@/lib/utils";
 
 const MARKETING_ROUTES = ["/", "/pricing", "/terms", "/privacy", "/signup"];
@@ -168,7 +169,13 @@ export function MarketingFooter() {
       </div>
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-stone sm:px-8 lg:px-10">
-          <p>© {new Date().getFullYear()} Cohestra. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()}{" "}
+            <PlatformByline
+              linkClassName="text-stone hover:text-ink"
+            />
+            . All rights reserved.
+          </p>
           <p>Built for community operators.</p>
         </div>
       </div>
