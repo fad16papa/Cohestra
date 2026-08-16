@@ -21,14 +21,17 @@ const presetOptions: Array<{ value: PlatformSupportReportPreset; label: string }
 export default function PlatformSupportReportPage() {
   const { authFetch } = useAuth();
   const [preset, setPreset] = useState<PlatformSupportReportPreset>("weekly");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [draftFrom, setDraftFrom] = useState("");
+  const [draftTo, setDraftTo] = useState("");
+  const [appliedFrom, setAppliedFrom] = useState("");
+  const [appliedTo, setAppliedTo] = useState("");
   const [report, setReport] = useState<PlatformSupportReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
-  const customRangeReady = preset !== "custom" || (from.length > 0 && to.length > 0);
+  const customRangeReady =
+    preset !== "custom" || (appliedFrom.length > 0 && appliedTo.length > 0);
 
   useEffect(() => {
     if (!customRangeReady) {
@@ -44,8 +47,8 @@ export default function PlatformSupportReportPage() {
 
     void getPlatformSupportReport(authFetch, {
       preset,
-      from: preset === "custom" ? from : undefined,
-      to: preset === "custom" ? to : undefined,
+      from: preset === "custom" ? appliedFrom : undefined,
+      to: preset === "custom" ? appliedTo : undefined,
     })
       .then((result) => {
         if (cancelled) {
@@ -66,20 +69,37 @@ export default function PlatformSupportReportPage() {
     return () => {
       cancelled = true;
     };
-  }, [authFetch, customRangeReady, preset, from, to]);
+  }, [authFetch, appliedFrom, appliedTo, customRangeReady, preset]);
 
   function handlePresetChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    setPreset(event.target.value as PlatformSupportReportPreset);
+    const nextPreset = event.target.value as PlatformSupportReportPreset;
+    setPreset(nextPreset);
+    if (nextPreset !== "custom") {
+      setDraftFrom("");
+      setDraftTo("");
+      setAppliedFrom("");
+      setAppliedTo("");
+    }
   }
 
   function handleCustomSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPreset("custom");
+    if (!draftFrom || !draftTo) {
+      setError("Choose both from and to dates.");
+      return;
+    }
+    if (draftFrom > draftTo) {
+      setError("From date must be on or before to date.");
+      return;
+    }
+    setError(null);
+    setAppliedFrom(draftFrom);
+    setAppliedTo(draftTo);
   }
 
   async function handleExport() {
     if (!customRangeReady) {
-      setError("Choose a from and to date before exporting.");
+      setError("Choose a from and to date, then click Apply.");
       return;
     }
 
@@ -88,8 +108,8 @@ export default function PlatformSupportReportPage() {
     try {
       const result = await exportPlatformSupportReportCsv(authFetch, {
         preset,
-        from: preset === "custom" ? from : undefined,
-        to: preset === "custom" ? to : undefined,
+        from: preset === "custom" ? appliedFrom : undefined,
+        to: preset === "custom" ? appliedTo : undefined,
       });
       const url = URL.createObjectURL(result.blob);
       const anchor = document.createElement("a");
@@ -162,8 +182,8 @@ export default function PlatformSupportReportPage() {
               <input
                 id="support-report-from"
                 type="date"
-                value={from}
-                onChange={(event) => setFrom(event.target.value)}
+                value={draftFrom}
+                onChange={(event) => setDraftFrom(event.target.value)}
                 className="mt-1 min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] bg-white/80 px-3 text-sm outline-none focus:border-[var(--plat-lagoon)] focus:ring-2 focus:ring-[var(--plat-lagoon)]/20"
               />
             </div>
@@ -174,8 +194,8 @@ export default function PlatformSupportReportPage() {
               <input
                 id="support-report-to"
                 type="date"
-                value={to}
-                onChange={(event) => setTo(event.target.value)}
+                value={draftTo}
+                onChange={(event) => setDraftTo(event.target.value)}
                 className="mt-1 min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] bg-white/80 px-3 text-sm outline-none focus:border-[var(--plat-lagoon)] focus:ring-2 focus:ring-[var(--plat-lagoon)]/20"
               />
             </div>

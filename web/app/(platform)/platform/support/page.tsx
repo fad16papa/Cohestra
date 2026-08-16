@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 
 import { useAuth } from "@/components/auth/auth-provider";
@@ -29,9 +29,10 @@ export default function PlatformSupportInboxPage() {
   const [pageSize, setPageSize] = useState(25);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
-    let cancelled = false;
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
 
@@ -42,7 +43,7 @@ export default function PlatformSupportInboxPage() {
       pageSize: 25,
     })
       .then((result) => {
-        if (cancelled) {
+        if (requestId !== requestIdRef.current) {
           return;
         }
         setItems(result.items);
@@ -51,7 +52,7 @@ export default function PlatformSupportInboxPage() {
         setLoading(false);
       })
       .catch((err: unknown) => {
-        if (cancelled) {
+        if (requestId !== requestIdRef.current) {
           return;
         }
         setError(err instanceof Error ? err.message : "Could not load support issues.");
@@ -59,10 +60,6 @@ export default function PlatformSupportInboxPage() {
         setTotalCount(0);
         setLoading(false);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, [authFetch, page, query, statusFilter]);
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {

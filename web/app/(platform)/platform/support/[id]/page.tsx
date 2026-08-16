@@ -80,9 +80,15 @@ export default function PlatformSupportDetailPage() {
     setActionError(null);
 
     try {
+      const statusChanged = status !== issue.status;
+      const noteChanged = internalNote !== (issue.internalNote ?? "");
+      if (!statusChanged && !noteChanged) {
+        return;
+      }
+
       const updated = await updatePlatformSupportIssue(authFetch, issueId, {
-        status: status !== issue.status ? status : undefined,
-        internalNote,
+        status: statusChanged ? status : undefined,
+        internalNote: noteChanged ? internalNote : undefined,
       });
       setIssue(updated);
       setStatus(updated.status);
