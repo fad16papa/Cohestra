@@ -24,7 +24,9 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     annualMonthlyEquivalent: null,
     trialNote: "No credit card required",
     features: [
-      "1 operator seat, 1 community, 4 published activities",
+      "1 operator seat",
+      "1 community",
+      "4 published activities",
       "250 registrations per month",
       "QR codes and public registration",
       "Client list with dedup and timeline",
