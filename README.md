@@ -65,10 +65,15 @@ See [deploy/nginx/README.md](deploy/nginx/README.md) for routing details.
 
 | Role | Who | Login | Home |
 |------|-----|-------|------|
-| `PlatformAdmin` | Cohestra ops (whole-platform governance) | `/platform/login` | `/platform` |
+| `PlatformAdmin` | Cohestra ops (whole-platform governance) | `/platform/login` (apex only) | `/platform` |
 | `TenantAdmin` | Subscribed org operator (PRD Tenant Admin) | `/login` | `/dashboard` |
 
 These roles are mutually exclusive. Legacy Identity role name `Admin` is renamed to `TenantAdmin` on API startup.
+
+Ops and club operators share **one web app** with two login paths — do not split into a second frontend:
+
+- **`/platform/login`** on marketing apex (`http://localhost:8088/platform/login`, production `cohestra.app`) is the Cohestra platform-admin door. `{slug}.localhost/platform/login` redirects to apex. This URL is not linked from tenant login.
+- **`/login`** on apex **and** every `{slug}` host is the same tenant/operator page (Host branding + workspace notice on slug URLs).
 
 ### Dev operator credentials (Docker Compose)
 
@@ -212,7 +217,8 @@ Each workspace is addressed by **Host**, not a path prefix:
 
 - `http://default.localhost/` — default seed tenant public home
 - `http://default.localhost/register/{activity-slug}` — tenant-scoped registration
-- `http://default.localhost/login` — admin login scoped to that tenant
+- `http://default.localhost/login` — tenant admin login scoped to that workspace (same page as apex `/login`)
+- `http://localhost/platform/login` — Cohestra platform admin (apex only)
 
 **Optional env for single-host dev:** set `DEV_TENANT_SLUG=default` on the **api** service when you cannot use `{slug}.localhost`. The web tier forwards your browser host to the API via `X-Forwarded-Host`.
 

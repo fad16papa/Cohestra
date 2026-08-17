@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { isPlatformAdminProfile } from "@/lib/auth-api";
 
 type AdminRouteGuardProps = {
   children: ReactNode;
@@ -11,13 +12,19 @@ type AdminRouteGuardProps = {
 
 export function AdminRouteGuard({ children }: AdminRouteGuardProps) {
   const router = useRouter();
-  const { status } = useAuth();
+  const { status, profile } = useAuth();
+  const isPlatformAdmin = profile ? isPlatformAdminProfile(profile) : false;
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/login");
+      return;
     }
-  }, [router, status]);
+
+    if (status === "authenticated" && isPlatformAdmin) {
+      router.replace("/platform");
+    }
+  }, [isPlatformAdmin, router, status]);
 
   if (status === "loading") {
     return (
@@ -27,7 +34,7 @@ export function AdminRouteGuard({ children }: AdminRouteGuardProps) {
     );
   }
 
-  if (status === "unauthenticated") {
+  if (status === "unauthenticated" || isPlatformAdmin) {
     return null;
   }
 

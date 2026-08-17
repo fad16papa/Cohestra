@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Two Doors, One Clubhouse — Cohestra Login Path Brainstorm</title>
+  <style>
+    :root {
+      --paper: #f4efe4;
+      --paper-deep: #e8dfd0;
+      --ink: #1a2a32;
+      --ink-soft: #3d5560;
+      --lagoon: #2a6f7a;
+      --lagoon-light: #5a9ea8;
+      --lagoon-mist: rgba(42, 111, 122, 0.12);
+      --warm: #c47d4a;
+      --warm-glow: rgba(196, 125, 74, 0.18);
+      --staff: #4a3d5c;
+      --staff-glow: rgba(74, 61, 92, 0.14);
+      --seal: #8b3a3a;
+      --line: rgba(26, 42, 50, 0.14);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.55;
+      overflow-x: hidden;
+    }
+
+    /* Paper grain */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.35;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+    }
+
+    .folio {
+      max-width: 52rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+    }
+
+    /* —— HERO: THE BUILDING —— */
+    .hero {
+      position: relative;
+      padding: 2rem 0 3rem;
+      border-bottom: 2px solid var(--ink);
+      margin-bottom: 3rem;
+    }
+
+    .hero-kicker {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--lagoon);
+      margin-bottom: 0.75rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.85rem, 5vw, 2.65rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      max-width: 18ch;
+    }
+
+    .hero-lede {
+      margin-top: 1rem;
+      max-width: 38ch;
+      color: var(--ink-soft);
+      font-size: 1.05rem;
+    }
+
+    .building {
+      margin: 2.5rem auto 0;
+      max-width: 28rem;
+      position: relative;
+    }
+
+    .building-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 12px 24px rgba(26, 42, 50, 0.12));
+    }
+
+    .door-label {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.65rem;
+      fill: var(--ink);
+      letter-spacing: 0.06em;
+    }
+
+    .building-caption {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      margin-top: 0.75rem;
+      font-style: italic;
+    }
+
+    /* —— TECHNIQUE NAV —— */
+    .technique-rail {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 2.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: linear-gradient(to bottom, var(--paper) 70%, transparent);
+      padding: 0.75rem 0 1rem;
+    }
+
+    .technique-rail a {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.68rem;
+      text-decoration: none;
+      color: var(--ink-soft);
+      border: 1px solid var(--line);
+      padding: 0.35rem 0.55rem;
+      background: var(--paper-deep);
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .technique-rail a:hover,
+    .technique-rail a.active {
+      background: var(--lagoon);
+      color: var(--paper);
+      border-color: var(--lagoon);
+    }
+
+    /* —— SHARED SECTION SHELL —— */
+    .technique {
+      margin-bottom: 4rem;
+      scroll-margin-top: 4rem;
+    }
+
+    .technique-header {
+      display: flex;
+      align-items: baseline;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .technique-num {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.7rem;
+      color: var(--warm);
+      letter-spacing: 0.1em;
+    }
+
+    .technique h2 {
+      font-size: 1.35rem;
+      font-weight: 600;
+    }
+
+    /* —— 1. ASSUMPTION REVERSAL: flip cards —— */
+    #assumption-reversal {
+      --accent: var(--lagoon);
+    }
+
+    .reversal-deck {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .reversal-card {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: stretch;
+      gap: 0;
+      border: 1px solid var(--line);
+      background: #fff;
+      min-height: 4.5rem;
+      cursor: default;
+      transition: box-shadow 0.25s;
+    }
+
+    .reversal-card:hover {
+      box-shadow: 4px 4px 0 var(--lagoon-mist);
+    }
+
+    .reversal-assume,
+    .reversal-reverse {
+      padding: 0.75rem 0.9rem;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .reversal-assume {
+      background: rgba(139, 58, 58, 0.06);
+      color: var(--ink-soft);
+      text-decoration: line-through;
+      text-decoration-color: rgba(139, 58, 58, 0.35);
+    }
+
+    .reversal-pivot {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      background: var(--lagoon);
+      color: var(--paper);
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .reversal-reverse {
+      background: var(--lagoon-mist);
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    @media (max-width: 540px) {
+      .reversal-card {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+      }
+      .reversal-pivot { width: 100%; padding: 0.3rem; transform: rotate(90deg); }
+    }
+
+    /* —— 2. JTBD: hiring slips —— */
+    #jtbd .job-wall {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+      gap: 0.75rem;
+    }
+
+    .job-slip {
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 0.85rem 1rem 0.85rem 1.1rem;
+      position: relative;
+      font-size: 0.84rem;
+      transition: transform 0.2s;
+    }
+
+    .job-slip::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--warm);
+    }
+
+    .job-slip.ops::before { background: var(--staff); }
+    .job-slip.tenant::before { background: var(--lagoon); }
+    .job-slip.infra::before { background: var(--ink-soft); }
+
+    .job-slip:hover { transform: translateY(-2px); }
+
+    .job-who {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink-soft);
+      margin-bottom: 0.35rem;
+    }
+
+    /* —— 3. WORST POSSIBLE IDEA: hazard tape —— */
+    #worst {
+      background: repeating-linear-gradient(
+        -45deg,
+        var(--paper-deep),
+        var(--paper-deep) 8px,
+        rgba(139, 58, 58, 0.08) 8px,
+        rgba(139, 58, 58, 0.08) 16px
+      );
+      border: 2px dashed var(--seal);
+      padding: 1.5rem;
+      margin-left: -0.5rem;
+      margin-right: -0.5rem;
+    }
+
+    #worst .technique-header { border-bottom-color: rgba(139, 58, 58, 0.25); }
+
+    .hazard-list {
+      list-style: none;
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .hazard-list li {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 0.65rem;
+      align-items: start;
+      background: #fff;
+      border: 1px solid rgba(139, 58, 58, 0.2);
+      padding: 0.65rem 0.85rem;
+      font-size: 0.84rem;
+    }
+
+    .hazard-skull {
+      font-size: 1rem;
+      line-height: 1;
+      opacity: 0.7;
+    }
+
+    .hazard-opposite {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.72rem;
+      color: var(--lagoon);
+      white-space: nowrap;
+      padding-top: 0.1rem;
+    }
+
+    /* —— 4. CONSTRAINT MAPPING: floor plan —— */
+    #constraints .constraint-map {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      #constraints .constraint-map { grid-template-columns: 1fr; }
+    }
+
+    .constraint-zone {
+      border: 1px solid var(--line);
+      padding: 1rem;
+      background: #fff;
+    }
+
+    .constraint-zone h3 {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .zone-real h3 { color: var(--lagoon); }
+    .zone-imagined h3 { color: var(--seal); text-decoration: line-through; }
+    .zone-asset h3 { color: var(--warm); }
+    .zone-gap h3 { color: var(--staff); }
+
+    .constraint-zone ul {
+      list-style: none;
+      font-size: 0.82rem;
+    }
+
+    .constraint-zone li {
+      padding: 0.35rem 0;
+      border-bottom: 1px dotted var(--line);
+    }
+
+    .constraint-zone li:last-child { border-bottom: none; }
+
+    .dissolve {
+      opacity: 0.55;
+      font-style: italic;
+    }
+
+    /* —— 5. SHIP IN 60 MINUTES: checklist manifest —— */
+    #ship60 {
+      background: var(--ink);
+      color: var(--paper);
+      padding: 1.75rem;
+      margin-left: -0.5rem;
+      margin-right: -0.5rem;
+      position: relative;
+    }
+
+    #ship60 .technique-header {
+      border-bottom-color: rgba(244, 239, 228, 0.2);
+    }
+
+    #ship60 .technique-num { color: var(--warm); }
+    #ship60 h2 { color: var(--paper); }
+
+    .manifest {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.78rem;
+      line-height: 1.7;
+    }
+
+    .manifest-row {
+      display: grid;
+      grid-template-columns: 1.4rem 1fr;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid rgba(244, 239, 228, 0.08);
+    }
+
+    .manifest-row:last-child { border-bottom: none; }
+
+    .manifest-check {
+      color: var(--lagoon-light);
+    }
+
+    .manifest-skip {
+      color: rgba(244, 239, 228, 0.35);
+    }
+
+    .manifest-skip .manifest-check::after { content: "—"; }
+
+    .timer-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      border: 1px solid var(--warm);
+      color: var(--warm);
+      padding: 0.25rem 0.5rem;
+    }
+
+    /* —— 6. DISNEY METHOD: three acts —— */
+    #disney .disney-acts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 700px) {
+      #disney .disney-acts { grid-template-columns: 1fr; }
+    }
+
+    .disney-act {
+      border: 1px solid var(--line);
+      padding: 1rem;
+      min-height: 12rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .disney-act::after {
+      content: attr(data-act);
+      position: absolute;
+      bottom: -0.5rem;
+      right: 0.25rem;
+      font-size: 3.5rem;
+      font-weight: 700;
+      opacity: 0.06;
+      pointer-events: none;
+    }
+
+    .act-dreamer {
+      background: linear-gradient(160deg, var(--lagoon-mist), #fff 60%);
+    }
+
+    .act-realist {
+      background: linear-gradient(160deg, var(--warm-glow), #fff 60%);
+    }
+
+    .act-critic {
+      background: linear-gradient(160deg, var(--staff-glow), #fff 60%);
+    }
+
+    .disney-act h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.65rem;
+      font-style: italic;
+    }
+
+    .disney-act ul {
+      list-style: none;
+      font-size: 0.8rem;
+    }
+
+    .disney-act li {
+      padding: 0.3rem 0;
+      padding-left: 0.85rem;
+      position: relative;
+    }
+
+    .disney-act li::before {
+      content: "·";
+      position: absolute;
+      left: 0;
+      color: var(--lagoon);
+      font-weight: bold;
+    }
+
+    /* —— CLIMAX: SYNTHESIS & DECISIONS —— */
+    .climax {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 3px double var(--ink);
+      position: relative;
+    }
+
+    .climax-ribbon {
+      position: absolute;
+      top: -1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--seal);
+      color: var(--paper);
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 0.4rem 1.2rem;
+    }
+
+    .climax h2 {
+      text-align: center;
+      font-size: 1.75rem;
+      margin: 1.5rem 0 1rem;
+    }
+
+    .insights {
+      display: grid;
+      gap: 0.75rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .insight {
+      background: var(--lagoon-mist);
+      border-left: 4px solid var(--lagoon);
+      padding: 1rem 1.15rem;
+      font-size: 0.95rem;
+      font-style: italic;
+    }
+
+    .decisions-seal {
+      background: #fff;
+      border: 2px solid var(--ink);
+      padding: 2rem 1.75rem;
+      position: relative;
+      box-shadow: 6px 6px 0 var(--lagoon-mist);
+    }
+
+    .decisions-seal::before {
+      content: "LOCKED";
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 4.5rem;
+      height: 4.5rem;
+      border: 2px solid var(--seal);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      color: var(--seal);
+      transform: rotate(-12deg);
+      opacity: 0.85;
+    }
+
+    .door-decision {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+
+    @media (max-width: 600px) {
+      .door-decision { grid-template-columns: 1fr; }
+      .decisions-seal::before { display: none; }
+    }
+
+    .door-panel {
+      border: 1px solid var(--line);
+      padding: 1.15rem;
+    }
+
+    .door-a {
+      border-top: 4px solid var(--lagoon);
+      background: linear-gradient(to bottom, var(--lagoon-mist), #fff 40%);
+    }
+
+    .door-b {
+      border-top: 4px solid var(--staff);
+      background: linear-gradient(to bottom, var(--staff-glow), #fff 40%);
+    }
+
+    .door-panel .path {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 1.1rem;
+      color: var(--ink);
+      margin: 0.4rem 0 0.6rem;
+    }
+
+    .door-panel .audience {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+    }
+
+    .killed-list,
+    .decision-list {
+      list-style: none;
+      font-size: 0.86rem;
+    }
+
+    .killed-list li,
+    .decision-list li {
+      padding: 0.4rem 0;
+      border-bottom: 1px dotted var(--line);
+      padding-left: 1rem;
+      position: relative;
+    }
+
+    .killed-list li::before {
+      content: "✕";
+      position: absolute;
+      left: 0;
+      color: var(--seal);
+      font-size: 0.75rem;
+    }
+
+    .decision-list li::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: var(--lagoon);
+    }
+
+    .killed-block {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .killed-block h4 {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--seal);
+      margin-bottom: 0.5rem;
+    }
+
+    .orthogonal {
+      margin-top: 1.5rem;
+      text-align: center;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      padding: 0.75rem;
+      border: 1px dashed var(--line);
+      background: var(--paper-deep);
+    }
+
+    .orthogonal strong {
+      color: var(--lagoon);
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+    }
+
+    footer {
+      margin-top: 3rem;
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--ink-soft);
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    /* reveal animation */
+    .reveal {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .climax .reveal { transition-delay: var(--delay, 0ms); }
+  </style>
+</head>
+<body>
+  <article class="folio">
+    <header class="hero">
+      <p class="hero-kicker">Cohestra · brainstorm · 2026-08-17</p>
+      <h1>Two doors on one clubhouse</h1>
+      <p class="hero-lede">One Next app. One nginx upstream. Two honest login doors — not two buildings.</p>
+
+      <figure class="building" aria-label="Illustration of one building with two doors">
+        <svg class="building-svg" viewBox="0 0 420 220" xmlns="http://www.w3.org/2000/svg" role="img">
+          <title>One clubhouse building with a front door and a staff side door</title>
+          <!-- lagoon sky wash -->
+          <rect width="420" height="220" fill="#dce8e6" rx="4"/>
+          <!-- building body -->
+          <rect x="60" y="50" width="300" height="150" fill="#e8dfd0" stroke="#1a2a32" stroke-width="2"/>
+          <!-- roof -->
+          <polygon points="50,50 210,15 370,50" fill="#c47d4a" stroke="#1a2a32" stroke-width="2" stroke-linejoin="round"/>
+          <!-- lagoon band -->
+          <rect x="60" y="175" width="300" height="25" fill="#2a6f7a" opacity="0.25"/>
+          <!-- Door A — front / operator -->
+          <rect x="155" y="110" width="50" height="90" fill="#f4efe4" stroke="#2a6f7a" stroke-width="2.5"/>
+          <circle cx="198" cy="155" r="3" fill="#c47d4a"/>
+          <text class="door-label" x="180" y="105" text-anchor="middle">/login</text>
+          <text class="door-label" x="180" y="210" text-anchor="middle" font-size="9" fill="#2a6f7a">apex + slug</text>
+          <!-- Door B — staff side -->
+          <rect x="295" y="120" width="38" height="80" fill="#f4efe4" stroke="#4a3d5c" stroke-width="2.5"/>
+          <circle cx="322" cy="160" r="2.5" fill="#4a3d5c"/>
+          <text class="door-label" x="314" y="115" text-anchor="middle" fill="#4a3d5c">/platform/login</text>
+          <text class="door-label" x="314" y="210" text-anchor="middle" font-size="9" fill="#4a3d5c">apex only</text>
+          <!-- sign -->
+          <rect x="175" y="68" width="70" height="18" fill="#f4efe4" stroke="#1a2a32" stroke-width="1"/>
+          <text x="210" y="81" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#1a2a32">Cohestra</text>
+          <!-- dashed path to side door -->
+          <path d="M 250 155 Q 275 140 295 155" fill="none" stroke="#4a3d5c" stroke-width="1" stroke-dasharray="4 3" opacity="0.5"/>
+        </svg>
+        <figcaption class="building-caption">Warm paper front door for every club. Staff-only side door for ops — same walls, same cookie jar.</figcaption>
+      </figure>
+    </header>
+
+    <nav class="technique-rail" aria-label="Brainstorm techniques">
+      <a href="#assumption-reversal">Assumption Reversal</a>
+      <a href="#jtbd">Job to Be Done</a>
+      <a href="#worst">Worst Possible Idea</a>
+      <a href="#constraints">Constraint Mapping</a>
+      <a href="#ship60">Ship in 60 Minutes</a>
+      <a href="#disney">Disney Method</a>
+      <a href="#climax">Decisions</a>
+    </nav>
+
+    <!-- 1. ASSUMPTION REVERSAL -->
+    <section class="technique reveal" id="assumption-reversal">
+      <div class="technique-header">
+        <span class="technique-num">01</span>
+        <h2>Assumption Reversal</h2>
+      </div>
+      <p style="font-size:0.9rem;color:var(--ink-soft);margin-bottom:1rem;">Flip what we thought we had to build. Each card turns a false necessity into a path-door truth.</p>
+      <div class="reversal-deck">
+        <div class="reversal-card"><div class="reversal-assume">Ops and operators share one URL</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">Two paths, one LoginForm audience family</div></div>
+        <div class="reversal-card"><div class="reversal-assume">Platform login needs a different visual system</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">Same AuthFlowShell; different eyebrow/copy — Cohestra, not a club workspace</div></div>
+        <div class="reversal-card"><div class="reversal-assume">Slug hosts should offer /platform/login</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">Tenant hosts never host ops; redirect to apex</div></div>
+        <div class="reversal-card"><div class="reversal-assume">/login should deep-link to platform login</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">Never advertise the ops door on tenant UX</div></div>
+        <div class="reversal-card"><div class="reversal-assume">API needs an audience field</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">Same POST /api/v1/auth/login; path is the UI door, Host still binds tenant</div></div>
+        <div class="reversal-card"><div class="reversal-assume">PlatformAdmin may sign in on /login and bounce to /platform</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">Reject at the operator door — the URL means the audience</div></div>
+        <div class="reversal-card"><div class="reversal-assume">We need platform.{apex} later</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">/platform/login on marketing apex is enough until a real origin split is forced</div></div>
+        <div class="reversal-card"><div class="reversal-assume">Two Next apps reduce blast radius</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">One app → one CSP, one font load, one cookie story; blast radius is already API-split</div></div>
+        <div class="reversal-card"><div class="reversal-assume">Tenant branding on platform login</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">siteBranding=null — ops never looks like a club</div></div>
+        <div class="reversal-card"><div class="reversal-assume">Forgot-password / Create account on platform login</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">Ops seed accounts are not self-serve; omit reset and register CTA</div></div>
+        <div class="reversal-card"><div class="reversal-assume">Middleware ignores path, only Host</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">Host selects tenant vs apex; path selects ops vs operator on apex</div></div>
+        <div class="reversal-card"><div class="reversal-assume">Slug login is a different Next page</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">One app/login/page.tsx; slug only changes Host + workspace notice</div></div>
+        <div class="reversal-card"><div class="reversal-assume">Extract architecture spine is still the plan</div><div class="reversal-pivot">↺</div><div class="reversal-reverse">Superseded by path doors in one app</div></div>
+      </div>
+    </section>
+
+    <!-- 2. JOB TO BE DONE -->
+    <section class="technique reveal" id="jtbd">
+      <div class="technique-header">
+        <span class="technique-num">02</span>
+        <h2>Job to Be Done</h2>
+      </div>
+      <p style="font-size:0.9rem;color:var(--ink-soft);margin-bottom:1rem;">Who is hiring which door — and what must never leak across the threshold.</p>
+      <div class="job-wall">
+        <div class="job-slip ops"><div class="job-who">Francis · ops</div>Hiring a URL to bookmark that never shows a club logo or invite flow</div>
+        <div class="job-slip tenant"><div class="job-who">Club owner · slug host</div>Hiring /login that looks like <em>their</em> workspace</div>
+        <div class="job-slip tenant"><div class="job-who">Club owner · apex</div>Hiring email-first workspace resolution, not a platform console</div>
+        <div class="job-slip ops"><div class="job-who">Support</div>Hiring a door they can paste in Slack without explaining Docker splits</div>
+        <div class="job-slip tenant"><div class="job-who">Mistaken tenant admin</div>Hiring a clear bounce when they typed /platform/login</div>
+        <div class="job-slip ops"><div class="job-who">Mistaken platform admin</div>Hiring a clear bounce to /platform/login from /login — not a silent /platform dump</div>
+        <div class="job-slip infra"><div class="job-who">Incident response</div>Hiring logs that show which door (path) was used — one app</div>
+        <div class="job-slip infra"><div class="job-who">Security</div>Hiring a non-advertised ops door so club operators do not see Cohestra internals</div>
+        <div class="job-slip infra"><div class="job-who">QA</div>Hiring one Playwright base URL with two paths plus one tenant-host /login check</div>
+        <div class="job-slip ops"><div class="job-who">On-call</div>Hiring seed creds documented next to the ops path only</div>
+        <div class="job-slip tenant"><div class="job-who">Pro tenant admin</div>Hiring the same form at creativorare.localhost/login as at localhost/login after handoff</div>
+        <div class="job-slip tenant"><div class="job-who">Marketing CTA</div>Hiring /login — never /platform/login</div>
+        <div class="job-slip tenant"><div class="job-who">Invite accept</div>Hiring /login?email= with invited=1 — never the ops door</div>
+        <div class="job-slip ops"><div class="job-who">Session expired · /platform/*</div>Hiring return to /platform/login?reason=session-expired</div>
+        <div class="job-slip tenant"><div class="job-who">Session expired · /dashboard</div>Hiring return to /login?reason=session-expired</div>
+        <div class="job-slip infra"><div class="job-who">Nginx</div>Hiring a single location / to web:3000 — path doors need no new upstream</div>
+        <div class="job-slip tenant"><div class="job-who">Custom domain future</div>Hiring /login on their host — never ops routes on that host</div>
+        <div class="job-slip ops"><div class="job-who">Platform support inbox · Epic 27</div>Hiring the same ops session after /platform/login — not a new IdP</div>
+        <div class="job-slip infra"><div class="job-who">Dual-tab user</div>Hiring one localStorage session: last successful door wins; roles exclusive</div>
+      </div>
+    </section>
+
+    <!-- 3. WORST POSSIBLE IDEA -->
+    <section class="technique reveal" id="worst">
+      <div class="technique-header">
+        <span class="technique-num">03</span>
+        <h2>Worst Possible Idea</h2>
+      </div>
+      <p style="font-size:0.9rem;color:var(--ink-soft);margin-bottom:1rem;">Deliberate sabotage — then invert. What we will not do.</p>
+      <ul class="hazard-list">
+        <li><span class="hazard-skull">☠</span><span>Put a Platform admin link in the tenant login footer</span><span class="hazard-opposite">→ hide ops URL</span></li>
+        <li><span class="hazard-skull">☠</span><span>Share one form without audience checks — PlatformAdmin on /login silently enters /platform</span><span class="hazard-opposite">→ honest doors</span></li>
+        <li><span class="hazard-skull">☠</span><span>Host platform login only on slug hosts</span><span class="hazard-opposite">→ apex only</span></li>
+        <li><span class="hazard-skull">☠</span><span>Split cookies per path</span><span class="hazard-opposite">→ one session store</span></li>
+        <li><span class="hazard-skull">☠</span><span>Add login body audience=platform</span><span class="hazard-opposite">→ Host+role rules</span></li>
+        <li><span class="hazard-skull">☠</span><span>Redirect /login when email looks like @cohestra</span><span class="hazard-opposite">→ no heuristic auth</span></li>
+        <li><span class="hazard-skull">☠</span><span>Put ops login under /admin/god</span><span class="hazard-opposite">→ boring /platform/login</span></li>
+        <li><span class="hazard-skull">☠</span><span>Make slug /login a different component tree</span><span class="hazard-opposite">→ one page module</span></li>
+        <li><span class="hazard-skull">☠</span><span>Allow PlatformAdmin to also be TenantAdmin</span><span class="hazard-opposite">→ PRD exclusive roles</span></li>
+        <li><span class="hazard-skull">☠</span><span>Serve platform console on every host including custom domains</span><span class="hazard-opposite">→ apex only</span></li>
+        <li><span class="hazard-skull">☠</span><span>HTTP basic auth in nginx for /platform</span><span class="hazard-opposite">→ JWT app flow</span></li>
+        <li><span class="hazard-skull">☠</span><span>Hide /platform/login behind a feature flag defaulting off in Docker</span><span class="hazard-opposite">→ ops can UAT</span></li>
+        <li><span class="hazard-skull">☠</span><span>Copy extract spine into production as web-platform with no traffic</span><span class="hazard-opposite">→ no zombie service</span></li>
+        <li><span class="hazard-skull">☠</span><span>Treat /platform as the login page (no /login suffix)</span><span class="hazard-opposite">→ /platform/login door, /platform home</span></li>
+      </ul>
+    </section>
+
+    <!-- 4. CONSTRAINT MAPPING -->
+    <section class="technique reveal" id="constraints">
+      <div class="technique-header">
+        <span class="technique-num">04</span>
+        <h2>Constraint Mapping</h2>
+      </div>
+      <p style="font-size:0.9rem;color:var(--ink-soft);margin-bottom:1rem;">Real walls, imagined walls, assets already in the walls, and gaps to patch.</p>
+      <div class="constraint-map">
+        <div class="constraint-zone zone-real">
+          <h3>Real constraints</h3>
+          <ul>
+            <li>One Next app, one nginx location /, one API</li>
+            <li>Host binds tenant; apex is marketing + email-first operator login</li>
+            <li>PlatformAdmin JWT cannot call /admin/me; operator JWT cannot call /platform/*</li>
+            <li>LoginForm has audience=platform; operator door does not reject PlatformAdmin yet — gap</li>
+            <li>isTenantSubdomainHost misses nip.io; use parseTenantSlugFromHostname</li>
+            <li>Do not change tenant slug login page identity — same route module</li>
+          </ul>
+        </div>
+        <div class="constraint-zone zone-imagined">
+          <h3>Dissolved</h3>
+          <ul>
+            <li class="dissolve">Must extract before production — user killed that</li>
+            <li class="dissolve">Ops needs a unique origin for cookies — same-site path is enough</li>
+            <li class="dissolve">Second Docker web image — not required</li>
+          </ul>
+        </div>
+        <div class="constraint-zone zone-asset">
+          <h3>Assets</h3>
+          <ul>
+            <li>PLATFORM_LOGIN_PATH and resolveLoginPath exist</li>
+            <li>Platform login already noindexes, omits register, links back to operator sign-in</li>
+            <li>Tenant login Host-brands via siteBranding + workspace notice</li>
+            <li>Reuse loginWithPassword — no new IdP</li>
+            <li>Unadvertised path is a mild speed bump; document in README/ops docs</li>
+            <li>Keep: robots noindex on platform login; mutually exclusive roles</li>
+          </ul>
+        </div>
+        <div class="constraint-zone zone-gap">
+          <h3>Gaps to close</h3>
+          <ul>
+            <li>Middleware does not bounce /platform* off tenant hosts</li>
+            <li>AdminRouteGuard does not bounce PlatformAdmin off /dashboard</li>
+            <li>Launch checklist lists /platform as login URL</li>
+            <li>Smoke platform login only asserts body visible, not ops heading</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. SHIP IN 60 MINUTES -->
+    <section class="technique reveal" id="ship60">
+      <span class="timer-badge">≤ 60 MIN</span>
+      <div class="technique-header">
+        <span class="technique-num">05</span>
+        <h2>Ship in 60 Minutes</h2>
+      </div>
+      <p style="font-size:0.85rem;opacity:0.75;margin-bottom:1rem;">The implementation manifest — do now, skip now.</p>
+      <div class="manifest">
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Stay in web/ — do not create web-platform</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Reject PlatformAdmin on operator LoginForm with CTA to /platform/login</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Keep rejecting TenantAdmin on platform LoginForm with CTA to /login</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Redirect any /platform* on tenant slug host to marketing apex equivalent (307)</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Bounce authenticated PlatformAdmin away from AdminRouteGuard to /platform</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Leave authenticated PlatformAdmin already on /login free to continue to /platform</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Do not add platform link on default tenant login footer</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Do not add forgot-password or register on platform login</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Unit-test loginAudienceMismatch and resolvePlatformOpsRedirectUrl</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Tighten Playwright: platform heading + tenant-host /platform/login redirect</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>README: two doors, one app; slug /login remains tenant-only</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Launch checklist: ops door is /platform/login on apex</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Preserve query string on apex redirect (reason=session-expired)</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Use 307 — never POST a login form to the wrong host</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Reuse resolveMarketingApexUrl for slug.localhost → localhost and nip.io</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>AuthFlowShell eyebrow: Platform console vs Operator workspace</span></div>
+        <div class="manifest-row"><span class="manifest-check">☑</span><span>Document seed email only beside /platform/login</span></div>
+        <div class="manifest-row manifest-skip"><span class="manifest-check"></span><span>Skip API contract changes this round</span></div>
+        <div class="manifest-row manifest-skip"><span class="manifest-check"></span><span>Skip new compose services</span></div>
+        <div class="manifest-row manifest-skip"><span class="manifest-check"></span><span>Skip rewriting extract planning docs on a dead branch; new branch from main</span></div>
+      </div>
+    </section>
+
+    <!-- 6. DISNEY METHOD -->
+    <section class="technique reveal" id="disney">
+      <div class="technique-header">
+        <span class="technique-num">06</span>
+        <h2>Disney Method</h2>
+      </div>
+      <p style="font-size:0.9rem;color:var(--ink-soft);margin-bottom:1rem;">Dream the clubhouse, engineer the hinges, stress-test the locks.</p>
+      <div class="disney-acts">
+        <div class="disney-act act-dreamer" data-act="I">
+          <h3>Dreamer</h3>
+          <ul>
+            <li>Ops types cohestra.app/platform/login in muscle memory like /admin on WordPress</li>
+            <li>Clubs never learn that URL exists unless they guess</li>
+            <li>Same password field, same a11y, zero second design system for a door</li>
+            <li>Future custom domains inherit tenant /login automatically — same page</li>
+          </ul>
+        </div>
+        <div class="disney-act act-realist" data-act="II">
+          <h3>Realist</h3>
+          <ul>
+            <li>Implement helper + middleware + form audience + guard + tests + docs</li>
+            <li>Middleware before static short-circuit; matcher covers all paths</li>
+            <li>Next origin behind nginx uses Host; tenant.localhost:8088 is detectable</li>
+            <li>Platform login outside (platform) group so unauthenticated users can render on apex</li>
+            <li>After tenant-host redirect, platform login is apex and fetchPublicDoor is marketing</li>
+          </ul>
+        </div>
+        <div class="disney-act act-critic" data-act="III">
+          <h3>Critic</h3>
+          <ul>
+            <li>Redirect loops if apex misdetected as slug — parseTenantSlugFromHostname returns null on localhost and cohestra.app</li>
+            <li>www.cohestra.app is apex; do not treat www as tenant</li>
+            <li>default.localhost is a tenant; must redirect</li>
+            <li>Keep smoke on apex if PUBLIC_BASE_URL is a tenant host in CI</li>
+            <li>Leaking PLATFORM_LOGIN_PATH in operator error CTA is acceptable — user proved platform account</li>
+            <li>Do not leak it on the empty operator form</li>
+            <li>Platform login Operator sign-in link is fine — escape hatch for ops who missed the path</li>
+            <li>No API audience: crafted POST from /login still authenticates PlatformAdmin — UI door is product truth; JWT policies are security boundary</li>
+            <li>Do not 404 /platform on tenant hosts if we can 307 — friendlier for mistyped bookmarks</li>
+            <li>Extracting later remains possible; this does not burn the bridge</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLIMAX -->
+    <section class="climax" id="climax">
+      <div class="climax-ribbon">Synthesis</div>
+      <h2>Two honest doors</h2>
+
+      <div class="insights">
+        <blockquote class="insight reveal" style="--delay:0ms">The split was solving an origin/blast-radius fear; the real job is two honest doors. Path /platform/login on apex + shared /login on every tenant host does that without a second Next app.</blockquote>
+        <blockquote class="insight reveal" style="--delay:80ms">Host and path are orthogonal: Host = which tenant (or apex); path = which audience door. Mixing them — ops UI on a club host — is the bug to prevent.</blockquote>
+        <blockquote class="insight reveal" style="--delay:160ms">Tenant login must stay one page module so apex and slug never drift. Platform login may share LoginForm but not tenant branding, register, or reset.</blockquote>
+        <blockquote class="insight reveal" style="--delay:240ms">UI audience checks are product truth; API role policies are the security boundary. Do both. Do not add a login audience DTO.</blockquote>
+      </div>
+
+      <div class="decisions-seal reveal" style="--delay:320ms">
+        <div class="door-decision">
+          <div class="door-panel door-a">
+            <strong>Door A</strong>
+            <div class="path">/login</div>
+            <p class="audience">On apex and {slug} hosts — all tenants and TenantAdmins. Same page. Host branding only.</p>
+          </div>
+          <div class="door-panel door-b">
+            <strong>Door B</strong>
+            <div class="path">/platform/login</div>
+            <p class="audience">On marketing/apex hosts only — PlatformAdmin / Cohestra ops. noindex. No register. No reset. No tenant chrome.</p>
+          </div>
+        </div>
+
+        <ul class="decision-list">
+          <li>Tenant slug hosts requesting /platform or /platform/login → 307 to apex equivalent</li>
+          <li>Operator form rejects PlatformAdmin (CTA to /platform/login). Platform form rejects non-PlatformAdmin (CTA to /login)</li>
+          <li>Admin shell bounces PlatformAdmin to /platform. Platform shell bounces others to /dashboard</li>
+          <li>No new API, no new compose service, no platform link on default tenant login footer</li>
+          <li>Implement Ship-in-60-minutes slice: helpers, middleware redirect, login-form symmetry, admin guard, tests, README + launch checklist</li>
+        </ul>
+
+        <div class="killed-block">
+          <h4>Killed · superseded</h4>
+          <ul class="killed-list">
+            <li>web-1/web-2 extract</li>
+            <li>platform.{apex} origin</li>
+            <li>packages/auth-client split</li>
+            <li>Path doors in the existing web app replace all of the above</li>
+          </ul>
+        </div>
+
+        <div class="orthogonal">
+          <strong>Host × Path</strong>
+          Host selects the building address · Path selects which door you knock on
+        </div>
+      </div>
+    </section>
+
+    <footer>brainstorm-platform-admin-login-path · 2026-08-17 · autonomous · complete</footer>
+  </article>
+
+  <script>
+    (function () {
+      var reveals = document.querySelectorAll('.reveal');
+      var railLinks = document.querySelectorAll('.technique-rail a');
+
+      if ('IntersectionObserver' in window) {
+        var obs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) e.target.classList.add('visible');
+          });
+        }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+        reveals.forEach(function (el) { obs.observe(el); });
+      } else {
+        reveals.forEach(function (el) { el.classList.add('visible'); });
+      }
+
+      var sections = [];
+      railLinks.forEach(function (link) {
+        var id = link.getAttribute('href').slice(1);
+        var sec = document.getElementById(id);
+        if (sec) sections.push({ link: link, sec: sec });
+      });
+
+      function onScroll() {
+        var y = window.scrollY + 120;
+        var current = sections[0];
+        sections.forEach(function (s) {
+          if (s.sec.offsetTop <= y) current = s;
+        });
+        railLinks.forEach(function (l) { l.classList.remove('active'); });
+        if (current) current.link.classList.add('active');
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      document.querySelectorAll('.reversal-card').forEach(function (card, i) {
+        card.style.transitionDelay = (i * 30) + 'ms';
+      });
+    })();
+  </script>
+</body>
+</html>

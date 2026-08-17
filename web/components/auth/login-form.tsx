@@ -9,15 +9,17 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   isPlatformAdminProfile,
+  loginAudienceMismatch,
   loginWithPassword,
-  OPERATOR_LOGIN_PATH,
   resolvePostLoginPath,
+  type LoginAudience,
+  type LoginAudienceMismatch,
 } from "@/lib/auth-api";
 import { buildVerifyEmailPath } from "@/lib/verify-email-path";
 import { cn } from "@/lib/utils";
 
 type LoginFormProps = {
-  audience?: "operator" | "platform";
+  audience?: LoginAudience;
   showSessionExpiredNotice?: boolean;
   initialEmail?: string;
   invitedAccept?: boolean;
@@ -43,6 +45,7 @@ export function LoginForm({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCta, setErrorCta] = useState<LoginAudienceMismatch | null>(null);
   const [verificationRedirectPath, setVerificationRedirectPath] = useState<string | null>(
     null
   );
@@ -61,6 +64,7 @@ export function LoginForm({
   useEffect(() => {
     setVerificationRedirectPath(null);
     setError(null);
+    setErrorCta(null);
   }, [email, password]);
 
   useEffect(() => {
@@ -98,6 +102,7 @@ export function LoginForm({
     }
 
     setError(null);
+    setErrorCta(null);
     setIsSubmitting(true);
 
     const result = await loginWithPassword(email.trim(), password);
@@ -127,11 +132,11 @@ export function LoginForm({
       return;
     }
 
-    if (audience === "platform" && !isPlatformAdminProfile(result.profile)) {
+    const mismatch = loginAudienceMismatch(audience, result.profile);
+    if (mismatch) {
       clearSession();
-      setError(
-        `This page is for Cohestra platform admins only. Use the operator workspace sign-in instead.`
-      );
+      setError(mismatch.message);
+      setErrorCta(mismatch);
       return;
     }
 
@@ -222,13 +227,13 @@ export function LoginForm({
       {error ? (
         <div role="alert" className="space-y-2 text-sm text-destructive">
           <p>{error}</p>
-          {audience === "platform" && error.includes("operator workspace") ? (
+          {errorCta ? (
             <p>
               <a
-                href={OPERATOR_LOGIN_PATH}
+                href={errorCta.otherDoorPath}
                 className="font-medium text-lagoon underline-offset-2 hover:text-lagoon-deep hover:underline"
               >
-                Go to operator sign in
+                {errorCta.otherDoorLabel}
               </a>
             </p>
           ) : null}

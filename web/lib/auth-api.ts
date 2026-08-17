@@ -183,6 +183,14 @@ export const ROLES = {
 export const OPERATOR_LOGIN_PATH = "/login";
 export const PLATFORM_LOGIN_PATH = "/platform/login";
 
+export type LoginAudience = "operator" | "platform";
+
+export type LoginAudienceMismatch = {
+  message: string;
+  otherDoorPath: string;
+  otherDoorLabel: string;
+};
+
 /**
  * Post-login home. Hard rule: PlatformAdmin and TenantAdmin are mutually exclusive.
  * PlatformAdmin → platform console; TenantAdmin → operator dashboard.
@@ -208,6 +216,37 @@ export function resolveLoginPath(pathname: string | null | undefined): string {
 
 export function isPlatformAdminProfile(profile: AdminProfile): boolean {
   return profile.roles.includes(ROLES.PlatformAdmin);
+}
+
+/**
+ * UI door check so `/login` means tenant operators and `/platform/login` means
+ * Cohestra ops. JWT policies remain the security boundary.
+ */
+export function loginAudienceMismatch(
+  audience: LoginAudience,
+  profile: AdminProfile
+): LoginAudienceMismatch | null {
+  const isPlatform = isPlatformAdminProfile(profile);
+
+  if (audience === "platform" && !isPlatform) {
+    return {
+      message:
+        "This page is for Cohestra platform admins only. Use the operator workspace sign-in instead.",
+      otherDoorPath: OPERATOR_LOGIN_PATH,
+      otherDoorLabel: "Go to operator sign in",
+    };
+  }
+
+  if (audience === "operator" && isPlatform) {
+    return {
+      message:
+        "This page is for workspace operators. Use the Cohestra platform admin sign-in instead.",
+      otherDoorPath: PLATFORM_LOGIN_PATH,
+      otherDoorLabel: "Go to platform admin sign in",
+    };
+  }
+
+  return null;
 }
 
 const ROLE_CLAIM =

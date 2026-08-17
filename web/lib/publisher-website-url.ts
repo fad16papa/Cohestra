@@ -30,7 +30,7 @@ function resolveTenantSlug(door: PublicDoorPayload, origin: string): string | nu
 
     if (hostname.endsWith(".nip.io")) {
       const parts = hostname.split(".");
-      if (parts.length >= 5) {
+      if (parts.length >= 4) {
         return parts[0];
       }
     }
@@ -62,7 +62,7 @@ export function resolveMarketingApexUrl(origin: string): string {
 
     if (hostname.endsWith(".nip.io")) {
       const parts = hostname.split(".");
-      if (parts.length >= 5) {
+      if (parts.length >= 4) {
         return `${url.protocol}//${parts.slice(1).join(".")}${portSuffix}`;
       }
     }
