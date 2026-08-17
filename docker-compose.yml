@@ -47,7 +47,7 @@ services:
       OperatorSeed__Enabled: ${OperatorSeed__Enabled:-false}
       OperatorSeed__Email: ${OperatorSeed__Email:-operator@cohestra.local}
       OperatorSeed__Password: ${OperatorSeed__Password:-ChangeMe123!}
-      PlatformAdminSeed__Enabled: ${PlatformAdminSeed__Enabled:-false}
+      PlatformAdminSeed__Enabled: ${PlatformAdminSeed__Enabled:-true}
       PlatformAdminSeed__Email: ${PlatformAdminSeed__Email:-platform-admin@cohestra.local}
       PlatformAdminSeed__Password: ${PlatformAdminSeed__Password:-ChangeMe123!}
       DemoDataSeed__Enabled: ${DemoDataSeed__Enabled:-false}
