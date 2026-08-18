@@ -296,4 +296,4 @@ FR-OC-1 through FR-OC-11, in forge build order: Snapshot → Reply+email → mem
 
 ## 11. Next
 
-`bmad-create-epics-and-stories` (or `bmad-ux` if Snapshot card needs a mock). Architecture is an approved `PlatformAdminOnly` bypass of EF filters — not a new app.
+Epics and stories: `_bmad-output/planning-artifacts/epics-platform-ops-console-2026-08-18.md` (Epic 28, stories 28.1–28.13). Optional: `bmad-ux` if Snapshot card needs a ratified mock before 28.2. Architecture is an approved `PlatformAdminOnly` bypass of EF filters — not a new app.
