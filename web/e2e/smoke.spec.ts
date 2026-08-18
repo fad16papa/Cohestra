@@ -24,7 +24,9 @@ test.describe("smoke", () => {
   test("platform login page loads", async ({ page }) => {
     const response = await page.goto("/platform/login");
     expect(response?.ok()).toBeTruthy();
-    await expect(page.locator("body")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /platform admin sign in/i })
+    ).toBeVisible();
   });
 
   test("tenant subdomain login loads when available", async ({ page }) => {
@@ -52,5 +54,37 @@ test.describe("smoke", () => {
     } catch {
       test.skip(true, "Tenant subdomain login is not reachable in this environment.");
     }
+  });
+
+  test("tenant subdomain platform login redirects to apex", async ({ page }) => {
+    const tenantBase = baseURL.includes("localhost")
+      ? baseURL.replace("://localhost", "://default.localhost")
+      : null;
+
+    if (!tenantBase) {
+      test.skip(true, "Tenant subdomain smoke requires localhost base URL.");
+      return;
+    }
+
+    try {
+      const response = await page.goto(`${tenantBase}/platform/login`, {
+        timeout: 15_000,
+        waitUntil: "domcontentloaded",
+      });
+
+      if (!response) {
+        test.skip(true, "Tenant subdomain platform login is not reachable in this environment.");
+        return;
+      }
+    } catch {
+      test.skip(true, "Tenant subdomain platform login is not reachable in this environment.");
+      return;
+    }
+
+    const apexLogin = new URL("/platform/login", baseURL).href.replace(/\/$/, "");
+    expect(page.url().replace(/\/$/, "")).toBe(apexLogin.replace(/\/$/, ""));
+    await expect(
+      page.getByRole("heading", { name: /platform admin sign in/i })
+    ).toBeVisible();
   });
 });

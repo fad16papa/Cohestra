@@ -38,7 +38,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 | Tenant site (UAT tenant) | `http://creativorare.localhost:8088/` | Door active; activities/register flow |
 | Marketing apex | `http://cohestra.app:8088/` | Midnight Atelier marketing home |
 | Pricing / signup | `http://cohestra.app:8088/pricing` | 200; self-serve signup UI |
-| Platform admin | `http://localhost:8088/platform` | Platform admin login + tenant directory |
+| Platform admin | `http://localhost:8088/platform/login` | Platform admin sign-in; home is `/platform` |
 
 **Smoke script (automated):**
 
@@ -98,6 +98,7 @@ v1 ships **enforce** — `Content-Security-Policy` (not Report-Only). Canonical 
 | Surface | URL | Pass |
 |---------|-----|------|
 | Tenant login | `http://default.localhost:8088/login` | Page loads; no broken UI |
+| Platform login | `http://localhost:8088/platform/login` | Platform admin sign-in (apex); slug hosts redirect here |
 | Dashboard | after login | Shell + nav render |
 | Website builder | `/dashboard/website` | Editor loads |
 | Public registration | tenant door `/register` or apex `/signup` | Form + reCAPTCHA (if enabled) |

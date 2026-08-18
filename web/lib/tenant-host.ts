@@ -19,7 +19,8 @@ export function parseTenantSlugFromHostname(hostname: string): string | null {
 
   if (host.endsWith(".nip.io")) {
     const parts = host.split(".");
-    if (parts.length >= 5) {
+    // Tenant: slug.129-212-235-2.nip.io (4 labels). Apex: 129-212-235-2.nip.io (3).
+    if (parts.length >= 4) {
       return parts[0] ?? null;
     }
   }
