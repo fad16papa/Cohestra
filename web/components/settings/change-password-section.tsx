@@ -13,7 +13,7 @@ import { changePassword } from "@/lib/auth-api";
 const fieldShellClassName =
   "flex min-h-11 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30";
 
-export function ChangePasswordSection() {
+export function ChangePasswordSection({ embedded = false }: { embedded?: boolean }) {
   const { authFetch } = useAuth();
   const { showToast } = useToast();
   const [currentPassword, setCurrentPassword] = useState("");
@@ -55,16 +55,29 @@ export function ChangePasswordSection() {
 
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-section text-text-warm">Password</h2>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Update your operator password without leaving the workspace.
-        </p>
-      </div>
+      {!embedded ? (
+        <div>
+          <h2 className="text-section text-text-warm">Password</h2>
+          <p className="mt-1 text-sm text-text-muted-warm">
+            Update your operator password without leaving the workspace.
+          </p>
+        </div>
+      ) : (
+        <div>
+          <h3 className="text-sm font-semibold text-text-warm">Password</h3>
+          <p className="mt-1 text-sm text-text-muted-warm">
+            Update your operator password without leaving the workspace.
+          </p>
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-xl border border-border-warm bg-muted/20 p-4 sm:p-5"
+        className={
+          embedded
+            ? "space-y-4"
+            : "rounded-xl border border-border-warm bg-muted/20 p-4 sm:p-5"
+        }
       >
         <div className="space-y-4">
           <div className="space-y-2">

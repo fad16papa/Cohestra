@@ -16,7 +16,7 @@ const appearanceHelperText: Record<ThemePreference, string> = {
   system: "Match your device settings.",
 };
 
-export function AppearanceSection() {
+export function AppearanceSection({ embedded = false }: { embedded?: boolean }) {
   const { selected, persistThemePreference, isSaving } =
     usePersistedThemePreference();
   const [error, setError] = useState<string | null>(null);
@@ -31,14 +31,16 @@ export function AppearanceSection() {
 
   return (
     <section className="space-y-4">
-      <p className="text-sm text-text-muted-warm">
-        Changes sync with the top-bar theme control instantly.
-      </p>
+      {!embedded ? (
+        <p className="text-sm text-text-muted-warm">
+          Changes sync with the top-bar theme control instantly.
+        </p>
+      ) : null}
 
       <div
         role="radiogroup"
         aria-label="Appearance preference"
-        className="inline-flex w-full max-w-md flex-col gap-2 rounded-lg border border-border-warm bg-card p-1 sm:flex-row"
+        className="inline-flex w-full max-w-lg flex-col gap-2 rounded-xl border border-border-warm bg-muted/20 p-1 sm:flex-row"
       >
         {themePreferences.map((option) => {
           const isActive = selected === option;
