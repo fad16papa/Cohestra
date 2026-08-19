@@ -138,6 +138,13 @@ public sealed class PlatformTenantOpsService(
                 "Member not found on this tenant.");
         }
 
+        if (!member.EmailConfirmed)
+        {
+            return PlatformTenantResult<PlatformRecoveryActionResponse>.Fail(
+                PlatformTenantError.Conflict,
+                "This member must verify their email before a password reset can be sent.");
+        }
+
         await authService.ForgotPasswordAsync(new ForgotPasswordRequest(member.Email), cancellationToken);
 
         var now = DateTimeOffset.UtcNow;

@@ -101,6 +101,7 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
     [ProducesResponseType(typeof(PlatformSupportIssueDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<PlatformSupportIssueDetailResponse>> AddReply(
         Guid id,
         [FromBody] AddPlatformSupportReplyRequest? request,
@@ -113,7 +114,7 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
 
         if (!TryGetActor(out var actorUserId, out var actorEmail))
         {
-            return BadRequestProblem("Authenticated user id is missing.");
+            return UnauthorizedProblem("Authenticated user id is missing.");
         }
 
         try
@@ -125,6 +126,10 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
                 actorEmail,
                 cancellationToken);
             return result is null ? NotFoundProblem("Support issue not found.") : Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ConflictProblem(ex.Message);
         }
         catch (ArgumentException ex)
         {
@@ -183,6 +188,30 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
         {
             Status = StatusCodes.Status404NotFound,
             Title = "Not Found",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        });
+    }
+
+    private ObjectResult ConflictProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+        return Conflict(new ProblemDetails
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = "Conflict",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        });
+    }
+
+    private UnauthorizedObjectResult UnauthorizedProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+        return Unauthorized(new ProblemDetails
+        {
+            Status = StatusCodes.Status401Unauthorized,
+            Title = "Unauthorized",
             Detail = detail,
             Instance = HttpContext.Request.Path,
         });

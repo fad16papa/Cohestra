@@ -203,6 +203,11 @@ public sealed class PlatformSupportIssueService(
             return null;
         }
 
+        if (issue.Status is SupportIssueStatus.Resolved or SupportIssueStatus.Closed)
+        {
+            throw new InvalidOperationException("Cannot reply to a resolved or closed support issue.");
+        }
+
         var now = DateTimeOffset.UtcNow;
         var reply = new SupportIssueReply
         {
@@ -215,6 +220,7 @@ public sealed class PlatformSupportIssueService(
         };
 
         issue.Replies.Add(reply);
+        issue.Status = SupportIssueStatus.WaitingOnOperator;
         issue.UpdatedAt = now;
 
         dbContext.PlatformAuditLogs.Add(new PlatformAuditLog
@@ -294,7 +300,7 @@ public sealed class PlatformSupportIssueService(
             issue.TenantId,
             OutboxMessageTypes.SupportIssueFilerStatus,
             payload,
-            $"support:{issue.Id:D}:status:{issue.Status}");
+            $"support:{issue.Id:D}:status:{issue.Status}:{issue.UpdatedAt.UtcTicks}");
     }
 
     private static bool ShouldEmailFilerOnStatus(SupportIssueStatus status) =>
