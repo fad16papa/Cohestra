@@ -13,7 +13,7 @@ import {
   type TenantRegistrationTimeZone,
 } from "@/lib/tenant-settings-api";
 
-export function OrganizationTimezoneSection() {
+export function OrganizationTimezoneSection({ embedded = false }: { embedded?: boolean }) {
   const { authFetch } = useAuth();
   const { refreshShell } = useTenantShell();
   const { showToast } = useToast();
@@ -65,13 +65,15 @@ export function OrganizationTimezoneSection() {
 
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-section text-text-warm">Registration month timezone</h2>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Monthly registration limits reset at midnight on the 1st in this timezone.
-          Used for plan headroom and public registration caps.
-        </p>
-      </div>
+      {!embedded ? (
+        <div>
+          <h2 className="text-section text-text-warm">Registration month timezone</h2>
+          <p className="mt-1 text-sm text-text-muted-warm">
+            Monthly registration limits reset at midnight on the 1st in this timezone.
+            Used for plan headroom and public registration caps.
+          </p>
+        </div>
+      ) : null}
 
       {loading ? (
         <p className="text-sm text-text-muted-warm">Loading timezone…</p>

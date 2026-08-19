@@ -19,7 +19,7 @@ import {
 } from "@/lib/brand-accent";
 import { cn } from "@/lib/utils";
 
-export function BrandAccentSection() {
+export function BrandAccentSection({ embedded = false }: { embedded?: boolean }) {
   const { authFetch, applyProfile, profile } = useAuth();
   const isTenantAdmin = profile?.roles.includes("TenantAdmin") ?? false;
   const { selected: themePreference } = usePersistedThemePreference();
@@ -103,15 +103,17 @@ export function BrandAccentSection() {
 
   return (
     <section className="space-y-5">
-      <div>
-        <h2 className="text-section text-text-warm">Brand accent</h2>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Personalize buttons, links, dashboard highlights, and toast accents.
-          Lead status colors and error states stay fixed for clarity.
-        </p>
-      </div>
+      {!embedded ? (
+        <div>
+          <h2 className="text-section text-text-warm">Brand accent</h2>
+          <p className="mt-1 text-sm text-text-muted-warm">
+            Personalize buttons, links, dashboard highlights, and toast accents.
+            Lead status colors and error states stay fixed for clarity.
+          </p>
+        </div>
+      ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,280px)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,260px)]">
         <div className="space-y-4">
           <div>
             <p className="mb-2 text-sm font-medium text-text-warm">Presets</p>

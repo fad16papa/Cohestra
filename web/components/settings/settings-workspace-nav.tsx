@@ -10,13 +10,13 @@ const navItems = [
   {
     href: "/settings/team",
     label: "Team",
-    description: "Invite operators, manage roles, and seat usage.",
+    description: "Invite operators, roles, and seats",
     icon: Users,
   },
   {
     href: "/settings/billing",
     label: "Billing & plan",
-    description: "Compare plans, trials, invoices, and payment method.",
+    description: "Plans, trials, invoices, and payment",
     icon: CreditCard,
   },
 ] as const;
@@ -28,8 +28,7 @@ export function SettingsWorkspaceNav() {
     return null;
   }
 
-  const showBilling =
-    shell.plan === "Basic" || shell.isBillingOwner;
+  const showBilling = shell.plan === "Basic" || shell.isBillingOwner;
 
   const visibleItems = navItems.filter((item) =>
     item.href === "/settings/billing" ? showBilling : true
@@ -40,12 +39,19 @@ export function SettingsWorkspaceNav() {
   }
 
   return (
-    <section className="space-y-4">
-      <div>
-        <h2 className="text-section text-text-warm">Workspace admin</h2>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Team and billing settings for {shell.tenantName}.
-        </p>
+    <section
+      aria-label="Workspace admin shortcuts"
+      className="rounded-2xl border border-border-warm/80 bg-muted/20 p-4 sm:p-5"
+    >
+      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.12em] text-text-muted-warm">
+            Workspace admin
+          </p>
+          <p className="mt-1 text-sm text-text-muted-warm">
+            Dedicated pages for team and billing on {shell.tenantName}.
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -54,22 +60,22 @@ export function SettingsWorkspaceNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "group flex items-start gap-3 rounded-xl border border-border-warm bg-card p-4",
-              "transition-colors hover:border-lagoon/30 hover:bg-muted/30"
+              "group flex min-h-[4.5rem] items-center gap-3 rounded-xl border border-border-warm bg-card/90 px-4 py-3",
+              "transition-all hover:border-primary/25 hover:bg-card hover:shadow-sm"
             )}
           >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-lagoon/10 text-lagoon">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
               <item.icon className="size-5" aria-hidden />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-1 font-medium text-text-warm">
+              <span className="flex items-center gap-1 text-sm font-semibold text-text-warm">
                 {item.label}
                 <ChevronRight
                   className="size-4 text-text-muted-warm transition-transform group-hover:translate-x-0.5"
                   aria-hidden
                 />
               </span>
-              <span className="mt-1 block text-sm text-text-muted-warm">
+              <span className="mt-0.5 block text-xs text-text-muted-warm sm:text-sm">
                 {item.description}
               </span>
             </span>

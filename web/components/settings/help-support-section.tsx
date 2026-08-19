@@ -49,7 +49,7 @@ function formatDate(value: string): string {
   });
 }
 
-export function HelpSupportSection() {
+export function HelpSupportSection({ embedded = false }: { embedded?: boolean }) {
   const { authFetch, profile } = useAuth();
   const { showToast } = useToast();
   const [subject, setSubject] = useState("");
@@ -176,14 +176,16 @@ export function HelpSupportSection() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <h2 className="text-section text-text-warm">Help &amp; support</h2>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Reach Creativorare with a subject, description, and optional screenshots.
-          You&apos;ll get a support ID on screen and a confirmation email at{" "}
-          {profile?.email ?? "your operator address"}.
-        </p>
-      </div>
+      {!embedded ? (
+        <div>
+          <h2 className="text-section text-text-warm">Help &amp; support</h2>
+          <p className="mt-1 text-sm text-text-muted-warm">
+            Reach Creativorare with a subject, description, and optional screenshots.
+            You&apos;ll get a support ID on screen and a confirmation email at{" "}
+            {profile?.email ?? "your operator address"}.
+          </p>
+        </div>
+      ) : null}
 
       <form
         onSubmit={handleSubmit}

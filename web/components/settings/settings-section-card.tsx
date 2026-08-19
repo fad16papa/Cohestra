@@ -9,27 +9,39 @@ import {
 import { cn } from "@/lib/utils";
 
 type SettingsSectionCardProps = {
+  id?: string;
   title: string;
-  description: string;
+  description?: string;
   children: ReactNode;
   className?: string;
 };
 
 export function SettingsSectionCard({
+  id,
   title,
   description,
   children,
   className,
 }: SettingsSectionCardProps) {
   return (
-    <Card className={cn("border-border-warm", className)}>
-      <CardHeader className="border-b border-border-warm">
-        <h2 className="font-heading text-base leading-snug font-medium text-section text-text-warm">
+    <Card
+      id={id}
+      className={cn(
+        "scroll-mt-24 border-border-warm/80 bg-card/80 shadow-sm backdrop-blur-sm",
+        className
+      )}
+    >
+      <CardHeader className="space-y-1 pb-4">
+        <h2 className="font-heading text-base font-semibold leading-snug text-text-warm">
           {title}
         </h2>
-        <CardDescription className="text-text-muted-warm">{description}</CardDescription>
+        {description ? (
+          <CardDescription className="text-sm leading-relaxed text-text-muted-warm">
+            {description}
+          </CardDescription>
+        ) : null}
       </CardHeader>
-      <CardContent className="space-y-8 pt-6">{children}</CardContent>
+      <CardContent className="space-y-8 pt-0">{children}</CardContent>
     </Card>
   );
 }
