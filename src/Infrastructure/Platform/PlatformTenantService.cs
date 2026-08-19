@@ -77,9 +77,9 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
         if (hideLoadTest)
         {
             query = query.Where(t =>
-                !t.Slug.StartsWith("load-", StringComparison.OrdinalIgnoreCase)
+                !t.Slug.ToLower().StartsWith("load-")
                 && t.Id != TenantIds.Default
-                && t.Slug != TenantIds.DefaultSlug);
+                && t.Slug.ToLower() != TenantIds.DefaultSlug.ToLowerInvariant());
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
