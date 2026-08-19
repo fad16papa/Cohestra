@@ -7,6 +7,9 @@ public interface IPlatformTenantService
 {
     Task<TenantListResponse> ListAsync(
         string? search,
+        string? status,
+        string? billingStatus,
+        bool hideLoadTest,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);

@@ -1,3 +1,4 @@
+using Cohestra.Application.Outbox;
 using Cohestra.Contracts.Platform;
 using Cohestra.Domain.Support;
 using Cohestra.Domain.Tenants;
@@ -123,7 +124,14 @@ public sealed class PlatformSupportIssueServiceTests
     {
         var attachmentService = new SupportAttachmentService(
             Options.Create(new SupportSettings { AttachmentStoragePath = Path.GetTempPath() }));
-        return new PlatformSupportIssueService(db, attachmentService);
+        return new PlatformSupportIssueService(db, attachmentService, new NoOpOutboxPublisher());
+    }
+
+    private sealed class NoOpOutboxPublisher : IOutboxPublisher
+    {
+        public void Enqueue(Guid tenantId, string messageType, string payloadJson, string? dedupeKey = null, DateTimeOffset? nextAttemptAt = null)
+        {
+        }
     }
 
     private static CohestraDbContext CreateDb()

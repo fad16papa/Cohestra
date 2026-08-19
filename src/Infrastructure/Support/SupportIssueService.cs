@@ -168,6 +168,40 @@ public sealed class SupportIssueService(
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<SupportIssueOperatorDetail?> GetMineByIdAsync(
+        Guid tenantId,
+        Guid operatorUserId,
+        Guid issueId,
+        CancellationToken cancellationToken = default)
+    {
+        var issue = await dbContext.SupportIssues
+            .AsNoTracking()
+            .Include(item => item.Replies.OrderBy(reply => reply.CreatedAt))
+            .FirstOrDefaultAsync(
+                item => item.Id == issueId
+                    && item.TenantId == tenantId
+                    && item.SubmittedByUserId == operatorUserId,
+                cancellationToken);
+
+        if (issue is null)
+        {
+            return null;
+        }
+
+        return new SupportIssueOperatorDetail(
+            issue.Id,
+            issue.IssueNumber,
+            issue.Subject,
+            issue.Description,
+            issue.Status.ToString(),
+            issue.CreatedAt,
+            issue.UpdatedAt,
+            issue.Replies
+                .OrderBy(reply => reply.CreatedAt)
+                .Select(reply => new SupportIssueReplySummary(reply.Body, reply.CreatedAt))
+                .ToList());
+    }
+
     private static string Truncate(string value, int maxLength) =>
         value.Length <= maxLength ? value : value[..maxLength];
 

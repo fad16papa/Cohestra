@@ -7,6 +7,9 @@ public sealed class PlatformAuditLog
 
     public Guid ActorUserId { get; set; }
 
+    /// <summary>FR-OC-11: actor email at write time; historical rows may be null.</summary>
+    public string? ActorEmail { get; set; }
+
     public Guid TenantId { get; set; }
 
     public PlatformAuditAction Action { get; set; }

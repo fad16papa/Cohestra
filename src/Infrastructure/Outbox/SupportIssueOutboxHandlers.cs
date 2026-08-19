@@ -110,3 +110,94 @@ public sealed class SupportIssueConfirmationOutboxHandler(
             issue.OperatorEmail);
     }
 }
+
+public sealed class SupportIssueFilerReplyOutboxHandler(
+    CohestraDbContext dbContext,
+    SupportIssueFilerNotificationEmailBuilder emailBuilder,
+    IEmailSender emailSender,
+    ILogger<SupportIssueFilerReplyOutboxHandler> logger) : IOutboxMessageHandler
+{
+    public string MessageType => OutboxMessageTypes.SupportIssueFilerReply;
+
+    public async Task HandleAsync(OutboxMessage message, CancellationToken cancellationToken = default)
+    {
+        if (message.DispatchedAt is not null)
+        {
+            return;
+        }
+
+        var payload = JsonSerializer.Deserialize<SupportIssueFilerOutboxPayload>(message.PayloadJson)
+            ?? throw new InvalidOperationException("Support filer reply outbox payload is invalid.");
+
+        if (payload.ReplyId is not Guid replyId)
+        {
+            throw new InvalidOperationException("Support filer reply outbox payload is missing reply id.");
+        }
+
+        var issue = await dbContext.SupportIssues
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == payload.IssueId, cancellationToken)
+            ?? throw new InvalidOperationException($"Support issue {payload.IssueId} was not found.");
+
+        var reply = await dbContext.SupportIssueReplies
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == replyId && item.SupportIssueId == issue.Id, cancellationToken)
+            ?? throw new InvalidOperationException($"Support reply {replyId} was not found.");
+
+        var email = emailBuilder.BuildReplyEmail(issue, reply);
+        var sendResult = await emailSender.SendAsync(email, cancellationToken);
+        if (!sendResult.Success)
+        {
+            throw new InvalidOperationException(sendResult.FailureReason ?? "Support filer reply email failed.");
+        }
+
+        message.DispatchedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Sent support filer reply email for issue {IssueNumber}.",
+            issue.IssueNumber);
+    }
+}
+
+public sealed class SupportIssueFilerStatusOutboxHandler(
+    CohestraDbContext dbContext,
+    SupportIssueFilerNotificationEmailBuilder emailBuilder,
+    IEmailSender emailSender,
+    ILogger<SupportIssueFilerStatusOutboxHandler> logger) : IOutboxMessageHandler
+{
+    public string MessageType => OutboxMessageTypes.SupportIssueFilerStatus;
+
+    public async Task HandleAsync(OutboxMessage message, CancellationToken cancellationToken = default)
+    {
+        if (message.DispatchedAt is not null)
+        {
+            return;
+        }
+
+        var payload = JsonSerializer.Deserialize<SupportIssueFilerOutboxPayload>(message.PayloadJson)
+            ?? throw new InvalidOperationException("Support filer status outbox payload is invalid.");
+
+        var issue = await dbContext.SupportIssues
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == payload.IssueId, cancellationToken)
+            ?? throw new InvalidOperationException($"Support issue {payload.IssueId} was not found.");
+
+        var email = emailBuilder.BuildStatusEmail(issue);
+        var sendResult = await emailSender.SendAsync(email, cancellationToken);
+        if (!sendResult.Success)
+        {
+            throw new InvalidOperationException(sendResult.FailureReason ?? "Support filer status email failed.");
+        }
+
+        message.DispatchedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Sent support filer status email for issue {IssueNumber} ({Status}).",
+            issue.IssueNumber,
+            issue.Status);
+    }
+}

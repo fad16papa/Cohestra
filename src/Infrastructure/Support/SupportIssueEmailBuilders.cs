@@ -86,3 +86,74 @@ public sealed class SupportIssueConfirmationEmailBuilder(IOptions<SendGridSettin
             FromName: fromName);
     }
 }
+
+public sealed class SupportIssueFilerNotificationEmailBuilder(IOptions<SendGridSettings> sendGridOptions)
+{
+    public EmailMessage BuildReplyEmail(SupportIssue issue, SupportIssueReply reply)
+    {
+        var settings = sendGridOptions.Value;
+        var subject = $"[{issue.IssueNumber}] Reply from Cohestra support";
+        var plainBody = $"""
+            Hi {issue.OperatorDisplayName},
+
+            Cohestra support replied to your request {issue.IssueNumber}.
+
+            Subject: {issue.Subject}
+            Status: {issue.Status}
+
+            Reply:
+            {reply.Body}
+
+            View this thread in Settings → Help in your workspace.
+            """;
+        var htmlBody = $"""
+            <p>Hi {System.Net.WebUtility.HtmlEncode(issue.OperatorDisplayName)},</p>
+            <p>Cohestra support replied to your request <strong>{System.Net.WebUtility.HtmlEncode(issue.IssueNumber)}</strong>.</p>
+            <p><strong>Subject:</strong> {System.Net.WebUtility.HtmlEncode(issue.Subject)}<br />
+            <strong>Status:</strong> {issue.Status}</p>
+            <p>{System.Net.WebUtility.HtmlEncode(reply.Body).Replace("\n", "<br />", StringComparison.Ordinal)}</p>
+            <p>View this thread in Settings → Help in your workspace.</p>
+            """;
+
+        return new EmailMessage(
+            issue.OperatorEmail,
+            issue.OperatorDisplayName,
+            subject,
+            plainBody,
+            htmlBody,
+            FromEmail: settings.FromEmail.Trim(),
+            FromName: settings.FromName.Trim());
+    }
+
+    public EmailMessage BuildStatusEmail(SupportIssue issue)
+    {
+        var settings = sendGridOptions.Value;
+        var subject = $"[{issue.IssueNumber}] Support request update";
+        var plainBody = $"""
+            Hi {issue.OperatorDisplayName},
+
+            Your support request {issue.IssueNumber} was updated.
+
+            Subject: {issue.Subject}
+            New status: {issue.Status}
+
+            View this thread in Settings → Help in your workspace.
+            """;
+        var htmlBody = $"""
+            <p>Hi {System.Net.WebUtility.HtmlEncode(issue.OperatorDisplayName)},</p>
+            <p>Your support request <strong>{System.Net.WebUtility.HtmlEncode(issue.IssueNumber)}</strong> was updated.</p>
+            <p><strong>Subject:</strong> {System.Net.WebUtility.HtmlEncode(issue.Subject)}<br />
+            <strong>New status:</strong> {issue.Status}</p>
+            <p>View this thread in Settings → Help in your workspace.</p>
+            """;
+
+        return new EmailMessage(
+            issue.OperatorEmail,
+            issue.OperatorDisplayName,
+            subject,
+            plainBody,
+            htmlBody,
+            FromEmail: settings.FromEmail.Trim(),
+            FromName: settings.FromName.Trim());
+    }
+}

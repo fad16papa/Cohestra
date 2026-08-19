@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Cohestra.Application.Support;
 using Cohestra.Contracts.Platform;
 using Cohestra.Infrastructure.Auth;
@@ -87,6 +88,55 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
         }
     }
 
+    [HttpGet("open-count")]
+    [ProducesResponseType(typeof(PlatformSupportOpenCountResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PlatformSupportOpenCountResponse>> GetOpenCount(
+        CancellationToken cancellationToken)
+    {
+        var count = await platformSupportIssueService.GetOpenCountAsync(cancellationToken);
+        return Ok(new PlatformSupportOpenCountResponse(count));
+    }
+
+    [HttpPost("{id:guid}/replies")]
+    [ProducesResponseType(typeof(PlatformSupportIssueDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<PlatformSupportIssueDetailResponse>> AddReply(
+        Guid id,
+        [FromBody] AddPlatformSupportReplyRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        if (!TryGetActor(out var actorUserId, out var actorEmail))
+        {
+            return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
+        try
+        {
+            var result = await platformSupportIssueService.AddReplyAsync(
+                id,
+                request,
+                actorUserId,
+                actorEmail,
+                cancellationToken);
+            return result is null ? NotFoundProblem("Support issue not found.") : Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ConflictProblem(ex.Message);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequestProblem(ex.Message);
+        }
+    }
+
     [HttpGet("{id:guid}/attachments/{attachmentId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -109,6 +159,16 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
         return File(result.Content, result.ContentType, result.FileName);
     }
 
+    private bool TryGetActor(out Guid actorUserId, out string? actorEmail)
+    {
+        actorUserId = Guid.Empty;
+        actorEmail = User.FindFirstValue(ClaimTypes.Email)
+            ?? User.FindFirstValue(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Email);
+        var raw = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub");
+        return Guid.TryParse(raw, out actorUserId) && actorUserId != Guid.Empty;
+    }
+
     private BadRequestObjectResult BadRequestProblem(string detail)
     {
         Response.ContentType = "application/problem+json";
@@ -128,6 +188,30 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
         {
             Status = StatusCodes.Status404NotFound,
             Title = "Not Found",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        });
+    }
+
+    private ObjectResult ConflictProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+        return Conflict(new ProblemDetails
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = "Conflict",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        });
+    }
+
+    private UnauthorizedObjectResult UnauthorizedProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+        return Unauthorized(new ProblemDetails
+        {
+            Status = StatusCodes.Status401Unauthorized,
+            Title = "Unauthorized",
             Detail = detail,
             Instance = HttpContext.Request.Path,
         });

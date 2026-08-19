@@ -15,3 +15,17 @@ public sealed record SupportIssueListItemResponse(
 
 public sealed record SupportIssueListResponse(
     IReadOnlyList<SupportIssueListItemResponse> Items);
+
+public sealed record SupportIssueReplyResponse(
+    string Body,
+    DateTimeOffset CreatedAt);
+
+public sealed record SupportIssueDetailResponse(
+    Guid Id,
+    string IssueNumber,
+    string Subject,
+    string Description,
+    string Status,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    IReadOnlyList<SupportIssueReplyResponse> Replies);

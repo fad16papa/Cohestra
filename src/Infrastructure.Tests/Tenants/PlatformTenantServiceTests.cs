@@ -199,26 +199,26 @@ public sealed class PlatformTenantServiceTests
             new CreateTenantRequest("Eastside FC", "eastside-fc", "Pro", "e@f.co"),
             actor);
 
-        var bySlug = await service.ListAsync("northside", page: 0, pageSize: 0);
+        var bySlug = await service.ListAsync("northside", null, null, false, page: 0, pageSize: 0);
         Assert.Equal(1, bySlug.TotalCount);
         Assert.Equal(1, bySlug.Page);
         Assert.Equal(25, bySlug.PageSize);
         Assert.Equal("northside-runners", bySlug.Items[0].Slug);
 
-        var byName = await service.ListAsync("Club", 1, 25);
+        var byName = await service.ListAsync("Club", null, null, false, 1, 25);
         Assert.Equal(1, byName.TotalCount);
         Assert.Equal("south-club", byName.Items[0].Slug);
 
-        var oversized = await service.ListAsync(null, 1, 500);
+        var oversized = await service.ListAsync(null, null, null, false, 1, 500);
         Assert.Equal(3, oversized.TotalCount);
         Assert.Equal(100, oversized.PageSize);
 
-        var hugePage = await service.ListAsync(null, int.MaxValue, 100);
+        var hugePage = await service.ListAsync(null, null, null, false, int.MaxValue, 100);
         Assert.True(hugePage.Page < int.MaxValue);
         Assert.True(hugePage.Page >= 1);
 
         var longSearch = new string('a', 500);
-        var truncatedSearch = await service.ListAsync(longSearch, 1, 25);
+        var truncatedSearch = await service.ListAsync(longSearch, null, null, false, 1, 25);
         Assert.Equal(0, truncatedSearch.TotalCount);
     }
 
@@ -312,7 +312,7 @@ public sealed class PlatformTenantServiceTests
             });
         await db.SaveChangesAsync();
 
-        var list = await service.ListAsync(null, 1, 25);
+        var list = await service.ListAsync(null, null, null, false, 1, 25);
         var alpha = list.Items.Single(i => i.Slug == "alpha-org");
         var beta = list.Items.Single(i => i.Slug == "beta-org");
         Assert.Equal(2, alpha.ActivityCount);
@@ -408,7 +408,7 @@ public sealed class PlatformTenantServiceTests
         var detail = await service.GetByIdAsync(created.Value.Id);
         Assert.False(detail.Value!.Tenant.IsComplimentary);
 
-        var list = await service.ListAsync("pilot-org", 1, 25);
+        var list = await service.ListAsync("pilot-org", null, null, false, 1, 25);
         Assert.False(list.Items[0].IsComplimentary);
     }
 

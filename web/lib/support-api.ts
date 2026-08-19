@@ -15,6 +15,22 @@ export type SupportIssueListItem = {
   createdAt: string;
 };
 
+export type SupportIssueReply = {
+  body: string;
+  createdAt: string;
+};
+
+export type SupportIssueDetail = {
+  id: string;
+  issueNumber: string;
+  subject: string;
+  description: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  replies: SupportIssueReply[];
+};
+
 function parseIssue(raw: Record<string, unknown>): SupportIssue {
   return {
     id: String(raw.id ?? raw.Id ?? ""),
@@ -127,4 +143,69 @@ export async function fetchSupportIssues(
   return itemsRaw
     .map((item) => parseListItem(item as Record<string, unknown>))
     .filter((item): item is SupportIssueListItem => item !== null);
+}
+
+function parseReply(raw: Record<string, unknown>): SupportIssueReply | null {
+  const body = raw.body ?? raw.Body;
+  const createdAt = raw.createdAt ?? raw.CreatedAt;
+  if (typeof body !== "string" || !createdAt) {
+    return null;
+  }
+  return {
+    body,
+    createdAt: String(createdAt),
+  };
+}
+
+function parseDetail(raw: Record<string, unknown>): SupportIssueDetail | null {
+  const id = raw.id ?? raw.Id;
+  const issueNumber = raw.issueNumber ?? raw.IssueNumber;
+  const subject = raw.subject ?? raw.Subject;
+  const description = raw.description ?? raw.Description;
+  const status = raw.status ?? raw.Status;
+  const createdAt = raw.createdAt ?? raw.CreatedAt;
+  const updatedAt = raw.updatedAt ?? raw.UpdatedAt;
+
+  if (!id || !issueNumber || !subject || !description) {
+    return null;
+  }
+
+  const repliesRaw = raw.replies ?? raw.Replies;
+  const replies = Array.isArray(repliesRaw)
+    ? repliesRaw
+        .map((item) => parseReply(item as Record<string, unknown>))
+        .filter((item): item is SupportIssueReply => item !== null)
+    : [];
+
+  return {
+    id: String(id),
+    issueNumber: String(issueNumber),
+    subject: String(subject),
+    description: String(description),
+    status: String(status ?? ""),
+    createdAt: String(createdAt ?? ""),
+    updatedAt: String(updatedAt ?? ""),
+    replies,
+  };
+}
+
+export async function fetchSupportIssueDetail(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  issueId: string
+): Promise<SupportIssueDetail> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/support-issues/${issueId}`
+  );
+  const raw = await readJsonBody(response);
+
+  if (!response.ok) {
+    throw new Error(errorMessage(response, raw, "Could not load support request."));
+  }
+
+  const detail = parseDetail(raw);
+  if (!detail) {
+    throw new Error("Invalid support request response.");
+  }
+
+  return detail;
 }
