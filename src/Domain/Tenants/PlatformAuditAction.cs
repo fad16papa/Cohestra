@@ -8,4 +8,7 @@ public enum PlatformAuditAction
     TenantArchived = 3,
     ComplimentarySet = 4,
     ComplimentaryCleared = 5,
+    SupportIssueReplyAdded = 6,
+    PasswordResetSent = 7,
+    EmailVerificationResent = 8,
 }

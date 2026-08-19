@@ -102,6 +102,8 @@ public class CohestraDbContext : IdentityDbContext<ApplicationUser, IdentityRole
 
     public DbSet<SupportIssueAttachment> SupportIssueAttachments => Set<SupportIssueAttachment>();
 
+    public DbSet<SupportIssueReply> SupportIssueReplies => Set<SupportIssueReply>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("public");

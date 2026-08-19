@@ -22,11 +22,21 @@ public sealed class PlatformTenantsController(IPlatformTenantService platformTen
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<TenantListResponse>> List(
         [FromQuery] string? search,
+        [FromQuery] string? status,
+        [FromQuery] string? billingStatus,
+        [FromQuery] bool hideLoadTest = false,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25,
         CancellationToken cancellationToken = default)
     {
-        var result = await platformTenantService.ListAsync(search, page, pageSize, cancellationToken);
+        var result = await platformTenantService.ListAsync(
+            search,
+            status,
+            billingStatus,
+            hideLoadTest,
+            page,
+            pageSize,
+            cancellationToken);
         return Ok(result);
     }
 

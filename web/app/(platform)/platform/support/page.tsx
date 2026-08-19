@@ -12,6 +12,7 @@ import {
   PlatformDataTableHeaderCell,
   PlatformDataTableRow,
 } from "@/components/platform/platform-data-table";
+import { PlatformOmniSearch } from "@/components/platform/platform-omni-search";
 import {
   listPlatformSupportIssues,
   PLATFORM_SUPPORT_STATUSES,
@@ -97,6 +98,8 @@ export default function PlatformSupportInboxPage() {
           Volume report
         </Link>
       </div>
+
+      <PlatformOmniSearch authFetch={authFetch} />
 
       <form onSubmit={handleSearch} className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <label className="sr-only" htmlFor="support-search">

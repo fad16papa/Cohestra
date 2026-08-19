@@ -164,6 +164,46 @@ public sealed class SupportIssuesController(
                 item.CreatedAt)).ToList()));
     }
 
+    [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(SupportIssueDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<SupportIssueDetailResponse>> GetById(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        var operatorUserId = ResolveOperatorUserId();
+        if (operatorUserId is null)
+        {
+            return Forbid();
+        }
+
+        var detail = await supportIssueService.GetMineByIdAsync(
+            tenantId,
+            operatorUserId.Value,
+            id,
+            cancellationToken);
+
+        if (detail is null)
+        {
+            return NotFoundProblem("Support issue not found.");
+        }
+
+        return Ok(new SupportIssueDetailResponse(
+            detail.Id,
+            detail.IssueNumber,
+            detail.Subject,
+            detail.Description,
+            detail.Status,
+            detail.CreatedAt,
+            detail.UpdatedAt,
+            detail.Replies.Select(reply => new SupportIssueReplyResponse(reply.Body, reply.CreatedAt)).ToList()));
+    }
+
     private Guid? ResolveOperatorUserId()
     {
         var sub = User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
@@ -185,6 +225,22 @@ public sealed class SupportIssuesController(
         })
         {
             StatusCode = StatusCodes.Status400BadRequest,
+        };
+    }
+
+    private ObjectResult NotFoundProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+
+        return new ObjectResult(new ProblemDetails
+        {
+            Status = StatusCodes.Status404NotFound,
+            Title = "Not Found",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        })
+        {
+            StatusCode = StatusCodes.Status404NotFound,
         };
     }
 

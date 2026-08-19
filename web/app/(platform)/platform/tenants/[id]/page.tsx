@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
+import { PlatformTenantOpsPanel } from "@/components/platform/platform-tenant-ops-panel";
 import { useAuth } from "@/components/auth/auth-provider";
 import {
   archivePlatformTenant,
@@ -217,6 +218,20 @@ export default function PlatformTenantDetailPage() {
           {tenant.adminContactEmail ?? "—"}
         </p>
       </div>
+
+      <PlatformTenantOpsPanel
+        tenantId={tenant.id}
+        adminContactEmail={tenant.adminContactEmail}
+        authFetch={authFetch}
+      onActionMessage={(message) => {
+        if (message && /fail|error|not found|already verified/i.test(message)) {
+          setActionError(message);
+        } else {
+          setActionError(null);
+        }
+      }}
+        onRefreshAudits={() => void loadDetail({ clearTenantOnError: false })}
+      />
 
       <section className="space-y-4">
         <h2
@@ -470,8 +485,8 @@ export default function PlatformTenantDetailPage() {
                       {formatDateTime(entry.createdAt)}
                     </td>
                     <td className="py-3 pr-4 font-medium">{entry.action}</td>
-                    <td className="py-3 pr-4 font-mono text-xs text-[var(--plat-ink-soft)]">
-                      {shortId(entry.actorUserId)}
+                    <td className="py-3 pr-4 text-[var(--plat-ink-soft)]">
+                      {entry.actorEmail ?? "Unknown"}
                     </td>
                     <td className="py-3 pr-4 font-mono text-xs text-[var(--plat-ink-soft)]">
                       {shortId(entry.tenantId)}

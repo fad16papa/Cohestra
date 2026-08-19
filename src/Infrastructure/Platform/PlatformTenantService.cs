@@ -26,6 +26,9 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
 
     public async Task<TenantListResponse> ListAsync(
         string? search,
+        string? status,
+        string? billingStatus,
+        bool hideLoadTest,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
@@ -55,6 +58,28 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             query = query.Where(t =>
                 t.Slug.ToLower().Contains(term) ||
                 t.Name.ToLower().Contains(term));
+        }
+
+        if (!string.IsNullOrWhiteSpace(status)
+            && Enum.TryParse<TenantStatus>(status.Trim(), ignoreCase: true, out var parsedStatus)
+            && Enum.IsDefined(parsedStatus))
+        {
+            query = query.Where(t => t.Status == parsedStatus);
+        }
+
+        if (!string.IsNullOrWhiteSpace(billingStatus)
+            && Enum.TryParse<BillingStatus>(billingStatus.Trim(), ignoreCase: true, out var parsedBilling)
+            && Enum.IsDefined(parsedBilling))
+        {
+            query = query.Where(t => t.BillingStatus == parsedBilling);
+        }
+
+        if (hideLoadTest)
+        {
+            query = query.Where(t =>
+                !t.Slug.StartsWith("load-", StringComparison.OrdinalIgnoreCase)
+                && t.Id != TenantIds.Default
+                && t.Slug != TenantIds.DefaultSlug);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -119,17 +144,21 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             ? DefaultAuditTake
             : Math.Min(auditTake, MaxAuditTake);
 
-        var audits = await dbContext.PlatformAuditLogs.AsNoTracking()
-            .Where(a => a.TenantId == tenantId)
-            .OrderByDescending(a => a.CreatedAt)
+        var audits = await (
+            from audit in dbContext.PlatformAuditLogs.AsNoTracking()
+            where audit.TenantId == tenantId
+            join user in dbContext.Users.AsNoTracking() on audit.ActorUserId equals user.Id into users
+            from user in users.DefaultIfEmpty()
+            orderby audit.CreatedAt descending
+            select new PlatformAuditEntryResponse(
+                audit.Id,
+                audit.ActorUserId,
+                audit.ActorEmail ?? user.Email,
+                audit.TenantId,
+                audit.Action.ToString(),
+                audit.Reason,
+                audit.CreatedAt))
             .Take(take)
-            .Select(a => new PlatformAuditEntryResponse(
-                a.Id,
-                a.ActorUserId,
-                a.TenantId,
-                a.Action.ToString(),
-                a.Reason,
-                a.CreatedAt))
             .ToListAsync(cancellationToken);
 
         return PlatformTenantResult<TenantDetailResponse>.Ok(

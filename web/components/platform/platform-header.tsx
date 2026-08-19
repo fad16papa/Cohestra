@@ -1,18 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { getPlatformSupportOpenCount } from "@/lib/platform-api";
 
 export function PlatformHeader() {
-  const { logout, profile } = useAuth();
+  const { logout, profile, authFetch } = useAuth();
   const [open, setOpen] = useState(false);
+  const [supportOpenCount, setSupportOpenCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getPlatformSupportOpenCount(authFetch)
+      .then((count) => {
+        if (!cancelled) {
+          setSupportOpenCount(count);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSupportOpenCount(null);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authFetch]);
 
   const links = [
     { href: "/platform", label: "Tenants" },
-    { href: "/platform/support", label: "Support" },
+    {
+      href: "/platform/support",
+      label: "Support",
+      badge: supportOpenCount && supportOpenCount > 0 ? supportOpenCount : null,
+    },
   ];
 
   return (
@@ -34,9 +58,14 @@ export function PlatformHeader() {
             <Link
               key={link.label}
               href={link.href}
-              className="text-[var(--plat-paper)]/90 transition-colors hover:text-white"
+              className="inline-flex items-center gap-2 text-[var(--plat-paper)]/90 transition-colors hover:text-white"
             >
               {link.label}
+              {link.badge ? (
+                <span className="rounded-full bg-[var(--plat-lagoon)] px-2 py-0.5 text-xs font-semibold text-[var(--plat-lagoon-fg)]">
+                  {link.badge}
+                </span>
+              ) : null}
             </Link>
           ))}
           {profile?.email ? (
@@ -74,10 +103,15 @@ export function PlatformHeader() {
               <li key={link.label}>
                 <Link
                   href={link.href}
-                  className="block rounded-[10px] px-3 py-2.5 text-sm hover:bg-white/5"
+                  className="flex items-center justify-between rounded-[10px] px-3 py-2.5 text-sm hover:bg-white/5"
                   onClick={() => setOpen(false)}
                 >
                   {link.label}
+                  {link.badge ? (
+                    <span className="rounded-full bg-[var(--plat-lagoon)] px-2 py-0.5 text-xs font-semibold">
+                      {link.badge}
+                    </span>
+                  ) : null}
                 </Link>
               </li>
             ))}

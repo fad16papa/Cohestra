@@ -4,14 +4,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-import { useAuth } from "@/components/auth/auth-provider";
 import { PlatformCard } from "@/components/platform/platform-card";
+import { PlatformSnapshotCard } from "@/components/platform/platform-snapshot-card";
+import { useAuth } from "@/components/auth/auth-provider";
 import {
+  addPlatformSupportReply,
   getPlatformSupportIssue,
+  getPlatformTenantSnapshot,
   platformSupportAttachmentUrl,
   PLATFORM_SUPPORT_STATUSES,
   updatePlatformSupportIssue,
   type PlatformSupportIssueDetail,
+  type PlatformTenantSnapshot,
 } from "@/lib/platform-api";
 
 export default function PlatformSupportDetailPage() {
@@ -20,8 +24,11 @@ export default function PlatformSupportDetailPage() {
   const { authFetch } = useAuth();
 
   const [issue, setIssue] = useState<PlatformSupportIssueDetail | null>(null);
+  const [snapshot, setSnapshot] = useState<PlatformTenantSnapshot | null>(null);
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [internalNote, setInternalNote] = useState("");
+  const [replyBody, setReplyBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,6 +48,16 @@ export default function PlatformSupportDetailPage() {
       setIssue(detail);
       setStatus(detail.status);
       setInternalNote(detail.internalNote ?? "");
+      try {
+        const snap = await getPlatformTenantSnapshot(authFetch, detail.tenantId);
+        setSnapshot(snap);
+        setSnapshotError(null);
+      } catch (snapErr) {
+        setSnapshot(null);
+        setSnapshotError(
+          snapErr instanceof Error ? snapErr.message : "Could not load tenant snapshot."
+        );
+      }
     } catch (err) {
       if (requestId !== requestIdRef.current) {
         return;
@@ -95,6 +112,26 @@ export default function PlatformSupportDetailPage() {
       setInternalNote(updated.internalNote ?? "");
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Could not save changes.");
+    } finally {
+      busyRef.current = false;
+      setBusy(false);
+    }
+  }
+
+  async function handleReply() {
+    if (busyRef.current || !issue || !replyBody.trim()) {
+      return;
+    }
+
+    busyRef.current = true;
+    setBusy(true);
+    setActionError(null);
+    try {
+      const updated = await addPlatformSupportReply(authFetch, issueId, replyBody.trim());
+      setIssue(updated);
+      setReplyBody("");
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "Could not send reply.");
     } finally {
       busyRef.current = false;
       setBusy(false);
@@ -193,9 +230,56 @@ export default function PlatformSupportDetailPage() {
               </ul>
             )}
           </PlatformCard>
+
+          <PlatformCard className="p-5">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--plat-stone)]">
+              Reply to operator
+            </h2>
+            <p className="mt-2 text-xs text-[var(--plat-stone)]">
+              Visible in Settings → Help. Internal note stays hidden.
+            </p>
+            {issue.replies.length > 0 ? (
+              <ul className="mt-4 space-y-3 border-b border-[var(--plat-line)] pb-4">
+                {issue.replies.map((reply) => (
+                  <li key={reply.id} className="text-sm">
+                    <p className="whitespace-pre-wrap text-[var(--plat-ink-soft)]">{reply.body}</p>
+                    <p className="mt-1 text-xs text-[var(--plat-stone)]">
+                      {formatDateTime(reply.createdAt)}
+                      {reply.actorEmail ? ` · ${reply.actorEmail}` : null}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <label htmlFor="support-reply" className="mt-4 block text-sm text-[var(--plat-stone)]">
+              New reply
+            </label>
+            <textarea
+              id="support-reply"
+              value={replyBody}
+              onChange={(event) => setReplyBody(event.target.value)}
+              rows={4}
+              className="mt-1 w-full rounded-[10px] border border-[var(--plat-line-strong)] bg-white/80 px-3 py-2 text-sm outline-none focus:border-[var(--plat-lagoon)] focus:ring-2 focus:ring-[var(--plat-lagoon)]/20"
+            />
+            <button
+              type="button"
+              disabled={busy || !replyBody.trim()}
+              onClick={() => void handleReply()}
+              className="mt-3 min-h-11 rounded-[10px] bg-[var(--plat-lagoon)] px-4 text-sm font-semibold text-[var(--plat-lagoon-fg)] disabled:opacity-50"
+            >
+              {busy ? "Sending…" : "Send reply"}
+            </button>
+          </PlatformCard>
         </div>
 
         <div className="space-y-6">
+          <PlatformSnapshotCard
+            snapshot={snapshot}
+            loading={false}
+            error={snapshotError}
+            tenantHref={`/platform/tenants/${issue.tenantId}`}
+          />
+
           <PlatformCard className="p-5">
             <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--plat-stone)]">
               Context

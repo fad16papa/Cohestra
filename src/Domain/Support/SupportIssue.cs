@@ -37,4 +37,6 @@ public sealed class SupportIssue : ITenantScoped
     public DateTimeOffset UpdatedAt { get; set; }
 
     public ICollection<SupportIssueAttachment> Attachments { get; set; } = [];
+
+    public ICollection<SupportIssueReply> Replies { get; set; } = [];
 }

@@ -38,7 +38,8 @@ public sealed record PlatformSupportIssueDetailResponse(
     string? InternalNote,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    IReadOnlyList<PlatformSupportAttachmentResponse> Attachments);
+    IReadOnlyList<PlatformSupportAttachmentResponse> Attachments,
+    IReadOnlyList<PlatformSupportReplyResponse> Replies);
 
 public sealed record UpdatePlatformSupportIssueRequest(
     string? Status,

@@ -11,6 +11,12 @@ public interface ISupportIssueService
         Guid operatorUserId,
         int limit = 10,
         CancellationToken cancellationToken = default);
+
+    Task<SupportIssueOperatorDetail?> GetMineByIdAsync(
+        Guid tenantId,
+        Guid operatorUserId,
+        Guid issueId,
+        CancellationToken cancellationToken = default);
 }
 
 public sealed record SupportIssueCreateRequest(
@@ -39,4 +45,18 @@ public sealed record SupportIssueSummary(
     string IssueNumber,
     string Subject,
     string Status,
+    DateTimeOffset CreatedAt);
+
+public sealed record SupportIssueOperatorDetail(
+    Guid Id,
+    string IssueNumber,
+    string Subject,
+    string Description,
+    string Status,
+    DateTimeOffset CreatedAt,
+    DateTimeOffset UpdatedAt,
+    IReadOnlyList<SupportIssueReplySummary> Replies);
+
+public sealed record SupportIssueReplySummary(
+    string Body,
     DateTimeOffset CreatedAt);

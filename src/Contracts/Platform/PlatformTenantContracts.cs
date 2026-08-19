@@ -55,6 +55,7 @@ public sealed record TenantListResponse(
 public sealed record PlatformAuditEntryResponse(
     Guid Id,
     Guid ActorUserId,
+    string? ActorEmail,
     Guid TenantId,
     string Action,
     string? Reason,

@@ -20,6 +20,15 @@ public interface IPlatformSupportIssueService
         UpdatePlatformSupportIssueRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<PlatformSupportIssueDetailResponse?> AddReplyAsync(
+        Guid id,
+        AddPlatformSupportReplyRequest request,
+        Guid actorUserId,
+        string? actorEmail,
+        CancellationToken cancellationToken = default);
+
+    Task<int> GetOpenCountAsync(CancellationToken cancellationToken = default);
+
     Task<PlatformSupportAttachmentFileResult?> GetAttachmentFileAsync(
         Guid issueId,
         Guid attachmentId,

@@ -3,6 +3,7 @@ using Cohestra.Application.Activities;
 using Cohestra.Application.Auth;
 using Cohestra.Application.Billing;
 using Cohestra.Application.Outbox;
+using Cohestra.Application.Platform;
 using Cohestra.Application.Support;
 using Cohestra.Infrastructure.Billing;
 using Cohestra.Infrastructure.Outbox;
@@ -162,6 +163,8 @@ public static class DependencyInjection
         services.AddScoped<IOutboxMessageHandler, BillingNotificationOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, SupportIssueTechOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, SupportIssueConfirmationOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, SupportIssueFilerReplyOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, SupportIssueFilerStatusOutboxHandler>();
         services.AddScoped<ITenantShellService, TenantShellService>();
         services.AddScoped<ITenantOrganizationService, TenantOrganizationService>();
         services.AddScoped<ITenantAccessService, TenantAccessService>();
@@ -196,9 +199,11 @@ public static class DependencyInjection
         services.AddScoped<SupportAttachmentService>();
         services.AddScoped<SupportIssueTechEmailBuilder>();
         services.AddScoped<SupportIssueConfirmationEmailBuilder>();
+        services.AddScoped<SupportIssueFilerNotificationEmailBuilder>();
         services.AddScoped<ISupportIssueService, SupportIssueService>();
         services.AddScoped<IPlatformSupportIssueService, PlatformSupportIssueService>();
         services.AddScoped<IPlatformSupportReportService, PlatformSupportReportService>();
+        services.AddScoped<IPlatformTenantOpsService, PlatformTenantOpsService>();
         services.AddSingleton<ISupportSubmissionRateLimiter, RedisSupportSubmissionRateLimiter>();
         services.AddSingleton<IPublicRegistrationRateLimiter, RedisPublicRegistrationRateLimiter>();
         services.AddSingleton<IPublicSignupRateLimiter, RedisPublicSignupRateLimiter>();

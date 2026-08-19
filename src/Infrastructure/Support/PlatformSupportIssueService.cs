@@ -1,6 +1,10 @@
+using System.Text.Json;
+using Cohestra.Application.Outbox;
 using Cohestra.Application.Support;
 using Cohestra.Contracts.Platform;
+using Cohestra.Domain.Outbox;
 using Cohestra.Domain.Support;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,13 +12,15 @@ namespace Cohestra.Infrastructure.Support;
 
 public sealed class PlatformSupportIssueService(
     CohestraDbContext dbContext,
-    SupportAttachmentService attachmentService) : IPlatformSupportIssueService
+    SupportAttachmentService attachmentService,
+    IOutboxPublisher outboxPublisher) : IPlatformSupportIssueService
 {
     private const int DefaultPageSize = 25;
     private const int MaxPageSize = 100;
     private const int MaxPage = 10_000;
     private const int MaxSearchLength = 200;
     private const int MaxInternalNoteLength = 4000;
+    private const int MaxReplyLength = 8000;
 
     public async Task<PlatformSupportIssueListResponse> ListAsync(
         string? search,
@@ -91,6 +97,7 @@ public sealed class PlatformSupportIssueService(
         var issue = await dbContext.IgnoreTenantFilters<SupportIssue>()
             .AsNoTracking()
             .Include(item => item.Attachments.OrderBy(attachment => attachment.CreatedAt))
+            .Include(item => item.Replies.OrderBy(reply => reply.CreatedAt))
             .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         return issue is null ? null : MapDetail(issue);
@@ -103,6 +110,7 @@ public sealed class PlatformSupportIssueService(
     {
         var issue = await dbContext.IgnoreTenantFilters<SupportIssue>()
             .Include(item => item.Attachments.OrderBy(attachment => attachment.CreatedAt))
+            .Include(item => item.Replies.OrderBy(reply => reply.CreatedAt))
             .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
 
         if (issue is null)
@@ -112,6 +120,7 @@ public sealed class PlatformSupportIssueService(
 
         var statusChanged = false;
         var noteChanged = false;
+        SupportIssueStatus? previousStatus = issue.Status;
 
         if (!string.IsNullOrWhiteSpace(request.Status))
         {
@@ -150,11 +159,95 @@ public sealed class PlatformSupportIssueService(
                 issue.UpdatedAt = DateTimeOffset.UtcNow;
             }
 
+            if (statusChanged && ShouldEmailFilerOnStatus(issue.Status))
+            {
+                EnqueueFilerStatusEmail(issue);
+            }
+
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         return MapDetail(issue);
     }
+
+    public async Task<PlatformSupportIssueDetailResponse?> AddReplyAsync(
+        Guid id,
+        AddPlatformSupportReplyRequest request,
+        Guid actorUserId,
+        string? actorEmail,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Body))
+        {
+            throw new ArgumentException("Reply body is required.");
+        }
+
+        var body = request.Body.Trim();
+        if (body.Length == 0)
+        {
+            throw new ArgumentException("Reply body is required.");
+        }
+
+        if (body.Length > MaxReplyLength)
+        {
+            throw new ArgumentException($"Reply must be {MaxReplyLength} characters or fewer.");
+        }
+
+        var issue = await dbContext.IgnoreTenantFilters<SupportIssue>()
+            .Include(item => item.Attachments.OrderBy(attachment => attachment.CreatedAt))
+            .Include(item => item.Replies.OrderBy(reply => reply.CreatedAt))
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (issue is null)
+        {
+            return null;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var reply = new SupportIssueReply
+        {
+            Id = Guid.CreateVersion7(),
+            SupportIssueId = issue.Id,
+            ActorUserId = actorUserId,
+            ActorEmail = actorEmail,
+            Body = body,
+            CreatedAt = now,
+        };
+
+        issue.Replies.Add(reply);
+        issue.UpdatedAt = now;
+
+        dbContext.PlatformAuditLogs.Add(new PlatformAuditLog
+        {
+            Id = Guid.CreateVersion7(),
+            ActorUserId = actorUserId,
+            ActorEmail = actorEmail,
+            TenantId = issue.TenantId,
+            Action = PlatformAuditAction.SupportIssueReplyAdded,
+            DetailsJson = JsonSerializer.Serialize(new
+            {
+                issueNumber = issue.IssueNumber,
+                issueId = issue.Id,
+                replyId = reply.Id,
+            }),
+            CreatedAt = now,
+        });
+
+        EnqueueFilerReplyEmail(issue, reply);
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapDetail(issue);
+    }
+
+    public async Task<int> GetOpenCountAsync(CancellationToken cancellationToken = default) =>
+        await dbContext.IgnoreTenantFilters<SupportIssue>()
+            .AsNoTracking()
+            .CountAsync(
+                issue => issue.Status == SupportIssueStatus.Open
+                    || issue.Status == SupportIssueStatus.InProgress
+                    || issue.Status == SupportIssueStatus.WaitingOnOperator,
+                cancellationToken);
 
     public async Task<PlatformSupportAttachmentFileResult?> GetAttachmentFileAsync(
         Guid issueId,
@@ -184,6 +277,31 @@ public sealed class PlatformSupportIssueService(
             attachment.FileName);
     }
 
+    private void EnqueueFilerReplyEmail(SupportIssue issue, SupportIssueReply reply)
+    {
+        var payload = JsonSerializer.Serialize(new SupportIssueFilerOutboxPayload(issue.Id, reply.Id));
+        outboxPublisher.Enqueue(
+            issue.TenantId,
+            OutboxMessageTypes.SupportIssueFilerReply,
+            payload,
+            $"support:{issue.Id:D}:reply:{reply.Id:D}");
+    }
+
+    private void EnqueueFilerStatusEmail(SupportIssue issue)
+    {
+        var payload = JsonSerializer.Serialize(new SupportIssueFilerOutboxPayload(issue.Id, null));
+        outboxPublisher.Enqueue(
+            issue.TenantId,
+            OutboxMessageTypes.SupportIssueFilerStatus,
+            payload,
+            $"support:{issue.Id:D}:status:{issue.Status}");
+    }
+
+    private static bool ShouldEmailFilerOnStatus(SupportIssueStatus status) =>
+        status is SupportIssueStatus.WaitingOnOperator
+            or SupportIssueStatus.Resolved
+            or SupportIssueStatus.Closed;
+
     private static PlatformSupportIssueDetailResponse MapDetail(SupportIssue issue) =>
         new(
             issue.Id,
@@ -208,6 +326,14 @@ public sealed class PlatformSupportIssueService(
                     attachment.ContentType,
                     attachment.SizeBytes,
                     attachment.CreatedAt))
+                .ToList(),
+            issue.Replies
+                .OrderBy(reply => reply.CreatedAt)
+                .Select(reply => new PlatformSupportReplyResponse(
+                    reply.Id,
+                    reply.Body,
+                    reply.ActorEmail,
+                    reply.CreatedAt))
                 .ToList());
 
     private static bool TryParseStatus(string raw, out SupportIssueStatus status)

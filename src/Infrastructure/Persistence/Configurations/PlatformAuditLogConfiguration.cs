@@ -13,6 +13,10 @@ internal sealed class PlatformAuditLogConfiguration : IEntityTypeConfiguration<P
         builder.HasKey(entry => entry.Id);
 
         builder.Property(entry => entry.ActorUserId).IsRequired();
+
+        builder.Property(entry => entry.ActorEmail)
+            .HasMaxLength(320);
+
         builder.Property(entry => entry.TenantId).IsRequired();
 
         builder.Property(entry => entry.Action)

@@ -11,7 +11,9 @@ import { useToast } from "@/components/ui/toast-provider";
 import { cn } from "@/lib/utils";
 import {
   createSupportIssue,
+  fetchSupportIssueDetail,
   fetchSupportIssues,
+  type SupportIssueDetail,
   type SupportIssueListItem,
 } from "@/lib/support-api";
 
@@ -59,6 +61,10 @@ export function HelpSupportSection() {
   const [copied, setCopied] = useState(false);
   const [recentIssues, setRecentIssues] = useState<SupportIssueListItem[]>([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<SupportIssueDetail | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   const loadRecent = useCallback(async () => {
     setIsLoadingRecent(true);
@@ -75,6 +81,28 @@ export function HelpSupportSection() {
   useEffect(() => {
     void loadRecent();
   }, [loadRecent]);
+
+  async function openIssueDetail(issueId: string) {
+    if (selectedIssueId === issueId) {
+      setSelectedIssueId(null);
+      setSelectedDetail(null);
+      setDetailError(null);
+      return;
+    }
+
+    setSelectedIssueId(issueId);
+    setSelectedDetail(null);
+    setDetailError(null);
+    setIsLoadingDetail(true);
+    try {
+      const detail = await fetchSupportIssueDetail(authFetch, issueId);
+      setSelectedDetail(detail);
+    } catch (err) {
+      setDetailError(err instanceof Error ? err.message : "Could not load request details.");
+    } finally {
+      setIsLoadingDetail(false);
+    }
+  }
 
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(event.target.files ?? []);
@@ -278,22 +306,77 @@ export function HelpSupportSection() {
           <p className="text-sm text-text-muted-warm">No support requests yet.</p>
         ) : (
           <ul className="divide-y divide-border-warm rounded-xl border border-border-warm">
-            {recentIssues.map((issue) => (
-              <li key={issue.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0 space-y-1">
-                  <p className="font-mono text-sm font-medium text-text-warm">{issue.issueNumber}</p>
-                  <p className="truncate text-sm text-text-warm">{issue.subject}</p>
-                  <p className="text-xs text-text-muted-warm">{formatDate(issue.createdAt)}</p>
-                </div>
-                <span
-                  className={cn(
-                    "inline-flex w-fit shrink-0 items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-text-warm"
-                  )}
-                >
-                  {formatStatus(issue.status)}
-                </span>
-              </li>
-            ))}
+            {recentIssues.map((issue) => {
+              const isOpen = selectedIssueId === issue.id;
+              return (
+                <li key={issue.id}>
+                  <button
+                    type="button"
+                    onClick={() => void openIssueDetail(issue.id)}
+                    className="flex w-full flex-col gap-2 p-4 text-left sm:flex-row sm:items-center sm:justify-between hover:bg-muted/30"
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <p className="font-mono text-sm font-medium text-text-warm">{issue.issueNumber}</p>
+                      <p className="truncate text-sm text-text-warm">{issue.subject}</p>
+                      <p className="text-xs text-text-muted-warm">{formatDate(issue.createdAt)}</p>
+                    </div>
+                    <span
+                      className={cn(
+                        "inline-flex w-fit shrink-0 items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-text-warm"
+                      )}
+                    >
+                      {formatStatus(issue.status)}
+                    </span>
+                  </button>
+                  {isOpen ? (
+                    <div className="border-t border-border-warm bg-muted/10 px-4 py-4">
+                      {isLoadingDetail ? (
+                        <p className="text-sm text-text-muted-warm">Loading conversation…</p>
+                      ) : detailError ? (
+                        <p role="alert" className="text-sm text-destructive">
+                          {detailError}
+                        </p>
+                      ) : selectedDetail ? (
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+                              Your message
+                            </p>
+                            <p className="mt-2 whitespace-pre-wrap text-sm text-text-warm">
+                              {selectedDetail.description}
+                            </p>
+                          </div>
+                          {selectedDetail.replies.length > 0 ? (
+                            <div className="space-y-3">
+                              <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+                                Replies from support
+                              </p>
+                              {selectedDetail.replies.map((reply, index) => (
+                                <article
+                                  key={`${reply.createdAt}-${index}`}
+                                  className="rounded-lg border border-border-warm bg-background/80 p-3"
+                                >
+                                  <p className="whitespace-pre-wrap text-sm text-text-warm">
+                                    {reply.body}
+                                  </p>
+                                  <p className="mt-2 text-xs text-text-muted-warm">
+                                    {formatDate(reply.createdAt)}
+                                  </p>
+                                </article>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-text-muted-warm">
+                              No replies yet. We&apos;ll email you when support responds.
+                            </p>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
