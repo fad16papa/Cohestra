@@ -1,53 +1,32 @@
 using System.Globalization;
-using Cohestra.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
 
 namespace Cohestra.Infrastructure.Support;
 
-public sealed class SupportIssueNumberGenerator(CohestraDbContext dbContext)
+public sealed class SupportIssueNumberGenerator
 {
-    public const int SequenceDigits = 6;
+    public const int SuffixDigits = 6;
+    private const int MaxSuffixExclusive = 1_000_000;
 
-    public static string Format(DateTimeOffset timestamp, int sequence)
+    public static string Format(DateTimeOffset timestamp, int suffix)
     {
-        if (sequence is < 1 or > 999_999)
+        if (suffix is < 0 or >= MaxSuffixExclusive)
         {
             throw new ArgumentOutOfRangeException(
-                nameof(sequence),
-                sequence,
-                "Support issue sequence must be between 1 and 999999.");
+                nameof(suffix),
+                suffix,
+                "Support issue suffix must be between 0 and 999999.");
         }
 
         var datePart = timestamp.UtcDateTime.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-        return $"SUP{datePart}{sequence:D6}";
+        return $"SUP{datePart}{suffix:D6}";
     }
 
-    public async Task<string> GenerateNextAsync(
+    public Task<string> GenerateNextAsync(
         DateTimeOffset timestamp,
         CancellationToken cancellationToken = default)
     {
-        var datePart = timestamp.UtcDateTime.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-        var prefix = $"SUP{datePart}";
-
-        var latestNumber = await dbContext.SupportIssues
-            .IgnoreQueryFilters()
-            .Where(issue => issue.IssueNumber.StartsWith(prefix))
-            .OrderByDescending(issue => issue.IssueNumber)
-            .Select(issue => issue.IssueNumber)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var nextSequence = 1;
-        if (latestNumber is not null &&
-            latestNumber.Length == prefix.Length + SequenceDigits &&
-            int.TryParse(
-                latestNumber.AsSpan(prefix.Length),
-                NumberStyles.None,
-                CultureInfo.InvariantCulture,
-                out var parsedSequence))
-        {
-            nextSequence = parsedSequence + 1;
-        }
-
-        return Format(timestamp, nextSequence);
+        var suffix = RandomNumberGenerator.GetInt32(0, MaxSuffixExclusive);
+        return Task.FromResult(Format(timestamp, suffix));
     }
 }
