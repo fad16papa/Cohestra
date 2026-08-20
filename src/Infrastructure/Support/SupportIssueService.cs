@@ -18,7 +18,7 @@ public sealed class SupportIssueService(
     IOutboxPublisher outboxPublisher,
     ILogger<SupportIssueService> logger) : ISupportIssueService
 {
-    private const int MaxIssueNumberAttempts = 3;
+    private const int MaxIssueNumberAttempts = 8;
     private const int MaxOperatorDisplayNameLength = 200;
     private const int MaxUserAgentLength = 512;
 
