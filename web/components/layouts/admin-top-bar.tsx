@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 
 import { AdminBreadcrumbs } from "@/components/layouts/admin-breadcrumbs";
-import { AdminMobileNav } from "@/components/layouts/admin-mobile-nav";
 import { useAdminShell } from "@/components/layouts/admin-shell-context";
 import { AdminUserMenu } from "@/components/layouts/admin-user-menu";
 import { UpdatedTime } from "@/components/layouts/updated-time";
@@ -36,10 +35,9 @@ export function AdminTopBar() {
 
   return (
     <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border-warm bg-card/80 px-4 backdrop-blur-md md:px-6">
-      <AdminMobileNav />
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
         {breadcrumbs.length > 1 ? (
-          <AdminBreadcrumbs items={breadcrumbs} className="hidden sm:flex" />
+          <AdminBreadcrumbs items={breadcrumbs} className="flex min-w-0" />
         ) : null}
         <div className="flex min-w-0 items-center gap-3">
           <h1 className="truncate text-section text-text-warm">{pageTitle}</h1>

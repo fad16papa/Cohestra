@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { PanelLeft, PanelRight } from "lucide-react";
+import { Info } from "lucide-react";
 
 import { AppearanceSection } from "@/components/settings/appearance-section";
 import { AccountSection } from "@/components/settings/account-section";
@@ -11,6 +11,7 @@ import { CustomDomainSection } from "@/components/settings/custom-domain-section
 import { HelpSupportSection } from "@/components/settings/help-support-section";
 import { OrganizationTimezoneSection } from "@/components/settings/organization-timezone-section";
 import { SettingsLeftRail } from "@/components/settings/settings-left-rail";
+import { SettingsMobileSectionTabs } from "@/components/settings/settings-mobile-section-tabs";
 import { SettingsPageHeader } from "@/components/settings/settings-page-header";
 import { SettingsPlanUsageSection } from "@/components/settings/settings-plan-usage-section";
 import { SettingsRightRail } from "@/components/settings/settings-right-rail";
@@ -73,7 +74,6 @@ export function SettingsPageContent() {
   );
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileContextOpen, setMobileContextOpen] = useState(false);
 
   useEffect(() => {
@@ -87,30 +87,17 @@ export function SettingsPageContent() {
 
   const showBillingLink = shell?.plan === "Basic" || shell?.isBillingOwner === true;
 
-  function selectSection(id: SettingsSectionId) {
-    setActiveId(id);
-    setMobileNavOpen(false);
-  }
-
   return (
     <div className="flex w-full flex-col gap-4 pb-8 lg:gap-5">
       <SettingsPageHeader />
 
-      <div className="flex flex-wrap items-center gap-2 lg:hidden">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="gap-2 border-border-warm"
-          onClick={() => setMobileNavOpen(true)}
-        >
-          <PanelLeft className="size-4" aria-hidden />
-          Sections
-        </Button>
-        <span className="truncate text-sm text-text-muted-warm">{activeSection.label}</span>
-      </div>
+      <SettingsMobileSectionTabs
+        sections={visibleSections}
+        activeId={activeId}
+        onSelect={setActiveId}
+      />
 
-      <div className="hidden items-center gap-2 lg:flex xl:hidden">
+      <div className="flex items-center justify-end lg:hidden">
         <Button
           type="button"
           variant="outline"
@@ -118,7 +105,7 @@ export function SettingsPageContent() {
           className="gap-2 border-border-warm"
           onClick={() => setMobileContextOpen(true)}
         >
-          <PanelRight className="size-4" aria-hidden />
+          <Info className="size-4" aria-hidden />
           Context
         </Button>
       </div>
@@ -133,7 +120,7 @@ export function SettingsPageContent() {
           className="hidden border-r lg:flex"
           sections={visibleSections}
           activeId={activeId}
-          onSelect={selectSection}
+          onSelect={setActiveId}
           collapsed={leftCollapsed}
           onToggleCollapsed={() => setLeftCollapsed((value) => !value)}
           showBillingLink={showBillingLink}
@@ -156,37 +143,20 @@ export function SettingsPageContent() {
         />
       </div>
 
-      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-        <SheetContent side="left" className="w-[min(100vw-2rem,18rem)] p-0">
-          <SheetHeader className="border-b border-border-warm px-4 py-3">
-            <SheetTitle>Sections</SheetTitle>
-          </SheetHeader>
-          <SettingsLeftRail
-            className="h-full w-full border-0 bg-transparent"
-            sections={visibleSections}
-            activeId={activeId}
-            onSelect={selectSection}
-            collapsed={false}
-            onToggleCollapsed={() => setMobileNavOpen(false)}
-            showBillingLink={showBillingLink}
-            showAdminLinks={isTenantAdmin}
-            hideCollapseToggle
-          />
-        </SheetContent>
-      </Sheet>
-
       <Sheet open={mobileContextOpen} onOpenChange={setMobileContextOpen}>
-        <SheetContent side="right" className="w-[min(100vw-2rem,20rem)] p-0">
+        <SheetContent side="bottom" className="max-h-[85vh] p-0">
           <SheetHeader className="border-b border-border-warm px-4 py-3">
             <SheetTitle>Context</SheetTitle>
           </SheetHeader>
-          <SettingsRightRail
-            className="h-full w-full border-0 bg-transparent"
-            activeId={activeId}
-            collapsed={false}
-            onToggleCollapsed={() => setMobileContextOpen(false)}
-            hideCollapseToggle
-          />
+          <div className="overflow-y-auto p-4">
+            <SettingsRightRail
+              className="w-full border-0 bg-transparent"
+              activeId={activeId}
+              collapsed={false}
+              onToggleCollapsed={() => setMobileContextOpen(false)}
+              hideCollapseToggle
+            />
+          </div>
         </SheetContent>
       </Sheet>
     </div>
