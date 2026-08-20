@@ -1,6 +1,8 @@
 using Cohestra.Application.Email;
 using Cohestra.Domain.Support;
+using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Email;
+using Cohestra.Infrastructure.Registrations;
 using Microsoft.Extensions.Options;
 
 namespace Cohestra.Infrastructure.Support;
@@ -48,40 +50,43 @@ public sealed class SupportIssueTechEmailBuilder(IOptions<SupportSettings> suppo
     }
 }
 
-public sealed class SupportIssueConfirmationEmailBuilder(IOptions<SendGridSettings> sendGridOptions)
+public sealed class SupportIssueConfirmationEmailBuilder(
+    IOptions<SendGridSettings> sendGridOptions,
+    IOptions<EmailBrandingSettings> brandingOptions,
+    IOptions<PublicWebOptions> publicWebOptions)
 {
     public EmailMessage Build(SupportIssue issue)
     {
         var settings = sendGridOptions.Value;
+        var branding = brandingOptions.Value;
+        var publicWeb = publicWebOptions.Value;
         var fromEmail = settings.FromEmail.Trim();
         var fromName = settings.FromName.Trim();
-        var subject = $"We received your support request {issue.IssueNumber}";
-        var plainBody = $"""
-            Hi {issue.OperatorDisplayName},
+        var logoUrl = RegistrationNotificationService.ResolveLogoUrlForEmail(branding, publicWeb);
+        var websiteUrl = (branding.WebsiteUrl ?? string.Empty).Trim();
 
-            We received your support request.
-
-            Your support ID: {issue.IssueNumber}
-
-            Please quote this ID in any follow-up email. Our team will reply to {issue.OperatorEmail}.
-
-            Subject: {issue.Subject}
-            """;
-
-        var htmlBody = $"""
-            <p>Hi {System.Net.WebUtility.HtmlEncode(issue.OperatorDisplayName)},</p>
-            <p>We received your support request.</p>
-            <p><strong>Your support ID:</strong> {System.Net.WebUtility.HtmlEncode(issue.IssueNumber)}</p>
-            <p>Please quote this ID in any follow-up email. Our team will reply to {System.Net.WebUtility.HtmlEncode(issue.OperatorEmail)}.</p>
-            <p><strong>Subject:</strong> {System.Net.WebUtility.HtmlEncode(issue.Subject)}</p>
-            """;
+        var content = SupportIssueConfirmationEmailTemplate.Build(
+            new SupportIssueConfirmationEmailModel(
+                GreetingName: SupportIssueConfirmationEmailTemplate.ResolveGreetingName(
+                    issue.OperatorDisplayName,
+                    issue.OperatorEmail),
+                IssueNumber: issue.IssueNumber,
+                Subject: issue.Subject,
+                Description: issue.Description,
+                TenantName: issue.TenantName,
+                TenantSlug: issue.TenantSlug,
+                OperatorEmail: issue.OperatorEmail,
+                SubmittedAtUtc: issue.CreatedAt,
+                AttachmentCount: issue.Attachments.Count,
+                LogoUrl: logoUrl,
+                WebsiteUrl: websiteUrl));
 
         return new EmailMessage(
             issue.OperatorEmail,
             issue.OperatorDisplayName,
-            subject,
-            plainBody,
-            htmlBody,
+            content.Subject,
+            content.PlainTextBody,
+            content.HtmlBody,
             FromEmail: fromEmail,
             FromName: fromName);
     }

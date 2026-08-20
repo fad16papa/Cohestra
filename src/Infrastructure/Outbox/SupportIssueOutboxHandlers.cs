@@ -91,6 +91,7 @@ public sealed class SupportIssueConfirmationOutboxHandler(
         var issue = await dbContext.SupportIssues
             .IgnoreQueryFilters()
             .AsNoTracking()
+            .Include(item => item.Attachments)
             .FirstOrDefaultAsync(item => item.Id == payload.IssueId, cancellationToken)
             ?? throw new InvalidOperationException($"Support issue {payload.IssueId} was not found.");
 
