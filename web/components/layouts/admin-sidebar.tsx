@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminNavFooter } from "@/components/layouts/admin-nav-footer";
 import { AdminNavLinks } from "@/components/layouts/admin-nav-links";
 import { CohestraLogo } from "@/components/marketing/cohestra-logo";
 import { LimitMeter } from "@/components/shell/limit-meter";
@@ -41,6 +42,8 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
           <LimitMeter dials={shell.limitDials} compact />
         </div>
       ) : null}
+
+      <AdminNavFooter className="hidden lg:block" />
     </aside>
   );
 }

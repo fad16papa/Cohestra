@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { DashboardMetricsRefreshProvider } from "@/components/dashboard/dashboard-metrics-refresh-context";
 import { ActivityCalendarNudge } from "@/components/dashboard/activity-calendar-popout";
 import { AdminSidebar } from "@/components/layouts/admin-sidebar";
+import { AdminMobileTabBar } from "@/components/layouts/admin-mobile-tab-bar";
 import { AdminTopBar } from "@/components/layouts/admin-top-bar";
 import { AdminShellProvider } from "@/components/layouts/admin-shell-context";
 import { BillingBannerBar } from "@/components/shell/billing-banner";
@@ -94,12 +95,13 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
         <main
           key={pathname}
           className={cn(
-            "mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6",
+            "mx-auto w-full max-w-7xl flex-1 p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:p-6 md:pb-6",
             "animate-page-enter"
           )}
         >
           {children}
         </main>
+        <AdminMobileTabBar />
         <ActivityCalendarNudge />
       </div>
     </div>
