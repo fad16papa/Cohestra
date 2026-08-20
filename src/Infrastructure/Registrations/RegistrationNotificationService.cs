@@ -22,7 +22,7 @@ public sealed class RegistrationNotificationService(
     ILogger<RegistrationNotificationService> logger) : IRegistrationNotificationService
 {
     internal const string HeroInlineContentId = "registration-hero";
-    internal const string LogoInlineContentId = "cohestra-brand-logo";
+    internal const string LogoInlineContentId = PlatformBrandAssets.LogoInlineContentId;
     public async Task<RegistrationConfirmationSendResult> SendConfirmationIfApplicableAsync(
         Guid registrationId,
         CancellationToken cancellationToken = default)
@@ -96,10 +96,10 @@ public sealed class RegistrationNotificationService(
         EmailInlineAttachment? logoInlineAttachment = null;
         if (string.IsNullOrWhiteSpace(heroImageUrl))
         {
-            logoInlineAttachment = TryLoadPlatformLogoInlineAttachment();
+            logoInlineAttachment = PlatformBrandAssets.TryCreateInlineLogoAttachment();
             if (logoInlineAttachment is not null)
             {
-                logoUrl = $"cid:{LogoInlineContentId}";
+                logoUrl = $"cid:{PlatformBrandAssets.LogoInlineContentId}";
             }
         }
 
@@ -161,21 +161,6 @@ public sealed class RegistrationNotificationService(
             recipientEmail);
 
         return new RegistrationConfirmationSendResult(true, recipientEmail);
-    }
-
-    private static EmailInlineAttachment? TryLoadPlatformLogoInlineAttachment()
-    {
-        var content = PlatformBrandAssets.TryLoadLogoPng();
-        if (content is null || content.Length == 0)
-        {
-            return null;
-        }
-
-        return new EmailInlineAttachment(
-            LogoInlineContentId,
-            content,
-            "image/png",
-            "cohestra-logo.png");
     }
 
     private static IReadOnlyList<EmailInlineAttachment>? BuildInlineAttachments(

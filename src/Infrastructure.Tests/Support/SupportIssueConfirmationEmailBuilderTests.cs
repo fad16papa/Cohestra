@@ -1,4 +1,9 @@
+using Cohestra.Domain.Support;
+using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Activities;
+using Cohestra.Infrastructure.Email;
 using Cohestra.Infrastructure.Support;
+using Microsoft.Extensions.Options;
 
 namespace Cohestra.Infrastructure.Tests.Support;
 
@@ -60,11 +65,50 @@ public sealed class SupportIssueConfirmationEmailBuilderTests
     public void Build_IncludesLogoWhenProvided()
     {
         var content = SupportIssueConfirmationEmailTemplate.Build(
-            CreateModel() with { LogoUrl = "https://cohestra.app/brand/cohestra-logo-email.png" });
+            CreateModel() with { LogoUrl = "cid:cohestra-brand-logo" });
 
-        Assert.Contains("https://cohestra.app/brand/cohestra-logo-email.png", content.HtmlBody);
+        Assert.Contains("cid:cohestra-brand-logo", content.HtmlBody);
         Assert.Contains("alt=\"Cohestra\"", content.HtmlBody);
     }
+
+    [Fact]
+    public void EmailBuilder_AttachesOfficialLogoInline()
+    {
+        var builder = new SupportIssueConfirmationEmailBuilder(
+            Options.Create(new SendGridSettings
+            {
+                FromEmail = "noreply@creativorare.com",
+                FromName = "Cohestra",
+            }),
+            Options.Create(new EmailBrandingSettings()),
+            Options.Create(new PublicWebOptions { BaseUrl = "https://cohestra.app" }));
+
+        var email = builder.Build(CreateIssue());
+
+        Assert.Contains("cid:cohestra-brand-logo", email.HtmlBody);
+        var attachment = Assert.Single(email.InlineAttachments!);
+        Assert.Equal(PlatformBrandAssets.LogoInlineContentId, attachment.ContentId);
+        Assert.Equal("image/png", attachment.ContentType);
+        Assert.NotEmpty(attachment.Content);
+    }
+
+    private static SupportIssue CreateIssue() =>
+        new()
+        {
+            Id = Guid.CreateVersion7(),
+            TenantId = Guid.CreateVersion7(),
+            IssueNumber = "SUP20260820810354",
+            SubmittedByUserId = Guid.CreateVersion7(),
+            Subject = "Login issue on mobile",
+            Description = "Cannot sign in from Safari on iPhone.",
+            OperatorEmail = "operator@example.com",
+            OperatorDisplayName = "Alex",
+            TenantSlug = "demo",
+            TenantName = "Demo Org",
+            Plan = TenantPlan.Core,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        };
 
     private static SupportIssueConfirmationEmailModel CreateModel(
         DateTimeOffset? submittedAt = null) =>
