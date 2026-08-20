@@ -30,9 +30,9 @@ export function SettingsPageHeader() {
           ) : null}
         </div>
       </div>
-      <p className="max-w-2xl text-sm leading-relaxed text-text-muted-warm">
-        Manage your operator account, workspace branding, and organization preferences.
-        Billing and team access live in dedicated pages below.
+      <p className="max-w-3xl text-sm leading-relaxed text-text-muted-warm">
+        Use the section list to navigate settings. Workspace admins can manage branding,
+        limits, and organization preferences from the panels below.
       </p>
     </header>
   );

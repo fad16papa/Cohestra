@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import { PanelLeft, PanelRight } from "lucide-react";
+
 import { AppearanceSection } from "@/components/settings/appearance-section";
 import { AccountSection } from "@/components/settings/account-section";
 import { BrandAccentSection } from "@/components/settings/brand-accent-section";
@@ -7,90 +10,185 @@ import { ChangePasswordSection } from "@/components/settings/change-password-sec
 import { CustomDomainSection } from "@/components/settings/custom-domain-section";
 import { HelpSupportSection } from "@/components/settings/help-support-section";
 import { OrganizationTimezoneSection } from "@/components/settings/organization-timezone-section";
-import { SettingsCollapsibleSection } from "@/components/settings/settings-collapsible-section";
+import { SettingsLeftRail } from "@/components/settings/settings-left-rail";
 import { SettingsPageHeader } from "@/components/settings/settings-page-header";
 import { SettingsPlanUsageSection } from "@/components/settings/settings-plan-usage-section";
+import { SettingsRightRail } from "@/components/settings/settings-right-rail";
+import { SettingsSectionPanel } from "@/components/settings/settings-section-panel";
+import {
+  getDefaultSettingsSection,
+  settingsSections,
+  type SettingsSectionId,
+  type SettingsSectionMeta,
+} from "@/components/settings/settings-sections";
 import { SettingsSubsectionDivider } from "@/components/settings/settings-subsection";
-import { SettingsWorkspaceNav } from "@/components/settings/settings-workspace-nav";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+
+function renderSectionContent(id: SettingsSectionId): React.ReactNode {
+  switch (id) {
+    case "settings-plan":
+      return <SettingsPlanUsageSection embedded />;
+    case "settings-brand":
+      return <BrandAccentSection embedded />;
+    case "settings-organization":
+      return <OrganizationTimezoneSection embedded />;
+    case "settings-domain":
+      return <CustomDomainSection embedded />;
+    case "settings-account":
+      return (
+        <>
+          <AccountSection embedded />
+          <SettingsSubsectionDivider />
+          <ChangePasswordSection embedded />
+        </>
+      );
+    case "settings-support":
+      return <HelpSupportSection embedded />;
+    case "settings-appearance":
+      return <AppearanceSection embedded />;
+    default:
+      return null;
+  }
+}
 
 export function SettingsPageContent() {
   const { shell } = useTenantShell();
   const isTenantAdmin = shell?.isTenantAdmin ?? false;
 
+  const visibleSections = useMemo(
+    () => settingsSections.filter((section) => !section.adminOnly || isTenantAdmin),
+    [isTenantAdmin]
+  );
+
+  const [activeId, setActiveId] = useState<SettingsSectionId>(() =>
+    getDefaultSettingsSection(isTenantAdmin)
+  );
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
+  const [rightCollapsed, setRightCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [mobileContextOpen, setMobileContextOpen] = useState(false);
+
+  useEffect(() => {
+    if (!visibleSections.some((section) => section.id === activeId)) {
+      setActiveId(getDefaultSettingsSection(isTenantAdmin));
+    }
+  }, [activeId, isTenantAdmin, visibleSections]);
+
+  const activeSection: SettingsSectionMeta =
+    visibleSections.find((section) => section.id === activeId) ?? visibleSections[0];
+
+  const showBillingLink = shell?.plan === "Basic" || shell?.isBillingOwner === true;
+
+  function selectSection(id: SettingsSectionId) {
+    setActiveId(id);
+    setMobileNavOpen(false);
+  }
+
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-5 pb-10">
+    <div className="flex w-full flex-col gap-4 pb-8 lg:gap-5">
       <SettingsPageHeader />
 
-      {isTenantAdmin ? <SettingsWorkspaceNav /> : null}
-
-      <div className="space-y-3">
-        {isTenantAdmin ? (
-          <>
-            <SettingsCollapsibleSection
-              id="settings-plan"
-              title="Plan & limits"
-              description="Headroom for published activities and monthly registrations on your current plan."
-              defaultOpen
-            >
-              <SettingsPlanUsageSection embedded />
-            </SettingsCollapsibleSection>
-
-            <SettingsCollapsibleSection
-              id="settings-brand"
-              title="Brand accent"
-              description="Personalize buttons, links, and dashboard highlights for this workspace."
-            >
-              <BrandAccentSection embedded />
-            </SettingsCollapsibleSection>
-
-            <SettingsCollapsibleSection
-              id="settings-organization"
-              title="Organization"
-              description="Timezone used for monthly registration limits and public registration caps."
-            >
-              <OrganizationTimezoneSection embedded />
-            </SettingsCollapsibleSection>
-          </>
-        ) : null}
-
-        <SettingsCollapsibleSection
-          id="settings-account"
-          title="Your account"
-          description="Signed-in operator profile and password for this workspace."
-          defaultOpen={!isTenantAdmin}
+      <div className="flex flex-wrap items-center gap-2 lg:hidden">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-2 border-border-warm"
+          onClick={() => setMobileNavOpen(true)}
         >
-          <AccountSection embedded />
-          <SettingsSubsectionDivider />
-          <ChangePasswordSection embedded />
-        </SettingsCollapsibleSection>
-
-        <SettingsCollapsibleSection
-          id="settings-support"
-          title="Help & support"
-          description="Contact Creativorare and track your recent support requests."
-        >
-          <HelpSupportSection embedded />
-        </SettingsCollapsibleSection>
-
-        <SettingsCollapsibleSection
-          id="settings-appearance"
-          title="Appearance"
-          description="How Cohestra looks on this device — synced with the top-bar theme control."
-        >
-          <AppearanceSection embedded />
-        </SettingsCollapsibleSection>
-
-        {isTenantAdmin ? (
-          <SettingsCollapsibleSection
-            id="settings-domain"
-            title="Custom domain"
-            description="Use your own hostname for public pages — Enterprise, coming soon."
-          >
-            <CustomDomainSection embedded />
-          </SettingsCollapsibleSection>
-        ) : null}
+          <PanelLeft className="size-4" aria-hidden />
+          Sections
+        </Button>
+        <span className="truncate text-sm text-text-muted-warm">{activeSection.label}</span>
       </div>
+
+      <div className="hidden items-center gap-2 lg:flex xl:hidden">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-2 border-border-warm"
+          onClick={() => setMobileContextOpen(true)}
+        >
+          <PanelRight className="size-4" aria-hidden />
+          Context
+        </Button>
+      </div>
+
+      <div
+        className={cn(
+          "flex min-h-[28rem] w-full overflow-hidden rounded-2xl border border-border-warm/80",
+          "bg-card/40 shadow-sm"
+        )}
+      >
+        <SettingsLeftRail
+          className="hidden border-r lg:flex"
+          sections={visibleSections}
+          activeId={activeId}
+          onSelect={selectSection}
+          collapsed={leftCollapsed}
+          onToggleCollapsed={() => setLeftCollapsed((value) => !value)}
+          showBillingLink={showBillingLink}
+          showAdminLinks={isTenantAdmin}
+        />
+
+        <main className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          {activeSection ? (
+            <SettingsSectionPanel section={activeSection}>
+              {renderSectionContent(activeSection.id)}
+            </SettingsSectionPanel>
+          ) : null}
+        </main>
+
+        <SettingsRightRail
+          className="hidden border-l xl:flex"
+          activeId={activeId}
+          collapsed={rightCollapsed}
+          onToggleCollapsed={() => setRightCollapsed((value) => !value)}
+        />
+      </div>
+
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetContent side="left" className="w-[min(100vw-2rem,18rem)] p-0">
+          <SheetHeader className="border-b border-border-warm px-4 py-3">
+            <SheetTitle>Sections</SheetTitle>
+          </SheetHeader>
+          <SettingsLeftRail
+            className="h-full w-full border-0 bg-transparent"
+            sections={visibleSections}
+            activeId={activeId}
+            onSelect={selectSection}
+            collapsed={false}
+            onToggleCollapsed={() => setMobileNavOpen(false)}
+            showBillingLink={showBillingLink}
+            showAdminLinks={isTenantAdmin}
+            hideCollapseToggle
+          />
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={mobileContextOpen} onOpenChange={setMobileContextOpen}>
+        <SheetContent side="right" className="w-[min(100vw-2rem,20rem)] p-0">
+          <SheetHeader className="border-b border-border-warm px-4 py-3">
+            <SheetTitle>Context</SheetTitle>
+          </SheetHeader>
+          <SettingsRightRail
+            className="h-full w-full border-0 bg-transparent"
+            activeId={activeId}
+            collapsed={false}
+            onToggleCollapsed={() => setMobileContextOpen(false)}
+            hideCollapseToggle
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
