@@ -150,7 +150,7 @@ NFR-12 (UX accessibility): WCAG 2.2 AA on marketing, admin, stub, registration, 
 
 | Plan | Seats | Communities | Published activities | Regs/mo | Public site | Reports | Campaigns |
 |------|-------|-------------|----------------------|---------|-------------|---------|-----------|
-| Basic | 1 | 1 | 3 | 150 | Stub | Fixed + CSV | — |
+| Basic | 1 | 1 | 4 | 250 | Stub | Fixed + CSV | — |
 | Core | 3 | 3 | 12 | 500 | Fixed SitePage | Queryable + CSV | — |
 | Pro | 10 | 10 | 50 | 5,000 | Builder | + campaigns + saved views | ✓ |
 
