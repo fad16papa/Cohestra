@@ -45,6 +45,8 @@ internal sealed class ActivityConfiguration : IEntityTypeConfiguration<Activity>
             .HasMaxLength(500)
             .IsRequired();
 
+        builder.Property(activity => activity.ScheduledStartsAt);
+
         builder.Property(activity => activity.Location)
             .HasMaxLength(500)
             .IsRequired();

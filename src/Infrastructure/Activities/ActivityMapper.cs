@@ -27,6 +27,7 @@ internal static class ActivityMapper
             FormSchemaMapper.ToDto(activity.FormSchema),
             activity.MaxRegistrants,
             registrationCount,
+            activity.ScheduledStartsAt,
             activity.CreatedAt,
             activity.UpdatedAt);
 }

@@ -7,4 +7,5 @@ public sealed record CreateActivityRequest(
     string Location,
     string CommunityLabel,
     string? Status,
-    int? MaxRegistrants = null);
+    int? MaxRegistrants = null,
+    DateTimeOffset? ScheduledStartsAt = null);

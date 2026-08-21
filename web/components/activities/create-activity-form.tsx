@@ -153,6 +153,7 @@ export function CreateActivityForm() {
         communityLabel,
         category,
         schedule: formatScheduleForStorage(scheduleDateTime),
+        scheduledStartsAt: new Date(scheduleDateTime).toISOString(),
         location: buildActivityLocation(locationDetail, countryCode),
         status: "draft",
         maxRegistrants: parsedCap,

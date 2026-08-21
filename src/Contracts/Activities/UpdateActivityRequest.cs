@@ -9,4 +9,5 @@ public sealed record UpdateActivityRequest(
     string? HeroImageUrl,
     string? AccentColor,
     int? MaxRegistrants = null,
-    RegistrationThemeDto? RegistrationTheme = null);
+    RegistrationThemeDto? RegistrationTheme = null,
+    DateTimeOffset? ScheduledStartsAt = null);

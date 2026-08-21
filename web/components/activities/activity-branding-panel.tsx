@@ -105,6 +105,7 @@ export function ActivityBrandingPanel({
       name: activity.name,
       category: activity.category,
       schedule: activity.schedule,
+      scheduledStartsAt: activity.scheduledStartsAt,
       location: activity.location,
       communityLabel: activity.communityLabel,
       heroImageUrl: nextHeroImageUrl.trim() || null,

@@ -81,6 +81,7 @@ public sealed class ActivityService(
                 Slug = slug,
                 Category = request.Category.Trim(),
                 Schedule = request.Schedule.Trim(),
+                ScheduledStartsAt = NormalizeScheduledStartsAt(request.ScheduledStartsAt, request.Schedule),
                 Location = request.Location.Trim(),
                 CommunityLabel = request.CommunityLabel.Trim(),
                 MaxRegistrants = request.MaxRegistrants,
@@ -280,6 +281,13 @@ public sealed class ActivityService(
         activity.Name = request.Name.Trim();
         activity.Category = request.Category.Trim();
         activity.Schedule = request.Schedule.Trim();
+        if (request.ScheduledStartsAt.HasValue || activity.ScheduledStartsAt is null)
+        {
+            activity.ScheduledStartsAt = NormalizeScheduledStartsAt(
+                request.ScheduledStartsAt,
+                request.Schedule);
+        }
+
         activity.Location = request.Location.Trim();
         activity.CommunityLabel = request.CommunityLabel.Trim();
         // Persist the uploaded/external URL as provided; browser resolution happens on read.
@@ -753,12 +761,21 @@ public sealed class ActivityService(
             cancellationToken);
         var resolved = ResolveRegistrationThemeForBrowser(
             RegistrationThemeQueries.ResolveForActivity(activity, community));
+        var tenantTimeZoneId = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == activity.TenantId)
+            .Select(tenant => tenant.RegistrationTimeZoneId)
+            .FirstOrDefaultAsync(cancellationToken) ?? RegistrationTimeZoneDefaults.Utc;
+        var isRegistrationOpen = ActivityScheduleExpiration.IsRegistrationOpen(
+            activity,
+            tenantTimeZoneId,
+            DateTimeOffset.UtcNow);
 
         return new PublicActivityResponse(
             activity.Slug,
             activity.Name,
             activity.Status.ToString().ToLowerInvariant(),
-            activity.Status == ActivityStatus.Published,
+            isRegistrationOpen,
             activity.Schedule,
             activity.Location,
             activity.CommunityLabel,
@@ -984,4 +1001,16 @@ public sealed class ActivityService(
                 dbContext.Registrations.Count(registration => registration.ActivityId == activity.Id)),
             _ => query.OrderByDescending(activity => activity.UpdatedAt),
         };
+
+    private static DateTimeOffset? NormalizeScheduledStartsAt(
+        DateTimeOffset? scheduledStartsAt,
+        string schedule)
+    {
+        if (scheduledStartsAt.HasValue)
+        {
+            return scheduledStartsAt.Value.ToUniversalTime();
+        }
+
+        return ActivityScheduleParser.TryParseStartsAt(schedule);
+    }
 }
