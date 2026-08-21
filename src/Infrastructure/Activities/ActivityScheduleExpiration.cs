@@ -54,4 +54,30 @@ public static class ActivityScheduleExpiration
         DateTimeOffset utcNow) =>
         activity.Status == ActivityStatus.Published
         && !IsPastEventEnd(activity, registrationTimeZoneId, utcNow);
+
+    public static DateTimeOffset? ResolveEventEndUtc(
+        Activity activity,
+        string registrationTimeZoneId,
+        DateTimeOffset referenceUtc = default)
+    {
+        var startsAt = ResolveStartsAt(activity, registrationTimeZoneId, referenceUtc);
+        if (startsAt is null)
+        {
+            return null;
+        }
+
+        var timeZone = ActivityScheduleTimeZone.Resolve(registrationTimeZoneId);
+        var localStart = TimeZoneInfo.ConvertTime(startsAt.Value, timeZone);
+        var endOfEventDayLocal = new DateTime(
+            localStart.Year,
+            localStart.Month,
+            localStart.Day,
+            23,
+            59,
+            59,
+            999,
+            DateTimeKind.Unspecified);
+
+        return TimeZoneInfo.ConvertTimeToUtc(endOfEventDayLocal, timeZone);
+    }
 }

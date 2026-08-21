@@ -1,5 +1,6 @@
 import { getPublicApiBaseUrl } from "@/lib/api";
 import { applyPhoneFieldDefaults } from "@/lib/phone-countries";
+import { isActivityRegistrationOpen } from "@/lib/activity-schedule-utils";
 
 export type ActivityStatus = "draft" | "published" | "archived";
 
@@ -70,6 +71,7 @@ export type Activity = {
   maxRegistrants: number | null;
   registrationCount: number;
   scheduledStartsAt: string | null;
+  isRegistrationOpen: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -266,6 +268,7 @@ function parseActivity(raw: Record<string, unknown>): Activity {
   const registrationCount = raw.registrationCount ?? raw.RegistrationCount;
   const maxRegistrantsRaw = raw.maxRegistrants ?? raw.MaxRegistrants;
   const scheduledStartsAtRaw = raw.scheduledStartsAt ?? raw.ScheduledStartsAt;
+  const isRegistrationOpenRaw = raw.isRegistrationOpen ?? raw.IsRegistrationOpen;
   const createdAt = raw.createdAt ?? raw.CreatedAt;
   const updatedAt = raw.updatedAt ?? raw.UpdatedAt;
 
@@ -308,6 +311,15 @@ function parseActivity(raw: Record<string, unknown>): Activity {
     registrationCount,
     scheduledStartsAt:
       typeof scheduledStartsAtRaw === "string" ? scheduledStartsAtRaw : null,
+    isRegistrationOpen:
+      typeof isRegistrationOpenRaw === "boolean"
+        ? isRegistrationOpenRaw
+        : isActivityRegistrationOpen({
+            status,
+            schedule,
+            scheduledStartsAt:
+              typeof scheduledStartsAtRaw === "string" ? scheduledStartsAtRaw : null,
+          }),
     createdAt,
     updatedAt,
   };

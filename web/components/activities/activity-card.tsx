@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ActivityCardQuickActions } from "@/components/activities/activity-card-quick-actions";
 import { ActivityPlanRegCapIndicator } from "@/components/activities/activity-plan-reg-cap-indicator";
 import { ActivityScheduleConflictAlert } from "@/components/activities/activity-schedule-conflict-alert";
+import { ActivityPastDueBadge } from "@/components/activities/activity-past-due-badge";
 import { ActivitySignUpsPausedBadge } from "@/components/activities/activity-sign-ups-paused-badge";
 import { ActivityStatusBadge } from "@/components/activities/activity-status-badge";
 import {
@@ -71,6 +72,8 @@ export function ActivityCard({
     activity.status,
     planRegistrationsDial
   );
+  const showPastDueStillPublished =
+    activity.status === "published" && activity.isRegistrationOpen === false;
 
   return (
     <Card
@@ -88,6 +91,7 @@ export function ActivityCard({
             </CardTitle>
             <div className="flex flex-wrap items-center justify-end gap-1.5">
               <ActivityStatusBadge status={activity.status} />
+              {showPastDueStillPublished ? <ActivityPastDueBadge /> : null}
               {showSignUpsPaused ? <ActivitySignUpsPausedBadge /> : null}
             </div>
           </div>

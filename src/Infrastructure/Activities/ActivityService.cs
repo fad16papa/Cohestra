@@ -211,13 +211,20 @@ public sealed class ActivityService(
                 .Where(community => communityLabels.Contains(community.Name))
                 .ToDictionaryAsync(community => community.Name, cancellationToken);
 
+        var tenantTimeZoneId = await ResolveTenantRegistrationTimeZoneAsync(cancellationToken);
+        var utcNow = DateTimeOffset.UtcNow;
+
         var items = activities
             .Select(activity => ToActivityResponse(
                 activity,
                 RegistrationThemeQueries.ResolveForActivity(
                     activity,
                     communities.GetValueOrDefault(activity.CommunityLabel)),
-                registrationCounts.GetValueOrDefault(activity.Id)))
+                registrationCounts.GetValueOrDefault(activity.Id),
+                ActivityScheduleExpiration.IsRegistrationOpen(
+                    activity,
+                    tenantTimeZoneId,
+                    utcNow)))
             .ToList();
 
         return new ActivityListResponse(items, normalizedPage, normalizedPageSize, totalCount);
@@ -731,18 +738,53 @@ public sealed class ActivityService(
             activity.CommunityLabel,
             cancellationToken);
         var resolved = RegistrationThemeQueries.ResolveForActivity(activity, community);
-        return ToActivityResponse(activity, resolved, registrationCount);
+        var tenantTimeZoneId = await ResolveTenantRegistrationTimeZoneAsync(
+            activity.TenantId,
+            cancellationToken);
+
+        return ToActivityResponse(
+            activity,
+            resolved,
+            registrationCount,
+            ActivityScheduleExpiration.IsRegistrationOpen(
+                activity,
+                tenantTimeZoneId,
+                DateTimeOffset.UtcNow));
+    }
+
+    private Task<string> ResolveTenantRegistrationTimeZoneAsync(
+        CancellationToken cancellationToken = default)
+    {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Task.FromResult(RegistrationTimeZoneDefaults.Utc);
+        }
+
+        return ResolveTenantRegistrationTimeZoneAsync(tenantId, cancellationToken);
+    }
+
+    private async Task<string> ResolveTenantRegistrationTimeZoneAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        return await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => tenant.RegistrationTimeZoneId)
+            .FirstOrDefaultAsync(cancellationToken) ?? RegistrationTimeZoneDefaults.Utc;
     }
 
     private static ActivityResponse ToActivityResponse(
         Activity activity,
         ResolvedRegistrationThemeDto resolvedTheme,
-        int registrationCount = 0) =>
+        int registrationCount = 0,
+        bool isRegistrationOpen = false) =>
         ActivityMapper.ToResponse(
             activity,
             ResolveRegistrationThemeForBrowser(resolvedTheme),
             registrationCount,
-            ResolveHeroImageUrl(activity.HeroImageUrl));
+            ResolveHeroImageUrl(activity.HeroImageUrl),
+            isRegistrationOpen);
 
     private static ResolvedRegistrationThemeDto ResolveRegistrationThemeForBrowser(
         ResolvedRegistrationThemeDto resolvedTheme) =>

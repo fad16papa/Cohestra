@@ -12,6 +12,7 @@ import { ActivityPublishControls } from "@/components/activities/activity-publis
 import { ActivityScheduleConflictAlert } from "@/components/activities/activity-schedule-conflict-alert";
 import { ActivityShareKitPanel } from "@/components/activities/activity-share-kit-panel";
 import { ActivityRegistrationsTab } from "@/components/activities/activity-registrations-tab";
+import { ActivityPastDueBadge } from "@/components/activities/activity-past-due-badge";
 import { ActivityStatusBadge } from "@/components/activities/activity-status-badge";
 import { useActivityScheduleConflicts } from "@/components/activities/use-activity-schedule-conflicts";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -198,7 +199,12 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
             {activity.communityLabel} · {activity.category}
           </p>
         </div>
-        <ActivityStatusBadge status={activity.status} className="shrink-0 self-start" />
+        <div className="flex flex-wrap items-center gap-2 self-start">
+          <ActivityStatusBadge status={activity.status} className="shrink-0" />
+          {activity.status === "published" && !activity.isRegistrationOpen ? (
+            <ActivityPastDueBadge />
+          ) : null}
+        </div>
       </div>
 
       {conflictError ? (

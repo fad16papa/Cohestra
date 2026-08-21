@@ -10,4 +10,5 @@ public static class OutboxMessageTypes
     public const string SupportIssueFilerReply = "support.issue.filer.reply";
     public const string SupportIssueFilerStatus = "support.issue.filer.status";
     public const string ActivityExpired = "activity.expired";
+    public const string ActivityExpiringSoon = "activity.expiring_soon";
 }

@@ -23,6 +23,15 @@ public sealed class ActivityExpirationHostedService(
             return;
         }
 
+        try
+        {
+            await RunBackfillPassAsync(stoppingToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogError(ex, "Activity ScheduledStartsAt startup backfill failed.");
+        }
+
         await Task.Delay(TimeSpan.FromMinutes(3), stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
@@ -37,6 +46,37 @@ public sealed class ActivityExpirationHostedService(
             }
 
             await Task.Delay(RunInterval, stoppingToken);
+        }
+    }
+
+    internal async Task RunBackfillPassAsync(CancellationToken cancellationToken)
+    {
+        if (!options.Value.Enabled)
+        {
+            return;
+        }
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var expirationService = scope.ServiceProvider.GetRequiredService<ActivityExpirationService>();
+
+        if (!await TryAcquireLockAsync(dbContext, cancellationToken))
+        {
+            logger.LogInformation("Activity backfill skipped — another instance holds the advisory lock.");
+            return;
+        }
+
+        try
+        {
+            var backfilledCount = await expirationService.BackfillMissingScheduledStartsAtAsync(cancellationToken);
+            if (backfilledCount > 0)
+            {
+                logger.LogInformation("Startup backfill updated {Count} activities.", backfilledCount);
+            }
+        }
+        finally
+        {
+            await ReleaseLockAsync(dbContext, cancellationToken);
         }
     }
 
@@ -60,6 +100,15 @@ public sealed class ActivityExpirationHostedService(
         try
         {
             await expirationService.BackfillMissingScheduledStartsAtAsync(cancellationToken);
+
+            var warningsQueued = await expirationService.SendExpiringSoonWarningsAsync(
+                DateTimeOffset.UtcNow,
+                cancellationToken);
+
+            if (warningsQueued > 0)
+            {
+                logger.LogInformation("Activity expiration queued {Count} expiring-soon warnings.", warningsQueued);
+            }
 
             var archivedCount = await expirationService.ArchiveExpiredPublishedActivitiesAsync(
                 DateTimeOffset.UtcNow,

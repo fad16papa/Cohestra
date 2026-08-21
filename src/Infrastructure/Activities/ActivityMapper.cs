@@ -9,7 +9,8 @@ internal static class ActivityMapper
         Activity activity,
         ResolvedRegistrationThemeDto resolvedTheme,
         int registrationCount = 0,
-        string? heroImageUrl = null) =>
+        string? heroImageUrl = null,
+        bool isRegistrationOpen = false) =>
         new(
             activity.Id,
             activity.Name,
@@ -28,6 +29,7 @@ internal static class ActivityMapper
             activity.MaxRegistrants,
             registrationCount,
             activity.ScheduledStartsAt,
+            isRegistrationOpen,
             activity.CreatedAt,
             activity.UpdatedAt);
 }

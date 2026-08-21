@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Outbox;
 
-public sealed class ActivityExpiredOutboxHandler(
+public sealed class ActivityExpiringSoonOutboxHandler(
     CohestraDbContext dbContext,
     IEmailSender emailSender) : IOutboxMessageHandler
 {
-    public string MessageType => OutboxMessageTypes.ActivityExpired;
+    public string MessageType => OutboxMessageTypes.ActivityExpiringSoon;
 
     public async Task HandleAsync(OutboxMessage message, CancellationToken cancellationToken = default)
     {
@@ -20,40 +20,44 @@ public sealed class ActivityExpiredOutboxHandler(
             return;
         }
 
-        var payload = JsonSerializer.Deserialize<ActivityExpiredOutboxPayload>(message.PayloadJson)
-            ?? throw new InvalidOperationException("Activity expired outbox payload is invalid.");
-
-        var recipientEmail = payload.ResolveRecipientEmail();
+        var payload = JsonSerializer.Deserialize<ActivityExpiringSoonOutboxPayload>(message.PayloadJson)
+            ?? throw new InvalidOperationException("Activity expiring-soon outbox payload is invalid.");
 
         var activityExists = await dbContext.Activities
             .IgnoreQueryFilters()
             .AsNoTracking()
-            .AnyAsync(item => item.Id == payload.ActivityId, cancellationToken);
+            .AnyAsync(
+                item => item.Id == payload.ActivityId && item.Status == Domain.Activities.ActivityStatus.Published,
+                cancellationToken);
 
         if (!activityExists)
         {
-            throw new InvalidOperationException($"Activity {payload.ActivityId} was not found for expired notification.");
+            message.DispatchedAt = DateTimeOffset.UtcNow;
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return;
         }
 
-        var email = ActivityExpiredEmailBuilder.Build(
+        var email = ActivityExpiringSoonEmailBuilder.Build(
             payload.ActivityName,
             payload.Schedule,
             payload.TenantName,
-            payload.ArchivedAtUtc);
+            payload.EventEndsAtUtc,
+            payload.RegistrationTimeZoneId,
+            payload.HoursBeforeEnd);
 
         var sendResult = await emailSender.SendAsync(
             new EmailMessage(
-                recipientEmail,
+                payload.RecipientEmail,
                 null,
                 email.Subject,
                 email.PlainBody,
                 email.HtmlBody,
-                InlineAttachments: ActivityExpiredEmailBuilder.BuildInlineAttachments()),
+                InlineAttachments: ActivityExpiringSoonEmailBuilder.BuildInlineAttachments()),
             cancellationToken);
 
         if (!sendResult.Success)
         {
-            throw new InvalidOperationException(sendResult.FailureReason ?? "Activity expired email failed.");
+            throw new InvalidOperationException(sendResult.FailureReason ?? "Activity expiring-soon email failed.");
         }
 
         message.DispatchedAt = DateTimeOffset.UtcNow;

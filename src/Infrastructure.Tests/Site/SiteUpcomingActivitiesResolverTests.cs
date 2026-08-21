@@ -72,13 +72,49 @@ public sealed class SiteUpcomingActivitiesResolverTests
             "http://localhost:8080",
             TenantIds.Default);
 
-        Assert.Equal(2, results.Count);
-        Assert.Contains(results, activity => activity.Slug == "published-visible");
-        Assert.Contains(results, activity => activity.Slug == "published-hidden");
+        Assert.Single(results);
+        Assert.Equal("published-visible", results[0].Slug);
+        Assert.DoesNotContain(results, activity => activity.Slug == "published-hidden");
     }
 
     [Fact]
-    public async Task LoadAsync_ReturnsAllPublishedActivitiesWithoutLimit()
+    public async Task LoadAsync_ExcludesPastPublishedActivities()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = DateTimeOffset.UtcNow;
+
+        dbContext.Activities.AddRange(
+            CreateActivity(
+                "upcoming-event",
+                ActivityStatus.Published,
+                showOnHomepage: true,
+                updatedAt: now,
+                scheduledStartsAt: now.AddDays(7)),
+            CreateActivity(
+                "past-event",
+                ActivityStatus.Published,
+                showOnHomepage: true,
+                updatedAt: now,
+                scheduledStartsAt: now.AddDays(-3)));
+        await dbContext.SaveChangesAsync();
+
+        var published = CreatePublished(
+        [
+            CreateSection("upcoming-1", "upcomingActivities", true, """{"limit": 6}"""),
+        ]);
+
+        var results = await SiteUpcomingActivitiesResolver.LoadAsync(
+            dbContext,
+            published,
+            "http://localhost:8080",
+            TenantIds.Default);
+
+        Assert.Single(results);
+        Assert.Equal("upcoming-event", results[0].Slug);
+    }
+
+    [Fact]
+    public async Task LoadAsync_AppliesConfiguredLimit()
     {
         await using var dbContext = CreateDbContext();
         var now = DateTimeOffset.UtcNow;
@@ -105,7 +141,7 @@ public sealed class SiteUpcomingActivitiesResolverTests
             "http://localhost:8080",
             TenantIds.Default);
 
-        Assert.Equal(15, results.Count);
+        Assert.Equal(3, results.Count);
     }
 
     [Fact]
@@ -190,7 +226,8 @@ public sealed class SiteUpcomingActivitiesResolverTests
         ActivityStatus status,
         bool showOnHomepage,
         DateTimeOffset updatedAt,
-        Guid? tenantId = null) =>
+        Guid? tenantId = null,
+        DateTimeOffset? scheduledStartsAt = null) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -203,6 +240,7 @@ public sealed class SiteUpcomingActivitiesResolverTests
             CommunityLabel = "Test Community",
             Status = status,
             ShowOnHomepage = showOnHomepage,
+            ScheduledStartsAt = scheduledStartsAt,
             CreatedAt = updatedAt,
             UpdatedAt = updatedAt,
         };
