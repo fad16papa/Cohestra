@@ -277,6 +277,14 @@ Subdomain public door — Basic stub, Core fixed SitePage, Pro builder; QR/regis
 Share kit, custom domain, thin confirm/reminder/thank-you automations, paid tickets (v1.2), seat add-ons — not v1 per GTM-A §13.11.
 **FRs covered:** none for v1 · UX-DR15 parked
 
+### Epic 26: Operator Support Intake
+Signed-in operators submit support from Settings with screenshots; global **SUP** issue ID; dual SendGrid (techsolutions@ + noreply confirmation).
+**FRs covered:** FR-SUP-1..10 (see `epics/epics-support-issue-tracker-2026-08-16.md`)
+
+### Epic 27: Platform Support Operations
+Platform admin Support inbox, status triage, attachment download, volume report + CSV; docs point to Settings.
+**FRs covered:** FR-SUP-11..15 (see `epics/epics-support-issue-tracker-2026-08-16.md`)
+
 <!-- Stories appended below per epic during Step 3 -->
 
 ## Epic 11: Tenant Workspaces & Platform Control
@@ -1670,4 +1678,16 @@ So that **registrants understand what to expect**.
 
 **Given** section header field type or meta divider  
 **Then** form renders non-input section headings between field groups
+
+## Epic 26: Operator Support Intake
+
+Signed-in operators submit support requests from Settings with screenshots, receive a global **SUP** issue ID, and trigger dual SendGrid notifications (techsolutions@ + noreply confirmation). Full stories: `_bmad-output/planning-artifacts/epics/epics-support-issue-tracker-2026-08-16.md`.
+
+**Stories:** 26.1 Domain + SUP numbers · 26.2 Email attachments + outbox · 26.3 Private attachment storage · 26.4 Create API + rate limit · 26.5 Settings Help & support UI
+
+## Epic 27: Platform Support Operations
+
+Platform admins triage issues in `/platform/support`, update status, download attachments, and view support volume report. Full stories: `_bmad-output/planning-artifacts/epics/epics-support-issue-tracker-2026-08-16.md`.
+
+**Stories:** 27.1 Platform inbox + detail · 27.2 Volume report + CSV · 27.3 Docs + maintenance copy
 
