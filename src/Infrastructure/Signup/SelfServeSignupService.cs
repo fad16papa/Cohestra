@@ -640,7 +640,8 @@ public sealed class SelfServeSignupService(
                     emailContent.PlainTextBody,
                     emailContent.HtmlBody,
                     fromEmail,
-                    fromName),
+                    fromName,
+                    InlineAttachments: emailContent.InlineAttachments),
                 cancellationToken);
 
             if (!sendResult.Success)
