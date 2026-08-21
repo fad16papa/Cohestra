@@ -1,20 +1,25 @@
 using Cohestra.Domain.Activities;
-using Cohestra.Domain.Tenants;
 
 namespace Cohestra.Infrastructure.Activities;
 
 public static class ActivityScheduleExpiration
 {
-    public static DateTimeOffset? ResolveStartsAt(Activity activity, DateTimeOffset referenceUtc = default) =>
+    public static DateTimeOffset? ResolveStartsAt(
+        Activity activity,
+        string registrationTimeZoneId,
+        DateTimeOffset referenceUtc = default) =>
         activity.ScheduledStartsAt
-        ?? ActivityScheduleParser.TryParseStartsAt(activity.Schedule, referenceUtc);
+        ?? ActivityScheduleParser.TryParseStartsAt(
+            activity.Schedule,
+            registrationTimeZoneId,
+            referenceUtc);
 
     public static bool IsPastEventEnd(
         Activity activity,
         string registrationTimeZoneId,
         DateTimeOffset utcNow)
     {
-        var startsAt = ResolveStartsAt(activity, utcNow);
+        var startsAt = ResolveStartsAt(activity, registrationTimeZoneId, utcNow);
         if (startsAt is null)
         {
             return false;
@@ -28,7 +33,7 @@ public static class ActivityScheduleExpiration
         string registrationTimeZoneId,
         DateTimeOffset utcNow)
     {
-        var timeZone = ResolveTimeZone(registrationTimeZoneId);
+        var timeZone = ActivityScheduleTimeZone.Resolve(registrationTimeZoneId);
         var localStart = TimeZoneInfo.ConvertTime(startsAtUtc, timeZone);
         var endOfEventDayLocal = new DateTime(
             localStart.Year,
@@ -49,25 +54,4 @@ public static class ActivityScheduleExpiration
         DateTimeOffset utcNow) =>
         activity.Status == ActivityStatus.Published
         && !IsPastEventEnd(activity, registrationTimeZoneId, utcNow);
-
-    private static TimeZoneInfo ResolveTimeZone(string registrationTimeZoneId)
-    {
-        if (string.IsNullOrWhiteSpace(registrationTimeZoneId))
-        {
-            return TimeZoneInfo.Utc;
-        }
-
-        try
-        {
-            return TimeZoneInfo.FindSystemTimeZoneById(registrationTimeZoneId.Trim());
-        }
-        catch (TimeZoneNotFoundException)
-        {
-            return TimeZoneInfo.Utc;
-        }
-        catch (InvalidTimeZoneException)
-        {
-            return TimeZoneInfo.Utc;
-        }
-    }
 }

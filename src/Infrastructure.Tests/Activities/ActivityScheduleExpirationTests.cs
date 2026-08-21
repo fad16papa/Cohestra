@@ -1,7 +1,5 @@
 using Cohestra.Domain.Activities;
 using Cohestra.Infrastructure.Activities;
-using Cohestra.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Tests.Activities;
 
@@ -38,7 +36,7 @@ public sealed class ActivityScheduleExpirationTests
         {
             Status = ActivityStatus.Published,
             ScheduledStartsAt = new DateTimeOffset(2026, 8, 20, 10, 0, 0, TimeSpan.Zero),
-            Schedule = "Sat, Aug 20, 2026, 10:00 AM",
+            Schedule = "Thu, Aug 20, 2026, 10:00 AM",
         };
 
         var nextDay = new DateTimeOffset(2026, 8, 21, 1, 0, 0, TimeSpan.Zero);
@@ -55,5 +53,33 @@ public sealed class ActivityScheduleExpirationTests
         Assert.Equal(2026, parsed!.Value.Year);
         Assert.Equal(8, parsed.Value.Month);
         Assert.Equal(20, parsed.Value.Day);
+    }
+
+    [Fact]
+    public void TryParseStartsAt_ParsesDisplayScheduleFormat()
+    {
+        var parsed = ActivityScheduleParser.TryParseStartsAt(
+            "Thu, Aug 20, 2026, 10:00 AM",
+            "UTC");
+
+        Assert.NotNull(parsed);
+        Assert.Equal(2026, parsed!.Value.Year);
+        Assert.Equal(8, parsed.Value.Month);
+        Assert.Equal(20, parsed.Value.Day);
+        Assert.Equal(10, parsed.Value.Hour);
+    }
+
+    [Fact]
+    public void TryParseStartsAt_ParsesWeekSaturdaySeedFormat()
+    {
+        var reference = new DateTimeOffset(2026, 8, 10, 12, 0, 0, TimeSpan.Zero);
+        var parsed = ActivityScheduleParser.TryParseStartsAt(
+            "Week 2, Saturdays 10:00",
+            "UTC",
+            reference);
+
+        Assert.NotNull(parsed);
+        Assert.Equal(DayOfWeek.Saturday, parsed!.Value.DayOfWeek);
+        Assert.Equal(10, parsed.Value.Hour);
     }
 }

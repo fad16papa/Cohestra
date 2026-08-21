@@ -62,6 +62,12 @@ public sealed class ActivityService(
             throw new InvalidOperationException(catalogError);
         }
 
+        var registrationTimeZoneId = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => tenant.RegistrationTimeZoneId)
+            .FirstOrDefaultAsync(cancellationToken) ?? RegistrationTimeZoneDefaults.Utc;
+
         var now = DateTimeOffset.UtcNow;
         const int maxAttempts = 3;
 
@@ -81,7 +87,10 @@ public sealed class ActivityService(
                 Slug = slug,
                 Category = request.Category.Trim(),
                 Schedule = request.Schedule.Trim(),
-                ScheduledStartsAt = NormalizeScheduledStartsAt(request.ScheduledStartsAt, request.Schedule),
+                ScheduledStartsAt = NormalizeScheduledStartsAt(
+                    request.ScheduledStartsAt,
+                    request.Schedule,
+                    registrationTimeZoneId),
                 Location = request.Location.Trim(),
                 CommunityLabel = request.CommunityLabel.Trim(),
                 MaxRegistrants = request.MaxRegistrants,
@@ -278,14 +287,23 @@ public sealed class ActivityService(
             throw new InvalidOperationException(catalogError);
         }
 
+        var registrationTimeZoneId = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == activity.TenantId)
+            .Select(tenant => tenant.RegistrationTimeZoneId)
+            .FirstOrDefaultAsync(cancellationToken) ?? RegistrationTimeZoneDefaults.Utc;
+
         activity.Name = request.Name.Trim();
         activity.Category = request.Category.Trim();
-        activity.Schedule = request.Schedule.Trim();
-        if (request.ScheduledStartsAt.HasValue || activity.ScheduledStartsAt is null)
+        var normalizedSchedule = request.Schedule.Trim();
+        var scheduleChanged = !string.Equals(activity.Schedule, normalizedSchedule, StringComparison.Ordinal);
+        activity.Schedule = normalizedSchedule;
+        if (request.ScheduledStartsAt.HasValue || activity.ScheduledStartsAt is null || scheduleChanged)
         {
             activity.ScheduledStartsAt = NormalizeScheduledStartsAt(
                 request.ScheduledStartsAt,
-                request.Schedule);
+                normalizedSchedule,
+                registrationTimeZoneId);
         }
 
         activity.Location = request.Location.Trim();
@@ -481,8 +499,14 @@ public sealed class ActivityService(
         var cached = await publicActivityCache.GetAsync(tenantId, normalizedSlug, cancellationToken);
         if (cached is not null)
         {
+            var refreshed = await RefreshCachedRegistrationOpenAsync(
+                cached,
+                tenantId,
+                normalizedSlug,
+                cancellationToken);
+
             return await EnrichWithRegistrationPauseStateAsync(
-                ResolvePublicResponse(cached),
+                ResolvePublicResponse(refreshed),
                 tenantId,
                 cancellationToken);
         }
@@ -834,6 +858,65 @@ public sealed class ActivityService(
             HeroImageUrl = ResolveHeroImageUrl(response.HeroImageUrl),
         };
 
+    private async Task<PublicActivityResponse> RefreshCachedRegistrationOpenAsync(
+        PublicActivityResponse cached,
+        Guid tenantId,
+        string normalizedSlug,
+        CancellationToken cancellationToken)
+    {
+        if (!string.Equals(cached.Status, "published", StringComparison.OrdinalIgnoreCase))
+        {
+            return cached;
+        }
+
+        var scheduleState = await dbContext.Activities
+            .AsNoTracking()
+            .Where(item => item.TenantId == tenantId && item.Slug == normalizedSlug)
+            .Select(item => new
+            {
+                item.Status,
+                item.Schedule,
+                item.ScheduledStartsAt,
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (scheduleState is null)
+        {
+            await publicActivityCache.InvalidateAsync(tenantId, normalizedSlug, cancellationToken);
+            return cached;
+        }
+
+        if (scheduleState.Status != ActivityStatus.Published)
+        {
+            await publicActivityCache.InvalidateAsync(tenantId, normalizedSlug, cancellationToken);
+            return cached with
+            {
+                Status = scheduleState.Status.ToString().ToLowerInvariant(),
+                IsRegistrationOpen = false,
+            };
+        }
+
+        var tenantTimeZoneId = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => tenant.RegistrationTimeZoneId)
+            .FirstOrDefaultAsync(cancellationToken) ?? RegistrationTimeZoneDefaults.Utc;
+
+        var probe = new Activity
+        {
+            Status = ActivityStatus.Published,
+            Schedule = scheduleState.Schedule,
+            ScheduledStartsAt = scheduleState.ScheduledStartsAt,
+        };
+
+        var isRegistrationOpen = ActivityScheduleExpiration.IsRegistrationOpen(
+            probe,
+            tenantTimeZoneId,
+            DateTimeOffset.UtcNow);
+
+        return cached with { IsRegistrationOpen = isRegistrationOpen };
+    }
+
     private async Task<string?> ValidateActivityCatalogAsync(
         string category,
         string communityLabel,
@@ -1004,13 +1087,14 @@ public sealed class ActivityService(
 
     private static DateTimeOffset? NormalizeScheduledStartsAt(
         DateTimeOffset? scheduledStartsAt,
-        string schedule)
+        string schedule,
+        string registrationTimeZoneId)
     {
         if (scheduledStartsAt.HasValue)
         {
             return scheduledStartsAt.Value.ToUniversalTime();
         }
 
-        return ActivityScheduleParser.TryParseStartsAt(schedule);
+        return ActivityScheduleParser.TryParseStartsAt(schedule, registrationTimeZoneId);
     }
 }
