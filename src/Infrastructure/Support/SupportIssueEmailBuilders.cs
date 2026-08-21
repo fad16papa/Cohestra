@@ -62,7 +62,10 @@ public sealed class SupportIssueConfirmationEmailBuilder(
         var publicWeb = publicWebOptions.Value;
         var fromEmail = settings.FromEmail.Trim();
         var fromName = settings.FromName.Trim();
-        var logoUrl = RegistrationNotificationService.ResolveLogoUrlForEmail(branding, publicWeb);
+        var logoInlineAttachment = PlatformBrandAssets.TryCreateInlineLogoAttachment();
+        var logoUrl = logoInlineAttachment is not null
+            ? $"cid:{PlatformBrandAssets.LogoInlineContentId}"
+            : RegistrationNotificationService.ResolveLogoUrlForEmail(branding, publicWeb);
         var websiteUrl = (branding.WebsiteUrl ?? string.Empty).Trim();
 
         var content = SupportIssueConfirmationEmailTemplate.Build(
@@ -88,7 +91,8 @@ public sealed class SupportIssueConfirmationEmailBuilder(
             content.PlainTextBody,
             content.HtmlBody,
             FromEmail: fromEmail,
-            FromName: fromName);
+            FromName: fromName,
+            InlineAttachments: logoInlineAttachment is null ? null : [logoInlineAttachment]);
     }
 }
 

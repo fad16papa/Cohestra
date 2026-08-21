@@ -1,7 +1,11 @@
+using Cohestra.Application.Email;
+
 namespace Cohestra.Infrastructure.Email;
 
 public sealed class PlatformBrandAssets
 {
+    public const string LogoInlineContentId = "cohestra-brand-logo";
+
     public static byte[]? TryLoadLogoPng()
     {
         var assembly = typeof(PlatformBrandAssets).Assembly;
@@ -24,5 +28,20 @@ public sealed class PlatformBrandAssets
         using var memory = new MemoryStream();
         stream.CopyTo(memory);
         return memory.ToArray();
+    }
+
+    public static EmailInlineAttachment? TryCreateInlineLogoAttachment()
+    {
+        var content = TryLoadLogoPng();
+        if (content is null || content.Length == 0)
+        {
+            return null;
+        }
+
+        return new EmailInlineAttachment(
+            LogoInlineContentId,
+            content,
+            "image/png",
+            "cohestra-logo.png");
     }
 }
