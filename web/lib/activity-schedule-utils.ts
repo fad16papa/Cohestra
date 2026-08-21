@@ -129,14 +129,35 @@ export function parseActivitySchedule(
 }
 
 /**
+ * Best-effort parse of activity schedule start time.
+ * Prefers structured scheduledStartsAt when available.
+ */
+export function resolveActivityStartDate(
+  activity: { schedule: string; scheduledStartsAt?: string | null },
+  options: { referenceDate?: Date } = {}
+): Date | null {
+  if (activity.scheduledStartsAt) {
+    const structured = new Date(activity.scheduledStartsAt);
+    if (!Number.isNaN(structured.getTime())) {
+      return structured;
+    }
+  }
+
+  return parseActivitySchedule(activity.schedule, options);
+}
+
+/**
  * True when the scheduled event is today or still in the future (local calendar day).
  * Used to warn before archiving a live registration channel before the event passes.
  */
 export function isActivityScheduleUpcomingOrToday(
   schedule: string,
-  now: Date = new Date()
+  now: Date = new Date(),
+  scheduledStartsAt?: string | null
 ): boolean {
-  const eventDate = parseActivitySchedule(schedule, { referenceDate: now });
+  const eventDate = scheduledStartsAt
+    ? resolveActivityStartDate({ schedule, scheduledStartsAt }, { referenceDate: now })
+    : parseActivitySchedule(schedule, { referenceDate: now });
   if (!eventDate) {
     return false;
   }

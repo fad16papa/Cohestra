@@ -7,4 +7,10 @@ public sealed class ActivityExpirationOptions
     public bool Enabled { get; set; } = true;
 
     public bool NotifyAdminOnAutoArchive { get; set; } = true;
+
+    public bool NotifyTeamOnAutoArchive { get; set; } = true;
+
+    public bool NotifyOnExpiringSoon { get; set; } = true;
+
+    public int ExpiringSoonHoursBeforeEnd { get; set; } = 24;
 }

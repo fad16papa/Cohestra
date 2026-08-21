@@ -1,9 +1,9 @@
 namespace Cohestra.Infrastructure.Outbox;
 
-public sealed record ActivityExpiredOutboxPayload(
+public sealed record ActivityExpiringSoonOutboxPayload(
     Guid ActivityId,
     string ActivityName,
     string Schedule,
     string RecipientEmail,
     string TenantName,
-    DateTimeOffset ArchivedAtUtc);
+    DateTimeOffset EventEndsAtUtc);

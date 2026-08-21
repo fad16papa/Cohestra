@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Cohestra.Contracts.Site;
 using Cohestra.Domain.Activities;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -38,20 +39,34 @@ internal static class SiteUpcomingActivitiesResolver
         CancellationToken cancellationToken = default)
     {
         _ = publicApiBaseUrl;
-        _ = ResolveLimit(published);
 
-        // Published (live) activities only — Draft (incl. unpublished), and Archived stay off the homepage.
-        // Schedule is operator-facing free text; UpdatedAt descending is the MVP ordering proxy.
-        // Ignore ambient tenant filters — caller passes an explicit tenant id (e.g. public door host resolve).
+        var limit = ResolveLimit(published);
+        var utcNow = DateTimeOffset.UtcNow;
+
+        var tenantTimeZoneId = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => tenant.RegistrationTimeZoneId)
+            .FirstOrDefaultAsync(cancellationToken) ?? RegistrationTimeZoneDefaults.Utc;
+
         var activities = await dbContext.IgnoreTenantFilters<Activity>()
             .AsNoTracking()
             .Where(activity =>
                 activity.TenantId == tenantId &&
-                activity.Status == ActivityStatus.Published)
-            .OrderByDescending(activity => activity.UpdatedAt)
+                activity.Status == ActivityStatus.Published &&
+                activity.ShowOnHomepage)
             .ToListAsync(cancellationToken);
 
         return activities
+            .Where(activity => !ActivityScheduleExpiration.IsPastEventEnd(
+                activity,
+                tenantTimeZoneId,
+                utcNow))
+            .OrderBy(activity => ActivityScheduleExpiration.ResolveStartsAt(
+                activity,
+                tenantTimeZoneId,
+                utcNow) ?? DateTimeOffset.MaxValue)
+            .Take(limit)
             .Select(activity => new PublicHomepageActivityDto(
                 activity.Slug,
                 activity.Name,

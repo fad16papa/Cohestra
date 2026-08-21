@@ -107,7 +107,13 @@ export function ActivityPublishControls({
     }
 
     setArchiveDialogVariant(
-      isActivityScheduleUpcomingOrToday(activity.schedule) ? "upcoming" : "past"
+      isActivityScheduleUpcomingOrToday(
+        activity.schedule,
+        new Date(),
+        activity.scheduledStartsAt
+      )
+        ? "upcoming"
+        : "past"
     );
     setArchiveDialogOpen(true);
   }

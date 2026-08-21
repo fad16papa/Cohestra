@@ -174,18 +174,15 @@ public sealed class ActivityExpirationService(
             archivedCount++;
             cacheInvalidations.Add((snapshot.TenantId, snapshot.Slug));
 
-            if (options.Value.NotifyAdminOnAutoArchive &&
-                !string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
-            {
-                EnqueueAdminNotification(
-                    snapshot.TenantId,
-                    snapshot.Id,
-                    snapshot.Name,
-                    snapshot.Schedule,
-                    tenant.AdminContactEmail.Trim(),
-                    tenant.Name,
-                    utcNow);
-            }
+            await EnqueueAutoArchiveNotificationsAsync(
+                snapshot.TenantId,
+                snapshot.Id,
+                snapshot.Name,
+                snapshot.Schedule,
+                tenant.AdminContactEmail,
+                tenant.Name,
+                utcNow,
+                cancellationToken);
 
             logger.LogInformation(
                 "Auto-archived expired published activity {ActivityId} ({ActivityName}) for tenant {TenantId}.",
@@ -218,12 +215,157 @@ public sealed class ActivityExpirationService(
         return archivedCount;
     }
 
-    private void EnqueueAdminNotification(
+    public async Task<int> SendExpiringSoonWarningsAsync(
+        DateTimeOffset utcNow,
+        CancellationToken cancellationToken = default)
+    {
+        if (!options.Value.NotifyOnExpiringSoon)
+        {
+            return 0;
+        }
+
+        var warningWindow = TimeSpan.FromHours(Math.Clamp(options.Value.ExpiringSoonHoursBeforeEnd, 1, 72));
+
+        var publishedActivities = await dbContext.IgnoreTenantFilters<Activity>()
+            .AsNoTracking()
+            .Where(activity => activity.Status == ActivityStatus.Published)
+            .Select(activity => new
+            {
+                activity.Id,
+                activity.TenantId,
+                activity.Name,
+                activity.Schedule,
+                activity.ScheduledStartsAt,
+            })
+            .ToListAsync(cancellationToken);
+
+        if (publishedActivities.Count == 0)
+        {
+            return 0;
+        }
+
+        var tenantIds = publishedActivities
+            .Select(activity => activity.TenantId)
+            .Distinct()
+            .ToList();
+
+        var tenants = await dbContext.IgnoreTenantFilters<Tenant>()
+            .AsNoTracking()
+            .Where(tenant => tenantIds.Contains(tenant.Id))
+            .Select(tenant => new
+            {
+                tenant.Id,
+                tenant.RegistrationTimeZoneId,
+                tenant.AdminContactEmail,
+                tenant.Name,
+            })
+            .ToDictionaryAsync(tenant => tenant.Id, cancellationToken);
+
+        var warningsQueued = 0;
+
+        foreach (var snapshot in publishedActivities)
+        {
+            if (!tenants.TryGetValue(snapshot.TenantId, out var tenant))
+            {
+                continue;
+            }
+
+            var probe = new Activity
+            {
+                Id = snapshot.Id,
+                TenantId = snapshot.TenantId,
+                Schedule = snapshot.Schedule,
+                ScheduledStartsAt = snapshot.ScheduledStartsAt,
+            };
+
+            var eventEndUtc = ActivityScheduleExpiration.ResolveEventEndUtc(
+                probe,
+                tenant.RegistrationTimeZoneId);
+
+            if (eventEndUtc is null)
+            {
+                continue;
+            }
+
+            var warningStartsAt = eventEndUtc.Value - warningWindow;
+            if (utcNow < warningStartsAt || utcNow >= eventEndUtc.Value)
+            {
+                continue;
+            }
+
+            var recipients = await ActivityNotificationRecipients.ResolveAsync(
+                dbContext,
+                snapshot.TenantId,
+                tenant.AdminContactEmail,
+                includeTeamMembers: options.Value.NotifyTeamOnAutoArchive,
+                includeAdminContact: options.Value.NotifyAdminOnAutoArchive,
+                cancellationToken);
+
+            foreach (var recipientEmail in recipients)
+            {
+                EnqueueExpiringSoonNotification(
+                    snapshot.TenantId,
+                    snapshot.Id,
+                    snapshot.Name,
+                    snapshot.Schedule,
+                    recipientEmail,
+                    tenant.Name,
+                    eventEndUtc.Value);
+                warningsQueued++;
+            }
+        }
+
+        if (warningsQueued > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Queued {Count} activity expiring-soon notifications.", warningsQueued);
+        }
+
+        return warningsQueued;
+    }
+
+    private async Task EnqueueAutoArchiveNotificationsAsync(
         Guid tenantId,
         Guid activityId,
         string activityName,
         string schedule,
-        string adminEmail,
+        string? adminContactEmail,
+        string tenantName,
+        DateTimeOffset archivedAtUtc,
+        CancellationToken cancellationToken)
+    {
+        if (!options.Value.NotifyAdminOnAutoArchive && !options.Value.NotifyTeamOnAutoArchive)
+        {
+            return;
+        }
+
+        var recipients = await ActivityNotificationRecipients.ResolveAsync(
+            dbContext,
+            tenantId,
+            adminContactEmail,
+            includeTeamMembers: options.Value.NotifyTeamOnAutoArchive,
+            includeAdminContact: options.Value.NotifyAdminOnAutoArchive,
+            cancellationToken);
+
+        foreach (var recipientEmail in recipients)
+        {
+            EnqueueExpiredNotification(
+                tenantId,
+                activityId,
+                activityName,
+                schedule,
+                recipientEmail,
+                tenantName,
+                archivedAtUtc);
+        }
+    }
+
+    private void EnqueueExpiredNotification(
+        Guid tenantId,
+        Guid activityId,
+        string activityName,
+        string schedule,
+        string recipientEmail,
         string tenantName,
         DateTimeOffset archivedAtUtc)
     {
@@ -231,7 +373,7 @@ public sealed class ActivityExpirationService(
             activityId,
             activityName,
             schedule,
-            adminEmail,
+            recipientEmail,
             tenantName,
             archivedAtUtc));
 
@@ -239,6 +381,30 @@ public sealed class ActivityExpirationService(
             tenantId,
             OutboxMessageTypes.ActivityExpired,
             payload,
-            $"activity-expired:{activityId:D}:{archivedAtUtc.UtcDateTime:yyyyMMdd}");
+            $"activity-expired:{activityId:D}:{recipientEmail}:{archivedAtUtc.UtcDateTime:yyyyMMdd}");
+    }
+
+    private void EnqueueExpiringSoonNotification(
+        Guid tenantId,
+        Guid activityId,
+        string activityName,
+        string schedule,
+        string recipientEmail,
+        string tenantName,
+        DateTimeOffset eventEndsAtUtc)
+    {
+        var payload = JsonSerializer.Serialize(new ActivityExpiringSoonOutboxPayload(
+            activityId,
+            activityName,
+            schedule,
+            recipientEmail,
+            tenantName,
+            eventEndsAtUtc));
+
+        outboxPublisher.Enqueue(
+            tenantId,
+            OutboxMessageTypes.ActivityExpiringSoon,
+            payload,
+            $"activity-expiring-soon:{activityId:D}:{recipientEmail}:{eventEndsAtUtc.UtcDateTime:yyyyMMdd}");
     }
 }

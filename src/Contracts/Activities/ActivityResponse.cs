@@ -18,5 +18,6 @@ public sealed record ActivityResponse(
     int? MaxRegistrants,
     int RegistrationCount,
     DateTimeOffset? ScheduledStartsAt,
+    bool IsRegistrationOpen,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
