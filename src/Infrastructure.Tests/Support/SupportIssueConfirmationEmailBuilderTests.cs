@@ -62,13 +62,27 @@ public sealed class SupportIssueConfirmationEmailBuilderTests
     }
 
     [Fact]
+    public void Build_IncludesBrandedEmailHeader()
+    {
+        var content = SupportIssueConfirmationEmailTemplate.Build(
+            CreateModel() with { LogoUrl = "cid:cohestra-brand-logo" });
+
+        Assert.Contains("Community Platform", content.PlainTextBody);
+        Assert.Contains("Production Support", content.PlainTextBody);
+        Assert.Contains("cid:cohestra-brand-logo", content.HtmlBody);
+        Assert.Contains("alt=\"Cohestra logo\"", content.HtmlBody);
+        Assert.Contains("Community Platform", content.HtmlBody);
+        Assert.Contains("Production Support", content.HtmlBody);
+    }
+
+    [Fact]
     public void Build_IncludesLogoWhenProvided()
     {
         var content = SupportIssueConfirmationEmailTemplate.Build(
             CreateModel() with { LogoUrl = "cid:cohestra-brand-logo" });
 
         Assert.Contains("cid:cohestra-brand-logo", content.HtmlBody);
-        Assert.Contains("alt=\"Cohestra\"", content.HtmlBody);
+        Assert.Contains("alt=\"Cohestra logo\"", content.HtmlBody);
     }
 
     [Fact]

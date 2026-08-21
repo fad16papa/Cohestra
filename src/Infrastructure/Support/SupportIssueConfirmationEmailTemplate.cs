@@ -31,6 +31,9 @@ internal static class SupportIssueConfirmationEmailTemplate
     internal const string EmailBannerBackground = "#f3f5f7";
     internal const string EmailBannerBorder = "#e6e9ed";
     internal const string FooterBrandLine = "Cohestra by Creativorare";
+    internal const string BrandName = "Cohestra";
+    internal const string BrandTagline = "Community Platform";
+    internal const string SupportLabel = "Production Support";
 
     public static SupportIssueConfirmationEmailContent Build(SupportIssueConfirmationEmailModel model)
     {
@@ -60,8 +63,10 @@ internal static class SupportIssueConfirmationEmailTemplate
         var submittedAt = FormatSubmittedAt(model.SubmittedAtUtc);
         var builder = new StringBuilder();
 
-        builder.AppendLine("Cohestra");
-        builder.AppendLine(new string('=', 8));
+        builder.AppendLine(BrandName);
+        builder.AppendLine(BrandTagline);
+        builder.AppendLine(SupportLabel);
+        builder.AppendLine(new string('=', BrandName.Length));
         builder.AppendLine();
         builder.AppendLine($"Hi {model.GreetingName},");
         builder.AppendLine();
@@ -118,9 +123,7 @@ internal static class SupportIssueConfirmationEmailTemplate
         var websiteHref = EncodeAttribute(model.WebsiteUrl);
         var submittedAt = Encode(FormatSubmittedAt(model.SubmittedAtUtc));
 
-        var headerBlock = string.IsNullOrWhiteSpace(model.LogoUrl)
-            ? $"""<p style="margin:0;font-size:22px;font-weight:700;color:{TextColor};letter-spacing:0.02em;">Cohestra</p>"""
-            : $"""<img src="{EncodeAttribute(model.LogoUrl)}" alt="Cohestra" width="96" style="display:block;max-width:96px;height:auto;margin:0 auto;" />""";
+        var headerBlock = BuildEmailHeader(model.LogoUrl);
 
         var attachmentRow = model.AttachmentCount > 0
             ? $"""
@@ -155,7 +158,6 @@ internal static class SupportIssueConfirmationEmailTemplate
                       <tr>
                         <td style="background-color:{EmailBannerBackground};border-bottom:1px solid {EmailBannerBorder};padding:32px 24px 28px;text-align:center;">
                           {headerBlock}
-                          <p style="margin:16px 0 0;font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:{PrimaryColor};">Production support</p>
                         </td>
                       </tr>
                       <tr>
@@ -245,6 +247,22 @@ internal static class SupportIssueConfirmationEmailTemplate
 
     private static string FormatSubmittedAt(DateTimeOffset submittedAtUtc) =>
         submittedAtUtc.UtcDateTime.ToString("MMMM d, yyyy 'at' h:mm tt 'UTC'", CultureInfo.InvariantCulture);
+
+    private static string BuildEmailHeader(string? logoUrl)
+    {
+        var logoBlock = string.IsNullOrWhiteSpace(logoUrl)
+            ? string.Empty
+            : $"""
+              <img src="{EncodeAttribute(logoUrl)}" alt="Cohestra logo" width="56" style="display:block;width:56px;max-width:56px;height:auto;margin:0 auto 12px;" />
+              """;
+
+        return $"""
+            {logoBlock}
+            <p style="margin:0;font-size:18px;font-weight:700;line-height:1.2;color:{TextColor};">{BrandName}</p>
+            <p style="margin:4px 0 0;font-size:13px;line-height:1.4;color:{MutedTextColor};">{BrandTagline}</p>
+            <p style="margin:14px 0 0;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:{PrimaryColor};">{SupportLabel}</p>
+            """;
+    }
 
     private static string Encode(string? value) =>
         WebUtility.HtmlEncode(value ?? string.Empty);
