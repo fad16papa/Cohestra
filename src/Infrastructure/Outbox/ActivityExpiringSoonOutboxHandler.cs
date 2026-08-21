@@ -41,7 +41,9 @@ public sealed class ActivityExpiringSoonOutboxHandler(
             payload.ActivityName,
             payload.Schedule,
             payload.TenantName,
-            payload.EventEndsAtUtc);
+            payload.EventEndsAtUtc,
+            payload.RegistrationTimeZoneId,
+            payload.HoursBeforeEnd);
 
         var sendResult = await emailSender.SendAsync(
             new EmailMessage(

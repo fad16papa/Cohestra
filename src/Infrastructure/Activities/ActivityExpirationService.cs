@@ -225,6 +225,8 @@ public sealed class ActivityExpirationService(
         }
 
         var warningWindow = TimeSpan.FromHours(Math.Clamp(options.Value.ExpiringSoonHoursBeforeEnd, 1, 72));
+        var catchUpGrace = TimeSpan.FromHours(Math.Clamp(options.Value.ExpiringSoonCatchUpGraceHours, 0, 24));
+        var hoursBeforeEnd = (int)warningWindow.TotalHours;
 
         var publishedActivities = await dbContext.IgnoreTenantFilters<Activity>()
             .AsNoTracking()
@@ -280,7 +282,8 @@ public sealed class ActivityExpirationService(
 
             var eventEndUtc = ActivityScheduleExpiration.ResolveEventEndUtc(
                 probe,
-                tenant.RegistrationTimeZoneId);
+                tenant.RegistrationTimeZoneId,
+                utcNow);
 
             if (eventEndUtc is null)
             {
@@ -288,7 +291,12 @@ public sealed class ActivityExpirationService(
             }
 
             var warningStartsAt = eventEndUtc.Value - warningWindow;
-            if (utcNow < warningStartsAt || utcNow >= eventEndUtc.Value)
+            if (utcNow < warningStartsAt)
+            {
+                continue;
+            }
+
+            if (utcNow >= eventEndUtc.Value + catchUpGrace)
             {
                 continue;
             }
@@ -297,8 +305,8 @@ public sealed class ActivityExpirationService(
                 dbContext,
                 snapshot.TenantId,
                 tenant.AdminContactEmail,
-                includeTeamMembers: options.Value.NotifyTeamOnAutoArchive,
-                includeAdminContact: options.Value.NotifyAdminOnAutoArchive,
+                includeTeamMembers: options.Value.NotifyTeamOnExpiringSoon,
+                includeAdminContact: options.Value.NotifyAdminOnExpiringSoon,
                 cancellationToken);
 
             foreach (var recipientEmail in recipients)
@@ -310,7 +318,9 @@ public sealed class ActivityExpirationService(
                     snapshot.Schedule,
                     recipientEmail,
                     tenant.Name,
-                    eventEndUtc.Value);
+                    eventEndUtc.Value,
+                    tenant.RegistrationTimeZoneId,
+                    hoursBeforeEnd);
                 warningsQueued++;
             }
         }
@@ -369,18 +379,20 @@ public sealed class ActivityExpirationService(
         string tenantName,
         DateTimeOffset archivedAtUtc)
     {
-        var payload = JsonSerializer.Serialize(new ActivityExpiredOutboxPayload(
-            activityId,
-            activityName,
-            schedule,
-            recipientEmail,
-            tenantName,
-            archivedAtUtc));
+        var payload = new ActivityExpiredOutboxPayload
+        {
+            ActivityId = activityId,
+            ActivityName = activityName,
+            Schedule = schedule,
+            RecipientEmail = recipientEmail,
+            TenantName = tenantName,
+            ArchivedAtUtc = archivedAtUtc,
+        };
 
         outboxPublisher.Enqueue(
             tenantId,
             OutboxMessageTypes.ActivityExpired,
-            payload,
+            JsonSerializer.Serialize(payload),
             $"activity-expired:{activityId:D}:{recipientEmail}:{archivedAtUtc.UtcDateTime:yyyyMMdd}");
     }
 
@@ -391,7 +403,9 @@ public sealed class ActivityExpirationService(
         string schedule,
         string recipientEmail,
         string tenantName,
-        DateTimeOffset eventEndsAtUtc)
+        DateTimeOffset eventEndsAtUtc,
+        string registrationTimeZoneId,
+        int hoursBeforeEnd)
     {
         var payload = JsonSerializer.Serialize(new ActivityExpiringSoonOutboxPayload(
             activityId,
@@ -399,7 +413,9 @@ public sealed class ActivityExpirationService(
             schedule,
             recipientEmail,
             tenantName,
-            eventEndsAtUtc));
+            eventEndsAtUtc,
+            registrationTimeZoneId,
+            hoursBeforeEnd));
 
         outboxPublisher.Enqueue(
             tenantId,

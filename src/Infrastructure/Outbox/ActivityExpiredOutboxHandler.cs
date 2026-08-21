@@ -23,6 +23,8 @@ public sealed class ActivityExpiredOutboxHandler(
         var payload = JsonSerializer.Deserialize<ActivityExpiredOutboxPayload>(message.PayloadJson)
             ?? throw new InvalidOperationException("Activity expired outbox payload is invalid.");
 
+        var recipientEmail = payload.ResolveRecipientEmail();
+
         var activityExists = await dbContext.Activities
             .IgnoreQueryFilters()
             .AsNoTracking()
@@ -41,7 +43,7 @@ public sealed class ActivityExpiredOutboxHandler(
 
         var sendResult = await emailSender.SendAsync(
             new EmailMessage(
-                payload.RecipientEmail,
+                recipientEmail,
                 null,
                 email.Subject,
                 email.PlainBody,

@@ -147,6 +147,29 @@ export function resolveActivityStartDate(
 }
 
 /**
+ * Client-side mirror of server registration-open gate (event calendar day, local time).
+ * Used when API omits isRegistrationOpen on older payloads.
+ */
+export function isActivityRegistrationOpen(
+  activity: {
+    status: string;
+    schedule: string;
+    scheduledStartsAt?: string | null;
+  },
+  now: Date = new Date()
+): boolean {
+  if (activity.status !== "published") {
+    return false;
+  }
+
+  return isActivityScheduleUpcomingOrToday(
+    activity.schedule,
+    now,
+    activity.scheduledStartsAt
+  );
+}
+
+/**
  * True when the scheduled event is today or still in the future (local calendar day).
  * Used to warn before archiving a live registration channel before the event passes.
  */

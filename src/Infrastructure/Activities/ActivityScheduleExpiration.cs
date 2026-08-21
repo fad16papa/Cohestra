@@ -57,9 +57,10 @@ public static class ActivityScheduleExpiration
 
     public static DateTimeOffset? ResolveEventEndUtc(
         Activity activity,
-        string registrationTimeZoneId)
+        string registrationTimeZoneId,
+        DateTimeOffset referenceUtc = default)
     {
-        var startsAt = ResolveStartsAt(activity, registrationTimeZoneId);
+        var startsAt = ResolveStartsAt(activity, registrationTimeZoneId, referenceUtc);
         if (startsAt is null)
         {
             return null;

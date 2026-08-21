@@ -1,5 +1,6 @@
 import { getPublicApiBaseUrl } from "@/lib/api";
 import { applyPhoneFieldDefaults } from "@/lib/phone-countries";
+import { isActivityRegistrationOpen } from "@/lib/activity-schedule-utils";
 
 export type ActivityStatus = "draft" | "published" | "archived";
 
@@ -313,7 +314,12 @@ function parseActivity(raw: Record<string, unknown>): Activity {
     isRegistrationOpen:
       typeof isRegistrationOpenRaw === "boolean"
         ? isRegistrationOpenRaw
-        : status === "published",
+        : isActivityRegistrationOpen({
+            status,
+            schedule,
+            scheduledStartsAt:
+              typeof scheduledStartsAtRaw === "string" ? scheduledStartsAtRaw : null,
+          }),
     createdAt,
     updatedAt,
   };

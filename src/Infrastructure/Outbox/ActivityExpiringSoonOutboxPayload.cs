@@ -6,4 +6,6 @@ public sealed record ActivityExpiringSoonOutboxPayload(
     string Schedule,
     string RecipientEmail,
     string TenantName,
-    DateTimeOffset EventEndsAtUtc);
+    DateTimeOffset EventEndsAtUtc,
+    string RegistrationTimeZoneId,
+    int HoursBeforeEnd);

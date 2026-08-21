@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Text;
 using Cohestra.Application.Email;
@@ -11,11 +12,14 @@ internal static class ActivityExpiringSoonEmailBuilder
         string activityName,
         string schedule,
         string tenantName,
-        DateTimeOffset eventEndsAtUtc)
+        DateTimeOffset eventEndsAtUtc,
+        string registrationTimeZoneId,
+        int hoursBeforeEnd)
     {
         var subject = $"Registration closes soon — {activityName}";
-        var closesLabel = eventEndsAtUtc.UtcDateTime.ToString("MMMM d, yyyy 'at' 11:59 PM' workspace time'");
+        var closesLabel = FormatEventDayEndLabel(eventEndsAtUtc, registrationTimeZoneId);
         var year = eventEndsAtUtc.UtcDateTime.Year;
+        var hoursLabel = FormatHoursBeforeEnd(hoursBeforeEnd);
 
         var plain = new StringBuilder();
         EmailBrandHeaderTemplate.AppendPlainTextHeader(plain, "Activity Reminder");
@@ -23,9 +27,11 @@ internal static class ActivityExpiringSoonEmailBuilder
         plain.AppendLine();
         plain.AppendLine($"Schedule: {schedule}");
         plain.AppendLine($"Workspace: {tenantName}");
-        plain.AppendLine($"Registration closes: end of event day ({closesLabel} reference)");
+        plain.AppendLine($"Registration closes: {closesLabel}");
         plain.AppendLine();
-        plain.AppendLine("After that, the activity will be archived automatically and new sign-ups will stop.");
+        plain.AppendLine(
+            $"After that, the activity will be archived automatically and new sign-ups will stop. " +
+            $"This reminder was sent about {hoursLabel} before registration closes.");
         plain.AppendLine("Review the activity in your Activities list if you need to extend or update it.");
         plain.AppendLine();
         plain.AppendLine(new string('-', 40));
@@ -62,7 +68,7 @@ internal static class ActivityExpiringSoonEmailBuilder
                         <td style="padding:32px 28px 8px;">
                           <h1 style="margin:0 0 12px;font-size:24px;line-height:1.2;color:{EmailBrandHeaderTemplate.TextColor};">Registration closes soon</h1>
                           <p style="margin:0;font-size:15px;line-height:1.6;color:{EmailBrandHeaderTemplate.MutedTextColor};">
-                            <strong style="color:{EmailBrandHeaderTemplate.TextColor};">{WebUtility.HtmlEncode(activityName)}</strong> reaches the end of its scheduled event day in about 24 hours. Public registration will close, then the activity will archive automatically.
+                            <strong style="color:{EmailBrandHeaderTemplate.TextColor};">{WebUtility.HtmlEncode(activityName)}</strong> reaches the end of its scheduled event day in about {WebUtility.HtmlEncode(hoursLabel)}. Public registration will close, then the activity will archive automatically.
                           </p>
                         </td>
                       </tr>
@@ -96,4 +102,17 @@ internal static class ActivityExpiringSoonEmailBuilder
         var inline = PlatformBrandAssets.TryCreateInlineLogoAttachment();
         return inline is null ? null : [inline];
     }
+
+    private static string FormatEventDayEndLabel(
+        DateTimeOffset eventEndsAtUtc,
+        string registrationTimeZoneId)
+    {
+        var timeZone = ActivityScheduleTimeZone.Resolve(registrationTimeZoneId);
+        var localEnd = TimeZoneInfo.ConvertTime(eventEndsAtUtc, timeZone);
+        return localEnd.ToString("MMMM d, yyyy 'at' h:mm tt", CultureInfo.InvariantCulture)
+            + $" ({registrationTimeZoneId})";
+    }
+
+    private static string FormatHoursBeforeEnd(int hoursBeforeEnd) =>
+        hoursBeforeEnd == 1 ? "1 hour" : $"{hoursBeforeEnd} hours";
 }
