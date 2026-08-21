@@ -201,6 +201,17 @@ public sealed class RegistrationService(
             return PublicRegistrationSubmitResult.NotFound();
         }
 
+        var tenantTimeZoneId = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => tenant.RegistrationTimeZoneId)
+            .FirstOrDefaultAsync(cancellationToken) ?? RegistrationTimeZoneDefaults.Utc;
+
+        if (!ActivityScheduleExpiration.IsRegistrationOpen(activity, tenantTimeZoneId, DateTimeOffset.UtcNow))
+        {
+            return PublicRegistrationSubmitResult.NotFound();
+        }
+
         var validationError = RegistrationAnswerValidator.Validate(activity.FormSchema, answers);
         if (validationError is not null)
         {
@@ -245,6 +256,15 @@ public sealed class RegistrationService(
             .FirstOrDefaultAsync(item => item.Id == activity.Id, cancellationToken);
 
         if (lockedActivity is null || lockedActivity.Status != ActivityStatus.Published)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return PublicRegistrationSubmitResult.NotFound();
+        }
+
+        if (!ActivityScheduleExpiration.IsRegistrationOpen(
+                lockedActivity,
+                tenantTimeZoneId,
+                DateTimeOffset.UtcNow))
         {
             await transaction.RollbackAsync(cancellationToken);
             return PublicRegistrationSubmitResult.NotFound();

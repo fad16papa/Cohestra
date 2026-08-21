@@ -16,6 +16,9 @@ public class Activity : ITenantScoped
 
     public string Schedule { get; set; } = string.Empty;
 
+    /// <summary>Structured event start used for schedule-based registration close and auto-archive.</summary>
+    public DateTimeOffset? ScheduledStartsAt { get; set; }
+
     public string Location { get; set; } = string.Empty;
 
     public string CommunityLabel { get; set; } = string.Empty;

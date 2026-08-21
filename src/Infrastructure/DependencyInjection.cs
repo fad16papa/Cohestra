@@ -165,6 +165,11 @@ public static class DependencyInjection
         services.AddScoped<IOutboxMessageHandler, SupportIssueConfirmationOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, SupportIssueFilerReplyOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, SupportIssueFilerStatusOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, ActivityExpiredOutboxHandler>();
+        services.Configure<ActivityExpirationOptions>(
+            configuration.GetSection(ActivityExpirationOptions.SectionName));
+        services.AddScoped<ActivityExpirationService>();
+        services.AddHostedService<ActivityExpirationHostedService>();
         services.AddScoped<ITenantShellService, TenantShellService>();
         services.AddScoped<ITenantOrganizationService, TenantOrganizationService>();
         services.AddScoped<ITenantAccessService, TenantAccessService>();

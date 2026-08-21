@@ -69,6 +69,7 @@ export type Activity = {
   formSchema: ActivityFormSchema | null;
   maxRegistrants: number | null;
   registrationCount: number;
+  scheduledStartsAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -88,6 +89,7 @@ export type CreateActivityInput = {
   communityLabel: string;
   status?: ActivityStatus;
   maxRegistrants?: number | null;
+  scheduledStartsAt?: string | null;
 };
 
 export type UpdateActivityInput = {
@@ -100,6 +102,7 @@ export type UpdateActivityInput = {
   accentColor?: string | null;
   maxRegistrants?: number | null;
   registrationTheme?: RegistrationTheme | null;
+  scheduledStartsAt?: string | null;
 };
 
 export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
@@ -262,6 +265,7 @@ function parseActivity(raw: Record<string, unknown>): Activity {
     raw.resolvedRegistrationTheme ?? raw.ResolvedRegistrationTheme;
   const registrationCount = raw.registrationCount ?? raw.RegistrationCount;
   const maxRegistrantsRaw = raw.maxRegistrants ?? raw.MaxRegistrants;
+  const scheduledStartsAtRaw = raw.scheduledStartsAt ?? raw.ScheduledStartsAt;
   const createdAt = raw.createdAt ?? raw.CreatedAt;
   const updatedAt = raw.updatedAt ?? raw.UpdatedAt;
 
@@ -302,6 +306,8 @@ function parseActivity(raw: Record<string, unknown>): Activity {
         ? maxRegistrantsRaw
         : null,
     registrationCount,
+    scheduledStartsAt:
+      typeof scheduledStartsAtRaw === "string" ? scheduledStartsAtRaw : null,
     createdAt,
     updatedAt,
   };
@@ -583,6 +589,7 @@ export async function updateActivity(
         accentColor: input.accentColor?.trim() || null,
         maxRegistrants: input.maxRegistrants ?? null,
         registrationTheme: input.registrationTheme ?? null,
+        scheduledStartsAt: input.scheduledStartsAt ?? null,
       }),
     }
   );

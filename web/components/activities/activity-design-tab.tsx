@@ -141,6 +141,7 @@ export function ActivityDesignTab({
       name: activity.name,
       category: activity.category,
       schedule: activity.schedule,
+      scheduledStartsAt: activity.scheduledStartsAt,
       location: activity.location,
       communityLabel: activity.communityLabel,
       heroImageUrl: activity.heroImageUrl,

@@ -9,4 +9,5 @@ public static class OutboxMessageTypes
     public const string SupportIssueConfirmation = "support.issue.confirmation";
     public const string SupportIssueFilerReply = "support.issue.filer.reply";
     public const string SupportIssueFilerStatus = "support.issue.filer.status";
+    public const string ActivityExpired = "activity.expired";
 }

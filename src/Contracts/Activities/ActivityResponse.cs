@@ -17,5 +17,6 @@ public sealed record ActivityResponse(
     ActivityFormSchemaDto? FormSchema,
     int? MaxRegistrants,
     int RegistrationCount,
+    DateTimeOffset? ScheduledStartsAt,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
