@@ -59,6 +59,8 @@ public sealed class ActivityExpirationHostedService(
 
         try
         {
+            await expirationService.BackfillMissingScheduledStartsAtAsync(cancellationToken);
+
             var archivedCount = await expirationService.ArchiveExpiredPublishedActivitiesAsync(
                 DateTimeOffset.UtcNow,
                 cancellationToken);
