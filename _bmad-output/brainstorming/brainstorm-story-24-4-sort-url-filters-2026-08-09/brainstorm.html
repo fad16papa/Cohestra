@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brainstorm — Story 24.4 Sort + URL Filters</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --surface: #1a2332;
+    --ink: #e8ecf4;
+    --muted: #8b95a8;
+    --accent: #3dd6c6;
+    --accent2: #7c6cf0;
+    --warn: #f0a060;
+    --line: #2a3548;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 16px/1.6 "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  header {
+    padding: 3rem 1.5rem 2rem;
+    text-align: center;
+    background: linear-gradient(160deg, #1a2332 0%, #0f1419 60%);
+    border-bottom: 1px solid var(--line);
+  }
+  h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    letter-spacing: -0.03em;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    margin-bottom: 1rem;
+  }
+  .sub { color: var(--muted); max-width: 52ch; margin: 0 auto; }
+  main { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+  section { margin-bottom: 3rem; }
+  h2 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent2);
+    margin: 0 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card strong { color: var(--accent); }
+  .url-demo {
+    font-family: ui-monospace, monospace;
+    font-size: 0.85rem;
+    background: #0a0e14;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+    color: var(--accent);
+    word-break: break-all;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .sort-chip {
+    background: color-mix(in srgb, var(--accent2) 12%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--accent2) 35%, var(--line));
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  .sort-chip span { display: block; font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  .flow .node {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+  }
+  .flow .arrow { color: var(--muted); }
+  .verdict {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 15%, var(--surface)), var(--surface));
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+  }
+  .verdict h3 { margin: 0 0 0.75rem; font-size: 1.25rem; }
+  ul { margin: 0; padding-left: 1.25rem; color: var(--muted); }
+  li { margin-bottom: 0.35rem; }
+  .out { opacity: 0.7; text-decoration: line-through; }
+</style>
+</head>
+<body>
+<header>
+  <div class="tag">Epic 24 · Story 24.4</div>
+  <h1>Sort + URL-sync filters</h1>
+  <p class="sub">Make the activities list bookmarkable, navigable, and sortable — the infrastructure layer before EXPERIENCE.md.</p>
+</header>
+<main>
+  <section>
+    <h2>The gap today</h2>
+    <div class="card">
+      <p><strong>24.1</strong> synced <code>status</code> to the URL. Search, community, and category still live in React memory — refresh loses them, back button lies, links aren't shareable.</p>
+      <p style="margin-bottom:0"><strong>Backend</strong> always sorts <code>UpdatedAt desc</code>. No way to rank by name or registration volume.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Target URL</h2>
+    <div class="url-demo">/activities?status=published&amp;community=Northside&amp;category=Fitness&amp;search=tennis&amp;sortBy=registrationCount&amp;sortDirection=desc</div>
+    <p style="color:var(--muted);font-size:0.9rem;margin-top:0.75rem">Page stays local (like Clients). One bookmark = one operator view.</p>
+  </section>
+
+  <section>
+    <h2>Sort options (v1)</h2>
+    <div class="grid">
+      <div class="sort-chip">Last updated <span>default · desc</span></div>
+      <div class="sort-chip">Created <span>desc</span></div>
+      <div class="sort-chip">Name <span>asc</span></div>
+      <div class="sort-chip">Registrations <span>desc · ops gold</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Data flow</h2>
+    <div class="flow">
+      <span class="node">Filter bar</span>
+      <span class="arrow">→</span>
+      <span class="node">router.replace URL</span>
+      <span class="arrow">→</span>
+      <span class="node">searchParams</span>
+      <span class="arrow">→</span>
+      <span class="node">fetchActivities</span>
+      <span class="arrow">→</span>
+      <span class="node">ActivityService sort + page</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Explicitly out</h2>
+    <ul>
+      <li class="out">Page in URL</li>
+      <li class="out">Saved filter presets</li>
+      <li class="out">Sort by schedule string</li>
+      <li class="out">EXPERIENCE.md (→ 24.5)</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="verdict">
+      <h3>Build Story 24.4</h3>
+      <p style="color:var(--muted);margin:0">Mirror <strong>clients-list-page</strong> URL patterns + add server-side sort on four fields. Keep 24.1 recovery chips URL-native.</p>
+    </div>
+  </section>
+</main>
+</body>
+</html>
