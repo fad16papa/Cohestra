@@ -1,13 +1,13 @@
 ---
 epic: 25
 story: 5
-status: review
+status: done
 baseline_commit: f5c6005
 ---
 
 # Story 25.5: Intro copy + section headers
 
-Status: review
+Status: done
 
 ## Story
 

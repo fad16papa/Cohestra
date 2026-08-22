@@ -1,13 +1,13 @@
 ---
 epic: 25
 story: 4
-status: review
+status: done
 baseline_commit: f5c6005
 ---
 
 # Story 25.4: Admin Design tab + live preview
 
-Status: review
+Status: done
 
 ## Story
 

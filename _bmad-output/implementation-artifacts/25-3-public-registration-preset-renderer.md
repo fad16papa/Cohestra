@@ -1,13 +1,13 @@
 ---
 epic: 25
 story: 3
-status: review
+status: done
 baseline_commit: f5c6005
 ---
 
 # Story 25.3: Public registration preset renderer
 
-Status: review
+Status: done
 
 ## Story
 
