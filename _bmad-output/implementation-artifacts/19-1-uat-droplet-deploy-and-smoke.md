@@ -2,7 +2,7 @@
 epic: 19
 story: 1
 status: in-progress
-baseline_commit: pending
+baseline_commit: b9b7950
 brainstorm: _bmad-output/brainstorming/epic-19-production-launch-2026-08-22/brainstorm-intent.md
 ---
 
@@ -21,7 +21,8 @@ So that **we have a live stack matching production topology before HTTPS, reCAPT
 - **Epic 19 evidence ladder:** 19.1 must complete before 19.2–19.5. Each story produces dated evidence (URL + command output + sign-off note).
 - **Dev pre-work done (Story 19.0):** `preflight-launch.sh`, `uat-smoke.sh`, `verify-security-headers.sh`, `ci-docker-smoke.sh`, catalog backfill migration, launch checklist.
 - **This story is primarily ops execution** on a DigitalOcean droplet; dev deliverable is the evidence runner + preflight guard for `SMOKE_TENANT_HOST`.
-- **Oracle:** `docs/deploy/enterprise-launch-checklist.md` § Deploy + `docs/deploy/digitalocean-uat.md`.
+- **Single production droplet** — no separate UAT server; see `docs/deploy/production-droplet-setup.md`
+- **Oracle:** `docs/deploy/enterprise-launch-checklist.md` § Deploy + `docs/deploy/production-droplet-setup.md`
 
 ## Acceptance Criteria
 

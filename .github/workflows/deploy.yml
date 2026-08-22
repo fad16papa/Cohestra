@@ -9,6 +9,16 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      full_smoke:
+        description: Run full tenant smoke (overrides .env auto-detect)
+        required: false
+        default: auto
+        type: choice
+        options:
+          - auto
+          - "true"
+          - "false"
 
 concurrency:
   group: deploy-production
@@ -16,7 +26,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy to DigitalOcean droplet
+    name: Deploy to production droplet
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'workflow_dispatch' ||
@@ -24,12 +34,15 @@ jobs:
     steps:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.2
+        env:
+          DEPLOY_FULL_SMOKE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.full_smoke || 'auto' }}
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          port: 22
-          command_timeout: 30m
+          port: ${{ secrets.DROPLET_SSH_PORT || 22 }}
+          command_timeout: 45m
+          envs: DEPLOY_FULL_SMOKE
           script: |
             set -euo pipefail
             DEPLOY_PATH="${{ secrets.DROPLET_DEPLOY_PATH }}"
@@ -37,4 +50,5 @@ jobs:
               DEPLOY_PATH="$HOME/cohestra"
             fi
             cd "$DEPLOY_PATH"
+            export DEPLOY_FULL_SMOKE="${DEPLOY_FULL_SMOKE:-auto}"
             bash deploy/remote-deploy.sh
