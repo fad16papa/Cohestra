@@ -20,14 +20,14 @@ public sealed class Tenant
     public BillingStatus BillingStatus { get; set; } = BillingStatus.Free;
 
     /// <summary>
-    /// P12 / FR-2: Platform Admin complimentary (Sponsored) plan — no Stripe required, BillingStatus=Free.
+    /// P12 / FR-2: Platform Admin complimentary (Sponsored) plan — no Paddle required, BillingStatus=Free.
     /// FR-23 delinquency jobs MUST skip when true. FR-25 dormancy does not apply to complimentary Core/Pro.
     /// </summary>
     public bool IsComplimentary { get; set; } = false;
 
-    public string? StripeCustomerId { get; set; }
+    public string? PaddleCustomerId { get; set; }
 
-    public string? StripeSubscriptionId { get; set; }
+    public string? PaddleSubscriptionId { get; set; }
 
     public BillingInterval? BillingInterval { get; set; }
 
@@ -56,7 +56,7 @@ public sealed class Tenant
     /// <summary>FR-26a: version string of Privacy Policy accepted.</summary>
     public string? PrivacyVersion { get; set; }
 
-    /// <summary>FR-24: plan scheduled to apply at Stripe period end (cancel/downgrade).</summary>
+    /// <summary>FR-24: plan scheduled to apply at period end (cancel/downgrade).</summary>
     public TenantPlan? ScheduledPlan { get; set; }
 
     public DateTimeOffset? ScheduledPlanEffectiveAt { get; set; }
@@ -64,8 +64,8 @@ public sealed class Tenant
     /// <summary>Billing interval to apply when <see cref="ScheduledPlan"/> takes effect.</summary>
     public BillingInterval? ScheduledBillingInterval { get; set; }
 
-    /// <summary>Stripe Subscription Schedule controlling a pending downgrade.</summary>
-    public string? StripeSubscriptionScheduleId { get; set; }
+    /// <summary>Paddle scheduled change id controlling a pending downgrade.</summary>
+    public string? PaddleSubscriptionScheduleId { get; set; }
 
     /// <summary>FR-25: max(last admin/member login, last public registration) for dormancy.</summary>
     public DateTimeOffset? LastActivityAt { get; set; }

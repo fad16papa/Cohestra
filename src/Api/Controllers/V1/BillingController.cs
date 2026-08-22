@@ -13,7 +13,7 @@ using Microsoft.Extensions.Options;
 namespace Cohestra.Api.Controllers.V1;
 
 /// <summary>
-/// Tenant Admin billing — Stripe Checkout for Core/Pro (Story 14.4).
+/// Tenant Admin billing — Core/Pro checkout (Epic 14 process; Paddle from Story 29.1).
 /// Policy name <see cref="TenantAuthPolicies.TenantAdminOnly"/> must be preserved.
 /// </summary>
 [ApiController]
@@ -23,7 +23,7 @@ namespace Cohestra.Api.Controllers.V1;
 public class BillingController(
     IBillingService billingService,
     ICurrentTenant currentTenant,
-    IOptions<StripeSettings> stripeOptions) : ControllerBase
+    IOptions<PaddleSettings> paddleOptions) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(BillingSummaryResponse), StatusCodes.Status200OK)]
@@ -53,14 +53,14 @@ public class BillingController(
         [FromBody] SyncBillingRequest? request,
         CancellationToken cancellationToken)
     {
-        if (!stripeOptions.Value.IsConfigured)
+        if (!paddleOptions.Value.IsConfigured)
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
                 new ProblemDetails
                 {
                     Title = "Billing unavailable",
-                    Detail = "Stripe is not configured in this environment.",
+                    Detail = "Paddle is not configured in this environment.",
                     Status = StatusCodes.Status503ServiceUnavailable,
                 });
         }
@@ -76,7 +76,7 @@ public class BillingController(
             return denied;
         }
 
-        var summary = await billingService.SyncFromStripeAsync(
+        var summary = await billingService.SyncFromProviderAsync(
             tenantId,
             request?.CheckoutSessionId,
             cancellationToken);
@@ -92,14 +92,14 @@ public class BillingController(
         [FromBody] CreateCheckoutSessionRequest request,
         CancellationToken cancellationToken)
     {
-        if (!stripeOptions.Value.IsConfigured)
+        if (!paddleOptions.Value.IsConfigured)
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
                 new ProblemDetails
                 {
                     Title = "Billing unavailable",
-                    Detail = "Stripe Checkout is not configured in this environment.",
+                    Detail = "Paddle Checkout is not configured in this environment.",
                     Status = StatusCodes.Status503ServiceUnavailable,
                 });
         }
@@ -208,14 +208,14 @@ public class BillingController(
         [FromBody] CreatePortalSessionRequest? request,
         CancellationToken cancellationToken)
     {
-        if (!stripeOptions.Value.IsConfigured)
+        if (!paddleOptions.Value.IsConfigured)
         {
             return StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
                 new ProblemDetails
                 {
                     Title = "Billing unavailable",
-                    Detail = "Stripe Customer Portal is not configured in this environment.",
+                    Detail = "Paddle Customer Portal is not configured in this environment.",
                     Status = StatusCodes.Status503ServiceUnavailable,
                 });
         }
@@ -288,9 +288,9 @@ public class BillingController(
     public async Task<ActionResult<SetupIntentResponse>> CreatePaymentMethodSetup(
         CancellationToken cancellationToken)
     {
-        if (!stripeOptions.Value.IsConfigured)
+        if (!paddleOptions.Value.IsConfigured)
         {
-            return StripeUnavailable();
+            return BillingUnavailable();
         }
 
         if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
@@ -323,9 +323,9 @@ public class BillingController(
         [FromBody] ConfirmSetupIntentRequest? request,
         CancellationToken cancellationToken)
     {
-        if (!stripeOptions.Value.IsConfigured)
+        if (!paddleOptions.Value.IsConfigured)
         {
-            return StripeUnavailable();
+            return BillingUnavailable();
         }
 
         if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
@@ -366,9 +366,9 @@ public class BillingController(
         [FromBody] UpdateBillingContactRequest? request,
         CancellationToken cancellationToken)
     {
-        if (!stripeOptions.Value.IsConfigured)
+        if (!paddleOptions.Value.IsConfigured)
         {
-            return StripeUnavailable();
+            return BillingUnavailable();
         }
 
         if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
@@ -405,9 +405,9 @@ public class BillingController(
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> CancelSubscription(CancellationToken cancellationToken)
     {
-        if (!stripeOptions.Value.IsConfigured)
+        if (!paddleOptions.Value.IsConfigured)
         {
-            return StripeUnavailable();
+            return BillingUnavailable();
         }
 
         if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
@@ -440,9 +440,9 @@ public class BillingController(
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> ResumeSubscription(CancellationToken cancellationToken)
     {
-        if (!stripeOptions.Value.IsConfigured)
+        if (!paddleOptions.Value.IsConfigured)
         {
-            return StripeUnavailable();
+            return BillingUnavailable();
         }
 
         if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
@@ -475,9 +475,9 @@ public class BillingController(
     [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> CancelScheduledPlanChange(CancellationToken cancellationToken)
     {
-        if (!stripeOptions.Value.IsConfigured)
+        if (!paddleOptions.Value.IsConfigured)
         {
-            return StripeUnavailable();
+            return BillingUnavailable();
         }
 
         if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
@@ -532,13 +532,13 @@ public class BillingController(
                 Status = StatusCodes.Status403Forbidden,
             });
 
-    private ObjectResult StripeUnavailable() =>
+    private ObjectResult BillingUnavailable() =>
         StatusCode(
             StatusCodes.Status503ServiceUnavailable,
             new ProblemDetails
             {
                 Title = "Billing unavailable",
-                Detail = "Stripe is not configured in this environment.",
+                Detail = "Paddle is not configured in this environment.",
                 Status = StatusCodes.Status503ServiceUnavailable,
             });
 
@@ -601,8 +601,8 @@ public class BillingController(
             summary.BillingInterval?.ToString(),
             summary.TrialEndsAt,
             summary.HasConsumedTrial,
-            summary.StripeConfigured,
-            summary.PublishableKey,
+            summary.BillingConfigured,
+            summary.ClientToken,
             summary.TrialPeriodDays,
             summary.IsComplimentary,
             summary.Usage is null

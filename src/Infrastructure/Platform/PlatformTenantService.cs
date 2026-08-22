@@ -501,7 +501,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
             tenant.IsComplimentary = true;
             tenant.Plan = plan;
             tenant.BillingStatus = BillingStatus.Free;
-            // Stripe customer/subscription IDs left unchanged (conversion may reuse customer).
+            // Paddle customer/subscription IDs left unchanged (conversion may reuse customer).
             tenant.UpdatedAt = now;
 
             dbContext.PlatformAuditLogs.Add(new PlatformAuditLog
@@ -519,7 +519,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
                     IsComplimentaryAfter = true,
                     BillingStatusBefore = billingBefore.ToString(),
                     BillingStatusAfter = BillingStatus.Free.ToString(),
-                    StripeIdsUnchanged = true,
+                    PaddleIdsUnchanged = true,
                     Note = "FR-23 delinquency jobs must skip IsComplimentary=true.",
                 }),
                 CreatedAt = now,
@@ -536,7 +536,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
 
             tenant.IsComplimentary = false;
             tenant.UpdatedAt = now;
-            // Plan and BillingStatus left as-is; Checkout (FR-19) required before paid Stripe sync.
+            // Plan and BillingStatus left as-is; Checkout (FR-19) required before paid Paddle sync.
 
             dbContext.PlatformAuditLogs.Add(new PlatformAuditLog
             {
@@ -551,7 +551,7 @@ public sealed class PlatformTenantService(CohestraDbContext dbContext) : IPlatfo
                     IsComplimentaryAfter = false,
                     PlanUnchanged = tenant.Plan.ToString(),
                     BillingStatusUnchanged = tenant.BillingStatus.ToString(),
-                    Note = "Checkout (FR-19) required before paid entitlements sync from Stripe.",
+                    Note = "Checkout (FR-19) required before paid entitlements sync from Paddle.",
                 }),
                 CreatedAt = now,
             });

@@ -226,10 +226,12 @@ export function mapBillingSummary(raw: Record<string, unknown>): BillingSummary 
         ? String(raw.trialEndsAt ?? raw.TrialEndsAt)
         : null,
     hasConsumedTrial: Boolean(raw.hasConsumedTrial ?? raw.HasConsumedTrial),
-    stripeConfigured: Boolean(raw.stripeConfigured ?? raw.StripeConfigured),
+    stripeConfigured: Boolean(
+      raw.billingConfigured ?? raw.BillingConfigured ?? raw.stripeConfigured ?? raw.StripeConfigured,
+    ),
     publishableKey:
-      typeof (raw.publishableKey ?? raw.PublishableKey) === "string"
-        ? String(raw.publishableKey ?? raw.PublishableKey)
+      typeof (raw.clientToken ?? raw.ClientToken ?? raw.publishableKey ?? raw.PublishableKey) === "string"
+        ? String(raw.clientToken ?? raw.ClientToken ?? raw.publishableKey ?? raw.PublishableKey)
         : null,
     trialPeriodDays: Number(raw.trialPeriodDays ?? raw.TrialPeriodDays ?? 30),
     isComplimentary: Boolean(raw.isComplimentary ?? raw.IsComplimentary),
