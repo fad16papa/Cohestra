@@ -1,13 +1,13 @@
 ---
 epic: 25
 story: 2
-status: review
+status: done
 baseline_commit: 444f125
 ---
 
 # Story 25.2: Activity registration theme JSON
 
-Status: review
+Status: done
 
 ## Story
 
