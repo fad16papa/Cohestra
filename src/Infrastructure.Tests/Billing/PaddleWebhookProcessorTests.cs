@@ -8,7 +8,7 @@ namespace Cohestra.Infrastructure.Tests.Billing;
 public sealed class PaddleWebhookProcessorTests
 {
     [Fact]
-    public async Task ProcessAsync_ledgers_event_and_treats_second_delivery_as_duplicate()
+    public async Task ProcessAsync_does_not_ledger_stub_receipts()
     {
         await using var db = CreateDb();
         var processor = new PaddleWebhookProcessor(db, NullLogger<PaddleWebhookProcessor>.Instance);
@@ -18,8 +18,9 @@ public sealed class PaddleWebhookProcessorTests
 
         Assert.False(first.Processed);
         Assert.False(first.Duplicate);
-        Assert.True(second.Duplicate);
-        Assert.Equal(1, await db.PaddleWebhookEvents.CountAsync(e => e.EventId == "ntf_1"));
+        Assert.Contains("29.3", first.Detail, StringComparison.Ordinal);
+        Assert.False(second.Duplicate);
+        Assert.Equal(0, await db.PaddleWebhookEvents.CountAsync());
     }
 
     [Fact]

@@ -59,6 +59,18 @@ namespace Infrastructure.Persistence.Migrations
                 schema: "public",
                 newName: "paddle_webhook_events",
                 newSchema: "public");
+
+            // No live Paddle customers yet. Leftover Stripe cus_/sub_/evt_ values
+            // must not be reused as Paddle IDs after the destructive rename.
+            migrationBuilder.Sql(
+                """
+                UPDATE public.tenants
+                SET "PaddleCustomerId" = NULL,
+                    "PaddleSubscriptionId" = NULL,
+                    "PaddleSubscriptionScheduleId" = NULL;
+                """);
+
+            migrationBuilder.Sql("DELETE FROM public.paddle_webhook_events;");
         }
 
         /// <inheritdoc />

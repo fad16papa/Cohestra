@@ -106,6 +106,10 @@ public sealed class TenantBillingPlanSyncTests
         Assert.Equal(TenantPlan.Pro, proPlan);
         Assert.Equal(BillingInterval.Annual, proInterval);
         Assert.Equal("pri_core_m", TenantBillingPlanSync.ResolvePriceId(TenantPlan.Core, BillingInterval.Monthly, settings));
+        Assert.False(TenantBillingPlanSync.TryMapPrice("", settings, out var emptyPlan, out _));
+        Assert.Equal(TenantPlan.Basic, emptyPlan);
+        Assert.False(TenantBillingPlanSync.TryMapPrice("", new PaddleSettings(), out var unsetPlan, out _));
+        Assert.Equal(TenantPlan.Basic, unsetPlan);
     }
 
     [Fact]

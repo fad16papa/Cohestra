@@ -26,5 +26,6 @@ public sealed class PaddleSettings
     public bool IsConfigured => !string.IsNullOrWhiteSpace(ApiKey);
 
     public bool IsSandbox =>
-        string.Equals(Environment.Trim(), "sandbox", StringComparison.OrdinalIgnoreCase);
+        string.IsNullOrWhiteSpace(Environment)
+        || string.Equals(Environment.Trim(), "sandbox", StringComparison.OrdinalIgnoreCase);
 }

@@ -17,6 +17,8 @@ public sealed class PaddleSettingsTests
     {
         Assert.True(new PaddleSettings().IsSandbox);
         Assert.True(new PaddleSettings { Environment = "Sandbox" }.IsSandbox);
+        Assert.True(new PaddleSettings { Environment = null! }.IsSandbox);
+        Assert.True(new PaddleSettings { Environment = "  " }.IsSandbox);
         Assert.False(new PaddleSettings { Environment = "production" }.IsSandbox);
     }
 

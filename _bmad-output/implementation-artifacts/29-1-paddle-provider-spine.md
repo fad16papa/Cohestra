@@ -1,13 +1,13 @@
 ---
 baseline_commit: 1751808
-status: review
+status: done
 story_id: 29.1
 story_key: 29-1-paddle-provider-spine
 ---
 
 # Story 29.1: Paddle provider spine (config, domain, DI)
 
-Status: review
+Status: done
 
 ## Story
 
@@ -61,11 +61,11 @@ so that **later stories can implement checkout against one merchant without left
 
 ### Review Findings
 
-- [ ] [Review][Patch] Do not mark stub webhook receipts as processed — leave `ProcessedAt` null or skip ledger insert until 29.3 [`src/Infrastructure/Billing/PaddleWebhookProcessor.cs:41`]
-- [ ] [Review][Patch] Treat only unique-index violations as webhook duplicates [`src/Infrastructure/Billing/PaddleWebhookProcessor.cs:48`]
-- [ ] [Review][Patch] Null leftover Stripe `cus_`/`sub_` IDs after column rename so they are not reused as Paddle IDs [`src/Infrastructure/Persistence/Migrations/20260822120000_ReplaceStripeWithPaddleBilling.cs:23`]
-- [ ] [Review][Patch] Guard `PaddleSettings.IsSandbox` against null/blank `Environment` [`src/Infrastructure/Billing/PaddleSettings.cs:28`]
-- [ ] [Review][Patch] `TryMapPrice` must not treat empty `priceId` + empty configured prices as Core monthly [`src/Infrastructure/Billing/TenantBillingPlanSync.cs:106`]
+- [x] [Review][Patch] Do not mark stub webhook receipts as processed — leave `ProcessedAt` null or skip ledger insert until 29.3 [`src/Infrastructure/Billing/PaddleWebhookProcessor.cs:41`]
+- [x] [Review][Patch] Treat only unique-index violations as webhook duplicates [`src/Infrastructure/Billing/PaddleWebhookProcessor.cs:48`]
+- [x] [Review][Patch] Null leftover Stripe `cus_`/`sub_` IDs after column rename so they are not reused as Paddle IDs [`src/Infrastructure/Persistence/Migrations/20260822120000_ReplaceStripeWithPaddleBilling.cs:23`]
+- [x] [Review][Patch] Guard `PaddleSettings.IsSandbox` against null/blank `Environment` [`src/Infrastructure/Billing/PaddleSettings.cs:28`]
+- [x] [Review][Patch] `TryMapPrice` must not treat empty `priceId` + empty configured prices as Core monthly [`src/Infrastructure/Billing/TenantBillingPlanSync.cs:106`]
 - [x] [Review][Defer] Complimentary tenants are not guarded inside `TenantBillingPlanSync` mutators [`src/Infrastructure/Billing/TenantBillingPlanSync.cs:12`] — deferred, pre-existing
 - [x] [Review][Defer] Stripe cancel/downgrade/webhook tests were deleted for later rewrite (29.5/29.6) [`src/Infrastructure.Tests/Billing`] — deferred, pre-existing
 
@@ -131,3 +131,4 @@ Cursor Grok 4.6
 
 - 2026-08-22: Implemented Story 29.1 Paddle provider spine.
 - 2026-08-22: Code review recorded 5 patch and 2 deferred findings.
+- 2026-08-22: Applied all 5 review patches; story marked done.

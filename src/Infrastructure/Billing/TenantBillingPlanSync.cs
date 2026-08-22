@@ -109,28 +109,35 @@ public static class TenantBillingPlanSync
         out TenantPlan plan,
         out BillingInterval interval)
     {
-        if (string.Equals(priceId, settings.PriceCoreMonthly, StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(priceId))
+        {
+            plan = TenantPlan.Basic;
+            interval = BillingInterval.Monthly;
+            return false;
+        }
+
+        if (MatchesPrice(priceId, settings.PriceCoreMonthly))
         {
             plan = TenantPlan.Core;
             interval = BillingInterval.Monthly;
             return true;
         }
 
-        if (string.Equals(priceId, settings.PriceCoreAnnual, StringComparison.Ordinal))
+        if (MatchesPrice(priceId, settings.PriceCoreAnnual))
         {
             plan = TenantPlan.Core;
             interval = BillingInterval.Annual;
             return true;
         }
 
-        if (string.Equals(priceId, settings.PriceProMonthly, StringComparison.Ordinal))
+        if (MatchesPrice(priceId, settings.PriceProMonthly))
         {
             plan = TenantPlan.Pro;
             interval = BillingInterval.Monthly;
             return true;
         }
 
-        if (string.Equals(priceId, settings.PriceProAnnual, StringComparison.Ordinal))
+        if (MatchesPrice(priceId, settings.PriceProAnnual))
         {
             plan = TenantPlan.Pro;
             interval = BillingInterval.Annual;
@@ -141,6 +148,10 @@ public static class TenantBillingPlanSync
         interval = BillingInterval.Monthly;
         return false;
     }
+
+    private static bool MatchesPrice(string priceId, string configured) =>
+        !string.IsNullOrWhiteSpace(configured)
+        && string.Equals(priceId, configured, StringComparison.Ordinal);
 
     public static string BuildTrialDisclaimer(DateTimeOffset trialEndDate) =>
         $"You will not be charged while your trial is active. Billing starts on {trialEndDate:MMMM d, yyyy} unless you cancel before then.";
