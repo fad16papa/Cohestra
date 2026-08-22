@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-21T16:15:00Z
+# last_updated: 2026-08-22T03:15:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -568,7 +568,8 @@ action_items:
   - epic: 25
     action: "Operator UAT — community brand kit + Design tab + public preset smoke on Docker"
     owner: Operator
-    status: open
+    status: done
+    resolution: "Operator sign-off 2026-08-22 — Design tab, public presets, and branding verified on local Docker"
   - epic: 25
     action: "Follow-up story: invalidate public activity cache on community brand-kit PATCH"
     owner: Dev
