@@ -1,15 +1,17 @@
-# GitHub Actions CI/CD — deploy to DigitalOcean droplet
+# GitHub Actions CI/CD — deploy to production droplet
 
 Automatic deployment runs **after CI passes on `main`**, or manually via **Actions → Deploy → Run workflow**.
+
+**Single production server:** there is no separate UAT droplet. See **[production-droplet-setup.md](./production-droplet-setup.md)** for full `.env` phases and bootstrap.
 
 ## Pipeline overview
 
 ```
 push / merge to main
-    → CI workflow (build + test)
-    → Deploy workflow (SSH to droplet)
-    → git pull + docker compose up --build
-    → smoke tests (/ready)
+    → CI workflow (build + test + Docker smoke)
+    → Deploy workflow (SSH to production droplet)
+    → preflight + git pull + docker compose up --build
+    → smoke (/ready + optional full tenant smoke via SMOKE_TENANT_HOST)
 ```
 
 | Workflow | File | Trigger |
@@ -89,6 +91,14 @@ In GitHub: **Settings → Secrets and variables → Actions → New repository s
 | `DROPLET_DEPLOY_PATH` | No | Default: `~/cohestra` |
 | `DROPLET_SSH_PORT` | No | Default: `22` if omitted |
 
+Manual deploy input **full_smoke**: `auto` (use `SMOKE_TENANT_HOST` from droplet `.env`), `true`, or `false`.
+
+### Recommended rollout
+
+1. **Bootstrap** — configure `.env` on droplet, run `bash deploy/droplet-env-check.sh`, manual `remote-deploy.sh`
+2. **Enable CD** — add GitHub secrets, test **Deploy → Run workflow**
+3. **Auto-deploy** — leave `workflow_run` trigger on; optional GitHub Environment approval for `production`
+
 ### Create a deploy SSH key (recommended)
 
 On your **local machine** (not the droplet):
@@ -161,6 +171,7 @@ Future pulls include `.gitattributes` to keep `*.sh` as LF on Linux.
 
 ## Related
 
+- **[production-droplet-setup.md](./production-droplet-setup.md)** — single-server config phases + DNS + secrets
 - [digitalocean-uat.md](./digitalocean-uat.md) — full server runbook
 - [sendgrid-production.md](./sendgrid-production.md) — email setup
 - [uat-polish-checklist.md](./uat-polish-checklist.md) — pre-handoff QA

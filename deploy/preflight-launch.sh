@@ -48,6 +48,13 @@ require_nonempty() {
 
 require_nonempty "PUBLIC_BASE_URL" "${PUBLIC_BASE_URL:-}"
 require_nonempty "POSTGRES_PASSWORD" "${POSTGRES_PASSWORD:-}"
+
+if [[ "${PUBLIC_BASE_URL:-}" != *localhost* && "${PUBLIC_BASE_URL:-}" != *127.0.0.1* && -z "${SMOKE_TENANT_HOST:-}" ]]; then
+  fail "SMOKE_TENANT_HOST required when PUBLIC_BASE_URL is not localhost (Story 19.1 full smoke)"
+else
+  pass "SMOKE_TENANT_HOST OK for smoke scope"
+fi
+
 require_nonempty "JWT_SIGNING_KEY" "${JWT_SIGNING_KEY:-}"
 require_nonempty "SendGrid__ApiKey" "${SendGrid__ApiKey:-}"
 

@@ -4,6 +4,8 @@ Use before **public launch** or handing a production/UAT environment to operator
 
 Supersedes the single-operator **[UAT polish checklist](./uat-polish-checklist.md)** for Cohestra Enterprise. That doc remains useful as historical reference for Platform 0.
 
+**Production droplet bootstrap:** [production-droplet-setup.md](./production-droplet-setup.md) (single server — no separate UAT).
+
 **Related docs:** [SendGrid production setup](./sendgrid-production.md) · [DigitalOcean UAT](./digitalocean-uat.md) · [GitHub Actions CD](./github-actions-cd.md) · [Cloud / mobile testing](./cloud-mobile-testing.md) · [Database tools](./database-tools.md)
 
 ---
@@ -169,7 +171,8 @@ dotnet test src/Api.IntegrationTests --filter "FullyQualifiedName~Resend_otp"
 - [ ] DigitalOcean firewall: **22, 80, 443 only** (no 5432/6379/3000/8080)
 - [ ] DNS: apex `cohestra.app`, wildcard `*.cohestra.app` → droplet (or documented nip.io interim)
 - [ ] `.env` filled with strong secrets (not dev defaults) — copy from [.env.uat.example](../../.env.uat.example)
-- [ ] `bash deploy/preflight-launch.sh --strict-recaptcha` passes before first deploy
+- [ ] `bash deploy/preflight-launch.sh` passes before first deploy
+- [ ] **Story 19.1 evidence:** `PUBLIC_BASE_URL=… SMOKE_TENANT_HOST=… bash deploy/epic-19-1-evidence.sh` exit 0 (saves sign-off template)
 - [ ] `docker compose -f docker-compose.uat.yml up -d --build` succeeds
 - [ ] `bash deploy/uat-smoke.sh --full` passes on server
 - [ ] **`SMOKE_TENANT_HOST` set** when `PUBLIC_BASE_URL` is apex or bare IP (e.g. `creativorare.cohestra.app` or `creativorare.YOUR_NIP_IO`) — required for tenant door/login checks in `--full` mode
