@@ -1,4 +1,5 @@
 using Cohestra.Domain.Activities;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,8 @@ public sealed class RegistrationThemeQueriesTests
     {
         const string communityAssetId = "33333333-3333-3333-3333-333333333333";
         await using var dbContext = CreateDbContext();
-        var tenantId = Guid.NewGuid();
+        // Bare CohestraDbContext (no ICurrentTenant) filters to TenantIds.Default.
+        var tenantId = TenantIds.Default;
 
         dbContext.Communities.Add(new Community
         {
