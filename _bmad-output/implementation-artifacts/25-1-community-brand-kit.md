@@ -1,13 +1,13 @@
 ---
 epic: 25
 story: 1
-status: review
+status: done
 baseline_commit: 870d3e24d4b03265b91ce0c0948219edd21be9e2
 ---
 
 # Story 25.1: Community brand kit
 
-Status: review
+Status: done
 
 ## Story
 

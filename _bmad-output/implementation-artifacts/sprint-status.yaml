@@ -1,11 +1,11 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-12T16:30:00Z
+# last_updated: 2026-08-22T03:15:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–19) + Epics 20–21, 23–24
-# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–24)
+# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–19) + Epics 20–21, 23–28
+# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–24+)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-12T16:45:00Z
+last_updated: 2026-08-21T16:15:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -279,13 +279,35 @@ development_status:
   23-4-next-follow-up-date: done
   epic-23-retrospective: done
 
-  epic-25: in-progress
-  25-1-community-brand-kit: review
-  25-2-activity-registration-theme: review
-  25-3-public-registration-preset-renderer: review
-  25-4-admin-design-tab-live-preview: review
-  25-5-intro-copy-section-headers: review
-  epic-25-retrospective: optional
+  epic-25: done
+  25-1-community-brand-kit: done
+  25-2-activity-registration-theme: done
+  25-3-public-registration-preset-renderer: done
+  25-4-admin-design-tab-live-preview: done
+  25-5-intro-copy-section-headers: done
+  epic-25-retrospective: done
+
+  epic-26: done
+  26-1-support-issue-entity-and-migration: done
+  26-2-dual-outbox-email-handlers: done
+  26-3-attachment-storage-service: done
+  26-4-admin-support-issues-api: done
+  26-5-settings-help-and-support-ui: done
+  epic-26-retrospective: optional
+
+  epic-27: done
+  27-1-platform-support-inbox-and-detail: done
+  27-2-support-volume-report-and-csv: done
+  27-3-docs-maintenance-copy-updates: done
+  epic-27-retrospective: optional
+
+  epic-28: done
+  28-1-tenant-snapshot-recovery-ops-api: done
+  28-2-support-reply-thread-notifications: done
+  28-3-directory-filters-omni-search-create-tenant: done
+  epic-28-retrospective: optional
+
+  # Ad-hoc delivery (not epic-tracked): activity auto-expiration (#231–#233), settings UX (#222–#224), support/otp email branding (#226–#230)
 
 action_items:
   - epic: 16
@@ -529,5 +551,38 @@ action_items:
     status: open
   - epic: 23
     action: "Retroactively create story files 23.1–23.4 in implementation-artifacts (optional)"
+    owner: Dev
+    status: open
+
+  # Epic 25 retrospective action items (2026-08-21)
+  - epic: 25
+    action: "Sync Epic 25 + Epics 26–28 in sprint-status.yaml"
+    owner: Dev
+    status: done
+    resolution: "sprint-status.yaml updated 2026-08-21; epic-25-retro-2026-08-21.md"
+  - epic: 25
+    action: "Fix RegistrationThemeQueriesTests tenant filter alignment"
+    owner: Dev
+    status: done
+    resolution: "Use TenantIds.Default in test; CI green on Infrastructure.Tests"
+  - epic: 25
+    action: "Operator UAT — community brand kit + Design tab + public preset smoke on Docker"
+    owner: Operator
+    status: done
+    resolution: "Operator sign-off 2026-08-22 — Design tab, public presets, and branding verified on local Docker"
+  - epic: 25
+    action: "Follow-up story: invalidate public activity cache on community brand-kit PATCH"
+    owner: Dev
+    status: open
+  - epic: 25
+    action: "Follow-up story: tenant ownership check on public campaign-asset URLs for logo"
+    owner: Dev
+    status: open
+  - epic: 25
+    action: "Document Design tab as primary branding surface (Overview hero/accent retirement)"
+    owner: Product
+    status: open
+  - epic: 25
+    action: "Close draft PR #202 (superseded by epic-25-retro-2026-08-21.md)"
     owner: Dev
     status: open
