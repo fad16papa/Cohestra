@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-22T03:15:00Z
+# last_updated: 2026-08-22T03:50:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -44,7 +44,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-21T16:15:00Z
+last_updated: 2026-08-22T03:50:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -246,8 +246,9 @@ development_status:
   18-4-redis-outage-rate-limiter-policy: done
   epic-18-retrospective: done
 
+  # Epic 19 — Production Launch Sign-off (brainstorm: epic-19-production-launch-2026-08-22)
   epic-19: in-progress
-  19-1-uat-droplet-deploy-and-smoke: in-progress
+  19-1-uat-droplet-deploy-and-smoke: in-progress  # dev automation done; ops evidence pending droplet
   19-2-https-edge-security-header-verify: in-progress
   19-3-recaptcha-production-enablement: backlog
   19-4-stripe-billing-uat-on-droplet: backlog
@@ -586,3 +587,21 @@ action_items:
     action: "Close draft PR #202 (superseded by epic-25-retro-2026-08-21.md)"
     owner: Dev
     status: open
+
+  # Epic 19 brainstorm action items (2026-08-22)
+  - epic: 19
+    action: "Run deploy/epic-19-1-evidence.sh on UAT droplet with SMOKE_TENANT_HOST set"
+    owner: Operator
+    status: open
+  - epic: 19
+    action: "Bootstrap Pro + Basic tenants on droplet for Story 19.5"
+    owner: Operator
+    status: open
+  - epic: 19
+    action: "DNS decision: wildcard *.cohestra.app vs nip.io — record in sign-off notes"
+    owner: Product
+    status: open
+  - epic: 19
+    action: "Complete evidence ladder 19.1→19.2→19.3→19.4→19.5 before public launch"
+    owner: Operator
+    status: in-progress
