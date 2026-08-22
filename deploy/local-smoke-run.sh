@@ -86,14 +86,26 @@ if [[ -n "$TOKEN" ]]; then
   COUNT=$(echo "$ACTIVITIES" | python3 -c "import sys,json; d=json.load(sys.stdin); print(len(d.get('items', d.get('Items', []))))" 2>/dev/null || echo 0)
   if [[ "$COUNT" -gt 0 ]]; then
     pass "Admin activities list (${COUNT} activities)"
+    # Prefer a published activity that still accepts registrations. The first
+    # published row can be at cap (demo-ikigai-pickleball-intro) or past event end.
     SLUG=$(echo "$ACTIVITIES" | python3 -c "
-import sys,json
-d=json.load(sys.stdin)
-items=d.get('items', d.get('Items', []))
+import sys, json
+d = json.load(sys.stdin)
+items = d.get('items', d.get('Items', []))
 for a in items:
-  if a.get('status','').lower()=='published' or a.get('Status','').lower()=='Published':
-    print(a.get('slug', a.get('Slug','')))
-    break
+    status = str(a.get('status') or a.get('Status') or '').lower()
+    if status != 'published':
+        continue
+    if a.get('isRegistrationOpen', a.get('IsRegistrationOpen', True)) is False:
+        continue
+    max_r = a.get('maxRegistrants', a.get('MaxRegistrants'))
+    count = a.get('registrationCount', a.get('RegistrationCount')) or 0
+    if max_r is not None and int(count) >= int(max_r):
+        continue
+    slug = a.get('slug') or a.get('Slug') or ''
+    if slug:
+        print(slug)
+        break
 " 2>/dev/null || true)
   else
     skip "Admin activities list empty — registration smoke skipped"

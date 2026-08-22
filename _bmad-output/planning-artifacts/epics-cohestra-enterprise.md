@@ -1318,23 +1318,25 @@ So that **automated signup abuse is mitigated on the live apex path**.
 **When** Epic 19.3 is done  
 **Then** reCAPTCHA items are checked off with evidence (date/URL in sign-off notes)
 
-### Story 19.4: Stripe billing UAT on droplet
+### Story 19.4: Paddle billing UAT on droplet
+
+> **Held / rewritten 2026-08-22.** Stripe UAT is cancelled. This story waits on **Epic 29** (Paddle merchant swap). Do not configure Stripe on the droplet. After 29.7 sandbox sign-off, verify **Paddle sandbox** (then live keys only at public launch) on the droplet.
 
 As a **platform operator**,
-I want **Stripe test-mode billing verified on the UAT droplet**,
+I want **Paddle sandbox billing verified on the production droplet**,
 So that **checkout, webhooks, and plan gates work on a live URL before going live**.
 
 **Acceptance Criteria:**
 
-**Given** Stripe **test** keys on UAT (live keys only on production)  
+**Given** Epic 29 done and Paddle **sandbox** keys on the droplet (live keys only at public launch)  
 **When** env is configured  
-**Then** `Stripe__WebhookSecret` matches Stripe Dashboard endpoint for deploy URL  
-**And** `Stripe__PriceCore*` / `Stripe__PricePro*` match Stripe products
+**Then** `Paddle__WebhookSecret` matches the Paddle notification destination for `https://{domain}/api/v1/system/paddle/webhook`  
+**And** `Paddle__PriceCore*` / `Paddle__PricePro*` match Paddle products
 
 **Given** tenant admin on Core or Pro path  
 **When** completing test checkout  
 **Then** checkout succeeds and plan reflects in tenant door/API  
-**And** webhook delivery succeeds (Stripe Dashboard or API logs)
+**And** webhook delivery succeeds (Paddle dashboard notifications or API logs)
 
 **Given** trial/delinquency background jobs (Epic 14.8)  
 **When** test subscription events fire  
@@ -1670,4 +1672,23 @@ So that **registrants understand what to expect**.
 
 **Given** section header field type or meta divider  
 **Then** form renders non-input section headings between field groups
+
+## Epic 29: Paddle Billing Migration (Stripe Removal)
+
+Replace Stripe with Paddle Billing as the sole merchant. **Do not change** the Epic 14 + in-app billing process — adapter, hosted collector, env, copy, and tests only.
+
+**Hold:** Epic 19 until 29.7. Full stories and inventory: [`epic-29-paddle-billing.md`](./epic-29-paddle-billing.md). Brainstorm: `_bmad-output/brainstorming/brainstorm-paddle-billing-2026-08-22/`.
+
+**FRs preserved:** FR-14–FR-25, in-app billing panel.  
+**Not in scope:** new plans/prices, dual Stripe+Paddle, droplet work.
+
+| Story | Summary |
+|-------|---------|
+| 29.1 | Paddle provider spine (config, domain IDs, webhook ledger, DI; Stripe removed from DI) |
+| 29.2 | Core/Pro checkout + 30-day trial via Paddle (same journeys, `CheckoutUrl` redirect) |
+| 29.3 | Paddle webhooks + tenant sync (same BillingStatus machine) |
+| 29.4 | In-app billing details + payment method (same screens; Paddle.js / update-payment-method) |
+| 29.5 | Portal, period-end cancel, resume, scheduled change |
+| 29.6 | Stripe excision (packages, copy, env, docs, tests); rewrite 19.4 to Paddle UAT |
+| 29.7 | Paddle sandbox UAT — Epic 14 process regression; then unhold Epic 19 |
 

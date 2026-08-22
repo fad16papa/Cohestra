@@ -1,17 +1,18 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-12T16:30:00Z
+# last_updated: 2026-08-22T15:00:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–19) + Epics 20–21, 23–24
-# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–24)
+# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–28) + Epic 29 Paddle billing
+# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–29)
 
 # STATUS DEFINITIONS:
 # ==================
 # Epic Status:
 #   - backlog: Epic not yet started
 #   - in-progress: Epic actively being worked on
+#   - blocked: Started but held (explicit decision); not abandoned
 #   - done: All stories in epic completed
 #
 # Epic Status Transitions:
@@ -44,7 +45,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-12T16:45:00Z
+last_updated: 2026-08-22T15:00:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -246,12 +247,13 @@ development_status:
   18-4-redis-outage-rate-limiter-policy: done
   epic-18-retrospective: done
 
-  epic-19: in-progress
-  19-1-uat-droplet-deploy-and-smoke: in-progress
-  19-2-https-edge-security-header-verify: in-progress
-  19-3-recaptcha-production-enablement: backlog
-  19-4-stripe-billing-uat-on-droplet: backlog
-  19-5-operator-core-flows-launch-signoff: backlog
+  # Epic 19 — BLOCKED 2026-08-22 pending Epic 29 (Paddle replaces Stripe)
+  epic-19: blocked
+  19-1-uat-droplet-deploy-and-smoke: blocked
+  19-2-https-edge-security-header-verify: blocked
+  19-3-recaptcha-production-enablement: blocked
+  19-4-paddle-billing-uat-on-droplet: blocked  # was Stripe UAT; rewrite after 29.6
+  19-5-operator-core-flows-launch-signoff: blocked
   epic-19-retrospective: optional
 
   epic-20: done
@@ -286,6 +288,18 @@ development_status:
   25-4-admin-design-tab-live-preview: review
   25-5-intro-copy-section-headers: review
   epic-25-retrospective: optional
+
+  # Epic 29 — Paddle Billing Migration (Stripe Removal). Adapter-only. Hold Epic 19 until 29.7.
+  # Source: planning-artifacts/epic-29-paddle-billing.md
+  epic-29: in-progress
+  29-1-paddle-provider-spine: done
+  29-2-core-pro-checkout-and-trial: backlog
+  29-3-paddle-webhooks-and-tenant-sync: backlog
+  29-4-in-app-billing-details-and-payment-method: backlog
+  29-5-portal-period-end-cancel-resume-schedule: backlog
+  29-6-stripe-excision-and-rewrite-19-4: backlog
+  29-7-paddle-sandbox-uat-epic-14-regression: backlog
+  epic-29-retrospective: optional
 
 action_items:
   - epic: 16
@@ -529,5 +543,19 @@ action_items:
     status: open
   - epic: 23
     action: "Retroactively create story files 23.1–23.4 in implementation-artifacts (optional)"
+    owner: Dev
+    status: open
+
+  # Epic 19 hold + Epic 29 Paddle (2026-08-22)
+  - epic: 19
+    action: "HOLD droplet evidence ladder until Epic 29.7 Paddle sandbox UAT is signed off"
+    owner: Operator
+    status: blocked
+  - epic: 29
+    action: "Finish Paddle sandbox catalog (4 USD prices + 30-day trial) before 29.2 implementation"
+    owner: Operator
+    status: open
+  - epic: 29
+    action: "Create next story 29.1 via bmad-create-story when ready to implement (no code until then)"
     owner: Dev
     status: open

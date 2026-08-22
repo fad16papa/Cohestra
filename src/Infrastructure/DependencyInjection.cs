@@ -113,7 +113,7 @@ public static class DependencyInjection
             configuration.GetSection(AuthOtpVerifyRateLimitOptions.SectionName));
         services.Configure<AuthResendOtpRateLimitOptions>(
             configuration.GetSection(AuthResendOtpRateLimitOptions.SectionName));
-        services.Configure<StripeSettings>(configuration.GetSection(StripeSettings.SectionName));
+        services.Configure<PaddleSettings>(configuration.GetSection(PaddleSettings.SectionName));
         services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
         services.Configure<SupportSettings>(configuration.GetSection(SupportSettings.SectionName));
         services.Configure<SupportSubmissionRateLimitOptions>(
@@ -149,8 +149,8 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ILegalComplianceService, LegalComplianceService>();
         services.AddScoped<ISelfServeSignupService, SelfServeSignupService>();
-        services.AddScoped<IBillingService, StripeBillingService>();
-        services.AddScoped<IStripeWebhookProcessor, StripeWebhookProcessor>();
+        services.AddScoped<IBillingService, PaddleBillingService>();
+        services.AddScoped<IPaddleWebhookProcessor, PaddleWebhookProcessor>();
         services.AddHostedService<BillingJobsHostedService>();
         services.Configure<FollowUpDigestOptions>(
             configuration.GetSection(FollowUpDigestOptions.SectionName));

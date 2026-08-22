@@ -236,7 +236,7 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             return true;
         }
 
-        if (IsStripeWebhookPath(path))
+        if (IsPaddleWebhookPath(path))
         {
             return true;
         }
@@ -278,11 +278,11 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             || value.Equals("/api/v1/auth/reset-password", StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>Stripe webhooks — no tenant Host required (Story 14.4).</summary>
-    internal static bool IsStripeWebhookPath(PathString path)
+    /// <summary>Paddle webhooks — no tenant Host required (Story 29.1).</summary>
+    internal static bool IsPaddleWebhookPath(PathString path)
     {
         var value = path.Value?.TrimEnd('/') ?? string.Empty;
-        return value.Equals("/api/v1/system/stripe/webhook", StringComparison.OrdinalIgnoreCase);
+        return value.Equals("/api/v1/system/paddle/webhook", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Marketing apex self-serve — no tenant Host required (Story 14.3).</summary>

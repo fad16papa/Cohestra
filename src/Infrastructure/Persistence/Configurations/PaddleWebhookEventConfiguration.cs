@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Cohestra.Infrastructure.Persistence.Configurations;
 
-internal sealed class StripeWebhookEventConfiguration : IEntityTypeConfiguration<StripeWebhookEvent>
+internal sealed class PaddleWebhookEventConfiguration : IEntityTypeConfiguration<PaddleWebhookEvent>
 {
-    public void Configure(EntityTypeBuilder<StripeWebhookEvent> builder)
+    public void Configure(EntityTypeBuilder<PaddleWebhookEvent> builder)
     {
-        builder.ToTable("stripe_webhook_events");
+        builder.ToTable("paddle_webhook_events");
 
         builder.HasKey(e => e.Id);
 

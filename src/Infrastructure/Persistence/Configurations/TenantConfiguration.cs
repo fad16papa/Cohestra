@@ -45,13 +45,13 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .IsRequired()
             .HasDefaultValue(false);
 
-        builder.Property(tenant => tenant.StripeCustomerId)
+        builder.Property(tenant => tenant.PaddleCustomerId)
             .HasMaxLength(255);
 
-        builder.Property(tenant => tenant.StripeSubscriptionId)
+        builder.Property(tenant => tenant.PaddleSubscriptionId)
             .HasMaxLength(255);
 
-        builder.Property(tenant => tenant.StripeSubscriptionScheduleId)
+        builder.Property(tenant => tenant.PaddleSubscriptionScheduleId)
             .HasMaxLength(255);
 
         builder.Property(tenant => tenant.BillingInterval)
@@ -66,13 +66,13 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .IsRequired()
             .HasDefaultValue(false);
 
-        builder.HasIndex(tenant => tenant.StripeCustomerId)
+        builder.HasIndex(tenant => tenant.PaddleCustomerId)
             .IsUnique()
-            .HasFilter("\"StripeCustomerId\" IS NOT NULL");
+            .HasFilter("\"PaddleCustomerId\" IS NOT NULL");
 
-        builder.HasIndex(tenant => tenant.StripeSubscriptionId)
+        builder.HasIndex(tenant => tenant.PaddleSubscriptionId)
             .IsUnique()
-            .HasFilter("\"StripeSubscriptionId\" IS NOT NULL");
+            .HasFilter("\"PaddleSubscriptionId\" IS NOT NULL");
 
         builder.Property(tenant => tenant.CreatedAt).IsRequired();
         builder.Property(tenant => tenant.UpdatedAt).IsRequired();

@@ -362,8 +362,8 @@ public sealed class PlatformTenantServiceTests
 
         var tenant = await db.Tenants.SingleAsync(t => t.Id == created.Value.Id);
         tenant.BillingStatus = BillingStatus.PastDue;
-        tenant.StripeCustomerId = "cus_keep";
-        tenant.StripeSubscriptionId = "sub_keep";
+        tenant.PaddleCustomerId = "ctm_keep";
+        tenant.PaddleSubscriptionId = "sub_keep";
         await db.SaveChangesAsync();
 
         var set = await service.SetComplimentaryAsync(
@@ -377,8 +377,8 @@ public sealed class PlatformTenantServiceTests
         Assert.Equal(BillingStatus.Free.ToString(), set.Value.BillingStatus);
 
         tenant = await db.Tenants.SingleAsync(t => t.Id == created.Value.Id);
-        Assert.Equal("cus_keep", tenant.StripeCustomerId);
-        Assert.Equal("sub_keep", tenant.StripeSubscriptionId);
+        Assert.Equal("ctm_keep", tenant.PaddleCustomerId);
+        Assert.Equal("sub_keep", tenant.PaddleSubscriptionId);
 
         var setAudit = await db.PlatformAuditLogs.SingleAsync(a =>
             a.TenantId == created.Value.Id && a.Action == PlatformAuditAction.ComplimentarySet);
@@ -386,6 +386,7 @@ public sealed class PlatformTenantServiceTests
         Assert.Equal("Pilot cohort", setAudit.Reason);
         Assert.Contains("FR-23", setAudit.DetailsJson!, StringComparison.Ordinal);
         Assert.Contains("IsComplimentaryAfter", setAudit.DetailsJson!, StringComparison.Ordinal);
+        Assert.Contains("PaddleIdsUnchanged", setAudit.DetailsJson!, StringComparison.Ordinal);
 
         var cleared = await service.SetComplimentaryAsync(
             created.Value.Id,

@@ -13,8 +13,8 @@ public sealed class TenantAccessEvaluatorTests
         Assert.Equal(TenantStatus.Active, tenant.Status);
         Assert.Equal(TenantPlan.Basic, tenant.Plan);
         Assert.Equal(BillingStatus.Free, tenant.BillingStatus);
-        Assert.Null(tenant.StripeCustomerId);
-        Assert.Null(tenant.StripeSubscriptionId);
+        Assert.Null(tenant.PaddleCustomerId);
+        Assert.Null(tenant.PaddleSubscriptionId);
         Assert.Null(tenant.BillingInterval);
         Assert.Null(tenant.TrialEndsAt);
         Assert.Null(tenant.DelinquencyStartedAt);

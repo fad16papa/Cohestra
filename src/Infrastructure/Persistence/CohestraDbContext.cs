@@ -94,7 +94,7 @@ public class CohestraDbContext : IdentityDbContext<ApplicationUser, IdentityRole
 
     public DbSet<SiteHomepageTemplate> SiteHomepageTemplates => Set<SiteHomepageTemplate>();
 
-    public DbSet<StripeWebhookEvent> StripeWebhookEvents => Set<StripeWebhookEvent>();
+    public DbSet<PaddleWebhookEvent> PaddleWebhookEvents => Set<PaddleWebhookEvent>();
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 

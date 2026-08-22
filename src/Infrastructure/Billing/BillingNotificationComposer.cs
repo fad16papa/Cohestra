@@ -32,7 +32,7 @@ internal static class BillingNotificationComposer
         var currentPlan = tenant.Plan.ToString();
         var targetPlanName = targetPlan.ToString();
         var effectiveLabel = effectiveAt.ToString("MMMM d, yyyy");
-        var intervalDowngrade = StripeTenantBillingSync.IsBillingIntervalDowngrade(
+        var intervalDowngrade = TenantBillingPlanSync.IsBillingIntervalDowngrade(
             tenant.BillingInterval,
             targetInterval);
         var subjectSuffix = intervalOnlyChange
@@ -53,7 +53,7 @@ internal static class BillingNotificationComposer
             html.Append(currentPlan);
             html.Append(" access until then.</p>");
         }
-        else if (StripeTenantBillingSync.IsPaidPlanDowngrade(tenant.Plan, targetPlan) && intervalDowngrade)
+        else if (TenantBillingPlanSync.IsPaidPlanDowngrade(tenant.Plan, targetPlan) && intervalDowngrade)
         {
             plain.Append(
                 $"Your {tenant.Name} workspace plan will change from {currentPlan} to {targetPlanName} on monthly billing on {effectiveLabel}. ");
