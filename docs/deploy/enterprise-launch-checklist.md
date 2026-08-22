@@ -4,6 +4,8 @@ Use before **public launch** or handing a production/UAT environment to operator
 
 Supersedes the single-operator **[UAT polish checklist](./uat-polish-checklist.md)** for Cohestra Enterprise. That doc remains useful as historical reference for Platform 0.
 
+**Production droplet bootstrap:** [production-droplet-setup.md](./production-droplet-setup.md) (single server — no separate UAT).
+
 **Related docs:** [SendGrid production setup](./sendgrid-production.md) · [DigitalOcean UAT](./digitalocean-uat.md) · [GitHub Actions CD](./github-actions-cd.md) · [Cloud / mobile testing](./cloud-mobile-testing.md) · [Database tools](./database-tools.md)
 
 ---
