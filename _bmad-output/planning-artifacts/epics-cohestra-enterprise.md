@@ -85,7 +85,7 @@ FR-20: USD-only billing — all prices/Checkout/UI in USD; no geo currency conve
 
 FR-21: Trial expiration reminders — daily email + in-app to Tenant Admins for last 7 days before `trial_end`; Portal link.
 
-FR-22: Monthly and annual billing — Core/Pro monthly + annual (2 mo free: $290 / $790); Basic has no Stripe Price; Portal exposes intervals.
+FR-22: Monthly and annual billing — Core/Pro monthly + annual (14.99% off: $152.92 / $305.93); Basic has no paid Price; Portal exposes intervals.
 
 FR-23: Delinquency lifecycle — from `invoice.payment_failed`: PastDue days 1–7 (daily notify, full access) → OnHold days 8–28 (weekly, read-only, public reg blocked) → archive day 29; payment restores Active; same path for trial-end and renewal failures.
 
@@ -154,14 +154,14 @@ NFR-12 (UX accessibility): WCAG 2.2 AA on marketing, admin, stub, registration, 
 | Core | 3 | 3 | 12 | 500 | Fixed SitePage | Queryable + CSV | — |
 | Pro | 10 | 10 | 50 | 5,000 | Builder | + campaigns + saved views | ✓ |
 
-- Prices: Basic free; Core $29/mo or $290/yr; Pro $79/mo or $790/yr; Enterprise custom/manual.
+- Prices: Basic free; Core $14.99/mo or $152.92/yr; Pro $29.99/mo or $305.93/yr; Enterprise custom/manual.
 - LimitMeter warn ≥80%, block at 100%.
 
 **From market pricing research**
 
-- Market annual as monthly equivalent on pricing page ($24/mo and $66/mo billed annually).
+- Market annual as monthly equivalent on pricing page ($12.74/mo and $25.49/mo billed annually).
 - Lead with CRM/client-list value vs free event tools; monitor Core→Pro conversion before list-price raise.
-- Do not invent middle tier in v1; if Pro conversion weak after 10+ tenants, test Pro intro $69/$690 before new tier.
+- Do not invent middle tier in v1; if Pro conversion weak after 10+ tenants, test a lower Pro monthly before new tier.
 
 **Epic mapping hint (addendum / PRD)**
 
@@ -691,8 +691,8 @@ So that I trust the product enough to begin without a card.
 
 **Given** `/pricing`
 **When** plans are shown
-**Then** Basic free, Core $29/$290, Pro $79/$790, Enterprise custom match `pricing-tiers.md`
-**And** annual is marketed as monthly equivalent ($24/mo and $66/mo billed annually)
+**Then** Basic free, Core $14.99/$152.92, Pro $29.99/$305.93, Enterprise custom match `pricing-tiers.md`
+**And** annual is marketed as monthly equivalent ($12.74/mo and $25.49/mo billed annually)
 **And** Start free is the primary CTA
 
 **Given** motion guidelines

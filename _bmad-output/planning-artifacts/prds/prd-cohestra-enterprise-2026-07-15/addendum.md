@@ -90,15 +90,15 @@ Use [Stripe test cards](https://docs.stripe.com/testing) (e.g. `4242 4242 4242 4
 4. Map to `Tenant.Plan`, `Tenant.BillingStatus`, `Tenant.BillingInterval`, `Tenant.TrialEndsAt`
 5. Customer Portal link for upgrade / payment method / interval change; **cancel and downgrade at `current_period_end`** (FR-24)
 
-### Intro USD Prices (Stripe dashboard)
+### Official USD list (Paddle catalog — 2026-08-23)
 
-| Plan | Monthly | Annual (2 mo free) | Stripe |
-|------|---------|-------------------|--------|
-| Basic | **Free** | — | No Stripe product |
-| Core | $29 | $290 | Checkout + webhooks |
-| Pro | $79 | $790 | Checkout + webhooks |
+| Plan | Monthly | Annual (14.99% off 12×) | Merchant |
+|------|---------|-------------------------|----------|
+| Basic | **Free** | — | No Paddle product |
+| Core | $14.99 | $152.92 | Checkout + webhooks |
+| Pro | $29.99 | $305.93 | Checkout + webhooks |
 
-Annual discount subject to pricing study (§13.9).
+Annual formula: `round(monthly × 12 × (1 − 0.1499), 2)`. Must match marketing (`pricing-tiers.md`, `pricing-plans.ts`) and the four Paddle `pri_` prices. See PRD §13.3 / §13.9.
 
 ### Trial reminders (FR-21)
 

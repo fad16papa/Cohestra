@@ -1,6 +1,6 @@
 # Cohestra — Pricing
 
-*Draft for [cohestra.app](https://cohestra.app). Paid tiers in **USD**.*
+*Official launch list for [cohestra.app](https://cohestra.app) as of 2026-08-23. Paid tiers in **USD**. Annual is **14.99% off** 12× monthly.*
 
 ---
 
@@ -29,9 +29,9 @@ Start **free** on Basic. Upgrade when you need a public homepage, richer reports
 
 ---
 
-### Core — $24 / mo billed annually ($290 / year)
+### Core — $12.74 / mo billed annually ($152.92 / year)
 
-**Or $29 / month**
+**Or $14.99 / month**
 
 **For:** Small organizations ready to run day-to-day.
 
@@ -47,9 +47,9 @@ Start **free** on Basic. Upgrade when you need a public homepage, richer reports
 
 ---
 
-### Pro — $66 / mo billed annually ($790 / year)
+### Pro — $25.49 / mo billed annually ($305.93 / year)
 
-**Or $79 / month**
+**Or $29.99 / month**
 
 **For:** Marketing, campaigns, and a custom public site.
 
@@ -85,7 +85,7 @@ Everything in Pro, plus custom limits, domain, and SSO.
 
 | Feature | Basic | Core | Pro |
 |---------|:-----:|:----:|:---:|
-| Price | **Free** | $29/mo | $79/mo |
+| Price | **Free** | $14.99/mo | $29.99/mo |
 | Operator seats | 1 | 3 | 10 |
 | Communities | 1 | 3 | 10 |
 | Published activities | 4 | 12 | 50 |
@@ -110,6 +110,9 @@ A straightforward list: who registered, how many, date and time — exportable a
 
 **Can I buy extra seats?**  
 Not in the current plans — upgrade instead (Basic 1 → Core 3 → Pro 10).
+
+**How does annual billing work?**  
+Pay once a year and save **14.99%** vs 12 monthly payments. Core is **$152.92**/year ($12.74/mo billed annually). Pro is **$305.93**/year ($25.49/mo billed annually).
 
 ---
 

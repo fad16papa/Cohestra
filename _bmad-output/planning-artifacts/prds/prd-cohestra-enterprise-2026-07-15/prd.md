@@ -2,7 +2,7 @@
 title: Cohestra Enterprise — Multi-Tenant SaaS
 status: draft
 created: 2026-07-15
-updated: 2026-08-08
+updated: 2026-08-23
 gtm_pricing: section-13
 sources:
   - _bmad-output/planning-artifacts/sprint-change-proposal-2026-07-14.md
@@ -454,7 +454,7 @@ During the **last 7 days** of trial (`trial_end` − 7 days through `trial_end`)
 
 #### FR-22: Monthly and annual billing
 
-Tenants choose **monthly** or **annual** billing at signup or via Customer Portal. Annual plans receive a **discount** vs 12× monthly — **2 months free** (pay 10, get 12): Core **$290**/yr, Pro **$790**/yr `[ASSUMPTION: A-16; see pricing study §13.9 for market context — math ratified]`.
+Tenants choose **monthly** or **annual** billing at signup or via Customer Portal. Annual plans receive a **14.99% discount** vs 12× monthly: Core **$152.92**/yr, Pro **$305.93**/yr `[ASSUMPTION: A-16; launch list ratified 2026-08-23 — see §13.3 / §13.9]`.
 
 **Consequences (testable):**
 - Stripe Prices exist for **Core/Pro** × monthly/annual only. **Basic has no Stripe Price.**
@@ -765,7 +765,7 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 | **H7** | Signup path wording | **Closed via P6** — Start free primary; Core/Pro trial secondary (FR-19, UJ-1); no further change |
 | **M1** | §0 assumptions section pointer | **Option A ratified** — index is §12 (not §9 Data Governance) |
 | **M2** | Missing A-16 in §12 | **Option B ratified** — renumber former A-17…A-36 → A-16…A-35 (contiguous) |
-| **M3** | FR-22 pricing-study cite | **Option A ratified** — cite §13.9; annual 2 mo free ratified (A-16), not open “confirm” |
+| **M3** | FR-22 pricing-study cite | **Option A ratified 2026-07-18** — cite §13.9; original annual was 2 mo free. **Superseded 2026-08-23** by A-16 launch list (14.99% annual off) |
 | **M4** | Launch diagrams trial-first | **Option A ratified** — §13.2/§13.7 Basic-first + optional Core/Pro trial |
 | **M5** | Deferred study includes ratified Q5 | **Option A ratified** — Q5 closed in decisions; deferred = Q2/P9 only; §13.9 renamed |
 | **M6** | Frontmatter `updated` date | **Option A ratified** — set `updated: 2026-07-18` |
@@ -815,12 +815,12 @@ Epics 1–10 delivered: API-first stack, activities, clients, dedup, dashboard, 
 - **A-8:** Default tenant backfill for existing dev data — §6.1
 - **A-9:** lead-generation-crm remains separate product — §0, §5
 - **A-10:** Three self-serve tiers Basic / Core / Pro; website builder Pro-only — §13
-- **A-11:** **Basic free forever**; paid intro Core **$29** / Pro **$79** (USD) — §13.3
+- **A-11:** **Basic free forever**; paid launch list Core **$14.99** / Pro **$29.99** (USD) — §13.3 (supersedes 2026-07 $29 / $79 intro)
 - **A-12:** 30-day trial, card on file, no charge until trial ends — **Core/Pro only** — §13.5, FR-19
 - **A-13:** Trial expiration: daily email + in-app notice in last 7 days — FR-21
 - **A-14:** All billing in **USD only** — FR-20
 - **A-15:** Stripe test mode for dev/CI; live mode production only — FR-19, addendum
-- **A-16:** Monthly + annual billing; annual ≈ 2 months free — FR-22
+- **A-16:** Monthly + annual billing; annual = **14.99% off** 12× monthly (Core **$152.92**/yr, Pro **$305.93**/yr) — FR-22 (supersedes 2026-07 “2 months free” / $290 / $790)
 - **A-17:** Delinquency (P3): 7d PastDue daily → 21d OnHold weekly → archive; starts at `payment_failed` (trial or renewal) — FR-23
 - **A-18:** Open self-serve signup at launch — §13.7
 - **A-19:** Usage limits (communities / published activities / regs per month): Basic 1 / **3** / 150 · Core 3 / 12 / 500 · Pro 10 / 50 / 5,000 — seats separate (1 / 3 / 10); full table §13.4 / §13.10
@@ -899,8 +899,8 @@ flowchart LR
 | Tier | Price | Target buyer |
 |------|-------|--------------|
 | **Basic** | **Free forever** | Prospects testing Cohestra at minimum viable footprint — one person, one community, a few live events |
-| **Core** | **$29** / mo · **$290** / yr (2 mo free) | Small org ready to commit; 3 communities, small team |
-| **Pro** | **$79** / mo · **$790** / yr (2 mo free) | Marketing, campaigns, custom site, high volume |
+| **Core** | **$14.99** / mo · **$152.92** / yr (14.99% off) | Small org ready to commit; 3 communities, small team |
+| **Pro** | **$29.99** / mo · **$305.93** / yr (14.99% off) | Marketing, campaigns, custom site, high volume |
 | **Enterprise** | Custom (manual invoice) | Custom limits, domain, SSO |
 
 **Default signup (P6):** Primary CTA **Start free** (Basic). Secondary CTA **Start Core/Pro trial** (direct paid path). Upgrade prompts in-app when limits hit or features gated.
@@ -915,7 +915,7 @@ flowchart LR
 
 | Capability | Basic | Core | Pro |
 |------------|:-----:|:----:|:---:|
-| **Price** | **Free** | $29/mo | $79/mo |
+| **Price** | **Free** | $14.99/mo | $29.99/mo |
 | Activities + QR + public registration | ✓ | ✓ | ✓ |
 | Client dedup + timeline | ✓ | ✓ | ✓ |
 | Dashboard + reports + CSV | Fixed report + CSV | Queryable + CSV | Queryable + CSV |
@@ -991,7 +991,7 @@ cohestra.app (apex marketing)
 1. Tenancy spine + isolation (Epic 11–13) — **blocks everything**
 2. **Stripe sandbox** + webhooks + plan sync + delinquency jobs (FR-19–23)
 3. Open self-serve: **Start free (Basic)** primary + secondary Core/Pro USD Checkout (monthly/annual) + 30-day trial
-4. cohestra.app marketing + pricing (Free Basic / Core $29 / Pro $79)
+4. cohestra.app marketing + pricing (Free Basic / Core $14.99 / Pro $29.99)
 5. 2–3 pilot tenants on **Basic and/or** Core/Pro trial
 6. Tenant-scoped website builder → **Pro upsell**
 7. **Pricing study (§13.9)** before list-price / grandfather rollout
@@ -1012,17 +1012,22 @@ cohestra.app (apex marketing)
 
 | Workstream | Status | Key finding |
 |------------|--------|-------------|
-| **Market penetration pricing (Q2 / P9)** | **Draft complete; grandfather policy deferred** | Launch intro **$29/$79**; grandfather **not locked** (P9-D); hypothesis **12 mo intro** (A) after pilots |
+| **Market penetration pricing (Q2 / P9)** | **Launch list locked 2026-08-23; grandfather policy deferred** | Launch **$14.99 / $29.99** monthly; annual **14.99% off** ($152.92 / $305.93); grandfather **not locked** (P9-D) |
 | **Registration economics (Q5)** | **Ratified — closed** | Option 1 limits locked — §13.4, §13.10 |
 
-**Annual pricing verdict ($290 Core / $790 Pro):**
+**Launch list (ratified 2026-08-23 — supersedes July $29 / $79 and 2-months-free annual):**
 
-- **Annual math is correct** — both tiers use the same **16.7% discount** (2 months free); industry standard.
-- The **“huge difference”** is the **Core→Pro gap ($500/yr)**, not broken annual pricing.
-- **Market with monthly equivalents:** Core **$24/mo** billed annually; Pro **$66/mo** billed annually.
-- **Pro $790** is ~**37% below** a Luma + Mailchimp stack (~$1,248/yr); **Core $290** is above free Peatix — sell CRM ROI, not event pages.
+| Tier | Monthly | 12× monthly | Annual (14.99% off) | Effective monthly |
+|------|---------|-------------|---------------------|-------------------|
+| Core | **$14.99** | $179.88 | **$152.92** | **$12.74**/mo billed annually |
+| Pro | **$29.99** | $359.88 | **$305.93** | **$25.49**/mo billed annually |
 
-**If Pro upgrade &lt; 15% after 10 tenants:** test Pro intro at **$69/mo ($690/yr)** before adding a middle tier.
+- Formula: `round(monthly × 12 × (1 − 0.1499), 2)`. Same discount on both paid tiers.
+- Market annual as the monthly equivalent ($12.74 / $25.49 billed annually), not only the yearly sticker.
+- July 2026 study (`research/market-cohestra-pricing-penetration-research-2026-07-16.md`) validated a higher intro ($29 / $79, 2 months free). That study remains historical context; it is **not** the current official list.
+- Paddle catalog (and `docs/marketing/pricing-tiers.md` / `web/lib/marketing/pricing-plans.ts`) must match this table. Sandbox yearly prices of $153.99 / $306.99 are **not** official — edit them to **$152.92** / **$305.93**.
+
+**If Pro upgrade &lt; 15% after 10 tenants:** test a lower Pro monthly before adding a middle tier.
 
 ### 13.10 Usage limits reference (Option 1 — ratified)
 

@@ -113,7 +113,7 @@ Sources: `prds/prd-cohestra-enterprise-2026-07-15/prd.md` + `addendum.md`.
 
 **FR-21: Trial expiration reminders** — Daily email + in-app last 7 days before trial_end; Portal link.
 
-**FR-22: Monthly and annual billing** — Core/Pro monthly+annual (2 mo free: $290/$790); Basic no Stripe Price; Portal intervals; sync BillingInterval.
+**FR-22: Monthly and annual billing** — Core/Pro monthly+annual (14.99% off: $152.92/$305.93); Basic no paid Price; Portal intervals; sync BillingInterval.
 
 **FR-23: Delinquency lifecycle** — From invoice.payment_failed: PastDue 1–7 (daily, full access) → OnHold 8–28 (weekly, read-only, public blocked) → archive day 29; payment restores Active; trial-end and renewal same path.
 

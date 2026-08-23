@@ -28,8 +28,8 @@ So that **I trust the product enough to begin without a card**.
 
 3. **Given** `/pricing`  
    **When** plans are shown  
-   **Then** Basic free, Core $29/$290, Pro $79/$790, Enterprise custom match `docs/marketing/pricing-tiers.md`  
-   **And** annual is marketed as monthly equivalent ($24/mo and $66/mo billed annually)  
+   **Then** Basic free, Core/Pro/Enterprise amounts match `docs/marketing/pricing-tiers.md` (official list as of 2026-08-23: Core $14.99/$152.92, Pro $29.99/$305.93)  
+   **And** annual is marketed as monthly equivalent ($12.74/mo and $25.49/mo billed annually)  
    **And** Start free is the primary CTA
 
 4. **Given** motion guidelines (UX-DR2)  
@@ -57,7 +57,7 @@ So that **I trust the product enough to begin without a card**.
 
 - [x] Task 4: Pricing page `/pricing` (AC: 3)
   - [x] 4.1 Add `web/app/pricing/page.tsx` with plan cards from `docs/marketing/pricing-tiers.md`
-  - [x] 4.2 Show annual monthly-equivalent ($24/mo, $66/mo) with monthly list prices
+  - [x] 4.2 Show annual monthly-equivalent ($12.74/mo, $25.49/mo) with monthly list prices
   - [x] 4.3 Compare table + FAQ excerpt; Start free primary CTA throughout
 
 - [x] Task 5: Verify (AC: 1–4)

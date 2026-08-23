@@ -15,7 +15,9 @@ Replace Stripe with **Paddle Billing** as Cohestra’s sole payment and subscrip
 
 **FRs preserved:** FR-14 through FR-25 (checkout, trial, portal, period-end cancel/downgrade, delinquency, complimentary, one-trial). In-app billing panel (2026-08-09) stays.
 
-**Not in scope:** New plans or prices, usage billing, multi-currency catalog, new Settings → Billing IA, dual-running Stripe + Paddle, Epic 19 droplet work.
+**Not in scope:** New plan SKUs beyond Core/Pro, usage billing, multi-currency catalog, new Settings → Billing IA, dual-running Stripe + Paddle, Epic 19 droplet work.
+
+**Launch list (2026-08-23):** Core **$14.99**/mo or **$152.92**/yr; Pro **$29.99**/mo or **$305.93**/yr; annual = **14.99% off** 12× monthly. Amounts live in PRD §13.3 — catalog must match.
 
 **Hold:** Epic 19 (including 19.4 Stripe UAT) until 29.7 is signed off. Story 19.4 is rewritten to Paddle UAT in 29.6.
 
@@ -105,11 +107,13 @@ Replace Stripe with **Paddle Billing** as Cohestra’s sole payment and subscrip
 
 Create in Paddle sandbox **before or during 29.2**:
 
-| Cohestra | Paddle |
-|----------|--------|
-| Core monthly / annual | Product `Cohestra Core` + 2 recurring USD prices, 30-day trial |
-| Pro monthly / annual | Product `Cohestra Pro` + 2 recurring USD prices, 30-day trial |
-| Basic | **No product** |
+| Cohestra | Amount (USD) | Paddle |
+|----------|--------------|--------|
+| Core monthly | **$14.99** | Product `Cohestra Core` + recurring monthly price, 30-day trial |
+| Core annual | **$152.92** (14.99% off 12×) | Same product, recurring yearly price, 30-day trial |
+| Pro monthly | **$29.99** | Product `Cohestra Pro` + recurring monthly price, 30-day trial |
+| Pro annual | **$305.93** (14.99% off 12×) | Same product, recurring yearly price, 30-day trial |
+| Basic | Free | **No product** |
 
 Store price IDs as `Paddle__PriceCoreMonthly` etc. (`pri_…`).
 

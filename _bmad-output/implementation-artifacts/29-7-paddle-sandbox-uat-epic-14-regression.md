@@ -22,6 +22,8 @@ Infrastructure tests cover: first checkout + trial disclaimer, one-trial immedia
 
 Use local Docker with Paddle sandbox keys, four `pri_` prices, and a tunnel to `/api/v1/system/paddle/webhook`.
 
+Catalog must match the 2026-08-23 launch list (PRD §13.3): Core **$14.99 / $152.92**, Pro **$29.99 / $305.93**, **30-day trial** on all four paid prices. Annual is **14.99% off** 12× monthly — not the sandbox $153.99 / $306.99 drafts.
+
 1. Basic signup — no checkout
 2. Core monthly checkout — trial, card required, plan unlocks, webhook + sync
 3. One-trial rule — second upgrade has no free trial
