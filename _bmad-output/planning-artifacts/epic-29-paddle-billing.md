@@ -1,8 +1,8 @@
 ---
 title: Epic 29 — Paddle Billing Migration (Stripe Removal)
-status: backlog
+status: done
 created: 2026-08-22
-updated: 2026-08-22
+updated: 2026-08-23
 source: brainstorm-paddle-billing-2026-08-22
 constraint: Preserve Epic 14 + in-app billing process. Adapter swap only. No code in this planning change.
 ---
