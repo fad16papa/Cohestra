@@ -69,6 +69,10 @@ so that **later stories can implement checkout against one merchant without left
 - [x] [Review][Defer] Complimentary tenants are not guarded inside `TenantBillingPlanSync` mutators [`src/Infrastructure/Billing/TenantBillingPlanSync.cs:12`] — deferred, pre-existing
 - [x] [Review][Defer] Stripe cancel/downgrade/webhook tests were deleted for later rewrite (29.5/29.6) [`src/Infrastructure.Tests/Billing`] — deferred, pre-existing
 
+### Review Findings (re-review 2026-08-23)
+
+- [ ] [Review][Patch] Stub webhook processor still queries `PaddleWebhookEvents` for duplicates even though 29.1 never inserts [`src/Infrastructure/Billing/PaddleWebhookProcessor.cs:25`]
+
 ## Dev Notes
 
 - Epic: `_bmad-output/planning-artifacts/epic-29-paddle-billing.md` Story 29.1
