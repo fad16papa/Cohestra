@@ -41,6 +41,7 @@ public sealed class PublicSiteIntegrationTests(IntegrationTestFixture fixture)
         var hiddenSlug = $"public-hidden-{Guid.NewGuid():N}";
 
         await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, visibleSlug);
+        await IntegrationTestHelpers.HideOtherDefaultHomepageActivitiesAsync(Factory.Services, visibleSlug);
 
         await using (var scope = Factory.Services.CreateAsyncScope())
         {

@@ -71,7 +71,7 @@ so that **later stories can implement checkout against one merchant without left
 
 ### Review Findings (re-review 2026-08-23)
 
-- [ ] [Review][Patch] Stub webhook processor still queries `PaddleWebhookEvents` for duplicates even though 29.1 never inserts [`src/Infrastructure/Billing/PaddleWebhookProcessor.cs:25`]
+- [x] [Review][Patch] Stub webhook processor still queries `PaddleWebhookEvents` for duplicates even though 29.1 never inserts [`src/Infrastructure/Billing/PaddleWebhookProcessor.cs:25`]
 
 ## Dev Notes
 
@@ -136,3 +136,5 @@ Cursor Grok 4.6
 - 2026-08-22: Implemented Story 29.1 Paddle provider spine.
 - 2026-08-22: Code review recorded 5 patch and 2 deferred findings.
 - 2026-08-22: Applied all 5 review patches; story marked done.
+- 2026-08-23: Re-review found 1 leftover patch (dead ledger lookup in stub processor).
+- 2026-08-23: Applied leftover patch; hardened integration activity seed against Saturday-schedule flakes.

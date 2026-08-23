@@ -75,6 +75,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
 
         var visibleSlug = $"iso-a-{Guid.NewGuid():N}"[..20];
         await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, visibleSlug);
+        await IntegrationTestHelpers.HideOtherDefaultHomepageActivitiesAsync(Factory.Services, visibleSlug);
 
         using var adminClient = Factory.CreateClient();
         var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);

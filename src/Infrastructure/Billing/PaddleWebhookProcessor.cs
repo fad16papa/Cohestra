@@ -1,34 +1,23 @@
-using Cohestra.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Cohestra.Infrastructure.Billing;
 
 /// <summary>
 /// Story 29.1 stub — log only. Ledger + HMAC + handlers land in Story 29.3.
-/// Do not persist here: a stub row with <c>ProcessedAt</c> set would make 29.3 skip the real event.
+/// Do not persist or query the ledger here: a stub row would make 29.3 skip the real event.
 /// </summary>
-public sealed class PaddleWebhookProcessor(
-    CohestraDbContext dbContext,
-    ILogger<PaddleWebhookProcessor> logger) : IPaddleWebhookProcessor
+public sealed class PaddleWebhookProcessor(ILogger<PaddleWebhookProcessor> logger) : IPaddleWebhookProcessor
 {
-    public async Task<PaddleWebhookProcessResult> ProcessAsync(
+    public Task<PaddleWebhookProcessResult> ProcessAsync(
         string eventId,
         string eventType,
         CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+
         if (string.IsNullOrWhiteSpace(eventId))
         {
-            return new PaddleWebhookProcessResult(false, false, "Missing event id.");
-        }
-
-        var existing = await dbContext.PaddleWebhookEvents
-            .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.EventId == eventId, cancellationToken);
-
-        if (existing is not null)
-        {
-            return new PaddleWebhookProcessResult(false, true, "Duplicate event.");
+            return Task.FromResult(new PaddleWebhookProcessResult(false, false, "Missing event id."));
         }
 
         logger.LogInformation(
@@ -36,6 +25,6 @@ public sealed class PaddleWebhookProcessor(
             eventType,
             eventId);
 
-        return new PaddleWebhookProcessResult(false, false, "Ignored until Story 29.3.");
+        return Task.FromResult(new PaddleWebhookProcessResult(false, false, "Ignored until Story 29.3."));
     }
 }
