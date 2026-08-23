@@ -26,12 +26,12 @@ internal static class RegistrationThemeMapper
             return null;
         }
 
-        return RegistrationThemeValidator.Normalize(new RegistrationTheme
+        return new RegistrationTheme
         {
             Preset = dto.Preset,
             InheritCommunityBrand = dto.InheritCommunityBrand,
             AccentColor = dto.AccentColor,
             HeroImageUrl = dto.HeroImageUrl,
-        });
+        };
     }
 }
