@@ -11,8 +11,8 @@
 | Check | Status |
 |-------|--------|
 | Basic $0 / limits vs `TenantPlanLimits` | ✅ Aligned |
-| Core $29/mo, $290/yr (~17%) | ✅ Aligned |
-| Pro $79/mo, $790/yr | ✅ Aligned |
+| Core $14.99/mo, $152.92/yr (14.99% off) | ✅ Aligned (list locked 2026-08-23) |
+| Pro $29.99/mo, $305.93/yr (14.99% off) | ✅ Aligned (list locked 2026-08-23) |
 | Compare table vs plan cards | ✅ Same source `PRICING_COMPARE_ROWS` |
 | CTA vertical alignment across 4 cards | ⚠️ Fixed — grid rows + min-height price block + pinned CTA |
 | Enterprise shorter feature list | ⚠️ Fixed — `1fr` feature row + min card height |

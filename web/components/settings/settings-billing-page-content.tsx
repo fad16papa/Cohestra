@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
-import { syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
+import { syncBillingFromProviderWithAuth } from "@/lib/billing/billing-api";
 
 function isPaidPlan(plan: string): boolean {
   return plan === "Core" || plan === "Pro";
@@ -22,7 +22,7 @@ export function SettingsBillingPageContent() {
     }
 
     autoSyncedRef.current = true;
-    void syncBillingFromStripeWithAuth(authFetch)
+    void syncBillingFromProviderWithAuth(authFetch)
       .then(() => refreshShell())
       .catch(() => undefined);
   }, [authFetch, refreshShell, shell?.isTenantAdmin, shell?.plan]);

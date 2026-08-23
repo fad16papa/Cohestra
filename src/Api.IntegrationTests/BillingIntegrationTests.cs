@@ -37,7 +37,7 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
     }
 
     [SkippableFact]
-    public async Task TenantAdmin_CancelScheduledChange_WithoutSchedule_Returns400()
+    public async Task TenantAdmin_CancelScheduledChange_WhenPaddleNotConfigured_Returns503()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
         await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
@@ -49,6 +49,8 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
         using var response = await client.PostAsync(
             "/api/v1/admin/billing/subscription/cancel-scheduled-change",
             content: null);
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        // 29.1: money APIs 503 when Paddle is not configured. Local 400 (no schedule)
+        // returns once Story 29.5 implements scheduled-change cancel.
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
     }
 }

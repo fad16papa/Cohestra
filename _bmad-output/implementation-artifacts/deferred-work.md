@@ -507,3 +507,8 @@
 - No web tests for channel toggle / default-channel selection
 - Follow-up note length not validated before DB MaxLength(500) (pre-existing WhatsApp path)
 - Integration tests omit success-body timeline assertions (dedup coverage meets AC-3)
+
+## Deferred from: code review of 29-1-paddle-provider-spine.md (2026-08-22)
+
+- Complimentary tenants are not guarded inside `TenantBillingPlanSync` mutators — jobs already skip complimentary for delinquency; webhook/service callers reject complimentary money paths
+- Operator still needs live Paddle sandbox keys + webhook tunnel to record 29.7 screenshot evidence (automated process tests cover the adapter)

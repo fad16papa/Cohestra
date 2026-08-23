@@ -138,7 +138,7 @@ public sealed class BillingJobsHostedService(
             return;
         }
 
-        StripeTenantBillingSync.ApplyScheduledPlan(tenant, scheduled);
+        TenantBillingPlanSync.ApplyScheduledPlan(tenant, scheduled);
         await db.SaveChangesAsync(cancellationToken);
 
         BillingNotificationComposer.EnqueueScheduledDowngradeApplied(

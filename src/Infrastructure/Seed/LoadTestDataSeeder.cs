@@ -598,7 +598,7 @@ public static class LoadTestDataSeeder
 
     /// <summary>
     /// Load-test workspaces are paid-plan QA fixtures — not platform-sponsored tenants.
-    /// Clears legacy complimentary flags so billing UI and Stripe portal behave like real customers.
+    /// Clears legacy complimentary flags so billing UI and the customer portal behave like real customers.
     /// </summary>
     private static async Task EnsureLoadTestTenantsNotComplimentaryAsync(
         CohestraDbContext dbContext,

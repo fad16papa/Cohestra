@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { loadStripe, type Stripe } from "@stripe/stripe-js";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
@@ -11,6 +9,7 @@ import {
   confirmPaymentMethodSetupWithAuth,
   createPaymentMethodSetupWithAuth,
 } from "@/lib/billing/billing-details-api";
+import { openPaddleCheckoutOverlay } from "@/lib/billing/paddle-checkout";
 
 type BillingPaymentMethodDialogProps = {
   open: boolean;
@@ -18,121 +17,69 @@ type BillingPaymentMethodDialogProps = {
   onSaved: () => void;
 };
 
-function PaymentMethodForm({
-  operatorEmail,
-  onClose,
-  onSaved,
-}: {
-  operatorEmail: string;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const { authFetch } = useAuth();
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  return (
-    <form
-      className="space-y-4"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (!stripe || !elements) {
-          return;
-        }
-
-        setSubmitting(true);
-        setError(null);
-
-        void stripe
-          .confirmSetup({
-            elements,
-            redirect: "if_required",
-          })
-          .then(async (result) => {
-            if (result.error) {
-              throw new Error(result.error.message ?? "Could not save payment method.");
-            }
-
-            const setupIntentId = result.setupIntent?.id;
-            if (!setupIntentId) {
-              throw new Error("Setup did not complete.");
-            }
-
-            await confirmPaymentMethodSetupWithAuth(authFetch, setupIntentId);
-            onSaved();
-            onClose();
-          })
-          .catch((err) => {
-            setError(err instanceof Error ? err.message : "Could not save payment method.");
-          })
-          .finally(() => setSubmitting(false));
-      }}
-    >
-      <PaymentElement
-        options={{
-          layout: "tabs",
-          wallets: {
-            link: "never",
-          },
-          defaultValues: {
-            billingDetails: {
-              email: operatorEmail,
-            },
-          },
-          fields: {
-            billingDetails: {
-              email: "never",
-            },
-          },
-        }}
-      />
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={!stripe || !elements || submitting}>
-          {submitting ? "Saving…" : "Save payment method"}
-        </Button>
-      </div>
-    </form>
-  );
-}
-
 export function BillingPaymentMethodDialog({
   open,
   onClose,
   onSaved,
 }: BillingPaymentMethodDialogProps) {
-  const { authFetch, profile } = useAuth();
+  const { authFetch } = useAuth();
   const { shell } = useTenantShell();
   const workspaceLabel = shell?.tenantName?.trim() || "this workspace";
-  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
-      setStripePromise(null);
-      setClientSecret(null);
       setError(null);
       return;
     }
 
+    let cancelled = false;
     setLoading(true);
+    setError(null);
+
     void createPaymentMethodSetupWithAuth(authFetch)
-      .then((setup) => {
-        setStripePromise(loadStripe(setup.publishableKey));
-        setClientSecret(setup.clientSecret);
+      .then(async (setup) => {
+        await openPaddleCheckoutOverlay({
+          clientToken: setup.clientToken,
+          transactionId: setup.clientSecret,
+          successUrl: window.location.href,
+          onCompleted: (transactionId) => {
+            void confirmPaymentMethodSetupWithAuth(authFetch, transactionId)
+              .then(() => {
+                if (!cancelled) {
+                  onSaved();
+                  onClose();
+                }
+              })
+              .catch((err) => {
+                if (!cancelled) {
+                  setError(err instanceof Error ? err.message : "Could not save payment method.");
+                }
+              });
+          },
+          onClosed: () => {
+            if (!cancelled) {
+              onClose();
+            }
+          },
+        });
       })
       .catch((err) => {
-        setError(err instanceof Error ? err.message : "Could not start payment setup.");
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Could not start payment setup.");
+        }
       })
-      .finally(() => setLoading(false));
-  }, [authFetch, open]);
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authFetch, onClose, onSaved, open]);
 
   if (!open) {
     return null;
@@ -150,23 +97,19 @@ export function BillingPaymentMethodDialog({
           Add payment method
         </h3>
         <p className="mt-1 text-sm text-text-muted-warm">
-          Card details are processed securely by Stripe and saved to workspace{" "}
+          Card details are processed securely by Paddle and saved to workspace{" "}
           <span className="font-medium text-text-warm">{workspaceLabel}</span>. Cohestra never
           stores your full card number.
         </p>
 
-        <div className="mt-5">
-          {loading ? <p className="text-sm text-text-muted-warm">Loading secure form…</p> : null}
+        <div className="mt-5 space-y-4">
+          {loading ? <p className="text-sm text-text-muted-warm">Opening secure card form…</p> : null}
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          {!loading && !error && stripePromise && clientSecret ? (
-            <Elements stripe={stripePromise} options={{ clientSecret }}>
-              <PaymentMethodForm
-                operatorEmail={profile?.email ?? ""}
-                onClose={onClose}
-                onSaved={onSaved}
-              />
-            </Elements>
-          ) : null}
+          <div className="flex justify-end">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+              Cancel
+            </Button>
+          </div>
         </div>
       </div>
     </div>

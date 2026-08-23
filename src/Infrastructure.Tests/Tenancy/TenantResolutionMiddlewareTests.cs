@@ -244,6 +244,9 @@ public sealed class TenantResolutionMiddlewareTests
     public async Task System_path_skips_tenant_requirement()
     {
         Assert.True(TenantResolutionMiddleware.IsSkipTenantRequirementPath("/api/v1/system/info"));
+        Assert.True(TenantResolutionMiddleware.IsPaddleWebhookPath("/api/v1/system/paddle/webhook"));
+        Assert.True(TenantResolutionMiddleware.IsSkipTenantRequirementPath("/api/v1/system/paddle/webhook"));
+        Assert.False(TenantResolutionMiddleware.IsPaddleWebhookPath("/api/v1/system/stripe/webhook"));
 
         var context = CreateContext(
             "/api/v1/system/info",

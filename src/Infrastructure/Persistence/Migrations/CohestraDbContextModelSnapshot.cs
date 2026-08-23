@@ -188,7 +188,7 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("communities", "public");
                 });
 
-            modelBuilder.Entity("Cohestra.Domain.Billing.StripeWebhookEvent", b =>
+            modelBuilder.Entity("Cohestra.Domain.Billing.PaddleWebhookEvent", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -212,7 +212,7 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("EventId")
                         .IsUnique();
 
-                    b.ToTable("stripe_webhook_events", "public");
+                    b.ToTable("paddle_webhook_events", "public");
                 });
 
             modelBuilder.Entity("Cohestra.Domain.Campaigns.Campaign", b =>
@@ -1026,15 +1026,15 @@ namespace Infrastructure.Persistence.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
-                    b.Property<string>("StripeCustomerId")
+                    b.Property<string>("PaddleCustomerId")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("StripeSubscriptionId")
+                    b.Property<string>("PaddleSubscriptionId")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
-                    b.Property<string>("StripeSubscriptionScheduleId")
+                    b.Property<string>("PaddleSubscriptionScheduleId")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
 
@@ -1060,13 +1060,13 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.HasIndex("StripeCustomerId")
+                    b.HasIndex("PaddleCustomerId")
                         .IsUnique()
-                        .HasFilter("\"StripeCustomerId\" IS NOT NULL");
+                        .HasFilter("\"PaddleCustomerId\" IS NOT NULL");
 
-                    b.HasIndex("StripeSubscriptionId")
+                    b.HasIndex("PaddleSubscriptionId")
                         .IsUnique()
-                        .HasFilter("\"StripeSubscriptionId\" IS NOT NULL");
+                        .HasFilter("\"PaddleSubscriptionId\" IS NOT NULL");
 
                     b.ToTable("tenants", "public");
                 });

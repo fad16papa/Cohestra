@@ -18,8 +18,8 @@ public sealed record BillingSummaryResponse(
     string? BillingInterval,
     DateTimeOffset? TrialEndsAt,
     bool HasConsumedTrial,
-    bool StripeConfigured,
-    string? PublishableKey,
+    bool BillingConfigured,
+    string? ClientToken,
     int TrialPeriodDays,
     bool IsComplimentary,
     BillingUsageResponse? Usage = null,
@@ -80,7 +80,7 @@ public sealed record BillingDetailsResponse(
     BillingSubscriptionDetailsResponse? Subscription,
     IReadOnlyList<BillingInvoiceResponse> Invoices);
 
-public sealed record SetupIntentResponse(string ClientSecret, string PublishableKey);
+public sealed record SetupIntentResponse(string ClientSecret, string ClientToken);
 
 public sealed record ConfirmSetupIntentRequest(string SetupIntentId);
 

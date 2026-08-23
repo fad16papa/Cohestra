@@ -44,7 +44,7 @@ export type BillingDetails = {
 
 export type SetupIntentResult = {
   clientSecret: string;
-  publishableKey: string;
+  clientToken: string;
 };
 
 function parseProblem(raw: Record<string, unknown>): string {
@@ -165,12 +165,12 @@ export async function createPaymentMethodSetupWithAuth(
   }
 
   const clientSecret = raw.clientSecret ?? raw.ClientSecret;
-  const publishableKey = raw.publishableKey ?? raw.PublishableKey;
-  if (typeof clientSecret !== "string" || typeof publishableKey !== "string") {
-    throw new Error("Invalid setup intent response.");
+  const clientToken = raw.clientToken ?? raw.ClientToken ?? raw.publishableKey ?? raw.PublishableKey;
+  if (typeof clientSecret !== "string" || typeof clientToken !== "string") {
+    throw new Error("Invalid payment method setup response.");
   }
 
-  return { clientSecret, publishableKey };
+  return { clientSecret, clientToken };
 }
 
 export async function confirmPaymentMethodSetupWithAuth(

@@ -335,7 +335,7 @@ export default function PlatformTenantDetailPage() {
           Complimentary
         </h2>
         <p className="max-w-2xl text-sm leading-relaxed text-[var(--plat-stone)]">
-          Mark a pilot Sponsored without Stripe. Sets BillingStatus to Free. Clearing the flag does
+          Mark a pilot Sponsored without Paddle. Sets BillingStatus to Free. Clearing the flag does
           not start Checkout — paid entitlements require Checkout (FR-19) afterward.
         </p>
 

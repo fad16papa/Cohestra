@@ -154,7 +154,7 @@ public sealed class PlatformTenantsController(IPlatformTenantService platformTen
 
     /// <summary>
     /// Set or clear complimentary (Sponsored) plan (P12). Forces BillingStatus=Free when set.
-    /// Stripe IDs unchanged; clearing requires Checkout (FR-19) before paid sync — not implemented here.
+    /// Paddle IDs unchanged; clearing requires Checkout (FR-19) before paid sync — not implemented here.
     /// </summary>
     [HttpPost("{tenantId:guid}/complimentary")]
     [ProducesResponseType(typeof(TenantResponse), StatusCodes.Status200OK)]

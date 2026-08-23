@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -274,6 +275,8 @@ internal static class IntegrationTestHelpers
         BindDefaultTenant(scope.ServiceProvider);
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var now = DateTimeOffset.UtcNow;
+        var startsAt = now.AddDays(21);
+        await EnsureIntegrationCatalogAsync(dbContext, tenantId, now, cancellationToken);
 
         var activity = new Activity
         {
@@ -282,7 +285,8 @@ internal static class IntegrationTestHelpers
             Name = name ?? "Integration Test Activity",
             Slug = slug,
             Category = "Test",
-            Schedule = "Saturday 10:00",
+            Schedule = startsAt.UtcDateTime.ToString("ddd, MMM d, yyyy, h:mm tt", CultureInfo.InvariantCulture),
+            ScheduledStartsAt = startsAt,
             Location = "Test Court",
             CommunityLabel = "Integration Community",
             MaxRegistrants = maxRegistrants,
@@ -463,5 +467,70 @@ internal static class IntegrationTestHelpers
         }
 
         throw new TimeoutException("Outbox did not drain within the allotted time.");
+    }
+
+    internal static async Task HideOtherDefaultHomepageActivitiesAsync(
+        IServiceProvider services,
+        string keepSlug,
+        CancellationToken cancellationToken = default)
+    {
+        await using var scope = services.CreateAsyncScope();
+        BindDefaultTenant(scope.ServiceProvider);
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var extras = await dbContext.Activities
+            .Where(activity =>
+                activity.TenantId == TenantIds.Default
+                && activity.ShowOnHomepage
+                && activity.Slug != keepSlug)
+            .ToListAsync(cancellationToken);
+
+        foreach (var extra in extras)
+        {
+            extra.ShowOnHomepage = false;
+        }
+
+        if (extras.Count > 0)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private static async Task EnsureIntegrationCatalogAsync(
+        CohestraDbContext dbContext,
+        Guid tenantId,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        var hasCategory = await dbContext.IgnoreTenantFilters<Category>()
+            .AnyAsync(
+                item => item.TenantId == tenantId && item.Name == "Test",
+                cancellationToken);
+        if (!hasCategory)
+        {
+            dbContext.Categories.Add(new Category
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Name = "Test",
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        }
+
+        var hasCommunity = await dbContext.IgnoreTenantFilters<Community>()
+            .AnyAsync(
+                item => item.TenantId == tenantId && item.Name == "Integration Community",
+                cancellationToken);
+        if (!hasCommunity)
+        {
+            dbContext.Communities.Add(new Community
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                Name = "Integration Community",
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        }
     }
 }

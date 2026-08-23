@@ -16,11 +16,11 @@ public interface IBillingService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Pull the latest Stripe subscription state for this tenant (checkout return / manual refresh).
+    /// Pull the latest merchant subscription state for this tenant (checkout return / manual refresh).
     /// </summary>
-    Task<BillingSummaryDto> SyncFromStripeAsync(
+    Task<BillingSummaryDto> SyncFromProviderAsync(
         Guid tenantId,
-        string? checkoutSessionId = null,
+        string? transactionId = null,
         CancellationToken cancellationToken = default);
 
     Task ValidateBillingAccessAsync(
@@ -87,8 +87,8 @@ public sealed record BillingSummaryDto(
     BillingInterval? BillingInterval,
     DateTimeOffset? TrialEndsAt,
     bool HasConsumedTrial,
-    bool StripeConfigured,
-    string? PublishableKey,
+    bool BillingConfigured,
+    string? ClientToken,
     int TrialPeriodDays,
     bool IsComplimentary,
     BillingUsageDto? Usage = null,
@@ -152,4 +152,4 @@ public sealed record BillingDetailsDto(
     BillingSubscriptionDetailsDto? Subscription,
     IReadOnlyList<BillingInvoiceDto> Invoices);
 
-public sealed record SetupIntentDto(string ClientSecret, string PublishableKey);
+public sealed record SetupIntentDto(string ClientSecret, string ClientToken);

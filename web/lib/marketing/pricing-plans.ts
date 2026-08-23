@@ -41,9 +41,9 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     id: "core",
     name: "Core",
     headline: "For clubs, workshops, and groups running day to day",
-    monthlyPrice: "$29",
-    annualPrice: "$290 / year",
-    annualMonthlyEquivalent: "$24 / mo billed annually",
+    monthlyPrice: "$14.99",
+    annualPrice: "$152.92 / year",
+    annualMonthlyEquivalent: "$12.74 / mo billed annually",
     trialNote: "30 day free trial. Card required. Not charged until trial ends.",
     features: [
       "3 seats, 3 communities, 12 published activities",
@@ -63,9 +63,9 @@ export const MARKETING_PLANS: MarketingPlan[] = [
     id: "pro",
     name: "Pro",
     headline: "For teams that run campaigns and a custom public site",
-    monthlyPrice: "$79",
-    annualPrice: "$790 / year",
-    annualMonthlyEquivalent: "$66 / mo billed annually",
+    monthlyPrice: "$29.99",
+    annualPrice: "$305.93 / year",
+    annualMonthlyEquivalent: "$25.49 / mo billed annually",
     trialNote: "30 day free trial. Card required. Not charged until trial ends.",
     features: [
       "10 seats, 10 communities, 50 published activities",
@@ -101,7 +101,7 @@ export const MARKETING_PLANS: MarketingPlan[] = [
 ];
 
 export const PRICING_COMPARE_ROWS = [
-  { feature: "Price", basic: "Free", core: "$29/mo", pro: "$79/mo" },
+  { feature: "Price", basic: "Free", core: "$14.99/mo", pro: "$29.99/mo" },
   { feature: "Operator seats", basic: "1", core: "3", pro: "10" },
   { feature: "Communities", basic: "1", core: "3", pro: "10" },
   { feature: "Published activities", basic: "4", core: "12", pro: "50" },
@@ -130,6 +130,11 @@ export const PRICING_FAQ = [
   {
     question: "Can I buy extra seats?",
     answer: "Not as add ons today. Upgrade the plan instead: Basic has 1 seat, Core has 3, Pro has 10.",
+  },
+  {
+    question: "How does annual billing work?",
+    answer:
+      "Pay once a year and save 14.99% versus 12 monthly payments. Core is $152.92/year ($12.74/mo billed annually). Pro is $305.93/year ($25.49/mo billed annually).",
   },
 ] as const;
 

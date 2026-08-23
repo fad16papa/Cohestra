@@ -1,7 +1,7 @@
 namespace Cohestra.Domain.Billing;
 
-/// <summary>Idempotent Stripe webhook processing ledger (platform-scoped, not tenant-filtered).</summary>
-public sealed class StripeWebhookEvent
+/// <summary>Idempotent Paddle webhook processing ledger (platform-scoped, not tenant-filtered).</summary>
+public sealed class PaddleWebhookEvent
 {
     public Guid Id { get; set; }
 

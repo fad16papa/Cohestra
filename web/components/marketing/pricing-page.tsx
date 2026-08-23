@@ -105,8 +105,8 @@ export function PricingPageContent() {
             Start free on Basic
           </Link>
           <p className="text-xs text-stone">
-            Prices are in USD and may be exclusive of applicable taxes. Stripe Tax is not enabled in
-            v1. Stripe Checkout may show a local currency estimate based on your location.
+            Prices are in USD. Paddle collects and remits applicable taxes as merchant of record.
+            Checkout may show a local currency estimate based on your location.
           </p>
         </MarketingReveal>
       </section>

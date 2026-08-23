@@ -17,6 +17,8 @@ source_verification: true
 
 # Market Research: Cohestra Enterprise Pricing Penetration
 
+> **Superseded as official list (2026-08-23).** This note studied a higher intro (**$29 / $79** monthly, **2 months free** annual). Current official launch list is Core **$14.99 / $152.92** and Pro **$29.99 / $305.93** (annual **14.99% off** 12× monthly). See PRD §13.3 / §13.9. Leave the findings below intact as historical market context.
+
 **Date:** 2026-07-16  
 **Author:** Admin  
 **Research Type:** Market — pricing & competitive positioning  

@@ -15,7 +15,7 @@ import {
   fetchTenantShell,
   type TenantShell,
 } from "@/lib/shell/tenant-shell-api";
-import { syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
+import { syncBillingFromProviderWithAuth } from "@/lib/billing/billing-api";
 
 const BILLING_SYNC_SESSION_KEY = "cohestra_billing_sync_attempted";
 
@@ -110,7 +110,7 @@ export function TenantShellProvider({ children }: { children: ReactNode }) {
 
     window.sessionStorage.setItem(BILLING_SYNC_SESSION_KEY, "1");
 
-    void syncBillingFromStripeWithAuth(authFetch)
+    void syncBillingFromProviderWithAuth(authFetch)
       .then(() => refreshShell())
       .catch(() => undefined);
   }, [authFetch, refreshShell, shell?.isTenantAdmin, status]);

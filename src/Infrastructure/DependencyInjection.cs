@@ -43,6 +43,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace Cohestra.Infrastructure;
@@ -113,7 +114,7 @@ public static class DependencyInjection
             configuration.GetSection(AuthOtpVerifyRateLimitOptions.SectionName));
         services.Configure<AuthResendOtpRateLimitOptions>(
             configuration.GetSection(AuthResendOtpRateLimitOptions.SectionName));
-        services.Configure<StripeSettings>(configuration.GetSection(StripeSettings.SectionName));
+        services.Configure<PaddleSettings>(configuration.GetSection(PaddleSettings.SectionName));
         services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
         services.Configure<SupportSettings>(configuration.GetSection(SupportSettings.SectionName));
         services.Configure<SupportSubmissionRateLimitOptions>(
@@ -149,8 +150,23 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ILegalComplianceService, LegalComplianceService>();
         services.AddScoped<ISelfServeSignupService, SelfServeSignupService>();
-        services.AddScoped<IBillingService, StripeBillingService>();
-        services.AddScoped<IStripeWebhookProcessor, StripeWebhookProcessor>();
+        services.AddHttpClient<IPaddleApiClient, PaddleApiClient>((sp, client) =>
+        {
+            var settings = sp.GetRequiredService<IOptions<PaddleSettings>>().Value;
+            client.BaseAddress = new Uri(
+                settings.IsSandbox
+                    ? "https://sandbox-api.paddle.com/"
+                    : "https://api.paddle.com/");
+            if (!string.IsNullOrWhiteSpace(settings.ApiKey))
+            {
+                client.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", settings.ApiKey.Trim());
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.AddScoped<IBillingService, PaddleBillingService>();
+        services.AddScoped<IPaddleWebhookProcessor, PaddleWebhookProcessor>();
         services.AddHostedService<BillingJobsHostedService>();
         services.Configure<FollowUpDigestOptions>(
             configuration.GetSection(FollowUpDigestOptions.SectionName));
