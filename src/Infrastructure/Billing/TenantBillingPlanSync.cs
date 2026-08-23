@@ -4,8 +4,7 @@ using Cohestra.Domain.Tenants;
 namespace Cohestra.Infrastructure.Billing;
 
 /// <summary>
-/// Merchant-agnostic tenant plan/billing field helpers used by jobs and notifications.
-/// Paddle subscription sync lands in Story 29.3.
+/// Merchant-agnostic tenant plan/billing field helpers used by jobs, notifications, and Paddle sync.
 /// </summary>
 public static class TenantBillingPlanSync
 {

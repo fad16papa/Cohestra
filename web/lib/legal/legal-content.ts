@@ -37,8 +37,8 @@ export const TERMS_SECTIONS: LegalSection[] = [
     id: "billing",
     title: "Plans & billing",
     paragraphs: [
-      "Paid plans are billed in USD. Prices shown on our pricing page may be exclusive of applicable taxes; Stripe Tax is not enabled in v1.",
-      "Trials, upgrades, and cancellations follow the plan terms presented at checkout or in the Stripe Customer Portal.",
+      "Paid plans are billed in USD. Paddle is the merchant of record and collects and remits applicable taxes.",
+      "Trials, upgrades, and cancellations follow the plan terms presented at checkout or in the billing portal.",
     ],
   },
   {

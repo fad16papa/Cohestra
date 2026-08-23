@@ -152,4 +152,4 @@ public sealed record BillingDetailsDto(
     BillingSubscriptionDetailsDto? Subscription,
     IReadOnlyList<BillingInvoiceDto> Invoices);
 
-public sealed record SetupIntentDto(string ClientSecret, string PublishableKey);
+public sealed record SetupIntentDto(string ClientSecret, string ClientToken);

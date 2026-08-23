@@ -29,7 +29,7 @@ import {
   updateBillingContactWithAuth,
   type BillingDetails,
 } from "@/lib/billing/billing-details-api";
-import { syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
+import { syncBillingFromProviderWithAuth } from "@/lib/billing/billing-api";
 import {
   formatScheduledChangeLabel,
   hasPendingPaidScheduleChange,
@@ -130,7 +130,7 @@ export function InAppBillingPanel({
   const refreshAll = async () => {
     setSyncing(true);
     try {
-      await syncBillingFromStripeWithAuth(authFetch);
+      await syncBillingFromProviderWithAuth(authFetch);
       await onRefreshShell();
       await loadDetails();
     } finally {
@@ -143,7 +143,7 @@ export function InAppBillingPanel({
       <div className="space-y-4">
         <UpgradePanel
           title="Upgrade your workspace"
-          description="Compare Core and Pro, choose monthly or yearly billing, then continue to Stripe Checkout to start your trial."
+          description="Compare Core and Pro, choose monthly or yearly billing, then continue to checkout to start your trial."
           requiredPlan="Core"
           isTenantAdmin
         />
@@ -178,7 +178,7 @@ export function InAppBillingPanel({
   const contact = details?.contact;
   const subscription = details?.subscription;
   const invoices = details?.invoices ?? [];
-  const stripeConfigured = details?.summary.stripeConfigured ?? false;
+  const billingConfigured = details?.summary.billingConfigured ?? false;
   const changePlanHref = `/billing/checkout?plan=${checkoutPlanParam(shellPlan)}&interval=${checkoutIntervalParam(details?.summary.billingInterval)}`;
   const hasActivePaidSubscription =
     shellBillingStatus === "Trialing"
@@ -262,14 +262,14 @@ export function InAppBillingPanel({
         ) : null}
       </div>
 
-      {!stripeConfigured ? (
-        <p className="text-sm text-text-muted-warm">Stripe is not configured in this environment.</p>
+      {!billingConfigured ? (
+        <p className="text-sm text-text-muted-warm">Billing is not configured in this environment.</p>
       ) : (
         <>
           <BillingSection title="Payment method">
             <p className="mb-3 text-sm text-text-muted-warm">
               Add your card once here. When you change plan, Cohestra uses this card on file — you
-              will not enter it again unless you continue to Stripe without a saved card.
+              will not enter it again unless you continue to checkout without a saved card.
             </p>
             {paymentMethod ? (
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -438,7 +438,7 @@ export function InAppBillingPanel({
               <p>
                 {hasActivePaidSubscription
                   ? "Compare Core and Pro or switch between monthly and yearly billing."
-                  : "Change plan or billing interval. If a payment method is saved above, subscription starts in Cohestra using that card. Otherwise you will continue to Stripe Checkout once to add a card."}
+                  : "Change plan or billing interval. If a payment method is saved above, subscription starts in Cohestra using that card. Otherwise you will continue to checkout once to add a card."}
               </p>
               <div className="flex flex-wrap gap-2">
                 <Link href={changePlanHref} className={buttonVariants({ size: "sm" })}>

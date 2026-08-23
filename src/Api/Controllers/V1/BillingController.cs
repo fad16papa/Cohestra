@@ -302,7 +302,7 @@ public class BillingController(
         try
         {
             var setup = await billingService.CreateSetupIntentAsync(tenantId, operatorEmail, cancellationToken);
-            return Ok(new SetupIntentResponse(setup.ClientSecret, setup.PublishableKey));
+            return Ok(new SetupIntentResponse(setup.ClientSecret, setup.ClientToken));
         }
         catch (UnauthorizedAccessException ex)
         {

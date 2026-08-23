@@ -155,10 +155,10 @@ dotnet test src/Api.IntegrationTests --filter "FullyQualifiedName~Resend_otp"
 
 ## Billing
 
-- [ ] Stripe **test** keys on UAT; **live** keys only on production droplet
-- [ ] `Stripe__WebhookSecret` matches Stripe Dashboard endpoint for deploy URL
-- [ ] Customer Portal return URL uses live HTTPS apex or tenant subdomain
-- [ ] Core / Pro price IDs match Stripe products (`Stripe__PriceCore*`, `Stripe__PricePro*`)
+- [ ] Paddle **sandbox** keys on UAT; **live** keys only on production droplet
+- [ ] `Paddle__WebhookSecret` matches the Paddle notification destination for `https://{domain}/api/v1/system/paddle/webhook`
+- [ ] Customer portal return URL uses live HTTPS apex or tenant subdomain
+- [ ] Core / Pro price IDs match Paddle prices (`Paddle__PriceCore*`, `Paddle__PricePro*`)
 - [ ] Trial / delinquency jobs run (Epic 14.8) — verify logs after test checkout
 
 ---
@@ -214,7 +214,7 @@ Repeat on at least one **Basic** and one **Pro** tenant (e.g. `creativorare`):
 | Dev | Cursor / Amelia | 2026-08-11 | Epic 19 production-readiness: catalog backfill migration, preflight + header verify scripts, CI Docker smoke, CSP enforce docs |
 | Dev | Cursor / Amelia | 2026-07-31 | Epic 17 P1 hardening merged (`23875d3`); SM-1 + abuse tests on main |
 | Operator | | | Multi-tenant UAT on local Docker + droplet |
-| PM | | | Epic 19 stories 19.1–19.5 ops gates remain (reCAPTCHA keys, droplet, Stripe UAT, operator sign-off) |
+| PM | | | Epic 19 stories 19.1–19.5 ops gates remain (reCAPTCHA keys, droplet, Paddle UAT, operator sign-off) |
 
 ---
 

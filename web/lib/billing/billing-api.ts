@@ -20,8 +20,8 @@ export type BillingSummary = {
   billingInterval: string | null;
   trialEndsAt: string | null;
   hasConsumedTrial: boolean;
-  stripeConfigured: boolean;
-  publishableKey: string | null;
+  billingConfigured: boolean;
+  clientToken: string | null;
   trialPeriodDays: number;
   isComplimentary: boolean;
   usage: BillingUsage | null;
@@ -90,7 +90,7 @@ export async function fetchBillingSummaryWithAuth(
   return mapBillingSummary(raw);
 }
 
-export async function syncBillingFromStripeWithAuth(
+export async function syncBillingFromProviderWithAuth(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>,
   checkoutSessionId?: string | null
 ): Promise<BillingSummary> {
@@ -226,12 +226,12 @@ export function mapBillingSummary(raw: Record<string, unknown>): BillingSummary 
         ? String(raw.trialEndsAt ?? raw.TrialEndsAt)
         : null,
     hasConsumedTrial: Boolean(raw.hasConsumedTrial ?? raw.HasConsumedTrial),
-    stripeConfigured: Boolean(
-      raw.billingConfigured ?? raw.BillingConfigured ?? raw.stripeConfigured ?? raw.StripeConfigured,
+    billingConfigured: Boolean(
+      raw.billingConfigured ?? raw.BillingConfigured,
     ),
-    publishableKey:
-      typeof (raw.clientToken ?? raw.ClientToken ?? raw.publishableKey ?? raw.PublishableKey) === "string"
-        ? String(raw.clientToken ?? raw.ClientToken ?? raw.publishableKey ?? raw.PublishableKey)
+    clientToken:
+      typeof (raw.clientToken ?? raw.ClientToken) === "string"
+        ? String(raw.clientToken ?? raw.ClientToken)
         : null,
     trialPeriodDays: Number(raw.trialPeriodDays ?? raw.TrialPeriodDays ?? 30),
     isComplimentary: Boolean(raw.isComplimentary ?? raw.IsComplimentary),

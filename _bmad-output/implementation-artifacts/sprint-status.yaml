@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-22T15:00:00Z
+# last_updated: 2026-08-23T06:00:00Z
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -247,13 +247,13 @@ development_status:
   18-4-redis-outage-rate-limiter-policy: done
   epic-18-retrospective: done
 
-  # Epic 19 — BLOCKED 2026-08-22 pending Epic 29 (Paddle replaces Stripe)
-  epic-19: blocked
-  19-1-uat-droplet-deploy-and-smoke: blocked
-  19-2-https-edge-security-header-verify: blocked
-  19-3-recaptcha-production-enablement: blocked
-  19-4-paddle-billing-uat-on-droplet: blocked  # was Stripe UAT; rewrite after 29.6
-  19-5-operator-core-flows-launch-signoff: blocked
+  # Epic 19 — unblocked 2026-08-23 after Epic 29. Do not put Stripe keys on the droplet.
+  epic-19: in-progress
+  19-1-uat-droplet-deploy-and-smoke: ready-for-dev
+  19-2-https-edge-security-header-verify: ready-for-dev
+  19-3-recaptcha-production-enablement: ready-for-dev
+  19-4-paddle-billing-uat-on-droplet: ready-for-dev
+  19-5-operator-core-flows-launch-signoff: ready-for-dev
   epic-19-retrospective: optional
 
   epic-20: done
@@ -289,16 +289,16 @@ development_status:
   25-5-intro-copy-section-headers: review
   epic-25-retrospective: optional
 
-  # Epic 29 — Paddle Billing Migration (Stripe Removal). Adapter-only. Hold Epic 19 until 29.7.
+  # Epic 29 — Paddle Billing Migration (Stripe Removal). Adapter-only.
   # Source: planning-artifacts/epic-29-paddle-billing.md
-  epic-29: in-progress
+  epic-29: done
   29-1-paddle-provider-spine: done
-  29-2-core-pro-checkout-and-trial: backlog
-  29-3-paddle-webhooks-and-tenant-sync: backlog
-  29-4-in-app-billing-details-and-payment-method: backlog
-  29-5-portal-period-end-cancel-resume-schedule: backlog
-  29-6-stripe-excision-and-rewrite-19-4: backlog
-  29-7-paddle-sandbox-uat-epic-14-regression: backlog
+  29-2-core-pro-checkout-and-trial: done
+  29-3-paddle-webhooks-and-tenant-sync: done
+  29-4-in-app-billing-details-and-payment-method: done
+  29-5-portal-period-end-cancel-resume-schedule: done
+  29-6-stripe-excision-and-rewrite-19-4: done
+  29-7-paddle-sandbox-uat-epic-14-regression: done
   epic-29-retrospective: optional
 
 action_items:

@@ -80,7 +80,7 @@ public sealed record BillingDetailsResponse(
     BillingSubscriptionDetailsResponse? Subscription,
     IReadOnlyList<BillingInvoiceResponse> Invoices);
 
-public sealed record SetupIntentResponse(string ClientSecret, string PublishableKey);
+public sealed record SetupIntentResponse(string ClientSecret, string ClientToken);
 
 public sealed record ConfirmSetupIntentRequest(string SetupIntentId);
 

@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Cohestra.Infrastructure.Billing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,13 +28,14 @@ public sealed class PaddleWebhookController(
             return BadRequest("Missing Paddle-Signature header.");
         }
 
-        // Signature HMAC verification lands in Story 29.3. Presence check keeps the route wired.
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync(cancellationToken);
-        var (eventId, eventType) = TryReadEventMeta(json);
+        if (!PaddleSignature.TryValidate(webhookSecret, signatureHeader, json, DateTimeOffset.UtcNow, out var reason))
+        {
+            logger.LogWarning("Paddle webhook signature rejected: {Reason}", reason);
+            return BadRequest("Invalid Paddle-Signature.");
+        }
 
-        logger.LogDebug("Paddle webhook received ({EventType}, {EventId}).", eventType, eventId);
-
-        var result = await webhookProcessor.ProcessAsync(eventId, eventType, cancellationToken);
+        var result = await webhookProcessor.ProcessAsync(json, cancellationToken);
         if (result.Duplicate)
         {
             return Ok(new { received = true, duplicate = true });
@@ -43,30 +43,4 @@ public sealed class PaddleWebhookController(
 
         return Ok(new { received = true, processed = result.Processed, detail = result.Detail });
     }
-
-    private static (string EventId, string EventType) TryReadEventMeta(string json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return (string.Empty, string.Empty);
-        }
-
-        try
-        {
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-            var eventId = ReadString(root, "event_id") ?? ReadString(root, "notification_id") ?? string.Empty;
-            var eventType = ReadString(root, "event_type") ?? string.Empty;
-            return (eventId, eventType);
-        }
-        catch (JsonException)
-        {
-            return (string.Empty, string.Empty);
-        }
-    }
-
-    private static string? ReadString(JsonElement root, string name) =>
-        root.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String
-            ? value.GetString()
-            : null;
 }

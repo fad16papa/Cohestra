@@ -186,7 +186,7 @@ export function SignupPageContent() {
             <div className="mt-3 space-y-2 text-sm text-stone">
               <p>
                 You chose <span className="font-medium text-ink">{plan}</span> ({billingInterval}).
-                After email verification you&apos;ll continue to Stripe Checkout for a 30-day trial.
+                After email verification you&apos;ll continue to checkout for a 30-day trial.
               </p>
               <p>{trialDisclaimer}</p>
             </div>

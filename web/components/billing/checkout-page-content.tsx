@@ -25,6 +25,10 @@ import {
 } from "@/lib/billing/billing-api";
 import { cancelScheduledPlanChangeWithAuth } from "@/lib/billing/billing-details-api";
 import {
+  extractPaddleTransactionId,
+  openPaddleCheckoutOverlay,
+} from "@/lib/billing/paddle-checkout";
+import {
   checkoutActionLabel,
   checkoutIntroCopy,
   checkoutPriceCaption,
@@ -240,6 +244,27 @@ function CheckoutContent() {
       }
     }
 
+    if (checkout.result.completedInApp) {
+      window.location.href = checkout.result.checkoutUrl;
+      return;
+    }
+
+    const clientToken = billingSummary?.clientToken;
+    const transactionId = extractPaddleTransactionId(checkout.result.checkoutUrl);
+    if (clientToken && transactionId) {
+      try {
+        await openPaddleCheckoutOverlay({
+          clientToken,
+          transactionId,
+          successUrl: `${window.location.origin}/dashboard?billing=success&session_id=${transactionId}`,
+          onClosed: () => setStarting(false),
+        });
+        return;
+      } catch {
+        // Fall through to hosted checkout redirect.
+      }
+    }
+
     window.location.href = checkout.result.checkoutUrl;
   }
 
@@ -396,7 +421,7 @@ function CheckoutContent() {
     void startCheckout(effectivePlan, interval);
   }
 
-  // Plan + interval already chosen on the upgrade gate — go straight to Stripe (upgrades only).
+  // Plan + interval already chosen on the upgrade gate — go straight to checkout (upgrades only).
   if (autoStart && !canceled && plan && !isDeferredSelection) {
     const meta = MARKETING_PLANS.find((p) => p.id === plan);
     const adjustHref = `/billing/checkout?plan=${plan}&interval=${interval}`;
@@ -596,8 +621,7 @@ function CheckoutContent() {
           role="status"
           className="rounded-xl border border-border-warm bg-muted/30 px-4 py-3 text-sm text-text-muted-warm"
         >
-          This change applies immediately. Stripe will prorate any price difference on your next
-          invoice.
+          This change applies immediately. Any price difference is prorated on your next invoice.
         </p>
       ) : null}
 
@@ -701,7 +725,7 @@ function CheckoutContent() {
             <p className="text-sm text-text-muted-warm">{priceCaption}</p>
             <p className="mt-1 text-lg font-semibold text-text-warm">{priceLabel}</p>
             <p className="mt-1 text-xs text-text-muted-warm">
-              Billed in USD. Stripe may show a local currency estimate at checkout.
+              Billed in USD. Checkout may show a local currency estimate based on your location.
             </p>
           </div>
           <Button

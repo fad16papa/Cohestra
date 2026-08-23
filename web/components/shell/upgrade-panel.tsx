@@ -35,7 +35,7 @@ export function buildCheckoutHref(
   planId: "core" | "pro",
   interval: BillingIntervalChoice
 ): string {
-  // start=1 skips the duplicate plan chooser and opens Stripe immediately.
+  // start=1 skips the duplicate plan chooser and opens checkout immediately.
   return `/billing/checkout?plan=${planId}&interval=${interval}&start=1`;
 }
 

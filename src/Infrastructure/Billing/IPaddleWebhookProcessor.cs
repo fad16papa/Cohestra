@@ -3,8 +3,7 @@ namespace Cohestra.Infrastructure.Billing;
 public interface IPaddleWebhookProcessor
 {
     Task<PaddleWebhookProcessResult> ProcessAsync(
-        string eventId,
-        string eventType,
+        string rawJson,
         CancellationToken cancellationToken = default);
 }
 

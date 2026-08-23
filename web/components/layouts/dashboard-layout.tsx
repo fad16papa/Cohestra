@@ -13,7 +13,7 @@ import { AdminShellProvider } from "@/components/layouts/admin-shell-context";
 import { BillingBannerBar } from "@/components/shell/billing-banner";
 import { TenantShellProvider, useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { useToast } from "@/components/ui/toast-provider";
-import { syncBillingFromStripeWithAuth } from "@/lib/billing/billing-api";
+import { syncBillingFromProviderWithAuth } from "@/lib/billing/billing-api";
 import { cn } from "@/lib/utils";
 
 type DashboardLayoutProps = {
@@ -29,7 +29,10 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
 
   useEffect(() => {
     const billingSuccess = searchParams.get("billing") === "success";
-    const checkoutSessionId = searchParams.get("session_id");
+    const checkoutSessionId =
+      searchParams.get("session_id")
+      ?? searchParams.get("_ptxn")
+      ?? searchParams.get("transaction_id");
     const billingMessage = searchParams.get("billing_message");
     if (!billingSuccess && !checkoutSessionId) {
       return;
@@ -39,7 +42,7 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
 
     async function syncAfterCheckout() {
       try {
-        await syncBillingFromStripeWithAuth(authFetch, checkoutSessionId);
+        await syncBillingFromProviderWithAuth(authFetch, checkoutSessionId);
       } catch {
         // Webhook may have already synced; still refresh shell below.
       }
