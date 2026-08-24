@@ -246,6 +246,7 @@ public sealed class TenantResolutionMiddlewareTests
         Assert.True(TenantResolutionMiddleware.IsSkipTenantRequirementPath("/api/v1/system/info"));
         Assert.True(TenantResolutionMiddleware.IsPaddleWebhookPath("/api/v1/system/paddle/webhook"));
         Assert.True(TenantResolutionMiddleware.IsSkipTenantRequirementPath("/api/v1/system/paddle/webhook"));
+        Assert.True(TenantResolutionMiddleware.IsSkipTenantRequirementPath("/api/v1/system/paddle/checkout-return"));
         Assert.False(TenantResolutionMiddleware.IsPaddleWebhookPath("/api/v1/system/stripe/webhook"));
 
         var context = CreateContext(

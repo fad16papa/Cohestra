@@ -162,6 +162,7 @@ if (loadTestSeedEnabled)
 }
 
 await LogStartupLoginAccountsAsync(app);
+LogPaddleDefaultPaymentLink(app);
 
 app.UseExceptionHandler();
 app.UseCors();
@@ -300,6 +301,21 @@ static void LogStartupSeedConfiguration(WebApplication app)
         config.GetValue("DemoDataSeed:Enabled", false),
         config.GetValue("LoadTestSeed:Enabled", false),
         config.GetValue("LoadTestSeed:ForceReseed", false));
+}
+
+static void LogPaddleDefaultPaymentLink(WebApplication app)
+{
+    if (string.IsNullOrWhiteSpace(app.Configuration["Paddle:ApiKey"]))
+    {
+        return;
+    }
+
+    var publicBase = app.Configuration["PublicWeb:BaseUrl"] ?? "https://cohestra.app";
+    var link = TenantPublicWebUrlBuilder.BuildPaddleDefaultPaymentLink(publicBase);
+    app.Logger.LogInformation(
+        "Paddle Checkout settings → Default payment link must be {DefaultPaymentLink} " +
+        "(marketing apex, no tenant slug). Local Docker uses HTTP; production uses https://cohestra.app.",
+        link);
 }
 
 static async Task LogStartupLoginAccountsAsync(WebApplication app)

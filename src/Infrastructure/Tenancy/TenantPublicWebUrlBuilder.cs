@@ -69,4 +69,60 @@ public static class TenantPublicWebUrlBuilder
         var normalizedPath = path.StartsWith('/') ? path : $"/{path}";
         return $"{origin.TrimEnd('/')}{normalizedPath}";
     }
+
+    /// <summary>
+    /// Marketing apex origin from <paramref name="publicBaseUrl"/> — never a tenant slug host.
+    /// Local Docker: <c>http://localhost:8088</c>. Production: <c>https://cohestra.app</c>.
+    /// </summary>
+    public static string BuildMarketingApexOrigin(string publicBaseUrl)
+    {
+        if (!Uri.TryCreate(publicBaseUrl.Trim(), UriKind.Absolute, out var baseUri))
+        {
+            return "https://cohestra.app";
+        }
+
+        var scheme = baseUri.Scheme;
+        var host = baseUri.Host;
+        var portSuffix = baseUri.IsDefaultPort ? string.Empty : $":{baseUri.Port}";
+
+        if (host is "localhost" or "127.0.0.1")
+        {
+            return $"{scheme}://{host}{portSuffix}";
+        }
+
+        if (host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase)
+            && !host.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"{scheme}://localhost{portSuffix}";
+        }
+
+        if (host.EndsWith(".nip.io", StringComparison.OrdinalIgnoreCase))
+        {
+            var nipHost = host.StartsWith("www.", StringComparison.OrdinalIgnoreCase)
+                ? host[4..]
+                : host;
+            var parts = nipHost.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (parts.Length >= 4)
+            {
+                return $"{scheme}://{string.Join('.', parts.Skip(1))}{portSuffix}";
+            }
+
+            return $"{scheme}://{nipHost}{portSuffix}";
+        }
+
+        if (host.Equals("cohestra.app", StringComparison.OrdinalIgnoreCase)
+            || host.Equals("www.cohestra.app", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith(".cohestra.app", StringComparison.OrdinalIgnoreCase))
+        {
+            return "https://cohestra.app";
+        }
+
+        return baseUri.GetLeftPart(UriPartial.Authority);
+    }
+
+    /// <summary>
+    /// Paddle Checkout → Default payment link. One URL per Paddle environment, never <c>{slug}.</c>.
+    /// </summary>
+    public static string BuildPaddleDefaultPaymentLink(string publicBaseUrl) =>
+        $"{BuildMarketingApexOrigin(publicBaseUrl).TrimEnd('/')}/billing/paddle-return";
 }
