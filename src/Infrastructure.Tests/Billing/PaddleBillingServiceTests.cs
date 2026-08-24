@@ -52,6 +52,27 @@ public sealed class PaddleBillingServiceTests
     }
 
     [Fact]
+    public async Task Checkout_reuses_existing_paddle_customer_for_the_same_email()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db);
+        var client = new FakePaddleApiClient
+        {
+            CreateCustomerShouldFail = true,
+            CustomersByEmail =
+            {
+                new PaddleCustomer { Id = "ctm_existing", Email = "admin@example.com", Name = "CreativoRare" },
+            },
+        };
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var session = await service.CreateCheckoutSessionAsync(Checkout(tenant.Id));
+
+        Assert.Contains("paddle.com", session.CheckoutUrl, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("ctm_existing", db.Tenants.Single(t => t.Id == tenant.Id).PaddleCustomerId);
+    }
+
+    [Fact]
     public async Task Checkout_one_trial_rule_charges_immediately_on_second_upgrade()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();

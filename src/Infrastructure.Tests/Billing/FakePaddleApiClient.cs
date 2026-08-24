@@ -51,12 +51,21 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
 
     public string? LastUpdateEffectiveFrom { get; private set; }
 
+    public List<PaddleCustomer> CustomersByEmail { get; } = [];
+
+    public bool CreateCustomerShouldFail { get; set; }
+
     public Task<PaddleCustomer> CreateCustomerAsync(
         string email,
         string name,
         IReadOnlyDictionary<string, string> customData,
         CancellationToken cancellationToken = default)
     {
+        if (CreateCustomerShouldFail)
+        {
+            throw new PaddleApiException("customer email conflicts with existing customer", 409, "conflict");
+        }
+
         Customer = new PaddleCustomer
         {
             Id = string.IsNullOrWhiteSpace(Customer.Id) ? "ctm_test" : Customer.Id,
@@ -65,6 +74,12 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
         };
         return Task.FromResult(Customer);
     }
+
+    public Task<PaddleCustomer?> FindCustomerByEmailAsync(
+        string email,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(CustomersByEmail.FirstOrDefault(customer =>
+            string.Equals(customer.Email, email, StringComparison.OrdinalIgnoreCase)));
 
     public Task<PaddleCustomer?> GetCustomerAsync(string customerId, CancellationToken cancellationToken = default) =>
         Task.FromResult<PaddleCustomer?>(Customer.Id == customerId ? Customer : Customer);

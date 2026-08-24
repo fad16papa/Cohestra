@@ -45,6 +45,17 @@ internal sealed class PaddleApiClient : IPaddleApiClient
             },
             cancellationToken);
 
+    public async Task<PaddleCustomer?> FindCustomerByEmailAsync(
+        string email,
+        CancellationToken cancellationToken = default)
+    {
+        var path =
+            $"customers?email={Uri.EscapeDataString(email.Trim())}&status=active,archived&per_page=1";
+        var matches = await SendListAsync<PaddleCustomer>(path, cancellationToken);
+        return matches.FirstOrDefault(customer =>
+            string.Equals(customer.Email, email.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+
     public Task<PaddleCustomer?> GetCustomerAsync(
         string customerId,
         CancellationToken cancellationToken = default) =>
