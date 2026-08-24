@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Check, Lock } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
-import { MARKETING_PLANS, type MarketingPlan } from "@/lib/marketing/pricing-plans";
+import { ANNUAL_SAVINGS_LABEL, MARKETING_PLANS, type MarketingPlan } from "@/lib/marketing/pricing-plans";
 import { cn } from "@/lib/utils";
 
 export type UpgradeRequiredPlan = "Core" | "Pro";
@@ -87,7 +87,7 @@ function IntervalToggle({
           >
             {value === "monthly" ? "Monthly" : "Yearly"}
             {value === "annual" ? (
-              <span className="ml-1.5 text-xs font-normal text-primary">Save ~17%</span>
+              <span className="ml-1.5 text-xs font-normal text-primary">{ANNUAL_SAVINGS_LABEL}</span>
             ) : null}
           </button>
         );

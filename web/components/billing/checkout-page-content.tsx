@@ -46,7 +46,7 @@ import {
 import { getDowngradeLimitWarnings } from "@/lib/billing/downgrade-limit-warnings";
 import { exchangeAuthHandoff } from "@/lib/auth-handoff";
 import { setAuthSession } from "@/lib/auth-storage";
-import { MARKETING_PLANS } from "@/lib/marketing/pricing-plans";
+import { ANNUAL_SAVINGS_LABEL, MARKETING_PLANS } from "@/lib/marketing/pricing-plans";
 import { cn } from "@/lib/utils";
 
 function priceFor(planId: PaidPlanId, interval: BillingIntervalId): string {
@@ -652,7 +652,7 @@ function CheckoutContent() {
                 >
                   {value === "monthly" ? "Monthly" : "Yearly"}
                   {value === "annual" ? (
-                    <span className="ml-1.5 text-xs font-normal text-primary">Save ~17%</span>
+                    <span className="ml-1.5 text-xs font-normal text-primary">{ANNUAL_SAVINGS_LABEL}</span>
                   ) : null}
                 </button>
               );

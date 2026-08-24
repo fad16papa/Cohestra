@@ -1,5 +1,9 @@
 export type MarketingPlanId = "basic" | "core" | "pro" | "enterprise";
 
+/** Official annual discount vs 12× monthly (PRD §13.3). Not the old 2-months-free ~17%. */
+export const ANNUAL_SAVINGS_PERCENT = "14.99%";
+export const ANNUAL_SAVINGS_LABEL = `Save ${ANNUAL_SAVINGS_PERCENT}`;
+
 export type MarketingPlan = {
   id: MarketingPlanId;
   name: string;
