@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { marketingAtelierButtonClass, marketingCardClass } from "@/components/marketing/marketing-shell";
 import { MarketingReveal, marketingRevealDelay } from "@/components/marketing/marketing-reveal";
-import { MARKETING_PLANS } from "@/lib/marketing/pricing-plans";
+import { ANNUAL_SAVINGS_LABEL, MARKETING_PLANS } from "@/lib/marketing/pricing-plans";
 import { cn } from "@/lib/utils";
 
 export type PricingInterval = "monthly" | "annual";
@@ -53,7 +53,7 @@ export function PricingIntervalToggle({
           >
             {value === "monthly" ? "Monthly" : "Yearly"}
             {value === "annual" ? (
-              <span className="ml-1.5 text-xs font-medium text-lagoon">Save ~17%</span>
+              <span className="ml-1.5 text-xs font-medium text-lagoon">{ANNUAL_SAVINGS_LABEL}</span>
             ) : null}
           </button>
         );
