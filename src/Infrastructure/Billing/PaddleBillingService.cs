@@ -1068,11 +1068,19 @@ internal sealed class PaddleBillingService(
         {
             try
             {
-                var customer = await paddleClient.CreateCustomerAsync(
+                var existingByEmail = await paddleClient.FindCustomerByEmailAsync(
                     normalizedEmail,
-                    tenant.Name,
-                    customData,
                     cancellationToken);
+                var customer = existingByEmail;
+                if (customer is null)
+                {
+                    customer = await paddleClient.CreateCustomerAsync(
+                        normalizedEmail,
+                        tenant.Name,
+                        customData,
+                        cancellationToken);
+                }
+
                 if (string.IsNullOrWhiteSpace(customer.Id))
                 {
                     throw new InvalidOperationException("Paddle did not return a customer id.");
@@ -1086,6 +1094,12 @@ internal sealed class PaddleBillingService(
             catch (PaddleApiException ex)
             {
                 logger.LogWarning(ex, "Paddle customer creation failed for tenant {TenantId}", tenant.Id);
+                if (ex.StatusCode is 401 or 403)
+                {
+                    throw new InvalidOperationException(
+                        "Paddle API key is invalid or missing permission to create customers.");
+                }
+
                 throw new InvalidOperationException("Could not create a billing customer for this workspace.");
             }
         }

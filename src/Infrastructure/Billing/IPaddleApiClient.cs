@@ -8,6 +8,10 @@ internal interface IPaddleApiClient
         IReadOnlyDictionary<string, string> customData,
         CancellationToken cancellationToken = default);
 
+    Task<PaddleCustomer?> FindCustomerByEmailAsync(
+        string email,
+        CancellationToken cancellationToken = default);
+
     Task<PaddleCustomer?> GetCustomerAsync(string customerId, CancellationToken cancellationToken = default);
 
     Task<PaddleCustomer> UpdateCustomerAsync(
