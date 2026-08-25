@@ -1,5 +1,5 @@
 import { parseTenantSlugFromOrigin } from "@/lib/tenant-host";
-import { buildTenantDashboardUrl } from "@/lib/signup/signup-api";
+import { buildTenantDashboardUrl } from "@/lib/tenant-dashboard-url";
 
 function isProductionPublicHost(hostname: string): boolean {
   const host = hostname.toLowerCase();

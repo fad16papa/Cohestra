@@ -56,3 +56,17 @@ Or Settings → Billing → Refresh. Keep the webhook tunnel running.
 7. After pay, Paddle opens `https://YOUR-NGROK-HOST/billing/paddle-return?_ptxn=txn_…`. Cohestra looks up the tenant and sends you to `http://creativorare.localhost:8088/dashboard?billing=success&session_id=txn_…`.
 
 Production Default payment link stays `https://cohestra.app/billing/paddle-return`. Do not put a tenant slug in this field.
+
+## Login stays on `{slug}.localhost`
+
+Ngrok is only for Paddle HTTPS return and webhooks. The operator app still lives on `http://{slug}.localhost:8088`.
+
+If you sign in (or finish signup) on the ngrok host, Cohestra sends you to `{slug}.localhost` with a short-lived `?handoff=` code. It does **not** send you to `{slug}.cohestra.app` — that hostname is production DNS and is `NXDOMAIN` until public launch.
+
+If a tab shows `DNS_PROBE_FINISHED_NXDOMAIN` on `https://{slug}.cohestra.app/dashboard?handoff=…`, discard it and open:
+
+```
+http://{slug}.localhost:8088/login
+```
+
+The `handoff=` token expires in about two minutes. Do not reuse a dead production URL.
