@@ -313,8 +313,9 @@ static void LogPaddleDefaultPaymentLink(WebApplication app)
     var publicBase = app.Configuration["PublicWeb:BaseUrl"] ?? "https://cohestra.app";
     var link = TenantPublicWebUrlBuilder.BuildPaddleDefaultPaymentLink(publicBase);
     app.Logger.LogInformation(
-        "Paddle Checkout settings → Default payment link must be {DefaultPaymentLink} " +
-        "(marketing apex, no tenant slug). Local Docker uses HTTP; production uses https://cohestra.app.",
+        "Paddle Checkout settings → Default payment link path is {DefaultPaymentLink} " +
+        "(marketing apex, no tenant slug). Paddle stores this as HTTPS even for localhost; " +
+        "local overlay checkout does not redirect there. Production: https://cohestra.app/billing/paddle-return.",
         link);
 }
 

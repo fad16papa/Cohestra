@@ -157,7 +157,7 @@ dotnet test src/Api.IntegrationTests --filter "FullyQualifiedName~Resend_otp"
 
 - [ ] Paddle **sandbox** keys on UAT; **live** keys only on production droplet
 - [ ] `Paddle__WebhookSecret` matches the Paddle notification destination for `https://{domain}/api/v1/system/paddle/webhook`
-- [ ] Paddle Checkout **Default payment link** is the marketing apex `/billing/paddle-return` (local: `http://localhost:8088/billing/paddle-return`; production: `https://cohestra.app/billing/paddle-return`) — never a tenant slug and never `https://localhost`
+- [ ] Paddle Checkout **Default payment link** is the marketing apex `/billing/paddle-return` (Paddle stores HTTPS always; sandbox overlay UAT can leave `https://localhost:8088/billing/paddle-return`; hosted local UAT uses the ngrok HTTPS apex; production: `https://cohestra.app/billing/paddle-return`) — never a tenant slug
 - [ ] Customer portal return URL uses live HTTPS apex or tenant subdomain
 - [ ] Core / Pro price IDs match Paddle prices (`Paddle__PriceCore*`, `Paddle__PricePro*`)
 - [ ] Trial / delinquency jobs run (Epic 14.8) — verify logs after test checkout

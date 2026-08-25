@@ -22,7 +22,7 @@ Infrastructure tests cover: first checkout + trial disclaimer, one-trial immedia
 
 Use local Docker with Paddle sandbox keys, four `pri_` prices, and a tunnel to `/api/v1/system/paddle/webhook`.
 
-Paddle Checkout **Default payment link** (sandbox): `http://localhost:8088/billing/paddle-return` — HTTP, marketing apex, **no tenant slug**. Production will use `https://cohestra.app/billing/paddle-return`. Do not set `{slug}.localhost` or `https://localhost:8088/pricing`.
+Paddle Checkout **Default payment link** (sandbox): Paddle **forces HTTPS**, so `http://localhost:8088/...` reverts to `https://localhost:8088/billing/paddle-return` on Save. That is expected. Overlay checkout on local Docker does not redirect there (rebuild **web** from main). For hosted-checkout return, use `https://{ngrok-host}/billing/paddle-return`. Production: `https://cohestra.app/billing/paddle-return`. Never a tenant slug.
 
 Catalog must match the 2026-08-23 launch list (PRD §13.3): Core **$14.99 / $152.92**, Pro **$29.99 / $305.93**, **30-day trial** on all four paid prices. Annual is **14.99% off** 12× monthly — not the sandbox $153.99 / $306.99 drafts.
 
