@@ -1,6 +1,9 @@
 import type { AuthSession } from "@/lib/auth-storage";
 import { getPublicApiBaseUrl } from "@/lib/api";
-import { buildTenantDashboardUrl } from "@/lib/signup/signup-api";
+import {
+  buildTenantDashboardUrl,
+  type PublicHostLocation,
+} from "@/lib/tenant-dashboard-url";
 
 export async function exchangeAuthHandoff(code: string): Promise<AuthSession | null> {
   const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/handoff/exchange`, {
@@ -35,9 +38,11 @@ export async function exchangeAuthHandoff(code: string): Promise<AuthSession | n
 
 export function buildTenantLoginHandoffUrl(
   tenantSlug: string,
-  handoffCode: string
+  handoffCode: string,
+  location?: PublicHostLocation,
+  apiUrl?: string
 ): string {
-  const url = new URL(buildTenantDashboardUrl(tenantSlug));
+  const url = new URL(buildTenantDashboardUrl(tenantSlug, location, apiUrl));
   url.searchParams.set("handoff", handoffCode);
   return url.toString();
 }

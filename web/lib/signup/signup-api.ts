@@ -266,40 +266,4 @@ export function getTestCaptchaToken(): string {
   return process.env.NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN?.trim() || "test-captcha-pass";
 }
 
-export function buildTenantDashboardUrl(slug: string): string {
-  if (typeof window !== "undefined") {
-    const { hostname, protocol, port, origin } = window.location;
-    const portSuffix = port ? `:${port}` : "";
-
-    if (hostname.endsWith(".nip.io")) {
-      const nipHost = hostname.startsWith("www.") ? hostname.slice(4) : hostname;
-      const parts = nipHost.split(".");
-      // Tenant host: slug.129-212-235-2.nip.io (4 labels)
-      if (parts.length >= 4) {
-        return `${origin}/dashboard`;
-      }
-
-      // Marketing apex: 129-212-235-2.nip.io (3 labels)
-      if (parts.length === 3) {
-        return `${protocol}//${slug}.${parts[0]}.nip.io/dashboard`;
-      }
-    }
-
-    if (
-      hostname === "localhost"
-      || hostname === "127.0.0.1"
-      || (hostname.endsWith(".localhost") && hostname !== "localhost")
-    ) {
-      return `${protocol}//${slug}.localhost${portSuffix}/dashboard`;
-    }
-
-    if (hostname.endsWith(".cohestra.app")) {
-      const apex = hostname === "cohestra.app" || hostname === "www.cohestra.app"
-        ? "cohestra.app"
-        : hostname.split(".").slice(-2).join(".");
-      return `https://${slug}.${apex}/dashboard`;
-    }
-  }
-
-  return `https://${slug}.cohestra.app/dashboard`;
-}
+export { buildTenantDashboardUrl } from "@/lib/tenant-dashboard-url";
