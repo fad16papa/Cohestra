@@ -32,18 +32,19 @@ Pass `custom_data.tenant_id` and `custom_data.tenant_slug` on every checkout tra
 
 Paddle allows **one** default payment link per environment (sandbox vs live). It must be the **marketing apex**, not a tenant slug host. After hosted checkout Paddle appends `?_ptxn=txn_…`; Cohestra looks up `custom_data.tenant_id` and redirects to `{slug}.…/dashboard`.
 
-**Paddle always stores this URL as HTTPS.** Saving `http://localhost:8088/...` will revert to `https://localhost:8088/...` — that is Paddle, not a Cohestra bug. Local nginx has no TLS, so `https://localhost:8088` will show `ERR_SSL_PROTOCOL_ERROR` if the browser is sent there.
+**Paddle always stores this URL as HTTPS.** Saving `http://localhost:8088/...` will revert to `https://localhost:8088/...` — that is Paddle, not a Cohestra bug. Local nginx has no TLS, so `https://localhost:8088` is `ERR_SSL_PROTOCOL_ERROR`.
+
+Local sandbox: use the **ngrok HTTPS** apex (same tunnel as the webhook) and set `NEXT_PUBLIC_PADDLE_RETURN_ORIGIN`. Step-by-step: [paddle-sandbox-local-checkout.md](./paddle-sandbox-local-checkout.md).
 
 | Environment | Default payment link |
 |---|---|
-| Local Docker overlay UAT | Leave Paddle’s HTTPS localhost value (required to *create* transactions). Overlay checkout does **not** redirect there after pay. |
-| Local Docker hosted-checkout UAT | `https://{ngrok-host}/billing/paddle-return` (same tunnel as the webhook). Paddle’s HTTPS rewrite then hits a real certificate; Cohestra redirects to `{slug}.localhost`. |
+| Local Docker sandbox | `https://{ngrok-host}/billing/paddle-return` |
 | Production | `https://cohestra.app/billing/paddle-return` |
 | nip.io UAT | `https://{ip-dashed}.nip.io/billing/paddle-return` |
 
 Do **not** put `{slug}.cohestra.app` or `{slug}.localhost` in this field — every workspace would return to that one slug.
 
-Overlay on local HTTP omits Paddle.js `successUrl` and navigates in `checkout.completed` to `http://{slug}.localhost:8088/dashboard`. Rebuild **web** from current `main` for that behavior. If a tab still lands on `https://localhost:8088/billing/paddle-return`, recover with:
+If a tab still lands on `https://localhost:8088/billing/paddle-return`, recover with:
 
 `http://{slug}.localhost:8088/dashboard?billing=success&session_id=txn_…`
 

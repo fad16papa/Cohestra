@@ -4,6 +4,7 @@ import {
   buildPaddleCheckoutReturnUrl,
   isPaddleTransactionId,
   resolvePaddleApexReturnRedirectUrl,
+  resolvePaddleOverlaySuccessUrl,
   sanitizePaddleOverlaySuccessUrl,
 } from "@/lib/billing/paddle-return";
 
@@ -78,6 +79,37 @@ describe("paddle-return", () => {
     expect(
       sanitizePaddleOverlaySuccessUrl(
         "https://creativorare.cohestra.app/dashboard?billing=success&session_id=txn_01abc"
+      )
+    ).toBe(
+      "https://creativorare.cohestra.app/dashboard?billing=success&session_id=txn_01abc"
+    );
+    expect(
+      sanitizePaddleOverlaySuccessUrl(
+        "https://coping-munchkin-unloving.ngrok-free.dev/billing/paddle-return"
+      )
+    ).toBe(
+      "https://coping-munchkin-unloving.ngrok-free.dev/billing/paddle-return"
+    );
+  });
+
+  it("uses an HTTPS ngrok return origin for overlay successUrl", () => {
+    expect(
+      resolvePaddleOverlaySuccessUrl(
+        "http://creativorare.localhost:8088",
+        "txn_01abc",
+        "https://demo.ngrok-free.dev"
+      )
+    ).toBe("https://demo.ngrok-free.dev/billing/paddle-return?_ptxn=txn_01abc");
+    expect(
+      resolvePaddleOverlaySuccessUrl(
+        "http://creativorare.localhost:8088",
+        "txn_01abc"
+      )
+    ).toBeUndefined();
+    expect(
+      resolvePaddleOverlaySuccessUrl(
+        "https://creativorare.cohestra.app",
+        "txn_01abc"
       )
     ).toBe(
       "https://creativorare.cohestra.app/dashboard?billing=success&session_id=txn_01abc"
