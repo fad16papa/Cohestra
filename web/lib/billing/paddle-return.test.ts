@@ -4,6 +4,7 @@ import {
   buildPaddleCheckoutReturnUrl,
   isPaddleTransactionId,
   resolvePaddleApexReturnRedirectUrl,
+  sanitizePaddleOverlaySuccessUrl,
 } from "@/lib/billing/paddle-return";
 
 describe("paddle-return", () => {
@@ -61,5 +62,25 @@ describe("paddle-return", () => {
         "txn_01m0t971y3gby0hbagesyewerj"
       )
     ).toBeNull();
+  });
+
+  it("omits overlay successUrl on local HTTP so Paddle cannot https-upgrade it", () => {
+    expect(
+      sanitizePaddleOverlaySuccessUrl(
+        "http://localhost:8088/billing/paddle-return?_ptxn=txn_01abc"
+      )
+    ).toBeUndefined();
+    expect(
+      sanitizePaddleOverlaySuccessUrl(
+        "http://creativorare.localhost:8088/dashboard?billing=success&session_id=txn_01abc"
+      )
+    ).toBeUndefined();
+    expect(
+      sanitizePaddleOverlaySuccessUrl(
+        "https://creativorare.cohestra.app/dashboard?billing=success&session_id=txn_01abc"
+      )
+    ).toBe(
+      "https://creativorare.cohestra.app/dashboard?billing=success&session_id=txn_01abc"
+    );
   });
 });

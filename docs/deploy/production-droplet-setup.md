@@ -40,7 +40,13 @@ Paddle allows **one** default payment link per environment (sandbox vs live). It
 
 Do **not** use `https://localhost:…` (local nginx is HTTP). Do **not** put `{slug}.cohestra.app` or `{slug}.localhost` in this field — every workspace would return to that one slug.
 
-Approve the apex domain in Paddle (Request website approval). Overlay `successUrl` must share that apex; tenant dashboard URLs are applied by Cohestra after return.
+Paddle still **rewrites http localhost success/return URLs to https**. Overlay checkout on local Docker therefore does **not** pass `successUrl` to Paddle.js; `checkout.completed` navigates to `http://{slug}.localhost:8088/dashboard` instead. If a hosted checkout still lands on `https://localhost:8088/billing/paddle-return` (`ERR_SSL_PROTOCOL_ERROR`), open the HTTP tenant URL:
+
+`http://{slug}.localhost:8088/dashboard?billing=success&session_id=txn_…`
+
+Sandbox default payment link can stay `http://localhost:8088/billing/paddle-return` for overlay. For hosted-checkout UAT, point it at the HTTPS ngrok apex (`https://{tunnel}/billing/paddle-return`) so Paddle's TLS rewrite has a real certificate; Cohestra then redirects to `{slug}.localhost`.
+
+Approve the apex domain in Paddle (Request website approval). Production overlay `successUrl` is the tenant dashboard (`https://{slug}.cohestra.app/dashboard`).
 
 API startup logs the exact URL when `Paddle__ApiKey` is set (`Paddle Checkout settings → Default payment link must be …`).
 

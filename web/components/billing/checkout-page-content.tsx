@@ -28,7 +28,7 @@ import {
   extractPaddleTransactionId,
   openPaddleCheckoutOverlay,
 } from "@/lib/billing/paddle-checkout";
-import { buildPaddleCheckoutReturnUrl } from "@/lib/billing/paddle-return";
+import { sanitizePaddleOverlaySuccessUrl } from "@/lib/billing/paddle-return";
 import {
   checkoutActionLabel,
   checkoutIntroCopy,
@@ -254,13 +254,15 @@ function CheckoutContent() {
     const transactionId = extractPaddleTransactionId(checkout.result.checkoutUrl);
     if (clientToken && transactionId) {
       try {
+        const tenantSuccessUrl =
+          `${window.location.origin}/dashboard?billing=success&session_id=${transactionId}`;
         await openPaddleCheckoutOverlay({
           clientToken,
           transactionId,
-          successUrl: buildPaddleCheckoutReturnUrl(window.location.origin, transactionId),
-          onCompleted: () => {
-            window.location.assign(
-              `${window.location.origin}/dashboard?billing=success&session_id=${transactionId}`
+          successUrl: sanitizePaddleOverlaySuccessUrl(tenantSuccessUrl),
+          onCompleted: (completedId) => {
+            window.location.replace(
+              `${window.location.origin}/dashboard?billing=success&session_id=${completedId}`
             );
           },
           onClosed: () => setStarting(false),

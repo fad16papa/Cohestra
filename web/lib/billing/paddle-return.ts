@@ -53,3 +53,32 @@ export function resolvePaddleApexReturnRedirectUrl(
 
   return buildPaddleCheckoutReturnUrl(origin, ptxn);
 }
+
+/**
+ * Paddle upgrades http success URLs to https. Local Docker nginx on 8088 has no TLS,
+ * so passing `http://localhost:8088/...` (or `{slug}.localhost`) produces ERR_SSL_PROTOCOL_ERROR.
+ * Omit overlay successUrl on local HTTP and navigate in `checkout.completed` instead.
+ */
+export function sanitizePaddleOverlaySuccessUrl(
+  url: string | null | undefined
+): string | undefined {
+  if (!url) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    const isLoopback =
+      host === "localhost"
+      || host === "127.0.0.1"
+      || host.endsWith(".localhost");
+    if (isLoopback && parsed.protocol === "http:") {
+      return undefined;
+    }
+
+    return url;
+  } catch {
+    return undefined;
+  }
+}
