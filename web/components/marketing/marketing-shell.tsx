@@ -9,7 +9,7 @@ import { CohestraLogo } from "@/components/marketing/cohestra-logo";
 import { PlatformByline } from "@/components/layouts/platform-byline";
 import { cn } from "@/lib/utils";
 
-const MARKETING_ROUTES = ["/", "/pricing", "/terms", "/privacy", "/signup", "/docs"];
+const MARKETING_ROUTES = ["/", "/pricing", "/terms", "/privacy", "/signup", "/docs", "/billing/paddle-return"];
 
 export function isMarketingRoute(pathname: string | null): boolean {
   if (!pathname) {

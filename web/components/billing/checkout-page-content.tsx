@@ -28,6 +28,7 @@ import {
   extractPaddleTransactionId,
   openPaddleCheckoutOverlay,
 } from "@/lib/billing/paddle-checkout";
+import { buildPaddleCheckoutReturnUrl } from "@/lib/billing/paddle-return";
 import {
   checkoutActionLabel,
   checkoutIntroCopy,
@@ -256,7 +257,12 @@ function CheckoutContent() {
         await openPaddleCheckoutOverlay({
           clientToken,
           transactionId,
-          successUrl: `${window.location.origin}/dashboard?billing=success&session_id=${transactionId}`,
+          successUrl: buildPaddleCheckoutReturnUrl(window.location.origin, transactionId),
+          onCompleted: () => {
+            window.location.assign(
+              `${window.location.origin}/dashboard?billing=success&session_id=${transactionId}`
+            );
+          },
           onClosed: () => setStarting(false),
         });
         return;

@@ -167,6 +167,7 @@ public static class DependencyInjection
         });
         services.AddScoped<IBillingService, PaddleBillingService>();
         services.AddScoped<IPaddleWebhookProcessor, PaddleWebhookProcessor>();
+        services.AddScoped<IPaddleCheckoutReturnResolver, PaddleCheckoutReturnResolver>();
         services.AddHostedService<BillingJobsHostedService>();
         services.Configure<FollowUpDigestOptions>(
             configuration.GetSection(FollowUpDigestOptions.SectionName));

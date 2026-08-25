@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { resolvePaddleApexReturnRedirectUrl } from "@/lib/billing/paddle-return";
 import {
   requestOriginFromHeaders,
   resolvePlatformOpsRedirectUrl,
@@ -12,6 +13,15 @@ export function middleware(request: NextRequest) {
   const proto =
     request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
   const origin = requestOriginFromHeaders(host, proto, request.nextUrl.origin);
+  const paddleReturnRedirect = resolvePaddleApexReturnRedirectUrl(
+    origin,
+    request.nextUrl.pathname,
+    request.nextUrl.searchParams.get("_ptxn")
+  );
+  if (paddleReturnRedirect) {
+    return NextResponse.redirect(paddleReturnRedirect, 307);
+  }
+
   const platformRedirect = resolvePlatformOpsRedirectUrl(
     origin,
     request.nextUrl.pathname,

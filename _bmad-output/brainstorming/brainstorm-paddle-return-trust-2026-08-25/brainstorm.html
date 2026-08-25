@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>People v. billing=success — A courtroom in the address bar</title>
+  <style>
+    :root {
+      --oak: #1c1610;
+      --oak-mid: #3a2f22;
+      --parchment: #f4ead6;
+      --parchment-deep: #e8d9b8;
+      --chrome: #e4e6ea;
+      --chrome-edge: #b8bcc4;
+      --ink: #16140f;
+      --muted: #5c5348;
+      --lock: #1d5c45;
+      --convict: #8f1d1d;
+      --acquit: #1d5c45;
+      --gold: #c4a35a;
+      --receipt: #fffdf6;
+      --carbon-y: #f3e6b0;
+      --carbon-p: #f3d0c8;
+      --bank: #1a3358;
+      --hat-w: #f7f4ee;
+      --hat-r: #b4232c;
+      --hat-y: #e3b23c;
+      --hat-k: #1a1a1a;
+      --hat-g: #2f6b4f;
+      --hat-b: #2a4a7a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Iowan Old Style", Palatino, "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      background: var(--oak);
+      color: var(--ink);
+      line-height: 1.55;
+    }
+
+    /* Wood grain of the courtroom */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.22;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          transparent 0 18px,
+          rgba(255, 220, 160, 0.04) 18px 19px
+        ),
+        radial-gradient(ellipse at 20% 0%, rgba(196, 163, 90, 0.18), transparent 50%);
+    }
+
+    /* Fixed browser chrome — the witness stand */
+    .chrome {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: linear-gradient(#f2f3f5, var(--chrome));
+      border-bottom: 1px solid var(--chrome-edge);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    }
+
+    .chrome-row {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.55rem 0.8rem 0.5rem;
+    }
+
+    .lights { display: flex; gap: 6px; flex-shrink: 0; }
+    .lights span {
+      width: 11px; height: 11px; border-radius: 50%;
+      box-shadow: inset 0 -1px 1px rgba(0,0,0,.2);
+    }
+    .lights .r { background: #ff5f57; }
+    .lights .y { background: #febc2e; }
+    .lights .g { background: #28c840; }
+
+    .urlbar {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      background: #fff;
+      border: 1px solid #c9ccd3;
+      border-radius: 999px;
+      padding: 0.38rem 0.85rem;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      color: #2a2e35;
+      min-width: 0;
+    }
+
+    .lock {
+      width: 14px; height: 14px; flex-shrink: 0;
+    }
+
+    .urlbar .host { color: #111; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .urlbar .path { color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .urlbar .lie { color: var(--convict); font-weight: 700; }
+
+    .docket-no {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.68rem;
+      color: #5b616b;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      padding-right: 0.2rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 0.6rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tabs a {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: #4b5160;
+      background: #d5d8de;
+      padding: 0.38rem 0.7rem 0.42rem;
+      border-radius: 8px 8px 0 0;
+      white-space: nowrap;
+      border: 1px solid transparent;
+      border-bottom: 0;
+    }
+    .tabs a:hover, .tabs a:focus { background: #fff; color: #111; }
+
+    .stage {
+      position: relative;
+      z-index: 1;
+      max-width: 58rem;
+      margin: 0 auto;
+      padding: 0 1rem 5rem;
+    }
+
+    /* Opening docket */
+    .docket {
+      background: var(--parchment);
+      margin: 1.4rem 0 2.2rem;
+      padding: 2.2rem 1.6rem 2rem;
+      border: 1px solid var(--parchment-deep);
+      box-shadow:
+        0 1px 0 #fff inset,
+        0 18px 40px rgba(0,0,0,.35);
+      position: relative;
+    }
+
+    .docket::after {
+      content: "FILED";
+      position: absolute;
+      top: 1.1rem;
+      right: 1.1rem;
+      transform: rotate(12deg);
+      border: 3px solid var(--convict);
+      color: var(--convict);
+      font-family: system-ui, sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      padding: 0.25rem 0.5rem;
+      opacity: 0.55;
+      font-size: 0.85rem;
+    }
+
+    .eyebrow {
+      font-family: system-ui, sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .docket h1 {
+      font-size: clamp(1.7rem, 4vw, 2.55rem);
+      line-height: 1.1;
+      margin: 0.35rem 0 0.8rem;
+      letter-spacing: -0.02em;
+    }
+
+    .caption {
+      font-style: italic;
+      color: var(--oak-mid);
+      margin-bottom: 1.1rem;
+    }
+
+    .charges {
+      display: grid;
+      gap: 0.7rem;
+      margin-top: 1.2rem;
+    }
+    .charge {
+      display: grid;
+      grid-template-columns: 5.5rem 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      border-top: 1px dashed #c9b89a;
+      padding-top: 0.7rem;
+    }
+    .charge b {
+      font-family: system-ui, sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--bank);
+    }
+
+    .hop-map {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1.4rem;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.72rem;
+    }
+    .hop {
+      background: #fff;
+      border: 1px solid #c9b89a;
+      padding: 0.4rem 0.55rem;
+      border-radius: 4px;
+    }
+    .hop.bank { border-color: var(--bank); color: var(--bank); }
+    .hop.dispute { border-color: var(--convict); background: #fbeaea; }
+    .hop.club { border-color: var(--lock); color: var(--lock); }
+    .arrow { color: var(--gold); font-size: 1rem; }
+
+    section {
+      margin: 2.6rem 0;
+    }
+
+    .sec-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--gold);
+      padding-bottom: 0.4rem;
+    }
+    .sec-head h2 {
+      font-size: 1.35rem;
+      letter-spacing: 0.02em;
+    }
+    .sec-head .tag {
+      font-family: system-ui, sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    /* Six hats as evidence folders */
+    .hats {
+      display: grid;
+      gap: 0.85rem;
+    }
+    .hat {
+      background: var(--parchment);
+      border-left: 10px solid #999;
+      padding: 1rem 1.1rem 1.05rem;
+      box-shadow: 0 10px 24px rgba(0,0,0,.22);
+    }
+    .hat.w { border-color: #d9d3c6; background: var(--hat-w); }
+    .hat.r { border-color: var(--hat-r); background: #f8ecec; }
+    .hat.y { border-color: var(--hat-y); background: #fbf3dc; }
+    .hat.k { border-color: var(--hat-k); background: #161616; color: #ece8df; }
+    .hat.g { border-color: var(--hat-g); background: #e8f2ec; }
+    .hat.b { border-color: var(--hat-b); background: #e8eef7; }
+
+    .hat h3 {
+      font-family: system-ui, sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 0.55rem;
+    }
+    .hat.k h3 { color: #f0c36a; }
+
+    .hat ul { padding-left: 1.1rem; }
+    .hat li { margin: 0.28rem 0; }
+    .hat.k li { color: #ddd6c6; }
+
+    .pulse {
+      font-style: italic;
+    }
+
+    /* Job posting */
+    .want-ad {
+      background: #f7f1e2;
+      border: 8px double #2c2418;
+      padding: 1.4rem 1.3rem 1.5rem;
+      column-count: 1;
+    }
+    @media (min-width: 720px) {
+      .jobs { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 1rem; }
+    }
+    .want-ad h3 {
+      font-family: "Times New Roman", Times, serif;
+      text-align: center;
+      font-size: 1.5rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-bottom: 2px solid #2c2418;
+      margin-bottom: 0.8rem;
+      padding-bottom: 0.35rem;
+    }
+    .job {
+      margin: 0.7rem 0;
+      padding-bottom: 0.7rem;
+      border-bottom: 1px solid #cbbba0;
+    }
+    .job strong { display: block; font-size: 0.95rem; }
+    .mismatch {
+      background: #1c1610;
+      color: var(--parchment);
+      padding: 1.2rem 1.15rem;
+      font-size: 1.05rem;
+    }
+    .mismatch em { color: var(--gold); font-style: normal; }
+    .hmw {
+      margin-top: 0.9rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.92rem;
+    }
+    .hmw li { margin: 0.4rem 0; }
+
+    /* Courtroom */
+    .court {
+      background: #2a2118;
+      color: #f3ead6;
+      padding: 1.4rem 1.1rem 1.6rem;
+      box-shadow: inset 0 0 80px rgba(0,0,0,.45);
+    }
+    .bench {
+      text-align: center;
+      letter-spacing: 0.28em;
+      font-family: system-ui, sans-serif;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+    .sides {
+      display: grid;
+      gap: 0.8rem;
+    }
+    @media (min-width: 760px) {
+      .sides { grid-template-columns: 1fr 1fr; }
+    }
+    .side {
+      background: rgba(244, 234, 214, 0.07);
+      border: 1px solid rgba(196, 163, 90, 0.35);
+      padding: 1rem;
+    }
+    .side h3 {
+      font-family: system-ui, sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: 0.55rem;
+    }
+    .pros h3 { color: #f0a0a0; }
+    .def h3 { color: #9ad4b8; }
+    .side p { margin: 0.45rem 0; font-size: 0.95rem; }
+
+    .jury {
+      margin-top: 1rem;
+      border: 1px dashed var(--gold);
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.05rem;
+    }
+    .stamps {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      justify-content: center;
+      margin-top: 1.1rem;
+    }
+    .stamp {
+      border: 4px solid currentColor;
+      padding: 0.45rem 0.7rem;
+      font-family: system-ui, sans-serif;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      transform: rotate(-6deg);
+      font-size: 0.78rem;
+    }
+    .stamp.guilty { color: #f0a0a0; transform: rotate(-8deg); }
+    .stamp.innocent { color: #9ad4b8; transform: rotate(5deg); }
+    .sentence {
+      margin-top: 1.1rem;
+      text-align: center;
+      font-size: 1.2rem;
+    }
+
+    /* Assumption reversal — voided checks */
+    .ledger {
+      background: var(--receipt);
+      padding: 1.2rem 1rem 1.4rem;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      box-shadow: 0 12px 30px rgba(0,0,0,.3);
+      position: relative;
+    }
+    .ledger::before, .ledger::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0;
+      height: 10px;
+      background:
+        radial-gradient(circle at 8px 0, transparent 7px, var(--oak) 8px) repeat-x;
+      background-size: 16px 10px;
+    }
+    .ledger::before { top: -10px; }
+    .ledger::after { bottom: -10px; transform: rotate(180deg); }
+
+    .check {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.35rem 0.8rem;
+      padding: 0.7rem 0;
+      border-bottom: 1px dashed #cfc6ae;
+    }
+    @media (max-width: 640px) {
+      .check { grid-template-columns: 1fr; }
+    }
+    .was { text-decoration: line-through; color: #8a7d68; }
+    .now { color: var(--lock); }
+    .now::before { content: "REV → "; color: var(--gold); font-weight: 700; }
+
+    .flips {
+      margin-top: 1rem;
+      background: #1c1610;
+      color: var(--parchment);
+      padding: 1rem;
+    }
+    .flips h3 {
+      font-family: system-ui, sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+    }
+    .flips li { margin: 0.35rem 0; }
+
+    /* Empathy — operator after pay */
+    .empathy {
+      background: linear-gradient(180deg, #1a3358 0%, #121018 100%);
+      color: #f4ead6;
+      padding: 1.3rem 1.1rem 1.5rem;
+    }
+    .phone {
+      max-width: 26rem;
+      margin: 0 auto 1.2rem;
+      background: #0d0d10;
+      border-radius: 1.4rem;
+      padding: 0.7rem 0.7rem 1rem;
+      border: 3px solid #3a3a44;
+    }
+    .phone .mini-url {
+      background: #1c1c24;
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.68rem;
+      color: #c9c4b8;
+      text-align: center;
+      margin-bottom: 0.7rem;
+    }
+    .quad {
+      display: grid;
+      gap: 0.55rem;
+    }
+    @media (min-width: 640px) {
+      .quad { grid-template-columns: 1fr 1fr; }
+    }
+    .cell {
+      background: rgba(255,255,255,0.06);
+      padding: 0.75rem 0.8rem;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .cell h3 {
+      font-family: system-ui, sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.3rem;
+    }
+    .arc {
+      margin-top: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      justify-content: center;
+      font-family: system-ui, sans-serif;
+      font-size: 0.75rem;
+    }
+    .arc span {
+      background: rgba(255,255,255,0.08);
+      padding: 0.3rem 0.55rem;
+      border-radius: 999px;
+    }
+    .needs { margin-top: 1rem; }
+    .needs li { margin: 0.35rem 0; }
+
+    /* Worst possible */
+    .cursed {
+      background: #140c0c;
+      color: #f3e2e2;
+      padding: 1.2rem 1.1rem;
+      position: relative;
+    }
+    .void-mark {
+      position: absolute;
+      inset: 18% 12%;
+      border: 8px solid rgba(180, 35, 44, 0.35);
+      color: rgba(180, 35, 44, 0.35);
+      font-family: system-ui, sans-serif;
+      font-weight: 900;
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      letter-spacing: 0.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: rotate(-18deg);
+      pointer-events: none;
+    }
+    .worst-grid {
+      display: grid;
+      gap: 0.7rem;
+      position: relative;
+      z-index: 1;
+    }
+    @media (min-width: 720px) {
+      .worst-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .pair {
+      background: rgba(255,255,255,0.04);
+      padding: 0.8rem;
+      border: 1px solid rgba(255,80,80,0.18);
+    }
+    .pair .bad { color: #f0a0a0; text-decoration: line-through; text-decoration-thickness: 2px; }
+    .pair .good { color: #b7e0c9; margin-top: 0.35rem; }
+
+    /* CLIMAX — triplicate receipt */
+    .climax {
+      margin-top: 3rem;
+      padding-top: 0.5rem;
+    }
+    .climax .sec-head { border-bottom-color: #fff; }
+    .climax .sec-head h2, .climax .sec-head .tag { color: var(--parchment); }
+
+    .triplicate {
+      position: relative;
+      min-height: 22rem;
+      margin: 1.2rem 0 1.6rem;
+      perspective: 1400px;
+    }
+    .sheet {
+      position: absolute;
+      left: 0; right: 0;
+      background: var(--receipt);
+      color: var(--ink);
+      padding: 1.3rem 1.2rem 1.4rem;
+      box-shadow: 0 16px 40px rgba(0,0,0,.4);
+      cursor: pointer;
+      transition: transform 0.45s ease, z-index 0s;
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.86rem;
+    }
+    .sheet header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 2px dashed #cfc6ae;
+      padding-bottom: 0.45rem;
+      margin-bottom: 0.7rem;
+      font-family: system-ui, sans-serif;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+    }
+    .sheet p { margin: 0.45rem 0; font-family: Georgia, serif; font-size: 1.02rem; }
+    .sheet.l1 { background: var(--carbon-y); top: 2.4rem; transform: rotate(-1.4deg); z-index: 1; }
+    .sheet.l2 { background: var(--carbon-p); top: 1.2rem; transform: rotate(1.1deg); z-index: 2; }
+    .sheet.l3 { background: var(--receipt); top: 0; transform: rotate(-0.4deg); z-index: 3; }
+    .triplicate[data-front="1"] .l1 { transform: rotate(0deg) translateY(-1.2rem); z-index: 5; }
+    .triplicate[data-front="1"] .l2 { z-index: 2; }
+    .triplicate[data-front="1"] .l3 { z-index: 3; }
+    .triplicate[data-front="2"] .l2 { transform: rotate(0deg) translateY(-1.2rem); z-index: 5; }
+    .triplicate[data-front="2"] .l1 { z-index: 1; }
+    .triplicate[data-front="2"] .l3 { z-index: 3; }
+    .triplicate[data-front="3"] .l3 { transform: rotate(0deg) translateY(-0.4rem); z-index: 5; }
+
+    .peel-hint {
+      font-family: system-ui, sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 0.6rem;
+    }
+
+    .insights {
+      background: var(--parchment);
+      padding: 1.4rem 1.2rem;
+      box-shadow: 0 12px 30px rgba(0,0,0,.3);
+    }
+    .insights h3 {
+      font-family: system-ui, sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--bank);
+      margin: 1rem 0 0.4rem;
+    }
+    .insights h3:first-child { margin-top: 0; }
+    .insights p { margin: 0.4rem 0; }
+    .direction {
+      background: #1c1610;
+      color: var(--parchment);
+      padding: 1rem 1.05rem;
+      margin-top: 1rem;
+    }
+    .direction li { margin: 0.3rem 0 0.3rem 1.1rem; }
+    .notary {
+      margin-top: 1.2rem;
+      border: 3px double var(--lock);
+      padding: 0.9rem 1rem;
+      color: var(--lock);
+      font-weight: 600;
+    }
+
+    footer.colophon {
+      text-align: center;
+      color: #b9a98a;
+      font-size: 0.82rem;
+      padding: 2rem 1rem 3rem;
+      font-family: system-ui, sans-serif;
+    }
+
+    button.gavel {
+      display: block;
+      margin: 0.8rem auto 0;
+      font-family: system-ui, sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      background: var(--gold);
+      color: #1c1610;
+      border: 0;
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+    }
+    button.gavel:hover { filter: brightness(1.08); }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .sheet { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="chrome" role="banner">
+    <div class="chrome-row">
+      <div class="lights" aria-hidden="true"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+      <div class="urlbar" id="urlbar">
+        <svg class="lock" viewBox="0 0 14 14" aria-hidden="true">
+          <rect x="3" y="6.5" width="8" height="6" rx="1" fill="#1d5c45"/>
+          <path d="M4.6 6.5V4.4a2.4 2.4 0 0 1 4.8 0v2.1" fill="none" stroke="#1d5c45" stroke-width="1.4"/>
+        </svg>
+        <span><span class="host" id="url-host">cohestra.app</span><span class="path" id="url-path">/billing/paddle-return?_ptxn=txn_••••</span><span class="lie" id="url-lie"></span></span>
+      </div>
+      <div class="docket-no">CASE txn_</div>
+    </div>
+    <nav class="tabs" aria-label="Session techniques">
+      <a href="#docket">Docket</a>
+      <a href="#hats">Six Hats</a>
+      <a href="#jobs">Job to Be Done</a>
+      <a href="#court">Courtroom</a>
+      <a href="#reversal">Reversal</a>
+      <a href="#empathy">Empathy</a>
+      <a href="#worst">Worst Idea</a>
+      <a href="#climax">Three Layers</a>
+    </nav>
+  </div>
+
+  <div class="stage">
+    <header class="docket" id="docket">
+      <p class="eyebrow">Court of the Address Bar · 25 August 2026 · Autonomous session</p>
+      <h1>The People of the Paying Operator v. <em>billing=success</em></h1>
+      <p class="caption">A keepsake from the Paddle return-trust session. Not minutes. A trial held inside a URL bar, with a thermal receipt as the exhibit table.</p>
+      <div class="charges">
+        <div class="charge">
+          <b>Count I</b>
+          <span>Whether Cohestra’s slug-free marketing apex — <code>/billing/paddle-return</code> hopping to <code>{slug}.cohestra.app</code> — is safe to ship in production.</span>
+        </div>
+        <div class="charge">
+          <b>Count II</b>
+          <span>Whether trusting the browser, the client, or a query string undermines billing truth.</span>
+        </div>
+        <div class="charge">
+          <b>Count III</b>
+          <span>Whether a paying operator can feel the transaction is legit — not merely that the servers believe it.</span>
+        </div>
+      </div>
+      <div class="hop-map" aria-label="The hop under examination">
+        <span class="hop bank">Paddle checkout chrome</span>
+        <span class="arrow">→</span>
+        <span class="hop dispute">cohestra.app/billing/paddle-return</span>
+        <span class="arrow">→</span>
+        <span class="hop club">{slug}.cohestra.app</span>
+      </div>
+      <p style="margin-top:1.1rem;font-size:0.95rem;color:var(--oak-mid)">
+        Money and plan state are granted only by HMAC webhooks and authenticated Paddle sync — never by <code>_ptxn</code>, never by <code>billing=success</code>. That was the assumption walking into the room. The room then asked whether the hop still lies even when the money does not.
+      </p>
+    </header>
+
+    <!-- SIX THINKING HATS -->
+    <section id="hats">
+      <div class="sec-head">
+        <h2>Six Thinking Hats</h2>
+        <span class="tag">Exhibit A · colored depositions</span>
+      </div>
+      <div class="hats">
+        <article class="hat w">
+          <h3>White · sworn facts</h3>
+          <ul>
+            <li>Paddle allows one Default payment link per environment. It cannot be <code>{slug}.cohestra.app</code>.</li>
+            <li>The return page is anonymous. It maps <code>txn_</code> to a tenant dashboard URL built server-side from <code>PublicWeb.BaseUrl</code>.</li>
+            <li><code>custom_data.tenant_id</code> is written by our API with the server API key, not by the browser.</li>
+            <li>Plan unlock on the dashboard calls authenticated <code>SyncFromProvider</code>, which re-fetches the transaction from Paddle and rejects a <code>tenant_id</code> mismatch.</li>
+            <li>HMAC-signed webhooks remain the durable source of truth. The return hop is a locator plus a refresh nudge.</li>
+            <li>Overlay <code>onCompleted</code> navigates to the current tenant origin, bypassing the apex hop when JavaScript works.</li>
+            <li>The resolver does not check <code>transaction.status</code> before appending <code>billing=success</code>.</li>
+            <li>The client follows whatever <code>http(s) redirectUrl</code> the API JSON returns after a same-origin fetch.</li>
+            <li><code>txn_</code> IDs are high-entropy. They are not a login cookie. They do not mint a JWT.</li>
+            <li>Production hop is <code>cohestra.app → {slug}.cohestra.app</code>. Local hop is <code>localhost → {slug}.localhost</code>.</li>
+          </ul>
+        </article>
+        <article class="hat r">
+          <h3>Red · the pulse after the card</h3>
+          <p class="pulse">The operator just typed a card. Any extra domain in the URL bar feels like a bait-and-switch.</p>
+          <p class="pulse">“Returning to your workspace” with no receipt, no amount, no plan name feels hollow after paying $29.99.</p>
+          <p class="pulse">An SSL error on <code>https://localhost</code> already taught this operator that a return URL can lie. That scar transfers to production.</p>
+          <p class="pulse">A marketing-styled apex page after Paddle’s checkout chrome feels like leaving the bank for a flyer.</p>
+          <p class="pulse">If the dashboard still says Basic for two seconds, the operator believes the charge failed.</p>
+          <p class="pulse">PH and SG operators already distrust payment rails. A hop through a different host confirms the fear.</p>
+        </article>
+        <article class="hat y">
+          <h3>Yellow · why the hop exists at all</h3>
+          <ul>
+            <li>One approved apex domain is how Paddle designed Checkout. Fighting it with per-slug <code>successUrl</code>s will keep failing approval.</li>
+            <li>A server-built tenant URL means the browser cannot pick a victim workspace.</li>
+            <li>The same pattern works in sandbox HTTP, nip.io, and live HTTPS without changing Paddle settings per tenant.</li>
+            <li>Overlay <code>successUrl</code> on the apex matches Paddle’s approved domain so they stop dumping people on <code>/pricing</code>.</li>
+            <li>The webhook can land before the redirect. The hop is then just a courtesy door.</li>
+          </ul>
+        </article>
+        <article class="hat k">
+          <h3>Black · objections entered</h3>
+          <ul>
+            <li><code>billing=success</code> on a draft or canceled txn trains a false success toast.</li>
+            <li>Anyone with a leaked <code>txn_</code> can discover the tenant slug via the redirect <code>Location</code>.</li>
+            <li>Anonymous GET is a txn-oracle: 200 versus 404 enumerates whether a transaction exists.</li>
+            <li>If <code>custom_data.tenant_id</code> is missing, sync may <code>ApplyTransaction</code> onto the logged-in tenant.</li>
+            <li>Client <code>isHttpUrl</code> is javascript-free and still trusts API JSON. A compromised or HTTP-downgraded API becomes an open redirect.</li>
+            <li>Referrer on the apex page can leak <code>_ptxn</code> to third-party marketing scripts.</li>
+            <li>Rate-unlimited Paddle <code>GetTransaction</code> from our API burns quota and can be used as a proxy.</li>
+            <li>The cross-site hop drops HttpOnly cookies. The operator may land on login and think payment vanished.</li>
+            <li>Paddle website approval of <code>cohestra.app</code> does not automatically bless every <code>{slug}</code> unless Paddle treats eTLD+1 as one site.</li>
+          </ul>
+        </article>
+        <article class="hat g">
+          <h3>Green · remedies the court may order</h3>
+          <ul>
+            <li>Only redirect when Paddle status is completed, billed, or paid. Otherwise show pending copy.</li>
+            <li>Server 302 from the API with no JSON client hop — one fewer trust surface.</li>
+            <li>Sign the return URL (HMAC of tenant + txn + exp) so the dashboard ignores unsigned <code>billing=success</code>.</li>
+            <li>Put the return page on a dedicated <code>billing.cohestra.app</code> with no marketing trackers.</li>
+            <li>Show plan name, trial days, and last4 on the apex handoff screen before redirect.</li>
+            <li>Keep the operator on the tenant host the whole time via overlay <code>onCompleted</code>. Treat apex as hosted-checkout fallback only.</li>
+            <li>Require a completed webhook before showing success. Poll a public status token instead of txn lookup.</li>
+          </ul>
+        </article>
+        <article class="hat b">
+          <h3>Blue · the judge’s notebook, already</h3>
+          <ul>
+            <li>Separate three layers in every review: money truth, navigation locator, and felt receipt.</li>
+            <li>Production UAT must screenshot the URL bar at Paddle, apex, and slug host. Trust lives there.</li>
+            <li>Never call the query param a session that grants a plan. Name it <code>checkout_return_ref</code>.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <!-- JOB TO BE DONE -->
+    <section id="jobs">
+      <div class="sec-head">
+        <h2>Job to Be Done</h2>
+        <span class="tag">Classifieds · who hired whom</span>
+      </div>
+      <div class="jobs">
+        <div class="want-ad">
+          <h3>Situations Wanted</h3>
+          <div class="job">
+            <strong>After I pay</strong>
+            Take me back to MY club’s admin without making me wonder who charged me.
+          </div>
+          <div class="job">
+            <strong>Prove the money moved</strong>
+            Not by a query string. By a receipt that matches Paddle’s overlay.
+          </div>
+          <div class="job">
+            <strong>Unlock Pro</strong>
+            So I can publish the site I came to pay for, in the same tab I started.
+          </div>
+          <div class="job">
+            <strong>If something failed</strong>
+            Tell me the card was not charged before I retry and double-bill.
+          </div>
+          <div class="job">
+            <strong>On mobile</strong>
+            Survive the Safari bounce through Paddle without losing the workspace cookie.
+          </div>
+          <div class="job">
+            <strong>Finance</strong>
+            Wants an invoice PDF that matches the amount on the checkout, not a marketing homepage.
+          </div>
+        </div>
+        <div>
+          <div class="mismatch">
+            Hiring checkout-return to do <em>routing</em> when the operator hired it to do <em>closure</em> is the mismatch.
+            <p style="margin-top:0.7rem;font-size:0.95rem;opacity:.92">
+              A locator that whispers success is doing a second job it was not hired for. That job belongs to webhook plus receipt.
+            </p>
+            <p style="margin-top:0.7rem;font-size:0.95rem;opacity:.92">
+              The tenant slug in the address bar is the product: <em>ikigai.cohestra.app</em> is the club. <em>cohestra.app</em> is Cohestra Inc.
+            </p>
+            <p style="margin-top:0.7rem;font-size:0.95rem;opacity:.92">
+              Operators hire Paddle to be the bank. They hire Cohestra to be the club OS. Mixing those rooms mid-payment feels like a mule.
+            </p>
+            <p style="margin-top:0.7rem;font-size:0.95rem;opacity:.92">
+              If overlay stays on the slug host, the job is already done. Apex is only for the hosted-checkout refugee.
+            </p>
+          </div>
+          <ul class="hmw">
+            <li>How might we close the payment on the same host the operator typed at login?</li>
+            <li>How might we show a true receipt before any redirect so the hop is optional emotionally?</li>
+            <li>How might we make webhook latency invisible so success is never a lie we have to walk back?</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEVIL'S ADVOCATE COURTROOM -->
+    <section id="court">
+      <div class="sec-head">
+        <h2>Devil’s Advocate Courtroom</h2>
+        <span class="tag">All rise · the hop on trial</span>
+      </div>
+      <div class="court">
+        <p class="bench">The Court of the Address Bar is now in session</p>
+        <div class="sides">
+          <div class="side pros">
+            <h3>Prosecution</h3>
+            <p>You ship an anonymous txn oracle that maps payment IDs to club URLs. That is a customer directory.</p>
+            <p><code>billing=success</code> is theater. The code does not ask Paddle if the card actually captured.</p>
+            <p>Client-side <code>window.location.replace</code> of API JSON is classic open-redirect packaging.</p>
+            <p>You already burned trust with <code>https://localhost</code>. Repeating a hop in production repeats the trauma.</p>
+            <p>A PH-registered, SG-operated entity chose Paddle as merchant of record so the charge is supposed to look official. A marketing interstitial undoes MoR gravity.</p>
+          </div>
+          <div class="side def">
+            <h3>Defense</h3>
+            <p>The browser never chooses the tenant. Paddle <code>custom_data</code> plus our DB slug does.</p>
+            <p><code>SyncFromProvider</code> refuses a txn whose <code>tenant_id</code> is not the JWT tenant.</p>
+            <p>No JWT is issued from <code>_ptxn</code>. Worst case of a leaked txn is a login wall on the right club.</p>
+            <p>Paddle itself appends <code>_ptxn</code> to the default payment link. We did not invent client-visible txn IDs.</p>
+            <p>HMAC webhooks still fire if the operator closes the tab. Money truth does not need the hop.</p>
+          </div>
+        </div>
+        <div class="jury">
+          <strong>Jury.</strong> Safe enough to ship for money. Not safe enough to claim the hop is a trusted receipt.
+        </div>
+        <div class="stamps" aria-label="Verdict stamps">
+          <div class="stamp guilty">Convict the success query string</div>
+          <div class="stamp innocent">Acquit the apex domain</div>
+        </div>
+        <p class="sentence">
+          Verdict condition: gate redirect on completed or billed, pin redirect host to <code>*.cohestra.app</code>, no third-party scripts on the return page.
+        </p>
+        <p class="sentence" style="font-size:1.35rem;margin-top:0.5rem">
+          Sentence: Keep the architecture. Strip the lie. Add a receipt beat.
+        </p>
+        <button class="gavel" type="button" id="gavel">Strike the gavel — read the hop aloud</button>
+      </div>
+    </section>
+
+    <!-- ASSUMPTION REVERSAL -->
+    <section id="reversal">
+      <div class="sec-head">
+        <h2>Assumption Reversal</h2>
+        <span class="tag">Voided checks · the other way through</span>
+      </div>
+      <div class="ledger">
+        <div class="check"><span class="was">We must use Paddle’s default payment link</span><span class="now">Overlay-only. Never hosted checkout. successUrl unused.</span></div>
+        <div class="check"><span class="was">Apex must be cohestra.app</span><span class="now">billing.cohestra.app as a sterile checkout chapel.</span></div>
+        <div class="check"><span class="was">Client must fetch JSON</span><span class="now">API 302 only. The page is just a noscript fallback.</span></div>
+        <div class="check"><span class="was">_ptxn must be in the URL</span><span class="now">One-time server cookie set before overlay opens.</span></div>
+        <div class="check"><span class="was">Success is a query flag</span><span class="now">Dashboard never reads billing=success. Only a webhook-driven shell.</span></div>
+        <div class="check"><span class="was">We trust custom_data</span><span class="now">Only match Paddle customer_id already stored on the tenant row.</span></div>
+        <div class="check"><span class="was">One Paddle account for all tenants</span><span class="now">Per-tenant Paddle accounts so default links can be slug hosts — operationally insane, and revealing.</span></div>
+        <div class="check"><span class="was">The hop is invisible</span><span class="now">Make it loudly a Cohestra handoff with brand, amount, and “not a new site” copy.</span></div>
+        <div class="check"><span class="was">Production HTTPS makes localhost lessons irrelevant</span><span class="now">The operator’s last memory of this flow is an SSL error.</span></div>
+        <div class="check"><span class="was">Feeling legit means looking like Paddle</span><span class="now">Feeling legit means never leaving {slug}.cohestra.app.</span></div>
+      </div>
+      <div class="flips">
+        <h3>Flipped designs the ledger coughed up</h3>
+        <ul>
+          <li>A signed return ticket minted at checkout create, redeemed once, bound to tenant plus operator.</li>
+          <li>No apex page. nginx maps <code>/billing/paddle-return</code> to an API 302 so the URL bar barely flickers.</li>
+          <li>Wait on overlay until webhook confirms, then navigate — truth before motion.</li>
+          <li>Flipped trust: treat <code>_ptxn</code> like a password in logs, emails, and referrers.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- EMPATHY MAP -->
+    <section id="empathy">
+      <div class="sec-head">
+        <h2>Empathy Map</h2>
+        <span class="tag">The operator, thirty seconds after pay</span>
+      </div>
+      <div class="empathy">
+        <div class="phone">
+          <div class="mini-url">https://cohestra.app/billing/paddle-return?_ptxn=txn_…</div>
+          <div class="quad">
+            <div class="cell">
+              <h3>Says</h3>
+              <p>Did it go through? Where is my invoice? Why am I on cohestra.app, not my club?</p>
+            </div>
+            <div class="cell">
+              <h3>Thinks</h3>
+              <p>Is this a phishing page stealing the card I just typed?</p>
+            </div>
+            <div class="cell">
+              <h3>Does</h3>
+              <p>Screenshots the URL. Emails hello@. Hits back. Pays again.</p>
+            </div>
+            <div class="cell">
+              <h3>Feels</h3>
+              <p>Brief power after Paddle’s checkmark, then suspicion at the interstitial, then relief or rage on the dashboard plan badge.</p>
+            </div>
+          </div>
+        </div>
+        <div class="arc" aria-label="Feeling arc">
+          <span>Paddle checkmark</span>
+          <span>→</span>
+          <span>interstitial suspicion</span>
+          <span>→</span>
+          <span>plan badge: relief or rage</span>
+        </div>
+        <ul class="needs">
+          <li><strong>Unmet:</strong> a sentence that names the workspace — “Taking you back to CreativoRare” — before the hop.</li>
+          <li><strong>Unmet:</strong> the same lock icon and host family they saw at login.</li>
+          <li><strong>Unmet:</strong> if login is required after hop, “your Pro trial is already on this workspace,” not a blank login.</li>
+          <li><strong>Member vs owner:</strong> only the billing owner should see success. A member landing here should not see a fake upgrade.</li>
+          <li><strong>Mobile Safari:</strong> in-app Paddle overlay versus hosted. Bounce through apex is more likely to drop ITP cookies.</li>
+          <li><strong>What would make it feel true:</strong> Paddle checkmark, then Cohestra names the plan and workspace, then the slug host already showing Pro Trialing.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- WORST POSSIBLE IDEA -->
+    <section id="worst">
+      <div class="sec-head">
+        <h2>Worst Possible Idea</h2>
+        <span class="tag">Then flip · do not ship the void</span>
+      </div>
+      <div class="cursed">
+        <div class="void-mark" aria-hidden="true">VOID</div>
+        <div class="worst-grid">
+          <div class="pair">
+            <p class="bad">Put the tenant slug in the Paddle default link so one club receives every return.</p>
+            <p class="good">Never encode a tenant in merchant dashboard settings. Encode it only in signed custom_data.</p>
+          </div>
+          <div class="pair">
+            <p class="bad">Let the browser pick redirectUrl from query (?next=).</p>
+            <p class="good">redirectUrl allowlist is TenantPublicWebUrlBuilder only. Client must re-validate host suffix.</p>
+          </div>
+          <div class="pair">
+            <p class="bad">Show SUCCESS in green before Paddle captures.</p>
+            <p class="good">Copy is “Confirming with Paddle…” until status is completed.</p>
+          </div>
+          <div class="pair">
+            <p class="bad">Log full checkout URLs with _ptxn in marketing analytics.</p>
+            <p class="good">Return page has zero analytics. referrer-policy: no-referrer.</p>
+          </div>
+          <div class="pair">
+            <p class="bad">Auto-login the operator from the txn id.</p>
+            <p class="good">Never mint a session from a payment id. That would make _ptxn a skeleton key.</p>
+          </div>
+          <div class="pair">
+            <p class="bad">Trust billing=success to set Plan=Pro in local React state.</p>
+            <p class="good">UI plan badge only from the server shell after sync or webhook.</p>
+          </div>
+          <div class="pair" style="grid-column: 1 / -1">
+            <p class="bad">HTTPS default payment link to HTTP tenant — mixed feelings and a browser warning.</p>
+            <p class="good">Production must be https apex to https slug. Never mix schemes.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLIMAX -->
+    <section class="climax" id="climax">
+      <div class="sec-head">
+        <h2>The triplicate</h2>
+        <span class="tag">Synthesis · peel the layers</span>
+      </div>
+      <p class="peel-hint">Click a sheet to bring it forward. Three truths. Only one of them is money.</p>
+      <div class="triplicate" id="triplicate" data-front="3">
+        <article class="sheet l1" data-layer="1">
+          <header>
+            <span>Layer 1 · carbon yellow</span>
+            <span>MONEY TRUTH</span>
+          </header>
+          <p>HMAC webhook plus authenticated Paddle GET. Not the client. Not the query string. Not the toast.</p>
+          <p>The bank still fires if the operator closes the tab. This layer was never on trial. It is granted.</p>
+          <p>Ship this as if the hop did not exist — because for money, it must not exist.</p>
+        </article>
+        <article class="sheet l2" data-layer="2">
+          <header>
+            <span>Layer 2 · carbon pink</span>
+            <span>NAVIGATION LOCATOR</span>
+          </header>
+          <p>Apex <code>/billing/paddle-return</code> is the right production shape. Paddle will not bless a per-slug success URL.</p>
+          <p>The jury acquitted the domain choice. The browser never picks the tenant. Server-built URL. Overlay stays on the slug host when JS works. Apex is the hosted-checkout refugee door.</p>
+          <p>Pin the destination to the host builder. Same-registrable-domain hop, https to https, never mixed schemes.</p>
+        </article>
+        <article class="sheet l3" data-layer="3">
+          <header>
+            <span>Layer 3 · original</span>
+            <span>FELT RECEIPT</span>
+          </header>
+          <p>Currently too weak, because <code>billing=success</code> is unearned. Trusting the client does not grant a plan today — it grants a success story. That story can be false.</p>
+          <p>False success is the production trust bug. Not the slug-free domain.</p>
+          <p>The operator needs the URL-bar family they logged into, the workspace spoken aloud, a plan badge that matches Paddle, and an invoice they do not have to hunt.</p>
+        </article>
+      </div>
+
+      <div class="insights">
+        <h3>What the three layers say when stacked</h3>
+        <p>Trusting the client does not grant a plan today, but it does grant a success story. That story can be false. False success is the production trust bug, not the slug-free domain.</p>
+        <p>The hop may be a courtesy door. It must never be a receipt. Convict the query string. Keep the architecture. Strip the lie. Add a receipt beat.</p>
+        <div class="direction">
+          <h3 style="color:var(--gold);margin-top:0">Chosen direction</h3>
+          <ul>
+            <li>Keep apex <code>/billing/paddle-return</code>.</li>
+            <li>Gate redirect on completed or billed.</li>
+            <li>Pin destination to our host builder.</li>
+            <li>Silent return page — no marketing trackers, treat <code>_ptxn</code> like a password.</li>
+            <li>Overlay stays on the tenant host.</li>
+            <li>Never auto-login from txn.</li>
+          </ul>
+        </div>
+        <p class="notary">
+          Ship condition for “feels legit”: the URL bar family matches the login host after at most one same-registrable-domain hop; the workspace name is spoken aloud; the plan badge matches Paddle; the invoice is visible without hunting.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <footer class="colophon">
+    Keepsake of the Paddle apex checkout-return session · 25 August 2026 · Cohestra · not a report. A courtroom that is also a URL bar, with a receipt that had to be earned.
+  </footer>
+
+  <script>
+    (function () {
+      var host = document.getElementById("url-host");
+      var path = document.getElementById("url-path");
+      var lie = document.getElementById("url-lie");
+      var hops = [
+        { id: "docket", host: "cohestra.app", path: "/billing/paddle-return?_ptxn=txn_••••", lie: "" },
+        { id: "hats", host: "cohestra.app", path: "/exhibits/six-hats", lie: "" },
+        { id: "jobs", host: "ikigai.cohestra.app", path: "  ← the club", lie: "" },
+        { id: "court", host: "cohestra.app", path: "/billing/paddle-return", lie: "&billing=success" },
+        { id: "reversal", host: "billing.cohestra.app", path: "/chapel", lie: "" },
+        { id: "empathy", host: "cohestra.app", path: "/billing/paddle-return", lie: "  · phishing?" },
+        { id: "worst", host: "victim.cohestra.app", path: "/?next=javascript:", lie: "" },
+        { id: "climax", host: "{slug}.cohestra.app", path: "/billing · receipt earned", lie: "" }
+      ];
+
+      function current() {
+        var y = window.scrollY + 120;
+        var chosen = hops[0];
+        for (var i = 0; i < hops.length; i++) {
+          var el = document.getElementById(hops[i].id);
+          if (el && el.offsetTop <= y) chosen = hops[i];
+        }
+        host.textContent = chosen.host;
+        path.textContent = chosen.path;
+        lie.textContent = chosen.lie;
+      }
+
+      window.addEventListener("scroll", current, { passive: true });
+      current();
+
+      var tri = document.getElementById("triplicate");
+      if (tri) {
+        tri.addEventListener("click", function (e) {
+          var sheet = e.target.closest(".sheet");
+          if (!sheet) return;
+          tri.setAttribute("data-front", sheet.getAttribute("data-layer"));
+        });
+      }
+
+      var gavel = document.getElementById("gavel");
+      if (gavel) {
+        var spoken = [
+          { host: "checkout.paddle.com", path: "/the-bank", lie: "" },
+          { host: "cohestra.app", path: "/billing/paddle-return", lie: "&billing=success" },
+          { host: "creativorare.cohestra.app", path: "/billing", lie: "" }
+        ];
+        var i = 0;
+        gavel.addEventListener("click", function () {
+          var s = spoken[i % spoken.length];
+          host.textContent = s.host;
+          path.textContent = s.path;
+          lie.textContent = s.lie;
+          i++;
+          gavel.textContent = i % 3 === 0
+            ? "Strike again — the hop is not a receipt"
+            : "Next host in the hop";
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

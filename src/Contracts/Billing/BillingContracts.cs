@@ -35,6 +35,8 @@ public sealed record CreateCheckoutSessionRequest(
     string? SuccessUrl,
     string? CancelUrl);
 
+public sealed record PaddleCheckoutReturnResponse(string RedirectUrl);
+
 public sealed record CheckoutSessionResponse(
     string CheckoutUrl,
     DateTimeOffset? TrialEndsAt,
