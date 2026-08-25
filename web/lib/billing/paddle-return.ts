@@ -57,7 +57,7 @@ export function resolvePaddleApexReturnRedirectUrl(
 /**
  * Paddle upgrades http success URLs to https. Local Docker nginx on 8088 has no TLS,
  * so passing `http://localhost:8088/...` (or `{slug}.localhost`) produces ERR_SSL_PROTOCOL_ERROR.
- * Omit overlay successUrl on local HTTP and navigate in `checkout.completed` instead.
+ * Omit those. Prefer `NEXT_PUBLIC_PADDLE_RETURN_ORIGIN` (HTTPS ngrok) for local sandbox.
  */
 export function sanitizePaddleOverlaySuccessUrl(
   url: string | null | undefined
@@ -77,8 +77,51 @@ export function sanitizePaddleOverlaySuccessUrl(
       return undefined;
     }
 
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return undefined;
+    }
+
     return url;
   } catch {
     return undefined;
   }
+}
+
+/** HTTPS origin Paddle may redirect to after overlay/hosted checkout (ngrok sandbox). */
+export function getPaddleReturnOrigin(
+  raw = process.env.NEXT_PUBLIC_PADDLE_RETURN_ORIGIN
+): string | undefined {
+  const trimmed = raw?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "https:") {
+      return undefined;
+    }
+
+    return parsed.origin;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Overlay successUrl that Paddle will actually open.
+ * Local HTTP is omitted (Paddle would https-upgrade it). Sandbox should pass the ngrok HTTPS apex.
+ */
+export function resolvePaddleOverlaySuccessUrl(
+  windowOrigin: string,
+  transactionId: string,
+  returnOrigin = getPaddleReturnOrigin()
+): string | undefined {
+  if (returnOrigin) {
+    return buildPaddleCheckoutReturnUrl(returnOrigin, transactionId);
+  }
+
+  const tenantSuccessUrl =
+    `${windowOrigin.replace(/\/$/, "")}/dashboard?billing=success&session_id=${encodeURIComponent(transactionId)}`;
+  return sanitizePaddleOverlaySuccessUrl(tenantSuccessUrl);
 }
