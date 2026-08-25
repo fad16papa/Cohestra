@@ -10,6 +10,7 @@ import {
   createPaymentMethodSetupWithAuth,
 } from "@/lib/billing/billing-details-api";
 import { openPaddleCheckoutOverlay } from "@/lib/billing/paddle-checkout";
+import { sanitizePaddleOverlaySuccessUrl } from "@/lib/billing/paddle-return";
 
 type BillingPaymentMethodDialogProps = {
   open: boolean;
@@ -43,7 +44,7 @@ export function BillingPaymentMethodDialog({
         await openPaddleCheckoutOverlay({
           clientToken: setup.clientToken,
           transactionId: setup.clientSecret,
-          successUrl: window.location.href,
+          successUrl: sanitizePaddleOverlaySuccessUrl(window.location.href),
           onCompleted: (transactionId) => {
             void confirmPaymentMethodSetupWithAuth(authFetch, transactionId)
               .then(() => {

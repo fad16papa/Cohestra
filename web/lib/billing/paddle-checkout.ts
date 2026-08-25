@@ -21,13 +21,27 @@ export function extractPaddleTransactionId(checkoutUrl: string): string | null {
   return match?.[0] ?? null;
 }
 
+type OverlayHandlers = {
+  transactionId: string;
+  onCompleted?: (transactionId: string) => void;
+  onClosed?: () => void;
+};
+
+let overlayHandlers: OverlayHandlers = { transactionId: "" };
+
 export async function openPaddleCheckoutOverlay(options: {
   clientToken: string;
   transactionId: string;
-  successUrl: string;
+  successUrl?: string;
   onCompleted?: (transactionId: string) => void;
   onClosed?: () => void;
 }): Promise<void> {
+  overlayHandlers = {
+    transactionId: options.transactionId,
+    onCompleted: options.onCompleted,
+    onClosed: options.onClosed,
+  };
+
   paddlePromise ??= initializePaddle({
     token: options.clientToken,
     environment: paddleEnvironment(options.clientToken),
@@ -35,13 +49,13 @@ export async function openPaddleCheckoutOverlay(options: {
       if (event.name === "checkout.completed") {
         const transactionId =
           typeof event.data === "object" && event.data && "transaction_id" in event.data
-            ? String((event.data as { transaction_id?: string }).transaction_id ?? options.transactionId)
-            : options.transactionId;
-        options.onCompleted?.(transactionId);
+            ? String((event.data as { transaction_id?: string }).transaction_id ?? overlayHandlers.transactionId)
+            : overlayHandlers.transactionId;
+        overlayHandlers.onCompleted?.(transactionId);
       }
 
       if (event.name === "checkout.closed") {
-        options.onClosed?.();
+        overlayHandlers.onClosed?.();
       }
     },
   });
@@ -51,13 +65,22 @@ export async function openPaddleCheckoutOverlay(options: {
     throw new Error("Could not load checkout.");
   }
 
+  const settings: {
+    displayMode: "overlay";
+    theme: "light";
+    allowLogout: false;
+    successUrl?: string;
+  } = {
+    displayMode: "overlay",
+    theme: "light",
+    allowLogout: false,
+  };
+  if (options.successUrl) {
+    settings.successUrl = options.successUrl;
+  }
+
   paddle.Checkout.open({
     transactionId: options.transactionId,
-    settings: {
-      displayMode: "overlay",
-      theme: "light",
-      allowLogout: false,
-      successUrl: options.successUrl,
-    },
+    settings,
   });
 }
