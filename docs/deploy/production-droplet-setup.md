@@ -30,25 +30,26 @@ Pass `custom_data.tenant_id` and `custom_data.tenant_slug` on every checkout tra
 
 ## Default payment link
 
-Paddle allows **one** default payment link per environment (sandbox vs live). It must be the **marketing apex**, not a tenant slug host. After checkout Paddle appends `?_ptxn=txn_…`; Cohestra looks up `custom_data.tenant_id` and redirects to `{slug}.…/dashboard`.
+Paddle allows **one** default payment link per environment (sandbox vs live). It must be the **marketing apex**, not a tenant slug host. After hosted checkout Paddle appends `?_ptxn=txn_…`; Cohestra looks up `custom_data.tenant_id` and redirects to `{slug}.…/dashboard`.
+
+**Paddle always stores this URL as HTTPS.** Saving `http://localhost:8088/...` will revert to `https://localhost:8088/...` — that is Paddle, not a Cohestra bug. Local nginx has no TLS, so `https://localhost:8088` will show `ERR_SSL_PROTOCOL_ERROR` if the browser is sent there.
 
 | Environment | Default payment link |
 |---|---|
-| Local Docker (`PUBLIC_BASE_URL=http://localhost:8088`) | `http://localhost:8088/billing/paddle-return` |
+| Local Docker overlay UAT | Leave Paddle’s HTTPS localhost value (required to *create* transactions). Overlay checkout does **not** redirect there after pay. |
+| Local Docker hosted-checkout UAT | `https://{ngrok-host}/billing/paddle-return` (same tunnel as the webhook). Paddle’s HTTPS rewrite then hits a real certificate; Cohestra redirects to `{slug}.localhost`. |
 | Production | `https://cohestra.app/billing/paddle-return` |
 | nip.io UAT | `https://{ip-dashed}.nip.io/billing/paddle-return` |
 
-Do **not** use `https://localhost:…` (local nginx is HTTP). Do **not** put `{slug}.cohestra.app` or `{slug}.localhost` in this field — every workspace would return to that one slug.
+Do **not** put `{slug}.cohestra.app` or `{slug}.localhost` in this field — every workspace would return to that one slug.
 
-Paddle still **rewrites http localhost success/return URLs to https**. Overlay checkout on local Docker therefore does **not** pass `successUrl` to Paddle.js; `checkout.completed` navigates to `http://{slug}.localhost:8088/dashboard` instead. If a hosted checkout still lands on `https://localhost:8088/billing/paddle-return` (`ERR_SSL_PROTOCOL_ERROR`), open the HTTP tenant URL:
+Overlay on local HTTP omits Paddle.js `successUrl` and navigates in `checkout.completed` to `http://{slug}.localhost:8088/dashboard`. Rebuild **web** from current `main` for that behavior. If a tab still lands on `https://localhost:8088/billing/paddle-return`, recover with:
 
 `http://{slug}.localhost:8088/dashboard?billing=success&session_id=txn_…`
 
-Sandbox default payment link can stay `http://localhost:8088/billing/paddle-return` for overlay. For hosted-checkout UAT, point it at the HTTPS ngrok apex (`https://{tunnel}/billing/paddle-return`) so Paddle's TLS rewrite has a real certificate; Cohestra then redirects to `{slug}.localhost`.
+Approve the production apex in Paddle (Request website approval). Production overlay `successUrl` is the tenant dashboard (`https://{slug}.cohestra.app/dashboard`).
 
-Approve the apex domain in Paddle (Request website approval). Production overlay `successUrl` is the tenant dashboard (`https://{slug}.cohestra.app/dashboard`).
-
-API startup logs the exact URL when `Paddle__ApiKey` is set (`Paddle Checkout settings → Default payment link must be …`).
+API startup logs the Cohestra apex return path when `Paddle__ApiKey` is set. Sandbox dashboards will still show HTTPS.
 
 ## Story 19.4
 
