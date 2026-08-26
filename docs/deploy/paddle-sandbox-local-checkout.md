@@ -43,6 +43,41 @@ Confirm Paddle sandbox **Notifications** still points at the **current** ngrok h
    https://YOUR-NGROK-HOST/api/v1/system/paddle/webhook
    ```
 
+   Edit the destination and subscribe at least:
+
+   - `transaction.completed`
+   - `transaction.payment_failed`
+   - `subscription.created`
+   - `subscription.updated`
+   - `subscription.canceled`
+   - `subscription.past_due`
+   - `subscription.activated`
+
+   `transaction.created` is **not** enough. Cohestra ignores it. A Failed log of only that event will never move a workspace off Basic.
+
+   Put the destination secret in `.env` as `Paddle__WebhookSecret` (same value as the Paddle destination secret) and recreate **api**:
+
+   ```bash
+   docker compose up -d --force-recreate api
+   ```
+
+   If every row is **Failed** after 3 attempts, Paddle never got HTTP 2xx. Click a row and read the response:
+
+   | Response | Meaning |
+   |---|---|
+   | `403` HTML / ngrok warning | Free ngrok blocked the POST. Keep the tunnel up; paid ngrok or `cloudflared tunnel --url http://localhost:8088` avoids this. |
+   | `503` `Paddle webhook secret is not configured` | `Paddle__WebhookSecret` is empty in the API container. |
+   | `400` `Invalid Paddle-Signature` | Secret in `.env` does not match this destination. |
+   | `502` / timeout | Docker/nginx on 8088 is down, or ngrok is pointing at the wrong port. |
+
+   Probe the tunnel (expect `400 Missing Paddle-Signature` if the API is reachable and the secret is set):
+
+   ```bash
+   curl -i -X POST https://YOUR-NGROK-HOST/api/v1/system/paddle/webhook \
+     -H "Content-Type: application/json" \
+     -d "{}"
+   ```
+
 5. Put the origin in `.env` (no trailing slash) and rebuild **web** so overlay `successUrl` matches the dashboard:
 
    ```bash
