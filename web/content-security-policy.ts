@@ -10,27 +10,27 @@
 
 const BASE_DIRECTIVES = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com https://cdn.paddle.com https://sandbox-cdn.paddle.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://images.unsplash.com",
+  "img-src 'self' data: blob: https://images.unsplash.com https://cdn.paddle.com https://sandbox-cdn.paddle.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://player.vimeo.com",
+  "frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://player.vimeo.com https://buy.paddle.com https://sandbox-buy.paddle.com",
 ] as const;
 
 /** Production / Docker (nginx-owned). API calls are same-origin via /api/ proxy. */
 export const contentSecurityPolicyValue = [
   ...BASE_DIRECTIVES,
-  "connect-src 'self' https://nominatim.openstreetmap.org",
+  "connect-src 'self' https://nominatim.openstreetmap.org https://api.paddle.com https://sandbox-api.paddle.com https://cdn.paddle.com https://sandbox-cdn.paddle.com",
 ].join("; ");
 
 /** Local `next dev` — allow HMR websockets. */
 export const contentSecurityPolicyDevValue = [
   ...BASE_DIRECTIVES,
-  "connect-src 'self' ws: wss: https://nominatim.openstreetmap.org",
+  "connect-src 'self' ws: wss: https://nominatim.openstreetmap.org https://api.paddle.com https://sandbox-api.paddle.com https://cdn.paddle.com https://sandbox-cdn.paddle.com",
 ].join("; ");
 
 /** @deprecated Use contentSecurityPolicyHeader — kept for staged rollback. */

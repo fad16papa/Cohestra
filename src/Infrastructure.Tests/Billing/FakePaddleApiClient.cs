@@ -55,6 +55,10 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
 
     public bool CreateCustomerShouldFail { get; set; }
 
+    public int GetTransactionCalls { get; private set; }
+
+    public int AttachSubscriptionAfterGetCalls { get; set; }
+
     public Task<PaddleCustomer> CreateCustomerAsync(
         string email,
         string name,
@@ -118,17 +122,34 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
         string transactionId,
         CancellationToken cancellationToken = default)
     {
+        GetTransactionCalls++;
+        PaddleTransaction? match = null;
         if (transactionId == CheckoutTransaction.Id)
         {
-            return Task.FromResult<PaddleTransaction?>(CheckoutTransaction);
+            match = CheckoutTransaction;
         }
-
-        if (transactionId == UpdatePaymentTransaction.Id)
+        else if (transactionId == UpdatePaymentTransaction.Id)
         {
-            return Task.FromResult<PaddleTransaction?>(UpdatePaymentTransaction);
+            match = UpdatePaymentTransaction;
+        }
+        else
+        {
+            match = Transactions.FirstOrDefault(t => t.Id == transactionId);
         }
 
-        return Task.FromResult(Transactions.FirstOrDefault(t => t.Id == transactionId));
+        if (match is not null
+            && AttachSubscriptionAfterGetCalls > 0
+            && GetTransactionCalls >= AttachSubscriptionAfterGetCalls
+            && Subscription is not null)
+        {
+            match.Status = string.IsNullOrWhiteSpace(match.Status) || match.Status == "ready"
+                ? "completed"
+                : match.Status;
+            match.SubscriptionId = Subscription.Id;
+            match.CustomerId ??= Subscription.CustomerId;
+        }
+
+        return Task.FromResult(match);
     }
 
     public Task<IReadOnlyList<PaddleTransaction>> ListTransactionsAsync(
@@ -174,9 +195,20 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
 
     public Task<IReadOnlyList<PaddleSubscription>> ListSubscriptionsAsync(
         string customerId,
-        CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyList<PaddleSubscription>>(
-            Subscription is null ? [] : [Subscription]);
+        CancellationToken cancellationToken = default)
+    {
+        if (Subscription is null)
+        {
+            return Task.FromResult<IReadOnlyList<PaddleSubscription>>([]);
+        }
+
+        if (AttachSubscriptionAfterGetCalls > 0 && GetTransactionCalls < AttachSubscriptionAfterGetCalls)
+        {
+            return Task.FromResult<IReadOnlyList<PaddleSubscription>>([]);
+        }
+
+        return Task.FromResult<IReadOnlyList<PaddleSubscription>>([Subscription]);
+    }
 
     public Task<PaddleSubscription> UpdateSubscriptionItemsAsync(
         string subscriptionId,

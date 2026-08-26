@@ -12,7 +12,8 @@ internal static class PaddleTenantBillingSync
         tenant.PaddleSubscriptionId = subscription.Id;
 
         var periodEnd = ResolvePeriodEnd(subscription);
-        var priceId = subscription.Items.FirstOrDefault()?.Price?.Id;
+        var priceId = subscription.Items.FirstOrDefault()?.Price?.Id
+            ?? subscription.Items.FirstOrDefault()?.PriceId;
         TenantPlan? mappedPlan = null;
         BillingInterval? mappedInterval = null;
 

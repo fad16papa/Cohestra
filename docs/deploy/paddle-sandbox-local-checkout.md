@@ -4,15 +4,19 @@ Paddle **always stores Default payment link as HTTPS**. Saving `http://localhost
 
 Do not fight the HTTP save. Point Paddle at an HTTPS tunnel that already reaches Docker (the same ngrok you use for webhooks).
 
+The return page (`/billing/paddle-return`) only proves Paddle sent you back. The workspace plan updates when Cohestra reads the transaction (checkout-return sync) or when the Paddle webhook arrives. If you land on `/dashboard` without `?billing=success&session_id=txn_…`, Settings → Billing stays **Basic**.
+
 ## Recover a checkout that already paid
 
-Open **HTTP** on the tenant host (not `https://localhost`):
+Open **HTTP** on the tenant host (not `https://localhost`), using the `_ptxn` from the ngrok URL:
 
 ```
 http://creativorare.localhost:8088/dashboard?billing=success&session_id=txn_YOUR_ID
 ```
 
-Or Settings → Billing → Refresh. Keep the webhook tunnel running.
+Or Settings → Billing → Refresh billing status. Keep the webhook tunnel running.
+
+Confirm Paddle sandbox **Notifications** still points at the **current** ngrok host (`https://YOUR-NGROK-HOST/api/v1/system/paddle/webhook`). A restarted free ngrok URL will not deliver webhooks until you update it.
 
 ## Manual sandbox walk (working return)
 

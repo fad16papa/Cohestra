@@ -302,6 +302,87 @@ public sealed class PaddleBillingServiceTests
         Assert.Null(db.Tenants.Single(t => t.Id == tenant.Id).ScheduledPlan);
     }
 
+    [Fact]
+    public async Task Sync_from_completed_transaction_unlocks_pro()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db);
+        tenant.PaddleCustomerId = "ctm_test";
+        await db.SaveChangesAsync();
+        var client = new FakePaddleApiClient
+        {
+            Subscription = new PaddleSubscription
+            {
+                Id = "sub_pro",
+                Status = "trialing",
+                CustomerId = "ctm_test",
+                Items = [new PaddleSubscriptionItem { Quantity = 1, Price = new PaddlePrice { Id = "pri_pro_m" } }],
+                TrialDates = new PaddleTimePeriod
+                {
+                    StartsAt = DateTimeOffset.UtcNow,
+                    EndsAt = DateTimeOffset.UtcNow.AddDays(30),
+                },
+            },
+        };
+        client.Transactions.Add(new PaddleTransaction
+        {
+            Id = "txn_01paidpro",
+            Status = "completed",
+            CustomerId = "ctm_test",
+            SubscriptionId = "sub_pro",
+            CustomData = System.Text.Json.JsonSerializer.SerializeToElement(new Dictionary<string, string>
+            {
+                ["tenant_id"] = tenant.Id.ToString(),
+                ["plan"] = "Pro",
+                ["interval"] = "Monthly",
+            }),
+        });
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var summary = await service.SyncFromProviderAsync(tenant.Id, "txn_01paidpro");
+
+        Assert.Equal(TenantPlan.Pro, summary.Plan);
+        Assert.Equal(BillingStatus.Trialing, summary.BillingStatus);
+        Assert.Equal("sub_pro", db.Tenants.Single(t => t.Id == tenant.Id).PaddleSubscriptionId);
+    }
+
+    [Fact]
+    public async Task Sync_waits_for_subscription_id_on_completed_checkout()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db);
+        tenant.PaddleCustomerId = "ctm_test";
+        await db.SaveChangesAsync();
+        var client = new FakePaddleApiClient
+        {
+            AttachSubscriptionAfterGetCalls = 2,
+            Subscription = new PaddleSubscription
+            {
+                Id = "sub_late",
+                Status = "active",
+                CustomerId = "ctm_test",
+                Items = [new PaddleSubscriptionItem { Quantity = 1, PriceId = "pri_core_m" }],
+            },
+        };
+        client.Transactions.Add(new PaddleTransaction
+        {
+            Id = "txn_01late",
+            Status = "completed",
+            CustomerId = "ctm_test",
+            CustomData = System.Text.Json.JsonSerializer.SerializeToElement(new Dictionary<string, string>
+            {
+                ["tenant_id"] = tenant.Id.ToString(),
+            }),
+        });
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var summary = await service.SyncFromProviderAsync(tenant.Id, "txn_01late");
+
+        Assert.True(client.GetTransactionCalls >= 2);
+        Assert.Equal(TenantPlan.Core, summary.Plan);
+        Assert.Equal("sub_late", db.Tenants.Single(t => t.Id == tenant.Id).PaddleSubscriptionId);
+    }
+
     private static CreateCheckoutSessionCommand Checkout(Guid tenantId) =>
         new(
             tenantId,

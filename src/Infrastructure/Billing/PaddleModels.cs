@@ -46,6 +46,8 @@ internal sealed class PaddleSubscriptionItem
 
     public PaddlePrice? Price { get; set; }
 
+    public string? PriceId { get; set; }
+
     public PaddleTimePeriod? TrialDates { get; set; }
 
     public DateTimeOffset? NextBilledAt { get; set; }

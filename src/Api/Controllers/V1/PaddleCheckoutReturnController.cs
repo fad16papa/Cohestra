@@ -1,3 +1,4 @@
+using Cohestra.Application.Billing;
 using Cohestra.Contracts.Billing;
 using Cohestra.Infrastructure.Billing;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +9,9 @@ namespace Cohestra.Api.Controllers.V1;
 [ApiController]
 [Route("api/v1/system/paddle")]
 public sealed class PaddleCheckoutReturnController(
-    IPaddleCheckoutReturnResolver checkoutReturnResolver) : ControllerBase
+    IPaddleCheckoutReturnResolver checkoutReturnResolver,
+    IBillingService billingService,
+    ILogger<PaddleCheckoutReturnController> logger) : ControllerBase
 {
     [AllowAnonymous]
     [HttpGet("checkout-return")]
@@ -21,20 +24,33 @@ public sealed class PaddleCheckoutReturnController(
         CancellationToken cancellationToken)
     {
         var id = string.IsNullOrWhiteSpace(transactionId) ? ptxn : transactionId;
-        var redirectUrl = string.IsNullOrWhiteSpace(id)
+        var resolved = string.IsNullOrWhiteSpace(id)
             ? null
             : await checkoutReturnResolver.ResolveDashboardUrlAsync(id, cancellationToken);
-        if (string.IsNullOrWhiteSpace(redirectUrl))
+        if (resolved is null)
         {
             return NotFound();
+        }
+
+        try
+        {
+            await billingService.SyncFromProviderAsync(resolved.TenantId, id, cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(
+                ex,
+                "Paddle checkout return synced tenant {TenantId} from {TransactionId} failed; dashboard can retry",
+                resolved.TenantId,
+                id);
         }
 
         var accept = Request.Headers.Accept.ToString();
         if (accept.Contains("application/json", StringComparison.OrdinalIgnoreCase))
         {
-            return Ok(new PaddleCheckoutReturnResponse(redirectUrl));
+            return Ok(new PaddleCheckoutReturnResponse(resolved.RedirectUrl));
         }
 
-        return Redirect(redirectUrl);
+        return Redirect(resolved.RedirectUrl);
     }
 }

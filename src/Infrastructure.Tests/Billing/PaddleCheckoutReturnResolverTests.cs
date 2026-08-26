@@ -21,7 +21,8 @@ public sealed class PaddleCheckoutReturnResolverTests
 
         Assert.Equal(
             $"http://studio.localhost:8088/dashboard?billing=success&session_id=txn_01checkoutreturn",
-            url);
+            url?.RedirectUrl);
+        Assert.Equal(tenant.Id, url?.TenantId);
     }
 
     [Fact]
@@ -38,7 +39,7 @@ public sealed class PaddleCheckoutReturnResolverTests
 
         Assert.Equal(
             "https://creativorare.cohestra.app/dashboard?billing=success&session_id=txn_01prodreturn",
-            url);
+            url?.RedirectUrl);
     }
 
     [Fact]
@@ -63,7 +64,7 @@ public sealed class PaddleCheckoutReturnResolverTests
 
         Assert.Equal(
             "https://studio.cohestra.app/dashboard?billing=success&session_id=txn_01idwins",
-            url);
+            url?.RedirectUrl);
     }
 
     [Fact]
@@ -85,7 +86,7 @@ public sealed class PaddleCheckoutReturnResolverTests
 
         Assert.Equal(
             "http://studio.localhost:8088/dashboard?billing=success&session_id=txn_01customerfallback",
-            url);
+            url?.RedirectUrl);
     }
 
     [Fact]

@@ -10,7 +10,6 @@ import {
   marketingAtelierButtonClass,
 } from "@/components/marketing/marketing-shell";
 import { useMarketingHeaderScroll } from "@/components/marketing/use-marketing-header-scroll";
-import { getPublicApiBaseUrl } from "@/lib/api";
 import { isPaddleTransactionId } from "@/lib/billing/paddle-return";
 
 function isHttpUrl(value: string): boolean {
@@ -40,10 +39,11 @@ function PaddleReturnContent() {
     async function redirectToWorkspace() {
       try {
         const response = await fetch(
-          `${getPublicApiBaseUrl()}/api/v1/system/paddle/checkout-return?transactionId=${encodeURIComponent(transactionId)}`,
+          `/api/v1/system/paddle/checkout-return?transactionId=${encodeURIComponent(transactionId)}`,
           {
             cache: "no-store",
             headers: { Accept: "application/json" },
+            signal: AbortSignal.timeout(20_000),
           }
         );
         if (!response.ok) {
@@ -65,7 +65,7 @@ function PaddleReturnContent() {
       } catch {
         if (!cancelled) {
           setError(
-            "We couldn't match this checkout to a workspace. Open your workspace dashboard and refresh billing."
+            `We couldn't match this checkout to a workspace. Open http://YOUR-SLUG.localhost:8088/dashboard?billing=success&session_id=${transactionId} or use Settings → Billing → Refresh billing status.`
           );
         }
       }

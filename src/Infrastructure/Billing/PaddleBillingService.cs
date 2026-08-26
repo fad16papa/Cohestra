@@ -26,6 +26,8 @@ internal sealed class PaddleBillingService(
     ILogger<PaddleBillingService> logger) : IBillingService
 {
     private readonly PaddleSettings _settings = paddleOptions.Value;
+    private const int CheckoutSubscriptionRetryCount = 6;
+    private static readonly TimeSpan CheckoutSubscriptionRetryDelay = TimeSpan.FromMilliseconds(250);
 
     public async Task<BillingSummaryDto> GetSummaryAsync(
         Guid tenantId,
@@ -963,32 +965,61 @@ internal sealed class PaddleBillingService(
     {
         try
         {
-            var transaction = await paddleClient.GetTransactionAsync(transactionId, cancellationToken);
-            if (transaction is null)
+            PaddleTransaction? transaction = null;
+            for (var attempt = 0; attempt < CheckoutSubscriptionRetryCount; attempt++)
             {
-                return null;
+                if (attempt > 0)
+                {
+                    await Task.Delay(CheckoutSubscriptionRetryDelay, cancellationToken);
+                }
+
+                transaction = await paddleClient.GetTransactionAsync(transactionId, cancellationToken);
+                if (transaction is null)
+                {
+                    return null;
+                }
+
+                var customData = PaddleJson.ReadCustomData(transaction.CustomData);
+                if (PaddleJson.TryGetGuid(customData, "tenant_id", out var metadataTenantId)
+                    && metadataTenantId != tenant.Id)
+                {
+                    logger.LogWarning(
+                        "Checkout transaction {TransactionId} tenant mismatch for tenant {TenantId}",
+                        transactionId,
+                        tenant.Id);
+                    return null;
+                }
+
+                PaddleTenantBillingSync.ApplyTransaction(tenant, transaction);
+                await dbContext.SaveChangesAsync(cancellationToken);
+
+                if (!string.IsNullOrWhiteSpace(transaction.SubscriptionId))
+                {
+                    return await paddleClient.GetSubscriptionAsync(
+                        transaction.SubscriptionId,
+                        cancellationToken);
+                }
+
+                if (!string.IsNullOrWhiteSpace(tenant.PaddleCustomerId))
+                {
+                    var listed = await TryResolveSubscriptionFromTenantAsync(tenant, cancellationToken);
+                    if (listed is not null)
+                    {
+                        return listed;
+                    }
+                }
+
+                if (!ExpectsCheckoutSubscription(transaction))
+                {
+                    return null;
+                }
             }
 
-            var customData = PaddleJson.ReadCustomData(transaction.CustomData);
-            if (PaddleJson.TryGetGuid(customData, "tenant_id", out var metadataTenantId)
-                && metadataTenantId != tenant.Id)
-            {
-                logger.LogWarning(
-                    "Checkout transaction {TransactionId} tenant mismatch for tenant {TenantId}",
-                    transactionId,
-                    tenant.Id);
-                return null;
-            }
-
-            PaddleTenantBillingSync.ApplyTransaction(tenant, transaction);
-            await dbContext.SaveChangesAsync(cancellationToken);
-
-            if (string.IsNullOrWhiteSpace(transaction.SubscriptionId))
-            {
-                return null;
-            }
-
-            return await paddleClient.GetSubscriptionAsync(transaction.SubscriptionId, cancellationToken);
+            logger.LogInformation(
+                "Checkout transaction {TransactionId} for tenant {TenantId} has no subscription after retries",
+                transactionId,
+                tenant.Id);
+            return null;
         }
         catch (PaddleApiException ex)
         {
@@ -999,6 +1030,12 @@ internal sealed class PaddleBillingService(
                 tenant.Id);
             return null;
         }
+    }
+
+    private static bool ExpectsCheckoutSubscription(PaddleTransaction transaction)
+    {
+        var status = transaction.Status?.Trim().ToLowerInvariant();
+        return status is "billed" or "completed" or "paid";
     }
 
     private async Task<PaddleSubscription?> TryResolveSubscriptionFromTenantAsync(

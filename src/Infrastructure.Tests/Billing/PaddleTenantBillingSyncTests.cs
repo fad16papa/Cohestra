@@ -39,6 +39,28 @@ public sealed class PaddleTenantBillingSyncTests
     }
 
     [Fact]
+    public void ApplySubscription_maps_item_level_price_id()
+    {
+        var tenant = new Tenant
+        {
+            Plan = TenantPlan.Basic,
+            BillingStatus = BillingStatus.Free,
+        };
+        var subscription = new PaddleSubscription
+        {
+            Id = "sub_price_id",
+            CustomerId = "ctm_1",
+            Status = "active",
+            Items = [new PaddleSubscriptionItem { Quantity = 1, PriceId = "pri_pro_m" }],
+        };
+
+        PaddleTenantBillingSync.ApplySubscription(tenant, subscription, PaddleBillingTestHarness.DefaultSettings());
+
+        Assert.Equal(TenantPlan.Pro, tenant.Plan);
+        Assert.Equal(BillingInterval.Monthly, tenant.BillingInterval);
+    }
+
+    [Fact]
     public void ApplySubscription_cancel_at_period_end_keeps_current_plan()
     {
         var tenant = new Tenant
