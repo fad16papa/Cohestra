@@ -37,7 +37,10 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
     {
         Urls = new PaddlePortalUrls
         {
-            General = new PaddlePortalLink { Url = "https://sandbox-vendors.paddle.com/portal/test" },
+            General = new PaddlePortalGeneralUrls
+            {
+                Overview = "https://sandbox-vendors.paddle.com/portal/test",
+            },
         },
     };
 

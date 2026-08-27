@@ -137,23 +137,40 @@ internal sealed class PaddleCard
 internal sealed class PaddlePortalSession
 {
     public PaddlePortalUrls? Urls { get; set; }
+
+    public string? ResolveUrl()
+    {
+        var paymentMethodUrl = Urls?.Subscriptions?
+            .Select(subscription => subscription.UpdateSubscriptionPaymentMethod)
+            .FirstOrDefault(url => !string.IsNullOrWhiteSpace(url));
+        if (!string.IsNullOrWhiteSpace(paymentMethodUrl))
+        {
+            return paymentMethodUrl;
+        }
+
+        return string.IsNullOrWhiteSpace(Urls?.General?.Overview) ? null : Urls.General.Overview;
+    }
 }
 
 internal sealed class PaddlePortalUrls
 {
-    public PaddlePortalLink? General { get; set; }
+    public PaddlePortalGeneralUrls? General { get; set; }
 
-    public PaddlePortalLink? Overview { get; set; }
+    public List<PaddlePortalSubscriptionUrls>? Subscriptions { get; set; }
 }
 
-internal sealed class PaddlePortalLink
+internal sealed class PaddlePortalGeneralUrls
 {
-    public string? Url { get; set; }
+    public string? Overview { get; set; }
+}
 
-    public string? Href { get; set; }
+internal sealed class PaddlePortalSubscriptionUrls
+{
+    public string? Id { get; set; }
 
-    public string? Resolved =>
-        !string.IsNullOrWhiteSpace(Url) ? Url : Href;
+    public string? CancelSubscription { get; set; }
+
+    public string? UpdateSubscriptionPaymentMethod { get; set; }
 }
 
 internal sealed class PaddleInvoiceFile

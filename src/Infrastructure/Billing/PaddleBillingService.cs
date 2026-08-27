@@ -179,7 +179,7 @@ internal sealed class PaddleBillingService(
                 tenant.PaddleCustomerId!,
                 tenant.PaddleSubscriptionId,
                 cancellationToken);
-            var url = session.Urls?.General?.Resolved ?? session.Urls?.Overview?.Resolved;
+            var url = session.ResolveUrl();
             if (string.IsNullOrWhiteSpace(url))
             {
                 throw new InvalidOperationException("Billing portal did not return a URL.");
