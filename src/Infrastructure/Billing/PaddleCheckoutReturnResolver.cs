@@ -37,7 +37,7 @@ internal sealed class PaddleCheckoutReturnResolver(
         return true;
     }
 
-    public async Task<string?> ResolveDashboardUrlAsync(
+    public async Task<PaddleCheckoutReturnMatch?> ResolveDashboardUrlAsync(
         string transactionId,
         CancellationToken cancellationToken = default)
     {
@@ -73,10 +73,11 @@ internal sealed class PaddleCheckoutReturnResolver(
         }
 
         var path = $"/dashboard?billing=success&session_id={Uri.EscapeDataString(transaction.Id)}";
-        return TenantPublicWebUrlBuilder.BuildTenantPath(
+        var redirectUrl = TenantPublicWebUrlBuilder.BuildTenantPath(
             publicWebOptions.Value.BaseUrl,
             tenant.Slug,
             path);
+        return new PaddleCheckoutReturnMatch(redirectUrl, tenant.Id, tenant.Slug);
     }
 
     private async Task<Tenant?> ResolveTenantAsync(

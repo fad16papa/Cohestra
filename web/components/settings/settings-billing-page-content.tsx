@@ -1,31 +1,49 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { syncBillingFromProviderWithAuth } from "@/lib/billing/billing-api";
+import { isPaddleTransactionId } from "@/lib/billing/paddle-return";
 
 function isPaidPlan(plan: string): boolean {
   return plan === "Core" || plan === "Pro";
 }
 
-export function SettingsBillingPageContent() {
+function SettingsBillingBody() {
   const { authFetch } = useAuth();
   const { shell, refreshShell } = useTenantShell();
+  const searchParams = useSearchParams();
   const autoSyncedRef = useRef(false);
+  const checkoutIncomplete = searchParams.get("billing") === "incomplete";
+  const checkoutSessionId =
+    searchParams.get("session_id")
+    ?? searchParams.get("_ptxn")
+    ?? searchParams.get("transaction_id");
+  const [incompleteNotice, setIncompleteNotice] = useState(checkoutIncomplete);
 
   useEffect(() => {
-    if (!shell?.isTenantAdmin || shell.plan !== "Basic" || autoSyncedRef.current) {
+    if (!shell?.isTenantAdmin || autoSyncedRef.current) {
+      return;
+    }
+
+    if (shell.plan !== "Basic" && !checkoutSessionId) {
       return;
     }
 
     autoSyncedRef.current = true;
-    void syncBillingFromProviderWithAuth(authFetch)
-      .then(() => refreshShell())
+    void syncBillingFromProviderWithAuth(authFetch, checkoutSessionId)
+      .then(async (summary) => {
+        await refreshShell();
+        if (isPaidPlan(summary.plan)) {
+          setIncompleteNotice(false);
+        }
+      })
       .catch(() => undefined);
-  }, [authFetch, refreshShell, shell?.isTenantAdmin, shell?.plan]);
+  }, [authFetch, checkoutSessionId, refreshShell, shell?.isTenantAdmin, shell?.plan]);
 
   if (!shell?.isTenantAdmin) {
     return (
@@ -61,6 +79,31 @@ export function SettingsBillingPageContent() {
         </p>
       </div>
 
+      {incompleteNotice && !isPaidPlan(shell.plan) ? (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
+        >
+          Paddle opened checkout but has not activated a paid plan yet. Finish the Paddle card
+          form with a sandbox test card (4242 4242 4242 4242) until payment succeeds. Then use
+          Refresh billing status. In Paddle Notifications you should see{" "}
+          <span className="font-medium">transaction.completed</span> and{" "}
+          <span className="font-medium">subscription.created</span> as Delivered — not only
+          transaction.created.
+          {isPaddleTransactionId(checkoutSessionId) ? (
+            <>
+              {" "}
+              <a
+                className="font-medium underline underline-offset-2"
+                href={`/billing/paddle-return?_ptxn=${encodeURIComponent(checkoutSessionId)}`}
+              >
+                Resume checkout
+              </a>
+            </>
+          ) : null}
+        </p>
+      ) : null}
+
       <InAppBillingPanel
         shellPlan={shell.plan}
         shellBillingStatus={shell.billingStatus}
@@ -68,5 +111,13 @@ export function SettingsBillingPageContent() {
         onRefreshShell={refreshShell}
       />
     </div>
+  );
+}
+
+export function SettingsBillingPageContent() {
+  return (
+    <Suspense fallback={<p className="text-sm text-text-muted-warm">Loading billing…</p>}>
+      <SettingsBillingBody />
+    </Suspense>
   );
 }

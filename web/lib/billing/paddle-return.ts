@@ -13,6 +13,23 @@ export function isPaddleTransactionId(
   return /^txn_[a-zA-Z0-9]+$/.test(value);
 }
 
+export function isPaidPaddlePlanName(plan: string | null | undefined): boolean {
+  return plan === "Core" || plan === "Pro";
+}
+
+/** Default payment link / Incomplete txn Payment link should collect a card. */
+export function shouldOpenPaddleCheckoutOnReturn(input: {
+  openCheckout: boolean;
+  clientToken?: string | null;
+  plan?: string | null;
+}): boolean {
+  return (
+    input.openCheckout
+    && Boolean(input.clientToken?.trim())
+    && !isPaidPaddlePlanName(input.plan)
+  );
+}
+
 /** Slug-free Paddle default payment link for this environment's marketing apex. */
 export function buildPaddleCheckoutReturnUrl(
   origin: string,
