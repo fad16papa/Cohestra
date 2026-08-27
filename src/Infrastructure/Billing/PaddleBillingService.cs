@@ -296,106 +296,6 @@ internal sealed class PaddleBillingService(
         return new BillingDetailsDto(summary, contact, paymentMethod, subscription, invoices);
     }
 
-    public async Task<SetupIntentDto> CreateSetupIntentAsync(
-        Guid tenantId,
-        string operatorEmail,
-        CancellationToken cancellationToken = default)
-    {
-        await ValidateBillingAccessAsync(tenantId, operatorEmail, cancellationToken);
-        EnsureConfigured();
-
-        if (string.IsNullOrWhiteSpace(_settings.ClientToken))
-        {
-            throw new InvalidOperationException("Paddle client token is not configured.");
-        }
-
-        var tenant = await dbContext.Tenants
-            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
-            ?? throw new InvalidOperationException("Tenant not found.");
-
-        if (tenant.IsComplimentary)
-        {
-            throw new InvalidOperationException("Complimentary tenants do not manage payment methods.");
-        }
-
-        await EnsurePaddleCustomerForOperatorAsync(tenant, operatorEmail, cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(tenant.PaddleSubscriptionId))
-        {
-            throw new InvalidOperationException(
-                "Add your card when you subscribe. Open checkout to start Core or Pro.");
-        }
-
-        try
-        {
-            var transaction = await paddleClient.CreateUpdatePaymentMethodTransactionAsync(
-                tenant.PaddleSubscriptionId,
-                cancellationToken);
-            if (string.IsNullOrWhiteSpace(transaction.Id))
-            {
-                throw new InvalidOperationException("Could not start payment method setup.");
-            }
-
-            return new SetupIntentDto(transaction.Id, _settings.ClientToken);
-        }
-        catch (PaddleApiException ex)
-        {
-            logger.LogWarning(ex, "Paddle payment method setup failed for tenant {TenantId}", tenant.Id);
-            throw new InvalidOperationException("Could not start payment method setup.");
-        }
-    }
-
-    public async Task ConfirmSetupIntentAsync(
-        Guid tenantId,
-        string operatorEmail,
-        string setupIntentId,
-        CancellationToken cancellationToken = default)
-    {
-        await ValidateBillingAccessAsync(tenantId, operatorEmail, cancellationToken);
-        EnsureConfigured();
-
-        if (string.IsNullOrWhiteSpace(setupIntentId))
-        {
-            throw new InvalidOperationException("Payment method setup id is required.");
-        }
-
-        var tenant = await dbContext.Tenants
-            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
-            ?? throw new InvalidOperationException("Tenant not found.");
-
-        if (tenant.IsComplimentary)
-        {
-            throw new InvalidOperationException("Complimentary tenants do not manage payment methods.");
-        }
-
-        PaddleTransaction? transaction;
-        try
-        {
-            transaction = await paddleClient.GetTransactionAsync(setupIntentId, cancellationToken);
-        }
-        catch (PaddleApiException ex)
-        {
-            logger.LogWarning(ex, "Paddle payment method confirm failed for tenant {TenantId}", tenant.Id);
-            throw new InvalidOperationException("Could not confirm payment method setup.");
-        }
-
-        if (transaction is null)
-        {
-            throw new InvalidOperationException("Payment method setup is not complete yet.");
-        }
-
-        if (!string.IsNullOrWhiteSpace(transaction.CustomerId)
-            && !string.Equals(transaction.CustomerId, tenant.PaddleCustomerId, StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException("Payment method setup does not belong to this workspace.");
-        }
-
-        if (transaction.Status is not ("completed" or "paid" or "billed" or "ready"))
-        {
-            throw new InvalidOperationException("Payment method setup is not complete yet.");
-        }
-    }
-
     public async Task UpdateBillingContactAsync(
         Guid tenantId,
         string operatorEmail,
@@ -781,7 +681,7 @@ internal sealed class PaddleBillingService(
                 "Subscription create with saved payment method failed for tenant {TenantId}",
                 tenant.Id);
             throw new InvalidOperationException(
-                "Could not start your subscription with the saved payment method. Add a card in billing settings or continue to checkout.");
+                "Could not start your subscription with the saved Paddle payment method. Continue to checkout to enter a card.");
         }
 
         await ApplyLiveSubscriptionAsync(tenant, subscription, cancellationToken);

@@ -33,17 +33,6 @@ public interface IBillingService
         string operatorEmail,
         CancellationToken cancellationToken = default);
 
-    Task<SetupIntentDto> CreateSetupIntentAsync(
-        Guid tenantId,
-        string operatorEmail,
-        CancellationToken cancellationToken = default);
-
-    Task ConfirmSetupIntentAsync(
-        Guid tenantId,
-        string operatorEmail,
-        string setupIntentId,
-        CancellationToken cancellationToken = default);
-
     Task UpdateBillingContactAsync(
         Guid tenantId,
         string operatorEmail,
@@ -151,5 +140,3 @@ public sealed record BillingDetailsDto(
     BillingPaymentMethodDto? PaymentMethod,
     BillingSubscriptionDetailsDto? Subscription,
     IReadOnlyList<BillingInvoiceDto> Invoices);
-
-public sealed record SetupIntentDto(string ClientSecret, string ClientToken);

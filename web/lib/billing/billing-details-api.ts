@@ -42,11 +42,6 @@ export type BillingDetails = {
   invoices: BillingInvoice[];
 };
 
-export type SetupIntentResult = {
-  clientSecret: string;
-  clientToken: string;
-};
-
 function parseProblem(raw: Record<string, unknown>): string {
   const detail = raw.detail ?? raw.Detail;
   const title = raw.title ?? raw.Title;
@@ -153,47 +148,6 @@ export async function fetchBillingDetailsWithAuth(
   return mapBillingDetails(raw);
 }
 
-export async function createPaymentMethodSetupWithAuth(
-  authFetch: (input: string, init?: RequestInit) => Promise<Response>
-): Promise<SetupIntentResult> {
-  const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/admin/billing/payment-method/setup`, {
-    method: "POST",
-  });
-  const raw = (await response.json()) as Record<string, unknown>;
-  if (!response.ok) {
-    throw new Error(parseProblem(raw));
-  }
-
-  const clientSecret = raw.clientSecret ?? raw.ClientSecret;
-  const clientToken = raw.clientToken ?? raw.ClientToken ?? raw.publishableKey ?? raw.PublishableKey;
-  if (typeof clientSecret !== "string" || typeof clientToken !== "string") {
-    throw new Error("Invalid payment method setup response.");
-  }
-
-  return { clientSecret, clientToken };
-}
-
-export async function confirmPaymentMethodSetupWithAuth(
-  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
-  setupIntentId: string
-): Promise<void> {
-  const response = await authFetch(
-    `${getPublicApiBaseUrl()}/api/v1/admin/billing/payment-method/confirm`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ setupIntentId }),
-    }
-  );
-
-  if (response.status === 204) {
-    return;
-  }
-
-  const raw = (await response.json()) as Record<string, unknown>;
-  throw new Error(parseProblem(raw));
-}
-
 export async function updateBillingContactWithAuth(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>,
   payload: { name?: string; email?: string; phoneCountry?: string; phoneLocal?: string }
@@ -268,12 +222,4 @@ export function formatInvoiceAmount(amountCents: number, currency: string): stri
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(amountCents / 100);
-}
-
-export function formatCardBrand(brand: string): string {
-  if (!brand) {
-    return "Card";
-  }
-
-  return brand.charAt(0).toUpperCase() + brand.slice(1);
 }
