@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { CreditCard, Mail, Pencil, Phone, User } from "lucide-react";
+import { Mail, Pencil, Phone, User } from "lucide-react";
 
 import { PhoneCountrySelect } from "@/components/activities/phone-country-select";
 import { useAuth } from "@/components/auth/auth-provider";
 import { BillingInvoiceHistorySection } from "@/components/billing/billing-invoice-history-section";
-import { BillingPaymentMethodDialog } from "@/components/billing/billing-payment-method-dialog";
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
 import {
   AlertDialog,
@@ -23,13 +22,15 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import {
   cancelSubscriptionWithAuth,
   fetchBillingDetailsWithAuth,
-  formatCardBrand,
   cancelScheduledPlanChangeWithAuth,
   resumeSubscriptionWithAuth,
   updateBillingContactWithAuth,
   type BillingDetails,
 } from "@/lib/billing/billing-details-api";
-import { syncBillingFromProviderWithAuth } from "@/lib/billing/billing-api";
+import {
+  createBillingPortalSession,
+  syncBillingFromProviderWithAuth,
+} from "@/lib/billing/billing-api";
 import {
   formatScheduledChangeLabel,
   hasPendingPaidScheduleChange,
@@ -87,7 +88,7 @@ export function InAppBillingPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
-  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [portalOpening, setPortalOpening] = useState(false);
   const [editingContact, setEditingContact] = useState(false);
   const [contactName, setContactName] = useState("");
   const [contactPhoneCountry, setContactPhoneCountry] = useState("SG");
@@ -174,7 +175,6 @@ export function InAppBillingPanel({
     );
   }
 
-  const paymentMethod = details?.paymentMethod ?? null;
   const contact = details?.contact;
   const subscription = details?.subscription;
   const invoices = details?.invoices ?? [];
@@ -204,6 +204,19 @@ export function InAppBillingPanel({
       .finally(() => {
         setSubscriptionUpdating(false);
         setResumeConfirmOpen(false);
+      });
+  };
+
+  const openPaddlePortal = () => {
+    setPortalOpening(true);
+    setError(null);
+    void createBillingPortalSession(authFetch, window.location.href)
+      .then((portalUrl) => {
+        window.location.assign(portalUrl);
+      })
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : "Could not open Paddle billing portal.");
+        setPortalOpening(false);
       });
   };
 
@@ -268,34 +281,22 @@ export function InAppBillingPanel({
         <>
           <BillingSection title="Payment method">
             <p className="mb-3 text-sm text-text-muted-warm">
-              Add your card once here. When you change plan, Cohestra uses this card on file — you
-              will not enter it again unless you continue to checkout without a saved card.
+              Paddle stores your card from checkout. Cohestra never collects or stores the full
+              card number.
             </p>
-            {paymentMethod ? (
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="flex items-center gap-2 text-sm text-text-warm">
-                  <CreditCard className="size-4 text-text-muted-warm" aria-hidden />
-                  {formatCardBrand(paymentMethod.brand)} ending in {paymentMethod.last4}
-                  <span className="text-text-muted-warm">
-                    · Expires {paymentMethod.expMonth}/{paymentMethod.expYear}
-                  </span>
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPaymentDialogOpen(true)}
-                >
-                  Update payment method
-                </Button>
-              </div>
+            {hasActivePaidSubscription ? (
+              <Button
+                type="button"
+                size="sm"
+                disabled={portalOpening}
+                onClick={openPaddlePortal}
+              >
+                {portalOpening ? "Opening Paddle…" : "Manage in Paddle"}
+              </Button>
             ) : (
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-text-muted-warm">No payment method on file.</p>
-                <Button type="button" size="sm" onClick={() => setPaymentDialogOpen(true)}>
-                  Add payment method
-                </Button>
-              </div>
+              <p className="text-sm text-text-muted-warm">
+                Your card is added when you start Core or Pro at checkout.
+              </p>
             )}
           </BillingSection>
 
@@ -438,7 +439,7 @@ export function InAppBillingPanel({
               <p>
                 {hasActivePaidSubscription
                   ? "Compare Core and Pro or switch between monthly and yearly billing."
-                  : "Change plan or billing interval. If a payment method is saved above, subscription starts in Cohestra using that card. Otherwise you will continue to checkout once to add a card."}
+                  : "Change plan or billing interval. Paddle collects your card at checkout."}
               </p>
               <div className="flex flex-wrap gap-2">
                 <Link href={changePlanHref} className={buttonVariants({ size: "sm" })}>
@@ -490,12 +491,6 @@ export function InAppBillingPanel({
       >
         {syncing ? "Refreshing…" : "Refresh billing status"}
       </button>
-
-      <BillingPaymentMethodDialog
-        open={paymentDialogOpen}
-        onClose={() => setPaymentDialogOpen(false)}
-        onSaved={() => void loadDetails()}
-      />
 
       <AlertDialog open={undoScheduledConfirmOpen} onOpenChange={setUndoScheduledConfirmOpen}>
         <AlertDialogContent>

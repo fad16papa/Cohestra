@@ -74,8 +74,8 @@ function SettingsBillingBody() {
       <div>
         <h1 className="text-xl font-semibold text-text-warm sm:text-2xl">Billing</h1>
         <p className="mt-1 text-sm text-text-muted-warm">
-          Manage payment method, billing contact, invoices, and plan changes without leaving
-          Cohestra.
+          Manage billing contact, invoices, and plan changes in Cohestra. Paddle stores your
+          payment method from checkout.
         </p>
       </div>
 
