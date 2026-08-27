@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cohestra vs Tally — form capture</title>
+  <style>
+    :root { --ink:#1c1917; --paper:#faf7f2; --rule:#e7e0d6; --tally:#0f766e; --coh:#c2410c; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: "Iowan Old Style", Palatino, Georgia, serif; background: var(--paper); color: var(--ink); }
+    header { padding: 3rem 1.5rem 2rem; border-bottom: 1px solid var(--rule); }
+    h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 600; letter-spacing: -0.03em; margin: 0; }
+    .sub { margin-top: 0.75rem; max-width: 40rem; line-height: 1.5; opacity: 0.8; }
+    main { max-width: 52rem; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+    h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--coh); margin: 2.5rem 0 0.75rem; }
+    .split { display: grid; gap: 1rem; }
+    @media (min-width: 720px) { .split { grid-template-columns: 1fr 1fr; } }
+    article { border: 1px solid var(--rule); padding: 1.1rem 1.2rem; background: #fff; }
+    article h3 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+    .tally h3 { color: var(--tally); }
+    .coh h3 { color: var(--coh); }
+    ul { margin: 0; padding-left: 1.1rem; line-height: 1.45; }
+    .ideas { columns: 1; }
+    @media (min-width: 640px) { .ideas { columns: 2; gap: 1.25rem; } }
+    .ideas li { break-inside: avoid; margin-bottom: 0.45rem; }
+    blockquote { margin: 2rem 0; padding: 1rem 1.25rem; border-left: 4px solid var(--coh); background: #fff7ed; font-size: 1.15rem; }
+    footer { font-size: 0.85rem; opacity: 0.65; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>A document vs a person</h1>
+    <p class="sub">Tally is a blank page that emits rows. Cohestra is a Saturday session that emits a client. Brainstorm, 27 Aug 2026 — steal the page, keep the person.</p>
+  </header>
+  <main>
+    <h2>Two products</h2>
+    <div class="split">
+      <article class="tally">
+        <h3>Tally.so</h3>
+        <ul>
+          <li>Slash to insert. Logic free. Stripe free. Embed free.</li>
+          <li>Guest list = Sheet / Notion.</li>
+          <li>Wins the first form.</li>
+        </ul>
+      </article>
+      <article class="coh">
+        <h3>Cohestra</h3>
+        <ul>
+          <li>Activity → field list → Client + Registration.</li>
+          <li>Dedup, capacity, QR, campaigns.</li>
+          <li>Wins the second event — if they started here.</li>
+        </ul>
+      </article>
+    </div>
+
+    <h2>SCAMPER — what to steal</h2>
+    <ul class="ideas">
+      <li>Substitute the type dropdown with <strong>/ insert</strong>.</li>
+      <li>Combine identity + consent as optional steps, not a wizard religion.</li>
+      <li>Adapt hidden fields so WhatsApp links carry <code>?ref=</code>.</li>
+      <li>Modify FormFieldEditor, do not add a canvas (UX-DR32).</li>
+      <li>Put-to-other-use: website contact still creates a Client.</li>
+      <li>Eliminate the reason to wrap Cohestra in a Tally embed: native embed later.</li>
+      <li>Reverse: Tally cannot become our CRM; stop competing on NPS blocks.</li>
+    </ul>
+
+    <h2>First principles</h2>
+    <ul class="ideas">
+      <li>A form without a person is a CSV.</li>
+      <li>A person without an event is a newsletter tool.</li>
+      <li>Publish still requires phone or email.</li>
+      <li>Field <code>id</code> is the contract, labels are decoration.</li>
+      <li>Show/hide is a recipe, not a programming language.</li>
+    </ul>
+
+    <h2>Failure modes</h2>
+    <ul class="ideas">
+      <li>We ship matrices and become a worse Tally.</li>
+      <li>We webhook Tally forever and never own capture.</li>
+      <li><code>visibleWhen</code> grows nested AND/OR in sprint 2.</li>
+      <li>Embed XSS on tenant sites.</li>
+      <li>Drafts without GDPR language.</li>
+    </ul>
+
+    <blockquote>If they still need Tally to find out who’s coming, we don’t have a form problem — we have a product-entry problem.</blockquote>
+
+    <h2>Chosen</h2>
+    <p>Slice A: hidden, textarea, date, piping, closed copy, slash-add, operator notify. Slice B: recipes + optional steps. Slice C: embed + website contact. Kill: clone Tally, logic IDE, in-form Stripe.</p>
+    <footer>Session workspace: _bmad-output/brainstorming/brainstorm-cohestra-vs-tally-forms-2026-08-27</footer>
+  </main>
+</body>
+</html>
