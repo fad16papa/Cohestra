@@ -4,7 +4,15 @@ Paddle **always stores Default payment link as HTTPS**. Saving `http://localhost
 
 Do not fight the HTTP save. Point Paddle at an HTTPS tunnel that already reaches Docker (the same ngrok you use for webhooks).
 
-The return page (`/billing/paddle-return`) only proves Paddle sent you back. The workspace plan updates when Cohestra reads the transaction (checkout-return sync) or when the Paddle webhook arrives. If you land on `/dashboard` without `?billing=success&session_id=txn_…`, Settings → Billing stays **Basic**.
+Paddle’s **Default payment link** is not only a post-pay redirect. It is also the **Payment link** on an Incomplete transaction (`transaction.checkout.url`). `/billing/paddle-return` must open the Paddle.js card overlay when the transaction is still unpaid. The workspace plan updates when Cohestra reads a **completed** transaction (checkout-return sync) or when `transaction.completed` / `subscription.created` arrives.
+
+**Incomplete in Paddle means nobody paid.** `transaction.created` Delivered and a Cohestra `?billing=success` hop do not mean the card form ran. Open the Payment link (or Settings → Billing → Resume checkout) and finish the overlay.
+
+Also confirm `.env` has `Paddle__ClientToken=test_…` (Paddle.js client-side token). Without it the return page cannot open the overlay.
+
+## Resume an Incomplete transaction
+
+If Paddle shows Status **Incomplete** and a Payment link like `https://YOUR-NGROK-HOST/billing/paddle-return?_ptxn=txn_…`, that URL is the checkout, not a “already paid” return. After api/web/nginx are on this build, open the link and complete the card overlay. The same Incomplete transaction can be reused; you do not need a new trial click.
 
 ## Recover a checkout that already paid
 
@@ -78,20 +86,24 @@ Confirm Paddle sandbox **Notifications** still points at the **current** ngrok h
      -d "{}"
    ```
 
-5. Put the origin in `.env` (no trailing slash) and rebuild **web** so overlay `successUrl` matches the dashboard:
+5. Put the origin in `.env` (no trailing slash) and confirm `Paddle__ClientToken=test_…` is set. Rebuild **api** and **web**, and recreate **nginx** (CSP must allow Paddle checkout frames and `form-action` to `sandbox-buy.paddle.com`):
 
    ```bash
    # .env
    NEXT_PUBLIC_PADDLE_RETURN_ORIGIN=https://YOUR-NGROK-HOST
 
-   docker compose build web --no-cache
-   docker compose up -d --force-recreate web
+   docker compose build api web --no-cache
+   docker compose up -d --force-recreate api web nginx
    ```
 
 6. Checkout from the tenant host, not bare localhost:
 
    `http://creativorare.localhost:8088/billing/checkout?plan=pro&interval=monthly`
 
-7. After pay, Paddle opens `https://YOUR-NGROK-HOST/billing/paddle-return?_ptxn=txn_…`. Cohestra looks up the tenant. If Paddle has activated Core/Pro, you go to the dashboard. If the transaction is still unpaid (`transaction.created` only), you return to Settings → Billing with an incomplete-checkout notice — that is expected, not a successful trial.
+   You should see a Paddle card overlay. Sandbox card `4242 4242 4242 4242`, any future expiry, any CVC. You are not charged during the trial.
+
+7. After pay, Paddle opens `https://YOUR-NGROK-HOST/billing/paddle-return?_ptxn=txn_…`. If that URL is opened while the transaction is still **Incomplete**, Cohestra now opens the same overlay there (this is Paddle’s Payment link). After a completed payment, Cohestra syncs the tenant and sends you to the dashboard on Core/Pro.
+
+   If you close the overlay without paying, Settings → Billing shows an incomplete-checkout notice with **Resume checkout**. That is not a successful trial.
 
 Production Default payment link stays `https://cohestra.app/billing/paddle-return`. Do not put a tenant slug in this field.

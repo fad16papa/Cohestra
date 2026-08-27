@@ -15,6 +15,7 @@ public sealed class PaddleCheckoutReturnController(
     IPaddleCheckoutReturnResolver checkoutReturnResolver,
     IBillingService billingService,
     IOptions<PublicWebOptions> publicWebOptions,
+    IOptions<PaddleSettings> paddleOptions,
     ILogger<PaddleCheckoutReturnController> logger) : ControllerBase
 {
     [AllowAnonymous]
@@ -57,6 +58,10 @@ public sealed class PaddleCheckoutReturnController(
             resolved.TenantSlug,
             id!,
             paid);
+        var clientToken = string.IsNullOrWhiteSpace(paddleOptions.Value.ClientToken)
+            ? null
+            : paddleOptions.Value.ClientToken.Trim();
+        var openCheckout = PaddleCheckoutReturnRedirect.ShouldOpenCheckout(paid, clientToken);
 
         var accept = Request.Headers.Accept.ToString();
         if (accept.Contains("application/json", StringComparison.OrdinalIgnoreCase))
@@ -65,7 +70,9 @@ public sealed class PaddleCheckoutReturnController(
                 new PaddleCheckoutReturnResponse(
                     redirectUrl,
                     summary.Plan.ToString(),
-                    summary.BillingStatus.ToString()));
+                    summary.BillingStatus.ToString(),
+                    openCheckout,
+                    openCheckout ? clientToken : null));
         }
 
         return Redirect(redirectUrl);

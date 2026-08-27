@@ -7,6 +7,7 @@ import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { syncBillingFromProviderWithAuth } from "@/lib/billing/billing-api";
+import { isPaddleTransactionId } from "@/lib/billing/paddle-return";
 
 function isPaidPlan(plan: string): boolean {
   return plan === "Core" || plan === "Pro";
@@ -89,6 +90,17 @@ function SettingsBillingBody() {
           <span className="font-medium">transaction.completed</span> and{" "}
           <span className="font-medium">subscription.created</span> as Delivered — not only
           transaction.created.
+          {isPaddleTransactionId(checkoutSessionId) ? (
+            <>
+              {" "}
+              <a
+                className="font-medium underline underline-offset-2"
+                href={`/billing/paddle-return?_ptxn=${encodeURIComponent(checkoutSessionId)}`}
+              >
+                Resume checkout
+              </a>
+            </>
+          ) : null}
         </p>
       ) : null}
 

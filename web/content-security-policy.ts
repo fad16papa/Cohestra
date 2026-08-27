@@ -16,7 +16,7 @@ const BASE_DIRECTIVES = [
   "img-src 'self' data: blob: https://images.unsplash.com https://cdn.paddle.com https://sandbox-cdn.paddle.com",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  "form-action 'self' https://buy.paddle.com https://sandbox-buy.paddle.com",
   "frame-ancestors 'none'",
   "frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://player.vimeo.com https://buy.paddle.com https://sandbox-buy.paddle.com",
 ] as const;

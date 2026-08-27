@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   buildPaddleCheckoutReturnUrl,
   isPaddleTransactionId,
+  isPaidPaddlePlanName,
   resolvePaddleApexReturnRedirectUrl,
   resolvePaddleOverlaySuccessUrl,
   sanitizePaddleOverlaySuccessUrl,
+  shouldOpenPaddleCheckoutOnReturn,
 } from "@/lib/billing/paddle-return";
 
 describe("paddle-return", () => {
@@ -13,6 +15,38 @@ describe("paddle-return", () => {
     expect(isPaddleTransactionId("txn_01m0t971y3gby0hbagesyewerj")).toBe(true);
     expect(isPaddleTransactionId("txn_")).toBe(false);
     expect(isPaddleTransactionId("session_abc")).toBe(false);
+  });
+
+  it("opens overlay on unpaid default payment links", () => {
+    expect(
+      shouldOpenPaddleCheckoutOnReturn({
+        openCheckout: true,
+        clientToken: "test_abc",
+        plan: "Basic",
+      })
+    ).toBe(true);
+    expect(isPaidPaddlePlanName("Pro")).toBe(true);
+    expect(
+      shouldOpenPaddleCheckoutOnReturn({
+        openCheckout: true,
+        clientToken: "test_abc",
+        plan: "Pro",
+      })
+    ).toBe(false);
+    expect(
+      shouldOpenPaddleCheckoutOnReturn({
+        openCheckout: false,
+        clientToken: "test_abc",
+        plan: "Basic",
+      })
+    ).toBe(false);
+    expect(
+      shouldOpenPaddleCheckoutOnReturn({
+        openCheckout: true,
+        clientToken: "  ",
+        plan: "Basic",
+      })
+    ).toBe(false);
   });
 
   it("builds the slug-free apex return URL for local Docker and production", () => {

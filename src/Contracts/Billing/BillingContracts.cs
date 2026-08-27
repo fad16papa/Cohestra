@@ -38,7 +38,9 @@ public sealed record CreateCheckoutSessionRequest(
 public sealed record PaddleCheckoutReturnResponse(
     string RedirectUrl,
     string Plan,
-    string BillingStatus);
+    string BillingStatus,
+    bool OpenCheckout = false,
+    string? ClientToken = null);
 
 public sealed record CheckoutSessionResponse(
     string CheckoutUrl,

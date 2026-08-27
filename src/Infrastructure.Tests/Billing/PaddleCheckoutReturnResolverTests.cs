@@ -122,6 +122,15 @@ public sealed class PaddleCheckoutReturnResolverTests
                 paidPlanActivated: true));
     }
 
+    [Fact]
+    public void Overlay_opens_only_when_unpaid_and_client_token_is_configured()
+    {
+        Assert.True(PaddleCheckoutReturnRedirect.ShouldOpenCheckout(false, "test_token"));
+        Assert.False(PaddleCheckoutReturnRedirect.ShouldOpenCheckout(true, "test_token"));
+        Assert.False(PaddleCheckoutReturnRedirect.ShouldOpenCheckout(false, null));
+        Assert.False(PaddleCheckoutReturnRedirect.ShouldOpenCheckout(false, "  "));
+    }
+
     private static FakePaddleApiClient TransactionClient(Tenant tenant, string transactionId)
     {
         var client = new FakePaddleApiClient();
