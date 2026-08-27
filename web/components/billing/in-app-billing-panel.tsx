@@ -291,7 +291,7 @@ export function InAppBillingPanel({
                 disabled={portalOpening}
                 onClick={openPaddlePortal}
               >
-                {portalOpening ? "Opening Paddle…" : "Manage in Paddle"}
+                {portalOpening ? "Opening…" : "Manage payment"}
               </Button>
             ) : (
               <p className="text-sm text-text-muted-warm">
