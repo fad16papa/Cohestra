@@ -1,8 +1,11 @@
 using Cohestra.Application.Billing;
 using Cohestra.Contracts.Billing;
+using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Billing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Cohestra.Api.Controllers.V1;
 
@@ -11,6 +14,7 @@ namespace Cohestra.Api.Controllers.V1;
 public sealed class PaddleCheckoutReturnController(
     IPaddleCheckoutReturnResolver checkoutReturnResolver,
     IBillingService billingService,
+    IOptions<PublicWebOptions> publicWebOptions,
     ILogger<PaddleCheckoutReturnController> logger) : ControllerBase
 {
     [AllowAnonymous]
@@ -32,9 +36,10 @@ public sealed class PaddleCheckoutReturnController(
             return NotFound();
         }
 
+        BillingSummaryDto summary;
         try
         {
-            await billingService.SyncFromProviderAsync(resolved.TenantId, id, cancellationToken);
+            summary = await billingService.SyncFromProviderAsync(resolved.TenantId, id, cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -43,14 +48,26 @@ public sealed class PaddleCheckoutReturnController(
                 "Paddle checkout return synced tenant {TenantId} from {TransactionId} failed; dashboard can retry",
                 resolved.TenantId,
                 id);
+            summary = await billingService.GetSummaryAsync(resolved.TenantId, cancellationToken);
         }
+
+        var paid = summary.Plan is TenantPlan.Core or TenantPlan.Pro;
+        var redirectUrl = PaddleCheckoutReturnRedirect.Build(
+            publicWebOptions.Value.BaseUrl,
+            resolved.TenantSlug,
+            id!,
+            paid);
 
         var accept = Request.Headers.Accept.ToString();
         if (accept.Contains("application/json", StringComparison.OrdinalIgnoreCase))
         {
-            return Ok(new PaddleCheckoutReturnResponse(resolved.RedirectUrl));
+            return Ok(
+                new PaddleCheckoutReturnResponse(
+                    redirectUrl,
+                    summary.Plan.ToString(),
+                    summary.BillingStatus.ToString()));
         }
 
-        return Redirect(resolved.RedirectUrl);
+        return Redirect(redirectUrl);
     }
 }

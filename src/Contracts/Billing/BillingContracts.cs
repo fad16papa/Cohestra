@@ -35,7 +35,10 @@ public sealed record CreateCheckoutSessionRequest(
     string? SuccessUrl,
     string? CancelUrl);
 
-public sealed record PaddleCheckoutReturnResponse(string RedirectUrl);
+public sealed record PaddleCheckoutReturnResponse(
+    string RedirectUrl,
+    string Plan,
+    string BillingStatus);
 
 public sealed record CheckoutSessionResponse(
     string CheckoutUrl,

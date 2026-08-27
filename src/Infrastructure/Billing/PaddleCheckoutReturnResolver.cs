@@ -77,7 +77,7 @@ internal sealed class PaddleCheckoutReturnResolver(
             publicWebOptions.Value.BaseUrl,
             tenant.Slug,
             path);
-        return new PaddleCheckoutReturnMatch(redirectUrl, tenant.Id);
+        return new PaddleCheckoutReturnMatch(redirectUrl, tenant.Id, tenant.Slug);
     }
 
     private async Task<Tenant?> ResolveTenantAsync(

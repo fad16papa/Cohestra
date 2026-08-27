@@ -92,6 +92,6 @@ Confirm Paddle sandbox **Notifications** still points at the **current** ngrok h
 
    `http://creativorare.localhost:8088/billing/checkout?plan=pro&interval=monthly`
 
-7. After pay, Paddle opens `https://YOUR-NGROK-HOST/billing/paddle-return?_ptxn=txn_…`. Cohestra looks up the tenant and sends you to `http://creativorare.localhost:8088/dashboard?billing=success&session_id=txn_…`.
+7. After pay, Paddle opens `https://YOUR-NGROK-HOST/billing/paddle-return?_ptxn=txn_…`. Cohestra looks up the tenant. If Paddle has activated Core/Pro, you go to the dashboard. If the transaction is still unpaid (`transaction.created` only), you return to Settings → Billing with an incomplete-checkout notice — that is expected, not a successful trial.
 
 Production Default payment link stays `https://cohestra.app/billing/paddle-return`. Do not put a tenant slug in this field.

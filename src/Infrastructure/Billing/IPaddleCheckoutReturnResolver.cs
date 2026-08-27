@@ -1,6 +1,6 @@
 namespace Cohestra.Infrastructure.Billing;
 
-public sealed record PaddleCheckoutReturnMatch(string RedirectUrl, Guid TenantId);
+public sealed record PaddleCheckoutReturnMatch(string RedirectUrl, Guid TenantId, string TenantSlug);
 
 public interface IPaddleCheckoutReturnResolver
 {

@@ -23,6 +23,7 @@ public sealed class PaddleCheckoutReturnResolverTests
             $"http://studio.localhost:8088/dashboard?billing=success&session_id=txn_01checkoutreturn",
             url?.RedirectUrl);
         Assert.Equal(tenant.Id, url?.TenantId);
+        Assert.Equal("studio", url?.TenantSlug);
     }
 
     [Fact]
@@ -100,6 +101,25 @@ public sealed class PaddleCheckoutReturnResolverTests
         Assert.Null(await resolver.ResolveDashboardUrlAsync("not-a-txn"));
         Assert.Null(await resolver.ResolveDashboardUrlAsync("txn_"));
         Assert.Null(await resolver.ResolveDashboardUrlAsync("https://evil.example/txn_abc"));
+    }
+
+    [Fact]
+    public void Redirect_unpaid_checkout_goes_to_billing_incomplete()
+    {
+        Assert.Equal(
+            "http://studio.localhost:8088/settings/billing?billing=incomplete&session_id=txn_01abc",
+            PaddleCheckoutReturnRedirect.Build(
+                "http://localhost:8088",
+                "studio",
+                "txn_01abc",
+                paidPlanActivated: false));
+        Assert.Equal(
+            "http://studio.localhost:8088/dashboard?billing=success&session_id=txn_01abc",
+            PaddleCheckoutReturnRedirect.Build(
+                "http://localhost:8088",
+                "studio",
+                "txn_01abc",
+                paidPlanActivated: true));
     }
 
     private static FakePaddleApiClient TransactionClient(Tenant tenant, string transactionId)

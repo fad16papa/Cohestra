@@ -53,6 +53,8 @@ function PaddleReturnContent() {
         const raw = (await response.json()) as {
           redirectUrl?: string;
           RedirectUrl?: string;
+          plan?: string;
+          Plan?: string;
         };
         const redirectUrl = raw.redirectUrl ?? raw.RedirectUrl;
         if (!redirectUrl || !isHttpUrl(redirectUrl)) {
@@ -88,7 +90,7 @@ function PaddleReturnContent() {
           </h1>
           <p className="mt-3 text-sm leading-6 text-ink/70">
             {error
-              ?? "Checkout finished. Taking you back to your Cohestra dashboard…"}
+              ?? "Taking you back to your Cohestra workspace…"}
           </p>
           {error ? (
             <Link href="/login" className={`${marketingAtelierButtonClass("lagoon")} mt-8 w-fit`}>
@@ -110,7 +112,7 @@ export function PaddleReturnPageContent() {
           <main className="relative z-10 mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-5 py-16">
             <h1 className="font-display text-3xl text-ink">Returning to your workspace</h1>
             <p className="mt-3 text-sm leading-6 text-ink/70">
-              Checkout finished. Taking you back to your Cohestra dashboard…
+              Taking you back to your Cohestra workspace…
             </p>
           </main>
           <MarketingFooter />
