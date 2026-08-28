@@ -1,27 +1,21 @@
----
-title: Cohestra vs Tally.so forms
-created: 2026-08-27
----
+# Cohestra vs Tally.so (forms) — artifact index
 
-# Cohestra vs Tally.so — forms study
-
-Pipeline: deep recon (manual; skill not installed) → comparison → feasibility → brainstorm → forge → product brief → PRFAQ.
+**Date:** 2026-08-27 (updated 2026-08-28)
+**Product:** Cohestra
+**Comparator:** [Tally.so](https://tally.so) (confirmed by user)
 
 | Artifact | Path |
 |---|---|
-| Recon | [recon-current-state.md](./recon-current-state.md) |
-| Pros / cons | [comparison.md](./comparison.md) |
-| Feasibility / slices | [feasibility.md](./feasibility.md) |
+| Brainstorm (comparison framing) | `_bmad-output/brainstorming/brainstorm-cohestra-vs-tally-forms-2026-08-27/` |
+| Brainstorm (slice elaboration) | `_bmad-output/brainstorming/brainstorm-registration-capture-slices-2026-08-28/` (html + intent) |
+| Forge | `_bmad-output/forge/tally-like-registration-capture/` |
+| Product brief | `_bmad-output/planning-artifacts/briefs/brief-cohestra-tally-forms-2026-08-27/brief.md` |
+| Deep recon (current Cohestra) | [recon-current-state.md](./recon-current-state.md) |
+| Comparison matrix | [comparison.md](./comparison.md) |
+| Feasibility | [feasibility.md](./feasibility.md) |
 | PRFAQ | [prfaq.md](./prfaq.md) |
-| Brief | [../briefs/brief-cohestra-tally-forms-2026-08-27/brief.md](../briefs/brief-cohestra-tally-forms-2026-08-27/brief.md) |
-| Forged idea | [../../forge/tally-like-registration-capture/forged-idea.md](../../forge/tally-like-registration-capture/forged-idea.md) |
-| Brainstorm intent | [../../brainstorming/brainstorm-cohestra-vs-tally-forms-2026-08-27/brainstorm-intent.md](../../brainstorming/brainstorm-cohestra-vs-tally-forms-2026-08-27/brainstorm-intent.md) |
-| Brainstorm HTML | [../../brainstorming/brainstorm-cohestra-vs-tally-forms-2026-08-27/brainstorm.html](../../brainstorming/brainstorm-cohestra-vs-tally-forms-2026-08-27/brainstorm.html) |
+| **Suggested slices — full elaboration** | [slices-elaborated.md](./slices-elaborated.md) |
 
-## One-line verdict
+`bmad-deep-recon` is **not installed** in this repo; recon was executed as a documented substitute against source + public Tally docs.
 
-**Possible and recommended:** steal Tally’s capture speed for **activity registration**. **Not recommended:** clone Tally as a generic form builder.
-
-## Next in BMad
-
-`bmad-prd` create **Registration Capture** · `bmad-spec` `form_schema` v1.1 · `bmad-ux` Form tab slash-insert only.
+**If you want this in the product backlog:** run **`bmad-prd`** (create or update) for epic **Registration Capture** — not a new “form builder” epic. Epic 25 website branding stays a non-goal.
