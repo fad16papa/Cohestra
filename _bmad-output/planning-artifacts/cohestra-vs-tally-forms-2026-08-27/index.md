@@ -16,6 +16,7 @@
 | PRFAQ | [prfaq.md](./prfaq.md) |
 | **Suggested slices — full elaboration** | [slices-elaborated.md](./slices-elaborated.md) |
 | **PRD — Registration Capture** | `../prds/prd-registration-capture-2026-08-29/prd.md` |
+| Form authoring tiers (Basic/Core/Pro templates) | `../prds/prd-registration-capture-2026-08-29/form-authoring-tiers.md` |
 | Brainstorm (Tally fair use vs Cohestra limits) | `_bmad-output/brainstorming/brainstorm-tally-fair-use-cohestra-2026-08-29/` |
 
 `bmad-deep-recon` is **not installed** in this repo; recon was executed as a documented substitute against source + public Tally docs.

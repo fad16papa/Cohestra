@@ -17,6 +17,8 @@ Not PRD-body material: mechanisms, rejected alternatives, later slices, schema e
 | LocalStorage-only save-and-resume | Weak; if drafts ever ship, write a Client with an explicit product decision |
 | Typeform one-question default | Wrong for QR-at-the-door |
 | `form_schema` version bump that migrates every Activity | Prefer `version: 1` + expanded type enum |
+| Tally fair-use / uncap registrations | Admin: keep 250 / 500 / 5,000; compete on templates |
+| Form canvas “design freedom” | UX-DR32; freedom = compose + save template |
 
 ---
 

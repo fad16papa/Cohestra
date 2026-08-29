@@ -11,6 +11,7 @@ sources:
   - _bmad-output/planning-artifacts/prds/prd-registration-experience-studio-2026-08-12/prd.md
   - _bmad-output/planning-artifacts/prds/prd-registration-touchpoints-2026-08-16/prd.md
   - docs/contracts/activity-form-schema-v1.md
+  - _bmad-output/planning-artifacts/prds/prd-registration-capture-2026-08-29/form-authoring-tiers.md
 ---
 
 # PRD: Registration Capture
@@ -28,7 +29,8 @@ Structure: Glossary-anchored vocabulary, Features with globally numbered **FR-RC
 - Touchpoints — confirmation email hero via `RegistrationThemeResolver` (do not fork).
 - Base CRM — one Form per Activity (FR-2), public submit → Registration + Client dedup (FR-4), Publish Gate.
 
-**Slice write-up (acceptance detail):** `_bmad-output/planning-artifacts/cohestra-vs-tally-forms-2026-08-27/slices-elaborated.md`.
+**Slice write-up (acceptance detail):** `_bmad-output/planning-artifacts/cohestra-vs-tally-forms-2026-08-27/slices-elaborated.md`.  
+**Plan tiers for authoring + saved templates:** `form-authoring-tiers.md` (same folder). **Plan registration/seat caps stay as shipped** — Tally fair-use uncapping was considered and rejected.
 
 ---
 
@@ -311,13 +313,46 @@ Website builder section with a **fixed** Field set (name, email, phone, message,
 - Enqueues sibling Outbox `WebsiteInquiryOperatorNotify` (not `RegistrationOperatorNotify`).
 - `[ASSUMPTION]` Endpoint shape `POST /api/v1/public/website-inquiries` (tenant-scoped host).
 
-**Out of Scope:** Full Form tab on website sections; logic on Contact; multi-form library.
+**Out of Scope:** Full Form tab on website sections; logic on Contact; multi-form library detached from this Contact section.
 
-### 4.11 Invariants (all phases)
+### 4.11 Saved Form templates (MVP follow — all plans, slot-gated)
+
+**Description:** Today Operators start from three **platform** launch templates and cannot save their own. Freedom to design a Form means **compose Fields freely** (slash-add + Capture types) and **reuse that composition** — not a canvas and not custom CSS. Realizes UJ-RC-1 on the second Activity. Detail: `form-authoring-tiers.md`.
+
+#### FR-RC-15: Save and apply tenant Form templates
+
+An Operator can save the current draft `form_schema` (fields + meta) as a named tenant Form template and apply it to another unpublished Activity (replaces draft Fields after confirm, same as launch templates). Realizes UJ-RC-1.
+
+**Consequences (testable):**
+- Save stores name + `form_schema` snapshot scoped by `TenantId`.
+- Apply on a published Activity stays locked (same as launch templates).
+- Publish Gate still runs on the Activity after apply.
+- Platform launch templates (Tennis, Pickleball, Board Game) remain available on every plan.
+
+#### FR-RC-16: Template slots by plan
+
+Slot counts: **Basic 1**, **Core 5**, **Pro 25**. Exceeding the cap returns `403 plan_locked`. Realizes monetization without changing registration caps.
+
+**Consequences (testable):**
+- Basic cannot create a second template.
+- Core sixth save is `plan_locked` with upgrade hint.
+- Pro 26th save is `plan_locked`.
+- Downgrade: existing templates remain readable; Operator cannot save new ones until under the new cap (same pattern as activity limits).
+
+#### FR-RC-17: Core community default + Pro Design pin
+
+Core+ can set one Saved Form template as the default for a Community (new Activities pre-fill that schema). Pro can pin a Design preset id on a template; applying offers to set that preset on the Activity (Operator confirms). Basic has neither.
+
+**Consequences (testable):**
+- Basic API rejects community-default and preset-pin.
+- Core can set community default; pin endpoint is `plan_locked`.
+- Theme is never written into `form_schema` (FR-RC-14).
+
+### 4.12 Invariants (all phases)
 
 #### FR-RC-14: Capture contract unchanged
 
-Publish Gate, Client dedup, Answer immutability, and one Form per Activity remain. Realizes UJ-RC-1–5.
+Publish Gate, Client dedup, Answer immutability, one Form per Activity, and **shipped plan limits** (`TenantPlanLimits`: 250 / 500 / 5,000 registrations per month, plus seat / community / activity caps) remain. Tally-style fair-use uncapping is out. Realizes UJ-RC-1–5.
 
 **Consequences (testable):**
 - Publish still requires a required Phone **or** Email Field (unit tests on `PublishGateValidator` / `FormSchemaValidator`).
@@ -331,7 +366,8 @@ Publish Gate, Client dedup, Answer immutability, and one Form per Activity remai
 
 - **Clone Tally** — no 20+ Field types (NPS, matrix, ranking, CSAT), no document-as-product.
 - **Logic IDE** — no nested `/logic`, calculate, or jump graph. Recipes only (Phase 2).
-- **Drag-and-drop Form canvas** — UX-DR32 / UX-DR24 stand. Slash-add is the Tally steal.
+- **Drag-and-drop Form canvas** — UX-DR32 / UX-DR24 stand. Slash-add + saved templates are the Tally steal, not a designer.
+- **Tally-style fair-use / uncapped registrations** — rejected 2026-08-29; keep `TenantPlanLimits`.
 - **Registrant checkout** — no Stripe-in-form; Paddle is tenant billing only.
 - **Custom CSS / custom fonts / custom domain** — NFR-12 / UX-DR26; Studio already covers brand.
 - **Sheets or Notion as system of record.**
@@ -355,9 +391,10 @@ Publish Gate, Client dedup, Answer immutability, and one Form per Activity remai
 - Closed message + Close-at (FR-RC-6, FR-RC-7)
 - Slash-add Form tab (FR-RC-8)
 - Operator new-Registration email (FR-RC-9)
-- Invariants (FR-RC-14)
+- Invariants (FR-RC-14) including **unchanged** registration/seat/activity caps
+- Saved Form templates, slot-gated (FR-RC-15–17) — ship with or immediately after slash-add
 - Contract doc bump: additive types on `form_schema` version `1`
-- Unit tests: `FormSchemaValidator`, `RegistrationAnswerValidator`, `ClientProfileExtractor`, Publish Gate
+- Unit tests: `FormSchemaValidator`, `RegistrationAnswerValidator`, `ClientProfileExtractor`, Publish Gate, template slot `plan_locked`
 
 ### 6.2 Out of Scope for MVP
 
@@ -378,6 +415,7 @@ Publish Gate, Client dedup, Answer immutability, and one Form per Activity remai
 **Secondary**
 - **SM-RC-3:** Publish Gate completion does not drop (same required Phone-or-Email rule). Validates FR-RC-14.
 - **SM-RC-4:** *(Phase 3)* Hosts paste Cohestra Embed instead of Tally for Activities. Method until telemetry exists: Operator interview / Share kit copy check — not a dashboard KPI. Validates FR-RC-12.
+- **SM-RC-5:** Operators apply a **saved** Form template to a second Activity within 30 days of first save. Validates FR-RC-15.
 
 **Counter-metrics (do not optimize)**
 - **SM-RC-C1:** Number of Field types in the palette — more types is not success (that is cloning Tally).
@@ -406,7 +444,7 @@ Inline `[ASSUMPTION]` tags (review these):
 - FR-RC-11 steps only when toggle on — not auto by Field count.
 - FR-RC-12 Allowed embed hosts; no `frame-ancestors *`; iframe first (also §8 Q5).
 - FR-RC-13 Core/Pro; `POST /api/v1/public/website-inquiries`; no Activity.
-- §15 MVP is not a new paid SKU.
+- Slice A field types on every plan that has the Form tab; template **slots** are the SKU (FR-RC-16).
 
 Locked in this PRD / memlog (not open inferences — no inline tag):
 
@@ -430,7 +468,7 @@ Tally’s free plan includes Hidden Fields, answer piping, email notifications, 
 - **NFR-RC-1 (contract):** Additive `form_schema` only. Unknown types reject. Existing Activities unchanged. Field id remains the CRM key.
 - **NFR-RC-2 (compat):** `registration_theme` stays off `form_schema`. Touchpoints resolver unchanged.
 - **NFR-RC-3 (a11y):** Public Form and slash palette meet existing WCAG 2.2 AA on registration surfaces (enterprise NFR-12). Closed message is not image-only. Public Form stays a one-thumb / QR flow — single page unless the Phase 2 toggle is on; Hidden Fields do not add Participant chrome.
-- **NFR-RC-4 (tenant isolation):** Answers, Hidden Fields, Close-at, Operator notify scoped by `TenantId`. SM-style isolation tests extended.
+- **NFR-RC-4 (tenant isolation):** Answers, Hidden Fields, Close-at, Operator notify, and Saved Form templates scoped by `TenantId`. SM-style isolation tests extended.
 - **NFR-RC-5 (perf):** Public GET/submit remain single-payload; Hidden Field query parse is O(fields).
 - **NFR-RC-6 (email):** Operator notify and confirmation stay on Outbox + SendGrid; registration notification emails remain available on all plans (enterprise FR-16).
 - **NFR-RC-7 (security, Phase 3):** Embed CSP allow-list; clickjacking documented. Webhook SSRF (if F ever ships) is addendum, not MVP.
@@ -484,7 +522,7 @@ Tally’s free plan includes Hidden Fields, answer piping, email notifications, 
 ## 15. Platform and Monetization
 
 - **Platform:** Web — admin (Next.js) + public registration. Phase 3 adds Embed route + website section.
-- **Monetization:** `[ASSUMPTION]` MVP capabilities are not a new paid SKU; they defend Core/Pro (and Basic’s one Activity) against Tally. `[ASSUMPTION]` Slice A is on every plan that already has the Form tab. Phase 3 Contact follows website-builder plan gates. HMAC webhooks (F), if ever, are Pro.
+- **Monetization:** Registration / seat / community / activity **caps stay as shipped**. We do not adopt Tally fair-use uncapping. Capture field types (Slice A) stay on every plan that has the Form tab. **Saved Form templates** are the paid differentiator: Basic 1 / Core 5 / Pro 25, plus Core community default and Pro Design pin (FR-RC-16–17). Phase 3 Contact follows website-builder plan gates. HMAC webhooks (F), if ever, are Pro.
 
 ---
 
@@ -501,7 +539,7 @@ Tally’s free plan includes Hidden Fields, answer piping, email notifications, 
 
 | Phase | Stories (suggested) | FRs |
 |---|---|---|
-| **MVP / Slice A** | Hidden + UTM · textarea · date · piping · closed copy + Close-at · slash-add · Operator notify | FR-RC-1–9, FR-RC-14 |
+| **MVP / Slice A** | Hidden + UTM · textarea · date · piping · closed copy + Close-at · slash-add · Operator notify · **saved templates (1/5/25)** | FR-RC-1–9, FR-RC-14–17 |
 | **Phase 2 / Slice B** | Recipes · optional steps | FR-RC-10–11 |
 | **Phase 3 / Slice C** | Embed · Contact section | FR-RC-12–13 |
 | **Later** | File · draft-as-Client (default off) · HMAC webhook | addendum D/E/F |
