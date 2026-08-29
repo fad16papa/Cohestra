@@ -2,7 +2,7 @@
 story_id: 30.1
 story_key: 30-1-hidden-field-and-campaign-query-passthrough
 epic: 30
-status: review
+status: done
 baseline_commit: 8af47caed5926649793883f6d5dd676d02ccfff7
 created: 2026-08-29
 sources:
@@ -18,7 +18,7 @@ sources:
 
 # Story 30.1: Hidden Field and campaign query passthrough
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 
@@ -105,6 +105,12 @@ so that an Instagram `?ref=wa` write lands on the Registration and Client histor
   - [x] `dotnet test Cohestra.sln --filter "Category!=Integration"`
   - [x] `dotnet build` + web typecheck as you already do for form stories
   - [x] Do not change `TenantPlanLimits`. Do not write `registration_theme` into `form_schema`.
+
+### Review Findings
+
+- [x] [Review][Patch] Reject `defaultValue` on `section_header` (early return skipped the hidden-only rule) [src/Infrastructure/Activities/FormSchemaValidator.cs:239]
+- [x] [Review][Patch] After sanitize, empty Hidden query/body must fall back to `defaultValue` [src/Infrastructure/Registrations/RegistrationAnswerValidator.cs:147]
+- [x] [Review][Patch] Align client schema issues + add unit tests for `defaultValue` only on Hidden [web/lib/form-schema-utils.ts:266]
 
 ## Dev Notes
 
@@ -245,3 +251,4 @@ Cursor Grok 4.6
 ### Change Log
 
 - 2026-08-29: Implemented Story 30.1 Hidden Field + campaign query passthrough. Status → review.
+- 2026-08-29: Code review — 3 patches applied (section_header `defaultValue`, sanitize-empty fallback, client issues). Status → done.

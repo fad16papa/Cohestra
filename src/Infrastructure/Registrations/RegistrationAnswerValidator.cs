@@ -152,8 +152,12 @@ internal static class RegistrationAnswerValidator
                     candidate = hiddenText;
                 }
 
-                candidate ??= field.DefaultValue;
                 var sanitized = HiddenValueSanitizer.Sanitize(candidate);
+                if (string.IsNullOrEmpty(sanitized))
+                {
+                    sanitized = HiddenValueSanitizer.Sanitize(field.DefaultValue);
+                }
+
                 if (string.IsNullOrEmpty(sanitized))
                 {
                     continue;

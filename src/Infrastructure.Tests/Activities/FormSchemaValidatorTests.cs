@@ -224,6 +224,37 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void ValidateModel_RejectsDefaultValueOnTextField()
+    {
+        var schema = ContactSchema();
+        schema.Fields[0].DefaultValue = "Maya";
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("defaultValue", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateModel_RejectsDefaultValueOnSectionHeader()
+    {
+        var schema = ContactSchema(
+            new FormFieldDefinition
+            {
+                Id = "about",
+                Type = FormFieldTypes.SectionHeader,
+                Label = "About you",
+                Required = false,
+                DefaultValue = "should-not-save",
+            });
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("defaultValue", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidateModel_RejectsHiddenDefaultValueOverMaxLength()
     {
         var schema = ContactSchema(

@@ -194,6 +194,11 @@ internal static partial class FormSchemaValidator
             return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header, hidden.";
         }
 
+        if (field.Type != FormFieldTypes.Hidden && field.DefaultValue is not null)
+        {
+            return $"{fieldPath}.defaultValue is only allowed for hidden fields.";
+        }
+
         if (field.Type == FormFieldTypes.Hidden)
         {
             return ValidateHiddenField(field, fieldPath);
@@ -317,11 +322,6 @@ internal static partial class FormSchemaValidator
         else if (!string.IsNullOrWhiteSpace(field.PhoneCountry))
         {
             return $"{fieldPath}.phoneCountry is only allowed for phone fields.";
-        }
-
-        if (field.DefaultValue is not null)
-        {
-            return $"{fieldPath}.defaultValue is only allowed for hidden fields.";
         }
 
         return null;

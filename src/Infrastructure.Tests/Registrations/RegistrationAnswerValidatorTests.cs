@@ -119,6 +119,19 @@ public sealed class RegistrationAnswerValidatorTests
     }
 
     [Fact]
+    public void NormalizeAnswers_HtmlOnlyHiddenValueFallsBackToDefault()
+    {
+        var schema = HiddenContactSchema();
+        schema.Fields.Single(field => field.Id == "ref").DefaultValue = "ig";
+
+        var normalized = RegistrationAnswerValidator.NormalizeAnswers(
+            schema,
+            ContactAnswers(("ref", "<b></b>")));
+
+        Assert.Equal("ig", normalized["ref"]);
+    }
+
+    [Fact]
     public void NormalizeAnswers_QueryWinsOverHiddenDefaultValue()
     {
         var schema = HiddenContactSchema();

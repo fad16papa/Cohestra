@@ -263,6 +263,10 @@ export function getFormSchemaClientIssues(
       issues.push(`Consent field "${field.label}" requires consent text.`);
     }
 
+    if (!isHiddenFieldType(field.type) && field.defaultValue?.trim()) {
+      issues.push(`Field "${field.label || field.id}" cannot have a default value.`);
+    }
+
     if (isNonInputFieldType(field.type)) {
       if (field.required) {
         issues.push(`Section header "${field.label}" cannot be marked required.`);
@@ -286,6 +290,10 @@ export function getFormSchemaClientIssues(
 
       if (field.options?.length) {
         issues.push(`Hidden field "${field.label}" cannot have options.`);
+      }
+
+      if (field.phoneCountry?.trim()) {
+        issues.push(`Hidden field "${field.label}" cannot have a phone country.`);
       }
 
       if (field.consentText?.trim()) {
