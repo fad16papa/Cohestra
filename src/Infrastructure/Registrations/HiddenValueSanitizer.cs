@@ -15,6 +15,7 @@ internal static class HiddenValueSanitizer
         sanitizer.AllowedAttributes.Clear();
         sanitizer.AllowedCssProperties.Clear();
         sanitizer.AllowedSchemes.Clear();
+        sanitizer.KeepChildNodes = true;
         return sanitizer;
     }
 

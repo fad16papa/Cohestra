@@ -2,7 +2,7 @@
 story_id: 30.1
 story_key: 30-1-hidden-field-and-campaign-query-passthrough
 epic: 30
-status: in-progress
+status: review
 baseline_commit: 8af47caed5926649793883f6d5dd676d02ccfff7
 created: 2026-08-29
 sources:
@@ -18,7 +18,7 @@ sources:
 
 # Story 30.1: Hidden Field and campaign query passthrough
 
-Status: in-progress
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 
@@ -65,46 +65,46 @@ so that an Instagram `?ref=wa` write lands on the Registration and Client histor
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Domain + contract (additive v1 only)** (AC: 1, 5)
-  - [ ] Add `FormFieldTypes.Hidden = "hidden"` to `All`. **Do not** add it to `NonInput` (that set skips answer persist — `section_header` only).
-  - [ ] Add optional `DefaultValue` on `FormFieldDefinition` and `FormFieldDefinitionDto` (last param, default `null`). JSON camelCase `defaultValue`. `ActivityFormSchemaJson` already ignores nulls on write — existing rows stay unchanged.
-  - [ ] Map `DefaultValue` in `FormSchemaValidator.MapToDomain` and `FormSchemaMapper.ToDto`. Update the two current `new FormFieldDefinitionDto(...)` call sites.
-  - [ ] Document `hidden` + `defaultValue` in `docs/contracts/activity-form-schema-v1.md` as **v1.1 additive**; `version` stays `1`. Add `hidden` to `docs/contracts/public-registration-v1.md` answer types (string, max 200).
+- [x] **Task 1 — Domain + contract (additive v1 only)** (AC: 1, 5)
+  - [x] Add `FormFieldTypes.Hidden = "hidden"` to `All`. **Do not** add it to `NonInput` (that set skips answer persist — `section_header` only).
+  - [x] Add optional `DefaultValue` on `FormFieldDefinition` and `FormFieldDefinitionDto` (last param, default `null`). JSON camelCase `defaultValue`. `ActivityFormSchemaJson` already ignores nulls on write — existing rows stay unchanged.
+  - [x] Map `DefaultValue` in `FormSchemaValidator.MapToDomain` and `FormSchemaMapper.ToDto`. Update the two current `new FormFieldDefinitionDto(...)` call sites.
+  - [x] Document `hidden` + `defaultValue` in `docs/contracts/activity-form-schema-v1.md` as **v1.1 additive**; `version` stays `1`. Add `hidden` to `docs/contracts/public-registration-v1.md` answer types (string, max 200).
 
-- [ ] **Task 2 — Schema + publish + extract + answers** (AC: 1, 3, 4, 5)
-  - [ ] `FormSchemaValidator`: accept `hidden`. Reject options / consentText / phoneCountry / placeholder on hidden. Allow optional `defaultValue` (trim; max 200; HTML stripped on save). Update the “type must be one of: …” error string.
-  - [ ] Hidden **may** be `required: true` (AC tests this). It still must not satisfy Publish Gate. **Do not** force `required: false` the way `section_header` does.
-  - [ ] `PublishGateValidator`: no production logic change (still required `phone` **or** `email`). Add a unit test so a required-only-hidden schema still fails publish.
-  - [ ] `RegistrationAnswerValidator.Validate`: Hidden never fails required. Sanitize string (strip HTML, trim, max 200). Over-length after strip → `400` with ProblemDetails via existing Invalid path.
-  - [ ] `NormalizeAnswers`: if Hidden answer missing/blank, use sanitized `defaultValue` when set. Query/body value wins over `defaultValue`. Drop unknown answer keys (already true — loop schema fields only).
-  - [ ] `ClientProfileExtractor`: no Hidden case that writes name/phone/email. Add a unit test: `type: hidden`, id `full_name`, value `Maya` → `NameFromForm` stays null.
-  - [ ] `ClientRegistrationAnswerFormatter` already emits every schema field with a non-empty string. Hidden with value `wa` will appear — **do not** skip Hidden. **Do not** build a new Activity Registrations detail page; that tab is a name/date list that links to `/clients/{id}` (Story 3.10). Client history is the admin Answer surface.
+- [x] **Task 2 — Schema + publish + extract + answers** (AC: 1, 3, 4, 5)
+  - [x] `FormSchemaValidator`: accept `hidden`. Reject options / consentText / phoneCountry / placeholder on hidden. Allow optional `defaultValue` (trim; max 200; HTML stripped on save). Update the “type must be one of: …” error string.
+  - [x] Hidden **may** be `required: true` (AC tests this). It still must not satisfy Publish Gate. **Do not** force `required: false` the way `section_header` does.
+  - [x] `PublishGateValidator`: no production logic change (still required `phone` **or** `email`). Add a unit test so a required-only-hidden schema still fails publish.
+  - [x] `RegistrationAnswerValidator.Validate`: Hidden never fails required. Sanitize string (strip HTML, trim, max 200). Over-length after strip → `400` with ProblemDetails via existing Invalid path.
+  - [x] `NormalizeAnswers`: if Hidden answer missing/blank, use sanitized `defaultValue` when set. Query/body value wins over `defaultValue`. Drop unknown answer keys (already true — loop schema fields only).
+  - [x] `ClientProfileExtractor`: no Hidden case that writes name/phone/email. Add a unit test: `type: hidden`, id `full_name`, value `Maya` → `NameFromForm` stays null.
+  - [x] `ClientRegistrationAnswerFormatter` already emits every schema field with a non-empty string. Hidden with value `wa` will appear — **do not** skip Hidden. **Do not** build a new Activity Registrations detail page; that tab is a name/date list that links to `/clients/{id}` (Story 3.10). Client history is the admin Answer surface.
 
-- [ ] **Task 3 — Web authoring + preview chip** (AC: 1, 2, 3)
-  - [ ] `FormFieldType` + `parseFormSchema` read `defaultValue`.
-  - [ ] `form-schema-utils.ts`: label **Hidden**; add to `formFieldTypeOptions` / `createDefaultField`. Prefer default id `ref` when free, else `hidden` / `hidden-2`. No placeholder UI for hidden. Add `defaultValue` input + help: Field ID must match the query key (`ref` → `?ref=wa`). Privacy line: campaign refs only — do not put emails in the link.
-  - [ ] `isNonInputFieldType` stays `section_header` only. Add `isHiddenFieldType` (or equivalent). `getFormSchemaClientIssues`: hidden cannot have placeholder/options/consent; `defaultValue` ≤ 200.
-  - [ ] `form-field-editor.tsx`: type dropdown is the add path (no slash palette). When type is hidden, hide placeholder; show defaultValue + help.
-  - [ ] `registration-form.tsx` `variant="preview"`: render HiddenChip only — muted pill, text exactly `Hidden · filled from link`. Reuse existing muted/chip classes (`DESIGN.md` `hidden-chip` / `{colors.muted-chip}`). No new brand color.
+- [x] **Task 3 — Web authoring + preview chip** (AC: 1, 2, 3)
+  - [x] `FormFieldType` + `parseFormSchema` read `defaultValue`.
+  - [x] `form-schema-utils.ts`: label **Hidden**; add to `formFieldTypeOptions` / `createDefaultField`. Prefer default id `ref` when free, else `hidden` / `hidden-2`. No placeholder UI for hidden. Add `defaultValue` input + help: Field ID must match the query key (`ref` → `?ref=wa`). Privacy line: campaign refs only — do not put emails in the link.
+  - [x] `isNonInputFieldType` stays `section_header` only. Add `isHiddenFieldType` (or equivalent). `getFormSchemaClientIssues`: hidden cannot have placeholder/options/consent; `defaultValue` ≤ 200.
+  - [x] `form-field-editor.tsx`: type dropdown is the add path (no slash palette). When type is hidden, hide placeholder; show defaultValue + help.
+  - [x] `registration-form.tsx` `variant="preview"`: render HiddenChip only — muted pill, text exactly `Hidden · filled from link`. Reuse existing muted/chip classes (`DESIGN.md` `hidden-chip` / `{colors.muted-chip}`). No new brand color.
 
-- [ ] **Task 4 — Public query passthrough** (AC: 2, 3, 4)
-  - [ ] Public `variant="public"`: **omit Hidden from the DOM** (do not use `<input type="hidden">` — that is still chrome and can leak in inspect).
-  - [ ] On submit, merge Hidden answers from `window` / `useSearchParams`: for each Hidden Field, `searchParams.get(field.id)` only (O(fields), NFR-RC-5). Unknown query keys ignored. Do **not** read query in preview (`/activities/{id}?tab=form` must not treat `tab` as a value).
-  - [ ] Missing key or blank → omit or send `defaultValue`; client validation **must not** require Hidden.
-  - [ ] Same `POST /api/v1/public/registrations` body. No new route. Embed parent-query is Story 32.2 — skip.
+- [x] **Task 4 — Public query passthrough** (AC: 2, 3, 4)
+  - [x] Public `variant="public"`: **omit Hidden from the DOM** (do not use `<input type="hidden">` — that is still chrome and can leak in inspect).
+  - [x] On submit, merge Hidden answers from `window` / `useSearchParams`: for each Hidden Field, `searchParams.get(field.id)` only (O(fields), NFR-RC-5). Unknown query keys ignored. Do **not** read query in preview (`/activities/{id}?tab=form` must not treat `tab` as a value).
+  - [x] Missing key or blank → omit or send `defaultValue`; client validation **must not** require Hidden.
+  - [x] Same `POST /api/v1/public/registrations` body. No new route. Embed parent-query is Story 32.2 — skip.
 
-- [ ] **Task 5 — Tests** (AC: all)
-  - [ ] Unit: `FormSchemaValidatorTests` (accept hidden; reject unknown; reject placeholder/options on hidden; reject `defaultValue` > 200; existing text/phone/email schema still valid).
-  - [ ] Unit: `PublishGateValidator` test file (new, next to FormSchema tests) — hidden-only required fails; phone+hidden publishes.
-  - [ ] Unit: `RegistrationAnswerValidatorTests` — query-like `ref=wa`; HTML stripped; max 200; missing succeeds; `defaultValue` applied in Normalize.
-  - [ ] Unit: `ClientProfileExtractor` (new test class if none) — Hidden never extracts.
-  - [ ] Integration: seed published activity **plus** a Hidden `ref` field, `POST` answers including `ref: "wa"`, assert JSONB `answers.ref` and client history formatter value. Missing `ref` still `201`.
-  - [ ] Web: unit-test the query helper (match by Field id; ignore extras; blank → default). No Playwright required.
+- [x] **Task 5 — Tests** (AC: all)
+  - [x] Unit: `FormSchemaValidatorTests` (accept hidden; reject unknown; reject placeholder/options on hidden; reject `defaultValue` > 200; existing text/phone/email schema still valid).
+  - [x] Unit: `PublishGateValidator` test file (new, next to FormSchema tests) — hidden-only required fails; phone+hidden publishes.
+  - [x] Unit: `RegistrationAnswerValidatorTests` — query-like `ref=wa`; HTML stripped; max 200; missing succeeds; `defaultValue` applied in Normalize.
+  - [x] Unit: `ClientProfileExtractor` (new test class if none) — Hidden never extracts.
+  - [x] Integration: seed published activity **plus** a Hidden `ref` field, `POST` answers including `ref: "wa"`, assert JSONB `answers.ref` and client history formatter value. Missing `ref` still `201`.
+  - [x] Web: unit-test the query helper (match by Field id; ignore extras; blank → default). No Playwright required.
 
-- [ ] **Task 6 — Verify** (AC: all)
-  - [ ] `dotnet test Cohestra.sln --filter "Category!=Integration"`
-  - [ ] `dotnet build` + web typecheck as you already do for form stories
-  - [ ] Do not change `TenantPlanLimits`. Do not write `registration_theme` into `form_schema`.
+- [x] **Task 6 — Verify** (AC: all)
+  - [x] `dotnet test Cohestra.sln --filter "Category!=Integration"`
+  - [x] `dotnet build` + web typecheck as you already do for form stories
+  - [x] Do not change `TenantPlanLimits`. Do not write `registration_theme` into `form_schema`.
 
 ## Dev Notes
 
@@ -196,8 +196,52 @@ See `_bmad-output/project-context.md`: brownfield extend-only; no parallel app; 
 
 ### Agent Model Used
 
+Cursor Grok 4.6
+
 ### Debug Log References
+
+- HtmlSanitizer 9.0.892 defaults `KeepChildNodes = false`. Clearing all allowed tags then dropped inner text (`<b>wa</b>` → empty). Set `KeepChildNodes = true` so Hidden values stay plain text after tag strip.
 
 ### Completion Notes List
 
+- Added `hidden` to `FormFieldTypes.All` only (not `NonInput`) so answers persist.
+- `DefaultValue` is last optional DTO/domain property (after Epic 31 `VisibleWhen` / `Step`). JSON `defaultValue`; nulls still omitted on write.
+- Schema save accepts Hidden (including `required: true`), rejects placeholder/options/consentText/phoneCountry, strips HTML and caps `defaultValue` at 200.
+- Publish Gate unchanged: required Hidden alone cannot publish; required phone + Hidden can.
+- Hidden answers never fail required. Normalize fills sanitized `defaultValue` when query/body is missing or blank; unknown keys stay dropped.
+- `ClientProfileExtractor` has an explicit Hidden no-op; Hidden `full_name` / `phone` / `email` do not map to Client contact.
+- Formatter still lists Hidden values on Client history. No new Registration-detail page.
+- Form tab: Hidden in the type dropdown; default id `ref`; defaultValue + privacy help. Preview chip is `Hidden · filled from link`. Public omits Hidden from the DOM.
+- Public submit merges `collectHiddenAnswers(fields, window.location.search)` into the existing POST body. Preview never reads the admin `?tab=` query.
+- Unit suite: 650 passed (`Category!=Integration`). Web: `hidden-field-query.test.ts` + `tsc --noEmit`. Integration tests authored; this VM has no Postgres/Redis so they were not executed here.
+
 ### File List
+
+- `_bmad-output/implementation-artifacts/30-1-hidden-field-and-campaign-query-passthrough.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `docs/contracts/activity-form-schema-v1.md`
+- `docs/contracts/public-registration-v1.md`
+- `src/Contracts/Activities/ActivityFormSchemaDto.cs`
+- `src/Domain/Activities/ActivityFormSchema.cs`
+- `src/Domain/Activities/FormFieldTypes.cs`
+- `src/Infrastructure/Activities/FormSchemaMapper.cs`
+- `src/Infrastructure/Activities/FormSchemaValidator.cs`
+- `src/Infrastructure/Registrations/ClientProfileExtractor.cs`
+- `src/Infrastructure/Registrations/HiddenValueSanitizer.cs`
+- `src/Infrastructure/Registrations/RegistrationAnswerValidator.cs`
+- `src/Infrastructure.Tests/Activities/FormSchemaValidatorTests.cs`
+- `src/Infrastructure.Tests/Activities/PublishGateValidatorTests.cs`
+- `src/Infrastructure.Tests/Clients/ClientRegistrationAnswerFormatterHiddenTests.cs`
+- `src/Infrastructure.Tests/Registrations/ClientProfileExtractorTests.cs`
+- `src/Infrastructure.Tests/Registrations/RegistrationAnswerValidatorTests.cs`
+- `src/Api.IntegrationTests/HiddenFieldRegistrationIntegrationTests.cs`
+- `web/components/activities/form-field-editor.tsx`
+- `web/components/registration/registration-form.tsx`
+- `web/lib/activities-api.ts`
+- `web/lib/form-schema-utils.ts`
+- `web/lib/hidden-field-query.ts`
+- `web/lib/hidden-field-query.test.ts`
+
+### Change Log
+
+- 2026-08-29: Implemented Story 30.1 Hidden Field + campaign query passthrough. Status → review.
