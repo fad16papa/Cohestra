@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics]
+stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics, step-03-create-stories]
 inputDocuments:
   - _bmad-output/planning-artifacts/prds/prd-registration-capture-2026-08-29/prd.md
   - _bmad-output/planning-artifacts/prds/prd-registration-capture-2026-08-29/addendum.md
@@ -28,7 +28,7 @@ This document provides the complete epic and story breakdown for Registration Ca
 
 **Thesis (locked):** Steal Tally event-signup authoring speed. Do not clone a form builder. Every submit still upserts a deduped Client.
 
-**Epic cut (locked, Admin 2026-08-29):** Three sibling epics numbered **30 / 31 / 32** so they sit after shipped Paddle **29**. Saved templates are the last stories in Epic 30, not their own epic. Stories are written in a later step.
+**Epic cut (locked, Admin 2026-08-29):** Three sibling epics numbered **30 / 31 / 32** so they sit after shipped Paddle **29**. Saved templates are the last stories in Epic 30, not their own epic. **18 stories written.** Step 4 validation: FR coverage, dependencies, and architecture checks passed (see end of file).
 
 ## Requirements Inventory
 
@@ -193,24 +193,24 @@ UX-DR-RC-10: Light and dark visual QA on every new public state (success with pi
 
 ### FR Coverage Map
 
-FR-RC-1: Epic 30 — Hidden Field type
-FR-RC-2: Epic 30 — Query passthrough into Answers
-FR-RC-3: Epic 30 — textarea Field
-FR-RC-4: Epic 30 — date Field
-FR-RC-5: Epic 30 — Piping on thank-you and confirmation email
-FR-RC-6: Epic 30 — Closed message
-FR-RC-7: Epic 30 — Close-at
-FR-RC-8: Epic 30 — Slash / plus Field palette
-FR-RC-9: Epic 30 — Operator new-Registration email
-FR-RC-10: Epic 31 — visibleWhen Recipes
-FR-RC-11: Epic 31 — Optional Identity → Details → Consent steps
-FR-RC-12: Epic 32 — Activity embed route and snippet
-FR-RC-13: Epic 32 — Website Contact section → Client
-FR-RC-14: Epic 30 — Capture invariants (31/32 inherit; do not reopen caps or theme-in-schema)
-FR-RC-15: Epic 30 — Save and apply tenant Form templates (last stories, after slash-add)
-FR-RC-16: Epic 30 — Template slots by plan (Basic 1 / Core 5 / Pro 25)
-FR-RC-17: Epic 30 — Core community default + Pro Design pin
-FR-RC-18: Epic 30 — Wave 1 toolbox types
+FR-RC-1: Epic 30 / Story 30.1 — Hidden Field type
+FR-RC-2: Epic 30 / Story 30.1 — Query passthrough (embed parent query in 32.2)
+FR-RC-3: Epic 30 / Story 30.2 — textarea Field
+FR-RC-4: Epic 30 / Story 30.2 — date Field
+FR-RC-5: Epic 30 / Story 30.6 — Piping on thank-you and confirmation email
+FR-RC-6: Epic 30 / Story 30.7 — Closed message
+FR-RC-7: Epic 30 / Story 30.8 — Close-at
+FR-RC-8: Epic 30 / Stories 30.4–30.5 — Slash palette + Core+ scale/emergency
+FR-RC-9: Epic 30 / Story 30.9 — Operator new-Registration email
+FR-RC-10: Epic 31 / Story 31.1 — visibleWhen Recipes
+FR-RC-11: Epic 31 / Story 31.2 — Optional Identity → Details → Consent steps
+FR-RC-12: Epic 32 / Stories 32.1–32.2 — Allow-list CSP + embed snippet
+FR-RC-13: Epic 32 / Story 32.3 — Website Contact section → Client
+FR-RC-14: Epic 30 / Story 30.10 — Capture invariants (31/32 inherit)
+FR-RC-15: Epic 30 / Story 30.11 — Save and apply tenant Form templates
+FR-RC-16: Epic 30 / Story 30.12 — Template slots by plan
+FR-RC-17: Epic 30 / Story 30.13 — Community default + Pro Design pin
+FR-RC-18: Epic 30 / Story 30.3 — Wave 1 toolbox types
 
 Companion extras (no FR-RC id): `country` (all plans), Core+ `scale` / `emergency`, Pro template duplicate → Epic 30. Phase 2 plan gate (Recipes Core+, steps Pro) → Epic 31.
 
@@ -263,6 +263,8 @@ So that an Instagram `?ref=wa` write lands on the Registration and Client histor
 **And** admin Registration detail and `ClientRegistrationHistory` show `ref = wa`
 **And** HTML is stripped; value max length 200
 **And** unknown query keys are ignored
+**And** public GET/submit stay a single payload (NFR-RC-5)
+**And** Operator help copy does not encourage putting emails in the query string (NFR-RC-10)
 
 **Given** Hidden Field id `ref` and no `?ref=`
 **When** they submit
@@ -328,6 +330,7 @@ So that Saturday’s event questions fit the toolbox without opening Tally.
 **And** `country` is an ISO list reusing phone-country data
 **And** Answers appear on admin Registration detail and Client history
 **And** extract to Client columns stays limited to name heuristics / phone / email / consent — these types are Answers-only (NFR-RC-1)
+**And** `docs/contracts/activity-form-schema-v1.md` documents the additive types as v1.1 while `version` stays `1`
 
 **Given** light and dark resolved themes
 **When** I preview the new controls
@@ -401,7 +404,7 @@ So that Maya sees “See you Saturday, Maya” without a hardcoded name — and 
 **Then** tokens are substituted
 **And** the email layout and hero still come from `RegistrationThemeResolver` (do not fork Touchpoints)
 **And** Hidden Field values are **never** substituted into the success screen or confirmation email
-**And** admin Registration detail and Operator notify (30.9) may still show Hidden Answers
+**And** admin Registration detail may still show Hidden Answers (Operator email is Story 30.9)
 
 **Given** the success-copy editor
 **When** I open the token cheatsheet (UX-DR-RC-5)
@@ -417,7 +420,7 @@ So that Maya sees “Waitlist opens Monday on WhatsApp” instead of only platfo
 **Acceptance Criteria:**
 
 **Given** I set `form_schema.meta.closedMessage` (max 2000, markdown-lite, no images)
-**When** the public Form is unavailable (capacity full, paused, ended, or Close-at from 30.8)
+**When** the public Form is unavailable for a reason that already exists (capacity full, paused, or Activity ended)
 **Then** the Operator copy is shown XSS-sanitized
 **And** a reason chip still shows (Full / Closed / Paused / Ended) (UX-DR-RC-3, UX-DR20)
 **And** empty Closed message → existing platform copy
@@ -499,9 +502,10 @@ So that Capture cannot uncap Tally-style or fork theme into `form_schema`.
 **And** Client dedup by phone/email still upserts one Client
 
 **Given** Studio / Touchpoints
-**When** I save Form meta or a template (30.11+)
+**When** I save Form meta
 **Then** `registration_theme` is never written into `form_schema` (NFR-RC-2)
 **And** confirmation hero still uses `RegistrationThemeResolver`
+**And** Paddle remains tenant billing; this epic does not add registrant checkout or Stripe-in-form
 
 **Given** existing Activities that only use pre-Capture v1 types
 **When** I load and publish them
@@ -758,3 +762,13 @@ So that “I only wanted a contact form” creates a Client without inventing a 
 **Given** a Basic tenant
 **When** I add or submit Contact
 **Then** UI and API are `plan_locked` like the website builder
+
+## Validation (step 4)
+
+- **FRs:** FR-RC-1–18 each map to at least one story (coverage map above). Companion extras (`country`, `scale`, `emergency`, Pro duplicate) live in 30.3 / 30.5 / 30.13.
+- **Starter template:** None. Brownfield; no “clone starter” story.
+- **Entities when needed:** Hidden/types reuse `form_schema` JSONB. Tenant templates appear in 30.11. `allowedEmbedOrigins` in 32.1. Website inquiry in 32.3.
+- **Forward deps fixed:** 30.6 no longer requires 30.9; 30.7 unavailable reasons are shipped states only; 30.10 theme check does not require 30.11.
+- **Epic independence:** 30 stands alone. 31 needs 30 types, not 32. 32 needs 30 Hidden for embed UTMs; Contact does not need 31.
+- **File churn:** 30 and 31 both touch Form tab / `form_schema` validators. Split kept for the Recipe stop-rule and embed CSP risk walls (Admin A′). Not consolidated.
+- **Out of scope (correctly unstoryed):** file/signature (D), draft-as-Client (E), HMAC webhooks (F), bot friction, Tally import, popup embed script.
