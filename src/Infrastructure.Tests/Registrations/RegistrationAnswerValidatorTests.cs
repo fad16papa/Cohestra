@@ -98,6 +98,16 @@ public sealed class RegistrationAnswerValidatorTests
     }
 
     [Fact]
+    public void NormalizeAnswers_DoesNotHtmlEncodeAmpersandsInHiddenValue()
+    {
+        var normalized = RegistrationAnswerValidator.NormalizeAnswers(
+            HiddenContactSchema(),
+            ContactAnswers(("ref", "wa&ig")));
+
+        Assert.Equal("wa&ig", normalized["ref"]);
+    }
+
+    [Fact]
     public void NormalizeAnswers_StripsHtmlFromHiddenValue()
     {
         var normalized = RegistrationAnswerValidator.NormalizeAnswers(

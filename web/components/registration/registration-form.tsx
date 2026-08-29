@@ -146,7 +146,9 @@ export function RegistrationForm({
   }
 
   const stepsOn = Boolean(schema.meta?.splitIntoSteps);
-  const stepIds = stepsOn ? usedFormSteps(schema.fields) : [];
+  const stepIds = stepsOn
+    ? usedFormSteps(schema.fields, { includeHidden: isPreview })
+    : [];
   const currentStep = stepIds[Math.min(stepIndex, Math.max(stepIds.length - 1, 0))] ?? stepIds[0] ?? null;
   const isLastStep = !stepsOn || stepIndex >= stepIds.length - 1;
 

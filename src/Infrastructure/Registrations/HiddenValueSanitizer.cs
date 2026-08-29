@@ -1,3 +1,4 @@
+using System.Net;
 using Ganss.Xss;
 
 namespace Cohestra.Infrastructure.Registrations;
@@ -26,6 +27,6 @@ internal static class HiddenValueSanitizer
             return string.Empty;
         }
 
-        return Sanitizer.Sanitize(raw).Trim();
+        return WebUtility.HtmlDecode(Sanitizer.Sanitize(raw)).Trim();
     }
 }

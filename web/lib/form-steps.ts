@@ -51,6 +51,13 @@ export function fieldsForStep(
   return fields.filter((field) => (field.step ?? autoBucketField(field)) === step);
 }
 
-export function usedFormSteps(fields: FormFieldDefinition[]): FormFieldStep[] {
-  return FORM_STEP_ORDER.filter((step) => fieldsForStep(fields, step).length > 0);
+export function usedFormSteps(
+  fields: FormFieldDefinition[],
+  options?: { includeHidden?: boolean }
+): FormFieldStep[] {
+  var scoped =
+    options?.includeHidden === false
+      ? fields.filter((field) => field.type !== "hidden")
+      : fields;
+  return FORM_STEP_ORDER.filter((step) => fieldsForStep(scoped, step).length > 0);
 }

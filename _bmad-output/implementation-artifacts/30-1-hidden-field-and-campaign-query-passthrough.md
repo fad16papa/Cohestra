@@ -111,6 +111,9 @@ so that an Instagram `?ref=wa` write lands on the Registration and Client histor
 - [x] [Review][Patch] Reject `defaultValue` on `section_header` (early return skipped the hidden-only rule) [src/Infrastructure/Activities/FormSchemaValidator.cs:239]
 - [x] [Review][Patch] After sanitize, empty Hidden query/body must fall back to `defaultValue` [src/Infrastructure/Registrations/RegistrationAnswerValidator.cs:147]
 - [x] [Review][Patch] Align client schema issues + add unit tests for `defaultValue` only on Hidden [web/lib/form-schema-utils.ts:266]
+- [x] [Review][Patch] HtmlSanitizer encodes `&` in Hidden values (`wa&ig` → `wa&amp;ig`) [src/Infrastructure/Registrations/HiddenValueSanitizer.cs:29]
+- [x] [Review][Patch] Public stepped Form shows an empty Details page when that step is Hidden-only [web/components/registration/registration-form.tsx:149]
+- [x] [Review][Patch] Add web unit tests that `defaultValue` is rejected on non-hidden fields [web/lib/form-schema-utils.ts:266]
 
 ## Dev Notes
 
@@ -247,8 +250,12 @@ Cursor Grok 4.6
 - `web/lib/form-schema-utils.ts`
 - `web/lib/hidden-field-query.ts`
 - `web/lib/hidden-field-query.test.ts`
+- `web/lib/form-schema-utils.test.ts`
+- `web/lib/form-steps.ts`
+- `web/lib/form-steps.test.ts`
 
 ### Change Log
 
 - 2026-08-29: Implemented Story 30.1 Hidden Field + campaign query passthrough. Status → review.
 - 2026-08-29: Code review — 3 patches applied (section_header `defaultValue`, sanitize-empty fallback, client issues). Status → done.
+- 2026-08-29: Re-review — 3 patches applied (HtmlDecode Hidden values, omit Hidden-only public steps, client defaultValue tests).
