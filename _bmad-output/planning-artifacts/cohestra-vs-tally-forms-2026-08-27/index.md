@@ -18,4 +18,6 @@
 
 `bmad-deep-recon` is **not installed** in this repo; recon was executed as a documented substitute against source + public Tally docs.
 
-**If you want this in the product backlog:** run **`bmad-prd`** (create or update) for epic **Registration Capture** — not a new “form builder” epic. Epic 25 website branding stays a non-goal.
+**PRD (2026-08-29):** `_bmad-output/planning-artifacts/prds/prd-registration-capture-2026-08-29/prd.md` — MVP = Slice A; Phase 2 = B; Phase 3 = C.
+
+Next: `bmad-ux` (Form tab slash-insert, no canvas), `bmad-spec` for additive `form_schema`, or `bmad-create-epics-and-stories`. Epic 25 website branding stays a non-goal.
