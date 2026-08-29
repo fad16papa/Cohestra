@@ -98,6 +98,16 @@ public sealed class RegistrationAnswerValidatorTests
     }
 
     [Fact]
+    public void NormalizeAnswers_DoesNotRestoreEncodedHtmlTags()
+    {
+        var normalized = RegistrationAnswerValidator.NormalizeAnswers(
+            HiddenContactSchema(),
+            ContactAnswers(("ref", "&lt;b&gt;wa&lt;/b&gt;")));
+
+        Assert.Equal("wa", normalized["ref"]);
+    }
+
+    [Fact]
     public void NormalizeAnswers_DoesNotHtmlEncodeAmpersandsInHiddenValue()
     {
         var normalized = RegistrationAnswerValidator.NormalizeAnswers(

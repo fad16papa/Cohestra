@@ -27,6 +27,9 @@ internal static class HiddenValueSanitizer
             return string.Empty;
         }
 
-        return WebUtility.HtmlDecode(Sanitizer.Sanitize(raw)).Trim();
+        // Strip tags, then decode entities (`wa&ig`), then strip again so
+        // `&lt;b&gt;wa&lt;/b&gt;` cannot rehydrate into markup.
+        var stripped = WebUtility.HtmlDecode(Sanitizer.Sanitize(raw)).Trim();
+        return WebUtility.HtmlDecode(Sanitizer.Sanitize(stripped)).Trim();
     }
 }

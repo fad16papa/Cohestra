@@ -224,6 +224,29 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void ValidateDto_RejectsNonHiddenDefaultValueThatSanitizesEmpty()
+    {
+        var error = FormSchemaValidator.ValidateDto(
+            new ActivityFormSchemaDto(
+                1,
+                [
+                    new FormFieldDefinitionDto(
+                        "full_name",
+                        FormFieldTypes.Text,
+                        "Full name",
+                        true,
+                        null,
+                        null,
+                        null,
+                        null,
+                        DefaultValue: "<b></b>"),
+                ]));
+
+        Assert.NotNull(error);
+        Assert.Contains("defaultValue", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidateModel_RejectsDefaultValueOnTextField()
     {
         var schema = ContactSchema();

@@ -140,14 +140,27 @@ internal static partial class FormSchemaValidator
                     Step = string.IsNullOrWhiteSpace(field.Step)
                         ? null
                         : field.Step.Trim().ToLowerInvariant(),
-                    DefaultValue = string.IsNullOrWhiteSpace(field.DefaultValue)
-                        ? null
-                        : HiddenValueSanitizer.Sanitize(field.DefaultValue) is { Length: > 0 } defaultValue
-                            ? defaultValue
-                            : null,
+                    DefaultValue = MapDefaultValue(field),
                 })
                 .ToList(),
         };
+    }
+
+    private static string? MapDefaultValue(FormFieldDefinitionDto field)
+    {
+        if (string.IsNullOrWhiteSpace(field.DefaultValue))
+        {
+            return null;
+        }
+
+        if (field.Type.Trim() != FormFieldTypes.Hidden)
+        {
+            return field.DefaultValue.Trim();
+        }
+
+        return HiddenValueSanitizer.Sanitize(field.DefaultValue) is { Length: > 0 } sanitized
+            ? sanitized
+            : null;
     }
 
     private static FormFieldVisibleWhen? MapVisibleWhen(FormFieldVisibleWhenDto? rule)
