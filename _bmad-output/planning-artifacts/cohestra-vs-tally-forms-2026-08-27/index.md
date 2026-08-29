@@ -1,6 +1,6 @@
 # Cohestra vs Tally.so (forms) — artifact index
 
-**Date:** 2026-08-27 (updated 2026-08-28)
+**Date:** 2026-08-27 (updated 2026-08-29)
 **Product:** Cohestra
 **Comparator:** [Tally.so](https://tally.so) (confirmed by user)
 
@@ -15,6 +15,7 @@
 | Feasibility | [feasibility.md](./feasibility.md) |
 | PRFAQ | [prfaq.md](./prfaq.md) |
 | **Suggested slices — full elaboration** | [slices-elaborated.md](./slices-elaborated.md) |
+| **PRD — Registration Capture** | `../prds/prd-registration-capture-2026-08-29/prd.md` |
 
 `bmad-deep-recon` is **not installed** in this repo; recon was executed as a documented substitute against source + public Tally docs.
 
