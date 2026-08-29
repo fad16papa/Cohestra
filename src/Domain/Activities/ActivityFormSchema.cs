@@ -12,6 +12,9 @@ public sealed class ActivityFormSchema
 public sealed class FormSchemaMeta
 {
     public string? IntroMarkdown { get; set; }
+
+    /// <summary>Pro-only. When false (default), the public Form is a single page.</summary>
+    public bool SplitIntoSteps { get; set; }
 }
 
 public sealed class FormFieldDefinition
@@ -32,6 +35,25 @@ public sealed class FormFieldDefinition
 
     /// <summary>ISO 3166-1 alpha-2 country for phone fields (e.g. SG, PH).</summary>
     public string? PhoneCountry { get; set; }
+
+    /// <summary>Core+ Recipe. Show this Field only when another Field matches.</summary>
+    public FormFieldVisibleWhen? VisibleWhen { get; set; }
+
+    /// <summary>Pro steps bucket: identity, details, or consent. Ignored unless meta.splitIntoSteps.</summary>
+    public string? Step { get; set; }
+}
+
+public sealed class FormFieldVisibleWhen
+{
+    public string FieldId { get; set; } = string.Empty;
+
+    /// <summary>JSON <c>equals</c>. Mutually exclusive with <see cref="NotEqualsValue"/>.</summary>
+    [System.Text.Json.Serialization.JsonPropertyName("equals")]
+    public string? EqualsValue { get; set; }
+
+    /// <summary>JSON <c>notEquals</c>.</summary>
+    [System.Text.Json.Serialization.JsonPropertyName("notEquals")]
+    public string? NotEqualsValue { get; set; }
 }
 
 public sealed class FormFieldOption

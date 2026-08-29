@@ -19,6 +19,14 @@ export type FormFieldOption = {
   label: string;
 };
 
+export type FormFieldVisibleWhen = {
+  fieldId: string;
+  equals?: string | null;
+  notEquals?: string | null;
+};
+
+export type FormFieldStep = "identity" | "details" | "consent";
+
 export type FormFieldDefinition = {
   id: string;
   type: FormFieldType;
@@ -28,10 +36,13 @@ export type FormFieldDefinition = {
   options: FormFieldOption[] | null;
   consentText: string | null;
   phoneCountry?: string | null;
+  visibleWhen?: FormFieldVisibleWhen | null;
+  step?: FormFieldStep | null;
 };
 
 export type FormSchemaMeta = {
   introMarkdown: string | null;
+  splitIntoSteps?: boolean;
 };
 
 export type ActivityFormSchema = {
@@ -129,11 +140,13 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
   if (metaRaw && typeof metaRaw === "object") {
     const metaRecord = metaRaw as Record<string, unknown>;
     const introMarkdown = metaRecord.introMarkdown ?? metaRecord.IntroMarkdown;
+    const splitIntoSteps = metaRecord.splitIntoSteps ?? metaRecord.SplitIntoSteps;
     meta = {
       introMarkdown:
         typeof introMarkdown === "string" && introMarkdown.trim()
           ? introMarkdown
           : null,
+      splitIntoSteps: splitIntoSteps === true,
     };
   }
 
@@ -150,6 +163,9 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
       const options = item.options ?? item.Options;
       const consentText = item.consentText ?? item.ConsentText;
       const phoneCountry = item.phoneCountry ?? item.PhoneCountry;
+      const visibleWhen = parseVisibleWhen(item.visibleWhen ?? item.VisibleWhen);
+      const stepRaw = item.step ?? item.Step;
+      const step = parseFieldStep(stepRaw);
 
       if (
         typeof id !== "string" ||
@@ -190,9 +206,47 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
           typeof phoneCountry === "string" && phoneCountry.trim()
             ? phoneCountry.trim().toUpperCase()
             : null,
+        visibleWhen,
+        step,
       });
     }),
   };
+}
+
+function parseVisibleWhen(raw: unknown): FormFieldVisibleWhen | null {
+  if (raw === null || raw === undefined || typeof raw !== "object") {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const fieldId = record.fieldId ?? record.FieldId;
+  const equals = record.equals ?? record.Equals ?? record.equalsValue ?? record.EqualsValue;
+  const notEquals =
+    record.notEquals ?? record.NotEquals ?? record.notEqualsValue ?? record.NotEqualsValue;
+
+  if (typeof fieldId !== "string" || !fieldId.trim()) {
+    return null;
+  }
+
+  return {
+    fieldId: fieldId.trim(),
+    equals: typeof equals === "string" && equals.trim() ? equals.trim() : null,
+    notEquals:
+      typeof notEquals === "string" && notEquals.trim() ? notEquals.trim() : null,
+  };
+}
+
+function parseFieldStep(raw: unknown): FormFieldStep | null {
+  if (typeof raw !== "string") {
+    return null;
+  }
+
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === "identity" || normalized === "details" || normalized === "consent") {
+    return normalized;
+  }
+
+  return null;
 }
 
 function parseRegistrationTheme(raw: unknown): RegistrationTheme | null {

@@ -46,6 +46,8 @@ Keys in `answers` must match field `id` values from [activity-form-schema-v1.md]
 
 Submissions are rejected when required fields are missing or invalid per the activity schema.
 
+Fields with a Core+ `visibleWhen` Recipe are required only while visible. Answers for currently invisible Fields are dropped (spoofs do not persist).
+
 ## Responses
 
 ### 201 Created (Story 3.1+)

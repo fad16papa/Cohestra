@@ -1,5 +1,6 @@
 using Cohestra.Application.Activities;
 using Cohestra.Contracts.Activities;
+using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -274,6 +275,10 @@ public class ActivitiesController(IActivityService activityService) : Controller
                 cancellationToken);
             return activity is null ? NotFound() : Ok(activity);
         }
+        catch (FormSchemaPlanLockedException ex)
+        {
+            return PlanLockedProblem(ex.Message);
+        }
         catch (ArgumentException ex)
         {
             return BadRequestProblem(ex.Message);
@@ -352,6 +357,25 @@ public class ActivitiesController(IActivityService activityService) : Controller
         }
 
         return null;
+    }
+
+    private ObjectResult PlanLockedProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status403Forbidden,
+            Title = "Forbidden",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        };
+        problem.Extensions["errorCode"] = "plan_locked";
+
+        return new ObjectResult(problem)
+        {
+            StatusCode = StatusCodes.Status403Forbidden,
+        };
     }
 
     private ObjectResult BadRequestProblem(string detail) =>

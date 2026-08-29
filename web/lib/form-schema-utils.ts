@@ -8,6 +8,7 @@ import {
   DEFAULT_PHONE_COUNTRY,
   isSupportedPhoneCountry,
 } from "@/lib/phone-countries";
+import { collectVisibleWhenIssues } from "@/lib/form-visibility";
 
 export const formFieldTypeLabels: Record<FormFieldType, string> = {
   text: "Text",
@@ -264,6 +265,8 @@ export function getFormSchemaClientIssues(
       }
     }
   }
+
+  issues.push(...collectVisibleWhenIssues(schema.fields));
 
   return [...new Set(issues)];
 }

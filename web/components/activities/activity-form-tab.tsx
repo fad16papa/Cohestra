@@ -8,6 +8,7 @@ import { FormTemplatePicker } from "@/components/activities/form-template-picker
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { RegistrationIntroCopy } from "@/components/registration/registration-intro-copy";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -34,6 +35,8 @@ import {
   getFormTemplate,
   type FormTemplateId,
 } from "@/lib/form-templates";
+import { applyMissingStepBuckets } from "@/lib/form-steps";
+import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
 
 const publishedTemplateLockReason =
@@ -51,6 +54,10 @@ export function ActivityFormTab({
   onDirtyChange,
 }: ActivityFormTabProps) {
   const { authFetch } = useAuth();
+  const { shell } = useTenantShell();
+  const plan = shell?.plan ?? "Basic";
+  const recipesLocked = !isCoreOrAbove(plan);
+  const stepsLocked = !isProPlan(plan);
   const [draftSchema, setDraftSchema] = useState<ActivityFormSchema>(() =>
     normalizeFormSchema(activity.formSchema)
   );
@@ -77,9 +84,13 @@ export function ActivityFormTab({
   const savedPublishGateIssues = getPublishGateIssues(activity.formSchema, {
     slug: activity.slug,
   });
-  const previewKey = draftSchema.fields
-    .map((field) => `${field.id}:${field.type}`)
-    .join("|");
+  const previewKey = [
+    draftSchema.meta?.splitIntoSteps ? "steps" : "page",
+    ...draftSchema.fields.map(
+      (field) =>
+        `${field.id}:${field.type}:${field.step ?? ""}:${field.visibleWhen?.fieldId ?? ""}:${field.visibleWhen?.equals ?? ""}:${field.visibleWhen?.notEquals ?? ""}`
+    ),
+  ].join("|");
   const introMarkdown = draftSchema.meta?.introMarkdown ?? null;
 
   const showPublishGate =
@@ -128,7 +139,7 @@ export function ActivityFormTab({
       const updated = await saveActivityFormSchema(
         authFetch,
         activity.id,
-        draftSchema
+        applyMissingStepBuckets(draftSchema)
       );
       onActivityUpdated(updated);
       setDraftSchema(normalizeFormSchema(updated.formSchema));
@@ -256,7 +267,10 @@ export function ActivityFormTab({
             const nextIntro = event.target.value.trim() ? event.target.value : null;
             setDraftSchema((current) => ({
               ...current,
-              meta: nextIntro ? { introMarkdown: nextIntro } : null,
+              meta: {
+                introMarkdown: nextIntro,
+                splitIntoSteps: current.meta?.splitIntoSteps ?? false,
+              },
             }));
           }}
         />
@@ -265,11 +279,52 @@ export function ActivityFormTab({
         </p>
       </section>
 
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+        <div className="flex items-start gap-3">
+          <input
+            id="split-into-steps"
+            type="checkbox"
+            className="mt-1 size-4 rounded border-input"
+            checked={Boolean(draftSchema.meta?.splitIntoSteps)}
+            disabled={isArchived || isSaving || stepsLocked}
+            onChange={(event) => {
+              const enabled = event.target.checked;
+              setDraftSchema((current) =>
+                applyMissingStepBuckets({
+                  ...current,
+                  meta: {
+                    introMarkdown: current.meta?.introMarkdown ?? null,
+                    splitIntoSteps: enabled,
+                  },
+                })
+              );
+            }}
+          />
+          <div>
+            <label htmlFor="split-into-steps" className="text-sm font-medium text-text-warm">
+              Split into steps
+            </label>
+            <p className="mt-0.5 text-xs text-text-muted-warm">
+              Pro only. Identity → Details → Consent. Off keeps the public Form on one
+              page. Field count does not turn this on.
+            </p>
+            {stepsLocked ? (
+              <p className="mt-2 text-xs text-text-muted-warm">
+                Upgrade to Pro to split the Form into steps. Core can still use Recipes.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
       <FormFieldEditor
         schema={draftSchema}
         onChange={setDraftSchema}
         disabled={isArchived}
         className="min-w-0"
+        recipesLocked={recipesLocked}
+        stepsEnabled={Boolean(draftSchema.meta?.splitIntoSteps)}
+        stepsLocked={stepsLocked}
       />
 
       <section

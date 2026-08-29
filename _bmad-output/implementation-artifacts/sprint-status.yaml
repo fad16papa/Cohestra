@@ -318,9 +318,9 @@ development_status:
   30-13-community-default-design-pin-and-pro-duplicate: backlog
   epic-30-retrospective: optional
 
-  epic-31: backlog
-  31-1-visiblewhen-recipes: backlog
-  31-2-optional-identity-details-consent-steps: backlog
+  epic-31: in-progress
+  31-1-visiblewhen-recipes: review
+  31-2-optional-identity-details-consent-steps: review
   epic-31-retrospective: optional
 
   epic-32: backlog

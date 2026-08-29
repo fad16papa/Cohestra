@@ -11,7 +11,9 @@ import type {
   ActivityFormSchema,
   FormFieldDefinition,
   FormFieldOption,
+  FormFieldStep,
   FormFieldType,
+  FormFieldVisibleWhen,
 } from "@/lib/activities-api";
 import {
   createDefaultField,
@@ -28,6 +30,8 @@ import {
   DEFAULT_PHONE_COUNTRY,
   getPhonePrefixLabel,
 } from "@/lib/phone-countries";
+import { formStepLabels } from "@/lib/form-steps";
+import { recipeSummary } from "@/lib/form-visibility";
 import { cn } from "@/lib/utils";
 
 type FormFieldEditorProps = {
@@ -35,6 +39,9 @@ type FormFieldEditorProps = {
   onChange: (schema: ActivityFormSchema) => void;
   disabled?: boolean;
   className?: string;
+  recipesLocked?: boolean;
+  stepsEnabled?: boolean;
+  stepsLocked?: boolean;
 };
 
 const editorPanelShellClassName =
@@ -75,6 +82,9 @@ export function FormFieldEditor({
   onChange,
   disabled = false,
   className,
+  recipesLocked = false,
+  stepsEnabled = false,
+  stepsLocked = false,
 }: FormFieldEditorProps) {
   const [addType, setAddType] = useState<FormFieldType>("text");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(
@@ -354,6 +364,16 @@ export function FormFieldEditor({
                             {formFieldTypeLabels[field.type]}
                             {field.required ? " · Required" : ""}
                           </p>
+                          {stepsEnabled && field.step ? (
+                            <p className="mt-1 inline-flex rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-text-muted-warm">
+                              {formStepLabels[field.step]}
+                            </p>
+                          ) : null}
+                          {recipeSummary(field.visibleWhen) ? (
+                            <p className="mt-1 truncate text-[11px] text-text-muted-warm">
+                              {recipeSummary(field.visibleWhen)}
+                            </p>
+                          ) : null}
                           {hasIdIssue ? (
                             <p className="mt-1 text-xs text-destructive">Fix field ID</p>
                           ) : null}
@@ -425,7 +445,11 @@ export function FormFieldEditor({
               <FieldPropertiesEditor
                 field={selectedField}
                 index={selectedIndex}
+                fields={schema.fields}
                 disabled={disabled}
+                recipesLocked={recipesLocked}
+                stepsEnabled={stepsEnabled}
+                stepsLocked={stepsLocked}
                 duplicateFieldIds={duplicateFieldIds}
                 onUpdate={(patch) => updateField(selectedIndex, patch)}
                 onAddOption={() => addOption(selectedIndex)}
@@ -445,7 +469,11 @@ export function FormFieldEditor({
 type FieldPropertiesEditorProps = {
   field: FormFieldDefinition;
   index: number;
+  fields: FormFieldDefinition[];
   disabled: boolean;
+  recipesLocked: boolean;
+  stepsEnabled: boolean;
+  stepsLocked: boolean;
   duplicateFieldIds: Set<string>;
   onUpdate: (patch: Partial<FormFieldDefinition>) => void;
   onAddOption: () => void;
@@ -456,7 +484,11 @@ type FieldPropertiesEditorProps = {
 function FieldPropertiesEditor({
   field,
   index,
+  fields,
   disabled,
+  recipesLocked,
+  stepsEnabled,
+  stepsLocked,
   duplicateFieldIds,
   onUpdate,
   onAddOption,
@@ -601,6 +633,33 @@ function FieldPropertiesEditor({
             Section headers are display-only dividers between field groups.
           </p>
         )}
+
+        {stepsEnabled ? (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor={`field-step-${index}`}>Step</Label>
+            <select
+              id={`field-step-${index}`}
+              value={field.step ?? "details"}
+              disabled={disabled || stepsLocked}
+              onChange={(event) =>
+                onUpdate({ step: event.target.value as FormFieldStep })
+              }
+              className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <option value="identity">Identity</option>
+              <option value="details">Details</option>
+              <option value="consent">Consent</option>
+            </select>
+          </div>
+        ) : null}
+
+        <RecipePicker
+          field={field}
+          fields={fields}
+          disabled={disabled}
+          locked={recipesLocked}
+          onUpdate={onUpdate}
+        />
       </div>
 
       {fieldNeedsOptions(field.type) ? (
@@ -661,3 +720,164 @@ function FieldPropertiesEditor({
     </div>
   );
 }
+
+const RECIPE_PRESETS = [
+  { id: "none", label: "Always shown" },
+  { id: "guest", label: "Guest name (when bringing a guest is yes)" },
+  { id: "dietary", label: "Dietary (when dietary needs is yes)" },
+  { id: "member", label: "Member ID (when is member is yes)" },
+  { id: "visitor", label: "Visitor company (when is visitor is yes)" },
+  { id: "custom", label: "Custom equals / not equals" },
+] as const;
+
+function RecipePicker({
+  field,
+  fields,
+  disabled,
+  locked,
+  onUpdate,
+}: {
+  field: FormFieldDefinition;
+  fields: FormFieldDefinition[];
+  disabled: boolean;
+  locked: boolean;
+  onUpdate: (patch: Partial<FormFieldDefinition>) => void;
+}) {
+  const controllers = fields.filter(
+    (candidate) => candidate.id !== field.id && !isNonInputFieldType(candidate.type)
+  );
+  const rule = field.visibleWhen;
+  const preset = inferRecipePreset(rule);
+
+  return (
+    <div className="space-y-3 sm:col-span-2">
+      <Label htmlFor={`field-recipe-${field.id}`}>Show only when</Label>
+      {locked ? (
+        <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-text-muted-warm">
+          Recipes require Core or Pro. Upgrade to hide guest name until “bringing a
+          guest?” is yes.
+        </p>
+      ) : (
+        <>
+          <select
+            id={`field-recipe-${field.id}`}
+            value={preset}
+            disabled={disabled}
+            onChange={(event) => {
+              const next = event.target.value;
+              if (next === "none") {
+                onUpdate({ visibleWhen: null });
+                return;
+              }
+
+              const controllerId =
+                rule?.fieldId && controllers.some((item) => item.id === rule.fieldId)
+                  ? rule.fieldId
+                  : (controllers[0]?.id ?? "");
+              if (!controllerId) {
+                return;
+              }
+
+              const nextRule: FormFieldVisibleWhen =
+                next === "custom"
+                  ? {
+                      fieldId: controllerId,
+                      equals: rule?.equals ?? "yes",
+                      notEquals: rule?.notEquals ?? null,
+                    }
+                  : { fieldId: controllerId, equals: "yes", notEquals: null };
+              onUpdate({ visibleWhen: nextRule });
+            }}
+            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          >
+            {RECIPE_PRESETS.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+          {rule ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor={`field-recipe-controller-${field.id}`}>
+                  Controller field
+                </Label>
+                <select
+                  id={`field-recipe-controller-${field.id}`}
+                  value={rule.fieldId}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    onUpdate({
+                      visibleWhen: { ...rule, fieldId: event.target.value },
+                    })
+                  }
+                  className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  {controllers.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label || item.id}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {preset === "custom" ? (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor={`field-recipe-op-${field.id}`}>Match</Label>
+                    <select
+                      id={`field-recipe-op-${field.id}`}
+                      value={rule.notEquals ? "notEquals" : "equals"}
+                      disabled={disabled}
+                      onChange={(event) => {
+                        const value = rule.equals ?? rule.notEquals ?? "yes";
+                        onUpdate({
+                          visibleWhen:
+                            event.target.value === "notEquals"
+                              ? { fieldId: rule.fieldId, equals: null, notEquals: value }
+                              : { fieldId: rule.fieldId, equals: value, notEquals: null },
+                        });
+                      }}
+                      className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                    >
+                      <option value="equals">Equals</option>
+                      <option value="notEquals">Does not equal</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor={`field-recipe-value-${field.id}`}>Value</Label>
+                    <Input
+                      id={`field-recipe-value-${field.id}`}
+                      value={rule.equals ?? rule.notEquals ?? ""}
+                      disabled={disabled}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        onUpdate({
+                          visibleWhen: rule.notEquals
+                            ? { fieldId: rule.fieldId, equals: null, notEquals: value }
+                            : { fieldId: rule.fieldId, equals: value, notEquals: null },
+                        });
+                      }}
+                    />
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
+function inferRecipePreset(rule: FormFieldVisibleWhen | null | undefined): string {
+  if (!rule) {
+    return "none";
+  }
+
+  if (rule.equals === "yes" && !rule.notEquals) {
+    return "guest";
+  }
+
+  return "custom";
+}
+

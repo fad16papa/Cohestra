@@ -22,6 +22,7 @@ Referenced by:
 |-----------|----------|----------|--------------------------------|
 | `version` | integer  | yes      | Must be `1` for this contract  |
 | `fields`  | array    | yes      | Ordered list; may be empty     |
+| `meta.splitIntoSteps` | boolean | no | Pro only. Default `false` keeps a single public page. |
 
 ## Field object
 
@@ -47,6 +48,8 @@ Referenced by:
 | `options`      | array    | conditional | Required for `select` and `referral_source` |
 | `consentText`  | string   | conditional | Required for `consent` (max 2000 chars) |
 | `phoneCountry` | string   | conditional | ISO 3166-1 alpha-2 for `phone` fields (e.g. `SG`, `PH`); launch templates default `SG` |
+| `visibleWhen`  | object   | no       | Core+ Recipe: `{ "fieldId", "equals" \| "notEquals" }`. Circular rules reject. Basic → `403 plan_locked`. |
+| `step`         | string   | no       | Pro steps bucket: `identity` \| `details` \| `consent`. Ignored unless `meta.splitIntoSteps`. |
 
 ### Option object (`options[]`)
 

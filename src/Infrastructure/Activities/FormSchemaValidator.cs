@@ -65,6 +65,28 @@ internal static partial class FormSchemaValidator
             }
         }
 
+        var recipeError = VisibleWhenEvaluator.ValidateGraph(schema);
+        if (recipeError is not null)
+        {
+            return recipeError;
+        }
+
+        if (schema.Meta is { SplitIntoSteps: true })
+        {
+            foreach (var field in schema.Fields)
+            {
+                if (string.IsNullOrWhiteSpace(field.Step))
+                {
+                    continue;
+                }
+
+                if (!FormFieldSteps.All.Contains(field.Step))
+                {
+                    return $"Field '{field.Id}' step must be identity, details, or consent.";
+                }
+            }
+        }
+
         return null;
     }
 
@@ -85,6 +107,7 @@ internal static partial class FormSchemaValidator
                     IntroMarkdown = string.IsNullOrWhiteSpace(schema.Meta.IntroMarkdown)
                         ? null
                         : schema.Meta.IntroMarkdown.Trim(),
+                    SplitIntoSteps = schema.Meta.SplitIntoSteps,
                 },
             Fields = schema.Fields
                 .Select(field => new FormFieldDefinition
@@ -113,8 +136,31 @@ internal static partial class FormSchemaValidator
                         : string.IsNullOrWhiteSpace(field.PhoneCountry)
                             ? null
                             : field.PhoneCountry.Trim().ToUpperInvariant(),
+                    VisibleWhen = MapVisibleWhen(field.VisibleWhen),
+                    Step = string.IsNullOrWhiteSpace(field.Step)
+                        ? null
+                        : field.Step.Trim().ToLowerInvariant(),
                 })
                 .ToList(),
+        };
+    }
+
+    private static FormFieldVisibleWhen? MapVisibleWhen(FormFieldVisibleWhenDto? rule)
+    {
+        if (rule is null)
+        {
+            return null;
+        }
+
+        return new FormFieldVisibleWhen
+        {
+            FieldId = rule.FieldId.Trim(),
+            EqualsValue = string.IsNullOrWhiteSpace(rule.EqualsValue)
+                ? null
+                : rule.EqualsValue.Trim(),
+            NotEqualsValue = string.IsNullOrWhiteSpace(rule.NotEqualsValue)
+                ? null
+                : rule.NotEqualsValue.Trim(),
         };
     }
 

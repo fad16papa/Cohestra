@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Cohestra.Domain.Activities;
+using Cohestra.Infrastructure.Activities;
 
 namespace Cohestra.Infrastructure.Registrations;
 
@@ -17,6 +18,11 @@ internal static class RegistrationAnswerValidator
         foreach (var field in schema.Fields)
         {
             if (FormFieldTypes.NonInput.Contains(field.Type))
+            {
+                continue;
+            }
+
+            if (!VisibleWhenEvaluator.IsVisible(field, schema, answers))
             {
                 continue;
             }
@@ -111,6 +117,11 @@ internal static class RegistrationAnswerValidator
         foreach (var field in schema.Fields)
         {
             if (FormFieldTypes.NonInput.Contains(field.Type))
+            {
+                continue;
+            }
+
+            if (!VisibleWhenEvaluator.IsVisible(field, schema, answers))
             {
                 continue;
             }

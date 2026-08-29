@@ -576,6 +576,16 @@ public sealed class ActivityService(
             throw new ArgumentException(validationError);
         }
 
+        var mapped = FormSchemaValidator.MapToDomain(formSchema);
+        FormFieldStepAssigner.ApplyMissingBuckets(mapped);
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            throw new InvalidOperationException("Tenant context is required to save a form schema.");
+        }
+
+        await EnsureFormSchemaPlanAllowedAsync(mapped, tenantId, cancellationToken);
+
         var activity = await dbContext.Activities.FirstOrDefaultAsync(
             item => item.Id == id,
             cancellationToken);
@@ -590,7 +600,7 @@ public sealed class ActivityService(
             throw new InvalidOperationException("Archived activities cannot be edited.");
         }
 
-        activity.FormSchema = FormSchemaValidator.MapToDomain(formSchema);
+        activity.FormSchema = mapped;
         activity.UpdatedAt = DateTimeOffset.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -1138,5 +1148,41 @@ public sealed class ActivityService(
         }
 
         return ActivityScheduleParser.TryParseStartsAt(schedule, registrationTimeZoneId);
+    }
+
+    private async Task EnsureFormSchemaPlanAllowedAsync(
+        ActivityFormSchema schema,
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var hasRecipes = schema.Fields.Any(field => field.VisibleWhen is not null);
+        var hasSteps = schema.Meta is { SplitIntoSteps: true };
+        if (!hasRecipes && !hasSteps)
+        {
+            return;
+        }
+
+        var plan = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => (TenantPlan?)tenant.Plan)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (plan is null)
+        {
+            throw new InvalidOperationException("Tenant not found for form schema plan gate.");
+        }
+
+        if (hasRecipes && plan is TenantPlan.Basic)
+        {
+            throw new FormSchemaPlanLockedException(
+                "Form Recipes require a Core or Pro plan.");
+        }
+
+        if (hasSteps && plan is not (TenantPlan.Pro or TenantPlan.Enterprise))
+        {
+            throw new FormSchemaPlanLockedException(
+                "Split into steps requires a Pro plan.");
+        }
     }
 }

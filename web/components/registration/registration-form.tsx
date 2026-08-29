@@ -8,6 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ActivityFormSchema, FormFieldDefinition } from "@/lib/activities-api";
 import { isNonInputFieldType } from "@/lib/form-schema-utils";
+import {
+  fieldsForStep,
+  formStepLabels,
+  usedFormSteps,
+} from "@/lib/form-steps";
+import { isFieldVisible } from "@/lib/form-visibility";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
 import { validatePhoneLocalNumber } from "@/lib/phone-countries";
 import { PUBLIC_PLAN_REGISTRATION_LIMIT_COPY } from "@/lib/public-registration-messages";
@@ -104,6 +110,7 @@ export function RegistrationForm({
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [stepIndex, setStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitErrorCode, setSubmitErrorCode] = useState<string | null>(null);
@@ -137,12 +144,17 @@ export function RegistrationForm({
     });
   }
 
-  function validateAllFields(): boolean {
+  const stepsOn = Boolean(schema.meta?.splitIntoSteps);
+  const stepIds = stepsOn ? usedFormSteps(schema.fields) : [];
+  const currentStep = stepIds[stepIndex] ?? stepIds[0] ?? null;
+  const isLastStep = !stepsOn || stepIndex >= stepIds.length - 1;
+
+  function validateFields(fields: FormFieldDefinition[]): boolean {
     const nextErrors: FieldErrors = {};
     const nextTouched: Record<string, boolean> = {};
 
-    for (const field of schema.fields) {
-      if (isNonInputFieldType(field.type)) {
+    for (const field of fields) {
+      if (isNonInputFieldType(field.type) || !isFieldVisible(field, values)) {
         continue;
       }
 
@@ -154,9 +166,31 @@ export function RegistrationForm({
     }
 
     setTouched((current) => ({ ...current, ...nextTouched }));
-    setErrors(nextErrors);
+    setErrors((current) => {
+      const next = { ...current };
+      for (const field of fields) {
+        if (nextErrors[field.id]) {
+          next[field.id] = nextErrors[field.id];
+        } else {
+          delete next[field.id];
+        }
+      }
+      return next;
+    });
 
     return Object.keys(nextErrors).length === 0;
+  }
+
+  function validateAllFields(): boolean {
+    return validateFields(schema.fields);
+  }
+
+  function validateCurrentStep(): boolean {
+    if (!stepsOn || !currentStep) {
+      return validateAllFields();
+    }
+
+    return validateFields(fieldsForStep(schema.fields, currentStep));
   }
 
   function performSubmit() {
@@ -202,6 +236,13 @@ export function RegistrationForm({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (stepsOn && !isLastStep) {
+      if (validateCurrentStep()) {
+        setStepIndex((current) => current + 1);
+      }
+      return;
+    }
+
     performSubmit();
   }
 
@@ -222,6 +263,10 @@ export function RegistrationForm({
   }
 
   function renderField(field: FormFieldDefinition) {
+    if (!isFieldVisible(field, values)) {
+      return null;
+    }
+
     if (field.type === "section_header") {
       const heading = field.label.trim() || "Section";
       return (
@@ -447,7 +492,17 @@ export function RegistrationForm({
             : "Registration is not open for this activity yet."}
         </p>
       ) : (
-        schema.fields.map((field) => renderField(field))
+        <>
+          {stepsOn && currentStep ? (
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted-warm">
+              {formStepLabels[currentStep]} ({stepIndex + 1} of {stepIds.length})
+            </p>
+          ) : null}
+          {(stepsOn && currentStep
+            ? fieldsForStep(schema.fields, currentStep)
+            : schema.fields
+          ).map((field) => renderField(field))}
+        </>
       )}
 
       {submitError ? (
@@ -491,22 +546,36 @@ export function RegistrationForm({
         </div>
       ) : null}
 
-      <Button
-        type="submit"
-        className={cn(isPublic && "min-h-12 w-full text-base")}
-        disabled={
-          isPreview ||
-          schema.fields.length === 0 ||
-          isSubmitting ||
-          !activitySlug
-        }
-      >
-        {isPreview
-          ? "Preview only"
-          : isSubmitting
-            ? "Submitting…"
-            : "Join activity"}
-      </Button>
+      <div className={cn("flex flex-col gap-2", stepsOn && "sm:flex-row")}>
+        {stepsOn && stepIndex > 0 ? (
+          <Button
+            type="button"
+            variant="outline"
+            className={cn(isPublic && "min-h-12 w-full text-base")}
+            onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
+          >
+            Back
+          </Button>
+        ) : null}
+        <Button
+          type="submit"
+          className={cn(isPublic && "min-h-12 w-full text-base")}
+          disabled={
+            (isPreview && !stepsOn) ||
+            schema.fields.length === 0 ||
+            isSubmitting ||
+            (!isPreview && !activitySlug && isLastStep)
+          }
+        >
+          {isPreview && isLastStep
+            ? "Preview only"
+            : isSubmitting
+              ? "Submitting…"
+              : stepsOn && !isLastStep
+                ? "Next"
+                : "Join activity"}
+        </Button>
+      </div>
     </form>
   );
 }

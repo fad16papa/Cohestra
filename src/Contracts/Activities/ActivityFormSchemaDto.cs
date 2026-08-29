@@ -3,7 +3,7 @@ namespace Cohestra.Contracts.Activities;
 /// <summary>
 /// Activity registration form schema (v1). See docs/contracts/activity-form-schema-v1.md.
 /// </summary>
-public sealed record FormSchemaMetaDto(string? IntroMarkdown);
+public sealed record FormSchemaMetaDto(string? IntroMarkdown, bool SplitIntoSteps = false);
 
 public sealed record ActivityFormSchemaDto(
     int Version,
@@ -21,6 +21,16 @@ public sealed record FormFieldDefinitionDto(
     string? Placeholder,
     IReadOnlyList<FormFieldOptionDto>? Options,
     string? ConsentText,
-    string? PhoneCountry);
+    string? PhoneCountry,
+    FormFieldVisibleWhenDto? VisibleWhen = null,
+    string? Step = null);
+
+/// <summary>
+/// Recipe: show the Field when another Field equals or not-equals a value. Nested AND/OR is not supported.
+/// </summary>
+public sealed record FormFieldVisibleWhenDto(
+    string FieldId,
+    [property: System.Text.Json.Serialization.JsonPropertyName("equals")] string? EqualsValue,
+    [property: System.Text.Json.Serialization.JsonPropertyName("notEquals")] string? NotEqualsValue);
 
 public sealed record FormFieldOptionDto(string Value, string Label);
