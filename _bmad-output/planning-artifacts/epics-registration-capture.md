@@ -670,3 +670,91 @@ So that a long Form can be Identity / Details / Consent without making QR-at-the
 ## Epic 32: Put the Form where the audience already is
 
 Francis can embed one Activity’s Form on an allow-listed host, or take a homepage Contact that writes a Client with no Activity.
+
+**FRs covered:** FR-RC-12, FR-RC-13  
+**Depends on:** Epic 30 Hidden/query passthrough for embed UTMs. Do not start before Epic 30. Contact does not need Epic 31.
+
+### Story 32.1: Allowed embed hosts and CSP
+
+As an Operator,
+I want to list the hosts that may iframe my public Form,
+So that we can relax framing **only** for those origins — never `*`.
+
+**Acceptance Criteria:**
+
+**Given** a tenant with no `allowedEmbedOrigins`
+**When** any origin requests `/embed/register/{slug}` in a frame
+**Then** CSP / `X-Frame-Options` keep `frame-ancestors 'none'` (or equivalent deny)
+**And** admin routes remain non-embeddable
+
+**Given** I save an allow-list of origins (scheme + host, no wildcard `*`)
+**When** nginx / `web/content-security-policy.ts` evaluate the **embed route only**
+**Then** `frame-ancestors` includes those origins and nothing else
+**And** public `/register/{slug}` and admin chrome are unchanged
+**And** deploy docs are updated in lockstep (NFR-RC-7)
+
+**Given** an invalid origin (`*`, bare `*`, or non-http(s) scheme)
+**When** I save the allow-list
+**Then** the API rejects it (`400` ProblemDetails)
+
+### Story 32.2: Activity embed route and Share kit snippet
+
+As an Operator,
+I want a chrome-light embed of one Activity’s Form and an iframe snippet in the Share kit,
+So that Saturday’s signup can live on a club or Notion page and still write a Registration + Client.
+
+**Acceptance Criteria:**
+
+**Given** at least one allowed origin from 32.1
+**When** that origin iframes `/embed/register/{slug}`
+**Then** the Form renders without admin chrome (UX-DR18, UX-DR-RC-9)
+**And** submit uses the same public registration API
+**And** a successful submit creates a Registration + deduped Client as on `/register/{slug}`
+**And** parent query string feeds Hidden Fields (FR-RC-2 / Story 30.1)
+**And** the iframe `postMessage`s height so the parent can resize
+**And** public submit rate limits still apply
+
+**Given** the Share kit
+**When** I copy the embed snippet
+**Then** I get an iframe pointing at `/embed/register/{slug}` (iframe first; popup script is out of this story)
+**And** the snippet is not offered in a useful way if the allow-list is empty (copy disabled or helper: add allowed hosts first)
+
+**Given** an origin **not** on the allow-list
+**When** it tries to frame the embed route
+**Then** the browser/CSP blocks it
+**And** no Registration is created from that framed load’s submit if the frame never renders
+
+### Story 32.3: Website Contact section creates a Client
+
+As a Core or Pro Operator,
+I want a homepage Contact section with a fixed Field set,
+So that “I only wanted a contact form” creates a Client without inventing a fake Activity.
+
+**Acceptance Criteria:**
+
+**Given** a Core or Pro tenant website builder
+**When** I add a Contact section
+**Then** Fields are fixed: name, email, phone, message, consent checkbox
+**And** I author heading, intro, button label, and success message — not a Form tab (UX-DR-RC-9)
+**And** there is no Recipe, no slash palette, and no multi-form library on this section
+
+**Given** a published homepage
+**When** a visitor submits Contact
+**Then** `POST /api/v1/public/website-inquiries` (tenant-scoped host) upserts a Client (`LeadStatus = New`)
+**And** a Website inquiry timeline event is written
+**And** no Activity Registration is created
+**And** duplicate phone/email updates the existing Client (same dedup as public Registration)
+
+**Given** consent unchecked
+**When** they submit
+**Then** the Client is created and marketing opt-in is **not** set
+**Given** consent checked
+**Then** marketing opt-in is set
+
+**Given** a successful Contact submit
+**When** Outbox runs
+**Then** `WebsiteInquiryOperatorNotify` is enqueued (not `RegistrationOperatorNotify`)
+
+**Given** a Basic tenant
+**When** I add or submit Contact
+**Then** UI and API are `plan_locked` like the website builder
