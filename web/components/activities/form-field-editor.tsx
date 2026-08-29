@@ -22,6 +22,7 @@ import {
   formFieldTypeLabels,
   formFieldTypeOptions,
   getDuplicateFieldIds,
+  isHiddenFieldType,
   isNonInputFieldType,
   isValidFieldId,
   reorderFields,
@@ -148,6 +149,15 @@ export function FormFieldEditor({
           updated.options = null;
           updated.consentText = null;
           updated.phoneCountry = null;
+        }
+
+        if (isHiddenFieldType(patch.type)) {
+          updated.placeholder = null;
+          updated.options = null;
+          updated.consentText = null;
+          updated.phoneCountry = null;
+        } else {
+          updated.defaultValue = null;
         }
       }
 
@@ -564,11 +574,18 @@ function FieldPropertiesEditor({
               This field ID is already used elsewhere in the form.
             </p>
           ) : null}
+          {isHiddenFieldType(field.type) ? (
+            <p className="text-xs text-text-muted-warm">
+              Field ID is the query key. Example: id <code>ref</code> reads{" "}
+              <code>?ref=wa</code>.
+            </p>
+          ) : null}
         </div>
 
         {!fieldNeedsOptions(field.type) &&
         !fieldNeedsConsentText(field.type) &&
-        !isNonInputFieldType(field.type) ? (
+        !isNonInputFieldType(field.type) &&
+        !isHiddenFieldType(field.type) ? (
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor={`field-placeholder-${index}`}>Placeholder</Label>
             <Input
@@ -581,6 +598,28 @@ function FieldPropertiesEditor({
                 })
               }
             />
+          </div>
+        ) : null}
+
+        {isHiddenFieldType(field.type) ? (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor={`field-default-${index}`}>Default value</Label>
+            <Input
+              id={`field-default-${index}`}
+              value={field.defaultValue ?? ""}
+              disabled={disabled}
+              maxLength={200}
+              onChange={(event) =>
+                onUpdate({
+                  defaultValue: event.target.value || null,
+                })
+              }
+            />
+            <p className="text-xs text-text-muted-warm">
+              Used when the public link omits this query key. Use campaign refs
+              (e.g. <code>wa</code>, <code>ig</code>). Do not put email addresses
+              in the registration link.
+            </p>
           </div>
         ) : null}
 

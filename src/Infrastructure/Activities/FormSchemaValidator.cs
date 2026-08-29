@@ -140,6 +140,11 @@ internal static partial class FormSchemaValidator
                     Step = string.IsNullOrWhiteSpace(field.Step)
                         ? null
                         : field.Step.Trim().ToLowerInvariant(),
+                    DefaultValue = string.IsNullOrWhiteSpace(field.DefaultValue)
+                        ? null
+                        : HiddenValueSanitizer.Sanitize(field.DefaultValue) is { Length: > 0 } defaultValue
+                            ? defaultValue
+                            : null,
                 })
                 .ToList(),
         };
@@ -186,7 +191,12 @@ internal static partial class FormSchemaValidator
 
         if (string.IsNullOrWhiteSpace(field.Type) || !FormFieldTypes.All.Contains(field.Type))
         {
-            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header.";
+            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header, hidden.";
+        }
+
+        if (field.Type == FormFieldTypes.Hidden)
+        {
+            return ValidateHiddenField(field, fieldPath);
         }
 
         if (field.Type == FormFieldTypes.SectionHeader)
@@ -307,6 +317,52 @@ internal static partial class FormSchemaValidator
         else if (!string.IsNullOrWhiteSpace(field.PhoneCountry))
         {
             return $"{fieldPath}.phoneCountry is only allowed for phone fields.";
+        }
+
+        if (field.DefaultValue is not null)
+        {
+            return $"{fieldPath}.defaultValue is only allowed for hidden fields.";
+        }
+
+        return null;
+    }
+
+    private static string? ValidateHiddenField(FormFieldDefinition field, string fieldPath)
+    {
+        if (string.IsNullOrWhiteSpace(field.Label))
+        {
+            return $"{fieldPath}.label is required.";
+        }
+
+        if (field.Label.Length > MaxLabelLength)
+        {
+            return $"{fieldPath}.label cannot exceed {MaxLabelLength} characters.";
+        }
+
+        if (field.Placeholder is not null)
+        {
+            return $"{fieldPath}.placeholder is not allowed for hidden fields.";
+        }
+
+        if (field.Options is { Count: > 0 })
+        {
+            return $"{fieldPath}.options is not allowed for hidden fields.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.ConsentText))
+        {
+            return $"{fieldPath}.consentText is not allowed for hidden fields.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.PhoneCountry))
+        {
+            return $"{fieldPath}.phoneCountry is not allowed for hidden fields.";
+        }
+
+        if (field.DefaultValue is not null &&
+            HiddenValueSanitizer.Sanitize(field.DefaultValue).Length > HiddenValueSanitizer.MaxLength)
+        {
+            return $"{fieldPath}.defaultValue cannot exceed {HiddenValueSanitizer.MaxLength} characters.";
         }
 
         return null;

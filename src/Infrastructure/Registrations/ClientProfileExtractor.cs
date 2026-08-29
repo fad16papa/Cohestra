@@ -104,6 +104,9 @@ internal static class ClientProfileExtractor
                     }
 
                     break;
+
+                case FormFieldTypes.Hidden:
+                    break;
             }
         }
 

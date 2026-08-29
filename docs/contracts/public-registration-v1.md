@@ -43,10 +43,13 @@ Keys in `answers` must match field `id` values from [activity-form-schema-v1.md]
 | `text`, `phone`, `email`           | string          | `"Elena Santos"` |
 | `select`, `referral_source`        | string          | `"friend"` (option `value`) |
 | `checkbox`, `consent`              | boolean         | `true` |
+| `hidden`                           | string          | `"wa"` (max 200 after HTML strip). Query key = Field `id`. Missing/blank uses operator `defaultValue`. Never required for submit. |
 
 Submissions are rejected when required fields are missing or invalid per the activity schema.
 
 Fields with a Core+ `visibleWhen` Recipe are required only while visible. Answers for currently invisible Fields are dropped (spoofs do not persist).
+
+Hidden answers are filled from the public link query (`?{fieldId}=…`) or the Field `defaultValue`. The public page does not render Hidden inputs. HTML is stripped; values longer than 200 characters after strip are rejected.
 
 ## Responses
 

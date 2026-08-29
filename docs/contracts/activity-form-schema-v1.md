@@ -50,6 +50,7 @@ Referenced by:
 | `phoneCountry` | string   | conditional | ISO 3166-1 alpha-2 for `phone` fields (e.g. `SG`, `PH`); launch templates default `SG` |
 | `visibleWhen`  | object   | no       | Core+ Recipe: `{ "fieldId", "equals" \| "notEquals" }`. Circular rules reject. Basic → `403 plan_locked`. |
 | `step`         | string   | no       | Pro steps bucket: `identity` \| `details` \| `consent`. Ignored unless `meta.splitIntoSteps`. |
+| `defaultValue` | string   | no       | **v1.1 additive.** Hidden fields only. Trimmed, HTML-stripped, max 200. Used when the public link omits the matching query key. |
 
 ### Option object (`options[]`)
 
@@ -70,6 +71,7 @@ Referenced by:
 | `checkbox`         | Boolean opt-in | — |
 | `consent`          | Consent block (Board Game template) | `consentText` required |
 | `referral_source`  | “How did you hear about us?” | `options` required |
+| `hidden`           | Campaign query passthrough (v1.1 additive; `version` stays `1`) | No Participant UI. Optional `defaultValue`. Field `id` is the query key (`ref` → `?ref=wa`). May be `required: true` but does not satisfy the Publish Gate and never blocks submit. No `placeholder` / `options` / `consentText` / `phoneCountry`. |
 
 ## Validation (API)
 
@@ -81,6 +83,8 @@ The admin save endpoint rejects schemas that:
 - Use unknown `type` values
 - Omit required `options` / `consentText` for conditional types
 - Include `options` or `consentText` on incompatible types
+- Put `placeholder`, `options`, `consentText`, or `phoneCountry` on `hidden`
+- Put `defaultValue` on a non-hidden field, or a `defaultValue` longer than 200 characters after HTML strip
 
 ## Immutability note (FR-2)
 

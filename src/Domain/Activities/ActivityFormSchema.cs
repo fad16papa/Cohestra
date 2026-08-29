@@ -41,6 +41,9 @@ public sealed class FormFieldDefinition
 
     /// <summary>Pro steps bucket: identity, details, or consent. Ignored unless meta.splitIntoSteps.</summary>
     public string? Step { get; set; }
+
+    /// <summary>Hidden fields only. Used when the public link omits the matching query key.</summary>
+    public string? DefaultValue { get; set; }
 }
 
 public sealed class FormFieldVisibleWhen

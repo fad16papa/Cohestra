@@ -12,7 +12,8 @@ export type FormFieldType =
   | "checkbox"
   | "consent"
   | "referral_source"
-  | "section_header";
+  | "section_header"
+  | "hidden";
 
 export type FormFieldOption = {
   value: string;
@@ -38,6 +39,7 @@ export type FormFieldDefinition = {
   phoneCountry?: string | null;
   visibleWhen?: FormFieldVisibleWhen | null;
   step?: FormFieldStep | null;
+  defaultValue?: string | null;
 };
 
 export type FormSchemaMeta = {
@@ -166,6 +168,7 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
       const visibleWhen = parseVisibleWhen(item.visibleWhen ?? item.VisibleWhen);
       const stepRaw = item.step ?? item.Step;
       const step = parseFieldStep(stepRaw);
+      const defaultValue = item.defaultValue ?? item.DefaultValue;
 
       if (
         typeof id !== "string" ||
@@ -208,6 +211,7 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
             : null,
         visibleWhen,
         step,
+        defaultValue: typeof defaultValue === "string" ? defaultValue : null,
       });
     }),
   };

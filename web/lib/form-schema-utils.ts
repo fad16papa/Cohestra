@@ -19,6 +19,7 @@ export const formFieldTypeLabels: Record<FormFieldType, string> = {
   consent: "Consent",
   referral_source: "Referral source",
   section_header: "Section header",
+  hidden: "Hidden",
 };
 
 export const formFieldTypeOptions: FormFieldType[] = [
@@ -30,6 +31,7 @@ export const formFieldTypeOptions: FormFieldType[] = [
   "consent",
   "referral_source",
   "section_header",
+  "hidden",
 ];
 
 export function emptyFormSchema(): ActivityFormSchema {
@@ -51,7 +53,16 @@ export function normalizeFormSchema(
 }
 
 export function createFieldId(type: FormFieldType, existingIds: Set<string>): string {
-  const base = type === "referral_source" ? "referral" : type.replace("_", "-");
+  if (type === "hidden" && !existingIds.has("ref")) {
+    return "ref";
+  }
+
+  const base =
+    type === "referral_source"
+      ? "referral"
+      : type === "hidden"
+        ? "hidden"
+        : type.replace("_", "-");
   let candidate = base;
   let suffix = 2;
 
@@ -139,6 +150,15 @@ export function createDefaultField(
       consentText: null,
       phoneCountry: null,
     },
+    hidden: {
+      label: "Campaign ref",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+      defaultValue: null,
+    },
   };
 
   return {
@@ -187,6 +207,10 @@ export function fieldNeedsConsentText(type: FormFieldType): boolean {
 
 export function isNonInputFieldType(type: FormFieldType): boolean {
   return type === "section_header";
+}
+
+export function isHiddenFieldType(type: FormFieldType): boolean {
+  return type === "hidden";
 }
 
 const FIELD_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
@@ -253,6 +277,24 @@ export function getFormSchemaClientIssues(
       }
 
       continue;
+    }
+
+    if (isHiddenFieldType(field.type)) {
+      if (field.placeholder?.trim()) {
+        issues.push(`Hidden field "${field.label}" cannot have a placeholder.`);
+      }
+
+      if (field.options?.length) {
+        issues.push(`Hidden field "${field.label}" cannot have options.`);
+      }
+
+      if (field.consentText?.trim()) {
+        issues.push(`Hidden field "${field.label}" cannot have consent text.`);
+      }
+
+      if ((field.defaultValue?.trim().length ?? 0) > 200) {
+        issues.push(`Hidden field "${field.label}" default value cannot exceed 200 characters.`);
+      }
     }
 
     if (field.type === "phone") {

@@ -23,7 +23,8 @@ public sealed record FormFieldDefinitionDto(
     string? ConsentText,
     string? PhoneCountry,
     FormFieldVisibleWhenDto? VisibleWhen = null,
-    string? Step = null);
+    string? Step = null,
+    string? DefaultValue = null);
 
 /// <summary>
 /// Recipe: show the Field when another Field equals or not-equals a value. Nested AND/OR is not supported.

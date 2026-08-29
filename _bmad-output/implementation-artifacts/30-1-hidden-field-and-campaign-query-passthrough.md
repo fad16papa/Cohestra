@@ -2,7 +2,8 @@
 story_id: 30.1
 story_key: 30-1-hidden-field-and-campaign-query-passthrough
 epic: 30
-status: ready-for-dev
+status: in-progress
+baseline_commit: 8af47caed5926649793883f6d5dd676d02ccfff7
 created: 2026-08-29
 sources:
   - _bmad-output/planning-artifacts/epics-registration-capture.md
@@ -17,7 +18,7 @@ sources:
 
 # Story 30.1: Hidden Field and campaign query passthrough
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 

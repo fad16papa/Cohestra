@@ -45,6 +45,22 @@ internal static class RegistrationAnswerValidator
             return null;
         }
 
+        if (field.Type == FormFieldTypes.Hidden)
+        {
+            if (!TryGetString(rawValue, out var hiddenText) || string.IsNullOrWhiteSpace(hiddenText))
+            {
+                return null;
+            }
+
+            var sanitized = HiddenValueSanitizer.Sanitize(hiddenText);
+            if (sanitized.Length > HiddenValueSanitizer.MaxLength)
+            {
+                return $"{field.Label} cannot exceed {HiddenValueSanitizer.MaxLength} characters.";
+            }
+
+            return null;
+        }
+
         if (field.Type is FormFieldTypes.Checkbox or FormFieldTypes.Consent)
         {
             if (!TryGetBoolean(rawValue, out var boolValue))
@@ -123,6 +139,27 @@ internal static class RegistrationAnswerValidator
 
             if (!VisibleWhenEvaluator.IsVisible(field, schema, answers))
             {
+                continue;
+            }
+
+            if (field.Type == FormFieldTypes.Hidden)
+            {
+                string? candidate = null;
+                if (answers.TryGetValue(field.Id, out var hiddenRaw) &&
+                    TryGetString(hiddenRaw, out var hiddenText) &&
+                    !string.IsNullOrWhiteSpace(hiddenText))
+                {
+                    candidate = hiddenText;
+                }
+
+                candidate ??= field.DefaultValue;
+                var sanitized = HiddenValueSanitizer.Sanitize(candidate);
+                if (string.IsNullOrEmpty(sanitized))
+                {
+                    continue;
+                }
+
+                normalized[field.Id] = sanitized;
                 continue;
             }
 
