@@ -553,7 +553,7 @@ Tally’s free plan includes Hidden Fields, answer piping, email notifications, 
 
 | Phase | Stories (suggested) | FRs |
 |---|---|---|
-| **MVP / Slice A** | Hidden + UTM · textarea · date · piping · closed copy + Close-at · slash-add · Operator notify · **saved templates (1/5/25)** | FR-RC-1–9, FR-RC-14–17 |
+| **MVP / Slice A** | Hidden + UTM · textarea · date · Wave 1 toolbox · piping · closed copy + Close-at · slash-add · Operator notify · **saved templates (1/5/25)** | FR-RC-1–9, FR-RC-14–18 |
 | **Phase 2 / Slice B** | Recipes · optional steps | FR-RC-10–11 |
 | **Phase 3 / Slice C** | Embed · Contact section | FR-RC-12–13 |
 | **Later** | File · draft-as-Client (default off) · HMAC webhook | addendum D/E/F |
