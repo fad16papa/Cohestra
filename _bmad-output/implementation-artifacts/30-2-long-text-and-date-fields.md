@@ -2,7 +2,7 @@
 story_id: 30.2
 story_key: 30-2-long-text-and-date-fields
 epic: 30
-status: in-progress
+status: review
 baseline_commit: 02c7dfa4c313c0450070248a97a136431f7423f4
 created: 2026-08-29
 sources:
@@ -16,7 +16,7 @@ sources:
 
 # Story 30.2: Long text and date Fields
 
-Status: in-progress
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 
@@ -55,37 +55,37 @@ so that notes and a preferred session day live in Cohestra instead of Tally.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Domain + contract** (AC: 1, 2, 3)
-  - [ ] Add `FormFieldTypes.Textarea = "textarea"` and `FormFieldTypes.Date = "date"` to `All` only. **Do not** add either to `NonInput`.
-  - [ ] Update the validator “type must be one of: …” string.
-  - [ ] Document both as **v1.1 additive** in `docs/contracts/activity-form-schema-v1.md` and `public-registration-v1.md`. `version` stays `1`.
-  - [ ] Textarea answers: string, max 2000, HTML stripped. Date answers: string `YYYY-MM-DD`.
+- [x] **Task 1 — Domain + contract** (AC: 1, 2, 3)
+  - [x] Add `FormFieldTypes.Textarea = "textarea"` and `FormFieldTypes.Date = "date"` to `All` only. **Do not** add either to `NonInput`.
+  - [x] Update the validator “type must be one of: …” string.
+  - [x] Document both as **v1.1 additive** in `docs/contracts/activity-form-schema-v1.md` and `public-registration-v1.md`. `version` stays `1`.
+  - [x] Textarea answers: string, max 2000, HTML stripped. Date answers: string `YYYY-MM-DD`.
 
-- [ ] **Task 2 — Schema + answers + extract** (AC: 1, 2, 3)
-  - [ ] `FormSchemaValidator`: accept textarea/date. Reject options / consentText / phoneCountry (same as text). `defaultValue` remains Hidden-only.
-  - [ ] `PublishGateValidator`: no production logic change. Unit-test textarea-only and date-only required schemas still fail publish; phone + textarea + date publishes.
-  - [ ] `RegistrationAnswerValidator`: textarea required/empty like text; over 2000 after strip → 400; strip HTML with existing `HiddenValueSanitizer` (plain text). Date: required/empty like text; non-empty must parse as `yyyy-MM-dd` calendar date (`DateOnly.TryParseExact`); store that exact format. No min/max.
-  - [ ] `ClientProfileExtractor`: `case Text or Textarea` for name / profession / nationality / residency / required-text fallback. **No** Date case that writes a Client column. Test: textarea id `full_name` → NameFromForm; date id `full_name` → NameFromForm stays null.
-  - [ ] `FormFieldStepAssigner` / `web/lib/form-steps.ts`: treat textarea like text for name-id → identity; date → details.
-  - [ ] Formatter already emits non-empty strings — do not skip textarea/date.
+- [x] **Task 2 — Schema + answers + extract** (AC: 1, 2, 3)
+  - [x] `FormSchemaValidator`: accept textarea/date. Reject options / consentText / phoneCountry (same as text). `defaultValue` remains Hidden-only.
+  - [x] `PublishGateValidator`: no production logic change. Unit-test textarea-only and date-only required schemas still fail publish; phone + textarea + date publishes.
+  - [x] `RegistrationAnswerValidator`: textarea required/empty like text; over 2000 after strip → 400; strip HTML with existing `HiddenValueSanitizer` (plain text). Date: required/empty like text; non-empty must parse as `yyyy-MM-dd` calendar date (`DateOnly.TryParseExact`); store that exact format. No min/max.
+  - [x] `ClientProfileExtractor`: `case Text or Textarea` for name / profession / nationality / residency / required-text fallback. **No** Date case that writes a Client column. Test: textarea id `full_name` → NameFromForm; date id `full_name` → NameFromForm stays null.
+  - [x] `FormFieldStepAssigner` / `web/lib/form-steps.ts`: treat textarea like text for name-id → identity; date → details.
+  - [x] Formatter already emits non-empty strings — do not skip textarea/date.
 
-- [ ] **Task 3 — Web authoring + public/preview** (AC: 1, 2)
-  - [ ] `FormFieldType` + labels + `formFieldTypeOptions` + `createDefaultField`. Prefer ids `notes` / `date` when free.
-  - [ ] `registration-form.tsx`: handle `textarea` and `date` **before** the default text `<Input>` or Participants will see a single-line box. Textarea: native `<textarea>`, public `min-h-12`. Date: `<input type="date">`. Client validate: textarea ≤ 2000; date empty-or-`YYYY-MM-DD`.
-  - [ ] Editor: type dropdown only (no slash palette). Placeholder allowed on both. No min/max UI.
+- [x] **Task 3 — Web authoring + public/preview** (AC: 1, 2)
+  - [x] `FormFieldType` + labels + `formFieldTypeOptions` + `createDefaultField`. Prefer ids `notes` / `date` when free.
+  - [x] `registration-form.tsx`: handle `textarea` and `date` **before** the default text `<Input>` or Participants will see a single-line box. Textarea: native `<textarea>`, public `min-h-12`. Date: `<input type="date">`. Client validate: textarea ≤ 2000; date empty-or-`YYYY-MM-DD`.
+  - [x] Editor: type dropdown only (no slash palette). Placeholder allowed on both. No min/max UI.
 
-- [ ] **Task 4 — Tests** (AC: all)
-  - [ ] `FormSchemaValidatorTests`: accept textarea+date; reject unknown; existing v1 + Hidden still valid.
-  - [ ] `PublishGateValidatorTests`: textarea-only / date-only fail; phone+both succeed.
-  - [ ] `RegistrationAnswerValidatorTests`: textarea 2000; HTML strip; date valid; `2026-02-30` and `not-a-date` fail; missing optional succeeds.
-  - [ ] `ClientProfileExtractorTests`: textarea name heuristics; date never extracts.
-  - [ ] Integration (author even if this VM has no Postgres): seed published activity, append textarea `notes` + date `preferred_date` (+ keep Hidden `ref` if already appended). POST valid notes + `2026-09-12` → persist. Invalid date → 400. Missing optional date → 201.
-  - [ ] Web: typecheck. Optional small helper test for date format if you extract one.
+- [x] **Task 4 — Tests** (AC: all)
+  - [x] `FormSchemaValidatorTests`: accept textarea+date; reject unknown; existing v1 + Hidden still valid.
+  - [x] `PublishGateValidatorTests`: textarea-only / date-only fail; phone+both succeed.
+  - [x] `RegistrationAnswerValidatorTests`: textarea 2000; HTML strip; date valid; `2026-02-30` and `not-a-date` fail; missing optional succeeds.
+  - [x] `ClientProfileExtractorTests`: textarea name heuristics; date never extracts.
+  - [x] Integration (author even if this VM has no Postgres): seed published activity, append textarea `notes` + date `preferred_date` (+ keep Hidden `ref` if already appended). POST valid notes + `2026-09-12` → persist. Invalid date → 400. Missing optional date → 201.
+  - [x] Web: typecheck. Optional small helper test for date format if you extract one.
 
-- [ ] **Task 5 — Verify**
-  - [ ] `dotnet test Cohestra.sln --filter "Category!=Integration"`
-  - [ ] `dotnet build` + web `tsc --noEmit`
-  - [ ] Do not change `TenantPlanLimits`. Do not add Wave 1 types (30.3). Do not add slash palette (30.4). Do not add these types to launch templates.
+- [x] **Task 5 — Verify**
+  - [x] `dotnet test Cohestra.sln --filter "Category!=Integration"`
+  - [x] `dotnet build` + web `tsc --noEmit`
+  - [x] Do not change `TenantPlanLimits`. Do not add Wave 1 types (30.3). Do not add slash palette (30.4). Do not add these types to launch templates.
 
 ## Dev Notes
 
@@ -133,8 +133,51 @@ See `_bmad-output/project-context.md`: brownfield extend-only; nullable on; DTOs
 
 ### Agent Model Used
 
+Cursor Grok 4.6
+
 ### Debug Log References
+
+- This VM has no Postgres/Redis (`postgresql` service missing). Integration tests were authored and compile but were not executed here.
 
 ### Completion Notes List
 
+- Added `textarea` and `date` to `FormFieldTypes.All` only (not `NonInput`) so answers persist. `form_schema.version` stays `1`.
+- Schema save accepts both; existing text-like extra-key rules reject options / consentText / phoneCountry; `defaultValue` stays Hidden-only.
+- Publish Gate unchanged: required textarea-only or date-only cannot publish; required phone + both can.
+- Textarea answers: `HiddenValueSanitizer` strip, max 2000, over-length is 400 (not truncated). Date answers: `DateOnly.TryParseExact` `yyyy-MM-dd`; `2026-02-30` and `not-a-date` fail; missing optional succeeds.
+- `ClientProfileExtractor`: textarea uses the same name / profession / nationality / residency / required-text fallback as text. Date is an explicit no-op (even if id is `full_name`).
+- Steps: textarea + name-like id → identity; date → details.
+- Form tab type dropdown: Long text / Date; preferred ids `notes` / `date`. Public + preview render native `<textarea>` (`min-h-12` on public) and `<input type="date">` before the default text input.
+- Unit suite: 672 passed (`Category!=Integration`). `dotnet build` clean. Web: `tsc --noEmit` + vitest for date helper / field ids / steps. Integration tests authored; not run (no Postgres).
+- Did not change `TenantPlanLimits`, launch templates, Wave 1 types, or slash palette.
+
 ### File List
+
+- `_bmad-output/implementation-artifacts/30-2-long-text-and-date-fields.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `docs/contracts/activity-form-schema-v1.md`
+- `docs/contracts/public-registration-v1.md`
+- `src/Domain/Activities/FormFieldTypes.cs`
+- `src/Infrastructure/Activities/FormFieldStepAssigner.cs`
+- `src/Infrastructure/Activities/FormSchemaValidator.cs`
+- `src/Infrastructure/Registrations/ClientProfileExtractor.cs`
+- `src/Infrastructure/Registrations/RegistrationAnswerValidator.cs`
+- `src/Infrastructure.Tests/Activities/FormFieldStepAssignerTests.cs`
+- `src/Infrastructure.Tests/Activities/FormSchemaValidatorTests.cs`
+- `src/Infrastructure.Tests/Activities/PublishGateValidatorTests.cs`
+- `src/Infrastructure.Tests/Clients/ClientRegistrationAnswerFormatterHiddenTests.cs`
+- `src/Infrastructure.Tests/Registrations/ClientProfileExtractorTests.cs`
+- `src/Infrastructure.Tests/Registrations/RegistrationAnswerValidatorTests.cs`
+- `src/Api.IntegrationTests/LongTextAndDateRegistrationIntegrationTests.cs`
+- `web/components/registration/registration-form.tsx`
+- `web/lib/activities-api.ts`
+- `web/lib/form-schema-utils.ts`
+- `web/lib/form-schema-utils.test.ts`
+- `web/lib/form-steps.ts`
+- `web/lib/form-steps.test.ts`
+- `web/lib/iso-calendar-date.ts`
+- `web/lib/iso-calendar-date.test.ts`
+
+### Change Log
+
+- 2026-08-29: Implemented Story 30.2 long text and date fields. Status → review.
