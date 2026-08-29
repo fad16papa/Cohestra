@@ -13,6 +13,14 @@ public static class FormFieldTypes
     public const string Hidden = "hidden";
     public const string Textarea = "textarea";
     public const string Date = "date";
+    public const string Number = "number";
+    public const string Url = "url";
+    public const string Time = "time";
+    public const string Choice = "choice";
+    public const string YesNo = "yes_no";
+    public const string MultiChoice = "multi_choice";
+    public const string Info = "info";
+    public const string Country = "country";
 
     public static readonly HashSet<string> All =
     [
@@ -27,10 +35,19 @@ public static class FormFieldTypes
         Hidden,
         Textarea,
         Date,
+        Number,
+        Url,
+        Time,
+        Choice,
+        YesNo,
+        MultiChoice,
+        Info,
+        Country,
     ];
 
     public static readonly HashSet<string> NonInput =
     [
         SectionHeader,
+        Info,
     ];
 }

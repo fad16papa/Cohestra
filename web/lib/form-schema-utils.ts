@@ -22,19 +22,35 @@ export const formFieldTypeLabels: Record<FormFieldType, string> = {
   referral_source: "Referral source",
   section_header: "Section header",
   hidden: "Hidden",
+  number: "Number",
+  url: "Link",
+  time: "Time",
+  choice: "Choice",
+  yes_no: "Yes / No",
+  multi_choice: "Multi-choice",
+  info: "Info",
+  country: "Country",
 };
 
 export const formFieldTypeOptions: FormFieldType[] = [
   "text",
   "textarea",
   "date",
+  "number",
+  "url",
+  "time",
+  "choice",
+  "yes_no",
+  "multi_choice",
   "phone",
   "email",
   "select",
   "checkbox",
   "consent",
   "referral_source",
+  "country",
   "section_header",
+  "info",
   "hidden",
 ];
 
@@ -69,6 +85,20 @@ export function createFieldId(type: FormFieldType, existingIds: Set<string>): st
     return "date";
   }
 
+  if (
+    (type === "number" ||
+      type === "url" ||
+      type === "time" ||
+      type === "choice" ||
+      type === "yes_no" ||
+      type === "multi_choice" ||
+      type === "info" ||
+      type === "country") &&
+    !existingIds.has(type)
+  ) {
+    return type;
+  }
+
   const base =
     type === "referral_source"
       ? "referral"
@@ -76,7 +106,7 @@ export function createFieldId(type: FormFieldType, existingIds: Set<string>): st
         ? "hidden"
         : type === "textarea"
           ? "notes"
-          : type.replace("_", "-");
+          : type;
   let candidate = base;
   let suffix = 2;
 
@@ -189,6 +219,81 @@ export function createDefaultField(
       phoneCountry: null,
       defaultValue: null,
     },
+    number: {
+      label: "Number",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+      min: null,
+      max: null,
+    },
+    url: {
+      label: "Website",
+      required: false,
+      placeholder: "https://",
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    time: {
+      label: "Time",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    choice: {
+      label: "Choose one",
+      required: false,
+      placeholder: null,
+      options: [
+        { value: "option_a", label: "Option A" },
+        { value: "option_b", label: "Option B" },
+      ],
+      consentText: null,
+      phoneCountry: null,
+    },
+    yes_no: {
+      label: "Yes or no",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    multi_choice: {
+      label: "Choose any",
+      required: false,
+      placeholder: null,
+      options: [
+        { value: "option_a", label: "Option A" },
+        { value: "option_b", label: "Option B" },
+      ],
+      consentText: null,
+      phoneCountry: null,
+      min: null,
+      max: null,
+    },
+    info: {
+      label: "Information",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+      infoText: "Add a short note for participants.",
+    },
+    country: {
+      label: "Country",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
   };
 
   return {
@@ -228,7 +333,12 @@ export function moveField(
 }
 
 export function fieldNeedsOptions(type: FormFieldType): boolean {
-  return type === "select" || type === "referral_source";
+  return (
+    type === "select" ||
+    type === "referral_source" ||
+    type === "choice" ||
+    type === "multi_choice"
+  );
 }
 
 export function fieldNeedsConsentText(type: FormFieldType): boolean {
@@ -236,7 +346,15 @@ export function fieldNeedsConsentText(type: FormFieldType): boolean {
 }
 
 export function isNonInputFieldType(type: FormFieldType): boolean {
-  return type === "section_header";
+  return type === "section_header" || type === "info";
+}
+
+export function fieldAllowsMinMax(type: FormFieldType): boolean {
+  return type === "number" || type === "multi_choice";
+}
+
+export function fieldNeedsInfoText(type: FormFieldType): boolean {
+  return type === "info";
 }
 
 export function isHiddenFieldType(type: FormFieldType): boolean {
@@ -299,15 +417,31 @@ export function getFormSchemaClientIssues(
 
     if (isNonInputFieldType(field.type)) {
       if (field.required) {
-        issues.push(`Section header "${field.label}" cannot be marked required.`);
+        issues.push(
+          field.type === "info"
+            ? `Info field "${field.label}" cannot be marked required.`
+            : `Section header "${field.label}" cannot be marked required.`
+        );
       }
 
       if (field.placeholder?.trim()) {
-        issues.push(`Section header "${field.label}" cannot have a placeholder.`);
+        issues.push(
+          field.type === "info"
+            ? `Info field "${field.label}" cannot have a placeholder.`
+            : `Section header "${field.label}" cannot have a placeholder.`
+        );
       }
 
       if (!field.label.trim()) {
-        issues.push(`Section header "${field.id}" requires a heading label.`);
+        issues.push(
+          field.type === "info"
+            ? `Info field "${field.id}" requires a heading label.`
+            : `Section header "${field.id}" requires a heading label.`
+        );
+      }
+
+      if (field.type === "info" && (field.infoText?.trim().length ?? 0) > 2000) {
+        issues.push(`Info field "${field.label}" cannot exceed 2000 characters.`);
       }
 
       continue;
@@ -333,6 +467,19 @@ export function getFormSchemaClientIssues(
       if ((field.defaultValue?.trim().length ?? 0) > 200) {
         issues.push(`Hidden field "${field.label}" default value cannot exceed 200 characters.`);
       }
+    }
+
+    if (!fieldAllowsMinMax(field.type) && (field.min != null || field.max != null)) {
+      issues.push(`Field "${field.label || field.id}" cannot have min or max.`);
+    }
+
+    if (
+      fieldAllowsMinMax(field.type) &&
+      field.min != null &&
+      field.max != null &&
+      field.min > field.max
+    ) {
+      issues.push(`Field "${field.label || field.id}" min cannot be greater than max.`);
     }
 
     if (field.type === "phone") {

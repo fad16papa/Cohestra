@@ -197,6 +197,77 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void ValidateModel_AcceptsWave1ToolboxTypes()
+    {
+        var schema = ContactSchema(
+            new FormFieldDefinition
+            {
+                Id = "party_size",
+                Type = FormFieldTypes.Number,
+                Label = "Party size",
+                Min = 1,
+                Max = 8,
+            },
+            new FormFieldDefinition
+            {
+                Id = "website",
+                Type = FormFieldTypes.Url,
+                Label = "Website",
+            },
+            new FormFieldDefinition
+            {
+                Id = "arrival",
+                Type = FormFieldTypes.Time,
+                Label = "Arrival",
+            },
+            new FormFieldDefinition
+            {
+                Id = "level",
+                Type = FormFieldTypes.Choice,
+                Label = "Level",
+                Options =
+                [
+                    new FormFieldOption { Value = "beginner", Label = "Beginner" },
+                    new FormFieldOption { Value = "advanced", Label = "Advanced" },
+                ],
+            },
+            new FormFieldDefinition
+            {
+                Id = "bringing_guest",
+                Type = FormFieldTypes.YesNo,
+                Label = "Bringing a guest?",
+            },
+            new FormFieldDefinition
+            {
+                Id = "days",
+                Type = FormFieldTypes.MultiChoice,
+                Label = "Days",
+                Min = 1,
+                Max = 2,
+                Options =
+                [
+                    new FormFieldOption { Value = "sat", Label = "Saturday" },
+                    new FormFieldOption { Value = "sun", Label = "Sunday" },
+                ],
+            },
+            new FormFieldDefinition
+            {
+                Id = "notice",
+                Type = FormFieldTypes.Info,
+                Label = "Please note",
+                InfoText = "Bring water.",
+            },
+            new FormFieldDefinition
+            {
+                Id = "nationality",
+                Type = FormFieldTypes.Country,
+                Label = "Nationality",
+            });
+
+        Assert.Null(FormSchemaValidator.ValidateModel(schema));
+    }
+
+    [Fact]
     public void ValidateModel_RejectsTextareaOptionsAndDefaultValue()
     {
         var withOptions = ContactSchema(
@@ -242,6 +313,9 @@ public sealed class FormSchemaValidatorTests
         Assert.Contains("hidden", error, StringComparison.Ordinal);
         Assert.Contains("textarea", error, StringComparison.Ordinal);
         Assert.Contains("date", error, StringComparison.Ordinal);
+        Assert.Contains("number", error, StringComparison.Ordinal);
+        Assert.Contains("yes_no", error, StringComparison.Ordinal);
+        Assert.Contains("country", error, StringComparison.Ordinal);
     }
 
     [Fact]

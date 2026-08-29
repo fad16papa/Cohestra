@@ -33,7 +33,10 @@ internal static class FormSchemaMapper
                             field.VisibleWhen.EqualsValue,
                             field.VisibleWhen.NotEqualsValue),
                     field.Step,
-                    field.DefaultValue))
+                    field.DefaultValue,
+                    field.Min,
+                    field.Max,
+                    field.InfoText))
                 .ToList(),
             schema.Meta is null
                 ? null

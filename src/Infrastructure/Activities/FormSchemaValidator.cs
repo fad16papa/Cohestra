@@ -141,9 +141,29 @@ internal static partial class FormSchemaValidator
                         ? null
                         : field.Step.Trim().ToLowerInvariant(),
                     DefaultValue = MapDefaultValue(field),
+                    Min = field.Min,
+                    Max = field.Max,
+                    InfoText = MapInfoText(field),
                 })
                 .ToList(),
         };
+    }
+
+    private static string? MapInfoText(FormFieldDefinitionDto field)
+    {
+        if (string.IsNullOrWhiteSpace(field.InfoText))
+        {
+            return null;
+        }
+
+        if (field.Type.Trim() != FormFieldTypes.Info)
+        {
+            return field.InfoText.Trim();
+        }
+
+        return HiddenValueSanitizer.Sanitize(field.InfoText) is { Length: > 0 } sanitized
+            ? sanitized
+            : null;
     }
 
     private static string? MapDefaultValue(FormFieldDefinitionDto field)
@@ -204,7 +224,7 @@ internal static partial class FormSchemaValidator
 
         if (string.IsNullOrWhiteSpace(field.Type) || !FormFieldTypes.All.Contains(field.Type))
         {
-            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header, hidden, textarea, date.";
+            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header, hidden, textarea, date, number, url, time, choice, yes_no, multi_choice, info, country.";
         }
 
         if (field.Type != FormFieldTypes.Hidden && field.DefaultValue is not null)
@@ -212,9 +232,32 @@ internal static partial class FormSchemaValidator
             return $"{fieldPath}.defaultValue is only allowed for hidden fields.";
         }
 
+        if (field.Type is FormFieldTypes.Number or FormFieldTypes.MultiChoice)
+        {
+            var boundError = ValidateMinMax(field, fieldPath);
+            if (boundError is not null)
+            {
+                return boundError;
+            }
+        }
+        else if (field.Min is not null || field.Max is not null)
+        {
+            return $"{fieldPath}.min/max is only allowed for number and multi_choice fields.";
+        }
+
+        if (field.Type != FormFieldTypes.Info && !string.IsNullOrWhiteSpace(field.InfoText))
+        {
+            return $"{fieldPath}.infoText is only allowed for info fields.";
+        }
+
         if (field.Type == FormFieldTypes.Hidden)
         {
             return ValidateHiddenField(field, fieldPath);
+        }
+
+        if (field.Type == FormFieldTypes.Info)
+        {
+            return ValidateInfoField(field, fieldPath);
         }
 
         if (field.Type == FormFieldTypes.SectionHeader)
@@ -272,7 +315,8 @@ internal static partial class FormSchemaValidator
             return $"{fieldPath}.placeholder cannot exceed {MaxPlaceholderLength} characters.";
         }
 
-        if (field.Type is FormFieldTypes.Select or FormFieldTypes.ReferralSource)
+        if (field.Type is FormFieldTypes.Select or FormFieldTypes.ReferralSource
+            or FormFieldTypes.Choice or FormFieldTypes.MultiChoice)
         {
             if (field.Options is null || field.Options.Count == 0)
             {
@@ -304,7 +348,7 @@ internal static partial class FormSchemaValidator
         }
         else if (field.Options is { Count: > 0 })
         {
-            return $"{fieldPath}.options is only allowed for select and referral_source fields.";
+            return $"{fieldPath}.options is only allowed for select, referral_source, choice, and multi_choice fields.";
         }
 
         if (field.Type == FormFieldTypes.Consent)
@@ -335,6 +379,80 @@ internal static partial class FormSchemaValidator
         else if (!string.IsNullOrWhiteSpace(field.PhoneCountry))
         {
             return $"{fieldPath}.phoneCountry is only allowed for phone fields.";
+        }
+
+        return null;
+    }
+
+    private static string? ValidateMinMax(FormFieldDefinition field, string fieldPath)
+    {
+        if (field.Min is { } min && field.Max is { } max && min > max)
+        {
+            return $"{fieldPath}.min cannot be greater than max.";
+        }
+
+        if (field.Type == FormFieldTypes.MultiChoice)
+        {
+            if (field.Min is { } minCount && (minCount < 0 || minCount != decimal.Truncate(minCount)))
+            {
+                return $"{fieldPath}.min must be a whole number of 0 or more for multi_choice fields.";
+            }
+
+            if (field.Max is { } maxCount && (maxCount < 0 || maxCount != decimal.Truncate(maxCount)))
+            {
+                return $"{fieldPath}.max must be a whole number of 0 or more for multi_choice fields.";
+            }
+        }
+
+        return null;
+    }
+
+    private static string? ValidateInfoField(FormFieldDefinition field, string fieldPath)
+    {
+        if (string.IsNullOrWhiteSpace(field.Label))
+        {
+            return $"{fieldPath}.label is required for info fields.";
+        }
+
+        if (field.Label.Length > MaxLabelLength)
+        {
+            return $"{fieldPath}.label cannot exceed {MaxLabelLength} characters.";
+        }
+
+        if (field.Required)
+        {
+            return $"{fieldPath}.required must be false for info fields.";
+        }
+
+        if (field.Placeholder is not null)
+        {
+            return $"{fieldPath}.placeholder is not allowed for info fields.";
+        }
+
+        if (field.Options is { Count: > 0 })
+        {
+            return $"{fieldPath}.options is not allowed for info fields.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.ConsentText))
+        {
+            return $"{fieldPath}.consentText is not allowed for info fields.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.PhoneCountry))
+        {
+            return $"{fieldPath}.phoneCountry is not allowed for info fields.";
+        }
+
+        if (field.DefaultValue is not null)
+        {
+            return $"{fieldPath}.defaultValue is only allowed for hidden fields.";
+        }
+
+        var infoText = field.InfoText ?? string.Empty;
+        if (infoText.Length > RegistrationAnswerValidator.TextareaMaxLength)
+        {
+            return $"{fieldPath}.infoText cannot exceed {RegistrationAnswerValidator.TextareaMaxLength} characters.";
         }
 
         return null;

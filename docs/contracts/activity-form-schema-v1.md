@@ -51,6 +51,8 @@ Referenced by:
 | `visibleWhen`  | object   | no       | Core+ Recipe: `{ "fieldId", "equals" \| "notEquals" }`. Circular rules reject. Basic → `403 plan_locked`. |
 | `step`         | string   | no       | Pro steps bucket: `identity` \| `details` \| `consent`. Ignored unless `meta.splitIntoSteps`. |
 | `defaultValue` | string   | no       | **v1.1 additive.** Hidden fields only. Trimmed, HTML-stripped, max 200. Used when the public link omits the matching query key. |
+| `min` / `max`  | number   | no       | **v1.1 additive.** `number` value bounds or `multi_choice` selection counts. Inclusive. |
+| `infoText`     | string   | no       | **v1.1 additive.** `info` body. Markdown-lite, max 2000 after HTML strip. |
 
 ### Option object (`options[]`)
 
@@ -74,6 +76,14 @@ Referenced by:
 | `hidden`           | Campaign query passthrough (v1.1 additive; `version` stays `1`) | No Participant UI. Optional `defaultValue`. Field `id` is the query key (`ref` → `?ref=wa`). May be `required: true` but does not satisfy the Publish Gate and never blocks submit. No `placeholder` / `options` / `consentText` / `phoneCountry`. |
 | `textarea`         | Long text / notes (v1.1 additive; `version` stays `1`) | Multi-line string. Answers max 2000 after HTML strip. Same name heuristics as `text` for Client extract. Does **not** satisfy the Publish Gate. No `options` / `consentText` / `phoneCountry` / `defaultValue`. Placeholder allowed. |
 | `date`             | Calendar date (v1.1 additive; `version` stays `1`) | Answer must be `YYYY-MM-DD` (valid calendar date). Not mapped to a Client column. No min/max, disabled weekdays, ranges, or timezone math. Does **not** satisfy the Publish Gate. No `options` / `consentText` / `phoneCountry` / `defaultValue`. Placeholder allowed. |
+| `number`           | Numeric (v1.1 additive) | Invariant decimal. Optional inclusive `min` / `max`. Does **not** satisfy the Publish Gate. |
+| `url`              | Link (v1.1 additive) | Absolute `http` or `https` URL. |
+| `time`             | Clock time (v1.1 additive) | `HH:mm`. No timezone math. |
+| `choice`           | Single pick (v1.1 additive) | `options` required. Public tap targets ≥ 44px. |
+| `yes_no`           | Boolean (v1.1 additive) | JSON boolean. Required means answered, not “must be yes”. |
+| `multi_choice`     | Several picks (v1.1 additive) | `options` required. Answer is a string array. Optional `min` / `max` are selection **counts**. |
+| `info`             | Display-only (v1.1 additive) | NonInput. `infoText` markdown-lite, max 2000 after HTML strip. No Answer. |
+| `country`          | ISO country (v1.1 additive) | Reuses phone-country ISO list (SG, PH, MY, ID, TH, VN, US, GB, AU, HK, JP, KR, CN, IN). |
 
 ## Validation (API)
 

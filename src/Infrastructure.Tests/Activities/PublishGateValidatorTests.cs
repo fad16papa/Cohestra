@@ -139,4 +139,70 @@ public sealed class PublishGateValidatorTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void ValidateForPublish_RequiredWave1Only_Fails()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "party_size",
+                        Type = FormFieldTypes.Number,
+                        Label = "Party size",
+                        Required = true,
+                    },
+                    new FormFieldDefinition
+                    {
+                        Id = "bringing_guest",
+                        Type = FormFieldTypes.YesNo,
+                        Label = "Guest?",
+                        Required = true,
+                    },
+                ],
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("required phone or email", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateForPublish_RequiredPhonePlusWave1_Succeeds()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "phone",
+                        Type = FormFieldTypes.Phone,
+                        Label = "Mobile number",
+                        Required = true,
+                        PhoneCountry = "SG",
+                    },
+                    new FormFieldDefinition
+                    {
+                        Id = "party_size",
+                        Type = FormFieldTypes.Number,
+                        Label = "Party size",
+                    },
+                    new FormFieldDefinition
+                    {
+                        Id = "notice",
+                        Type = FormFieldTypes.Info,
+                        Label = "Note",
+                        InfoText = "Hi",
+                    },
+                ],
+            });
+
+        Assert.Null(error);
+    }
 }

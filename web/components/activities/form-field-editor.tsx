@@ -17,7 +17,9 @@ import type {
 } from "@/lib/activities-api";
 import {
   createDefaultField,
+  fieldAllowsMinMax,
   fieldNeedsConsentText,
+  fieldNeedsInfoText,
   fieldNeedsOptions,
   formFieldTypeLabels,
   formFieldTypeOptions,
@@ -149,6 +151,18 @@ export function FormFieldEditor({
           updated.options = null;
           updated.consentText = null;
           updated.phoneCountry = null;
+          updated.min = null;
+          updated.max = null;
+          if (patch.type === "info" && !updated.infoText) {
+            updated.infoText = "Add a short note for participants.";
+          }
+        } else {
+          updated.infoText = null;
+        }
+
+        if (!fieldAllowsMinMax(patch.type)) {
+          updated.min = null;
+          updated.max = null;
         }
 
         if (isHiddenFieldType(patch.type)) {
@@ -658,6 +672,61 @@ function FieldPropertiesEditor({
           </div>
         ) : null}
 
+        {fieldNeedsInfoText(field.type) ? (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor={`field-info-${index}`}>Info text</Label>
+            <textarea
+              id={`field-info-${index}`}
+              value={field.infoText ?? ""}
+              disabled={disabled}
+              rows={4}
+              onChange={(event) =>
+                onUpdate({
+                  infoText: event.target.value || null,
+                })
+              }
+              className="flex min-h-20 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            />
+          </div>
+        ) : null}
+
+        {fieldAllowsMinMax(field.type) ? (
+          <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor={`field-min-${index}`}>
+                {field.type === "multi_choice" ? "Min selections" : "Minimum"}
+              </Label>
+              <Input
+                id={`field-min-${index}`}
+                type="number"
+                value={field.min ?? ""}
+                disabled={disabled}
+                onChange={(event) =>
+                  onUpdate({
+                    min: event.target.value === "" ? null : Number(event.target.value),
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor={`field-max-${index}`}>
+                {field.type === "multi_choice" ? "Max selections" : "Maximum"}
+              </Label>
+              <Input
+                id={`field-max-${index}`}
+                type="number"
+                value={field.max ?? ""}
+                disabled={disabled}
+                onChange={(event) =>
+                  onUpdate({
+                    max: event.target.value === "" ? null : Number(event.target.value),
+                  })
+                }
+              />
+            </div>
+          </div>
+        ) : null}
+
         {!isNonInputFieldType(field.type) ? (
           <div className="flex items-center gap-2 sm:col-span-2">
             <input
@@ -672,7 +741,9 @@ function FieldPropertiesEditor({
           </div>
         ) : (
           <p className="text-xs text-text-muted-warm sm:col-span-2">
-            Section headers are display-only dividers between field groups.
+            {field.type === "info"
+              ? "Info blocks are display-only. They do not collect an answer."
+              : "Section headers are display-only dividers between field groups."}
           </p>
         )}
 

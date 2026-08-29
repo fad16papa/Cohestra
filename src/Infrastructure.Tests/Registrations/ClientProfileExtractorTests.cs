@@ -138,4 +138,38 @@ public sealed class ClientProfileExtractorTests
         Assert.Null(profile.NameFromForm);
         Assert.Equal("maya@example.com", profile.Email);
     }
+
+    [Fact]
+    public void Extract_Wave1FullNameIds_DoNotSetNameFromForm()
+    {
+        var schema = new ActivityFormSchema
+        {
+            Version = 1,
+            Fields =
+            [
+                new FormFieldDefinition { Id = "full_name", Type = FormFieldTypes.Number, Label = "Name" },
+                new FormFieldDefinition { Id = "yes_name", Type = FormFieldTypes.YesNo, Label = "Name" },
+                new FormFieldDefinition { Id = "country_name", Type = FormFieldTypes.Country, Label = "Name" },
+                new FormFieldDefinition
+                {
+                    Id = "email",
+                    Type = FormFieldTypes.Email,
+                    Label = "Email",
+                    Required = true,
+                },
+            ],
+        };
+
+        var profile = ClientProfileExtractor.Extract(
+            schema,
+            new Dictionary<string, object?>
+            {
+                ["full_name"] = "12",
+                ["yes_name"] = true,
+                ["country_name"] = "PH",
+                ["email"] = "maya@example.com",
+            });
+
+        Assert.Null(profile.NameFromForm);
+    }
 }

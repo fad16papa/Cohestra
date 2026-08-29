@@ -9,6 +9,7 @@ internal static class RegistrationAnswerValidator
 {
     internal const int TextareaMaxLength = 2000;
     private const string DateFormat = "yyyy-MM-dd";
+    private const string TimeFormat = "HH:mm";
 
     public static string? Validate(
         ActivityFormSchema? schema,
@@ -65,13 +66,18 @@ internal static class RegistrationAnswerValidator
             return null;
         }
 
-        if (field.Type is FormFieldTypes.Checkbox or FormFieldTypes.Consent)
+        if (field.Type is FormFieldTypes.Checkbox or FormFieldTypes.Consent or FormFieldTypes.YesNo)
         {
             if (!TryGetBoolean(rawValue, out var boolValue))
             {
                 return field.Required
                     ? $"{field.Label} is required."
                     : null;
+            }
+
+            if (field.Type == FormFieldTypes.YesNo)
+            {
+                return null;
             }
 
             if (field.Required && !boolValue)
@@ -82,6 +88,11 @@ internal static class RegistrationAnswerValidator
             }
 
             return null;
+        }
+
+        if (field.Type == FormFieldTypes.MultiChoice)
+        {
+            return ValidateMultiChoice(field, rawValue);
         }
 
         if (!TryGetString(rawValue, out var text))
@@ -113,7 +124,7 @@ internal static class RegistrationAnswerValidator
             }
         }
 
-        if (field.Type is FormFieldTypes.Select or FormFieldTypes.ReferralSource)
+        if (field.Type is FormFieldTypes.Select or FormFieldTypes.ReferralSource or FormFieldTypes.Choice)
         {
             var allowedValues = field.Options?
                 .Select(option => option.Value)
@@ -142,6 +153,26 @@ internal static class RegistrationAnswerValidator
         if (field.Type == FormFieldTypes.Date && !TryParseIsoDate(text, out _))
         {
             return $"{field.Label} must be a valid date (YYYY-MM-DD).";
+        }
+
+        if (field.Type == FormFieldTypes.Number)
+        {
+            return ValidateNumber(field, text);
+        }
+
+        if (field.Type == FormFieldTypes.Url && !IsHttpUrl(text))
+        {
+            return $"{field.Label} must be an http or https URL.";
+        }
+
+        if (field.Type == FormFieldTypes.Time && !TryParseIsoTime(text, out _))
+        {
+            return $"{field.Label} must be a valid time (HH:mm).";
+        }
+
+        if (field.Type == FormFieldTypes.Country && !PhoneCountrySupport.IsSupportedIsoCode(text))
+        {
+            return $"{field.Label} must be a supported country.";
         }
 
         return null;
@@ -195,9 +226,30 @@ internal static class RegistrationAnswerValidator
                 continue;
             }
 
-            if (field.Type is FormFieldTypes.Checkbox or FormFieldTypes.Consent)
+            if (field.Type is FormFieldTypes.Checkbox or FormFieldTypes.Consent or FormFieldTypes.YesNo)
             {
+                if (field.Type == FormFieldTypes.YesNo)
+                {
+                    if (TryGetBoolean(rawValue, out var yesNo))
+                    {
+                        normalized[field.Id] = yesNo;
+                    }
+
+                    continue;
+                }
+
                 normalized[field.Id] = TryGetBoolean(rawValue, out var boolValue) && boolValue;
+                continue;
+            }
+
+            if (field.Type == FormFieldTypes.MultiChoice)
+            {
+                if (!TryGetStringList(rawValue, out var selected) || selected.Count == 0)
+                {
+                    continue;
+                }
+
+                normalized[field.Id] = selected;
                 continue;
             }
 
@@ -226,11 +278,154 @@ internal static class RegistrationAnswerValidator
                     continue;
                 }
 
+                if (field.Type == FormFieldTypes.Number)
+                {
+                    if (!TryParseNumber(text, out var number))
+                    {
+                        continue;
+                    }
+
+                    normalized[field.Id] = number.ToString(CultureInfo.InvariantCulture);
+                    continue;
+                }
+
+                if (field.Type == FormFieldTypes.Time)
+                {
+                    if (!TryParseIsoTime(text, out var time))
+                    {
+                        continue;
+                    }
+
+                    normalized[field.Id] = time.ToString(TimeFormat, CultureInfo.InvariantCulture);
+                    continue;
+                }
+
+                if (field.Type == FormFieldTypes.Country)
+                {
+                    normalized[field.Id] = text.Trim().ToUpperInvariant();
+                    continue;
+                }
+
+                if (field.Type == FormFieldTypes.Url)
+                {
+                    normalized[field.Id] = text.Trim();
+                    continue;
+                }
+
                 normalized[field.Id] = text.Trim();
             }
         }
 
         return normalized;
+    }
+
+    private static string? ValidateNumber(FormFieldDefinition field, string text)
+    {
+        if (!TryParseNumber(text, out var number))
+        {
+            return $"{field.Label} must be a number.";
+        }
+
+        if (field.Min is { } min && number < min)
+        {
+            return $"{field.Label} must be at least {min.ToString(CultureInfo.InvariantCulture)}.";
+        }
+
+        if (field.Max is { } max && number > max)
+        {
+            return $"{field.Label} must be at most {max.ToString(CultureInfo.InvariantCulture)}.";
+        }
+
+        return null;
+    }
+
+    private static string? ValidateMultiChoice(FormFieldDefinition field, object? rawValue)
+    {
+        if (!TryGetStringList(rawValue, out var selected))
+        {
+            return field.Required ? $"{field.Label} is required." : null;
+        }
+
+        if (selected.Count == 0)
+        {
+            return field.Required ? $"{field.Label} is required." : null;
+        }
+
+        var allowedValues = field.Options?
+            .Select(option => option.Value)
+            .ToHashSet(StringComparer.Ordinal) ?? [];
+
+        if (selected.Any(value => !allowedValues.Contains(value)))
+        {
+            return $"{field.Label} must be one of the allowed options.";
+        }
+
+        if (field.Min is { } min && selected.Count < (int)min)
+        {
+            return $"{field.Label} requires at least {min.ToString(CultureInfo.InvariantCulture)} selections.";
+        }
+
+        if (field.Max is { } max && selected.Count > (int)max)
+        {
+            return $"{field.Label} allows at most {max.ToString(CultureInfo.InvariantCulture)} selections.";
+        }
+
+        return null;
+    }
+
+    private static bool TryParseNumber(string text, out decimal number) =>
+        decimal.TryParse(
+            text.Trim(),
+            NumberStyles.Number,
+            CultureInfo.InvariantCulture,
+            out number);
+
+    private static bool IsHttpUrl(string text)
+    {
+        return Uri.TryCreate(text.Trim(), UriKind.Absolute, out var uri) &&
+               (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    }
+
+    private static bool TryParseIsoTime(string text, out TimeOnly time) =>
+        TimeOnly.TryParseExact(
+            text.Trim(),
+            TimeFormat,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out time);
+
+    private static bool TryGetStringList(object? rawValue, out List<string> values)
+    {
+        values = [];
+        switch (rawValue)
+        {
+            case null:
+                return false;
+            case IEnumerable<string> strings:
+                values = strings
+                    .Select(item => item.Trim())
+                    .Where(item => item.Length > 0)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToList();
+                return true;
+            case JsonElement json when json.ValueKind == JsonValueKind.Array:
+                foreach (var item in json.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.String &&
+                        item.GetString() is { Length: > 0 } text)
+                    {
+                        var trimmed = text.Trim();
+                        if (trimmed.Length > 0 && !values.Contains(trimmed, StringComparer.Ordinal))
+                        {
+                            values.Add(trimmed);
+                        }
+                    }
+                }
+
+                return true;
+            default:
+                return false;
+        }
     }
 
     private static bool TryParseIsoDate(string text, out DateOnly date) =>

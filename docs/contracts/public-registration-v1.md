@@ -43,6 +43,14 @@ Keys in `answers` must match field `id` values from [activity-form-schema-v1.md]
 | `text`, `phone`, `email`           | string          | `"Elena Santos"` |
 | `textarea`                         | string          | `"Prefers Saturday mornings"` (max 2000 after HTML strip; over-length is `400`, not truncated) |
 | `date`                             | string          | `"2026-09-12"` (`YYYY-MM-DD` calendar date; invalid values are `400`) |
+| `number`                           | string          | `"12"` (invariant decimal; optional min/max) |
+| `url`                              | string          | `"https://example.com"` |
+| `time`                             | string          | `"09:30"` (`HH:mm`) |
+| `choice`                           | string          | `"option_a"` (option `value`) |
+| `yes_no`                           | boolean         | `true` or `false` |
+| `multi_choice`                     | string array    | `["sat","sun"]` |
+| `country`                          | string          | `"PH"` (supported phone-country ISO) |
+| `info`                             | —               | Display-only; no answer |
 | `select`, `referral_source`        | string          | `"friend"` (option `value`) |
 | `checkbox`, `consent`              | boolean         | `true` |
 | `hidden`                           | string          | `"wa"` (max 200 after HTML strip). Query key = Field `id`. Missing/blank uses operator `defaultValue`. Never required for submit. |

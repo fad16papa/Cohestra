@@ -44,6 +44,15 @@ public sealed class FormFieldDefinition
 
     /// <summary>Hidden fields only. Used when the public link omits the matching query key.</summary>
     public string? DefaultValue { get; set; }
+
+    /// <summary>Number value bound or multi_choice selection count. Inclusive.</summary>
+    public decimal? Min { get; set; }
+
+    /// <summary>Number value bound or multi_choice selection count. Inclusive.</summary>
+    public decimal? Max { get; set; }
+
+    /// <summary>Info fields only. Markdown-lite body, max 2000 after HTML strip.</summary>
+    public string? InfoText { get; set; }
 }
 
 public sealed class FormFieldVisibleWhen

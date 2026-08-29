@@ -108,6 +108,14 @@ internal static class ClientProfileExtractor
 
                 case FormFieldTypes.Hidden:
                 case FormFieldTypes.Date:
+                case FormFieldTypes.Number:
+                case FormFieldTypes.Url:
+                case FormFieldTypes.Time:
+                case FormFieldTypes.Choice:
+                case FormFieldTypes.YesNo:
+                case FormFieldTypes.MultiChoice:
+                case FormFieldTypes.Info:
+                case FormFieldTypes.Country:
                     break;
             }
         }

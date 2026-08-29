@@ -252,6 +252,23 @@ public sealed class RegistrationAnswerValidatorTests
     }
 
     [Fact]
+    public void Validate_Wave1NumberUrlTimeChoiceYesNoCountry()
+    {
+        Assert.Null(RegistrationAnswerValidator.Validate(
+            Wave1Schema(),
+            Wave1Answers(("party_size", "3"), ("website", "https://example.com"), ("arrival", "09:30"), ("level", "beginner"), ("bringing_guest", false), ("days", new[] { "sat" }), ("nationality", "PH"))));
+
+        Assert.Contains("number", RegistrationAnswerValidator.Validate(Wave1Schema(), Wave1Answers(("party_size", "abc")))!, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("at most", RegistrationAnswerValidator.Validate(Wave1Schema(), Wave1Answers(("party_size", "20")))!, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("http", RegistrationAnswerValidator.Validate(Wave1Schema(), Wave1Answers(("website", "ftp://x")))!, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("HH:mm", RegistrationAnswerValidator.Validate(Wave1Schema(), Wave1Answers(("arrival", "25:00")))!, StringComparison.Ordinal);
+        Assert.Contains("allowed options", RegistrationAnswerValidator.Validate(Wave1Schema(), Wave1Answers(("level", "pro")))!, StringComparison.Ordinal);
+        Assert.Contains("at most", RegistrationAnswerValidator.Validate(Wave1Schema(), Wave1Answers(("days", new[] { "sat", "sun", "mon" })))!, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("country", RegistrationAnswerValidator.Validate(Wave1Schema(), Wave1Answers(("nationality", "ZZ")))!, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(RegistrationAnswerValidator.Validate(Wave1Schema(), Wave1Answers()));
+    }
+
+    [Fact]
     public void NormalizeAnswers_IgnoresUnknownAnswerKeys()
     {
         var normalized = RegistrationAnswerValidator.NormalizeAnswers(
@@ -261,6 +278,88 @@ public sealed class RegistrationAnswerValidatorTests
         Assert.False(normalized.ContainsKey("utm_source"));
         Assert.Equal("wa", normalized["ref"]);
     }
+
+    private static ActivityFormSchema Wave1Schema() =>
+        new()
+        {
+            Version = 1,
+            Fields =
+            [
+                new FormFieldDefinition
+                {
+                    Id = "email",
+                    Type = FormFieldTypes.Email,
+                    Label = "Email",
+                    Required = true,
+                },
+                new FormFieldDefinition
+                {
+                    Id = "party_size",
+                    Type = FormFieldTypes.Number,
+                    Label = "Party size",
+                    Max = 8,
+                },
+                new FormFieldDefinition
+                {
+                    Id = "website",
+                    Type = FormFieldTypes.Url,
+                    Label = "Website",
+                },
+                new FormFieldDefinition
+                {
+                    Id = "arrival",
+                    Type = FormFieldTypes.Time,
+                    Label = "Arrival",
+                },
+                new FormFieldDefinition
+                {
+                    Id = "level",
+                    Type = FormFieldTypes.Choice,
+                    Label = "Level",
+                    Options =
+                    [
+                        new FormFieldOption { Value = "beginner", Label = "Beginner" },
+                        new FormFieldOption { Value = "advanced", Label = "Advanced" },
+                    ],
+                },
+                new FormFieldDefinition
+                {
+                    Id = "bringing_guest",
+                    Type = FormFieldTypes.YesNo,
+                    Label = "Guest?",
+                },
+                new FormFieldDefinition
+                {
+                    Id = "days",
+                    Type = FormFieldTypes.MultiChoice,
+                    Label = "Days",
+                    Max = 2,
+                    Options =
+                    [
+                        new FormFieldOption { Value = "sat", Label = "Saturday" },
+                        new FormFieldOption { Value = "sun", Label = "Sunday" },
+                        new FormFieldOption { Value = "mon", Label = "Monday" },
+                    ],
+                },
+                new FormFieldDefinition
+                {
+                    Id = "notice",
+                    Type = FormFieldTypes.Info,
+                    Label = "Note",
+                    InfoText = "Hi",
+                },
+                new FormFieldDefinition
+                {
+                    Id = "nationality",
+                    Type = FormFieldTypes.Country,
+                    Label = "Nationality",
+                },
+            ],
+        };
+
+    private static Dictionary<string, object?> Wave1Answers(
+        params (string Key, object? Value)[] extras) =>
+        ContactAnswers(extras);
 
     private static ActivityFormSchema LongTextSchema(bool requiredNotes = false) =>
         new()

@@ -22,6 +22,9 @@ describe("createFieldId", () => {
     expect(createFieldId("date", new Set())).toBe("date");
     expect(createFieldId("textarea", new Set(["notes"]))).toBe("notes-2");
     expect(createFieldId("date", new Set(["date"]))).toBe("date-2");
+    expect(createFieldId("yes_no", new Set())).toBe("yes_no");
+    expect(createFieldId("multi_choice", new Set())).toBe("multi_choice");
+    expect(createFieldId("country", new Set())).toBe("country");
   });
 });
 

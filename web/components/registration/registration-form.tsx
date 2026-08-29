@@ -10,6 +10,8 @@ import type { ActivityFormSchema, FormFieldDefinition } from "@/lib/activities-a
 import { isHiddenFieldType, isNonInputFieldType } from "@/lib/form-schema-utils";
 import { collectHiddenAnswers } from "@/lib/hidden-field-query";
 import { isIsoCalendarDate } from "@/lib/iso-calendar-date";
+import { isIsoClockTime } from "@/lib/iso-clock-time";
+import { isSupportedPhoneCountry, phoneCountryOptions } from "@/lib/phone-countries";
 import {
   fieldsForStep,
   formStepLabels,
@@ -78,10 +80,37 @@ function validateField(field: FormFieldDefinition, value: unknown): string | nul
     return null;
   }
 
-  if (field.type === "select" || field.type === "referral_source") {
+  if (field.type === "select" || field.type === "referral_source" || field.type === "choice") {
     const text = typeof value === "string" ? value.trim() : "";
     if (field.required && !text) {
       return "This field is required.";
+    }
+
+    return null;
+  }
+
+  if (field.type === "yes_no") {
+    if (field.required && value !== true && value !== false) {
+      return "This field is required.";
+    }
+
+    return null;
+  }
+
+  if (field.type === "multi_choice") {
+    const selected = Array.isArray(value)
+      ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+      : [];
+    if (field.required && selected.length === 0) {
+      return "This field is required.";
+    }
+
+    if (field.min != null && selected.length > 0 && selected.length < field.min) {
+      return `Select at least ${field.min}.`;
+    }
+
+    if (field.max != null && selected.length > field.max) {
+      return `Select at most ${field.max}.`;
     }
 
     return null;
@@ -116,6 +145,77 @@ function validateField(field: FormFieldDefinition, value: unknown): string | nul
 
     if (text && !isIsoCalendarDate(text)) {
       return "Enter a valid date.";
+    }
+
+    return null;
+  }
+
+  if (field.type === "number") {
+    const numberText =
+      typeof value === "string" ? value.trim() : typeof value === "number" ? String(value) : "";
+    if (field.required && !numberText) {
+      return "This field is required.";
+    }
+
+    if (numberText) {
+      const parsed = Number(numberText);
+      if (!Number.isFinite(parsed)) {
+        return "Enter a number.";
+      }
+
+      if (field.min != null && parsed < field.min) {
+        return `Must be at least ${field.min}.`;
+      }
+
+      if (field.max != null && parsed > field.max) {
+        return `Must be at most ${field.max}.`;
+      }
+    }
+
+    return null;
+  }
+
+  if (field.type === "url") {
+    const urlText = typeof value === "string" ? value.trim() : "";
+    if (field.required && !urlText) {
+      return "This field is required.";
+    }
+
+    if (urlText) {
+      try {
+        const parsedUrl = new URL(urlText);
+        if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+          return "Enter an http or https URL.";
+        }
+      } catch {
+        return "Enter an http or https URL.";
+      }
+    }
+
+    return null;
+  }
+
+  if (field.type === "time") {
+    const timeText = typeof value === "string" ? value.trim() : "";
+    if (field.required && !timeText) {
+      return "This field is required.";
+    }
+
+    if (timeText && !isIsoClockTime(timeText)) {
+      return "Enter a valid time.";
+    }
+
+    return null;
+  }
+
+  if (field.type === "country") {
+    const countryText = typeof value === "string" ? value.trim() : "";
+    if (field.required && !countryText) {
+      return "This field is required.";
+    }
+
+    if (countryText && !isSupportedPhoneCountry(countryText)) {
+      return "Select a supported country.";
     }
 
     return null;
@@ -356,6 +456,26 @@ export function RegistrationForm({
       );
     }
 
+    if (field.type === "info") {
+      const heading = field.label.trim() || "Info";
+      const body = (field.infoText ?? "").replace(/<[^>]*>/g, "").trim();
+      const paragraphs = body
+        .split(/\n{2,}/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+      return (
+        <div key={field.id} className="space-y-2 rounded-lg border border-border-warm bg-muted/30 p-3">
+          <h3 className="text-sm font-semibold text-text-warm">{heading}</h3>
+          {paragraphs.map((paragraph, index) => (
+            <p key={`${field.id}-${index}`} className="text-sm leading-relaxed text-text-muted-warm">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+      );
+    }
+
     const error = touched[field.id] ? errors[field.id] : undefined;
     const fieldId = `registration-${field.id}`;
     const errorDescribedBy = error ? `${fieldId}-error` : undefined;
@@ -482,6 +602,188 @@ export function RegistrationForm({
       );
     }
 
+    if (field.type === "yes_no") {
+      const selected =
+        values[field.id] === true ? true : values[field.id] === false ? false : null;
+      return (
+        <div key={field.id} className="space-y-2">
+          <p className="text-sm font-medium text-text-warm">
+            {field.label}
+            {field.required ? (
+              <span className="text-destructive" aria-hidden>
+                {" "}
+                *
+              </span>
+            ) : null}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: true, label: "Yes" },
+              { value: false, label: "No" },
+            ].map((option) => (
+              <button
+                key={String(option.value)}
+                type="button"
+                onClick={() =>
+                  setValues((current) => ({
+                    ...current,
+                    [field.id]: option.value,
+                  }))
+                }
+                onBlur={() => validateOnBlur(field)}
+                aria-pressed={selected === option.value}
+                className={cn(
+                  "inline-flex min-h-12 min-w-11 items-center justify-center rounded-lg border px-4 text-sm font-medium shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+                  selected === option.value
+                    ? "border-ring bg-muted text-text-warm"
+                    : "border-input bg-background text-text-warm"
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {renderFieldError(fieldId, error)}
+        </div>
+      );
+    }
+
+    if (field.type === "choice") {
+      const selected =
+        typeof values[field.id] === "string" ? (values[field.id] as string) : "";
+      return (
+        <div key={field.id} className="space-y-2">
+          <p className="text-sm font-medium text-text-warm">
+            {field.label}
+            {field.required ? (
+              <span className="text-destructive" aria-hidden>
+                {" "}
+                *
+              </span>
+            ) : null}
+          </p>
+          <div className="flex flex-col gap-2">
+            {(field.options ?? []).map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() =>
+                  setValues((current) => ({
+                    ...current,
+                    [field.id]: option.value,
+                  }))
+                }
+                onBlur={() => validateOnBlur(field)}
+                aria-pressed={selected === option.value}
+                className={cn(
+                  "inline-flex min-h-12 w-full items-center justify-start rounded-lg border px-4 text-left text-sm font-medium shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+                  selected === option.value
+                    ? "border-ring bg-muted text-text-warm"
+                    : "border-input bg-background text-text-warm"
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {renderFieldError(fieldId, error)}
+        </div>
+      );
+    }
+
+    if (field.type === "multi_choice") {
+      const selected = Array.isArray(values[field.id])
+        ? (values[field.id] as string[])
+        : [];
+      return (
+        <div key={field.id} className="space-y-2">
+          <p className="text-sm font-medium text-text-warm">
+            {field.label}
+            {field.required ? (
+              <span className="text-destructive" aria-hidden>
+                {" "}
+                *
+              </span>
+            ) : null}
+          </p>
+          <div className="flex flex-col gap-2">
+            {(field.options ?? []).map((option) => {
+              const checked = selected.includes(option.value);
+              return (
+                <label
+                  key={option.value}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-3 rounded-lg border border-input px-3",
+                    isPublic && "min-h-12"
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(event) => {
+                      const next = event.target.checked
+                        ? [...selected, option.value]
+                        : selected.filter((item) => item !== option.value);
+                      setValues((current) => ({
+                        ...current,
+                        [field.id]: next,
+                      }));
+                    }}
+                    onBlur={() => validateOnBlur(field)}
+                    className={cn("rounded border-input", isPublic ? "size-5" : "size-4")}
+                  />
+                  <span className="text-sm text-text-warm">{option.label}</span>
+                </label>
+              );
+            })}
+          </div>
+          {renderFieldError(fieldId, error)}
+        </div>
+      );
+    }
+
+    if (field.type === "country") {
+      return (
+        <div key={field.id} className="space-y-2">
+          <Label htmlFor={fieldId}>
+            {field.label}
+            {field.required ? (
+              <span className="text-destructive" aria-hidden>
+                {" "}
+                *
+              </span>
+            ) : null}
+          </Label>
+          <select
+            id={fieldId}
+            value={
+              typeof values[field.id] === "string"
+                ? (values[field.id] as string)
+                : ""
+            }
+            onChange={(event) =>
+              setValues((current) => ({
+                ...current,
+                [field.id]: event.target.value,
+              }))
+            }
+            onBlur={() => validateOnBlur(field)}
+            aria-invalid={Boolean(error)}
+            aria-describedby={errorDescribedBy}
+            className={publicSelectClass}
+          >
+            <option value="">Select…</option>
+            {phoneCountryOptions.map((option) => (
+              <option key={option.code} value={option.code}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+          {renderFieldError(fieldId, error)}
+        </div>
+      );
+    }
+
     if (field.type === "textarea") {
       return (
         <div key={field.id} className="space-y-2">
@@ -586,7 +888,15 @@ export function RegistrationForm({
     }
 
     const inputType =
-      field.type === "email" ? "email" : "text";
+      field.type === "email"
+        ? "email"
+        : field.type === "number"
+          ? "number"
+          : field.type === "url"
+            ? "url"
+            : field.type === "time"
+              ? "time"
+              : "text";
 
     return (
       <div key={field.id} className="space-y-2">

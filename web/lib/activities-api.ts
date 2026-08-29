@@ -15,7 +15,15 @@ export type FormFieldType =
   | "consent"
   | "referral_source"
   | "section_header"
-  | "hidden";
+  | "hidden"
+  | "number"
+  | "url"
+  | "time"
+  | "choice"
+  | "yes_no"
+  | "multi_choice"
+  | "info"
+  | "country";
 
 export type FormFieldOption = {
   value: string;
@@ -42,6 +50,9 @@ export type FormFieldDefinition = {
   visibleWhen?: FormFieldVisibleWhen | null;
   step?: FormFieldStep | null;
   defaultValue?: string | null;
+  min?: number | null;
+  max?: number | null;
+  infoText?: string | null;
 };
 
 export type FormSchemaMeta = {
@@ -171,6 +182,9 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
       const stepRaw = item.step ?? item.Step;
       const step = parseFieldStep(stepRaw);
       const defaultValue = item.defaultValue ?? item.DefaultValue;
+      const min = parseOptionalNumber(item.min ?? item.Min);
+      const max = parseOptionalNumber(item.max ?? item.Max);
+      const infoText = item.infoText ?? item.InfoText;
 
       if (
         typeof id !== "string" ||
@@ -214,9 +228,25 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
         visibleWhen,
         step,
         defaultValue: typeof defaultValue === "string" ? defaultValue : null,
+        min,
+        max,
+        infoText: typeof infoText === "string" ? infoText : null,
       });
     }),
   };
+}
+
+function parseOptionalNumber(raw: unknown): number | null {
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return raw;
+  }
+
+  if (typeof raw === "string" && raw.trim()) {
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
 }
 
 function parseVisibleWhen(raw: unknown): FormFieldVisibleWhen | null {
