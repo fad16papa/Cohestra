@@ -304,7 +304,7 @@ development_status:
   # Epic 30–32 — Registration Capture. Source: epics-registration-capture.md
   epic-30: in-progress
   30-1-hidden-field-and-campaign-query-passthrough: done
-  30-2-long-text-and-date-fields: review
+  30-2-long-text-and-date-fields: done
   30-3-wave-1-toolbox-types-and-country: backlog
   30-4-slash-add-field-palette: backlog
   30-5-core-scale-and-emergency-contact: backlog
