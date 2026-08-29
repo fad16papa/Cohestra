@@ -239,6 +239,42 @@ Francis embeds Saturday’s Form on a club/Notion page (allow-listed hosts, no `
 
 Francis can author, close, attribute, thank, get notified, and reuse Saturday’s Form in Cohestra. Every public submit still upserts a deduped Client. Saved templates are the last stories in this epic.
 
+### Story 30.1: Hidden Field and campaign query passthrough
+
+As an Operator,
+I want a Hidden Field whose value comes from the public link query string,
+So that an Instagram `?ref=wa` write lands on the Registration and Client history without Maya seeing attribution chrome.
+
+**Acceptance Criteria:**
+
+**Given** I am on an unpublished Activity Form tab
+**When** I add a Field with `type: "hidden"` and id `ref` (existing type control is enough)
+**Then** `PUT .../form-schema` accepts it (`form_schema` `version` stays `1`)
+**And** unknown types still `400`
+**And** a required Hidden Field does **not** satisfy the Publish Gate
+**And** `ClientProfileExtractor` does not map Hidden values to Client name, phone, or email
+
+**Given** the public Form for that Activity
+**When** a Participant opens `/register/{slug}`
+**Then** no Hidden input and no attribution chrome are rendered
+**And** admin preview may show a “Hidden · filled from link” chip (UX-DR-RC-2)
+
+**Given** Hidden Field id `ref` and URL `?ref=wa`
+**When** the Participant submits a valid Form
+**Then** `registrations.answers.ref` is `"wa"`
+**And** admin Registration detail and `ClientRegistrationHistory` show `ref = wa`
+**And** HTML is stripped; value max length 200
+**And** unknown query keys are ignored
+
+**Given** Hidden Field id `ref` and no `?ref=`
+**When** they submit
+**Then** the Answer is empty or the operator `defaultValue`
+**And** submit still succeeds
+
+**Given** an existing Activity that only uses today’s v1 types
+**When** I save its Form without Hidden Fields
+**Then** it remains valid (NFR-RC-1)
+
 ## Epic 31: Show only the fields that apply
 
 Francis can show Fields only when a Recipe says so, and on Pro optionally step Identity → Details → Consent, without turning the Form into a logic IDE.
