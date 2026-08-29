@@ -1,5 +1,5 @@
 ---
-stepsCompleted: [step-01-validate-prerequisites]
+stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics]
 inputDocuments:
   - _bmad-output/planning-artifacts/prds/prd-registration-capture-2026-08-29/prd.md
   - _bmad-output/planning-artifacts/prds/prd-registration-capture-2026-08-29/addendum.md
@@ -28,7 +28,7 @@ This document provides the complete epic and story breakdown for Registration Ca
 
 **Thesis (locked):** Steal Tally event-signup authoring speed. Do not clone a form builder. Every submit still upserts a deduped Client.
 
-**Inventory only (step 1).** Coverage map and epic list are filled in later steps. No stories in this revision.
+**Epic cut (locked, Admin 2026-08-29):** Three sibling epics numbered **30 / 31 / 32** so they sit after shipped Paddle **29**. Saved templates are the last stories in Epic 30, not their own epic. Stories are written in a later step.
 
 ## Requirements Inventory
 
@@ -193,33 +193,56 @@ UX-DR-RC-10: Light and dark visual QA on every new public state (success with pi
 
 ### FR Coverage Map
 
-{{requirements_coverage_map}}
+FR-RC-1: Epic 30 — Hidden Field type
+FR-RC-2: Epic 30 — Query passthrough into Answers
+FR-RC-3: Epic 30 — textarea Field
+FR-RC-4: Epic 30 — date Field
+FR-RC-5: Epic 30 — Piping on thank-you and confirmation email
+FR-RC-6: Epic 30 — Closed message
+FR-RC-7: Epic 30 — Close-at
+FR-RC-8: Epic 30 — Slash / plus Field palette
+FR-RC-9: Epic 30 — Operator new-Registration email
+FR-RC-10: Epic 31 — visibleWhen Recipes
+FR-RC-11: Epic 31 — Optional Identity → Details → Consent steps
+FR-RC-12: Epic 32 — Activity embed route and snippet
+FR-RC-13: Epic 32 — Website Contact section → Client
+FR-RC-14: Epic 30 — Capture invariants (31/32 inherit; do not reopen caps or theme-in-schema)
+FR-RC-15: Epic 30 — Save and apply tenant Form templates (last stories, after slash-add)
+FR-RC-16: Epic 30 — Template slots by plan (Basic 1 / Core 5 / Pro 25)
+FR-RC-17: Epic 30 — Core community default + Pro Design pin
+FR-RC-18: Epic 30 — Wave 1 toolbox types
+
+Companion extras (no FR-RC id): `country` (all plans), Core+ `scale` / `emergency`, Pro template duplicate → Epic 30. Phase 2 plan gate (Recipes Core+, steps Pro) → Epic 31.
 
 ## Epic List
 
-{{epics_list}}
+### Epic 30: Author Saturday’s signup in Cohestra
+Francis can build Saturday’s Form here (slash toolbox + Wave 1 types + Hidden/UTM), close the session with his copy, pipe the thank-you, get an email when someone registers, and **save the Form for next month** (last stories in this epic). Maya’s submit still writes a deduped Client. Tally is no longer required for the event job.
+**FRs covered:** FR-RC-1, FR-RC-2, FR-RC-3, FR-RC-4, FR-RC-5, FR-RC-6, FR-RC-7, FR-RC-8, FR-RC-9, FR-RC-14, FR-RC-15, FR-RC-16, FR-RC-17, FR-RC-18
+**Depends on:** Shipped Form tab, public `/register/{slug}`, Publish Gate, Outbox, Studio theme resolver. **Does not need** Epic 31 or 32.
+**Story order constraint:** Validators + Hidden/Wave 1 persist before saved templates. Fat epic, thin stories (Close-at timezone, Hidden-not-in-Participant-email, `plan_locked` slots, Publish Gate each get their own story).
 
-<!-- Repeat for each epic in epics_list (N = 1, 2, 3...) -->
+### Epic 31: Show only the fields that apply
+Francis can hide guest name until “bringing a guest?” is yes (Recipes), and on Pro optionally split Identity → Details → Consent. Submit still creates the same Client as a single page. Public default stays one-thumb until the toggle is on. If a story needs nested AND/OR, **stop**.
+**FRs covered:** FR-RC-10, FR-RC-11
+**Plan gate:** Recipes Core+; optional steps Pro only. Basic has neither.
+**Depends on:** Epic 30 Field types (`yes_no`, etc.). **Does not need** Epic 32.
 
-## Epic {{N}}: {{epic_title_N}}
+### Epic 32: Put the Form where the audience already is
+Francis embeds Saturday’s Form on a club/Notion page (allow-listed hosts, no `frame-ancestors *`), or adds a homepage Contact that creates a Client without a fake Activity.
+**FRs covered:** FR-RC-12, FR-RC-13
+**Depends on:** Epic 30 Hidden/query passthrough for embed UTMs. Contact does not need Recipes. **Do not start before Epic 30.**
 
-{{epic_goal_N}}
+<!-- Story sections filled in step 3. Do not invent stories in this revision. -->
 
-<!-- Repeat for each story (M = 1, 2, 3...) within epic N -->
+## Epic 30: Author Saturday’s signup in Cohestra
 
-### Story {{N}}.{{M}}: {{story_title_N_M}}
+Francis can author, close, attribute, thank, get notified, and reuse Saturday’s Form in Cohestra. Every public submit still upserts a deduped Client. Saved templates are the last stories in this epic.
 
-As a {{user_type}},
-I want {{capability}},
-So that {{value_benefit}}.
+## Epic 31: Show only the fields that apply
 
-**Acceptance Criteria:**
+Francis can show Fields only when a Recipe says so, and on Pro optionally step Identity → Details → Consent, without turning the Form into a logic IDE.
 
-<!-- for each AC on this story -->
+## Epic 32: Put the Form where the audience already is
 
-**Given** {{precondition}}
-**When** {{action}}
-**Then** {{expected_outcome}}
-**And** {{additional_criteria}}
-
-<!-- End story repeat -->
+Francis can embed one Activity’s Form on an allow-listed host, or take a homepage Contact that writes a Client with no Activity.
