@@ -48,6 +48,7 @@ Apply still **replaces** the draft Form (same as launch templates today) and sta
 | Pin Design preset onto a template | — | — | Yes |
 | Duplicate template | — | — | Yes |
 | Recipes + optional steps (Capture Phase 2) | — | Recipes | Recipes + steps |
+| Form toolbox (see `form-component-toolbox.md`) | Always group | + Scale, Emergency | + File, Signature (when D) |
 
 Upgrade copy when Basic hits 1 saved template: “Core saves up to 5 form recipes for every new session.”
 

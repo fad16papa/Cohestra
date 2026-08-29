@@ -181,6 +181,18 @@ An Operator can add Field type `date`. Stored as `YYYY-MM-DD`. Realizes UJ-RC-1.
 - Not mapped to a Client column in this epic.
 - No min/max, no “disable Sundays,” no ranges.
 
+#### FR-RC-18: Event toolbox Wave 1
+
+The Form accepts additive types `number`, `url`, `time`, `choice`, `yes_no`, `multi_choice`, and display-only `info`. Catalog: `form-component-toolbox.md`. All plans. Realizes UJ-RC-1.
+
+**Consequences (testable):**
+- `number` rejects non-numeric; optional min/max.
+- `url` requires `http` or `https`.
+- `time` stores `HH:mm`.
+- `choice` is single-select with large tap targets; `multi_choice` allows several; `yes_no` stores boolean.
+- `info` is NonInput (no Answer); markdown-lite, max 2000.
+- None of these satisfy the Publish Gate.
+
 ### 4.3 Piping on thank-you and confirmation email (MVP)
 
 **Description:** Thank-you screen and confirmation email substitute Piping tokens from Answers or Client extract. Does **not** redesign the email layout (Touchpoints non-goal). Hero still comes from Resolved registration theme. Realizes UJ-RC-2.
@@ -225,11 +237,13 @@ An Operator can set `form_schema.meta.registrationClosesAt`. Server evaluates on
 
 #### FR-RC-8: Slash / plus Field palette
 
-On the Form tab, `/` or **+** opens a palette: Short text, Long text, Email, Phone, Date, Select, Checkbox, Consent, Referral source, Section header, Hidden. Keyboard: arrows + Enter; Esc closes. Existing type dropdown remains as fallback. Reorder stays grip / up-down (not a canvas). Realizes UJ-RC-1.
+On the Form tab, `/` or **+** opens a palette grouped as a **toolbox** (see `form-component-toolbox.md`): Text, Long text, Number, Email, Phone, Link, Date, Time, Yes/No, Choice, Dropdown, Multi-choice, Checkbox, Consent, Referral, Country, Section, Info, Hidden. Core+ adds Scale and Emergency contact. Keyboard: arrows + Enter; Esc closes. Existing type dropdown remains as fallback. Reorder stays grip / up-down (not a canvas). Realizes UJ-RC-1.
 
 **Consequences (testable):**
 - Operator can add Email + Hidden Field without using the type `<select>` as the primary path.
+- Wave 1 types (`textarea`, `date`, `hidden`, `number`, `url`, `time`, `choice`, `yes_no`, `multi_choice`, `info`) save, preview, publish, submit, and show in admin Answers (`info` is display-only).
 - No drag-and-drop canvas, no column layout, no “typed prose becomes a Field.”
+- NPS, matrix, ranking, payment are not in the palette.
 
 ### 4.6 Operator notification on new Registration (MVP)
 
@@ -386,7 +400,7 @@ Publish Gate, Client dedup, Answer immutability, one Form per Activity, and **sh
 ### 6.1 In Scope (Slice A / MVP)
 
 - Hidden Field + query passthrough (FR-RC-1, FR-RC-2)
-- `textarea`, `date` (FR-RC-3, FR-RC-4)
+- `textarea`, `date` (FR-RC-3, FR-RC-4) plus Wave 1 toolbox: `number`, `url`, `time`, `choice`, `yes_no`, `multi_choice`, `info`
 - Piping tokens on thank-you + confirmation email (FR-RC-5)
 - Closed message + Close-at (FR-RC-6, FR-RC-7)
 - Slash-add Form tab (FR-RC-8)
@@ -496,7 +510,7 @@ Tally’s free plan includes Hidden Fields, answer piping, email notifications, 
 | Depends on | How |
 |---|---|
 | `form_schema` v1 + validators | Additive types/keys |
-| Form tab / `FormFieldEditor` | Slash palette |
+| Form tab / `FormFieldEditor` | Slash palette + save/apply templates |
 | Public `RegistrationForm` + `POST /api/v1/public/registrations` | Render + submit |
 | `ClientProfileExtractor`, Publish Gate | Skip Hidden; keep phone-or-email |
 | Outbox + confirmation email builder | Piping + Operator notify |
