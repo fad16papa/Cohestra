@@ -2,14 +2,14 @@
 story_id: 31.2
 story_key: 31-2-optional-identity-details-consent-steps
 epic: 31
-status: review
+status: done
 created: 2026-08-29
 baseline_commit: 55ffa75aadae9a6156077b819f0a2d55bce27e91
 ---
 
 # Story 31.2: Optional Identity → Details → Consent steps
 
-Status: review
+Status: done
 
 ## Story
 
@@ -61,6 +61,17 @@ Cursor Grok 4.6
 - `web/components/activities/form-field-editor.tsx`
 - `web/components/registration/registration-form.tsx`
 
+### Review Findings
+
+- [x] [Review][Patch] New Fields after toggle-on must auto-bucket [web/components/activities/form-field-editor.tsx]
+- [x] [Review][Patch] Name-bucket heuristics match server (case-insensitive `full_name`) [web/lib/form-steps.ts]
+- [x] [Review][Patch] Clamp `stepIndex`; last submit jumps to first invalid step [web/components/registration/registration-form.tsx]
+- [x] [Review][Patch] Downgraded tenants can turn Split into steps off to save [web/components/activities/activity-form-tab.tsx]
+- [x] [Review][Defer] `public-registration-v1.md` does not document the stepper
+- [x] [Review][Defer] Preview last-step button stays enabled (“Preview only”)
+- [x] [Review][Defer] No Next/Back component test
+
 ### Change Log
 
 - 2026-08-29: Story 31.2 implemented — optional Identity/Details/Consent steps.
+- 2026-08-29: Code review — patched auto-bucket on add, stepIndex, downgrade off; deferred stepper docs/tests.

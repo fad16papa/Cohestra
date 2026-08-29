@@ -92,6 +92,58 @@ public sealed class VisibleWhenEvaluatorTests
     }
 
     [Fact]
+    public void IsVisible_InvisibleController_DoesNotUnlockDependent()
+    {
+        var schema = new ActivityFormSchema
+        {
+            Fields =
+            [
+                new FormFieldDefinition
+                {
+                    Id = "ask_guest",
+                    Type = FormFieldTypes.Select,
+                    Label = "Ask guest?",
+                    Options =
+                    [
+                        new FormFieldOption { Value = "yes", Label = "Yes" },
+                        new FormFieldOption { Value = "no", Label = "No" },
+                    ],
+                },
+                new FormFieldDefinition
+                {
+                    Id = "bringing_guest",
+                    Type = FormFieldTypes.Select,
+                    Label = "Bringing a guest?",
+                    VisibleWhen = new FormFieldVisibleWhen { FieldId = "ask_guest", EqualsValue = "yes" },
+                    Options =
+                    [
+                        new FormFieldOption { Value = "yes", Label = "Yes" },
+                        new FormFieldOption { Value = "no", Label = "No" },
+                    ],
+                },
+                new FormFieldDefinition
+                {
+                    Id = "guest_name",
+                    Type = FormFieldTypes.Text,
+                    Label = "Guest name",
+                    Required = true,
+                    VisibleWhen = new FormFieldVisibleWhen { FieldId = "bringing_guest", EqualsValue = "yes" },
+                },
+            ],
+        };
+
+        Assert.False(VisibleWhenEvaluator.IsVisible(
+            schema.Fields[2],
+            schema,
+            new Dictionary<string, object?>
+            {
+                ["ask_guest"] = "no",
+                ["bringing_guest"] = "yes",
+                ["guest_name"] = "Spoofed",
+            }));
+    }
+
+    [Fact]
     public void ValidateModel_AcceptsGuestRecipe()
     {
         Assert.Null(FormSchemaValidator.ValidateModel(GuestSchema()));

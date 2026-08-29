@@ -17,11 +17,10 @@ export function autoBucketField(field: FormFieldDefinition): FormFieldStep {
     return "identity";
   }
 
+  const id = field.id.toLowerCase();
   if (
     field.type === "text" &&
-    (field.id === "full_name" ||
-      field.id === "name" ||
-      field.id.includes("full_name"))
+    (id === "full_name" || id === "name" || id.includes("full_name"))
   ) {
     return "identity";
   }

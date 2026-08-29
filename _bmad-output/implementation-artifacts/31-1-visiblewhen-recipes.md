@@ -2,14 +2,14 @@
 story_id: 31.1
 story_key: 31-1-visiblewhen-recipes
 epic: 31
-status: review
+status: done
 created: 2026-08-29
 baseline_commit: 55ffa75aadae9a6156077b819f0a2d55bce27e91
 ---
 
 # Story 31.1: visibleWhen Recipes
 
-Status: review
+Status: done
 
 ## Story
 
@@ -73,6 +73,17 @@ Cursor Grok 4.6
 - `docs/contracts/activity-form-schema-v1.md`
 - `docs/contracts/public-registration-v1.md`
 
+### Review Findings
+
+- [x] [Review][Patch] Null `visibleWhen.fieldId` must not 500 — MapVisibleWhen returns null [src/Infrastructure/Activities/FormSchemaValidator.cs]
+- [x] [Review][Patch] Invisible controller must not unlock a dependent [src/Infrastructure/Activities/VisibleWhenEvaluator.cs]
+- [x] [Review][Patch] Client visibility matches empty fieldId + controller chain [web/lib/form-visibility.ts]
+- [x] [Review][Patch] Locked Recipe picker can clear `visibleWhen` so Basic can save [web/components/activities/form-field-editor.tsx]
+- [x] [Review][Defer] Runtime does not re-check plan after downgrade — save-time `plan_locked` is the spec; published Forms keep stored Recipes
+- [x] [Review][Defer] No HTTP integration test for Basic `403 plan_locked`
+- [x] [Review][Defer] Recipe preset labels all infer as “guest” when `equals=yes`
+
 ### Change Log
 
 - 2026-08-29: Story 31.1 implemented — visibleWhen Recipes, plan gate, spoof drop.
+- 2026-08-29: Code review — patched controller-chain spoof, null fieldId, locked clear; deferred runtime plan strip and HTTP 403 test.

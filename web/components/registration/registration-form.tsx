@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { PhoneFieldInput } from "@/components/registration/phone-field-input";
 import { Button } from "@/components/ui/button";
@@ -146,15 +146,26 @@ export function RegistrationForm({
 
   const stepsOn = Boolean(schema.meta?.splitIntoSteps);
   const stepIds = stepsOn ? usedFormSteps(schema.fields) : [];
-  const currentStep = stepIds[stepIndex] ?? stepIds[0] ?? null;
+  const currentStep = stepIds[Math.min(stepIndex, Math.max(stepIds.length - 1, 0))] ?? stepIds[0] ?? null;
   const isLastStep = !stepsOn || stepIndex >= stepIds.length - 1;
+
+  useEffect(() => {
+    if (!stepsOn) {
+      setStepIndex(0);
+      return;
+    }
+
+    setStepIndex((current) =>
+      stepIds.length === 0 ? 0 : Math.min(current, stepIds.length - 1)
+    );
+  }, [stepsOn, stepIds.length]);
 
   function validateFields(fields: FormFieldDefinition[]): boolean {
     const nextErrors: FieldErrors = {};
     const nextTouched: Record<string, boolean> = {};
 
     for (const field of fields) {
-      if (isNonInputFieldType(field.type) || !isFieldVisible(field, values)) {
+      if (isNonInputFieldType(field.type) || !isFieldVisible(field, values, schema.fields)) {
         continue;
       }
 
@@ -199,6 +210,21 @@ export function RegistrationForm({
     }
 
     if (!validateAllFields()) {
+      if (stepsOn && stepIds.length > 0) {
+        const firstInvalid = stepIds.findIndex((step) =>
+          fieldsForStep(schema.fields, step).some((field) => {
+            if (isNonInputFieldType(field.type) || !isFieldVisible(field, values, schema.fields)) {
+              return false;
+            }
+
+            return validateField(field, values[field.id]) !== null;
+          })
+        );
+        if (firstInvalid >= 0) {
+          setStepIndex(firstInvalid);
+        }
+      }
+
       return;
     }
 
@@ -263,7 +289,7 @@ export function RegistrationForm({
   }
 
   function renderField(field: FormFieldDefinition) {
-    if (!isFieldVisible(field, values)) {
+    if (!isFieldVisible(field, values, schema.fields)) {
       return null;
     }
 

@@ -8,7 +8,8 @@ internal static class VisibleWhenEvaluator
     public static bool IsVisible(
         FormFieldDefinition field,
         ActivityFormSchema schema,
-        IReadOnlyDictionary<string, object?> answers)
+        IReadOnlyDictionary<string, object?> answers,
+        HashSet<string>? visiting = null)
     {
         if (field.VisibleWhen is null)
         {
@@ -16,6 +17,19 @@ internal static class VisibleWhenEvaluator
         }
 
         if (string.IsNullOrWhiteSpace(field.VisibleWhen.FieldId))
+        {
+            return false;
+        }
+
+        visiting ??= new HashSet<string>(StringComparer.Ordinal);
+        if (!visiting.Add(field.Id))
+        {
+            return false;
+        }
+
+        var controller = schema.Fields.FirstOrDefault(candidate =>
+            string.Equals(candidate.Id, field.VisibleWhen.FieldId, StringComparison.Ordinal));
+        if (controller is not null && !IsVisible(controller, schema, answers, visiting))
         {
             return false;
         }

@@ -30,7 +30,7 @@ import {
   DEFAULT_PHONE_COUNTRY,
   getPhonePrefixLabel,
 } from "@/lib/phone-countries";
-import { formStepLabels } from "@/lib/form-steps";
+import { autoBucketField, formStepLabels } from "@/lib/form-steps";
 import { recipeSummary } from "@/lib/form-visibility";
 import { cn } from "@/lib/utils";
 
@@ -159,6 +159,9 @@ export function FormFieldEditor({
 
   function addField() {
     const field = createDefaultField(addType, fieldIds);
+    if (stepsEnabled) {
+      field.step = autoBucketField(field);
+    }
     updateFields([...schema.fields, field]);
     setSelectedIndex(schema.fields.length);
   }
@@ -753,10 +756,23 @@ function RecipePicker({
     <div className="space-y-3 sm:col-span-2">
       <Label htmlFor={`field-recipe-${field.id}`}>Show only when</Label>
       {locked ? (
-        <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-text-muted-warm">
-          Recipes require Core or Pro. Upgrade to hide guest name until “bringing a
-          guest?” is yes.
-        </p>
+        <div className="space-y-2">
+          <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-text-muted-warm">
+            Recipes require Core or Pro. Upgrade to hide guest name until “bringing a
+            guest?” is yes.
+          </p>
+          {rule ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={disabled}
+              onClick={() => onUpdate({ visibleWhen: null })}
+            >
+              Remove Recipe so you can save
+            </Button>
+          ) : null}
+        </div>
       ) : (
         <>
           <select

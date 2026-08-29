@@ -42,6 +42,26 @@ describe("form visibility", () => {
     expect(isFieldVisible(guest, { bringing_guest: "yes" })).toBe(true);
   });
 
+  it("does not unlock a dependent when the controller is itself hidden", () => {
+    const ask: FormFieldDefinition = {
+      ...controller,
+      id: "ask_guest",
+      label: "Ask?",
+    };
+    const bringing: FormFieldDefinition = {
+      ...controller,
+      visibleWhen: { fieldId: "ask_guest", equals: "yes" },
+    };
+
+    expect(
+      isFieldVisible(guest, { ask_guest: "no", bringing_guest: "yes" }, [
+        ask,
+        bringing,
+        guest,
+      ])
+    ).toBe(false);
+  });
+
   it("rejects circular recipes", () => {
     const issues = collectVisibleWhenIssues([
       {

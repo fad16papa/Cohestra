@@ -286,7 +286,11 @@ export function ActivityFormTab({
             type="checkbox"
             className="mt-1 size-4 rounded border-input"
             checked={Boolean(draftSchema.meta?.splitIntoSteps)}
-            disabled={isArchived || isSaving || stepsLocked}
+            disabled={
+              isArchived ||
+              isSaving ||
+              (stepsLocked && !draftSchema.meta?.splitIntoSteps)
+            }
             onChange={(event) => {
               const enabled = event.target.checked;
               setDraftSchema((current) =>

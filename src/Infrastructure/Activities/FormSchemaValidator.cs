@@ -147,7 +147,7 @@ internal static partial class FormSchemaValidator
 
     private static FormFieldVisibleWhen? MapVisibleWhen(FormFieldVisibleWhenDto? rule)
     {
-        if (rule is null)
+        if (rule is null || string.IsNullOrWhiteSpace(rule.FieldId))
         {
             return null;
         }

@@ -1,3 +1,12 @@
+## Deferred from: code review of 31-1-visiblewhen-recipes.md + 31-2-optional-identity-details-consent-steps.md (2026-08-29)
+
+- Runtime does not re-check plan after downgrade — save-time `plan_locked` is the spec; published Forms keep stored Recipes
+- No HTTP integration test for Basic `403 plan_locked` on form-schema save
+- Recipe preset labels all infer as “guest” when `equals=yes`
+- `public-registration-v1.md` does not document the stepper
+- Preview last-step button stays enabled (“Preview only”)
+- No Next/Back component test
+
 ## Deferred from: code review of 19-0-production-readiness-dev.md (2026-08-12)
 
 - Migration `Down()` is no-op (irreversible catalog backfill) — acceptable for data-only migrations

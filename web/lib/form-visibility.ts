@@ -31,11 +31,27 @@ export function normalizeComparableAnswer(value: unknown): string {
 
 export function isFieldVisible(
   field: FormFieldDefinition,
-  answers: Record<string, unknown>
+  answers: Record<string, unknown>,
+  fields: FormFieldDefinition[] = [],
+  visiting: Set<string> = new Set()
 ): boolean {
   const rule = field.visibleWhen;
-  if (!rule?.fieldId) {
+  if (!rule) {
     return true;
+  }
+
+  if (!rule.fieldId.trim()) {
+    return false;
+  }
+
+  if (visiting.has(field.id)) {
+    return false;
+  }
+
+  visiting.add(field.id);
+  const controller = fields.find((candidate) => candidate.id === rule.fieldId);
+  if (controller && !isFieldVisible(controller, answers, fields, visiting)) {
+    return false;
   }
 
   const actual = normalizeComparableAnswer(answers[rule.fieldId]);
