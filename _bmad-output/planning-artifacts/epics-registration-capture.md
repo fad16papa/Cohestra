@@ -592,6 +592,81 @@ So that new Activities start from our Saturday recipe and optionally pick up the
 
 Francis can show Fields only when a Recipe says so, and on Pro optionally step Identity → Details → Consent, without turning the Form into a logic IDE.
 
+**FRs covered:** FR-RC-10, FR-RC-11  
+**Depends on:** Epic 30 Field types (`yes_no`, etc.). Public default stays one page. If a story needs nested AND/OR, calculate, jump-to-page, regex, or “contains,” **stop**.
+
+### Story 31.1: visibleWhen Recipes
+
+As a Core or Pro Operator,
+I want named Recipes (and a simple equals / notEquals custom rule) so a Field shows only when another Field matches,
+So that guest name is required only when Maya is bringing a guest — without a logic IDE.
+
+**Acceptance Criteria:**
+
+**Given** a Core or Pro tenant and a Form that includes a `yes_no` (or equivalent) “Bringing a guest?” Field plus a guest-name Field
+**When** I apply the guest-name Recipe (or custom `visibleWhen: { fieldId, equals: "yes" }`)
+**Then** `form_schema` stores `visibleWhen` additively on version `1`
+**And** circular Recipes are rejected at Form save (`400` ProblemDetails)
+**And** Publish Gate is unchanged (still required phone or email)
+**And** Operator UX is presets (guest name, dietary, member ID, visitor company) plus custom pick Field + value — not a graph (UX-DR-RC-8)
+
+**Given** the public Form
+**When** “Bringing a guest?” is No
+**Then** guest name is not rendered and not required
+**And** submit with empty guest succeeds
+**When** it is Yes
+**Then** guest name is shown and required
+**And** submit with empty guest fails
+
+**Given** a client spoofs an Answer for a Field that is currently invisible
+**When** they POST
+**Then** the server re-validates visibility and **drops** spoofed Answers
+**And** the Registration + Client still succeed when the visible required Fields are valid
+
+**Given** a Basic tenant
+**When** I save `visibleWhen` via API or UI
+**Then** `403 plan_locked`
+
+**Given** any story draft that needs nested AND/OR, calculate, jump-to-page, regex, or “contains”
+**When** that requirement appears
+**Then** this epic stops; do not implement it here
+
+### Story 31.2: Optional Identity → Details → Consent steps
+
+As a Pro Operator,
+I want a single “Split into steps” toggle,
+So that a long Form can be Identity / Details / Consent without making QR-at-the-door a Typeform interview.
+
+**Acceptance Criteria:**
+
+**Given** a Pro tenant
+**When** I turn “Split into steps” **on**
+**Then** Fields auto-bucket: name / phone / email → Identity; consent → Consent; else Details
+**And** I can move a Field between steps **inside the list editor** (not a canvas) (UX-DR24, UX-DR32)
+**And** step labels default Identity / Details / Consent
+**And** preview shows steps and each Field’s bucket (UX-DR-RC-8)
+**And** the toggle is the only enablement — Field count does **not** auto-enable steps
+
+**Given** a 10-Field Form with the toggle on
+**When** a Participant uses Next / Back
+**Then** the current step validates before Next
+**And** there is one submit on the last step
+**And** the Registration + Client are identical to the same Form submitted as a single page
+
+**Given** the toggle is **off** (default)
+**When** a Participant opens `/register/{slug}`
+**Then** there is no stepper chrome
+**And** the public Form stays one page / one-thumb (NFR-RC-3, UX-DR9)
+
+**Given** a Basic or Core tenant
+**When** I enable steps via API or UI
+**Then** `403 plan_locked`
+**And** Core may still use Recipes from 31.1
+
+**Given** Recipes from 31.1 on a stepped Form
+**When** a Field is invisible on the current step
+**Then** it is not required; server still drops spoofed Answers as in 31.1
+
 ## Epic 32: Put the Form where the audience already is
 
 Francis can embed one Activity’s Form on an allow-listed host, or take a homepage Contact that writes a Client with no Activity.
