@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import type { ActivityFormSchema, FormFieldDefinition } from "@/lib/activities-api";
 import { isHiddenFieldType, isNonInputFieldType } from "@/lib/form-schema-utils";
 import { collectHiddenAnswers } from "@/lib/hidden-field-query";
+import { isIsoCalendarDate } from "@/lib/iso-calendar-date";
 import {
   fieldsForStep,
   formStepLabels,
@@ -34,6 +35,8 @@ type RegistrationFormProps = {
 };
 
 type FieldErrors = Record<string, string>;
+
+const TEXTAREA_MAX_LENGTH = 2000;
 
 function validateEmailField(value: unknown, required: boolean): string | null {
   const text = typeof value === "string" ? value.trim() : "";
@@ -90,6 +93,32 @@ function validateField(field: FormFieldDefinition, value: unknown): string | nul
 
   if (field.type === "email") {
     return validateEmailField(value, field.required);
+  }
+
+  if (field.type === "textarea") {
+    const text = typeof value === "string" ? value.trim() : "";
+    if (field.required && !text) {
+      return "This field is required.";
+    }
+
+    if (text.length > TEXTAREA_MAX_LENGTH) {
+      return `This field cannot exceed ${TEXTAREA_MAX_LENGTH} characters.`;
+    }
+
+    return null;
+  }
+
+  if (field.type === "date") {
+    const text = typeof value === "string" ? value.trim() : "";
+    if (field.required && !text) {
+      return "This field is required.";
+    }
+
+    if (text && !isIsoCalendarDate(text)) {
+      return "Enter a valid date.";
+    }
+
+    return null;
   }
 
   const text = typeof value === "string" ? value.trim() : "";
@@ -448,6 +477,83 @@ export function RegistrationForm({
               </option>
             ))}
           </select>
+          {renderFieldError(fieldId, error)}
+        </div>
+      );
+    }
+
+    if (field.type === "textarea") {
+      return (
+        <div key={field.id} className="space-y-2">
+          <Label htmlFor={fieldId}>
+            {field.label}
+            {field.required ? (
+              <span className="text-destructive" aria-hidden>
+                {" "}
+                *
+              </span>
+            ) : null}
+          </Label>
+          <textarea
+            id={fieldId}
+            placeholder={field.placeholder ?? undefined}
+            value={
+              typeof values[field.id] === "string"
+                ? (values[field.id] as string)
+                : ""
+            }
+            onChange={(event) =>
+              setValues((current) => ({
+                ...current,
+                [field.id]: event.target.value,
+              }))
+            }
+            onBlur={() => validateOnBlur(field)}
+            aria-invalid={Boolean(error)}
+            aria-describedby={errorDescribedBy}
+            rows={3}
+            className={cn(
+              "flex min-h-20 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
+              isPublic && "min-h-12 text-base"
+            )}
+          />
+          {renderFieldError(fieldId, error)}
+        </div>
+      );
+    }
+
+    if (field.type === "date") {
+      return (
+        <div key={field.id} className="space-y-2">
+          <Label htmlFor={fieldId}>
+            {field.label}
+            {field.required ? (
+              <span className="text-destructive" aria-hidden>
+                {" "}
+                *
+              </span>
+            ) : null}
+          </Label>
+          <Input
+            id={fieldId}
+            type="date"
+            placeholder={field.placeholder ?? undefined}
+            value={
+              typeof values[field.id] === "string"
+                ? (values[field.id] as string)
+                : ""
+            }
+            onChange={(event) =>
+              setValues((current) => ({
+                ...current,
+                [field.id]: event.target.value,
+              }))
+            }
+            onBlur={() => validateOnBlur(field)}
+            aria-invalid={Boolean(error)}
+            aria-describedby={errorDescribedBy}
+            className={publicControlClass}
+          />
           {renderFieldError(fieldId, error)}
         </div>
       );

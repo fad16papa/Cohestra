@@ -72,6 +72,8 @@ Referenced by:
 | `consent`          | Consent block (Board Game template) | `consentText` required |
 | `referral_source`  | “How did you hear about us?” | `options` required |
 | `hidden`           | Campaign query passthrough (v1.1 additive; `version` stays `1`) | No Participant UI. Optional `defaultValue`. Field `id` is the query key (`ref` → `?ref=wa`). May be `required: true` but does not satisfy the Publish Gate and never blocks submit. No `placeholder` / `options` / `consentText` / `phoneCountry`. |
+| `textarea`         | Long text / notes (v1.1 additive; `version` stays `1`) | Multi-line string. Answers max 2000 after HTML strip. Same name heuristics as `text` for Client extract. Does **not** satisfy the Publish Gate. No `options` / `consentText` / `phoneCountry` / `defaultValue`. Placeholder allowed. |
+| `date`             | Calendar date (v1.1 additive; `version` stays `1`) | Answer must be `YYYY-MM-DD` (valid calendar date). Not mapped to a Client column. No min/max, disabled weekdays, ranges, or timezone math. Does **not** satisfy the Publish Gate. No `options` / `consentText` / `phoneCountry` / `defaultValue`. Placeholder allowed. |
 
 ## Validation (API)
 

@@ -16,7 +16,7 @@ internal static class FormFieldStepAssigner
             return FormFieldSteps.Identity;
         }
 
-        if (field.Type == FormFieldTypes.Text && LooksLikeName(field.Id))
+        if ((field.Type is FormFieldTypes.Text or FormFieldTypes.Textarea) && LooksLikeName(field.Id))
         {
             return FormFieldSteps.Identity;
         }

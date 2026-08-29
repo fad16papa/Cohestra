@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { FormFieldDefinition } from "@/lib/activities-api";
-import { getFormSchemaClientIssues } from "@/lib/form-schema-utils";
+import { createFieldId, getFormSchemaClientIssues } from "@/lib/form-schema-utils";
 
 function field(
   overrides: Partial<FormFieldDefinition> & Pick<FormFieldDefinition, "id" | "type">
@@ -15,6 +15,15 @@ function field(
     ...overrides,
   };
 }
+
+describe("createFieldId", () => {
+  it("prefers notes and date when those ids are free", () => {
+    expect(createFieldId("textarea", new Set())).toBe("notes");
+    expect(createFieldId("date", new Set())).toBe("date");
+    expect(createFieldId("textarea", new Set(["notes"]))).toBe("notes-2");
+    expect(createFieldId("date", new Set(["date"]))).toBe("date-2");
+  });
+});
 
 describe("getFormSchemaClientIssues", () => {
   it("rejects defaultValue on non-hidden fields", () => {

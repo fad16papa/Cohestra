@@ -37,6 +37,28 @@ describe("form steps", () => {
         consentText: null,
       })
     ).toBe("details");
+    expect(
+      autoBucketField({
+        id: "full_name",
+        type: "textarea",
+        label: "Name",
+        required: false,
+        placeholder: null,
+        options: null,
+        consentText: null,
+      })
+    ).toBe("identity");
+    expect(
+      autoBucketField({
+        id: "preferred_date",
+        type: "date",
+        label: "Preferred date",
+        required: false,
+        placeholder: null,
+        options: null,
+        consentText: null,
+      })
+    ).toBe("details");
   });
 
   it("fills missing buckets only when the toggle is on", () => {

@@ -19,7 +19,7 @@ export function autoBucketField(field: FormFieldDefinition): FormFieldStep {
 
   const id = field.id.toLowerCase();
   if (
-    field.type === "text" &&
+    (field.type === "text" || field.type === "textarea") &&
     (id === "full_name" || id === "name" || id.includes("full_name"))
   ) {
     return "identity";

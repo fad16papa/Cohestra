@@ -41,6 +41,8 @@ Keys in `answers` must match field `id` values from [activity-form-schema-v1.md]
 | Field type                         | JSON value type | Example |
 |------------------------------------|-----------------|---------|
 | `text`, `phone`, `email`           | string          | `"Elena Santos"` |
+| `textarea`                         | string          | `"Prefers Saturday mornings"` (max 2000 after HTML strip; over-length is `400`, not truncated) |
+| `date`                             | string          | `"2026-09-12"` (`YYYY-MM-DD` calendar date; invalid values are `400`) |
 | `select`, `referral_source`        | string          | `"friend"` (option `value`) |
 | `checkbox`, `consent`              | boolean         | `true` |
 | `hidden`                           | string          | `"wa"` (max 200 after HTML strip). Query key = Field `id`. Missing/blank uses operator `defaultValue`. Never required for submit. |

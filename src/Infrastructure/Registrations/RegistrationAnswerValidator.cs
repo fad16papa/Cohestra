@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Cohestra.Domain.Activities;
 using Cohestra.Infrastructure.Activities;
@@ -6,6 +7,9 @@ namespace Cohestra.Infrastructure.Registrations;
 
 internal static class RegistrationAnswerValidator
 {
+    internal const int TextareaMaxLength = 2000;
+    private const string DateFormat = "yyyy-MM-dd";
+
     public static string? Validate(
         ActivityFormSchema? schema,
         IReadOnlyDictionary<string, object?> answers)
@@ -121,6 +125,25 @@ internal static class RegistrationAnswerValidator
             }
         }
 
+        if (field.Type == FormFieldTypes.Textarea)
+        {
+            var sanitized = HiddenValueSanitizer.Sanitize(text);
+            if (string.IsNullOrWhiteSpace(sanitized))
+            {
+                return field.Required ? $"{field.Label} is required." : null;
+            }
+
+            if (sanitized.Length > TextareaMaxLength)
+            {
+                return $"{field.Label} cannot exceed {TextareaMaxLength} characters.";
+            }
+        }
+
+        if (field.Type == FormFieldTypes.Date && !TryParseIsoDate(text, out _))
+        {
+            return $"{field.Label} must be a valid date (YYYY-MM-DD).";
+        }
+
         return null;
     }
 
@@ -180,12 +203,43 @@ internal static class RegistrationAnswerValidator
 
             if (TryGetString(rawValue, out var text))
             {
+                if (field.Type == FormFieldTypes.Textarea)
+                {
+                    var sanitized = HiddenValueSanitizer.Sanitize(text);
+                    if (string.IsNullOrEmpty(sanitized))
+                    {
+                        continue;
+                    }
+
+                    normalized[field.Id] = sanitized;
+                    continue;
+                }
+
+                if (field.Type == FormFieldTypes.Date)
+                {
+                    if (!TryParseIsoDate(text, out var date))
+                    {
+                        continue;
+                    }
+
+                    normalized[field.Id] = date.ToString(DateFormat, CultureInfo.InvariantCulture);
+                    continue;
+                }
+
                 normalized[field.Id] = text.Trim();
             }
         }
 
         return normalized;
     }
+
+    private static bool TryParseIsoDate(string text, out DateOnly date) =>
+        DateOnly.TryParseExact(
+            text.Trim(),
+            DateFormat,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.None,
+            out date);
 
     internal static bool TryGetStringForExtraction(object? rawValue, out string text) =>
         TryGetString(rawValue, out text);

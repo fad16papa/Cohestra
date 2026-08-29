@@ -165,6 +165,93 @@ public sealed class RegistrationAnswerValidatorTests
     }
 
     [Fact]
+    public void Validate_AcceptsTextareaAtMaxLengthAfterStrip()
+    {
+        var error = RegistrationAnswerValidator.Validate(
+            LongTextSchema(),
+            ContactAnswers(("notes", new string('a', 2000))));
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void Validate_TextareaOverMaxLengthAfterStrip_Fails()
+    {
+        var error = RegistrationAnswerValidator.Validate(
+            LongTextSchema(),
+            ContactAnswers(("notes", new string('a', 2001))));
+
+        Assert.NotNull(error);
+        Assert.Contains("2000", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_TextareaHtmlOnlyWhenRequired_Fails()
+    {
+        var schema = LongTextSchema(requiredNotes: true);
+        var error = RegistrationAnswerValidator.Validate(
+            schema,
+            ContactAnswers(("notes", "<b></b>")));
+
+        Assert.NotNull(error);
+        Assert.Contains("Notes", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NormalizeAnswers_StripsHtmlFromTextarea()
+    {
+        var normalized = RegistrationAnswerValidator.NormalizeAnswers(
+            LongTextSchema(),
+            ContactAnswers(("notes", "<b>Saturday mornings</b>")));
+
+        Assert.Equal("Saturday mornings", normalized["notes"]);
+    }
+
+    [Fact]
+    public void Validate_AcceptsValidDate()
+    {
+        var error = RegistrationAnswerValidator.Validate(
+            LongTextSchema(),
+            ContactAnswers(("preferred_date", "2026-09-12")));
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void Validate_RejectsImpossibleAndNonIsoDates()
+    {
+        var impossible = RegistrationAnswerValidator.Validate(
+            LongTextSchema(),
+            ContactAnswers(("preferred_date", "2026-02-30")));
+        Assert.NotNull(impossible);
+        Assert.Contains("YYYY-MM-DD", impossible, StringComparison.Ordinal);
+
+        var garbage = RegistrationAnswerValidator.Validate(
+            LongTextSchema(),
+            ContactAnswers(("preferred_date", "not-a-date")));
+        Assert.NotNull(garbage);
+        Assert.Contains("YYYY-MM-DD", garbage, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_MissingOptionalDate_Succeeds()
+    {
+        var error = RegistrationAnswerValidator.Validate(LongTextSchema(), ContactAnswers());
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void NormalizeAnswers_StoresIsoDate()
+    {
+        var normalized = RegistrationAnswerValidator.NormalizeAnswers(
+            LongTextSchema(),
+            ContactAnswers(("preferred_date", "  2026-09-12  ")));
+
+        Assert.Equal("2026-09-12", normalized["preferred_date"]);
+    }
+
+    [Fact]
     public void NormalizeAnswers_IgnoresUnknownAnswerKeys()
     {
         var normalized = RegistrationAnswerValidator.NormalizeAnswers(
@@ -174,6 +261,35 @@ public sealed class RegistrationAnswerValidatorTests
         Assert.False(normalized.ContainsKey("utm_source"));
         Assert.Equal("wa", normalized["ref"]);
     }
+
+    private static ActivityFormSchema LongTextSchema(bool requiredNotes = false) =>
+        new()
+        {
+            Version = 1,
+            Fields =
+            [
+                new FormFieldDefinition
+                {
+                    Id = "email",
+                    Type = FormFieldTypes.Email,
+                    Label = "Email",
+                    Required = true,
+                },
+                new FormFieldDefinition
+                {
+                    Id = "notes",
+                    Type = FormFieldTypes.Textarea,
+                    Label = "Notes",
+                    Required = requiredNotes,
+                },
+                new FormFieldDefinition
+                {
+                    Id = "preferred_date",
+                    Type = FormFieldTypes.Date,
+                    Label = "Preferred date",
+                },
+            ],
+        };
 
     private static ActivityFormSchema HiddenContactSchema(bool required = false) =>
         new()

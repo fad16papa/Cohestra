@@ -170,6 +170,61 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void ValidateModel_AcceptsTextareaAndDateBesideHidden()
+    {
+        var schema = ContactSchema(
+            new FormFieldDefinition
+            {
+                Id = "ref",
+                Type = FormFieldTypes.Hidden,
+                Label = "Campaign ref",
+            },
+            new FormFieldDefinition
+            {
+                Id = "notes",
+                Type = FormFieldTypes.Textarea,
+                Label = "Notes",
+                Placeholder = "Anything we should know?",
+            },
+            new FormFieldDefinition
+            {
+                Id = "preferred_date",
+                Type = FormFieldTypes.Date,
+                Label = "Preferred date",
+            });
+
+        Assert.Null(FormSchemaValidator.ValidateModel(schema));
+    }
+
+    [Fact]
+    public void ValidateModel_RejectsTextareaOptionsAndDefaultValue()
+    {
+        var withOptions = ContactSchema(
+            new FormFieldDefinition
+            {
+                Id = "notes",
+                Type = FormFieldTypes.Textarea,
+                Label = "Notes",
+                Options = [new FormFieldOption { Value = "a", Label = "A" }],
+            });
+        var optionsError = FormSchemaValidator.ValidateModel(withOptions);
+        Assert.NotNull(optionsError);
+        Assert.Contains("options", optionsError, StringComparison.Ordinal);
+
+        var withDefault = ContactSchema(
+            new FormFieldDefinition
+            {
+                Id = "notes",
+                Type = FormFieldTypes.Textarea,
+                Label = "Notes",
+                DefaultValue = "hello",
+            });
+        var defaultError = FormSchemaValidator.ValidateModel(withDefault);
+        Assert.NotNull(defaultError);
+        Assert.Contains("defaultValue", defaultError, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidateModel_RejectsUnknownFieldType()
     {
         var schema = ContactSchema(
@@ -185,6 +240,8 @@ public sealed class FormSchemaValidatorTests
         Assert.NotNull(error);
         Assert.Contains("must be one of:", error, StringComparison.Ordinal);
         Assert.Contains("hidden", error, StringComparison.Ordinal);
+        Assert.Contains("textarea", error, StringComparison.Ordinal);
+        Assert.Contains("date", error, StringComparison.Ordinal);
     }
 
     [Fact]

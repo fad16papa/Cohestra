@@ -11,6 +11,8 @@ public static class FormFieldTypes
     public const string ReferralSource = "referral_source";
     public const string SectionHeader = "section_header";
     public const string Hidden = "hidden";
+    public const string Textarea = "textarea";
+    public const string Date = "date";
 
     public static readonly HashSet<string> All =
     [
@@ -23,6 +25,8 @@ public static class FormFieldTypes
         ReferralSource,
         SectionHeader,
         Hidden,
+        Textarea,
+        Date,
     ];
 
     public static readonly HashSet<string> NonInput =

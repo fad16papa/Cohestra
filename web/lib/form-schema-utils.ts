@@ -12,6 +12,8 @@ import { collectVisibleWhenIssues } from "@/lib/form-visibility";
 
 export const formFieldTypeLabels: Record<FormFieldType, string> = {
   text: "Text",
+  textarea: "Long text",
+  date: "Date",
   phone: "Phone",
   email: "Email",
   select: "Select",
@@ -24,6 +26,8 @@ export const formFieldTypeLabels: Record<FormFieldType, string> = {
 
 export const formFieldTypeOptions: FormFieldType[] = [
   "text",
+  "textarea",
+  "date",
   "phone",
   "email",
   "select",
@@ -57,12 +61,22 @@ export function createFieldId(type: FormFieldType, existingIds: Set<string>): st
     return "ref";
   }
 
+  if (type === "textarea" && !existingIds.has("notes")) {
+    return "notes";
+  }
+
+  if (type === "date" && !existingIds.has("date")) {
+    return "date";
+  }
+
   const base =
     type === "referral_source"
       ? "referral"
       : type === "hidden"
         ? "hidden"
-        : type.replace("_", "-");
+        : type === "textarea"
+          ? "notes"
+          : type.replace("_", "-");
   let candidate = base;
   let suffix = 2;
 
@@ -82,6 +96,22 @@ export function createDefaultField(
   const defaults: Record<FormFieldType, Omit<FormFieldDefinition, "id" | "type">> = {
     text: {
       label: "Text field",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    textarea: {
+      label: "Notes",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    date: {
+      label: "Date",
       required: false,
       placeholder: null,
       options: null,

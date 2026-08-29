@@ -6,6 +6,8 @@ export type ActivityStatus = "draft" | "published" | "archived";
 
 export type FormFieldType =
   | "text"
+  | "textarea"
+  | "date"
   | "phone"
   | "email"
   | "select"

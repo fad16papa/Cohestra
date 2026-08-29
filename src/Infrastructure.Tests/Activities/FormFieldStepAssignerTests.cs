@@ -36,6 +36,20 @@ public sealed class FormFieldStepAssignerTests
                 Id = "notes",
                 Type = FormFieldTypes.Text,
             }));
+        Assert.Equal(
+            FormFieldSteps.Identity,
+            FormFieldStepAssigner.AutoBucket(new FormFieldDefinition
+            {
+                Id = "full_name",
+                Type = FormFieldTypes.Textarea,
+            }));
+        Assert.Equal(
+            FormFieldSteps.Details,
+            FormFieldStepAssigner.AutoBucket(new FormFieldDefinition
+            {
+                Id = "preferred_date",
+                Type = FormFieldTypes.Date,
+            }));
     }
 
     [Fact]

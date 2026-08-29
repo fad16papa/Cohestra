@@ -204,7 +204,7 @@ internal static partial class FormSchemaValidator
 
         if (string.IsNullOrWhiteSpace(field.Type) || !FormFieldTypes.All.Contains(field.Type))
         {
-            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header, hidden.";
+            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header, hidden, textarea, date.";
         }
 
         if (field.Type != FormFieldTypes.Hidden && field.DefaultValue is not null)
