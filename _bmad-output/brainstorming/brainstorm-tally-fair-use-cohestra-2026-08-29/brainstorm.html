@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fair use — Tally’s scale vs Cohestra’s wall</title>
+  <style>
+    :root { --ink: #1a1612; --paper: #f7f1e8; --wall: #c45c26; --soft: #2f6f4e; --rule: #d9cfc0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Iowan Old Style", Georgia, serif; background: var(--paper); color: var(--ink); line-height: 1.45; }
+    header { padding: 48px 28px 24px; max-width: 880px; margin: 0 auto; }
+    h1 { font-size: 2.4rem; font-weight: 600; letter-spacing: -0.03em; margin: 0 0 8px; }
+    .sub { color: #5c5348; font-size: 1.05rem; }
+    main { max-width: 880px; margin: 0 auto; padding: 0 28px 80px; }
+    .scale { margin: 32px 0 40px; }
+    .scale p { margin: 0 0 10px; font-size: 0.92rem; color: #5c5348; }
+    .bar { height: 28px; background: #efe6d8; border-radius: 4px; overflow: hidden; position: relative; margin: 8px 0 20px; }
+    .bar i { display: block; height: 100%; }
+    .tally { width: 100%; background: var(--soft); }
+    .basic { width: 0.5%; background: var(--wall); min-width: 4px; }
+    .core { width: 1%; background: #e08a3c; min-width: 6px; }
+    .pro { width: 10%; background: #3d6b8a; }
+    .lbl { display: flex; justify-content: space-between; font-size: 0.85rem; font-family: ui-sans-serif, system-ui, sans-serif; }
+    h2 { font-size: 1.35rem; margin: 36px 0 12px; }
+    .steal { border-left: 4px solid var(--soft); padding: 12px 16px; background: #e8f0ea; margin: 16px 0; }
+    .dont { border-left: 4px solid var(--wall); padding: 12px 16px; background: #f8ebe3; margin: 16px 0; }
+    ul { padding-left: 1.2em; }
+    li { margin: 6px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; font-family: ui-sans-serif, system-ui, sans-serif; }
+    th, td { border-bottom: 1px solid var(--rule); text-align: left; padding: 8px 6px; vertical-align: top; }
+    th { font-weight: 600; }
+    footer { margin-top: 48px; font-size: 0.85rem; color: #7a7166; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>The wall vs the conversation</h1>
+    <p class="sub">Tally meters pressure and then <em>talks</em>. Cohestra meters the queue and then <em>stops Saturday</em>.</p>
+  </header>
+  <main>
+    <div class="scale">
+      <p>Same month, same unit — registrations. Bars are to Tally’s 50k fair-use <em>conversation</em> (not a hard kill).</p>
+      <div class="lbl"><span>Tally free (soft ~50,000)</span><span>talk, don’t 403</span></div>
+      <div class="bar"><i class="tally"></i></div>
+      <div class="lbl"><span>Cohestra Pro 5,000</span><span>hard</span></div>
+      <div class="bar"><i class="pro"></i></div>
+      <div class="lbl"><span>Core 500 · Basic 250</span><span>the wall Francis hits</span></div>
+      <div class="bar"><i class="core"></i></div>
+      <div class="bar"><i class="basic"></i></div>
+    </div>
+
+    <h2>Can we pattern it?</h2>
+    <div class="steal">
+      <strong>Yes — the approach.</strong> Don’t kill the job. Meter infra and depth. Warn, talk, custom plan. Occasional spikes are fine.
+    </div>
+    <div class="dont">
+      <strong>No — the costume.</strong> Don’t tattoo 50,000 on the pricing page. Don’t make Basic a Tally clone. Don’t 403 a QR because Paddle hasn’t invoiced yet.
+    </div>
+
+    <h2>What each product is selling</h2>
+    <table>
+      <thead><tr><th></th><th>Tally</th><th>Cohestra today</th></tr></thead>
+      <tbody>
+        <tr><td>Free promise</td><td>Unlimited forms &amp; submits (fair use)</td><td>250 regs, 4 activities, 1 community</td></tr>
+        <tr><td>Paid promise</td><td>Logo off, domain, teams, CSS</td><td>Website, seats, campaigns</td></tr>
+        <tr><td>When you get big</td><td>Email + quarterly custom on top</td><td>Public submit returns plan limit</td></tr>
+        <tr><td>Wedge</td><td>A document that emits rows</td><td>A Registration that emits a person</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Patterns that survived the room</h2>
+    <ul>
+      <li><strong>B — Uncap the queue, sell the club.</strong> Unlimited registrations; keep seats, communities, activities, website, campaigns. Recommended.</li>
+      <li><strong>C — Never fail the public POST</strong> for plan limit. Operator sees usage. Invoice later.</li>
+      <li><strong>E — Generous Basic capture</strong> so Francis never opens Tally; paid is the OS.</li>
+      <li><strong>D — 10× the hard caps</strong> if we need a one-line code change and no ops.</li>
+    </ul>
+
+    <h2>Ideas that died (usefully)</h2>
+    <ul>
+      <li>Meter Clients stored — taxes the wedge.</li>
+      <li>Copy Tally’s quarterly custom invoice before we have someone to send it.</li>
+      <li>Fair-use unlimited without bot friction — a scraper farm.</li>
+      <li>Keep 250 as the brand of “free forever” — that’s a Tally ad.</li>
+    </ul>
+
+    <footer>Brainstorm 2026-08-29 · Registration Capture stay separate. This is a billing/limits conversation.</footer>
+  </main>
+</body>
+</html>
