@@ -9,7 +9,8 @@ public sealed record FormSchemaMetaDto(
     string? SuccessCopyMarkdown = null,
     string? ConfirmationEmailSubject = null,
     string? ConfirmationEmailBodyMarkdown = null,
-    string? ClosedMessage = null);
+    string? ClosedMessage = null,
+    DateTimeOffset? RegistrationClosesAt = null);
 
 public sealed record ActivityFormSchemaDto(
     int Version,

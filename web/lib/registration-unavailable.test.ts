@@ -26,6 +26,7 @@ describe("registration-unavailable", () => {
   it("maps unavailable reasons to reason chips", () => {
     expect(resolveRegistrationUnavailableChip("full")).toBe("Full");
     expect(resolveRegistrationUnavailableChip("plan-limit")).toBe("Paused");
+    expect(resolveRegistrationUnavailableChip("close-at")).toBe("Closed");
     expect(resolveRegistrationUnavailableChip("unavailable", "published")).toBe("Ended");
     expect(resolveRegistrationUnavailableChip("unavailable", "archived")).toBe("Closed");
     expect(resolveRegistrationUnavailableChip("not-found")).toBeNull();

@@ -29,7 +29,11 @@ export async function generateMetadata({
   }
 
   const indexable =
-    result.activity.isRegistrationOpen && result.activity.status === "published";
+    result.activity.status === "published" &&
+    result.activity.isRegistrationOpen &&
+    !result.activity.isRegistrationFull &&
+    !result.activity.isRegistrationPaused &&
+    !result.activity.isRegistrationClosedAt;
 
   return buildActivityRegistrationMetadata(result.activity, origin, {
     indexable,
@@ -55,14 +59,14 @@ export default async function PublicRegistrationPage({
   const websiteLink = origin ? buildPublisherWebsiteLink(door, origin) : null;
   const closedMessage = activity.formSchema?.meta?.closedMessage ?? null;
 
-  if (!activity.isRegistrationOpen) {
+  if (activity.isRegistrationFull) {
     return (
       <PublicRegistrationUnavailable
         slug={slug}
         activityName={activity.name}
         activityStatus={activity.status}
         closedMessage={closedMessage}
-        reason="unavailable"
+        reason="full"
       />
     );
   }
@@ -79,14 +83,26 @@ export default async function PublicRegistrationPage({
     );
   }
 
-  if (activity.isRegistrationFull) {
+  if (activity.isRegistrationClosedAt) {
     return (
       <PublicRegistrationUnavailable
         slug={slug}
         activityName={activity.name}
         activityStatus={activity.status}
         closedMessage={closedMessage}
-        reason="full"
+        reason="close-at"
+      />
+    );
+  }
+
+  if (!activity.isRegistrationOpen) {
+    return (
+      <PublicRegistrationUnavailable
+        slug={slug}
+        activityName={activity.name}
+        activityStatus={activity.status}
+        closedMessage={closedMessage}
+        reason="unavailable"
       />
     );
   }

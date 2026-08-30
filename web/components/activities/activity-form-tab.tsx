@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { LayoutTemplate } from "lucide-react";
 
 import { FormFieldEditor } from "@/components/activities/form-field-editor";
+import { ActivityCloseAtPicker } from "@/components/activities/activity-close-at-picker";
 import { FormTemplatePicker } from "@/components/activities/form-template-picker";
 import { PipingCheatsheet } from "@/components/activities/piping-cheatsheet";
 import { RegistrationForm } from "@/components/registration/registration-form";
@@ -41,6 +42,10 @@ import {
 } from "@/lib/form-templates";
 import { applyMissingStepBuckets } from "@/lib/form-steps";
 import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
+import {
+  closeAtDateTimeLocalToUtcIso,
+  toCloseAtDateTimeLocal,
+} from "@/lib/registration-close-at";
 import { cn } from "@/lib/utils";
 
 const publishedTemplateLockReason =
@@ -98,6 +103,12 @@ export function ActivityFormTab({
   ].join("|");
   const introMarkdown = draftSchema.meta?.introMarkdown ?? null;
   const closedMessage = draftSchema.meta?.closedMessage ?? null;
+  const registrationClosesAt = draftSchema.meta?.registrationClosesAt ?? null;
+  const registrationTimeZoneId = shell?.registrationTimeZoneId ?? "UTC";
+  const closeAtDateTimeLocal = toCloseAtDateTimeLocal(
+    registrationClosesAt,
+    registrationTimeZoneId
+  );
   const successCopyMarkdown = draftSchema.meta?.successCopyMarkdown ?? null;
   const confirmationEmailSubject = draftSchema.meta?.confirmationEmailSubject ?? null;
   const confirmationEmailBodyMarkdown =
@@ -330,6 +341,44 @@ export function ActivityFormTab({
         <p className="text-xs text-text-muted-warm">
           Plain text and paragraph breaks only. HTML is stripped on the public page.
         </p>
+      </section>
+
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+        <div>
+          <h3 className="text-section text-text-warm">Close-at</h3>
+          <p className="mt-0.5 text-sm text-text-muted-warm">
+            Optional date and time when the public form stops accepting registrations.
+            Shown in your organization timezone.
+          </p>
+        </div>
+        <ActivityCloseAtPicker
+          value={closeAtDateTimeLocal}
+          timeZoneId={registrationTimeZoneId}
+          disabled={isArchived || isSaving}
+          onChange={(nextLocal) => {
+            const nextUtc = closeAtDateTimeLocalToUtcIso(nextLocal, registrationTimeZoneId);
+            setDraftSchema((current) => ({
+              ...current,
+              meta: mergeFormSchemaMeta(current, { registrationClosesAt: nextUtc }),
+            }));
+          }}
+        />
+        {registrationClosesAt ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={isArchived || isSaving}
+            onClick={() =>
+              setDraftSchema((current) => ({
+                ...current,
+                meta: mergeFormSchemaMeta(current, { registrationClosesAt: null }),
+              }))
+            }
+          >
+            Clear Close-at
+          </Button>
+        ) : null}
       </section>
 
       <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">

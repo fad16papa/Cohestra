@@ -74,6 +74,7 @@ export function mergeFormSchemaMeta(
     confirmationEmailSubject: current.meta?.confirmationEmailSubject ?? null,
     confirmationEmailBodyMarkdown: current.meta?.confirmationEmailBodyMarkdown ?? null,
     closedMessage: current.meta?.closedMessage ?? null,
+    registrationClosesAt: current.meta?.registrationClosesAt ?? null,
     ...patch,
   };
 }

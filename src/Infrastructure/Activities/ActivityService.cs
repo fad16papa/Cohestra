@@ -842,10 +842,14 @@ public sealed class ActivityService(
             .Where(tenant => tenant.Id == activity.TenantId)
             .Select(tenant => tenant.RegistrationTimeZoneId)
             .FirstOrDefaultAsync(cancellationToken) ?? RegistrationTimeZoneDefaults.Utc;
+        var utcNow = DateTimeOffset.UtcNow;
         var isRegistrationOpen = ActivityScheduleExpiration.IsRegistrationOpen(
             activity,
             tenantTimeZoneId,
-            DateTimeOffset.UtcNow);
+            utcNow);
+        var isRegistrationClosedAt = RegistrationCloseAtEvaluator.IsPastCloseAt(
+            activity.FormSchema,
+            utcNow);
 
         return new PublicActivityResponse(
             activity.Slug,
@@ -865,7 +869,8 @@ public sealed class ActivityService(
             activity.MaxRegistrants,
             registrationCount,
             ActivityCapacityValidator.IsRegistrationFull(activity.MaxRegistrants, registrationCount),
-            IsRegistrationPaused: false);
+            IsRegistrationPaused: false,
+            isRegistrationClosedAt);
     }
 
     private async Task<PublicActivityResponse> EnrichWithRegistrationPauseStateAsync(
@@ -873,11 +878,6 @@ public sealed class ActivityService(
         Guid tenantId,
         CancellationToken cancellationToken)
     {
-        if (!response.IsRegistrationOpen)
-        {
-            return response;
-        }
-
         var tenant = await dbContext.Tenants
             .AsNoTracking()
             .Where(item => item.Id == tenantId)
@@ -965,8 +965,15 @@ public sealed class ActivityService(
             probe,
             tenantTimeZoneId,
             DateTimeOffset.UtcNow);
+        var isRegistrationClosedAt = RegistrationCloseAtEvaluator.IsPastCloseAt(
+            cached.FormSchema,
+            DateTimeOffset.UtcNow);
 
-        return cached with { IsRegistrationOpen = isRegistrationOpen };
+        return cached with
+        {
+            IsRegistrationOpen = isRegistrationOpen,
+            IsRegistrationClosedAt = isRegistrationClosedAt,
+        };
     }
 
     private async Task<string?> ValidateActivityCatalogAsync(

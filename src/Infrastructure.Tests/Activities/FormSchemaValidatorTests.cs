@@ -284,6 +284,34 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void MapToDomain_NormalizesRegistrationClosesAtToUtc()
+    {
+        var dto = new ActivityFormSchemaDto(
+            1,
+            [
+                new FormFieldDefinitionDto(
+                    "email",
+                    FormFieldTypes.Email,
+                    "Email",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+            ],
+            new FormSchemaMetaDto(
+                IntroMarkdown: null,
+                RegistrationClosesAt: new DateTimeOffset(2026, 9, 1, 18, 0, 0, TimeSpan.FromHours(8))));
+
+        var schema = FormSchemaValidator.MapToDomain(dto);
+
+        Assert.NotNull(schema.Meta?.RegistrationClosesAt);
+        Assert.Equal(
+            new DateTimeOffset(2026, 9, 1, 10, 0, 0, TimeSpan.Zero),
+            schema.Meta!.RegistrationClosesAt!.Value.ToUniversalTime());
+    }
+
+    [Fact]
     public void ValidateModel_AcceptsHiddenFieldWithDefaultValue()
     {
         var schema = ContactSchema(

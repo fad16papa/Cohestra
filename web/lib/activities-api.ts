@@ -64,6 +64,7 @@ export type FormSchemaMeta = {
   confirmationEmailSubject?: string | null;
   confirmationEmailBodyMarkdown?: string | null;
   closedMessage?: string | null;
+  registrationClosesAt?: string | null;
 };
 
 export type ActivityFormSchema = {
@@ -169,6 +170,8 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
     const confirmationEmailBodyMarkdown =
       metaRecord.confirmationEmailBodyMarkdown ?? metaRecord.ConfirmationEmailBodyMarkdown;
     const closedMessage = metaRecord.closedMessage ?? metaRecord.ClosedMessage;
+    const registrationClosesAt =
+      metaRecord.registrationClosesAt ?? metaRecord.RegistrationClosesAt;
     meta = {
       introMarkdown:
         typeof introMarkdown === "string" && introMarkdown.trim()
@@ -191,6 +194,10 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
       closedMessage:
         typeof closedMessage === "string" && closedMessage.trim()
           ? closedMessage
+          : null,
+      registrationClosesAt:
+        typeof registrationClosesAt === "string" && registrationClosesAt.trim()
+          ? registrationClosesAt.trim()
           : null,
     };
   }
