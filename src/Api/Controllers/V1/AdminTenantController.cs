@@ -65,6 +65,48 @@ public sealed class AdminTenantController(
         return Ok(response);
     }
 
+    [HttpGet("notifications")]
+    [ProducesResponseType(typeof(TenantNotificationSettingsResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TenantNotificationSettingsResponse>> GetNotificationSettings(
+        CancellationToken cancellationToken)
+    {
+        var tenantId = currentTenant.TenantId;
+        if (tenantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await tenantOrganizationService.GetNotificationSettingsAsync(
+            tenantId.Value,
+            cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpPatch("notifications")]
+    [ProducesResponseType(typeof(TenantNotificationSettingsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<TenantNotificationSettingsResponse>> UpdateNotificationSettings(
+        [FromBody] UpdateTenantNotificationSettingsRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        var tenantId = currentTenant.TenantId;
+        if (tenantId is null)
+        {
+            return Unauthorized();
+        }
+
+        var response = await tenantOrganizationService.UpdateNotificationSettingsAsync(
+            tenantId.Value,
+            request.EmailOnNewRegistration,
+            cancellationToken);
+        return Ok(response);
+    }
+
     private ActionResult BadRequestProblem(string detail) =>
         Problem(detail: detail, statusCode: StatusCodes.Status400BadRequest, title: "Validation failed");
 }

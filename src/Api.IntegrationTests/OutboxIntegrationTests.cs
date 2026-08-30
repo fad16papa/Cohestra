@@ -51,4 +51,41 @@ public sealed class OutboxIntegrationTests(IntegrationTestFixture fixture)
         Assert.NotNull(outbox);
         Assert.Equal(OutboxMessageStatus.Pending, outbox!.Status);
     }
+
+    [SkippableFact]
+    public async Task RegistrationSubmit_EnqueuesOperatorNotifyOutboxMessage()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var slug = $"outbox-op-{Guid.NewGuid():N}"[..20];
+        await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, slug);
+
+        using var client = Factory.CreateClient();
+        client.DefaultRequestHeaders.Host = $"{TenantIds.DefaultSlug}.localhost";
+
+        var response = await IntegrationTestHelpers.SubmitRegistrationAsync(
+            client,
+            slug,
+            new Dictionary<string, object?>
+            {
+                ["full_name"] = "Operator Notify User",
+                ["phone"] = "09181234568",
+                ["email"] = $"operator-notify-{Guid.NewGuid():N}@example.com",
+                ["consent"] = true,
+            });
+
+        await using var scope = Factory.Services.CreateAsyncScope();
+        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
+        var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+
+        var outbox = await db.OutboxMessages
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                message =>
+                    message.MessageType == OutboxMessageTypes.RegistrationOperatorNotify
+                    && message.DedupeKey == $"registration:{response.RegistrationId}:operator_notify");
+
+        Assert.NotNull(outbox);
+        Assert.Equal(OutboxMessageStatus.Pending, outbox!.Status);
+    }
 }

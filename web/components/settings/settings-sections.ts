@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Bell,
   Globe,
   LifeBuoy,
   Palette,
@@ -12,6 +13,7 @@ export type SettingsSectionId =
   | "settings-plan"
   | "settings-brand"
   | "settings-organization"
+  | "settings-notifications"
   | "settings-domain"
   | "settings-account"
   | "settings-support"
@@ -56,6 +58,14 @@ export const settingsSections: SettingsSectionMeta[] = [
     description: "Registration month timezone and limits.",
     group: "workspace",
     icon: Globe,
+    adminOnly: true,
+  },
+  {
+    id: "settings-notifications",
+    label: "Notifications",
+    description: "Email alerts when someone registers.",
+    group: "workspace",
+    icon: Bell,
     adminOnly: true,
   },
   {
