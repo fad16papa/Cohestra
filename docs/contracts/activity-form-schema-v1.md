@@ -27,6 +27,7 @@ Referenced by:
 | `meta.successCopyMarkdown` | string | no | Thank-you screen copy with piping tokens (max 2000). Hidden values never substitute. |
 | `meta.confirmationEmailSubject` | string | no | Confirmation email subject with piping tokens (max 200). Layout unchanged. |
 | `meta.confirmationEmailBodyMarkdown` | string | no | Confirmation email closing message with piping tokens (max 2000). Layout unchanged. |
+| `meta.closedMessage` | string | no | Operator copy when the public Form is unavailable (max 2000). Markdown-lite; HTML stripped on render. Reason chip still shows. |
 
 ### Piping tokens (v1.1 additive)
 

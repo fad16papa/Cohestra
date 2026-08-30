@@ -97,6 +97,7 @@ export function ActivityFormTab({
     ),
   ].join("|");
   const introMarkdown = draftSchema.meta?.introMarkdown ?? null;
+  const closedMessage = draftSchema.meta?.closedMessage ?? null;
   const successCopyMarkdown = draftSchema.meta?.successCopyMarkdown ?? null;
   const confirmationEmailSubject = draftSchema.meta?.confirmationEmailSubject ?? null;
   const confirmationEmailBodyMarkdown =
@@ -294,6 +295,35 @@ export function ActivityFormTab({
             setDraftSchema((current) => ({
               ...current,
               meta: mergeFormSchemaMeta(current, { introMarkdown: nextIntro }),
+            }));
+          }}
+        />
+        <p className="text-xs text-text-muted-warm">
+          Plain text and paragraph breaks only. HTML is stripped on the public page.
+        </p>
+      </section>
+
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+        <div>
+          <h3 className="text-section text-text-warm">Closed message</h3>
+          <p className="mt-0.5 text-sm text-text-muted-warm">
+            Optional copy when the form is unavailable (full, paused, or ended). A reason chip
+            still shows for clarity.
+          </p>
+        </div>
+        <textarea
+          id="form-closed-message"
+          rows={4}
+          maxLength={2000}
+          value={closedMessage ?? ""}
+          disabled={isArchived || isSaving}
+          placeholder="Waitlist opens Monday on WhatsApp."
+          className="flex min-h-[5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+          onChange={(event) => {
+            const next = event.target.value.trim() ? event.target.value : null;
+            setDraftSchema((current) => ({
+              ...current,
+              meta: mergeFormSchemaMeta(current, { closedMessage: next }),
             }));
           }}
         />

@@ -24,6 +24,9 @@ public sealed class FormSchemaMeta
 
     /// <summary>Confirmation email body message with piping tokens. Layout unchanged.</summary>
     public string? ConfirmationEmailBodyMarkdown { get; set; }
+
+    /// <summary>Operator copy when the public Form is unavailable. Markdown-lite, max 2000.</summary>
+    public string? ClosedMessage { get; set; }
 }
 
 public sealed class FormFieldDefinition

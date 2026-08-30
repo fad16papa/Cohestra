@@ -193,6 +193,33 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void ValidateModel_RejectsClosedMessageOverMaxLength()
+    {
+        var schema = ContactSchema();
+        schema.Meta = new FormSchemaMeta
+        {
+            ClosedMessage = new string('a', 2001),
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("Closed message", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateModel_AcceptsClosedMessageInMeta()
+    {
+        var schema = ContactSchema();
+        schema.Meta = new FormSchemaMeta
+        {
+            ClosedMessage = "Waitlist opens Monday on WhatsApp.",
+        };
+
+        Assert.Null(FormSchemaValidator.ValidateModel(schema));
+    }
+
+    [Fact]
     public void ValidateModel_RejectsConfirmationEmailSubjectWithLineBreaks()
     {
         var schema = ContactSchema();
@@ -245,13 +272,15 @@ public sealed class FormSchemaValidatorTests
                 SplitIntoSteps: false,
                 SuccessCopyMarkdown: "  See you, {{full_name}}  ",
                 ConfirmationEmailSubject: "  Hi {{full_name}}  ",
-                ConfirmationEmailBodyMarkdown: "  Thanks {{full_name}}  "));
+                ConfirmationEmailBodyMarkdown: "  Thanks {{full_name}}  ",
+                ClosedMessage: "  Waitlist opens Monday  "));
 
         var schema = FormSchemaValidator.MapToDomain(dto);
 
         Assert.Equal("See you, {{full_name}}", schema.Meta?.SuccessCopyMarkdown);
         Assert.Equal("Hi {{full_name}}", schema.Meta?.ConfirmationEmailSubject);
         Assert.Equal("Thanks {{full_name}}", schema.Meta?.ConfirmationEmailBodyMarkdown);
+        Assert.Equal("Waitlist opens Monday", schema.Meta?.ClosedMessage);
     }
 
     [Fact]

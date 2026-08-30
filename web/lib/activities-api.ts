@@ -63,6 +63,7 @@ export type FormSchemaMeta = {
   successCopyMarkdown?: string | null;
   confirmationEmailSubject?: string | null;
   confirmationEmailBodyMarkdown?: string | null;
+  closedMessage?: string | null;
 };
 
 export type ActivityFormSchema = {
@@ -167,6 +168,7 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
       metaRecord.confirmationEmailSubject ?? metaRecord.ConfirmationEmailSubject;
     const confirmationEmailBodyMarkdown =
       metaRecord.confirmationEmailBodyMarkdown ?? metaRecord.ConfirmationEmailBodyMarkdown;
+    const closedMessage = metaRecord.closedMessage ?? metaRecord.ClosedMessage;
     meta = {
       introMarkdown:
         typeof introMarkdown === "string" && introMarkdown.trim()
@@ -185,6 +187,10 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
         typeof confirmationEmailBodyMarkdown === "string" &&
         confirmationEmailBodyMarkdown.trim()
           ? confirmationEmailBodyMarkdown
+          : null,
+      closedMessage:
+        typeof closedMessage === "string" && closedMessage.trim()
+          ? closedMessage
           : null,
     };
   }

@@ -73,6 +73,7 @@ export function mergeFormSchemaMeta(
     successCopyMarkdown: current.meta?.successCopyMarkdown ?? null,
     confirmationEmailSubject: current.meta?.confirmationEmailSubject ?? null,
     confirmationEmailBodyMarkdown: current.meta?.confirmationEmailBodyMarkdown ?? null,
+    closedMessage: current.meta?.closedMessage ?? null,
     ...patch,
   };
 }

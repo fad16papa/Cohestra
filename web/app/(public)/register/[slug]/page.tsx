@@ -53,12 +53,15 @@ export default async function PublicRegistrationPage({
   const { activity } = result;
   const [door, origin] = await Promise.all([fetchPublicDoorServer(), getRequestOrigin()]);
   const websiteLink = origin ? buildPublisherWebsiteLink(door, origin) : null;
+  const closedMessage = activity.formSchema?.meta?.closedMessage ?? null;
 
   if (!activity.isRegistrationOpen) {
     return (
       <PublicRegistrationUnavailable
         slug={slug}
         activityName={activity.name}
+        activityStatus={activity.status}
+        closedMessage={closedMessage}
         reason="unavailable"
       />
     );
@@ -69,6 +72,8 @@ export default async function PublicRegistrationPage({
       <PublicRegistrationUnavailable
         slug={slug}
         activityName={activity.name}
+        activityStatus={activity.status}
+        closedMessage={closedMessage}
         reason="plan-limit"
       />
     );
@@ -79,6 +84,8 @@ export default async function PublicRegistrationPage({
       <PublicRegistrationUnavailable
         slug={slug}
         activityName={activity.name}
+        activityStatus={activity.status}
+        closedMessage={closedMessage}
         reason="full"
       />
     );
