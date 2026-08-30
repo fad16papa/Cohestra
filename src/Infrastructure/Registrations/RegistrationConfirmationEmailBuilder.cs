@@ -208,7 +208,11 @@ internal static class RegistrationConfirmationEmailBuilder
     internal static string ResolveClosingMessage(RegistrationConfirmationEmailModel model) =>
         string.IsNullOrWhiteSpace(model.CustomClosingMessage)
             ? DefaultClosingMessage
-            : model.CustomClosingMessage.Trim();
+            : NormalizeLineEndings(model.CustomClosingMessage.Trim());
+
+    internal static string NormalizeLineEndings(string text) =>
+        text.Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace("\r", "\n", StringComparison.Ordinal);
 
     internal static string SanitizeEmailSubject(string subject) =>
         Regex.Replace(subject.Trim(), @"[\r\n]+", " ", RegexOptions.CultureInvariant).Trim();

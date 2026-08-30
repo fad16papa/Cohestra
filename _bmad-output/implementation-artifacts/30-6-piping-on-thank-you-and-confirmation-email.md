@@ -104,7 +104,7 @@ So that Maya sees “See you Saturday, Maya” without a hardcoded name — and 
 
 ### Review Findings (Pass 3)
 
-- [ ] [Review][Patch] Confirmation closing message HTML splits on `\n` only; lone `\r` from `\r\n` body copy can survive in output [`RegistrationConfirmationEmailBuilder.cs:221-223`]
+- [x] [Review][Patch] Confirmation closing message HTML splits on `\n` only; lone `\r` from `\r\n` body copy can survive in output [`RegistrationConfirmationEmailBuilder.cs:221-223`]
 
 - [x] [Review][Defer] Post-substitution unknown/unclosed token sweeps can strip literal `{{…}}` inside piped field **answers** (e.g. notes value `I use {{mustache}}`) [`RegistrationPipingTokenSubstitutor.cs:30-31`, `registration-piping.ts:69-71`] — deferred, low likelihood; fix needs template-only sanitization pass
 - [x] [Review][Defer] All-empty token substitution returns `null` success copy (template set but every token empty) [`RegistrationService.cs:392`] — deferred, indistinguishable from unset in API

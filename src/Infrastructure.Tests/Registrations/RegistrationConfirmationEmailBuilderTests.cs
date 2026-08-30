@@ -103,6 +103,22 @@ public sealed class RegistrationConfirmationEmailBuilderTests
     }
 
     [Fact]
+    public void Build_NormalizesCarriageReturnsInCustomClosingMessage()
+    {
+        var content = RegistrationConfirmationEmailBuilder.Build(
+            CreateModel() with
+            {
+                CustomClosingMessage = "Line one\r\nLine two\rLine three",
+            });
+
+        Assert.Contains("Line one", content.PlainTextBody);
+        Assert.Contains("Line two", content.PlainTextBody);
+        Assert.Contains("Line three", content.PlainTextBody);
+        Assert.DoesNotContain("\r", content.HtmlBody);
+        Assert.Contains("Line one<br />Line two<br />Line three", content.HtmlBody);
+    }
+
+    [Fact]
     public void ResolveLogoUrl_UsesPublicWebBaseWhenLogoUrlNotConfigured()
     {
         var url = RegistrationNotificationService.ResolveLogoUrl(
