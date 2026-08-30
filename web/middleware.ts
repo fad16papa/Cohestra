@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import {
+  buildEmbedRouteSecurityHeaders,
+  fetchPublicEmbedOrigins,
+  isEmbedPath,
+} from "@/lib/embed-csp";
 import { resolvePaddleApexReturnRedirectUrl } from "@/lib/billing/paddle-return";
 import {
   requestOriginFromHeaders,
@@ -8,7 +13,7 @@ import {
 } from "@/lib/platform-ops-host";
 
 /** Preserve Host for downstream server components (Story 15.1). */
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   const proto =
     request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
@@ -37,9 +42,22 @@ export function middleware(request: NextRequest) {
     requestHeaders.set("x-forwarded-host", host);
   }
 
-  return NextResponse.next({
+  const response = NextResponse.next({
     request: { headers: requestHeaders },
   });
+
+  if (isEmbedPath(request.nextUrl.pathname)) {
+    const origins = await fetchPublicEmbedOrigins(request);
+    const embedHeaders = buildEmbedRouteSecurityHeaders(origins);
+    for (const [key, value] of Object.entries(embedHeaders)) {
+      response.headers.set(key, value);
+    }
+
+    // CSP frame-ancestors takes precedence; omit DENY so parent frames can embed when allowed.
+    response.headers.delete("X-Frame-Options");
+  }
+
+  return response;
 }
 
 export const config = {

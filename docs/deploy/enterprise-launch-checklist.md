@@ -72,6 +72,7 @@ Optional apex check is included when `PUBLIC_BASE_URL` is set (see script sectio
 - [x] **P1 shipped (Story 17.4):** Operator auth OTP verify throttling; refresh revoke-all; production secret validation; security headers; OpenAPI dev-only; HtmlSanitizer ≥ 9.0.892
 - [x] **P2 shipped (Story 18.3):** Security header ownership — **nginx** owns headers in Docker/production (`app.conf`, `app-ssl.conf.template`); **Next.js** emits them only in `next dev` (`web/security-headers.ts`). Nginx `proxy_hide_header` strips upstream duplicates on `/`.
 - [x] **P2 shipped (Story 18.2):** CSP baseline — **enforce** policy (`Content-Security-Policy`) owned by nginx in Docker/production; Next.js emits dev variant in `next dev`. Canonical policy in `web/content-security-policy.ts`.
+- [x] **Epic 32 / Story 32.1:** Registration embed CSP — global `frame-ancestors 'none'` unchanged for admin, marketing, and `/register/*`. **`/embed/*` only:** Next middleware sets tenant-scoped `frame-ancestors` from Settings allow-list; nginx `/embed/` location block skips global `X-Frame-Options` / CSP so upstream headers apply (`deploy/nginx/app.conf`, `app-ssl.conf.template`). Empty allow-list → `'none'`.
 
 **Verify single header values (Docker on port 8088):**
 
@@ -106,7 +107,12 @@ v1 ships **enforce** — `Content-Security-Policy` (not Report-Only). Canonical 
 
 ```bash
 curl -sI -H "Host: default.localhost:8088" http://localhost:8088/ | grep -i content-security-policy
-# Expect: Content-Security-Policy: ... (NOT Report-Only)
+# Expect: Content-Security-Policy: ... frame-ancestors 'none' ...
+
+# Embed route (Story 32.1) — after saving allow-list in Settings:
+curl -sI -H "Host: default.localhost:8088" http://localhost:8088/embed/register/demo-slug | grep -i content-security-policy
+# Expect: frame-ancestors includes configured origins, or 'none' when allow-list empty
+# Expect: no X-Frame-Options: DENY on /embed/*
 ```
 
 Run SM-1 locally (Postgres + Redis required):

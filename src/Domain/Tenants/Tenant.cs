@@ -89,4 +89,10 @@ public sealed class Tenant
 
     /// <summary>Set when DNS verification succeeds for <see cref="CustomDomain"/>.</summary>
     public DateTimeOffset? CustomDomainVerifiedAt { get; set; }
+
+    /// <summary>
+    /// Origins allowed to iframe public embed routes (e.g. https://www.notion.so).
+    /// Empty list keeps frame-ancestors 'none'.
+    /// </summary>
+    public List<string> AllowedEmbedOrigins { get; set; } = [];
 }

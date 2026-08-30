@@ -6,12 +6,14 @@ import {
   Settings2,
   Sparkles,
   User,
+  Frame,
 } from "lucide-react";
 
 export type SettingsSectionId =
   | "settings-plan"
   | "settings-brand"
   | "settings-organization"
+  | "settings-embed"
   | "settings-domain"
   | "settings-account"
   | "settings-support"
@@ -56,6 +58,14 @@ export const settingsSections: SettingsSectionMeta[] = [
     description: "Registration month timezone and limits.",
     group: "workspace",
     icon: Globe,
+    adminOnly: true,
+  },
+  {
+    id: "settings-embed",
+    label: "Allowed embed hosts",
+    description: "Origins that may iframe your registration embed.",
+    group: "workspace",
+    icon: Frame,
     adminOnly: true,
   },
   {

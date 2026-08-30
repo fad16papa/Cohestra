@@ -52,6 +52,11 @@ function sectionTips(activeId: SettingsSectionId): { title: string; body: string
         title: "Timezone",
         body: "Changing timezone recalculates this month's registration count immediately for plan enforcement.",
       };
+    case "settings-embed":
+      return {
+        title: "Embed framing",
+        body: "Only listed origins can iframe /embed/register. Public /register links and admin pages always deny framing.",
+      };
     case "settings-domain":
       return {
         title: "Enterprise",

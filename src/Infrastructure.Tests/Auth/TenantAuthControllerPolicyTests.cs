@@ -24,6 +24,7 @@ public sealed class TenantAuthControllerPolicyTests
     [InlineData(typeof(EmailDeliveryController), TenantAuthPolicies.TenantAdminOnly, false)]
     [InlineData(typeof(TeamController), TenantAuthPolicies.TenantAdminOnly, false)]
     [InlineData(typeof(BillingController), TenantAuthPolicies.TenantAdminOnly, false)]
+    [InlineData(typeof(AdminTenantEmbedController), TenantAuthPolicies.TenantOperator, false)]
     public void Controller_uses_expected_membership_policy(Type controller, string policy, bool requireProPlan)
     {
         var authorize = controller.GetCustomAttributes<AuthorizeAttribute>(inherit: true).ToArray();

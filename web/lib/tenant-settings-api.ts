@@ -73,3 +73,50 @@ export async function updateTenantRegistrationTimeZone(
   }
   return parseResponse(raw);
 }
+
+export type TenantEmbedSettings = {
+  allowedEmbedOrigins: string[];
+};
+
+export function parseEmbedSettingsResponse(raw: Record<string, unknown>): TenantEmbedSettings {
+  const originsRaw = raw.allowedEmbedOrigins ?? raw.AllowedEmbedOrigins;
+  const allowedEmbedOrigins = Array.isArray(originsRaw)
+    ? originsRaw.filter((item): item is string => typeof item === "string")
+    : [];
+
+  return { allowedEmbedOrigins };
+}
+
+export async function fetchTenantEmbedSettings(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>
+): Promise<TenantEmbedSettings> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/tenant/embed-settings`
+  );
+  const raw = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    const detail = raw.detail ?? raw.Detail;
+    throw new Error(typeof detail === "string" ? detail : "Could not load embed settings.");
+  }
+  return parseEmbedSettingsResponse(raw);
+}
+
+export async function updateTenantEmbedSettings(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  allowedEmbedOrigins: string[]
+): Promise<TenantEmbedSettings> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/tenant/embed-settings`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ allowedEmbedOrigins }),
+    }
+  );
+  const raw = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    const detail = raw.detail ?? raw.Detail;
+    throw new Error(typeof detail === "string" ? detail : "Could not update embed settings.");
+  }
+  return parseEmbedSettingsResponse(raw);
+}

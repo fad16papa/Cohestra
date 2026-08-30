@@ -301,6 +301,13 @@ development_status:
   29-7-paddle-sandbox-uat-epic-14-regression: done
   epic-29-retrospective: optional
 
+  # Epic 32 — Registration embed (allowed hosts + iframe route)
+  epic-32: in-progress
+  32-1-allowed-embed-hosts-and-csp: done
+  32-2-activity-embed-route-and-share-kit-snippet: backlog
+  32-3-website-contact-section-creates-a-client: backlog
+  epic-32-retrospective: optional
+
 action_items:
   - epic: 16
     action: "Run Epic 16 UAT on local Docker: Share kit, OG unfurl, homepage WhatsApp, publish tenant URL"
