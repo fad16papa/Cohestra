@@ -100,7 +100,20 @@ So that Maya sees “See you Saturday, Maya” without a hardcoded name — and 
 - [x] [Review][Defer] Client `getFormSchemaClientIssues` omits piping meta max-length mirrors [`form-schema-utils.ts`] — deferred, HTML maxLength + server gate sufficient
 - [x] [Review][Defer] Unused `encodedName` in email HTML builder [`RegistrationConfirmationEmailBuilder.cs:88`] — deferred, pre-existing dead assignment
 
-Status: done
+**Pass 2 verdict:** AC1–AC3 satisfied. Pass 2 patches applied.
+
+### Review Findings (Pass 3)
+
+- [ ] [Review][Patch] Confirmation closing message HTML splits on `\n` only; lone `\r` from `\r\n` body copy can survive in output [`RegistrationConfirmationEmailBuilder.cs:221-223`]
+
+- [x] [Review][Defer] Post-substitution unknown/unclosed token sweeps can strip literal `{{…}}` inside piped field **answers** (e.g. notes value `I use {{mustache}}`) [`RegistrationPipingTokenSubstitutor.cs:30-31`, `registration-piping.ts:69-71`] — deferred, low likelihood; fix needs template-only sanitization pass
+- [x] [Review][Defer] All-empty token substitution returns `null` success copy (template set but every token empty) [`RegistrationService.cs:392`] — deferred, indistinguishable from unset in API
+- [x] [Review][Defer] Token insert can push draft past `maxLength` without client-side truncate [`activity-form-tab.tsx`] — deferred, HTML maxLength + server validator catch on save
+
+- [x] [Review][Dismiss] Emergency fields are piping-eligible (third-party contact is participant-visible by design) [`registration-piping.ts`, `RegistrationPipingTokenSubstitutor.cs`]
+- [x] [Review][Dismiss] Cheatsheet lists both `{{email}}` and `{{field:email}}` when an email field exists — redundant but not incorrect [`piping-cheatsheet.tsx`]
+
+**Pass 3 verdict:** AC1–AC3 satisfied (Acceptance Auditor). **713** .NET + **6** Vitest tests pass. One optional hygiene patch (closing `\r`); no blockers.
 
 ## Dev Agent Record
 
