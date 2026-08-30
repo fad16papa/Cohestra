@@ -94,6 +94,18 @@ So that Maya cannot register after my deadline even when the Activity is still u
 
 - [x] [Review][Dismiss] No dedicated validator test asserting past Close-at at save is allowed — implementation has no future-date guard; behavior correct by omission
 
+### Review Findings (Pass 2)
+
+- [x] [Review][Patch] Close-at picker value is derived from saved UTC on every render; partial `datetime-local` edits are ignored so the input resets until the field is cleared [`activity-form-tab.tsx:107-111`, `activity-close-at-picker.tsx`]
+
+- [x] [Review][Defer] Schedule-ended submit now validates answers and runs client dedup before returning 404 — side effect of duplicate-before-Close-at reorder [`RegistrationService.cs:210-249`] — deferred, dedup is idempotent; ended activities are low traffic
+
+- [x] [Review][Defer] Stale tab submit with invalid answers after Close-at returns 400 validation error instead of 409 closed [`RegistrationService.cs:210-249`] — deferred, availability requires valid payload to identify returning registrants
+
+- [x] [Review][Defer] Close-at picker uses UTC when tenant shell is still loading [`activity-form-tab.tsx:107`] — deferred, shell resolves quickly; operator can re-save after load
+
+**Pass 2 verdict:** All patch findings applied. AC1–AC3 satisfied; Pass 1 patches verified. **730** .NET + **8** Vitest tests pass.
+
 ## Dev Agent Record
 
 ### Completion Notes

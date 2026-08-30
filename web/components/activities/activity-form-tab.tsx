@@ -42,10 +42,6 @@ import {
 } from "@/lib/form-templates";
 import { applyMissingStepBuckets } from "@/lib/form-steps";
 import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
-import {
-  closeAtDateTimeLocalToUtcIso,
-  toCloseAtDateTimeLocal,
-} from "@/lib/registration-close-at";
 import { cn } from "@/lib/utils";
 
 const publishedTemplateLockReason =
@@ -105,10 +101,6 @@ export function ActivityFormTab({
   const closedMessage = draftSchema.meta?.closedMessage ?? null;
   const registrationClosesAt = draftSchema.meta?.registrationClosesAt ?? null;
   const registrationTimeZoneId = shell?.registrationTimeZoneId ?? "UTC";
-  const closeAtDateTimeLocal = toCloseAtDateTimeLocal(
-    registrationClosesAt,
-    registrationTimeZoneId
-  );
   const successCopyMarkdown = draftSchema.meta?.successCopyMarkdown ?? null;
   const confirmationEmailSubject = draftSchema.meta?.confirmationEmailSubject ?? null;
   const confirmationEmailBodyMarkdown =
@@ -352,31 +344,15 @@ export function ActivityFormTab({
           </p>
         </div>
         <ActivityCloseAtPicker
-          value={closeAtDateTimeLocal}
+          isoUtc={registrationClosesAt}
           timeZoneId={registrationTimeZoneId}
           disabled={isArchived || isSaving}
-          onChange={(nextLocal) => {
-            if (!nextLocal.trim()) {
-              setDraftSchema((current) => ({
-                ...current,
-                meta: mergeFormSchemaMeta(current, { registrationClosesAt: null }),
-              }));
-              return;
-            }
-
-            const nextUtc = closeAtDateTimeLocalToUtcIso(
-              nextLocal,
-              registrationTimeZoneId
-            );
-            if (nextUtc === null) {
-              return;
-            }
-
+          onChange={(nextUtc) =>
             setDraftSchema((current) => ({
               ...current,
               meta: mergeFormSchemaMeta(current, { registrationClosesAt: nextUtc }),
-            }));
-          }}
+            }))
+          }
         />
         {registrationClosesAt ? (
           <Button

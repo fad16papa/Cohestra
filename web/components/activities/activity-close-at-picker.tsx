@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Calendar } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import {
   closeAtDateTimeLocalToUtcIso,
   formatCloseAtPreview,
+  toCloseAtDateTimeLocal,
 } from "@/lib/registration-close-at";
 
 type ActivityCloseAtPickerProps = {
-  value: string;
-  onChange: (dateTimeLocal: string) => void;
+  isoUtc: string | null;
+  onChange: (isoUtc: string | null) => void;
   timeZoneId: string;
   disabled?: boolean;
 };
@@ -21,14 +22,34 @@ const dateTimeInputClassName =
   "pl-10 [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-8 [&::-webkit-calendar-picker-indicator]:cursor-pointer";
 
 export function ActivityCloseAtPicker({
-  value,
+  isoUtc,
   onChange,
   timeZoneId,
   disabled = false,
 }: ActivityCloseAtPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const previewIso = value ? closeAtDateTimeLocalToUtcIso(value, timeZoneId) : null;
-  const preview = previewIso ? formatCloseAtPreview(previewIso, timeZoneId) : null;
+  const committedLocal = toCloseAtDateTimeLocal(isoUtc, timeZoneId);
+  const [localValue, setLocalValue] = useState(committedLocal);
+
+  useEffect(() => {
+    setLocalValue(committedLocal);
+  }, [committedLocal]);
+
+  const preview = isoUtc ? formatCloseAtPreview(isoUtc, timeZoneId) : null;
+
+  function handleChange(nextLocal: string) {
+    setLocalValue(nextLocal);
+
+    if (!nextLocal.trim()) {
+      onChange(null);
+      return;
+    }
+
+    const nextUtc = closeAtDateTimeLocalToUtcIso(nextLocal, timeZoneId);
+    if (nextUtc !== null) {
+      onChange(nextUtc);
+    }
+  }
 
   function openPicker() {
     const input = inputRef.current;
@@ -66,8 +87,8 @@ export function ActivityCloseAtPicker({
           id="form-close-at"
           type="datetime-local"
           disabled={disabled}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
+          value={localValue}
+          onChange={(event) => handleChange(event.target.value)}
           className={dateTimeInputClassName}
         />
       </div>
