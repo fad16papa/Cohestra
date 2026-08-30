@@ -154,6 +154,19 @@ So that Maya sees “See you Saturday, Maya” without a hardcoded name — and 
 
 **Pass 5 verdict:** AC1–AC3 satisfied (Acceptance Auditor). **718** .NET + **6** Vitest tests pass. Two optional hygiene patches (line-ending normalization on non-subject surfaces); no blockers.
 
+### Review Findings (Pass 6)
+
+- [x] [Review][Defer] Thank-you live preview renders single `<p>` without paragraph split or line-ending normalization; can diverge from success screen [`activity-form-tab.tsx:338-343`, `registration-piping.ts`] — deferred, operator preview polish not in AC
+- [x] [Review][Defer] Client `.trim()` on parsed `successCopyMarkdown` drops intentional leading/trailing whitespace [`public-registration-api.ts:197-200`] — deferred, consistent with other optional meta fields
+- [x] [Review][Defer] Single `\n` within success-screen paragraph collapses (no `pre-line`); email closing uses `<br />` for single newlines — deferred, pass 1/2 carry-over
+- [x] [Review][Defer] Generic “Save the date…” sign-off always shown; idempotency replay omits `successCopyMarkdown` — deferred, documented v1 tradeoffs
+- [x] [Review][Defer] Field token lookup case-insensitive on schema id but answer key uses canonical `field.Id` — deferred, answers normalized at persist
+
+- [x] [Review][Dismiss] `SanitizeEmailSubject` leaves double spaces after newline collapse (e.g. `\n\n` → two spaces) — cosmetic, valid subject
+- [x] [Review][Dismiss] `participantVisible` parameter always `true` in substitutor — dead abstraction, no behavioral impact
+
+**Pass 6 verdict:** ✅ Clean review — all layers passed. AC1–AC3 satisfied (Acceptance Auditor). Edge Case Hunter: no unhandled paths. **720** .NET + **8** Vitest tests pass. No patch findings.
+
 ## Dev Agent Record
 
 ### Agent Model Used
