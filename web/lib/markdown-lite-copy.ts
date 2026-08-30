@@ -15,3 +15,7 @@ export function splitMarkdownLiteParagraphs(value: string): string[] {
     .map((part) => part.trim())
     .filter(Boolean);
 }
+
+export function hasRenderableMarkdownLiteCopy(value: string | null | undefined): boolean {
+  return splitMarkdownLiteParagraphs(value ?? "").length > 0;
+}

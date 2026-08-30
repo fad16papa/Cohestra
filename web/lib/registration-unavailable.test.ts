@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { splitMarkdownLiteParagraphs, sanitizeMarkdownLite } from "@/lib/markdown-lite-copy";
+import { splitMarkdownLiteParagraphs, sanitizeMarkdownLite, hasRenderableMarkdownLiteCopy } from "@/lib/markdown-lite-copy";
 import { resolveRegistrationUnavailableChip } from "@/lib/registration-unavailable";
 
 describe("markdown-lite-copy", () => {
@@ -13,6 +13,12 @@ describe("markdown-lite-copy", () => {
       "First",
       "Second",
     ]);
+  });
+
+  it("treats HTML-only strings as non-renderable", () => {
+    expect(hasRenderableMarkdownLiteCopy("<b></b>")).toBe(false);
+    expect(hasRenderableMarkdownLiteCopy("<img src=x onerror=alert(1)>")).toBe(false);
+    expect(hasRenderableMarkdownLiteCopy("Waitlist opens Monday")).toBe(true);
   });
 });
 

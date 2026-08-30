@@ -57,9 +57,9 @@ So that Maya sees “Waitlist opens Monday on WhatsApp” instead of only platfo
 
 ### Review Findings (Pass 1)
 
-- [ ] [Review][Patch] `operatorCopy` uses raw trim, not post-sanitize content; HTML-only values (e.g. `"<b></b>"`) suppress platform title/description but render nothing [`public-registration-unavailable.tsx:55,70-88`]
+- [x] [Review][Patch] `operatorCopy` uses raw trim, not post-sanitize content; HTML-only values (e.g. `"<b></b>"`) suppress platform title/description but render nothing [`public-registration-unavailable.tsx:55,70-88`]
 
-- [ ] [Review][Patch] Reason chip uses `text-primary` on `bg-primary/10`; dark-mode computed contrast ~3.5:1 (fails WCAG 2.2 AA 4.5:1 for small text) [`public-registration-unavailable.tsx:65-66`]
+- [x] [Review][Patch] Reason chip uses `text-primary` on `bg-primary/10`; dark-mode computed contrast ~3.5:1 (fails WCAG 2.2 AA 4.5:1 for small text) [`public-registration-unavailable.tsx:65-66`]
 
 - [x] [Review][Defer] Client HTML strip via regex only (no entity decode); same pattern as intro copy — deferred, React text nodes + strip sufficient for v1 [`markdown-lite-copy.ts:4`]
 - [x] [Review][Defer] No server-side HTML strip on save for `closedMessage`; max-length only — deferred, matches intro/success copy meta pattern [`FormSchemaValidator.cs:80-83`]
@@ -70,7 +70,7 @@ So that Maya sees “Waitlist opens Monday on WhatsApp” instead of only platfo
 - [x] [Review][Dismiss] `error` / `not-found` paths could show operator copy if prop passed — page never passes `closedMessage` for those reasons [`page.tsx:45-50`]
 - [x] [Review][Dismiss] `activityStatus` undefined maps unavailable → Closed chip — page always passes status on wired routes [`registration-unavailable.ts:24-25`]
 
-**Pass 1 verdict:** AC1 partial fail (sanitize-to-empty fallback); AC2 partial fail (dark chip contrast). **722** .NET + **3** Vitest tests pass. Two patch findings; no blockers beyond AC gaps above.
+**Pass 1 verdict:** AC1–AC2 satisfied after patches. **722** .NET + **5** Vitest tests pass. Two patch findings applied.
 
 ## Dev Agent Record
 

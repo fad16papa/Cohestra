@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { ActivityStatus } from "@/lib/activities-api";
+import { hasRenderableMarkdownLiteCopy } from "@/lib/markdown-lite-copy";
 import { PUBLIC_PLAN_REGISTRATION_LIMIT_COPY } from "@/lib/public-registration-messages";
 import {
   type PublicRegistrationUnavailableReason,
@@ -52,7 +53,7 @@ export function PublicRegistrationUnavailable({
 }: PublicRegistrationUnavailableProps) {
   const platformCopy = resolvePlatformCopy(reason);
   const reasonChip = resolveRegistrationUnavailableChip(reason, activityStatus);
-  const operatorCopy = closedMessage?.trim() ?? "";
+  const useOperatorCopy = hasRenderableMarkdownLiteCopy(closedMessage);
 
   return (
     <Card className="border-border-warm bg-card">
@@ -62,12 +63,12 @@ export function PublicRegistrationUnavailable({
         </CardDescription>
         {reasonChip ? (
           <p className="mt-2">
-            <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-primary">
+            <span className="inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-primary-foreground">
               {reasonChip}
             </span>
           </p>
         ) : null}
-        {!operatorCopy ? (
+        {!useOperatorCopy ? (
           <CardTitle className="text-public-hero text-text-warm">
             {platformCopy.title}
           </CardTitle>
@@ -77,9 +78,9 @@ export function PublicRegistrationUnavailable({
         {activityName ? (
           <p className="text-sm font-medium text-text-warm">{activityName}</p>
         ) : null}
-        {operatorCopy ? (
+        {useOperatorCopy ? (
           <RegistrationMarkdownLiteCopy
-            copy={operatorCopy}
+            copy={closedMessage ?? ""}
             className="space-y-3 text-left sm:text-center"
             paragraphClassName="text-sm leading-relaxed text-text-warm"
           />
