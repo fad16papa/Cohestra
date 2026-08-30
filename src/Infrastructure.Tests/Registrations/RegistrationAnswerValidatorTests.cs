@@ -269,6 +269,48 @@ public sealed class RegistrationAnswerValidatorTests
     }
 
     [Fact]
+    public void Validate_MultiChoiceMinAboveInt32_ReturnsErrorInsteadOfThrowing()
+    {
+        var schema = new ActivityFormSchema
+        {
+            Version = 1,
+            Fields =
+            [
+                new FormFieldDefinition
+                {
+                    Id = "email",
+                    Type = FormFieldTypes.Email,
+                    Label = "Email",
+                    Required = true,
+                },
+                new FormFieldDefinition
+                {
+                    Id = "days",
+                    Type = FormFieldTypes.MultiChoice,
+                    Label = "Days",
+                    Min = (decimal)int.MaxValue + 1,
+                    Options =
+                    [
+                        new FormFieldOption { Value = "sat", Label = "Saturday" },
+                        new FormFieldOption { Value = "sun", Label = "Sunday" },
+                    ],
+                },
+            ],
+        };
+
+        var error = RegistrationAnswerValidator.Validate(
+            schema,
+            new Dictionary<string, object?>
+            {
+                ["email"] = "guest@example.com",
+                ["days"] = new[] { "sat" },
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("at least", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void NormalizeAnswers_IgnoresUnknownAnswerKeys()
     {
         var normalized = RegistrationAnswerValidator.NormalizeAnswers(

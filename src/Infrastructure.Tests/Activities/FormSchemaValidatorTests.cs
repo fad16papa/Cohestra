@@ -268,6 +268,29 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void ValidateModel_RejectsMultiChoiceMinAboveOptionCount()
+    {
+        var schema = ContactSchema(
+            new FormFieldDefinition
+            {
+                Id = "days",
+                Type = FormFieldTypes.MultiChoice,
+                Label = "Days",
+                Min = 3,
+                Options =
+                [
+                    new FormFieldOption { Value = "sat", Label = "Saturday" },
+                    new FormFieldOption { Value = "sun", Label = "Sunday" },
+                ],
+            });
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("min cannot exceed the number of options", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidateModel_RejectsTextareaOptionsAndDefaultValue()
     {
         var withOptions = ContactSchema(

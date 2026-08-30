@@ -2,7 +2,7 @@
 story_id: 30.3
 story_key: 30-3-wave-1-toolbox-types-and-country
 epic: 30
-status: review
+status: done
 baseline_commit: da9fe01a0e717c27394c66b0b444d68acc1ca627
 created: 2026-08-29
 sources:
@@ -17,7 +17,7 @@ sources:
 
 # Story 30.3: Wave 1 toolbox types and country
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 
@@ -178,9 +178,10 @@ Cursor Grok 4.6
 
 - 2026-08-29: Implemented Story 30.3 Wave 1 toolbox types and country. Status → review.
 - 2026-08-30: Adversarial code review (Blind Hunter, Edge Case Hunter, Acceptance Auditor). 3 patch, 16 dismissed. No AC violations.
+- 2026-08-30: Applied all 3 review patches. Status → done.
 
 ### Review Findings
 
-- [ ] [Review][Patch] Switching `info` → `section_header` leaves `infoText`, so schema save fails [web/components/activities/form-field-editor.tsx:148]
-- [ ] [Review][Patch] `multi_choice` min can exceed option count, making a required field unsatisfiable [src/Infrastructure/Activities/FormSchemaValidator.cs:387]
-- [ ] [Review][Patch] `multi_choice` min/max cast to `int` throws on values above `Int32.MaxValue` [src/Infrastructure/Registrations/RegistrationAnswerValidator.cs:363]
+- [x] [Review][Patch] Switching `info` → `section_header` leaves `infoText`, so schema save fails [web/components/activities/form-field-editor.tsx:148]
+- [x] [Review][Patch] `multi_choice` min can exceed option count, making a required field unsatisfiable [src/Infrastructure/Activities/FormSchemaValidator.cs:387]
+- [x] [Review][Patch] `multi_choice` min/max cast to `int` throws on values above `Int32.MaxValue` [src/Infrastructure/Registrations/RegistrationAnswerValidator.cs:363]

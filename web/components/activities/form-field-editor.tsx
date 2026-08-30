@@ -153,7 +153,10 @@ export function FormFieldEditor({
           updated.phoneCountry = null;
           updated.min = null;
           updated.max = null;
-          if (patch.type === "info" && !updated.infoText) {
+        }
+
+        if (patch.type === "info") {
+          if (!updated.infoText) {
             updated.infoText = "Add a short note for participants.";
           }
         } else {

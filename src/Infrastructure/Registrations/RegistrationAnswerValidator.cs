@@ -360,12 +360,12 @@ internal static class RegistrationAnswerValidator
             return $"{field.Label} must be one of the allowed options.";
         }
 
-        if (field.Min is { } min && selected.Count < (int)min)
+        if (field.Min is { } min && selected.Count < min)
         {
             return $"{field.Label} requires at least {min.ToString(CultureInfo.InvariantCulture)} selections.";
         }
 
-        if (field.Max is { } max && selected.Count > (int)max)
+        if (field.Max is { } max && selected.Count > max)
         {
             return $"{field.Label} allows at most {max.ToString(CultureInfo.InvariantCulture)} selections.";
         }

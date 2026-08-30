@@ -415,6 +415,10 @@ export function getFormSchemaClientIssues(
       issues.push(`Field "${field.label || field.id}" cannot have a default value.`);
     }
 
+    if (field.type !== "info" && field.infoText?.trim()) {
+      issues.push(`Field "${field.label || field.id}" cannot have info text.`);
+    }
+
     if (isNonInputFieldType(field.type)) {
       if (field.required) {
         issues.push(
@@ -480,6 +484,16 @@ export function getFormSchemaClientIssues(
       field.min > field.max
     ) {
       issues.push(`Field "${field.label || field.id}" min cannot be greater than max.`);
+    }
+
+    if (
+      field.type === "multi_choice" &&
+      field.min != null &&
+      field.min > (field.options?.length ?? 0)
+    ) {
+      issues.push(
+        `Field "${field.label || field.id}" min cannot exceed the number of options.`
+      );
     }
 
     if (field.type === "phone") {

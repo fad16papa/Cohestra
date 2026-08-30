@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-29
+# last_updated: 2026-08-30
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -45,7 +45,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-29
+last_updated: 2026-08-30
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -305,7 +305,7 @@ development_status:
   epic-30: in-progress
   30-1-hidden-field-and-campaign-query-passthrough: done
   30-2-long-text-and-date-fields: done
-  30-3-wave-1-toolbox-types-and-country: review
+  30-3-wave-1-toolbox-types-and-country: done
   30-4-slash-add-field-palette: backlog
   30-5-core-scale-and-emergency-contact: backlog
   30-6-piping-on-thank-you-and-confirmation-email: backlog

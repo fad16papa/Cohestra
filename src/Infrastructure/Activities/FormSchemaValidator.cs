@@ -402,6 +402,13 @@ internal static partial class FormSchemaValidator
             {
                 return $"{fieldPath}.max must be a whole number of 0 or more for multi_choice fields.";
             }
+
+            if (field.Min is { } minSelections &&
+                field.Options is { Count: var optionCount } &&
+                minSelections > optionCount)
+            {
+                return $"{fieldPath}.min cannot exceed the number of options.";
+            }
         }
 
         return null;

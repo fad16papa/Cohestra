@@ -74,4 +74,42 @@ describe("getFormSchemaClientIssues", () => {
       true
     );
   });
+
+  it("rejects leftover infoText on section_header", () => {
+    const issues = getFormSchemaClientIssues({
+      version: 1,
+      fields: [
+        field({
+          id: "about",
+          type: "section_header",
+          label: "About",
+          infoText: "Stale note from an info field.",
+        }),
+      ],
+    });
+
+    expect(issues.some((issue) => issue.includes("cannot have info text"))).toBe(true);
+  });
+
+  it("rejects multi_choice min above option count", () => {
+    const issues = getFormSchemaClientIssues({
+      version: 1,
+      fields: [
+        field({
+          id: "days",
+          type: "multi_choice",
+          label: "Days",
+          min: 3,
+          options: [
+            { value: "sat", label: "Saturday" },
+            { value: "sun", label: "Sunday" },
+          ],
+        }),
+      ],
+    });
+
+    expect(
+      issues.some((issue) => issue.includes("min cannot exceed the number of options"))
+    ).toBe(true);
+  });
 });
