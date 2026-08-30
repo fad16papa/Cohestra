@@ -348,6 +348,7 @@ export function getFormTemplate(id: FormTemplateId): FormTemplate {
 export function cloneFormSchema(schema: ActivityFormSchema): ActivityFormSchema {
   return {
     version: schema.version,
+    meta: schema.meta ? { ...schema.meta } : undefined,
     fields: schema.fields.map((item) => ({
       ...item,
       options: item.options?.map((option) => ({ ...option })) ?? null,

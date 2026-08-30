@@ -6,6 +6,8 @@ using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Contracts.Platform;
 using Cohestra.Contracts.Site;
 using Cohestra.Contracts.PublicDoor;
+using Cohestra.Domain.Activities;
+using Cohestra.Contracts.Activities;
 using Cohestra.Domain.Registrations;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
@@ -281,5 +283,58 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         var activityBody = await activityResponse.Content.ReadAsStringAsync();
         // ProblemDetails.Instance echoes the request path (may include {slug}); assert no tenant payload leaked.
         Assert.DoesNotContain(foreignMarker, activityBody, StringComparison.Ordinal);
+    }
+
+    [SkippableFact]
+    public async Task Admin_GetFormTemplate_ByForeignTenantId_Returns404Or403_NeverForeignPayload()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        const string foreignMarker = "TENANT_B_FORM_TEMPLATE_MARKER";
+        Guid foreignTemplateId;
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            foreignTemplateId = Guid.NewGuid();
+            dbContext.TenantFormTemplates.Add(new TenantFormTemplate
+            {
+                Id = foreignTemplateId,
+                TenantId = tenantB.Id,
+                Name = foreignMarker,
+                FormSchema = new ActivityFormSchema
+                {
+                    Version = 1,
+                    Fields =
+                    [
+                        new FormFieldDefinition
+                        {
+                            Id = "full_name",
+                            Type = "text",
+                            Label = "Full name",
+                            Required = true,
+                        },
+                    ],
+                },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var adminClient = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+
+        using var response = await adminClient.GetAsync(
+            $"/api/v1/admin/form-templates/{foreignTemplateId}");
+
+        Assert.True(
+            response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden,
+            $"Expected 404 or 403 for cross-tenant form template GET, got {(int)response.StatusCode}.");
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(foreignMarker, body, StringComparison.Ordinal);
     }
 }

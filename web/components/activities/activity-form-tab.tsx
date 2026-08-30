@@ -23,6 +23,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   saveActivityFormSchema,
   type Activity,
   type ActivityFormSchema,
@@ -36,10 +44,21 @@ import {
 } from "@/lib/form-schema-utils";
 import { substitutePipingPreview } from "@/lib/registration-piping";
 import {
+  cloneFormSchema,
   cloneFormTemplate,
   getFormTemplate,
   type FormTemplateId,
 } from "@/lib/form-templates";
+import {
+  createFormTemplate,
+  deleteFormTemplate,
+  fetchFormTemplate,
+  fetchFormTemplates,
+  updateFormTemplate,
+  type FormTemplateUsage,
+  type SavedFormTemplate,
+  type SavedFormTemplateSummary,
+} from "@/lib/form-templates-api";
 import { applyMissingStepBuckets } from "@/lib/form-steps";
 import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
@@ -71,6 +90,26 @@ export function ActivityFormTab({
   const [success, setSuccess] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingTemplateId, setPendingTemplateId] = useState<FormTemplateId | null>(null);
+  const [pendingSavedTemplate, setPendingSavedTemplate] =
+    useState<SavedFormTemplate | null>(null);
+  const [savedTemplates, setSavedTemplates] = useState<SavedFormTemplateSummary[]>([]);
+  const [templateUsage, setTemplateUsage] = useState<FormTemplateUsage>({
+    used: 0,
+    limit: 1,
+  });
+  const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveTemplateName, setSaveTemplateName] = useState("");
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameTemplate, setRenameTemplate] = useState<SavedFormTemplateSummary | null>(
+    null
+  );
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTemplate, setDeleteTemplate] = useState<SavedFormTemplateSummary | null>(
+    null
+  );
+  const [templateActionLoading, setTemplateActionLoading] = useState(false);
 
   const isArchived = activity.status === "archived";
   const isDraft = activity.status === "draft";
@@ -132,11 +171,47 @@ export function ActivityFormTab({
     setDraftSchema(normalizeFormSchema(activity.formSchema));
   }, [activity.formSchema, activity.id, activity.status]);
 
-  function applyTemplate(templateId: FormTemplateId) {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTemplates() {
+      setTemplatesLoading(true);
+      try {
+        const result = await fetchFormTemplates(authFetch);
+        if (!cancelled) {
+          setSavedTemplates(result.templates);
+          setTemplateUsage(result.usage);
+        }
+      } catch {
+        if (!cancelled) {
+          setSavedTemplates([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setTemplatesLoading(false);
+        }
+      }
+    }
+
+    void loadTemplates();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authFetch]);
+
+  function applyLaunchTemplate(templateId: FormTemplateId) {
     setError(null);
     setSuccess(null);
     setDraftSchema(cloneFormTemplate(templateId));
     setSuccess(`${getFormTemplate(templateId).name} template applied. Save when ready.`);
+  }
+
+  function applySavedTemplate(template: SavedFormTemplate) {
+    setError(null);
+    setSuccess(null);
+    setDraftSchema(cloneFormSchema(template.formSchema));
+    setSuccess(`"${template.name}" applied. Save when ready.`);
   }
 
   function handleSelectTemplate(templateId: FormTemplateId) {
@@ -148,17 +223,123 @@ export function ActivityFormTab({
   }
 
   function confirmApplyTemplate() {
-    if (!pendingTemplateId) {
+    if (pendingTemplateId) {
+      applyLaunchTemplate(pendingTemplateId);
+      setPendingTemplateId(null);
       return;
     }
 
-    applyTemplate(pendingTemplateId);
-    setPendingTemplateId(null);
+    if (pendingSavedTemplate) {
+      applySavedTemplate(pendingSavedTemplate);
+      setPendingSavedTemplate(null);
+    }
   }
 
-  const pendingTemplate = pendingTemplateId
+  async function handleSelectSavedTemplate(template: SavedFormTemplateSummary) {
+    if (isPublished || isArchived) {
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    try {
+      const full = await fetchFormTemplate(authFetch, template.id);
+      setPendingSavedTemplate(full);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Could not load saved template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handleSaveTemplate() {
+    const trimmed = saveTemplateName.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await createFormTemplate(authFetch, trimmed, draftSchema);
+      const result = await fetchFormTemplates(authFetch);
+      setSavedTemplates(result.templates);
+      setTemplateUsage(result.usage);
+      setSaveDialogOpen(false);
+      setSaveTemplateName("");
+      setSuccess(`Saved "${trimmed}" as a form template.`);
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error ? saveError.message : "Could not save template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handleRenameTemplate() {
+    if (!renameTemplate) {
+      return;
+    }
+
+    const trimmed = renameValue.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await updateFormTemplate(authFetch, renameTemplate.id, { name: trimmed });
+      const result = await fetchFormTemplates(authFetch);
+      setSavedTemplates(result.templates);
+      setTemplateUsage(result.usage);
+      setRenameDialogOpen(false);
+      setRenameTemplate(null);
+      setRenameValue("");
+      setSuccess(`Renamed template to "${trimmed}".`);
+    } catch (renameError) {
+      setError(
+        renameError instanceof Error ? renameError.message : "Could not rename template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handleDeleteTemplate() {
+    if (!deleteTemplate) {
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await deleteFormTemplate(authFetch, deleteTemplate.id);
+      const result = await fetchFormTemplates(authFetch);
+      setSavedTemplates(result.templates);
+      setTemplateUsage(result.usage);
+      setDeleteDialogOpen(false);
+      setDeleteTemplate(null);
+      setSuccess("Template deleted.");
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error ? deleteError.message : "Could not delete template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  const pendingLaunchTemplate = pendingTemplateId
     ? getFormTemplate(pendingTemplateId)
     : null;
+  const applyDialogOpen = pendingTemplateId !== null || pendingSavedTemplate !== null;
+  const pendingApplyName =
+    pendingLaunchTemplate?.name ?? pendingSavedTemplate?.name ?? "this template";
 
   async function handleSave() {
     setError(null);
@@ -272,9 +453,28 @@ export function ActivityFormTab({
       {!isArchived ? (
         <FormTemplatePicker
           onSelectTemplate={handleSelectTemplate}
-          disabled={isSaving}
+          onSelectSavedTemplate={(template) => void handleSelectSavedTemplate(template)}
+          onSaveCurrentDraft={() => {
+            setSaveTemplateName("");
+            setSaveDialogOpen(true);
+          }}
+          onRenameSavedTemplate={(template) => {
+            setRenameTemplate(template);
+            setRenameValue(template.name);
+            setRenameDialogOpen(true);
+          }}
+          onDeleteSavedTemplate={(template) => {
+            setDeleteTemplate(template);
+            setDeleteDialogOpen(true);
+          }}
+          savedTemplates={savedTemplates}
+          usage={templateUsage}
+          plan={plan}
+          isTenantAdmin={shell?.isTenantAdmin ?? false}
+          disabled={isSaving || templateActionLoading}
           locked={isPublished}
           lockedReason={isPublished ? publishedTemplateLockReason : undefined}
+          templatesLoading={templatesLoading}
         />
       ) : null}
 
@@ -565,10 +765,11 @@ export function ActivityFormTab({
       </section>
 
       <AlertDialog
-        open={pendingTemplateId !== null}
+        open={applyDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
             setPendingTemplateId(null);
+            setPendingSavedTemplate(null);
           }
         }}
       >
@@ -579,9 +780,7 @@ export function ActivityFormTab({
                 <LayoutTemplate className="size-4" aria-hidden />
               </span>
               <div className="space-y-2">
-                <AlertDialogTitle>
-                  Apply {pendingTemplate ? `"${pendingTemplate.name}"` : "this template"}?
-                </AlertDialogTitle>
+                <AlertDialogTitle>Apply &quot;{pendingApplyName}&quot;?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This replaces all current form fields with the template preset. Any
                   unsaved changes will be lost.
@@ -593,6 +792,105 @@ export function ActivityFormTab({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmApplyTemplate}>
               Apply template
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save form template</DialogTitle>
+            <DialogDescription>
+              Save the current draft fields and meta as a reusable template.
+            </DialogDescription>
+          </DialogHeader>
+          <label className="block space-y-1.5">
+            <span className="text-sm font-medium text-text-warm">Template name</span>
+            <input
+              type="text"
+              maxLength={120}
+              value={saveTemplateName}
+              disabled={templateActionLoading}
+              className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+              placeholder="Saturday tennis"
+              onChange={(event) => setSaveTemplateName(event.target.value)}
+            />
+          </label>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={templateActionLoading}
+              onClick={() => setSaveDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={templateActionLoading || !saveTemplateName.trim()}
+              onClick={() => void handleSaveTemplate()}
+            >
+              {templateActionLoading ? "Saving…" : "Save template"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename template</DialogTitle>
+          </DialogHeader>
+          <label className="block space-y-1.5">
+            <span className="text-sm font-medium text-text-warm">Template name</span>
+            <input
+              type="text"
+              maxLength={120}
+              value={renameValue}
+              disabled={templateActionLoading}
+              className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+              onChange={(event) => setRenameValue(event.target.value)}
+            />
+          </label>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={templateActionLoading}
+              onClick={() => setRenameDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={templateActionLoading || !renameValue.trim()}
+              onClick={() => void handleRenameTemplate()}
+            >
+              {templateActionLoading ? "Saving…" : "Rename"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete &quot;{deleteTemplate?.name ?? "template"}&quot;?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the saved template. Activities already using these fields are
+              not affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void handleDeleteTemplate()}
+            >
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

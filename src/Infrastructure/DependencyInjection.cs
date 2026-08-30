@@ -202,6 +202,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantPlanGate, TenantPlanGate>();
         services.AddScoped<RequireProPlanFilter>();
         services.AddScoped<IActivityService, ActivityService>();
+        services.AddScoped<IFormTemplateService, FormTemplateService>();
         services.AddScoped<ICommunityService, CommunityService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IClientService, ClientService>();

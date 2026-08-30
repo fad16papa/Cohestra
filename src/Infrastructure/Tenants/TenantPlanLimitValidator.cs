@@ -30,6 +30,11 @@ public static class TenantPlanLimitValidator
             ? $"Monthly registration limit reached ({registrationsThisMonth:N0}/{registrationLimit:N0}). Upgrade your plan or wait until next month."
             : null;
 
-    private static string FormatCapacityMessage(string label, int used, int limit) =>
+    public static string? ValidateCanAddFormTemplate(int used, int limit) =>
+        IsAtOrOverCapacity(used, limit)
+            ? FormatCapacityMessage("Saved form templates", used, limit)
+            : null;
+
+    internal static string FormatCapacityMessage(string label, int used, int limit) =>
         $"{label} is at capacity ({used}/{limit}). {LimitReachedSuffix}";
 }
