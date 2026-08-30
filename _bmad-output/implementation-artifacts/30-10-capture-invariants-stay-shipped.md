@@ -106,3 +106,23 @@ Regression-only story: lock Epic 30 Capture invariants with focused unit tests. 
 ### Review Findings (Pass 2)
 
 Clean review — Pass 1 patches applied. No remaining patch or decision-needed findings.
+
+### Review Findings (Pass 3 — subagent follow-up)
+
+- [x] [Review][Patch] DTO theme contract untested [`CaptureInvariantsTests.cs`] — Extended scan to `ActivityFormSchemaDto`, `FormSchemaMetaDto`, `FormFieldDefinitionDto`.
+
+- [x] [Review][Patch] `NormalizeAnswers` may return same reference [`CaptureInvariantsTests.cs`] — Added `Assert.NotSame(originalAnswers, normalized)`.
+
+- [x] [Review][Patch] `IRegistrationService` surface too loose [`CaptureInvariantsTests.cs`] — `DeclaredOnly` methods + empty properties check.
+
+- [x] [Review][Patch] Email-only v1 compat untested [`CaptureInvariantsTests.cs`] — Added `PreCaptureV1EmailOnlySchema_passes_publish_gate_and_validation`.
+
+- [x] [Review][Patch] Optional consent with required email [`PublishGateValidatorTests.cs`] — Locks consent-required publish gate (fails when consent optional).
+
+- [x] [Review][Patch] Registrant-safe plan-limit copy [`CaptureInvariantsTests.cs`] — `PlanLimitReachedDetail_is_registrant_safe` asserts no upgrade/plan-limit numbers.
+
+- [x] [Review][Defer] AC2 integration test for `plan_registration_limit` 409 on submit — Unit lock on registrant copy added; full submit integration remains deferred.
+
+- [x] [Review][Defer] AC3 persisted JSONB immutability integration test — Out of scope for regression-only story slice.
+
+- [x] [Review][Defer] Marketing/pricing-plans.ts cross-assert — Comment in `TenantPlanLimitsTests` documents alignment; cross-language test deferred.

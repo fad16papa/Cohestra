@@ -351,6 +351,37 @@ public sealed class PublishGateValidatorTests
     }
 
     [Fact]
+    public void ValidateForPublish_RequiredEmailWithOptionalConsent_Fails()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "email",
+                        Type = FormFieldTypes.Email,
+                        Label = "Email",
+                        Required = true,
+                    },
+                    new FormFieldDefinition
+                    {
+                        Id = "consent",
+                        Type = FormFieldTypes.Consent,
+                        Label = "Consent",
+                        Required = false,
+                        ConsentText = "Optional marketing updates.",
+                    },
+                ],
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("Consent fields must be marked required", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidateForPublish_OptionalPhoneOnly_Fails()
     {
         var error = PublishGateValidator.ValidateForPublish(

@@ -1,5 +1,6 @@
 using System.Reflection;
 using Cohestra.Application.Registrations;
+using Cohestra.Contracts.Activities;
 using Cohestra.Domain.Activities;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Registrations;
@@ -12,15 +13,21 @@ namespace Cohestra.Infrastructure.Tests.Registrations;
 public sealed class CaptureInvariantsTests
 {
     [Fact]
-    public void FormSchema_types_do_not_include_registration_theme()
+    public void FormSchema_types_and_dtos_do_not_include_registration_theme()
     {
-        Assert.DoesNotContain(
-            typeof(ActivityFormSchema).GetProperties(BindingFlags.Public | BindingFlags.Instance),
-            property => property.Name.Contains("RegistrationTheme", StringComparison.Ordinal));
-
-        Assert.DoesNotContain(
-            typeof(FormSchemaMeta).GetProperties(BindingFlags.Public | BindingFlags.Instance),
-            property => property.Name.Contains("RegistrationTheme", StringComparison.Ordinal));
+        foreach (var type in new[]
+                 {
+                     typeof(ActivityFormSchema),
+                     typeof(FormSchemaMeta),
+                     typeof(ActivityFormSchemaDto),
+                     typeof(FormSchemaMetaDto),
+                     typeof(FormFieldDefinitionDto),
+                 })
+        {
+            Assert.DoesNotContain(
+                type.GetProperties(BindingFlags.Public | BindingFlags.Instance),
+                property => property.Name.Contains("RegistrationTheme", StringComparison.Ordinal));
+        }
     }
 
     [Fact]
@@ -37,10 +44,11 @@ public sealed class CaptureInvariantsTests
     [Fact]
     public void IRegistrationService_exposes_submit_only()
     {
-        var methods = typeof(IRegistrationService).GetMethods();
+        var methods = typeof(IRegistrationService).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
         Assert.Single(methods);
         Assert.Equal(nameof(IRegistrationService.SubmitPublicRegistrationAsync), methods[0].Name);
+        Assert.Empty(typeof(IRegistrationService).GetProperties());
     }
 
     [Fact]
@@ -89,6 +97,51 @@ public sealed class CaptureInvariantsTests
     }
 
     [Fact]
+    public void PreCaptureV1EmailOnlySchema_passes_publish_gate_and_validation()
+    {
+        var schema = new ActivityFormSchema
+        {
+            Version = 1,
+            Fields =
+            [
+                new FormFieldDefinition
+                {
+                    Id = "full_name",
+                    Type = FormFieldTypes.Text,
+                    Label = "Full name",
+                    Required = true,
+                },
+                new FormFieldDefinition
+                {
+                    Id = "email",
+                    Type = FormFieldTypes.Email,
+                    Label = "Email",
+                    Required = true,
+                },
+                new FormFieldDefinition
+                {
+                    Id = "consent",
+                    Type = FormFieldTypes.Consent,
+                    Label = "Consent",
+                    Required = true,
+                    ConsentText = "I agree to be contacted.",
+                },
+            ],
+        };
+
+        Assert.Null(FormSchemaValidator.ValidateModel(schema));
+        Assert.Null(PublishGateValidator.ValidateForPublish(schema));
+    }
+
+    [Fact]
+    public void PlanLimitReachedDetail_is_registrant_safe()
+    {
+        Assert.DoesNotContain("Upgrade", PublicRegistrationMessages.PlanLimitReachedDetail, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("plan limit", PublicRegistrationMessages.PlanLimitReachedDetail, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("250", PublicRegistrationMessages.PlanLimitReachedDetail, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NormalizeAnswers_does_not_mutate_input_dictionary()
     {
         var schema = new ActivityFormSchema
@@ -122,6 +175,7 @@ public sealed class CaptureInvariantsTests
 
         var normalized = RegistrationAnswerValidator.NormalizeAnswers(schema, originalAnswers);
 
+        Assert.NotSame(originalAnswers, normalized);
         Assert.Equal("91234567", originalAnswers["phone"]);
         Assert.Equal("Maya Chen", originalAnswers["full_name"]);
         Assert.Equal("91234567", normalized["phone"]);
