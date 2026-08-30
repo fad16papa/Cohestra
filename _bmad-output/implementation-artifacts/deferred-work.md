@@ -1,3 +1,11 @@
+## Deferred from: code review of 30-8-close-at.md (2026-08-30, pass 1)
+
+- Manual timezone offset iteration lacks DST gap/ambiguous-hour handling; only Singapore round-trip tested — acceptable for v1 tenant TZs
+- Stale browser tab after Close-at passes still shows form until reload — matches existing no-polling pattern
+- `isRegistrationOpen` remains true when only Close-at blocks — intentional separate flags; contract doc updated
+- Missing integration test for closed message + Close-at wiring and combined paused+Close-at submit precedence — unit + page wiring sufficient
+- Close-at and archived unavailable both use **Closed** chip label — spec requires Closed for Close-at; archived pre-existed
+
 ## Deferred from: code review of 30-6-piping-on-thank-you-and-confirmation-email.md (2026-08-30, pass 4)
 
 - Token-only confirmation templates that substitute to whitespace-only fall back to default subject/closing — safer email UX than blank subject/sign-off

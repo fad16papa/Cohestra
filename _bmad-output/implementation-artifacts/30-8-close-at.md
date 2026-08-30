@@ -66,6 +66,34 @@ So that Maya cannot register after my deadline even when the Activity is still u
   - [x] Vitest for timezone conversion helpers
   - [x] Contract docs update
 
+### Review Findings (Pass 1)
+
+- [x] [Review][Patch] Returning registrant after Close-at gets `registration_closed_at` instead of already-registered [`RegistrationService.cs:210-251`]
+
+- [x] [Review][Patch] Close-at submit rejection does not refresh public activity cache (only `ActivityFull` does) [`RegistrationService.cs:276-284`]
+
+- [x] [Review][Patch] Controller 409 branch order lists Close-at before plan-limit; contradicts spec precedence full → paused → Close-at [`PublicRegistrationsController.cs:121-140`]
+
+- [x] [Review][Patch] Malformed datetime-local in picker silently clears existing Close-at when `closeAtDateTimeLocalToUtcIso` returns null [`activity-form-tab.tsx:358-363`]
+
+- [x] [Review][Patch] `closeAtDateTimeLocalToUtcIso` throws on invalid tenant timezone (display path has try/catch, save path does not) [`registration-close-at.ts:68-95`]
+
+- [x] [Review][Patch] No final Close-at re-check immediately before `SaveChangesAsync`; slow submit can persist after deadline [`RegistrationService.cs:270-337`]
+
+**Pass 1 verdict:** All six patch findings applied. Deferred items unchanged.
+
+- [x] [Review][Defer] Manual timezone offset iteration lacks DST gap/ambiguous-hour handling; only Singapore round-trip tested [`registration-close-at.ts`] — deferred, acceptable for v1 tenant TZs; revisit if US/EU operators adopt Close-at heavily
+
+- [x] [Review][Defer] Stale browser tab after Close-at passes still shows form until reload; submit returns inline 409 [`page.tsx`, `registration-form.tsx`] — deferred, matches existing no-polling pattern for capacity/ended
+
+- [x] [Review][Defer] `isRegistrationOpen` remains true when only Close-at blocks; clients must also check `isRegistrationClosedAt` [`PublicActivityResponse`, integration test`] — deferred, intentional separate flags; contract doc updated
+
+- [x] [Review][Defer] Missing integration test for closed message + Close-at unavailable wiring and combined paused+Close-at submit precedence — deferred, unit coverage + page wiring sufficient for slice
+
+- [x] [Review][Defer] Close-at and archived unavailable both use **Closed** chip label [`registration-unavailable.ts`] — deferred, spec requires Closed chip for Close-at; archived path pre-existed
+
+- [x] [Review][Dismiss] No dedicated validator test asserting past Close-at at save is allowed — implementation has no future-date guard; behavior correct by omission
+
 ## Dev Agent Record
 
 ### Completion Notes

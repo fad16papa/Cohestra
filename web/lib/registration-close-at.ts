@@ -33,35 +33,39 @@ export function toCloseAtDateTimeLocal(
   }
 }
 
-function getTimeZoneOffsetMs(at: Date, timeZoneId: string): number {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: timeZoneId,
-    hour12: false,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-  const parts = formatter.formatToParts(at);
-  const filled: Record<string, string> = {};
-  for (const part of parts) {
-    if (part.type !== "literal") {
-      filled[part.type] = part.value;
+function getTimeZoneOffsetMs(at: Date, timeZoneId: string): number | null {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: timeZoneId,
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    const parts = formatter.formatToParts(at);
+    const filled: Record<string, string> = {};
+    for (const part of parts) {
+      if (part.type !== "literal") {
+        filled[part.type] = part.value;
+      }
     }
+
+    const asUtc = Date.UTC(
+      Number(filled.year),
+      Number(filled.month) - 1,
+      Number(filled.day),
+      Number(filled.hour),
+      Number(filled.minute),
+      Number(filled.second)
+    );
+
+    return asUtc - at.getTime();
+  } catch {
+    return null;
   }
-
-  const asUtc = Date.UTC(
-    Number(filled.year),
-    Number(filled.month) - 1,
-    Number(filled.day),
-    Number(filled.hour),
-    Number(filled.minute),
-    Number(filled.second)
-  );
-
-  return asUtc - at.getTime();
 }
 
 /** Parse datetime-local as tenant-local time and return a UTC ISO instant. */
@@ -89,6 +93,10 @@ export function closeAtDateTimeLocalToUtcIso(
   let utcMs = Date.UTC(year, month - 1, day, hour, minute);
   for (let attempt = 0; attempt < 3; attempt++) {
     const offset = getTimeZoneOffsetMs(new Date(utcMs), zone);
+    if (offset === null) {
+      return null;
+    }
+
     utcMs = Date.UTC(year, month - 1, day, hour, minute) - offset;
   }
 

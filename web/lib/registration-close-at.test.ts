@@ -23,4 +23,8 @@ describe("registration-close-at", () => {
   it("returns null when datetime-local is cleared", () => {
     expect(closeAtDateTimeLocalToUtcIso("", "UTC")).toBeNull();
   });
+
+  it("returns null for invalid timezone instead of throwing", () => {
+    expect(closeAtDateTimeLocalToUtcIso("2026-09-01T10:00", "Not/AZone")).toBeNull();
+  });
 });

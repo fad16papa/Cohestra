@@ -356,7 +356,22 @@ export function ActivityFormTab({
           timeZoneId={registrationTimeZoneId}
           disabled={isArchived || isSaving}
           onChange={(nextLocal) => {
-            const nextUtc = closeAtDateTimeLocalToUtcIso(nextLocal, registrationTimeZoneId);
+            if (!nextLocal.trim()) {
+              setDraftSchema((current) => ({
+                ...current,
+                meta: mergeFormSchemaMeta(current, { registrationClosesAt: null }),
+              }));
+              return;
+            }
+
+            const nextUtc = closeAtDateTimeLocalToUtcIso(
+              nextLocal,
+              registrationTimeZoneId
+            );
+            if (nextUtc === null) {
+              return;
+            }
+
             setDraftSchema((current) => ({
               ...current,
               meta: mergeFormSchemaMeta(current, { registrationClosesAt: nextUtc }),

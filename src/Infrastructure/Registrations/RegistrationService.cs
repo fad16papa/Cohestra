@@ -207,17 +207,6 @@ public sealed class RegistrationService(
             .Select(tenant => tenant.RegistrationTimeZoneId)
             .FirstOrDefaultAsync(cancellationToken) ?? RegistrationTimeZoneDefaults.Utc;
 
-        var preSubmitAvailability = await ResolveUnavailableSubmitResultAsync(
-            activity,
-            tenantId,
-            tenantTimeZoneId,
-            normalizedSlug,
-            cancellationToken);
-        if (preSubmitAvailability is not null)
-        {
-            return preSubmitAvailability;
-        }
-
         var validationError = RegistrationAnswerValidator.Validate(activity.FormSchema, answers);
         if (validationError is not null)
         {
@@ -251,6 +240,22 @@ public sealed class RegistrationService(
                 client.Id);
         }
 
+        var preSubmitAvailability = await ResolveUnavailableSubmitResultAsync(
+            activity,
+            tenantId,
+            tenantTimeZoneId,
+            normalizedSlug,
+            cancellationToken);
+        if (preSubmitAvailability is not null)
+        {
+            await RefreshPublicActivityCacheIfUnavailableBestEffortAsync(
+                tenantId,
+                normalizedSlug,
+                preSubmitAvailability,
+                cancellationToken);
+            return preSubmitAvailability;
+        }
+
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         await dbContext.Database.ExecuteSqlInterpolatedAsync(
@@ -276,11 +281,11 @@ public sealed class RegistrationService(
         if (lockedAvailability is not null)
         {
             await transaction.RollbackAsync(cancellationToken);
-            if (lockedAvailability.IsActivityFull)
-            {
-                await RefreshPublicActivityCacheBestEffortAsync(tenantId, normalizedSlug, cancellationToken);
-            }
-
+            await RefreshPublicActivityCacheIfUnavailableBestEffortAsync(
+                tenantId,
+                normalizedSlug,
+                lockedAvailability,
+                cancellationToken);
             return lockedAvailability;
         }
 
@@ -307,6 +312,18 @@ public sealed class RegistrationService(
         }
 
         var registrationNumber = await registrationNumberGenerator.GenerateNextAsync(now, cancellationToken);
+
+        if (RegistrationCloseAtEvaluator.IsPastCloseAt(lockedActivity.FormSchema, DateTimeOffset.UtcNow))
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            var closedAtResult = PublicRegistrationSubmitResult.RegistrationClosedAt();
+            await RefreshPublicActivityCacheIfUnavailableBestEffortAsync(
+                tenantId,
+                normalizedSlug,
+                closedAtResult,
+                cancellationToken);
+            return closedAtResult;
+        }
 
         var registration = new Registration
         {
@@ -447,6 +464,20 @@ public sealed class RegistrationService(
             RegistrationAvailabilityState.NotPublished => PublicRegistrationSubmitResult.NotFound(),
             _ => null,
         };
+    }
+
+    private async Task RefreshPublicActivityCacheIfUnavailableBestEffortAsync(
+        Guid tenantId,
+        string activitySlug,
+        PublicRegistrationSubmitResult unavailableResult,
+        CancellationToken cancellationToken)
+    {
+        if (!unavailableResult.IsActivityFull && !unavailableResult.IsRegistrationClosedAt)
+        {
+            return;
+        }
+
+        await RefreshPublicActivityCacheBestEffortAsync(tenantId, activitySlug, cancellationToken);
     }
 
     private async Task RefreshPublicActivityCacheBestEffortAsync(
