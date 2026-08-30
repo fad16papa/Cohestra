@@ -301,6 +301,34 @@ development_status:
   29-7-paddle-sandbox-uat-epic-14-regression: done
   epic-29-retrospective: optional
 
+  # Epic 30–32 — Registration Capture. Source: epics-registration-capture.md
+  epic-30: in-progress
+  30-1-hidden-field-and-campaign-query-passthrough: done
+  30-2-long-text-and-date-fields: done
+  30-3-wave-1-toolbox-types-and-country: done
+  30-4-slash-add-field-palette: done
+  30-5-core-scale-and-emergency-contact: done
+  30-6-piping-on-thank-you-and-confirmation-email: done
+  30-7-closed-message: done
+  30-8-close-at: done
+  30-9-operator-email-on-new-registration: done
+  30-10-capture-invariants-stay-shipped: done
+  30-11-save-and-apply-tenant-form-templates: done
+  30-12-template-slots-by-plan: done
+  30-13-community-default-design-pin-and-pro-duplicate: backlog
+  epic-30-retrospective: optional
+
+  epic-31: done
+  31-1-visiblewhen-recipes: done
+  31-2-optional-identity-details-consent-steps: done
+  epic-31-retrospective: optional
+
+  epic-32: in-progress
+  32-1-allowed-embed-hosts-and-csp: ready-for-dev
+  32-2-activity-embed-route-and-share-kit-snippet: backlog
+  32-3-website-contact-section-creates-a-client: backlog
+  epic-32-retrospective: optional
+
 action_items:
   - epic: 16
     action: "Run Epic 16 UAT on local Docker: Share kit, OG unfurl, homepage WhatsApp, publish tenant URL"
