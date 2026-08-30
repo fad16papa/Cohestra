@@ -74,7 +74,7 @@ So that Maya sees “Waitlist opens Monday on WhatsApp” instead of only platfo
 
 ### Review Findings (Pass 2)
 
-- [ ] [Review][Patch] Solid chip still uses `text-primary-foreground` (`#f3fffc`) on dark `bg-primary` (`#12877d`); computed contrast ~4.29:1, below WCAG 2.2 AA 4.5:1 for `text-xs` [`public-registration-unavailable.tsx:66`, `brand-tokens.css:115-116`]
+- [x] [Review][Patch] Solid chip still uses `text-primary-foreground` (`#f3fffc`) on dark `bg-primary` (`#12877d`); computed contrast ~4.29:1, below WCAG 2.2 AA 4.5:1 for `text-xs` [`public-registration-unavailable.tsx:66`, `brand-tokens.css:115-116`]
 
 - [x] [Review][Defer] Zero-width/format chars (e.g. U+200B) pass trim but render blank while hiding platform title — deferred, extremely unlikely operator input [`markdown-lite-copy.ts:19-21`]
 - [x] [Review][Defer] Regex-only HTML strip; no server-side strip on save; unavailable branch precedence; single-`\n` collapse — deferred, Pass 1 carry-over

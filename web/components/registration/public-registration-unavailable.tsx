@@ -63,7 +63,7 @@ export function PublicRegistrationUnavailable({
         </CardDescription>
         {reasonChip ? (
           <p className="mt-2">
-            <span className="inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-primary-foreground">
+            <span className="inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-white">
               {reasonChip}
             </span>
           </p>
