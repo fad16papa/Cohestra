@@ -1,7 +1,9 @@
-## Deferred from: code review of 30-11/30-12 (2026-08-30, pass 2)
+## Deferred from: code review of 30-11/30-12 (2026-08-30, pass 3)
 
-- Apply downgraded-plan template without client re-check — same pattern as launch templates; server gates on activity save
-- Duplicate template names allowed — non-unique index; ambiguous library entries possible
+- Apply downgraded-plan template without client re-check — resolved as defer (same as launch templates)
+- Duplicate template names — **resolved**: unique per tenant via validation + unique index (Pass 3 decision A)
+
+## Deferred from: code review of 30-11/30-12 (2026-08-30, pass 2)
 
 ## Deferred from: code review of 30-11/30-12 (2026-08-30, pass 1)
 
