@@ -136,6 +136,24 @@ So that Maya sees “See you Saturday, Maya” without a hardcoded name — and 
 
 **Pass 4 verdict:** AC1–AC3 satisfied (Acceptance Auditor). **714** .NET + **6** Vitest tests pass. One optional hygiene patch (Unicode line separators in subject); no blockers.
 
+### Review Findings (Pass 5)
+
+- [ ] [Review][Patch] `NormalizeLineEndings` normalizes `\r` but not Unicode line separators (`\u2028`, `\u2029`); pass 4 fixed the subject path only — closing message (template or piped values) can still carry them into plain-text/HTML email [`RegistrationConfirmationEmailBuilder.cs:213-215`]
+
+- [ ] [Review][Patch] Success screen splits paragraphs on `\n{2,}` without normalizing `\r` or Unicode line separators first; CRLF paragraph breaks and `\u2028`/`\u2029` in piped copy render incorrectly [`registration-success-screen.tsx:46-48`, `RegistrationService.cs:386-392`]
+
+- [x] [Review][Defer] Live schema at outbox send time (submit-time vs send-time copy divergence) [`RegistrationNotificationService.cs:177-197`] — deferred, pre-existing outbox pattern
+- [x] [Review][Defer] Post-substitution token sweeps strip literal `{{…}}` inside piped field answers [`RegistrationPipingTokenSubstitutor.cs:30-31`] — deferred, low likelihood
+- [x] [Review][Defer] Token-only templates → default subject/closing; blank-line removal in HTML closing; idempotency replay; all-empty → null; expansion beyond max length — deferred, pass 4 carry-over
+- [x] [Review][Defer] Success screen generic boilerplate; single- vs double-newline vs email; no confirmation preview; token insert past maxLength — deferred, UX polish not in AC
+- [x] [Review][Defer] Other line-break codepoints in subject (`\u0085`, VT, FF) beyond pass 4 set — deferred, diminishing returns after `\r\n\u2028\u2029` coverage
+- [x] [Review][Defer] `{{email}}`/`{{phone}}` vs `{{field:email}}` formatting inconsistency — deferred, distinct token semantics
+
+- [x] [Review][Dismiss] Field named `successCopyMarkdown` but rendered as plain text (no markdown parser) — naming/UX, not AC violation
+- [x] [Review][Dismiss] React paragraph keys from 24-char prefix can collide — extremely unlikely duplicate paragraphs
+
+**Pass 5 verdict:** AC1–AC3 satisfied (Acceptance Auditor). **718** .NET + **6** Vitest tests pass. Two optional hygiene patches (line-ending normalization on non-subject surfaces); no blockers.
+
 ## Dev Agent Record
 
 ### Agent Model Used
