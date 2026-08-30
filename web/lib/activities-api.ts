@@ -23,7 +23,9 @@ export type FormFieldType =
   | "yes_no"
   | "multi_choice"
   | "info"
-  | "country";
+  | "country"
+  | "scale"
+  | "emergency";
 
 export type FormFieldOption = {
   value: string;

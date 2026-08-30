@@ -269,6 +269,54 @@ public sealed class RegistrationAnswerValidatorTests
     }
 
     [Fact]
+    public void Validate_ScaleAndEmergency()
+    {
+        var schema = CorePlusSchema();
+
+        Assert.Null(RegistrationAnswerValidator.Validate(
+            schema,
+            ContactAnswers(
+                ("skill", "3"),
+                ("emergency_contact", new Dictionary<string, object?>
+                {
+                    ["name"] = "Alex",
+                    ["phone"] = "91234567",
+                }))));
+
+        Assert.Contains("1 to 5", RegistrationAnswerValidator.Validate(
+            schema,
+            ContactAnswers(("skill", "9")))!,
+            StringComparison.Ordinal);
+
+        Assert.Contains("required", RegistrationAnswerValidator.Validate(
+            schema,
+            ContactAnswers(("emergency_contact", new Dictionary<string, object?>
+            {
+                ["name"] = "Alex",
+            })))!,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void NormalizeAnswers_StoresScaleAndEmergency()
+    {
+        var normalized = RegistrationAnswerValidator.NormalizeAnswers(
+            CorePlusSchema(),
+            ContactAnswers(
+                ("skill", " 4 "),
+                ("emergency_contact", new Dictionary<string, object?>
+                {
+                    ["name"] = " Alex ",
+                    ["phone"] = " 91234567 ",
+                })));
+
+        Assert.Equal("4", normalized["skill"]);
+        var emergency = Assert.IsType<Dictionary<string, string?>>(normalized["emergency_contact"]);
+        Assert.Equal("Alex", emergency["name"]);
+        Assert.Equal("91234567", emergency["phone"]);
+    }
+
+    [Fact]
     public void Validate_MultiChoiceMinAboveInt32_ReturnsErrorInsteadOfThrowing()
     {
         var schema = new ActivityFormSchema
@@ -470,4 +518,35 @@ public sealed class RegistrationAnswerValidatorTests
 
         return answers;
     }
+
+    private static ActivityFormSchema CorePlusSchema() =>
+        new()
+        {
+            Version = 1,
+            Fields =
+            [
+                new FormFieldDefinition
+                {
+                    Id = "email",
+                    Type = FormFieldTypes.Email,
+                    Label = "Email",
+                    Required = true,
+                },
+                new FormFieldDefinition
+                {
+                    Id = "skill",
+                    Type = FormFieldTypes.Scale,
+                    Label = "Skill level",
+                    Required = true,
+                },
+                new FormFieldDefinition
+                {
+                    Id = "emergency_contact",
+                    Type = FormFieldTypes.Emergency,
+                    Label = "Emergency contact",
+                    Required = true,
+                    PhoneCountry = "SG",
+                },
+            ],
+        };
 }

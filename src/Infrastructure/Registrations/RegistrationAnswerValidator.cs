@@ -95,6 +95,16 @@ internal static class RegistrationAnswerValidator
             return ValidateMultiChoice(field, rawValue);
         }
 
+        if (field.Type == FormFieldTypes.Scale)
+        {
+            return ValidateScale(field, rawValue);
+        }
+
+        if (field.Type == FormFieldTypes.Emergency)
+        {
+            return ValidateEmergency(field, rawValue);
+        }
+
         if (!TryGetString(rawValue, out var text))
         {
             return field.Required ? $"{field.Label} is required." : null;
@@ -253,6 +263,37 @@ internal static class RegistrationAnswerValidator
                 continue;
             }
 
+            if (field.Type == FormFieldTypes.Scale)
+            {
+                if (TryGetString(rawValue, out var scaleText) &&
+                    ScaleFieldSupport.IsValidValue(scaleText))
+                {
+                    normalized[field.Id] = scaleText.Trim();
+                }
+
+                continue;
+            }
+
+            if (field.Type == FormFieldTypes.Emergency)
+            {
+                if (TryGetEmergencyAnswer(rawValue, out var emergency) &&
+                    (!string.IsNullOrWhiteSpace(emergency.Name) ||
+                     !string.IsNullOrWhiteSpace(emergency.Phone)))
+                {
+                    normalized[field.Id] = new Dictionary<string, string?>(StringComparer.Ordinal)
+                    {
+                        [EmergencyFieldSupport.NameKey] = string.IsNullOrWhiteSpace(emergency.Name)
+                            ? null
+                            : emergency.Name.Trim(),
+                        [EmergencyFieldSupport.PhoneKey] = string.IsNullOrWhiteSpace(emergency.Phone)
+                            ? null
+                            : emergency.Phone.Trim(),
+                    };
+                }
+
+                continue;
+            }
+
             if (TryGetString(rawValue, out var text))
             {
                 if (field.Type == FormFieldTypes.Textarea)
@@ -373,6 +414,70 @@ internal static class RegistrationAnswerValidator
         return null;
     }
 
+    private static string? ValidateScale(FormFieldDefinition field, object? rawValue)
+    {
+        if (!TryGetString(rawValue, out var text))
+        {
+            return field.Required ? $"{field.Label} is required." : null;
+        }
+
+        if (field.Required && string.IsNullOrWhiteSpace(text))
+        {
+            return $"{field.Label} is required.";
+        }
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        if (!ScaleFieldSupport.IsValidValue(text))
+        {
+            return $"{field.Label} must be a value from 1 to 5.";
+        }
+
+        return null;
+    }
+
+    private static string? ValidateEmergency(FormFieldDefinition field, object? rawValue)
+    {
+        if (!TryGetEmergencyAnswer(rawValue, out var emergency))
+        {
+            return field.Required ? $"{field.Label} is required." : null;
+        }
+
+        var name = emergency.Name.Trim();
+        var phone = emergency.Phone.Trim();
+        var hasName = name.Length > 0;
+        var hasPhone = phone.Length > 0;
+
+        if (field.Required && (!hasName || !hasPhone))
+        {
+            return $"{field.Label} is required.";
+        }
+
+        if (!hasName && !hasPhone)
+        {
+            return null;
+        }
+
+        if (hasName && name.Length > EmergencyFieldSupport.MaxNameLength)
+        {
+            return $"{field.Label} name cannot exceed {EmergencyFieldSupport.MaxNameLength} characters.";
+        }
+
+        if (hasPhone)
+        {
+            var phoneError = PhoneCountrySupport.ValidateLocalMobileNumber(field.PhoneCountry, phone);
+            if (phoneError is not null)
+            {
+                return phoneError;
+            }
+        }
+
+        return null;
+    }
+
     private static bool TryParseNumber(string text, out decimal number) =>
         decimal.TryParse(
             text.Trim(),
@@ -393,6 +498,51 @@ internal static class RegistrationAnswerValidator
             CultureInfo.InvariantCulture,
             DateTimeStyles.None,
             out time);
+
+    private sealed record EmergencyAnswer(string Name, string Phone);
+
+    private static bool TryGetEmergencyAnswer(object? rawValue, out EmergencyAnswer answer)
+    {
+        answer = new EmergencyAnswer(string.Empty, string.Empty);
+
+        switch (rawValue)
+        {
+            case null:
+                return false;
+            case EmergencyAnswer emergency:
+                answer = emergency;
+                return true;
+            case IReadOnlyDictionary<string, object?> dictionary:
+                dictionary.TryGetValue(EmergencyFieldSupport.NameKey, out var nameRaw);
+                dictionary.TryGetValue(EmergencyFieldSupport.PhoneKey, out var phoneRaw);
+                TryGetString(nameRaw, out var dictName);
+                TryGetString(phoneRaw, out var dictPhone);
+                answer = new EmergencyAnswer(dictName, dictPhone);
+                return true;
+            case JsonElement json when json.ValueKind == JsonValueKind.Object:
+                var jsonName = ReadJsonProperty(json, EmergencyFieldSupport.NameKey);
+                var jsonPhone = ReadJsonProperty(json, EmergencyFieldSupport.PhoneKey);
+                answer = new EmergencyAnswer(jsonName, jsonPhone);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static string ReadJsonProperty(JsonElement json, string propertyName)
+    {
+        if (!json.TryGetProperty(propertyName, out var property))
+        {
+            return string.Empty;
+        }
+
+        return property.ValueKind switch
+        {
+            JsonValueKind.String => property.GetString() ?? string.Empty,
+            JsonValueKind.Null => string.Empty,
+            _ => property.GetRawText(),
+        };
+    }
 
     private static bool TryGetStringList(object? rawValue, out List<string> values)
     {

@@ -325,11 +325,11 @@ export function formatPhoneCountryOptionLabel(option: PhoneCountryOption): strin
   return `${option.name} (+${option.callingCode})`;
 }
 
-/** Ensures phone fields always carry a supported country (defaults to SG). */
+/** Ensures phone and emergency fields carry a supported country (defaults to SG). */
 export function applyPhoneFieldDefaults<T extends { type: string; phoneCountry?: string | null; placeholder?: string | null }>(
   field: T
 ): T {
-  if (field.type !== "phone") {
+  if (field.type !== "phone" && field.type !== "emergency") {
     return field;
   }
 
@@ -338,6 +338,9 @@ export function applyPhoneFieldDefaults<T extends { type: string; phoneCountry?:
   return {
     ...field,
     phoneCountry,
-    placeholder: field.placeholder ?? `${getPhonePrefixLabel(phoneCountry)} …`,
+    placeholder:
+      field.type === "phone"
+        ? field.placeholder ?? `${getPhonePrefixLabel(phoneCountry)} …`
+        : field.placeholder ?? null,
   };
 }

@@ -52,6 +52,24 @@ internal static class ClientRegistrationAnswerFormatter
             return FormatMultiChoice(field, rawValue);
         }
 
+        if (field.Type == FormFieldTypes.Scale)
+        {
+            if (!RegistrationAnswerValidator.TryGetStringForExtraction(rawValue, out var scaleValue) ||
+                string.IsNullOrWhiteSpace(scaleValue))
+            {
+                return null;
+            }
+
+            var trimmed = scaleValue.Trim();
+            var label = ScaleFieldSupport.GetLabel(trimmed);
+            return label is null ? trimmed : $"{trimmed} — {label}";
+        }
+
+        if (field.Type == FormFieldTypes.Emergency)
+        {
+            return FormatEmergency(field, rawValue);
+        }
+
         if (!RegistrationAnswerValidator.TryGetStringForExtraction(rawValue, out var text) ||
             string.IsNullOrWhiteSpace(text))
         {
@@ -103,6 +121,57 @@ internal static class ClientRegistrationAnswerFormatter
             .ToList();
 
         return labels.Count == 0 ? null : string.Join(", ", labels);
+    }
+
+    private static string? FormatEmergency(FormFieldDefinition field, object? rawValue)
+    {
+        if (rawValue is not JsonElement json || json.ValueKind != JsonValueKind.Object)
+        {
+            if (rawValue is IReadOnlyDictionary<string, object?> dictionary)
+            {
+                dictionary.TryGetValue(EmergencyFieldSupport.NameKey, out var nameRaw);
+                dictionary.TryGetValue(EmergencyFieldSupport.PhoneKey, out var phoneRaw);
+                return FormatEmergencyParts(nameRaw, phoneRaw);
+            }
+
+            return null;
+        }
+
+        var name = json.TryGetProperty(EmergencyFieldSupport.NameKey, out var nameProperty) &&
+                   nameProperty.ValueKind == JsonValueKind.String
+            ? nameProperty.GetString()
+            : null;
+        var phone = json.TryGetProperty(EmergencyFieldSupport.PhoneKey, out var phoneProperty) &&
+                    phoneProperty.ValueKind == JsonValueKind.String
+            ? phoneProperty.GetString()
+            : null;
+
+        return FormatEmergencyParts(name, phone);
+    }
+
+    private static string? FormatEmergencyParts(object? nameRaw, object? phoneRaw)
+    {
+        RegistrationAnswerValidator.TryGetStringForExtraction(nameRaw, out var name);
+        RegistrationAnswerValidator.TryGetStringForExtraction(phoneRaw, out var phone);
+        var trimmedName = name.Trim();
+        var trimmedPhone = phone.Trim();
+
+        if (trimmedName.Length == 0 && trimmedPhone.Length == 0)
+        {
+            return null;
+        }
+
+        if (trimmedName.Length == 0)
+        {
+            return trimmedPhone;
+        }
+
+        if (trimmedPhone.Length == 0)
+        {
+            return trimmedName;
+        }
+
+        return $"{trimmedName} — {trimmedPhone}";
     }
 
     private static string? FormatRawValue(object? rawValue)

@@ -472,6 +472,81 @@ public sealed class FormSchemaValidatorTests
         Assert.Equal("wa", schema.Fields[0].DefaultValue);
     }
 
+    [Fact]
+    public void ValidateModel_AcceptsScaleAndEmergencyFields()
+    {
+        var schema = ContactSchema(
+            new FormFieldDefinition
+            {
+                Id = "skill",
+                Type = FormFieldTypes.Scale,
+                Label = "Skill level",
+            },
+            new FormFieldDefinition
+            {
+                Id = "emergency_contact",
+                Type = FormFieldTypes.Emergency,
+                Label = "Emergency contact",
+                PhoneCountry = "SG",
+            });
+
+        Assert.Null(FormSchemaValidator.ValidateModel(schema));
+    }
+
+    [Fact]
+    public void ValidateModel_RejectsScaleOptions()
+    {
+        var error = FormSchemaValidator.ValidateModel(ContactSchema(
+            new FormFieldDefinition
+            {
+                Id = "skill",
+                Type = FormFieldTypes.Scale,
+                Label = "Skill level",
+                Options = [new FormFieldOption { Value = "1", Label = "One" }],
+            }));
+
+        Assert.NotNull(error);
+        Assert.Contains("options", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateModel_RejectsInvalidEmergencyPhoneCountry()
+    {
+        var error = FormSchemaValidator.ValidateModel(ContactSchema(
+            new FormFieldDefinition
+            {
+                Id = "emergency_contact",
+                Type = FormFieldTypes.Emergency,
+                Label = "Emergency contact",
+                PhoneCountry = "ZZ",
+            }));
+
+        Assert.NotNull(error);
+        Assert.Contains("phoneCountry", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void MapToDomain_DefaultsEmergencyPhoneCountry()
+    {
+        var dto = new ActivityFormSchemaDto(
+            1,
+            [
+                new FormFieldDefinitionDto(
+                    "emergency_contact",
+                    FormFieldTypes.Emergency,
+                    "Emergency contact",
+                    false,
+                    null,
+                    null,
+                    null,
+                    null),
+            ]);
+
+        var schema = FormSchemaValidator.MapToDomain(dto);
+
+        Assert.Equal("SG", schema.Fields[0].PhoneCountry);
+    }
+
     private static ActivityFormSchema ContactSchema(params FormFieldDefinition[] extraFields)
     {
         var fields = new List<FormFieldDefinition>

@@ -116,6 +116,8 @@ internal static class ClientProfileExtractor
                 case FormFieldTypes.MultiChoice:
                 case FormFieldTypes.Info:
                 case FormFieldTypes.Country:
+                case FormFieldTypes.Scale:
+                case FormFieldTypes.Emergency:
                     break;
             }
         }

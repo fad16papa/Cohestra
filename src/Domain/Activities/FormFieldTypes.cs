@@ -21,6 +21,14 @@ public static class FormFieldTypes
     public const string MultiChoice = "multi_choice";
     public const string Info = "info";
     public const string Country = "country";
+    public const string Scale = "scale";
+    public const string Emergency = "emergency";
+
+    public static readonly HashSet<string> CorePlusOnly =
+    [
+        Scale,
+        Emergency,
+    ];
 
     public static readonly HashSet<string> All =
     [
@@ -43,6 +51,8 @@ public static class FormFieldTypes
         MultiChoice,
         Info,
         Country,
+        Scale,
+        Emergency,
     ];
 
     public static readonly HashSet<string> NonInput =

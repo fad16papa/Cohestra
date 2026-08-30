@@ -57,6 +57,7 @@ export function ActivityFormTab({
   const { shell } = useTenantShell();
   const plan = shell?.plan ?? "Basic";
   const recipesLocked = !isCoreOrAbove(plan);
+  const corePlusLocked = !isCoreOrAbove(plan);
   const stepsLocked = !isProPlan(plan);
   const [draftSchema, setDraftSchema] = useState<ActivityFormSchema>(() =>
     normalizeFormSchema(activity.formSchema)
@@ -327,6 +328,7 @@ export function ActivityFormTab({
         disabled={isArchived}
         className="min-w-0"
         recipesLocked={recipesLocked}
+        corePlusLocked={corePlusLocked}
         stepsEnabled={Boolean(draftSchema.meta?.splitIntoSteps)}
         stepsLocked={stepsLocked}
       />
