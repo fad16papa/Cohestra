@@ -1,25 +1,16 @@
+import { getServerApiBaseUrl } from "./api";
 import { buildEmbedContentSecurityPolicy } from "../content-security-policy";
 
 const EMBED_PATH_PREFIX = "/embed/";
 
-function getApiBaseUrl(request: Request): string {
-  const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
-  if (configured) {
-    return configured.replace(/\/$/, "");
-  }
-
-  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  const proto = request.headers.get("x-forwarded-proto") ?? "http";
-  if (host) {
-    return `${proto}://${host}`;
-  }
-
-  return "http://localhost:8080";
+/** Server-side API base for middleware embed-origins fetch (Docker `API_URL` or public fallback). */
+export function resolveMiddlewareApiBaseUrl(): string {
+  return getServerApiBaseUrl();
 }
 
 export async function fetchPublicEmbedOrigins(request: Request): Promise<string[]> {
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  const apiBase = getApiBaseUrl(request);
+  const apiBase = resolveMiddlewareApiBaseUrl();
 
   try {
     const response = await fetch(`${apiBase}/api/v1/public/embed-origins`, {

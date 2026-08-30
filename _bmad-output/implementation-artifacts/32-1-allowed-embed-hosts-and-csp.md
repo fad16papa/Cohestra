@@ -186,3 +186,11 @@ Composer
 - [x] [Review][Defer] Silent fail-closed when embed-origins API unavailable — returns empty list → `'none'`; masks misconfig but is safer [`web/lib/embed-csp.ts:30`] — deferred, fail-closed preferred
 - [x] [Review][Defer] No automated e2e assertion of `/embed/register/*` response headers [`TenantEmbedSettingsIntegrationTests.cs`] — deferred to 32.2 manual verify
 - [x] [Review][Defer] Settings UI lacks client-side origin validation/max-count guard before PATCH [`allowed-embed-hosts-section.tsx:47`] — deferred, server validates
+
+### Review Findings (pass 2 — 2026-08-30)
+
+- [x] [Review][Patch] Middleware embed CSP fetch ignores `API_URL` — use `getServerApiBaseUrl()` via `resolveMiddlewareApiBaseUrl()` [`web/lib/embed-csp.ts`]
+- [x] [Review][Patch] `SanitizeStoredOrigins` does not cap at `MaxOrigins` on read — cap after normalize [`EmbedOriginSupport.cs:120`]
+- [x] [Review][Patch] No integration test that `TenantMember` gets 403 on embed-settings — added to `TenantAuthzIntegrationTests` [`TenantAuthzIntegrationTests.cs`]
+- [x] [Review][Defer] No unit tests for `embed-csp.ts` URL selection / fail-closed behavior — defer to patch above [`web/lib/embed-csp.ts`] — deferred, covered by fix + optional follow-up test
+- [x] [Review][Defer] IDN host punycode mismatch between saved origin and browser `Origin` header — defer v1 [`EmbedOriginSupport.cs:53`] — deferred, edge case

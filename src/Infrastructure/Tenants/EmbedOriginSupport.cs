@@ -117,6 +117,11 @@ public static class EmbedOriginSupport
             }
         }
 
+        if (normalized.Count > MaxOrigins)
+        {
+            normalized = normalized.Take(MaxOrigins).ToList();
+        }
+
         return normalized;
     }
 }

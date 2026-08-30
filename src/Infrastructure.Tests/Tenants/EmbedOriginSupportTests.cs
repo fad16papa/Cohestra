@@ -92,4 +92,16 @@ public sealed class EmbedOriginSupportTests
         Assert.Single(sanitized);
         Assert.Equal("https://club.example.com", sanitized[0]);
     }
+
+    [Fact]
+    public void SanitizeStoredOrigins_caps_at_max_origins()
+    {
+        var stored = Enumerable.Range(0, EmbedOriginSupport.MaxOrigins + 5)
+            .Select(i => $"https://host{i}.example.com")
+            .ToList();
+
+        var sanitized = EmbedOriginSupport.SanitizeStoredOrigins(stored);
+
+        Assert.Equal(EmbedOriginSupport.MaxOrigins, sanitized.Count);
+    }
 }

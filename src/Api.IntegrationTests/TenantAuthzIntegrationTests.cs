@@ -42,6 +42,15 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
                 "http://localhost/cancel"),
             IntegrationTestHelpers.JsonOptions);
         await AssertForbiddenAsync(checkoutResponse);
+
+        using var embedGetResponse = await client.GetAsync("/api/v1/admin/tenant/embed-settings");
+        await AssertForbiddenAsync(embedGetResponse);
+
+        using var embedPatchResponse = await client.PatchAsJsonAsync(
+            "/api/v1/admin/tenant/embed-settings",
+            new { allowedEmbedOrigins = new[] { "https://club.example.com" } },
+            IntegrationTestHelpers.JsonOptions);
+        await AssertForbiddenAsync(embedPatchResponse);
     }
 
     [SkippableFact]
