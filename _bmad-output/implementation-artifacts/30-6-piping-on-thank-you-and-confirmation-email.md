@@ -115,6 +115,27 @@ So that Maya sees “See you Saturday, Maya” without a hardcoded name — and 
 
 **Pass 3 verdict:** AC1–AC3 satisfied (Acceptance Auditor). **713** .NET + **6** Vitest tests pass. One optional hygiene patch (closing `\r`); no blockers.
 
+### Review Findings (Pass 4)
+
+- [ ] [Review][Patch] Confirmation subject validation and `SanitizeEmailSubject` only reject/normalize `\r`/`\n`; Unicode line separators (`\u2028`, `\u2029`) in templates or piped field values can survive into the email subject header [`FormSchemaValidator.cs:65-68`, `RegistrationConfirmationEmailBuilder.cs:217-218`]
+
+- [x] [Review][Defer] Live schema at outbox send time (TOCTOU hidden-value / copy divergence vs submit-time `successCopyMarkdown`) [`RegistrationNotificationService.cs:177-197`, `RegistrationService.cs:386-392`] — deferred, pre-existing outbox pattern
+- [x] [Review][Defer] Post-substitution unknown/unclosed token sweeps strip literal `{{…}}` inside piped field answers [`RegistrationPipingTokenSubstitutor.cs:30-31`, `registration-piping.ts:69-71`] — deferred, low likelihood
+- [x] [Review][Defer] Token-only confirmation templates that substitute to whitespace-only fall back to default subject/closing instead of empty [`RegistrationConfirmationEmailBuilder.cs:38-40`, `208-211`] — deferred, safer email UX than blank subject/sign-off
+- [x] [Review][Defer] `EncodeClosingMessageHtml` `RemoveEmptyEntries` drops intentional blank lines in closing copy [`RegistrationConfirmationEmailBuilder.cs:225-227`] — deferred, polish
+- [x] [Review][Defer] Idempotency replay omits `successCopyMarkdown`; no submit-path integration test [`RegistrationService.cs:74-79`] — deferred, documented v1 tradeoff
+- [x] [Review][Defer] All-empty token substitution returns `null` success copy [`RegistrationService.cs:392`] — deferred, indistinguishable from unset in API
+- [x] [Review][Defer] Post-substitution copy can exceed template max length when tokens expand — deferred, template-bound not expansion-bound
+- [x] [Review][Defer] Success screen generic boilerplate alongside operator copy; single- vs double-newline rendering vs email — deferred, UX polish not in AC
+- [x] [Review][Defer] Confirmation email editors lack live preview; client phone preview format differs from server — deferred, AC3 scoped to success-copy editor
+- [x] [Review][Defer] Token insert can push draft past `maxLength` without client truncate [`activity-form-tab.tsx`] — deferred, server validator catches on save
+- [x] [Review][Defer] No outbox-path test for hidden-field leak on schema mutation between enqueue and send — deferred, pre-existing outbox pattern
+
+- [x] [Review][Dismiss] Emergency fields piping-eligible by design (participant-visible third-party contact) [`RegistrationPipingTokenSubstitutor.cs`, `registration-piping.ts`]
+- [x] [Review][Dismiss] Malformed templates with extra wrapping braces (e.g. `{{{full_name}}}`) leave stray `{` characters — operator typo; extremely low likelihood
+
+**Pass 4 verdict:** AC1–AC3 satisfied (Acceptance Auditor). **714** .NET + **6** Vitest tests pass. One optional hygiene patch (Unicode line separators in subject); no blockers.
+
 ## Dev Agent Record
 
 ### Agent Model Used

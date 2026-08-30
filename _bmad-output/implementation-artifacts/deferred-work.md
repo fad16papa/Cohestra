@@ -1,3 +1,9 @@
+## Deferred from: code review of 30-6-piping-on-thank-you-and-confirmation-email.md (2026-08-30, pass 4)
+
+- Token-only confirmation templates that substitute to whitespace-only fall back to default subject/closing — safer email UX than blank subject/sign-off
+- `EncodeClosingMessageHtml` `RemoveEmptyEntries` drops intentional blank lines in closing copy — polish
+- No outbox-path test for hidden-field leak on schema mutation between enqueue and send — pre-existing outbox pattern
+
 ## Deferred from: code review of 30-6-piping-on-thank-you-and-confirmation-email.md (2026-08-30)
 
 - Idempotency replay omits `successCopyMarkdown` (documented intentional, same as confirmation fields) — acceptable v1 replay tradeoff
