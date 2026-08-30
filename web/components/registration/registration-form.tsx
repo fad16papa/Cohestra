@@ -13,6 +13,11 @@ import { isIsoCalendarDate } from "@/lib/iso-calendar-date";
 import { isIsoClockTime } from "@/lib/iso-clock-time";
 import { isSupportedPhoneCountry, phoneCountryOptions } from "@/lib/phone-countries";
 import {
+  getScaleFieldLabel,
+  isScaleFieldValue,
+  scaleFieldValues,
+} from "@/lib/scale-labels";
+import {
   fieldsForStep,
   formStepLabels,
   usedFormSteps,
@@ -37,6 +42,23 @@ type RegistrationFormProps = {
 };
 
 type FieldErrors = Record<string, string>;
+
+type EmergencyContactValue = {
+  name: string;
+  phone: string;
+};
+
+function readEmergencyValue(value: unknown): EmergencyContactValue {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    return {
+      name: typeof record.name === "string" ? record.name : "",
+      phone: typeof record.phone === "string" ? record.phone : "",
+    };
+  }
+
+  return { name: "", phone: "" };
+}
 
 const TEXTAREA_MAX_LENGTH = 2000;
 
@@ -216,6 +238,42 @@ function validateField(field: FormFieldDefinition, value: unknown): string | nul
 
     if (countryText && !isSupportedPhoneCountry(countryText)) {
       return "Select a supported country.";
+    }
+
+    return null;
+  }
+
+  if (field.type === "scale") {
+    const scaleText = typeof value === "string" ? value.trim() : "";
+    if (field.required && !scaleText) {
+      return "This field is required.";
+    }
+
+    if (scaleText && !isScaleFieldValue(scaleText)) {
+      return "Select a value from 1 to 5.";
+    }
+
+    return null;
+  }
+
+  if (field.type === "emergency") {
+    const emergency = readEmergencyValue(value);
+    const name = emergency.name.trim();
+    const phone = emergency.phone.trim();
+
+    if (field.required && (!name || !phone)) {
+      return "This field is required.";
+    }
+
+    if (!name && !phone) {
+      return null;
+    }
+
+    if (phone) {
+      const phoneError = validatePhoneLocalNumber(field.phoneCountry ?? null, phone, false);
+      if (phoneError) {
+        return phoneError;
+      }
     }
 
     return null;
@@ -779,6 +837,115 @@ export function RegistrationForm({
               </option>
             ))}
           </select>
+          {renderFieldError(fieldId, error)}
+        </div>
+      );
+    }
+
+    if (field.type === "scale") {
+      const selected =
+        typeof values[field.id] === "string" ? (values[field.id] as string) : "";
+      return (
+        <div key={field.id} className="space-y-2">
+          <p className="text-sm font-medium text-text-warm">
+            {field.label}
+            {field.required ? (
+              <span className="text-destructive" aria-hidden>
+                {" "}
+                *
+              </span>
+            ) : null}
+          </p>
+          <div className="grid gap-2 sm:grid-cols-5">
+            {scaleFieldValues.map((scaleValue) => {
+              const label = getScaleFieldLabel(scaleValue) ?? scaleValue;
+              return (
+                <button
+                  key={scaleValue}
+                  type="button"
+                  onClick={() =>
+                    setValues((current) => ({
+                      ...current,
+                      [field.id]: scaleValue,
+                    }))
+                  }
+                  onBlur={() => validateOnBlur(field)}
+                  aria-pressed={selected === scaleValue}
+                  className={cn(
+                    "inline-flex min-h-12 min-w-11 flex-col items-center justify-center rounded-lg border px-2 py-2 text-center text-sm font-medium shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+                    selected === scaleValue
+                      ? "border-ring bg-muted text-text-warm"
+                      : "border-input bg-background text-text-warm"
+                  )}
+                >
+                  <span>{scaleValue}</span>
+                  <span className="mt-0.5 text-[11px] font-normal leading-tight text-text-muted-warm">
+                    {label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {renderFieldError(fieldId, error)}
+        </div>
+      );
+    }
+
+    if (field.type === "emergency") {
+      const emergency = readEmergencyValue(values[field.id]);
+      const nameFieldId = `${fieldId}-name`;
+      const phoneFieldId = `${fieldId}-phone`;
+
+      return (
+        <div key={field.id} className="space-y-3">
+          <p className="text-sm font-medium text-text-warm">
+            {field.label}
+            {field.required ? (
+              <span className="text-destructive" aria-hidden>
+                {" "}
+                *
+              </span>
+            ) : null}
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor={nameFieldId}>Contact name</Label>
+            <Input
+              id={nameFieldId}
+              value={emergency.name}
+              onChange={(event) =>
+                setValues((current) => ({
+                  ...current,
+                  [field.id]: {
+                    ...readEmergencyValue(current[field.id]),
+                    name: event.target.value,
+                  },
+                }))
+              }
+              onBlur={() => validateOnBlur(field)}
+              aria-invalid={Boolean(error)}
+              aria-describedby={errorDescribedBy}
+              className={publicControlClass}
+            />
+          </div>
+          <PhoneFieldInput
+            field={field}
+            fieldId={phoneFieldId}
+            label="Contact phone"
+            showRequired={false}
+            value={emergency.phone}
+            error={error}
+            isPublic={isPublic}
+            onChange={(nextValue) =>
+              setValues((current) => ({
+                ...current,
+                [field.id]: {
+                  ...readEmergencyValue(current[field.id]),
+                  phone: nextValue,
+                },
+              }))
+            }
+            onBlur={() => validateOnBlur(field)}
+          />
           {renderFieldError(fieldId, error)}
         </div>
       );

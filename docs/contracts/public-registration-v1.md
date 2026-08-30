@@ -50,6 +50,8 @@ Keys in `answers` must match field `id` values from [activity-form-schema-v1.md]
 | `yes_no`                           | boolean         | `true` or `false` |
 | `multi_choice`                     | string array    | `["sat","sun"]` |
 | `country`                          | string          | `"PH"` (supported phone-country ISO) |
+| `scale`                            | string          | `"3"` (values `"1"`–`"5"` with fixed skill labels) |
+| `emergency`                        | object          | `{ "name": "Alex", "phone": "91234567" }` |
 | `info`                             | —               | Display-only; no answer |
 | `select`, `referral_source`        | string          | `"friend"` (option `value`) |
 | `checkbox`, `consent`              | boolean         | `true` |

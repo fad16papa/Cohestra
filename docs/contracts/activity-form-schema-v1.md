@@ -84,6 +84,8 @@ Referenced by:
 | `multi_choice`     | Several picks (v1.1 additive) | `options` required. Answer is a string array. Optional `min` / `max` are selection **counts**. |
 | `info`             | Display-only (v1.1 additive) | NonInput. `infoText` markdown-lite, max 2000 after HTML strip. No Answer. |
 | `country`          | ISO country (v1.1 additive) | Reuses phone-country ISO list (SG, PH, MY, ID, TH, VN, US, GB, AU, HK, JP, KR, CN, IN). |
+| `scale`            | Labeled 1–5 skill (Core+ additive) | Answer is `"1"`–`"5"` with fixed labels (Beginner → Expert). **Not** NPS. Does **not** satisfy Publish Gate. Basic save → `403 plan_locked`. |
+| `emergency`        | Compound emergency contact (Core+ additive) | One field id; answer is `{ "name": string, "phone": string }`. `phoneCountry` defaults to `SG`. Does **not** satisfy Publish Gate or Client extract. Basic save → `403 plan_locked`. |
 
 ## Validation (API)
 

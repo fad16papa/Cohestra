@@ -1,11 +1,13 @@
 "use client";
 
+import { Lock } from "lucide-react";
 import { Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   filterFormFieldPaletteItems,
-  formFieldPaletteGroups,
+  getFormFieldPaletteGroups,
+  type FormFieldPaletteGroup,
   type FormFieldPaletteItem,
 } from "@/lib/form-field-palette";
 import type { FormFieldType } from "@/lib/activities-api";
@@ -14,6 +16,7 @@ import { cn } from "@/lib/utils";
 type FormFieldPaletteDialogProps = {
   open: boolean;
   disabled?: boolean;
+  corePlusLocked?: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (type: FormFieldType) => void;
 };
@@ -21,6 +24,7 @@ type FormFieldPaletteDialogProps = {
 export function FormFieldPaletteDialog({
   open,
   disabled = false,
+  corePlusLocked = false,
   onOpenChange,
   onSelect,
 }: FormFieldPaletteDialogProps) {
@@ -28,9 +32,19 @@ export function FormFieldPaletteDialog({
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const paletteGroups = useMemo(
+    () => getFormFieldPaletteGroups(corePlusLocked),
+    [corePlusLocked]
+  );
+
   const filteredItems = useMemo(
-    () => filterFormFieldPaletteItems(query),
-    [query]
+    () => filterFormFieldPaletteItems(query, paletteGroups),
+    [paletteGroups, query]
+  );
+
+  const selectableItems = useMemo(
+    () => filteredItems.filter((item) => !item.locked),
+    [filteredItems]
   );
 
   useEffect(() => {
@@ -71,20 +85,24 @@ export function FormFieldPaletteDialog({
         return;
       }
 
-      if (disabled || filteredItems.length === 0) {
+      if (disabled || selectableItems.length === 0) {
         return;
       }
 
       if (event.key === "ArrowDown") {
         event.preventDefault();
-        setActiveIndex((current) => (current + 1) % filteredItems.length);
+        setActiveIndex((current) => {
+          const next = findNextSelectableIndex(filteredItems, current, 1);
+          return next ?? current;
+        });
       }
 
       if (event.key === "ArrowUp") {
         event.preventDefault();
-        setActiveIndex(
-          (current) => (current - 1 + filteredItems.length) % filteredItems.length
-        );
+        setActiveIndex((current) => {
+          const next = findNextSelectableIndex(filteredItems, current, -1);
+          return next ?? current;
+        });
       }
 
       if (event.key === "Enter") {
@@ -94,7 +112,7 @@ export function FormFieldPaletteDialog({
 
         event.preventDefault();
         const item = filteredItems[activeIndex];
-        if (item) {
+        if (item && !item.locked) {
           onSelect(item.type);
           onOpenChange(false);
         }
@@ -103,7 +121,15 @@ export function FormFieldPaletteDialog({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeIndex, disabled, filteredItems, onOpenChange, onSelect, open]);
+  }, [
+    activeIndex,
+    disabled,
+    filteredItems,
+    onOpenChange,
+    onSelect,
+    open,
+    selectableItems.length,
+  ]);
 
   if (!open || disabled) {
     return null;
@@ -148,7 +174,7 @@ export function FormFieldPaletteDialog({
           ) : (
             <ul role="listbox" aria-label="Field types">
               {filteredItems.map((item, index) => {
-                const groupLabel = findGroupLabel(item);
+                const groupLabel = findGroupLabel(item, paletteGroups);
                 const showHeader = groupLabel !== lastGroupLabel;
                 lastGroupLabel = groupLabel;
                 const isActive = index === activeIndex;
@@ -164,11 +190,12 @@ export function FormFieldPaletteDialog({
                       type="button"
                       role="option"
                       aria-selected={isActive}
-                      disabled={disabled}
+                      aria-disabled={item.locked}
+                      disabled={disabled || item.locked}
                       onMouseEnter={() => setActiveIndex(index)}
                       onFocus={() => setActiveIndex(index)}
                       onClick={() => {
-                        if (disabled) {
+                        if (disabled || item.locked) {
                           return;
                         }
 
@@ -176,15 +203,28 @@ export function FormFieldPaletteDialog({
                         onOpenChange(false);
                       }}
                       className={cn(
-                        "flex w-full items-center rounded-lg px-3 py-2 text-left text-sm outline-none",
+                        "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm outline-none",
                         "focus-visible:ring-2 focus-visible:ring-ring",
-                        isActive
-                          ? "bg-primary/10 text-text-warm"
-                          : "text-text-warm hover:bg-muted/60"
+                        item.locked
+                          ? "cursor-not-allowed text-text-muted-warm"
+                          : isActive
+                            ? "bg-primary/10 text-text-warm"
+                            : "text-text-warm hover:bg-muted/60"
                       )}
                     >
-                      {item.label}
+                      <span>{item.label}</span>
+                      {item.locked ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-text-muted-warm">
+                          <Lock className="size-3.5" aria-hidden />
+                          Core+
+                        </span>
+                      ) : null}
                     </button>
+                    {item.locked && item.lockedReason && isActive ? (
+                      <p className="px-3 pb-1 text-xs text-text-muted-warm">
+                        {item.lockedReason}
+                      </p>
+                    ) : null}
                   </li>
                 );
               })}
@@ -203,12 +243,35 @@ export function FormFieldPaletteDialog({
   );
 }
 
-function findGroupLabel(item: FormFieldPaletteItem): string {
-  for (const group of formFieldPaletteGroups) {
+function findGroupLabel(
+  item: FormFieldPaletteItem,
+  groups: FormFieldPaletteGroup[]
+): string {
+  for (const group of groups) {
     if (group.items.some((candidate) => candidate.type === item.type)) {
       return group.label;
     }
   }
 
   return "Fields";
+}
+
+function findNextSelectableIndex(
+  items: FormFieldPaletteItem[],
+  currentIndex: number,
+  direction: 1 | -1
+): number | null {
+  if (items.length === 0) {
+    return null;
+  }
+
+  let index = currentIndex;
+  for (let step = 0; step < items.length; step += 1) {
+    index = (index + direction + items.length) % items.length;
+    if (!items[index]?.locked) {
+      return index;
+    }
+  }
+
+  return null;
 }

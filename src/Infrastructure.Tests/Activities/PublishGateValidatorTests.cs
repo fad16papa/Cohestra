@@ -59,6 +59,58 @@ public sealed class PublishGateValidatorTests
     }
 
     [Fact]
+    public void ValidateForPublish_RequiredScaleOnly_Fails()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "skill",
+                        Type = FormFieldTypes.Scale,
+                        Label = "Skill level",
+                        Required = true,
+                    },
+                ],
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("required phone or email", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateForPublish_PhonePlusScale_Succeeds()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "phone",
+                        Type = FormFieldTypes.Phone,
+                        Label = "Mobile number",
+                        Required = true,
+                        PhoneCountry = "SG",
+                    },
+                    new FormFieldDefinition
+                    {
+                        Id = "skill",
+                        Type = FormFieldTypes.Scale,
+                        Label = "Skill level",
+                    },
+                ],
+            });
+
+        Assert.Null(error);
+    }
+
+    [Fact]
     public void ValidateForPublish_RequiredTextareaOnly_Fails()
     {
         var error = PublishGateValidator.ValidateForPublish(

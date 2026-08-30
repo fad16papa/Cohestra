@@ -172,4 +172,53 @@ public sealed class ClientProfileExtractorTests
 
         Assert.Null(profile.NameFromForm);
     }
+
+    [Fact]
+    public void Extract_ScaleAndEmergency_DoNotSetClientContactFields()
+    {
+        var schema = new ActivityFormSchema
+        {
+            Version = 1,
+            Fields =
+            [
+                new FormFieldDefinition
+                {
+                    Id = "skill",
+                    Type = FormFieldTypes.Scale,
+                    Label = "Skill level",
+                },
+                new FormFieldDefinition
+                {
+                    Id = "emergency_contact",
+                    Type = FormFieldTypes.Emergency,
+                    Label = "Emergency contact",
+                    PhoneCountry = "SG",
+                },
+                new FormFieldDefinition
+                {
+                    Id = "email",
+                    Type = FormFieldTypes.Email,
+                    Label = "Email",
+                    Required = true,
+                },
+            ],
+        };
+
+        var profile = ClientProfileExtractor.Extract(
+            schema,
+            new Dictionary<string, object?>
+            {
+                ["skill"] = "3",
+                ["emergency_contact"] = new Dictionary<string, object?>
+                {
+                    ["name"] = "Alex",
+                    ["phone"] = "91234567",
+                },
+                ["email"] = "maya@example.com",
+            });
+
+        Assert.Null(profile.NameFromForm);
+        Assert.Null(profile.Phone);
+        Assert.Equal("maya@example.com", profile.Email);
+    }
 }

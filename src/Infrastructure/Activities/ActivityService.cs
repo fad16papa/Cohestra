@@ -1157,7 +1157,9 @@ public sealed class ActivityService(
     {
         var hasRecipes = schema.Fields.Any(field => field.VisibleWhen is not null);
         var hasSteps = schema.Meta is { SplitIntoSteps: true };
-        if (!hasRecipes && !hasSteps)
+        var hasCorePlusFields = schema.Fields.Any(field =>
+            FormFieldTypes.CorePlusOnly.Contains(field.Type));
+        if (!hasRecipes && !hasSteps && !hasCorePlusFields)
         {
             return;
         }
@@ -1171,6 +1173,12 @@ public sealed class ActivityService(
         if (plan is null)
         {
             throw new InvalidOperationException("Tenant not found for form schema plan gate.");
+        }
+
+        if (hasCorePlusFields && plan is TenantPlan.Basic)
+        {
+            throw new FormSchemaPlanLockedException(
+                "Scale and emergency contact fields require a Core or Pro plan.");
         }
 
         if (hasRecipes && plan is TenantPlan.Basic)

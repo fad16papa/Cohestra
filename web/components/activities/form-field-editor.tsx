@@ -44,6 +44,7 @@ type FormFieldEditorProps = {
   disabled?: boolean;
   className?: string;
   recipesLocked?: boolean;
+  corePlusLocked?: boolean;
   stepsEnabled?: boolean;
   stepsLocked?: boolean;
 };
@@ -87,6 +88,7 @@ export function FormFieldEditor({
   disabled = false,
   className,
   recipesLocked = false,
+  corePlusLocked = false,
   stepsEnabled = false,
   stepsLocked = false,
 }: FormFieldEditorProps) {
@@ -335,6 +337,7 @@ export function FormFieldEditor({
       <FormFieldPaletteDialog
         open={paletteOpen}
         disabled={disabled}
+        corePlusLocked={corePlusLocked}
         onOpenChange={setPaletteOpen}
         onSelect={addFieldOfType}
       />
@@ -614,13 +617,15 @@ function FieldPropertiesEditor({
             disabled={disabled}
             onChange={(event) => {
               const nextType = event.target.value as FormFieldType;
-              if (nextType === "phone") {
+              if (nextType === "phone" || nextType === "emergency") {
                 const country = field.phoneCountry ?? DEFAULT_PHONE_COUNTRY;
                 onUpdate({
                   type: nextType,
                   phoneCountry: country,
                   placeholder:
-                    field.placeholder ?? `${getPhonePrefixLabel(country)} …`,
+                    nextType === "phone"
+                      ? field.placeholder ?? `${getPhonePrefixLabel(country)} …`
+                      : null,
                 });
                 return;
               }
@@ -718,7 +723,7 @@ function FieldPropertiesEditor({
           </div>
         ) : null}
 
-        {field.type === "phone" ? (
+        {field.type === "phone" || field.type === "emergency" ? (
           <div className="sm:col-span-2">
             <PhoneCountrySelect
               id={`field-phone-country-${index}`}
@@ -727,7 +732,10 @@ function FieldPropertiesEditor({
               onChange={(nextCountry) =>
                 onUpdate({
                   phoneCountry: nextCountry,
-                  placeholder: `${getPhonePrefixLabel(nextCountry)} …`,
+                  placeholder:
+                    field.type === "phone"
+                      ? `${getPhonePrefixLabel(nextCountry)} …`
+                      : null,
                 })
               }
             />

@@ -129,7 +129,7 @@ internal static partial class FormSchemaValidator
                     ConsentText = string.IsNullOrWhiteSpace(field.ConsentText)
                         ? null
                         : field.ConsentText.Trim(),
-                    PhoneCountry = field.Type == FormFieldTypes.Phone
+                    PhoneCountry = field.Type is FormFieldTypes.Phone or FormFieldTypes.Emergency
                         ? string.IsNullOrWhiteSpace(field.PhoneCountry)
                             ? PhoneCountrySupport.DefaultPhoneCountryIsoCode
                             : field.PhoneCountry.Trim().ToUpperInvariant()
@@ -224,7 +224,7 @@ internal static partial class FormSchemaValidator
 
         if (string.IsNullOrWhiteSpace(field.Type) || !FormFieldTypes.All.Contains(field.Type))
         {
-            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header, hidden, textarea, date, number, url, time, choice, yes_no, multi_choice, info, country.";
+            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header, hidden, textarea, date, number, url, time, choice, yes_no, multi_choice, info, country, scale, emergency.";
         }
 
         if (field.Type != FormFieldTypes.Hidden && field.DefaultValue is not null)
@@ -258,6 +258,16 @@ internal static partial class FormSchemaValidator
         if (field.Type == FormFieldTypes.Info)
         {
             return ValidateInfoField(field, fieldPath);
+        }
+
+        if (field.Type == FormFieldTypes.Scale)
+        {
+            return ValidateScaleField(field, fieldPath);
+        }
+
+        if (field.Type == FormFieldTypes.Emergency)
+        {
+            return ValidateEmergencyField(field, fieldPath);
         }
 
         if (field.Type == FormFieldTypes.SectionHeader)
@@ -368,7 +378,7 @@ internal static partial class FormSchemaValidator
             return $"{fieldPath}.consentText is only allowed for consent fields.";
         }
 
-        if (field.Type == FormFieldTypes.Phone)
+        if (field.Type is FormFieldTypes.Phone or FormFieldTypes.Emergency)
         {
             if (!string.IsNullOrWhiteSpace(field.PhoneCountry) &&
                 !PhoneCountrySupport.IsSupportedIsoCode(field.PhoneCountry))
@@ -378,7 +388,7 @@ internal static partial class FormSchemaValidator
         }
         else if (!string.IsNullOrWhiteSpace(field.PhoneCountry))
         {
-            return $"{fieldPath}.phoneCountry is only allowed for phone fields.";
+            return $"{fieldPath}.phoneCountry is only allowed for phone and emergency fields.";
         }
 
         return null;
@@ -501,6 +511,101 @@ internal static partial class FormSchemaValidator
             HiddenValueSanitizer.Sanitize(field.DefaultValue).Length > HiddenValueSanitizer.MaxLength)
         {
             return $"{fieldPath}.defaultValue cannot exceed {HiddenValueSanitizer.MaxLength} characters.";
+        }
+
+        return null;
+    }
+
+    private static string? ValidateScaleField(FormFieldDefinition field, string fieldPath)
+    {
+        if (string.IsNullOrWhiteSpace(field.Label))
+        {
+            return $"{fieldPath}.label is required for scale fields.";
+        }
+
+        if (field.Label.Length > MaxLabelLength)
+        {
+            return $"{fieldPath}.label cannot exceed {MaxLabelLength} characters.";
+        }
+
+        if (field.Placeholder is not null)
+        {
+            return $"{fieldPath}.placeholder is not allowed for scale fields.";
+        }
+
+        if (field.Options is { Count: > 0 })
+        {
+            return $"{fieldPath}.options is not allowed for scale fields.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.ConsentText))
+        {
+            return $"{fieldPath}.consentText is not allowed for scale fields.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.PhoneCountry))
+        {
+            return $"{fieldPath}.phoneCountry is not allowed for scale fields.";
+        }
+
+        if (field.DefaultValue is not null)
+        {
+            return $"{fieldPath}.defaultValue is only allowed for hidden fields.";
+        }
+
+        if (field.Min is not null || field.Max is not null)
+        {
+            return $"{fieldPath}.min/max is only allowed for number and multi_choice fields.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.InfoText))
+        {
+            return $"{fieldPath}.infoText is only allowed for info fields.";
+        }
+
+        return null;
+    }
+
+    private static string? ValidateEmergencyField(FormFieldDefinition field, string fieldPath)
+    {
+        if (string.IsNullOrWhiteSpace(field.Label))
+        {
+            return $"{fieldPath}.label is required for emergency fields.";
+        }
+
+        if (field.Label.Length > MaxLabelLength)
+        {
+            return $"{fieldPath}.label cannot exceed {MaxLabelLength} characters.";
+        }
+
+        if (field.Placeholder is not null)
+        {
+            return $"{fieldPath}.placeholder is not allowed for emergency fields.";
+        }
+
+        if (field.Options is { Count: > 0 })
+        {
+            return $"{fieldPath}.options is not allowed for emergency fields.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.ConsentText))
+        {
+            return $"{fieldPath}.consentText is not allowed for emergency fields.";
+        }
+
+        if (field.DefaultValue is not null)
+        {
+            return $"{fieldPath}.defaultValue is only allowed for hidden fields.";
+        }
+
+        if (field.Min is not null || field.Max is not null)
+        {
+            return $"{fieldPath}.min/max is only allowed for number and multi_choice fields.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.InfoText))
+        {
+            return $"{fieldPath}.infoText is only allowed for info fields.";
         }
 
         return null;

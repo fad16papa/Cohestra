@@ -30,6 +30,8 @@ export const formFieldTypeLabels: Record<FormFieldType, string> = {
   multi_choice: "Multi-choice",
   info: "Info",
   country: "Country",
+  scale: "Scale",
+  emergency: "Emergency contact",
 };
 
 export const formFieldTypeOptions: FormFieldType[] = [
@@ -52,6 +54,8 @@ export const formFieldTypeOptions: FormFieldType[] = [
   "section_header",
   "info",
   "hidden",
+  "scale",
+  "emergency",
 ];
 
 export function emptyFormSchema(): ActivityFormSchema {
@@ -93,7 +97,9 @@ export function createFieldId(type: FormFieldType, existingIds: Set<string>): st
       type === "yes_no" ||
       type === "multi_choice" ||
       type === "info" ||
-      type === "country") &&
+      type === "country" ||
+      type === "scale" ||
+      type === "emergency") &&
     !existingIds.has(type)
   ) {
     return type;
@@ -294,6 +300,22 @@ export function createDefaultField(
       consentText: null,
       phoneCountry: null,
     },
+    scale: {
+      label: "Skill level",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    emergency: {
+      label: "Emergency contact",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: DEFAULT_PHONE_COUNTRY,
+    },
   };
 
   return {
@@ -343,6 +365,10 @@ export function fieldNeedsOptions(type: FormFieldType): boolean {
 
 export function fieldNeedsConsentText(type: FormFieldType): boolean {
   return type === "consent";
+}
+
+export function isCorePlusFieldType(type: FormFieldType): boolean {
+  return type === "scale" || type === "emergency";
 }
 
 export function isNonInputFieldType(type: FormFieldType): boolean {
