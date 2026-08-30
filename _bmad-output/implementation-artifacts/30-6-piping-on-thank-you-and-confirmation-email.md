@@ -138,9 +138,9 @@ So that Maya sees “See you Saturday, Maya” without a hardcoded name — and 
 
 ### Review Findings (Pass 5)
 
-- [ ] [Review][Patch] `NormalizeLineEndings` normalizes `\r` but not Unicode line separators (`\u2028`, `\u2029`); pass 4 fixed the subject path only — closing message (template or piped values) can still carry them into plain-text/HTML email [`RegistrationConfirmationEmailBuilder.cs:213-215`]
+- [x] [Review][Patch] `NormalizeLineEndings` normalizes `\r` but not Unicode line separators (`\u2028`, `\u2029`); pass 4 fixed the subject path only — closing message (template or piped values) can still carry them into plain-text/HTML email [`RegistrationConfirmationEmailBuilder.cs:213-215`]
 
-- [ ] [Review][Patch] Success screen splits paragraphs on `\n{2,}` without normalizing `\r` or Unicode line separators first; CRLF paragraph breaks and `\u2028`/`\u2029` in piped copy render incorrectly [`registration-success-screen.tsx:46-48`, `RegistrationService.cs:386-392`]
+- [x] [Review][Patch] Success screen splits paragraphs on `\n{2,}` without normalizing `\r` or Unicode line separators first; CRLF paragraph breaks and `\u2028`/`\u2029` in piped copy render incorrectly [`registration-success-screen.tsx:46-48`, `RegistrationService.cs:386-392`]
 
 - [x] [Review][Defer] Live schema at outbox send time (submit-time vs send-time copy divergence) [`RegistrationNotificationService.cs:177-197`] — deferred, pre-existing outbox pattern
 - [x] [Review][Defer] Post-substitution token sweeps strip literal `{{…}}` inside piped field answers [`RegistrationPipingTokenSubstitutor.cs:30-31`] — deferred, low likelihood

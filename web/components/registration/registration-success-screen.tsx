@@ -7,6 +7,7 @@ import { PublisherWebsiteLinkButton } from "@/components/registration/publisher-
 import { Button } from "@/components/ui/button";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
+import { splitParticipantCopyParagraphs } from "@/lib/registration-piping";
 
 type RegistrationSuccessScreenProps = {
   activityName: string;
@@ -45,7 +46,7 @@ export function RegistrationSuccessScreen({
 
   const personalizedCopy = successCopyMarkdown?.trim() ?? "";
   const personalizedParagraphs = personalizedCopy
-    ? personalizedCopy.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean)
+    ? splitParticipantCopyParagraphs(personalizedCopy)
     : [];
 
   return (

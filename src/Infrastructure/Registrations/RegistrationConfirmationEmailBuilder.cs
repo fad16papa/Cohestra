@@ -212,7 +212,9 @@ internal static class RegistrationConfirmationEmailBuilder
 
     internal static string NormalizeLineEndings(string text) =>
         text.Replace("\r\n", "\n", StringComparison.Ordinal)
-            .Replace("\r", "\n", StringComparison.Ordinal);
+            .Replace("\r", "\n", StringComparison.Ordinal)
+            .Replace("\u2028", "\n", StringComparison.Ordinal)
+            .Replace("\u2029", "\n", StringComparison.Ordinal);
 
     internal static string SanitizeEmailSubject(string subject) =>
         Regex.Replace(subject.Trim(), @"[\r\n\u2028\u2029]+", " ", RegexOptions.CultureInvariant).Trim();

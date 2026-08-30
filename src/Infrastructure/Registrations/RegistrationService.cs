@@ -389,7 +389,8 @@ public sealed class RegistrationService(
             profile,
             answers);
 
-        return string.IsNullOrWhiteSpace(substituted) ? null : substituted;
+        var normalized = RegistrationConfirmationEmailBuilder.NormalizeLineEndings(substituted);
+        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
     }
 
     private async Task RefreshPublicActivityCacheBestEffortAsync(

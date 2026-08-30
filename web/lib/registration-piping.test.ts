@@ -4,7 +4,9 @@ import type { ActivityFormSchema } from "@/lib/activities-api";
 import {
   isPipingEligibleField,
   listPipingFieldTokens,
+  normalizeParticipantCopyLineEndings,
   PIPING_SAMPLE_NAME,
+  splitParticipantCopyParagraphs,
   substitutePipingPreview,
 } from "@/lib/registration-piping";
 
@@ -81,5 +83,19 @@ describe("registration-piping", () => {
   it("clears empty and unclosed tokens in preview", () => {
     expect(substitutePipingPreview("Hi {{}} there", schema)).toBe("Hi  there");
     expect(substitutePipingPreview("Hi {{full_name there", schema)).toBe("Hi ");
+  });
+
+  it("normalizes carriage returns and unicode line separators", () => {
+    expect(normalizeParticipantCopyLineEndings("Line one\r\nLine two")).toBe(
+      "Line one\nLine two"
+    );
+    expect(normalizeParticipantCopyLineEndings("A\u2028B\u2029C")).toBe("A\nB\nC");
+  });
+
+  it("splits paragraphs after normalizing CRLF paragraph breaks", () => {
+    expect(splitParticipantCopyParagraphs("First\r\n\r\nSecond")).toEqual([
+      "First",
+      "Second",
+    ]);
   });
 });

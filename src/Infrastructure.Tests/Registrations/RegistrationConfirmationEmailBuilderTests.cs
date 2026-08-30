@@ -133,6 +133,22 @@ public sealed class RegistrationConfirmationEmailBuilderTests
         Assert.Contains("Line one<br />Line two<br />Line three", content.HtmlBody);
     }
 
+    [Theory]
+    [InlineData('\u2028')]
+    [InlineData('\u2029')]
+    public void Build_NormalizesUnicodeLineSeparatorsInCustomClosingMessage(char separator)
+    {
+        var content = RegistrationConfirmationEmailBuilder.Build(
+            CreateModel() with
+            {
+                CustomClosingMessage = $"Line one{separator}Line two",
+            });
+
+        Assert.DoesNotContain(separator, content.PlainTextBody);
+        Assert.DoesNotContain(separator, content.HtmlBody);
+        Assert.Contains("Line one<br />Line two", content.HtmlBody);
+    }
+
     [Fact]
     public void ResolveLogoUrl_UsesPublicWebBaseWhenLogoUrlNotConfigured()
     {

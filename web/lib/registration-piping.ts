@@ -21,6 +21,22 @@ export function listPipingFieldTokens(schema: ActivityFormSchema): string[] {
   return schema.fields.filter(isPipingEligibleField).map((field) => `{{field:${field.id}}}`);
 }
 
+export function normalizeParticipantCopyLineEndings(text: string): string {
+  return text.replace(/\r\n?/g, "\n").replace(/\u2028|\u2029/g, "\n");
+}
+
+export function splitParticipantCopyParagraphs(text: string): string[] {
+  const normalized = normalizeParticipantCopyLineEndings(text.trim());
+  if (!normalized) {
+    return [];
+  }
+
+  return normalized
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 function findFieldById(schema: ActivityFormSchema, fieldId: string): FormFieldDefinition | undefined {
   const normalized = fieldId.toLowerCase();
   return schema.fields.find((item) => item.id.toLowerCase() === normalized);
