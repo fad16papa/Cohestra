@@ -215,7 +215,7 @@ internal static class RegistrationConfirmationEmailBuilder
             .Replace("\r", "\n", StringComparison.Ordinal);
 
     internal static string SanitizeEmailSubject(string subject) =>
-        Regex.Replace(subject.Trim(), @"[\r\n]+", " ", RegexOptions.CultureInvariant).Trim();
+        Regex.Replace(subject.Trim(), @"[\r\n\u2028\u2029]+", " ", RegexOptions.CultureInvariant).Trim();
 
     internal static string EncodeClosingMessageHtml(RegistrationConfirmationEmailModel model)
     {

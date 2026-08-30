@@ -102,6 +102,21 @@ public sealed class RegistrationConfirmationEmailBuilderTests
         Assert.Equal("You're in, Maya", content.Subject);
     }
 
+    [Theory]
+    [InlineData('\u2028')]
+    [InlineData('\u2029')]
+    public void Build_SanitizesUnicodeLineSeparatorsInCustomSubject(char separator)
+    {
+        var content = RegistrationConfirmationEmailBuilder.Build(
+            CreateModel() with
+            {
+                CustomSubject = $"You're in,{separator}Maya",
+                CustomClosingMessage = "See you Saturday, Maya.",
+            });
+
+        Assert.Equal("You're in, Maya", content.Subject);
+    }
+
     [Fact]
     public void Build_NormalizesCarriageReturnsInCustomClosingMessage()
     {

@@ -207,6 +207,23 @@ public sealed class FormSchemaValidatorTests
         Assert.Contains("line breaks", error, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData('\u2028')]
+    [InlineData('\u2029')]
+    public void ValidateModel_RejectsConfirmationEmailSubjectWithUnicodeLineSeparators(char separator)
+    {
+        var schema = ContactSchema();
+        schema.Meta = new FormSchemaMeta
+        {
+            ConfirmationEmailSubject = $"Hello{separator}World",
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("line breaks", error, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void MapToDomain_TrimsPipingMetaFields()
     {

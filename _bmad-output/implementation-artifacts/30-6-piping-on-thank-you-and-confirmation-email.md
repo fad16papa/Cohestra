@@ -117,7 +117,7 @@ So that Maya sees “See you Saturday, Maya” without a hardcoded name — and 
 
 ### Review Findings (Pass 4)
 
-- [ ] [Review][Patch] Confirmation subject validation and `SanitizeEmailSubject` only reject/normalize `\r`/`\n`; Unicode line separators (`\u2028`, `\u2029`) in templates or piped field values can survive into the email subject header [`FormSchemaValidator.cs:65-68`, `RegistrationConfirmationEmailBuilder.cs:217-218`]
+- [x] [Review][Patch] Confirmation subject validation and `SanitizeEmailSubject` only reject/normalize `\r`/`\n`; Unicode line separators (`\u2028`, `\u2029`) in templates or piped field values can survive into the email subject header [`FormSchemaValidator.cs:65-68`, `RegistrationConfirmationEmailBuilder.cs:217-218`]
 
 - [x] [Review][Defer] Live schema at outbox send time (TOCTOU hidden-value / copy divergence vs submit-time `successCopyMarkdown`) [`RegistrationNotificationService.cs:177-197`, `RegistrationService.cs:386-392`] — deferred, pre-existing outbox pattern
 - [x] [Review][Defer] Post-substitution unknown/unclosed token sweeps strip literal `{{…}}` inside piped field answers [`RegistrationPipingTokenSubstitutor.cs:30-31`, `registration-piping.ts:69-71`] — deferred, low likelihood

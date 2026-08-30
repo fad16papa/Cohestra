@@ -63,7 +63,10 @@ internal static partial class FormSchemaValidator
         }
 
         if (schema.Meta?.ConfirmationEmailSubject is { } confirmationSubject &&
-            (confirmationSubject.Contains('\r') || confirmationSubject.Contains('\n')))
+            (confirmationSubject.Contains('\r')
+             || confirmationSubject.Contains('\n')
+             || confirmationSubject.Contains('\u2028')
+             || confirmationSubject.Contains('\u2029')))
         {
             return "Confirmation email subject cannot contain line breaks.";
         }
