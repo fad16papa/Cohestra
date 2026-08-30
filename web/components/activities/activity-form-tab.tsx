@@ -5,6 +5,7 @@ import { LayoutTemplate } from "lucide-react";
 
 import { FormFieldEditor } from "@/components/activities/form-field-editor";
 import { FormTemplatePicker } from "@/components/activities/form-template-picker";
+import { PipingCheatsheet } from "@/components/activities/piping-cheatsheet";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { RegistrationIntroCopy } from "@/components/registration/registration-intro-copy";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -24,12 +25,15 @@ import {
   saveActivityFormSchema,
   type Activity,
   type ActivityFormSchema,
+  type FormSchemaMeta,
 } from "@/lib/activities-api";
 import {
   getFormSchemaClientIssues,
   getPublishGateIssues,
+  mergeFormSchemaMeta,
   normalizeFormSchema,
 } from "@/lib/form-schema-utils";
+import { substitutePipingPreview } from "@/lib/registration-piping";
 import {
   cloneFormTemplate,
   getFormTemplate,
@@ -93,6 +97,27 @@ export function ActivityFormTab({
     ),
   ].join("|");
   const introMarkdown = draftSchema.meta?.introMarkdown ?? null;
+  const successCopyMarkdown = draftSchema.meta?.successCopyMarkdown ?? null;
+  const confirmationEmailSubject = draftSchema.meta?.confirmationEmailSubject ?? null;
+  const confirmationEmailBodyMarkdown =
+    draftSchema.meta?.confirmationEmailBodyMarkdown ?? null;
+  const successCopyPreview = substitutePipingPreview(successCopyMarkdown, draftSchema);
+
+  function insertIntoMetaField(
+    field: keyof Pick<
+      FormSchemaMeta,
+      "successCopyMarkdown" | "confirmationEmailSubject" | "confirmationEmailBodyMarkdown"
+    >,
+    token: string,
+    currentValue: string | null
+  ) {
+    setDraftSchema((current) => ({
+      ...current,
+      meta: mergeFormSchemaMeta(current, {
+        [field]: `${currentValue ?? ""}${token}`,
+      }),
+    }));
+  }
 
   const showPublishGate =
     isDraft &&
@@ -268,16 +293,130 @@ export function ActivityFormTab({
             const nextIntro = event.target.value.trim() ? event.target.value : null;
             setDraftSchema((current) => ({
               ...current,
-              meta: {
-                introMarkdown: nextIntro,
-                splitIntoSteps: current.meta?.splitIntoSteps ?? false,
-              },
+              meta: mergeFormSchemaMeta(current, { introMarkdown: nextIntro }),
             }));
           }}
         />
         <p className="text-xs text-text-muted-warm">
           Plain text and paragraph breaks only. HTML is stripped on the public page.
         </p>
+      </section>
+
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-section text-text-warm">Thank-you copy</h3>
+            <p className="mt-0.5 text-sm text-text-muted-warm">
+              Optional message on the success screen after submit. Use tokens like{" "}
+              <code className="text-xs">{`{{full_name}}`}</code>.
+            </p>
+          </div>
+          <PipingCheatsheet
+            schema={draftSchema}
+            disabled={isArchived || isSaving}
+            onInsert={(token) =>
+              insertIntoMetaField("successCopyMarkdown", token, successCopyMarkdown)
+            }
+          />
+        </div>
+        <textarea
+          id="form-success-copy-markdown"
+          rows={3}
+          maxLength={2000}
+          value={successCopyMarkdown ?? ""}
+          disabled={isArchived || isSaving}
+          placeholder="See you Saturday, {{full_name}}."
+          className="flex min-h-[4rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+          onChange={(event) => {
+            const next = event.target.value.trim() ? event.target.value : null;
+            setDraftSchema((current) => ({
+              ...current,
+              meta: mergeFormSchemaMeta(current, { successCopyMarkdown: next }),
+            }));
+          }}
+        />
+        {successCopyPreview ? (
+          <div className="rounded-lg border border-dashed border-border-warm bg-muted/20 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+              Preview
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-text-warm">{successCopyPreview}</p>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-section text-text-warm">Confirmation email</h3>
+            <p className="mt-0.5 text-sm text-text-muted-warm">
+              Optional subject and closing message. Layout and hero stay on your registration
+              theme.
+            </p>
+          </div>
+        </div>
+        <label className="block space-y-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-medium text-text-warm">Subject</span>
+            <PipingCheatsheet
+              schema={draftSchema}
+              disabled={isArchived || isSaving}
+              onInsert={(token) =>
+                insertIntoMetaField("confirmationEmailSubject", token, confirmationEmailSubject)
+              }
+            />
+          </div>
+          <input
+            id="form-confirmation-email-subject"
+            type="text"
+            maxLength={200}
+            value={confirmationEmailSubject ?? ""}
+            disabled={isArchived || isSaving}
+            placeholder={`You're registered — {{full_name}}`}
+            className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+            onChange={(event) => {
+              const next = event.target.value.trim() ? event.target.value : null;
+              setDraftSchema((current) => ({
+                ...current,
+                meta: mergeFormSchemaMeta(current, { confirmationEmailSubject: next }),
+              }));
+            }}
+          />
+        </label>
+        <label className="block space-y-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-medium text-text-warm">Closing message</span>
+            <PipingCheatsheet
+              schema={draftSchema}
+              disabled={isArchived || isSaving}
+              onInsert={(token) =>
+                insertIntoMetaField(
+                  "confirmationEmailBodyMarkdown",
+                  token,
+                  confirmationEmailBodyMarkdown
+                )
+              }
+            />
+          </div>
+          <textarea
+            id="form-confirmation-email-body-markdown"
+            rows={3}
+            maxLength={2000}
+            value={confirmationEmailBodyMarkdown ?? ""}
+            disabled={isArchived || isSaving}
+            placeholder="Save the date — we look forward to seeing you there, {{full_name}}."
+            className="flex min-h-[4rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+            onChange={(event) => {
+              const next = event.target.value.trim() ? event.target.value : null;
+              setDraftSchema((current) => ({
+                ...current,
+                meta: mergeFormSchemaMeta(current, {
+                  confirmationEmailBodyMarkdown: next,
+                }),
+              }));
+            }}
+          />
+        </label>
       </section>
 
       <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
@@ -297,10 +436,7 @@ export function ActivityFormTab({
               setDraftSchema((current) =>
                 applyMissingStepBuckets({
                   ...current,
-                  meta: {
-                    introMarkdown: current.meta?.introMarkdown ?? null,
-                    splitIntoSteps: enabled,
-                  },
+                  meta: mergeFormSchemaMeta(current, { splitIntoSteps: enabled }),
                 })
               );
             }}

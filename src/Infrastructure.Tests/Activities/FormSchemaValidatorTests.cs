@@ -148,6 +148,113 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void ValidateModel_RejectsSuccessCopyOverMaxLength()
+    {
+        var schema = ContactSchema();
+        schema.Meta = new FormSchemaMeta
+        {
+            SuccessCopyMarkdown = new string('a', 2001),
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("Success copy", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateModel_RejectsConfirmationEmailSubjectOverMaxLength()
+    {
+        var schema = ContactSchema();
+        schema.Meta = new FormSchemaMeta
+        {
+            ConfirmationEmailSubject = new string('a', 201),
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("Confirmation email subject", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateModel_RejectsConfirmationEmailBodyOverMaxLength()
+    {
+        var schema = ContactSchema();
+        schema.Meta = new FormSchemaMeta
+        {
+            ConfirmationEmailBodyMarkdown = new string('a', 2001),
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("Confirmation email body", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateModel_RejectsConfirmationEmailSubjectWithLineBreaks()
+    {
+        var schema = ContactSchema();
+        schema.Meta = new FormSchemaMeta
+        {
+            ConfirmationEmailSubject = "Hello\nWorld",
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("line breaks", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData('\u2028')]
+    [InlineData('\u2029')]
+    public void ValidateModel_RejectsConfirmationEmailSubjectWithUnicodeLineSeparators(char separator)
+    {
+        var schema = ContactSchema();
+        schema.Meta = new FormSchemaMeta
+        {
+            ConfirmationEmailSubject = $"Hello{separator}World",
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("line breaks", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void MapToDomain_TrimsPipingMetaFields()
+    {
+        var dto = new ActivityFormSchemaDto(
+            1,
+            [
+                new FormFieldDefinitionDto(
+                    "email",
+                    FormFieldTypes.Email,
+                    "Email",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+            ],
+            new FormSchemaMetaDto(
+                IntroMarkdown: null,
+                SplitIntoSteps: false,
+                SuccessCopyMarkdown: "  See you, {{full_name}}  ",
+                ConfirmationEmailSubject: "  Hi {{full_name}}  ",
+                ConfirmationEmailBodyMarkdown: "  Thanks {{full_name}}  "));
+
+        var schema = FormSchemaValidator.MapToDomain(dto);
+
+        Assert.Equal("See you, {{full_name}}", schema.Meta?.SuccessCopyMarkdown);
+        Assert.Equal("Hi {{full_name}}", schema.Meta?.ConfirmationEmailSubject);
+        Assert.Equal("Thanks {{full_name}}", schema.Meta?.ConfirmationEmailBodyMarkdown);
+    }
+
+    [Fact]
     public void ValidateModel_AcceptsHiddenFieldWithDefaultValue()
     {
         var schema = ContactSchema(

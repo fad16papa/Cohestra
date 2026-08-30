@@ -140,6 +140,7 @@ export type PublicRegistrationSubmitResult = {
   clientId: string;
   confirmationEmailSent: boolean;
   confirmationEmail: string | null;
+  successCopyMarkdown: string | null;
 };
 
 export async function submitPublicRegistration(
@@ -175,6 +176,8 @@ export async function submitPublicRegistration(
       raw.confirmationEmailSent ?? raw.ConfirmationEmailSent ?? false;
     const confirmationEmailRaw =
       raw.confirmationEmail ?? raw.ConfirmationEmail ?? null;
+    const successCopyRaw =
+      raw.successCopyMarkdown ?? raw.SuccessCopyMarkdown ?? null;
 
     if (
       typeof status !== "string" ||
@@ -191,6 +194,10 @@ export async function submitPublicRegistration(
       typeof confirmationEmailRaw === "string" && confirmationEmailRaw.trim()
         ? confirmationEmailRaw.trim()
         : null;
+    const successCopyMarkdown =
+      typeof successCopyRaw === "string" && successCopyRaw.trim()
+        ? successCopyRaw.trim()
+        : null;
 
     return {
       status,
@@ -200,6 +207,7 @@ export async function submitPublicRegistration(
       clientId,
       confirmationEmailSent,
       confirmationEmail,
+      successCopyMarkdown,
     };
   }
 

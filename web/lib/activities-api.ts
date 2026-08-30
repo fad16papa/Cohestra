@@ -60,6 +60,9 @@ export type FormFieldDefinition = {
 export type FormSchemaMeta = {
   introMarkdown: string | null;
   splitIntoSteps?: boolean;
+  successCopyMarkdown?: string | null;
+  confirmationEmailSubject?: string | null;
+  confirmationEmailBodyMarkdown?: string | null;
 };
 
 export type ActivityFormSchema = {
@@ -158,12 +161,31 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
     const metaRecord = metaRaw as Record<string, unknown>;
     const introMarkdown = metaRecord.introMarkdown ?? metaRecord.IntroMarkdown;
     const splitIntoSteps = metaRecord.splitIntoSteps ?? metaRecord.SplitIntoSteps;
+    const successCopyMarkdown =
+      metaRecord.successCopyMarkdown ?? metaRecord.SuccessCopyMarkdown;
+    const confirmationEmailSubject =
+      metaRecord.confirmationEmailSubject ?? metaRecord.ConfirmationEmailSubject;
+    const confirmationEmailBodyMarkdown =
+      metaRecord.confirmationEmailBodyMarkdown ?? metaRecord.ConfirmationEmailBodyMarkdown;
     meta = {
       introMarkdown:
         typeof introMarkdown === "string" && introMarkdown.trim()
           ? introMarkdown
           : null,
       splitIntoSteps: splitIntoSteps === true,
+      successCopyMarkdown:
+        typeof successCopyMarkdown === "string" && successCopyMarkdown.trim()
+          ? successCopyMarkdown
+          : null,
+      confirmationEmailSubject:
+        typeof confirmationEmailSubject === "string" && confirmationEmailSubject.trim()
+          ? confirmationEmailSubject
+          : null,
+      confirmationEmailBodyMarkdown:
+        typeof confirmationEmailBodyMarkdown === "string" &&
+        confirmationEmailBodyMarkdown.trim()
+          ? confirmationEmailBodyMarkdown
+          : null,
     };
   }
 

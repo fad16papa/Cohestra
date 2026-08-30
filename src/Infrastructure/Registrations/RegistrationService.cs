@@ -357,13 +357,40 @@ public sealed class RegistrationService(
 
         await RefreshPublicActivityCacheBestEffortAsync(tenantId, normalizedSlug, cancellationToken);
 
+        var successCopy = ResolveSuccessCopyMarkdown(
+            activity.FormSchema!,
+            profile,
+            normalizedAnswers);
+
         return PublicRegistrationSubmitResult.Created(
             registration.Id,
             registration.RegistrationNumber,
             client.Id,
             clientCreated,
             confirmationEmailQueued: profile.Email is not null && !string.IsNullOrWhiteSpace(profile.Email.Trim()),
-            confirmationEmail: profile.Email?.Trim());
+            confirmationEmail: profile.Email?.Trim(),
+            successCopyMarkdown: successCopy);
+    }
+
+    private static string? ResolveSuccessCopyMarkdown(
+        ActivityFormSchema schema,
+        ExtractedClientProfile profile,
+        IReadOnlyDictionary<string, object?> answers)
+    {
+        var template = schema.Meta?.SuccessCopyMarkdown;
+        if (string.IsNullOrWhiteSpace(template))
+        {
+            return null;
+        }
+
+        var substituted = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+            template,
+            schema,
+            profile,
+            answers);
+
+        var normalized = RegistrationConfirmationEmailBuilder.NormalizeLineEndings(substituted);
+        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
     }
 
     private async Task RefreshPublicActivityCacheBestEffortAsync(

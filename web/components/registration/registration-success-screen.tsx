@@ -7,6 +7,7 @@ import { PublisherWebsiteLinkButton } from "@/components/registration/publisher-
 import { Button } from "@/components/ui/button";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
+import { splitParticipantCopyParagraphs } from "@/lib/registration-piping";
 
 type RegistrationSuccessScreenProps = {
   activityName: string;
@@ -14,6 +15,7 @@ type RegistrationSuccessScreenProps = {
   location: string;
   communityLabel: string;
   registrationNumber: string;
+  successCopyMarkdown?: string | null;
   confirmationEmailSent?: boolean;
   confirmationEmail?: string | null;
   websiteLink?: PublisherWebsiteLink | null;
@@ -26,6 +28,7 @@ export function RegistrationSuccessScreen({
   location,
   communityLabel,
   registrationNumber,
+  successCopyMarkdown = null,
   confirmationEmailSent = false,
   confirmationEmail = null,
   websiteLink = null,
@@ -40,6 +43,11 @@ export function RegistrationSuccessScreen({
       window.setTimeout(() => setCopied(false), 2000);
     }
   }
+
+  const personalizedCopy = successCopyMarkdown?.trim() ?? "";
+  const personalizedParagraphs = personalizedCopy
+    ? splitParticipantCopyParagraphs(personalizedCopy)
+    : [];
 
   return (
     <div
@@ -58,6 +66,18 @@ export function RegistrationSuccessScreen({
           We&apos;ve saved your spot for{" "}
           <span className="font-medium text-text-warm">{activityName}</span>.
         </p>
+        {personalizedParagraphs.length > 0 ? (
+          <div className="mt-3 space-y-2">
+            {personalizedParagraphs.map((paragraph, index) => (
+              <p
+                key={`${index}-${paragraph.slice(0, 24)}`}
+                className="text-sm leading-relaxed text-text-warm"
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-4 px-5 py-6 text-left sm:px-6 sm:py-8">

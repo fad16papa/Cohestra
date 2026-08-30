@@ -75,7 +75,8 @@ Hidden answers are filled from the public link query (`?{fieldId}=…`) or the F
   "registrationNumber": "REG20260616000001",
   "clientId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
   "confirmationEmailSent": true,
-  "confirmationEmail": "elena@example.com"
+  "confirmationEmail": "elena@example.com",
+  "successCopyMarkdown": "See you Saturday, Elena."
 }
 ```
 
@@ -88,6 +89,7 @@ Hidden answers are filled from the public link query (`?{fieldId}=…`) or the F
 | `clientId`          | uuid   | yes      | Master client record (created or updated) |
 | `confirmationEmailSent` | boolean | yes | `true` when SendGrid delivered a registration confirmation email |
 | `confirmationEmail` | string \| null | yes | Recipient address when the client has an email on file; `null` when no email was captured |
+| `successCopyMarkdown` | string \| null | yes | Operator thank-you copy with piping tokens substituted; `null` when unset |
 
 When the client submitted an email, the API sends a branded transactional confirmation (no-reply sender) after persisting the registration. Send failures do not fail the registration; `confirmationEmailSent` is `false` in that case.
 
