@@ -177,3 +177,10 @@ Cursor Grok 4.6
 ### Change Log
 
 - 2026-08-29: Implemented Story 30.3 Wave 1 toolbox types and country. Status → review.
+- 2026-08-30: Adversarial code review (Blind Hunter, Edge Case Hunter, Acceptance Auditor). 3 patch, 16 dismissed. No AC violations.
+
+### Review Findings
+
+- [ ] [Review][Patch] Switching `info` → `section_header` leaves `infoText`, so schema save fails [web/components/activities/form-field-editor.tsx:148]
+- [ ] [Review][Patch] `multi_choice` min can exceed option count, making a required field unsatisfiable [src/Infrastructure/Activities/FormSchemaValidator.cs:387]
+- [ ] [Review][Patch] `multi_choice` min/max cast to `int` throws on values above `Int32.MaxValue` [src/Infrastructure/Registrations/RegistrationAnswerValidator.cs:363]
