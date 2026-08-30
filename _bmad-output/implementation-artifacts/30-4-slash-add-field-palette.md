@@ -118,3 +118,10 @@ Cursor Composer
 ### Change Log
 
 - 2026-08-30: Implemented Story 30.4 slash-add field palette. Status → review.
+- 2026-08-30: Adversarial code review. 3 patch, 0 defer, 12 dismissed. No AC violations.
+
+### Review Findings
+
+- [ ] [Review][Patch] Palette stays open and can add fields when editor becomes disabled [web/components/activities/form-field-editor.tsx:190]
+- [ ] [Review][Patch] Tab-focused option vs activeIndex: Enter adds wrong type [web/components/activities/form-field-palette-dialog.tsx:82]
+- [ ] [Review][Patch] IME composition Enter adds field mid-input [web/components/activities/form-field-palette-dialog.tsx:82]
