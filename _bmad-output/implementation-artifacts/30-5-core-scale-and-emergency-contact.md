@@ -91,6 +91,10 @@ So that skill level and a door-contact live on the same Form without a survey bl
 
 Second adversarial pass after 8 patches: Edge Case Hunter `[]`, Acceptance Auditor no AC violations. Blind Hunter raised 9 polish items (radiogroup keyboard nav, emergency sub-field UX, autocomplete, client shape checks, magic-number drift) — all classified defer/dismiss; no new patch items.
 
+### Re-review pass 3 (2026-08-30)
+
+No code changes since pass 2. Blind Hunter: **CLEAN — no new findings**. Acceptance Auditor: **CLEAN — no AC violations**. Edge Case Hunter: one theoretical JsonElement numeric emergency phone in formatter (post-normalize storage uses strings) — **defer**, no patch.
+
 ### File List
 
 - `src/Domain/Activities/FormFieldTypes.cs`
