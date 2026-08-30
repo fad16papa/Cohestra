@@ -95,6 +95,10 @@ So that I get the lead without waiting on a webhook or opening Tally.
 
 - [x] [Review][Patch] Plain-text body contact/activity fields allowed newline injection [`RegistrationOperatorNotifyEmailBuilder.cs`] — `FormatValue` and activity title now use `SanitizePlainTextField`.
 
+### Review Findings (Pass 3)
+
+Clean review — all layers passed. No new patch or decision-needed findings. Remaining defer items from Pass 1 are pre-existing patterns (outbox idempotency, test coverage gaps, tenant-not-found 500).
+
 ## Dev Agent Record
 
 ### Implementation Plan
