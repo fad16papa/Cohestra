@@ -2,7 +2,7 @@
 story_id: 30.5
 story_key: 30-5-core-scale-and-emergency-contact
 epic: 30
-status: review
+status: done
 baseline_commit: 1b1c905
 created: 2026-08-30
 sources:
@@ -65,14 +65,14 @@ So that skill level and a door-contact live on the same Form without a survey bl
 
 ### Review Findings
 
-- [ ] [Review][Patch] Emergency `phoneCountry` bypasses schema validation [`src/Infrastructure/Activities/FormSchemaValidator.cs:268-271`] — `ValidateEmergencyField` returns early before the shared ISO check at line 381; invalid codes like `ZZ` can be saved.
-- [ ] [Review][Patch] Web schema validation skips emergency `phoneCountry` [`web/lib/form-schema-utils.ts:525-533`] — client publish-gate path validates phone fields only, not emergency.
-- [ ] [Review][Patch] Emergency name length not enforced in public form [`web/components/registration/registration-form.tsx`] — server caps at 200 chars; client has no `maxLength` or validation.
-- [ ] [Review][Patch] Optional scale cannot be cleared once selected [`web/components/registration/registration-form.tsx:845-884`] — toggle deselect needed for optional fields.
-- [ ] [Review][Patch] Scale control lacks radiogroup semantics [`web/components/registration/registration-form.tsx`] — use `role="radiogroup"` / `role="radio"` (or fieldset/legend) for screen readers.
-- [ ] [Review][Patch] No formatter tests for scale/emergency display [`src/Infrastructure/Clients/ClientRegistrationAnswerFormatter.cs`] — AC1 admin Answers formatting is untested.
-- [ ] [Review][Patch] Add schema test rejecting invalid emergency `phoneCountry` [`src/Infrastructure.Tests/Activities/FormSchemaValidatorTests.cs`]
-- [ ] [Review][Patch] Add publish-gate test for required emergency-only schema [`src/Infrastructure.Tests/Activities/PublishGateValidatorTests.cs`]
+- [x] [Review][Patch] Emergency `phoneCountry` bypasses schema validation [`src/Infrastructure/Activities/FormSchemaValidator.cs:268-271`] — `ValidateEmergencyField` returns early before the shared ISO check at line 381; invalid codes like `ZZ` can be saved.
+- [x] [Review][Patch] Web schema validation skips emergency `phoneCountry` [`web/lib/form-schema-utils.ts:525-533`] — client publish-gate path validates phone fields only, not emergency.
+- [x] [Review][Patch] Emergency name length not enforced in public form [`web/components/registration/registration-form.tsx`] — server caps at 200 chars; client has no `maxLength` or validation.
+- [x] [Review][Patch] Optional scale cannot be cleared once selected [`web/components/registration/registration-form.tsx:845-884`] — toggle deselect needed for optional fields.
+- [x] [Review][Patch] Scale control lacks radiogroup semantics [`web/components/registration/registration-form.tsx`] — use `role="radiogroup"` / `role="radio"` (or fieldset/legend) for screen readers.
+- [x] [Review][Patch] No formatter tests for scale/emergency display [`src/Infrastructure/Clients/ClientRegistrationAnswerFormatter.cs`] — AC1 admin Answers formatting is untested.
+- [x] [Review][Patch] Add schema test rejecting invalid emergency `phoneCountry` [`src/Infrastructure.Tests/Activities/FormSchemaValidatorTests.cs`]
+- [x] [Review][Patch] Add publish-gate test for required emergency-only schema [`src/Infrastructure.Tests/Activities/PublishGateValidatorTests.cs`]
 - [x] [Review][Defer] Basic `403 plan_locked` save path has no automated test [`src/Infrastructure/Activities/ActivityService.cs`] — deferred, matches existing deferred-work pattern for HTTP plan_locked tests
 - [x] [Review][Defer] Type dropdown on Basic still lists scale/emergency (save-time gate only) [`web/components/activities/form-field-editor.tsx`] — deferred, consistent with Recipes pattern (palette lock + save-time API gate)
 - [x] [Review][Defer] Duplicate scale labels in C# and TypeScript [`ScaleFieldSupport.cs`, `web/lib/scale-labels.ts`] — deferred, maintainability follow-up

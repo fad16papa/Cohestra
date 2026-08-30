@@ -61,6 +61,7 @@ function readEmergencyValue(value: unknown): EmergencyContactValue {
 }
 
 const TEXTAREA_MAX_LENGTH = 2000;
+const EMERGENCY_NAME_MAX_LENGTH = 200;
 
 function validateEmailField(value: unknown, required: boolean): string | null {
   const text = typeof value === "string" ? value.trim() : "";
@@ -267,6 +268,10 @@ function validateField(field: FormFieldDefinition, value: unknown): string | nul
 
     if (!name && !phone) {
       return null;
+    }
+
+    if (name.length > EMERGENCY_NAME_MAX_LENGTH) {
+      return `Contact name cannot exceed ${EMERGENCY_NAME_MAX_LENGTH} characters.`;
     }
 
     if (phone) {
@@ -846,8 +851,8 @@ export function RegistrationForm({
       const selected =
         typeof values[field.id] === "string" ? (values[field.id] as string) : "";
       return (
-        <div key={field.id} className="space-y-2">
-          <p className="text-sm font-medium text-text-warm">
+        <fieldset key={field.id} className="space-y-2 border-0 p-0">
+          <legend className="text-sm font-medium text-text-warm">
             {field.label}
             {field.required ? (
               <span className="text-destructive" aria-hidden>
@@ -855,25 +860,38 @@ export function RegistrationForm({
                 *
               </span>
             ) : null}
-          </p>
-          <div className="grid gap-2 sm:grid-cols-5">
+          </legend>
+          <div
+            role="radiogroup"
+            aria-required={field.required}
+            aria-invalid={Boolean(error)}
+            aria-describedby={errorDescribedBy}
+            className="grid gap-2 sm:grid-cols-5"
+          >
             {scaleFieldValues.map((scaleValue) => {
               const label = getScaleFieldLabel(scaleValue) ?? scaleValue;
+              const isSelected = selected === scaleValue;
               return (
                 <button
                   key={scaleValue}
                   type="button"
+                  role="radio"
+                  aria-checked={isSelected}
                   onClick={() =>
-                    setValues((current) => ({
-                      ...current,
-                      [field.id]: scaleValue,
-                    }))
+                    setValues((current) => {
+                      const next = { ...current };
+                      if (!field.required && isSelected) {
+                        delete next[field.id];
+                      } else {
+                        next[field.id] = scaleValue;
+                      }
+                      return next;
+                    })
                   }
                   onBlur={() => validateOnBlur(field)}
-                  aria-pressed={selected === scaleValue}
                   className={cn(
                     "inline-flex min-h-12 min-w-11 flex-col items-center justify-center rounded-lg border px-2 py-2 text-center text-sm font-medium shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-                    selected === scaleValue
+                    isSelected
                       ? "border-ring bg-muted text-text-warm"
                       : "border-input bg-background text-text-warm"
                   )}
@@ -887,7 +905,7 @@ export function RegistrationForm({
             })}
           </div>
           {renderFieldError(fieldId, error)}
-        </div>
+        </fieldset>
       );
     }
 
@@ -912,6 +930,7 @@ export function RegistrationForm({
             <Input
               id={nameFieldId}
               value={emergency.name}
+              maxLength={EMERGENCY_NAME_MAX_LENGTH}
               onChange={(event) =>
                 setValues((current) => ({
                   ...current,

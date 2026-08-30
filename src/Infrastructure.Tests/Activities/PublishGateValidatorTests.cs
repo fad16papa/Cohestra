@@ -111,6 +111,30 @@ public sealed class PublishGateValidatorTests
     }
 
     [Fact]
+    public void ValidateForPublish_RequiredEmergencyOnly_Fails()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "emergency_contact",
+                        Type = FormFieldTypes.Emergency,
+                        Label = "Emergency contact",
+                        Required = true,
+                        PhoneCountry = "SG",
+                    },
+                ],
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("required phone or email", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidateForPublish_RequiredTextareaOnly_Fails()
     {
         var error = PublishGateValidator.ValidateForPublish(

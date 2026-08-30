@@ -510,6 +510,22 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void ValidateModel_RejectsInvalidEmergencyPhoneCountry()
+    {
+        var error = FormSchemaValidator.ValidateModel(ContactSchema(
+            new FormFieldDefinition
+            {
+                Id = "emergency_contact",
+                Type = FormFieldTypes.Emergency,
+                Label = "Emergency contact",
+                PhoneCountry = "ZZ",
+            }));
+
+        Assert.NotNull(error);
+        Assert.Contains("phoneCountry", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void MapToDomain_DefaultsEmergencyPhoneCountry()
     {
         var dto = new ActivityFormSchemaDto(

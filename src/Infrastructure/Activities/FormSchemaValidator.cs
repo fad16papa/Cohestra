@@ -608,6 +608,12 @@ internal static partial class FormSchemaValidator
             return $"{fieldPath}.infoText is only allowed for info fields.";
         }
 
+        if (!string.IsNullOrWhiteSpace(field.PhoneCountry) &&
+            !PhoneCountrySupport.IsSupportedIsoCode(field.PhoneCountry))
+        {
+            return $"{fieldPath}.phoneCountry must be a supported ISO country code (e.g. SG, PH).";
+        }
+
         return null;
     }
 

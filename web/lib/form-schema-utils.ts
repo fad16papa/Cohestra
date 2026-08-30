@@ -522,12 +522,14 @@ export function getFormSchemaClientIssues(
       );
     }
 
-    if (field.type === "phone") {
+    if (field.type === "phone" || field.type === "emergency") {
       if (!field.phoneCountry?.trim()) {
-        issues.push(`Phone field "${field.label}" requires a mobile country.`);
+        issues.push(
+          `${field.type === "phone" ? "Phone" : "Emergency contact"} field "${field.label}" requires a mobile country.`
+        );
       } else if (!isSupportedPhoneCountry(field.phoneCountry)) {
         issues.push(
-          `Phone field "${field.label}" uses an unsupported country code.`
+          `${field.type === "phone" ? "Phone" : "Emergency contact"} field "${field.label}" uses an unsupported country code.`
         );
       }
     }
