@@ -127,7 +127,20 @@ When a published activity has `maxRegistrants` set and registration count has re
 
 Duplicate-client checks run before the capacity check; an already-registered client still receives the existing already-registered `409` response.
 
-Public activity GET (`/api/v1/public/activities/{slug}`) exposes separate fields: `isRegistrationOpen` (published status), `isRegistrationFull`, `registrationCount`, and optional `maxRegistrants`.
+Public activity GET (`/api/v1/public/activities/{slug}`) exposes separate fields: `isRegistrationOpen` (schedule), `isRegistrationFull`, `isRegistrationPaused`, `isRegistrationClosedAt` (Story 30.8), `registrationCount`, and optional `maxRegistrants`. Unavailable precedence on the public page: capacity full → paused → Close-at → Activity ended.
+
+### 409 Conflict — registration closed at Close-at (Story 30.8)
+
+When `form_schema.meta.registrationClosesAt` is set and server time is on or after that UTC instant:
+
+```json
+{
+  "title": "Registration closed",
+  "detail": "This activity is no longer accepting registrations.",
+  "status": 409,
+  "errorCode": "registration_closed_at"
+}
+```
 
 ## Authentication
 

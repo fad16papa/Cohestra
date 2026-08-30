@@ -1163,7 +1163,9 @@ export function RegistrationForm({
           role="alert"
           className={cn(
             "space-y-3 rounded-lg border p-4",
-            submitErrorCode === "activity_full" || submitErrorCode === "plan_registration_limit"
+            submitErrorCode === "activity_full" ||
+            submitErrorCode === "plan_registration_limit" ||
+            submitErrorCode === "registration_closed_at"
               ? "border-border-warm bg-muted/30"
               : "border-destructive/30 bg-destructive/5"
           )}
@@ -1181,6 +1183,11 @@ export function RegistrationForm({
               <p className="text-sm text-text-muted-warm">
                 {PUBLIC_PLAN_REGISTRATION_LIMIT_COPY.description}
               </p>
+            </>
+          ) : submitErrorCode === "registration_closed_at" ? (
+            <>
+              <p className="text-sm font-medium text-text-warm">Registration closed</p>
+              <p className="text-sm text-text-muted-warm">{submitError}</p>
             </>
           ) : (
             <>

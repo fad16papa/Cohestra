@@ -27,6 +27,9 @@ public sealed class FormSchemaMeta
 
     /// <summary>Operator copy when the public Form is unavailable. Markdown-lite, max 2000.</summary>
     public string? ClosedMessage { get; set; }
+
+    /// <summary>Optional UTC instant after which public registration closes.</summary>
+    public DateTimeOffset? RegistrationClosesAt { get; set; }
 }
 
 public sealed class FormFieldDefinition

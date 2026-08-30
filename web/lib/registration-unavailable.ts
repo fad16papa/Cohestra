@@ -5,6 +5,7 @@ export type PublicRegistrationUnavailableReason =
   | "unavailable"
   | "full"
   | "plan-limit"
+  | "close-at"
   | "error";
 
 export type RegistrationUnavailableChip = "Full" | "Paused" | "Ended" | "Closed";
@@ -19,6 +20,10 @@ export function resolveRegistrationUnavailableChip(
 
   if (reason === "plan-limit") {
     return "Paused";
+  }
+
+  if (reason === "close-at") {
+    return "Closed";
   }
 
   if (reason === "unavailable") {
@@ -44,5 +49,9 @@ export const registrationUnavailablePlatformCopy: Record<
     title: "Activity full",
     description:
       "This activity has reached its registration limit and is no longer accepting sign-ups.",
+  },
+  "close-at": {
+    title: "Registration closed",
+    description: "This activity is no longer accepting registrations.",
   },
 };

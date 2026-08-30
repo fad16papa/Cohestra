@@ -28,6 +28,7 @@ Referenced by:
 | `meta.confirmationEmailSubject` | string | no | Confirmation email subject with piping tokens (max 200). Layout unchanged. |
 | `meta.confirmationEmailBodyMarkdown` | string | no | Confirmation email closing message with piping tokens (max 2000). Layout unchanged. |
 | `meta.closedMessage` | string | no | Operator copy when the public Form is unavailable (max 2000). Markdown-lite; HTML stripped on render. Reason chip still shows. |
+| `meta.registrationClosesAt` | string (ISO-8601 UTC instant) | no | Optional datetime after which public GET/submit reject. Empty = no datetime close. Operator picker displays in the Activity/tenant timezone. Past Close-at at save is allowed. |
 
 ### Piping tokens (v1.1 additive)
 

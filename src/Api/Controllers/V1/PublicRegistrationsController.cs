@@ -129,6 +129,17 @@ public class PublicRegistrationsController(
             });
         }
 
+        if (result.IsRegistrationClosedAt)
+        {
+            return Conflict(new ProblemDetails
+            {
+                Title = "Registration closed",
+                Detail = "This activity is no longer accepting registrations.",
+                Status = StatusCodes.Status409Conflict,
+                Extensions = { ["errorCode"] = "registration_closed_at" },
+            });
+        }
+
         if (result.ValidationError is not null)
         {
             return BadRequest(new ProblemDetails
