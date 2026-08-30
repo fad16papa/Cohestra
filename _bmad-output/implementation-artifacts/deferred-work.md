@@ -1,3 +1,13 @@
+## Deferred from: code review of 30-9-operator-email-on-new-registration.md (2026-08-30, pass 1)
+
+- Missing registration completes outbox silently — mirrors confirmation handler idempotency pattern
+- Form-edit / draft-save negative tests missing — enqueue only on public submit (implementation correct)
+- Settings notifications API lacks dedicated tests — same gap as registration-timezone endpoints
+- Tenant-not-found throws 500 — consistent with TenantOrganizationService patterns
+- Toggle ON with empty admin email — UI warns; registration still commits (admin email prerequisite)
+- RegistrationOperatorNotifyService branch unit tests missing — builder tests sufficient for story slice
+- Settings error state has no retry button — matches organization timezone section pattern
+
 ## Deferred from: code review of 30-8-close-at.md (2026-08-30, pass 1)
 
 - Manual timezone offset iteration lacks DST gap/ambiguous-hour handling; only Singapore round-trip tested — acceptable for v1 tenant TZs

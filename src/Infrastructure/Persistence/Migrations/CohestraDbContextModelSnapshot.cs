@@ -957,6 +957,11 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("DelinquencyStartedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("EmailOnNewRegistration")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<bool>("HasConsumedTrial")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")

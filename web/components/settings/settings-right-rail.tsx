@@ -52,6 +52,11 @@ function sectionTips(activeId: SettingsSectionId): { title: string; body: string
         title: "Timezone",
         body: "Changing timezone recalculates this month's registration count immediately for plan enforcement.",
       };
+    case "settings-notifications":
+      return {
+        title: "New registrations",
+        body: "Operator emails include participant contact details and a link to Activity registrations. Hidden campaign fields may appear in operator mail only.",
+      };
     case "settings-domain":
       return {
         title: "Enterprise",

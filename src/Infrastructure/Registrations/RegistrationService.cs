@@ -348,6 +348,19 @@ public sealed class RegistrationService(
                 $"registration:{registration.Id}:confirmation");
         }
 
+        if (tenant is not null
+            && tenant.EmailOnNewRegistration
+            && !string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
+        {
+            var operatorPayload = JsonSerializer.Serialize(
+                new RegistrationOperatorNotifyOutboxPayload(registration.Id));
+            outboxPublisher.Enqueue(
+                tenantId,
+                OutboxMessageTypes.RegistrationOperatorNotify,
+                operatorPayload,
+                $"registration:{registration.Id}:operator_notify");
+        }
+
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);

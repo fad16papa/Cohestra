@@ -176,6 +176,7 @@ public static class DependencyInjection
         services.AddScoped<IOutboxPublisher, OutboxPublisher>();
         services.AddScoped<IOutboxProcessor, OutboxProcessor>();
         services.AddScoped<IOutboxMessageHandler, RegistrationConfirmationOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, RegistrationOperatorNotifyOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, CampaignRecipientOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, BillingNotificationOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, SupportIssueTechOutboxHandler>();
@@ -208,6 +209,7 @@ public static class DependencyInjection
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IRegistrationService, RegistrationService>();
         services.AddScoped<IRegistrationNotificationService, RegistrationNotificationService>();
+        services.AddScoped<IRegistrationOperatorNotifyService, RegistrationOperatorNotifyService>();
         services.AddScoped<IEmailTemplateService, EmailTemplateService>();
         services.AddScoped<IClientSegmentService, ClientSegmentService>();
         services.AddScoped<ICampaignService, CampaignService>();
