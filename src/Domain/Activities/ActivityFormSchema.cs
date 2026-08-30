@@ -15,6 +15,15 @@ public sealed class FormSchemaMeta
 
     /// <summary>Pro-only. When false (default), the public Form is a single page.</summary>
     public bool SplitIntoSteps { get; set; }
+
+    /// <summary>Operator thank-you copy with piping tokens. Participant-visible only.</summary>
+    public string? SuccessCopyMarkdown { get; set; }
+
+    /// <summary>Confirmation email subject with piping tokens. Layout unchanged.</summary>
+    public string? ConfirmationEmailSubject { get; set; }
+
+    /// <summary>Confirmation email body message with piping tokens. Layout unchanged.</summary>
+    public string? ConfirmationEmailBodyMarkdown { get; set; }
 }
 
 public sealed class FormFieldDefinition

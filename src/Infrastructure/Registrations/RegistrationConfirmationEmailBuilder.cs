@@ -19,7 +19,9 @@ public sealed record RegistrationConfirmationEmailModel(
     string FooterLegalName,
     string WebsiteUrl,
     string? LogoUrl,
-    string? HeroImageUrl);
+    string? HeroImageUrl,
+    string? CustomSubject = null,
+    string? CustomClosingMessage = null);
 
 internal static class RegistrationConfirmationEmailBuilder
 {
@@ -32,7 +34,9 @@ internal static class RegistrationConfirmationEmailBuilder
 
     public static RegistrationConfirmationEmailContent Build(RegistrationConfirmationEmailModel model)
     {
-        var subject = $"You're registered — {model.ActivityName}";
+        var subject = string.IsNullOrWhiteSpace(model.CustomSubject)
+            ? $"You're registered — {model.ActivityName}"
+            : model.CustomSubject.Trim();
         var plainText = BuildPlainText(model);
         var html = BuildHtml(model);
         return new RegistrationConfirmationEmailContent(subject, plainText, html);
@@ -68,7 +72,7 @@ internal static class RegistrationConfirmationEmailBuilder
         }
 
         builder.AppendLine();
-        builder.AppendLine("Save the date — we look forward to seeing you there.");
+        builder.AppendLine(ResolveClosingMessage(model));
         builder.AppendLine();
         builder.AppendLine(new string('-', 40));
         builder.AppendLine(model.FooterLegalName);
@@ -167,7 +171,7 @@ internal static class RegistrationConfirmationEmailBuilder
                             </tr>
                           </table>
                           <p style="margin:24px 0 0;text-align:center;font-size:14px;color:{MutedTextColor};">
-                            Save the date — we look forward to seeing you there.
+                            {EncodeClosingMessageHtml(model)}
                           </p>
                         </td>
                       </tr>
@@ -197,4 +201,21 @@ internal static class RegistrationConfirmationEmailBuilder
 
     private static string EncodeAttribute(string? value) =>
         WebUtility.HtmlEncode(value ?? string.Empty);
+
+    private const string DefaultClosingMessage = "Save the date — we look forward to seeing you there.";
+
+    internal static string ResolveClosingMessage(RegistrationConfirmationEmailModel model) =>
+        string.IsNullOrWhiteSpace(model.CustomClosingMessage)
+            ? DefaultClosingMessage
+            : model.CustomClosingMessage.Trim();
+
+    internal static string EncodeClosingMessageHtml(RegistrationConfirmationEmailModel model)
+    {
+        var message = ResolveClosingMessage(model);
+        return string.Join(
+            "<br />",
+            message
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(Encode));
+    }
 }

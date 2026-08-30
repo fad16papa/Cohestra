@@ -52,6 +52,21 @@ internal static partial class FormSchemaValidator
             return $"Intro copy cannot exceed {MaxIntroMarkdownLength} characters.";
         }
 
+        if (schema.Meta?.SuccessCopyMarkdown is { Length: > RegistrationPipingTokenSubstitutor.MaxSuccessCopyLength })
+        {
+            return $"Success copy cannot exceed {RegistrationPipingTokenSubstitutor.MaxSuccessCopyLength} characters.";
+        }
+
+        if (schema.Meta?.ConfirmationEmailSubject is { Length: > RegistrationPipingTokenSubstitutor.MaxConfirmationSubjectLength })
+        {
+            return $"Confirmation email subject cannot exceed {RegistrationPipingTokenSubstitutor.MaxConfirmationSubjectLength} characters.";
+        }
+
+        if (schema.Meta?.ConfirmationEmailBodyMarkdown is { Length: > RegistrationPipingTokenSubstitutor.MaxConfirmationBodyLength })
+        {
+            return $"Confirmation email body cannot exceed {RegistrationPipingTokenSubstitutor.MaxConfirmationBodyLength} characters.";
+        }
+
         var seenIds = new HashSet<string>(StringComparer.Ordinal);
 
         for (var index = 0; index < schema.Fields.Count; index++)
@@ -108,6 +123,9 @@ internal static partial class FormSchemaValidator
                         ? null
                         : schema.Meta.IntroMarkdown.Trim(),
                     SplitIntoSteps = schema.Meta.SplitIntoSteps,
+                    SuccessCopyMarkdown = TrimOptionalMeta(schema.Meta.SuccessCopyMarkdown),
+                    ConfirmationEmailSubject = TrimOptionalMeta(schema.Meta.ConfirmationEmailSubject),
+                    ConfirmationEmailBodyMarkdown = TrimOptionalMeta(schema.Meta.ConfirmationEmailBodyMarkdown),
                 },
             Fields = schema.Fields
                 .Select(field => new FormFieldDefinition
@@ -619,4 +637,7 @@ internal static partial class FormSchemaValidator
 
     [GeneratedRegex("^[a-z0-9][a-z0-9_-]{0,63}$")]
     private static partial Regex FieldIdRegex();
+
+    private static string? TrimOptionalMeta(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

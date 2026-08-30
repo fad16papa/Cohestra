@@ -23,6 +23,19 @@ Referenced by:
 | `version` | integer  | yes      | Must be `1` for this contract  |
 | `fields`  | array    | yes      | Ordered list; may be empty     |
 | `meta.splitIntoSteps` | boolean | no | Pro only. Default `false` keeps a single public page. |
+| `meta.introMarkdown` | string | no | Optional welcome copy above fields (max 4000). |
+| `meta.successCopyMarkdown` | string | no | Thank-you screen copy with piping tokens (max 2000). Hidden values never substitute. |
+| `meta.confirmationEmailSubject` | string | no | Confirmation email subject with piping tokens (max 200). Layout unchanged. |
+| `meta.confirmationEmailBodyMarkdown` | string | no | Confirmation email closing message with piping tokens (max 2000). Layout unchanged. |
+
+### Piping tokens (v1.1 additive)
+
+Operator copy may include:
+
+- `{{full_name}}`, `{{email}}`, `{{phone}}` — from Client extract / name heuristics
+- `{{field:<id>}}` — formatted answer for a visible field
+
+Missing values substitute to an empty string. Hidden and display-only fields (`hidden`, `section_header`, `info`) never substitute on Participant-visible surfaces (success screen and confirmation email).
 
 ## Field object
 

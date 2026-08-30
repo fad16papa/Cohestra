@@ -75,6 +75,21 @@ public sealed class RegistrationConfirmationEmailBuilderTests
     }
 
     [Fact]
+    public void Build_UsesCustomSubjectAndClosingMessageWhenProvided()
+    {
+        var content = RegistrationConfirmationEmailBuilder.Build(
+            CreateModel() with
+            {
+                CustomSubject = "You're in, Maya",
+                CustomClosingMessage = "See you Saturday, Maya.",
+            });
+
+        Assert.Equal("You're in, Maya", content.Subject);
+        Assert.Contains("See you Saturday, Maya.", content.PlainTextBody);
+        Assert.Contains("See you Saturday, Maya.", content.HtmlBody);
+    }
+
+    [Fact]
     public void ResolveLogoUrl_UsesPublicWebBaseWhenLogoUrlNotConfigured()
     {
         var url = RegistrationNotificationService.ResolveLogoUrl(

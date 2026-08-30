@@ -14,6 +14,7 @@ type RegistrationSuccessScreenProps = {
   location: string;
   communityLabel: string;
   registrationNumber: string;
+  successCopyMarkdown?: string | null;
   confirmationEmailSent?: boolean;
   confirmationEmail?: string | null;
   websiteLink?: PublisherWebsiteLink | null;
@@ -26,6 +27,7 @@ export function RegistrationSuccessScreen({
   location,
   communityLabel,
   registrationNumber,
+  successCopyMarkdown = null,
   confirmationEmailSent = false,
   confirmationEmail = null,
   websiteLink = null,
@@ -40,6 +42,11 @@ export function RegistrationSuccessScreen({
       window.setTimeout(() => setCopied(false), 2000);
     }
   }
+
+  const personalizedCopy = successCopyMarkdown?.replace(/<[^>]*>/g, "").trim() ?? "";
+  const personalizedParagraphs = personalizedCopy
+    ? personalizedCopy.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean)
+    : [];
 
   return (
     <div
@@ -58,6 +65,18 @@ export function RegistrationSuccessScreen({
           We&apos;ve saved your spot for{" "}
           <span className="font-medium text-text-warm">{activityName}</span>.
         </p>
+        {personalizedParagraphs.length > 0 ? (
+          <div className="mt-3 space-y-2">
+            {personalizedParagraphs.map((paragraph, index) => (
+              <p
+                key={`${index}-${paragraph.slice(0, 24)}`}
+                className="text-sm leading-relaxed text-text-warm"
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-4 px-5 py-6 text-left sm:px-6 sm:py-8">

@@ -2,6 +2,7 @@ import type {
   ActivityFormSchema,
   FormFieldDefinition,
   FormFieldType,
+  FormSchemaMeta,
 } from "@/lib/activities-api";
 import {
   applyPhoneFieldDefaults,
@@ -60,6 +61,20 @@ export const formFieldTypeOptions: FormFieldType[] = [
 
 export function emptyFormSchema(): ActivityFormSchema {
   return { version: 1, meta: null, fields: [] };
+}
+
+export function mergeFormSchemaMeta(
+  current: ActivityFormSchema,
+  patch: Partial<FormSchemaMeta>
+): FormSchemaMeta {
+  return {
+    introMarkdown: current.meta?.introMarkdown ?? null,
+    splitIntoSteps: current.meta?.splitIntoSteps ?? false,
+    successCopyMarkdown: current.meta?.successCopyMarkdown ?? null,
+    confirmationEmailSubject: current.meta?.confirmationEmailSubject ?? null,
+    confirmationEmailBodyMarkdown: current.meta?.confirmationEmailBodyMarkdown ?? null,
+    ...patch,
+  };
 }
 
 export function normalizeFormSchema(

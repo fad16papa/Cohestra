@@ -40,6 +40,11 @@ internal static class FormSchemaMapper
                 .ToList(),
             schema.Meta is null
                 ? null
-                : new FormSchemaMetaDto(schema.Meta.IntroMarkdown, schema.Meta.SplitIntoSteps));
+                : new FormSchemaMetaDto(
+                    schema.Meta.IntroMarkdown,
+                    schema.Meta.SplitIntoSteps,
+                    schema.Meta.SuccessCopyMarkdown,
+                    schema.Meta.ConfirmationEmailSubject,
+                    schema.Meta.ConfirmationEmailBodyMarkdown));
     }
 }

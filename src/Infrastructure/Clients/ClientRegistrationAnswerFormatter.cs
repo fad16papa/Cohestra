@@ -35,6 +35,9 @@ internal static class ClientRegistrationAnswerFormatter
             .ToList();
     }
 
+    internal static string? FormatSingleFieldValue(FormFieldDefinition field, object? rawValue) =>
+        FormatFieldValue(field, rawValue);
+
     private static string? FormatFieldValue(FormFieldDefinition field, object? rawValue)
     {
         if (field.Type is FormFieldTypes.Checkbox or FormFieldTypes.Consent or FormFieldTypes.YesNo)

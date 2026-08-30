@@ -3,7 +3,12 @@ namespace Cohestra.Contracts.Activities;
 /// <summary>
 /// Activity registration form schema (v1). See docs/contracts/activity-form-schema-v1.md.
 /// </summary>
-public sealed record FormSchemaMetaDto(string? IntroMarkdown, bool SplitIntoSteps = false);
+public sealed record FormSchemaMetaDto(
+    string? IntroMarkdown,
+    bool SplitIntoSteps = false,
+    string? SuccessCopyMarkdown = null,
+    string? ConfirmationEmailSubject = null,
+    string? ConfirmationEmailBodyMarkdown = null);
 
 public sealed record ActivityFormSchemaDto(
     int Version,
