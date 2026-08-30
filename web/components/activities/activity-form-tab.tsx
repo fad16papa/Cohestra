@@ -55,6 +55,7 @@ import {
   deleteFormTemplate,
   fetchFormTemplate,
   fetchFormTemplates,
+  isFormTemplateSaveBlocked,
   updateFormTemplate,
   type FormTemplateUsage,
   type SavedFormTemplate,
@@ -239,7 +240,11 @@ export function ActivityFormTab({
   function applySavedTemplate(template: SavedFormTemplate) {
     setError(null);
     setSuccess(null);
-    setDraftSchema(cloneFormSchema(template.formSchema));
+    setDraftSchema(
+      applyMissingStepBuckets(
+        normalizeFormSchema(cloneFormSchema(template.formSchema))
+      )
+    );
     setSuccess(`"${template.name}" applied. Save when ready.`);
   }
 
@@ -334,6 +339,7 @@ export function ActivityFormTab({
           : `Replaced "${replaceTemplate.name}" with the current draft. Refresh the page to update your library.`
       );
     } catch (replaceError) {
+      await refreshSavedTemplates();
       setError(
         replaceError instanceof Error ? replaceError.message : "Could not replace template."
       );
@@ -366,6 +372,7 @@ export function ActivityFormTab({
           : `Renamed template to "${trimmed}". Refresh the page to update your library.`
       );
     } catch (renameError) {
+      await refreshSavedTemplates();
       setError(
         renameError instanceof Error ? renameError.message : "Could not rename template."
       );
@@ -392,6 +399,7 @@ export function ActivityFormTab({
           : "Template deleted. Refresh the page to update your library."
       );
     } catch (deleteError) {
+      await refreshSavedTemplates();
       setError(
         deleteError instanceof Error ? deleteError.message : "Could not delete template."
       );
@@ -907,7 +915,11 @@ export function ActivityFormTab({
             </Button>
             <Button
               type="button"
-              disabled={templateActionLoading || !saveTemplateName.trim()}
+              disabled={
+                templateActionLoading
+                || !saveTemplateName.trim()
+                || isFormTemplateSaveBlocked(templateUsage)
+              }
               onClick={() => void handleSaveTemplate()}
             >
               {templateActionLoading ? "Saving…" : "Save template"}

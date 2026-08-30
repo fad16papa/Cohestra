@@ -7,6 +7,7 @@ using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Tenants;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Cohestra.Infrastructure.Activities;
 
@@ -74,7 +75,7 @@ public sealed class FormTemplateService(
         };
 
         dbContext.TenantFormTemplates.Add(template);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await SaveChangesHandlingDuplicateNameAsync(cancellationToken);
 
         return ToResponse(template);
     }
@@ -120,7 +121,7 @@ public sealed class FormTemplateService(
         }
 
         template.UpdatedAt = DateTimeOffset.UtcNow;
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await SaveChangesHandlingDuplicateNameAsync(cancellationToken);
 
         return ToResponse(template);
     }
@@ -275,6 +276,25 @@ public sealed class FormTemplateService(
 
         return null;
     }
+
+    private async Task SaveChangesHandlingDuplicateNameAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (IsFormTemplateNameUniqueViolation(ex))
+        {
+            throw new FormTemplateDuplicateNameException(
+                "A form template with this name already exists. Choose a different name.");
+        }
+    }
+
+    private static bool IsFormTemplateNameUniqueViolation(DbUpdateException exception) =>
+        exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation,
+        };
 
     private static ActivityFormSchema CloneSchema(ActivityFormSchema schema)
     {

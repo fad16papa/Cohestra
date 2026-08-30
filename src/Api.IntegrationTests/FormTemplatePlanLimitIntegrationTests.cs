@@ -41,6 +41,9 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
 
         var errorCode = await IntegrationTestHelpers.ReadProblemErrorCodeAsync(secondResponse);
         Assert.Equal("plan_locked", errorCode);
+
+        var detail = await ReadProblemDetailAsync(secondResponse);
+        Assert.Contains("Core saves up to 5 form recipes", detail, StringComparison.OrdinalIgnoreCase);
     }
 
     [SkippableFact]
@@ -82,6 +85,25 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
                     null,
                     null),
             ]);
+
+    private static async Task<string> ReadProblemDetailAsync(HttpResponseMessage response)
+    {
+        var raw = await response.Content.ReadAsStringAsync();
+        using var document = System.Text.Json.JsonDocument.Parse(raw);
+        if (document.RootElement.TryGetProperty("detail", out var detail)
+            && detail.ValueKind == System.Text.Json.JsonValueKind.String)
+        {
+            return detail.GetString() ?? raw;
+        }
+
+        if (document.RootElement.TryGetProperty("Detail", out var detailPascal)
+            && detailPascal.ValueKind == System.Text.Json.JsonValueKind.String)
+        {
+            return detailPascal.GetString() ?? raw;
+        }
+
+        return raw;
+    }
 
     private async Task EnsureDefaultTenantPlanAsync(TenantPlan plan)
     {

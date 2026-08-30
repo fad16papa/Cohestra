@@ -340,6 +340,88 @@ public sealed class FormTemplateServiceTests
         Assert.Equal("Keep me", updated!.Name);
     }
 
+    [Fact]
+    public async Task CreateAsync_BasicTenantWithRecipes_ThrowsFormSchemaPlanLocked()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Basic);
+        var service = CreateService(dbContext);
+        var schemaWithRecipe = new ActivityFormSchemaDto(
+            1,
+            [
+                new FormFieldDefinitionDto(
+                    "full_name",
+                    "text",
+                    "Full name",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+                new FormFieldDefinitionDto(
+                    "notes",
+                    "textarea",
+                    "Notes",
+                    false,
+                    null,
+                    null,
+                    null,
+                    null,
+                    new FormFieldVisibleWhenDto("full_name", "Alex", null)),
+            ]);
+
+        var ex = await Assert.ThrowsAsync<FormSchemaPlanLockedException>(
+            () => service.CreateAsync(new CreateFormTemplateRequest("Recipe template", schemaWithRecipe)));
+
+        Assert.Contains("Form Recipes", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CreateAsync_BasicTenantWithCorePlusField_ThrowsFormSchemaPlanLocked()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Basic);
+        var service = CreateService(dbContext);
+        var schemaWithScale = new ActivityFormSchemaDto(
+            1,
+            [
+                new FormFieldDefinitionDto(
+                    "scale",
+                    "scale",
+                    "Rate your experience",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+            ]);
+
+        await Assert.ThrowsAsync<FormSchemaPlanLockedException>(
+            () => service.CreateAsync(new CreateFormTemplateRequest("Scale template", schemaWithScale)));
+    }
+
+    [Fact]
+    public async Task CreateAsync_BasicTenantWithSplitSteps_ThrowsFormSchemaPlanLocked()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Basic);
+        var service = CreateService(dbContext);
+        var schemaWithSteps = new ActivityFormSchemaDto(
+            1,
+            [
+                new FormFieldDefinitionDto(
+                    "full_name",
+                    "text",
+                    "Full name",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+            ],
+            new FormSchemaMetaDto(null, SplitIntoSteps: true));
+
+        await Assert.ThrowsAsync<FormSchemaPlanLockedException>(
+            () => service.CreateAsync(new CreateFormTemplateRequest("Steps template", schemaWithSteps)));
+    }
+
     private static FormTemplateService CreateService(CohestraDbContext dbContext)
     {
         var currentTenant = new CurrentTenant();

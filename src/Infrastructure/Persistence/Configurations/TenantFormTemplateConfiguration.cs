@@ -34,16 +34,24 @@ internal sealed class TenantFormTemplateConfiguration : IEntityTypeConfiguration
             .HasColumnType("jsonb")
             .HasConversion(
                 schema => JsonSerializer.Serialize(schema, ActivityFormSchemaJson.SerializerOptions),
-                json => string.IsNullOrWhiteSpace(json)
-                    ? new ActivityFormSchema()
-                    : JsonSerializer.Deserialize<ActivityFormSchema>(
-                        json,
-                        ActivityFormSchemaJson.SerializerOptions) ?? new ActivityFormSchema());
+                json => DeserializeFormTemplateSchema(json));
 
         builder.Property(template => template.CreatedAt).IsRequired();
         builder.Property(template => template.UpdatedAt).IsRequired();
 
-        builder.HasIndex(template => new { template.TenantId, template.Name })
-            .IsUnique();
+        builder.HasIndex(template => new { template.TenantId, template.Name });
+    }
+
+    private static ActivityFormSchema DeserializeFormTemplateSchema(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new InvalidOperationException("Form template schema is missing.");
+        }
+
+        return JsonSerializer.Deserialize<ActivityFormSchema>(
+                   json,
+                   ActivityFormSchemaJson.SerializerOptions)
+               ?? throw new InvalidOperationException("Form template schema is invalid.");
     }
 }

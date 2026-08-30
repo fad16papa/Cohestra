@@ -287,3 +287,9 @@ _(filled by dev agent)_
 - [x] [Review][Dismiss] Enterprise 999 slot limit untested — static constant; Enterprise excluded from shipped-plan test matrix repo-wide [`FormTemplateSlotLimits.cs`]
 
 - [x] [Review][Defer] 403 save toast only, not UpgradePanel — spec marks upgrade panel optional; proactive at-cap UI + usage resync on 403 sufficient [`activity-form-tab.tsx`]
+
+### Review Findings (Pass 4)
+
+- [x] [Review][Patch] HTTP `plan_locked` test omits AC1 upgrade copy — integration test now asserts `"Core saves up to 5 form recipes"` in `detail` [`FormTemplatePlanLimitIntegrationTests.cs`]
+
+- [x] [Review][Patch] Save dialog submit not blocked when meter shows at-cap — Save button disabled when `isFormTemplateSaveBlocked(templateUsage)` [`activity-form-tab.tsx`]

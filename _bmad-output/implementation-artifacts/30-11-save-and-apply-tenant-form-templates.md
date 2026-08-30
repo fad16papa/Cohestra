@@ -269,7 +269,7 @@ _(filled by dev agent)_
 
 - [x] [Review][Defer] Apply downgraded-plan template without client re-check — same deferred enforcement pattern as launch templates; server gates on activity save/publish [`activity-form-tab.tsx:239-244`]
 
-- [x] [Review][Defer] Duplicate template names allowed — index on `(TenantId, Name)` is not unique; operators can accumulate ambiguous library entries [`TenantFormTemplateConfiguration.cs:46`]
+- [x] [Review][Patch] Duplicate template names allowed — resolved Pass 3: unique per tenant via validation + unique index [`TenantFormTemplateConfiguration.cs:46`]
 
 ### Review Findings (Pass 3 — deferred re-evaluation)
 
@@ -282,3 +282,17 @@ _(filled by dev agent)_
 - [x] [Review][Patch] No HTTP integration test POST `403 plan_locked` — `FormTemplatePlanLimitIntegrationTests` asserts `403` + `errorCode: plan_locked` [`FormTemplatePlanLimitIntegrationTests.cs`]
 
 - [x] [Review][Patch] Duplicate template names allowed — enforce unique names per tenant (case-insensitive validation + unique index) [`FormTemplateService.cs`, `TenantFormTemplateConfiguration.cs`]
+
+### Review Findings (Pass 4)
+
+- [x] [Review][Patch] Case-insensitive uniqueness gap at DB layer — expression unique index on `(TenantId, lower(Name))` [`20260830151739_FormTemplateCaseInsensitiveUniqueName`]
+
+- [x] [Review][Patch] Duplicate-name race returns 500 not 409 — `SaveChangesHandlingDuplicateNameAsync` maps `DbUpdateException` to `FormTemplateDuplicateNameException` [`FormTemplateService.cs`]
+
+- [x] [Review][Patch] EF JSONB read silently materializes empty schema — deserialize throws on missing/invalid JSONB [`TenantFormTemplateConfiguration.cs`]
+
+- [x] [Review][Patch] Apply saved template skips `normalizeFormSchema` and `applyMissingStepBuckets` — apply path now normalizes like activity load [`activity-form-tab.tsx`]
+
+- [x] [Review][Patch] Template schema plan-gate untested — Basic recipes/Core+ fields/split-steps service tests added [`FormTemplateServiceTests.cs`]
+
+- [x] [Review][Patch] Replace/rename/delete failures do not resync usage — catch blocks call `refreshSavedTemplates()` [`activity-form-tab.tsx`]
