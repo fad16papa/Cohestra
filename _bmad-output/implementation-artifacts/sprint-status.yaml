@@ -314,7 +314,7 @@ development_status:
   30-9-operator-email-on-new-registration: done
   30-10-capture-invariants-stay-shipped: done
   30-11-save-and-apply-tenant-form-templates: ready-for-dev
-  30-12-template-slots-by-plan: backlog
+  30-12-template-slots-by-plan: ready-for-dev
   30-13-community-default-design-pin-and-pro-duplicate: backlog
   epic-30-retrospective: optional
 
