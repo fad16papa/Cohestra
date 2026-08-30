@@ -106,6 +106,12 @@ So that Maya cannot register after my deadline even when the Activity is still u
 
 **Pass 2 verdict:** All patch findings applied. AC1–AC3 satisfied; Pass 1 patches verified. **730** .NET + **8** Vitest tests pass.
 
+### Review Findings (Pass 3)
+
+- [x] [Review][Defer] Incomplete Close-at datetime in picker local draft can diverge from saved schema if operator saves form before finishing edit [`activity-close-at-picker.tsx:40-51`] — deferred, browser picker emits complete values; manual partial edit then immediate save is unlikely
+
+**Pass 3 verdict:** ✅ Clean review — all layers passed. AC1–AC3 and FR-RC-7 satisfied; Pass 1–2 patches verified. **730** .NET + **8** Vitest tests pass.
+
 ## Dev Agent Record
 
 ### Completion Notes
