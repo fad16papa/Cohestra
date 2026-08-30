@@ -281,4 +281,127 @@ public sealed class PublishGateValidatorTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void ValidateForPublish_InfoOnly_Fails()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "notice",
+                        Type = FormFieldTypes.Info,
+                        Label = "Welcome",
+                        InfoText = "Thanks for joining.",
+                    },
+                ],
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("required phone or email", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateForPublish_OptionalEmailOnly_Fails()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "email",
+                        Type = FormFieldTypes.Email,
+                        Label = "Email",
+                        Required = false,
+                    },
+                ],
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("required phone or email", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateForPublish_RequiredEmailOnly_Succeeds()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "email",
+                        Type = FormFieldTypes.Email,
+                        Label = "Email",
+                        Required = true,
+                    },
+                ],
+            });
+
+        Assert.Null(error);
+    }
+
+    [Fact]
+    public void ValidateForPublish_RequiredEmailWithOptionalConsent_Fails()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "email",
+                        Type = FormFieldTypes.Email,
+                        Label = "Email",
+                        Required = true,
+                    },
+                    new FormFieldDefinition
+                    {
+                        Id = "consent",
+                        Type = FormFieldTypes.Consent,
+                        Label = "Consent",
+                        Required = false,
+                        ConsentText = "Optional marketing updates.",
+                    },
+                ],
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("Consent fields must be marked required", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateForPublish_OptionalPhoneOnly_Fails()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "phone",
+                        Type = FormFieldTypes.Phone,
+                        Label = "Mobile number",
+                        Required = false,
+                        PhoneCountry = "SG",
+                    },
+                ],
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("required phone or email", error, StringComparison.Ordinal);
+    }
 }
