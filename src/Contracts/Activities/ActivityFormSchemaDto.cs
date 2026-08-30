@@ -8,7 +8,8 @@ public sealed record FormSchemaMetaDto(
     bool SplitIntoSteps = false,
     string? SuccessCopyMarkdown = null,
     string? ConfirmationEmailSubject = null,
-    string? ConfirmationEmailBodyMarkdown = null);
+    string? ConfirmationEmailBodyMarkdown = null,
+    string? ClosedMessage = null);
 
 public sealed record ActivityFormSchemaDto(
     int Version,

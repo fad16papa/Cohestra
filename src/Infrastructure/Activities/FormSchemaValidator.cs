@@ -14,6 +14,7 @@ internal static partial class FormSchemaValidator
     private const int MaxOptionCount = 50;
 
     private const int MaxIntroMarkdownLength = 4000;
+    private const int MaxClosedMessageLength = 2000;
 
     public static string? ValidateDto(ActivityFormSchemaDto? schema)
     {
@@ -76,6 +77,11 @@ internal static partial class FormSchemaValidator
             return $"Confirmation email body cannot exceed {RegistrationPipingTokenSubstitutor.MaxConfirmationBodyLength} characters.";
         }
 
+        if (schema.Meta?.ClosedMessage is { Length: > MaxClosedMessageLength })
+        {
+            return $"Closed message cannot exceed {MaxClosedMessageLength} characters.";
+        }
+
         var seenIds = new HashSet<string>(StringComparer.Ordinal);
 
         for (var index = 0; index < schema.Fields.Count; index++)
@@ -135,6 +141,7 @@ internal static partial class FormSchemaValidator
                     SuccessCopyMarkdown = TrimOptionalMeta(schema.Meta.SuccessCopyMarkdown),
                     ConfirmationEmailSubject = TrimOptionalMeta(schema.Meta.ConfirmationEmailSubject),
                     ConfirmationEmailBodyMarkdown = TrimOptionalMeta(schema.Meta.ConfirmationEmailBodyMarkdown),
+                    ClosedMessage = TrimOptionalMeta(schema.Meta.ClosedMessage),
                 },
             Fields = schema.Fields
                 .Select(field => new FormFieldDefinition

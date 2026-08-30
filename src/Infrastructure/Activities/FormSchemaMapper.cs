@@ -45,6 +45,7 @@ internal static class FormSchemaMapper
                     schema.Meta.SplitIntoSteps,
                     schema.Meta.SuccessCopyMarkdown,
                     schema.Meta.ConfirmationEmailSubject,
-                    schema.Meta.ConfirmationEmailBodyMarkdown));
+                    schema.Meta.ConfirmationEmailBodyMarkdown,
+                    schema.Meta.ClosedMessage));
     }
 }
