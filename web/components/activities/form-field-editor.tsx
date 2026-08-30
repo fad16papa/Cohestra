@@ -4,7 +4,6 @@ import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2 } from "lucide-react
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { FormFieldPaletteDialog } from "@/components/activities/form-field-palette-dialog";
-
 import { PhoneCountrySelect } from "@/components/activities/phone-country-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -188,6 +187,10 @@ export function FormFieldEditor({
   }
 
   function addFieldOfType(type: FormFieldType) {
+    if (disabled) {
+      return;
+    }
+
     const field = createDefaultField(type, fieldIds);
     if (stepsEnabled) {
       field.step = autoBucketField(field);
@@ -203,6 +206,12 @@ export function FormFieldEditor({
   const openPalette = useCallback(() => {
     if (!disabled) {
       setPaletteOpen(true);
+    }
+  }, [disabled]);
+
+  useEffect(() => {
+    if (disabled) {
+      setPaletteOpen(false);
     }
   }, [disabled]);
 
@@ -325,6 +334,7 @@ export function FormFieldEditor({
     <div className={cn("space-y-4", className)}>
       <FormFieldPaletteDialog
         open={paletteOpen}
+        disabled={disabled}
         onOpenChange={setPaletteOpen}
         onSelect={addFieldOfType}
       />

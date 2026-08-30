@@ -13,12 +13,14 @@ import { cn } from "@/lib/utils";
 
 type FormFieldPaletteDialogProps = {
   open: boolean;
+  disabled?: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (type: FormFieldType) => void;
 };
 
 export function FormFieldPaletteDialog({
   open,
+  disabled = false,
   onOpenChange,
   onSelect,
 }: FormFieldPaletteDialogProps) {
@@ -30,6 +32,12 @@ export function FormFieldPaletteDialog({
     () => filterFormFieldPaletteItems(query),
     [query]
   );
+
+  useEffect(() => {
+    if (disabled && open) {
+      onOpenChange(false);
+    }
+  }, [disabled, onOpenChange, open]);
 
   useEffect(() => {
     if (!open) {
@@ -63,7 +71,7 @@ export function FormFieldPaletteDialog({
         return;
       }
 
-      if (filteredItems.length === 0) {
+      if (disabled || filteredItems.length === 0) {
         return;
       }
 
@@ -80,6 +88,10 @@ export function FormFieldPaletteDialog({
       }
 
       if (event.key === "Enter") {
+        if (event.isComposing) {
+          return;
+        }
+
         event.preventDefault();
         const item = filteredItems[activeIndex];
         if (item) {
@@ -91,9 +103,9 @@ export function FormFieldPaletteDialog({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [activeIndex, filteredItems, onOpenChange, onSelect, open]);
+  }, [activeIndex, disabled, filteredItems, onOpenChange, onSelect, open]);
 
-  if (!open) {
+  if (!open || disabled) {
     return null;
   }
 
@@ -152,8 +164,14 @@ export function FormFieldPaletteDialog({
                       type="button"
                       role="option"
                       aria-selected={isActive}
+                      disabled={disabled}
                       onMouseEnter={() => setActiveIndex(index)}
+                      onFocus={() => setActiveIndex(index)}
                       onClick={() => {
+                        if (disabled) {
+                          return;
+                        }
+
                         onSelect(item.type);
                         onOpenChange(false);
                       }}

@@ -2,7 +2,7 @@
 story_id: 30.4
 story_key: 30-4-slash-add-field-palette
 epic: 30
-status: review
+status: done
 baseline_commit: 381a7a4efb30a07474cd22ae9b09b54d38f725c1
 created: 2026-08-30
 sources:
@@ -14,7 +14,7 @@ sources:
 
 # Story 30.4: Slash-add Field palette
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 
@@ -119,9 +119,10 @@ Cursor Composer
 
 - 2026-08-30: Implemented Story 30.4 slash-add field palette. Status → review.
 - 2026-08-30: Adversarial code review. 3 patch, 0 defer, 12 dismissed. No AC violations.
+- 2026-08-30: Applied all 3 review patches. Status → done.
 
 ### Review Findings
 
-- [ ] [Review][Patch] Palette stays open and can add fields when editor becomes disabled [web/components/activities/form-field-editor.tsx:190]
-- [ ] [Review][Patch] Tab-focused option vs activeIndex: Enter adds wrong type [web/components/activities/form-field-palette-dialog.tsx:82]
-- [ ] [Review][Patch] IME composition Enter adds field mid-input [web/components/activities/form-field-palette-dialog.tsx:82]
+- [x] [Review][Patch] Palette stays open and can add fields when editor becomes disabled [web/components/activities/form-field-editor.tsx:190]
+- [x] [Review][Patch] Tab-focused option vs activeIndex: Enter adds wrong type [web/components/activities/form-field-palette-dialog.tsx:82]
+- [x] [Review][Patch] IME composition Enter adds field mid-input [web/components/activities/form-field-palette-dialog.tsx:82]
