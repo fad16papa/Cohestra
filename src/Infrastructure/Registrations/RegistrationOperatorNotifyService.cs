@@ -39,7 +39,7 @@ public sealed class RegistrationOperatorNotifyService(
             .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == registration.TenantId, cancellationToken);
 
-        if (tenant is null || !tenant.EmailOnNewRegistration)
+        if (tenant is null)
         {
             return new RegistrationOperatorNotifySendResult(false, null);
         }
@@ -65,7 +65,7 @@ public sealed class RegistrationOperatorNotifyService(
             logger.LogWarning(
                 "Skipped operator registration notify for {RegistrationId} because no sender email is configured.",
                 registrationId);
-            return new RegistrationOperatorNotifySendResult(false, recipientEmail);
+            return new RegistrationOperatorNotifySendResult(false, null);
         }
 
         var fromName = sendGridSettings.RegistrationFromName?.Trim();

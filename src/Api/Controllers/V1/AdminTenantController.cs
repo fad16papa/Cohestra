@@ -94,6 +94,11 @@ public sealed class AdminTenantController(
             return BadRequestProblem("Request body is required.");
         }
 
+        if (request.EmailOnNewRegistration is not bool emailOnNewRegistration)
+        {
+            return BadRequestProblem("EmailOnNewRegistration is required.");
+        }
+
         var tenantId = currentTenant.TenantId;
         if (tenantId is null)
         {
@@ -102,7 +107,7 @@ public sealed class AdminTenantController(
 
         var response = await tenantOrganizationService.UpdateNotificationSettingsAsync(
             tenantId.Value,
-            request.EmailOnNewRegistration,
+            emailOnNewRegistration,
             cancellationToken);
         return Ok(response);
     }

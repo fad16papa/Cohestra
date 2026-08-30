@@ -2,7 +2,7 @@
 story_id: 30.9
 story_key: 30-9-operator-email-on-new-registration
 epic: 30
-status: done
+status: in-progress
 baseline_commit: cursor/close-at-d861
 created: 2026-08-30
 sources:
@@ -12,7 +12,7 @@ sources:
 
 # Story 30.9: Operator email on new Registration
 
-Status: done
+Status: in-progress
 
 ## Story
 
@@ -60,6 +60,34 @@ So that I get the lead without waiting on a webhook or opening Tally.
 - [x] **Task 5 — Tests** (AC: 1–2)
   - [x] Email builder unit tests (subject, body, hidden answers)
   - [x] Integration test: operator notify outbox enqueue on submit
+
+### Review Findings (Pass 1)
+
+- [x] [Review][Decision] Send-time toggle re-check vs enqueue-time intent — **Decision A**: removed send-time `EmailOnNewRegistration` check; honor enqueue decision. Admin contact email still validated at send time.
+
+- [x] [Review][Patch] Subject line lacks newline sanitization [`RegistrationOperatorNotifyEmailBuilder.cs:29`]
+
+- [x] [Review][Patch] Missing sender config causes infinite outbox retries [`RegistrationOperatorNotifyService.cs:63-68`]
+
+- [x] [Review][Patch] PATCH `{}` defaults toggle to false [`TenantNotificationSettingsContracts.cs:3`]
+
+- [x] [Review][Patch] No integration test: toggle OFF suppresses operator outbox [`OutboxIntegrationTests.cs`]
+
+- [x] [Review][Patch] Plain-text hidden field values not encoded [`RegistrationOperatorNotifyEmailBuilder.cs:154-157`]
+
+- [x] [Review][Defer] Missing registration completes outbox silently [`RegistrationOperatorNotifyOutboxHandler.cs:35-39`] — Mirrors confirmation handler `(Sent=false, RecipientEmail=null)` success path; pre-existing outbox idempotency pattern.
+
+- [x] [Review][Defer] Form-edit / draft-save negative tests missing — Enqueue only in public submit path (correct); no regression test (same gap as other outbox types).
+
+- [x] [Review][Defer] Settings notifications API lacks dedicated tests — `GET/PATCH notifications` untested; registration-timezone endpoints also lack dedicated tests (consistent gap).
+
+- [x] [Review][Defer] Tenant-not-found throws 500 [`TenantOrganizationService.cs:57-58`] — Same `InvalidOperationException` pattern as registration-timezone service.
+
+- [x] [Review][Defer] Toggle ON with empty admin email — UI warns; registration commits without enqueue (reasonable; admin email is billing/workspace prerequisite).
+
+- [x] [Review][Defer] `RegistrationOperatorNotifyService` branch unit tests missing — Only email builder covered; service gating untested (non-blocking for story scope).
+
+- [x] [Review][Defer] Settings error state has no retry button [`notifications-section.tsx:77-80`] — Same pattern as organization timezone section.
 
 ## Dev Agent Record
 

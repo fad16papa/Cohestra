@@ -51,6 +51,21 @@ public sealed class RegistrationOperatorNotifyEmailBuilderTests
     }
 
     [Fact]
+    public void Build_SanitizesNewlinesInSubject()
+    {
+        var content = RegistrationOperatorNotifyEmailBuilder.Build(
+            CreateModel() with
+            {
+                ParticipantName = "Elena\nSantos",
+                ActivityName = "Sunday\r\nClinic",
+            });
+
+        Assert.DoesNotContain('\n', content.Subject);
+        Assert.DoesNotContain('\r', content.Subject);
+        Assert.Contains("Elena Santos", content.Subject);
+    }
+
+    [Fact]
     public void Build_IncludesHiddenAnswersWhenPresent()
     {
         var content = RegistrationOperatorNotifyEmailBuilder.Build(

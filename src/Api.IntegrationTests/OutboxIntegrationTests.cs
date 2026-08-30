@@ -88,4 +88,63 @@ public sealed class OutboxIntegrationTests(IntegrationTestFixture fixture)
         Assert.NotNull(outbox);
         Assert.Equal(OutboxMessageStatus.Pending, outbox!.Status);
     }
+
+    [SkippableFact]
+    public async Task RegistrationSubmit_WhenOperatorNotifyDisabled_DoesNotEnqueueOperatorNotify()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        await using (var setupScope = Factory.Services.CreateAsyncScope())
+        {
+            IntegrationTestHelpers.BindDefaultTenant(setupScope.ServiceProvider);
+            var db = setupScope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            var tenant = await db.Tenants.FirstAsync(t => t.Id == TenantIds.Default);
+            tenant.EmailOnNewRegistration = false;
+            await db.SaveChangesAsync();
+        }
+
+        try
+        {
+            var slug = $"outbox-off-{Guid.NewGuid():N}"[..20];
+            await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, slug);
+
+            using var client = Factory.CreateClient();
+            client.DefaultRequestHeaders.Host = $"{TenantIds.DefaultSlug}.localhost";
+
+            var response = await IntegrationTestHelpers.SubmitRegistrationAsync(
+                client,
+                slug,
+                new Dictionary<string, object?>
+                {
+                    ["full_name"] = "Notify Off User",
+                    ["phone"] = "09181234569",
+                    ["email"] = $"notify-off-{Guid.NewGuid():N}@example.com",
+                    ["consent"] = true,
+                });
+
+            Assert.True(response.RegistrationId != Guid.Empty);
+
+            await using var scope = Factory.Services.CreateAsyncScope();
+            IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
+            var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+
+            var operatorOutbox = await db.OutboxMessages
+                .AsNoTracking()
+                .AnyAsync(
+                    message =>
+                        message.MessageType == OutboxMessageTypes.RegistrationOperatorNotify
+                        && message.DedupeKey == $"registration:{response.RegistrationId}:operator_notify");
+
+            Assert.False(operatorOutbox);
+        }
+        finally
+        {
+            await using var restoreScope = Factory.Services.CreateAsyncScope();
+            IntegrationTestHelpers.BindDefaultTenant(restoreScope.ServiceProvider);
+            var db = restoreScope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            var tenant = await db.Tenants.FirstAsync(t => t.Id == TenantIds.Default);
+            tenant.EmailOnNewRegistration = true;
+            await db.SaveChangesAsync();
+        }
+    }
 }

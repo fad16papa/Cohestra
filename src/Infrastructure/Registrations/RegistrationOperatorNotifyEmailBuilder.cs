@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using Cohestra.Application.Email;
 using Cohestra.Domain.Activities;
 using Cohestra.Infrastructure.Email;
@@ -26,7 +27,8 @@ internal static class RegistrationOperatorNotifyEmailBuilder
                 ? model.Phone.Trim()
                 : "New registrant";
 
-        var subject = $"New registration — {model.ActivityName} — {subjectParticipant}";
+        var subject = SanitizeEmailSubject(
+            $"New registration — {model.ActivityName} — {subjectParticipant}");
 
         var plain = new StringBuilder();
         EmailBrandHeaderTemplate.AppendPlainTextHeader(plain, "New Registration");
@@ -153,9 +155,15 @@ internal static class RegistrationOperatorNotifyEmailBuilder
         plain.AppendLine("Campaign / hidden fields:");
         foreach (var (label, value) in hiddenAnswers)
         {
-            plain.AppendLine($"{label}: {value}");
+            plain.AppendLine($"{SanitizePlainTextField(label)}: {SanitizePlainTextField(value)}");
         }
     }
+
+    private static string SanitizePlainTextField(string value) =>
+        Regex.Replace(value.Trim(), @"[\r\n\u2028\u2029]+", " ", RegexOptions.CultureInvariant).Trim();
+
+    private static string SanitizeEmailSubject(string subject) =>
+        RegistrationConfirmationEmailBuilder.SanitizeEmailSubject(subject);
 
     private static string BuildHiddenAnswersHtml(IReadOnlyList<(string Label, string Value)> hiddenAnswers)
     {
