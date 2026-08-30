@@ -1,3 +1,11 @@
+## Deferred from: code review of 30-5-core-scale-and-emergency-contact.md (2026-08-30)
+
+- Basic `403 plan_locked` save path has no automated test — matches existing deferred-work pattern for HTTP plan_locked tests
+- Type dropdown on Basic still lists scale/emergency (save-time gate only) — consistent with Recipes pattern
+- Duplicate scale labels in C# and TypeScript — maintainability follow-up
+- No AC3 mixed hidden + wave-1 + Core+ regression test — low risk given isolated validators
+- No integration test for public registration POST with scale/emergency — unit coverage sufficient for this story slice
+
 ## Deferred from: code review of 31-1-visiblewhen-recipes.md + 31-2-optional-identity-details-consent-steps.md (2026-08-29)
 
 - Runtime does not re-check plan after downgrade — save-time `plan_locked` is the spec; published Forms keep stored Recipes
