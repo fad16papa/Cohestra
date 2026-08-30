@@ -1,8 +1,9 @@
 "use client";
 
 import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { FormFieldPaletteDialog } from "@/components/activities/form-field-palette-dialog";
 import { PhoneCountrySelect } from "@/components/activities/phone-country-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -90,6 +91,7 @@ export function FormFieldEditor({
   stepsLocked = false,
 }: FormFieldEditorProps) {
   const [addType, setAddType] = useState<FormFieldType>("text");
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(
     schema.fields.length > 0 ? 0 : null
   );
@@ -184,14 +186,62 @@ export function FormFieldEditor({
     updateFields(next);
   }
 
-  function addField() {
-    const field = createDefaultField(addType, fieldIds);
+  function addFieldOfType(type: FormFieldType) {
+    if (disabled) {
+      return;
+    }
+
+    const field = createDefaultField(type, fieldIds);
     if (stepsEnabled) {
       field.step = autoBucketField(field);
     }
     updateFields([...schema.fields, field]);
     setSelectedIndex(schema.fields.length);
   }
+
+  function addField() {
+    addFieldOfType(addType);
+  }
+
+  const openPalette = useCallback(() => {
+    if (!disabled) {
+      setPaletteOpen(true);
+    }
+  }, [disabled]);
+
+  useEffect(() => {
+    if (disabled) {
+      setPaletteOpen(false);
+    }
+  }, [disabled]);
+
+  useEffect(() => {
+    if (disabled) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (paletteOpen || event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
+
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      setPaletteOpen(true);
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [disabled, paletteOpen]);
 
   function removeField(index: number) {
     updateFields(schema.fields.filter((_, fieldIndex) => fieldIndex !== index));
@@ -282,6 +332,13 @@ export function FormFieldEditor({
 
   return (
     <div className={cn("space-y-4", className)}>
+      <FormFieldPaletteDialog
+        open={paletteOpen}
+        disabled={disabled}
+        onOpenChange={setPaletteOpen}
+        onSelect={addFieldOfType}
+      />
+
       <div>
         <h3 className="text-section text-text-warm">Form fields</h3>
         <p className="mt-1 text-sm text-text-muted-warm">
@@ -301,9 +358,19 @@ export function FormFieldEditor({
           </div>
 
           {schema.fields.length === 0 ? (
-            <p className="px-4 py-8 text-sm text-text-muted-warm">
-              No fields yet. Add your first field below.
-            </p>
+            <div className="flex flex-col items-center gap-4 px-4 py-10 text-center">
+              <p className="text-sm text-text-muted-warm">
+                No fields yet. Add your first field with the toolbox palette.
+              </p>
+              <Button type="button" disabled={disabled} onClick={openPalette}>
+                <Plus className="size-4" />
+                Add field
+              </Button>
+              <p className="text-xs text-text-muted-warm">
+                Tip: press <kbd className="rounded border border-border-warm px-1">/</kbd> anywhere
+                on this tab to open the palette.
+              </p>
+            </div>
           ) : (
             <ul
               className={cn(
@@ -428,29 +495,40 @@ export function FormFieldEditor({
           )}
 
           <div className="mt-auto border-t border-border-warm p-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <div className="min-w-0 flex-1 space-y-2">
-                <Label htmlFor="add-field-type" className="text-xs">
-                  Add field
-                </Label>
-                <select
-                  id="add-field-type"
-                  value={addType}
-                  disabled={disabled}
-                  onChange={(event) => setAddType(event.target.value as FormFieldType)}
-                  className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                >
-                  {formFieldTypeOptions.map((type) => (
-                    <option key={type} value={type}>
-                      {formFieldTypeLabels[type]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <Button type="button" disabled={disabled} onClick={addField}>
+            <div className="flex flex-col gap-3">
+              <Button
+                type="button"
+                variant="default"
+                disabled={disabled}
+                className="w-full sm:w-auto"
+                onClick={openPalette}
+              >
                 <Plus className="size-4" />
-                Add
+                Add field
               </Button>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Label htmlFor="add-field-type" className="text-xs">
+                    Or pick a type (fallback)
+                  </Label>
+                  <select
+                    id="add-field-type"
+                    value={addType}
+                    disabled={disabled}
+                    onChange={(event) => setAddType(event.target.value as FormFieldType)}
+                    className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    {formFieldTypeOptions.map((type) => (
+                      <option key={type} value={type}>
+                        {formFieldTypeLabels[type]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <Button type="button" variant="outline" disabled={disabled} onClick={addField}>
+                  Add
+                </Button>
+              </div>
             </div>
           </div>
         </section>
