@@ -193,6 +193,21 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void ValidateModel_RejectsConfirmationEmailSubjectWithLineBreaks()
+    {
+        var schema = ContactSchema();
+        schema.Meta = new FormSchemaMeta
+        {
+            ConfirmationEmailSubject = "Hello\nWorld",
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("line breaks", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void MapToDomain_TrimsPipingMetaFields()
     {
         var dto = new ActivityFormSchemaDto(

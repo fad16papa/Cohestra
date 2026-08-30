@@ -43,7 +43,7 @@ export function RegistrationSuccessScreen({
     }
   }
 
-  const personalizedCopy = successCopyMarkdown?.replace(/<[^>]*>/g, "").trim() ?? "";
+  const personalizedCopy = successCopyMarkdown?.trim() ?? "";
   const personalizedParagraphs = personalizedCopy
     ? personalizedCopy.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean)
     : [];

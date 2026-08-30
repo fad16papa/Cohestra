@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Cohestra.Infrastructure.Registrations;
 
@@ -36,7 +37,7 @@ internal static class RegistrationConfirmationEmailBuilder
     {
         var subject = string.IsNullOrWhiteSpace(model.CustomSubject)
             ? $"You're registered — {model.ActivityName}"
-            : model.CustomSubject.Trim();
+            : SanitizeEmailSubject(model.CustomSubject);
         var plainText = BuildPlainText(model);
         var html = BuildHtml(model);
         return new RegistrationConfirmationEmailContent(subject, plainText, html);
@@ -208,6 +209,9 @@ internal static class RegistrationConfirmationEmailBuilder
         string.IsNullOrWhiteSpace(model.CustomClosingMessage)
             ? DefaultClosingMessage
             : model.CustomClosingMessage.Trim();
+
+    internal static string SanitizeEmailSubject(string subject) =>
+        Regex.Replace(subject.Trim(), @"[\r\n]+", " ", RegexOptions.CultureInvariant).Trim();
 
     internal static string EncodeClosingMessageHtml(RegistrationConfirmationEmailModel model)
     {

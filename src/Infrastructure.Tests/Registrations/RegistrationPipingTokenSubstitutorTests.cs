@@ -171,6 +171,51 @@ public sealed class RegistrationPipingTokenSubstitutorTests
     }
 
     [Fact]
+    public void SubstituteParticipantVisible_EmptyBraceToken_IsCleared()
+    {
+        var result = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+            "Hi {{}} there",
+            CreateSchema(),
+            CreateProfile(),
+            new Dictionary<string, object?>());
+
+        Assert.Equal("Hi  there", result);
+    }
+
+    [Fact]
+    public void SubstituteParticipantVisible_UnclosedToken_IsCleared()
+    {
+        var result = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+            "Hi {{full_name there",
+            CreateSchema(),
+            CreateProfile(),
+            new Dictionary<string, object?>());
+
+        Assert.Equal("Hi ", result);
+    }
+
+    [Fact]
+    public void SubstituteParticipantVisible_SectionHeaderFieldToken_IsEmpty()
+    {
+        var schema = CreateSchema(
+            new FormFieldDefinition
+            {
+                Id = "divider",
+                Type = FormFieldTypes.SectionHeader,
+                Label = "About you",
+                Required = false,
+            });
+
+        var result = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+            "Section: {{field:divider}}",
+            schema,
+            CreateProfile(),
+            new Dictionary<string, object?>());
+
+        Assert.Equal("Section: ", result);
+    }
+
+    [Fact]
     public void SubstituteParticipantVisible_FieldToken_IsCaseInsensitiveForSchemaId()
     {
         var schema = CreateSchema();

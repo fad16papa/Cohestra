@@ -7,7 +7,8 @@ export const PIPING_SAMPLE_PHONE = "+65 9123 4567";
 const PARTICIPANT_TOKEN_PATTERN =
   /\{\{(full_name|email|phone)\}\}|\{\{field:([a-z0-9][a-z0-9_-]{0,63})\}\}/gi;
 
-const UNKNOWN_TOKEN_PATTERN = /\{\{[^}]+\}\}/g;
+const UNKNOWN_TOKEN_PATTERN = /\{\{[^}]*\}\}/g;
+const UNCLOSED_TOKEN_PATTERN = /\{\{[^}\n]*/g;
 
 const NON_INPUT_FIELD_TYPES = new Set(["section_header", "info"]);
 const HIDDEN_FIELD_TYPE = "hidden";
@@ -65,5 +66,7 @@ export function substitutePipingPreview(
     }
   );
 
-  return substituted.replace(UNKNOWN_TOKEN_PATTERN, "");
+  return substituted
+    .replace(UNKNOWN_TOKEN_PATTERN, "")
+    .replace(UNCLOSED_TOKEN_PATTERN, "");
 }

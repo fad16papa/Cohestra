@@ -2,7 +2,7 @@
 story_id: 30.6
 story_key: 30-6-piping-on-thank-you-and-confirmation-email
 epic: 30
-status: done
+status: in-progress
 baseline_commit: 60cac03
 created: 2026-08-30
 sources:
@@ -13,7 +13,7 @@ sources:
 
 # Story 30.6: Piping on thank-you and confirmation email
 
-Status: done
+Status: in-progress
 
 ## Story
 
@@ -85,6 +85,22 @@ So that Maya sees “See you Saturday, Maya” without a hardcoded name — and 
 - [x] [Review][Defer] Single-newline vs double-newline rendering differs success screen vs email [`registration-success-screen.tsx`, `RegistrationConfirmationEmailBuilder.cs`] — deferred, polish
 - [x] [Review][Defer] No integration test asserting `successCopyMarkdown` on public submit API [`PublicRegistrationsController.cs`] — deferred, unit coverage sufficient for slice
 - [x] [Review][Defer] No component/E2E test proving piped copy renders on success screen [`registration-success-screen.tsx`] — deferred, manual QA path
+
+### Review Findings (Pass 2)
+
+- [x] [Review][Patch] Duplicate 30-6 deferred-work block pasted twice [`deferred-work.md:1-21`]
+- [x] [Review][Patch] Unclosed/incomplete tokens (`{{foo`, `{{}}`) survive; only closed unknown `{{…}}` pairs are cleared [`RegistrationPipingTokenSubstitutor.cs:87-88`, `registration-piping.ts:10`]
+- [x] [Review][Patch] Custom confirmation subject allows embedded `\r`/`\n` after piping (header-smuggling risk) [`RegistrationConfirmationEmailBuilder.cs:37-39`, `FormSchemaValidator.cs`]
+- [x] [Review][Patch] Success screen strips `<…>` from server-substituted copy; can mangle values like `x < y` [`registration-success-screen.tsx:46`]
+- [x] [Review][Patch] Add `section_header` substitutor blocking test (info covered; section_header not) [`RegistrationPipingTokenSubstitutorTests.cs`]
+- [x] [Review][Patch] Hidden email notification test uses brittle `DoesNotContain("wa")` substring assert [`RegistrationNotificationServiceTests.cs`]
+
+- [x] [Review][Defer] Success screen shows generic “Save the date…” sign-off even when operator thank-you copy is set [`registration-success-screen.tsx`] — deferred, UX polish not in AC
+- [x] [Review][Defer] Live preview `{{phone}}` uses formatted sample; server uses raw extracted phone [`registration-piping.ts`] — deferred, AC3 only requires name preview
+- [x] [Review][Defer] Client `getFormSchemaClientIssues` omits piping meta max-length mirrors [`form-schema-utils.ts`] — deferred, HTML maxLength + server gate sufficient
+- [x] [Review][Defer] Unused `encodedName` in email HTML builder [`RegistrationConfirmationEmailBuilder.cs:88`] — deferred, pre-existing dead assignment
+
+**Pass 2 verdict:** AC1–AC3 satisfied (Acceptance Auditor). No hidden-field leak regressions. Core piping path clean after pass 1 patches.
 
 ## Dev Agent Record
 

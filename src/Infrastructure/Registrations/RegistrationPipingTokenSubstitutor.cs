@@ -27,7 +27,8 @@ internal static partial class RegistrationPipingTokenSubstitutor
             template,
             match => ResolveToken(match, schema, profile, answers, participantVisible: true));
 
-        return UnknownTokenRegex().Replace(substituted, MissingTokenReplacement);
+        substituted = UnknownTokenRegex().Replace(substituted, MissingTokenReplacement);
+        return UnclosedTokenRegex().Replace(substituted, MissingTokenReplacement);
     }
 
     private static string ResolveToken(
@@ -84,8 +85,11 @@ internal static partial class RegistrationPipingTokenSubstitutor
         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
     private static partial Regex ParticipantTokenRegex();
 
-    [GeneratedRegex(@"\{\{[^}]+\}\}", RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"\{\{[^}]*\}\}", RegexOptions.CultureInvariant)]
     private static partial Regex UnknownTokenRegex();
+
+    [GeneratedRegex(@"\{\{[^}\n]*", RegexOptions.CultureInvariant)]
+    private static partial Regex UnclosedTokenRegex();
 
     private static string ResolveFullName(ExtractedClientProfile profile) =>
         string.IsNullOrWhiteSpace(profile.NameFromForm)

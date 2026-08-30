@@ -62,6 +62,12 @@ internal static partial class FormSchemaValidator
             return $"Confirmation email subject cannot exceed {RegistrationPipingTokenSubstitutor.MaxConfirmationSubjectLength} characters.";
         }
 
+        if (schema.Meta?.ConfirmationEmailSubject is { } confirmationSubject &&
+            (confirmationSubject.Contains('\r') || confirmationSubject.Contains('\n')))
+        {
+            return "Confirmation email subject cannot contain line breaks.";
+        }
+
         if (schema.Meta?.ConfirmationEmailBodyMarkdown is { Length: > RegistrationPipingTokenSubstitutor.MaxConfirmationBodyLength })
         {
             return $"Confirmation email body cannot exceed {RegistrationPipingTokenSubstitutor.MaxConfirmationBodyLength} characters.";

@@ -466,7 +466,7 @@ public sealed class RegistrationNotificationServiceTests
             Answers = new Dictionary<string, object?>
             {
                 ["full_name"] = "Maya Chen",
-                ["ref"] = "wa",
+                ["ref"] = "SECRET_REF_XYZ",
             },
             CreatedAt = DateTimeOffset.UtcNow,
         });
@@ -481,7 +481,7 @@ public sealed class RegistrationNotificationServiceTests
         Assert.Single(sender.Messages);
         Assert.Contains("Hidden campaign ref is", sender.Messages[0].HtmlBody);
         Assert.Contains("end.", sender.Messages[0].HtmlBody);
-        Assert.DoesNotContain("wa", sender.Messages[0].HtmlBody);
+        Assert.DoesNotContain("SECRET_REF_XYZ", sender.Messages[0].HtmlBody);
         Assert.DoesNotContain("Save the date", sender.Messages[0].HtmlBody);
     }
 

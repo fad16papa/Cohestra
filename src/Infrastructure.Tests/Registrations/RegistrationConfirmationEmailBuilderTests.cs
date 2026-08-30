@@ -90,6 +90,19 @@ public sealed class RegistrationConfirmationEmailBuilderTests
     }
 
     [Fact]
+    public void Build_SanitizesNewlinesInCustomSubject()
+    {
+        var content = RegistrationConfirmationEmailBuilder.Build(
+            CreateModel() with
+            {
+                CustomSubject = "You're in,\nMaya",
+                CustomClosingMessage = "See you Saturday, Maya.",
+            });
+
+        Assert.Equal("You're in, Maya", content.Subject);
+    }
+
+    [Fact]
     public void ResolveLogoUrl_UsesPublicWebBaseWhenLogoUrlNotConfigured()
     {
         var url = RegistrationNotificationService.ResolveLogoUrl(
