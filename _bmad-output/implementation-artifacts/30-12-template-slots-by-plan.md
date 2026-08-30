@@ -279,3 +279,11 @@ _(filled by dev agent)_
 - [x] [Review][Patch] No usage resync after `403 plan_locked` on create — stale slot meter remains after server rejects over-cap save [`activity-form-tab.tsx:305-308`]
 
 - [x] [Review][Patch] Delete-to-unblock after downgrade not tested — AC4 “create blocked until under cap” half verified; delete restoring create path untested [`FormTemplateServiceTests.cs`]
+
+### Review Findings (Pass 3 — deferred re-evaluation)
+
+- [x] [Review][Patch] No HTTP integration test POST `403 plan_locked` — `FormTemplatePlanLimitIntegrationTests` asserts `403` + `errorCode: plan_locked` [`FormTemplatePlanLimitIntegrationTests.cs`]
+
+- [x] [Review][Dismiss] Enterprise 999 slot limit untested — static constant; Enterprise excluded from shipped-plan test matrix repo-wide [`FormTemplateSlotLimits.cs`]
+
+- [x] [Review][Defer] 403 save toast only, not UpgradePanel — spec marks upgrade panel optional; proactive at-cap UI + usage resync on 403 sufficient [`activity-form-tab.tsx`]

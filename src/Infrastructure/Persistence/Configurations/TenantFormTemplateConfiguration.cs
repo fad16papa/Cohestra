@@ -43,6 +43,7 @@ internal sealed class TenantFormTemplateConfiguration : IEntityTypeConfiguration
         builder.Property(template => template.CreatedAt).IsRequired();
         builder.Property(template => template.UpdatedAt).IsRequired();
 
-        builder.HasIndex(template => new { template.TenantId, template.Name });
+        builder.HasIndex(template => new { template.TenantId, template.Name })
+            .IsUnique();
     }
 }

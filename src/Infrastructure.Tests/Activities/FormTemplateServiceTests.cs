@@ -289,6 +289,57 @@ public sealed class FormTemplateServiceTests
         Assert.Contains("version", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task CreateAsync_DuplicateName_ThrowsDuplicateNameException()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Pro);
+        var service = CreateService(dbContext);
+        await service.CreateAsync(CreateRequest("Saturday tennis"));
+
+        var ex = await Assert.ThrowsAsync<FormTemplateDuplicateNameException>(
+            () => service.CreateAsync(CreateRequest("Saturday tennis")));
+
+        Assert.Contains("already exists", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CreateAsync_DuplicateNameCaseInsensitive_ThrowsDuplicateNameException()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Pro);
+        var service = CreateService(dbContext);
+        await service.CreateAsync(CreateRequest("Saturday tennis"));
+
+        await Assert.ThrowsAsync<FormTemplateDuplicateNameException>(
+            () => service.CreateAsync(CreateRequest("SATURDAY TENNIS")));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_RenameToExistingName_ThrowsDuplicateNameException()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Pro);
+        var service = CreateService(dbContext);
+        var first = await service.CreateAsync(CreateRequest("First"));
+        await service.CreateAsync(CreateRequest("Second"));
+
+        await Assert.ThrowsAsync<FormTemplateDuplicateNameException>(
+            () => service.UpdateAsync(first.Id, new UpdateFormTemplateRequest("Second", null)));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_RenameToSameName_AllowsNoOp()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Pro);
+        var service = CreateService(dbContext);
+        var created = await service.CreateAsync(CreateRequest("Keep me"));
+
+        var updated = await service.UpdateAsync(
+            created.Id,
+            new UpdateFormTemplateRequest("Keep me", null));
+
+        Assert.NotNull(updated);
+        Assert.Equal("Keep me", updated!.Name);
+    }
+
     private static FormTemplateService CreateService(CohestraDbContext dbContext)
     {
         var currentTenant = new CurrentTenant();

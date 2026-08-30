@@ -37,6 +37,7 @@ public class FormTemplatesController(IFormTemplateService formTemplateService) :
     [ProducesResponseType(typeof(FormTemplateResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public async Task<ActionResult<FormTemplateResponse>> Create(
         [FromBody] CreateFormTemplateRequest? request,
         CancellationToken cancellationToken)
@@ -63,12 +64,17 @@ public class FormTemplatesController(IFormTemplateService formTemplateService) :
         {
             return PlanLockedProblem(ex.Message);
         }
+        catch (FormTemplateDuplicateNameException ex)
+        {
+            return ConflictProblem(ex.Message);
+        }
     }
 
     [HttpPatch("{id:guid}")]
     [ProducesResponseType(typeof(FormTemplateResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<FormTemplateResponse>> Update(
         Guid id,
@@ -97,6 +103,10 @@ public class FormTemplatesController(IFormTemplateService formTemplateService) :
         catch (FormSchemaPlanLockedException ex)
         {
             return PlanLockedProblem(ex.Message);
+        }
+        catch (FormTemplateDuplicateNameException ex)
+        {
+            return ConflictProblem(ex.Message);
         }
     }
 
@@ -141,6 +151,22 @@ public class FormTemplatesController(IFormTemplateService formTemplateService) :
         return new ObjectResult(problem)
         {
             StatusCode = StatusCodes.Status403Forbidden,
+        };
+    }
+
+    private ObjectResult ConflictProblem(string detail)
+    {
+        Response.ContentType = "application/problem+json";
+
+        return new ObjectResult(new ProblemDetails
+        {
+            Status = StatusCodes.Status409Conflict,
+            Title = "Conflict",
+            Detail = detail,
+            Instance = HttpContext.Request.Path,
+        })
+        {
+            StatusCode = StatusCodes.Status409Conflict,
         };
     }
 }

@@ -49,6 +49,8 @@ public sealed class FormTemplateService(
             throw new ArgumentException(nameError);
         }
 
+        await EnsureNameAvailableAsync(request.Name.Trim(), excludeId: null, cancellationToken);
+
         var validationError = FormSchemaValidator.ValidateDto(request.FormSchema);
         if (validationError is not null)
         {
@@ -99,6 +101,7 @@ public sealed class FormTemplateService(
                 throw new ArgumentException(nameError);
             }
 
+            await EnsureNameAvailableAsync(request.Name.Trim(), template.Id, cancellationToken);
             template.Name = request.Name.Trim();
         }
 
@@ -135,6 +138,25 @@ public sealed class FormTemplateService(
         dbContext.TenantFormTemplates.Remove(template);
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    private async Task EnsureNameAvailableAsync(
+        string name,
+        Guid? excludeId,
+        CancellationToken cancellationToken)
+    {
+        var normalized = name.Trim();
+        var duplicateExists = await dbContext.TenantFormTemplates.AnyAsync(
+            template =>
+                template.Name.ToLower() == normalized.ToLower()
+                && (!excludeId.HasValue || template.Id != excludeId.Value),
+            cancellationToken);
+
+        if (duplicateExists)
+        {
+            throw new FormTemplateDuplicateNameException(
+                $"A form template named \"{normalized}\" already exists. Choose a different name.");
+        }
     }
 
     private async Task EnsureCanAddTemplateAsync(

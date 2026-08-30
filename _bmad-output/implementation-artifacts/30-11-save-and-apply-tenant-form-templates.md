@@ -270,3 +270,19 @@ _(filled by dev agent)_
 - [x] [Review][Defer] Apply downgraded-plan template without client re-check — same deferred enforcement pattern as launch templates; server gates on activity save/publish [`activity-form-tab.tsx:239-244`]
 
 - [x] [Review][Defer] Duplicate template names allowed — index on `(TenantId, Name)` is not unique; operators can accumulate ambiguous library entries [`TenantFormTemplateConfiguration.cs:46`]
+
+### Review Findings (Pass 3 — deferred re-evaluation)
+
+- [x] [Review][Defer] Save current draft on published activities while Apply locked — AC3 locks apply only; intentional library capture from live form [`form-template-picker.tsx`]
+
+- [x] [Review][Defer] Replace/Rename/Delete on published activities — extends Save asymmetry; library CRUD not gated by `locked` [`form-template-picker.tsx`]
+
+- [x] [Review][Defer] Concurrent POST slot-boundary TOCTOU — count-then-insert matches other plan-limit creates [`FormTemplateService.cs`]
+
+- [ ] [Review][Patch] No HTTP integration test POST `403 plan_locked` — service tests cover caps; Story 30.12 Task 6 requires HTTP contract verification [`FormTemplatesController.cs`]
+
+- [x] [Review][Defer] Tenant isolation PATCH/DELETE untested — GET spot-check only; same EF tenant filter pattern [`TenantIsolationApiTests.cs`]
+
+- [x] [Review][Defer] Apply downgraded-plan template without client re-check — same deferred model as launch templates; server gates on activity save [`activity-form-tab.tsx`]
+
+- [ ] [Review][Decision] Duplicate template names allowed — product policy: enforce unique names per tenant or allow duplicates (30.13 duplicate may assume rules)? [`TenantFormTemplateConfiguration.cs:46`]
