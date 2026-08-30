@@ -32,12 +32,12 @@ internal static class RegistrationOperatorNotifyEmailBuilder
 
         var plain = new StringBuilder();
         EmailBrandHeaderTemplate.AppendPlainTextHeader(plain, "New Registration");
-        plain.AppendLine($"Someone registered for \"{model.ActivityName}\".");
+        plain.AppendLine($"Someone registered for \"{SanitizePlainTextField(model.ActivityName)}\".");
         plain.AppendLine();
         plain.AppendLine($"Name: {FormatValue(model.ParticipantName)}");
         plain.AppendLine($"Phone: {FormatValue(model.Phone)}");
         plain.AppendLine($"Email: {FormatValue(model.Email)}");
-        plain.AppendLine($"Registration #: {model.RegistrationNumber}");
+        plain.AppendLine($"Registration #: {SanitizePlainTextField(model.RegistrationNumber)}");
         AppendHiddenAnswersPlain(plain, model.HiddenAnswers);
         plain.AppendLine();
         plain.AppendLine($"View registrations: {model.RegistrationsUrl}");
@@ -192,5 +192,5 @@ internal static class RegistrationOperatorNotifyEmailBuilder
     }
 
     private static string FormatValue(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? "Not provided" : value.Trim();
+        string.IsNullOrWhiteSpace(value) ? "Not provided" : SanitizePlainTextField(value);
 }

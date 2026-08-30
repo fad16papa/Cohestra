@@ -311,7 +311,7 @@ development_status:
   30-6-piping-on-thank-you-and-confirmation-email: done
   30-7-closed-message: done
   30-8-close-at: done
-  30-9-operator-email-on-new-registration: in-progress
+  30-9-operator-email-on-new-registration: done
   30-10-capture-invariants-stay-shipped: backlog
   30-11-save-and-apply-tenant-form-templates: backlog
   30-12-template-slots-by-plan: backlog

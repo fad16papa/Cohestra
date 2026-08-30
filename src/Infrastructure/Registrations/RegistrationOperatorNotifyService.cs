@@ -76,6 +76,16 @@ public sealed class RegistrationOperatorNotifyService(
 
         var client = registration.Client;
         var activity = registration.Activity;
+        var profile = activity.FormSchema is not null
+            ? ClientProfileExtractor.Extract(activity.FormSchema, registration.Answers)
+            : null;
+
+        var participantName = !string.IsNullOrWhiteSpace(profile?.DisplayName)
+            ? profile!.DisplayName
+            : client.FullName;
+        var participantPhone = profile?.Phone ?? client.Phone;
+        var participantEmail = profile?.Email ?? client.Email;
+
         var registrationsUrl = TenantPublicWebUrlBuilder.BuildTenantPath(
             publicWebOptions.Value.BaseUrl,
             tenant.Slug,
@@ -88,9 +98,9 @@ public sealed class RegistrationOperatorNotifyService(
         var emailContent = RegistrationOperatorNotifyEmailBuilder.Build(
             new RegistrationOperatorNotifyEmailModel(
                 ActivityName: activity.Name,
-                ParticipantName: client.FullName,
-                Phone: client.Phone,
-                Email: client.Email,
+                ParticipantName: participantName,
+                Phone: participantPhone,
+                Email: participantEmail,
                 RegistrationNumber: registration.RegistrationNumber,
                 RegistrationsUrl: registrationsUrl,
                 HiddenAnswers: hiddenAnswers));

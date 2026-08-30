@@ -2,7 +2,7 @@
 story_id: 30.9
 story_key: 30-9-operator-email-on-new-registration
 epic: 30
-status: in-progress
+status: done
 baseline_commit: cursor/close-at-d861
 created: 2026-08-30
 sources:
@@ -12,7 +12,7 @@ sources:
 
 # Story 30.9: Operator email on new Registration
 
-Status: in-progress
+Status: done
 
 ## Story
 
@@ -88,6 +88,12 @@ So that I get the lead without waiting on a webhook or opening Tally.
 - [x] [Review][Defer] `RegistrationOperatorNotifyService` branch unit tests missing — Only email builder covered; service gating untested (non-blocking for story scope).
 
 - [x] [Review][Defer] Settings error state has no retry button [`notifications-section.tsx:77-80`] — Same pattern as organization timezone section.
+
+### Review Findings (Pass 2)
+
+- [x] [Review][Patch] Operator notify used Client row instead of registration answers [`RegistrationOperatorNotifyService.cs`] — Contact fields now extracted via `ClientProfileExtractor` from `registration.Answers` with client fallback.
+
+- [x] [Review][Patch] Plain-text body contact/activity fields allowed newline injection [`RegistrationOperatorNotifyEmailBuilder.cs`] — `FormatValue` and activity title now use `SanitizePlainTextField`.
 
 ## Dev Agent Record
 
