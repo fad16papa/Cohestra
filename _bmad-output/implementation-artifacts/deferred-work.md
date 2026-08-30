@@ -1,3 +1,25 @@
+## Deferred from: code review of 30-6-piping-on-thank-you-and-confirmation-email.md (2026-08-30)
+
+- Idempotency replay omits `successCopyMarkdown` (documented intentional, same as confirmation fields) — acceptable v1 replay tradeoff
+- Post-substitution copy can exceed template max length when tokens expand — template-bound not expansion-bound
+- Outbox email uses live schema at send time, not submit-time snapshot — pre-existing outbox pattern
+- Live preview uses field labels for `{{field:id}}`, not formatted answers — AC3 only requires sample name for `{{full_name}}`
+- No live preview for confirmation email subject/body editors — not in AC
+- Single-newline vs double-newline rendering differs success screen vs email — polish
+- No integration test asserting `successCopyMarkdown` on public submit API — unit coverage sufficient for slice
+- No component/E2E test proving piped copy renders on success screen — manual QA path
+
+## Deferred from: code review of 30-6-piping-on-thank-you-and-confirmation-email.md (2026-08-30)
+
+- Idempotency replay omits `successCopyMarkdown` (documented intentional, same as confirmation fields) — acceptable v1 replay tradeoff
+- Post-substitution copy can exceed template max length when tokens expand — template-bound not expansion-bound
+- Outbox email uses live schema at send time, not submit-time snapshot — pre-existing outbox pattern
+- Live preview uses field labels for `{{field:id}}`, not formatted answers — AC3 only requires sample name for `{{full_name}}`
+- No live preview for confirmation email subject/body editors — not in AC
+- Single-newline vs double-newline rendering differs success screen vs email — polish
+- No integration test asserting `successCopyMarkdown` on public submit API — unit coverage sufficient for slice
+- No component/E2E test proving piped copy renders on success screen — manual QA path
+
 ## Deferred from: code review of 30-5-core-scale-and-emergency-contact.md (2026-08-30)
 
 - Basic `403 plan_locked` save path has no automated test — matches existing deferred-work pattern for HTTP plan_locked tests

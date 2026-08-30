@@ -73,4 +73,8 @@ describe("registration-piping", () => {
       })
     ).toBe(false);
   });
+
+  it("returns empty for unknown tokens in preview", () => {
+    expect(substitutePipingPreview("Hi {{foo}} there", schema)).toBe("Hi  there");
+  });
 });

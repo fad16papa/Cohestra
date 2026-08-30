@@ -23,9 +23,11 @@ internal static partial class RegistrationPipingTokenSubstitutor
             return string.Empty;
         }
 
-        return ParticipantTokenRegex().Replace(
+        var substituted = ParticipantTokenRegex().Replace(
             template,
             match => ResolveToken(match, schema, profile, answers, participantVisible: true));
+
+        return UnknownTokenRegex().Replace(substituted, MissingTokenReplacement);
     }
 
     private static string ResolveToken(
@@ -54,38 +56,39 @@ internal static partial class RegistrationPipingTokenSubstitutor
 
         var fieldId = match.Groups[2].Value;
         var field = schema.Fields.FirstOrDefault(item =>
-            string.Equals(item.Id, fieldId, StringComparison.Ordinal));
+            string.Equals(item.Id, fieldId, StringComparison.OrdinalIgnoreCase));
 
         if (field is null)
         {
             return MissingTokenReplacement;
         }
 
-        if (participantVisible &&
-            (FormFieldTypes.Hidden.Contains(field.Type) || FormFieldTypes.NonInput.Contains(field.Type)))
+        if (participantVisible && IsBlockedParticipantField(field.Type))
         {
             return MissingTokenReplacement;
         }
 
-        answers.TryGetValue(fieldId, out var rawValue);
+        var answerKey = field.Id;
+        answers.TryGetValue(answerKey, out var rawValue);
+
         return ClientRegistrationAnswerFormatter.FormatSingleFieldValue(field, rawValue)
             ?? MissingTokenReplacement;
     }
+
+    private static bool IsBlockedParticipantField(string fieldType) =>
+        string.Equals(fieldType, FormFieldTypes.Hidden, StringComparison.Ordinal)
+        || FormFieldTypes.NonInput.Contains(fieldType);
 
     [GeneratedRegex(
         @"\{\{(full_name|email|phone)\}\}|\{\{field:([a-z0-9][a-z0-9_-]{0,63})\}\}",
         RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
     private static partial Regex ParticipantTokenRegex();
 
-    private static string ResolveFullName(ExtractedClientProfile profile)
-    {
-        if (!string.IsNullOrWhiteSpace(profile.NameFromForm))
-        {
-            return profile.NameFromForm.Trim();
-        }
+    [GeneratedRegex(@"\{\{[^}]+\}\}", RegexOptions.CultureInvariant)]
+    private static partial Regex UnknownTokenRegex();
 
-        return string.IsNullOrWhiteSpace(profile.DisplayName)
+    private static string ResolveFullName(ExtractedClientProfile profile) =>
+        string.IsNullOrWhiteSpace(profile.NameFromForm)
             ? MissingTokenReplacement
-            : profile.DisplayName.Trim();
-    }
+            : profile.NameFromForm.Trim();
 }

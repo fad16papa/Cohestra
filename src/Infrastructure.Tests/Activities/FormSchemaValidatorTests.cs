@@ -163,6 +163,36 @@ public sealed class FormSchemaValidatorTests
     }
 
     [Fact]
+    public void ValidateModel_RejectsConfirmationEmailSubjectOverMaxLength()
+    {
+        var schema = ContactSchema();
+        schema.Meta = new FormSchemaMeta
+        {
+            ConfirmationEmailSubject = new string('a', 201),
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("Confirmation email subject", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateModel_RejectsConfirmationEmailBodyOverMaxLength()
+    {
+        var schema = ContactSchema();
+        schema.Meta = new FormSchemaMeta
+        {
+            ConfirmationEmailBodyMarkdown = new string('a', 2001),
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.NotNull(error);
+        Assert.Contains("Confirmation email body", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void MapToDomain_TrimsPipingMetaFields()
     {
         var dto = new ActivityFormSchemaDto(

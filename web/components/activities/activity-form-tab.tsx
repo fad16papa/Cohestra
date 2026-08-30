@@ -354,29 +354,18 @@ export function ActivityFormTab({
               theme.
             </p>
           </div>
-          <PipingCheatsheet
-            schema={draftSchema}
-            disabled={isArchived || isSaving}
-            onInsert={(token) => {
-              const target = document.activeElement?.id;
-              if (target === "form-confirmation-email-subject") {
-                insertIntoMetaField(
-                  "confirmationEmailSubject",
-                  token,
-                  confirmationEmailSubject
-                );
-                return;
-              }
-              insertIntoMetaField(
-                "confirmationEmailBodyMarkdown",
-                token,
-                confirmationEmailBodyMarkdown
-              );
-            }}
-          />
         </div>
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-text-warm">Subject</span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-medium text-text-warm">Subject</span>
+            <PipingCheatsheet
+              schema={draftSchema}
+              disabled={isArchived || isSaving}
+              onInsert={(token) =>
+                insertIntoMetaField("confirmationEmailSubject", token, confirmationEmailSubject)
+              }
+            />
+          </div>
           <input
             id="form-confirmation-email-subject"
             type="text"
@@ -395,7 +384,20 @@ export function ActivityFormTab({
           />
         </label>
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium text-text-warm">Closing message</span>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-medium text-text-warm">Closing message</span>
+            <PipingCheatsheet
+              schema={draftSchema}
+              disabled={isArchived || isSaving}
+              onInsert={(token) =>
+                insertIntoMetaField(
+                  "confirmationEmailBodyMarkdown",
+                  token,
+                  confirmationEmailBodyMarkdown
+                )
+              }
+            />
+          </div>
           <textarea
             id="form-confirmation-email-body-markdown"
             rows={3}

@@ -89,7 +89,104 @@ public sealed class RegistrationPipingTokenSubstitutorTests
         Assert.Equal("Notes: Prefers morning slots", result);
     }
 
-    private static ActivityFormSchema CreateSchema() =>
+    [Fact]
+    public void SubstituteParticipantVisible_ReplacesEmailAndPhone()
+    {
+        var schema = CreateSchema();
+        var profile = CreateProfile();
+
+        var emailResult = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+            "Reach me at {{email}}",
+            schema,
+            profile,
+            new Dictionary<string, object?>());
+
+        var phoneResult = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+            "Call {{phone}}",
+            schema,
+            profile,
+            new Dictionary<string, object?>());
+
+        Assert.Equal("Reach me at maya@example.com", emailResult);
+        Assert.Equal("Call +6591234567", phoneResult);
+    }
+
+    [Fact]
+    public void SubstituteParticipantVisible_FullNameIgnoresDisplayNameFallback()
+    {
+        var schema = CreateSchema();
+        var profile = new ExtractedClientProfile(
+            NameFromForm: null,
+            DisplayName: "maya@example.com",
+            Phone: null,
+            NormalizedPhone: null,
+            Email: "maya@example.com",
+            NormalizedEmail: "maya@example.com",
+            Profession: null,
+            Nationality: null,
+            Residency: null,
+            ConsentGiven: false,
+            ReferralSource: null);
+
+        var result = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+            "Hello {{full_name}}",
+            schema,
+            profile,
+            new Dictionary<string, object?>());
+
+        Assert.Equal("Hello ", result);
+    }
+
+    [Fact]
+    public void SubstituteParticipantVisible_InfoFieldToken_IsEmpty()
+    {
+        var schema = CreateSchema(
+            new FormFieldDefinition
+            {
+                Id = "welcome",
+                Type = FormFieldTypes.Info,
+                Label = "Welcome",
+                Required = false,
+            });
+
+        var result = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+            "Info: {{field:welcome}}",
+            schema,
+            CreateProfile(),
+            new Dictionary<string, object?>());
+
+        Assert.Equal("Info: ", result);
+    }
+
+    [Fact]
+    public void SubstituteParticipantVisible_UnknownToken_IsCleared()
+    {
+        var result = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+            "Hi {{foo}} there",
+            CreateSchema(),
+            CreateProfile(),
+            new Dictionary<string, object?>());
+
+        Assert.Equal("Hi  there", result);
+    }
+
+    [Fact]
+    public void SubstituteParticipantVisible_FieldToken_IsCaseInsensitiveForSchemaId()
+    {
+        var schema = CreateSchema();
+        var profile = CreateProfile();
+        var answers = new Dictionary<string, object?> { ["notes"] = "Prefers morning slots" };
+
+        var result = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+            "Notes: {{field:Notes}}",
+            schema,
+            profile,
+            answers);
+
+        Assert.Equal("Notes: Prefers morning slots", result);
+    }
+
+    private static ActivityFormSchema CreateSchema(params FormFieldDefinition[] extraFields) =>
         new()
         {
             Version = 1,
@@ -120,6 +217,7 @@ public sealed class RegistrationPipingTokenSubstitutorTests
                     Label = "Notes",
                     Required = false,
                 },
+                ..extraFields,
             ],
         };
 
