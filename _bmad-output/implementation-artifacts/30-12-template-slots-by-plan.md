@@ -267,3 +267,15 @@ _(filled by dev agent)_
 - [x] [Review][Defer] Enterprise 999 slot limit untested — only Basic/Core/Pro asserted in `TenantPlanLimitsTests` [`FormTemplateSlotLimits.cs`]
 
 - [x] [Review][Defer] 403 on save surfaces via toast only, not UpgradePanel — spec says "optionally open upgrade panel"; ProblemDetails detail is shown [`activity-form-tab.tsx:274`]
+
+### Review Findings (Pass 2)
+
+- [x] [Review][Patch] Save enabled while `templatesLoading` — at-cap tenants can open Save before usage loads; server rejects but UI contradicts Task 5 [`form-template-picker.tsx:166`]
+
+- [x] [Review][Patch] Initial slot meter assumes Basic 0/1 — `templateUsage` initializes to `{ used: 0, limit: 1 }`; Core/Pro tenants see wrong meter and enabled Save until fetch completes [`activity-form-tab.tsx:96-99`]
+
+- [x] [Review][Patch] List fetch failure resets meter to Basic 0/1 — catch block misreports capacity for Core/Pro and re-enables Save when server would still return `403 plan_locked` [`activity-form-tab.tsx:189-192`]
+
+- [x] [Review][Patch] No usage resync after `403 plan_locked` on create — stale slot meter remains after server rejects over-cap save [`activity-form-tab.tsx:305-308`]
+
+- [x] [Review][Patch] Delete-to-unblock after downgrade not tested — AC4 “create blocked until under cap” half verified; delete restoring create path untested [`FormTemplateServiceTests.cs`]

@@ -1,3 +1,8 @@
+## Deferred from: code review of 30-11/30-12 (2026-08-30, pass 2)
+
+- Apply downgraded-plan template without client re-check — same pattern as launch templates; server gates on activity save
+- Duplicate template names allowed — non-unique index; ambiguous library entries possible
+
 ## Deferred from: code review of 30-11/30-12 (2026-08-30, pass 1)
 
 - Save current draft on published activities while Apply locked — may be intentional (capture live form recipe)

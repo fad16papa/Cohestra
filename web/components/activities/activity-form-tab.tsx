@@ -50,6 +50,7 @@ import {
   type FormTemplateId,
 } from "@/lib/form-templates";
 import {
+  createDefaultFormTemplateUsage,
   createFormTemplate,
   deleteFormTemplate,
   fetchFormTemplate,
@@ -93,10 +94,9 @@ export function ActivityFormTab({
   const [pendingSavedTemplate, setPendingSavedTemplate] =
     useState<SavedFormTemplate | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<SavedFormTemplateSummary[]>([]);
-  const [templateUsage, setTemplateUsage] = useState<FormTemplateUsage>({
-    used: 0,
-    limit: 1,
-  });
+  const [templateUsage, setTemplateUsage] = useState<FormTemplateUsage>(() =>
+    createDefaultFormTemplateUsage(plan)
+  );
   const [templatesLoading, setTemplatesLoading] = useState(true);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveTemplateName, setSaveTemplateName] = useState("");
@@ -189,7 +189,7 @@ export function ActivityFormTab({
       } catch {
         if (!cancelled) {
           setSavedTemplates([]);
-          setTemplateUsage({ used: 0, limit: 1 });
+          setTemplateUsage(createDefaultFormTemplateUsage(plan));
         }
       } finally {
         if (!cancelled) {
@@ -203,7 +203,7 @@ export function ActivityFormTab({
     return () => {
       cancelled = true;
     };
-  }, [authFetch]);
+  }, [authFetch, plan]);
 
   function schemaForTemplateSave(): ActivityFormSchema {
     return applyMissingStepBuckets(draftSchema);
@@ -248,6 +248,7 @@ export function ActivityFormTab({
       return;
     }
 
+    setPendingSavedTemplate(null);
     setPendingTemplateId(templateId);
   }
 
@@ -270,6 +271,7 @@ export function ActivityFormTab({
     }
 
     setTemplateActionLoading(true);
+    setPendingTemplateId(null);
     try {
       const full = await fetchFormTemplate(authFetch, template.id);
       setPendingSavedTemplate(full);
@@ -303,6 +305,7 @@ export function ActivityFormTab({
           : `Saved "${trimmed}" as a form template. Refresh the page to update your library.`
       );
     } catch (saveError) {
+      await refreshSavedTemplates();
       setError(
         saveError instanceof Error ? saveError.message : "Could not save template."
       );
@@ -961,9 +964,12 @@ export function ActivityFormTab({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void handleReplaceTemplate()}>
-              Replace template
+            <AlertDialogCancel disabled={templateActionLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={templateActionLoading}
+              onClick={() => void handleReplaceTemplate()}
+            >
+              {templateActionLoading ? "Replacing…" : "Replace template"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -981,12 +987,13 @@ export function ActivityFormTab({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={templateActionLoading}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={templateActionLoading}
               onClick={() => void handleDeleteTemplate()}
             >
-              Delete
+              {templateActionLoading ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

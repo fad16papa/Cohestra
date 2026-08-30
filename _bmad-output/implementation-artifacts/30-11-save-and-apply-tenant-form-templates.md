@@ -252,3 +252,21 @@ _(filled by dev agent)_
 - [x] [Review][Defer] No HTTP integration test for POST `403 plan_locked` — service tests cover slot enforcement [`FormTemplatesController.cs`]
 
 - [x] [Review][Defer] Tenant isolation only asserts cross-tenant GET — PATCH/DELETE follow same EF filter pattern [`TenantIsolationApiTests.cs`]
+
+### Review Findings (Pass 2)
+
+- [x] [Review][Patch] Launch vs saved template pending-state race — selecting a saved template after a launch template leaves `pendingTemplateId` set; `confirmApplyTemplate` checks launch first and applies the wrong preset [`activity-form-tab.tsx:246-275`]
+
+- [x] [Review][Patch] Missing `formSchema` parses as empty schema — `parseTemplate` returns `{ version: 1, fields: [] }` instead of throwing, so Apply confirm can wipe the activity form [`form-templates-api.ts:114-122`]
+
+- [x] [Review][Patch] `CloneSchema` silently substitutes empty schema on deserialize failure — corrupt round-trip would persist an empty template [`FormTemplateService.cs:257-261`]
+
+- [x] [Review][Patch] Replace/Delete confirm actions not disabled during `templateActionLoading` — rapid double-clicks can issue duplicate PATCH/DELETE requests [`activity-form-tab.tsx:965`, `activity-form-tab.tsx:985`]
+
+- [x] [Review][Patch] Meta round-trip not tested — AC1 requires fields **+ meta** snapshot; service tests only assert a single field id [`FormTemplateServiceTests.cs`]
+
+- [x] [Review][Patch] Validation failure tests missing — empty/overlong name and invalid schema paths untested despite service validation [`FormTemplateServiceTests.cs`]
+
+- [x] [Review][Defer] Apply downgraded-plan template without client re-check — same deferred enforcement pattern as launch templates; server gates on activity save/publish [`activity-form-tab.tsx:239-244`]
+
+- [x] [Review][Defer] Duplicate template names allowed — index on `(TenantId, Name)` is not unique; operators can accumulate ambiguous library entries [`TenantFormTemplateConfiguration.cs:46`]

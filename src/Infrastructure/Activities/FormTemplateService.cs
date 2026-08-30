@@ -257,8 +257,13 @@ public sealed class FormTemplateService(
     private static ActivityFormSchema CloneSchema(ActivityFormSchema schema)
     {
         var json = JsonSerializer.Serialize(schema, ActivityFormSchemaJson.SerializerOptions);
-        return JsonSerializer.Deserialize<ActivityFormSchema>(json, ActivityFormSchemaJson.SerializerOptions)
-               ?? new ActivityFormSchema();
+        var cloned = JsonSerializer.Deserialize<ActivityFormSchema>(json, ActivityFormSchemaJson.SerializerOptions);
+        if (cloned is null)
+        {
+            throw new InvalidOperationException("Form schema could not be cloned.");
+        }
+
+        return cloned;
     }
 
     private static FormTemplateSummaryResponse ToSummary(TenantFormTemplate template) =>

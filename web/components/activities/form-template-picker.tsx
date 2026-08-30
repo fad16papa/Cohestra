@@ -163,7 +163,7 @@ export function FormTemplatePicker({
             type="button"
             variant="outline"
             size="sm"
-            disabled={disabled || saveBlocked || hasClientIssues}
+            disabled={disabled || saveBlocked || hasClientIssues || templatesLoading}
             onClick={onSaveCurrentDraft}
           >
             Save current draft

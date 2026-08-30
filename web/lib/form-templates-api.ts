@@ -17,6 +17,27 @@ export type FormTemplateUsage = {
   limit: number;
 };
 
+export function formTemplateSlotLimitForPlan(plan: string): number {
+  const normalized = plan.trim().toLowerCase();
+  if (normalized === "core") {
+    return 5;
+  }
+
+  if (normalized === "pro") {
+    return 25;
+  }
+
+  if (normalized === "enterprise") {
+    return 999;
+  }
+
+  return 1;
+}
+
+export function createDefaultFormTemplateUsage(plan: string): FormTemplateUsage {
+  return { used: 0, limit: formTemplateSlotLimitForPlan(plan) };
+}
+
 export type FormTemplateListResult = {
   templates: SavedFormTemplateSummary[];
   usage: FormTemplateUsage;
@@ -113,20 +134,25 @@ function parseSummary(raw: Record<string, unknown>): SavedFormTemplateSummary {
 
 function parseTemplate(raw: Record<string, unknown>): SavedFormTemplate {
   const formSchemaRaw = raw.formSchema ?? raw.FormSchema;
+  if (!formSchemaRaw || typeof formSchemaRaw !== "object") {
+    throw new Error("Saved template is missing form schema.");
+  }
+
   return {
     ...parseSummary(raw),
-    formSchema:
-      formSchemaRaw && typeof formSchemaRaw === "object"
-        ? parseFormSchema(formSchemaRaw as Record<string, unknown>)
-        : { version: 1, fields: [] },
+    formSchema: parseFormSchema(formSchemaRaw as Record<string, unknown>),
   };
 }
 
 function parseUsage(raw: Record<string, unknown>): FormTemplateUsage {
-  return {
-    used: Number(raw.used ?? raw.Used ?? 0),
-    limit: Number(raw.limit ?? raw.Limit ?? 1),
-  };
+  const used = Number(raw.used ?? raw.Used ?? 0);
+  const limit = Number(raw.limit ?? raw.Limit ?? 1);
+
+  if (!Number.isFinite(used) || !Number.isFinite(limit)) {
+    throw new Error("Form template usage response is invalid.");
+  }
+
+  return { used, limit };
 }
 
 async function parseProblemDetail(response: Response): Promise<string> {
@@ -163,7 +189,7 @@ export async function fetchFormTemplates(
     usage:
       usageRaw && typeof usageRaw === "object"
         ? parseUsage(usageRaw as Record<string, unknown>)
-        : { used: 0, limit: 1 },
+        : createDefaultFormTemplateUsage("Basic"),
   };
 }
 
