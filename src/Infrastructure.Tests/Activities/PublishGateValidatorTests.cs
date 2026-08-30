@@ -281,4 +281,72 @@ public sealed class PublishGateValidatorTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void ValidateForPublish_InfoOnly_Fails()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "notice",
+                        Type = FormFieldTypes.Info,
+                        Label = "Welcome",
+                        InfoText = "Thanks for joining.",
+                    },
+                ],
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("required phone or email", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateForPublish_OptionalEmailOnly_Fails()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "email",
+                        Type = FormFieldTypes.Email,
+                        Label = "Email",
+                        Required = false,
+                    },
+                ],
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("required phone or email", error, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateForPublish_RequiredEmailOnly_Succeeds()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "email",
+                        Type = FormFieldTypes.Email,
+                        Label = "Email",
+                        Required = true,
+                    },
+                ],
+            });
+
+        Assert.Null(error);
+    }
 }
