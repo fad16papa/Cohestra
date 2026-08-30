@@ -13,7 +13,7 @@ sources:
 
 # Story 30.5: Core+ scale and emergency contact
 
-Status: review
+Status: done
 
 ## Story
 
@@ -86,6 +86,10 @@ So that skill level and a door-contact live on the same Form without a survey bl
 - Core+ palette group adds Scale + Emergency contact; Basic sees locked rows with upgrade copy.
 - Scale answers are `"1"`–`"5"` strings; emergency answers are `{ name, phone }` objects.
 - Publish Gate unchanged: still requires required phone or email only.
+
+### Re-review (2026-08-30)
+
+Second adversarial pass after 8 patches: Edge Case Hunter `[]`, Acceptance Auditor no AC violations. Blind Hunter raised 9 polish items (radiogroup keyboard nav, emergency sub-field UX, autocomplete, client shape checks, magic-number drift) — all classified defer/dismiss; no new patch items.
 
 ### File List
 
