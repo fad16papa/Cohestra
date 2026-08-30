@@ -18,7 +18,7 @@ forward_deps:
 
 # Story 30.11: Save and apply tenant Form templates
 
-Status: ready-for-dev
+Status: done
 
 <!-- Ultimate context engine analysis completed — comprehensive developer guide created -->
 
@@ -230,3 +230,25 @@ _(filled by dev agent)_
 ### File List
 
 ### Change Log
+
+### Review Findings (Pass 1)
+
+- [x] [Review][Patch] Missing **Replace** saved template action — AC4 requires rename/**replace**/delete; API supports `PATCH { formSchema }` but picker only has Rename/Delete [`form-template-picker.tsx`, `activity-form-tab.tsx`]
+
+- [x] [Review][Patch] Save template skips `applyMissingStepBuckets` — activity save normalizes step buckets; template save sends raw `draftSchema` [`activity-form-tab.tsx:267`]
+
+- [x] [Review][Patch] Save template ignores client validation issues — `hasClientIssues` blocks Save form but not Save template [`activity-form-tab.tsx:258`]
+
+- [x] [Review][Patch] Save succeeds but list refresh failure shows error toast — template persisted server-side [`activity-form-tab.tsx:267-277`]
+
+- [x] [Review][Patch] Template list load failure leaves stale `usage` — catch clears templates only, Save button state wrong [`activity-form-tab.tsx:loadTemplates`]
+
+- [x] [Review][Patch] `cloneFormSchema` shallow-clones `visibleWhen` — nested recipe objects may alias across apply [`form-templates.ts:348`]
+
+- [x] [Review][Defer] Save current draft enabled on published activities while Apply is locked — saving live form as library recipe may be intentional; AC3 only locks apply [`form-template-picker.tsx:162`]
+
+- [x] [Review][Defer] Concurrent POST at slot boundary (TOCTOU) — same pattern as other plan-limit creates; no DB unique constraint [`FormTemplateService.cs:EnsureCanAddTemplateAsync`]
+
+- [x] [Review][Defer] No HTTP integration test for POST `403 plan_locked` — service tests cover slot enforcement [`FormTemplatesController.cs`]
+
+- [x] [Review][Defer] Tenant isolation only asserts cross-tenant GET — PATCH/DELETE follow same EF filter pattern [`TenantIsolationApiTests.cs`]

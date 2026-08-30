@@ -109,6 +109,10 @@ export function ActivityFormTab({
   const [deleteTemplate, setDeleteTemplate] = useState<SavedFormTemplateSummary | null>(
     null
   );
+  const [replaceDialogOpen, setReplaceDialogOpen] = useState(false);
+  const [replaceTemplate, setReplaceTemplate] = useState<SavedFormTemplateSummary | null>(
+    null
+  );
   const [templateActionLoading, setTemplateActionLoading] = useState(false);
 
   const isArchived = activity.status === "archived";
@@ -185,6 +189,7 @@ export function ActivityFormTab({
       } catch {
         if (!cancelled) {
           setSavedTemplates([]);
+          setTemplateUsage({ used: 0, limit: 1 });
         }
       } finally {
         if (!cancelled) {
@@ -199,6 +204,30 @@ export function ActivityFormTab({
       cancelled = true;
     };
   }, [authFetch]);
+
+  function schemaForTemplateSave(): ActivityFormSchema {
+    return applyMissingStepBuckets(draftSchema);
+  }
+
+  async function refreshSavedTemplates(): Promise<boolean> {
+    try {
+      const result = await fetchFormTemplates(authFetch);
+      setSavedTemplates(result.templates);
+      setTemplateUsage(result.usage);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function ensureDraftReadyForTemplateLibrary(): boolean {
+    if (hasClientIssues) {
+      setError("Fix form validation issues before saving or replacing a template.");
+      return false;
+    }
+
+    return true;
+  }
 
   function applyLaunchTemplate(templateId: FormTemplateId) {
     setError(null);
@@ -257,23 +286,53 @@ export function ActivityFormTab({
 
   async function handleSaveTemplate() {
     const trimmed = saveTemplateName.trim();
-    if (!trimmed) {
+    if (!trimmed || !ensureDraftReadyForTemplateLibrary()) {
       return;
     }
 
     setTemplateActionLoading(true);
     setError(null);
     try {
-      await createFormTemplate(authFetch, trimmed, draftSchema);
-      const result = await fetchFormTemplates(authFetch);
-      setSavedTemplates(result.templates);
-      setTemplateUsage(result.usage);
+      await createFormTemplate(authFetch, trimmed, schemaForTemplateSave());
+      const refreshed = await refreshSavedTemplates();
       setSaveDialogOpen(false);
       setSaveTemplateName("");
-      setSuccess(`Saved "${trimmed}" as a form template.`);
+      setSuccess(
+        refreshed
+          ? `Saved "${trimmed}" as a form template.`
+          : `Saved "${trimmed}" as a form template. Refresh the page to update your library.`
+      );
     } catch (saveError) {
       setError(
         saveError instanceof Error ? saveError.message : "Could not save template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handleReplaceTemplate() {
+    if (!replaceTemplate || !ensureDraftReadyForTemplateLibrary()) {
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await updateFormTemplate(authFetch, replaceTemplate.id, {
+        formSchema: schemaForTemplateSave(),
+      });
+      const refreshed = await refreshSavedTemplates();
+      setReplaceDialogOpen(false);
+      setReplaceTemplate(null);
+      setSuccess(
+        refreshed
+          ? `Replaced "${replaceTemplate.name}" with the current draft.`
+          : `Replaced "${replaceTemplate.name}" with the current draft. Refresh the page to update your library.`
+      );
+    } catch (replaceError) {
+      setError(
+        replaceError instanceof Error ? replaceError.message : "Could not replace template."
       );
     } finally {
       setTemplateActionLoading(false);
@@ -294,13 +353,15 @@ export function ActivityFormTab({
     setError(null);
     try {
       await updateFormTemplate(authFetch, renameTemplate.id, { name: trimmed });
-      const result = await fetchFormTemplates(authFetch);
-      setSavedTemplates(result.templates);
-      setTemplateUsage(result.usage);
+      const refreshed = await refreshSavedTemplates();
       setRenameDialogOpen(false);
       setRenameTemplate(null);
       setRenameValue("");
-      setSuccess(`Renamed template to "${trimmed}".`);
+      setSuccess(
+        refreshed
+          ? `Renamed template to "${trimmed}".`
+          : `Renamed template to "${trimmed}". Refresh the page to update your library.`
+      );
     } catch (renameError) {
       setError(
         renameError instanceof Error ? renameError.message : "Could not rename template."
@@ -319,12 +380,14 @@ export function ActivityFormTab({
     setError(null);
     try {
       await deleteFormTemplate(authFetch, deleteTemplate.id);
-      const result = await fetchFormTemplates(authFetch);
-      setSavedTemplates(result.templates);
-      setTemplateUsage(result.usage);
+      const refreshed = await refreshSavedTemplates();
       setDeleteDialogOpen(false);
       setDeleteTemplate(null);
-      setSuccess("Template deleted.");
+      setSuccess(
+        refreshed
+          ? "Template deleted."
+          : "Template deleted. Refresh the page to update your library."
+      );
     } catch (deleteError) {
       setError(
         deleteError instanceof Error ? deleteError.message : "Could not delete template."
@@ -455,6 +518,10 @@ export function ActivityFormTab({
           onSelectTemplate={handleSelectTemplate}
           onSelectSavedTemplate={(template) => void handleSelectSavedTemplate(template)}
           onSaveCurrentDraft={() => {
+            if (!ensureDraftReadyForTemplateLibrary()) {
+              return;
+            }
+
             setSaveTemplateName("");
             setSaveDialogOpen(true);
           }}
@@ -462,6 +529,14 @@ export function ActivityFormTab({
             setRenameTemplate(template);
             setRenameValue(template.name);
             setRenameDialogOpen(true);
+          }}
+          onReplaceSavedTemplate={(template) => {
+            if (!ensureDraftReadyForTemplateLibrary()) {
+              return;
+            }
+
+            setReplaceTemplate(template);
+            setReplaceDialogOpen(true);
           }}
           onDeleteSavedTemplate={(template) => {
             setDeleteTemplate(template);
@@ -475,6 +550,7 @@ export function ActivityFormTab({
           locked={isPublished}
           lockedReason={isPublished ? publishedTemplateLockReason : undefined}
           templatesLoading={templatesLoading}
+          hasClientIssues={hasClientIssues}
         />
       ) : null}
 
@@ -872,6 +948,26 @@ export function ActivityFormTab({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={replaceDialogOpen} onOpenChange={setReplaceDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Replace &quot;{replaceTemplate?.name ?? "template"}&quot;?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This overwrites the saved template with your current draft fields and meta.
+              The template name stays the same.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handleReplaceTemplate()}>
+              Replace template
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

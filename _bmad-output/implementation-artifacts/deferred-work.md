@@ -1,3 +1,12 @@
+## Deferred from: code review of 30-11/30-12 (2026-08-30, pass 1)
+
+- Save current draft on published activities while Apply locked — may be intentional (capture live form recipe)
+- Concurrent POST slot-boundary TOCTOU — matches other plan-limit patterns
+- No HTTP integration test for POST plan_locked — service tests cover enforcement
+- Tenant isolation PATCH/DELETE — GET case added; same EF filter for other verbs
+- Enterprise 999 slot limit untested
+- 403 save shows toast only, not UpgradePanel — spec optional; detail surfaced
+
 ## Deferred from: code review of 30-10-capture-invariants-stay-shipped.md (2026-08-30, pass 1)
 
 - AC3 persisted JSONB immutability not integration-tested in this story — submit-only API lock sufficient for regression slice

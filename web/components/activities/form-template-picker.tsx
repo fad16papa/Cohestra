@@ -21,6 +21,7 @@ type FormTemplatePickerProps = {
   onSelectSavedTemplate: (template: SavedFormTemplateSummary) => void;
   onSaveCurrentDraft: () => void;
   onRenameSavedTemplate: (template: SavedFormTemplateSummary) => void;
+  onReplaceSavedTemplate: (template: SavedFormTemplateSummary) => void;
   onDeleteSavedTemplate: (template: SavedFormTemplateSummary) => void;
   savedTemplates: SavedFormTemplateSummary[];
   usage: FormTemplateUsage;
@@ -30,6 +31,7 @@ type FormTemplatePickerProps = {
   locked?: boolean;
   lockedReason?: string;
   templatesLoading?: boolean;
+  hasClientIssues?: boolean;
 };
 
 function SlotMeter({ usage }: { usage: FormTemplateUsage }) {
@@ -75,6 +77,7 @@ export function FormTemplatePicker({
   onSelectSavedTemplate,
   onSaveCurrentDraft,
   onRenameSavedTemplate,
+  onReplaceSavedTemplate,
   onDeleteSavedTemplate,
   savedTemplates,
   usage,
@@ -84,6 +87,7 @@ export function FormTemplatePicker({
   locked = false,
   lockedReason,
   templatesLoading = false,
+  hasClientIssues = false,
 }: FormTemplatePickerProps) {
   const isDisabled = disabled || locked;
   const saveBlocked = isFormTemplateSaveBlocked(usage);
@@ -159,12 +163,17 @@ export function FormTemplatePicker({
             type="button"
             variant="outline"
             size="sm"
-            disabled={disabled || saveBlocked}
+            disabled={disabled || saveBlocked || hasClientIssues}
             onClick={onSaveCurrentDraft}
           >
             Save current draft
           </Button>
         </div>
+        {hasClientIssues ? (
+          <p role="status" className="text-sm text-destructive">
+            Fix form validation issues before saving or replacing a template.
+          </p>
+        ) : null}
 
         {saveBlocked && upgradePlan ? (
           <UpgradePanel
@@ -177,6 +186,11 @@ export function FormTemplatePicker({
             requiredPlan={upgradePlan}
             isTenantAdmin={isTenantAdmin}
           />
+        ) : saveBlocked ? (
+          <p role="status" className="text-sm text-text-muted-warm">
+            Saved form templates are at capacity ({usage.used}/{usage.limit}). Delete a
+            template to save a new one.
+          </p>
         ) : null}
 
         {templatesLoading ? (
@@ -209,6 +223,15 @@ export function FormTemplatePicker({
                     onClick={() => onSelectSavedTemplate(template)}
                   >
                     Apply
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={disabled || hasClientIssues}
+                    onClick={() => onReplaceSavedTemplate(template)}
+                  >
+                    Replace
                   </Button>
                   <Button
                     type="button"

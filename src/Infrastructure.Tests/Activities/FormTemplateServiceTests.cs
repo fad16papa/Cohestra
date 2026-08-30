@@ -92,6 +92,53 @@ public sealed class FormTemplateServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_ProTwentySixthTemplate_ThrowsPlanLocked()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Pro);
+        var service = CreateService(dbContext);
+
+        for (var index = 0; index < 25; index++)
+        {
+            await service.CreateAsync(CreateRequest($"Template {index + 1}"));
+        }
+
+        var ex = await Assert.ThrowsAsync<FormTemplatePlanLockedException>(
+            () => service.CreateAsync(CreateRequest("Template 26")));
+
+        Assert.Contains("at capacity", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_ReplacesFormSchema()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Pro);
+        var service = CreateService(dbContext);
+        var created = await service.CreateAsync(CreateRequest("Original"));
+
+        var replacement = new ActivityFormSchemaDto(
+            1,
+            [
+                new FormFieldDefinitionDto(
+                    "email",
+                    "email",
+                    "Email",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+            ]);
+
+        var updated = await service.UpdateAsync(
+            created.Id,
+            new UpdateFormTemplateRequest(null, replacement));
+
+        Assert.NotNull(updated);
+        Assert.Single(updated!.FormSchema.Fields);
+        Assert.Equal("email", updated.FormSchema.Fields[0].Id);
+    }
+
+    [Fact]
     public async Task ListAsync_AfterDowngradeOverCap_StillReturnsExistingTemplates()
     {
         await using var dbContext = await CreateDbContextAsync(TenantPlan.Pro);

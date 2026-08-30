@@ -18,7 +18,7 @@ forward_deps:
 
 # Story 30.12: Template slots by plan
 
-Status: ready-for-dev
+Status: done
 
 <!-- Ultimate context engine analysis completed — comprehensive developer guide created -->
 
@@ -257,3 +257,13 @@ _(filled by dev agent)_
 ### File List
 
 ### Change Log
+
+### Review Findings (Pass 1)
+
+- [x] [Review][Patch] Pro 26th-save slot cap untested — AC3 requires `403 plan_locked` at 25/25+1 [`FormTemplateServiceTests.cs`]
+
+- [x] [Review][Patch] Pro at capacity shows disabled Save with no guidance — `formTemplateUpgradePlan('Pro')` returns null so no UpgradePanel [`form-template-picker.tsx:169`]
+
+- [x] [Review][Defer] Enterprise 999 slot limit untested — only Basic/Core/Pro asserted in `TenantPlanLimitsTests` [`FormTemplateSlotLimits.cs`]
+
+- [x] [Review][Defer] 403 on save surfaces via toast only, not UpgradePanel — spec says "optionally open upgrade panel"; ProblemDetails detail is shown [`activity-form-tab.tsx:274`]
