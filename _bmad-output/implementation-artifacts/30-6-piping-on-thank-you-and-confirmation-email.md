@@ -2,7 +2,7 @@
 story_id: 30.6
 story_key: 30-6-piping-on-thank-you-and-confirmation-email
 epic: 30
-status: in-progress
+status: done
 baseline_commit: 60cac03
 created: 2026-08-30
 sources:
@@ -13,7 +13,7 @@ sources:
 
 # Story 30.6: Piping on thank-you and confirmation email
 
-Status: in-progress
+Status: done
 
 ## Story
 
@@ -100,7 +100,7 @@ So that Maya sees “See you Saturday, Maya” without a hardcoded name — and 
 - [x] [Review][Defer] Client `getFormSchemaClientIssues` omits piping meta max-length mirrors [`form-schema-utils.ts`] — deferred, HTML maxLength + server gate sufficient
 - [x] [Review][Defer] Unused `encodedName` in email HTML builder [`RegistrationConfirmationEmailBuilder.cs:88`] — deferred, pre-existing dead assignment
 
-**Pass 2 verdict:** AC1–AC3 satisfied (Acceptance Auditor). No hidden-field leak regressions. Core piping path clean after pass 1 patches.
+Status: done
 
 ## Dev Agent Record
 
