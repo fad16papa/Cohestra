@@ -21,7 +21,7 @@ forward_deps:
 
 # Story 32.1: Allowed embed hosts and CSP
 
-Status: ready-for-dev
+Status: done
 
 <!-- Ultimate context engine analysis completed — comprehensive developer guide created -->
 
@@ -170,3 +170,19 @@ Composer
 ### Change Log
 
 - 2026-08-30: Story 32.1 implemented — allowed embed hosts + route-scoped CSP
+
+### Review Findings
+
+- [x] [Review][Patch] Broken import in `embed-csp.ts` — fixed `../content-security-policy` [`web/lib/embed-csp.ts:1`]
+- [x] [Review][Patch] AC2 violation: removed `'self'` from `frame-ancestors` [`web/content-security-policy.ts:28`]
+- [x] [Review][Patch] `next dev` double CSP on `/embed/*` — excluded embed paths from global CSP headers [`web/next.config.ts`]
+- [x] [Review][Patch] Story metadata contradicts itself — aligned to `in-progress` during review [`32-1-allowed-embed-hosts-and-csp.md`]
+- [x] [Review][Patch] Max-origin guard runs before dedupe — dedupe first, then enforce max [`EmbedOriginSupport.cs`]
+- [x] [Review][Patch] No read-path validation — `SanitizeStoredOrigins` on GET [`TenantOrganizationService.cs:56`]
+- [x] [Review][Patch] nginx `/embed/` block missing `proxy_hide_header` — dismissed: hiding upstream CSP would strip Next middleware headers; embed location intentionally passes them through [`deploy/nginx/app.conf:31`]
+- [x] [Review][Decision] Settings section is `adminOnly: true` but API uses `TenantOperator` — resolved: API changed to `TenantAdminOnly` to match Settings UI [`AdminTenantEmbedController.cs`]
+- [x] [Review][Defer] Public `/embed-origins` exposes tenant allow-list without auth — required for middleware CSP lookup; acceptable recon surface [`PublicEmbedOriginsController.cs`] — deferred, by design
+- [x] [Review][Defer] Middleware synchronous uncached API fetch per embed page view — perf concern, no timeout [`web/lib/embed-csp.ts:25`] — deferred, v1 acceptable
+- [x] [Review][Defer] Silent fail-closed when embed-origins API unavailable — returns empty list → `'none'`; masks misconfig but is safer [`web/lib/embed-csp.ts:30`] — deferred, fail-closed preferred
+- [x] [Review][Defer] No automated e2e assertion of `/embed/register/*` response headers [`TenantEmbedSettingsIntegrationTests.cs`] — deferred to 32.2 manual verify
+- [x] [Review][Defer] Settings UI lacks client-side origin validation/max-count guard before PATCH [`allowed-embed-hosts-section.tsx:47`] — deferred, server validates

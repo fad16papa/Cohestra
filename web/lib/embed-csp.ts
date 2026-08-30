@@ -1,4 +1,4 @@
-import { buildEmbedContentSecurityPolicy } from "./content-security-policy";
+import { buildEmbedContentSecurityPolicy } from "../content-security-policy";
 
 const EMBED_PATH_PREFIX = "/embed/";
 

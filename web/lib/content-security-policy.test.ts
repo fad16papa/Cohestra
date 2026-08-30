@@ -18,7 +18,7 @@ describe("buildContentSecurityPolicy", () => {
     });
 
     expect(policy).toContain(
-      "frame-ancestors 'self' https://club.example.com https://www.notion.so"
+      "frame-ancestors https://club.example.com https://www.notion.so"
     );
     expect(policy).not.toContain("frame-ancestors 'none'");
   });

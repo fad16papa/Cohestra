@@ -1,3 +1,11 @@
+## Deferred from: code review of 32-1-allowed-embed-hosts-and-csp.md (2026-08-30)
+
+- Public `/embed-origins` exposes tenant allow-list without auth — required for middleware CSP lookup; acceptable recon surface
+- Middleware synchronous uncached API fetch per embed page view — perf concern, no timeout; v1 acceptable
+- Silent fail-closed when embed-origins API unavailable — returns empty list → `'none'`; masks misconfig but is safer
+- No automated e2e assertion of `/embed/register/*` response headers — deferred to 32.2 manual verify
+- Settings UI lacks client-side origin validation/max-count guard before PATCH — server validates on save
+
 ## Deferred from: code review of 19-0-production-readiness-dev.md (2026-08-12)
 
 - Migration `Down()` is no-op (irreversible catalog backfill) — acceptable for data-only migrations

@@ -54,7 +54,7 @@ public sealed class EmbedOriginSupportTests
     }
 
     [Fact]
-    public void NormalizeList_enforces_max_count()
+    public void NormalizeList_rejects_more_than_max_unique_origins()
     {
         var origins = Enumerable.Range(0, EmbedOriginSupport.MaxOrigins + 1)
             .Select(i => $"https://host{i}.example.com")
@@ -64,5 +64,32 @@ public sealed class EmbedOriginSupportTests
 
         Assert.False(ok);
         Assert.Contains("20", error);
+    }
+
+    [Fact]
+    public void NormalizeList_dedupes_before_enforcing_max()
+    {
+        var origins = Enumerable.Range(0, EmbedOriginSupport.MaxOrigins)
+            .SelectMany(i => new[] { $"https://host{i}.example.com", $"HTTPS://host{i}.example.com" })
+            .ToList();
+
+        var (ok, normalized, error) = EmbedOriginSupport.NormalizeList(origins);
+
+        Assert.True(ok);
+        Assert.Null(error);
+        Assert.Equal(EmbedOriginSupport.MaxOrigins, normalized.Count);
+    }
+
+    [Fact]
+    public void SanitizeStoredOrigins_drops_invalid_entries()
+    {
+        var sanitized = EmbedOriginSupport.SanitizeStoredOrigins([
+            "https://club.example.com",
+            "not-a-url",
+            "https://*.example.com",
+        ]);
+
+        Assert.Single(sanitized);
+        Assert.Equal("https://club.example.com", sanitized[0]);
     }
 }

@@ -9,7 +9,7 @@ namespace Cohestra.Api.Controllers.V1;
 
 [ApiController]
 [Route("api/v1/admin/tenant")]
-[Authorize(Policy = TenantAuthPolicies.TenantOperator)]
+[Authorize(Policy = TenantAuthPolicies.TenantAdminOnly)]
 [Produces("application/json")]
 public sealed class AdminTenantEmbedController(
     ICurrentTenant currentTenant,

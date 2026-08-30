@@ -25,7 +25,7 @@ function buildFrameAncestorsDirective(frameAncestors?: readonly string[]): strin
     return "frame-ancestors 'none'";
   }
 
-  return `frame-ancestors 'self' ${frameAncestors.join(" ")}`;
+  return `frame-ancestors ${frameAncestors.join(" ")}`;
 }
 
 export function buildContentSecurityPolicy(

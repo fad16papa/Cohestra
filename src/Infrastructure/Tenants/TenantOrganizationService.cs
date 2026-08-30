@@ -53,7 +53,8 @@ public sealed class TenantOrganizationService(CohestraDbContext dbContext) : ITe
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
             ?? throw new InvalidOperationException("Tenant not found.");
 
-        return new TenantEmbedSettingsResponse(tenant.AllowedEmbedOrigins);
+        return new TenantEmbedSettingsResponse(
+            EmbedOriginSupport.SanitizeStoredOrigins(tenant.AllowedEmbedOrigins));
     }
 
     public async Task<(bool Ok, string? Error)> UpdateEmbedSettingsAsync(

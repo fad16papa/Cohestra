@@ -65,11 +65,6 @@ public static class EmbedOriginSupport
             return (false, [], "AllowedEmbedOrigins is required.");
         }
 
-        if (origins.Count > MaxOrigins)
-        {
-            return (false, [], $"At most {MaxOrigins} embed origins are allowed.");
-        }
-
         var normalized = new List<string>(origins.Count);
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -90,6 +85,38 @@ public static class EmbedOriginSupport
             normalized.Add(canonical);
         }
 
+        if (normalized.Count > MaxOrigins)
+        {
+            return (false, [], $"At most {MaxOrigins} embed origins are allowed.");
+        }
+
         return (true, normalized, null);
+    }
+
+    public static IReadOnlyList<string> SanitizeStoredOrigins(IReadOnlyList<string>? stored)
+    {
+        if (stored is null || stored.Count == 0)
+        {
+            return [];
+        }
+
+        var normalized = new List<string>(stored.Count);
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var origin in stored)
+        {
+            if (ValidateOrigin(origin) is not null)
+            {
+                continue;
+            }
+
+            var canonical = NormalizeOrigin(origin);
+            if (seen.Add(canonical))
+            {
+                normalized.Add(canonical);
+            }
+        }
+
+        return normalized;
     }
 }
