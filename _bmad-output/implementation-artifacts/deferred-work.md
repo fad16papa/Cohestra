@@ -1,3 +1,10 @@
+## Deferred from: code review of 30-10-capture-invariants-stay-shipped.md (2026-08-30, pass 1)
+
+- AC3 persisted JSONB immutability not integration-tested in this story — submit-only API lock sufficient for regression slice
+- AC3 client dedup — existing ClientDedupIntegrationTests; no new test in 30.10
+- AC4 theme save/serialize round-trip — reflection structural lock only
+- AC2 reg-cap public submit rejection — TenantPlanLimitValidatorTests + existing integration tests
+
 ## Deferred from: code review of 30-9-operator-email-on-new-registration.md (2026-08-30, pass 1)
 
 - Missing registration completes outbox silently — mirrors confirmation handler idempotency pattern

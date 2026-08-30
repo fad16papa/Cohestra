@@ -349,4 +349,28 @@ public sealed class PublishGateValidatorTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void ValidateForPublish_OptionalPhoneOnly_Fails()
+    {
+        var error = PublishGateValidator.ValidateForPublish(
+            new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "phone",
+                        Type = FormFieldTypes.Phone,
+                        Label = "Mobile number",
+                        Required = false,
+                        PhoneCountry = "SG",
+                    },
+                ],
+            });
+
+        Assert.NotNull(error);
+        Assert.Contains("required phone or email", error, StringComparison.Ordinal);
+    }
 }

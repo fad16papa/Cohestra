@@ -86,3 +86,23 @@ Regression-only story: lock Epic 30 Capture invariants with focused unit tests. 
 ## Change Log
 
 - 2026-08-30: Story 30.10 — Capture invariant regression tests.
+
+### Review Findings (Pass 1)
+
+- [x] [Review][Patch] Misleading immutability test name [`CaptureInvariantsTests.cs:92`] — Renamed to `NormalizeAnswers_does_not_mutate_input_dictionary` (tests input dict only, not persisted JSONB).
+
+- [x] [Review][Patch] Publish gate missing optional-phone-only fail case [`PublishGateValidatorTests.cs`] — Added symmetric test alongside optional-email-only.
+
+- [x] [Review][Defer] AC3 persisted-answer immutability not asserted in new tests — Covered by submit-only `IRegistrationService` + no update API; full JSONB immutability remains integration/deferred-work scope.
+
+- [x] [Review][Defer] AC3 client dedup not added here — Existing `ClientDedupIntegrationTests` covers upsert; story completion notes reference it.
+
+- [x] [Review][Defer] AC4 theme separation uses reflection only — Structural lock sufficient for regression story; save/serialize round-trip out of scope.
+
+- [x] [Review][Defer] AC2 reg-cap submit rejection not in new tests — `TenantPlanLimitValidatorTests` + existing integration capacity tests cover behavior.
+
+- [x] [Review][Defer] AC5 uses hand-built v1 schema — No legacy JSON fixture needed; validates validator/publish gate accept canonical v1 shape.
+
+### Review Findings (Pass 2)
+
+Clean review — Pass 1 patches applied. No remaining patch or decision-needed findings.

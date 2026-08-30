@@ -89,7 +89,7 @@ public sealed class CaptureInvariantsTests
     }
 
     [Fact]
-    public void Submit_normalizes_answers_without_mutating_existing_registration_rows()
+    public void NormalizeAnswers_does_not_mutate_input_dictionary()
     {
         var schema = new ActivityFormSchema
         {
