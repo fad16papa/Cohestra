@@ -184,3 +184,7 @@ Composer
 - [x] [Review][Patch] **`SubmitWebsiteInquiry_WithoutPublishedContactSection_Returns404` is order-dependent** [`WebsiteInquiryIntegrationTests.cs:119-136`] — test publishes hero-only site via `PublishSiteWithoutContactSectionAsync` before asserting 404.
 
 - [x] [Review][Patch] **`CollapseInlineNewlines` misses Unicode line separators** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:143-148`] — also replaces U+2028/U+2029 with spaces.
+
+### Review Findings — Pass 7 (2026-08-31)
+
+**Clean review — all layers passed.** Acceptance audit: all ACs satisfied. Edge Case Hunter: `[]`. Blind Hunter: no new findings. Pass 6 fixes verified intact.
