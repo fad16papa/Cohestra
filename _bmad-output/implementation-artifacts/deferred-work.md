@@ -1,3 +1,10 @@
+## Deferred from: code review of 32-3-website-contact-section-creates-a-client.md (2026-08-31)
+
+- LeadStatus not reset to New on dedup update — matches public registration dedup (LeadStatus only set on create)
+- Consent unchecked cannot revoke prior opt-in — pre-existing ClientDeduplicationService behavior shared with registration
+- No idempotency key on website inquiry submit — not in Story 32.3 AC; double-submit creates duplicate timeline/outbox entries
+- No integration test for phone-based dedup — email dedup path covers same ClientDeduplicationService; phone path unverified in CI
+
 ## Deferred from: code review of 32-2 pass 3 (2026-08-31)
 
 - Hidden field form editor incomplete — minimal 30.1 port; full editor with Story 30.1
