@@ -179,14 +179,14 @@ public sealed class CommunityService(
             return null;
         }
 
-        var planGateError = await ValidateCommunityDefaultTemplatePlanGateAsync(cancellationToken);
-        if (planGateError is not null)
-        {
-            throw new CommunityPlanLockedException(planGateError);
-        }
-
         if (request.FormTemplateId is Guid templateId)
         {
+            var planGateError = await ValidateCommunityDefaultTemplatePlanGateAsync(cancellationToken);
+            if (planGateError is not null)
+            {
+                throw new CommunityPlanLockedException(planGateError);
+            }
+
             var templateExists = await dbContext.TenantFormTemplates
                 .AsNoTracking()
                 .AnyAsync(template => template.Id == templateId, cancellationToken);

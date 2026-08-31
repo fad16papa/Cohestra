@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-30
+# last_updated: 2026-08-31
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -315,7 +315,7 @@ development_status:
   30-10-capture-invariants-stay-shipped: done
   30-11-save-and-apply-tenant-form-templates: done
   30-12-template-slots-by-plan: done
-  30-13-community-default-design-pin-and-pro-duplicate: review
+  30-13-community-default-design-pin-and-pro-duplicate: done
   epic-30-retrospective: done
 
   epic-31: done

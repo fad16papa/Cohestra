@@ -1,3 +1,9 @@
+## Deferred from: code review of 30-13-community-default-design-pin-and-pro-duplicate.md (2026-08-31)
+
+- Core tenant silently loses prefill when default template has Pro-only split steps — downgrade edge case; create skips all-or-nothing without operator feedback
+- Set community default does not validate template schema against caller plan — create-time gate prevents bad schema on new activities; set-time validation would improve operator UX
+- No cross-tenant integration test for pinned-preset endpoint — EF tenant filter + service tests cover isolation
+
 ## Deferred from: Epic 30 code review pass 1 (2026-08-31)
 
 - Stale-tab Close-at submit uses platform copy, not operator closedMessage — GET unavailable path OK; inline submit edge case

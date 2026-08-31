@@ -47,6 +47,25 @@ public sealed class CommunityDefaultTemplateServiceTests
     }
 
     [Fact]
+    public async Task SetDefaultFormTemplateAsync_BasicTenant_CanClearDefault()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Basic);
+        var service = CreateCommunityService(dbContext);
+        var templateId = await SeedTemplateAsync(dbContext, "Legacy default");
+        var community = await SeedCommunityAsync(dbContext, "Youth");
+        community.DefaultFormTemplateId = templateId;
+        await dbContext.SaveChangesAsync();
+
+        var updated = await service.SetDefaultFormTemplateAsync(
+            community.Id,
+            new SetCommunityDefaultFormTemplateRequest(null));
+
+        Assert.NotNull(updated);
+        Assert.Null(updated!.DefaultFormTemplateId);
+        Assert.Null(updated.DefaultFormTemplateName);
+    }
+
+    [Fact]
     public async Task SetDefaultFormTemplateAsync_UnknownTemplate_ReturnsNull()
     {
         await using var dbContext = await CreateDbContextAsync(TenantPlan.Core);

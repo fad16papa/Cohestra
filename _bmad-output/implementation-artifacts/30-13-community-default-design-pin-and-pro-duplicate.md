@@ -2,7 +2,7 @@
 story_id: 30.13
 story_key: 30-13-community-default-design-pin-and-pro-duplicate
 epic: 30
-status: review
+status: done
 baseline_commit: cursor/save-tenant-form-templates-d861
 created: 2026-08-31
 depends_on:
@@ -19,7 +19,7 @@ sources:
 
 # Story 30.13: Community default, Design pin, and Pro duplicate
 
-Status: review
+Status: done
 
 ## Story
 
@@ -154,3 +154,13 @@ Composer
 ### Change Log
 
 - 2026-08-31: Story 30.13 implemented — community default, Pro preset pin, Pro duplicate (FR-RC-17)
+- 2026-08-31: Code review — plan-gate fixes on activity create pre-fill; Basic clear-default exemption; +3 tests (786 unit tests pass)
+
+### Review Findings
+
+- [x] [Review][Patch] Community-default create prefill bypassed plan gates [`ActivityService.cs`] — fixed: `EnsureFormSchemaPlanAllowedAsync` + Basic plan early return
+- [x] [Review][Patch] Basic tenant received grandfathered community-default prefill [`ActivityService.cs`] — fixed: skip prefill when tenant plan is Basic (FR-RC-17)
+- [x] [Review][Patch] Basic tenant could not clear an existing community default [`CommunityService.cs`] — fixed: plan gate only when setting a template id, not when clearing
+- [x] [Review][Defer] Core tenant silently loses prefill when default template has Pro-only split steps [`ActivityService.cs`] — deferred: downgrade edge case; create skips all-or-nothing with no operator toast (acceptable for v1)
+- [x] [Review][Defer] Set community default does not validate template schema against caller plan [`CommunityService.cs`] — deferred: create-time gate prevents bad schema persistence; set-time validation is a future UX improvement
+- [x] [Review][Defer] No cross-tenant integration test for pinned-preset endpoint [`TenantIsolationApiTests.cs`] — deferred: EF tenant filter + service tests cover isolation; mirror test optional

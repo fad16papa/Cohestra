@@ -75,6 +75,132 @@ public sealed class ActivityServiceCommunityDefaultTests
         Assert.Equal("phone", created.FormSchema.Fields[0].Id);
     }
 
+    [Fact]
+    public async Task CreateAsync_CommunityDefaultWithBasicFields_BasicTenant_SkipsPreFill()
+    {
+        await using var dbContext = CreateDbContext();
+        var templateId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var tenant = await dbContext.Tenants.FirstAsync();
+        tenant.Plan = TenantPlan.Basic;
+        dbContext.Communities.Add(new Community
+        {
+            Id = Guid.NewGuid(),
+            Name = "Youth",
+            DefaultFormTemplateId = templateId,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        dbContext.Categories.Add(new Category
+        {
+            Id = Guid.NewGuid(),
+            Name = "Tennis",
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        dbContext.TenantFormTemplates.Add(new TenantFormTemplate
+        {
+            Id = templateId,
+            Name = "Saturday recipe",
+            FormSchema = new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "phone",
+                        Type = FormFieldTypes.Phone,
+                        Label = "Mobile",
+                        Required = true,
+                        PhoneCountry = "SG",
+                    },
+                ],
+            },
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext);
+        var created = await service.CreateAsync(
+            new CreateActivityRequest(
+                "Summer Clinic",
+                "Tennis",
+                "Weekly",
+                "Court A",
+                "Youth",
+                Status: "draft"));
+
+        Assert.Null(created.FormSchema);
+    }
+
+    [Fact]
+    public async Task CreateAsync_CommunityDefaultWithCorePlusFields_BasicTenant_SkipsPreFill()
+    {
+        await using var dbContext = CreateDbContext();
+        var templateId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        var tenant = await dbContext.Tenants.FirstAsync();
+        tenant.Plan = TenantPlan.Basic;
+        dbContext.Communities.Add(new Community
+        {
+            Id = Guid.NewGuid(),
+            Name = "Youth",
+            DefaultFormTemplateId = templateId,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        dbContext.Categories.Add(new Category
+        {
+            Id = Guid.NewGuid(),
+            Name = "Tennis",
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        dbContext.TenantFormTemplates.Add(new TenantFormTemplate
+        {
+            Id = templateId,
+            Name = "Recipe template",
+            FormSchema = new ActivityFormSchema
+            {
+                Version = 1,
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "notes",
+                        Type = FormFieldTypes.Textarea,
+                        Label = "Notes",
+                        Required = false,
+                        VisibleWhen = new FormFieldVisibleWhen
+                        {
+                            FieldId = "guest",
+                            EqualsValue = "yes",
+                        },
+                    },
+                ],
+            },
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext);
+        var created = await service.CreateAsync(
+            new CreateActivityRequest(
+                "Summer Clinic",
+                "Tennis",
+                "Weekly",
+                "Court A",
+                "Youth",
+                Status: "draft"));
+
+        Assert.Null(created.FormSchema);
+    }
+
     private static CohestraDbContext CreateDbContext()
     {
         var currentTenant = new CurrentTenant();
@@ -91,6 +217,7 @@ public sealed class ActivityServiceCommunityDefaultTests
             Id = TestTenantId,
             Slug = "test",
             Name = "Test Tenant",
+            Plan = TenantPlan.Core,
             CreatedAt = now,
             UpdatedAt = now,
             RegistrationTimeZoneId = "UTC",

@@ -1174,6 +1174,22 @@ public sealed class ActivityService(
             return;
         }
 
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return;
+        }
+
+        var plan = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => (TenantPlan?)tenant.Plan)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (plan is TenantPlan.Basic)
+        {
+            return;
+        }
+
         var template = await dbContext.TenantFormTemplates
             .AsNoTracking()
             .FirstOrDefaultAsync(item => item.Id == templateId, cancellationToken);
@@ -1185,6 +1201,16 @@ public sealed class ActivityService(
 
         var cloned = FormSchemaCloner.Clone(template.FormSchema);
         FormFieldStepAssigner.ApplyMissingBuckets(cloned);
+
+        try
+        {
+            await EnsureFormSchemaPlanAllowedAsync(cloned, tenantId, cancellationToken);
+        }
+        catch (FormSchemaPlanLockedException)
+        {
+            return;
+        }
+
         activity.FormSchema = cloned;
     }
 
