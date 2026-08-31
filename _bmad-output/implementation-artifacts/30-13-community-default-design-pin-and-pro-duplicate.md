@@ -174,3 +174,7 @@ Composer
 - Acceptance criteria 1–4 satisfied against spec
 - 786 unit tests pass
 - Deferred items unchanged (split-step downgrade silent skip, set-time schema validation, pinned-preset isolation IT)
+
+**Pass 2 subagent follow-up (Edge Case Hunter):**
+- [x] [Review][Patch] Basic tenants had no UI to clear grandfathered community default [`community-default-form-template-panel.tsx`] — fixed: show current default + Clear button when downgraded
+- [x] [Review][Patch] Missing tenant plan could 500 activity create during prefill [`ActivityService.cs`] — fixed: skip prefill when plan is null

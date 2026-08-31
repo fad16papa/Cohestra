@@ -1185,7 +1185,7 @@ public sealed class ActivityService(
             .Select(tenant => (TenantPlan?)tenant.Plan)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (plan is TenantPlan.Basic)
+        if (plan is null or TenantPlan.Basic)
         {
             return;
         }

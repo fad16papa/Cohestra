@@ -106,6 +106,31 @@ export function CommunityDefaultFormTemplatePanel({
     }
   }
 
+  async function handleClearDefault() {
+    setError(null);
+    setSavedMessage(null);
+    setIsSaving(true);
+
+    try {
+      const updated = await setCommunityDefaultFormTemplate(
+        authFetch,
+        community.id,
+        null
+      );
+      onCommunityUpdated(updated);
+      setSelectedTemplateId("");
+      setSavedMessage("Default form template cleared.");
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Could not clear default form template."
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
     <section className="space-y-4 rounded-xl border border-border-warm bg-card p-4">
       <div>
@@ -116,12 +141,36 @@ export function CommunityDefaultFormTemplatePanel({
       </div>
 
       {!canSetDefault ? (
-        <UpgradePanel
-          title="Community default template"
-          description="Core saves form recipes and can set a default for every new activity in a community."
-          requiredPlan="Core"
-          isTenantAdmin={shell?.isTenantAdmin ?? false}
-        />
+        community.defaultFormTemplateId ? (
+          <div className="space-y-3">
+            <p className="text-sm text-text-muted-warm">
+              Current default:{" "}
+              {community.defaultFormTemplateName ?? "Saved template"}
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isSaving}
+              onClick={() => void handleClearDefault()}
+            >
+              {isSaving ? "Clearing…" : "Clear default"}
+            </Button>
+            <UpgradePanel
+              title="Community default template"
+              description="Core saves form recipes and can set a default for every new activity in a community."
+              requiredPlan="Core"
+              isTenantAdmin={shell?.isTenantAdmin ?? false}
+            />
+          </div>
+        ) : (
+          <UpgradePanel
+            title="Community default template"
+            description="Core saves form recipes and can set a default for every new activity in a community."
+            requiredPlan="Core"
+            isTenantAdmin={shell?.isTenantAdmin ?? false}
+          />
+        )
       ) : (
         <>
           <div className="space-y-2">
