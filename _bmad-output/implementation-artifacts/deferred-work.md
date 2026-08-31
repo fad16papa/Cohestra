@@ -1,3 +1,11 @@
+## Deferred from: Epic 30 code review pass 1 (2026-08-31)
+
+- Stale-tab Close-at submit uses platform copy, not operator closedMessage — GET unavailable path OK; inline submit edge case
+- Saved template apply can carry past registrationClosesAt — meta snapshot footgun; no apply-time warning
+- CaptureInvariantsTests does not lock submit availability precedence chain — evaluator unit-tested separately
+- Duplicated EnsureFormSchemaPlanAllowedAsync in Activity vs FormTemplate services — drift risk on future gates
+- GET availability flags separate from submit evaluator — precedence aligned today; no shared function
+
 ## Deferred from: code review of 30-11/30-12 (2026-08-30, pass 3)
 
 - Apply downgraded-plan template without client re-check — resolved as defer (same as launch templates)
