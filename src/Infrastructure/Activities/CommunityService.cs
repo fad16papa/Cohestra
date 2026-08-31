@@ -52,7 +52,7 @@ public sealed class CommunityService(
 
         var counts = await GetCountsAsync(community.Name, cancellationToken);
 
-        return ToResponse(community, counts.ActivityCount, counts.LeadCount);
+        return await ToResponseAsync(community, counts.ActivityCount, counts.LeadCount, cancellationToken);
     }
 
     public async Task<CommunityResponse> CreateAsync(
@@ -84,7 +84,7 @@ public sealed class CommunityService(
         dbContext.Communities.Add(community);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return ToResponse(community, 0, 0);
+        return await ToResponseAsync(community, 0, 0, cancellationToken);
     }
 
     public async Task<CommunityResponse?> UpdateAsync(
@@ -163,7 +163,51 @@ public sealed class CommunityService(
 
         var counts = await GetCountsAsync(community.Name, cancellationToken);
 
-        return ToResponse(community, counts.ActivityCount, counts.LeadCount);
+        return await ToResponseAsync(community, counts.ActivityCount, counts.LeadCount, cancellationToken);
+    }
+
+    public async Task<CommunityResponse?> SetDefaultFormTemplateAsync(
+        Guid id,
+        SetCommunityDefaultFormTemplateRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var community = await dbContext.Communities
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (community is null)
+        {
+            return null;
+        }
+
+        var planGateError = await ValidateCommunityDefaultTemplatePlanGateAsync(cancellationToken);
+        if (planGateError is not null)
+        {
+            throw new CommunityPlanLockedException(planGateError);
+        }
+
+        if (request.FormTemplateId is Guid templateId)
+        {
+            var templateExists = await dbContext.TenantFormTemplates
+                .AsNoTracking()
+                .AnyAsync(template => template.Id == templateId, cancellationToken);
+
+            if (!templateExists)
+            {
+                return null;
+            }
+
+            community.DefaultFormTemplateId = templateId;
+        }
+        else
+        {
+            community.DefaultFormTemplateId = null;
+        }
+
+        community.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var counts = await GetCountsAsync(community.Name, cancellationToken);
+        return await ToResponseAsync(community, counts.ActivityCount, counts.LeadCount, cancellationToken);
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -291,11 +335,51 @@ public sealed class CommunityService(
         return null;
     }
 
-    private static CommunityResponse ToResponse(
+    private async Task<string?> ValidateCommunityDefaultTemplatePlanGateAsync(
+        CancellationToken cancellationToken)
+    {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return null;
+        }
+
+        var plan = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => (TenantPlan?)tenant.Plan)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (plan is null)
+        {
+            return null;
+        }
+
+        if (plan is TenantPlan.Basic)
+        {
+            return "Community default form template requires Core plan or above.";
+        }
+
+        return null;
+    }
+
+    private async Task<CommunityResponse> ToResponseAsync(
         Community community,
         int activityCount,
-        int leadCount) =>
-        new(
+        int leadCount,
+        CancellationToken cancellationToken)
+    {
+        string? defaultTemplateName = null;
+
+        if (community.DefaultFormTemplateId is Guid templateId)
+        {
+            defaultTemplateName = await dbContext.TenantFormTemplates
+                .AsNoTracking()
+                .Where(template => template.Id == templateId)
+                .Select(template => template.Name)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        return new CommunityResponse(
             community.Id,
             community.Name,
             activityCount,
@@ -303,6 +387,9 @@ public sealed class CommunityService(
             community.LogoAssetId,
             community.AccentColor,
             community.DefaultHeroImageUrl,
+            community.DefaultFormTemplateId,
+            defaultTemplateName,
             community.CreatedAt,
             community.UpdatedAt);
+    }
 }

@@ -12,6 +12,8 @@ public sealed class TenantFormTemplate : ITenantScoped
 
     public ActivityFormSchema FormSchema { get; set; } = new();
 
+    public string? PinnedRegistrationThemePreset { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }

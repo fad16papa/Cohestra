@@ -36,6 +36,9 @@ internal sealed class TenantFormTemplateConfiguration : IEntityTypeConfiguration
                 schema => JsonSerializer.Serialize(schema, ActivityFormSchemaJson.SerializerOptions),
                 json => DeserializeFormTemplateSchema(json));
 
+        builder.Property(template => template.PinnedRegistrationThemePreset)
+            .HasMaxLength(32);
+
         builder.Property(template => template.CreatedAt).IsRequired();
         builder.Property(template => template.UpdatedAt).IsRequired();
 

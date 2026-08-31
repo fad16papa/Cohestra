@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Cohestra.Application.Activities;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Activities;
@@ -69,7 +68,7 @@ public sealed class FormTemplateService(
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             Name = request.Name.Trim(),
-            FormSchema = CloneSchema(mapped),
+            FormSchema = FormSchemaCloner.Clone(mapped),
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -117,7 +116,7 @@ public sealed class FormTemplateService(
             var mapped = FormSchemaValidator.MapToDomain(request.FormSchema);
             FormFieldStepAssigner.ApplyMissingBuckets(mapped);
             await EnsureFormSchemaPlanAllowedAsync(mapped, tenantId, cancellationToken);
-            template.FormSchema = CloneSchema(mapped);
+            template.FormSchema = FormSchemaCloner.Clone(mapped);
         }
 
         template.UpdatedAt = DateTimeOffset.UtcNow;
@@ -139,6 +138,122 @@ public sealed class FormTemplateService(
         dbContext.TenantFormTemplates.Remove(template);
         await dbContext.SaveChangesAsync(cancellationToken);
         return true;
+    }
+
+    public async Task<FormTemplateResponse?> SetPinnedPresetAsync(
+        Guid id,
+        SetFormTemplatePinnedPresetRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var tenantId = RequireTenantId();
+        await EnsureProPlanForTemplateFeatureAsync(tenantId, cancellationToken);
+
+        var template = await dbContext.TenantFormTemplates
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (template is null)
+        {
+            return null;
+        }
+
+        if (request.Preset is not null &&
+            !RegistrationThemePresets.All.Contains(request.Preset))
+        {
+            throw new ArgumentException("Preset must be classic, card, immersive, or compact.");
+        }
+
+        template.PinnedRegistrationThemePreset = request.Preset is null
+            ? null
+            : RegistrationThemeValidator.NormalizePreset(request.Preset);
+        template.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return ToResponse(template);
+    }
+
+    public async Task<FormTemplateResponse> DuplicateAsync(
+        Guid id,
+        DuplicateFormTemplateRequest? request,
+        CancellationToken cancellationToken = default)
+    {
+        var tenantId = RequireTenantId();
+        await EnsureProPlanForTemplateFeatureAsync(tenantId, cancellationToken);
+
+        var source = await dbContext.TenantFormTemplates
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (source is null)
+        {
+            throw new KeyNotFoundException("Form template not found.");
+        }
+
+        await EnsureCanAddTemplateAsync(tenantId, cancellationToken);
+
+        var baseName = string.IsNullOrWhiteSpace(request?.Name)
+            ? $"{source.Name} (copy)"
+            : request.Name.Trim();
+
+        var nameError = ValidateName(baseName);
+        if (nameError is not null)
+        {
+            throw new ArgumentException(nameError);
+        }
+
+        var uniqueName = await ResolveDuplicateNameAsync(baseName, cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+        var duplicate = new TenantFormTemplate
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Name = uniqueName,
+            FormSchema = FormSchemaCloner.Clone(source.FormSchema),
+            PinnedRegistrationThemePreset = source.PinnedRegistrationThemePreset,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+        dbContext.TenantFormTemplates.Add(duplicate);
+        await SaveChangesHandlingDuplicateNameAsync(cancellationToken);
+
+        return ToResponse(duplicate);
+    }
+
+    private async Task<string> ResolveDuplicateNameAsync(
+        string baseName,
+        CancellationToken cancellationToken)
+    {
+        var candidate = baseName;
+        for (var suffix = 2; suffix <= 99; suffix++)
+        {
+            var exists = await dbContext.TenantFormTemplates.AnyAsync(
+                template => template.Name.ToLower() == candidate.ToLower(),
+                cancellationToken);
+
+            if (!exists)
+            {
+                return candidate;
+            }
+
+            candidate = $"{baseName} ({suffix})";
+        }
+
+        throw new FormTemplateDuplicateNameException(
+            "Could not allocate a unique name for the duplicated template.");
+    }
+
+    private async Task EnsureProPlanForTemplateFeatureAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var plan = await GetTenantPlanAsync(tenantId, cancellationToken);
+
+        if (plan is not (TenantPlan.Pro or TenantPlan.Enterprise))
+        {
+            throw new FormTemplatePlanLockedException(
+                "Duplicate and preset pin require a Pro plan.");
+        }
     }
 
     private async Task EnsureNameAvailableAsync(
@@ -296,26 +411,20 @@ public sealed class FormTemplateService(
             SqlState: PostgresErrorCodes.UniqueViolation,
         };
 
-    private static ActivityFormSchema CloneSchema(ActivityFormSchema schema)
-    {
-        var json = JsonSerializer.Serialize(schema, ActivityFormSchemaJson.SerializerOptions);
-        var cloned = JsonSerializer.Deserialize<ActivityFormSchema>(json, ActivityFormSchemaJson.SerializerOptions);
-        if (cloned is null)
-        {
-            throw new InvalidOperationException("Form schema could not be cloned.");
-        }
-
-        return cloned;
-    }
-
     private static FormTemplateSummaryResponse ToSummary(TenantFormTemplate template) =>
-        new(template.Id, template.Name, template.CreatedAt, template.UpdatedAt);
+        new(
+            template.Id,
+            template.Name,
+            template.PinnedRegistrationThemePreset,
+            template.CreatedAt,
+            template.UpdatedAt);
 
     private static FormTemplateResponse ToResponse(TenantFormTemplate template) =>
         new(
             template.Id,
             template.Name,
             FormSchemaMapper.ToDto(template.FormSchema)!,
+            template.PinnedRegistrationThemePreset,
             template.CreatedAt,
             template.UpdatedAt);
 }

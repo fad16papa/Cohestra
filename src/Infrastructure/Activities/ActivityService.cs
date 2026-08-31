@@ -99,6 +99,8 @@ public sealed class ActivityService(
                 UpdatedAt = now,
             };
 
+            await ApplyCommunityDefaultFormSchemaAsync(activity, cancellationToken);
+
             dbContext.Activities.Add(activity);
 
             try
@@ -1155,6 +1157,35 @@ public sealed class ActivityService(
         }
 
         return ActivityScheduleParser.TryParseStartsAt(schedule, registrationTimeZoneId);
+    }
+
+    private async Task ApplyCommunityDefaultFormSchemaAsync(
+        Activity activity,
+        CancellationToken cancellationToken)
+    {
+        var community = await dbContext.Communities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                item => item.Name == activity.CommunityLabel,
+                cancellationToken);
+
+        if (community?.DefaultFormTemplateId is not Guid templateId)
+        {
+            return;
+        }
+
+        var template = await dbContext.TenantFormTemplates
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == templateId, cancellationToken);
+
+        if (template is null)
+        {
+            return;
+        }
+
+        var cloned = FormSchemaCloner.Clone(template.FormSchema);
+        FormFieldStepAssigner.ApplyMissingBuckets(cloned);
+        activity.FormSchema = cloned;
     }
 
     private async Task EnsureFormSchemaPlanAllowedAsync(

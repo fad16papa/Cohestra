@@ -18,6 +18,8 @@ export type CommunityDetail = CommunityListItem & {
   logoAssetId: string | null;
   accentColor: string | null;
   defaultHeroImageUrl: string | null;
+  defaultFormTemplateId: string | null;
+  defaultFormTemplateName: string | null;
 };
 
 async function parseProblemDetail(response: Response): Promise<string> {
@@ -39,6 +41,9 @@ function parseCommunityDetail(raw: Record<string, unknown>): CommunityDetail {
   const logoAssetId = raw.logoAssetId ?? raw.LogoAssetId;
   const accentColor = raw.accentColor ?? raw.AccentColor;
   const defaultHeroImageUrl = raw.defaultHeroImageUrl ?? raw.DefaultHeroImageUrl;
+  const defaultFormTemplateId = raw.defaultFormTemplateId ?? raw.DefaultFormTemplateId;
+  const defaultFormTemplateName =
+    raw.defaultFormTemplateName ?? raw.DefaultFormTemplateName;
 
   return {
     ...base,
@@ -59,6 +64,18 @@ function parseCommunityDetail(raw: Record<string, unknown>): CommunityDetail {
         ? null
         : typeof defaultHeroImageUrl === "string"
           ? defaultHeroImageUrl
+          : null,
+    defaultFormTemplateId:
+      defaultFormTemplateId === null || defaultFormTemplateId === undefined
+        ? null
+        : typeof defaultFormTemplateId === "string"
+          ? defaultFormTemplateId
+          : null,
+    defaultFormTemplateName:
+      defaultFormTemplateName === null || defaultFormTemplateName === undefined
+        ? null
+        : typeof defaultFormTemplateName === "string"
+          ? defaultFormTemplateName
           : null,
   };
 }
@@ -160,6 +177,27 @@ export async function updateCommunity(
         : {}),
     }),
   });
+
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+
+  return parseCommunityDetail((await response.json()) as Record<string, unknown>);
+}
+
+export async function setCommunityDefaultFormTemplate(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  communityId: string,
+  formTemplateId: string | null
+): Promise<CommunityDetail> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/communities/${communityId}/default-form-template`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ formTemplateId }),
+    }
+  );
 
   if (!response.ok) {
     throw new Error(await parseProblemDetail(response));

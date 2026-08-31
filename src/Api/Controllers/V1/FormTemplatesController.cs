@@ -119,6 +119,70 @@ public class FormTemplatesController(IFormTemplateService formTemplateService) :
         return deleted ? NoContent() : NotFound();
     }
 
+    [HttpPatch("{id:guid}/pinned-preset")]
+    [ProducesResponseType(typeof(FormTemplateResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<FormTemplateResponse>> SetPinnedPreset(
+        Guid id,
+        [FromBody] SetFormTemplatePinnedPresetRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        try
+        {
+            var template = await formTemplateService.SetPinnedPresetAsync(id, request, cancellationToken);
+            return template is null ? NotFound() : Ok(template);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequestProblem(ex.Message);
+        }
+        catch (FormTemplatePlanLockedException ex)
+        {
+            return PlanLockedProblem(ex.Message);
+        }
+    }
+
+    [HttpPost("{id:guid}/duplicate")]
+    [ProducesResponseType(typeof(FormTemplateResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<FormTemplateResponse>> Duplicate(
+        Guid id,
+        [FromBody] DuplicateFormTemplateRequest? request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var template = await formTemplateService.DuplicateAsync(id, request, cancellationToken);
+            return CreatedAtAction(nameof(GetById), new { id = template.Id }, template);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequestProblem(ex.Message);
+        }
+        catch (FormTemplatePlanLockedException ex)
+        {
+            return PlanLockedProblem(ex.Message);
+        }
+        catch (FormTemplateDuplicateNameException ex)
+        {
+            return ConflictProblem(ex.Message);
+        }
+    }
+
     private ObjectResult BadRequestProblem(string detail)
     {
         Response.ContentType = "application/problem+json";

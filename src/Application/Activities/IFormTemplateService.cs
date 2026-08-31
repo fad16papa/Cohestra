@@ -20,4 +20,14 @@ public interface IFormTemplateService
         CancellationToken cancellationToken = default);
 
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<FormTemplateResponse?> SetPinnedPresetAsync(
+        Guid id,
+        SetFormTemplatePinnedPresetRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<FormTemplateResponse> DuplicateAsync(
+        Guid id,
+        DuplicateFormTemplateRequest? request,
+        CancellationToken cancellationToken = default);
 }

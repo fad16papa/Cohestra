@@ -1,9 +1,10 @@
-import type { ActivityFormSchema } from "@/lib/activities-api";
+import type { ActivityFormSchema, RegistrationThemePreset } from "@/lib/activities-api";
 import { getPublicApiBaseUrl } from "@/lib/api";
 
 export type SavedFormTemplateSummary = {
   id: string;
   name: string;
+  pinnedRegistrationThemePreset: RegistrationThemePreset | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -124,9 +125,18 @@ function parseFormSchema(raw: Record<string, unknown>): ActivityFormSchema {
 }
 
 function parseSummary(raw: Record<string, unknown>): SavedFormTemplateSummary {
+  const presetRaw = raw.pinnedRegistrationThemePreset ?? raw.PinnedRegistrationThemePreset;
+  const preset =
+    presetRaw === null || presetRaw === undefined
+      ? null
+      : typeof presetRaw === "string"
+        ? (presetRaw as RegistrationThemePreset)
+        : null;
+
   return {
     id: String(raw.id ?? raw.Id ?? ""),
     name: String(raw.name ?? raw.Name ?? ""),
+    pinnedRegistrationThemePreset: preset,
     createdAt: String(raw.createdAt ?? raw.CreatedAt ?? ""),
     updatedAt: String(raw.updatedAt ?? raw.UpdatedAt ?? ""),
   };
@@ -259,6 +269,48 @@ export async function deleteFormTemplate(
   if (!response.ok && response.status !== 204) {
     throw new Error(await parseProblemDetail(response));
   }
+}
+
+export async function setFormTemplatePinnedPreset(
+  authFetch: typeof fetch,
+  id: string,
+  preset: RegistrationThemePreset | null
+): Promise<SavedFormTemplate> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/form-templates/${id}/pinned-preset`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ preset }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+
+  return parseTemplate((await response.json()) as Record<string, unknown>);
+}
+
+export async function duplicateFormTemplate(
+  authFetch: typeof fetch,
+  id: string,
+  name?: string
+): Promise<SavedFormTemplate> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/form-templates/${id}/duplicate`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(name ? { name } : {}),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+
+  return parseTemplate((await response.json()) as Record<string, unknown>);
 }
 
 export function isFormTemplateSaveBlocked(usage: FormTemplateUsage): boolean {

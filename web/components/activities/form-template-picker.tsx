@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Copy, Pencil, Trash2 } from "lucide-react";
 
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,18 @@ import {
   formTemplates,
   type FormTemplateId,
 } from "@/lib/form-templates";
+import type { RegistrationThemePreset } from "@/lib/activities-api";
 import {
   formTemplateUpgradePlan,
   isFormTemplateSaveBlocked,
   type FormTemplateUsage,
   type SavedFormTemplateSummary,
 } from "@/lib/form-templates-api";
+import {
+  registrationPresetLabels,
+  registrationPresetOptions,
+} from "@/lib/registration-theme-utils";
+import { isProPlan } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
 
 type FormTemplatePickerProps = {
@@ -23,6 +29,11 @@ type FormTemplatePickerProps = {
   onRenameSavedTemplate: (template: SavedFormTemplateSummary) => void;
   onReplaceSavedTemplate: (template: SavedFormTemplateSummary) => void;
   onDeleteSavedTemplate: (template: SavedFormTemplateSummary) => void;
+  onDuplicateSavedTemplate: (template: SavedFormTemplateSummary) => void;
+  onPinPresetSavedTemplate: (
+    template: SavedFormTemplateSummary,
+    preset: RegistrationThemePreset | null
+  ) => void;
   savedTemplates: SavedFormTemplateSummary[];
   usage: FormTemplateUsage;
   plan: string;
@@ -32,6 +43,7 @@ type FormTemplatePickerProps = {
   lockedReason?: string;
   templatesLoading?: boolean;
   hasClientIssues?: boolean;
+  presetActionLoading?: boolean;
 };
 
 function SlotMeter({ usage }: { usage: FormTemplateUsage }) {
@@ -79,6 +91,8 @@ export function FormTemplatePicker({
   onRenameSavedTemplate,
   onReplaceSavedTemplate,
   onDeleteSavedTemplate,
+  onDuplicateSavedTemplate,
+  onPinPresetSavedTemplate,
   savedTemplates,
   usage,
   plan,
@@ -88,10 +102,12 @@ export function FormTemplatePicker({
   lockedReason,
   templatesLoading = false,
   hasClientIssues = false,
+  presetActionLoading = false,
 }: FormTemplatePickerProps) {
   const isDisabled = disabled || locked;
   const saveBlocked = isFormTemplateSaveBlocked(usage);
   const upgradePlan = formTemplateUpgradePlan(plan);
+  const isPro = isProPlan(plan);
 
   return (
     <div className="space-y-4">
@@ -212,9 +228,38 @@ export function FormTemplatePicker({
                   </p>
                   <p className="text-xs text-text-muted-warm">
                     Updated {new Date(template.updatedAt).toLocaleDateString()}
+                    {template.pinnedRegistrationThemePreset ? (
+                      <>
+                        {" "}
+                        · Pin:{" "}
+                        {registrationPresetLabels[template.pinnedRegistrationThemePreset]}
+                      </>
+                    ) : null}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {isPro ? (
+                    <select
+                      aria-label={`Pin design preset for ${template.name}`}
+                      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                      value={template.pinnedRegistrationThemePreset ?? ""}
+                      disabled={disabled || presetActionLoading}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        onPinPresetSavedTemplate(
+                          template,
+                          value ? (value as RegistrationThemePreset) : null
+                        );
+                      }}
+                    >
+                      <option value="">No preset pin</option>
+                      {registrationPresetOptions.map((preset) => (
+                        <option key={preset} value={preset}>
+                          {registrationPresetLabels[preset]}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
                   <Button
                     type="button"
                     variant="outline"
@@ -244,6 +289,19 @@ export function FormTemplatePicker({
                     <Pencil className="size-4" aria-hidden />
                     Rename
                   </Button>
+                  {isPro ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={disabled || saveBlocked}
+                      onClick={() => onDuplicateSavedTemplate(template)}
+                      aria-label={`Duplicate ${template.name}`}
+                    >
+                      <Copy className="size-4" aria-hidden />
+                      Duplicate
+                    </Button>
+                  ) : null}
                   <Button
                     type="button"
                     variant="outline"
@@ -260,6 +318,15 @@ export function FormTemplatePicker({
             ))}
           </ul>
         )}
+
+        {!isPro && savedTemplates.length > 0 ? (
+          <UpgradePanel
+            title="Duplicate templates and pin Design presets"
+            description="Pro can duplicate saved form recipes and pin a registration layout preset when applying."
+            requiredPlan="Pro"
+            isTenantAdmin={isTenantAdmin}
+          />
+        ) : null}
       </section>
     </div>
   );

@@ -337,4 +337,80 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         var body = await response.Content.ReadAsStringAsync();
         Assert.DoesNotContain(foreignMarker, body, StringComparison.Ordinal);
     }
+
+    [SkippableFact]
+    public async Task Admin_SetCommunityDefaultFormTemplate_ForeignTemplate_Returns404()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        Guid foreignTemplateId;
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            foreignTemplateId = Guid.NewGuid();
+            dbContext.TenantFormTemplates.Add(new TenantFormTemplate
+            {
+                Id = foreignTemplateId,
+                TenantId = tenantB.Id,
+                Name = "Foreign default template",
+                FormSchema = new ActivityFormSchema { Version = 1, Fields = [] },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var adminClient = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+
+        var communitiesResponse = await adminClient.GetAsync("/api/v1/admin/communities");
+        communitiesResponse.EnsureSuccessStatusCode();
+        var communities = await communitiesResponse.Content.ReadFromJsonAsync<CommunityListResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        var communityId = communities!.Items[0].Id;
+
+        using var response = await adminClient.PutAsJsonAsync(
+            $"/api/v1/admin/communities/{communityId}/default-form-template",
+            new SetCommunityDefaultFormTemplateRequest(foreignTemplateId));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [SkippableFact]
+    public async Task Admin_DuplicateFormTemplate_ForeignTemplate_Returns404()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        Guid foreignTemplateId;
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            foreignTemplateId = Guid.NewGuid();
+            dbContext.TenantFormTemplates.Add(new TenantFormTemplate
+            {
+                Id = foreignTemplateId,
+                TenantId = tenantB.Id,
+                Name = "Foreign duplicate source",
+                FormSchema = new ActivityFormSchema { Version = 1, Fields = [] },
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+            });
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var adminClient = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+
+        using var response = await adminClient.PostAsJsonAsync(
+            $"/api/v1/admin/form-templates/{foreignTemplateId}/duplicate",
+            new DuplicateFormTemplateRequest(null));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
 }

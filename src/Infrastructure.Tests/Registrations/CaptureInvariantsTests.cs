@@ -42,6 +42,19 @@ public sealed class CaptureInvariantsTests
     }
 
     [Fact]
+    public void TenantFormTemplate_stores_preset_pin_separate_from_form_schema()
+    {
+        var schemaProperty = typeof(TenantFormTemplate).GetProperty(nameof(TenantFormTemplate.FormSchema));
+        var presetProperty = typeof(TenantFormTemplate).GetProperty(
+            nameof(TenantFormTemplate.PinnedRegistrationThemePreset));
+
+        Assert.NotNull(schemaProperty);
+        Assert.NotNull(presetProperty);
+        Assert.Equal(typeof(ActivityFormSchema), schemaProperty!.PropertyType);
+        Assert.Equal(typeof(string), presetProperty!.PropertyType);
+    }
+
+    [Fact]
     public void IRegistrationService_exposes_submit_only()
     {
         var methods = typeof(IRegistrationService).GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);

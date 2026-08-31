@@ -32,9 +32,11 @@ import {
 } from "@/components/ui/dialog";
 import {
   saveActivityFormSchema,
+  updateActivity,
   type Activity,
   type ActivityFormSchema,
   type FormSchemaMeta,
+  type RegistrationThemePreset,
 } from "@/lib/activities-api";
 import {
   getFormSchemaClientIssues,
@@ -53,15 +55,18 @@ import {
   createDefaultFormTemplateUsage,
   createFormTemplate,
   deleteFormTemplate,
+  duplicateFormTemplate,
   fetchFormTemplate,
   fetchFormTemplates,
   isFormTemplateSaveBlocked,
+  setFormTemplatePinnedPreset,
   updateFormTemplate,
   type FormTemplateUsage,
   type SavedFormTemplate,
   type SavedFormTemplateSummary,
 } from "@/lib/form-templates-api";
 import { applyMissingStepBuckets } from "@/lib/form-steps";
+import { registrationPresetLabels } from "@/lib/registration-theme-utils";
 import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
 
@@ -115,6 +120,9 @@ export function ActivityFormTab({
     null
   );
   const [templateActionLoading, setTemplateActionLoading] = useState(false);
+  const [pendingPresetApply, setPendingPresetApply] =
+    useState<RegistrationThemePreset | null>(null);
+  const [presetDialogOpen, setPresetDialogOpen] = useState(false);
 
   const isArchived = activity.status === "archived";
   const isDraft = activity.status === "draft";
@@ -265,9 +273,63 @@ export function ActivityFormTab({
     }
 
     if (pendingSavedTemplate) {
+      const pinnedPreset = pendingSavedTemplate.pinnedRegistrationThemePreset;
       applySavedTemplate(pendingSavedTemplate);
       setPendingSavedTemplate(null);
+
+      if (pinnedPreset) {
+        setPendingPresetApply(pinnedPreset);
+        setPresetDialogOpen(true);
+      }
     }
+  }
+
+  async function confirmApplyPinnedPreset() {
+    if (!pendingPresetApply) {
+      setPresetDialogOpen(false);
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      const updated = await updateActivity(authFetch, activity.id, {
+        name: activity.name,
+        category: activity.category,
+        schedule: activity.schedule,
+        location: activity.location,
+        communityLabel: activity.communityLabel,
+        heroImageUrl: activity.heroImageUrl,
+        accentColor: activity.accentColor,
+        maxRegistrants: activity.maxRegistrants,
+        scheduledStartsAt: activity.scheduledStartsAt,
+        registrationTheme: {
+          preset: pendingPresetApply,
+          inheritCommunityBrand: true,
+          accentColor: null,
+          heroImageUrl: null,
+        },
+      });
+      onActivityUpdated(updated);
+      setSuccess(
+        `Form and ${registrationPresetLabels[pendingPresetApply]} layout applied. Save form when ready.`
+      );
+    } catch (applyError) {
+      setError(
+        applyError instanceof Error
+          ? applyError.message
+          : "Could not apply design preset."
+      );
+    } finally {
+      setPendingPresetApply(null);
+      setPresetDialogOpen(false);
+      setTemplateActionLoading(false);
+    }
+  }
+
+  function dismissPresetApply() {
+    setPendingPresetApply(null);
+    setPresetDialogOpen(false);
   }
 
   async function handleSelectSavedTemplate(template: SavedFormTemplateSummary) {
@@ -402,6 +464,49 @@ export function ActivityFormTab({
       await refreshSavedTemplates();
       setError(
         deleteError instanceof Error ? deleteError.message : "Could not delete template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handleDuplicateTemplate(template: SavedFormTemplateSummary) {
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await duplicateFormTemplate(authFetch, template.id);
+      await refreshSavedTemplates();
+      setSuccess(`Duplicated "${template.name}".`);
+    } catch (duplicateError) {
+      await refreshSavedTemplates();
+      setError(
+        duplicateError instanceof Error
+          ? duplicateError.message
+          : "Could not duplicate template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handlePinPreset(
+    template: SavedFormTemplateSummary,
+    preset: RegistrationThemePreset | null
+  ) {
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await setFormTemplatePinnedPreset(authFetch, template.id, preset);
+      await refreshSavedTemplates();
+      setSuccess(
+        preset
+          ? `Pinned ${registrationPresetLabels[preset]} on "${template.name}".`
+          : `Cleared preset pin on "${template.name}".`
+      );
+    } catch (pinError) {
+      await refreshSavedTemplates();
+      setError(
+        pinError instanceof Error ? pinError.message : "Could not update preset pin."
       );
     } finally {
       setTemplateActionLoading(false);
@@ -553,6 +658,10 @@ export function ActivityFormTab({
             setDeleteTemplate(template);
             setDeleteDialogOpen(true);
           }}
+          onDuplicateSavedTemplate={(template) => void handleDuplicateTemplate(template)}
+          onPinPresetSavedTemplate={(template, preset) =>
+            void handlePinPreset(template, preset)
+          }
           savedTemplates={savedTemplates}
           usage={templateUsage}
           plan={plan}
@@ -562,6 +671,7 @@ export function ActivityFormTab({
           lockedReason={isPublished ? publishedTemplateLockReason : undefined}
           templatesLoading={templatesLoading}
           hasClientIssues={hasClientIssues}
+          presetActionLoading={templateActionLoading}
         />
       ) : null}
 
@@ -879,6 +989,45 @@ export function ActivityFormTab({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmApplyTemplate}>
               Apply template
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={presetDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            dismissPresetApply();
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Apply{" "}
+              {pendingPresetApply
+                ? registrationPresetLabels[pendingPresetApply]
+                : "preset"}{" "}
+              layout?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This template pins the{" "}
+              {pendingPresetApply
+                ? registrationPresetLabels[pendingPresetApply].toLowerCase()
+                : "selected"}{" "}
+              registration layout. Apply it to this activity&apos;s Design tab?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={templateActionLoading}>
+              Form only
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={templateActionLoading}
+              onClick={() => void confirmApplyPinnedPreset()}
+            >
+              {templateActionLoading ? "Applying…" : "Apply layout"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

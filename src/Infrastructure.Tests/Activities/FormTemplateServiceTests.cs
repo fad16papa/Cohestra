@@ -422,6 +422,82 @@ public sealed class FormTemplateServiceTests
             () => service.CreateAsync(new CreateFormTemplateRequest("Steps template", schemaWithSteps)));
     }
 
+    [Fact]
+    public async Task SetPinnedPresetAsync_ProTenant_UpdatesPreset()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Pro);
+        var service = CreateService(dbContext);
+        var created = await service.CreateAsync(CreateRequest("Pinned layout"));
+
+        var updated = await service.SetPinnedPresetAsync(
+            created.Id,
+            new SetFormTemplatePinnedPresetRequest("compact"));
+
+        Assert.NotNull(updated);
+        Assert.Equal("compact", updated!.PinnedRegistrationThemePreset);
+    }
+
+    [Fact]
+    public async Task SetPinnedPresetAsync_CoreTenant_ThrowsPlanLocked()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Core);
+        var service = CreateService(dbContext);
+        var created = await service.CreateAsync(CreateRequest("Core template"));
+
+        await Assert.ThrowsAsync<FormTemplatePlanLockedException>(
+            () => service.SetPinnedPresetAsync(
+                created.Id,
+                new SetFormTemplatePinnedPresetRequest("card")));
+    }
+
+    [Fact]
+    public async Task DuplicateAsync_ProTenant_CreatesCopyAndCountsSlot()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Pro);
+        var service = CreateService(dbContext);
+        var source = await service.CreateAsync(CreateRequest("Original"));
+
+        var duplicate = await service.DuplicateAsync(
+            source.Id,
+            new DuplicateFormTemplateRequest(null));
+
+        Assert.Equal("Original (copy)", duplicate.Name);
+        Assert.Equal(source.FormSchema.Fields[0].Id, duplicate.FormSchema.Fields[0].Id);
+
+        var list = await service.ListAsync();
+        Assert.Equal(2, list.Templates.Count);
+        Assert.Equal(2, list.Usage.Used);
+    }
+
+    [Fact]
+    public async Task DuplicateAsync_CoreTenant_ThrowsPlanLocked()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Core);
+        var service = CreateService(dbContext);
+        var source = await service.CreateAsync(CreateRequest("Core original"));
+
+        await Assert.ThrowsAsync<FormTemplatePlanLockedException>(
+            () => service.DuplicateAsync(source.Id, null));
+    }
+
+    [Fact]
+    public async Task DuplicateAsync_AtCapacity_ThrowsPlanLocked()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Pro);
+        var service = CreateService(dbContext);
+
+        for (var index = 0; index < 25; index++)
+        {
+            await service.CreateAsync(CreateRequest($"Template {index + 1}"));
+        }
+
+        var first = await service.GetByIdAsync(
+            (await service.ListAsync()).Templates[0].Id);
+
+        await Assert.ThrowsAsync<FormTemplatePlanLockedException>(
+            () => service.DuplicateAsync(first!.Id, null));
+    }
+
     private static FormTemplateService CreateService(CohestraDbContext dbContext)
     {
         var currentTenant = new CurrentTenant();
