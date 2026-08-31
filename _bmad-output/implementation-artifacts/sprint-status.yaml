@@ -45,7 +45,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-22T15:00:00Z
+last_updated: 2026-08-31T12:30:00Z
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -302,11 +302,11 @@ development_status:
   epic-29-retrospective: optional
 
   # Epic 32 — Registration embed (allowed hosts + iframe route)
-  epic-32: in-progress
+  epic-32: done
   32-1-allowed-embed-hosts-and-csp: done
   32-2-activity-embed-route-and-share-kit-snippet: done
   32-3-website-contact-section-creates-a-client: done
-  epic-32-retrospective: optional
+  epic-32-retrospective: done
 
 action_items:
   - epic: 16
@@ -565,4 +565,30 @@ action_items:
   - epic: 29
     action: "Create next story 29.1 via bmad-create-story when ready to implement (no code until then)"
     owner: Dev
+    status: open
+
+  # Epic 32 retrospective action items (2026-08-31)
+  - epic: 32
+    action: "Merge Epic 32 PR stack (32.1 → 32.2 → 32.3) when CI green"
+    owner: Dev
+    status: open
+  - epic: 32
+    action: "Operator UAT — embed allow-list, Share kit iframe, contact form submit on dev stack"
+    owner: Operator
+    status: open
+  - epic: 32
+    action: "Run WebsiteInquiry + TenantEmbedSettings integration tests on CI Postgres/Redis"
+    owner: Dev
+    status: open
+  - epic: 32
+    action: "Manual verify embed route CSP headers (Story 32.1 Task 7)"
+    owner: Operator
+    status: open
+  - epic: 32
+    action: "Document embed operator flow in launch/UAT checklist"
+    owner: Dev
+    status: open
+  - epic: 32
+    action: "Track deferred embed e2e tests as follow-up if registration capture expands"
+    owner: Product
     status: open
