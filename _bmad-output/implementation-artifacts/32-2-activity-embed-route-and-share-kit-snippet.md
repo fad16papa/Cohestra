@@ -2,7 +2,7 @@
 story_id: 32.2
 story_key: 32-2-activity-embed-route-and-share-kit-snippet
 epic: 32
-status: in-progress
+status: review
 baseline_commit: fad9672
 created: 2026-08-31
 depends_on:
@@ -16,7 +16,7 @@ forward_deps:
 
 # Story 32.2: Activity embed route and Share kit snippet
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -147,4 +147,5 @@ Composer
 
 ## Change Log
 
+- 2026-08-31: Code review pass 1 — decision + 7 patches applied (iframe id, embed bundle copy, settings error/loading, URL API, height guards)
 - 2026-08-31: Story 32.2 implemented — embed route, postMessage height, Share kit snippet; minimal 30.1 hidden-field port
