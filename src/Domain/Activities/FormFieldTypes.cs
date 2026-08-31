@@ -10,6 +10,7 @@ public static class FormFieldTypes
     public const string Consent = "consent";
     public const string ReferralSource = "referral_source";
     public const string SectionHeader = "section_header";
+    public const string Hidden = "hidden";
 
     public static readonly HashSet<string> All =
     [
@@ -21,6 +22,7 @@ public static class FormFieldTypes
         Consent,
         ReferralSource,
         SectionHeader,
+        Hidden,
     ];
 
     public static readonly HashSet<string> NonInput =

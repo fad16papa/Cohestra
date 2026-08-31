@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download, Link2, MessageCircle } from "lucide-react";
+import { Download, Link2, MessageCircle, Code2 } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { ShareLinkPreview } from "@/components/shared/share-link-preview";
@@ -14,6 +14,12 @@ import {
   type ActivityRegistrationLink,
 } from "@/lib/activities-api";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import {
+  buildActivityEmbedIframeSnippet,
+  buildActivityEmbedUrl,
+  buildEmbedResizeListenerSnippet,
+} from "@/lib/embed-snippet";
+import { fetchTenantEmbedSettings, type TenantEmbedSettings } from "@/lib/tenant-settings-api";
 import {
   buildActivitySharePackText,
   buildActivitySharePreview,
@@ -34,6 +40,7 @@ export function ActivityShareKitPanel({
   const { authFetch } = useAuth();
   const [registrationLink, setRegistrationLink] =
     useState<ActivityRegistrationLink | null>(null);
+  const [embedSettings, setEmbedSettings] = useState<TenantEmbedSettings | null>(null);
   const [qrPreviewUrl, setQrPreviewUrl] = useState<string | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [qrError, setQrError] = useState<string | null>(null);
@@ -61,6 +68,26 @@ export function ActivityShareKitPanel({
     return buildActivityWhatsAppMessage(activity, registrationLink.url);
   }, [activity, registrationLink]);
 
+  const embedUrl = useMemo(() => {
+    if (!registrationLink) {
+      return null;
+    }
+
+    return buildActivityEmbedUrl(registrationLink.url, registrationLink.path);
+  }, [registrationLink]);
+
+  const embedSnippet = useMemo(() => {
+    if (!embedUrl) {
+      return null;
+    }
+
+    return buildActivityEmbedIframeSnippet(embedUrl, activity.name);
+  }, [activity.name, embedUrl]);
+
+  const embedResizeHelper = useMemo(() => buildEmbedResizeListenerSnippet(), []);
+
+  const embedHostsConfigured = (embedSettings?.allowedEmbedOrigins.length ?? 0) > 0;
+
   useEffect(() => {
     let cancelled = false;
     let objectUrl: string | null = null;
@@ -68,6 +95,7 @@ export function ActivityShareKitPanel({
     async function loadPublishedAssets() {
       if (!isPublished) {
         setRegistrationLink(null);
+        setEmbedSettings(null);
         setQrPreviewUrl(null);
         setLinkError(null);
         setQrError(null);
@@ -78,9 +106,10 @@ export function ActivityShareKitPanel({
       setLinkError(null);
       setQrError(null);
 
-      const [linkResult, qrResult] = await Promise.allSettled([
+      const [linkResult, qrResult, embedResult] = await Promise.allSettled([
         fetchActivityRegistrationLink(authFetch, activity.id),
         fetchActivityQrCodeBlob(authFetch, activity.id),
+        fetchTenantEmbedSettings(authFetch),
       ]);
 
       if (cancelled) {
@@ -96,6 +125,12 @@ export function ActivityShareKitPanel({
             ? linkResult.reason.message
             : "Could not load registration link."
         );
+      }
+
+      if (embedResult.status === "fulfilled") {
+        setEmbedSettings(embedResult.value);
+      } else {
+        setEmbedSettings(null);
       }
 
       if (qrResult.status === "fulfilled") {
@@ -128,6 +163,20 @@ export function ActivityShareKitPanel({
       });
     };
   }, [activity.id, authFetch, isPublished, reloadToken]);
+
+  async function handleCopyEmbedSnippet() {
+    if (!embedSnippet || !embedHostsConfigured) {
+      return;
+    }
+
+    setStatusMessage(null);
+    const copied = await copyTextToClipboard(embedSnippet);
+    setStatusMessage(
+      copied
+        ? "Embed snippet copied."
+        : "Select the snippet and copy manually (Ctrl+C)."
+    );
+  }
 
   async function handleCopyLink() {
     if (!registrationLink) {
@@ -334,6 +383,58 @@ export function ActivityShareKitPanel({
               <p role="status" className="text-xs text-text-muted-warm">
                 QR preview unavailable — you can still download the PNG.
               </p>
+            ) : null}
+
+            {registrationLink ? (
+              <div className="space-y-2 border-t border-border-warm pt-4">
+                <p className="text-sm font-medium text-text-warm">Website embed</p>
+                {embedHostsConfigured && embedSnippet ? (
+                  <>
+                    <label
+                      htmlFor="activity-embed-snippet"
+                      className="text-xs text-text-muted-warm"
+                    >
+                      iframe snippet
+                    </label>
+                    <textarea
+                      id="activity-embed-snippet"
+                      readOnly
+                      rows={3}
+                      value={embedSnippet}
+                      aria-label="iframe embed snippet"
+                      className="w-full resize-none rounded-lg border border-input bg-muted/30 px-3 py-2 font-mono text-xs"
+                      onFocus={(event) => event.target.select()}
+                      onClick={(event) => event.currentTarget.select()}
+                    />
+                    <p className="text-xs text-text-muted-warm">
+                      Paste on an allowed host (Settings → Allowed embed hosts). Add this
+                      resize listener on the parent page:
+                    </p>
+                    <textarea
+                      readOnly
+                      rows={4}
+                      value={embedResizeHelper}
+                      aria-label="Parent page resize listener example"
+                      className="w-full resize-none rounded-lg border border-input bg-muted/30 px-3 py-2 font-mono text-xs"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isLoading}
+                      onClick={() => void handleCopyEmbedSnippet()}
+                    >
+                      <Code2 className="size-4" aria-hidden />
+                      Copy embed snippet
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-sm text-text-muted-warm">
+                    Add at least one allowed embed host in Settings before copying an iframe
+                    snippet.
+                  </p>
+                )}
+              </div>
             ) : null}
           </div>
 

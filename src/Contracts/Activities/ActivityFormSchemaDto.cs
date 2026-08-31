@@ -21,6 +21,7 @@ public sealed record FormFieldDefinitionDto(
     string? Placeholder,
     IReadOnlyList<FormFieldOptionDto>? Options,
     string? ConsentText,
-    string? PhoneCountry);
+    string? PhoneCountry,
+    string? DefaultValue = null);
 
 public sealed record FormFieldOptionDto(string Value, string Label);

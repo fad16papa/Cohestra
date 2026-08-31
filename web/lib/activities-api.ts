@@ -12,7 +12,8 @@ export type FormFieldType =
   | "checkbox"
   | "consent"
   | "referral_source"
-  | "section_header";
+  | "section_header"
+  | "hidden";
 
 export type FormFieldOption = {
   value: string;
@@ -28,6 +29,7 @@ export type FormFieldDefinition = {
   options: FormFieldOption[] | null;
   consentText: string | null;
   phoneCountry?: string | null;
+  defaultValue?: string | null;
 };
 
 export type FormSchemaMeta = {
@@ -150,6 +152,7 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
       const options = item.options ?? item.Options;
       const consentText = item.consentText ?? item.ConsentText;
       const phoneCountry = item.phoneCountry ?? item.PhoneCountry;
+      const defaultValue = item.defaultValue ?? item.DefaultValue;
 
       if (
         typeof id !== "string" ||
@@ -190,6 +193,7 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
           typeof phoneCountry === "string" && phoneCountry.trim()
             ? phoneCountry.trim().toUpperCase()
             : null,
+        defaultValue: typeof defaultValue === "string" ? defaultValue : null,
       });
     }),
   };

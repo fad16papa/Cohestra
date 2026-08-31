@@ -32,6 +32,9 @@ public sealed class FormFieldDefinition
 
     /// <summary>ISO 3166-1 alpha-2 country for phone fields (e.g. SG, PH).</summary>
     public string? PhoneCountry { get; set; }
+
+    /// <summary>Hidden fields only. Used when the public link omits the matching query key.</summary>
+    public string? DefaultValue { get; set; }
 }
 
 public sealed class FormFieldOption

@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ActivityFormSchema, FormFieldDefinition } from "@/lib/activities-api";
-import { isNonInputFieldType } from "@/lib/form-schema-utils";
+import { isHiddenFieldType, isNonInputFieldType } from "@/lib/form-schema-utils";
+import { collectHiddenAnswers } from "@/lib/hidden-field-query";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
 import { validatePhoneLocalNumber } from "@/lib/phone-countries";
 import { PUBLIC_PLAN_REGISTRATION_LIMIT_COPY } from "@/lib/public-registration-messages";
@@ -54,7 +55,7 @@ function validatePhoneField(
 }
 
 function validateField(field: FormFieldDefinition, value: unknown): string | null {
-  if (isNonInputFieldType(field.type)) {
+  if (isNonInputFieldType(field.type) || isHiddenFieldType(field.type)) {
     return null;
   }
 
@@ -142,7 +143,7 @@ export function RegistrationForm({
     const nextTouched: Record<string, boolean> = {};
 
     for (const field of schema.fields) {
-      if (isNonInputFieldType(field.type)) {
+      if (isNonInputFieldType(field.type) || isHiddenFieldType(field.type)) {
         continue;
       }
 
@@ -177,7 +178,15 @@ export function RegistrationForm({
       idempotencyKeyRef.current = createIdempotencyKey();
     }
 
-    void submitPublicRegistration(activitySlug, values, {
+    const answers = {
+      ...values,
+      ...collectHiddenAnswers(
+        schema.fields,
+        new URLSearchParams(window.location.search)
+      ),
+    };
+
+    void submitPublicRegistration(activitySlug, answers, {
       idempotencyKey: idempotencyKeyRef.current,
     })
       .then((result) => {
@@ -227,6 +236,20 @@ export function RegistrationForm({
       return (
         <div key={field.id} className="border-t border-border-warm pt-5 first:border-t-0 first:pt-0">
           <h3 className="text-sm font-semibold text-text-warm">{heading}</h3>
+        </div>
+      );
+    }
+
+    if (isHiddenFieldType(field.type)) {
+      if (!isPreview) {
+        return null;
+      }
+
+      return (
+        <div key={field.id}>
+          <span className="inline-flex items-center rounded-lg bg-muted px-2.5 py-1 text-xs font-medium text-text-muted-warm">
+            Hidden · filled from link
+          </span>
         </div>
       );
     }
