@@ -2,7 +2,7 @@
 story_id: 32.2
 story_key: 32-2-activity-embed-route-and-share-kit-snippet
 epic: 32
-status: review
+status: in-progress
 baseline_commit: fad9672
 created: 2026-08-31
 depends_on:
@@ -16,7 +16,7 @@ forward_deps:
 
 # Story 32.2: Activity embed route and Share kit snippet
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -89,6 +89,20 @@ So that Saturday's signup can live on a club or Notion page and still write a Re
 - [x] [Review][Defer] **Rate-limit parity for embed submit unverified** — deferred, reuses same public registration API path
 - [x] [Review][Defer] **Double activity fetch in generateMetadata + page** [`web/app/embed/register/[slug]/page.tsx`] — deferred, minor Next.js perf
 - [x] [Review][Defer] **Hidden query passthrough not integration-tested via URL query string** — deferred, client-side merge covered by unit tests
+
+### Review Findings — Pass 2 (2026-08-31)
+
+- [x] [Review][Patch] **`AppFooter` renders on `/embed/*`, under-reports resize height** [`web/components/layouts/app-footer.tsx:15`]
+- [x] [Review][Patch] **Share kit iframe textarea still iframe-only** [`web/components/activities/activity-share-kit-panel.tsx:443`]
+- [x] [Review][Patch] **Campaign URL example breaks when embed URL has query** [`web/components/activities/activity-share-kit-panel.tsx:435`]
+- [x] [Review][Patch] **EmbedHeightReporter should cap height at 10000** [`web/components/registration/embed-height-reporter.tsx:25`]
+- [x] [Review][Patch] **Resize listener should verify `event.source`** [`web/lib/embed-snippet.ts:64`]
+
+- [x] [Review][Defer] **Fixed iframe id breaks multi-embed parent pages** — deferred, v1 assumes one embed per page
+- [x] [Review][Defer] **Inline `<script>` in copy bundle blocked by strict parent CSP** — deferred, document external-script alternative in follow-up
+- [x] [Review][Defer] **No initial min-height on iframe snippet** — deferred, first postMessage handles resize; minor UX flash
+- [x] [Review][Defer] **Required hidden fields not enforced when query absent** — deferred, Story 30.1 contract: required hidden never blocks submit
+- [x] [Review][Defer] **Paused registration uses `plan-limit` unavailable reason** — deferred, matches public `/register/{slug}` brownfield
 
 ## Dev Notes
 

@@ -1,3 +1,11 @@
+## Deferred from: code review of 32-2-activity-embed-route-and-share-kit-snippet.md pass 2 (2026-08-31)
+
+- Fixed iframe id breaks multi-embed parent pages — v1 assumes one embed per page
+- Inline script in copy bundle blocked by strict parent CSP — document external-script alternative in follow-up
+- No initial min-height on iframe snippet — first postMessage handles resize; minor UX flash
+- Required hidden fields not enforced when query absent — Story 30.1 contract: required hidden never blocks submit
+- Paused registration uses plan-limit unavailable reason — matches public /register brownfield
+
 ## Deferred from: code review of 32-2-activity-embed-route-and-share-kit-snippet.md (2026-08-31)
 
 - postMessage uses targetOrigin `"*"` — standard v1 embed-widget pattern; parent listener should validate origin

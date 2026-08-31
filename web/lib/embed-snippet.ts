@@ -1,5 +1,6 @@
 export const EMBED_RESIZE_MESSAGE_TYPE = "cohestra-embed-resize";
 export const EMBED_IFRAME_ID = "cohestra-registration-embed";
+export const EMBED_MAX_REPORTED_HEIGHT = 10000;
 
 export type EmbedResizeMessage = {
   type: typeof EMBED_RESIZE_MESSAGE_TYPE;
@@ -47,6 +48,21 @@ export function buildActivityEmbedUrl(registrationUrl: string, registrationPath:
   }
 }
 
+export function buildCampaignQueryExample(
+  embedUrl: string,
+  param = "ref",
+  value = "wa"
+): string {
+  try {
+    const url = new URL(embedUrl);
+    url.searchParams.set(param, value);
+    return url.toString();
+  } catch {
+    const separator = embedUrl.includes("?") ? "&" : "?";
+    return `${embedUrl}${separator}${param}=${encodeURIComponent(value)}`;
+  }
+}
+
 export function buildActivityEmbedIframeSnippet(
   embedUrl: string,
   activityName: string,
@@ -65,9 +81,10 @@ export function buildEmbedResizeListenerSnippet(
   if (event.origin !== "${allowedOrigin}") return;
   if (event.data?.type !== "${EMBED_RESIZE_MESSAGE_TYPE}") return;
   const h = Number(event.data.height);
-  if (!Number.isFinite(h) || h < 0 || h > 10000) return;
+  if (!Number.isFinite(h) || h < 0 || h > ${EMBED_MAX_REPORTED_HEIGHT}) return;
   const frame = document.getElementById("${iframeId}");
-  if (frame) frame.style.height = h + "px";
+  if (!frame || event.source !== frame.contentWindow) return;
+  frame.style.height = h + "px";
 });`;
 }
 
@@ -78,8 +95,9 @@ export function buildActivityEmbedCopyBundle(
 ): string {
   const iframe = buildActivityEmbedIframeSnippet(embedUrl, activityName);
   const listener = buildEmbedResizeListenerSnippet();
+  const campaignExample = buildCampaignQueryExample(embedUrl);
   return [
-    `<!-- Campaign tracking: append Hidden field keys to iframe src, e.g. ${embedUrl}?ref=wa -->`,
+    `<!-- Campaign tracking: append Hidden field keys to iframe src, e.g. ${campaignExample} -->`,
     iframe,
     "<!-- Paste on the parent page (replace YOUR_COHESTRA_ORIGIN with your tenant site origin) -->",
     `<script>${listener}</script>`,

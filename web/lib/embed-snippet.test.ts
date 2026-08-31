@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   EMBED_IFRAME_ID,
+  EMBED_MAX_REPORTED_HEIGHT,
   buildActivityEmbedCopyBundle,
   buildActivityEmbedIframeSnippet,
   buildActivityEmbedPath,
   buildActivityEmbedUrl,
+  buildCampaignQueryExample,
   buildEmbedResizeListenerSnippet,
 } from "./embed-snippet";
 
@@ -55,11 +57,23 @@ describe("embed-snippet", () => {
     expect(snippet).toContain('title="Register for Fun &quot;Event&quot; &amp; More"');
   });
 
-  it("resize listener validates origin and height", () => {
+  it("resize listener validates origin, source, and height", () => {
     const listener = buildEmbedResizeListenerSnippet();
     expect(listener).toContain('event.origin !== "YOUR_COHESTRA_ORIGIN"');
+    expect(listener).toContain("event.source !== frame.contentWindow");
     expect(listener).toContain("Number.isFinite(h)");
+    expect(listener).toContain(String(EMBED_MAX_REPORTED_HEIGHT));
     expect(listener).toContain(`getElementById("${EMBED_IFRAME_ID}")`);
+  });
+
+  it("builds campaign query example appending to existing search params", () => {
+    expect(
+      buildCampaignQueryExample(
+        "https://club.example.com/embed/register/saturday-pickleball?utm=email"
+      )
+    ).toBe(
+      "https://club.example.com/embed/register/saturday-pickleball?utm=email&ref=wa"
+    );
   });
 
   it("copy bundle includes iframe, listener, and campaign query hint", () => {

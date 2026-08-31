@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { EMBED_RESIZE_MESSAGE_TYPE } from "@/lib/embed-snippet";
+import { EMBED_MAX_REPORTED_HEIGHT, EMBED_RESIZE_MESSAGE_TYPE } from "@/lib/embed-snippet";
 
 type EmbedHeightReporterProps = {
   children: React.ReactNode;
@@ -22,7 +22,8 @@ export function EmbedHeightReporter({ children }: EmbedHeightReporterProps) {
     }
 
     function postHeight() {
-      const height = Math.ceil(container?.getBoundingClientRect().height ?? 0);
+      const rawHeight = Math.ceil(container?.getBoundingClientRect().height ?? 0);
+      const height = Math.min(rawHeight, EMBED_MAX_REPORTED_HEIGHT);
       if (!Number.isFinite(height) || height <= 0) {
         return;
       }

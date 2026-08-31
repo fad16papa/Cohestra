@@ -16,9 +16,8 @@ import {
 import { copyTextToClipboard } from "@/lib/clipboard";
 import {
   buildActivityEmbedCopyBundle,
-  buildActivityEmbedIframeSnippet,
   buildActivityEmbedUrl,
-  buildEmbedResizeListenerSnippet,
+  buildCampaignQueryExample,
 } from "@/lib/embed-snippet";
 import { fetchTenantEmbedSettings, type TenantEmbedSettings } from "@/lib/tenant-settings-api";
 import {
@@ -79,14 +78,6 @@ export function ActivityShareKitPanel({
     return buildActivityEmbedUrl(registrationLink.url, registrationLink.path);
   }, [registrationLink]);
 
-  const embedSnippet = useMemo(() => {
-    if (!embedUrl) {
-      return null;
-    }
-
-    return buildActivityEmbedIframeSnippet(embedUrl, activity.name);
-  }, [activity.name, embedUrl]);
-
   const embedCopyBundle = useMemo(() => {
     if (!embedUrl) {
       return null;
@@ -95,7 +86,13 @@ export function ActivityShareKitPanel({
     return buildActivityEmbedCopyBundle(embedUrl, activity.name);
   }, [activity.name, embedUrl]);
 
-  const embedResizeHelper = useMemo(() => buildEmbedResizeListenerSnippet(), []);
+  const campaignQueryExample = useMemo(() => {
+    if (!embedUrl) {
+      return null;
+    }
+
+    return buildCampaignQueryExample(embedUrl);
+  }, [embedUrl]);
 
   const embedHostsConfigured = (embedSettings?.allowedEmbedOrigins.length ?? 0) > 0;
 
@@ -426,41 +423,32 @@ export function ActivityShareKitPanel({
                       Retry embed settings
                     </Button>
                   </div>
-                ) : embedHostsConfigured && embedSnippet && embedCopyBundle ? (
+                ) : embedHostsConfigured && embedCopyBundle && campaignQueryExample ? (
                   <>
                     <p className="text-xs text-text-muted-warm">
                       Paste on an allowed host (Settings → Allowed embed hosts). For Hidden
                       campaign fields, append query keys to the iframe{" "}
                       <code className="rounded bg-muted px-1">src</code> (e.g.{" "}
-                      <code className="rounded bg-muted px-1">{embedUrl}?ref=wa</code>).
+                      <code className="rounded bg-muted px-1">{campaignQueryExample}</code>
+                      ). Replace{" "}
+                      <code className="rounded bg-muted px-1">YOUR_COHESTRA_ORIGIN</code> in the
+                      script with your tenant site origin.
                     </p>
                     <label
                       htmlFor="activity-embed-snippet"
                       className="text-xs text-text-muted-warm"
                     >
-                      iframe snippet
+                      Embed bundle (iframe + resize listener)
                     </label>
                     <textarea
                       id="activity-embed-snippet"
                       readOnly
-                      rows={3}
-                      value={embedSnippet}
-                      aria-label="iframe embed snippet"
+                      rows={12}
+                      value={embedCopyBundle}
+                      aria-label="Embed bundle with iframe and resize listener"
                       className="w-full resize-none rounded-lg border border-input bg-muted/30 px-3 py-2 font-mono text-xs"
                       onFocus={(event) => event.target.select()}
                       onClick={(event) => event.currentTarget.select()}
-                    />
-                    <p className="text-xs text-text-muted-warm">
-                      Add this resize listener on the parent page (replace{" "}
-                      <code className="rounded bg-muted px-1">YOUR_COHESTRA_ORIGIN</code> with
-                      your tenant site origin):
-                    </p>
-                    <textarea
-                      readOnly
-                      rows={5}
-                      value={embedResizeHelper}
-                      aria-label="Parent page resize listener example"
-                      className="w-full resize-none rounded-lg border border-input bg-muted/30 px-3 py-2 font-mono text-xs"
                     />
                     <Button
                       type="button"
