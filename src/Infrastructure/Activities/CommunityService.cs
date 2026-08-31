@@ -187,14 +187,32 @@ public sealed class CommunityService(
                 throw new CommunityPlanLockedException(planGateError);
             }
 
-            var templateExists = await dbContext.TenantFormTemplates
-                .AsNoTracking()
-                .AnyAsync(template => template.Id == templateId, cancellationToken);
+            if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+            {
+                throw new InvalidOperationException("Tenant context is required.");
+            }
 
-            if (!templateExists)
+            var template = await dbContext.TenantFormTemplates
+                .AsNoTracking()
+                .FirstOrDefaultAsync(item => item.Id == templateId, cancellationToken);
+
+            if (template is null)
             {
                 return null;
             }
+
+            var plan = await dbContext.Tenants
+                .AsNoTracking()
+                .Where(item => item.Id == tenantId)
+                .Select(item => (TenantPlan?)item.Plan)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (plan is null)
+            {
+                throw new InvalidOperationException("Tenant not found for form schema plan gate.");
+            }
+
+            FormSchemaPlanGate.EnsureAllowed(template.FormSchema, plan.Value);
 
             community.DefaultFormTemplateId = templateId;
         }
