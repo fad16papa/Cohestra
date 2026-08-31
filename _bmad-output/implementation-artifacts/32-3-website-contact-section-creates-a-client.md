@@ -141,3 +141,14 @@ Composer
 - [x] [Review][Defer] **Consent unchecked cannot revoke prior opt-in** [`ClientDeduplicationService.ApplyProfileAsync`] — deferred, pre-existing dedup service behavior shared with registration
 - [x] [Review][Defer] **No idempotency key on website inquiry submit** [`WebsiteInquiryService.cs`] — deferred, not in Story 32.3 AC; double-submit creates duplicate timeline/outbox entries
 - [x] [Review][Defer] **No integration test for phone-based dedup** [`WebsiteInquiryIntegrationTests.cs`] — deferred, email dedup path covers same `ClientDeduplicationService`; phone path unverified in CI
+
+### Review Findings — Pass 3 (2026-08-31)
+
+**Acceptance audit:** All Story 32.3 ACs satisfied. Pass 2 fixes verified intact.
+
+- [ ] [Review][Patch] **Null-safe contact-section gate when `Sections` is null** [`WebsiteInquiryService.cs:127-129` — JSON-deserialized document may have null `Sections`]
+- [ ] [Review][Patch] **`NormalizeMessageBody` throws on null message** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:127-128`]
+- [ ] [Review][Patch] **Email subject allows CR/LF in participant name** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:21-27` — subject built from raw name/phone]
+
+- [x] [Review][Defer] **Operator notify email omits submission consent** — deferred, AC 3 covers client `ConsentGiven`; operator email is best-effort and not spec'd
+- [x] [Review][Defer] **No integration test deserializes outbox inquiry snapshot** — deferred, pass 1 fix covered by unit flow; CI regression guard nice-to-have
