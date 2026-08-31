@@ -109,7 +109,7 @@ Composer
 
 ### Change Log
 
-- 2026-08-31: Pass 2 code review — 4 polish patches applied
+- 2026-08-31: Pass 3 code review — 3 defensive patches applied
 
 ### Review Findings (2026-08-31)
 
@@ -146,9 +146,9 @@ Composer
 
 **Acceptance audit:** All Story 32.3 ACs satisfied. Pass 2 fixes verified intact.
 
-- [ ] [Review][Patch] **Null-safe contact-section gate when `Sections` is null** [`WebsiteInquiryService.cs:127-129` — JSON-deserialized document may have null `Sections`]
-- [ ] [Review][Patch] **`NormalizeMessageBody` throws on null message** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:127-128`]
-- [ ] [Review][Patch] **Email subject allows CR/LF in participant name** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:21-27` — subject built from raw name/phone]
+- [x] [Review][Patch] **Null-safe contact-section gate when `Sections` is null** — `Sections?.Any(...) == true`.
+- [x] [Review][Patch] **`NormalizeMessageBody` throws on null message** — accepts null and coalesces to empty string.
+- [x] [Review][Patch] **Email subject allows CR/LF in participant name** — `SanitizeSubjectParticipant` collapses newlines before subject build.
 
 - [x] [Review][Defer] **Operator notify email omits submission consent** — deferred, AC 3 covers client `ConsentGiven`; operator email is best-effort and not spec'd
 - [x] [Review][Defer] **No integration test deserializes outbox inquiry snapshot** — deferred, pass 1 fix covered by unit flow; CI regression guard nice-to-have

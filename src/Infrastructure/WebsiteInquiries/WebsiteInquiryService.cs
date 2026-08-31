@@ -124,9 +124,9 @@ public sealed class WebsiteInquiryService(
             return false;
         }
 
-        return page.PublishedSections.Sections.Any(section =>
+        return page.PublishedSections.Sections?.Any(section =>
             section.Enabled &&
-            string.Equals(section.Type, "contact", StringComparison.OrdinalIgnoreCase));
+            string.Equals(section.Type, "contact", StringComparison.OrdinalIgnoreCase)) == true;
     }
 
     private static string TruncateNote(string message)

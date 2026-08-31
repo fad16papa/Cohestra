@@ -18,11 +18,12 @@ internal static class WebsiteInquiryOperatorNotifyEmailBuilder
     public static (string Subject, string PlainBody, string HtmlBody) Build(
         WebsiteInquiryOperatorNotifyEmailModel model)
     {
-        var subjectParticipant = !string.IsNullOrWhiteSpace(model.ParticipantName)
-            ? model.ParticipantName.Trim()
-            : !string.IsNullOrWhiteSpace(model.Phone)
-                ? model.Phone.Trim()
-                : "New contact";
+        var subjectParticipant = SanitizeSubjectParticipant(
+            !string.IsNullOrWhiteSpace(model.ParticipantName)
+                ? model.ParticipantName
+                : !string.IsNullOrWhiteSpace(model.Phone)
+                    ? model.Phone
+                    : "New contact");
 
         var subject = SanitizeEmailSubject($"Website inquiry — {subjectParticipant}");
 
@@ -124,8 +125,21 @@ internal static class WebsiteInquiryOperatorNotifyEmailBuilder
     private static string FormatValue(string? value) =>
         string.IsNullOrWhiteSpace(value) ? "—" : value.Trim();
 
-    private static string NormalizeMessageBody(string value) =>
-        value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Trim();
+    private static string NormalizeMessageBody(string? value) =>
+        (value ?? string.Empty)
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Trim();
+
+    private static string SanitizeSubjectParticipant(string value)
+    {
+        var collapsed = value
+            .Replace("\r\n", " ", StringComparison.Ordinal)
+            .Replace('\r', ' ')
+            .Replace('\n', ' ')
+            .Trim();
+        return collapsed.Length <= 120 ? collapsed : collapsed[..120];
+    }
 
     private static string SanitizeEmailSubject(string subject)
     {
