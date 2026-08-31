@@ -110,7 +110,7 @@ Composer
 ### Change Log
 
 - 2026-08-31: Pass 3 code review — 3 defensive patches applied
-- 2026-08-31: Pass 4 code review — 1 patch finding (plain-text email newline injection)
+- 2026-08-31: Pass 4 code review — plain-text email newline injection patch applied
 
 ### Review Findings (2026-08-31)
 
@@ -158,7 +158,7 @@ Composer
 
 **Acceptance audit:** All Story 32.3 ACs satisfied. Pass 1–3 fixes verified intact.
 
-- [ ] [Review][Patch] **Plain-text operator notify allows newline injection in name/phone/email** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs`] — Pass 3 sanitized subject via `SanitizeSubjectParticipant`; plain-text body still uses `FormatValue` (trim only) for labeled fields, so values like `Alice\nEmail: attacker@evil.com` can inject spoofed lines in plain-text inboxes. HTML body is safe (`HtmlEncode`). Fix: reuse subject sanitizer on plain-text labeled fields.
+- [x] [Review][Patch] **Plain-text operator notify allows newline injection in name/phone/email** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs`] — `FormatPlainTextValue` reuses `SanitizeSubjectParticipant` for plain-text labeled fields.
 
 - [x] [Review][Defer] **HTTP 201 returned when dedup path returns `"updated"`** [`PublicWebsiteInquiriesController.cs`] — deferred, REST semantics nit; web client ignores status code
 - [x] [Review][Defer] **Basic tenant invalid payload gets 400 before plan gate** [`WebsiteInquiryService.cs`] — deferred, AC 5 satisfied for valid payloads; validation-before-plan ordering is acceptable v1

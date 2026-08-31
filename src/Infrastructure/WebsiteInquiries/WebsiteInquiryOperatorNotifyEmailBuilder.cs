@@ -31,9 +31,9 @@ internal static class WebsiteInquiryOperatorNotifyEmailBuilder
         EmailBrandHeaderTemplate.AppendPlainTextHeader(plain, "Website Inquiry");
         plain.AppendLine("Someone submitted the homepage contact form.");
         plain.AppendLine();
-        plain.AppendLine($"Name: {FormatValue(model.ParticipantName)}");
-        plain.AppendLine($"Phone: {FormatValue(model.Phone)}");
-        plain.AppendLine($"Email: {FormatValue(model.Email)}");
+        plain.AppendLine($"Name: {FormatPlainTextValue(model.ParticipantName)}");
+        plain.AppendLine($"Phone: {FormatPlainTextValue(model.Phone)}");
+        plain.AppendLine($"Email: {FormatPlainTextValue(model.Email)}");
         plain.AppendLine();
         plain.AppendLine("Message:");
         plain.AppendLine(NormalizeMessageBody(model.Message));
@@ -124,6 +124,9 @@ internal static class WebsiteInquiryOperatorNotifyEmailBuilder
 
     private static string FormatValue(string? value) =>
         string.IsNullOrWhiteSpace(value) ? "—" : value.Trim();
+
+    private static string FormatPlainTextValue(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? "—" : SanitizeSubjectParticipant(value.Trim());
 
     private static string NormalizeMessageBody(string? value) =>
         (value ?? string.Empty)
