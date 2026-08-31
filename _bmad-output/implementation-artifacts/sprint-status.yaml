@@ -302,7 +302,7 @@ development_status:
   epic-29-retrospective: optional
 
   # Epic 30–32 — Registration Capture. Source: epics-registration-capture.md
-  epic-30: in-progress
+  epic-30: done
   30-1-hidden-field-and-campaign-query-passthrough: done
   30-2-long-text-and-date-fields: done
   30-3-wave-1-toolbox-types-and-country: done
@@ -323,11 +323,11 @@ development_status:
   31-2-optional-identity-details-consent-steps: done
   epic-31-retrospective: optional
 
-  epic-32: backlog
-  32-1-allowed-embed-hosts-and-csp: backlog
-  32-2-activity-embed-route-and-share-kit-snippet: backlog
-  32-3-website-contact-section-creates-a-client: backlog
-  epic-32-retrospective: optional
+  epic-32: done
+  32-1-allowed-embed-hosts-and-csp: done
+  32-2-activity-embed-route-and-share-kit-snippet: done
+  32-3-website-contact-section-creates-a-client: done
+  epic-32-retrospective: done
 
 action_items:
   - epic: 16
@@ -592,7 +592,8 @@ action_items:
   - epic: 30
     action: "Merge Epic 30 PR stack (#252–#264) when CI green"
     owner: Dev
-    status: open
+    status: done
+    resolution: "Merged to main via PR #269 (2026-08-31)"
   - epic: 30
     action: "Run integration matrix on CI Postgres/Redis (hidden, close-at, templates, invariants)"
     owner: Dev
@@ -604,7 +605,8 @@ action_items:
   - epic: 30
     action: "Decide Story 30.13 timing — same epic vs follow-up sprint"
     owner: Product
-    status: open
+    status: done
+    resolution: "Shipped in PR #269 with Epic 30 stack"
   - epic: 30
     action: "Extract shared EnsureFormSchemaPlanAllowedAsync (Activity + FormTemplate services)"
     owner: Dev
@@ -612,4 +614,30 @@ action_items:
   - epic: 30
     action: "Extend CaptureInvariantsTests for submit availability precedence chain"
     owner: Dev
+    status: open
+
+  # Epic 32 retrospective action items (2026-08-31)
+  - epic: 32
+    action: "Merge Epic 32 PR stack (32.1 → 32.2 → 32.3) when CI green"
+    owner: Dev
+    status: in-progress
+  - epic: 32
+    action: "Operator UAT — embed allow-list, Share kit iframe, contact form submit on dev stack"
+    owner: Operator
+    status: open
+  - epic: 32
+    action: "Run WebsiteInquiry + TenantEmbedSettings integration tests on CI Postgres/Redis"
+    owner: Dev
+    status: open
+  - epic: 32
+    action: "Manual verify embed route CSP headers (Story 32.1 Task 7)"
+    owner: Operator
+    status: open
+  - epic: 32
+    action: "Document embed operator flow in launch/UAT checklist"
+    owner: Dev
+    status: open
+  - epic: 32
+    action: "Track deferred embed e2e tests as follow-up if registration capture expands"
+    owner: Product
     status: open

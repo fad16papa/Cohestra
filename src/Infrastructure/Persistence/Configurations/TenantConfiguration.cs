@@ -1,4 +1,5 @@
 using Cohestra.Domain.Tenants;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -102,5 +103,21 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.HasIndex(tenant => tenant.CustomDomain)
             .IsUnique()
             .HasFilter("\"CustomDomain\" IS NOT NULL");
+
+        builder.Property(tenant => tenant.AllowedEmbedOrigins)
+            .HasColumnName("allowed_embed_origins")
+            .HasColumnType("jsonb")
+            .HasConversion(
+                origins => JsonSerializer.Serialize(origins, EmbedOriginJson.SerializerOptions),
+                json => string.IsNullOrWhiteSpace(json)
+                    ? new List<string>()
+                    : JsonSerializer.Deserialize<List<string>>(json, EmbedOriginJson.SerializerOptions)
+                      ?? new List<string>())
+            .HasDefaultValueSql("'[]'::jsonb");
     }
+}
+
+internal static class EmbedOriginJson
+{
+    internal static readonly JsonSerializerOptions SerializerOptions = new();
 }

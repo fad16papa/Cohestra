@@ -1,29 +1,29 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTenantEmailOnNewRegistration : Migration
+    public partial class AddTenantAllowedEmbedOrigins : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "EmailOnNewRegistration",
+            migrationBuilder.AddColumn<string>(
+                name: "allowed_embed_origins",
                 schema: "public",
                 table: "tenants",
-                type: "boolean",
+                type: "jsonb",
                 nullable: false,
-                defaultValue: true);
+                defaultValueSql: "'[]'::jsonb");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "EmailOnNewRegistration",
+                name: "allowed_embed_origins",
                 schema: "public",
                 table: "tenants");
         }

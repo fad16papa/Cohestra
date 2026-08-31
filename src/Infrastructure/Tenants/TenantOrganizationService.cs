@@ -72,6 +72,42 @@ public sealed class TenantOrganizationService(CohestraDbContext dbContext) : ITe
         return BuildNotificationSettingsResponse(tenant);
     }
 
+    public async Task<TenantEmbedSettingsResponse> GetEmbedSettingsAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        return new TenantEmbedSettingsResponse(tenant.AllowedEmbedOrigins);
+    }
+
+    public async Task<(bool Ok, string? Error)> UpdateEmbedSettingsAsync(
+        Guid tenantId,
+        IReadOnlyList<string> allowedEmbedOrigins,
+        CancellationToken cancellationToken = default)
+    {
+        var (ok, normalized, error) = EmbedOriginSupport.NormalizeList(allowedEmbedOrigins);
+        if (!ok)
+        {
+            return (false, error);
+        }
+
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return (false, "Tenant not found.");
+        }
+
+        tenant.AllowedEmbedOrigins = normalized.ToList();
+        tenant.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return (true, null);
+    }
+
     internal static TenantNotificationSettingsResponse BuildNotificationSettingsResponse(
         Domain.Tenants.Tenant tenant) =>
         new(

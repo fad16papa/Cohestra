@@ -1,3 +1,56 @@
+## Deferred from: code review of 32-3 pass 5 (2026-08-31)
+
+- HTML notify fields still allow multiline name/phone/email — HtmlEncode prevents injection; layout inconsistency with plain-text only
+- Message body could mimic Phone:/Email: lines in plain-text notify — user-controlled content; plain-text spoofing accepted v1 risk
+
+## Deferred from: code review of 32-3 pass 4 (2026-08-31)
+
+- HTTP 201 returned when dedup path returns `"updated"` — REST semantics nit; web client ignores status code
+- Basic tenant invalid payload gets 400 before plan gate — AC 5 satisfied for valid payloads; validation-before-plan ordering acceptable v1
+- Dedup integration test omits profile field update assertions — dedup path covered; name/message refresh unverified in CI
+- Website inquiry notify reuses RegistrationFromEmail settings — matches registration notify pattern; dedicated sender config not in AC
+- No integration tests for public 400 validation paths — validator unit tests cover rules; API matrix nice-to-have
+
+## Deferred from: code review of 32-3-website-contact-section-creates-a-client.md (2026-08-31)
+
+- LeadStatus not reset to New on dedup update — matches public registration dedup (LeadStatus only set on create)
+- Consent unchecked cannot revoke prior opt-in — pre-existing ClientDeduplicationService behavior shared with registration
+- No idempotency key on website inquiry submit — not in Story 32.3 AC; double-submit creates duplicate timeline/outbox entries
+- No integration test for phone-based dedup — email dedup path covers same ClientDeduplicationService; phone path unverified in CI
+
+## Deferred from: code review of 32-2 pass 3 (2026-08-31)
+
+- Hidden field form editor incomplete — minimal 30.1 port; full editor with Story 30.1
+- PublicRegistrationUnavailable shows public-registration card chrome in embed — minor copy polish
+- Client-side hidden query length not capped at 200 — server validates
+- Campaign example URL in HTML comment could break on --> — API-built URLs unlikely
+
+## Deferred from: code review of 32-2-activity-embed-route-and-share-kit-snippet.md pass 2 (2026-08-31)
+
+- Fixed iframe id breaks multi-embed parent pages — v1 assumes one embed per page
+- Inline script in copy bundle blocked by strict parent CSP — document external-script alternative in follow-up
+- No initial min-height on iframe snippet — first postMessage handles resize; minor UX flash
+- Required hidden fields not enforced when query absent — Story 30.1 contract: required hidden never blocks submit
+- Paused registration uses plan-limit unavailable reason — matches public /register brownfield
+
+## Deferred from: code review of 32-2-activity-embed-route-and-share-kit-snippet.md (2026-08-31)
+
+- postMessage uses targetOrigin `"*"` — standard v1 embed-widget pattern; parent listener should validate origin
+- No automated /embed/register or postMessage e2e tests — matches 32.1 manual-verify pattern
+- AC 3 CSP blocking not tested in this diff — enforced by Story 32.1 middleware
+- Rate-limit parity for embed submit unverified — reuses same public registration API path
+- Double activity fetch in generateMetadata + page — minor Next.js perf
+- Hidden query passthrough not integration-tested via URL query string — client-side merge covered by unit tests
+
+## Deferred from: code review of 32-1-allowed-embed-hosts-and-csp.md (2026-08-30)
+
+- Public `/embed-origins` exposes tenant allow-list without auth — required for middleware CSP lookup; acceptable recon surface
+- Middleware synchronous uncached API fetch per embed page view — perf concern, no timeout; v1 acceptable
+- Silent fail-closed when embed-origins API unavailable — returns empty list → `'none'`; masks misconfig but is safer
+- No automated e2e assertion of `/embed/register/*` response headers — deferred to 32.2 manual verify
+- Settings UI lacks client-side origin validation/max-count guard before PATCH — server validates on save
+
+## Deferred from: code review of 19-0-production-readiness-dev.md (2026-08-12)
 ## Deferred from: code review of 30-13-community-default-design-pin-and-pro-duplicate.md (2026-08-31)
 
 - Core tenant silently loses prefill when default template has Pro-only split steps — downgrade edge case; create skips all-or-nothing without operator feedback

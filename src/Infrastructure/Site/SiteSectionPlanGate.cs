@@ -17,6 +17,7 @@ public static class SiteSectionPlanGate
             "upcomingActivities",
             "howItWorks",
             "footer",
+            "contact",
         };
 
     public static readonly IReadOnlySet<string> StudioSectionTypes =

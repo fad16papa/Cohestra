@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Bell,
+  Frame,
   Globe,
   LifeBuoy,
   Palette,
@@ -14,6 +15,7 @@ export type SettingsSectionId =
   | "settings-brand"
   | "settings-organization"
   | "settings-notifications"
+  | "settings-embed"
   | "settings-domain"
   | "settings-account"
   | "settings-support"
@@ -66,6 +68,14 @@ export const settingsSections: SettingsSectionMeta[] = [
     description: "Email alerts when someone registers.",
     group: "workspace",
     icon: Bell,
+    adminOnly: true,
+  },
+  {
+    id: "settings-embed",
+    label: "Allowed embed hosts",
+    description: "Origins that may iframe your registration embed.",
+    group: "workspace",
+    icon: Frame,
     adminOnly: true,
   },
   {

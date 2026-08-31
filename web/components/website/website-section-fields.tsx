@@ -17,6 +17,7 @@ import {
   Trash2,
   CalendarDays,
   BarChart3,
+  Mail,
   Footprints,
 } from "lucide-react";
 
@@ -72,6 +73,7 @@ const SECTION_TYPE_ICONS: Record<string, typeof Sparkles> = {
   howitworks: Footprints,
   upcomingactivities: CalendarDays,
   footer: Layers,
+  contact: Mail,
 };
 
 function SectionTypeIcon({ type }: { type: string }) {
@@ -509,6 +511,73 @@ export function WebsiteSectionFields({
         Footer shows &ldquo;Cohestra&rdquo; by default. This label is not
         editable in v1.
       </p>
+    );
+  }
+
+  if (type === "contact") {
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor={`${section.id}-heading`}>Heading</Label>
+          <Input
+            id={`${section.id}-heading`}
+            value={typeof section.props.heading === "string" ? section.props.heading : ""}
+            disabled={disabled}
+            onChange={(event) => patchProps({ heading: event.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${section.id}-intro`}>Intro</Label>
+          <textarea
+            id={`${section.id}-intro`}
+            className={textareaClassName}
+            value={typeof section.props.intro === "string" ? section.props.intro : ""}
+            disabled={disabled}
+            onChange={(event) => patchProps({ intro: event.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${section.id}-button-label`}>Button label</Label>
+          <Input
+            id={`${section.id}-button-label`}
+            value={
+              typeof section.props.buttonLabel === "string" ? section.props.buttonLabel : ""
+            }
+            disabled={disabled}
+            onChange={(event) => patchProps({ buttonLabel: event.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${section.id}-success-message`}>Success message</Label>
+          <textarea
+            id={`${section.id}-success-message`}
+            className={textareaClassName}
+            value={
+              typeof section.props.successMessage === "string"
+                ? section.props.successMessage
+                : ""
+            }
+            disabled={disabled}
+            onChange={(event) => patchProps({ successMessage: event.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${section.id}-consent-label`}>Consent checkbox label</Label>
+          <textarea
+            id={`${section.id}-consent-label`}
+            className={textareaClassName}
+            value={
+              typeof section.props.consentLabel === "string" ? section.props.consentLabel : ""
+            }
+            disabled={disabled}
+            onChange={(event) => patchProps({ consentLabel: event.target.value })}
+          />
+        </div>
+        <p className="text-xs text-text-muted-warm">
+          Form fields (name, email, phone, message, consent) are fixed — not editable like the
+          Activity Form tab.
+        </p>
+      </div>
     );
   }
 

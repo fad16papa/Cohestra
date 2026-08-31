@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Info } from "lucide-react";
 
+import { AllowedEmbedHostsSection } from "@/components/settings/allowed-embed-hosts-section";
 import { AppearanceSection } from "@/components/settings/appearance-section";
 import { AccountSection } from "@/components/settings/account-section";
 import { BrandAccentSection } from "@/components/settings/brand-accent-section";
@@ -44,6 +45,8 @@ function renderSectionContent(id: SettingsSectionId): React.ReactNode {
       return <OrganizationTimezoneSection embedded />;
     case "settings-notifications":
       return <NotificationsSection embedded />;
+    case "settings-embed":
+      return <AllowedEmbedHostsSection embedded />;
     case "settings-domain":
       return <CustomDomainSection embedded />;
     case "settings-account":

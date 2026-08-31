@@ -11,7 +11,11 @@ const nextConfig: NextConfig = {
 
     return [
       {
-        source: "/:path*",
+        source: "/embed/:path*",
+        headers: securityHeaders.filter((header) => header.key !== "X-Frame-Options"),
+      },
+      {
+        source: "/((?!embed/).*)",
         headers: [...securityHeaders, contentSecurityPolicyDevHeader],
       },
     ];

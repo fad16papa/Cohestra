@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Download, Link2, MessageCircle } from "lucide-react";
+import { Download, Link2, MessageCircle, Code2 } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { ShareLinkPreview } from "@/components/shared/share-link-preview";
@@ -14,6 +14,12 @@ import {
   type ActivityRegistrationLink,
 } from "@/lib/activities-api";
 import { copyTextToClipboard } from "@/lib/clipboard";
+import {
+  buildActivityEmbedCopyBundle,
+  buildActivityEmbedUrl,
+  buildCampaignQueryExample,
+} from "@/lib/embed-snippet";
+import { fetchTenantEmbedSettings, type TenantEmbedSettings } from "@/lib/tenant-settings-api";
 import {
   buildActivitySharePackText,
   buildActivitySharePreview,
@@ -34,6 +40,9 @@ export function ActivityShareKitPanel({
   const { authFetch } = useAuth();
   const [registrationLink, setRegistrationLink] =
     useState<ActivityRegistrationLink | null>(null);
+  const [embedSettings, setEmbedSettings] = useState<TenantEmbedSettings | null>(null);
+  const [embedSettingsLoaded, setEmbedSettingsLoaded] = useState(false);
+  const [embedSettingsError, setEmbedSettingsError] = useState<string | null>(null);
   const [qrPreviewUrl, setQrPreviewUrl] = useState<string | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [qrError, setQrError] = useState<string | null>(null);
@@ -61,6 +70,32 @@ export function ActivityShareKitPanel({
     return buildActivityWhatsAppMessage(activity, registrationLink.url);
   }, [activity, registrationLink]);
 
+  const embedUrl = useMemo(() => {
+    if (!registrationLink) {
+      return null;
+    }
+
+    return buildActivityEmbedUrl(registrationLink.url, registrationLink.path);
+  }, [registrationLink]);
+
+  const embedCopyBundle = useMemo(() => {
+    if (!embedUrl) {
+      return null;
+    }
+
+    return buildActivityEmbedCopyBundle(embedUrl, activity.name);
+  }, [activity.name, embedUrl]);
+
+  const campaignQueryExample = useMemo(() => {
+    if (!embedUrl) {
+      return null;
+    }
+
+    return buildCampaignQueryExample(embedUrl);
+  }, [embedUrl]);
+
+  const embedHostsConfigured = (embedSettings?.allowedEmbedOrigins.length ?? 0) > 0;
+
   useEffect(() => {
     let cancelled = false;
     let objectUrl: string | null = null;
@@ -68,6 +103,9 @@ export function ActivityShareKitPanel({
     async function loadPublishedAssets() {
       if (!isPublished) {
         setRegistrationLink(null);
+        setEmbedSettings(null);
+        setEmbedSettingsLoaded(false);
+        setEmbedSettingsError(null);
         setQrPreviewUrl(null);
         setLinkError(null);
         setQrError(null);
@@ -77,10 +115,13 @@ export function ActivityShareKitPanel({
       setIsLoading(true);
       setLinkError(null);
       setQrError(null);
+      setEmbedSettingsLoaded(false);
+      setEmbedSettingsError(null);
 
-      const [linkResult, qrResult] = await Promise.allSettled([
+      const [linkResult, qrResult, embedResult] = await Promise.allSettled([
         fetchActivityRegistrationLink(authFetch, activity.id),
         fetchActivityQrCodeBlob(authFetch, activity.id),
+        fetchTenantEmbedSettings(authFetch),
       ]);
 
       if (cancelled) {
@@ -97,6 +138,19 @@ export function ActivityShareKitPanel({
             : "Could not load registration link."
         );
       }
+
+      if (embedResult.status === "fulfilled") {
+        setEmbedSettings(embedResult.value);
+        setEmbedSettingsError(null);
+      } else {
+        setEmbedSettings(null);
+        setEmbedSettingsError(
+          embedResult.reason instanceof Error
+            ? embedResult.reason.message
+            : "Could not load embed host settings."
+        );
+      }
+      setEmbedSettingsLoaded(true);
 
       if (qrResult.status === "fulfilled") {
         objectUrl = URL.createObjectURL(qrResult.value);
@@ -128,6 +182,20 @@ export function ActivityShareKitPanel({
       });
     };
   }, [activity.id, authFetch, isPublished, reloadToken]);
+
+  async function handleCopyEmbedSnippet() {
+    if (!embedCopyBundle || !embedHostsConfigured) {
+      return;
+    }
+
+    setStatusMessage(null);
+    const copied = await copyTextToClipboard(embedCopyBundle);
+    setStatusMessage(
+      copied
+        ? "Embed bundle copied (iframe + resize listener)."
+        : "Select the snippet and copy manually (Ctrl+C)."
+    );
+  }
 
   async function handleCopyLink() {
     if (!registrationLink) {
@@ -334,6 +402,72 @@ export function ActivityShareKitPanel({
               <p role="status" className="text-xs text-text-muted-warm">
                 QR preview unavailable — you can still download the PNG.
               </p>
+            ) : null}
+
+            {registrationLink ? (
+              <div className="space-y-2 border-t border-border-warm pt-4">
+                <p className="text-sm font-medium text-text-warm">Website embed</p>
+                {!embedSettingsLoaded || isLoading ? (
+                  <p className="text-sm text-text-muted-warm">Loading embed settings…</p>
+                ) : embedSettingsError ? (
+                  <div className="space-y-2">
+                    <p role="alert" className="text-sm text-destructive">
+                      {embedSettingsError}
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRetryLoad}
+                    >
+                      Retry embed settings
+                    </Button>
+                  </div>
+                ) : embedHostsConfigured && embedCopyBundle && campaignQueryExample ? (
+                  <>
+                    <p className="text-xs text-text-muted-warm">
+                      Paste on an allowed host (Settings → Allowed embed hosts). For Hidden
+                      campaign fields, append query keys to the iframe{" "}
+                      <code className="rounded bg-muted px-1">src</code> (e.g.{" "}
+                      <code className="rounded bg-muted px-1">{campaignQueryExample}</code>
+                      ). Replace{" "}
+                      <code className="rounded bg-muted px-1">YOUR_COHESTRA_ORIGIN</code> in the
+                      script with your tenant site origin.
+                    </p>
+                    <label
+                      htmlFor="activity-embed-snippet"
+                      className="text-xs text-text-muted-warm"
+                    >
+                      Embed bundle (iframe + resize listener)
+                    </label>
+                    <textarea
+                      id="activity-embed-snippet"
+                      readOnly
+                      rows={12}
+                      value={embedCopyBundle}
+                      aria-label="Embed bundle with iframe and resize listener"
+                      className="w-full resize-none rounded-lg border border-input bg-muted/30 px-3 py-2 font-mono text-xs"
+                      onFocus={(event) => event.target.select()}
+                      onClick={(event) => event.currentTarget.select()}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isLoading}
+                      onClick={() => void handleCopyEmbedSnippet()}
+                    >
+                      <Code2 className="size-4" aria-hidden />
+                      Copy embed bundle
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-sm text-text-muted-warm">
+                    Add at least one allowed embed host in Settings before copying an iframe
+                    snippet.
+                  </p>
+                )}
+              </div>
             ) : null}
           </div>
 

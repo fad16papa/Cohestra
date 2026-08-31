@@ -19,31 +19,39 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
     public async Task CreateFormTemplate_WhenBasicTenantAtSlotCap_Returns403PlanLocked()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
-        await EnsureDefaultTenantPlanAsync(TenantPlan.Basic);
 
-        using var adminClient = Factory.CreateClient();
-        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
-        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+        try
+        {
+            await EnsureDefaultTenantPlanAsync(TenantPlan.Basic);
 
-        var schema = BuildMinimalSchema();
-        using var firstResponse = await adminClient.PostAsJsonAsync(
-            "/api/v1/admin/form-templates",
-            new CreateFormTemplateRequest("First template", schema),
-            IntegrationTestHelpers.JsonOptions);
-        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+            using var adminClient = Factory.CreateClient();
+            var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+            IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
 
-        using var secondResponse = await adminClient.PostAsJsonAsync(
-            "/api/v1/admin/form-templates",
-            new CreateFormTemplateRequest("Second template", schema),
-            IntegrationTestHelpers.JsonOptions);
+            var schema = BuildMinimalSchema();
+            using var firstResponse = await adminClient.PostAsJsonAsync(
+                "/api/v1/admin/form-templates",
+                new CreateFormTemplateRequest("First template", schema),
+                IntegrationTestHelpers.JsonOptions);
+            Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
 
-        Assert.Equal(HttpStatusCode.Forbidden, secondResponse.StatusCode);
+            using var secondResponse = await adminClient.PostAsJsonAsync(
+                "/api/v1/admin/form-templates",
+                new CreateFormTemplateRequest("Second template", schema),
+                IntegrationTestHelpers.JsonOptions);
 
-        var errorCode = await IntegrationTestHelpers.ReadProblemErrorCodeAsync(secondResponse);
-        Assert.Equal("plan_locked", errorCode);
+            Assert.Equal(HttpStatusCode.Forbidden, secondResponse.StatusCode);
 
-        var detail = await ReadProblemDetailAsync(secondResponse);
-        Assert.Contains("Core saves up to 5 form recipes", detail, StringComparison.OrdinalIgnoreCase);
+            var errorCode = await IntegrationTestHelpers.ReadProblemErrorCodeAsync(secondResponse);
+            Assert.Equal("plan_locked", errorCode);
+
+            var detail = await ReadProblemDetailAsync(secondResponse);
+            Assert.Contains("Core saves up to 5 form recipes", detail, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+        }
     }
 
     [SkippableFact]

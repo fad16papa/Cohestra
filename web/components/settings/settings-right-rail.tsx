@@ -57,6 +57,11 @@ function sectionTips(activeId: SettingsSectionId): { title: string; body: string
         title: "New registrations",
         body: "Operator emails include participant contact details and a link to Activity registrations. Hidden campaign fields may appear in operator mail only.",
       };
+    case "settings-embed":
+      return {
+        title: "Embed framing",
+        body: "Only listed origins can iframe /embed/register. Public /register links and admin pages always deny framing.",
+      };
     case "settings-domain":
       return {
         title: "Enterprise",

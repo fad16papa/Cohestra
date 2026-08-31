@@ -9,4 +9,5 @@ public enum ClientTimelineEventType
     ViberInitiated,
     ViberFollowUpRecorded,
     NextFollowUpChanged,
+    WebsiteInquiry,
 }

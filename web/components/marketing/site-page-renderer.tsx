@@ -38,6 +38,7 @@ import { CtaBandPublicSection } from "@/components/marketing/sections/cta-band-s
 import { FaqPublicSection } from "@/components/marketing/sections/faq-section";
 import { StatsPublicSection } from "@/components/marketing/sections/stats-section";
 import { TestimonialsPublicSection } from "@/components/marketing/sections/testimonials-section";
+import { ContactSection } from "@/components/marketing/sections/contact-section";
 import { SitePreviewBanner } from "@/components/marketing/site-preview-banner";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { buildBrandAccentStyle } from "@/lib/brand-accent";
@@ -583,6 +584,7 @@ function renderSection(
     upcomingActivities: PublicHomepageActivity[];
     showUpcoming: boolean;
     previewMode: SitePreviewLayoutMode;
+    isPreview: boolean;
   }
 ) {
   let node: ReactNode = null;
@@ -629,6 +631,9 @@ function renderSection(
       break;
     case "video":
       node = <VideoPublicSection section={section} />;
+      break;
+    case "contact":
+      node = <ContactSection section={section} isPreview={context.isPreview} />;
       break;
     case "footer":
       node = <FooterSection section={section} previewMode={context.previewMode} />;
@@ -701,6 +706,7 @@ export function SitePageRenderer({
     upcomingActivities,
     showUpcoming,
     previewMode,
+    isPreview,
   };
 
   return (

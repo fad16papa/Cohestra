@@ -247,6 +247,10 @@ export function getSectionSummary(section: SiteSection): string {
     }
     case "footer":
       return "Site footer";
+    case "contact": {
+      const heading = typeof props.heading === "string" ? props.heading.trim() : "";
+      return heading || "Contact form";
+    }
     default:
       return SECTION_TYPE_LABELS[type] ?? section.type;
   }

@@ -1,5 +1,8 @@
 import type { ActivityFormSchema, RegistrationThemePreset } from "@/lib/activities-api";
+import { parseFormSchema } from "@/lib/activities-api";
 import { getPublicApiBaseUrl } from "@/lib/api";
+
+type AuthFetch = (input: string, init?: RequestInit) => Promise<Response>;
 
 export type SavedFormTemplateSummary = {
   id: string;
@@ -44,86 +47,6 @@ export type FormTemplateListResult = {
   usage: FormTemplateUsage;
 };
 
-function parseFormSchema(raw: Record<string, unknown>): ActivityFormSchema {
-  const version = raw.version ?? raw.Version;
-  const fieldsRaw = raw.fields ?? raw.Fields;
-  const metaRaw = raw.meta ?? raw.Meta;
-
-  const fields = Array.isArray(fieldsRaw)
-    ? fieldsRaw.map((field) => {
-        const item = field as Record<string, unknown>;
-        const optionsRaw = item.options ?? item.Options;
-        const visibleWhenRaw = item.visibleWhen ?? item.VisibleWhen;
-        const visibleWhen =
-          visibleWhenRaw && typeof visibleWhenRaw === "object"
-            ? (() => {
-                const vw = visibleWhenRaw as Record<string, unknown>;
-                return {
-                  fieldId: String(vw.fieldId ?? vw.FieldId ?? ""),
-                  equals: (vw.equals ?? vw.EqualsValue ?? null) as string | null,
-                  notEquals: (vw.notEquals ?? vw.NotEqualsValue ?? null) as string | null,
-                };
-              })()
-            : null;
-
-        return {
-          id: String(item.id ?? item.Id ?? ""),
-          type: String(item.type ?? item.Type ?? ""),
-          label: String(item.label ?? item.Label ?? ""),
-          required: Boolean(item.required ?? item.Required ?? false),
-          placeholder: (item.placeholder ?? item.Placeholder ?? null) as string | null,
-          options: Array.isArray(optionsRaw)
-            ? optionsRaw.map((option) => {
-                const opt = option as Record<string, unknown>;
-                return {
-                  value: String(opt.value ?? opt.Value ?? ""),
-                  label: String(opt.label ?? opt.Label ?? ""),
-                };
-              })
-            : null,
-          consentText: (item.consentText ?? item.ConsentText ?? null) as string | null,
-          phoneCountry: (item.phoneCountry ?? item.PhoneCountry ?? null) as string | null,
-          visibleWhen,
-          step: (item.step ?? item.Step ?? null) as string | null,
-          defaultValue: (item.defaultValue ?? item.DefaultValue ?? null) as string | null,
-          min: (item.min ?? item.Min ?? null) as number | null,
-          max: (item.max ?? item.Max ?? null) as number | null,
-          infoText: (item.infoText ?? item.InfoText ?? null) as string | null,
-        };
-      })
-    : [];
-
-  const meta =
-    metaRaw && typeof metaRaw === "object"
-      ? (() => {
-          const m = metaRaw as Record<string, unknown>;
-          return {
-            introMarkdown: (m.introMarkdown ?? m.IntroMarkdown ?? null) as string | null,
-            splitIntoSteps: Boolean(m.splitIntoSteps ?? m.SplitIntoSteps ?? false),
-            successCopyMarkdown: (m.successCopyMarkdown ?? m.SuccessCopyMarkdown ?? null) as
-              | string
-              | null,
-            confirmationEmailSubject: (m.confirmationEmailSubject ??
-              m.ConfirmationEmailSubject ??
-              null) as string | null,
-            confirmationEmailBodyMarkdown: (m.confirmationEmailBodyMarkdown ??
-              m.ConfirmationEmailBodyMarkdown ??
-              null) as string | null,
-            closedMessage: (m.closedMessage ?? m.ClosedMessage ?? null) as string | null,
-            registrationClosesAt: (m.registrationClosesAt ??
-              m.RegistrationClosesAt ??
-              null) as string | null,
-          };
-        })()
-      : undefined;
-
-  return {
-    version: typeof version === "number" ? version : 1,
-    fields,
-    meta,
-  };
-}
-
 function parseSummary(raw: Record<string, unknown>): SavedFormTemplateSummary {
   const presetRaw = raw.pinnedRegistrationThemePreset ?? raw.PinnedRegistrationThemePreset;
   const preset =
@@ -150,7 +73,7 @@ function parseTemplate(raw: Record<string, unknown>): SavedFormTemplate {
 
   return {
     ...parseSummary(raw),
-    formSchema: parseFormSchema(formSchemaRaw as Record<string, unknown>),
+    formSchema: parseFormSchema(formSchemaRaw) ?? { version: 1, fields: [] },
   };
 }
 
@@ -180,7 +103,7 @@ async function parseProblemDetail(response: Response): Promise<string> {
 }
 
 export async function fetchFormTemplates(
-  authFetch: typeof fetch
+  authFetch: AuthFetch
 ): Promise<FormTemplateListResult> {
   const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/admin/form-templates`);
 
@@ -204,7 +127,7 @@ export async function fetchFormTemplates(
 }
 
 export async function fetchFormTemplate(
-  authFetch: typeof fetch,
+  authFetch: AuthFetch,
   id: string
 ): Promise<SavedFormTemplate> {
   const response = await authFetch(
@@ -219,7 +142,7 @@ export async function fetchFormTemplate(
 }
 
 export async function createFormTemplate(
-  authFetch: typeof fetch,
+  authFetch: AuthFetch,
   name: string,
   formSchema: ActivityFormSchema
 ): Promise<SavedFormTemplate> {
@@ -237,7 +160,7 @@ export async function createFormTemplate(
 }
 
 export async function updateFormTemplate(
-  authFetch: typeof fetch,
+  authFetch: AuthFetch,
   id: string,
   payload: { name?: string; formSchema?: ActivityFormSchema }
 ): Promise<SavedFormTemplate> {
@@ -258,7 +181,7 @@ export async function updateFormTemplate(
 }
 
 export async function deleteFormTemplate(
-  authFetch: typeof fetch,
+  authFetch: AuthFetch,
   id: string
 ): Promise<void> {
   const response = await authFetch(
@@ -272,7 +195,7 @@ export async function deleteFormTemplate(
 }
 
 export async function setFormTemplatePinnedPreset(
-  authFetch: typeof fetch,
+  authFetch: AuthFetch,
   id: string,
   preset: RegistrationThemePreset | null
 ): Promise<SavedFormTemplate> {
@@ -293,7 +216,7 @@ export async function setFormTemplatePinnedPreset(
 }
 
 export async function duplicateFormTemplate(
-  authFetch: typeof fetch,
+  authFetch: AuthFetch,
   id: string,
   name?: string
 ): Promise<SavedFormTemplate> {
