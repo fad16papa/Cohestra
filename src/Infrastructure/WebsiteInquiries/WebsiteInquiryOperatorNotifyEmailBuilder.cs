@@ -145,6 +145,8 @@ internal static class WebsiteInquiryOperatorNotifyEmailBuilder
             .Replace("\r\n", " ", StringComparison.Ordinal)
             .Replace('\r', ' ')
             .Replace('\n', ' ')
+            .Replace('\u2028', ' ')
+            .Replace('\u2029', ' ')
             .Trim();
 
     private static string SanitizeEmailSubject(string subject)

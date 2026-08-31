@@ -121,6 +121,10 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
 
+        var slug = $"contact-none-{Guid.NewGuid():N}";
+        await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, slug);
+        await PublishSiteWithoutContactSectionAsync(slug);
+
         using var client = Factory.CreateClient();
         var response = await client.PostAsJsonAsync(
             "/api/v1/public/website-inquiries",
@@ -178,6 +182,23 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
         }
     }
 
+    private async Task PublishSiteWithoutContactSectionAsync(string activitySlug)
+    {
+        using var adminClient = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+
+        var draft = CreateDraftWithoutContactSection(activitySlug);
+        var putResponse = await adminClient.PutAsJsonAsync(
+            "/api/v1/admin/site",
+            new UpdateSiteDraftRequest(draft),
+            IntegrationTestHelpers.JsonOptions);
+        putResponse.EnsureSuccessStatusCode();
+
+        var publishResponse = await adminClient.PostAsync("/api/v1/admin/site/publish", content: null);
+        publishResponse.EnsureSuccessStatusCode();
+    }
+
     private async Task PublishSiteWithContactSectionAsync(string activitySlug)
     {
         using var adminClient = Factory.CreateClient();
@@ -193,6 +214,28 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
 
         var publishResponse = await adminClient.PostAsync("/api/v1/admin/site/publish", content: null);
         publishResponse.EnsureSuccessStatusCode();
+    }
+
+    private static SiteSectionsDocumentDto CreateDraftWithoutContactSection(string activitySlug)
+    {
+        using var heroProps = System.Text.Json.JsonDocument.Parse(
+            $$"""
+            {
+              "headline": "Community activities. Meaningful connections.",
+              "primaryCta": { "label": "Browse events", "target": "scroll-upcoming" }
+            }
+            """);
+
+        return new SiteSectionsDocumentDto(
+            SchemaVersion: 1,
+            SiteName: "Cohestra",
+            AccentColor: "#c45c26",
+            LogoAssetId: null,
+            PresetId: "community",
+            Sections:
+            [
+                new SiteSectionDto("hero-1", "hero", true, 0, heroProps.RootElement),
+            ]);
     }
 
     private static SiteSectionsDocumentDto CreateDraftWithContactSection(string activitySlug)

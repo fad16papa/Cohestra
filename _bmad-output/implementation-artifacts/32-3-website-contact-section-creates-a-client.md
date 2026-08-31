@@ -112,6 +112,7 @@ Composer
 - 2026-08-31: Pass 3 code review — 3 defensive patches applied
 - 2026-08-31: Pass 4 code review — plain-text email newline injection patch applied
 - 2026-08-31: Pass 5 code review — plain-text field truncation patch applied
+- 2026-08-31: Pass 6 code review — flaky 404 test + Unicode line separator patches applied
 
 ### Review Findings (2026-08-31)
 
@@ -180,6 +181,6 @@ Composer
 
 **Acceptance audit:** All Story 32.3 ACs satisfied. Pass 5 `CollapseInlineNewlines` fix verified intact.
 
-- [ ] [Review][Patch] **`SubmitWebsiteInquiry_WithoutPublishedContactSection_Returns404` is order-dependent** [`WebsiteInquiryIntegrationTests.cs:119-136`] — test assumes default tenant has no published contact section, but sibling tests call `PublishSiteWithContactSectionAsync` and leave contact enabled; xUnit order is undefined, so this test can return 201 when run after publishing tests. Fix: explicitly publish a site without contact (or disable contact and republish) in test setup.
+- [x] [Review][Patch] **`SubmitWebsiteInquiry_WithoutPublishedContactSection_Returns404` is order-dependent** [`WebsiteInquiryIntegrationTests.cs:119-136`] — test publishes hero-only site via `PublishSiteWithoutContactSectionAsync` before asserting 404.
 
-- [ ] [Review][Patch] **`CollapseInlineNewlines` misses Unicode line separators** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:143-148`] — only collapses `\r`/`\n`; U+2028/U+2029 can still inject line breaks in plain-text notify fields and subject participant fallback.
+- [x] [Review][Patch] **`CollapseInlineNewlines` misses Unicode line separators** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:143-148`] — also replaces U+2028/U+2029 with spaces.
