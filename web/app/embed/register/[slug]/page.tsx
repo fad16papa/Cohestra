@@ -49,14 +49,17 @@ export default async function EmbedRegisterPage({ params }: EmbedRegisterPagePro
   }
 
   const { activity } = result;
+  const closedMessage = activity.formSchema?.meta?.closedMessage ?? null;
 
-  if (!activity.isRegistrationOpen) {
+  if (activity.isRegistrationFull) {
     return (
       <EmbedHeightReporter>
         <PublicRegistrationUnavailable
           slug={slug}
           activityName={activity.name}
-          reason="unavailable"
+          activityStatus={activity.status}
+          closedMessage={closedMessage}
+          reason="full"
         />
       </EmbedHeightReporter>
     );
@@ -68,19 +71,37 @@ export default async function EmbedRegisterPage({ params }: EmbedRegisterPagePro
         <PublicRegistrationUnavailable
           slug={slug}
           activityName={activity.name}
+          activityStatus={activity.status}
+          closedMessage={closedMessage}
           reason="plan-limit"
         />
       </EmbedHeightReporter>
     );
   }
 
-  if (activity.isRegistrationFull) {
+  if (activity.isRegistrationClosedAt) {
     return (
       <EmbedHeightReporter>
         <PublicRegistrationUnavailable
           slug={slug}
           activityName={activity.name}
-          reason="full"
+          activityStatus={activity.status}
+          closedMessage={closedMessage}
+          reason="close-at"
+        />
+      </EmbedHeightReporter>
+    );
+  }
+
+  if (!activity.isRegistrationOpen) {
+    return (
+      <EmbedHeightReporter>
+        <PublicRegistrationUnavailable
+          slug={slug}
+          activityName={activity.name}
+          activityStatus={activity.status}
+          closedMessage={closedMessage}
+          reason="unavailable"
         />
       </EmbedHeightReporter>
     );

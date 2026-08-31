@@ -67,7 +67,7 @@ export function NotificationsSection({ embedded = false }: { embedded?: boolean 
         <div>
           <h2 className="text-section text-text-warm">Notifications</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
-            Control email alerts when someone registers through your public forms.
+            Control operator email alerts from public registration and website contact forms.
           </p>
         </div>
       ) : null}
@@ -91,11 +91,12 @@ export function NotificationsSection({ embedded = false }: { embedded?: boolean 
             />
             <div className="space-y-1">
               <Label htmlFor="email-on-new-registration" className="cursor-pointer font-medium">
-                Email me on new registrations
+                Email me on new public form submissions
               </Label>
               <p className="text-sm text-text-muted-warm">
-                Sends an email to your workspace admin contact when a public registration is
-                submitted. Participant confirmation emails are separate.
+                Sends an email to your workspace admin contact when someone submits a public
+                registration or a website contact message. Participant confirmation emails are
+                separate.
               </p>
             </div>
           </div>

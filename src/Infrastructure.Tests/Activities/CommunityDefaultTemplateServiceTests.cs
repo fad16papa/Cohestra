@@ -79,6 +79,20 @@ public sealed class CommunityDefaultTemplateServiceTests
         Assert.Null(updated);
     }
 
+    [Fact]
+    public async Task SetDefaultFormTemplateAsync_CoreTenantWithProStepsTemplate_ThrowsFormSchemaPlanLocked()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Core);
+        var service = CreateCommunityService(dbContext);
+        var templateId = await SeedTemplateWithSplitStepsAsync(dbContext, "Pro steps recipe");
+        var community = await SeedCommunityAsync(dbContext, "Youth");
+
+        await Assert.ThrowsAsync<FormSchemaPlanLockedException>(
+            () => service.SetDefaultFormTemplateAsync(
+                community.Id,
+                new SetCommunityDefaultFormTemplateRequest(templateId)));
+    }
+
     private static CommunityService CreateCommunityService(CohestraDbContext dbContext)
     {
         var currentTenant = new CurrentTenant();
@@ -148,6 +162,39 @@ public sealed class CommunityDefaultTemplateServiceTests
                         Type = FormFieldTypes.Text,
                         Label = "Full name",
                         Required = true,
+                    },
+                ],
+            },
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        dbContext.TenantFormTemplates.Add(template);
+        await dbContext.SaveChangesAsync();
+        return template.Id;
+    }
+
+    private static async Task<Guid> SeedTemplateWithSplitStepsAsync(
+        CohestraDbContext dbContext,
+        string name)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var template = new TenantFormTemplate
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            FormSchema = new ActivityFormSchema
+            {
+                Version = 1,
+                Meta = new FormSchemaMeta { SplitIntoSteps = true },
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "phone",
+                        Type = FormFieldTypes.Phone,
+                        Label = "Mobile",
+                        Required = true,
+                        PhoneCountry = "SG",
                     },
                 ],
             },

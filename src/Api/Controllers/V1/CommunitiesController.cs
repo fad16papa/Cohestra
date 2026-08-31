@@ -160,6 +160,10 @@ public class CommunitiesController(
         {
             return PlanLockedProblem(ex.Message);
         }
+        catch (FormSchemaPlanLockedException ex)
+        {
+            return PlanLockedProblem(ex.Message);
+        }
     }
 
     [HttpDelete("{id:guid}")]

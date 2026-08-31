@@ -141,6 +141,74 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
     }
 
     [SkippableFact]
+    public async Task SubmitWebsiteInquiry_WhenOperatorNotifyDisabled_DoesNotEnqueueOperatorNotify()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var slug = $"contact-notify-off-{Guid.NewGuid():N}";
+        await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, slug);
+        await PublishSiteWithContactSectionAsync(slug);
+
+        await using (var setupScope = Factory.Services.CreateAsyncScope())
+        {
+            IntegrationTestHelpers.BindDefaultTenant(setupScope.ServiceProvider);
+            var dbContext = setupScope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            var tenant = await dbContext.Tenants.FirstAsync(item => item.Id == TenantIds.Default);
+            tenant.EmailOnNewRegistration = false;
+            await dbContext.SaveChangesAsync();
+        }
+
+        try
+        {
+            using var client = Factory.CreateClient();
+            var response = await client.PostAsJsonAsync(
+                "/api/v1/public/website-inquiries",
+                new SubmitWebsiteInquiryRequest(
+                    "Jordan Lee",
+                    $"notify-off-{Guid.NewGuid():N}@example.com",
+                    null,
+                    "Please reach out about upcoming events.",
+                    false),
+                IntegrationTestHelpers.JsonOptions);
+
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+
+            var body = await response.Content.ReadFromJsonAsync<SubmitWebsiteInquiryResponse>(
+                IntegrationTestHelpers.JsonOptions);
+            Assert.NotNull(body);
+
+            await using var scope = Factory.Services.CreateAsyncScope();
+            IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
+            var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+
+            var timelineEvent = await dbContext.ClientTimelineEvents
+                .AsNoTracking()
+                .Where(item =>
+                    item.ClientId == body.ClientId
+                    && item.EventType == ClientTimelineEventType.WebsiteInquiry)
+                .OrderByDescending(item => item.OccurredAt)
+                .FirstAsync();
+
+            var operatorOutbox = await dbContext.OutboxMessages
+                .AsNoTracking()
+                .AnyAsync(message =>
+                    message.MessageType == OutboxMessageTypes.WebsiteInquiryOperatorNotify
+                    && message.DedupeKey == $"website-inquiry:{timelineEvent.Id}:operator-notify");
+
+            Assert.False(operatorOutbox);
+        }
+        finally
+        {
+            await using var restoreScope = Factory.Services.CreateAsyncScope();
+            IntegrationTestHelpers.BindDefaultTenant(restoreScope.ServiceProvider);
+            var dbContext = restoreScope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            var tenant = await dbContext.Tenants.FirstAsync(item => item.Id == TenantIds.Default);
+            tenant.EmailOnNewRegistration = true;
+            await dbContext.SaveChangesAsync();
+        }
+    }
+
+    [SkippableFact]
     public async Task SubmitWebsiteInquiry_BasicTenant_ReturnsPlanLocked()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
