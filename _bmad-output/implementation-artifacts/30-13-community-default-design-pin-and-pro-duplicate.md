@@ -164,3 +164,13 @@ Composer
 - [x] [Review][Defer] Core tenant silently loses prefill when default template has Pro-only split steps [`ActivityService.cs`] — deferred: downgrade edge case; create skips all-or-nothing with no operator toast (acceptable for v1)
 - [x] [Review][Defer] Set community default does not validate template schema against caller plan [`CommunityService.cs`] — deferred: create-time gate prevents bad schema persistence; set-time validation is a future UX improvement
 - [x] [Review][Defer] No cross-tenant integration test for pinned-preset endpoint [`TenantIsolationApiTests.cs`] — deferred: EF tenant filter + service tests cover isolation; mirror test optional
+
+### Re-review pass 2 (2026-08-31, post d616033)
+
+**Result:** Clean — prior patch findings verified fixed; no new patch or decision-needed items.
+
+- Verified `ApplyCommunityDefaultFormSchemaAsync`: Basic early return + `EnsureFormSchemaPlanAllowedAsync` before assign
+- Verified `SetDefaultFormTemplateAsync`: plan gate only on set, clear via `null` allowed for Basic
+- Acceptance criteria 1–4 satisfied against spec
+- 786 unit tests pass
+- Deferred items unchanged (split-step downgrade silent skip, set-time schema validation, pinned-preset isolation IT)
