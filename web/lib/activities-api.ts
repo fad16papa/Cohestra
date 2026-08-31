@@ -6,6 +6,8 @@ export type ActivityStatus = "draft" | "published" | "archived";
 
 export type FormFieldType =
   | "text"
+  | "textarea"
+  | "date"
   | "phone"
   | "email"
   | "select"
@@ -13,12 +15,30 @@ export type FormFieldType =
   | "consent"
   | "referral_source"
   | "section_header"
-  | "hidden";
+  | "hidden"
+  | "number"
+  | "url"
+  | "time"
+  | "choice"
+  | "yes_no"
+  | "multi_choice"
+  | "info"
+  | "country"
+  | "scale"
+  | "emergency";
 
 export type FormFieldOption = {
   value: string;
   label: string;
 };
+
+export type FormFieldVisibleWhen = {
+  fieldId: string;
+  equals?: string | null;
+  notEquals?: string | null;
+};
+
+export type FormFieldStep = "identity" | "details" | "consent";
 
 export type FormFieldDefinition = {
   id: string;
@@ -29,11 +49,22 @@ export type FormFieldDefinition = {
   options: FormFieldOption[] | null;
   consentText: string | null;
   phoneCountry?: string | null;
+  visibleWhen?: FormFieldVisibleWhen | null;
+  step?: FormFieldStep | null;
   defaultValue?: string | null;
+  min?: number | null;
+  max?: number | null;
+  infoText?: string | null;
 };
 
 export type FormSchemaMeta = {
   introMarkdown: string | null;
+  splitIntoSteps?: boolean;
+  successCopyMarkdown?: string | null;
+  confirmationEmailSubject?: string | null;
+  confirmationEmailBodyMarkdown?: string | null;
+  closedMessage?: string | null;
+  registrationClosesAt?: string | null;
 };
 
 export type ActivityFormSchema = {
@@ -131,10 +162,42 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
   if (metaRaw && typeof metaRaw === "object") {
     const metaRecord = metaRaw as Record<string, unknown>;
     const introMarkdown = metaRecord.introMarkdown ?? metaRecord.IntroMarkdown;
+    const splitIntoSteps = metaRecord.splitIntoSteps ?? metaRecord.SplitIntoSteps;
+    const successCopyMarkdown =
+      metaRecord.successCopyMarkdown ?? metaRecord.SuccessCopyMarkdown;
+    const confirmationEmailSubject =
+      metaRecord.confirmationEmailSubject ?? metaRecord.ConfirmationEmailSubject;
+    const confirmationEmailBodyMarkdown =
+      metaRecord.confirmationEmailBodyMarkdown ?? metaRecord.ConfirmationEmailBodyMarkdown;
+    const closedMessage = metaRecord.closedMessage ?? metaRecord.ClosedMessage;
+    const registrationClosesAt =
+      metaRecord.registrationClosesAt ?? metaRecord.RegistrationClosesAt;
     meta = {
       introMarkdown:
         typeof introMarkdown === "string" && introMarkdown.trim()
           ? introMarkdown
+          : null,
+      splitIntoSteps: splitIntoSteps === true,
+      successCopyMarkdown:
+        typeof successCopyMarkdown === "string" && successCopyMarkdown.trim()
+          ? successCopyMarkdown
+          : null,
+      confirmationEmailSubject:
+        typeof confirmationEmailSubject === "string" && confirmationEmailSubject.trim()
+          ? confirmationEmailSubject
+          : null,
+      confirmationEmailBodyMarkdown:
+        typeof confirmationEmailBodyMarkdown === "string" &&
+        confirmationEmailBodyMarkdown.trim()
+          ? confirmationEmailBodyMarkdown
+          : null,
+      closedMessage:
+        typeof closedMessage === "string" && closedMessage.trim()
+          ? closedMessage
+          : null,
+      registrationClosesAt:
+        typeof registrationClosesAt === "string" && registrationClosesAt.trim()
+          ? registrationClosesAt.trim()
           : null,
     };
   }
@@ -152,7 +215,13 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
       const options = item.options ?? item.Options;
       const consentText = item.consentText ?? item.ConsentText;
       const phoneCountry = item.phoneCountry ?? item.PhoneCountry;
+      const visibleWhen = parseVisibleWhen(item.visibleWhen ?? item.VisibleWhen);
+      const stepRaw = item.step ?? item.Step;
+      const step = parseFieldStep(stepRaw);
       const defaultValue = item.defaultValue ?? item.DefaultValue;
+      const min = parseOptionalNumber(item.min ?? item.Min);
+      const max = parseOptionalNumber(item.max ?? item.Max);
+      const infoText = item.infoText ?? item.InfoText;
 
       if (
         typeof id !== "string" ||
@@ -193,10 +262,64 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
           typeof phoneCountry === "string" && phoneCountry.trim()
             ? phoneCountry.trim().toUpperCase()
             : null,
+        visibleWhen,
+        step,
         defaultValue: typeof defaultValue === "string" ? defaultValue : null,
+        min,
+        max,
+        infoText: typeof infoText === "string" ? infoText : null,
       });
     }),
   };
+}
+
+function parseOptionalNumber(raw: unknown): number | null {
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    return raw;
+  }
+
+  if (typeof raw === "string" && raw.trim()) {
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function parseVisibleWhen(raw: unknown): FormFieldVisibleWhen | null {
+  if (raw === null || raw === undefined || typeof raw !== "object") {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const fieldId = record.fieldId ?? record.FieldId;
+  const equals = record.equals ?? record.Equals ?? record.equalsValue ?? record.EqualsValue;
+  const notEquals =
+    record.notEquals ?? record.NotEquals ?? record.notEqualsValue ?? record.NotEqualsValue;
+
+  if (typeof fieldId !== "string" || !fieldId.trim()) {
+    return null;
+  }
+
+  return {
+    fieldId: fieldId.trim(),
+    equals: typeof equals === "string" && equals.trim() ? equals.trim() : null,
+    notEquals:
+      typeof notEquals === "string" && notEquals.trim() ? notEquals.trim() : null,
+  };
+}
+
+function parseFieldStep(raw: unknown): FormFieldStep | null {
+  if (typeof raw !== "string") {
+    return null;
+  }
+
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === "identity" || normalized === "details" || normalized === "consent") {
+    return normalized;
+  }
+
+  return null;
 }
 
 function parseRegistrationTheme(raw: unknown): RegistrationTheme | null {

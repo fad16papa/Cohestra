@@ -22,6 +22,22 @@ Referenced by:
 |-----------|----------|----------|--------------------------------|
 | `version` | integer  | yes      | Must be `1` for this contract  |
 | `fields`  | array    | yes      | Ordered list; may be empty     |
+| `meta.splitIntoSteps` | boolean | no | Pro only. Default `false` keeps a single public page. |
+| `meta.introMarkdown` | string | no | Optional welcome copy above fields (max 4000). |
+| `meta.successCopyMarkdown` | string | no | Thank-you screen copy with piping tokens (max 2000). Hidden values never substitute. |
+| `meta.confirmationEmailSubject` | string | no | Confirmation email subject with piping tokens (max 200). Layout unchanged. |
+| `meta.confirmationEmailBodyMarkdown` | string | no | Confirmation email closing message with piping tokens (max 2000). Layout unchanged. |
+| `meta.closedMessage` | string | no | Operator copy when the public Form is unavailable (max 2000). Markdown-lite; HTML stripped on render. Reason chip still shows. |
+| `meta.registrationClosesAt` | string (ISO-8601 UTC instant) | no | Optional datetime after which public GET/submit reject. Empty = no datetime close. Operator picker displays in the Activity/tenant timezone. Past Close-at at save is allowed. |
+
+### Piping tokens (v1.1 additive)
+
+Operator copy may include:
+
+- `{{full_name}}`, `{{email}}`, `{{phone}}` — from Client extract / name heuristics
+- `{{field:<id>}}` — formatted answer for a visible field
+
+Missing values substitute to an empty string. Hidden and display-only fields (`hidden`, `section_header`, `info`) never substitute on Participant-visible surfaces (success screen and confirmation email).
 
 ## Field object
 
@@ -47,6 +63,11 @@ Referenced by:
 | `options`      | array    | conditional | Required for `select` and `referral_source` |
 | `consentText`  | string   | conditional | Required for `consent` (max 2000 chars) |
 | `phoneCountry` | string   | conditional | ISO 3166-1 alpha-2 for `phone` fields (e.g. `SG`, `PH`); launch templates default `SG` |
+| `visibleWhen`  | object   | no       | Core+ Recipe: `{ "fieldId", "equals" \| "notEquals" }`. Circular rules reject. Basic → `403 plan_locked`. |
+| `step`         | string   | no       | Pro steps bucket: `identity` \| `details` \| `consent`. Ignored unless `meta.splitIntoSteps`. |
+| `defaultValue` | string   | no       | **v1.1 additive.** Hidden fields only. Trimmed, HTML-stripped, max 200. Used when the public link omits the matching query key. |
+| `min` / `max`  | number   | no       | **v1.1 additive.** `number` value bounds or `multi_choice` selection counts. Inclusive. |
+| `infoText`     | string   | no       | **v1.1 additive.** `info` body. Markdown-lite, max 2000 after HTML strip. |
 
 ### Option object (`options[]`)
 
@@ -67,6 +88,19 @@ Referenced by:
 | `checkbox`         | Boolean opt-in | — |
 | `consent`          | Consent block (Board Game template) | `consentText` required |
 | `referral_source`  | “How did you hear about us?” | `options` required |
+| `hidden`           | Campaign query passthrough (v1.1 additive; `version` stays `1`) | No Participant UI. Optional `defaultValue`. Field `id` is the query key (`ref` → `?ref=wa`). May be `required: true` but does not satisfy the Publish Gate and never blocks submit. No `placeholder` / `options` / `consentText` / `phoneCountry`. |
+| `textarea`         | Long text / notes (v1.1 additive; `version` stays `1`) | Multi-line string. Answers max 2000 after HTML strip. Same name heuristics as `text` for Client extract. Does **not** satisfy the Publish Gate. No `options` / `consentText` / `phoneCountry` / `defaultValue`. Placeholder allowed. |
+| `date`             | Calendar date (v1.1 additive; `version` stays `1`) | Answer must be `YYYY-MM-DD` (valid calendar date). Not mapped to a Client column. No min/max, disabled weekdays, ranges, or timezone math. Does **not** satisfy the Publish Gate. No `options` / `consentText` / `phoneCountry` / `defaultValue`. Placeholder allowed. |
+| `number`           | Numeric (v1.1 additive) | Invariant decimal. Optional inclusive `min` / `max`. Does **not** satisfy the Publish Gate. |
+| `url`              | Link (v1.1 additive) | Absolute `http` or `https` URL. |
+| `time`             | Clock time (v1.1 additive) | `HH:mm`. No timezone math. |
+| `choice`           | Single pick (v1.1 additive) | `options` required. Public tap targets ≥ 44px. |
+| `yes_no`           | Boolean (v1.1 additive) | JSON boolean. Required means answered, not “must be yes”. |
+| `multi_choice`     | Several picks (v1.1 additive) | `options` required. Answer is a string array. Optional `min` / `max` are selection **counts**. |
+| `info`             | Display-only (v1.1 additive) | NonInput. `infoText` markdown-lite, max 2000 after HTML strip. No Answer. |
+| `country`          | ISO country (v1.1 additive) | Reuses phone-country ISO list (SG, PH, MY, ID, TH, VN, US, GB, AU, HK, JP, KR, CN, IN). |
+| `scale`            | Labeled 1–5 skill (Core+ additive) | Answer is `"1"`–`"5"` with fixed labels (Beginner → Expert). **Not** NPS. Does **not** satisfy Publish Gate. Basic save → `403 plan_locked`. |
+| `emergency`        | Compound emergency contact (Core+ additive) | One field id; answer is `{ "name": string, "phone": string }`. `phoneCountry` defaults to `SG`. Does **not** satisfy Publish Gate or Client extract. Basic save → `403 plan_locked`. |
 
 ## Validation (API)
 
@@ -78,6 +112,8 @@ The admin save endpoint rejects schemas that:
 - Use unknown `type` values
 - Omit required `options` / `consentText` for conditional types
 - Include `options` or `consentText` on incompatible types
+- Put `placeholder`, `options`, `consentText`, or `phoneCountry` on `hidden`
+- Put `defaultValue` on a non-hidden field, or a `defaultValue` longer than 200 characters after HTML strip
 
 ## Immutability note (FR-2)
 

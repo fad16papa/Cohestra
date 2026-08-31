@@ -10,6 +10,7 @@ import { BrandAccentSection } from "@/components/settings/brand-accent-section";
 import { ChangePasswordSection } from "@/components/settings/change-password-section";
 import { CustomDomainSection } from "@/components/settings/custom-domain-section";
 import { HelpSupportSection } from "@/components/settings/help-support-section";
+import { NotificationsSection } from "@/components/settings/notifications-section";
 import { OrganizationTimezoneSection } from "@/components/settings/organization-timezone-section";
 import { SettingsLeftRail } from "@/components/settings/settings-left-rail";
 import { SettingsMobileSectionTabs } from "@/components/settings/settings-mobile-section-tabs";
@@ -42,6 +43,8 @@ function renderSectionContent(id: SettingsSectionId): React.ReactNode {
       return <BrandAccentSection embedded />;
     case "settings-organization":
       return <OrganizationTimezoneSection embedded />;
+    case "settings-notifications":
+      return <NotificationsSection embedded />;
     case "settings-embed":
       return <AllowedEmbedHostsSection embedded />;
     case "settings-domain":

@@ -159,6 +159,9 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("DefaultFormTemplateId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("DefaultHeroImageUrl")
                         .HasMaxLength(2048)
                         .HasColumnType("character varying(2048)");
@@ -180,12 +183,52 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DefaultFormTemplateId");
+
                     b.HasIndex("TenantId");
 
                     b.HasIndex("TenantId", "Name")
                         .IsUnique();
 
                     b.ToTable("communities", "public");
+                });
+
+            modelBuilder.Entity("Cohestra.Domain.Activities.TenantFormTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FormSchema")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("form_schema");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("PinnedRegistrationThemePreset")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "Name");
+
+                    b.ToTable("tenant_form_templates", "public");
                 });
 
             modelBuilder.Entity("Cohestra.Domain.Billing.PaddleWebhookEvent", b =>
@@ -964,6 +1007,11 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("DelinquencyStartedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("EmailOnNewRegistration")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<bool>("HasConsumedTrial")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -1384,6 +1432,20 @@ namespace Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("Cohestra.Domain.Activities.Community", b =>
+                {
+                    b.HasOne("Cohestra.Domain.Activities.TenantFormTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("DefaultFormTemplateId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Cohestra.Domain.Tenants.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cohestra.Domain.Activities.TenantFormTemplate", b =>
                 {
                     b.HasOne("Cohestra.Domain.Tenants.Tenant", null)
                         .WithMany()

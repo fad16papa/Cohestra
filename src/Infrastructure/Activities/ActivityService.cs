@@ -99,6 +99,8 @@ public sealed class ActivityService(
                 UpdatedAt = now,
             };
 
+            await ApplyCommunityDefaultFormSchemaAsync(activity, cancellationToken);
+
             dbContext.Activities.Add(activity);
 
             try
@@ -576,6 +578,16 @@ public sealed class ActivityService(
             throw new ArgumentException(validationError);
         }
 
+        var mapped = FormSchemaValidator.MapToDomain(formSchema);
+        FormFieldStepAssigner.ApplyMissingBuckets(mapped);
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            throw new InvalidOperationException("Tenant context is required to save a form schema.");
+        }
+
+        await EnsureFormSchemaPlanAllowedAsync(mapped, tenantId, cancellationToken);
+
         var activity = await dbContext.Activities.FirstOrDefaultAsync(
             item => item.Id == id,
             cancellationToken);
@@ -590,7 +602,7 @@ public sealed class ActivityService(
             throw new InvalidOperationException("Archived activities cannot be edited.");
         }
 
-        activity.FormSchema = FormSchemaValidator.MapToDomain(formSchema);
+        activity.FormSchema = mapped;
         activity.UpdatedAt = DateTimeOffset.UtcNow;
 
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -832,10 +844,14 @@ public sealed class ActivityService(
             .Where(tenant => tenant.Id == activity.TenantId)
             .Select(tenant => tenant.RegistrationTimeZoneId)
             .FirstOrDefaultAsync(cancellationToken) ?? RegistrationTimeZoneDefaults.Utc;
+        var utcNow = DateTimeOffset.UtcNow;
         var isRegistrationOpen = ActivityScheduleExpiration.IsRegistrationOpen(
             activity,
             tenantTimeZoneId,
-            DateTimeOffset.UtcNow);
+            utcNow);
+        var isRegistrationClosedAt = RegistrationCloseAtEvaluator.IsPastCloseAt(
+            activity.FormSchema,
+            utcNow);
 
         return new PublicActivityResponse(
             activity.Slug,
@@ -855,7 +871,8 @@ public sealed class ActivityService(
             activity.MaxRegistrants,
             registrationCount,
             ActivityCapacityValidator.IsRegistrationFull(activity.MaxRegistrants, registrationCount),
-            IsRegistrationPaused: false);
+            IsRegistrationPaused: false,
+            isRegistrationClosedAt);
     }
 
     private async Task<PublicActivityResponse> EnrichWithRegistrationPauseStateAsync(
@@ -863,11 +880,6 @@ public sealed class ActivityService(
         Guid tenantId,
         CancellationToken cancellationToken)
     {
-        if (!response.IsRegistrationOpen)
-        {
-            return response;
-        }
-
         var tenant = await dbContext.Tenants
             .AsNoTracking()
             .Where(item => item.Id == tenantId)
@@ -955,8 +967,15 @@ public sealed class ActivityService(
             probe,
             tenantTimeZoneId,
             DateTimeOffset.UtcNow);
+        var isRegistrationClosedAt = RegistrationCloseAtEvaluator.IsPastCloseAt(
+            cached.FormSchema,
+            DateTimeOffset.UtcNow);
 
-        return cached with { IsRegistrationOpen = isRegistrationOpen };
+        return cached with
+        {
+            IsRegistrationOpen = isRegistrationOpen,
+            IsRegistrationClosedAt = isRegistrationClosedAt,
+        };
     }
 
     private async Task<string?> ValidateActivityCatalogAsync(
@@ -1138,5 +1157,104 @@ public sealed class ActivityService(
         }
 
         return ActivityScheduleParser.TryParseStartsAt(schedule, registrationTimeZoneId);
+    }
+
+    private async Task ApplyCommunityDefaultFormSchemaAsync(
+        Activity activity,
+        CancellationToken cancellationToken)
+    {
+        var community = await dbContext.Communities
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                item => item.Name == activity.CommunityLabel,
+                cancellationToken);
+
+        if (community?.DefaultFormTemplateId is not Guid templateId)
+        {
+            return;
+        }
+
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return;
+        }
+
+        var plan = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => (TenantPlan?)tenant.Plan)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (plan is null or TenantPlan.Basic)
+        {
+            return;
+        }
+
+        var template = await dbContext.TenantFormTemplates
+            .AsNoTracking()
+            .FirstOrDefaultAsync(item => item.Id == templateId, cancellationToken);
+
+        if (template is null)
+        {
+            return;
+        }
+
+        var cloned = FormSchemaCloner.Clone(template.FormSchema);
+        FormFieldStepAssigner.ApplyMissingBuckets(cloned);
+
+        try
+        {
+            await EnsureFormSchemaPlanAllowedAsync(cloned, tenantId, cancellationToken);
+        }
+        catch (FormSchemaPlanLockedException)
+        {
+            return;
+        }
+
+        activity.FormSchema = cloned;
+    }
+
+    private async Task EnsureFormSchemaPlanAllowedAsync(
+        ActivityFormSchema schema,
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var hasRecipes = schema.Fields.Any(field => field.VisibleWhen is not null);
+        var hasSteps = schema.Meta is { SplitIntoSteps: true };
+        var hasCorePlusFields = schema.Fields.Any(field =>
+            FormFieldTypes.CorePlusOnly.Contains(field.Type));
+        if (!hasRecipes && !hasSteps && !hasCorePlusFields)
+        {
+            return;
+        }
+
+        var plan = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => (TenantPlan?)tenant.Plan)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (plan is null)
+        {
+            throw new InvalidOperationException("Tenant not found for form schema plan gate.");
+        }
+
+        if (hasCorePlusFields && plan is TenantPlan.Basic)
+        {
+            throw new FormSchemaPlanLockedException(
+                "Scale and emergency contact fields require a Core or Pro plan.");
+        }
+
+        if (hasRecipes && plan is TenantPlan.Basic)
+        {
+            throw new FormSchemaPlanLockedException(
+                "Form Recipes require a Core or Pro plan.");
+        }
+
+        if (hasSteps && plan is not (TenantPlan.Pro or TenantPlan.Enterprise))
+        {
+            throw new FormSchemaPlanLockedException(
+                "Split into steps requires a Pro plan.");
+        }
     }
 }

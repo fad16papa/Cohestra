@@ -348,9 +348,17 @@ export function getFormTemplate(id: FormTemplateId): FormTemplate {
 export function cloneFormSchema(schema: ActivityFormSchema): ActivityFormSchema {
   return {
     version: schema.version,
+    meta: schema.meta ? { ...schema.meta } : undefined,
     fields: schema.fields.map((item) => ({
       ...item,
       options: item.options?.map((option) => ({ ...option })) ?? null,
+      visibleWhen: item.visibleWhen
+        ? {
+            fieldId: item.visibleWhen.fieldId,
+            equals: item.visibleWhen.equals ?? null,
+            notEquals: item.visibleWhen.notEquals ?? null,
+          }
+        : null,
     })),
   };
 }

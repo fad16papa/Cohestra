@@ -44,6 +44,34 @@ public sealed class TenantOrganizationService(CohestraDbContext dbContext) : ITe
         return (true, null);
     }
 
+    public async Task<TenantNotificationSettingsResponse> GetNotificationSettingsAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        return BuildNotificationSettingsResponse(tenant);
+    }
+
+    public async Task<TenantNotificationSettingsResponse> UpdateNotificationSettingsAsync(
+        Guid tenantId,
+        bool emailOnNewRegistration,
+        CancellationToken cancellationToken = default)
+    {
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+            ?? throw new InvalidOperationException("Tenant not found.");
+
+        tenant.EmailOnNewRegistration = emailOnNewRegistration;
+        tenant.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return BuildNotificationSettingsResponse(tenant);
+    }
+
     public async Task<TenantEmbedSettingsResponse> GetEmbedSettingsAsync(
         Guid tenantId,
         CancellationToken cancellationToken = default)
@@ -53,8 +81,7 @@ public sealed class TenantOrganizationService(CohestraDbContext dbContext) : ITe
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
             ?? throw new InvalidOperationException("Tenant not found.");
 
-        return new TenantEmbedSettingsResponse(
-            EmbedOriginSupport.SanitizeStoredOrigins(tenant.AllowedEmbedOrigins));
+        return new TenantEmbedSettingsResponse(tenant.AllowedEmbedOrigins);
     }
 
     public async Task<(bool Ok, string? Error)> UpdateEmbedSettingsAsync(
@@ -80,6 +107,14 @@ public sealed class TenantOrganizationService(CohestraDbContext dbContext) : ITe
         await dbContext.SaveChangesAsync(cancellationToken);
         return (true, null);
     }
+
+    internal static TenantNotificationSettingsResponse BuildNotificationSettingsResponse(
+        Domain.Tenants.Tenant tenant) =>
+        new(
+            tenant.EmailOnNewRegistration,
+            string.IsNullOrWhiteSpace(tenant.AdminContactEmail)
+                ? null
+                : tenant.AdminContactEmail.Trim());
 
     internal static TenantRegistrationTimeZoneResponse BuildResponse(string? registrationTimeZoneId)
     {

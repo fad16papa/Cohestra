@@ -18,6 +18,8 @@ public sealed record CommunityResponse(
     string? LogoAssetId,
     string? AccentColor,
     string? DefaultHeroImageUrl,
+    Guid? DefaultFormTemplateId,
+    string? DefaultFormTemplateName,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
@@ -29,3 +31,5 @@ public sealed record UpdateCommunityRequest(
     string? AccentColor = null,
     string? DefaultHeroImageUrl = null,
     bool BrandKitIncluded = false);
+
+public sealed record SetCommunityDefaultFormTemplateRequest(Guid? FormTemplateId);

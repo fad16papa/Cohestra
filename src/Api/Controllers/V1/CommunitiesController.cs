@@ -137,6 +137,31 @@ public class CommunitiesController(
         }
     }
 
+    [HttpPut("{id:guid}/default-form-template")]
+    [ProducesResponseType(typeof(CommunityResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<CommunityResponse>> SetDefaultFormTemplate(
+        Guid id,
+        [FromBody] SetCommunityDefaultFormTemplateRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("Request body is required.");
+        }
+
+        try
+        {
+            var community = await communityService.SetDefaultFormTemplateAsync(id, request, cancellationToken);
+            return community is null ? NotFound() : Ok(community);
+        }
+        catch (CommunityPlanLockedException ex)
+        {
+            return PlanLockedProblem(ex.Message);
+        }
+    }
+
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

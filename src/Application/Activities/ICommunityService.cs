@@ -18,4 +18,9 @@ public interface ICommunityService
         CancellationToken cancellationToken = default);
 
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<CommunityResponse?> SetDefaultFormTemplateAsync(
+        Guid id,
+        SetCommunityDefaultFormTemplateRequest request,
+        CancellationToken cancellationToken = default);
 }

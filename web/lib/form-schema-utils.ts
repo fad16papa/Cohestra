@@ -2,15 +2,19 @@ import type {
   ActivityFormSchema,
   FormFieldDefinition,
   FormFieldType,
+  FormSchemaMeta,
 } from "@/lib/activities-api";
 import {
   applyPhoneFieldDefaults,
   DEFAULT_PHONE_COUNTRY,
   isSupportedPhoneCountry,
 } from "@/lib/phone-countries";
+import { collectVisibleWhenIssues } from "@/lib/form-visibility";
 
 export const formFieldTypeLabels: Record<FormFieldType, string> = {
   text: "Text",
+  textarea: "Long text",
+  date: "Date",
   phone: "Phone",
   email: "Email",
   select: "Select",
@@ -19,22 +23,60 @@ export const formFieldTypeLabels: Record<FormFieldType, string> = {
   referral_source: "Referral source",
   section_header: "Section header",
   hidden: "Hidden",
+  number: "Number",
+  url: "Link",
+  time: "Time",
+  choice: "Choice",
+  yes_no: "Yes / No",
+  multi_choice: "Multi-choice",
+  info: "Info",
+  country: "Country",
+  scale: "Scale",
+  emergency: "Emergency contact",
 };
 
 export const formFieldTypeOptions: FormFieldType[] = [
   "text",
+  "textarea",
+  "date",
+  "number",
+  "url",
+  "time",
+  "choice",
+  "yes_no",
+  "multi_choice",
   "phone",
   "email",
   "select",
   "checkbox",
   "consent",
   "referral_source",
+  "country",
   "section_header",
+  "info",
   "hidden",
+  "scale",
+  "emergency",
 ];
 
 export function emptyFormSchema(): ActivityFormSchema {
   return { version: 1, meta: null, fields: [] };
+}
+
+export function mergeFormSchemaMeta(
+  current: ActivityFormSchema,
+  patch: Partial<FormSchemaMeta>
+): FormSchemaMeta {
+  return {
+    introMarkdown: current.meta?.introMarkdown ?? null,
+    splitIntoSteps: current.meta?.splitIntoSteps ?? false,
+    successCopyMarkdown: current.meta?.successCopyMarkdown ?? null,
+    confirmationEmailSubject: current.meta?.confirmationEmailSubject ?? null,
+    confirmationEmailBodyMarkdown: current.meta?.confirmationEmailBodyMarkdown ?? null,
+    closedMessage: current.meta?.closedMessage ?? null,
+    registrationClosesAt: current.meta?.registrationClosesAt ?? null,
+    ...patch,
+  };
 }
 
 export function normalizeFormSchema(
@@ -56,12 +98,38 @@ export function createFieldId(type: FormFieldType, existingIds: Set<string>): st
     return "ref";
   }
 
+  if (type === "textarea" && !existingIds.has("notes")) {
+    return "notes";
+  }
+
+  if (type === "date" && !existingIds.has("date")) {
+    return "date";
+  }
+
+  if (
+    (type === "number" ||
+      type === "url" ||
+      type === "time" ||
+      type === "choice" ||
+      type === "yes_no" ||
+      type === "multi_choice" ||
+      type === "info" ||
+      type === "country" ||
+      type === "scale" ||
+      type === "emergency") &&
+    !existingIds.has(type)
+  ) {
+    return type;
+  }
+
   const base =
     type === "referral_source"
       ? "referral"
       : type === "hidden"
         ? "hidden"
-        : type.replace("_", "-");
+        : type === "textarea"
+          ? "notes"
+          : type;
   let candidate = base;
   let suffix = 2;
 
@@ -81,6 +149,22 @@ export function createDefaultField(
   const defaults: Record<FormFieldType, Omit<FormFieldDefinition, "id" | "type">> = {
     text: {
       label: "Text field",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    textarea: {
+      label: "Notes",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    date: {
+      label: "Date",
       required: false,
       placeholder: null,
       options: null,
@@ -158,6 +242,97 @@ export function createDefaultField(
       phoneCountry: null,
       defaultValue: null,
     },
+    number: {
+      label: "Number",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+      min: null,
+      max: null,
+    },
+    url: {
+      label: "Website",
+      required: false,
+      placeholder: "https://",
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    time: {
+      label: "Time",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    choice: {
+      label: "Choose one",
+      required: false,
+      placeholder: null,
+      options: [
+        { value: "option_a", label: "Option A" },
+        { value: "option_b", label: "Option B" },
+      ],
+      consentText: null,
+      phoneCountry: null,
+    },
+    yes_no: {
+      label: "Yes or no",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    multi_choice: {
+      label: "Choose any",
+      required: false,
+      placeholder: null,
+      options: [
+        { value: "option_a", label: "Option A" },
+        { value: "option_b", label: "Option B" },
+      ],
+      consentText: null,
+      phoneCountry: null,
+      min: null,
+      max: null,
+    },
+    info: {
+      label: "Information",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+      infoText: "Add a short note for participants.",
+    },
+    country: {
+      label: "Country",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    scale: {
+      label: "Skill level",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: null,
+    },
+    emergency: {
+      label: "Emergency contact",
+      required: false,
+      placeholder: null,
+      options: null,
+      consentText: null,
+      phoneCountry: DEFAULT_PHONE_COUNTRY,
+    },
   };
 
   return {
@@ -197,15 +372,32 @@ export function moveField(
 }
 
 export function fieldNeedsOptions(type: FormFieldType): boolean {
-  return type === "select" || type === "referral_source";
+  return (
+    type === "select" ||
+    type === "referral_source" ||
+    type === "choice" ||
+    type === "multi_choice"
+  );
 }
 
 export function fieldNeedsConsentText(type: FormFieldType): boolean {
   return type === "consent";
 }
 
+export function isCorePlusFieldType(type: FormFieldType): boolean {
+  return type === "scale" || type === "emergency";
+}
+
 export function isNonInputFieldType(type: FormFieldType): boolean {
-  return type === "section_header";
+  return type === "section_header" || type === "info";
+}
+
+export function fieldAllowsMinMax(type: FormFieldType): boolean {
+  return type === "number" || type === "multi_choice";
+}
+
+export function fieldNeedsInfoText(type: FormFieldType): boolean {
+  return type === "info";
 }
 
 export function isHiddenFieldType(type: FormFieldType): boolean {
@@ -266,17 +458,37 @@ export function getFormSchemaClientIssues(
       issues.push(`Field "${field.label || field.id}" cannot have a default value.`);
     }
 
+    if (field.type !== "info" && field.infoText?.trim()) {
+      issues.push(`Field "${field.label || field.id}" cannot have info text.`);
+    }
+
     if (isNonInputFieldType(field.type)) {
       if (field.required) {
-        issues.push(`Section header "${field.label}" cannot be marked required.`);
+        issues.push(
+          field.type === "info"
+            ? `Info field "${field.label}" cannot be marked required.`
+            : `Section header "${field.label}" cannot be marked required.`
+        );
       }
 
       if (field.placeholder?.trim()) {
-        issues.push(`Section header "${field.label}" cannot have a placeholder.`);
+        issues.push(
+          field.type === "info"
+            ? `Info field "${field.label}" cannot have a placeholder.`
+            : `Section header "${field.label}" cannot have a placeholder.`
+        );
       }
 
       if (!field.label.trim()) {
-        issues.push(`Section header "${field.id}" requires a heading label.`);
+        issues.push(
+          field.type === "info"
+            ? `Info field "${field.id}" requires a heading label.`
+            : `Section header "${field.id}" requires a heading label.`
+        );
+      }
+
+      if (field.type === "info" && (field.infoText?.trim().length ?? 0) > 2000) {
+        issues.push(`Info field "${field.label}" cannot exceed 2000 characters.`);
       }
 
       continue;
@@ -304,16 +516,43 @@ export function getFormSchemaClientIssues(
       }
     }
 
-    if (field.type === "phone") {
+    if (!fieldAllowsMinMax(field.type) && (field.min != null || field.max != null)) {
+      issues.push(`Field "${field.label || field.id}" cannot have min or max.`);
+    }
+
+    if (
+      fieldAllowsMinMax(field.type) &&
+      field.min != null &&
+      field.max != null &&
+      field.min > field.max
+    ) {
+      issues.push(`Field "${field.label || field.id}" min cannot be greater than max.`);
+    }
+
+    if (
+      field.type === "multi_choice" &&
+      field.min != null &&
+      field.min > (field.options?.length ?? 0)
+    ) {
+      issues.push(
+        `Field "${field.label || field.id}" min cannot exceed the number of options.`
+      );
+    }
+
+    if (field.type === "phone" || field.type === "emergency") {
       if (!field.phoneCountry?.trim()) {
-        issues.push(`Phone field "${field.label}" requires a mobile country.`);
+        issues.push(
+          `${field.type === "phone" ? "Phone" : "Emergency contact"} field "${field.label}" requires a mobile country.`
+        );
       } else if (!isSupportedPhoneCountry(field.phoneCountry)) {
         issues.push(
-          `Phone field "${field.label}" uses an unsupported country code.`
+          `${field.type === "phone" ? "Phone" : "Emergency contact"} field "${field.label}" uses an unsupported country code.`
         );
       }
     }
   }
+
+  issues.push(...collectVisibleWhenIssues(schema.fields));
 
   return [...new Set(issues)];
 }

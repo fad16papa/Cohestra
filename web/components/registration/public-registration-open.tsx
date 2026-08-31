@@ -54,6 +54,7 @@ export function PublicRegistrationOpen({
   const [registrationNumber, setRegistrationNumber] = useState<string | null>(null);
   const [confirmationEmailSent, setConfirmationEmailSent] = useState(false);
   const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
+  const [successCopyMarkdown, setSuccessCopyMarkdown] = useState<string | null>(null);
   const brandingStyle = accentColor
     ? ({ "--primary": accentColor } as CSSProperties)
     : undefined;
@@ -80,6 +81,7 @@ export function PublicRegistrationOpen({
         location={location}
         communityLabel={communityLabel}
         registrationNumber={registrationNumber}
+        successCopyMarkdown={successCopyMarkdown}
         confirmationEmailSent={confirmationEmailSent}
         confirmationEmail={confirmationEmail}
         websiteLink={websiteLink}
@@ -87,6 +89,7 @@ export function PublicRegistrationOpen({
           setRegistrationNumber(null);
           setConfirmationEmailSent(false);
           setConfirmationEmail(null);
+          setSuccessCopyMarkdown(null);
           setSubmitted(false);
         }}
       />
@@ -106,6 +109,7 @@ export function PublicRegistrationOpen({
             setRegistrationNumber(result.registrationNumber);
             setConfirmationEmailSent(result.confirmationEmailSent);
             setConfirmationEmail(result.confirmationEmail);
+            setSuccessCopyMarkdown(result.successCopyMarkdown);
             setSubmitted(true);
           }}
         />

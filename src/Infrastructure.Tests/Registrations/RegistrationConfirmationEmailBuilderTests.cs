@@ -75,6 +75,81 @@ public sealed class RegistrationConfirmationEmailBuilderTests
     }
 
     [Fact]
+    public void Build_UsesCustomSubjectAndClosingMessageWhenProvided()
+    {
+        var content = RegistrationConfirmationEmailBuilder.Build(
+            CreateModel() with
+            {
+                CustomSubject = "You're in, Maya",
+                CustomClosingMessage = "See you Saturday, Maya.",
+            });
+
+        Assert.Equal("You're in, Maya", content.Subject);
+        Assert.Contains("See you Saturday, Maya.", content.PlainTextBody);
+        Assert.Contains("See you Saturday, Maya.", content.HtmlBody);
+    }
+
+    [Fact]
+    public void Build_SanitizesNewlinesInCustomSubject()
+    {
+        var content = RegistrationConfirmationEmailBuilder.Build(
+            CreateModel() with
+            {
+                CustomSubject = "You're in,\nMaya",
+                CustomClosingMessage = "See you Saturday, Maya.",
+            });
+
+        Assert.Equal("You're in, Maya", content.Subject);
+    }
+
+    [Theory]
+    [InlineData('\u2028')]
+    [InlineData('\u2029')]
+    public void Build_SanitizesUnicodeLineSeparatorsInCustomSubject(char separator)
+    {
+        var content = RegistrationConfirmationEmailBuilder.Build(
+            CreateModel() with
+            {
+                CustomSubject = $"You're in,{separator}Maya",
+                CustomClosingMessage = "See you Saturday, Maya.",
+            });
+
+        Assert.Equal("You're in, Maya", content.Subject);
+    }
+
+    [Fact]
+    public void Build_NormalizesCarriageReturnsInCustomClosingMessage()
+    {
+        var content = RegistrationConfirmationEmailBuilder.Build(
+            CreateModel() with
+            {
+                CustomClosingMessage = "Line one\r\nLine two\rLine three",
+            });
+
+        Assert.Contains("Line one", content.PlainTextBody);
+        Assert.Contains("Line two", content.PlainTextBody);
+        Assert.Contains("Line three", content.PlainTextBody);
+        Assert.DoesNotContain("\r", content.HtmlBody);
+        Assert.Contains("Line one<br />Line two<br />Line three", content.HtmlBody);
+    }
+
+    [Theory]
+    [InlineData('\u2028')]
+    [InlineData('\u2029')]
+    public void Build_NormalizesUnicodeLineSeparatorsInCustomClosingMessage(char separator)
+    {
+        var content = RegistrationConfirmationEmailBuilder.Build(
+            CreateModel() with
+            {
+                CustomClosingMessage = $"Line one{separator}Line two",
+            });
+
+        Assert.DoesNotContain(separator, content.PlainTextBody);
+        Assert.DoesNotContain(separator, content.HtmlBody);
+        Assert.Contains("Line one<br />Line two", content.HtmlBody);
+    }
+
+    [Fact]
     public void ResolveLogoUrl_UsesPublicWebBaseWhenLogoUrlNotConfigured()
     {
         var url = RegistrationNotificationService.ResolveLogoUrl(

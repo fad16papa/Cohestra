@@ -41,10 +41,27 @@ Keys in `answers` must match field `id` values from [activity-form-schema-v1.md]
 | Field type                         | JSON value type | Example |
 |------------------------------------|-----------------|---------|
 | `text`, `phone`, `email`           | string          | `"Elena Santos"` |
+| `textarea`                         | string          | `"Prefers Saturday mornings"` (max 2000 after HTML strip; over-length is `400`, not truncated) |
+| `date`                             | string          | `"2026-09-12"` (`YYYY-MM-DD` calendar date; invalid values are `400`) |
+| `number`                           | string          | `"12"` (invariant decimal; optional min/max) |
+| `url`                              | string          | `"https://example.com"` |
+| `time`                             | string          | `"09:30"` (`HH:mm`) |
+| `choice`                           | string          | `"option_a"` (option `value`) |
+| `yes_no`                           | boolean         | `true` or `false` |
+| `multi_choice`                     | string array    | `["sat","sun"]` |
+| `country`                          | string          | `"PH"` (supported phone-country ISO) |
+| `scale`                            | string          | `"3"` (values `"1"`–`"5"` with fixed skill labels) |
+| `emergency`                        | object          | `{ "name": "Alex", "phone": "91234567" }` |
+| `info`                             | —               | Display-only; no answer |
 | `select`, `referral_source`        | string          | `"friend"` (option `value`) |
 | `checkbox`, `consent`              | boolean         | `true` |
+| `hidden`                           | string          | `"wa"` (max 200 after HTML strip). Query key = Field `id`. Missing/blank uses operator `defaultValue`. Never required for submit. |
 
 Submissions are rejected when required fields are missing or invalid per the activity schema.
+
+Fields with a Core+ `visibleWhen` Recipe are required only while visible. Answers for currently invisible Fields are dropped (spoofs do not persist).
+
+Hidden answers are filled from the public link query (`?{fieldId}=…`) or the Field `defaultValue`. The public page does not render Hidden inputs. HTML is stripped; values longer than 200 characters after strip are rejected.
 
 ## Responses
 
@@ -58,7 +75,8 @@ Submissions are rejected when required fields are missing or invalid per the act
   "registrationNumber": "REG20260616000001",
   "clientId": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
   "confirmationEmailSent": true,
-  "confirmationEmail": "elena@example.com"
+  "confirmationEmail": "elena@example.com",
+  "successCopyMarkdown": "See you Saturday, Elena."
 }
 ```
 
@@ -71,6 +89,7 @@ Submissions are rejected when required fields are missing or invalid per the act
 | `clientId`          | uuid   | yes      | Master client record (created or updated) |
 | `confirmationEmailSent` | boolean | yes | `true` when SendGrid delivered a registration confirmation email |
 | `confirmationEmail` | string \| null | yes | Recipient address when the client has an email on file; `null` when no email was captured |
+| `successCopyMarkdown` | string \| null | yes | Operator thank-you copy with piping tokens substituted; `null` when unset |
 
 When the client submitted an email, the API sends a branded transactional confirmation (no-reply sender) after persisting the registration. Send failures do not fail the registration; `confirmationEmailSent` is `false` in that case.
 
@@ -108,7 +127,20 @@ When a published activity has `maxRegistrants` set and registration count has re
 
 Duplicate-client checks run before the capacity check; an already-registered client still receives the existing already-registered `409` response.
 
-Public activity GET (`/api/v1/public/activities/{slug}`) exposes separate fields: `isRegistrationOpen` (published status), `isRegistrationFull`, `registrationCount`, and optional `maxRegistrants`.
+Public activity GET (`/api/v1/public/activities/{slug}`) exposes separate fields: `isRegistrationOpen` (schedule), `isRegistrationFull`, `isRegistrationPaused`, `isRegistrationClosedAt` (Story 30.8), `registrationCount`, and optional `maxRegistrants`. Unavailable precedence on the public page: capacity full → paused → Close-at → Activity ended.
+
+### 409 Conflict — registration closed at Close-at (Story 30.8)
+
+When `form_schema.meta.registrationClosesAt` is set and server time is on or after that UTC instant:
+
+```json
+{
+  "title": "Registration closed",
+  "detail": "This activity is no longer accepting registrations.",
+  "status": 409,
+  "errorCode": "registration_closed_at"
+}
+```
 
 ## Authentication
 

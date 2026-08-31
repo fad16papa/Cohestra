@@ -91,6 +91,10 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             .IsRequired()
             .HasDefaultValue("UTC");
 
+        builder.Property(tenant => tenant.EmailOnNewRegistration)
+            .IsRequired()
+            .HasDefaultValue(true);
+
         builder.Property(tenant => tenant.CustomDomain)
             .HasMaxLength(253);
 

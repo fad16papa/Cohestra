@@ -51,6 +51,100 @@
 - Settings UI lacks client-side origin validation/max-count guard before PATCH — server validates on save
 
 ## Deferred from: code review of 19-0-production-readiness-dev.md (2026-08-12)
+## Deferred from: code review of 30-13-community-default-design-pin-and-pro-duplicate.md (2026-08-31)
+
+- Core tenant silently loses prefill when default template has Pro-only split steps — downgrade edge case; create skips all-or-nothing without operator feedback
+- Set community default does not validate template schema against caller plan — create-time gate prevents bad schema on new activities; set-time validation would improve operator UX
+- No cross-tenant integration test for pinned-preset endpoint — EF tenant filter + service tests cover isolation
+
+## Deferred from: Epic 30 code review pass 1 (2026-08-31)
+
+- Stale-tab Close-at submit uses platform copy, not operator closedMessage — GET unavailable path OK; inline submit edge case
+- Saved template apply can carry past registrationClosesAt — meta snapshot footgun; no apply-time warning
+- CaptureInvariantsTests does not lock submit availability precedence chain — evaluator unit-tested separately
+- Duplicated EnsureFormSchemaPlanAllowedAsync in Activity vs FormTemplate services — drift risk on future gates
+- GET availability flags separate from submit evaluator — precedence aligned today; no shared function
+
+## Deferred from: code review of 30-11/30-12 (2026-08-30, pass 3)
+
+- Apply downgraded-plan template without client re-check — resolved as defer (same as launch templates)
+- Duplicate template names — **resolved**: unique per tenant via validation + unique index (Pass 3 decision A)
+
+## Deferred from: code review of 30-11/30-12 (2026-08-30, pass 2)
+
+## Deferred from: code review of 30-11/30-12 (2026-08-30, pass 1)
+
+- Save current draft on published activities while Apply locked — may be intentional (capture live form recipe)
+- Concurrent POST slot-boundary TOCTOU — matches other plan-limit patterns
+- No HTTP integration test for POST plan_locked — service tests cover enforcement
+- Tenant isolation PATCH/DELETE — GET case added; same EF filter for other verbs
+- Enterprise 999 slot limit untested
+- 403 save shows toast only, not UpgradePanel — spec optional; detail surfaced
+
+## Deferred from: code review of 30-10-capture-invariants-stay-shipped.md (2026-08-30, pass 1)
+
+- AC3 persisted JSONB immutability not integration-tested in this story — submit-only API lock sufficient for regression slice
+- AC3 client dedup — existing ClientDedupIntegrationTests; no new test in 30.10
+- AC4 theme save/serialize round-trip — reflection structural lock only
+- AC2 reg-cap public submit rejection — TenantPlanLimitValidatorTests + existing integration tests
+
+## Deferred from: code review of 30-9-operator-email-on-new-registration.md (2026-08-30, pass 1)
+
+- Missing registration completes outbox silently — mirrors confirmation handler idempotency pattern
+- Form-edit / draft-save negative tests missing — enqueue only on public submit (implementation correct)
+- Settings notifications API lacks dedicated tests — same gap as registration-timezone endpoints
+- Tenant-not-found throws 500 — consistent with TenantOrganizationService patterns
+- Toggle ON with empty admin email — UI warns; registration still commits (admin email prerequisite)
+- RegistrationOperatorNotifyService branch unit tests missing — builder tests sufficient for story slice
+- Settings error state has no retry button — matches organization timezone section pattern
+
+## Deferred from: code review of 30-8-close-at.md (2026-08-30, pass 1)
+
+- Manual timezone offset iteration lacks DST gap/ambiguous-hour handling; only Singapore round-trip tested — acceptable for v1 tenant TZs
+- Stale browser tab after Close-at passes still shows form until reload — matches existing no-polling pattern
+- `isRegistrationOpen` remains true when only Close-at blocks — intentional separate flags; contract doc updated
+- Missing integration test for closed message + Close-at wiring and combined paused+Close-at submit precedence — unit + page wiring sufficient
+- Close-at and archived unavailable both use **Closed** chip label — spec requires Closed for Close-at; archived pre-existed
+
+## Deferred from: code review of 30-6-piping-on-thank-you-and-confirmation-email.md (2026-08-30, pass 4)
+
+- Token-only confirmation templates that substitute to whitespace-only fall back to default subject/closing — safer email UX than blank subject/sign-off
+- `EncodeClosingMessageHtml` `RemoveEmptyEntries` drops intentional blank lines in closing copy — polish
+- No outbox-path test for hidden-field leak on schema mutation between enqueue and send — pre-existing outbox pattern
+
+## Deferred from: code review of 30-6-piping-on-thank-you-and-confirmation-email.md (2026-08-30)
+
+- Idempotency replay omits `successCopyMarkdown` (documented intentional, same as confirmation fields) — acceptable v1 replay tradeoff
+- Post-substitution copy can exceed template max length when tokens expand — template-bound not expansion-bound
+- Outbox email uses live schema at send time, not submit-time snapshot — pre-existing outbox pattern
+- Live preview uses field labels for `{{field:id}}`, not formatted answers — AC3 only requires sample name for `{{full_name}}`
+- No live preview for confirmation email subject/body editors — not in AC
+- Single-newline vs double-newline rendering differs success screen vs email — polish
+- No integration test asserting `successCopyMarkdown` on public submit API — unit coverage sufficient for slice
+- No component/E2E test proving piped copy renders on success screen — manual QA path
+- Success screen shows generic sign-off when operator thank-you copy is set — UX polish not in AC
+- Live preview `{{phone}}` formatted sample vs raw server phone — AC3 only requires name preview
+- Client form-schema issues omit piping meta max-length — HTML maxLength + server gate sufficient
+- Unused `encodedName` in email HTML builder — pre-existing dead assignment
+
+## Deferred from: code review of 30-5-core-scale-and-emergency-contact.md (2026-08-30)
+
+- Basic `403 plan_locked` save path has no automated test — matches existing deferred-work pattern for HTTP plan_locked tests
+- Type dropdown on Basic still lists scale/emergency (save-time gate only) — consistent with Recipes pattern
+- Duplicate scale labels in C# and TypeScript — maintainability follow-up
+- No AC3 mixed hidden + wave-1 + Core+ regression test — low risk given isolated validators
+- No integration test for public registration POST with scale/emergency — unit coverage sufficient for this story slice
+
+## Deferred from: code review of 31-1-visiblewhen-recipes.md + 31-2-optional-identity-details-consent-steps.md (2026-08-29)
+
+- Runtime does not re-check plan after downgrade — save-time `plan_locked` is the spec; published Forms keep stored Recipes
+- No HTTP integration test for Basic `403 plan_locked` on form-schema save
+- Recipe preset labels all infer as “guest” when `equals=yes`
+- `public-registration-v1.md` does not document the stepper
+- Preview last-step button stays enabled (“Preview only”)
+- No Next/Back component test
+
+## Deferred from: code review of 19-0-production-readiness-dev.md (2026-08-12)
 
 - Migration `Down()` is no-op (irreversible catalog backfill) — acceptable for data-only migrations
 - Header verifier checks `/` only, not `/api/*` duplicate-header edge — pre-existing nginx header ownership design

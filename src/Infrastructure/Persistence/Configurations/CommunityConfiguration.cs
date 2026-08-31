@@ -37,6 +37,13 @@ public sealed class CommunityConfiguration : IEntityTypeConfiguration<Community>
         builder.Property(community => community.DefaultHeroImageUrl)
             .HasMaxLength(2048);
 
+        builder.Property(community => community.DefaultFormTemplateId);
+
+        builder.HasOne<TenantFormTemplate>()
+            .WithMany()
+            .HasForeignKey(community => community.DefaultFormTemplateId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasIndex(community => new { community.TenantId, community.Name })
             .IsUnique();
 

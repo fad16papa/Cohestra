@@ -84,6 +84,9 @@ public sealed class Tenant
     /// </summary>
     public string RegistrationTimeZoneId { get; set; } = RegistrationTimeZoneDefaults.Utc;
 
+    /// <summary>When true (default), enqueue operator email on each new public registration.</summary>
+    public bool EmailOnNewRegistration { get; set; } = true;
+
     /// <summary>Enterprise custom domain hostname (e.g. events.example.com).</summary>
     public string? CustomDomain { get; set; }
 

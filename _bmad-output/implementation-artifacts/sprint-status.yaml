@@ -1,11 +1,11 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-23T06:00:00Z
+# last_updated: 2026-08-31
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (epics 1–10 done) + Cohestra Enterprise (epics 11–28) + Epic 29 Paddle billing
-# epics_source: planning-artifacts/epics.md (1–10) + planning-artifacts/epics-cohestra-enterprise.md (11–29)
+# initiative: Platform 0 (1–10) + Enterprise (11–29) + Registration Capture (30–32)
+# epics_source: epics.md (1–10) + epics-cohestra-enterprise.md (11–29) + epics-registration-capture.md (30–32)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -45,7 +45,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-31T12:30:00Z
+last_updated: 2026-08-31
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -301,7 +301,28 @@ development_status:
   29-7-paddle-sandbox-uat-epic-14-regression: done
   epic-29-retrospective: optional
 
-  # Epic 32 — Registration embed (allowed hosts + iframe route)
+  # Epic 30–32 — Registration Capture. Source: epics-registration-capture.md
+  epic-30: done
+  30-1-hidden-field-and-campaign-query-passthrough: done
+  30-2-long-text-and-date-fields: done
+  30-3-wave-1-toolbox-types-and-country: done
+  30-4-slash-add-field-palette: done
+  30-5-core-scale-and-emergency-contact: done
+  30-6-piping-on-thank-you-and-confirmation-email: done
+  30-7-closed-message: done
+  30-8-close-at: done
+  30-9-operator-email-on-new-registration: done
+  30-10-capture-invariants-stay-shipped: done
+  30-11-save-and-apply-tenant-form-templates: done
+  30-12-template-slots-by-plan: done
+  30-13-community-default-design-pin-and-pro-duplicate: done
+  epic-30-retrospective: done
+
+  epic-31: done
+  31-1-visiblewhen-recipes: done
+  31-2-optional-identity-details-consent-steps: done
+  epic-31-retrospective: optional
+
   epic-32: done
   32-1-allowed-embed-hosts-and-csp: done
   32-2-activity-embed-route-and-share-kit-snippet: done
@@ -567,11 +588,39 @@ action_items:
     owner: Dev
     status: open
 
+  # Epic 30 retrospective action items (2026-08-31)
+  - epic: 30
+    action: "Merge Epic 30 PR stack (#252–#264) when CI green"
+    owner: Dev
+    status: done
+    resolution: "Merged to main via PR #269 (2026-08-31)"
+  - epic: 30
+    action: "Run integration matrix on CI Postgres/Redis (hidden, close-at, templates, invariants)"
+    owner: Dev
+    status: open
+  - epic: 30
+    action: "Operator UAT — templates, slot meter, close-at, slash palette"
+    owner: Operator
+    status: open
+  - epic: 30
+    action: "Decide Story 30.13 timing — same epic vs follow-up sprint"
+    owner: Product
+    status: done
+    resolution: "Shipped in PR #269 with Epic 30 stack"
+  - epic: 30
+    action: "Extract shared EnsureFormSchemaPlanAllowedAsync (Activity + FormTemplate services)"
+    owner: Dev
+    status: open
+  - epic: 30
+    action: "Extend CaptureInvariantsTests for submit availability precedence chain"
+    owner: Dev
+    status: open
+
   # Epic 32 retrospective action items (2026-08-31)
   - epic: 32
     action: "Merge Epic 32 PR stack (32.1 → 32.2 → 32.3) when CI green"
     owner: Dev
-    status: open
+    status: in-progress
   - epic: 32
     action: "Operator UAT — embed allow-list, Share kit iframe, contact form submit on dev stack"
     owner: Operator

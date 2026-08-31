@@ -303,6 +303,188 @@ public sealed class RegistrationNotificationServiceTests
         Assert.Empty(sender.Messages);
     }
 
+    [Fact]
+    public async Task SendConfirmationIfApplicableAsync_SubstitutesPipingTokensInCustomCopy()
+    {
+        await using var dbContext = CreateDbContext();
+        var tenantId = TenantIds.Default;
+        var activityId = Guid.NewGuid();
+        var clientId = Guid.NewGuid();
+        var registrationId = Guid.NewGuid();
+
+        dbContext.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Slug = "creativorare",
+            Name = "Creativorare",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Activities.Add(new Activity
+        {
+            Id = activityId,
+            TenantId = tenantId,
+            Name = "Sunday Pickleball Clinic",
+            Slug = "pickleball",
+            Category = "Sports",
+            Schedule = "Sun 9:00 AM",
+            Location = "Ikigai Studio",
+            CommunityLabel = "Ikigai",
+            Status = ActivityStatus.Published,
+            FormSchema = new ActivityFormSchema
+            {
+                Version = 1,
+                Meta = new FormSchemaMeta
+                {
+                    ConfirmationEmailSubject = "You're in, {{full_name}}",
+                    ConfirmationEmailBodyMarkdown = "See you Saturday, {{full_name}}.",
+                },
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "full_name",
+                        Type = FormFieldTypes.Text,
+                        Label = "Full name",
+                        Required = true,
+                    },
+                ],
+            },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Clients.Add(new Client
+        {
+            Id = clientId,
+            TenantId = tenantId,
+            FullName = "Maya Chen",
+            Email = "maya@example.com",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Registrations.Add(new Registration
+        {
+            Id = registrationId,
+            TenantId = tenantId,
+            RegistrationNumber = "REG20260616000042",
+            ActivityId = activityId,
+            ClientId = clientId,
+            Answers = new Dictionary<string, object?> { ["full_name"] = "Maya Chen" },
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        await dbContext.SaveChangesAsync();
+
+        var sender = new CapturingEmailSender();
+        var service = CreateService(dbContext, sender);
+        var result = await service.SendConfirmationIfApplicableAsync(registrationId);
+
+        Assert.True(result.Sent);
+        Assert.Single(sender.Messages);
+        Assert.Equal("You're in, Maya Chen", sender.Messages[0].Subject);
+        Assert.Contains("See you Saturday, Maya Chen.", sender.Messages[0].HtmlBody);
+    }
+
+    [Fact]
+    public async Task SendConfirmationIfApplicableAsync_OmitsHiddenFieldTokensFromEmail()
+    {
+        await using var dbContext = CreateDbContext();
+        var tenantId = TenantIds.Default;
+        var activityId = Guid.NewGuid();
+        var clientId = Guid.NewGuid();
+        var registrationId = Guid.NewGuid();
+
+        dbContext.Tenants.Add(new Tenant
+        {
+            Id = tenantId,
+            Slug = "creativorare",
+            Name = "Creativorare",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Activities.Add(new Activity
+        {
+            Id = activityId,
+            TenantId = tenantId,
+            Name = "Sunday Pickleball Clinic",
+            Slug = "pickleball",
+            Category = "Sports",
+            Schedule = "Sun 9:00 AM",
+            Location = "Ikigai Studio",
+            CommunityLabel = "Ikigai",
+            Status = ActivityStatus.Published,
+            FormSchema = new ActivityFormSchema
+            {
+                Version = 1,
+                Meta = new FormSchemaMeta
+                {
+                    ConfirmationEmailBodyMarkdown = "Hidden campaign ref is {{field:ref}} end.",
+                },
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Id = "full_name",
+                        Type = FormFieldTypes.Text,
+                        Label = "Full name",
+                        Required = true,
+                    },
+                    new FormFieldDefinition
+                    {
+                        Id = "ref",
+                        Type = FormFieldTypes.Hidden,
+                        Label = "Campaign ref",
+                        Required = false,
+                    },
+                ],
+            },
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Clients.Add(new Client
+        {
+            Id = clientId,
+            TenantId = tenantId,
+            FullName = "Maya Chen",
+            Email = "maya@example.com",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+
+        dbContext.Registrations.Add(new Registration
+        {
+            Id = registrationId,
+            TenantId = tenantId,
+            RegistrationNumber = "REG20260616000042",
+            ActivityId = activityId,
+            ClientId = clientId,
+            Answers = new Dictionary<string, object?>
+            {
+                ["full_name"] = "Maya Chen",
+                ["ref"] = "SECRET_REF_XYZ",
+            },
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        await dbContext.SaveChangesAsync();
+
+        var sender = new CapturingEmailSender();
+        var service = CreateService(dbContext, sender);
+        var result = await service.SendConfirmationIfApplicableAsync(registrationId);
+
+        Assert.True(result.Sent);
+        Assert.Single(sender.Messages);
+        Assert.Contains("Hidden campaign ref is", sender.Messages[0].HtmlBody);
+        Assert.Contains("end.", sender.Messages[0].HtmlBody);
+        Assert.DoesNotContain("SECRET_REF_XYZ", sender.Messages[0].HtmlBody);
+        Assert.DoesNotContain("Save the date", sender.Messages[0].HtmlBody);
+    }
+
     private static RegistrationNotificationService CreateService(
         CohestraDbContext dbContext,
         IEmailSender sender,

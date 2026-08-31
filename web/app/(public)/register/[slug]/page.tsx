@@ -29,7 +29,11 @@ export async function generateMetadata({
   }
 
   const indexable =
-    result.activity.isRegistrationOpen && result.activity.status === "published";
+    result.activity.status === "published" &&
+    result.activity.isRegistrationOpen &&
+    !result.activity.isRegistrationFull &&
+    !result.activity.isRegistrationPaused &&
+    !result.activity.isRegistrationClosedAt;
 
   return buildActivityRegistrationMetadata(result.activity, origin, {
     indexable,
@@ -53,13 +57,16 @@ export default async function PublicRegistrationPage({
   const { activity } = result;
   const [door, origin] = await Promise.all([fetchPublicDoorServer(), getRequestOrigin()]);
   const websiteLink = origin ? buildPublisherWebsiteLink(door, origin) : null;
+  const closedMessage = activity.formSchema?.meta?.closedMessage ?? null;
 
-  if (!activity.isRegistrationOpen) {
+  if (activity.isRegistrationFull) {
     return (
       <PublicRegistrationUnavailable
         slug={slug}
         activityName={activity.name}
-        reason="unavailable"
+        activityStatus={activity.status}
+        closedMessage={closedMessage}
+        reason="full"
       />
     );
   }
@@ -69,17 +76,33 @@ export default async function PublicRegistrationPage({
       <PublicRegistrationUnavailable
         slug={slug}
         activityName={activity.name}
+        activityStatus={activity.status}
+        closedMessage={closedMessage}
         reason="plan-limit"
       />
     );
   }
 
-  if (activity.isRegistrationFull) {
+  if (activity.isRegistrationClosedAt) {
     return (
       <PublicRegistrationUnavailable
         slug={slug}
         activityName={activity.name}
-        reason="full"
+        activityStatus={activity.status}
+        closedMessage={closedMessage}
+        reason="close-at"
+      />
+    );
+  }
+
+  if (!activity.isRegistrationOpen) {
+    return (
+      <PublicRegistrationUnavailable
+        slug={slug}
+        activityName={activity.name}
+        activityStatus={activity.status}
+        closedMessage={closedMessage}
+        reason="unavailable"
       />
     );
   }

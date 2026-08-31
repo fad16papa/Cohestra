@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import { LayoutTemplate } from "lucide-react";
 
 import { FormFieldEditor } from "@/components/activities/form-field-editor";
+import { ActivityCloseAtPicker } from "@/components/activities/activity-close-at-picker";
 import { FormTemplatePicker } from "@/components/activities/form-template-picker";
+import { PipingCheatsheet } from "@/components/activities/piping-cheatsheet";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { RegistrationIntroCopy } from "@/components/registration/registration-intro-copy";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -20,20 +23,51 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   saveActivityFormSchema,
+  updateActivity,
   type Activity,
   type ActivityFormSchema,
+  type FormSchemaMeta,
+  type RegistrationThemePreset,
 } from "@/lib/activities-api";
 import {
   getFormSchemaClientIssues,
   getPublishGateIssues,
+  mergeFormSchemaMeta,
   normalizeFormSchema,
 } from "@/lib/form-schema-utils";
+import { substitutePipingPreview } from "@/lib/registration-piping";
 import {
+  cloneFormSchema,
   cloneFormTemplate,
   getFormTemplate,
   type FormTemplateId,
 } from "@/lib/form-templates";
+import {
+  createDefaultFormTemplateUsage,
+  createFormTemplate,
+  deleteFormTemplate,
+  duplicateFormTemplate,
+  fetchFormTemplate,
+  fetchFormTemplates,
+  isFormTemplateSaveBlocked,
+  setFormTemplatePinnedPreset,
+  updateFormTemplate,
+  type FormTemplateUsage,
+  type SavedFormTemplate,
+  type SavedFormTemplateSummary,
+} from "@/lib/form-templates-api";
+import { applyMissingStepBuckets } from "@/lib/form-steps";
+import { registrationPresetLabels } from "@/lib/registration-theme-utils";
+import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
 
 const publishedTemplateLockReason =
@@ -51,6 +85,11 @@ export function ActivityFormTab({
   onDirtyChange,
 }: ActivityFormTabProps) {
   const { authFetch } = useAuth();
+  const { shell } = useTenantShell();
+  const plan = shell?.plan ?? "Basic";
+  const recipesLocked = !isCoreOrAbove(plan);
+  const corePlusLocked = !isCoreOrAbove(plan);
+  const stepsLocked = !isProPlan(plan);
   const [draftSchema, setDraftSchema] = useState<ActivityFormSchema>(() =>
     normalizeFormSchema(activity.formSchema)
   );
@@ -58,6 +97,32 @@ export function ActivityFormTab({
   const [success, setSuccess] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [pendingTemplateId, setPendingTemplateId] = useState<FormTemplateId | null>(null);
+  const [pendingSavedTemplate, setPendingSavedTemplate] =
+    useState<SavedFormTemplate | null>(null);
+  const [savedTemplates, setSavedTemplates] = useState<SavedFormTemplateSummary[]>([]);
+  const [templateUsage, setTemplateUsage] = useState<FormTemplateUsage>(() =>
+    createDefaultFormTemplateUsage(plan)
+  );
+  const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveTemplateName, setSaveTemplateName] = useState("");
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameTemplate, setRenameTemplate] = useState<SavedFormTemplateSummary | null>(
+    null
+  );
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTemplate, setDeleteTemplate] = useState<SavedFormTemplateSummary | null>(
+    null
+  );
+  const [replaceDialogOpen, setReplaceDialogOpen] = useState(false);
+  const [replaceTemplate, setReplaceTemplate] = useState<SavedFormTemplateSummary | null>(
+    null
+  );
+  const [templateActionLoading, setTemplateActionLoading] = useState(false);
+  const [pendingPresetApply, setPendingPresetApply] =
+    useState<RegistrationThemePreset | null>(null);
+  const [presetDialogOpen, setPresetDialogOpen] = useState(false);
 
   const isArchived = activity.status === "archived";
   const isDraft = activity.status === "draft";
@@ -77,10 +142,38 @@ export function ActivityFormTab({
   const savedPublishGateIssues = getPublishGateIssues(activity.formSchema, {
     slug: activity.slug,
   });
-  const previewKey = draftSchema.fields
-    .map((field) => `${field.id}:${field.type}`)
-    .join("|");
+  const previewKey = [
+    draftSchema.meta?.splitIntoSteps ? "steps" : "page",
+    ...draftSchema.fields.map(
+      (field) =>
+        `${field.id}:${field.type}:${field.step ?? ""}:${field.visibleWhen?.fieldId ?? ""}:${field.visibleWhen?.equals ?? ""}:${field.visibleWhen?.notEquals ?? ""}`
+    ),
+  ].join("|");
   const introMarkdown = draftSchema.meta?.introMarkdown ?? null;
+  const closedMessage = draftSchema.meta?.closedMessage ?? null;
+  const registrationClosesAt = draftSchema.meta?.registrationClosesAt ?? null;
+  const registrationTimeZoneId = shell?.registrationTimeZoneId ?? "UTC";
+  const successCopyMarkdown = draftSchema.meta?.successCopyMarkdown ?? null;
+  const confirmationEmailSubject = draftSchema.meta?.confirmationEmailSubject ?? null;
+  const confirmationEmailBodyMarkdown =
+    draftSchema.meta?.confirmationEmailBodyMarkdown ?? null;
+  const successCopyPreview = substitutePipingPreview(successCopyMarkdown, draftSchema);
+
+  function insertIntoMetaField(
+    field: keyof Pick<
+      FormSchemaMeta,
+      "successCopyMarkdown" | "confirmationEmailSubject" | "confirmationEmailBodyMarkdown"
+    >,
+    token: string,
+    currentValue: string | null
+  ) {
+    setDraftSchema((current) => ({
+      ...current,
+      meta: mergeFormSchemaMeta(current, {
+        [field]: `${currentValue ?? ""}${token}`,
+      }),
+    }));
+  }
 
   const showPublishGate =
     isDraft &&
@@ -91,11 +184,76 @@ export function ActivityFormTab({
     setDraftSchema(normalizeFormSchema(activity.formSchema));
   }, [activity.formSchema, activity.id, activity.status]);
 
-  function applyTemplate(templateId: FormTemplateId) {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTemplates() {
+      setTemplatesLoading(true);
+      try {
+        const result = await fetchFormTemplates(authFetch);
+        if (!cancelled) {
+          setSavedTemplates(result.templates);
+          setTemplateUsage(result.usage);
+        }
+      } catch {
+        if (!cancelled) {
+          setSavedTemplates([]);
+          setTemplateUsage(createDefaultFormTemplateUsage(plan));
+        }
+      } finally {
+        if (!cancelled) {
+          setTemplatesLoading(false);
+        }
+      }
+    }
+
+    void loadTemplates();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authFetch, plan]);
+
+  function schemaForTemplateSave(): ActivityFormSchema {
+    return applyMissingStepBuckets(draftSchema);
+  }
+
+  async function refreshSavedTemplates(): Promise<boolean> {
+    try {
+      const result = await fetchFormTemplates(authFetch);
+      setSavedTemplates(result.templates);
+      setTemplateUsage(result.usage);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function ensureDraftReadyForTemplateLibrary(): boolean {
+    if (hasClientIssues) {
+      setError("Fix form validation issues before saving or replacing a template.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function applyLaunchTemplate(templateId: FormTemplateId) {
     setError(null);
     setSuccess(null);
     setDraftSchema(cloneFormTemplate(templateId));
     setSuccess(`${getFormTemplate(templateId).name} template applied. Save when ready.`);
+  }
+
+  function applySavedTemplate(template: SavedFormTemplate) {
+    setError(null);
+    setSuccess(null);
+    setDraftSchema(
+      applyMissingStepBuckets(
+        normalizeFormSchema(cloneFormSchema(template.formSchema))
+      )
+    );
+    setSuccess(`"${template.name}" applied. Save when ready.`);
   }
 
   function handleSelectTemplate(templateId: FormTemplateId) {
@@ -103,21 +261,264 @@ export function ActivityFormTab({
       return;
     }
 
+    setPendingSavedTemplate(null);
     setPendingTemplateId(templateId);
   }
 
   function confirmApplyTemplate() {
-    if (!pendingTemplateId) {
+    if (pendingTemplateId) {
+      applyLaunchTemplate(pendingTemplateId);
+      setPendingTemplateId(null);
       return;
     }
 
-    applyTemplate(pendingTemplateId);
-    setPendingTemplateId(null);
+    if (pendingSavedTemplate) {
+      const pinnedPreset = pendingSavedTemplate.pinnedRegistrationThemePreset;
+      applySavedTemplate(pendingSavedTemplate);
+      setPendingSavedTemplate(null);
+
+      if (pinnedPreset) {
+        setPendingPresetApply(pinnedPreset);
+        setPresetDialogOpen(true);
+      }
+    }
   }
 
-  const pendingTemplate = pendingTemplateId
+  async function confirmApplyPinnedPreset() {
+    if (!pendingPresetApply) {
+      setPresetDialogOpen(false);
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      const updated = await updateActivity(authFetch, activity.id, {
+        name: activity.name,
+        category: activity.category,
+        schedule: activity.schedule,
+        location: activity.location,
+        communityLabel: activity.communityLabel,
+        heroImageUrl: activity.heroImageUrl,
+        accentColor: activity.accentColor,
+        maxRegistrants: activity.maxRegistrants,
+        scheduledStartsAt: activity.scheduledStartsAt,
+        registrationTheme: {
+          preset: pendingPresetApply,
+          inheritCommunityBrand: true,
+          accentColor: null,
+          heroImageUrl: null,
+        },
+      });
+      onActivityUpdated(updated);
+      setSuccess(
+        `Form and ${registrationPresetLabels[pendingPresetApply]} layout applied. Save form when ready.`
+      );
+    } catch (applyError) {
+      setError(
+        applyError instanceof Error
+          ? applyError.message
+          : "Could not apply design preset."
+      );
+    } finally {
+      setPendingPresetApply(null);
+      setPresetDialogOpen(false);
+      setTemplateActionLoading(false);
+    }
+  }
+
+  function dismissPresetApply() {
+    setPendingPresetApply(null);
+    setPresetDialogOpen(false);
+  }
+
+  async function handleSelectSavedTemplate(template: SavedFormTemplateSummary) {
+    if (isPublished || isArchived) {
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    setPendingTemplateId(null);
+    try {
+      const full = await fetchFormTemplate(authFetch, template.id);
+      setPendingSavedTemplate(full);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Could not load saved template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handleSaveTemplate() {
+    const trimmed = saveTemplateName.trim();
+    if (!trimmed || !ensureDraftReadyForTemplateLibrary()) {
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await createFormTemplate(authFetch, trimmed, schemaForTemplateSave());
+      const refreshed = await refreshSavedTemplates();
+      setSaveDialogOpen(false);
+      setSaveTemplateName("");
+      setSuccess(
+        refreshed
+          ? `Saved "${trimmed}" as a form template.`
+          : `Saved "${trimmed}" as a form template. Refresh the page to update your library.`
+      );
+    } catch (saveError) {
+      await refreshSavedTemplates();
+      setError(
+        saveError instanceof Error ? saveError.message : "Could not save template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handleReplaceTemplate() {
+    if (!replaceTemplate || !ensureDraftReadyForTemplateLibrary()) {
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await updateFormTemplate(authFetch, replaceTemplate.id, {
+        formSchema: schemaForTemplateSave(),
+      });
+      const refreshed = await refreshSavedTemplates();
+      setReplaceDialogOpen(false);
+      setReplaceTemplate(null);
+      setSuccess(
+        refreshed
+          ? `Replaced "${replaceTemplate.name}" with the current draft.`
+          : `Replaced "${replaceTemplate.name}" with the current draft. Refresh the page to update your library.`
+      );
+    } catch (replaceError) {
+      await refreshSavedTemplates();
+      setError(
+        replaceError instanceof Error ? replaceError.message : "Could not replace template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handleRenameTemplate() {
+    if (!renameTemplate) {
+      return;
+    }
+
+    const trimmed = renameValue.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await updateFormTemplate(authFetch, renameTemplate.id, { name: trimmed });
+      const refreshed = await refreshSavedTemplates();
+      setRenameDialogOpen(false);
+      setRenameTemplate(null);
+      setRenameValue("");
+      setSuccess(
+        refreshed
+          ? `Renamed template to "${trimmed}".`
+          : `Renamed template to "${trimmed}". Refresh the page to update your library.`
+      );
+    } catch (renameError) {
+      await refreshSavedTemplates();
+      setError(
+        renameError instanceof Error ? renameError.message : "Could not rename template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handleDeleteTemplate() {
+    if (!deleteTemplate) {
+      return;
+    }
+
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await deleteFormTemplate(authFetch, deleteTemplate.id);
+      const refreshed = await refreshSavedTemplates();
+      setDeleteDialogOpen(false);
+      setDeleteTemplate(null);
+      setSuccess(
+        refreshed
+          ? "Template deleted."
+          : "Template deleted. Refresh the page to update your library."
+      );
+    } catch (deleteError) {
+      await refreshSavedTemplates();
+      setError(
+        deleteError instanceof Error ? deleteError.message : "Could not delete template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handleDuplicateTemplate(template: SavedFormTemplateSummary) {
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await duplicateFormTemplate(authFetch, template.id);
+      await refreshSavedTemplates();
+      setSuccess(`Duplicated "${template.name}".`);
+    } catch (duplicateError) {
+      await refreshSavedTemplates();
+      setError(
+        duplicateError instanceof Error
+          ? duplicateError.message
+          : "Could not duplicate template."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  async function handlePinPreset(
+    template: SavedFormTemplateSummary,
+    preset: RegistrationThemePreset | null
+  ) {
+    setTemplateActionLoading(true);
+    setError(null);
+    try {
+      await setFormTemplatePinnedPreset(authFetch, template.id, preset);
+      await refreshSavedTemplates();
+      setSuccess(
+        preset
+          ? `Pinned ${registrationPresetLabels[preset]} on "${template.name}".`
+          : `Cleared preset pin on "${template.name}".`
+      );
+    } catch (pinError) {
+      await refreshSavedTemplates();
+      setError(
+        pinError instanceof Error ? pinError.message : "Could not update preset pin."
+      );
+    } finally {
+      setTemplateActionLoading(false);
+    }
+  }
+
+  const pendingLaunchTemplate = pendingTemplateId
     ? getFormTemplate(pendingTemplateId)
     : null;
+  const applyDialogOpen = pendingTemplateId !== null || pendingSavedTemplate !== null;
+  const pendingApplyName =
+    pendingLaunchTemplate?.name ?? pendingSavedTemplate?.name ?? "this template";
 
   async function handleSave() {
     setError(null);
@@ -128,7 +529,7 @@ export function ActivityFormTab({
       const updated = await saveActivityFormSchema(
         authFetch,
         activity.id,
-        draftSchema
+        applyMissingStepBuckets(draftSchema)
       );
       onActivityUpdated(updated);
       setDraftSchema(normalizeFormSchema(updated.formSchema));
@@ -231,9 +632,46 @@ export function ActivityFormTab({
       {!isArchived ? (
         <FormTemplatePicker
           onSelectTemplate={handleSelectTemplate}
-          disabled={isSaving}
+          onSelectSavedTemplate={(template) => void handleSelectSavedTemplate(template)}
+          onSaveCurrentDraft={() => {
+            if (!ensureDraftReadyForTemplateLibrary()) {
+              return;
+            }
+
+            setSaveTemplateName("");
+            setSaveDialogOpen(true);
+          }}
+          onRenameSavedTemplate={(template) => {
+            setRenameTemplate(template);
+            setRenameValue(template.name);
+            setRenameDialogOpen(true);
+          }}
+          onReplaceSavedTemplate={(template) => {
+            if (!ensureDraftReadyForTemplateLibrary()) {
+              return;
+            }
+
+            setReplaceTemplate(template);
+            setReplaceDialogOpen(true);
+          }}
+          onDeleteSavedTemplate={(template) => {
+            setDeleteTemplate(template);
+            setDeleteDialogOpen(true);
+          }}
+          onDuplicateSavedTemplate={(template) => void handleDuplicateTemplate(template)}
+          onPinPresetSavedTemplate={(template, preset) =>
+            void handlePinPreset(template, preset)
+          }
+          savedTemplates={savedTemplates}
+          usage={templateUsage}
+          plan={plan}
+          isTenantAdmin={shell?.isTenantAdmin ?? false}
+          disabled={isSaving || templateActionLoading}
           locked={isPublished}
           lockedReason={isPublished ? publishedTemplateLockReason : undefined}
+          templatesLoading={templatesLoading}
+          hasClientIssues={hasClientIssues}
+          presetActionLoading={templateActionLoading}
         />
       ) : null}
 
@@ -256,7 +694,7 @@ export function ActivityFormTab({
             const nextIntro = event.target.value.trim() ? event.target.value : null;
             setDraftSchema((current) => ({
               ...current,
-              meta: nextIntro ? { introMarkdown: nextIntro } : null,
+              meta: mergeFormSchemaMeta(current, { introMarkdown: nextIntro }),
             }));
           }}
         />
@@ -265,11 +703,237 @@ export function ActivityFormTab({
         </p>
       </section>
 
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+        <div>
+          <h3 className="text-section text-text-warm">Closed message</h3>
+          <p className="mt-0.5 text-sm text-text-muted-warm">
+            Optional copy when the form is unavailable (full, paused, or ended). A reason chip
+            still shows for clarity.
+          </p>
+        </div>
+        <textarea
+          id="form-closed-message"
+          rows={4}
+          maxLength={2000}
+          value={closedMessage ?? ""}
+          disabled={isArchived || isSaving}
+          placeholder="Waitlist opens Monday on WhatsApp."
+          className="flex min-h-[5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+          onChange={(event) => {
+            const next = event.target.value.trim() ? event.target.value : null;
+            setDraftSchema((current) => ({
+              ...current,
+              meta: mergeFormSchemaMeta(current, { closedMessage: next }),
+            }));
+          }}
+        />
+        <p className="text-xs text-text-muted-warm">
+          Plain text and paragraph breaks only. HTML is stripped on the public page.
+        </p>
+      </section>
+
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+        <div>
+          <h3 className="text-section text-text-warm">Close-at</h3>
+          <p className="mt-0.5 text-sm text-text-muted-warm">
+            Optional date and time when the public form stops accepting registrations.
+            Shown in your organization timezone.
+          </p>
+        </div>
+        <ActivityCloseAtPicker
+          isoUtc={registrationClosesAt}
+          timeZoneId={registrationTimeZoneId}
+          disabled={isArchived || isSaving}
+          onChange={(nextUtc) =>
+            setDraftSchema((current) => ({
+              ...current,
+              meta: mergeFormSchemaMeta(current, { registrationClosesAt: nextUtc }),
+            }))
+          }
+        />
+        {registrationClosesAt ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={isArchived || isSaving}
+            onClick={() =>
+              setDraftSchema((current) => ({
+                ...current,
+                meta: mergeFormSchemaMeta(current, { registrationClosesAt: null }),
+              }))
+            }
+          >
+            Clear Close-at
+          </Button>
+        ) : null}
+      </section>
+
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-section text-text-warm">Thank-you copy</h3>
+            <p className="mt-0.5 text-sm text-text-muted-warm">
+              Optional message on the success screen after submit. Use tokens like{" "}
+              <code className="text-xs">{`{{full_name}}`}</code>.
+            </p>
+          </div>
+          <PipingCheatsheet
+            schema={draftSchema}
+            disabled={isArchived || isSaving}
+            onInsert={(token) =>
+              insertIntoMetaField("successCopyMarkdown", token, successCopyMarkdown)
+            }
+          />
+        </div>
+        <textarea
+          id="form-success-copy-markdown"
+          rows={3}
+          maxLength={2000}
+          value={successCopyMarkdown ?? ""}
+          disabled={isArchived || isSaving}
+          placeholder="See you Saturday, {{full_name}}."
+          className="flex min-h-[4rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+          onChange={(event) => {
+            const next = event.target.value.trim() ? event.target.value : null;
+            setDraftSchema((current) => ({
+              ...current,
+              meta: mergeFormSchemaMeta(current, { successCopyMarkdown: next }),
+            }));
+          }}
+        />
+        {successCopyPreview ? (
+          <div className="rounded-lg border border-dashed border-border-warm bg-muted/20 p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+              Preview
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-text-warm">{successCopyPreview}</p>
+          </div>
+        ) : null}
+      </section>
+
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-section text-text-warm">Confirmation email</h3>
+            <p className="mt-0.5 text-sm text-text-muted-warm">
+              Optional subject and closing message. Layout and hero stay on your registration
+              theme.
+            </p>
+          </div>
+        </div>
+        <label className="block space-y-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-medium text-text-warm">Subject</span>
+            <PipingCheatsheet
+              schema={draftSchema}
+              disabled={isArchived || isSaving}
+              onInsert={(token) =>
+                insertIntoMetaField("confirmationEmailSubject", token, confirmationEmailSubject)
+              }
+            />
+          </div>
+          <input
+            id="form-confirmation-email-subject"
+            type="text"
+            maxLength={200}
+            value={confirmationEmailSubject ?? ""}
+            disabled={isArchived || isSaving}
+            placeholder={`You're registered — {{full_name}}`}
+            className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+            onChange={(event) => {
+              const next = event.target.value.trim() ? event.target.value : null;
+              setDraftSchema((current) => ({
+                ...current,
+                meta: mergeFormSchemaMeta(current, { confirmationEmailSubject: next }),
+              }));
+            }}
+          />
+        </label>
+        <label className="block space-y-1.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-medium text-text-warm">Closing message</span>
+            <PipingCheatsheet
+              schema={draftSchema}
+              disabled={isArchived || isSaving}
+              onInsert={(token) =>
+                insertIntoMetaField(
+                  "confirmationEmailBodyMarkdown",
+                  token,
+                  confirmationEmailBodyMarkdown
+                )
+              }
+            />
+          </div>
+          <textarea
+            id="form-confirmation-email-body-markdown"
+            rows={3}
+            maxLength={2000}
+            value={confirmationEmailBodyMarkdown ?? ""}
+            disabled={isArchived || isSaving}
+            placeholder="Save the date — we look forward to seeing you there, {{full_name}}."
+            className="flex min-h-[4rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+            onChange={(event) => {
+              const next = event.target.value.trim() ? event.target.value : null;
+              setDraftSchema((current) => ({
+                ...current,
+                meta: mergeFormSchemaMeta(current, {
+                  confirmationEmailBodyMarkdown: next,
+                }),
+              }));
+            }}
+          />
+        </label>
+      </section>
+
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+        <div className="flex items-start gap-3">
+          <input
+            id="split-into-steps"
+            type="checkbox"
+            className="mt-1 size-4 rounded border-input"
+            checked={Boolean(draftSchema.meta?.splitIntoSteps)}
+            disabled={
+              isArchived ||
+              isSaving ||
+              (stepsLocked && !draftSchema.meta?.splitIntoSteps)
+            }
+            onChange={(event) => {
+              const enabled = event.target.checked;
+              setDraftSchema((current) =>
+                applyMissingStepBuckets({
+                  ...current,
+                  meta: mergeFormSchemaMeta(current, { splitIntoSteps: enabled }),
+                })
+              );
+            }}
+          />
+          <div>
+            <label htmlFor="split-into-steps" className="text-sm font-medium text-text-warm">
+              Split into steps
+            </label>
+            <p className="mt-0.5 text-xs text-text-muted-warm">
+              Pro only. Identity → Details → Consent. Off keeps the public Form on one
+              page. Field count does not turn this on.
+            </p>
+            {stepsLocked ? (
+              <p className="mt-2 text-xs text-text-muted-warm">
+                Upgrade to Pro to split the Form into steps. Core can still use Recipes.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </section>
+
       <FormFieldEditor
         schema={draftSchema}
         onChange={setDraftSchema}
         disabled={isArchived}
         className="min-w-0"
+        recipesLocked={recipesLocked}
+        corePlusLocked={corePlusLocked}
+        stepsEnabled={Boolean(draftSchema.meta?.splitIntoSteps)}
+        stepsLocked={stepsLocked}
       />
 
       <section
@@ -298,10 +962,11 @@ export function ActivityFormTab({
       </section>
 
       <AlertDialog
-        open={pendingTemplateId !== null}
+        open={applyDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
             setPendingTemplateId(null);
+            setPendingSavedTemplate(null);
           }
         }}
       >
@@ -312,9 +977,7 @@ export function ActivityFormTab({
                 <LayoutTemplate className="size-4" aria-hidden />
               </span>
               <div className="space-y-2">
-                <AlertDialogTitle>
-                  Apply {pendingTemplate ? `"${pendingTemplate.name}"` : "this template"}?
-                </AlertDialogTitle>
+                <AlertDialogTitle>Apply &quot;{pendingApplyName}&quot;?</AlertDialogTitle>
                 <AlertDialogDescription>
                   This replaces all current form fields with the template preset. Any
                   unsaved changes will be lost.
@@ -326,6 +989,172 @@ export function ActivityFormTab({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmApplyTemplate}>
               Apply template
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={presetDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            dismissPresetApply();
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Apply{" "}
+              {pendingPresetApply
+                ? registrationPresetLabels[pendingPresetApply]
+                : "preset"}{" "}
+              layout?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This template pins the{" "}
+              {pendingPresetApply
+                ? registrationPresetLabels[pendingPresetApply].toLowerCase()
+                : "selected"}{" "}
+              registration layout. Apply it to this activity&apos;s Design tab?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={templateActionLoading}>
+              Form only
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={templateActionLoading}
+              onClick={() => void confirmApplyPinnedPreset()}
+            >
+              {templateActionLoading ? "Applying…" : "Apply layout"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save form template</DialogTitle>
+            <DialogDescription>
+              Save the current draft fields and meta as a reusable template.
+            </DialogDescription>
+          </DialogHeader>
+          <label className="block space-y-1.5">
+            <span className="text-sm font-medium text-text-warm">Template name</span>
+            <input
+              type="text"
+              maxLength={120}
+              value={saveTemplateName}
+              disabled={templateActionLoading}
+              className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+              placeholder="Saturday tennis"
+              onChange={(event) => setSaveTemplateName(event.target.value)}
+            />
+          </label>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={templateActionLoading}
+              onClick={() => setSaveDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={
+                templateActionLoading
+                || !saveTemplateName.trim()
+                || isFormTemplateSaveBlocked(templateUsage)
+              }
+              onClick={() => void handleSaveTemplate()}
+            >
+              {templateActionLoading ? "Saving…" : "Save template"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename template</DialogTitle>
+          </DialogHeader>
+          <label className="block space-y-1.5">
+            <span className="text-sm font-medium text-text-warm">Template name</span>
+            <input
+              type="text"
+              maxLength={120}
+              value={renameValue}
+              disabled={templateActionLoading}
+              className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+              onChange={(event) => setRenameValue(event.target.value)}
+            />
+          </label>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={templateActionLoading}
+              onClick={() => setRenameDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={templateActionLoading || !renameValue.trim()}
+              onClick={() => void handleRenameTemplate()}
+            >
+              {templateActionLoading ? "Saving…" : "Rename"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={replaceDialogOpen} onOpenChange={setReplaceDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Replace &quot;{replaceTemplate?.name ?? "template"}&quot;?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This overwrites the saved template with your current draft fields and meta.
+              The template name stays the same.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={templateActionLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={templateActionLoading}
+              onClick={() => void handleReplaceTemplate()}
+            >
+              {templateActionLoading ? "Replacing…" : "Replace template"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete &quot;{deleteTemplate?.name ?? "template"}&quot;?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the saved template. Activities already using these fields are
+              not affected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={templateActionLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={templateActionLoading}
+              onClick={() => void handleDeleteTemplate()}
+            >
+              {templateActionLoading ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

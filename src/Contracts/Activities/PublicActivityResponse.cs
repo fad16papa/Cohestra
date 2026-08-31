@@ -16,5 +16,6 @@ public sealed record PublicActivityResponse(
     int? MaxRegistrants,
     int RegistrationCount,
     bool IsRegistrationFull,
-    bool IsRegistrationPaused);
+    bool IsRegistrationPaused,
+    bool IsRegistrationClosedAt);
 

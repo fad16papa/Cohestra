@@ -12,6 +12,15 @@ export type TenantRegistrationTimeZone = {
   options: RegistrationTimeZoneOption[];
 };
 
+export type TenantNotificationSettings = {
+  emailOnNewRegistration: boolean;
+  adminContactEmail: string | null;
+};
+
+export type TenantEmbedSettings = {
+  allowedEmbedOrigins: string[];
+};
+
 function parseResponse(raw: Record<string, unknown>): TenantRegistrationTimeZone {
   const optionsRaw = raw.options ?? raw.Options;
   const options = Array.isArray(optionsRaw)
@@ -38,6 +47,26 @@ function parseResponse(raw: Record<string, unknown>): TenantRegistrationTimeZone
     ),
     options,
   };
+}
+
+function parseNotificationSettings(raw: Record<string, unknown>): TenantNotificationSettings {
+  const adminRaw = raw.adminContactEmail ?? raw.AdminContactEmail;
+  return {
+    emailOnNewRegistration: Boolean(
+      raw.emailOnNewRegistration ?? raw.EmailOnNewRegistration ?? true
+    ),
+    adminContactEmail:
+      typeof adminRaw === "string" && adminRaw.trim().length > 0 ? adminRaw.trim() : null,
+  };
+}
+
+export function parseEmbedSettingsResponse(raw: Record<string, unknown>): TenantEmbedSettings {
+  const originsRaw = raw.allowedEmbedOrigins ?? raw.AllowedEmbedOrigins;
+  const allowedEmbedOrigins = Array.isArray(originsRaw)
+    ? originsRaw.filter((item): item is string => typeof item === "string")
+    : [];
+
+  return { allowedEmbedOrigins };
 }
 
 export async function fetchTenantRegistrationTimeZone(
@@ -74,17 +103,38 @@ export async function updateTenantRegistrationTimeZone(
   return parseResponse(raw);
 }
 
-export type TenantEmbedSettings = {
-  allowedEmbedOrigins: string[];
-};
+export async function fetchTenantNotificationSettings(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>
+): Promise<TenantNotificationSettings> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/tenant/notifications`
+  );
+  const raw = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    const detail = raw.detail ?? raw.Detail;
+    throw new Error(typeof detail === "string" ? detail : "Could not load notification settings.");
+  }
+  return parseNotificationSettings(raw);
+}
 
-export function parseEmbedSettingsResponse(raw: Record<string, unknown>): TenantEmbedSettings {
-  const originsRaw = raw.allowedEmbedOrigins ?? raw.AllowedEmbedOrigins;
-  const allowedEmbedOrigins = Array.isArray(originsRaw)
-    ? originsRaw.filter((item): item is string => typeof item === "string")
-    : [];
-
-  return { allowedEmbedOrigins };
+export async function updateTenantNotificationSettings(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  emailOnNewRegistration: boolean
+): Promise<TenantNotificationSettings> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/tenant/notifications`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ emailOnNewRegistration }),
+    }
+  );
+  const raw = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    const detail = raw.detail ?? raw.Detail;
+    throw new Error(typeof detail === "string" ? detail : "Could not update notification settings.");
+  }
+  return parseNotificationSettings(raw);
 }
 
 export async function fetchTenantEmbedSettings(

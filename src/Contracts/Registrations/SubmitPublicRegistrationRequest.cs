@@ -22,6 +22,7 @@ public sealed record SubmitPublicRegistrationRequest(
 /// <param name="ConfirmationEmailSent">True when a confirmation email was delivered to the participant.</param>
 /// <param name="ConfirmationEmailQueued">True when a confirmation email was queued for async delivery.</param>
 /// <param name="ConfirmationEmail">Recipient address when an email was attempted, queued, or sent; null when no email on file.</param>
+/// <param name="SuccessCopyMarkdown">Operator thank-you copy with piping tokens substituted; null when unset.</param>
 public sealed record SubmitPublicRegistrationResponse(
     string Status,
     string Message,
@@ -30,4 +31,5 @@ public sealed record SubmitPublicRegistrationResponse(
     Guid ClientId,
     bool ConfirmationEmailSent = false,
     bool ConfirmationEmailQueued = false,
-    string? ConfirmationEmail = null);
+    string? ConfirmationEmail = null,
+    string? SuccessCopyMarkdown = null);

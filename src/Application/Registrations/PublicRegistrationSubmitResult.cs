@@ -18,6 +18,8 @@ public sealed record PublicRegistrationSubmitResult
 
     public bool IsActivityFull { get; init; }
 
+    public bool IsRegistrationClosedAt { get; init; }
+
     public bool IsPlanRegistrationLimitReached { get; init; }
 
     public string? PlanLimitDetail { get; init; }
@@ -33,6 +35,9 @@ public sealed record PublicRegistrationSubmitResult
     public bool ConfirmationEmailQueued { get; init; }
 
     public string? ConfirmationEmail { get; init; }
+
+    /// <summary>Operator thank-you copy after token substitution; null when unset.</summary>
+    public string? SuccessCopyMarkdown { get; init; }
 
     public static PublicRegistrationSubmitResult NotFound() =>
         new() { IsNotFound = true };
@@ -50,7 +55,8 @@ public sealed record PublicRegistrationSubmitResult
         bool clientCreated,
         bool isReplay = false,
         bool confirmationEmailQueued = false,
-        string? confirmationEmail = null) =>
+        string? confirmationEmail = null,
+        string? successCopyMarkdown = null) =>
         new()
         {
             IsSuccess = true,
@@ -61,6 +67,7 @@ public sealed record PublicRegistrationSubmitResult
             IsReplay = isReplay,
             ConfirmationEmailQueued = confirmationEmailQueued,
             ConfirmationEmail = confirmationEmail,
+            SuccessCopyMarkdown = successCopyMarkdown,
         };
 
     public static PublicRegistrationSubmitResult AlreadyRegistered(
@@ -77,6 +84,9 @@ public sealed record PublicRegistrationSubmitResult
 
     public static PublicRegistrationSubmitResult ActivityFull() =>
         new() { IsActivityFull = true };
+
+    public static PublicRegistrationSubmitResult RegistrationClosedAt() =>
+        new() { IsRegistrationClosedAt = true };
 
     public static PublicRegistrationSubmitResult PlanRegistrationLimitReached(string detail) =>
         new() { IsPlanRegistrationLimitReached = true, PlanLimitDetail = detail };
