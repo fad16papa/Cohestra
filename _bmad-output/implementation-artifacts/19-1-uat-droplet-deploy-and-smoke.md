@@ -2,7 +2,8 @@
 story_id: 19.1
 story_key: 19-1-uat-droplet-deploy-and-smoke
 epic: 19
-status: ready-for-dev
+status: in-progress
+baseline_commit: 7b4a892
 created: 2026-08-31
 depends_on:
   - 29-7-paddle-sandbox-uat-epic-14-regression
@@ -24,7 +25,7 @@ sources:
 
 # Story 19.1: UAT droplet deploy and stack smoke
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed — comprehensive operator + dev guide for Epic 19 kickoff -->
 
@@ -62,35 +63,33 @@ So that **we have a live stack matching production topology before public launch
 ## Tasks / Subtasks
 
 - [ ] **Task 1 — Droplet + firewall** (AC: 1, 4)
-  - [ ] Provision Ubuntu 22.04+ droplet (2 GB RAM min, 4 GB recommended); enable weekly backups
-  - [ ] Attach DO firewall: inbound **22, 80, 443** only; no 5432/6379/3000/8080
-  - [ ] DNS: A record for apex/wildcard **or** document nip.io interim (`docs/deploy/temporary-https-nipio.md`)
+  - [x] Droplet exists (129.212.235.2); HTTPS cert for `thesocialcollectivesg.com` (verified 2026-08-31)
+  - [ ] Confirm DO firewall: inbound **22, 80, 443** only (operator verify in DO console)
+  - [ ] Document wildcard/`cohestra.app` DNS if marketing signup checks required on same stack
 
 - [ ] **Task 2 — Bootstrap repo + secrets** (AC: 1, 3)
-  - [ ] SSH → `git clone` → `bash deploy/uat-bootstrap.sh` (installs Docker, copies `.env.uat.example` → `.env`)
-  - [ ] Fill `.env`: `PUBLIC_BASE_URL`, `POSTGRES_PASSWORD`, `JWT_SIGNING_KEY`, SendGrid live keys (see `docs/deploy/sendgrid-production.md`)
-  - [ ] Confirm seeds off: `OperatorSeed__Enabled=false`, `DemoDataSeed__Enabled=false` in compose (do not set `DEV_TENANT_SLUG`)
-  - [ ] Run `bash deploy/preflight-launch.sh` (warn-only reCAPTCHA OK for 19.1; `--strict-recaptcha` is 19.3)
+  - [ ] SSH → pull latest `main` → confirm `.env` secrets (operator)
+  - [x] Compose defaults verified in repo: `OperatorSeed__Enabled=false`, `DemoDataSeed__Enabled=false`; no `DEV_TENANT_SLUG` in `docker-compose.uat.yml`
+  - [ ] Run `bash deploy/preflight-launch.sh` on droplet after `.env` review
 
 - [ ] **Task 3 — Deploy stack** (AC: 1)
-  - [ ] `docker compose -f docker-compose.uat.yml up -d --build`
-  - [ ] Verify containers healthy: `docker compose -f docker-compose.uat.yml ps`
-  - [ ] `curl -s ${PUBLIC_BASE_URL}/ready` returns `"status":"Healthy"`
+  - [x] `/ready` healthy on `https://thesocialcollectivesg.com` (2026-08-31 remote probe)
+  - [ ] Redeploy latest `main`: `docker compose -f docker-compose.uat.yml up -d --build` (operator — stack appears behind current main)
+  - [ ] `docker compose -f docker-compose.uat.yml ps` all healthy on server
 
 - [ ] **Task 4 — Automated smoke** (AC: 2)
-  - [ ] On droplet: `PUBLIC_BASE_URL=http://YOUR_IP bash deploy/uat-smoke.sh`
-  - [ ] Full smoke: set `SMOKE_TENANT_HOST` when URL is apex or bare IP (e.g. `creativorare.YOUR_NIP_IO` or tenant subdomain)
+  - [x] Remote smoke script fix: `uat-smoke.sh` skips local Docker when probing remote URL
+  - [ ] Full pass on droplet URL (see Dev Agent Record — 3 pass / 4 fail on 2026-08-31 probe)
   - [ ] `PUBLIC_BASE_URL=… SMOKE_TENANT_HOST=… bash deploy/uat-smoke.sh --full` exits 0
-  - [ ] Capture smoke output in story Dev Agent Record (date, URL, pass count)
 
 - [ ] **Task 5 — Manual operator bootstrap** (AC: 3)
-  - [ ] Browser: `${PUBLIC_BASE_URL}/register` → create single operator via OTP (no dev seed credentials)
-  - [ ] Dashboard loads after login
-  - [ ] Check enterprise checklist **Deploy** section items for 19.1 evidence
+  - [x] Operator already exists (`registrationAvailable: false` on onboarding API)
+  - [ ] Dashboard login verified in browser post-redeploy
+  - [ ] Enterprise checklist **Deploy** section checked with evidence
 
-- [ ] **Task 6 — Dev gaps (only if smoke fails)** (AC: 2)
-  - [ ] If script/doc gap found, minimal fix in `deploy/` or `docs/deploy/` — no product features
-  - [ ] Re-run smoke after fix; note in Change Log
+- [x] **Task 6 — Dev gaps (only if smoke fails)** (AC: 2)
+  - [x] `deploy/uat-smoke.sh`: skip Docker when not on PATH; `SMOKE_MARKETING_HOST` for Host-header marketing checks; `SMOKE_INSECURE_TLS=1` for cert mismatch probes
+  - [x] `docs/deploy/digitalocean-uat.md`: remote smoke from laptop documented
 
 ## Dev Notes
 
@@ -134,6 +133,7 @@ Same routing as local `docker-compose.yml`; UAT differs by Production env, requi
 - Default: `/ready`, web home (200/307/308), auth onboarding, `/signup` + `/pricing`, legal versions, security headers via `verify-security-headers.sh`
 - `--full`: delegates to `deploy/local-smoke-run.sh` with `API_BASE` + `TENANT_HOST`; needs registration payload with `consent: true` (fixed in 19.0)
 - Exit non-zero if any check fails; summary shows pass/fail counts
+- **Remote mode:** when Docker is not installed locally, HTTP checks still run against `PUBLIC_BASE_URL`
 
 ### Common failures (from 19.0 + digitalocean-uat.md)
 
@@ -144,6 +144,25 @@ Same routing as local `docker-compose.yml`; UAT differs by Production env, requi
 | `--full` tenant login fails on IP URL | Set `SMOKE_TENANT_HOST` to real tenant host |
 | API won't start | SendGrid config invalid in Production |
 | 502 from nginx | web/api container down |
+| `/signup` `/pricing` 404 on client domain | Set `SMOKE_MARKETING_HOST=cohestra.app` and ensure marketing host resolves to droplet, or redeploy with apex routes |
+| Security headers fail | Story **19.2** — regenerate `active-ssl.conf` |
+
+### Operator handoff (remaining)
+
+SSH to droplet (`129.212.235.2` / `thesocialcollectivesg.com`):
+
+```bash
+cd ~/cohestra   # or DROPLET_DEPLOY_PATH
+git pull origin main
+bash deploy/preflight-launch.sh
+docker compose -f docker-compose.uat.yml up -d --build
+PUBLIC_BASE_URL=https://thesocialcollectivesg.com bash deploy/uat-smoke.sh
+# If marketing on cohestra.app points here:
+SMOKE_MARKETING_HOST=cohestra.app PUBLIC_BASE_URL=https://thesocialcollectivesg.com bash deploy/uat-smoke.sh
+PUBLIC_BASE_URL=https://thesocialcollectivesg.com SMOKE_TENANT_HOST=thesocialcollectivesg.com bash deploy/uat-smoke.sh --full
+```
+
+Or trigger GitHub **Deploy** workflow (`workflow_dispatch`) after CI green on `main`.
 
 ### Files reference (do not reinvent)
 
@@ -172,16 +191,24 @@ Same routing as local `docker-compose.yml`; UAT differs by Production env, requi
 
 ### Agent Model Used
 
-(composer — story creation)
+Composer
 
 ### Completion Notes List
 
-(pending implementation)
+- 2026-08-31: Dev-story started. Cloud agent has no Docker; droplet at `129.212.235.2` / `https://thesocialcollectivesg.com` probed remotely.
+- Compose seed flags verified in repo (`OperatorSeed__Enabled=false`, `DemoDataSeed__Enabled=false`).
+- **Remote smoke** (`PUBLIC_BASE_URL=https://thesocialcollectivesg.com`): **3 pass / 4 fail** — `/ready`, web home 307, auth onboarding OK; failures: `/signup`, `/pricing`, legal versions (404 — likely stale deploy), security headers (→ 19.2).
+- Operator account already bootstrapped (`registrationAvailable: false`).
+- Patched `uat-smoke.sh` for remote runs without local Docker + `SMOKE_MARKETING_HOST` / `SMOKE_INSECURE_TLS`.
 
 ### File List
 
-(pending — expect checklist notes + optional deploy doc/script touch-ups only)
+- `deploy/uat-smoke.sh`
+- `docs/deploy/digitalocean-uat.md`
+- `_bmad-output/implementation-artifacts/19-1-uat-droplet-deploy-and-smoke.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
 ### Change Log
 
 - 2026-08-31: Story 19.1 spec created — UAT droplet deploy and stack smoke (Epic 19 kickoff)
+- 2026-08-31: Dev-story — remote smoke script fix; droplet probe documented; **blocked on operator redeploy + full smoke pass**

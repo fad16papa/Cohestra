@@ -249,7 +249,7 @@ development_status:
 
   # Epic 19 — unblocked 2026-08-23 after Epic 29. Do not put Stripe keys on the droplet.
   epic-19: in-progress
-  19-1-uat-droplet-deploy-and-smoke: ready-for-dev
+  19-1-uat-droplet-deploy-and-smoke: in-progress
   19-2-https-edge-security-header-verify: ready-for-dev
   19-3-recaptcha-production-enablement: ready-for-dev
   19-4-paddle-billing-uat-on-droplet: ready-for-dev

@@ -153,6 +153,13 @@ bash deploy/uat-smoke.sh
 PUBLIC_BASE_URL=http://YOUR_DROPLET_IP bash deploy/uat-smoke.sh
 ```
 
+From your laptop (no Docker required — HTTP checks only):
+
+```bash
+PUBLIC_BASE_URL=https://your-domain.com bash deploy/uat-smoke.sh
+SMOKE_MARKETING_HOST=cohestra.app PUBLIC_BASE_URL=https://your-droplet.example.com bash deploy/uat-smoke.sh
+```
+
 Manual browser checks:
 
 1. Open `${PUBLIC_BASE_URL}/` — redirects to `/register` (first setup) or `/login`
