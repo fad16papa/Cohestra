@@ -108,10 +108,10 @@ So that Saturday's signup can live on a club or Notion page and still write a Re
 
 **Acceptance audit:** All Story 32.2 ACs satisfied (chrome-light embed, iframe-src hidden query, postMessage height, Share kit gating, CSP via 32.1).
 
-- [ ] [Review][Patch] **Duplicate `NonInput` guard in `NormalizeAnswers`** [`RegistrationAnswerValidator.cs:129-137`]
-- [ ] [Review][Patch] **Embed iframe uses `loading="lazy"`** [`web/lib/embed-snippet.ts:73`] — delays first load/resize for above-the-fold signup embed; remove or use `eager`.
-- [ ] [Review][Patch] **Resize listener accepts height `0`** [`web/lib/embed-snippet.ts:84`] — use `h <= 0` reject to match reporter and avoid collapsed iframe.
-- [ ] [Review][Patch] **Strip newlines from activity name before HTML attribute escape** [`web/lib/embed-snippet.ts:10`]
+- [x] [Review][Patch] **Duplicate `NonInput` guard in `NormalizeAnswers`** [`RegistrationAnswerValidator.cs:129-137`]
+- [x] [Review][Patch] **Embed iframe uses `loading="lazy"`** [`web/lib/embed-snippet.ts:73`]
+- [x] [Review][Patch] **Resize listener accepts height `0`** [`web/lib/embed-snippet.ts:84`]
+- [x] [Review][Patch] **Strip newlines from activity name before HTML attribute escape** [`web/lib/embed-snippet.ts:10`]
 
 - [x] [Review][Defer] **Hidden field form editor incomplete (no defaultValue UI, stale props on type switch)** — deferred, minimal 30.1 port; full editor ships with Story 30.1
 - [x] [Review][Defer] **`PublicRegistrationUnavailable` shows “Public registration” card chrome in embed** — deferred, minor copy polish

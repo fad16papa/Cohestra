@@ -46,6 +46,17 @@ describe("embed-snippet", () => {
     expect(snippet).toContain('src="https://club.example.com/embed/register/saturday-pickleball"');
     expect(snippet).toContain('title="Register for Saturday Pickleball"');
     expect(snippet).toContain("<iframe");
+    expect(snippet).not.toContain('loading="lazy"');
+  });
+
+  it("collapses newlines in activity name for title attribute", () => {
+    const snippet = buildActivityEmbedIframeSnippet(
+      "https://club.example.com/embed/register/x",
+      "Line one\nLine two"
+    );
+
+    expect(snippet).toContain('title="Register for Line one Line two"');
+    expect(snippet).not.toContain("\n");
   });
 
   it("escapes special characters in activity name for title attribute", () => {
@@ -61,7 +72,7 @@ describe("embed-snippet", () => {
     const listener = buildEmbedResizeListenerSnippet();
     expect(listener).toContain('event.origin !== "YOUR_COHESTRA_ORIGIN"');
     expect(listener).toContain("event.source !== frame.contentWindow");
-    expect(listener).toContain("Number.isFinite(h)");
+    expect(listener).toContain("h <= 0");
     expect(listener).toContain(String(EMBED_MAX_REPORTED_HEIGHT));
     expect(listener).toContain(`getElementById("${EMBED_IFRAME_ID}")`);
   });

@@ -9,6 +9,7 @@ export type EmbedResizeMessage = {
 
 function escapeHtmlAttr(value: string): string {
   return value
+    .replace(/[\n\r\t]/g, " ")
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")
     .replace(/</g, "&lt;")
@@ -70,7 +71,7 @@ export function buildActivityEmbedIframeSnippet(
 ): string {
   const title = escapeHtmlAttr(`Register for ${activityName}`);
   const src = escapeHtmlAttr(embedUrl);
-  return `<iframe id="${iframeId}" src="${src}" title="${title}" style="width:100%;border:0;" loading="lazy"></iframe>`;
+  return `<iframe id="${iframeId}" src="${src}" title="${title}" style="width:100%;border:0;"></iframe>`;
 }
 
 export function buildEmbedResizeListenerSnippet(
@@ -81,7 +82,7 @@ export function buildEmbedResizeListenerSnippet(
   if (event.origin !== "${allowedOrigin}") return;
   if (event.data?.type !== "${EMBED_RESIZE_MESSAGE_TYPE}") return;
   const h = Number(event.data.height);
-  if (!Number.isFinite(h) || h < 0 || h > ${EMBED_MAX_REPORTED_HEIGHT}) return;
+  if (!Number.isFinite(h) || h <= 0 || h > ${EMBED_MAX_REPORTED_HEIGHT}) return;
   const frame = document.getElementById("${iframeId}");
   if (!frame || event.source !== frame.contentWindow) return;
   frame.style.height = h + "px";

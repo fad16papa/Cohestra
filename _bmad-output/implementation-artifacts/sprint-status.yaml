@@ -304,7 +304,7 @@ development_status:
   # Epic 32 — Registration embed (allowed hosts + iframe route)
   epic-32: in-progress
   32-1-allowed-embed-hosts-and-csp: done
-  32-2-activity-embed-route-and-share-kit-snippet: review
+  32-2-activity-embed-route-and-share-kit-snippet: done
   32-3-website-contact-section-creates-a-client: backlog
   epic-32-retrospective: optional
 

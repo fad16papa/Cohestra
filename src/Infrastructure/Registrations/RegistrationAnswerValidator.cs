@@ -131,11 +131,6 @@ internal static class RegistrationAnswerValidator
                 continue;
             }
 
-            if (FormFieldTypes.NonInput.Contains(field.Type))
-            {
-                continue;
-            }
-
             if (field.Type == FormFieldTypes.Hidden)
             {
                 string? candidate = null;
