@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Contracts.Site;
 using Cohestra.Contracts.WebsiteInquiries;
@@ -218,13 +219,14 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
 
     private static SiteSectionsDocumentDto CreateDraftWithoutContactSection(string activitySlug)
     {
-        using var heroProps = System.Text.Json.JsonDocument.Parse(
+        using var heroPropsDocument = JsonDocument.Parse(
             $$"""
             {
               "headline": "Community activities. Meaningful connections.",
               "primaryCta": { "label": "Browse events", "target": "scroll-upcoming" }
             }
             """);
+        var heroProps = JsonSerializer.Deserialize<JsonElement>(heroPropsDocument.RootElement.GetRawText());
 
         return new SiteSectionsDocumentDto(
             SchemaVersion: 1,
@@ -234,20 +236,22 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
             PresetId: "community",
             Sections:
             [
-                new SiteSectionDto("hero-1", "hero", true, 0, heroProps.RootElement),
+                new SiteSectionDto("hero-1", "hero", true, 0, heroProps),
             ]);
     }
 
     private static SiteSectionsDocumentDto CreateDraftWithContactSection(string activitySlug)
     {
-        using var heroProps = System.Text.Json.JsonDocument.Parse(
+        using var heroPropsDocument = JsonDocument.Parse(
             $$"""
             {
               "headline": "Community activities. Meaningful connections.",
               "primaryCta": { "label": "Browse events", "target": "scroll-upcoming" }
             }
             """);
-        using var contactProps = System.Text.Json.JsonDocument.Parse(
+        var heroProps = JsonSerializer.Deserialize<JsonElement>(heroPropsDocument.RootElement.GetRawText());
+
+        using var contactPropsDocument = JsonDocument.Parse(
             """
             {
               "heading": "Get in touch",
@@ -257,6 +261,7 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
               "consentLabel": "Keep me updated about events."
             }
             """);
+        var contactProps = JsonSerializer.Deserialize<JsonElement>(contactPropsDocument.RootElement.GetRawText());
 
         return new SiteSectionsDocumentDto(
             SchemaVersion: 1,
@@ -266,8 +271,8 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
             PresetId: "community",
             Sections:
             [
-                new SiteSectionDto("hero-1", "hero", true, 0, heroProps.RootElement),
-                new SiteSectionDto("contact-1", "contact", true, 1, contactProps.RootElement),
+                new SiteSectionDto("hero-1", "hero", true, 0, heroProps),
+                new SiteSectionDto("contact-1", "contact", true, 1, contactProps),
             ]);
     }
 }
