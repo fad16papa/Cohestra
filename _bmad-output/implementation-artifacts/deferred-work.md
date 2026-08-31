@@ -1,3 +1,10 @@
+## Deferred from: code review of 32-2 pass 3 (2026-08-31)
+
+- Hidden field form editor incomplete — minimal 30.1 port; full editor with Story 30.1
+- PublicRegistrationUnavailable shows public-registration card chrome in embed — minor copy polish
+- Client-side hidden query length not capped at 200 — server validates
+- Campaign example URL in HTML comment could break on --> — API-built URLs unlikely
+
 ## Deferred from: code review of 32-2-activity-embed-route-and-share-kit-snippet.md pass 2 (2026-08-31)
 
 - Fixed iframe id breaks multi-embed parent pages — v1 assumes one embed per page

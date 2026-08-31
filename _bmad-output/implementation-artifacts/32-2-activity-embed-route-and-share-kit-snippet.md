@@ -2,7 +2,7 @@
 story_id: 32.2
 story_key: 32-2-activity-embed-route-and-share-kit-snippet
 epic: 32
-status: in-progress
+status: review
 baseline_commit: fad9672
 created: 2026-08-31
 depends_on:
@@ -16,7 +16,7 @@ forward_deps:
 
 # Story 32.2: Activity embed route and Share kit snippet
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -104,6 +104,20 @@ So that Saturday's signup can live on a club or Notion page and still write a Re
 - [x] [Review][Defer] **Required hidden fields not enforced when query absent** — deferred, Story 30.1 contract: required hidden never blocks submit
 - [x] [Review][Defer] **Paused registration uses `plan-limit` unavailable reason** — deferred, matches public `/register/{slug}` brownfield
 
+### Review Findings — Pass 3 (2026-08-31)
+
+**Acceptance audit:** All Story 32.2 ACs satisfied (chrome-light embed, iframe-src hidden query, postMessage height, Share kit gating, CSP via 32.1).
+
+- [ ] [Review][Patch] **Duplicate `NonInput` guard in `NormalizeAnswers`** [`RegistrationAnswerValidator.cs:129-137`]
+- [ ] [Review][Patch] **Embed iframe uses `loading="lazy"`** [`web/lib/embed-snippet.ts:73`] — delays first load/resize for above-the-fold signup embed; remove or use `eager`.
+- [ ] [Review][Patch] **Resize listener accepts height `0`** [`web/lib/embed-snippet.ts:84`] — use `h <= 0` reject to match reporter and avoid collapsed iframe.
+- [ ] [Review][Patch] **Strip newlines from activity name before HTML attribute escape** [`web/lib/embed-snippet.ts:10`]
+
+- [x] [Review][Defer] **Hidden field form editor incomplete (no defaultValue UI, stale props on type switch)** — deferred, minimal 30.1 port; full editor ships with Story 30.1
+- [x] [Review][Defer] **`PublicRegistrationUnavailable` shows “Public registration” card chrome in embed** — deferred, minor copy polish
+- [x] [Review][Defer] **Client-side hidden query length not capped at 200** — deferred, server validates; generic submit error only
+- [x] [Review][Defer] **Campaign example URL in HTML comment could break on `-->`** — deferred, API-built URLs unlikely
+
 ## Dev Notes
 
 ### Brownfield anchors
@@ -161,5 +175,6 @@ Composer
 
 ## Change Log
 
+- 2026-08-31: Code review pass 2 — hide AppFooter on /embed/*, bundle textarea, campaign URL helper, height cap, event.source guard
 - 2026-08-31: Code review pass 1 — decision + 7 patches applied (iframe id, embed bundle copy, settings error/loading, URL API, height guards)
 - 2026-08-31: Story 32.2 implemented — embed route, postMessage height, Share kit snippet; minimal 30.1 hidden-field port
