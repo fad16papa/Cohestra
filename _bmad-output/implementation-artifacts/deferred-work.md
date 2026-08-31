@@ -1,3 +1,11 @@
+## Deferred from: code review of 32-3 pass 4 (2026-08-31)
+
+- HTTP 201 returned when dedup path returns `"updated"` — REST semantics nit; web client ignores status code
+- Basic tenant invalid payload gets 400 before plan gate — AC 5 satisfied for valid payloads; validation-before-plan ordering acceptable v1
+- Dedup integration test omits profile field update assertions — dedup path covered; name/message refresh unverified in CI
+- Website inquiry notify reuses RegistrationFromEmail settings — matches registration notify pattern; dedicated sender config not in AC
+- No integration tests for public 400 validation paths — validator unit tests cover rules; API matrix nice-to-have
+
 ## Deferred from: code review of 32-3-website-contact-section-creates-a-client.md (2026-08-31)
 
 - LeadStatus not reset to New on dedup update — matches public registration dedup (LeadStatus only set on create)
