@@ -18,33 +18,32 @@ public sealed class WebsiteInquiryOperatorNotifyService(
     ILogger<WebsiteInquiryOperatorNotifyService> logger) : IWebsiteInquiryOperatorNotifyService
 {
     public async Task<WebsiteInquiryOperatorNotifySendResult> SendOperatorNotifyIfApplicableAsync(
-        Guid clientId,
-        Guid timelineEventId,
+        WebsiteInquiryOperatorNotifyRequest request,
         CancellationToken cancellationToken = default)
     {
         var client = await dbContext.Clients
             .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Id == clientId, cancellationToken);
+            .FirstOrDefaultAsync(item => item.Id == request.ClientId, cancellationToken);
 
         if (client is null)
         {
             logger.LogWarning(
                 "Skipped website inquiry operator notify because client {ClientId} was not found.",
-                clientId);
+                request.ClientId);
             return new WebsiteInquiryOperatorNotifySendResult(false, null);
         }
 
         var timelineEvent = await dbContext.ClientTimelineEvents
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                item => item.Id == timelineEventId && item.ClientId == clientId,
+                item => item.Id == request.TimelineEventId && item.ClientId == request.ClientId,
                 cancellationToken);
 
         if (timelineEvent is null)
         {
             logger.LogWarning(
                 "Skipped website inquiry operator notify because timeline event {TimelineEventId} was not found.",
-                timelineEventId);
+                request.TimelineEventId);
             return new WebsiteInquiryOperatorNotifySendResult(false, null);
         }
 
@@ -62,7 +61,7 @@ public sealed class WebsiteInquiryOperatorNotifyService(
         {
             logger.LogWarning(
                 "Skipped website inquiry operator notify for client {ClientId} because tenant admin contact email is missing.",
-                clientId);
+                request.ClientId);
             return new WebsiteInquiryOperatorNotifySendResult(false, null);
         }
 
@@ -77,7 +76,7 @@ public sealed class WebsiteInquiryOperatorNotifyService(
         {
             logger.LogWarning(
                 "Skipped website inquiry operator notify for client {ClientId} because no sender email is configured.",
-                clientId);
+                request.ClientId);
             return new WebsiteInquiryOperatorNotifySendResult(false, null);
         }
 
@@ -94,10 +93,10 @@ public sealed class WebsiteInquiryOperatorNotifyService(
 
         var emailContent = WebsiteInquiryOperatorNotifyEmailBuilder.Build(
             new WebsiteInquiryOperatorNotifyEmailModel(
-                ParticipantName: client.FullName,
-                Phone: client.Phone,
-                Email: client.Email,
-                Message: timelineEvent.Note ?? string.Empty,
+                ParticipantName: request.ParticipantName,
+                Phone: request.Phone,
+                Email: request.Email,
+                Message: request.Message,
                 ClientProfileUrl: clientProfileUrl));
 
         var sendResult = await emailSender.SendAsync(
@@ -116,7 +115,7 @@ public sealed class WebsiteInquiryOperatorNotifyService(
         {
             logger.LogWarning(
                 "Website inquiry operator notify failed for client {ClientId} to {RecipientEmail}: {Reason}",
-                clientId,
+                request.ClientId,
                 recipientEmail,
                 sendResult.FailureReason);
             return new WebsiteInquiryOperatorNotifySendResult(false, recipientEmail);
@@ -124,7 +123,7 @@ public sealed class WebsiteInquiryOperatorNotifyService(
 
         logger.LogInformation(
             "Website inquiry operator notify sent for client {ClientId} to {RecipientEmail}.",
-            clientId,
+            request.ClientId,
             recipientEmail);
 
         return new WebsiteInquiryOperatorNotifySendResult(true, recipientEmail);

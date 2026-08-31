@@ -47,4 +47,20 @@ public sealed class WebsiteInquiryValidatorTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void Validate_RejectsOversizeMessage()
+    {
+        var error = WebsiteInquiryValidator.Validate(
+            new SubmitWebsiteInquiryCommand(
+                "Alex",
+                "alex@example.com",
+                null,
+                new string('x', WebsiteInquiryValidator.MaxMessageLength + 1),
+                false));
+
+        Assert.Equal(
+            $"Message must be at most {WebsiteInquiryValidator.MaxMessageLength} characters.",
+            error);
+    }
 }

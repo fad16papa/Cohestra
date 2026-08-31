@@ -5,7 +5,9 @@ using Cohestra.Contracts.Site;
 using Cohestra.Contracts.WebsiteInquiries;
 using Cohestra.Domain.Clients;
 using Cohestra.Domain.Outbox;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -98,12 +100,17 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
         var secondBody = await second.Content.ReadFromJsonAsync<SubmitWebsiteInquiryResponse>(
             IntegrationTestHelpers.JsonOptions);
         Assert.NotNull(secondBody);
+        Assert.Equal("updated", secondBody.Status);
         Assert.False(secondBody.ClientCreated);
         Assert.Equal(firstBody.ClientId, secondBody.ClientId);
 
         await using var scope = Factory.Services.CreateAsyncScope();
         IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+
+        var savedClient = await dbContext.Clients.FirstOrDefaultAsync(item => item.Id == firstBody.ClientId);
+        Assert.NotNull(savedClient);
+        Assert.False(savedClient.ConsentGiven);
 
         Assert.Equal(1, dbContext.Clients.Count(item => item.NormalizedEmail == email.ToLowerInvariant()));
         Assert.Equal(2, dbContext.ClientTimelineEvents.Count(item => item.ClientId == firstBody.ClientId));
@@ -126,6 +133,49 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
             IntegrationTestHelpers.JsonOptions);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [SkippableFact]
+    public async Task SubmitWebsiteInquiry_BasicTenant_ReturnsPlanLocked()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var slug = $"contact-basic-{Guid.NewGuid():N}";
+        await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, slug);
+        await PublishSiteWithContactSectionAsync(slug);
+
+        await using var scope = Factory.Services.CreateAsyncScope();
+        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var tenant = await dbContext.Tenants.FirstAsync(item => item.Id == TenantIds.Default);
+        var originalPlan = tenant.Plan;
+        tenant.Plan = TenantPlan.Basic;
+        tenant.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync();
+
+        try
+        {
+            using var client = Factory.CreateClient();
+            var response = await client.PostAsJsonAsync(
+                "/api/v1/public/website-inquiries",
+                new SubmitWebsiteInquiryRequest(
+                    "Alex",
+                    "alex@example.com",
+                    null,
+                    "Hello",
+                    false),
+                IntegrationTestHelpers.JsonOptions);
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            var errorCode = await IntegrationTestHelpers.ReadProblemErrorCodeAsync(response);
+            Assert.Equal("plan_locked", errorCode);
+        }
+        finally
+        {
+            tenant.Plan = originalPlan;
+            tenant.UpdatedAt = DateTimeOffset.UtcNow;
+            await dbContext.SaveChangesAsync();
+        }
     }
 
     private async Task PublishSiteWithContactSectionAsync(string activitySlug)

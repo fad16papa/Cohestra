@@ -32,7 +32,7 @@ public class PublicWebsiteInquiriesController(
             return BadRequest(new ProblemDetails
             {
                 Title = "Invalid inquiry payload",
-                Detail = "name and message are required.",
+                Detail = "Name is required.",
                 Status = StatusCodes.Status400BadRequest,
             });
         }
@@ -78,7 +78,7 @@ public class PublicWebsiteInquiriesController(
         }
 
         var response = new SubmitWebsiteInquiryResponse(
-            Status: "created",
+            Status: result.ClientCreated ? "created" : "updated",
             Message: "Thank you — we've received your message.",
             ClientId: result.ClientId,
             ClientCreated: result.ClientCreated);

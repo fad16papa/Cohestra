@@ -12,6 +12,12 @@ import {
   validatePhoneLocalNumber,
 } from "@/lib/phone-countries";
 import { submitWebsiteInquiry } from "@/lib/website-inquiry-api";
+import {
+  WEBSITE_INQUIRY_MAX_EMAIL_LENGTH,
+  WEBSITE_INQUIRY_MAX_MESSAGE_LENGTH,
+  WEBSITE_INQUIRY_MAX_NAME_LENGTH,
+  WEBSITE_INQUIRY_MAX_PHONE_LENGTH,
+} from "@/lib/website-inquiry-limits";
 import { cn } from "@/lib/utils";
 
 import { SectionShell, SectionTitle } from "./section-shell";
@@ -74,25 +80,37 @@ export function ContactSection({ section, isPreview = false }: ContactSectionPro
 
     if (!trimmedName) {
       nextErrors.name = "Name is required.";
+    } else if (trimmedName.length > WEBSITE_INQUIRY_MAX_NAME_LENGTH) {
+      nextErrors.name = `Name must be at most ${WEBSITE_INQUIRY_MAX_NAME_LENGTH} characters.`;
     }
 
     if (!trimmedEmail && !trimmedPhone) {
       nextErrors.email = "Provide an email or phone number.";
     } else {
-      if (trimmedEmail && !trimmedEmail.includes("@")) {
-        nextErrors.email = "Enter a valid email address.";
+      if (trimmedEmail) {
+        if (!trimmedEmail.includes("@")) {
+          nextErrors.email = "Enter a valid email address.";
+        } else if (trimmedEmail.length > WEBSITE_INQUIRY_MAX_EMAIL_LENGTH) {
+          nextErrors.email = `Email must be at most ${WEBSITE_INQUIRY_MAX_EMAIL_LENGTH} characters.`;
+        }
       }
 
       if (trimmedPhone) {
-        const phoneError = validatePhoneLocalNumber(DEFAULT_PHONE_COUNTRY, trimmedPhone, false);
-        if (phoneError) {
-          nextErrors.phone = phoneError;
+        if (trimmedPhone.length > WEBSITE_INQUIRY_MAX_PHONE_LENGTH) {
+          nextErrors.phone = `Phone must be at most ${WEBSITE_INQUIRY_MAX_PHONE_LENGTH} characters.`;
+        } else {
+          const phoneError = validatePhoneLocalNumber(DEFAULT_PHONE_COUNTRY, trimmedPhone, false);
+          if (phoneError) {
+            nextErrors.phone = phoneError;
+          }
         }
       }
     }
 
     if (!trimmedMessage) {
       nextErrors.message = "Message is required.";
+    } else if (trimmedMessage.length > WEBSITE_INQUIRY_MAX_MESSAGE_LENGTH) {
+      nextErrors.message = `Message must be at most ${WEBSITE_INQUIRY_MAX_MESSAGE_LENGTH} characters.`;
     }
 
     setErrors(nextErrors);
@@ -225,6 +243,7 @@ export function ContactSection({ section, isPreview = false }: ContactSectionPro
               id={`${section.id}-message`}
               className={textareaClass}
               value={message}
+              maxLength={WEBSITE_INQUIRY_MAX_MESSAGE_LENGTH}
               onChange={(event) => setMessage(event.target.value)}
             />
             {errors.message ? (

@@ -93,7 +93,13 @@ public sealed class WebsiteInquiryService(
         dbContext.ClientTimelineEvents.Add(timelineEvent);
 
         var payload = JsonSerializer.Serialize(
-            new WebsiteInquiryOperatorNotifyOutboxPayload(client.Id, timelineEvent.Id));
+            new WebsiteInquiryOperatorNotifyOutboxPayload(
+                client.Id,
+                timelineEvent.Id,
+                name,
+                phone,
+                email,
+                message));
         outboxPublisher.Enqueue(
             tenantId,
             OutboxMessageTypes.WebsiteInquiryOperatorNotify,
@@ -125,10 +131,16 @@ public sealed class WebsiteInquiryService(
 
     private static string TruncateNote(string message)
     {
-        const int maxLength = 500;
+        var maxLength = WebsiteInquiryValidator.MaxMessageLength;
         var trimmed = message.Trim();
         return trimmed.Length <= maxLength ? trimmed : trimmed[..maxLength];
     }
 }
 
-internal sealed record WebsiteInquiryOperatorNotifyOutboxPayload(Guid ClientId, Guid TimelineEventId);
+internal sealed record WebsiteInquiryOperatorNotifyOutboxPayload(
+    Guid ClientId,
+    Guid TimelineEventId,
+    string ParticipantName,
+    string? Phone,
+    string? Email,
+    string Message);

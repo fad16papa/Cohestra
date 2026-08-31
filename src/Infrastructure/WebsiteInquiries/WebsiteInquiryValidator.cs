@@ -7,7 +7,7 @@ internal static class WebsiteInquiryValidator
     public const int MaxNameLength = 200;
     public const int MaxEmailLength = 320;
     public const int MaxPhoneLength = 40;
-    public const int MaxMessageLength = 2000;
+    public const int MaxMessageLength = 500;
 
     public static string? Validate(SubmitWebsiteInquiryCommand command)
     {

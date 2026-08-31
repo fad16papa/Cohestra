@@ -29,8 +29,13 @@ public sealed class WebsiteInquiryOperatorNotifyOutboxHandler(
         currentTenant.SetResolved(message.TenantId, tenant.Slug);
 
         var result = await websiteInquiryOperatorNotifyService.SendOperatorNotifyIfApplicableAsync(
-            payload.ClientId,
-            payload.TimelineEventId,
+            new WebsiteInquiryOperatorNotifyRequest(
+                payload.ClientId,
+                payload.TimelineEventId,
+                payload.ParticipantName,
+                payload.Phone,
+                payload.Email,
+                payload.Message),
             cancellationToken);
 
         if (!result.Sent && result.RecipientEmail is not null)
