@@ -35,7 +35,7 @@ internal static class WebsiteInquiryOperatorNotifyEmailBuilder
         plain.AppendLine($"Email: {FormatValue(model.Email)}");
         plain.AppendLine();
         plain.AppendLine("Message:");
-        plain.AppendLine(SanitizePlainTextField(model.Message));
+        plain.AppendLine(NormalizeMessageBody(model.Message));
         plain.AppendLine();
         plain.AppendLine($"View client: {model.ClientProfileUrl}");
         plain.AppendLine();
@@ -86,7 +86,7 @@ internal static class WebsiteInquiryOperatorNotifyEmailBuilder
                                 <p style="margin:0 0 8px;"><strong>Phone:</strong> {WebUtility.HtmlEncode(FormatValue(model.Phone))}</p>
                                 <p style="margin:0 0 8px;"><strong>Email:</strong> {WebUtility.HtmlEncode(FormatValue(model.Email))}</p>
                                 <p style="margin:0 0 8px;"><strong>Message:</strong></p>
-                                <p style="margin:0;white-space:pre-wrap;">{WebUtility.HtmlEncode(SanitizePlainTextField(model.Message))}</p>
+                                <p style="margin:0;white-space:pre-wrap;">{WebUtility.HtmlEncode(NormalizeMessageBody(model.Message))}</p>
                               </td>
                             </tr>
                           </table>
@@ -124,8 +124,8 @@ internal static class WebsiteInquiryOperatorNotifyEmailBuilder
     private static string FormatValue(string? value) =>
         string.IsNullOrWhiteSpace(value) ? "—" : value.Trim();
 
-    private static string SanitizePlainTextField(string value) =>
-        value.Replace('\r', ' ').Replace('\n', ' ').Trim();
+    private static string NormalizeMessageBody(string value) =>
+        value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Trim();
 
     private static string SanitizeEmailSubject(string subject)
     {

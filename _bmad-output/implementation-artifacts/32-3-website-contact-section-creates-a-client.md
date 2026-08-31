@@ -109,7 +109,7 @@ Composer
 
 ### Change Log
 
-- 2026-08-31: Pass 1 code review — decision (keep consentLabel) + 7 patches applied
+- 2026-08-31: Pass 2 code review — 4 polish patches applied
 
 ### Review Findings (2026-08-31)
 
@@ -127,10 +127,10 @@ Composer
 
 **Acceptance audit:** All Story 32.3 ACs satisfied after pass 1 patches.
 
-- [ ] [Review][Patch] **Website inquiry message shown twice in client timeline** [`web/components/clients/timeline-event.tsx:69-71,90-92` — summary uses `item.note` and generic `Note:` block repeats it]
-- [ ] [Review][Patch] **Operator notify email collapses message newlines** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:SanitizePlainTextField` — strips `\n` before HTML `pre-wrap` body]
-- [ ] [Review][Patch] **Contact submit has no catch for network/parse failures** [`contact-section.tsx:135-152` — rejected fetch throws; spinner resets with no error]
-- [ ] [Review][Patch] **maxLength attribute only on message textarea** [`contact-section.tsx` — name/email/phone rely on JS validation only until submit]
+- [x] [Review][Patch] **Website inquiry message shown twice in client timeline** — summary is static; message shown once in `Note:` block.
+- [x] [Review][Patch] **Operator notify email collapses message newlines** — `NormalizeMessageBody` preserves line breaks in plain/HTML bodies.
+- [x] [Review][Patch] **Contact submit has no catch for network/parse failures** — catch sets user-facing submit error.
+- [x] [Review][Patch] **maxLength attribute only on message textarea** — added to name, email, and phone inputs.
 
 - [x] [Review][Defer] **Create-path integration test does not assert LeadStatus=New** [`WebsiteInquiryIntegrationTests.cs`] — deferred, `ClientDeduplicationService` sets New on create; covered by service unit tests
 - [x] [Review][Defer] **No integration test for disabled contact section (`enabled: false`)** — deferred, publish gate + enabled check in service; low risk v1

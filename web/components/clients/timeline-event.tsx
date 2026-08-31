@@ -67,7 +67,7 @@ function formatTimelineSummary(item: ClientTimelineItem) {
   }
 
   if (item.eventType === "website_inquiry") {
-    return item.note ?? "Homepage contact form";
+    return "Homepage contact form";
   }
 
   return item.activityName ?? "Update recorded";

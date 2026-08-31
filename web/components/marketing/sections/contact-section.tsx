@@ -147,6 +147,8 @@ export function ContactSection({ section, isPreview = false }: ContactSectionPro
       }
 
       setSubmitted(true);
+    } catch {
+      setSubmitError("Unable to send your message. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -179,6 +181,7 @@ export function ContactSection({ section, isPreview = false }: ContactSectionPro
               id={`${section.id}-name`}
               value={name}
               autoComplete="name"
+              maxLength={WEBSITE_INQUIRY_MAX_NAME_LENGTH}
               className={cn(controlClass, errors.name && "border-destructive ring-3 ring-destructive/20")}
               onChange={(event) => setName(event.target.value)}
             />
@@ -195,6 +198,7 @@ export function ContactSection({ section, isPreview = false }: ContactSectionPro
               inputMode="email"
               autoComplete="email"
               value={email}
+              maxLength={WEBSITE_INQUIRY_MAX_EMAIL_LENGTH}
               className={cn(controlClass, errors.email && "border-destructive ring-3 ring-destructive/20")}
               onChange={(event) => setEmail(event.target.value)}
             />
@@ -224,6 +228,7 @@ export function ContactSection({ section, isPreview = false }: ContactSectionPro
                 autoComplete="tel-national"
                 placeholder={getPhonePlaceholder(DEFAULT_PHONE_COUNTRY)}
                 value={phone}
+                maxLength={WEBSITE_INQUIRY_MAX_PHONE_LENGTH}
                 onChange={(event) => setPhone(event.target.value)}
                 className="min-h-12 flex-1 bg-transparent px-3 text-base outline-none"
               />
