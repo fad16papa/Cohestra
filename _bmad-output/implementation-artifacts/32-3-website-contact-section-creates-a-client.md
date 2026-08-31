@@ -125,7 +125,17 @@ Composer
 
 ### Review Findings — Pass 2 (2026-08-31)
 
-Pending re-review after pass 1 patches.
+**Acceptance audit:** All Story 32.3 ACs satisfied after pass 1 patches.
+
+- [ ] [Review][Patch] **Website inquiry message shown twice in client timeline** [`web/components/clients/timeline-event.tsx:69-71,90-92` — summary uses `item.note` and generic `Note:` block repeats it]
+- [ ] [Review][Patch] **Operator notify email collapses message newlines** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:SanitizePlainTextField` — strips `\n` before HTML `pre-wrap` body]
+- [ ] [Review][Patch] **Contact submit has no catch for network/parse failures** [`contact-section.tsx:135-152` — rejected fetch throws; spinner resets with no error]
+- [ ] [Review][Patch] **maxLength attribute only on message textarea** [`contact-section.tsx` — name/email/phone rely on JS validation only until submit]
+
+- [x] [Review][Defer] **Create-path integration test does not assert LeadStatus=New** [`WebsiteInquiryIntegrationTests.cs`] — deferred, `ClientDeduplicationService` sets New on create; covered by service unit tests
+- [x] [Review][Defer] **No integration test for disabled contact section (`enabled: false`)** — deferred, publish gate + enabled check in service; low risk v1
+- [x] [Review][Defer] **Concurrent duplicate create race on unique index** [`WebsiteInquiryService.cs`] — deferred, registration submit shares same dedup pattern
+- [x] [Review][Defer] **Phone-only junk text with no digits passes validation** [`WebsiteInquiryValidator.cs`] — deferred, SG mobile validator covers normal paths; edge junk low impact
 
 - [x] [Review][Defer] **LeadStatus not reset to New on dedup update** [`WebsiteInquiryService.cs` + `ClientDeduplicationService`] — deferred, matches public registration dedup (LeadStatus only set on create)
 - [x] [Review][Defer] **Consent unchecked cannot revoke prior opt-in** [`ClientDeduplicationService.ApplyProfileAsync`] — deferred, pre-existing dedup service behavior shared with registration
