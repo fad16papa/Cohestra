@@ -18,6 +18,7 @@ using Cohestra.Application.Signup;
 using Cohestra.Application.Site;
 using Cohestra.Application.Team;
 using Cohestra.Application.Tenants;
+using Cohestra.Application.WebsiteInquiries;
 using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Platform;
@@ -31,6 +32,7 @@ using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.PublicDoor;
 using Cohestra.Infrastructure.Registrations;
+using Cohestra.Infrastructure.WebsiteInquiries;
 using Cohestra.Infrastructure.Reports;
 using Cohestra.Infrastructure.Signup;
 using Cohestra.Infrastructure.Site;
@@ -184,6 +186,9 @@ public static class DependencyInjection
         services.AddScoped<IOutboxMessageHandler, SupportIssueFilerStatusOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, ActivityExpiredOutboxHandler>();
         services.AddScoped<IOutboxMessageHandler, ActivityExpiringSoonOutboxHandler>();
+        services.AddScoped<IOutboxMessageHandler, WebsiteInquiryOperatorNotifyOutboxHandler>();
+        services.AddScoped<IWebsiteInquiryService, WebsiteInquiryService>();
+        services.AddScoped<IWebsiteInquiryOperatorNotifyService, WebsiteInquiryOperatorNotifyService>();
         services.Configure<ActivityExpirationOptions>(
             configuration.GetSection(ActivityExpirationOptions.SectionName));
         services.AddScoped<ActivityExpirationService>();

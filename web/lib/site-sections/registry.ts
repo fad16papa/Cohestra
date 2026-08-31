@@ -14,6 +14,7 @@ export const SECTION_TYPE_LABELS: Record<string, string> = {
   stats: "Stats",
   ctaBand: "CTA band",
   video: "Video",
+  contact: "Contact",
 };
 
 /** Essentials palette — Core and Pro. */
@@ -22,6 +23,7 @@ export const ESSENTIALS_SECTION_TYPES = [
   "howItWorks",
   "upcomingActivities",
   "footer",
+  "contact",
 ] as const;
 
 /** Studio palette — Pro and Enterprise only. */
@@ -157,6 +159,15 @@ export function getDefaultSectionProps(type: string): Record<string, unknown> {
     case "footer":
       return {
         poweredByLabel: "Cohestra",
+        variant: "default",
+      };
+    case "contact":
+      return {
+        heading: "Get in touch",
+        intro: "Have a question? Send us a message and we'll get back to you.",
+        buttonLabel: "Send message",
+        successMessage: "Thanks — we've received your message.",
+        consentLabel: "I'd like to receive updates and marketing from this community.",
         variant: "default",
       };
     default:

@@ -130,6 +130,20 @@ internal static class ClientTimelineBuilder
                         timelineEvent.Subject,
                         timelineEvent.Note));
                     break;
+
+                case ClientTimelineEventType.WebsiteInquiry:
+                    items.Add(new ClientTimelineItemResponse(
+                        "website_inquiry",
+                        timelineEvent.OccurredAt,
+                        "Website inquiry",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        timelineEvent.Subject,
+                        timelineEvent.Note));
+                    break;
             }
         }
 

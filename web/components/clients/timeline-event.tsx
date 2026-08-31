@@ -66,6 +66,10 @@ function formatTimelineSummary(item: ClientTimelineItem) {
     return item.note ? `Follow-up date: ${item.note}` : "Follow-up date cleared";
   }
 
+  if (item.eventType === "website_inquiry") {
+    return item.note ?? "Homepage contact form";
+  }
+
   return item.activityName ?? "Update recorded";
 }
 

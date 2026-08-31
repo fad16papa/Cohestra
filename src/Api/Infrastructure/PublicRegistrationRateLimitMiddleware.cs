@@ -11,11 +11,12 @@ public sealed class PublicRegistrationRateLimitMiddleware(
     RequestDelegate next,
     IPublicRegistrationRateLimiter rateLimiter)
 {
-    private const string TargetPathValue = "/api/v1/public/registrations";
+    private const string RegistrationPath = "/api/v1/public/registrations";
+    private const string WebsiteInquiryPath = "/api/v1/public/website-inquiries";
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (!IsRegistrationSubmit(context))
+        if (!IsRateLimitedSubmit(context))
         {
             await next(context);
             return;
@@ -55,7 +56,9 @@ public sealed class PublicRegistrationRateLimitMiddleware(
 
             var problem = new ProblemDetails
             {
-                Title = "Too many registration requests",
+                Title = IsWebsiteInquirySubmit(context)
+                    ? "Too many contact requests"
+                    : "Too many registration requests",
                 Detail = "Please wait before submitting again.",
                 Status = StatusCodes.Status429TooManyRequests,
                 Instance = context.Request.Path,
@@ -69,7 +72,7 @@ public sealed class PublicRegistrationRateLimitMiddleware(
         await next(context);
     }
 
-    internal static bool IsRegistrationSubmit(HttpContext context)
+    internal static bool IsRateLimitedSubmit(HttpContext context)
     {
         if (!HttpMethods.IsPost(context.Request.Method))
         {
@@ -77,8 +80,23 @@ public sealed class PublicRegistrationRateLimitMiddleware(
         }
 
         var path = context.Request.Path.Value?.TrimEnd('/') ?? string.Empty;
-        return string.Equals(path, TargetPathValue, StringComparison.OrdinalIgnoreCase);
+        return string.Equals(path, RegistrationPath, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(path, WebsiteInquiryPath, StringComparison.OrdinalIgnoreCase);
     }
+
+    internal static bool IsRegistrationSubmit(HttpContext context) =>
+        IsRateLimitedSubmit(context)
+        && string.Equals(
+            context.Request.Path.Value?.TrimEnd('/') ?? string.Empty,
+            RegistrationPath,
+            StringComparison.OrdinalIgnoreCase);
+
+    internal static bool IsWebsiteInquirySubmit(HttpContext context) =>
+        IsRateLimitedSubmit(context)
+        && string.Equals(
+            context.Request.Path.Value?.TrimEnd('/') ?? string.Empty,
+            WebsiteInquiryPath,
+            StringComparison.OrdinalIgnoreCase);
 
     internal static string ResolveClientIdentifier(HttpContext context)
     {

@@ -8,6 +8,7 @@ public sealed class SiteSectionPlanGateTests
     [Theory]
     [InlineData("hero", TenantPlan.Core, true)]
     [InlineData("highlights", TenantPlan.Core, true)]
+    [InlineData("contact", TenantPlan.Core, true)]
     [InlineData("carousel", TenantPlan.Core, false)]
     [InlineData("video", TenantPlan.Core, false)]
     [InlineData("testimonials", TenantPlan.Core, false)]
