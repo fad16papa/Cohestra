@@ -118,18 +118,13 @@ public sealed class RegistrationNotificationService(
         }
 
         var emailContent = RegistrationConfirmationEmailBuilder.Build(
-            new RegistrationConfirmationEmailModel(
-                ParticipantName: registration.Client.FullName,
-                ActivityName: registration.Activity.Name,
-                Schedule: registration.Activity.Schedule,
-                Location: registration.Activity.Location,
-                CommunityLabel: registration.Activity.CommunityLabel,
-                RegistrationNumber: registration.RegistrationNumber,
-                BrandName: brandName,
-                FooterLegalName: footerLegalName,
-                WebsiteUrl: websiteUrl,
-                LogoUrl: logoUrl,
-                HeroImageUrl: heroImageUrl));
+            BuildEmailModel(
+                registration,
+                brandName,
+                footerLegalName,
+                websiteUrl,
+                logoUrl,
+                heroImageUrl));
 
         var inlineAttachments = BuildInlineAttachments(heroInlineAttachment, logoInlineAttachment);
 
@@ -161,6 +156,61 @@ public sealed class RegistrationNotificationService(
             recipientEmail);
 
         return new RegistrationConfirmationSendResult(true, recipientEmail);
+    }
+
+    private static RegistrationConfirmationEmailModel BuildEmailModel(
+        Domain.Registrations.Registration registration,
+        string brandName,
+        string footerLegalName,
+        string websiteUrl,
+        string? logoUrl,
+        string? heroImageUrl)
+    {
+        var activity = registration.Activity!;
+        var client = registration.Client!;
+        var schema = activity.FormSchema;
+        var answers = registration.Answers;
+
+        string? customSubject = null;
+        string? customClosingMessage = null;
+
+        if (schema is not null)
+        {
+            var profile = ClientProfileExtractor.Extract(schema, answers);
+
+            if (!string.IsNullOrWhiteSpace(schema.Meta?.ConfirmationEmailSubject))
+            {
+                customSubject = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+                    schema.Meta.ConfirmationEmailSubject,
+                    schema,
+                    profile,
+                    answers);
+            }
+
+            if (!string.IsNullOrWhiteSpace(schema.Meta?.ConfirmationEmailBodyMarkdown))
+            {
+                customClosingMessage = RegistrationPipingTokenSubstitutor.SubstituteParticipantVisible(
+                    schema.Meta.ConfirmationEmailBodyMarkdown,
+                    schema,
+                    profile,
+                    answers);
+            }
+        }
+
+        return new RegistrationConfirmationEmailModel(
+            ParticipantName: client.FullName,
+            ActivityName: activity.Name,
+            Schedule: activity.Schedule,
+            Location: activity.Location,
+            CommunityLabel: activity.CommunityLabel,
+            RegistrationNumber: registration.RegistrationNumber,
+            BrandName: brandName,
+            FooterLegalName: footerLegalName,
+            WebsiteUrl: websiteUrl,
+            LogoUrl: logoUrl,
+            HeroImageUrl: heroImageUrl,
+            CustomSubject: customSubject,
+            CustomClosingMessage: customClosingMessage);
     }
 
     private static IReadOnlyList<EmailInlineAttachment>? BuildInlineAttachments(

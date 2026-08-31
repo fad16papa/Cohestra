@@ -16,6 +16,8 @@ public class Community : ITenantScoped
 
     public string? DefaultHeroImageUrl { get; set; }
 
+    public Guid? DefaultFormTemplateId { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }

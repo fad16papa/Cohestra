@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Capture Slices — Brainstorming Session</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 960px; margin: 0 auto; padding: 40px 20px; line-height: 1.6; color: #1a1a1a; }
+    h1 { font-size: 2.2em; border-bottom: 3px solid #2563eb; padding-bottom: 10px; }
+    h2 { font-size: 1.5em; color: #1e40af; margin-top: 40px; }
+    h3 { font-size: 1.2em; color: #3b82f6; margin-top: 28px; }
+    .meta { color: #666; font-size: 0.95em; margin-bottom: 30px; }
+    .technique { background: #eff6ff; border-left: 4px solid #2563eb; padding: 20px 24px; margin: 20px 0; }
+    .concept { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 16px 20px; margin: 12px 0; }
+    .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 12px 0; }
+    .insight { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 12px 0; }
+    .anti { background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px 20px; margin: 12px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.95em; }
+    th, td { border: 1px solid #e5e7eb; padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; }
+    .nav { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    .nav ul { list-style: none; padding-left: 0; }
+    .nav a { color: #2563eb; text-decoration: none; }
+    footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #666; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <h1>Registration Capture — Slice Elaboration</h1>
+  <div class="meta">
+    <strong>Date:</strong> 2026-08-28<br>
+    <strong>Facilitator:</strong> BMad Brainstorming Coach<br>
+    <strong>Context:</strong> Cohestra vs Tally.so study — user asked to elaborate all suggested slices in full detail.
+  </div>
+
+  <div class="nav">
+    <h2>Session Navigation</h2>
+    <ul>
+      <li><a href="#approach">Approach</a></li>
+      <li><a href="#slice-a">Slice A — Native capture depth</a></li>
+      <li><a href="#slice-b">Slice B — Recipes + optional steps</a></li>
+      <li><a href="#slice-c">Slice C — Embed + website contact</a></li>
+      <li><a href="#later">Later D / E / F</a></li>
+      <li><a href="#compare">How they relate</a></li>
+      <li><a href="#next">Next steps</a></li>
+    </ul>
+  </div>
+
+  <h2 id="approach">Approach</h2>
+  <div class="technique">
+    <h3>Technique: Slice decomposition + failure-mode walk</h3>
+    <p>Each slice is a shippable product increment, not a theme. For every slice: problem, user story, in-scope fields/surfaces, data model, API, UI, acceptance tests, non-goals, failure modes, effort shape.</p>
+  </div>
+
+  <div class="insight">
+    <strong>Session insight:</strong> Slice A is the only slice that is unambiguously “steal Tally’s capture UX on Cohestra’s existing form.” B and C change distribution or schema semantics. File upload / draft-as-client / HMAC webhooks stay later because they expand the Client contract or ops surface.
+  </div>
+
+  <h2 id="slice-a">Slice A — Native capture depth</h2>
+  <p><strong>One-liner:</strong> Make the existing activity registration form as good as a Tally one-pager for the fields Cohestra already understands — without logic, embed, or website contact.</p>
+  <p><strong>Why first:</strong> Highest Tally gap vs smallest architecture change. Same Form tab, same public URL, same Client mapping.</p>
+
+  <h3>A1 Hidden / UTM fields</h3>
+  <div class="concept">
+    <p>New field type <code>hidden</code> (or <code>utm</code>). Not shown to the registrant. Value from query string (<code>?utm_source=ig</code>) or a constant set in the builder (campaign id). Stored in <code>Registration.Answers</code> and optionally copied onto Client tags / notes.</p>
+    <p><strong>Why Tally:</strong> Tally Hidden Fields are the whole attribution story. Cohestra has none today.</p>
+    <p><strong>Failure:</strong> PII in query strings logged in nginx — document; don’t put emails in UTM. Missing params → empty answer, still submit.</p>
+  </div>
+
+  <h3>A2 Textarea</h3>
+  <div class="concept">
+    <p>New type <code>textarea</code> mapped like <code>text</code> to Client.Notes or a named custom answer. Distinct from single-line text for “why are you joining?”</p>
+    <p><strong>Failure:</strong> 2k/5k char cap; sanitise XSS on display in registrations table.</p>
+  </div>
+
+  <h3>A3 Date</h3>
+  <div class="concept">
+    <p>Type <code>date</code> with ISO date storage. Use for DOB, preferred session date, “when did you last attend.” Maps to Client.DateOfBirth when labelled as such, else Answers only.</p>
+    <p><strong>Failure:</strong> Timezones — date-only, no datetime. Min/max optional later.</p>
+  </div>
+
+  <h3>A4 Thank-you piping + email piping</h3>
+  <div class="concept">
+    <p>Thank-you copy and confirmation email already exist. Add merge tokens: <code>{{firstName}}</code>, <code>{{activityTitle}}</code>, <code>{{startDate}}</code> from Activity + submitted answers. Same token set in both places so operators don’t learn two languages.</p>
+    <p><strong>Failure:</strong> Unknown tokens left as-is or stripped — pick one and test. Don’t allow HTML in operator-authored thank-you without sanitisation.</p>
+  </div>
+
+  <h3>A5 Closed-state copy + close-at</h3>
+  <div class="concept">
+    <p>Today closed/full/ended shows generic copy. Add operator-editable closed message + optional <code>registrationClosesAt</code> datetime independent of activity end (e.g. close 48h before class).</p>
+    <p><strong>Failure:</strong> Clock skew — server time only. Capacity vs close-at: both can block; message should say which.</p>
+  </div>
+
+  <h3>A6 Form-tab UX: slash-add, not DnD</h3>
+  <div class="concept">
+    <p>Keep list editor. Add “Add field” that inserts after focused field (slash or +). Reorder via up/down. Matches UX-DR32 (no canvas DnD) and Tally’s insert-in-place feel.</p>
+  </div>
+
+  <h3>A7 Operator email on new registration</h3>
+  <div class="concept">
+    <p>Notify tenant email (or activity owner) when a registration is submitted. Template with name, activity, link to registration row. Completes Tally’s “you get the lead” loop without webhooks.</p>
+    <p><strong>Failure:</strong> Don’t email on every field edit. Rate-limit / digest optional later. Honor existing email infrastructure (SendGrid).</p>
+  </div>
+
+  <h3>A8 Optional: bot friction</h3>
+  <div class="warning">
+    <p>Turnstile/hCaptcha on public POST. Not Tally-clone; ops hygiene. Can ship with A or immediately after. Failure: false positives on mobile; provide operator override / allowlist later.</p>
+  </div>
+
+  <p><strong>Slice A non-goals:</strong> visibleWhen, multi-step, iframe, website contact, file upload, webhooks.</p>
+  <p><strong>Acceptance (A):</strong> Hidden UTM round-trips; textarea + date in schema + public form + answers; thank-you shows first name; closed copy shows when closed; operator receives email; Form tab can insert field without DnD.</p>
+
+  <h2 id="slice-b">Slice B — Recipes + optional steps</h2>
+  <p><strong>One-liner:</strong> Cover ~80% of Tally logic with 3–5 named recipes, plus an optional Identity → Details → Consent stepper that is still one schema.</p>
+
+  <h3>B1 visibleWhen recipes</h3>
+  <div class="concept">
+    <p>JSON on a field, e.g. <code>visibleWhen: { recipe: "equals", fieldId: "role", value: "parent" }</code>. Recipes: equals, notEquals, isChecked, isNotEmpty. No formula language, no AND/OR tree in v1 (AND of two equals can be a later recipe).</p>
+    <p><strong>Server:</strong> Ignore hidden field values on submit (don’t persist spoofed answers for invisible fields). Client: hide/show without page reload.</p>
+    <p><strong>Failure:</strong> Circular refs (A shows if B, B shows if A) — builder validation. Required + hidden = not required.</p>
+  </div>
+
+  <h3>B2 Optional 3-step</h3>
+  <div class="concept">
+    <p>Activity flag <code>registrationSteps: identity | details | consent</code> grouping existing fields. Progress 1/3. Back doesn’t lose data. One POST at the end (or save draft in session only — not a Client until submit).</p>
+    <p><strong>Failure:</strong> Don’t invent a generic wizard builder. If operators need 7 steps, that’s a different product.</p>
+  </div>
+
+  <p><strong>Slice B non-goals:</strong> Calculated fields, jump-to-page, payment inside form, logic IDE.</p>
+  <p><strong>Depends on:</strong> Slice A field types exist so recipes have something to hide.</p>
+
+  <h2 id="slice-c">Slice C — Embed + website contact</h2>
+  <p><strong>One-liner:</strong> Registration and/or a Contact block can live on a Cohestra website (or later a foreign site) without cloning Tally as a platform.</p>
+
+  <h3>C1 Activity embed</h3>
+  <div class="concept">
+    <p>Today CSP <code>frame-ancestors 'none'</code> blocks iframes. Options: (1) dedicated embed route with relaxed CSP + nonce, (2) same-origin website section that mounts the existing public form component (no iframe). Prefer (2) for Cohestra sites; (1) only if tenants must embed on Squarespace/etc.</p>
+    <p><strong>Failure:</strong> Clickjacking if CSP too open — allowlist tenant website domain or embed token. Theme: inherit website tokens, not a second design system.</p>
+  </div>
+
+  <h3>C2 Website Contact → Client</h3>
+  <div class="concept">
+    <p>Website section type: name, email, phone, message, consent. POST creates Client + optional Registration against a “contact” activity or a dedicated ContactSubmission that still upserts Client. This is the Tally “contact form on my site” job, mapped to Cohestra’s object.</p>
+    <p><strong>Failure:</strong> Duplicate clients — reuse existing email/phone dedup. Don’t create a second CRM.</p>
+  </div>
+
+  <p><strong>Slice C non-goals:</strong> Public form marketplace, embed on arbitrary sites in v1 unless (1) is explicitly in scope, Tally-style share page.</p>
+
+  <h2 id="later">Later D / E / F (not v1)</h2>
+  <p>Same depth as A–C so “maybe” is not a shrug. Do not smuggle into Slice A.</p>
+
+  <h3>D — File upload</h3>
+  <div class="concept">
+    <p>Type <code>file</code>: waiver PDF / ID photo. Signed upload URL, MIME + size cap, virus scan, GDPR delete with the Client. Admin download on the registration row.</p>
+    <p><strong>Why later:</strong> storage + security epic wearing a field-type costume.</p>
+  </div>
+
+  <h3>E — Draft-as-client</h3>
+  <div class="anti">
+    <p>Abandoned Identity step becomes an Incomplete Client. Beats Tally — and pollutes CRM unless consent, retention, and capacity rules are explicit. Default: <strong>off</strong>. Session-only answers (no Client) is the safe way to help Slice B bounce.</p>
+  </div>
+
+  <h3>F — HMAC tenant webhooks</h3>
+  <div class="concept">
+    <p>Outbound <code>registration.created</code> with HMAC, retries, delivery log, SSRF guard. A7 email covers most hosts. Build when a tenant asks for Zapier-out — not to look like Tally. No inbound webhooks.</p>
+  </div>
+
+  <h2 id="compare">How they relate</h2>
+  <table>
+    <thead>
+      <tr><th></th><th>A Native depth</th><th>B Recipes + steps</th><th>C Embed + contact</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Tally job stolen</td><td>Beautiful registration form</td><td>Show if / multi-step</td><td>Form on my website</td></tr>
+      <tr><td>Schema change</td><td>New field types + copy + close-at</td><td>visibleWhen + step grouping</td><td>Website section + maybe CSP</td></tr>
+      <tr><td>Risk</td><td>Low</td><td>Medium (logic bugs)</td><td>Medium (security + dual capture)</td></tr>
+      <tr><td>Can ship alone</td><td>Yes</td><td>Needs A types ideally</td><td>Contact can ship without A; embed better after A</td></tr>
+      <tr><td>Later cousins</td><td>A8 bot friction optional</td><td>—</td><td>F webhook if they still live in Zapier; D if they need a waiver</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="next">Next steps</h2>
+  <ol>
+    <li>Product: confirm Slice A as next epic after current work (or PRD).</li>
+    <li>Do not start Slice C embed until CSP/clickjacking note is in the story.</li>
+    <li>Keep Epic 25 website branding non-goals; Contact section is new, not a branding epic.</li>
+  </ol>
+
+  <footer>
+    <p>Generated by BMAD brainstorming workflow. Full product detail: <code>_bmad-output/planning-artifacts/cohestra-vs-tally-forms-2026-08-27/slices-elaborated.md</code></p>
+  </footer>
+</body>
+</html>

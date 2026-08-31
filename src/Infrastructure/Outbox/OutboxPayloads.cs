@@ -2,6 +2,8 @@ namespace Cohestra.Infrastructure.Outbox;
 
 public sealed record RegistrationConfirmationOutboxPayload(Guid RegistrationId);
 
+public sealed record RegistrationOperatorNotifyOutboxPayload(Guid RegistrationId);
+
 public sealed record CampaignRecipientOutboxPayload(
     Guid CampaignId,
     Guid RecipientId);

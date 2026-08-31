@@ -42,6 +42,7 @@ internal static class ClientProfileExtractor
             switch (field.Type)
             {
                 case FormFieldTypes.Text:
+                case FormFieldTypes.Textarea:
                     if (IsNameField(field.Id) && fullName is null &&
                         RegistrationAnswerValidator.TryGetStringForExtraction(rawValue, out var name))
                     {
@@ -103,6 +104,20 @@ internal static class ClientProfileExtractor
                         referralSource = referral.Trim();
                     }
 
+                    break;
+
+                case FormFieldTypes.Hidden:
+                case FormFieldTypes.Date:
+                case FormFieldTypes.Number:
+                case FormFieldTypes.Url:
+                case FormFieldTypes.Time:
+                case FormFieldTypes.Choice:
+                case FormFieldTypes.YesNo:
+                case FormFieldTypes.MultiChoice:
+                case FormFieldTypes.Info:
+                case FormFieldTypes.Country:
+                case FormFieldTypes.Scale:
+                case FormFieldTypes.Emergency:
                     break;
             }
         }

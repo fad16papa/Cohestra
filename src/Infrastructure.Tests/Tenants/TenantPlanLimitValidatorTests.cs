@@ -30,6 +30,22 @@ public sealed class TenantPlanLimitValidatorTests
     }
 
     [Fact]
+    public void ValidateCanAddFormTemplate_ReturnsMessageAtCapacity()
+    {
+        var message = TenantPlanLimitValidator.ValidateCanAddFormTemplate(1, 1);
+
+        Assert.NotNull(message);
+        Assert.Contains("Saved form templates", message);
+        Assert.Contains(TenantPlanLimitValidator.LimitReachedSuffix, message);
+    }
+
+    [Fact]
+    public void ValidateCanAddFormTemplate_AllowsBelowCapacity()
+    {
+        Assert.Null(TenantPlanLimitValidator.ValidateCanAddFormTemplate(0, 1));
+    }
+
+    [Fact]
     public void ValidateCanAcceptRegistration_ReturnsMessageAtCapacity()
     {
         var message = TenantPlanLimitValidator.ValidateCanAcceptRegistration(5000, 5000);

@@ -12,4 +12,13 @@ public interface ITenantOrganizationService
         Guid tenantId,
         string registrationTimeZoneId,
         CancellationToken cancellationToken = default);
+
+    Task<TenantNotificationSettingsResponse> GetNotificationSettingsAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
+    Task<TenantNotificationSettingsResponse> UpdateNotificationSettingsAsync(
+        Guid tenantId,
+        bool emailOnNewRegistration,
+        CancellationToken cancellationToken = default);
 }

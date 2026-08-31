@@ -11,6 +11,8 @@ type PhoneFieldInputProps = {
   field: FormFieldDefinition;
   fieldId: string;
   value: string;
+  label?: string;
+  showRequired?: boolean;
   error?: string;
   isPublic?: boolean;
   onChange: (value: string) => void;
@@ -21,6 +23,8 @@ export function PhoneFieldInput({
   field,
   fieldId,
   value,
+  label,
+  showRequired = true,
   error,
   isPublic = false,
   onChange,
@@ -33,8 +37,8 @@ export function PhoneFieldInput({
   return (
     <div className="space-y-2">
       <Label htmlFor={fieldId}>
-        {field.label}
-        {field.required ? (
+        {label ?? field.label}
+        {showRequired && field.required ? (
           <span className="text-destructive" aria-hidden>
             {" "}
             *

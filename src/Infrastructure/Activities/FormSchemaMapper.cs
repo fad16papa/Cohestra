@@ -25,10 +25,28 @@ internal static class FormSchemaMapper
                         .Select(option => new FormFieldOptionDto(option.Value, option.Label))
                         .ToList(),
                     field.ConsentText,
-                    field.PhoneCountry))
+                    field.PhoneCountry,
+                    field.VisibleWhen is null
+                        ? null
+                        : new FormFieldVisibleWhenDto(
+                            field.VisibleWhen.FieldId,
+                            field.VisibleWhen.EqualsValue,
+                            field.VisibleWhen.NotEqualsValue),
+                    field.Step,
+                    field.DefaultValue,
+                    field.Min,
+                    field.Max,
+                    field.InfoText))
                 .ToList(),
             schema.Meta is null
                 ? null
-                : new FormSchemaMetaDto(schema.Meta.IntroMarkdown));
+                : new FormSchemaMetaDto(
+                    schema.Meta.IntroMarkdown,
+                    schema.Meta.SplitIntoSteps,
+                    schema.Meta.SuccessCopyMarkdown,
+                    schema.Meta.ConfirmationEmailSubject,
+                    schema.Meta.ConfirmationEmailBodyMarkdown,
+                    schema.Meta.ClosedMessage,
+                    schema.Meta.RegistrationClosesAt));
     }
 }
