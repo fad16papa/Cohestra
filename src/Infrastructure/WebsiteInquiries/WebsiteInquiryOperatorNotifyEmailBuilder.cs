@@ -126,7 +126,7 @@ internal static class WebsiteInquiryOperatorNotifyEmailBuilder
         string.IsNullOrWhiteSpace(value) ? "—" : value.Trim();
 
     private static string FormatPlainTextValue(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? "—" : SanitizeSubjectParticipant(value.Trim());
+        string.IsNullOrWhiteSpace(value) ? "—" : CollapseInlineNewlines(value.Trim());
 
     private static string NormalizeMessageBody(string? value) =>
         (value ?? string.Empty)
@@ -136,13 +136,16 @@ internal static class WebsiteInquiryOperatorNotifyEmailBuilder
 
     private static string SanitizeSubjectParticipant(string value)
     {
-        var collapsed = value
+        var collapsed = CollapseInlineNewlines(value);
+        return collapsed.Length <= 120 ? collapsed : collapsed[..120];
+    }
+
+    private static string CollapseInlineNewlines(string value) =>
+        value
             .Replace("\r\n", " ", StringComparison.Ordinal)
             .Replace('\r', ' ')
             .Replace('\n', ' ')
             .Trim();
-        return collapsed.Length <= 120 ? collapsed : collapsed[..120];
-    }
 
     private static string SanitizeEmailSubject(string subject)
     {
