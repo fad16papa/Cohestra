@@ -1220,10 +1220,15 @@ public sealed class ActivityService(
     }
 
     private async Task EnsureFormSchemaPlanAllowedAsync(
-        ActivityFormSchema schema,
+        ActivityFormSchema? schema,
         Guid tenantId,
         CancellationToken cancellationToken)
     {
+        if (schema is null)
+        {
+            return;
+        }
+
         var hasRecipes = schema.Fields.Any(field => field.VisibleWhen is not null);
         var hasSteps = schema.Meta is { SplitIntoSteps: true };
         var hasCorePlusFields = schema.Fields.Any(field =>

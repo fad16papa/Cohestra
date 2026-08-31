@@ -245,6 +245,37 @@ public sealed class ActivityServiceCommunityDefaultTests
             () => service.PublishAsync(activityId));
     }
 
+    [Fact]
+    public async Task PublishAsync_NullFormSchema_ThrowsPublishGateError()
+    {
+        await using var dbContext = CreateDbContext();
+        var now = DateTimeOffset.UtcNow;
+        var activityId = Guid.NewGuid();
+
+        dbContext.Activities.Add(new Activity
+        {
+            Id = activityId,
+            Name = "Summer Clinic",
+            Slug = "summer-clinic-null-schema",
+            Category = "Tennis",
+            Schedule = "Weekly",
+            Location = "Court A",
+            CommunityLabel = "Youth",
+            Status = ActivityStatus.Draft,
+            FormSchema = null,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => service.PublishAsync(activityId));
+
+        Assert.Contains("Configure the registration form", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static CohestraDbContext CreateDbContext()
     {
         var currentTenant = new CurrentTenant();

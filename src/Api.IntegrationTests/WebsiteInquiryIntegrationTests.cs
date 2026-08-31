@@ -173,12 +173,29 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 
+            var body = await response.Content.ReadFromJsonAsync<SubmitWebsiteInquiryResponse>(
+                IntegrationTestHelpers.JsonOptions);
+            Assert.NotNull(body);
+
             await using var scope = Factory.Services.CreateAsyncScope();
             IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
             var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
 
-            Assert.False(await dbContext.OutboxMessages.AnyAsync(item =>
-                item.MessageType == OutboxMessageTypes.WebsiteInquiryOperatorNotify));
+            var timelineEvent = await dbContext.ClientTimelineEvents
+                .AsNoTracking()
+                .Where(item =>
+                    item.ClientId == body.ClientId
+                    && item.EventType == ClientTimelineEventType.WebsiteInquiry)
+                .OrderByDescending(item => item.OccurredAt)
+                .FirstAsync();
+
+            var operatorOutbox = await dbContext.OutboxMessages
+                .AsNoTracking()
+                .AnyAsync(message =>
+                    message.MessageType == OutboxMessageTypes.WebsiteInquiryOperatorNotify
+                    && message.DedupeKey == $"website-inquiry:{timelineEvent.Id}:operator-notify");
+
+            Assert.False(operatorOutbox);
         }
         finally
         {

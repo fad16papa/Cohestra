@@ -58,9 +58,26 @@ Subagent could not diff (clean working tree on `main`). Security-sensitive paths
 
 ---
 
-## Recommended next steps
+## Pass 2 — patch branch review (PR #271, `c0218eb`)
 
-1. **Apply P1–P2** — embed Close-at + closed-message parity (small Next.js diff).
-2. **Apply P3–P4** — plan gates on publish + community-default assign.
-3. **Resolve D1** — product call on inquiry notify toggle.
-4. Optional: brownfield migration for `EmailOnNewRegistration` (W8).
+**Verdict:** P1–P4 and D1 **accepted** — ready to merge with one small follow-up patch recommended.
+
+### Patch (recommended before or immediately after merge)
+
+- [x] [Review][Patch] Null `FormSchema` publish NRE [`ActivityService.cs:458`] — skip plan gate when schema null; publish gate returns 400 message
+- [x] [Review][Patch] Notify-off integration test too broad [`WebsiteInquiryIntegrationTests.cs:180`] — scoped to inquiry dedupe key
+
+### Defer
+
+- [x] [Review][Defer] Community-default prefill silent skip on downgrade [`ActivityService.cs:1210`] — assign path fixed (P4); create-time prefill still no-ops quietly
+- [x] [Review][Defer] No embed Close-at render/e2e test — parity verified by code mirror of public page; no embed test harness today
+- [x] [Review][Defer] Missing unit tests for Basic+recipes/Core+ publish gate — same `FormSchemaPlanGate` as save path; Pro-steps publish test covers gate wiring
+
+### Dismiss
+
+- AdminContactEmail blank with notify on — matches registration notify behavior (no outbox when no recipient)
+- Publish `403 plan_locked` mapping — consistent with `UpdateFormSchema` controller pattern
+
+**Score:** 0 decision-needed · 2 patch · 3 defer · 2 dismiss
+
+---
