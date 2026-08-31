@@ -175,3 +175,11 @@ Composer
 
 - [x] [Review][Defer] **HTML notify fields still allow multiline name/phone/email** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:86-88`] — deferred, `HtmlEncode` prevents injection; layout inconsistency with plain-text only
 - [x] [Review][Defer] **Message body could mimic `Phone:`/`Email:` lines in plain-text notify** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:38-39`] — deferred, user-controlled message content; plain-text email spoofing accepted v1 risk
+
+### Review Findings — Pass 6 (2026-08-31)
+
+**Acceptance audit:** All Story 32.3 ACs satisfied. Pass 5 `CollapseInlineNewlines` fix verified intact.
+
+- [ ] [Review][Patch] **`SubmitWebsiteInquiry_WithoutPublishedContactSection_Returns404` is order-dependent** [`WebsiteInquiryIntegrationTests.cs:119-136`] — test assumes default tenant has no published contact section, but sibling tests call `PublishSiteWithContactSectionAsync` and leave contact enabled; xUnit order is undefined, so this test can return 201 when run after publishing tests. Fix: explicitly publish a site without contact (or disable contact and republish) in test setup.
+
+- [ ] [Review][Patch] **`CollapseInlineNewlines` misses Unicode line separators** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:143-148`] — only collapses `\r`/`\n`; U+2028/U+2029 can still inject line breaks in plain-text notify fields and subject participant fallback.
