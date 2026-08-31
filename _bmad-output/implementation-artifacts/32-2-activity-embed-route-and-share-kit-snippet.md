@@ -2,7 +2,7 @@
 story_id: 32.2
 story_key: 32-2-activity-embed-route-and-share-kit-snippet
 epic: 32
-status: review
+status: done
 baseline_commit: fad9672
 created: 2026-08-31
 depends_on:
@@ -16,7 +16,7 @@ forward_deps:
 
 # Story 32.2: Activity embed route and Share kit snippet
 
-Status: review
+Status: done
 
 ## Story
 
@@ -118,6 +118,10 @@ So that Saturday's signup can live on a club or Notion page and still write a Re
 - [x] [Review][Defer] **Client-side hidden query length not capped at 200** — deferred, server validates; generic submit error only
 - [x] [Review][Defer] **Campaign example URL in HTML comment could break on `-->`** — deferred, API-built URLs unlikely
 
+### Review Findings — Pass 4 (2026-08-31)
+
+**Clean review — all layers passed.** Acceptance audit: none. Edge Case Hunter: `[]`. No new patch or decision items after passes 1–3.
+
 ## Dev Notes
 
 ### Brownfield anchors
@@ -175,6 +179,7 @@ Composer
 
 ## Change Log
 
+- 2026-08-31: Code review pass 3 — duplicate guard, eager iframe load, h<=0 listener, newline escape
 - 2026-08-31: Code review pass 2 — hide AppFooter on /embed/*, bundle textarea, campaign URL helper, height cap, event.source guard
 - 2026-08-31: Code review pass 1 — decision + 7 patches applied (iframe id, embed bundle copy, settings error/loading, URL API, height guards)
 - 2026-08-31: Story 32.2 implemented — embed route, postMessage height, Share kit snippet; minimal 30.1 hidden-field port
