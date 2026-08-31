@@ -17,9 +17,13 @@ export function EmbedHeightReporter({ children }: EmbedHeightReporterProps) {
       return;
     }
 
+    if (window.parent === window) {
+      return;
+    }
+
     function postHeight() {
       const height = Math.ceil(container?.getBoundingClientRect().height ?? 0);
-      if (height <= 0) {
+      if (!Number.isFinite(height) || height <= 0) {
         return;
       }
 

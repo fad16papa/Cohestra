@@ -15,6 +15,7 @@ import {
 } from "@/lib/activities-api";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import {
+  buildActivityEmbedCopyBundle,
   buildActivityEmbedIframeSnippet,
   buildActivityEmbedUrl,
   buildEmbedResizeListenerSnippet,
@@ -41,6 +42,8 @@ export function ActivityShareKitPanel({
   const [registrationLink, setRegistrationLink] =
     useState<ActivityRegistrationLink | null>(null);
   const [embedSettings, setEmbedSettings] = useState<TenantEmbedSettings | null>(null);
+  const [embedSettingsLoaded, setEmbedSettingsLoaded] = useState(false);
+  const [embedSettingsError, setEmbedSettingsError] = useState<string | null>(null);
   const [qrPreviewUrl, setQrPreviewUrl] = useState<string | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [qrError, setQrError] = useState<string | null>(null);
@@ -84,6 +87,14 @@ export function ActivityShareKitPanel({
     return buildActivityEmbedIframeSnippet(embedUrl, activity.name);
   }, [activity.name, embedUrl]);
 
+  const embedCopyBundle = useMemo(() => {
+    if (!embedUrl) {
+      return null;
+    }
+
+    return buildActivityEmbedCopyBundle(embedUrl, activity.name);
+  }, [activity.name, embedUrl]);
+
   const embedResizeHelper = useMemo(() => buildEmbedResizeListenerSnippet(), []);
 
   const embedHostsConfigured = (embedSettings?.allowedEmbedOrigins.length ?? 0) > 0;
@@ -96,6 +107,8 @@ export function ActivityShareKitPanel({
       if (!isPublished) {
         setRegistrationLink(null);
         setEmbedSettings(null);
+        setEmbedSettingsLoaded(false);
+        setEmbedSettingsError(null);
         setQrPreviewUrl(null);
         setLinkError(null);
         setQrError(null);
@@ -105,6 +118,8 @@ export function ActivityShareKitPanel({
       setIsLoading(true);
       setLinkError(null);
       setQrError(null);
+      setEmbedSettingsLoaded(false);
+      setEmbedSettingsError(null);
 
       const [linkResult, qrResult, embedResult] = await Promise.allSettled([
         fetchActivityRegistrationLink(authFetch, activity.id),
@@ -129,9 +144,16 @@ export function ActivityShareKitPanel({
 
       if (embedResult.status === "fulfilled") {
         setEmbedSettings(embedResult.value);
+        setEmbedSettingsError(null);
       } else {
         setEmbedSettings(null);
+        setEmbedSettingsError(
+          embedResult.reason instanceof Error
+            ? embedResult.reason.message
+            : "Could not load embed host settings."
+        );
       }
+      setEmbedSettingsLoaded(true);
 
       if (qrResult.status === "fulfilled") {
         objectUrl = URL.createObjectURL(qrResult.value);
@@ -165,15 +187,15 @@ export function ActivityShareKitPanel({
   }, [activity.id, authFetch, isPublished, reloadToken]);
 
   async function handleCopyEmbedSnippet() {
-    if (!embedSnippet || !embedHostsConfigured) {
+    if (!embedCopyBundle || !embedHostsConfigured) {
       return;
     }
 
     setStatusMessage(null);
-    const copied = await copyTextToClipboard(embedSnippet);
+    const copied = await copyTextToClipboard(embedCopyBundle);
     setStatusMessage(
       copied
-        ? "Embed snippet copied."
+        ? "Embed bundle copied (iframe + resize listener)."
         : "Select the snippet and copy manually (Ctrl+C)."
     );
   }
@@ -388,8 +410,30 @@ export function ActivityShareKitPanel({
             {registrationLink ? (
               <div className="space-y-2 border-t border-border-warm pt-4">
                 <p className="text-sm font-medium text-text-warm">Website embed</p>
-                {embedHostsConfigured && embedSnippet ? (
+                {!embedSettingsLoaded || isLoading ? (
+                  <p className="text-sm text-text-muted-warm">Loading embed settings…</p>
+                ) : embedSettingsError ? (
+                  <div className="space-y-2">
+                    <p role="alert" className="text-sm text-destructive">
+                      {embedSettingsError}
+                    </p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleRetryLoad}
+                    >
+                      Retry embed settings
+                    </Button>
+                  </div>
+                ) : embedHostsConfigured && embedSnippet && embedCopyBundle ? (
                   <>
+                    <p className="text-xs text-text-muted-warm">
+                      Paste on an allowed host (Settings → Allowed embed hosts). For Hidden
+                      campaign fields, append query keys to the iframe{" "}
+                      <code className="rounded bg-muted px-1">src</code> (e.g.{" "}
+                      <code className="rounded bg-muted px-1">{embedUrl}?ref=wa</code>).
+                    </p>
                     <label
                       htmlFor="activity-embed-snippet"
                       className="text-xs text-text-muted-warm"
@@ -407,12 +451,13 @@ export function ActivityShareKitPanel({
                       onClick={(event) => event.currentTarget.select()}
                     />
                     <p className="text-xs text-text-muted-warm">
-                      Paste on an allowed host (Settings → Allowed embed hosts). Add this
-                      resize listener on the parent page:
+                      Add this resize listener on the parent page (replace{" "}
+                      <code className="rounded bg-muted px-1">YOUR_COHESTRA_ORIGIN</code> with
+                      your tenant site origin):
                     </p>
                     <textarea
                       readOnly
-                      rows={4}
+                      rows={5}
                       value={embedResizeHelper}
                       aria-label="Parent page resize listener example"
                       className="w-full resize-none rounded-lg border border-input bg-muted/30 px-3 py-2 font-mono text-xs"
@@ -425,7 +470,7 @@ export function ActivityShareKitPanel({
                       onClick={() => void handleCopyEmbedSnippet()}
                     >
                       <Code2 className="size-4" aria-hidden />
-                      Copy embed snippet
+                      Copy embed bundle
                     </Button>
                   </>
                 ) : (

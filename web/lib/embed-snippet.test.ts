@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  EMBED_IFRAME_ID,
+  buildActivityEmbedCopyBundle,
   buildActivityEmbedIframeSnippet,
   buildActivityEmbedPath,
   buildActivityEmbedUrl,
+  buildEmbedResizeListenerSnippet,
 } from "./embed-snippet";
 
 describe("embed-snippet", () => {
@@ -13,7 +16,7 @@ describe("embed-snippet", () => {
     );
   });
 
-  it("builds embed url from registration url and path", () => {
+  it("builds embed url from registration url and path via URL API", () => {
     expect(
       buildActivityEmbedUrl(
         "https://club.example.com/register/saturday-pickleball",
@@ -22,14 +25,52 @@ describe("embed-snippet", () => {
     ).toBe("https://club.example.com/embed/register/saturday-pickleball");
   });
 
-  it("builds iframe snippet with title and src", () => {
+  it("preserves query string on registration url when rebuilding pathname", () => {
+    expect(
+      buildActivityEmbedUrl(
+        "https://club.example.com/register/saturday-pickleball?utm=email",
+        "/register/saturday-pickleball"
+      )
+    ).toBe("https://club.example.com/embed/register/saturday-pickleball?utm=email");
+  });
+
+  it("builds iframe snippet with id, title, and escaped src", () => {
     const snippet = buildActivityEmbedIframeSnippet(
       "https://club.example.com/embed/register/saturday-pickleball",
       "Saturday Pickleball"
     );
 
+    expect(snippet).toContain(`id="${EMBED_IFRAME_ID}"`);
     expect(snippet).toContain('src="https://club.example.com/embed/register/saturday-pickleball"');
     expect(snippet).toContain('title="Register for Saturday Pickleball"');
     expect(snippet).toContain("<iframe");
+  });
+
+  it("escapes special characters in activity name for title attribute", () => {
+    const snippet = buildActivityEmbedIframeSnippet(
+      "https://club.example.com/embed/register/x",
+      'Fun "Event" & More'
+    );
+
+    expect(snippet).toContain('title="Register for Fun &quot;Event&quot; &amp; More"');
+  });
+
+  it("resize listener validates origin and height", () => {
+    const listener = buildEmbedResizeListenerSnippet();
+    expect(listener).toContain('event.origin !== "YOUR_COHESTRA_ORIGIN"');
+    expect(listener).toContain("Number.isFinite(h)");
+    expect(listener).toContain(`getElementById("${EMBED_IFRAME_ID}")`);
+  });
+
+  it("copy bundle includes iframe, listener, and campaign query hint", () => {
+    const bundle = buildActivityEmbedCopyBundle(
+      "https://club.example.com/embed/register/saturday-pickleball",
+      "Saturday Pickleball"
+    );
+
+    expect(bundle).toContain("?ref=wa");
+    expect(bundle).toContain(`id="${EMBED_IFRAME_ID}"`);
+    expect(bundle).toContain("<script>");
+    expect(bundle).toContain(EMBED_IFRAME_ID);
   });
 });

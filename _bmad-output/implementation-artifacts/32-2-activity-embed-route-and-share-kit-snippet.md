@@ -2,7 +2,7 @@
 story_id: 32.2
 story_key: 32-2-activity-embed-route-and-share-kit-snippet
 epic: 32
-status: review
+status: in-progress
 baseline_commit: fad9672
 created: 2026-08-31
 depends_on:
@@ -16,7 +16,7 @@ forward_deps:
 
 # Story 32.2: Activity embed route and Share kit snippet
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -71,6 +71,24 @@ So that Saturday's signup can live on a club or Notion page and still write a Re
   - [x] Web unit: `embed-snippet.test.ts`, `hidden-field-query.test.ts`
   - [x] `dotnet test Cohestra.sln --filter "Category!=Integration"` — 641 passed
   - [x] `cd web && npm run test -- embed-snippet hidden-field-query` — 7 passed
+
+### Review Findings (2026-08-31)
+
+- [x] [Review][Decision] **Parent-page query vs iframe-src query for Hidden Fields** — Resolved: document that campaign params belong on iframe `src` (e.g. `?ref=wa`); Share kit helper + copy bundle comment.
+- [x] [Review][Patch] **Iframe snippet missing `id` matching resize listener** [`web/lib/embed-snippet.ts:34`]
+- [x] [Review][Patch] **Embed settings fetch failure shown as empty allow-list** [`web/components/activities/activity-share-kit-panel.tsx:122`]
+- [x] [Review][Patch] **Share kit conflates loading vs empty embed hosts** [`web/components/activities/activity-share-kit-panel.tsx:391`]
+- [x] [Review][Patch] **Copy embed snippet should bundle iframe + listener (or copy both)** [`web/components/activities/activity-share-kit-panel.tsx:420`]
+- [x] [Review][Patch] **Resize listener snippet needs origin + height validation** [`web/lib/embed-snippet.ts:38`]
+- [x] [Review][Patch] **EmbedHeightReporter guard non-finite height and skip when top-level** [`web/components/registration/embed-height-reporter.tsx:21`]
+- [x] [Review][Patch] **buildActivityEmbedUrl should use URL API not string replace** [`web/lib/embed-snippet.ts:20`]
+
+- [x] [Review][Defer] **postMessage uses targetOrigin `"*"`** [`web/components/registration/embed-height-reporter.tsx:28`] — deferred, standard v1 embed-widget pattern; parent listener should validate origin
+- [x] [Review][Defer] **No automated /embed/register or postMessage e2e tests** — deferred, matches 32.1 manual-verify pattern
+- [x] [Review][Defer] **AC 3 CSP blocking not tested in this diff** — deferred, enforced by Story 32.1 middleware
+- [x] [Review][Defer] **Rate-limit parity for embed submit unverified** — deferred, reuses same public registration API path
+- [x] [Review][Defer] **Double activity fetch in generateMetadata + page** [`web/app/embed/register/[slug]/page.tsx`] — deferred, minor Next.js perf
+- [x] [Review][Defer] **Hidden query passthrough not integration-tested via URL query string** — deferred, client-side merge covered by unit tests
 
 ## Dev Notes
 
