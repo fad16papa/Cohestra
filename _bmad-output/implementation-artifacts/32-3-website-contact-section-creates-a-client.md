@@ -2,7 +2,7 @@
 story_id: 32.3
 story_key: 32-3-website-contact-section-creates-a-client
 epic: 32
-status: in-progress
+status: done
 baseline_commit: 6f920e6
 created: 2026-08-31
 depends_on:
@@ -13,7 +13,7 @@ sources:
 
 # Story 32.3: Website Contact section creates a Client
 
-Status: in-progress
+Status: done
 
 ## Story
 
@@ -109,19 +109,23 @@ Composer
 
 ### Change Log
 
-- 2026-08-31: Story 32.3 — Website Contact section creates a Client (FR-RC-13 / CAP-11)
+- 2026-08-31: Pass 1 code review — decision (keep consentLabel) + 7 patches applied
 
 ### Review Findings (2026-08-31)
 
-- [ ] [Review][Decision] **Consent checkbox label editable beyond AC copy fields** — AC 1 limits operator editing to heading, intro, button label, and success message. Implementation also exposes `consentLabel` in the builder (`website-section-fields.tsx`, `registry.ts`). Keep editable for compliance copy, or remove editor and use a fixed default?
+- [x] [Review][Decision] **Consent checkbox label editable beyond AC copy fields** — Resolved: keep `consentLabel` editable for compliance/marketing copy (operator need outweighs strict four-field AC wording).
 
-- [ ] [Review][Patch] **Message validated to 2000 chars but stored/emailed truncated at 500** [`WebsiteInquiryValidator.cs:MaxMessageLength`, `WebsiteInquiryService.cs:TruncateNote`]
-- [ ] [Review][Patch] **Operator notify email uses persisted client record, not inquiry payload** [`WebsiteInquiryOperatorNotifyService.cs` — dedup hit may email stale name/phone/email while timeline note has new message]
-- [ ] [Review][Patch] **API status always `"created"` even when `ClientCreated=false`** [`PublicWebsiteInquiriesController.cs`]
-- [ ] [Review][Patch] **Controller 400 detail says "name and message are required" but only checks name** [`PublicWebsiteInquiriesController.cs:Submit`]
-- [ ] [Review][Patch] **Contact form missing client-side max-length validation** [`web/components/marketing/sections/contact-section.tsx`]
-- [ ] [Review][Patch] **Integration test omits `ConsentGiven=false` assertion on dedup path** [`WebsiteInquiryIntegrationTests.cs:SubmitWebsiteInquiry_DuplicateEmail_UpdatesExistingClient`]
-- [ ] [Review][Patch] **No integration test for Basic tenant `plan_locked` on submit** [`WebsiteInquiryIntegrationTests.cs`]
+- [x] [Review][Patch] **Message validated to 2000 chars but stored/emailed truncated at 500** — aligned `MaxMessageLength` to 500 (timeline `Note` column limit).
+- [x] [Review][Patch] **Operator notify email uses persisted client record, not inquiry payload** — outbox payload now carries submission snapshot; notify service emails inquiry fields.
+- [x] [Review][Patch] **API status always `"created"` even when `ClientCreated=false`** — returns `"updated"` on dedup hit.
+- [x] [Review][Patch] **Controller 400 detail says "name and message are required" but only checks name** — detail now `"Name is required."`
+- [x] [Review][Patch] **Contact form missing client-side max-length validation** — `website-inquiry-limits.ts` + inline validation in `ContactSection`.
+- [x] [Review][Patch] **Integration test omits `ConsentGiven=false` assertion on dedup path** — added assertion + `"updated"` status check.
+- [x] [Review][Patch] **No integration test for Basic tenant `plan_locked` on submit** — `SubmitWebsiteInquiry_BasicTenant_ReturnsPlanLocked` added.
+
+### Review Findings — Pass 2 (2026-08-31)
+
+Pending re-review after pass 1 patches.
 
 - [x] [Review][Defer] **LeadStatus not reset to New on dedup update** [`WebsiteInquiryService.cs` + `ClientDeduplicationService`] — deferred, matches public registration dedup (LeadStatus only set on create)
 - [x] [Review][Defer] **Consent unchecked cannot revoke prior opt-in** [`ClientDeduplicationService.ApplyProfileAsync`] — deferred, pre-existing dedup service behavior shared with registration
