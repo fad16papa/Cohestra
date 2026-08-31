@@ -45,7 +45,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-30
+last_updated: 2026-08-31
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -316,7 +316,7 @@ development_status:
   30-11-save-and-apply-tenant-form-templates: done
   30-12-template-slots-by-plan: done
   30-13-community-default-design-pin-and-pro-duplicate: backlog
-  epic-30-retrospective: optional
+  epic-30-retrospective: done
 
   epic-31: done
   31-1-visiblewhen-recipes: done
@@ -585,5 +585,31 @@ action_items:
     status: open
   - epic: 29
     action: "Create next story 29.1 via bmad-create-story when ready to implement (no code until then)"
+    owner: Dev
+    status: open
+
+  # Epic 30 retrospective action items (2026-08-31)
+  - epic: 30
+    action: "Merge Epic 30 PR stack (#252–#264) when CI green"
+    owner: Dev
+    status: open
+  - epic: 30
+    action: "Run integration matrix on CI Postgres/Redis (hidden, close-at, templates, invariants)"
+    owner: Dev
+    status: open
+  - epic: 30
+    action: "Operator UAT — templates, slot meter, close-at, slash palette"
+    owner: Operator
+    status: open
+  - epic: 30
+    action: "Decide Story 30.13 timing — same epic vs follow-up sprint"
+    owner: Product
+    status: open
+  - epic: 30
+    action: "Extract shared EnsureFormSchemaPlanAllowedAsync (Activity + FormTemplate services)"
+    owner: Dev
+    status: open
+  - epic: 30
+    action: "Extend CaptureInvariantsTests for submit availability precedence chain"
     owner: Dev
     status: open
