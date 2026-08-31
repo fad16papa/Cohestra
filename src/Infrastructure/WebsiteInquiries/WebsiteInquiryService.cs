@@ -92,19 +92,23 @@ public sealed class WebsiteInquiryService(
 
         dbContext.ClientTimelineEvents.Add(timelineEvent);
 
-        var payload = JsonSerializer.Serialize(
-            new WebsiteInquiryOperatorNotifyOutboxPayload(
-                client.Id,
-                timelineEvent.Id,
-                name,
-                phone,
-                email,
-                message));
-        outboxPublisher.Enqueue(
-            tenantId,
-            OutboxMessageTypes.WebsiteInquiryOperatorNotify,
-            payload,
-            $"website-inquiry:{timelineEvent.Id}:operator-notify");
+        if (tenant.EmailOnNewRegistration
+            && !string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
+        {
+            var payload = JsonSerializer.Serialize(
+                new WebsiteInquiryOperatorNotifyOutboxPayload(
+                    client.Id,
+                    timelineEvent.Id,
+                    name,
+                    phone,
+                    email,
+                    message));
+            outboxPublisher.Enqueue(
+                tenantId,
+                OutboxMessageTypes.WebsiteInquiryOperatorNotify,
+                payload,
+                $"website-inquiry:{timelineEvent.Id}:operator-notify");
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
 

@@ -10,7 +10,7 @@
 - [x] **P3** Plan gate on publish
 - [x] **P4** Community default template schema plan gate at assign
 
-**Open:** D1 (website inquiry notify toggle) — product decision deferred
+**Open:** ~~D1 (website inquiry notify toggle)~~ — resolved: website inquiry honors `EmailOnNewRegistration` (same toggle, copy updated)
 
 ---
 
