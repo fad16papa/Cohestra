@@ -11,6 +11,14 @@ namespace Infrastructure.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<bool>(
+                name: "EmailOnNewRegistration",
+                schema: "public",
+                table: "tenants",
+                type: "boolean",
+                nullable: false,
+                defaultValue: true);
+
             migrationBuilder.CreateTable(
                 name: "tenant_form_templates",
                 schema: "public",
@@ -54,6 +62,11 @@ namespace Infrastructure.Persistence.Migrations
             migrationBuilder.DropTable(
                 name: "tenant_form_templates",
                 schema: "public");
+
+            migrationBuilder.DropColumn(
+                name: "EmailOnNewRegistration",
+                schema: "public",
+                table: "tenants");
         }
     }
 }
