@@ -1,3 +1,27 @@
+## Deferred from: code review of 32-2 pass 3 (2026-08-31)
+
+- Hidden field form editor incomplete — minimal 30.1 port; full editor with Story 30.1
+- PublicRegistrationUnavailable shows public-registration card chrome in embed — minor copy polish
+- Client-side hidden query length not capped at 200 — server validates
+- Campaign example URL in HTML comment could break on --> — API-built URLs unlikely
+
+## Deferred from: code review of 32-2-activity-embed-route-and-share-kit-snippet.md pass 2 (2026-08-31)
+
+- Fixed iframe id breaks multi-embed parent pages — v1 assumes one embed per page
+- Inline script in copy bundle blocked by strict parent CSP — document external-script alternative in follow-up
+- No initial min-height on iframe snippet — first postMessage handles resize; minor UX flash
+- Required hidden fields not enforced when query absent — Story 30.1 contract: required hidden never blocks submit
+- Paused registration uses plan-limit unavailable reason — matches public /register brownfield
+
+## Deferred from: code review of 32-2-activity-embed-route-and-share-kit-snippet.md (2026-08-31)
+
+- postMessage uses targetOrigin `"*"` — standard v1 embed-widget pattern; parent listener should validate origin
+- No automated /embed/register or postMessage e2e tests — matches 32.1 manual-verify pattern
+- AC 3 CSP blocking not tested in this diff — enforced by Story 32.1 middleware
+- Rate-limit parity for embed submit unverified — reuses same public registration API path
+- Double activity fetch in generateMetadata + page — minor Next.js perf
+- Hidden query passthrough not integration-tested via URL query string — client-side merge covered by unit tests
+
 ## Deferred from: code review of 32-1-allowed-embed-hosts-and-csp.md (2026-08-30)
 
 - Public `/embed-origins` exposes tenant allow-list without auth — required for middleware CSP lookup; acceptable recon surface

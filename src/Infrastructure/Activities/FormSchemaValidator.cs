@@ -113,9 +113,27 @@ internal static partial class FormSchemaValidator
                         : string.IsNullOrWhiteSpace(field.PhoneCountry)
                             ? null
                             : field.PhoneCountry.Trim().ToUpperInvariant(),
+                    DefaultValue = MapDefaultValue(field),
                 })
                 .ToList(),
         };
+    }
+
+    private static string? MapDefaultValue(FormFieldDefinitionDto field)
+    {
+        if (string.IsNullOrWhiteSpace(field.DefaultValue))
+        {
+            return null;
+        }
+
+        if (field.Type.Trim() != FormFieldTypes.Hidden)
+        {
+            return field.DefaultValue.Trim();
+        }
+
+        return HiddenValueSanitizer.Sanitize(field.DefaultValue) is { Length: > 0 } sanitized
+            ? sanitized
+            : null;
     }
 
     private static string? ValidateField(
@@ -140,7 +158,17 @@ internal static partial class FormSchemaValidator
 
         if (string.IsNullOrWhiteSpace(field.Type) || !FormFieldTypes.All.Contains(field.Type))
         {
-            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header.";
+            return $"{fieldPath}.type must be one of: text, phone, email, select, checkbox, consent, referral_source, section_header, hidden.";
+        }
+
+        if (field.Type != FormFieldTypes.Hidden && field.DefaultValue is not null)
+        {
+            return $"{fieldPath}.defaultValue is only allowed for hidden fields.";
+        }
+
+        if (field.Type == FormFieldTypes.Hidden)
+        {
+            return ValidateHiddenField(field, fieldPath);
         }
 
         if (field.Type == FormFieldTypes.SectionHeader)
@@ -261,6 +289,47 @@ internal static partial class FormSchemaValidator
         else if (!string.IsNullOrWhiteSpace(field.PhoneCountry))
         {
             return $"{fieldPath}.phoneCountry is only allowed for phone fields.";
+        }
+
+        return null;
+    }
+
+    private static string? ValidateHiddenField(FormFieldDefinition field, string fieldPath)
+    {
+        if (string.IsNullOrWhiteSpace(field.Label))
+        {
+            return $"{fieldPath}.label is required.";
+        }
+
+        if (field.Label.Length > MaxLabelLength)
+        {
+            return $"{fieldPath}.label cannot exceed {MaxLabelLength} characters.";
+        }
+
+        if (field.Placeholder is not null)
+        {
+            return $"{fieldPath}.placeholder is not allowed for hidden fields.";
+        }
+
+        if (field.Options is { Count: > 0 })
+        {
+            return $"{fieldPath}.options is not allowed for hidden fields.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.ConsentText))
+        {
+            return $"{fieldPath}.consentText is not allowed for hidden fields.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(field.PhoneCountry))
+        {
+            return $"{fieldPath}.phoneCountry is not allowed for hidden fields.";
+        }
+
+        if (field.DefaultValue is not null &&
+            HiddenValueSanitizer.Sanitize(field.DefaultValue).Length > HiddenValueSanitizer.MaxLength)
+        {
+            return $"{fieldPath}.defaultValue cannot exceed {HiddenValueSanitizer.MaxLength} characters.";
         }
 
         return null;

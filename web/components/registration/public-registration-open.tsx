@@ -22,7 +22,7 @@ type PublicRegistrationOpenProps = {
   preset?: RegistrationThemePreset;
   formSchema: ActivityFormSchema | null;
   websiteLink?: PublisherWebsiteLink | null;
-  variant?: "public" | "preview";
+  variant?: "public" | "preview" | "embed";
 };
 
 function FormSection({
@@ -50,6 +50,7 @@ export function PublicRegistrationOpen({
   variant = "public",
 }: PublicRegistrationOpenProps) {
   const [submitted, setSubmitted] = useState(false);
+  const isEmbed = variant === "embed";
   const [registrationNumber, setRegistrationNumber] = useState<string | null>(null);
   const [confirmationEmailSent, setConfirmationEmailSent] = useState(false);
   const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
@@ -142,7 +143,7 @@ export function PublicRegistrationOpen({
     );
   }
 
-  if (preset === "compact") {
+  if (preset === "compact" || isEmbed) {
     return (
       <div className={cn("space-y-5")} style={brandingStyle}>
         {hero}

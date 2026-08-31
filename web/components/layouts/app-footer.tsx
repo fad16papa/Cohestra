@@ -22,6 +22,7 @@ export function AppFooter({ className }: AppFooterProps) {
 
   if (
     marketingRoutes.includes(pathname) ||
+    pathname.startsWith("/embed/") ||
     authRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))
   ) {
     return null;

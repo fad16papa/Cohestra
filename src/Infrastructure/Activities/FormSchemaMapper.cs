@@ -25,7 +25,8 @@ internal static class FormSchemaMapper
                         .Select(option => new FormFieldOptionDto(option.Value, option.Label))
                         .ToList(),
                     field.ConsentText,
-                    field.PhoneCountry))
+                    field.PhoneCountry,
+                    field.DefaultValue))
                 .ToList(),
             schema.Meta is null
                 ? null
