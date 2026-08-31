@@ -111,6 +111,7 @@ Composer
 
 - 2026-08-31: Pass 3 code review — 3 defensive patches applied
 - 2026-08-31: Pass 4 code review — plain-text email newline injection patch applied
+- 2026-08-31: Pass 5 code review — 1 patch finding (plain-text field 120-char truncation)
 
 ### Review Findings (2026-08-31)
 
@@ -165,3 +166,12 @@ Composer
 - [x] [Review][Defer] **Dedup integration test omits profile field update assertions** [`WebsiteInquiryIntegrationTests.cs`] — deferred, dedup path covered; name/message refresh unverified in CI
 - [x] [Review][Defer] **Website inquiry notify reuses RegistrationFromEmail settings** [`WebsiteInquiryOperatorNotifyService.cs`] — deferred, matches registration notify pattern; dedicated sender config not in AC
 - [x] [Review][Defer] **No integration tests for public 400 validation paths** [`WebsiteInquiryIntegrationTests.cs`] — deferred, validator unit tests cover rules; API matrix nice-to-have
+
+### Review Findings — Pass 5 (2026-08-31)
+
+**Acceptance audit:** All Story 32.3 ACs satisfied. Pass 4 plain-text sanitization verified intact.
+
+- [ ] [Review][Patch] **`FormatPlainTextValue` truncates name/email/phone at 120 chars** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:128-129`] — reuses `SanitizeSubjectParticipant` (120-char cap meant for subject line); validator allows name 200 / email 320. Plain-text operator email truncates while HTML body shows full value.
+
+- [x] [Review][Defer] **HTML notify fields still allow multiline name/phone/email** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:86-88`] — deferred, `HtmlEncode` prevents injection; layout inconsistency with plain-text only
+- [x] [Review][Defer] **Message body could mimic `Phone:`/`Email:` lines in plain-text notify** [`WebsiteInquiryOperatorNotifyEmailBuilder.cs:38-39`] — deferred, user-controlled message content; plain-text email spoofing accepted v1 risk

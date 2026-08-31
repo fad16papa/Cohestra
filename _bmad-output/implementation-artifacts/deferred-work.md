@@ -1,3 +1,8 @@
+## Deferred from: code review of 32-3 pass 5 (2026-08-31)
+
+- HTML notify fields still allow multiline name/phone/email — HtmlEncode prevents injection; layout inconsistency with plain-text only
+- Message body could mimic Phone:/Email: lines in plain-text notify — user-controlled content; plain-text spoofing accepted v1 risk
+
 ## Deferred from: code review of 32-3 pass 4 (2026-08-31)
 
 - HTTP 201 returned when dedup path returns `"updated"` — REST semantics nit; web client ignores status code
