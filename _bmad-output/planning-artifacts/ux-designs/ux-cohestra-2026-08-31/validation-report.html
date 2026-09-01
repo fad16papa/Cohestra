@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<!--
+  UX Design Validation Report — skeleton template.
+
+  This file is a starter the synthesis pass fills in directly. There is no
+  substitution engine. The LLM:
+    1. Reads {doc_workspace}/review-rubric.md and every review-{slug}.md from
+       additional reviewers.
+    2. Copies this skeleton.
+    3. Replaces the placeholder content (everything between TEMPLATE markers)
+       with the consolidated review, preserving the structure and CSS.
+    4. Writes the result to {doc_workspace}/validation-report.html.
+    5. Writes a markdown twin to {doc_workspace}/validation-report.md.
+
+  Visual rules the LLM must preserve:
+    - The container width, the color tokens, the typography.
+    - One dimension = one collapsible <section class="dimension">.
+    - Verdict pill uses the verdict-* class matching its judgment.
+    - Severity badge uses the badge-sev-* class matching its level.
+    - Each extra reviewer (accessibility, adversarial, etc.) gets its own
+      collapsible section below the rubric dimensions.
+    - The footer always shows the artifact paths and timestamp.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Landing Product Cinema — UX Design Validation Report</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="report-header">
+      <div class="title">
+        <h1>Landing Product Cinema — UX Design Validation Report</h1>
+        <div class="subtitle">_bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-08-31/</div>
+      </div>
+    </header>
+
+    <div class="synthesis">
+      <p>The pair is a strong <strong>intent contract</strong> for Designed Chapter cinema (constraints, anti-patterns, verbatim copy, dual-mode desktop/mobile), but not yet a clean <strong>source-extract contract</strong> for architecture or story-dev. Load-bearing pin physics, climax optionality, and desktop a11y semantics remain <code>[ASSUMPTION]</code>; the only visual is the current-carousel backup, with no cinema-pin mock. Consumers can implement the <em>rules</em> but must invent scrub geometry and resolve open decisions before coding.</p>
+      <p>The accessibility lens shifts that from “lock assumptions before extract” to <strong>do not build</strong>. The spines want the right floor — reduced-motion is the real carousel, not a dimmed film; pills are named; there is no autoplay; mobile does not pin — then leave the dangerous parts as <code>[ASSUMPTION]</code>. Desktop cinema as drawn is a sticky-on-sticky scroll machine whose only skip control <strong>leaves the viewport</strong>, whose live region will <strong>narrate the scrub</strong>, and whose inherited stone/gold pairings <strong>fail 1.4.3</strong> on the copy and seek labels the section now depends on. Polish can wait; trapping Priya in ~540vh of unlabeled progress cannot.</p>
+    </div>
+
+    <div class="dimension-summary">
+      <div class="dim-card">
+        <div class="dim-name">Flow coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Token completeness</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Component coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">State coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Visual reference coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-thin)">thin</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Bloat &amp; overspecification</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Inheritance discipline</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Shape fit</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">strong</div>
+      </div>
+    </div>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Flow coverage</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Checked <code>sources</code> frontmatter (parent ux-cohestra-2026-07-18 EXPERIENCE + DESIGN, Apple craft URL, import PNG) for UJ / requirement names; walked EXPERIENCE Key Flows A–D against memlog-locked journeys (desktop cinema, mobile model a, seek/skip Website, reduced-motion = current carousel). Named protagonist, numbered steps, climax beat, and failure/escape are present on the cinema journeys — but parent UJ-1…UJ-5 are unscope-declared, and pin math plus climax optionality remain <code>[ASSUMPTION]</code>.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Parent UJ-1…UJ-5 not in this spine and not declared out of scope</h3>
+              <span class="finding-location">EXPERIENCE.md sources; parent §Key Flows</span>
+            </header>
+            <div class="finding-note">Parent EXPERIENCE is a listed source and defines UJ-1…UJ-5 (plus Billing / Plan upgrade surface-closure needs). This workspace has no Key Flows under those names.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Drop parent EXPERIENCE from <code>sources</code> (keep DESIGN inherit), or add a one-line scope table: “UJ-1…UJ-5 → parent spine; this workspace = <code>/#crm</code> cinema only.”</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Pin scrub math still [ASSUMPTION]</h3>
+              <span class="finding-location">EXPERIENCE.md §Interaction Primitives; DESIGN.md §Layout &amp; Spacing</span>
+            </header>
+            <div class="finding-note">Equal sixths, <code>~90vh</code> per chapter, <code>~2–4%</code> hysteresis drive the whole desktop model and are not committed numbers. Accessibility independently flags the resulting ~5.4 extra viewports as a scroll-trap risk (critical — see Accessibility review).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Commit concrete progress ranges, track length, and boundary hysteresis (or mark them open blockers, not silent assumptions).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">ClimaxMicroBeat optional with assumed magnitude</h3>
+              <span class="finding-location">EXPERIENCE.md Foundation + §Component Patterns; DESIGN.md §ClimaxMicroBeat</span>
+            </header>
+            <div class="finding-note">Climax is “optional” with assumed magnitude / settle-back-to-1. Story acceptance cannot lock scale, lift, or rest state. Accessibility separately asks that it not fire on skip-to-Website (medium).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Decide ship / no-ship and lock scale, lift, and rest state for story acceptance.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Flow D has no named protagonist; B/D lack failure paths</h3>
+              <span class="finding-location">EXPERIENCE.md §Key Flows</span>
+            </header>
+            <div class="finding-note">Reduced-motion flow is content-only at climax. Flows B and D have no explicit failure/escape beat.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Narrate Priya under reduced-motion; add one failure/escape beat each (e.g. JS fallback → CarouselChrome).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Cinema journeys never mirror parent name UJ-1</h3>
+              <span class="finding-location">EXPERIENCE.md Foundation + Flow A</span>
+            </header>
+            <div class="finding-note">Priya is tagged as the parent UJ-1 prospect, but Flow A is not titled as a UJ-1 marketing-home slice.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Title Flow A as a UJ-1 marketing-home slice, or stop citing UJ-1.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">90vh × 6 ≈ 5.4 viewports vs “without a marathon pin”</h3>
+              <span class="finding-location">DESIGN.md §Layout &amp; Spacing</span>
+            </header>
+            <div class="finding-note">Merged into Accessibility critical (scroll-trap / native scroll). Track length tensions the anti-marathon claim.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Reconcile track length with the anti-marathon claim (shorter per-chapter or shared track) as part of the native-scroll contract.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Token completeness</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Extracted all YAML frontmatter tokens and every <code>{path.to.token}</code> in both spines. Hex on colors present; light-only mode committed (<code>theme.modes: [light]</code>). Load-bearing contrast pairings are stated in DESIGN.md §Colors but fail WCAG AA on the cinema canvas — accessibility raises the same pairing as a 1.4.3 ship-blocker.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Stone/gold on paper-warm fail 1.4.3; no numeric contrast targets</h3>
+              <span class="finding-location">DESIGN.md §Colors, ChapterPills, ChapterCopy</span>
+            </header>
+            <div class="finding-note">Also flagged by Accessibility (high). <code>{colors.stone}</code> on <code>{colors.paper-warm}</code> ≈ <strong>2.85:1</strong> (leads, ~16px regular — needs 4.5:1). <code>{colors.gold}</code> on paper-warm ≈ <strong>2.97:1</strong> at 13px (eyebrows are plan information). Idle pill stone-on-paper is <strong>3.00:1</strong> for primary seek names. DESIGN “Do not lighten stone for cinema density” cements the failure. Ink/paper titles and active pill pass; lagoon on paper-warm ~5.8:1 passes.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Cinema-specific text tokens: darken stone for leads/idle labels to ≥4.5:1 on paper-warm (ink-soft <code>#141C24</code> works). Gold eyebrows: darker gold or ink + a non-color-only “Pro” treatment. State target ratios. Do not ship idle chapter names at 3:1.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Bullet body uses bare ink/85, not a token</h3>
+              <span class="finding-location">DESIGN.md §ChapterCopy</span>
+            </header>
+            <div class="finding-note">Tailwind opacity, not a defined token with hex/alpha.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add <code>{colors.ink-85}</code> (or equivalent) with hex/alpha, or cite <code>{colors.ink}</code> + opacity rule in frontmatter.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">cinema-copy-visual-gap defined but never cited</h3>
+              <span class="finding-location">DESIGN.md frontmatter vs §Layout &amp; Spacing</span>
+            </header>
+            <div class="finding-note"><code>{spacing.cinema-copy-visual-gap}</code> (48px) exists; live carousel uses <code>gap-8</code> / <code>lg:gap-12</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Wire the token into the pinned anatomy and name mobile vs <code>lg</code> gaps.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">climax-scale / climax-lift live under spacing; unused inherited tokens</h3>
+              <span class="finding-location">DESIGN.md frontmatter</span>
+            </header>
+            <div class="finding-note">Transform magnitudes are not spacing dimensions. Restated parent tokens (<code>success</code>/<code>warn</code>/<code>danger</code>, <code>display</code>/<code>marketing-display</code>, <code>button-primary</code>, <code>page-gutter</code>/<code>section-y</code>) are unused on this surface.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Move climax magnitudes to <code>components.climax-micro-beat</code>. Trim unused tokens or mark “inherited unused — do not invent cinema uses.”</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Component coverage</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Extracted component names from DESIGN.md Components, EXPERIENCE.md Component Patterns, frontmatter <code>components</code>, and chapter <code>visual</code> fields. Core cinema set (<code>SectionHeader</code>, <code>ChapterPills</code>, <code>CinemaStage</code>, <code>ChapterCopy</code>, <code>ProductFrame</code>, <code>ClimaxMicroBeat</code>, <code>CarouselChrome</code>) has visual + behavioral rows with real rules. Splits remain on LiveRegion / BulletRow and PascalCase vs kebab keys.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">LiveRegion has behavior but no DESIGN visual/anatomy</h3>
+              <span class="finding-location">EXPERIENCE.md §Component Patterns</span>
+            </header>
+            <div class="finding-note">Behavioral row exists; DESIGN.md Components has no entry. Accessibility separately treats live-region <em>policy</em> (scrub vs seek) as high.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add a one-line DESIGN note (<code>sr-only</code>, polite, atomic) or fold LiveRegion into CarouselChrome/ChapterPills as a required child.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">BulletRow named in DESIGN, no EXPERIENCE behavioral row</h3>
+              <span class="finding-location">DESIGN.md §ChapterCopy</span>
+            </header>
+            <div class="finding-note">Behavior is folded into ChapterCopy; the name still reads as a separate component.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Either add a Component Patterns row or stop naming BulletRow as a separate component.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Unused frontmatter components; dual naming; showcase mocks not in tables</h3>
+              <span class="finding-location">DESIGN.md frontmatter; both spines; EXPERIENCE.md §Chapters</span>
+            </header>
+            <div class="finding-note"><code>button-primary</code> / <code>hairline-rule</code> have no body rows. PascalCase vs kebab (<code>ProductFrame</code> / <code>BrowserFrame</code> / <code>{components.browser-frame}</code>). Six showcase mocks named as chapter visuals are not in either component table.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Remove or document inherited-unused. One mapping table (display name → token key). Add file paths next to <code>visual:</code> for extractors.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>State coverage</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Walked the single IA surface (<code>/#crm</code>) for applicable states: cold-load, hash land, in-pin chapter <em>n</em>, seek, skip, climax armed/spent, unpin, reduced-motion, resize across <code>lg</code>, JS/cinema failure. Empty / permission-denied largely N/A for static marketing. Missing Focus row is load-bearing; tablist vs <code>aria-current</code> and PRM/resize are uncommitted — accessibility treats those forks as high / critical.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">No Focus state for keyboard on desktop pills while pinned</h3>
+              <span class="finding-location">EXPERIENCE.md §State Patterns vs §Accessibility Floor</span>
+            </header>
+            <div class="finding-note">Load-bearing for sticky pin + consumer a11y. Accessibility separately flags weak <code>focus-visible</code> appearance (medium) and 2.4.11 header collision (critical).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add Focus row: ring visibility against <code>{colors.paper-warm}</code>, tab order while pinned, no focus trap, arrow-key behavior once committed.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Desktop tablist vs aria-current still [ASSUMPTION]</h3>
+              <span class="finding-location">EXPERIENCE.md §Accessibility Floor; §State Patterns</span>
+            </header>
+            <div class="finding-note">State/role of chapter controls is not committed. Accessibility raises this to <strong>high</strong> (NRV coin toss, APG, arrow vs page-scroll) — see Accessibility review.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Lock one pattern and reflect it in State Patterns + Component Patterns. Do not mix <code>aria-current</code> and <code>aria-selected</code> on the same node.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">No mock/visual render-failure state (PRM mid-session merged to a11y high)</h3>
+              <span class="finding-location">EXPERIENCE.md §State Patterns</span>
+            </header>
+            <div class="finding-note">Missing fallback for mock/visual render failure. Mid-session <code>prefers-reduced-motion</code> change is covered under Accessibility high (PRM completeness).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Specify fallback (keep last good chapter + CarouselChrome).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Hover on idle pills / chevrons in DESIGN, absent from State Patterns</h3>
+              <span class="finding-location">DESIGN.md §ChapterPills; EXPERIENCE.md §State Patterns</span>
+            </header>
+            <div class="finding-note">Hover treatment is specified visually only.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One Hover row pointing at DESIGN treatment, or declare hover visual-only.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary>
+          <h2>Visual reference coverage</h2>
+          <span class="verdict-pill verdict-thin">thin</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Listed workspace artifacts: <code>imports/current-product-carousel-website-slide.png</code> (present, ~209KB); <code>mockups/</code> absent; <code>wireframes/</code> absent; <code>.working/</code> empty. Spines-win-on-conflict is stated in both intros. The novel interaction — desktop cinema pin with stable stage + scrub track — has only ASCII anatomy. This is the sole <strong>thin</strong> category.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">No promoted mock/wireframe of the desktop cinema pin</h3>
+              <span class="finding-location">DESIGN.md §Layout &amp; Spacing (ASCII only)</span>
+            </header>
+            <div class="finding-note">The novel interaction (stable stage + scrub track) has no <code>mockups/</code> HTML and no wireframe. Implementers must invent pin geometry from prose.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add at least one <code>mockups/</code> HTML (or wireframe) of pinned Clients + pinned Website climax; link inline at CinemaStage / Flow A.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Sole import is the current carousel Website slide</h3>
+              <span class="finding-location">imports/; DESIGN.md / EXPERIENCE.md intros; §Backup &amp; Rollback</span>
+            </header>
+            <div class="finding-note">Correctly named as backup / Website reference (dots + chevrons visible). Cannot illustrate pin, scrub, or climax.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Keep import for rollback; add cinema-specific visuals so implementers are not inventing pin geometry.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">No local Apple craft capture; no cinema-mock links yet</h3>
+              <span class="finding-location">both spines sources / Inspiration</span>
+            </header>
+            <div class="finding-note">Apple URL is grammar-only. Spines-win-on-conflict is stated (good); neither spine links a cinema mock because none exist.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Optional: save a redacted scroll-grammar note under <code>imports/</code>. After mocks land, link at IA + Components with the same spines-win line.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Bloat &amp; overspecification</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Checked for pixel specs duplicating tokens, source restatement, prose-where-table, unread sections, decorative narrative untied to decisions. DESIGN editorial voice allowed; EXPERIENCE should stay operational. Verbatim six-chapter copy catalogs are load-bearing for “no copy cut” but inflate IA versus example spines.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Verbatim six-chapter copy catalogs dominate IA</h3>
+              <span class="finding-location">EXPERIENCE.md §Chapters</span>
+            </header>
+            <div class="finding-note">Restates live <code>PRODUCT_SLIDES</code> and inflates IA vs example spines. Load-bearing for the “no copy cut” contract.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Keep one locked copy table (or “source of truth = <code>PRODUCT_SLIDES</code>”) and shrink IA to surface + chapter ids + seek order.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Full Midnight Atelier ramp restated including unused tokens</h3>
+              <span class="finding-location">DESIGN.md frontmatter + §Colors</span>
+            </header>
+            <div class="finding-note">Self-containment goal restates palette/type never used on <code>#crm</code>. Inspiration editorial beat (“the object holds still”) is fine for that section.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Self-contain only cinema-touching tokens; inherit the rest by reference.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Inheritance discipline</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Checked <code>sources</code> resolution, UJ/requirement name fidelity, glossary consistency (Midnight Atelier, Designed Chapter cinema, True Apple, Beat×6, Priya), component-name identity across sections, and EXPERIENCE <code>{token}</code> → DESIGN resolution. Glossary and anti-pattern names are consistent; token cross-refs from EXPERIENCE resolve. Frontmatter <code>sources</code> is misaligned with memlog and over-includes parent EXPERIENCE.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Frontmatter sources omit memlog context and over-include parent EXPERIENCE</h3>
+              <span class="finding-location">.memlog.md; both spines sources</span>
+            </header>
+            <div class="finding-note">Memlog lists secondary context (<code>landing-pricing-ux</code>, website-builder PRD) and earlier “sources pending.” Frontmatter omits them and instead lists full parent EXPERIENCE.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Align frontmatter with actual inheritance: parent DESIGN (+ <code>inherits</code>), craft URL, import PNG; add PRDs only if extractors must read them.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Pill-full committed against parent “avoid pill-full”</h3>
+              <span class="finding-location">parent DESIGN.md §Shapes; cinema DESIGN.md §Shapes</span>
+            </header>
+            <div class="finding-note">Cinema commits <code>{rounded.full}</code> for chapter pills without an explicit override note.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Explicit override: “pill nav is the existing six-chapter control — exception to parent avoid-pill-full.”</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Marketing type tokens claimed as parent restatement</h3>
+              <span class="finding-location">DESIGN.md §Typography vs parent DESIGN.md</span>
+            </header>
+            <div class="finding-note"><code>marketing-section</code> / <code>marketing-lead</code> / chapter type tokens exist in live CSS and this DESIGN, but not in parent DESIGN.md frontmatter.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Label these as marketing-shell / live-token deltas, not parent-frontmatter restatements.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">status: draft during Reviewer Gate — expected</h3>
+              <span class="finding-location">both spines frontmatter</span>
+            </header>
+            <div class="finding-note">Glossary and anti-pattern names are consistent; EXPERIENCE token cross-refs resolve. Both spines <code>status: draft</code> while validation runs — not final for handoff.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Set <code>final</code> only after assumptions closed and build-blocking items resolved.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Shape fit</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>DESIGN.md section order matches canonical Brand &amp; Style → Colors → Typography → Layout &amp; Spacing → Elevation &amp; Depth → Shapes → Components → Do's and Don'ts. EXPERIENCE required defaults are present (Foundation, IA, Voice and Tone, Component Patterns, State Patterns, Interaction Primitives, Accessibility Floor, Key Flows) plus triggered Inspiration and Responsive. Invented Backup &amp; Rollback earns its place (memlog-locked constraint). No high or critical findings in this dimension.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Shape notes — keep Backup &amp; Rollback; optional copy relocate</h3>
+              <span class="finding-location">EXPERIENCE.md §Backup &amp; Rollback; DESIGN.md frontmatter; EXPERIENCE.md IA</span>
+            </header>
+            <div class="finding-note">Invented Backup &amp; Rollback earns its place. DESIGN frontmatter carries BMad extras (<code>status</code>, <code>theme</code>, <code>sources</code>, <code>inherits</code>) beyond Google Labs token keys — matches org pattern. IA copy catalogs are a shape stretch vs example IA tables but remain defensible as the locked conversion copy contract (see Bloat medium).</div>
+            <div class="finding-fix"><strong>Fix:</strong> None required. Optional: relocate locked copy to a subsection under Voice and Tone.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="reviewer-section">
+      <details open>
+        <summary>
+          <h2>Accessibility review</h2>
+          <span class="reviewer-source">review-accessibility.md</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Lens: WCAG 2.2 AA on a consumer conversion surface. Critique is of the <strong>spines</strong>, not of an implementation. Live <code>MarketingProductCarousel</code> is cited only as behavioral ground truth.</p>
+            <p>The spines want the right floor — reduced-motion is the real carousel, not a dimmed film; pills are named; there is no autoplay; mobile does not pin — then leave the dangerous parts as <code>[ASSUMPTION]</code>. Desktop cinema as drawn is a <strong>sticky-on-sticky scroll machine</strong> whose only skip control <strong>leaves the viewport</strong>, whose live region will <strong>narrate the scrub</strong>, and whose inherited stone/gold pairings <strong>fail 1.4.3</strong> on the copy and seek labels the section now depends on. Do not build until pin geometry, seek persistence, announcement policy, and control contrast/size are locked. Polish can wait; <strong>trapping Priya in 540vh of unlabeled progress cannot</strong>.</p>
+            <p><strong>Build-blocking (must land in the spines before implement):</strong> (1) Persistent seek while pinned + no <code>scrollIntoView</code> progress fight. (2) Pin <code>top</code> / <code>z-index</code> / <code>scroll-margin</code> vs sticky header; 2.4.11 written. (3) Native scroll only (no <code>preventDefault</code> jack); unpin without a modal. (4) One NRV model for both breakpoints; stable panel; arrow vs page-scroll table. (5) Live region: seek vs scrub debounce. (6) Contrast: stone/gold/idle pill text ≥4.5:1; idle glyphs ≥3:1 if they carry state. (7) Dot (and any 6px) hit areas ≥24×24 on the CarouselChrome fallback. (8) Breakpoint / PRM / orientation: chapter id + scrollTop + focus; <code>#crm</code> reset; seek vs wheel cancel. (9) PRM: kill hover/crossfade/climax; <code>matchMedia</code> change; spacer teardown.</p>
+            <p>Already strong (do not lose): reduced-motion is a real product; no autoplay / no Beat×6 stagger; no long pin on mobile; pills use text <code>navLabel</code>s; skip-to-Website is first-class; hash <code>#crm</code> must land Clients at rest; live region string is human (<code>polite</code> + <code>atomic</code>); mocks are decorative; motion is transform/opacity only; copy floor protects cognitive access.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">Seek chrome leaves the viewport once the pin starts</h3>
+              <span class="finding-location">EXPERIENCE Component Patterns ChapterPills; DESIGN Layout anatomy; Flow C</span>
+            </header>
+            <div class="finding-note">Desktop ChapterPills sit <em>above</em> the pin track and are not sticky, so once scrub starts the only skip/seek UI is gone. Keyboard and screen-reader cursor users who entered via scroll must discover Website by scrolling — the opposite of the locked “seek / escape” decision. Tabbing back to a pill <code>scrollIntoView</code>s the intro and fights pin <code>progress</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Keep seek chrome visible and operable for the entire pin (sticky pills under the header, or a persistent “Website” control). Focusing a pill must not rewrite progress except on explicit Activate; use <code>preventScroll</code> on programmatic focus where needed.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">Sticky header + unspecified pin = 2.4.11 Focus Not Obscured</h3>
+              <span class="finding-location">EXPERIENCE Accessibility Floor; State #crm; Responsive Hash; DESIGN pinned anatomy</span>
+            </header>
+            <div class="finding-note">Sticky marketing header (<code>top-0 z-30</code>) plus an unspecified cinema pin. <code>scroll-mt-24</code> only fixes hash landing of the <em>section</em>, not <code>position: sticky</code> <code>top</code> on the stage. <code>top: 0</code> puts ChapterCopy / H3 under the bar; a higher z-index covers header nav (focusable links with no visible target).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Lock pin <code>top</code> to header height (not <code>0</code>), pin <code>z-index</code> below the header, <code>scroll-margin</code> on pills ≥ header height, and a written 2.4.11 check: focused pill, focused header link, and chapter H3 are never fully covered while pinned.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">Scroll-trap named but not banned; 5.4 extra viewports, no in-track escape</h3>
+              <span class="finding-location">EXPERIENCE Interaction Primitives Pin/Escape/Banned; Accessibility Floor</span>
+            </header>
+            <div class="finding-note">Also noted by Rubric Flow (low — marathon pin). “Wheel / trackpad / keyboard page scroll all drive the same progress” is how implementers justify <code>preventDefault</code> on wheel/touch/keydown. That <strong>is</strong> a trap: it breaks assistive cursor scrolling, find-in-page, and Space/PageDown when focus is not on a button. Six × 90vh ≈ 5.4 extra viewports.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Native scroll only. Map <code>scrollY</code> → chapter index. Forbid preventing default on wheel/touch/keyboard. “Escape” = continue scrolling <em>and</em> a visible seek control. Do not capture Space/PageDown/Home/End except when a seek control is actually focused.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">PRM fallback is the right idea and the wrong spec completeness</h3>
+              <span class="finding-location">EXPERIENCE State prefers-reduced-motion; Backup &amp; Rollback; DESIGN ChapterPills hover</span>
+            </header>
+            <div class="finding-note">Also flagged by Rubric State (medium — mid-session PRM). Gaps: (1) DESIGN still specifies idle-pill hover <code>translateY(-2px)</code> and 400ms chapter-crossfade with no PRM exception; live CSS kills enter animation but not pill hover lift. (2) No rule for PRM toggling mid-pin — spacer must collapse without leaving the visitor stranded ~400vh down. (3) Reduced-motion desktop gains dots/chevrons while motion-safe desktop drops them — skip-parity untested.</div>
+            <div class="finding-fix"><strong>Fix:</strong> PRM = current carousel behavior and chrome, including hover/animation kill. Listen to <code>matchMedia('change')</code>. On PRM flip: remount CarouselChrome, restore chapter id, do not keep pin spacer height.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Live region treats scrub like a click — six polite announcements per flick</h3>
+              <span class="finding-location">EXPERIENCE Voice and Tone; LiveRegion; State In-pin chapter n</span>
+            </header>
+            <div class="finding-note">“Announce chapter changes… Showing {navLabel}: {title}” on every chapter change will fire six polite announcements on a single flick (more if hysteresis flickers). Polite queues drop, interrupt bullet reading, and desync from the visual chapter. Today the region only updates on <code>goTo</code> (explicit); cinema makes chapter a scroll side effect and keeps the same string.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Announce on explicit seek immediately. For scrub: update visual + <code>aria-current</code>/<code>aria-selected</code> continuously; debounce the live region until progress settles (scrollend or ~200–400ms idle); suppress duplicate strings. Keep polite + atomic. Never assertive on scrub.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Name, role, value is a coin toss — tablist vs aria-current</h3>
+              <span class="finding-location">EXPERIENCE Accessibility Floor; Interaction Pills keyboard</span>
+            </header>
+            <div class="finding-note">Also flagged by Rubric State as medium (uncommitted). “Prefer tablist if it maps 1:1” <em>or</em> scroll-seek buttons with <code>aria-current</code> is not a floor. Tablist without APG plus a single tabpanel whose id changes fails 4.1.2 in spirit. Arrow-keys-on-pill collide with page-scroll.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Lock one model. Recommended: both breakpoints use tablist/tab/tabpanel with roving tabindex, Left/Right (Home/End), <code>aria-selected</code>, one selected tab in tab order, and a stable panel id (or six panels with <code>hidden</code>). Chevrons remain buttons. Write what Up/Down/Space/PageDown do in one sentence.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Contrast floor restates failing Midnight Atelier pairings as AA</h3>
+              <span class="finding-location">DESIGN Colors; ChapterPills; ChapterCopy</span>
+            </header>
+            <div class="finding-note">Same defect as Rubric Token completeness (high). Stone on paper-warm 2.85:1 (leads need 4.5:1). Gold on paper-warm 2.97:1 at 13px. Idle pill stone-on-paper 3.00:1 for primary seek names. “Do not lighten stone for cinema density” cements 1.4.3 failures. Ink/paper titles and active pill pass; lagoon ~5.8:1 passes.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Cinema-specific text tokens, not a rebrand. Darken stone for leads/idle labels to ≥4.5:1. Gold eyebrows: darker gold or ink + non-color-only “Pro”. Do not ship idle chapter names at 3:1.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">2.5.8 Target Size — 6×6px dots on the a11y fallback path</h3>
+              <span class="finding-location">DESIGN chapter-dot-*; CarouselChrome; EXPERIENCE desktop chrome</span>
+            </header>
+            <div class="finding-note">Chrome cinema preserves as the mobile + PRM path already fails 2.5.8. Idle dots 6×6px with gap-1.5 (6px) — neither 24×24 nor 24px spacing. Active dot 24×6. Desktop cinema removes chevrons, so motion-safe lg+ has no 40px pager at all.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Hit area ≥24×24 (padding / min-h/min-w with visible 6px glyph). Keep names (Go to {navLabel}). If desktop has no dots, pills must stay reachable — do not delete the only oversized control.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Resize / orientation / hash are assumptions, not failure modes</h3>
+              <span class="finding-location">EXPERIENCE State Resize; Hash; Seek; Responsive lg</span>
+            </header>
+            <div class="finding-note">“Remount without losing chapter id” ignores pin spacer height (collapsing ~540vh jumps the page; injecting it lands mid-scrub unless scrollTop is rewritten); focus loss when chevrons unmount at lg+; iPad oscillating across 1024; two scrollTop owners; header Clients → /#crm while already pinned on Website often does nothing.</div>
+            <div class="finding-fix"><strong>Fix:</strong> On breakpoint/PRM change: map id, synchronously set scroll so the section is in view at the matching model, move focus to the active pill if focus was inside unmounted chrome. Hash/nav to #crm always resets to Clients. Seek smooth-scroll cancels on user wheel/touch/Escape.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">1.4.11 non-text contrast on idle chrome</h3>
+              <span class="finding-location">DESIGN chapter-pill-idle, chapter-dot-idle</span>
+            </header>
+            <div class="finding-note">Line on paper-warm ~1.11:1 (idle dots); idle pill border ~1.18:1; idle fill nearly invisible. If the border/dot is how you see “this is a control,” it fails 3:1. Active lagoon dot passes.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Idle indicators ≥3:1 against canvas. Idle pill: stronger border or ink-muted text (with 1.4.3 fix above).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Focus appearance hand-waved — weak ring on paper-warm</h3>
+              <span class="finding-location">EXPERIENCE Accessibility Floor; DESIGN has no cinema focus token</span>
+            </header>
+            <div class="finding-note">Complementary to Rubric State Focus gap (high). Carousel pills/dots have no focus-visible ring in ground truth. Sticky pin makes a clipped or header-overlapped ring a 2.4.7 / 2.4.13-adjacent failure.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Explicit focus-visible ring: solid ink or lagoon ≥3:1 vs adjacent paper-warm, offset so sticky header cannot clip it (scroll-margin).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Mobile tablist keeps today’s holes; double-speak + overflow</h3>
+              <span class="finding-location">EXPERIENCE Mobile / CarouselChrome; DESIGN Responsive &lt;sm</span>
+            </header>
+            <div class="finding-note">All six tabs in tab order (no roving tabindex), no arrow-key behavior in live code, &lt;sm horizontal overflow-x-auto nowrap. Cinema adds aria-live on the same click path — activating a tab then double-speaks. Overflow without a “more” affordance hides Follow-up…Website off-screen.</div>
+            <div class="finding-fix"><strong>Fix:</strong> APG tablist on mobile too. Delay or skip live region when aria-selected already changed from a user activate. Below sm, wrap or show peek/scroll hint; do not require a horizontal gesture (2.5.1) to reach Website.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">aria-hidden mocks never require no tab stops</h3>
+              <span class="finding-location">EXPERIENCE ProductFrame; Accessibility Floor</span>
+            </header>
+            <div class="finding-note">aria-hidden does not remove descendants from tab order. A future “real product” mock with a button would create 2.4.3 / 4.1.2 hidden focus. Ground truth mocks are currently non-interactive divs.</div>
+            <div class="finding-fix"><strong>Fix:</strong> aria-hidden and inert (or no controls in mocks). Written test: tab from last pill to next page landmark with zero stops inside the frame.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">ClimaxMicroBeat fires on skip-to-Website</h3>
+              <span class="finding-location">DESIGN ClimaxMicroBeat; EXPERIENCE Skip to Website + Climax armed</span>
+            </header>
+            <div class="finding-note">Complementary to Rubric Flow climax ship/no-ship (high). Reduced-motion skips it; a vestibular user without PRM still gets scale/lift after a seek they thought was a static jump. 500ms transform on a large frame is more than a 2% footnote.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Fire only on scrub-entry from Reports, not on pill skip; or drop the beat (already optional). Never combine with copy crossfade in a way that moves the H3.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Esc naming, light-only, optional skip-past-cinema</h3>
+              <span class="finding-location">EXPERIENCE Unpin / Escape; DESIGN theme.modes; 2.4.1</span>
+            </header>
+            <div class="finding-note">“Escape” means “keep scrolling” — Esc does nothing. Light-only cinema means prefers-color-scheme: dark visitors still get paper-warm (shell-level, out of scope). No bypass besides heading navigation to skip the whole cinema — kindness, not AA-blocking, if persistent seek is fixed.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Wire Esc to unpin or stop calling scroll “escape.” Do not invent a dark theater. Optional skip link to the next section id (pricing / start-free).</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <div class="mechanical">
+      <h3>Mechanical notes</h3>
+      <ul>
+        <li><strong>Broken / missing paths:</strong> None for listed import — <code>imports/current-product-carousel-website-slide.png</code> resolves. <code>mockups/</code> and <code>wireframes/</code> directories do not exist (not broken links; coverage gap). Relative parent links <code>../ux-cohestra-2026-07-18/DESIGN.md</code> resolve. Implementation path <code>web/components/marketing/marketing-product-carousel.tsx</code> resolves; showcase components exist under <code>web/components/marketing/</code>.</li>
+        <li><strong>Name inconsistencies:</strong> <code>ProductFrame</code> / <code>BrowserFrame</code> / <code>browser-frame</code>; <code>ChapterPills</code> vs <code>chapter-pill-idle|active</code>; <code>ClimaxMicroBeat</code> vs <code>climax-micro-beat</code>; <code>CinemaStage</code> vs <code>cinema-stage</code>. EXPERIENCE lists <code>LiveRegion</code>; DESIGN does not. <code>BulletRow</code> only in DESIGN prose.</li>
+        <li><strong>Frontmatter completeness:</strong> Both spines share <code>name</code>, <code>status: draft</code>, <code>created</code>/<code>updated</code>, <code>sources</code>. DESIGN has <code>description</code>, <code>theme</code>, <code>inherits</code>, full token blocks. EXPERIENCE has <code>design: ./DESIGN.md</code>, <code>implementation: …</code>. YAML list items use unquoted <code>{planning_artifacts}/…</code> (BMad convention; strict YAML flow-mapping risk — same as skill examples).</li>
+        <li><strong>Cross-refs:</strong> EXPERIENCE <code>{components.chapter-crossfade}</code>, <code>{components.climax-micro-beat}</code>, <code>{components.browser-frame}</code>, <code>{colors.paper-warm}</code>, <code>{colors.paper}</code>, <code>{spacing.cinema-chapter-scroll}</code> all resolve. Copy interpolations <code>{navLabel}</code> / <code>{title}</code> are not DESIGN tokens (OK).</li>
+        <li><strong>Mermaid:</strong> None. Layout uses ASCII stage diagram (DESIGN.md §Layout &amp; Spacing) — valid; no syntax issues.</li>
+        <li><strong>Copy fidelity:</strong> EXPERIENCE chapter tables match live <code>PRODUCT_SLIDES</code> verbatim (ids, navLabels, eyebrows, titles, leads, four points each) — strong inheritance from implementation.</li>
+        <li><strong>Open [ASSUMPTION] count (load-bearing):</strong> desktop <code>lg</code> cinema gate; pin track <code>90vh</code>/chapter; equal progress ranges; hysteresis; climax magnitude + settle; desktop pills-only (no dots/chevrons); arrow keys on pills; tablist vs <code>aria-current</code>; re-enter pin from above/below; resize remount preserves chapter id; shared frame chrome radius; no mobile swipe; Priya = parent UJ-1 prospect.</li>
+      </ul>
+    </div>
+
+    <footer class="report-footer">
+      <div class="meta">
+        <span>Rubric: _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-08-31/review-rubric.md</span>
+        <span>Generated: 2026-08-31T16:45:00Z</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

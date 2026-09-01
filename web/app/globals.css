@@ -16,12 +16,14 @@
   --color-paper: var(--paper);
   --color-paper-warm: var(--paper-warm);
   --color-stone: var(--stone);
+  --color-stone-cinema: var(--stone-cinema);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-lagoon: var(--lagoon);
   --color-lagoon-deep: var(--lagoon-deep);
   --color-lagoon-fg: var(--lagoon-fg);
   --color-gold: var(--gold);
+  --color-gold-cinema: var(--gold-cinema);
   --color-gold-soft: var(--gold-soft);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -141,6 +143,22 @@
 
   .marketing-product-carousel-enter {
     animation: marketing-product-carousel-enter 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  @keyframes marketing-cinema-climax {
+    0% {
+      transform: scale(1) translate3d(0, 0, 0);
+    }
+    40% {
+      transform: scale(1.02) translate3d(0, -4px, 0);
+    }
+    100% {
+      transform: scale(1) translate3d(0, 0, 0);
+    }
+  }
+
+  .marketing-cinema-climax {
+    animation: marketing-cinema-climax 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
   @keyframes marketing-hero-stack-rise {
@@ -416,7 +434,8 @@
     .marketing-hero-enter,
     .marketing-product-lift,
     .marketing-hero-stack-card,
-    .marketing-product-carousel-enter {
+    .marketing-product-carousel-enter,
+    .marketing-cinema-climax {
       animation: none;
       opacity: 1;
       transform: none;

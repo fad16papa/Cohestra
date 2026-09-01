@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Key screen — Mobile carousel · Clients</title>
+  <style>
+    /*
+      Governs this screen (Landing Product Cinema spines):
+      EXPERIENCE.md — Foundation (Mobile model a: current click-tabs carousel; no long pin);
+        Information Architecture §Section (verbatim) + §Chapters 1. Clients;
+        Component Patterns: SectionHeader, ChapterPills (mobile sets index), ChapterCopy, ProductFrame, CarouselChrome;
+        State Patterns: Hash #crm mobile — carousel index 0 (Clients), no pin;
+        Interaction Primitives: Mobile < lg — tap pills/dots/chevrons; no sticky stage;
+        Key Flows: Flow B (Priya on phone); Accessibility: CarouselChrome dots hit ≥24×24; chevrons = buttons not tabs;
+        Responsive: < lg keeps today's carousel; Desktop chrome LOCKED pills-only — this file is the backup path.
+      DESIGN.md — Components: SectionHeader, CarouselChrome (tablist, lagoon dots, chevron icon buttons);
+        Layout: stacked copy above visual; horizontal-scroll tablist below sm;
+        {components.chapter-dot-idle} 6px / hit 24px; {components.chapter-dot-active} 24×6 lagoon;
+        {components.carousel-icon-button} 40px / radius md; no climax scale on mobile.
+    */
+    :root {
+      --paper-warm: #F3F5F7;
+      --paper: #FAFBFC;
+      --ink: #070D12;
+      --stone-cinema: #5A636E;
+      --gold-cinema: #6E5A32;
+      --lagoon: #0B6B63;
+      --line: #E6E9ED;
+      --line-strong: #D0D5DB;
+      --success: #1F7A5C;
+      --warn: #9A6700;
+      --status-new: #2563EB;
+      --serif: "Fraunces", Georgia, "Times New Roman", serif;
+      --sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: var(--sans);
+      color: var(--ink);
+      background: var(--paper);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .studio {
+      min-height: 100vh;
+      padding: 36px 20px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Phone frame — inner screen ~390px */
+    .phone {
+      width: 414px;
+      max-width: 100%;
+      background: var(--ink);
+      border-radius: 44px;
+      padding: 12px;
+      box-shadow: 0 40px 80px rgba(7, 13, 18, 0.18);
+    }
+    .bezel {
+      position: relative;
+      background: var(--paper-warm);
+      border-radius: 34px;
+      overflow: hidden;
+      width: 390px;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+    .island {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 118px;
+      height: 28px;
+      background: var(--ink);
+      border-radius: 18px;
+      z-index: 5;
+    }
+    .status-bar {
+      height: 48px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 22px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    .screen { padding: 0 0 18px; }
+
+    .mkt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 20px 12px;
+      background: rgba(250, 251, 252, 0.92);
+      border-bottom: 1px solid var(--line);
+    }
+    .wordmark {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.25rem;
+      letter-spacing: -0.04em;
+    }
+    .mkt-nav {
+      display: flex;
+      gap: 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--stone-cinema);
+    }
+    .mkt-nav .on { color: var(--ink); }
+
+    .crm-section {
+      padding: 28px 20px 8px;
+      background: var(--paper-warm);
+    }
+
+    .section-head { text-align: center; }
+    .eyebrow {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-cinema);
+    }
+    .h2 {
+      margin: 12px 0 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.85rem;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+    .section-lead {
+      margin: 12px 0 0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--stone-cinema);
+    }
+
+    /* Horizontal-ish pill row */
+    .pill-scroll {
+      margin: 22px -20px 0;
+      padding: 0 20px 4px;
+      overflow-x: auto;
+    }
+    .pills {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 8px;
+      width: max-content;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 9999px;
+      padding: 8px 16px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border: 1px solid var(--line-strong);
+      background: var(--paper);
+      color: var(--stone-cinema);
+      white-space: nowrap;
+    }
+    .pill.is-active {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+      box-shadow: 0 8px 20px rgba(7, 13, 18, 0.12);
+    }
+
+    .copy {
+      margin-top: 24px;
+      text-align: center;
+    }
+    .chapter-title {
+      margin: 12px 0 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.65rem;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+    .lead {
+      margin: 12px 0 0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--stone-cinema);
+      text-align: left;
+    }
+    .points {
+      list-style: none;
+      margin: 18px 0 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      text-align: left;
+    }
+    .points li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14.5px;
+      line-height: 1.5;
+      color: rgba(7, 13, 18, 0.85);
+    }
+    .check {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      border-radius: 999px;
+      background: rgba(11, 107, 99, 0.12);
+      color: var(--lagoon);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .visual {
+      margin-top: 20px;
+    }
+    .product-frame {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--paper);
+      box-shadow: 0 24px 48px rgba(7, 13, 18, 0.10);
+      overflow: hidden;
+    }
+    .product-chrome {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      background: var(--paper-warm);
+      border-bottom: 1px solid var(--line);
+    }
+    .dot3 { width: 8px; height: 8px; border-radius: 999px; }
+    .r { background: #ff5f57; }
+    .y { background: #febc2e; }
+    .g { background: #28c840; }
+    .url {
+      margin-left: 4px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 9px;
+      color: var(--stone-cinema);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .crm-head { padding: 12px 12px 10px; border-bottom: 1px solid var(--line); }
+    .crm-title-row { display: flex; align-items: center; gap: 8px; }
+    .crm-title {
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+    .count {
+      border-radius: 999px;
+      background: rgba(11, 107, 99, 0.10);
+      color: var(--lagoon);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+    }
+    .search {
+      margin-top: 10px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper-warm);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      font-size: 12px;
+      color: var(--stone-cinema);
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12.5px;
+    }
+    .row:last-child { border-bottom: 0; }
+    .row.is-sel {
+      background: rgba(11, 107, 99, 0.05);
+      box-shadow: inset 3px 0 0 var(--lagoon);
+    }
+    .av {
+      width: 26px; height: 26px; border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; flex-shrink: 0;
+    }
+    .av-em { background: rgba(11, 107, 99, 0.14); color: var(--lagoon); }
+    .av-sr { background: rgba(37, 99, 235, 0.12); color: #1d4ed8; }
+    .av-jk { background: rgba(154, 103, 0, 0.14); color: var(--warn); }
+    .who { min-width: 0; flex: 1; }
+    .who strong { display: block; font-weight: 600; }
+    .who span { color: var(--stone-cinema); font-size: 11px; }
+    .badge {
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .badge-active { background: var(--success); }
+    .badge-new { background: var(--status-new); }
+    .badge-contacted { background: var(--warn); }
+
+    /* CarouselChrome: dots (24px hit) + chevrons (buttons) */
+    .chrome-footer {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .dots {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .dot-hit {
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      /* Visual indication of the 24×24 hit area (WCAG 2.5.8) */
+      box-shadow: inset 0 0 0 1px var(--line-strong);
+    }
+    .dot-hit.is-active {
+      box-shadow: inset 0 0 0 1px rgba(11, 107, 99, 0.45);
+    }
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--stone-cinema);
+    }
+    .dot-hit.is-active .dot {
+      width: 16px;
+      height: 6px;
+      background: var(--lagoon);
+    }
+    .chevrons { display: flex; gap: 8px; }
+    .chev {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .home-ind {
+      width: 120px;
+      height: 4px;
+      border-radius: 999px;
+      background: var(--ink);
+      opacity: 0.28;
+      margin: 8px auto 4px;
+    }
+
+    .caption {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--stone-cinema);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="studio">
+    <div class="phone">
+      <div class="bezel">
+        <div class="island" aria-hidden="true"></div>
+        <div class="status-bar"><span>9:41</span><span>5G</span></div>
+
+        <div class="screen">
+          <header class="mkt-header">
+            <div class="wordmark">Cohestra</div>
+            <nav class="mkt-nav" aria-label="Marketing">
+              <span>Pricing</span>
+              <span class="on">Sign in</span>
+            </nav>
+          </header>
+
+          <section class="crm-section" id="crm">
+            <div class="section-head">
+              <p class="eyebrow">Inside the workspace</p>
+              <h2 class="h2">One product, one platform, covers all your need</h2>
+              <p class="section-lead">Browse each surface at full size — the same views your team uses every week.</p>
+            </div>
+
+            <div class="pill-scroll">
+              <div class="pills" role="tablist" aria-label="Product surfaces">
+                <span class="pill is-active" role="tab" aria-selected="true">Clients</span>
+                <span class="pill" role="tab" aria-selected="false">Follow-up</span>
+                <span class="pill" role="tab" aria-selected="false">Dashboard</span>
+                <span class="pill" role="tab" aria-selected="false">Campaigns</span>
+                <span class="pill" role="tab" aria-selected="false">Reports</span>
+                <span class="pill" role="tab" aria-selected="false">Website</span>
+              </div>
+            </div>
+
+            <div class="copy">
+              <p class="eyebrow">Client CRM</p>
+              <h3 class="chapter-title">A client list your team actually uses</h3>
+              <p class="lead">Every registration builds one profile. Search the list, open a client, see their history, and message them without leaving Cohestra.</p>
+              <ul class="points">
+                <li>
+                  <span class="check" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  Search and filter by status, nationality, or recent signup
+                </li>
+                <li>
+                  <span class="check" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  Lead status badges so the team knows who still needs a reply
+                </li>
+                <li>
+                  <span class="check" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  Full profile with contact details, registration history, and timeline
+                </li>
+                <li>
+                  <span class="check" aria-hidden="true">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  WhatsApp and Viber open from the profile with messages saved automatically
+                </li>
+              </ul>
+            </div>
+
+            <div class="visual">
+              <div class="product-frame" aria-hidden="true">
+                <div class="product-chrome">
+                  <span class="dot3 r"></span><span class="dot3 y"></span><span class="dot3 g"></span>
+                  <span class="url">yourclub.cohestra.app/dashboard/clients</span>
+                </div>
+                <div class="crm-head">
+                  <div class="crm-title-row">
+                    <p class="crm-title">Clients</p>
+                    <span class="count">248</span>
+                  </div>
+                  <div class="search">Search by name or nationality</div>
+                </div>
+                <div class="row is-sel">
+                  <span class="av av-em">EM</span>
+                  <div class="who"><strong>Elena Martinez</strong><span>Spain</span></div>
+                  <span class="badge badge-active">Active</span>
+                </div>
+                <div class="row">
+                  <span class="av av-sr">SR</span>
+                  <div class="who"><strong>Sam Rivera</strong><span>USA</span></div>
+                  <span class="badge badge-new">New</span>
+                </div>
+                <div class="row">
+                  <span class="av av-jk">JK</span>
+                  <div class="who"><strong>Jordan Kim</strong><span>South Korea</span></div>
+                  <span class="badge badge-contacted">Contacted</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="chrome-footer">
+              <div class="dots" aria-label="Chapter position">
+                <span class="dot-hit is-active" title="Clients · 24×24 hit"><span class="dot"></span></span>
+                <span class="dot-hit" title="Follow-up · 24×24 hit"><span class="dot"></span></span>
+                <span class="dot-hit" title="Dashboard · 24×24 hit"><span class="dot"></span></span>
+                <span class="dot-hit" title="Campaigns · 24×24 hit"><span class="dot"></span></span>
+                <span class="dot-hit" title="Reports · 24×24 hit"><span class="dot"></span></span>
+                <span class="dot-hit" title="Website · 24×24 hit"><span class="dot"></span></span>
+              </div>
+              <div class="chevrons">
+                <span class="chev" role="button" aria-label="Previous product surface">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 5 8 12l7 7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="chev" role="button" aria-label="Next product surface">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </div>
+            </div>
+          </section>
+        </div>
+        <div class="home-ind" aria-hidden="true"></div>
+      </div>
+    </div>
+    <p class="caption">Mobile &lt; lg · click-tabs carousel · no pin</p>
+  </div>
+</body>
+</html>
