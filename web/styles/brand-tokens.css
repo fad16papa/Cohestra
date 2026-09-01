@@ -10,12 +10,15 @@
   --paper: #fafbfc;
   --paper-warm: #f3f5f7;
   --stone: #8b939c;
+  /* Marketing cinema conversion surface — WCAG AA on paper-warm (landing only) */
+  --stone-cinema: #5a636e;
   --line: #e6e9ed;
   --line-strong: #d0d5db;
   --lagoon: #0b6b63;
   --lagoon-deep: #08554f;
   --lagoon-fg: #f3fffc;
   --gold: #a68b5b;
+  --gold-cinema: #6e5a32;
   --gold-soft: #f4eee3;
   --success: #1f7a5c;
   --warn: #9a6700;
