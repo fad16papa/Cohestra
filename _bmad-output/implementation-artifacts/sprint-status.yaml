@@ -331,8 +331,8 @@ development_status:
 
   # Epic 33 — Live Proof Cinema (marketing /#crm). Source: epics-live-proof-cinema.md
   # Slice drafted as standalone Epic 1; tracker uses 33 to avoid colliding with Platform Epic 1 (done).
-  epic-33: backlog
-  33-1-marketingdemoclub-seed-presentational-mounts: backlog
+  epic-33: in-progress
+  33-1-marketingdemoclub-seed-presentational-mounts: ready-for-dev
   33-2-feeling-copy-kill-chapter-mock-chrome: backlog
   33-3-preview-productframe-desktop-pin-seek: backlog
   33-4-cinema-a11y-hash-live-region-dual-state-pills: backlog
