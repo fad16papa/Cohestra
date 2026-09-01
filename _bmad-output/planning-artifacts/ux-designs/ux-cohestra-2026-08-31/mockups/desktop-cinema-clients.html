@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Key screen — Desktop cinema · Clients</title>
+  <style>
+    /*
+      Governs this screen (Landing Product Cinema spines):
+      EXPERIENCE.md — Foundation (Designed Chapter cinema; sticky ChapterPills; pills-only seek);
+        Information Architecture §Section + §Chapters 1. Clients (verbatim copy);
+        Component Patterns: ChapterPills, CinemaStage, ChapterCopy, ProductFrame;
+        State Patterns: Cold load / Hash #crm / In-pin chapter n (Clients @ progress 0);
+        Interaction Primitives: Pin (top = header-offset 6rem), stable stage;
+        Key Flows: Flow A step 2 (pinned Clients, four CRM bullets, Clients CRM mock).
+      DESIGN.md — Brand & Style (Midnight Atelier); Colors (stone-cinema / gold-cinema / ink fill);
+        Typography (section eyebrow, chapter-title, chapter-lead, chapter-point);
+        Layout & Spacing (sticky pills under header, copy 2.8fr / frame 3.2fr, stage min 520px);
+        Elevation: {components.browser-frame}; Components: ChapterPills, CinemaStage, ChapterCopy, ProductFrame.
+    */
+    :root {
+      --paper-warm: #F3F5F7;
+      --paper: #FAFBFC;
+      --ink: #070D12;
+      --stone-cinema: #5A636E;
+      --gold-cinema: #6E5A32;
+      --lagoon: #0B6B63;
+      --line: #E6E9ED;
+      --line-strong: #D0D5DB;
+      --success: #1F7A5C;
+      --warn: #9A6700;
+      --status-new: #2563EB;
+      --serif: "Fraunces", Georgia, "Times New Roman", serif;
+      --sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --header-offset: 6rem;
+      --frame-shadow: 0 40px 80px rgba(7, 13, 18, 0.14);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: var(--sans);
+      color: var(--ink);
+      background: var(--paper);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .studio {
+      min-height: 100vh;
+      padding: 40px 32px 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+    }
+
+    /* Outer marketing-site device chrome */
+    .device {
+      width: min(1180px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--paper);
+      box-shadow: var(--frame-shadow);
+      overflow: hidden;
+    }
+    .os-chrome {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--paper-warm);
+      border-bottom: 1px solid var(--line);
+    }
+    .traffic { display: flex; gap: 6px; flex-shrink: 0; }
+    .traffic i {
+      width: 10px; height: 10px; border-radius: 999px; display: block;
+    }
+    .traffic .r { background: #ff5f57; }
+    .traffic .y { background: #febc2e; }
+    .traffic .g { background: #28c840; }
+    .urlbar {
+      flex: 1;
+      min-width: 0;
+      height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px;
+      color: var(--stone-cinema);
+      letter-spacing: 0.01em;
+    }
+
+    /* Marketing header — 6rem band (pin top = header-offset) */
+    .mkt-header {
+      height: var(--header-offset);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(250, 251, 252, 0.92);
+      border-bottom: 1px solid var(--line);
+      position: relative;
+      z-index: 30;
+    }
+    .wordmark {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.55rem;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .mkt-nav {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--stone-cinema);
+    }
+    .mkt-nav .on { color: var(--ink); }
+
+    /* Sticky ChapterPills under header for the entire pin */
+    .pill-band {
+      position: relative;
+      z-index: 20;
+      background: var(--paper-warm);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 40px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 9999px;
+      padding: 8px 16px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      line-height: 1.2;
+      border: 1px solid var(--line-strong);
+      background: var(--paper);
+      color: var(--stone-cinema);
+      white-space: nowrap;
+    }
+    .pill.is-active {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+      box-shadow: 0 8px 20px rgba(7, 13, 18, 0.12);
+    }
+
+    /* Pinned CinemaStage */
+    .stage {
+      background: var(--paper-warm);
+      padding: 28px 40px 40px;
+      display: grid;
+      grid-template-columns: minmax(0, 2.8fr) minmax(0, 3.2fr);
+      gap: 48px;
+      align-items: center;
+      min-height: 520px;
+    }
+
+    .eyebrow {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-cinema);
+    }
+    .chapter-title {
+      margin: 14px 0 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      max-width: 16ch;
+    }
+    .lead {
+      margin: 16px 0 0;
+      font-size: 1.0625rem;
+      font-weight: 400;
+      line-height: 1.65;
+      color: var(--stone-cinema);
+      max-width: 38em;
+    }
+    .points {
+      list-style: none;
+      margin: 28px 0 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .points li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 15.2px;
+      line-height: 1.55;
+      color: rgba(7, 13, 18, 0.85);
+    }
+    .check {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      border-radius: 999px;
+      background: rgba(11, 107, 99, 0.12);
+      color: var(--lagoon);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ProductFrame — the cinematic object */
+    .product-frame {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--paper);
+      box-shadow: var(--frame-shadow);
+      overflow: hidden;
+      min-height: 480px;
+      display: flex;
+      flex-direction: column;
+    }
+    .product-chrome {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--paper-warm);
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .product-chrome .url {
+      margin-left: 6px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px;
+      color: var(--stone-cinema);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .product-body { flex: 1; min-height: 0; background: var(--paper); }
+
+    .crm-head {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .crm-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .crm-mark {
+      width: 20px; height: 20px; color: var(--lagoon); flex-shrink: 0;
+    }
+    .crm-title {
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .count {
+      border-radius: 999px;
+      background: rgba(11, 107, 99, 0.10);
+      color: var(--lagoon);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+    }
+    .search {
+      margin-top: 14px;
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper-warm);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      font-size: 0.875rem;
+      color: var(--stone-cinema);
+    }
+    .search svg { flex-shrink: 0; opacity: 0.7; }
+    .filters {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+    }
+    .chip {
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--stone-cinema);
+    }
+    .chip.is-on {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+
+    .cols {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr 0.7fr 1.2fr;
+      gap: 12px;
+      padding: 8px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--stone-cinema);
+      border-bottom: 1px solid var(--line);
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr 0.7fr 1.2fr;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13.5px;
+    }
+    .row:last-child { border-bottom: 0; }
+    .row.is-sel {
+      background: rgba(11, 107, 99, 0.05);
+      box-shadow: inset 4px 0 0 var(--lagoon);
+    }
+    .who { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 600; }
+    .av {
+      width: 28px; height: 28px; border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .av-em { background: rgba(11, 107, 99, 0.14); color: var(--lagoon); }
+    .av-sr { background: rgba(37, 99, 235, 0.12); color: #1d4ed8; }
+    .av-jk { background: rgba(154, 103, 0, 0.14); color: var(--warn); }
+    .nat, .act { color: var(--stone-cinema); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      width: fit-content;
+    }
+    .badge-active { background: var(--success); }
+    .badge-new { background: var(--status-new); }
+    .badge-contacted { background: var(--warn); }
+
+    .caption {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--stone-cinema);
+    }
+  </style>
+</head>
+<body>
+  <div class="studio">
+    <div class="device">
+      <div class="os-chrome">
+        <span class="traffic" aria-hidden="true"><i class="r"></i><i class="y"></i><i class="g"></i></span>
+        <div class="urlbar">cohestra.app/#crm</div>
+      </div>
+
+      <header class="mkt-header">
+        <div class="wordmark">Cohestra</div>
+        <nav class="mkt-nav" aria-label="Marketing">
+          <span>Features</span>
+          <span>Document</span>
+          <span class="on">Clients</span>
+          <span>How it works</span>
+          <span>Pricing</span>
+          <span>FAQ</span>
+          <span>Sign in</span>
+        </nav>
+      </header>
+
+      <div class="pill-band" role="tablist" aria-label="Product surfaces">
+        <span class="pill is-active" role="tab" aria-selected="true">Clients</span>
+        <span class="pill" role="tab" aria-selected="false">Follow-up</span>
+        <span class="pill" role="tab" aria-selected="false">Dashboard</span>
+        <span class="pill" role="tab" aria-selected="false">Campaigns</span>
+        <span class="pill" role="tab" aria-selected="false">Reports</span>
+        <span class="pill" role="tab" aria-selected="false">Website</span>
+      </div>
+
+      <div class="stage">
+        <div class="copy">
+          <p class="eyebrow">Client CRM</p>
+          <h3 class="chapter-title">A client list your team actually uses</h3>
+          <p class="lead">Every registration builds one profile. Search the list, open a client, see their history, and message them without leaving Cohestra.</p>
+          <ul class="points">
+            <li>
+              <span class="check" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Search and filter by status, nationality, or recent signup
+            </li>
+            <li>
+              <span class="check" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Lead status badges so the team knows who still needs a reply
+            </li>
+            <li>
+              <span class="check" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Full profile with contact details, registration history, and timeline
+            </li>
+            <li>
+              <span class="check" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              WhatsApp and Viber open from the profile with messages saved automatically
+            </li>
+          </ul>
+        </div>
+
+        <div class="product-frame" aria-hidden="true">
+          <div class="product-chrome">
+            <span class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></span>
+            <span class="url">yourclub.cohestra.app/dashboard/clients</span>
+          </div>
+          <div class="product-body">
+            <div class="crm-head">
+              <div class="crm-title-row">
+                <svg class="crm-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                  <circle cx="9" cy="7" r="3.25" stroke="currentColor" stroke-width="1.75"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                </svg>
+                <p class="crm-title">Clients</p>
+                <span class="count">248</span>
+              </div>
+              <div class="search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.75"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+                Search by name or nationality
+              </div>
+              <div class="filters">
+                <span class="chip is-on">All</span>
+                <span class="chip">New</span>
+                <span class="chip">Contacted</span>
+                <span class="chip">Active</span>
+              </div>
+            </div>
+            <div class="cols">
+              <span>Name</span>
+              <span>Nationality</span>
+              <span>Status</span>
+              <span>Last activity</span>
+            </div>
+            <div class="row is-sel">
+              <div class="who"><span class="av av-em">EM</span> Elena Martinez</div>
+              <span class="nat">Spain</span>
+              <span class="badge badge-active">Active</span>
+              <span class="act">Registered Sunday clinic · 2 days ago</span>
+            </div>
+            <div class="row">
+              <div class="who"><span class="av av-sr">SR</span> Sam Rivera</div>
+              <span class="nat">USA</span>
+              <span class="badge badge-new">New</span>
+              <span class="act">Registered board games night · today</span>
+            </div>
+            <div class="row">
+              <div class="who"><span class="av av-jk">JK</span> Jordan Kim</div>
+              <span class="nat">South Korea</span>
+              <span class="badge badge-contacted">Contacted</span>
+              <span class="act">WhatsApp follow up · yesterday</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Desktop pin · Clients · sticky seek pills</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Key screen — Desktop cinema · Website climax</title>
+  <style>
+    /*
+      Governs this screen (Landing Product Cinema spines):
+      EXPERIENCE.md — Foundation (Climax: one micro-beat on Website / Pro; scrub-entry only);
+        Information Architecture §Chapters 6. Website (verbatim copy);
+        Component Patterns: ChapterPills (Website = skip), CinemaStage, ChapterCopy, ProductFrame, ClimaxMicroBeat;
+        State Patterns: Climax armed (scrub-entry Reports→Website); Skip to Website does NOT fire climax;
+        Interaction Primitives: Stable stage — transform limited to ClimaxMicroBeat;
+        Key Flows: Flow A step 5 (climax path: scale 1.02 → settle 1; eyebrow still "Website builder · Pro").
+      DESIGN.md — Components: ClimaxMicroBeat (scale 1.02, translateY -4px, 500ms, settle 1);
+        Colors / Typography same cinema tokens; Elevation: {components.browser-frame};
+        Layout: sticky ChapterPills, copy 2.8fr / frame 3.2fr; Gold on eyebrows only — no climax wash.
+    */
+    :root {
+      --paper-warm: #F3F5F7;
+      --paper: #FAFBFC;
+      --ink: #070D12;
+      --stone-cinema: #5A636E;
+      --gold-cinema: #6E5A32;
+      --lagoon: #0B6B63;
+      --lagoon-fg: #F3FFFC;
+      --line: #E6E9ED;
+      --line-strong: #D0D5DB;
+      --serif: "Fraunces", Georgia, "Times New Roman", serif;
+      --sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --header-offset: 6rem;
+      --frame-shadow: 0 40px 80px rgba(7, 13, 18, 0.14);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: var(--sans);
+      color: var(--ink);
+      background: var(--paper);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .studio {
+      min-height: 100vh;
+      padding: 40px 32px 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .device {
+      width: min(1180px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--paper);
+      box-shadow: var(--frame-shadow);
+      overflow: hidden;
+    }
+    .os-chrome {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--paper-warm);
+      border-bottom: 1px solid var(--line);
+    }
+    .traffic { display: flex; gap: 6px; flex-shrink: 0; }
+    .traffic i {
+      width: 10px; height: 10px; border-radius: 999px; display: block;
+    }
+    .traffic .r { background: #ff5f57; }
+    .traffic .y { background: #febc2e; }
+    .traffic .g { background: #28c840; }
+    .urlbar {
+      flex: 1;
+      min-width: 0;
+      height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px;
+      color: var(--stone-cinema);
+    }
+
+    .mkt-header {
+      height: var(--header-offset);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(250, 251, 252, 0.92);
+      border-bottom: 1px solid var(--line);
+      position: relative;
+      z-index: 30;
+    }
+    .wordmark {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.55rem;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .mkt-nav {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--stone-cinema);
+    }
+    .mkt-nav .on { color: var(--ink); }
+
+    .pill-band {
+      position: relative;
+      z-index: 20;
+      background: var(--paper-warm);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 40px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 9999px;
+      padding: 8px 16px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      line-height: 1.2;
+      border: 1px solid var(--line-strong);
+      background: var(--paper);
+      color: var(--stone-cinema);
+      white-space: nowrap;
+    }
+    .pill.is-active {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+      box-shadow: 0 8px 20px rgba(7, 13, 18, 0.12);
+    }
+
+    .stage {
+      background: var(--paper-warm);
+      padding: 28px 40px 48px;
+      display: grid;
+      grid-template-columns: minmax(0, 2.8fr) minmax(0, 3.2fr);
+      gap: 48px;
+      align-items: center;
+      min-height: 520px;
+      overflow: visible;
+    }
+
+    .eyebrow {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-cinema);
+    }
+    .chapter-title {
+      margin: 14px 0 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      max-width: 16ch;
+    }
+    .lead {
+      margin: 16px 0 0;
+      font-size: 1.0625rem;
+      line-height: 1.65;
+      color: var(--stone-cinema);
+      max-width: 38em;
+    }
+    .points {
+      list-style: none;
+      margin: 28px 0 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .points li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 15.2px;
+      line-height: 1.55;
+      color: rgba(7, 13, 18, 0.85);
+    }
+    .check {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      border-radius: 999px;
+      background: rgba(11, 107, 99, 0.12);
+      color: var(--lagoon);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ProductFrame + ClimaxMicroBeat visual hint (scrub-entry peak, not settled) */
+    .frame-wrap {
+      position: relative;
+    }
+    .product-frame {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--paper);
+      box-shadow: var(--frame-shadow);
+      overflow: hidden;
+      transform: scale(1.02) translateY(-4px);
+      transform-origin: center center;
+    }
+    .climax-badge {
+      position: absolute;
+      top: -10px;
+      right: 16px;
+      z-index: 2;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold-cinema);
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 10px;
+      box-shadow: 0 8px 16px rgba(7, 13, 18, 0.06);
+    }
+    .product-chrome {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      background: var(--paper-warm);
+      border-bottom: 1px solid var(--line);
+    }
+    .product-chrome .url {
+      margin-left: 6px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px;
+      color: var(--stone-cinema);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .builder {
+      padding: 18px 18px 20px;
+      background: rgba(243, 245, 247, 0.4);
+    }
+    .builder-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .builder-title {
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.2rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .pro {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      background: var(--ink);
+      color: var(--paper);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      vertical-align: 3px;
+      margin-left: 8px;
+    }
+    .builder-sub {
+      margin: 6px 0 0;
+      font-size: 13px;
+      color: var(--stone-cinema);
+    }
+    .publish {
+      flex-shrink: 0;
+      border-radius: 8px;
+      background: var(--lagoon);
+      color: var(--lagoon-fg);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 12px;
+    }
+    .studio-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .stab {
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--stone-cinema);
+    }
+    .stab.is-on {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+    .builder-grid {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+      gap: 12px;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper);
+      padding: 14px;
+    }
+    .panel-label {
+      margin: 0 0 10px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--stone-cinema);
+    }
+    .sec {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: var(--stone-cinema);
+      margin-bottom: 8px;
+    }
+    .sec:last-child { margin-bottom: 0; }
+    .sec.is-on {
+      border-color: rgba(11, 107, 99, 0.30);
+      background: rgba(11, 107, 99, 0.05);
+      color: var(--ink);
+      font-weight: 500;
+    }
+    .preview {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper);
+      overflow: hidden;
+    }
+    .preview-bar {
+      padding: 8px 12px;
+      background: var(--paper-warm);
+      border-bottom: 1px solid var(--line);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--stone-cinema);
+    }
+    .preview-body { padding: 12px; }
+    .hero-block {
+      border-radius: 8px;
+      background: rgba(11, 107, 99, 0.10);
+      padding: 14px 12px;
+    }
+    .hero-block p {
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 14px;
+      color: var(--ink);
+    }
+    .hero-block span {
+      display: block;
+      margin-top: 4px;
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--stone-cinema);
+    }
+    .mini-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .mini {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px;
+      font-size: 12px;
+      color: var(--stone-cinema);
+    }
+    .upcoming {
+      margin-top: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .upcoming .k {
+      margin: 0;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold-cinema);
+    }
+    .upcoming p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--ink);
+    }
+
+    .caption {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--stone-cinema);
+    }
+  </style>
+</head>
+<body>
+  <div class="studio">
+    <div class="device">
+      <div class="os-chrome">
+        <span class="traffic" aria-hidden="true"><i class="r"></i><i class="y"></i><i class="g"></i></span>
+        <div class="urlbar">cohestra.app/#crm</div>
+      </div>
+
+      <header class="mkt-header">
+        <div class="wordmark">Cohestra</div>
+        <nav class="mkt-nav" aria-label="Marketing">
+          <span>Features</span>
+          <span>Document</span>
+          <span class="on">Clients</span>
+          <span>How it works</span>
+          <span>Pricing</span>
+          <span>FAQ</span>
+          <span>Sign in</span>
+        </nav>
+      </header>
+
+      <div class="pill-band" role="tablist" aria-label="Product surfaces">
+        <span class="pill" role="tab" aria-selected="false">Clients</span>
+        <span class="pill" role="tab" aria-selected="false">Follow-up</span>
+        <span class="pill" role="tab" aria-selected="false">Dashboard</span>
+        <span class="pill" role="tab" aria-selected="false">Campaigns</span>
+        <span class="pill" role="tab" aria-selected="false">Reports</span>
+        <span class="pill is-active" role="tab" aria-selected="true">Website</span>
+      </div>
+
+      <div class="stage">
+        <div class="copy">
+          <p class="eyebrow">Website builder · Pro</p>
+          <h3 class="chapter-title">Publish a public site tied to your activities</h3>
+          <p class="lead">Pro unlocks the full website builder — draft, preview, and publish a homepage at your org subdomain with activities that stay in sync.</p>
+          <ul class="points">
+            <li>
+              <span class="check" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Studio sections: carousel, testimonials, FAQ, and more
+            </li>
+            <li>
+              <span class="check" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Upcoming activities update from your workspace automatically
+            </li>
+            <li>
+              <span class="check" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Draft, preview on desktop and mobile, then publish in one click
+            </li>
+            <li>
+              <span class="check" aria-hidden="true">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.2 8.4 6.4 11.6 12.8 4.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              Share kit with QR, link, and WhatsApp text ready to paste
+            </li>
+          </ul>
+        </div>
+
+        <div class="frame-wrap">
+          <span class="climax-badge">Climax micro-beat (scrub-entry only)</span>
+          <div class="product-frame" aria-hidden="true">
+            <div class="product-chrome">
+              <span class="traffic"><i class="r"></i><i class="y"></i><i class="g"></i></span>
+              <span class="url">yourclub.cohestra.app/dashboard/website</span>
+            </div>
+            <div class="builder">
+              <div class="builder-head">
+                <div>
+                  <p class="builder-title">Website builder <span class="pro">Pro</span></p>
+                  <p class="builder-sub">Draft, preview, and publish your public homepage</p>
+                </div>
+                <span class="publish">Publish</span>
+              </div>
+              <div class="studio-tabs">
+                <span class="stab is-on">Design</span>
+                <span class="stab">Sections</span>
+                <span class="stab">Templates</span>
+              </div>
+              <div class="builder-grid">
+                <div class="panel">
+                  <p class="panel-label">Sections</p>
+                  <div class="sec is-on">Hero</div>
+                  <div class="sec">Highlights</div>
+                  <div class="sec">Upcoming activities</div>
+                  <div class="sec">Testimonials</div>
+                </div>
+                <div class="preview">
+                  <div class="preview-bar">Live preview · Desktop</div>
+                  <div class="preview-body">
+                    <div class="hero-block">
+                      <p>Sunday clinic &amp; open play</p>
+                      <span>Your club homepage hero</span>
+                    </div>
+                    <div class="mini-grid">
+                      <div class="mini">QR registration</div>
+                      <div class="mini">WhatsApp share</div>
+                    </div>
+                    <div class="upcoming">
+                      <p class="k">Upcoming</p>
+                      <p>Sunday clinic · Board games night</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Desktop pin · Website · scrub climax</p>
+  </div>
+</body>
+</html>
