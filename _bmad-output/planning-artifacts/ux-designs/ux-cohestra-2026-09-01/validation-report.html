@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<!--
+  UX Design Validation Report — skeleton template.
+
+  This file is a starter the synthesis pass fills in directly. There is no
+  substitution engine. The LLM:
+    1. Reads {doc_workspace}/review-rubric.md and every review-{slug}.md from
+       additional reviewers.
+    2. Copies this skeleton.
+    3. Replaces the placeholder content (everything between TEMPLATE markers)
+       with the consolidated review, preserving the structure and CSS.
+    4. Writes the result to {doc_workspace}/validation-report.html.
+    5. Writes a markdown twin to {doc_workspace}/validation-report.md.
+
+  Visual rules the LLM must preserve:
+    - The container width, the color tokens, the typography.
+    - One dimension = one collapsible <section class="dimension">.
+    - Verdict pill uses the verdict-* class matching its judgment.
+    - Severity badge uses the badge-sev-* class matching its level.
+    - Each extra reviewer (accessibility, adversarial, etc.) gets its own
+      collapsible section below the rubric dimensions.
+    - The footer always shows the artifact paths and timestamp.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>UX Design Validation: Live Proof Cinema</title>
+<style>
+  :root {
+    --bg: #fafaf9;
+    --surface: #ffffff;
+    --border: #e7e5e4;
+    --text: #1c1917;
+    --muted: #78716c;
+
+    --verdict-strong: #16a34a;
+    --verdict-adequate: #65a30d;
+    --verdict-thin: #d97706;
+    --verdict-broken: #dc2626;
+
+    --sev-low: #64748b;
+    --sev-medium: #ca8a04;
+    --sev-high: #ea580c;
+    --sev-critical: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 64px; }
+
+  header.report-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .title h1 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .title .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+  .synthesis {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    font-size: 15.5px;
+  }
+  .synthesis p { margin: 0 0 10px; }
+  .synthesis p:last-child { margin-bottom: 0; }
+
+  .dimension-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .dim-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .dim-card .dim-name { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .dim-card .dim-verdict { font-size: 14px; font-weight: 600; }
+
+  section.dimension, section.reviewer-section { margin-bottom: 14px; }
+  section.dimension details, section.reviewer-section details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  section summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section summary::-webkit-details-marker { display: none; }
+  section summary::before {
+    content: "▸";
+    display: inline-block;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+  section details[open] summary::before { transform: rotate(90deg); }
+  section summary h2 {
+    display: inline;
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    flex: 1;
+  }
+  .verdict-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+  }
+  .verdict-strong { background: var(--verdict-strong); }
+  .verdict-adequate { background: var(--verdict-adequate); }
+  .verdict-thin { background: var(--verdict-thin); }
+  .verdict-broken { background: var(--verdict-broken); }
+
+  .dim-body { padding: 4px 20px 18px; }
+  .dim-judgment { color: var(--text); font-size: 14.5px; }
+  .dim-judgment p { margin: 0 0 10px; }
+
+  .findings-list { padding: 0 20px 4px; }
+  article.finding {
+    padding: 14px 0;
+    border-top: 1px solid var(--border);
+  }
+  article.finding:first-child { border-top: none; }
+  article.finding header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .badge {
+    font-size: 10.5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+  }
+  .badge-sev-low { background: rgba(100, 116, 139, 0.12); color: var(--sev-low); }
+  .badge-sev-medium { background: rgba(202, 138, 4, 0.14); color: var(--sev-medium); }
+  .badge-sev-high { background: rgba(234, 88, 12, 0.14); color: var(--sev-high); }
+  .badge-sev-critical { background: rgba(220, 38, 38, 0.14); color: var(--sev-critical); }
+  .finding-title { margin: 0; font-size: 15px; font-weight: 500; flex: 1; min-width: 200px; }
+  .finding-location { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--muted); }
+  .finding-note, .finding-fix { margin-top: 6px; font-size: 14px; }
+  .finding-fix strong { color: var(--muted); font-weight: 500; }
+
+  .reviewer-source {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .mechanical {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-top: 24px;
+    font-size: 14px;
+  }
+  .mechanical h3 { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .mechanical ul { margin: 0; padding-left: 20px; }
+  .mechanical li { margin-bottom: 4px; color: var(--text); }
+
+  footer.report-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  footer .meta { display: flex; gap: 24px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="report-header">
+      <div class="title">
+        <h1>Live Proof Cinema — UX Design Validation Report</h1>
+        <div class="subtitle">_bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-09-01/</div>
+      </div>
+    </header>
+
+    <div class="synthesis">
+      <p>The pair is an extractable <strong>behavioral and token contract</strong> for Live Proof Cinema: A1–A7 are locked, contrast tokens are hexed with AA targets, pin math is numeric, and Maya’s four journeys cover the intent’s conversion paths. It is not yet a complete <strong>visual contract</strong> — <code>mockups/</code> and <code>wireframes/</code> are empty, and the memlog’s anti-pattern screenshot is missing from <code>imports/</code> — so a consumer can implement rules without inventing decisions, but must still invent the pinned composition. Downstream architecture / story-dev can source-extract cleanly for copy, seek/pin/PRM, and a11y; they cannot source-extract the stage layout from a picture.</p>
+      <p>The accessibility lens shifts that from “invent the pinned composition from ASCII” to <strong>do not extract the exploded anatomy</strong>. Contrast tokens, Focus≠seek, scrub-debounced live region, PRM→click-tabs, and hash-resets-to-Clients are real floors — keep them. Do <strong>not</strong> treat the Accessibility Floor as shippable. Two locks fight themselves: (1) pills and stage both <code>top: 6rem</code> / <code>z-20</code>, which re-creates <strong>2.4.11</strong> occlusion the last review made blocking; (2) <code>tablist/tabpanel</code> plus <code>aria-hidden</code>+<code>inert</code> on an undefined “stage,” which can hide FeelingCopy or leave a hidden panel. The live mount then adds a third: real WhatsApp/Publish chrome that must not trap, must not be fake, must inner-scroll, and must not steal the pin’s wheel. Those four cannot be true of one subtree. Conditionally specified, not AA-ready — fix the geometry and the hidden-vs-panel map before extract; otherwise implementers will copy <code>top-24</code> onto two stickies and <code>inert</code> onto the tabpanel.</p>
+      <p><strong>Prominently blocking (merged unique):</strong> 2 critical + 7 high. Rubric source: 0 critical / 1 high / 7 medium / 18 low. Accessibility source: 2 critical / 6 high / 5 medium / 3 low. The rubric’s sole high is the missing desktop-pin mock. Accessibility’s two criticals (sticky stacking vs 2.4.11; unnamed <code>tabpanel</code> vs <code>aria-hidden</code> stage) plus six highs (fake live will, inner-scroll vs pin, live-UI 1.4.3, selected vs focused, hash restore, mobile scale/swipe) are the extract stop. Prefer today’s live sticky-wrapper topology over the new exploded anatomy.</p>
+    </div>
+
+    <div class="dimension-summary">
+      <div class="dim-card">
+        <div class="dim-name">Flow coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">strong</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Token completeness</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Component coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">State coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">strong</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Visual reference coverage</div>
+        <div class="dim-verdict" style="color: var(--verdict-thin)">thin</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Bloat &amp; overspecification</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Inheritance discipline</div>
+        <div class="dim-verdict" style="color: var(--verdict-adequate)">adequate</div>
+      </div>
+      <div class="dim-card">
+        <div class="dim-name">Shape fit</div>
+        <div class="dim-verdict" style="color: var(--verdict-strong)">strong</div>
+      </div>
+    </div>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Flow coverage</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Checked <code>sources</code> (intent as primary, parent 2026-07-18 DESIGN, 2026-08-31 EXPERIENCE for pin/a11y only, Apple/Tally craft notes) for UJ / requirement names. Intent has no <code>UJ-*</code> ids; six room jobs + kill/keep + open decisions 1–5 are the requirements. Spine <code>scope</code> explicitly parks parent <strong>UJ-1…UJ-5</strong> on <code>ux-cohestra-2026-07-18</code>. Walked Key Flows A–D against those journeys (desktop walk, mobile click-tabs, skip/escape, reduced-motion). Verified named protagonist, numbered steps, climax beat, failure/escape where present. Three lows only — no extract trap in this category.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Flow D never names Maya</h3>
+              <span class="finding-location">EXPERIENCE.md §Key Flows · Flow D</span>
+            </header>
+            <div class="finding-note">Flow D has numbered steps and a content-only climax but never names Maya.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Open with Maya (or “Maya, OS reduced-motion”) so the template matches A–C.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Flows B and D have no failure path</h3>
+              <span class="finding-location">EXPERIENCE.md §Key Flows vs §State Patterns</span>
+            </header>
+            <div class="finding-note">Flows B and D have resolution beats but no failure path; mount-fail / JS fallback live only in State Patterns.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One line each (Website pill absent; JS fail → CarouselChrome).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">No flow title mirrors parent UJ-1</h3>
+              <span class="finding-location">EXPERIENCE.md §Foundation, §Key Flows</span>
+            </header>
+            <div class="finding-note">Foundation tags Maya as the same job as parent <strong>UJ-1</strong> Priya, but no flow title mirrors <code>UJ-1</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Subtitle Flow A as “UJ-1 marketing-home slice” or drop the UJ-1 citation now that <code>scope</code> already parks UJ-1…UJ-5.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Token completeness</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Extracted every YAML token in DESIGN.md frontmatter and every <code>{path.to.token}</code> in both spines. All color values are hex; <code>theme.modes: [light]</code> commits light-only. Cinema contrast pairs are stated and compute above floor: <code>{colors.stone-cinema}</code> on <code>{colors.paper-warm}</code> ≈ 5.58:1; <code>{colors.gold-cinema}</code> on <code>{colors.paper-warm}</code> ≈ 6.06:1; ink on paper ≈ 18.85:1; lagoon on lagoon-fg ≈ 6.22:1. EXPERIENCE <code>{components.*}</code> / <code>{colors.*}</code> / <code>{spacing.*}</code> refs resolve. Copy interpolations <code>{job sentence}</code> / <code>{navLabel}</code> / <code>{title}</code> are not DESIGN tokens (ok). Three extract traps remain: signed translate, dead eyebrow token, unitless hysteresis in <code>spacing</code>.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">climax-micro-beat translate-y sign conflict</h3>
+              <span class="finding-location">DESIGN.md frontmatter climax-micro-beat vs §ClimaxMicroBeat</span>
+            </header>
+            <div class="finding-note"><code>{components.climax-micro-beat.translate-y}</code> is <code>4px</code> while DESIGN prose locks <code>translateY(-4px)</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One signed value in both places (the beat is a lift: <code>-4px</code>).</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">A6 omits eyebrow but the token still ships gold-cinema</h3>
+              <span class="finding-location">DESIGN.md frontmatter section-header vs §SectionHeader / EXPERIENCE.md §Section</span>
+            </header>
+            <div class="finding-note">A6 omits the section eyebrow, but <code>{components.section-header.eyebrow}</code> still ships <code>{colors.gold-cinema}</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Delete the <code>eyebrow</code> key or set <code>eyebrow: omit</code> so extractors do not render it.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">cinema-pin-hysteresis is a unitless ratio in spacing</h3>
+              <span class="finding-location">DESIGN.md frontmatter spacing; EXPERIENCE.md §Interaction Primitives</span>
+            </header>
+            <div class="finding-note"><code>{spacing.cinema-pin-hysteresis}: 0.03</code> is a unitless ratio in <code>spacing</code>, which the spec requires to be dimensions.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Move to <code>{components.cinema-stage.hysteresis}</code> (or <code>3%</code>) so a token consumer is not told to emit <code>0.03</code> as CSS spacing.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">cinema-copy-visual-gap defined and never cited</h3>
+              <span class="finding-location">DESIGN.md frontmatter vs §Layout &amp; Spacing</span>
+            </header>
+            <div class="finding-note"><code>{spacing.cinema-copy-visual-gap}</code> (32px) is defined and never cited in Layout prose.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Wire it between FeelingCopy and ProductFrame, or delete it.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Restated unused parent tokens</h3>
+              <span class="finding-location">DESIGN.md frontmatter</span>
+            </header>
+            <div class="finding-note">Restated unused parent tokens (<code>success</code> / <code>warn</code> / <code>danger</code>, <code>ink-soft</code>, <code>lagoon-deep</code>, <code>display</code> / <code>marketing-display</code> / <code>public-hero</code>, <code>page-gutter</code> / <code>section-y</code>).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Keep only cinema-touching tokens plus a one-line “inherit unused — do not invent cinema uses.”</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Extra note keys and clamp() fontSize strings</h3>
+              <span class="finding-location">DESIGN.md typography</span>
+            </header>
+            <div class="finding-note"><code>feeling-title</code> / <code>outcome-line</code> carry extra <code>note</code> keys beyond the spec’s typography subset; several <code>fontSize</code> values are <code>clamp(...)</code> strings.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Legal CSS, but move <code>note</code> to prose if a strict resolver is expected.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Component coverage</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Extracted names from DESIGN.md §Components headings, frontmatter <code>components</code>, EXPERIENCE.md §Component Patterns, and room <code>visual</code> fields. Core cinema set has real visual + behavioral rules (not one-word): <code>SectionHeader</code>, <code>SeekPills</code>, <code>CinemaStage</code>, <code>FeelingCopy</code>, <code>ProductFrame</code>, <code>ClimaxMicroBeat</code>, <code>CarouselChrome</code>, <code>LiveRegion</code>, <code>PrimaryButton</code>. Seek dots / chevrons fold into CarouselChrome. LiveRegion now has a DESIGN anatomy line (prior gap closed). InkProgress is the remaining visual-heading hole; accessibility independently flags its role/name as a leftover 4.1.2 issue (merged in the markdown twin).</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">InkProgress has no DESIGN.md Components heading</h3>
+              <span class="finding-location">EXPERIENCE.md §Component Patterns; DESIGN.md §SeekPills / components.ink-progress</span>
+            </header>
+            <div class="finding-note"><code>InkProgress</code> has an EXPERIENCE Component Patterns row and a frontmatter token, but no DESIGN.md §Components heading — visual spec is nested under SeekPills. Accessibility independently flags unspecified role, unlabeled tablist, and unnamed chevrons/dots (see Accessibility review).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Add a <code>### InkProgress</code> visual row (2px, track <code>{colors.line}</code>, selected pill remains teacher) or fold the EXPERIENCE row into SeekPills.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">cinematic-mask has no EXPERIENCE behavioral row</h3>
+              <span class="finding-location">DESIGN.md frontmatter + §ProductFrame</span>
+            </header>
+            <div class="finding-note"><code>{components.cinematic-mask}</code> is specified visually and cited under ProductFrame, with no EXPERIENCE behavioral row. Complementary to Accessibility high (inner-scroll vs pin).</div>
+            <div class="finding-fix"><strong>Fix:</strong> One line under ProductFrame (“mask crops; still live DOM; no second mock”) is enough — or add a Component Patterns row.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">button-secondary and hairline-rule unused</h3>
+              <span class="finding-location">DESIGN.md frontmatter</span>
+            </header>
+            <div class="finding-note"><code>{components.button-secondary}</code> and <code>{components.hairline-rule}</code> exist in frontmatter with no Components body row and no EXPERIENCE pattern.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Remove, or mark inherited unused.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Dual naming: PascalCase vs kebab tokens</h3>
+              <span class="finding-location">both spines Components</span>
+            </header>
+            <div class="finding-note">PascalCase experience components vs kebab tokens (<code>ProductFrame</code> / <code>{components.product-frame}</code>, <code>PrimaryButton</code> / <code>{components.button-primary}</code>, <code>SeekPills</code> / <code>seek-pill-idle|sticky|active</code>).</div>
+            <div class="finding-fix"><strong>Fix:</strong> One mapping line at the top of each Components section.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>State coverage</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Walked the single IA surface <code>/#crm</code> (six rooms as seek targets, not routes) for applicable states: empty (N/A except Website-omit), cold-load, hash land, in-pin <em>n</em>, seek, skip, climax armed/spent, Website epilogue, unpin/re-enter, focus (desktop pinned), reduced-motion, resize/<code>lg</code> remount, hash-while-in-section reset, mount/iframe failure, JS/cinema failure. Offline and permission-denied do not apply to static apex seed. Prior gaps (Focus, tablist vs <code>aria-current</code>, PRM remount, mock/mount failure) are now committed. One low (hover visual-only) remains; accessibility independently raises hash restore, selected-vs-focused, and PRM DESIGN-token leftovers as extract issues.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Hover on idle pills / chevrons absent from State Patterns</h3>
+              <span class="finding-location">DESIGN.md §SeekPills; EXPERIENCE.md §State Patterns</span>
+            </header>
+            <div class="finding-note">Hover on idle pills / chevrons is specified in DESIGN and absent from State Patterns.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One Hover row pointing at DESIGN, or declare hover visual-only.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details open>
+        <summary>
+          <h2>Visual reference coverage</h2>
+          <span class="verdict-pill verdict-thin">thin</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Listed workspace files: <code>imports/brainstorm-intent-live-proof-cinema.md</code>, <code>imports/craft-apple-iphone-17-pro-sg.md</code>, <code>imports/craft-tally-so.md</code> (all three linked from both intros). <code>mockups/</code> absent. <code>wireframes/</code> absent. <code>.working/</code> empty. Memlog claims <code>website-chapter-hollow-mock.png</code>; the file is not on disk and neither spine links it. Spines-win-on-conflict is stated once in each intro. This is the only thin dimension — the novel desktop pin cinema has no picture, which is also the rubric’s sole high.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">No promoted mock or wireframe of the desktop pin cinema</h3>
+              <span class="finding-location">DESIGN.md §Layout &amp; Spacing; EXPERIENCE.md §CinemaStage / Flow A</span>
+            </header>
+            <div class="finding-note">No promoted mock or wireframe of the <strong>desktop pin cinema</strong> (stable stage + sticky SeekPills + 32/68 split) — the novel interaction. Only ASCII anatomy plus tokens. A consumer can implement rules without inventing decisions, but must still invent the pinned composition. Accessibility independently warns that implementing DESIGN’s two-band drawing literally will fail 2.4.11 in QA (critical — see Accessibility review).</div>
+            <div class="finding-fix"><strong>Fix:</strong> At least one <code>mockups/</code> HTML (Clients pinned + Follow-up climax) linked at CinemaStage / Flow A; name what it illustrates; keep spines-win.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Memlog anti-pattern PNG is missing from imports/</h3>
+              <span class="finding-location">.memlog.md; imports/ listing</span>
+            </header>
+            <div class="finding-note">Memlog import <code>website-chapter-hollow-mock.png</code> (hollow Website + chapter chrome, the anti-pattern) does not exist under <code>imports/</code> and is unreferenced in the spines.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Restore the PNG into <code>imports/</code> and link it at Inspiration / Website room as “do not ship this,” or delete the memlog claim.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Craft notes linked only from the intro</h3>
+              <span class="finding-location">both spines intros vs EXPERIENCE.md §Inspiration</span>
+            </header>
+            <div class="finding-note">Craft notes are linked only from the intro, not at Inspiration where the Apple/Tally grammar is consumed.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Repeat the relative <code>imports/craft-*.md</code> links at Inspiration with one-line captions.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Spines-win present; no mock to conflict with yet</h3>
+              <span class="finding-location">both spines intros</span>
+            </header>
+            <div class="finding-note">Spines-win is present; there is no mock to conflict with yet.</div>
+            <div class="finding-fix"><strong>Fix:</strong> After mocks land, link them at IA + Components with the same spines-win line.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Bloat &amp; overspecification</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Checked for pixel specs duplicating tokens, source restatement, prose-where-table, unread sections, decorative narrative untied to a decision. DESIGN editorial voice is allowed; EXPERIENCE is mostly operational (Feeling → Scene → Proof tables are load-bearing copy, not decoration). The locked A1–A7 / six-room copy catalog is restated enough that extractors must hunt which table wins.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">A1–A7 and six-room copy restated across too many sections</h3>
+              <span class="finding-location">EXPERIENCE.md §Foundation · Model, §Rooms, §Component Patterns; DESIGN.md §Components</span>
+            </header>
+            <div class="finding-note">Locked A1–A7 and the six-room copy catalog are restated across Foundation, IA, Components, Layout, Key Flows, and Backup — extractors must hunt which table wins.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One “Locked decisions (A1–A7)” table plus one copy table; elsewhere cite by id.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Full Midnight Atelier ramp restated including unused tokens</h3>
+              <span class="finding-location">DESIGN.md frontmatter + §Colors</span>
+            </header>
+            <div class="finding-note">Full Midnight Atelier palette/type ramp restated “so this workspace is self-contained,” including tokens never used on <code>#crm</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Self-contain cinema-touching tokens; inherit the rest by <code>inherits</code>.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Inheritance discipline</h2>
+          <span class="verdict-pill verdict-adequate">adequate</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Checked <code>sources</code> paths exist, UJ/requirement names vs intent (verbatim room jobs, feeling lines, CTA, kill list), glossary (Live Proof Cinema, Midnight Atelier, MarketingDemoClub, Maya, CarouselChrome, ClimaxMicroBeat), component-name identity, and EXPERIENCE <code>{token}</code> → DESIGN resolution. Parent DESIGN hex values match restated cinema colors. <code>inherits</code> points at <code>ux-cohestra-2026-07-18/DESIGN.md</code>. Zero <code>[ASSUMPTION]</code> markers remain; A1–A7 are memlog-locked. Remaining extract traps are conflicts (signed translate, dead eyebrow token, Sora in intent), not unmarked assumptions.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Intent still says Fraunces/Sora; DESIGN forbids Sora; override not memlogged</h3>
+              <span class="finding-location">imports/brainstorm-intent-live-proof-cinema.md Non-negotiables; DESIGN.md §Brand &amp; Style</span>
+            </header>
+            <div class="finding-note">Primary source still says “Fraunces/Sora”; DESIGN forbids a third family (“no Sora, no San Francisco”). Spines win, but the override is not in <code>.memlog.md</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Memlog <code>override</code>: Sora is out; Plus Jakarta Sans is the instrument face.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Pill-full committed against parent avoid-pill-full</h3>
+              <span class="finding-location">parent DESIGN.md §Shapes; cinema DESIGN.md §Shapes</span>
+            </header>
+            <div class="finding-note">Parent Shapes say avoid pill-full; cinema commits <code>{rounded.full}</code> on SeekPills with CTA staying <code>{rounded.md}</code>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One explicit override sentence: “pill nav is the six-room seek control — exception to parent avoid-pill-full.” (Rationale is already there; name it as override.)</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Marketing type tokens are cinema deltas, not parent YAML</h3>
+              <span class="finding-location">DESIGN.md §Typography vs parent DESIGN.md</span>
+            </header>
+            <div class="finding-note"><code>marketing-section</code> / <code>marketing-lead</code> / <code>feeling-*</code> are marketing-shell / cinema deltas, not parent-frontmatter restatements.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Keep the “marketing shell” label; do not say they inherit from Midnight Atelier YAML.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">status: draft during Reviewer Gate — expected</h3>
+              <span class="finding-location">both spines frontmatter</span>
+            </header>
+            <div class="finding-note">Both spines <code>status: draft</code> during Reviewer Gate — expected, not handoff-ready.</div>
+            <div class="finding-fix"><strong>Fix:</strong> <code>final</code> only after visual coverage and the signed-token / eyebrow traps close.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="dimension">
+      <details>
+        <summary>
+          <h2>Shape fit</h2>
+          <span class="verdict-pill verdict-strong">strong</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>DESIGN.md body order matches canonical Brand &amp; Style → Colors → Typography → Layout &amp; Spacing → Elevation &amp; Depth → Shapes → Components → Do's and Don'ts; none omitted that the surface needs; no out-of-order extras. EXPERIENCE required defaults present (Foundation, IA, Voice and Tone, Component Patterns, State Patterns, Interaction Primitives, Accessibility Floor, Key Flows). Triggered sections present (Inspiration — Apple/Tally in sources + memlog; Responsive — desktop pin + mobile click-tabs). Invented <strong>Backup &amp; Rollback</strong> earns its place (live bodies on every fallback; never revive chapter chrome). Invented Foundation Model / Kill-keep / Data &amp; Mount are load-bearing, not furniture.</p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Key Flows sit before Inspiration &amp; Responsive</h3>
+              <span class="finding-location">EXPERIENCE.md heading order vs experience-example-shadcn.md</span>
+            </header>
+            <div class="finding-note">Key Flows sit before Inspiration &amp; Responsive; example spines put Key Flows last.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Optional move Key Flows after Responsive so extractors find journeys where the template puts them.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">DESIGN frontmatter carries BMad extras beyond Google Labs token keys</h3>
+              <span class="finding-location">DESIGN.md frontmatter</span>
+            </header>
+            <div class="finding-note">DESIGN frontmatter carries BMad extras (<code>status</code>, <code>theme</code>, <code>sources</code>, <code>inherits</code>, <code>scope</code>, <code>design</code>) beyond Google Labs token keys — matches org / prior Cohestra cinema spines.</div>
+            <div class="finding-fix"><strong>Fix:</strong> None.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <section class="reviewer-section">
+      <details open>
+        <summary>
+          <h2>Accessibility review</h2>
+          <span class="reviewer-source">review-accessibility.md</span>
+        </summary>
+        <div class="dim-body">
+          <div class="dim-judgment">
+            <p>Lens: WCAG 2.2 AA on a consumer-conversion marketing surface. Critique is of this delta’s spines (<code>DESIGN.md</code>, <code>EXPERIENCE.md</code>), not of a finished implementation. Live <code>web/components/marketing/marketing-product-cinema.tsx</code> is cited only as ground truth — what the prior cinema already got right, and what this anatomy would regress.</p>
+            <p><strong>Conditionally specified, not AA-ready.</strong> Contrast tokens, Focus≠seek, scrub-debounced live region, PRM→click-tabs, and hash-resets-to-Clients are real floors — keep them. Do <strong>not</strong> treat the Accessibility Floor as shippable. Two locks fight themselves: (1) pills and stage both <code>top: 6rem</code> / <code>z-20</code>, which re-creates <strong>2.4.11</strong> occlusion; (2) <code>tablist/tabpanel</code> plus <code>aria-hidden</code>+<code>inert</code> on an undefined “stage.” The live mount then adds a third: real WhatsApp/Publish chrome that must not trap, must not be fake, must inner-scroll, and must not steal the pin’s wheel. Those four cannot be true of one subtree.</p>
+            <p><strong>Build-blocking (2 critical + 6 high):</strong> (1) One sticky cinema chrome under the header — pills inside the box, not a second <code>top-24</code>. (2) Frame-only <code>aria-hidden</code>+<code>inert</code>; FeelingCopy <em>is</em> the <code>tabpanel</code>. (3) Treat the frame as preview, not an operable desk. (4) No inner scroll — crop with the mask; page scroll owns the wheel. (5) Cinema mount uses cinema contrast tokens, not unmodified admin stone. (6) Dual-state: ink/<code>aria-selected</code> follow seeked room; focus is ring only; Tab-in resyncs to selected. (7) Hash <code>#crm</code> intercept + <code>resetToClients</code>; do not yank focus from the header. (8) No CSS-scale of live roots; wrap pills below <code>sm</code>.</p>
+            <p>Already strong (do not lose): cinema contrast tokens are real (stone-cinema 5.58:1, gold-cinema 6.06:1); Focus ≠ seek; Activate seeks; <code>preventScroll</code> on programmatic focus; native scroll only; live-region cadence (polite + atomic, debounce scrub); PRM is a product not a dimmer; no autoplay; climax not on skip; Website is epilogue; no long pin on mobile; hash means Clients at rest. Ground-truth cinema already: one sticky under <code>top-24</code>, <code>aria-hidden</code>+<code>inert</code>+<code>pointer-events-none</code> on the <strong>visual only</strong>, copy as the accessible column, <code>aria-label="Product surfaces"</code>. <strong>Prefer that topology over the new exploded anatomy.</strong></p>
+          </div>
+        </div>
+        <div class="findings-list">
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">Pin + sticky pills vs header still fail 2.4.11 as specified</h3>
+              <span class="finding-location">DESIGN pinned anatomy + seek-pill-sticky + Layout; EXPERIENCE SeekPills / Accessibility Floor; live sticky wrapper</span>
+            </header>
+            <div class="finding-note">The floor writes the right <em>check</em> (focused pill, header link, feeling H3 never fully covered) and the wrong <em>geometry</em>. <code>{components.seek-pill-sticky}</code> and the pin both use <code>top: {spacing.header-offset}</code> (6rem) and both <code>z-20</code>; header is <code>z-30</code>. Two stickies at the same <code>top</code> occupy the same band: the stage (min-height 520px) paints over the pill row and the left-column H3, or the pill band covers the feeling word. <code>scroll-mt-24</code> only offsets hash landing of <code>#crm</code>, not stacking of pill height under the bar. Ground truth already does this correctly as <strong>one</strong> sticky (<code>top-24 z-20 h-[calc(100vh-6rem)]</code>) with the tablist <em>inside</em> that box — the DESIGN anatomy drawing would regress it.</div>
+            <div class="finding-fix"><strong>Fix:</strong> One sticky cinema chrome under the header. Pills are a <code>shrink-0</code> row <em>inside</em> it; the FeelingCopy+frame fills the rest. If two stickies are required, stage <code>top</code> = header height <strong>+</strong> pill-band height, pills <code>z</code> above the stage, both below header <code>z-30</code>. Write the 2.4.11 test against that math, not against a shared 6rem.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-critical">critical</span>
+              <h3 class="finding-title">aria-hidden+inert target is “stage,” but the accessible tabpanel is unnamed</h3>
+              <span class="finding-location">EXPERIENCE Model “Stage a11y”; ProductFrame; Accessibility Floor; DESIGN CinemaStage / FeelingCopy / ProductFrame</span>
+            </header>
+            <div class="finding-note">Model table: “Stage a11y = <code>aria-hidden</code> and <code>inert</code>.” ProductFrame row repeats “Stage: <code>aria-hidden</code> and <code>inert</code>.” CinemaStage <strong>is</strong> FeelingCopy + ProductFrame. Hide the pair and AT loses the H3, scene, and outcomes — leaving a tablist whose panel is empty/hidden (<strong>4.1.2</strong> / APG: tabs must control a visible panel) plus a first-person live-region riddle. Hide only the frame (as today’s visual column does) and FeelingCopy can <em>be</em> the stable panel — but the spine never says that. <code>PrimaryButton</code> “not inside the inert stage” implies the stage is the whole pinned pair. Live copy column is <strong>not</strong> <code>aria-hidden</code>; visual <strong>is</strong>.</div>
+            <div class="finding-fix"><strong>Fix:</strong> <strong>Frame only:</strong> <code>aria-hidden</code> + <code>inert</code> on ProductFrame. FeelingCopy <strong>is</strong> the <code>tabpanel</code> (<code>id</code> stable, <code>aria-labelledby</code> active tab). Pills <code>aria-controls</code> that id. Written test: headings/scene are in the accessibility tree; zero tab stops inside the frame; Tab from last pill lands on the next page landmark, never a WhatsApp button.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Live product UI is specified as real will and as a poster</h3>
+              <span class="finding-location">DESIGN Colors / Craft 5; EXPERIENCE ProductFrame + Stage a11y; intent Stage inert</span>
+            </header>
+            <div class="finding-note">DESIGN: lagoon is “true product actions inside the live stage (WhatsApp, Publish).” EXPERIENCE: clicks blocked, inert, pills are the only control. Sighted users get login-true buttons that do nothing (<strong>1.3.1</strong> / consistent identification). That is not “no fake interactivity”; it is fake interactivity with better pixels than the old mocks. Keyboard is saved only if inert holds; pointer users learn the product is a lie.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Treat the frame as <strong>preview</strong>, not an operable desk. No hover/cursor/active styles leaking from admin buttons. Optional visible caption: this is a walkthrough, not a session. Do not advertise in-frame Publish/WhatsApp as will — will is the post-cinema CTA. If a control cannot activate, it must not look enabled.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">“Inner scroll for depth” fights native pin scrub</h3>
+              <span class="finding-location">EXPERIENCE Interaction Primitives; ProductFrame; DESIGN cinematic-mask</span>
+            </header>
+            <div class="finding-note">Pin maps page <code>scrollY</code> → surface index and <strong>forbids</strong> <code>preventDefault</code> on wheel. The frame is a cinematic mask (<code>overflow: hidden</code>) that is also “internally scrollable.” Wheel over Clients will scroll the list, not the house — cinema feels stuck; hysteresis never fires. <code>pointer-events: none</code> (today’s visual) blocks inner scroll <strong>and</strong> clicks, which satisfies inert but contradicts “scroll for depth.” Nested scrollports are a pointer trap even when keyboard is free (<strong>2.1.2</strong>-adjacent for anyone using a cursor as their AT).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Pick one. Recommended: <strong>no inner scroll</strong>. Crop with the mask; page scroll owns the wheel. If depth-scroll is mandatory, it exists only when the pointer is inside a clearly labeled overflow region <strong>and</strong> does not start until the inner pane has overflow — never on the frame chrome — and pin progress ignores wheel over that pane. Document the hit-test. Do not ship both “native scroll only” and “inner scroll allowed” as equal rules.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Visible live UI still fails 1.4.3 even when cinema copy passes</h3>
+              <span class="finding-location">DESIGN Colors LOCKED ≥4.5:1; EXPERIENCE Accessibility Floor; Data &amp; Mount</span>
+            </header>
+            <div class="finding-note"><code>{colors.stone-cinema}</code> / <code>{colors.gold-cinema}</code> on <code>{colors.paper-warm}</code> measure <strong>5.58:1</strong> and <strong>6.06:1</strong> — the <em>copy</em> floor is honest. The trust hire is the mounted admin/preview, which still uses inherited <code>{colors.stone}</code> <strong>2.85:1</strong> on paper-warm (and whatever muted chips the bodies ship). <strong>1.4.3 applies to visible text</strong>, including <code>aria-hidden</code> subtrees. A conversion section that is AA in the left column and 2.85:1 in the hero object is not AA.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Cinema mount uses the same contrast tokens as marketing (stone-cinema / ink for secondary text), or a dedicated DemoClub presentational theme. Do not iframe a production admin stylesheet unmodified. QA contrast on Elena’s meta line, not only the feeling scene.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">APG tablist is locked; selected vs focused is not</h3>
+              <span class="finding-location">EXPERIENCE SeekPills; Interaction Pills; State In-pin / Focus; Accessibility Floor NRV</span>
+            </header>
+            <div class="finding-note">“Focus moves <strong>highlight</strong> only; Activate seeks” plus “selected = ink fill” plus <code>aria-selected</code> on in-pin room <em>n</em> describes three properties and one word (“highlight”). Implementers will ink-fill on focus (seek on arrow — banned) or set <code>aria-selected</code> on focus (AT thinks the room changed — <strong>4.1.2</strong>). Manual-activation APG requires: ink + <code>aria-selected</code> follow the <strong>seeked</strong> room; focus-visible ring is the only focus tell; two pills may be emphasized at once. Floor also says “one selected tab in tab order,” which conflicts with independent <code>focusIndex</code> after scrub: Tab back into the list lands on a stale Clients tab while Website is selected. Live code already splits <code>isSelected</code> vs <code>isFocused</code> but does not resync roving to selected on blur.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Write the dual-state. <code>aria-selected</code> ⇔ progress room ⇔ ink. Focus ⇔ ring only. Left/Right/Home/End move focus with <code>preventScroll</code>; Enter/Space Activate. On Tab-in (or blur of the tablist), roving <code>tabIndex={0}</code> returns to the <strong>selected</strong> tab. Do not <code>preventDefault</code> Up/Down/PageDown; Space only when a tab is focused.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Hash #crm restore is a state, not a mechanism</h3>
+              <span class="finding-location">EXPERIENCE State Hash; Header nav contract; Interaction Hash; live onHash + focusTab</span>
+            </header>
+            <div class="finding-note">State table: hash always scrolls the section into view, Clients at progress 0 / index 0, including when already in-section. Header <strong>Clients</strong> is <code>href="/#crm"</code>. Same-document clicks on an already-current hash <strong>do not fire <code>hashchange</code></strong> — today’s handler never runs; the visitor stays on Website. Spec also does not say whether restore <strong>moves focus</strong>. Live cinema currently <code>focusTab(clients)</code> on hash, yanking focus from the header link (<strong>2.4.3</strong>).</div>
+            <div class="finding-fix"><strong>Fix:</strong> Intercept header/in-page <code>#crm</code> activation (click + Next.js same-hash), always <code>resetToClients</code> + scroll with <code>scroll-mt-24</code>. <strong>Do not</strong> move focus unless focus was inside cinema chrome that unmounted. After restore, do not re-announce unless the room actually changed.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-high">high</span>
+              <h3 class="finding-title">Mobile parity is story-parity, not access-parity</h3>
+              <span class="finding-location">DESIGN form factor / CarouselChrome / seek-dot; EXPERIENCE Responsive &lt;sm / Mobile; Flow B</span>
+            </header>
+            <div class="finding-note"><code>&lt; lg</code> is click-tabs (good — no pin trap) with “same live bodies, <strong>scaled</strong>” inside a crop mask. Scaling admin density below 16px, or clipping the operable region of a table, fails low-vision reading even if 1.4.4 browser zoom still works (inner <code>transform: scale</code> <strong>fights</strong> zoom). Horizontal-scroll tablist “below <code>sm</code> as needed” still hides Website off-screen without a peek — <strong>2.5.1</strong> path-gesture to reach a room. Dots at 24×24 are specified; pills at <code>8px 16px</code> + 12px label are ~32px tall (2.5.8 pass, 2.5.5 fail — AA-ok).</div>
+            <div class="finding-fix"><strong>Fix:</strong> No CSS-scale of live roots. Reflow/crop, don’t shrink type. Below <code>sm</code>, <strong>wrap</strong> pills (same as <code>sm:flex-wrap</code>) or show a peek + chevrons; do not require a horizontal swipe to reach Website. Keep 24×24 dots; keep chevron 40px on this path.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Live region policy is right; the string is not an orientation</h3>
+              <span class="finding-location">EXPERIENCE Voice live-region pattern; LiveRegion; Accessibility Floor</span>
+            </header>
+            <div class="finding-note">Polite, atomic, explicit-seek immediate, scrub ~300ms/<code>scrollend</code>, no assertive, suppress duplicates — keep all of it. Replacing “Showing {navLabel}: {title}” with the first-person <strong>job sentence</strong> means a scrub-settle announcement has <strong>no room name</strong>. Explicit seek already speaks the tab then the job — complementary, but noisy. Scrub-only users never hear the tab name from the region.</div>
+            <div class="finding-fix"><strong>Fix:</strong> <code>{navLabel}. {job sentence}.</code> Suppress the region on explicit Activate if the tab’s accessible name already includes <code>navLabel</code> <strong>and</strong> the job is in the panel H3 — or delay ~150ms so the tab utterance wins. Never “Chapter N.”</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">PRM→click-tabs is locked in EXPERIENCE and still contradicted by DESIGN motion tokens</h3>
+              <span class="finding-location">DESIGN SeekPills hover / feeling-crossfade / ClimaxMicroBeat; EXPERIENCE PRM state; Backup</span>
+            </header>
+            <div class="finding-note">State: <code>matchMedia</code> change tears the spacer, remounts CarouselChrome, restores surface <strong>id</strong>, syncs scroll. Climax/hover-lift/crossfade skip under PRM. DESIGN SeekPills still specify idle hover <code>translateY(-2px)</code> and <code>{components.feeling-crossfade}</code> 400ms with no token-level PRM exception — the last review’s leftover. Motion-safe <code>lg+</code> drops dots/chevrons; PRM <strong>gains</strong> them — skip-parity must be tested on both chromes.</div>
+            <div class="finding-fix"><strong>Fix:</strong> DESIGN: hover-lift and crossfade are motion-safe only. PRM = CarouselChrome behavior <strong>and</strong> chrome. Preserve the remount rule.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">InkProgress and unnamed tablist/chevrons are leftover 4.1.2 holes</h3>
+              <span class="finding-location">DESIGN ink-progress / CarouselChrome; EXPERIENCE InkProgress / Accessibility Floor</span>
+            </header>
+            <div class="finding-note">Also flagged by Rubric Component coverage (medium — no DESIGN heading). A7 ships a 2px ink bar under pills. Unspecified role: a <code>&lt;progress&gt;</code> will announce on scrub; an unlabeled slider will be operable by accident. Idle track <code>{colors.line}</code> on paper-warm is <strong>1.11:1</strong> — acceptable only if the bar is purely decorative (selected <strong>pill</strong> is the teacher) and <code>aria-hidden</code>. Tablist has no required accessible name in this spine (live code: <code>aria-label="Product surfaces"</code>). Chevrons/dots “call the same Activate” but have no <code>Go to {navLabel}</code> / <code>Previous</code> names.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Ink bar: <code>aria-hidden</code> presentational div, not <code>progressbar</code>. Tablist: <code>aria-label="Product surfaces"</code>. Chevrons: buttons with names; dots: <code>Go to {navLabel}</code>.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">iframe /demo/* fallback can undo inert</h3>
+              <span class="finding-location">EXPERIENCE Data &amp; Mount Fallback; State Mount failure; A5</span>
+            </header>
+            <div class="finding-note">Fallback is still a full document. <code>inert</code> on the host does not reliably kill iframe tab stops in every engine; a focusable demo <strong>is</strong> a <strong>2.1.2</strong> trap (Tab in, no Tab out). Mount failure that “keeps prior inhabited room and announce nothing” while the Website pill remains is a selected-tab/panel lie (<strong>4.1.2</strong>). A5 omit-the-room is the honest path; silent iframe failure is not.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Prefer omit-pill. If iframe ships: <code>tabindex="-1"</code>, <code>inert</code> on host, <code>pointer-events: none</code>, <code>title</code> decorative, sandbox without <code>allow-scripts</code> if possible. On failure: hide that tab, retarget <code>aria-controls</code>, do not leave a selected Website tab on a Clients panel.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-medium">medium</span>
+              <h3 class="finding-title">Feeling copy contrast passes; whisper type can still fail in production</h3>
+              <span class="finding-location">DESIGN feeling-copy / typography.section; Colors “do not use stone/gold”</span>
+            </header>
+            <div class="finding-note">Gold-cinema <strong>6.06:1</strong> and stone-cinema <strong>5.58:1</strong> on paper-warm at 13px / 16px meet <strong>1.4.3</strong>. The feeling word is <code>{typography.section}</code> — 13px uppercase, <code>letter-spacing: 0.12em</code>. That pairing is legally AA and optically faint; any <code>opacity</code>, <code>/60</code>, or <code>{colors.gold}</code> fallback (2.97:1) kills it. <strong>1.4.12</strong> user letter-spacing on an already-tracked 13px line will wrap into the sticky pill band if overflow is hidden.</div>
+            <div class="finding-fix"><strong>Fix:</strong> No opacity on feeling/scene. Clip test with 1.4.12 spacing. Do not put FeelingCopy under <code>overflow: hidden</code> shared with the mask.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">“Escape” still means “keep scrolling”</h3>
+              <span class="finding-location">EXPERIENCE Unpin / Escape</span>
+            </header>
+            <div class="finding-note">Keyboard users will press Esc. It does nothing. Harmless unless a future <code>preventDefault</code> lands.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Stop calling scroll “escape,” or map Esc to scroll to the end of the track / next section.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">Light-only cinema (theme.modes: [light])</h3>
+              <span class="finding-location">DESIGN theme.modes</span>
+            </header>
+            <div class="finding-note"><code>prefers-color-scheme: dark</code> still gets paper-warm. Correctly not a dark theater; still glare. Out of scope.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Shell-level later. Do not invent a cinema dark mode.</div>
+          </article>
+          <article class="finding">
+            <header>
+              <span class="badge badge-sev-low">low</span>
+              <h3 class="finding-title">No skip-past-cinema control (2.4.1 kindness)</h3>
+              <span class="finding-location">2.4.1; post-cinema CTA</span>
+            </header>
+            <div class="finding-note">Roving tablist is one stop; the pin adds time, not stops. A skip link to the post-cinema CTA is optional <strong>if</strong> critical geometry holds.</div>
+            <div class="finding-fix"><strong>Fix:</strong> Optional <code>Skip product walkthrough</code> to <code>#</code> of the CTA band.</div>
+          </article>
+        </div>
+      </details>
+    </section>
+
+    <div class="mechanical">
+      <h3>Mechanical notes</h3>
+      <ul>
+        <li><strong>Broken / missing paths:</strong> Relative parent links <code>../ux-cohestra-2026-07-18/DESIGN.md</code> and <code>../ux-cohestra-2026-08-31/EXPERIENCE.md</code> resolve. Implementation paths <code>web/components/marketing/marketing-product-cinema.tsx</code>, <code>use-marketing-product-cinema.ts</code>, <code>web/lib/marketing/product-slides.tsx</code> resolve. <code>imports/craft-*.md</code> and <code>imports/brainstorm-intent-live-proof-cinema.md</code> resolve. <code>imports/website-chapter-hollow-mock.png</code> does <strong>not</strong> exist (memlog-only). <code>mockups/</code> and <code>wireframes/</code> directories do not exist.</li>
+        <li><strong>Name inconsistencies:</strong> <code>Follow-up</code> navLabel vs room id <code>outreach</code> / <code>ProductSlideId</code> (committed, but extractors need the id table). <code>InkProgress</code> vs <code>{components.ink-progress}</code>. <code>PrimaryButton</code> vs <code>{components.button-primary}</code>. <code>SeekPills</code> vs <code>seek-pill-idle|sticky|active</code>. Maya (this spine) vs Priya (parent UJ-1).</li>
+        <li><strong>Frontmatter completeness:</strong> Both spines share <code>name</code>, <code>description</code>, <code>status: draft</code>, <code>created</code>/<code>updated</code>, <code>sources</code>, <code>scope</code>, <code>design: ./DESIGN.md</code>. DESIGN has <code>theme</code>, <code>inherits</code>, full token blocks. EXPERIENCE has <code>implementation</code>. YAML list items use unquoted <code>{planning_artifacts}/…</code>, which <strong>fails strict YAML parse</strong> (<code>expected &lt;block end&gt;, but found '&lt;scalar&gt;'</code>) — same BMad convention as skill examples; quote those strings if a machine resolver is in the chain. <code>craft_reference: https://…</code> mappings inside <code>sources</code> are likewise non-string list items.</li>
+        <li><strong>Cross-refs:</strong> EXPERIENCE <code>{components.seek-pill-sticky}</code>, <code>{components.feeling-crossfade}</code>, <code>{components.climax-micro-beat}</code>, <code>{components.button-primary}</code>, <code>{components.seek-dot-idle}</code>, <code>{colors.stone-cinema}</code>, <code>{colors.gold-cinema}</code>, <code>{colors.paper-warm}</code>, <code>{spacing.header-offset}</code>, <code>{spacing.cinema-surface-scroll}</code>, <code>{spacing.cinema-pin-hysteresis}</code>, <code>{spacing.cinema-stage-span}</code>, <code>{spacing.cinema-copy-span}</code> all resolve. <code>{job sentence}</code> / <code>{navLabel}</code> / <code>{title}</code> / <code>{n}</code> are copy interpolations, not tokens. Self-conflict: climax <code>translate-y</code> sign (see Token completeness).</li>
+        <li><strong>Mermaid:</strong> None. ASCII stage diagram in DESIGN.md §Layout &amp; Spacing — valid, no syntax issues.</li>
+        <li><strong>Copy fidelity:</strong> EXPERIENCE room tables match intent feeling/job/feeling-line verbatim (Clients…Website). CTA, thesis (A3), omitted eyebrow (A6), Website omit-if-heavy (A5) match locked memlog decisions.</li>
+        <li><strong>Open [ASSUMPTION] count:</strong> <strong>Zero</strong> in either spine. Remaining extract traps are conflicts (signed translate, dead eyebrow token, Sora in intent), not unmarked assumptions.</li>
+        <li><strong>Contrast (computed, for the record):</strong> stone on paper-warm 2.85:1 (correctly banned); gold on paper-warm 2.97:1 (correctly prefer gold-cinema); cinema tokens clear AA as claimed. Accessibility still flags inherited stone on the <em>live mount</em> as a 1.4.3 hole (high).</li>
+        <li><strong>Source severity totals (verified):</strong> Rubric 0 critical / 1 high / 7 medium / 18 low. Accessibility 2 critical / 6 high / 5 medium / 3 low. Merged unique: 2 critical / 7 high / 11 medium / 21 low (InkProgress visual-gap + 4.1.2 folded into one medium).</li>
+      </ul>
+    </div>
+
+    <footer class="report-footer">
+      <div class="meta">
+        <span>DESIGN: _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-09-01/DESIGN.md</span>
+        <span>EXPERIENCE: _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-09-01/EXPERIENCE.md</span>
+        <span>Rubric: _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-09-01/review-rubric.md</span>
+        <span>Accessibility: _bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-09-01/review-accessibility.md</span>
+        <span>Generated: 2026-09-01T14:55Z</span>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
