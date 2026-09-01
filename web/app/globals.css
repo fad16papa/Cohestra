@@ -161,6 +161,19 @@
     animation: marketing-cinema-climax 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
+  /* Cinema stage: force nested showcase shells to fill the visual column */
+  .marketing-cinema-visual,
+  .marketing-cinema-visual > div,
+  .marketing-cinema-visual .marketing-crm-showcase-frame,
+  .marketing-cinema-visual .marketing-crm-showcase-surface {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .marketing-cinema-visual [aria-hidden] {
+    height: 100%;
+  }
+
   @keyframes marketing-hero-stack-rise {
     from {
       opacity: 0;

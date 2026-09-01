@@ -27,6 +27,7 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
   const [playClimax, setPlayClimax] = useState(false);
   const [focusIndex, setFocusIndex] = useState(initialIndex);
   const slide = PRODUCT_SLIDES[activeIndex]!;
+  const chapterNumber = String(activeIndex + 1).padStart(2, "0");
 
   useEffect(() => {
     if (!climaxArmed) {
@@ -50,14 +51,13 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
         queueMicrotask(() => focusTab(PRODUCT_SLIDES[0]!.id));
       }
     };
-    // Only on real hash changes — not every cinema mount (preserves remount chapter).
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, [resetToClients]);
 
   return (
     <section id="crm" className="scroll-mt-24 border-t border-line bg-paper-warm">
-      <div className="mx-auto max-w-7xl px-5 pt-16 sm:px-8 lg:px-10 lg:pt-20">
+      <div className="mx-auto max-w-7xl px-5 pt-14 sm:px-8 lg:px-10 lg:pt-16">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-section text-gold-cinema">Inside the workspace</p>
           <h2 className="text-marketing-section mt-4 text-balance text-ink">
@@ -71,11 +71,12 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
 
       <div
         ref={trackRef}
-        className="relative mt-10"
+        className="relative mt-8"
         style={{ height: `${trackHeightVh}vh` }}
       >
-        <div className="sticky top-24 z-20 flex max-h-[calc(100vh-6rem)] flex-col overflow-hidden bg-paper-warm pb-10">
-          <div className="mx-auto flex w-full max-w-7xl min-h-0 flex-1 flex-col px-5 sm:px-8 lg:px-10">
+        {/* Full remaining viewport under sticky marketing header */}
+        <div className="sticky top-24 z-20 flex h-[calc(100vh-6rem)] flex-col bg-paper-warm">
+          <div className="mx-auto flex h-full w-full max-w-[90rem] min-h-0 flex-col px-5 sm:px-8 lg:px-10">
             <div
               role="tablist"
               aria-label="Product surfaces"
@@ -124,7 +125,7 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
                       }
                     }}
                     className={cn(
-                      "shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper-warm",
+                      "shrink-0 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper-warm",
                       isSelected
                         ? "border-ink bg-ink text-paper shadow-[0_8px_20px_rgba(7,13,18,0.12)]"
                         : "border-line-strong bg-paper text-stone-cinema hover:border-ink/25 hover:text-ink"
@@ -144,40 +145,56 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
               role="tabpanel"
               id="product-cinema-panel"
               aria-labelledby={`product-cinema-tab-${activeId}`}
-              className="mt-6 grid min-h-0 flex-1 items-center gap-8 overflow-hidden lg:grid-cols-[minmax(0,2.8fr)_minmax(0,3.2fr)] lg:gap-12"
+              className="grid min-h-0 flex-1 items-stretch gap-6 overflow-hidden py-4 lg:grid-cols-[minmax(17rem,0.8fr)_minmax(0,1.65fr)] lg:gap-10 lg:py-5"
             >
+              {/* Copy — emphasize the function of this chapter */}
               <div
                 key={`copy-${activeId}`}
-                className="marketing-product-carousel-enter min-h-0 overflow-y-auto text-left"
+                className="marketing-product-carousel-enter flex h-full min-h-0 flex-col justify-start overflow-y-auto pt-2 pr-1 text-left lg:pt-4"
               >
-                <p className="text-section text-gold-cinema">{slide.eyebrow}</p>
-                <h3 className="text-marketing-section mt-4 max-w-[18ch] text-balance text-ink">
+                <div className="flex items-center gap-3">
+                  <span
+                    aria-hidden
+                    className="font-[family-name:var(--font-fraunces)] text-3xl font-medium tracking-[-0.03em] text-ink/15 sm:text-4xl"
+                  >
+                    {chapterNumber}
+                  </span>
+                  <p className="text-section text-gold-cinema">{slide.eyebrow}</p>
+                </div>
+                <h3 className="mt-3 max-w-[22ch] text-balance font-[family-name:var(--font-fraunces)] text-[clamp(1.85rem,2.6vw,2.75rem)] font-medium leading-[1.12] tracking-[-0.03em] text-ink">
                   {slide.title}
                 </h3>
-                <p className="text-marketing-lead mt-4 max-w-xl text-stone-cinema">
+                <p className="mt-4 max-w-md text-[1.05rem] leading-relaxed text-stone-cinema">
                   {slide.lead}
                 </p>
-                <ul className="mt-8 space-y-3 text-left text-[0.95rem]">
+                <ul className="mt-8 space-y-4 text-left">
                   {slide.points.map((point) => (
-                    <li key={point} className="flex items-start gap-3 text-ink/85">
-                      <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-lagoon/12 text-lagoon">
+                    <li
+                      key={point}
+                      className="flex items-start gap-3.5 text-[1rem] leading-snug text-ink"
+                    >
+                      <span className="mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-lagoon/12 text-lagoon">
                         <Check className="size-3.5" aria-hidden />
                       </span>
-                      {point}
+                      <span className="font-medium text-ink/90">{point}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
+              {/* Product stage — fills remaining height */}
               <div
                 className={cn(
-                  "min-h-0 min-w-0 overflow-hidden pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
+                  "marketing-cinema-visual flex h-full min-h-0 min-w-0 flex-col pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
                   playClimax && "marketing-cinema-climax"
                 )}
                 aria-hidden
                 inert
               >
-                <div key={`visual-${activeId}`} className="marketing-product-carousel-enter">
+                <div
+                  key={`visual-${activeId}`}
+                  className="marketing-product-carousel-enter flex h-full min-h-0 flex-1 flex-col [&_.marketing-crm-showcase-frame]:h-full [&_.marketing-crm-showcase-surface]:h-full [&_.marketing-crm-showcase-surface]:min-h-0 [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-1 [&>div]:flex-col"
+                >
                   {slide.visual}
                 </div>
               </div>

@@ -21,11 +21,11 @@ export function ShowcaseBrowserChrome({
     <div
       aria-hidden
       className={cn(
-        "overflow-hidden rounded-[18px] border border-line bg-paper shadow-[0_32px_64px_rgba(7,13,18,0.14)]",
+        "flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border border-line bg-paper shadow-[0_32px_64px_rgba(7,13,18,0.14)]",
         className
       )}
     >
-      <div className="flex items-center gap-2 border-b border-line bg-paper-warm px-4 py-2.5">
+      <div className="flex shrink-0 items-center gap-2 border-b border-line bg-paper-warm px-4 py-2.5">
         <span className="size-2 rounded-full bg-[#ff5f57]" />
         <span className="size-2 rounded-full bg-[#febc2e]" />
         <span className="size-2 rounded-full bg-[#28c840]" />
@@ -33,7 +33,7 @@ export function ShowcaseBrowserChrome({
           {path}
         </span>
       </div>
-      <div className="bg-paper-warm/40 p-3 sm:p-5">{children}</div>
+      <div className="min-h-0 flex-1 overflow-auto bg-paper-warm/40 p-3 sm:p-5">{children}</div>
     </div>
   );
 }
