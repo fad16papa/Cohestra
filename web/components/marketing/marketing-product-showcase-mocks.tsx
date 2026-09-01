@@ -33,7 +33,9 @@ export function ShowcaseBrowserChrome({
           {path}
         </span>
       </div>
-      <div className="min-h-0 flex-1 overflow-auto bg-paper-warm/40 p-3 sm:p-5">{children}</div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-paper-warm/40 p-3 sm:p-5">
+        {children}
+      </div>
     </div>
   );
 }
@@ -53,8 +55,8 @@ export function DashboardShowcaseMock() {
 
   return (
     <ShowcaseBrowserChrome path="yourclub.cohestra.app/dashboard">
-      <div className="space-y-4">
-        <div>
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        <div className="shrink-0">
           <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium tracking-[-0.02em] text-ink sm:text-xl">
             Good morning, Alex
           </p>
@@ -63,13 +65,13 @@ export function DashboardShowcaseMock() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid shrink-0 grid-cols-2 gap-3 sm:grid-cols-4">
           {metrics.map((metric) => (
             <div
               key={metric.label}
-              className="rounded-[10px] border border-line bg-paper px-3 py-3"
+              className="rounded-[10px] border border-line bg-paper px-3 py-3 sm:py-4"
             >
-              <p className="font-[family-name:var(--font-fraunces)] text-xl font-medium tracking-[-0.02em] text-ink">
+              <p className="font-[family-name:var(--font-fraunces)] text-xl font-medium tracking-[-0.02em] text-ink sm:text-2xl">
                 {metric.value}
               </p>
               <p className="mt-1 text-xs leading-snug text-stone">{metric.label}</p>
@@ -77,15 +79,15 @@ export function DashboardShowcaseMock() {
           ))}
         </div>
 
-        <div className="rounded-[10px] border border-line bg-paper p-4">
+        <div className="flex min-h-0 flex-1 flex-col rounded-[10px] border border-line bg-paper p-4">
           <p className="text-[0.6875rem] font-semibold tracking-wide text-gold uppercase">
             Needs follow-up
           </p>
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-3 flex flex-1 flex-col justify-evenly gap-2">
             {queue.map((row) => (
               <li
                 key={row.name}
-                className="flex items-center justify-between gap-2 text-sm"
+                className="flex items-center justify-between gap-2 rounded-[8px] bg-paper-warm/60 px-3 py-2.5 text-sm"
               >
                 <span className="font-medium text-ink">{row.name}</span>
                 <span className="rounded-sm bg-lagoon/10 px-2 py-0.5 text-[0.625rem] font-bold tracking-wide text-lagoon uppercase">
@@ -109,8 +111,8 @@ export function CampaignsShowcaseMock() {
 
   return (
     <ShowcaseBrowserChrome path="yourclub.cohestra.app/campaigns">
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        <div className="flex shrink-0 items-start justify-between gap-3">
           <div>
             <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium tracking-[-0.02em] text-ink sm:text-xl">
               Campaigns
@@ -124,22 +126,24 @@ export function CampaignsShowcaseMock() {
           </span>
         </div>
 
-        <div className="overflow-hidden rounded-[10px] border border-line bg-paper">
-          <div className="grid grid-cols-[1.4fr_0.6fr_0.5fr] gap-3 border-b border-line bg-paper-warm px-4 py-2.5 text-[0.6875rem] font-semibold tracking-wide text-stone uppercase">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-line bg-paper">
+          <div className="grid shrink-0 grid-cols-[1.4fr_0.6fr_0.5fr] gap-3 border-b border-line bg-paper-warm px-4 py-2.5 text-[0.6875rem] font-semibold tracking-wide text-stone uppercase">
             <span>Subject</span>
             <span>Sent</span>
             <span>Status</span>
           </div>
-          {rows.map((row) => (
-            <div
-              key={row.subject}
-              className="grid grid-cols-[1.4fr_0.6fr_0.5fr] gap-3 border-b border-line px-4 py-3 text-sm last:border-b-0"
-            >
-              <span className="truncate font-medium text-ink">{row.subject}</span>
-              <span className="text-stone">{row.sent}</span>
-              <span className="font-semibold text-lagoon">Delivered</span>
-            </div>
-          ))}
+          <div className="flex min-h-0 flex-1 flex-col justify-evenly">
+            {rows.map((row) => (
+              <div
+                key={row.subject}
+                className="grid grid-cols-[1.4fr_0.6fr_0.5fr] gap-3 border-b border-line px-4 py-3.5 text-sm last:border-b-0"
+              >
+                <span className="truncate font-medium text-ink">{row.subject}</span>
+                <span className="text-stone">{row.sent}</span>
+                <span className="font-semibold text-lagoon">Delivered</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </ShowcaseBrowserChrome>
@@ -164,8 +168,8 @@ export function OutreachShowcaseMock() {
 
   return (
     <ShowcaseBrowserChrome path="yourclub.cohestra.app/clients/jordan-kim">
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium tracking-[-0.02em] text-ink sm:text-xl">
               Jordan Kim
@@ -177,7 +181,7 @@ export function OutreachShowcaseMock() {
           </span>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid shrink-0 gap-3 sm:grid-cols-2">
           <span className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] border border-lagoon/25 bg-lagoon/10 text-sm font-semibold text-lagoon">
             <WhatsAppBrandIcon />
             WhatsApp
@@ -188,11 +192,11 @@ export function OutreachShowcaseMock() {
           </span>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid min-h-0 flex-1 gap-3 sm:grid-cols-2">
           {channels.map((channel) => (
             <div
               key={channel.id}
-              className="rounded-[12px] border border-line bg-paper p-3.5"
+              className="flex min-h-0 flex-col rounded-[12px] border border-line bg-paper p-3.5 sm:p-4"
             >
               <div className="flex items-center gap-2">
                 {channel.id === "whatsapp" ? (
@@ -204,7 +208,7 @@ export function OutreachShowcaseMock() {
                   {channel.label}
                 </p>
               </div>
-              <p className="mt-3 text-sm leading-relaxed text-ink/90">
+              <p className="mt-3 flex-1 text-sm leading-relaxed text-ink/90">
                 &ldquo;{channel.preview}&rdquo;
               </p>
               <p className="mt-2 text-xs text-stone">{channel.logged}</p>
@@ -212,7 +216,7 @@ export function OutreachShowcaseMock() {
           ))}
         </div>
 
-        <div className="rounded-[10px] border border-line bg-paper p-4">
+        <div className="shrink-0 rounded-[10px] border border-line bg-paper p-4">
           <p className="text-[0.6875rem] font-semibold tracking-wide text-stone uppercase">
             Relationship timeline
           </p>
@@ -241,8 +245,8 @@ export function WebsiteBuilderShowcaseMock() {
 
   return (
     <ShowcaseBrowserChrome path="yourclub.cohestra.app/dashboard/website">
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        <div className="flex shrink-0 flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium tracking-[-0.02em] text-ink sm:text-xl">
@@ -261,7 +265,7 @@ export function WebsiteBuilderShowcaseMock() {
           </span>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex shrink-0 flex-wrap gap-2">
           {["Design", "Sections", "Templates"].map((tab, index) => (
             <span
               key={tab}
@@ -277,17 +281,17 @@ export function WebsiteBuilderShowcaseMock() {
           ))}
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-          <div className="space-y-3 rounded-[10px] border border-line bg-paper p-3.5">
+        <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+          <div className="flex min-h-0 flex-col gap-3 rounded-[10px] border border-line bg-paper p-3.5">
             <p className="text-[0.6875rem] font-semibold tracking-wide text-stone uppercase">
               Sections
             </p>
-            <ul className="space-y-2">
+            <ul className="flex flex-1 flex-col justify-evenly gap-2">
               {sections.map((section, index) => (
                 <li
                   key={section}
                   className={cn(
-                    "rounded-[8px] border px-3 py-2 text-sm",
+                    "rounded-[8px] border px-3 py-2.5 text-sm",
                     index === 0
                       ? "border-lagoon/30 bg-lagoon/5 font-medium text-ink"
                       : "border-line text-stone"
@@ -299,11 +303,11 @@ export function WebsiteBuilderShowcaseMock() {
             </ul>
           </div>
 
-          <div className="overflow-hidden rounded-[10px] border border-line bg-paper">
-            <div className="border-b border-line bg-paper-warm px-3 py-2 text-[0.625rem] font-medium text-stone">
+          <div className="flex min-h-0 flex-col overflow-hidden rounded-[10px] border border-line bg-paper">
+            <div className="shrink-0 border-b border-line bg-paper-warm px-3 py-2 text-[0.625rem] font-medium text-stone">
               Live preview · Desktop
             </div>
-            <div className="space-y-2 p-3">
+            <div className="flex min-h-0 flex-1 flex-col justify-evenly gap-2 p-3">
               <div className="rounded-[8px] bg-lagoon/10 px-3 py-4">
                 <p className="font-[family-name:var(--font-fraunces)] text-sm font-medium text-ink">
                   Sunday clinic &amp; open play
@@ -342,8 +346,8 @@ export function ReportsShowcaseMock() {
 
   return (
     <ShowcaseBrowserChrome path="yourclub.cohestra.app/reports">
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className="flex h-full min-h-0 flex-col gap-4">
+        <div className="flex shrink-0 items-start justify-between gap-3">
           <div>
             <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium tracking-[-0.02em] text-ink sm:text-xl">
               Living Reports
@@ -355,14 +359,14 @@ export function ReportsShowcaseMock() {
           </span>
         </div>
 
-        <div className="rounded-[10px] border border-line bg-paper px-4 py-3">
+        <div className="shrink-0 rounded-[10px] border border-line bg-paper px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-lagoon">This week</p>
           <p className="mt-1 font-[family-name:var(--font-fraunces)] text-base font-medium text-ink">
             36 registrations · 82% follow-up coverage
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex shrink-0 flex-wrap gap-2">
           {filters.map((filter, index) => (
             <span
               key={filter}
@@ -378,27 +382,27 @@ export function ReportsShowcaseMock() {
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid shrink-0 grid-cols-3 gap-3">
           {summary.map((item) => (
             <div
               key={item.label}
               className="rounded-[10px] border border-line bg-paper px-3 py-2.5"
             >
               <p className="text-xs text-stone">{item.label}</p>
-              <p className="mt-1 truncate font-[family-name:var(--font-fraunces)] text-base font-medium text-ink">
+              <p className="mt-1 truncate font-[family-name:var(--font-fraunces)] text-base font-medium text-ink sm:text-lg">
                 {item.value}
               </p>
             </div>
           ))}
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-[10px] border border-line bg-paper p-4">
+        <div className="grid min-h-0 flex-1 gap-3 sm:grid-cols-2">
+          <div className="flex min-h-0 flex-col rounded-[10px] border border-line bg-paper p-4">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-stone">
               Top activities
             </p>
-            <div className="mt-3 flex justify-center">
-              <div className="relative flex size-24 items-center justify-center rounded-full border-[12px] border-lagoon/40 border-t-[var(--chart-1)] border-r-[var(--chart-2)] border-b-[var(--chart-4)]">
+            <div className="mt-3 flex flex-1 items-center justify-center">
+              <div className="relative flex size-28 items-center justify-center rounded-full border-[12px] border-lagoon/40 border-t-[var(--chart-1)] border-r-[var(--chart-2)] border-b-[var(--chart-4)] sm:size-32">
                 <div className="text-center">
                   <span className="font-[family-name:var(--font-fraunces)] text-lg font-medium text-ink">
                     15
@@ -408,16 +412,16 @@ export function ReportsShowcaseMock() {
               </div>
             </div>
           </div>
-          <div className="rounded-[10px] border border-line bg-paper p-4">
+          <div className="flex min-h-0 flex-col rounded-[10px] border border-line bg-paper p-4">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-stone">
               Follow-up pipeline
             </p>
-            <div className="mt-3 flex h-24 items-end gap-2 px-1">
+            <div className="mt-3 flex min-h-[6rem] flex-1 items-end gap-2 px-1">
               {[3, 4, 2, 1].map((height, index) => (
                 <span
                   key={index}
                   className="flex-1 rounded-t-sm bg-lagoon/30"
-                  style={{ height: `${height * 18}%` }}
+                  style={{ height: `${height * 22}%` }}
                 />
               ))}
             </div>

@@ -145,41 +145,54 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
               role="tabpanel"
               id="product-cinema-panel"
               aria-labelledby={`product-cinema-tab-${activeId}`}
-              className="grid min-h-0 flex-1 items-stretch gap-6 overflow-hidden py-4 lg:grid-cols-[minmax(17rem,0.8fr)_minmax(0,1.65fr)] lg:gap-10 lg:py-5"
+              className="grid min-h-0 flex-1 items-stretch gap-6 overflow-hidden py-3 lg:grid-cols-[minmax(18rem,0.85fr)_minmax(0,1.7fr)] lg:gap-8 lg:py-4 xl:gap-10"
             >
-              {/* Copy — emphasize the function of this chapter */}
+              {/* Copy — fills height; each capability gets clear visual weight */}
               <div
                 key={`copy-${activeId}`}
-                className="marketing-product-carousel-enter flex h-full min-h-0 flex-col justify-start overflow-y-auto pt-2 pr-1 text-left lg:pt-4"
+                className="marketing-product-carousel-enter flex h-full min-h-0 flex-col overflow-y-auto pr-1 text-left"
               >
-                <div className="flex items-center gap-3">
-                  <span
-                    aria-hidden
-                    className="font-[family-name:var(--font-fraunces)] text-3xl font-medium tracking-[-0.03em] text-ink/15 sm:text-4xl"
-                  >
-                    {chapterNumber}
-                  </span>
-                  <p className="text-section text-gold-cinema">{slide.eyebrow}</p>
+                <div className="shrink-0">
+                  <div className="flex items-baseline gap-3">
+                    <span
+                      aria-hidden
+                      className="font-[family-name:var(--font-fraunces)] text-4xl font-medium tracking-[-0.03em] text-ink/14 sm:text-5xl"
+                    >
+                      {chapterNumber}
+                    </span>
+                    <p className="text-section text-gold-cinema">{slide.eyebrow}</p>
+                  </div>
+                  <h3 className="mt-3 max-w-[24ch] text-balance font-[family-name:var(--font-fraunces)] text-[clamp(1.95rem,2.8vw,2.85rem)] font-medium leading-[1.1] tracking-[-0.03em] text-ink">
+                    {slide.title}
+                  </h3>
+                  <p className="mt-4 max-w-md text-[1.05rem] leading-relaxed text-stone-cinema xl:text-[1.1rem]">
+                    {slide.lead}
+                  </p>
                 </div>
-                <h3 className="mt-3 max-w-[22ch] text-balance font-[family-name:var(--font-fraunces)] text-[clamp(1.85rem,2.6vw,2.75rem)] font-medium leading-[1.12] tracking-[-0.03em] text-ink">
-                  {slide.title}
-                </h3>
-                <p className="mt-4 max-w-md text-[1.05rem] leading-relaxed text-stone-cinema">
-                  {slide.lead}
-                </p>
-                <ul className="mt-8 space-y-4 text-left">
+
+                <ul className="mt-6 flex min-h-0 flex-1 flex-col justify-center gap-3 border-y border-line/70 py-5 xl:mt-7 xl:gap-3.5 xl:py-6">
                   {slide.points.map((point) => (
                     <li
                       key={point}
-                      className="flex items-start gap-3.5 text-[1rem] leading-snug text-ink"
+                      className="flex items-start gap-3.5 rounded-2xl bg-paper/70 px-3.5 py-3 shadow-[inset_0_0_0_1px_rgba(7,13,18,0.04)] xl:px-4 xl:py-3.5"
                     >
-                      <span className="mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-lagoon/12 text-lagoon">
-                        <Check className="size-3.5" aria-hidden />
+                      <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-lagoon/14 text-lagoon">
+                        <Check className="size-3.5" strokeWidth={2.75} aria-hidden />
                       </span>
-                      <span className="font-medium text-ink/90">{point}</span>
+                      <span className="text-[0.98rem] font-medium leading-snug text-ink xl:text-[1.02rem]">
+                        {point}
+                      </span>
                     </li>
                   ))}
                 </ul>
+
+                <p className="mt-4 shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-cinema/60">
+                  Chapter {activeIndex + 1} of {PRODUCT_SLIDES.length}
+                  <span className="mx-2 font-normal text-line" aria-hidden>
+                    ·
+                  </span>
+                  <span className="font-medium tracking-[0.12em]">Scroll to continue</span>
+                </p>
               </div>
 
               {/* Product stage — fills remaining height */}

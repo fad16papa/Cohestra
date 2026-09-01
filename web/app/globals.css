@@ -166,12 +166,20 @@
   .marketing-cinema-visual > div,
   .marketing-cinema-visual .marketing-crm-showcase-frame,
   .marketing-cinema-visual .marketing-crm-showcase-surface {
+    display: flex;
     height: 100%;
     min-height: 0;
+    flex-direction: column;
   }
 
-  .marketing-cinema-visual [aria-hidden] {
+  /* Browser chrome shells only — not decorative aria-hidden icons/dots */
+  .marketing-cinema-visual > div > [aria-hidden],
+  .marketing-cinema-visual .marketing-crm-showcase-surface > [aria-hidden] {
+    display: flex;
     height: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
   }
 
   @keyframes marketing-hero-stack-rise {
