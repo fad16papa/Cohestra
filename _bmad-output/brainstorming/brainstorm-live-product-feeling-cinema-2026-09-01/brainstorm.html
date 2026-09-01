@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Don’t Fake the Kitchen — Live Proof Cinema</title>
+  <style>
+    :root {
+      --ink: #070d12;
+      --ink-soft: #141c24;
+      --paper: #f6efe4;
+      --paper-warm: #efe6d6;
+      --paper-hot: #faf6ee;
+      --stone: #6a6258;
+      --line: #d9cfc0;
+      --lagoon: #0b6b63;
+      --lagoon-deep: #08554f;
+      --lagoon-mist: rgba(11, 107, 99, 0.12);
+      --gold: #a68b5b;
+      --gold-soft: #f4eee3;
+      --danger: #9b1c1c;
+      --serif: Palatino, "Palatino Linotype", "Iowan Old Style", "Times New Roman", Georgia, serif;
+      --sans: ui-sans-serif, "Segoe UI", system-ui, sans-serif;
+      --mono: ui-monospace, "SF Mono", "Cascadia Code", "Liberation Mono", Menlo, monospace;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--serif);
+      line-height: 1.5;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, rgba(11, 107, 99, 0.08), transparent 50%),
+        radial-gradient(ellipse 60% 40% at 100% 0%, rgba(166, 139, 91, 0.1), transparent 45%),
+        var(--paper);
+    }
+    body::before {
+      content: "";
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      opacity: 0.18;
+      mix-blend-mode: multiply;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(7, 13, 18, 0.015) 3px, rgba(7, 13, 18, 0.015) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 5px, rgba(7, 13, 18, 0.012) 5px, rgba(7, 13, 18, 0.012) 6px);
+    }
+    a { color: var(--lagoon-deep); }
+    .skip {
+      position: absolute;
+      left: -999px;
+      top: 8px;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 8px 12px;
+      z-index: 100;
+    }
+    .skip:focus { left: 8px; }
+
+    /* Seek pills — rooms, never chapters */
+    .seek {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: color-mix(in srgb, var(--paper) 92%, white);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+    .seek-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 10px 20px 0;
+    }
+    .seek-label {
+      font-family: var(--sans);
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--stone);
+      margin: 0 0 8px;
+    }
+    .pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      scrollbar-width: thin;
+    }
+    .pills a {
+      flex: 0 0 auto;
+      text-decoration: none;
+      font-family: var(--sans);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--stone);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 12px;
+      background: transparent;
+    }
+    .pills a.is-on, .pills a:hover {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+    }
+    .ink-bar {
+      height: 2px;
+      background: var(--line);
+      position: relative;
+    }
+    .ink-bar i {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: var(--ink);
+      transition: width 0.35s ease;
+    }
+
+    /* Hero cinema */
+    .hero {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 56px 24px 28px;
+    }
+    .eyebrow {
+      font-family: var(--sans);
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--lagoon);
+      margin: 0 0 14px;
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4.6rem);
+      line-height: 0.95;
+      font-weight: 600;
+      letter-spacing: -0.035em;
+      margin: 0 0 18px;
+      max-width: 16ch;
+    }
+    .lede {
+      font-size: 1.25rem;
+      color: var(--ink-soft);
+      max-width: 38ch;
+      margin: 0 0 36px;
+    }
+    .lede em { font-style: italic; color: var(--lagoon-deep); }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(7, 13, 18, 0.08);
+      background: var(--paper-hot);
+    }
+    @media (max-width: 860px) { .compare { grid-template-columns: 1fr; } }
+    .stage {
+      min-height: 340px;
+      padding: 22px;
+      position: relative;
+    }
+    .stage.hollow {
+      background:
+        repeating-linear-gradient(135deg, #f3f5f7 0 12px, #eef0f3 12px 24px);
+      color: #9aa3ad;
+    }
+    .stage.live {
+      background: linear-gradient(180deg, #fafbfc, #f3f5f7);
+      color: var(--ink);
+    }
+    .stage h2 {
+      font-family: var(--sans);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin: 0 0 14px;
+    }
+    .stage.hollow h2 { color: #b0b8c0; }
+    .stage.live h2 { color: var(--lagoon); }
+    .fake-chrome {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .fake-chrome span {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #d0d5db;
+    }
+    .watermark {
+      position: absolute;
+      bottom: 16px;
+      right: 18px;
+      font-family: var(--sans);
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      color: rgba(0,0,0,0.12);
+    }
+    .lonely {
+      display: flex;
+      gap: 8px;
+      margin: 40px 0 20px;
+    }
+    .lonely b {
+      flex: 1;
+      height: 36px;
+      border: 1px dashed #c5ccd4;
+      border-radius: 8px;
+      font-weight: 400;
+      font-family: var(--sans);
+      font-size: 0.65rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #b8c0c8;
+    }
+    .empty-rails {
+      height: 120px;
+      border: 1px dashed #c5ccd4;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--sans);
+      font-size: 0.8rem;
+    }
+    .continue {
+      margin-top: 28px;
+      font-family: var(--sans);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-align: center;
+      color: #b0b8c0;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      background: #fff;
+      border: 1px solid #e6e9ed;
+    }
+    .row.on {
+      border-left: 4px solid var(--lagoon);
+      background: rgba(11, 107, 99, 0.05);
+    }
+    .row small { color: var(--stone); }
+    .wa {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      background: var(--lagoon);
+      color: #f3fffc;
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--lagoon);
+      display: inline-block;
+    }
+
+    /* Shared scene wrap */
+    section.scene {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 72px 24px 24px;
+    }
+    .tech {
+      font-family: var(--sans);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin: 0 0 8px;
+    }
+    .scene h2 {
+      font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 12px;
+    }
+    .breath { color: var(--stone); max-width: 52ch; margin: 0 0 28px; }
+
+    /* FIRST PRINCIPLES — bedrock slabs */
+    .bedrock { perspective: 900px; }
+    .slab {
+      background: linear-gradient(180deg, #e7dcc8, #dccfb8);
+      border: 1px solid #cbbca3;
+      border-radius: 4px 12px 4px 12px;
+      padding: 18px 22px;
+      margin: 0 auto 12px;
+      max-width: 720px;
+      box-shadow: 0 8px 0 #c4b49a, 0 16px 28px rgba(7,13,18,0.08);
+      transform-origin: center;
+    }
+    .slab:nth-child(1) { transform: rotate(-1.2deg); }
+    .slab:nth-child(2) { transform: rotate(0.8deg); max-width: 760px; }
+    .slab:nth-child(3) { transform: rotate(-0.5deg); }
+    .slab:nth-child(4) { transform: rotate(1.1deg); max-width: 700px; }
+    .slab:nth-child(5) { transform: rotate(-0.7deg); }
+    .slab strong { display: block; font-size: 1.05rem; }
+    .slab span { display: block; color: #5c5348; font-size: 0.95rem; margin-top: 4px; }
+    .rebuilds {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 36px;
+    }
+    @media (max-width: 800px) { .rebuilds { grid-template-columns: 1fr; } }
+    .rebuild {
+      border: 1px dashed var(--lagoon);
+      background: var(--lagoon-mist);
+      padding: 16px 18px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+    }
+    .rebuild b { display: block; font-family: var(--sans); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lagoon); margin-bottom: 6px; }
+
+    /* EMOTION ORCHESTRA — staves */
+    #orchestra { background: linear-gradient(180deg, transparent, rgba(11,107,99,0.05), transparent); }
+    .staves {
+      display: grid;
+      gap: 10px;
+    }
+    .staff {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 16px;
+      align-items: center;
+      padding: 14px 18px;
+      border-radius: 12px;
+      background: var(--paper-hot);
+      border: 1px solid var(--line);
+    }
+    @media (max-width: 640px) { .staff { grid-template-columns: 1fr; } }
+    .feel {
+      font-family: var(--sans);
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .feel.rage { color: var(--danger); }
+    .feel.joy { color: var(--lagoon); }
+    .feel.fear { color: #9a6700; }
+    .feel.hope { color: var(--gold); }
+    .notes {
+      height: 28px;
+      background:
+        repeating-linear-gradient(180deg, transparent 0 4px, rgba(7,13,18,0.08) 4px 5px, transparent 5px 9px);
+      position: relative;
+    }
+    .notes::after {
+      content: "♩  ♪  ♫";
+      position: absolute;
+      left: 8%;
+      top: -6px;
+      letter-spacing: 1.6em;
+      opacity: 0.7;
+    }
+    .staff p { margin: 8px 0 0; grid-column: 1 / -1; font-size: 0.95rem; }
+    .arc-strip {
+      display: flex;
+      gap: 0;
+      margin-top: 28px;
+      overflow-x: auto;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+    }
+    .arc-strip span {
+      flex: 1;
+      min-width: 110px;
+      text-align: center;
+      padding: 12px 8px;
+      font-family: var(--sans);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--paper);
+    }
+    .arc-strip span:nth-child(1) { background: #3d5a4c; }
+    .arc-strip span:nth-child(2) { background: var(--lagoon); }
+    .arc-strip span:nth-child(3) { background: #1a3a42; }
+    .arc-strip span:nth-child(4) { background: #2e5a52; }
+    .arc-strip span:nth-child(5) { background: #4a3f2e; }
+    .arc-strip span:nth-child(6) { background: var(--gold); color: var(--ink); }
+
+    /* JTBD — hiring poster */
+    .poster {
+      background: #f3e6c4;
+      border: 8px solid var(--ink);
+      padding: 28px 32px;
+      max-width: 680px;
+      margin: 0 auto 28px;
+      box-shadow: 8px 8px 0 rgba(7,13,18,0.08);
+      transform: rotate(-0.4deg);
+    }
+    .poster .wanted {
+      font-family: var(--sans);
+      text-align: center;
+      letter-spacing: 0.4em;
+      font-size: 0.78rem;
+      font-weight: 800;
+      margin: 0 0 8px;
+    }
+    .poster h3 {
+      text-align: center;
+      font-size: 2rem;
+      margin: 0 0 12px;
+      line-height: 1.15;
+    }
+    .poster p { margin: 0; text-align: center; }
+    .jobs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 700px) { .jobs { grid-template-columns: 1fr; } }
+    .ticket {
+      background: var(--paper-hot);
+      border-left: 4px solid var(--gold);
+      padding: 14px 16px;
+      font-size: 0.95rem;
+    }
+    .ticket b { font-family: var(--sans); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lagoon); display: block; margin-bottom: 4px; }
+    .pattern {
+      margin-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      font-family: var(--sans);
+      font-size: 0.85rem;
+    }
+    .pattern i {
+      font-style: normal;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+    .pattern s { color: var(--stone); }
+
+    /* ASSUMPTION REVERSAL — crossed / revealed */
+    .flips { display: grid; gap: 10px; }
+    .flip {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    @media (max-width: 700px) {
+      .flip { grid-template-columns: 1fr; }
+      .flip .arr { display: none; }
+    }
+    .flip .was {
+      color: var(--stone);
+      text-decoration: line-through;
+      text-decoration-color: var(--danger);
+      opacity: 0.85;
+    }
+    .flip .now { color: var(--ink); font-weight: 600; }
+    .arr {
+      font-family: var(--sans);
+      color: var(--lagoon);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      font-size: 0.72rem;
+    }
+
+    /* ALIEN — field journal */
+    .journal {
+      background: #1c2a24;
+      color: #d7e4d6;
+      padding: 36px 32px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      line-height: 1.65;
+      box-shadow: inset 0 0 80px rgba(0,0,0,0.35);
+    }
+    .journal h2, #alien h2 { color: inherit; }
+    #alien .tech { color: #8fbfa8; }
+    #alien .breath { color: #9bb5a6; }
+    .journal .q { margin: 0 0 14px; }
+    .journal .q::before { content: "Q. "; color: #7d9a88; }
+    .trans {
+      margin-top: 22px;
+      border-top: 1px dashed #3d5a4c;
+      padding-top: 16px;
+      color: #f4eee3;
+    }
+    .trans b { color: #8fbfa8; display: block; letter-spacing: 0.16em; font-size: 0.7rem; margin-bottom: 6px; }
+
+    /* TRAIT TRANSFER — two cases */
+    .cases {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 800px) { .cases { grid-template-columns: 1fr; } }
+    .case {
+      border-radius: 16px;
+      padding: 22px;
+      min-height: 280px;
+    }
+    .case.keep {
+      background: var(--ink);
+      color: var(--paper);
+    }
+    .case.refuse {
+      background: var(--gold-soft);
+      border: 1px solid var(--gold);
+    }
+    .case h3 {
+      font-family: var(--sans);
+      font-size: 0.75rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin: 0 0 14px;
+    }
+    .case ul { margin: 0; padding-left: 1.1em; }
+    .case li { margin: 8px 0; }
+    .lobby {
+      margin-top: 20px;
+      padding: 18px 22px;
+      border-radius: 12px;
+      background: var(--lagoon);
+      color: #f3fffc;
+      font-size: 1.15rem;
+    }
+
+    /* SCAMPER — wood type */
+    .blocks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .block {
+      background: #5a4632;
+      color: #f4eee3;
+      padding: 16px 18px;
+      border-radius: 6px;
+      min-height: 150px;
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.08), 0 8px 16px rgba(7,13,18,0.12);
+    }
+    .block .letter {
+      font-family: var(--sans);
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+    .block .word {
+      font-family: var(--sans);
+      font-size: 0.68rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin: 0 0 8px;
+    }
+    .block p { margin: 0; font-size: 0.92rem; }
+
+    /* SENSORY — place settings */
+    .senses {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 900px) { .senses { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 520px) { .senses { grid-template-columns: 1fr; } }
+    .sense {
+      background: var(--paper-hot);
+      border-radius: 50% 50% 12px 12px;
+      padding: 28px 18px 20px;
+      text-align: center;
+      border: 1px solid var(--line);
+    }
+    .sense .glyph { font-size: 1.6rem; margin-bottom: 6px; }
+    .sense h3 { font-size: 1rem; margin: 0 0 6px; }
+    .sense p { margin: 0; font-size: 0.88rem; color: var(--stone); }
+
+    /* SECRET WISH — folded notes */
+    .wishes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+    }
+    .note {
+      width: min(280px, 100%);
+      background: #fff8e8;
+      padding: 22px 20px 28px;
+      box-shadow: 3px 4px 0 rgba(7,13,18,0.08);
+      transform: rotate(-2deg);
+      font-style: italic;
+      font-size: 1.05rem;
+    }
+    .note:nth-child(2) { transform: rotate(1.5deg); background: #f4eee3; }
+    .note:nth-child(3) { transform: rotate(-0.8deg); }
+    .note:nth-child(4) { transform: rotate(2deg); background: #eef6f4; }
+    .note:nth-child(5) { transform: rotate(-1.4deg); }
+
+    /* PERSONA — floorplan path */
+    .path {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 800px) { .path { grid-template-columns: 1fr 1fr 1fr; } }
+    .room {
+      background: var(--paper-hot);
+      border: 1px solid var(--line);
+      padding: 12px 10px;
+      min-height: 110px;
+      position: relative;
+    }
+    .room .who {
+      font-family: var(--sans);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--lagoon);
+    }
+    .room h3 { font-size: 0.95rem; margin: 4px 0 6px; }
+    .room p { margin: 0; font-size: 0.82rem; color: var(--stone); }
+    .guests { display: grid; gap: 10px; }
+    .guest {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.95rem;
+    }
+    @media (max-width: 560px) { .guest { grid-template-columns: 1fr; } }
+    .guest b { font-family: var(--sans); font-size: 0.78rem; }
+
+    /* WORST — film negative */
+    .negatives {
+      background: #120e0c;
+      color: #e8dcc8;
+      padding: 28px;
+      border-radius: 12px;
+    }
+    #worst .tech { color: #c9a27a; }
+    #worst h2 { color: #f4eee3; }
+    #worst .breath { color: #a89880; }
+    .burn {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 700px) { .burn { grid-template-columns: 1fr; } }
+    .frame {
+      border: 2px solid #3a3028;
+      padding: 14px 16px;
+      background: #1a1512;
+    }
+    .frame .stamp {
+      font-family: var(--sans);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: #c45c4a;
+      margin: 0 0 6px;
+    }
+    .frame p { margin: 0 0 8px; }
+    .frame .developed {
+      color: #9dcec4;
+      font-size: 0.9rem;
+    }
+    .lesson {
+      margin-top: 18px;
+      font-size: 1.1rem;
+      color: var(--gold);
+    }
+
+    /* DISNEY — three chairs */
+    .chairs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 800px) { .chairs { grid-template-columns: 1fr; } }
+    .chair {
+      padding: 22px 20px 28px;
+      border-radius: 16px 16px 6px 6px;
+      min-height: 240px;
+    }
+    .chair.dream { background: linear-gradient(180deg, #f4eee3, #e8d9b8); }
+    .chair.real { background: var(--ink); color: var(--paper); }
+    .chair.crit { background: #e7e0d4; }
+    .chair h3 {
+      font-family: var(--sans);
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin: 0 0 12px;
+    }
+    .clapper {
+      margin-top: 28px;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 20px 24px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      font-family: var(--sans);
+    }
+    .clapper strong { font-size: 1.4rem; letter-spacing: -0.03em; font-family: var(--serif); }
+    .clapper span { font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+
+    /* MORPHOLOGICAL — switchboard */
+    .axes { display: grid; gap: 14px; }
+    .axis {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+    @media (max-width: 640px) { .axis { grid-template-columns: 1fr; } }
+    .axis .k {
+      font-family: var(--sans);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--stone);
+      padding-top: 8px;
+    }
+    .cells { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cell {
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      border: 1px solid var(--line);
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: var(--paper-hot);
+      color: var(--stone);
+    }
+    .cell.pick {
+      background: var(--lagoon);
+      color: #f3fffc;
+      border-color: var(--lagoon);
+    }
+    .combo {
+      margin-top: 22px;
+      padding: 16px 18px;
+      border-left: 4px solid var(--lagoon);
+      background: var(--lagoon-mist);
+      font-size: 1.05rem;
+    }
+    .feelings {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 22px;
+    }
+    @media (max-width: 700px) { .feelings { grid-template-columns: 1fr; } }
+    .feel-line {
+      padding: 12px 14px;
+      background: var(--paper-hot);
+      border-radius: 10px;
+    }
+    .feel-line b { font-family: var(--sans); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--lagoon); }
+
+    /* CLIMAX */
+    #climax {
+      max-width: none;
+      padding: 0 0 80px;
+      margin-top: 40px;
+    }
+    .curtain {
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(11,107,99,0.18), transparent 50%),
+        var(--ink);
+      color: var(--paper);
+      padding: 72px 24px 56px;
+      text-align: center;
+    }
+    .curtain .tech { color: var(--gold); }
+    .curtain h2 {
+      font-size: clamp(2.4rem, 6vw, 4.2rem);
+      letter-spacing: -0.04em;
+      margin: 0 0 12px;
+      color: var(--paper);
+    }
+    .curtain .breath { margin: 0 auto 8px; color: #c9c2b4; }
+    .house {
+      max-width: 1100px;
+      margin: -28px auto 0;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 0;
+      padding: 0 24px;
+    }
+    @media (max-width: 900px) { .house { grid-template-columns: 1fr 1fr 3fr; } }
+    @media (max-width: 560px) { .house { grid-template-columns: 1fr 1fr; } }
+    .door {
+      background: var(--paper);
+      color: var(--ink);
+      padding: 18px 12px 22px;
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+    .door:nth-child(2) {
+      background: var(--lagoon);
+      color: #f3fffc;
+      transform: translateY(-10px);
+      box-shadow: 0 18px 40px rgba(11,107,99,0.28);
+      z-index: 1;
+    }
+    .door em {
+      display: block;
+      font-family: var(--sans);
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-style: normal;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+    .door strong { display: block; font-size: 1.05rem; }
+    .door span { display: block; font-size: 0.82rem; margin-top: 4px; opacity: 0.8; }
+    .door small { display: block; margin-top: 8px; font-family: var(--sans); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; }
+    .lists {
+      max-width: 1100px;
+      margin: 40px auto 0;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 800px) { .lists { grid-template-columns: 1fr; } }
+    .kill, .keep {
+      padding: 24px;
+      border-radius: 16px;
+    }
+    .kill { background: #f6e4dc; }
+    .keep { background: #e4f0ec; }
+    .kill h3, .keep h3 {
+      font-family: var(--sans);
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin: 0 0 14px;
+    }
+    .kill h3 { color: var(--danger); }
+    .keep h3 { color: var(--lagoon-deep); }
+    .kill li { text-decoration: line-through; text-decoration-color: var(--danger); color: #5c4038; margin: 8px 0; }
+    .keep li { margin: 8px 0; }
+    .star {
+      max-width: 720px;
+      margin: 48px auto 0;
+      padding: 0 24px;
+      text-align: center;
+      font-size: 1.35rem;
+      line-height: 1.4;
+    }
+    .star em { color: var(--lagoon-deep); }
+    footer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 64px;
+      color: var(--stone);
+      font-size: 0.85rem;
+      font-family: var(--sans);
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#climax">Skip to Live Proof Cinema</a>
+
+  <nav class="seek" aria-label="Rooms in this session">
+    <div class="seek-inner">
+      <p class="seek-label">The house, not the brochure</p>
+      <div class="pills" id="pills">
+        <a href="#bedrock">Bedrock</a>
+        <a href="#orchestra">Orchestra</a>
+        <a href="#job">The hire</a>
+        <a href="#flip">Reversal</a>
+        <a href="#alien">Field notes</a>
+        <a href="#transfer">Transfer</a>
+        <a href="#scamper">SCAMPER</a>
+        <a href="#sensory">Senses</a>
+        <a href="#wish">Wishes</a>
+        <a href="#persona">Maya’s path</a>
+        <a href="#worst">Worst</a>
+        <a href="#disney">Three chairs</a>
+        <a href="#morph">Axes</a>
+        <a href="#climax">Live Proof</a>
+      </div>
+    </div>
+    <div class="ink-bar" aria-hidden="true"><i id="ink"></i></div>
+  </nav>
+
+  <header class="hero">
+    <p class="eyebrow">A week with your people</p>
+    <h1>Don’t fake the kitchen.</h1>
+    <p class="lede">
+      Visitors do not hire a marketing carousel. They hire <em>certainty</em> that this software is real —
+      and built for their club. A decorative mock is a promise with a question mark.
+      Elena’s WhatsApp, logged on Monday, is a promise with evidence.
+    </p>
+
+    <div class="compare" aria-label="Hollow mock versus inhabited live product">
+      <div class="stage hollow">
+        <div class="fake-chrome" aria-hidden="true"><span></span><span></span><span></span></div>
+        <h2>The hollow twin</h2>
+        <div class="lonely">
+          <b>Hero</b><b>Highlights</b><b>Activities</b><b>Testimonials</b>
+        </div>
+        <div class="empty-rails">four lonely section pills · lorem waiting</div>
+        <p class="continue">Scroll to continue · Chapter 6 of 6</p>
+        <div class="watermark">CHAPTER 06</div>
+      </div>
+      <div class="stage live">
+        <h2>The inhabited house</h2>
+        <div class="row on">
+          <span>Elena Tan</span>
+          <small>Sunday clinic · WhatsApp</small>
+        </div>
+        <div class="row">
+          <span>Jordan Hale</span>
+          <small>Board games night</small>
+        </div>
+        <div class="row">
+          <span>Sunday clinic</span>
+          <small>23 signed · that’s our week</small>
+        </div>
+        <span class="wa"><span class="dot"></span> Message logged · welcome note sent</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="scene" id="bedrock">
+    <p class="tech">First Principles</p>
+    <h2>The product already has rooms.</h2>
+    <p class="breath">Strip the brochure. What remains is isomorphism: the same React surfaces the team will open on Monday, fed by a club week that smells like coffee and a printed signup sheet — not Acme Corp.</p>
+    <div class="bedrock">
+      <article class="slab"><strong>Certainty, not carousel.</strong><span>They hire proof this is real software for their kind of club.</span></article>
+      <article class="slab"><strong>Mocks ask. Live screens answer.</strong><span>Cohestra already has Clients, Follow-up, Dashboard, Campaigns, Reports, Website. Show those — not a parallel fake UI.</span></article>
+      <article class="slab"><strong>Seed a week, not lorem.</strong><span>Elena, Sunday clinic, WhatsApp logged. Recurring cast across every surface.</span></article>
+      <article class="slab"><strong>Chapter numbers are textbook scaffolding.</strong><span>Apple rarely labels Chapter 06. Feeling comes from the product moment. Scroll itself teaches progress.</span></article>
+      <article class="slab"><strong>Gathered clarity, not hardware theater.</strong><span>Ink, lagoon, warm paper. Relief and quiet confidence — someone finally built the stack for clubs.</span></article>
+    </div>
+    <div class="rebuilds">
+      <div class="rebuild"><b>Pin one frame</b>Copy names the emotional job. Pills seek surfaces, never chapters.</div>
+      <div class="rebuild"><b>One design language</b>Demo tenant feeds real components. Marketing wraps them inert. Crop with a cinematic mask if dense — still live DOM.</div>
+      <div class="rebuild"><b>Headlines answer fears</b>“Will we lose this lead?” Bullets become felt outcomes: your team opens WhatsApp and Cohestra remembers.</div>
+    </div>
+  </section>
+
+  <section class="scene" id="orchestra">
+    <p class="tech">Emotion Orchestra</p>
+    <h2>Rage at the empty temple. Joy when Elena looks like Monday.</h2>
+    <p class="breath">Harmonize the rooms so the house never empties between seeks. Left copy always starts with the feeling word. Right stage crossfades — inhabited, always.</p>
+    <div class="staves">
+      <div class="staff">
+        <div class="feel rage">Rage</div>
+        <div class="notes" aria-hidden="true"></div>
+        <p>Empty Website mock. CHAPTER 6 OF 6 teaching a tutorial. Feature bullets that could be any CRM. Rewrite as the chaotic week without Cohestra.</p>
+      </div>
+      <div class="staff">
+        <div class="feel joy">Joy</div>
+        <div class="notes" aria-hidden="true"></div>
+        <p>Elena’s WhatsApp button identical to the real client profile. Sunday clinic in the charts — that’s our week. Quiet lagoon checks, not neon confetti.</p>
+      </div>
+      <div class="staff">
+        <div class="feel fear">Fear</div>
+        <div class="notes" aria-hidden="true"></div>
+        <p>Live screens might show unfinished edges, auth leaks, or a visitor mistaking demo for their empty tenant. Snapshot, read-only, curated seed. Copy says “a week inside a club like yours.”</p>
+      </div>
+      <div class="staff">
+        <div class="feel hope">Hope</div>
+        <div class="notes" aria-hidden="true"></div>
+        <p>One scroll and they whisper: this ends the spreadsheet. A tidy club office at dusk. Pills as rooms in one house — climax on Follow-up or Clients, not a Website Pro upsell.</p>
+      </div>
+    </div>
+    <div class="arc-strip" aria-label="Feeling arc">
+      <span>Relief</span><span>Connection</span><span>Control</span><span>Reach</span><span>Proof</span><span>Pride</span>
+    </div>
+  </section>
+
+  <section class="scene" id="job">
+    <p class="tech">Job to Be Done</p>
+    <h2>Make the chaos end here.</h2>
+    <div class="poster">
+      <p class="wanted">Wanted</p>
+      <h3>Certainty this is real software for my kind of club — not pretty vapor.</h3>
+      <p>Maya, Saturday volunteers, no training. Stop juggling Forms + sheet + WhatsApp memory + Linktree.</p>
+    </div>
+    <div class="jobs">
+      <div class="ticket"><b>Clients</b>Show me I won’t lose a person after they scan the QR.</div>
+      <div class="ticket"><b>Follow-up</b>Show me messaging lives where the lead lives.</div>
+      <div class="ticket"><b>Dashboard</b>Show me Monday morning in ten seconds.</div>
+      <div class="ticket"><b>Campaigns</b>Show me I can email the right segment without exporting.</div>
+      <div class="ticket"><b>Reports</b>Show me I can prove the week to my board.</div>
+      <div class="ticket"><b>Website</b>Show me our public face and our activities stay one organism.</div>
+    </div>
+    <p class="pattern">
+      <i>Feeling</i> → <i>Scene</i> → <i>Proof</i>
+      <s>never Feature → Bullet → Mock</s>
+      &nbsp; Close on “Start with your first activity.” Anti-job: do not hire this section to learn a chapter index.
+    </p>
+  </section>
+
+  <section class="scene" id="flip">
+    <p class="tech">Assumption Reversal</p>
+    <h2>Live UI is the polish. Mocks are the noise.</h2>
+    <p class="breath">Every brochure habit, inverted. Apple emptiness frames a dense product. Our emptiness framed a hollow mock. Fill with product, not void.</p>
+    <div class="flips">
+      <div class="flip"><div class="was">Marketing can’t mount admin components</div><div class="arr">FLIP</div><div class="now">MarketingDemoProvider seed. Same components, apex-only.</div></div>
+      <div class="flip"><div class="was">Chapters create cinema grammar</div><div class="arr">FLIP</div><div class="now">Product focus + scroll ownership. Chapters are self-inflicted brochure smell.</div></div>
+      <div class="flip"><div class="was">Website is the climax because Pro</div><div class="arr">FLIP</div><div class="now">Climax is chaos becoming calm. Website is the pride epilogue.</div></div>
+      <div class="flip"><div class="was">Seed data must be anonymous</div><div class="arr">FLIP</div><div class="now">Named club people create empathy. Elena is the plot.</div></div>
+      <div class="flip"><div class="was">Inert means a static image</div><div class="arr">FLIP</div><div class="now">Inert live React still scrolls internally. Clicks blocked. Depth remains.</div></div>
+      <div class="flip"><div class="was">Fake URL bar proves authenticity</div><div class="arr">FLIP</div><div class="now">Thin Cohestra frame — or frameless. Identity, not mock theater.</div></div>
+      <div class="flip"><div class="was">A PRO chip on empty UI sells upgrade</div><div class="arr">FLIP</div><div class="now">A living public site sells Pro better than a badge on a ghost.</div></div>
+    </div>
+  </section>
+
+  <section class="scene" id="alien">
+    <p class="tech">Alien Anthropologist</p>
+    <h2 style="position:absolute;left:-999px">Why fake the kitchen?</h2>
+    <div class="journal">
+      <p class="tech">Field notes · habitat study</p>
+      <p class="q">Why do humans put fake browser dots on a picture of software that already lives in a browser?</p>
+      <p class="q">Why number the rooms when the door labels already say Clients and Reports?</p>
+      <p class="q">Why leave half the habitat empty when the tribe’s real tools are dense with people names?</p>
+      <p class="q">Why teach “scroll to continue” when the scroll bar already exists in their culture?</p>
+      <p class="q">Why sell Pro with a hollow temple instead of a living public square?</p>
+      <p class="trans">
+        <b>Translation</b>
+        Authenticity is isomorphism: same components, same tokens, same seed people. Feeling is density of care — named people, logged messages, upcoming clinic — not density of adjectives. Cohestra’s scent is warm paper + lagoon, not charcoal product-porn. A landing that redraws a weaker twin is an apology. Erase the museum plaque from the living kitchen.
+      </p>
+    </div>
+  </section>
+
+  <section class="scene" id="transfer">
+    <p class="tech">Trait Transfer</p>
+    <h2>Borrow Apple’s grammar. Refuse Apple’s soul.</h2>
+    <div class="cases">
+      <div class="case keep">
+        <h3>Transplant</h3>
+        <ul>
+          <li>One heroic product object owns the viewport — for us, the live workspace, not a phone.</li>
+          <li>Short, confident, benefit-first copy, spoken in gathered club clarity.</li>
+          <li>Scrub and pin cinema without labeling chapters.</li>
+          <li>Lagoon used sparingly, like a true action: WhatsApp, Publish.</li>
+          <li>Transitions settle. No playful bounce. Whitespace frames the product; if space appears, enlarge the stage.</li>
+        </ul>
+      </div>
+      <div class="case refuse">
+        <h3>Do not steal</h3>
+        <ul>
+          <li>Hardware orbit. Black void. San Francisco coldness.</li>
+          <li>Cohestra stays warm paper community craft — a club’s heartbeat still audible.</li>
+          <li>Take instead from Linear/Stripe: live product UI embeds, craft-tier proof.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="lobby">The lobby should smell like the restaurant. Landing stage = actual kitchen tools. Elena appears in Clients and in Reports — a day in the life, not a taxonomy.</p>
+  </section>
+
+  <section class="scene" id="scamper">
+    <p class="tech">SCAMPER</p>
+    <h2>Wood type, one letter at a time.</h2>
+    <p class="breath">Substitute the fake chrome. Eliminate the watermark. Reverse the entry if connection wants to speak first.</p>
+    <div class="blocks">
+      <article class="block"><div class="letter">S</div><div class="word">Substitute</div><p>Live ClientsRoute demo mount. Optional thin frame. Chapter N of 6 becomes nothing.</p></article>
+      <article class="block"><div class="letter">C</div><div class="word">Combine</div><p>Feeling line + live stage as one unit. One DemoClub JSON so names never desync.</p></article>
+      <article class="block"><div class="letter">A</div><div class="word">Adapt</div><p>OperatorSeed into MarketingDemoProvider, apex-only. Reduced-motion keeps the surfaces; only the pin scrub dies.</p></article>
+      <article class="block"><div class="letter">M</div><div class="word">Modify</div><p>Stage ~70% width. Copy shrinks to a feeling headline and one breath. Thesis: the tool that ends the stack.</p></article>
+      <article class="block"><div class="letter">P</div><div class="word">Put to use</div><p>Real Website builder preview on marketing. Seeded homepage sections fill the frame.</p></article>
+      <article class="block"><div class="letter">E</div><div class="word">Eliminate</div><p>Empty section rails. Scroll to continue. PRO chip theater. Chapter watermarks.</p></article>
+      <article class="block"><div class="letter">R</div><div class="word">Reverse</div><p>Product stage first, copy as caption. Or start cinema on Follow-up — test connection as the door.</p></article>
+    </div>
+  </section>
+
+  <section class="scene" id="sensory">
+    <p class="tech">Sensory Exploration</p>
+    <h2>Sunday clinic coffee. Silence. Warmth.</h2>
+    <div class="senses">
+      <article class="sense"><div class="glyph">◉</div><h3>Sight</h3><p>Filled live UI. Soft paper halo. Lagoon only on true actions.</p></article>
+      <article class="sense"><div class="glyph">ø</div><h3>Sound</h3><p>Silence. No celebratory toasts. Quiet competence.</p></article>
+      <article class="sense"><div class="glyph">▣</div><h3>Touch</h3><p>Sticky stage planted. Soft-press pills. No hover-lift carnival.</p></article>
+      <article class="sense"><div class="glyph">♨</div><h3>Smell</h3><p>Coffee and a printed signup sheet — never Acme Corp.</p></article>
+      <article class="sense"><div class="glyph">—</div><h3>Taste</h3><p>Bitter honesty: spreadsheets lie. Then the sweet relief of order.</p></article>
+      <article class="sense"><div class="glyph">〰</div><h3>Texture</h3><p>Fraunces titles like cloth. Product UI crisp sans. The handshake.</p></article>
+      <article class="sense"><div class="glyph">°</div><h3>Temperature</h3><p>Warm. Never cold tech black.</p></article>
+      <article class="sense"><div class="glyph">⚖</div><h3>Balance</h3><p>If the stage goes gray and empty, inject seed density — not more chrome.</p></article>
+    </div>
+  </section>
+
+  <section class="scene" id="wish">
+    <p class="tech">Secret Wish</p>
+    <h2>Wait — is that the real app?</h2>
+    <div class="wishes">
+      <p class="note">A tiny ache of recognition: this is the week I already live. Then relief.</p>
+      <p class="note">Cohestra feels inevitable, not optional SaaS.</p>
+      <p class="note">The Website chapter stops embarrassing us. Live builder or don’t show it.</p>
+      <p class="note">No one ever says “nice mockups.” Founders send the URL without apology.</p>
+      <p class="note">Apple cleanliness — with a club’s heartbeat still audible.</p>
+    </div>
+  </section>
+
+  <section class="scene" id="persona">
+    <p class="tech">Persona Journey</p>
+    <h2>Maya walks the house. The stack can die.</h2>
+    <div class="path" aria-label="Maya through six rooms">
+      <div class="room"><div class="who">Maya</div><h3>Clients</h3><p>Elena’s profile identical to hope. She breathes.</p></div>
+      <div class="room"><div class="who">Maya</div><h3>Follow-up</h3><p>WhatsApp on the timeline. Monday is handled.</p></div>
+      <div class="room"><div class="who">Board chair</div><h3>Reports</h3><p>Sunday clinic numbers. Trust for the budget talk.</p></div>
+      <div class="room"><div class="who">Volunteer</div><h3>Campaigns</h3><p>Real subjects. Not afraid of “email tool.”</p></div>
+      <div class="room"><div class="who">Skeptic</div><h3>Stage</h3><p>Looks for fake URL bar and lorem. Finds none.</p></div>
+      <div class="room"><div class="who">Tired admin</div><h3>Absence</h3><p>Chapter chrome was a tax. Its lack feels respectful.</p></div>
+    </div>
+    <div class="guests">
+      <div class="guest"><b>Climax beat</b><span>WhatsApp logged. Maya: the stack can die.</span></div>
+    </div>
+  </section>
+
+  <section class="scene" id="worst">
+    <p class="tech">Worst Possible Idea</p>
+    <h2>Burn the carnival. Develop the photograph.</h2>
+    <div class="negatives">
+      <p class="breath">Each disaster teaches its opposite. Authenticity without privacy risk. Emotion without carnival. Density without clutter.</p>
+      <div class="burn">
+        <article class="frame"><p class="stamp">Do not process</p><p>Keep the empty Website mock. Add more chapter numbers.</p><p class="developed">Fill with live builder. Kill chapters.</p></article>
+        <article class="frame"><p class="stamp">Do not process</p><p>Autoplay a loud feature video. Stock smiles over the UI.</p><p class="developed">Silent inhabited product. Named seed people inside it.</p></article>
+        <article class="frame"><p class="stamp">Do not process</p><p>Infinite bullets. Iframe production with real PII. Gate the UI behind signup.</p><p class="developed">One feeling sentence + live proof. MarketingDemoClub only. Gift the proof first.</p></article>
+      </div>
+      <p class="lesson">Flip-lesson: honesty survives. Carnival does not convert a club operator at dusk.</p>
+    </div>
+  </section>
+
+  <section class="scene" id="disney">
+    <p class="tech">Disney Method</p>
+    <h2>Three chairs, one verdict.</h2>
+    <div class="chairs">
+      <article class="chair dream">
+        <h3>Dreamer</h3>
+        <p>Full-bleed live workspace as the only hero. Copy floats as captions. Emotional weather per surface: relief, connection, control, reach, proof, pride.</p>
+      </article>
+      <article class="chair real">
+        <h3>Realist</h3>
+        <p>MarketingDemoProvider + shared seed JSON. Mount existing page bodies behind inert. Delete chapterNumber and scroll-continue this sprint. Feeling → Scene. Two or three outcome lines, max.</p>
+      </article>
+      <article class="chair crit">
+        <h3>Critic</h3>
+        <p>Crop admin nav with overflow hidden. Website: preview + sections only, not full editor. One DemoClub fixture owned by marketing and product. Stage stays aria-hidden; pills remain the controls.</p>
+      </article>
+    </div>
+    <div class="clapper">
+      <span>Scene · Take 1</span>
+      <strong>Ship Live Proof Cinema</strong>
+      <span>Live surfaces · feeling copy · no pedagogy</span>
+    </div>
+  </section>
+
+  <section class="scene" id="morph">
+    <p class="tech">Morphological Analysis</p>
+    <h2>The lighting plot for a living stage.</h2>
+    <p class="breath">Prefer JSON seed for apex speed and safety. Presentational mount, then iframe fallback. Kill fake browser chrome.</p>
+    <div class="axes">
+      <div class="axis"><div class="k">Data</div><div class="cells"><span class="cell pick">static MarketingDemoClub JSON</span><span class="cell">read-only demo API</span><span class="cell">cloned seed DB</span></div></div>
+      <div class="axis"><div class="k">Mount</div><div class="cells"><span class="cell pick">presentational bodies</span><span class="cell">iframe /demo/*</span><span class="cell">keep mocks</span></div></div>
+      <div class="axis"><div class="k">Frame</div><div class="cells"><span class="cell pick">frameless or thin Cohestra</span><span class="cell">fake browser chrome</span></div></div>
+      <div class="axis"><div class="k">Copy</div><div class="cells"><span class="cell">feeling only</span><span class="cell pick">feeling + scene</span><span class="cell">+ 3 outcomes, light</span></div></div>
+      <div class="axis"><div class="k">Progress</div><div class="cells"><span class="cell pick">selected pill only</span><span class="cell">pill + ink bar</span><span class="cell">chapters — forbid</span></div></div>
+      <div class="axis"><div class="k">Climax</div><div class="cells"><span class="cell pick">Follow-up connection</span><span class="cell">Clients relief</span><span class="cell">Website pride as epilogue</span></div></div>
+    </div>
+    <p class="combo">Combo pick: JSON seed + presentational mount + thin or frameless stage + feeling-and-scene copy + pill-only progress + connection climax.</p>
+    <div class="feelings">
+      <div class="feel-line"><b>Clients · relief</b>Every person who signs up still has a name on Monday.</div>
+      <div class="feel-line"><b>Follow-up · connection</b>Message them where they already are — and keep the record.</div>
+      <div class="feel-line"><b>Dashboard · control</b>Know what needs you before the session starts.</div>
+      <div class="feel-line"><b>Campaigns · reach</b>Reach the right people without exporting your community.</div>
+      <div class="feel-line"><b>Reports · proof</b>Show the week — not a spreadsheet archaeology dig.</div>
+      <div class="feel-line"><b>Website · pride</b>Your public face stays tied to the activities you already run.</div>
+    </div>
+  </section>
+
+  <section id="climax">
+    <div class="curtain">
+      <p class="tech">Synthesis</p>
+      <h2>Live Proof Cinema</h2>
+      <p class="breath">Same Cohestra UI. DemoClub seed. Feeling copy. Apple pin grammar without Apple soul theft. Chapters are brochure smell. The mandate from three rooms at once: isomorphism over illustration.</p>
+    </div>
+    <div class="house" aria-label="Feeling arc through six rooms">
+      <div class="door"><em>Clients</em><strong>Relief</strong><span>A name on Monday</span></div>
+      <div class="door"><em>Follow-up · peak</em><strong>Connection</strong><span>The stack can die</span><small>Emotional climax</small></div>
+      <div class="door"><em>Dashboard</em><strong>Control</strong><span>Monday in ten seconds</span></div>
+      <div class="door"><em>Campaigns</em><strong>Reach</strong><span>No export</span></div>
+      <div class="door"><em>Reports</em><strong>Proof</strong><span>Sunday clinic</span></div>
+      <div class="door"><em>Website</em><strong>Pride</strong><span>Epilogue, not the peak</span></div>
+    </div>
+    <div class="lists">
+      <div class="kill">
+        <h3>Kill list</h3>
+        <ul>
+          <li>chapterNumber</li>
+          <li>Chapter N of 6</li>
+          <li>Scroll to continue</li>
+          <li>Empty Website section rails</li>
+          <li>ShowcaseBrowserChrome as the authenticity signal</li>
+        </ul>
+      </div>
+      <div class="keep">
+        <h3>Keep list</h3>
+        <ul>
+          <li>Pin cinema</li>
+          <li>Seek pills</li>
+          <li>Live region announces the job sentence, never Chapter N</li>
+          <li>Prefer-reduced-motion → click-tabs; same live surfaces</li>
+          <li>Midnight Atelier tokens</li>
+          <li>Climax micro-beat — optional, subtler</li>
+        </ul>
+      </div>
+    </div>
+    <p class="star">
+      Kill the chapter chrome. Mount the live house with MarketingDemoClub seed.
+      Rewrite copy <em>Feeling → Scene</em>. Frameless or thin Cohestra frame. Pill-only progress.
+      The secret wish, answered: <em>wait, is that the real app?</em>
+    </p>
+  </section>
+
+  <footer>
+    Session keepsake · 1 September 2026 · Cohestra Live Proof Cinema · English · no chapters were numbered in the making of this house
+  </footer>
+
+  <script>
+    (function () {
+      var scenes = Array.prototype.slice.call(document.querySelectorAll("section[id], #climax"));
+      var pills = Array.prototype.slice.call(document.querySelectorAll("#pills a"));
+      var ink = document.getElementById("ink");
+      function setOn(id) {
+        pills.forEach(function (a) {
+          a.classList.toggle("is-on", a.getAttribute("href") === "#" + id);
+        });
+      }
+      function progress() {
+        var max = document.documentElement.scrollHeight - window.innerHeight;
+        var p = max > 0 ? window.scrollY / max : 0;
+        if (ink) ink.style.width = Math.min(100, Math.max(0, p * 100)) + "%";
+      }
+      if ("IntersectionObserver" in window) {
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) setOn(e.target.id);
+          });
+        }, { rootMargin: "-35% 0px -50% 0px", threshold: 0.01 });
+        scenes.forEach(function (s) { io.observe(s); });
+      }
+      window.addEventListener("scroll", progress, { passive: true });
+      progress();
+    })();
+  </script>
+</body>
+</html>
