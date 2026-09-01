@@ -140,7 +140,7 @@ function ShowcaseClientsList({ compact = false }: { compact?: boolean }) {
       </div>
 
       <div className="min-h-0 flex-1 divide-y divide-line overflow-y-auto">
-        {SHOWCASE_CLIENTS.slice(0, compact ? 4 : SHOWCASE_CLIENTS.length).map((client) => (
+        {SHOWCASE_CLIENTS.slice(0, compact ? 6 : SHOWCASE_CLIENTS.length).map((client) => (
           <div
             key={client.id}
             className={cn(
@@ -222,7 +222,7 @@ function ShowcaseClientProfile({ compact = false }: { compact?: boolean }) {
           Relationship timeline
         </p>
         <ul className="mt-4 space-y-4">
-          {TIMELINE.slice(0, compact ? 3 : TIMELINE.length).map((event) => (
+          {TIMELINE.slice(0, compact ? 5 : TIMELINE.length).map((event) => (
             <li key={event.label} className="flex gap-3">
               <span
                 className={cn(
@@ -250,21 +250,23 @@ export function MarketingCrmShowcase({
   compact?: boolean;
 }) {
   return (
-    <div className={cn("flex w-full min-w-0 flex-col", className)}>
-      <div className="marketing-crm-showcase-frame w-full min-w-0">
+    <div className={cn("flex h-full w-full min-h-0 min-w-0 flex-col", className)}>
+      <div className="marketing-crm-showcase-frame h-full min-h-0 w-full min-w-0">
         <div
           className={cn(
-            "marketing-crm-showcase-surface shadow-[0_32px_64px_rgba(7,13,18,0.12)]",
+            "marketing-crm-showcase-surface h-full min-h-0 shadow-[0_32px_64px_rgba(7,13,18,0.12)]",
             compact
-              ? "min-h-[420px] sm:min-h-[480px] lg:min-h-[520px]"
-              : "min-h-[min(78vh,920px)] sm:min-h-[min(82vh,960px)]"
+              ? "min-h-[420px] sm:min-h-[480px] lg:min-h-0"
+              : "min-h-[min(78vh,920px)] sm:min-h-[min(82vh,960px)] lg:min-h-0"
           )}
         >
           <ShowcaseBrowserChrome>
             <div
               className={cn(
                 "flex h-full flex-col",
-                compact ? "min-h-[380px] lg:min-h-[480px] lg:flex-row" : "min-h-[min(72vh,840px)] lg:min-h-0 lg:flex-row"
+                compact
+                  ? "min-h-[380px] lg:min-h-0 lg:flex-row"
+                  : "min-h-[min(72vh,840px)] lg:min-h-0 lg:flex-row"
               )}
             >
               <ShowcaseClientsList compact={compact} />
