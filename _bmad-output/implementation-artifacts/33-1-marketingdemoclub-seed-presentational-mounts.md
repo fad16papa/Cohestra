@@ -320,6 +320,7 @@ Cursor Grok 4.6
 - Vitest 6/6 demo-club + full web suite 151/151; `tsc --noEmit` clean
 - Browser verified on localhost:3000/#crm — Clients/Follow-up/Dashboard/Campaigns/Reports/Website seek; mobile clients body OK
 - Code-review patches applied and re-verified (Elena phone, March week, Recipients, New leads, H3 chart ticks)
+- Pass 2 patches: Mar 8–15 window, board games Sundays, Jordan timeline order, Website mount inert, Total clients tile
 
 ### File List
 
@@ -345,3 +346,4 @@ Cursor Grok 4.6
 
 - 2026-09-01: Implemented Story 33.1 — MarketingDemoClub seed + presentational mounts for `/#crm`
 - 2026-09-02: Applied code-review patches — H3 token remap, invariants, March week seed, campaigns/reports/dashboard copy
+- 2026-09-02: Pass 2 review patches — Mar 8–15 period, Sunday board-games schedule, queue/section invariants, Website `inert`, Total clients tile
