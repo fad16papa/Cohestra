@@ -16,7 +16,7 @@
     {
       "id": "demo-elena",
       "fullName": "Elena Martinez",
-      "phone": "+34612345678",
+      "phone": "+34 612 345 678",
       "email": "elena@example.com",
       "consentGiven": true,
       "nationality": "Spain",
@@ -36,7 +36,7 @@
       "consentGiven": true,
       "nationality": "USA",
       "leadStatus": "new",
-      "lastRegistrationAt": "2026-09-01T09:00:00.000Z",
+      "lastRegistrationAt": "2026-03-15T09:00:00.000Z",
       "lastActivityName": "board games night",
       "lastOutreachAt": null,
       "lastOutreachKind": null,
@@ -66,7 +66,7 @@
       "consentGiven": true,
       "nationality": "India",
       "leadStatus": "active",
-      "lastRegistrationAt": "2026-08-28T11:00:00.000Z",
+      "lastRegistrationAt": "2026-03-11T11:00:00.000Z",
       "lastActivityName": "youth open play",
       "lastOutreachAt": null,
       "lastOutreachKind": null,
@@ -78,7 +78,7 @@
     "demo-elena": {
       "id": "demo-elena",
       "fullName": "Elena Martinez",
-      "phone": "+34612345678",
+      "phone": "+34 612 345 678",
       "email": "elena@example.com",
       "profession": null,
       "nationality": "Spain",
@@ -216,7 +216,7 @@
   },
   "dashboard": {
     "totalLeads": 248,
-    "newLeadsInPeriod": 36,
+    "newLeadsInPeriod": 12,
     "periodDays": 7,
     "activeActivitiesCount": 4,
     "followUpCoveragePercent": 82,
@@ -236,20 +236,28 @@
         "category": "Social",
         "status": "published",
         "registrationCount": 12
+      },
+      {
+        "activityId": "demo-youth-open-play",
+        "activityName": "youth open play",
+        "communityLabel": "Riverside Rec",
+        "category": "Social",
+        "status": "published",
+        "registrationCount": 6
       }
     ],
-    "computedAt": "2026-09-01T08:00:00.000Z",
+    "computedAt": "2026-03-15T18:00:00.000Z",
     "registrationsInPeriod": 36,
     "registrationsInPreviousPeriod": 28,
     "trendDays": 7,
     "registrationsTrend": [
-      { "date": "2026-08-26", "registrations": 4, "newClients": 2 },
-      { "date": "2026-08-27", "registrations": 5, "newClients": 3 },
-      { "date": "2026-08-28", "registrations": 6, "newClients": 2 },
-      { "date": "2026-08-29", "registrations": 4, "newClients": 1 },
-      { "date": "2026-08-30", "registrations": 7, "newClients": 3 },
-      { "date": "2026-08-31", "registrations": 5, "newClients": 2 },
-      { "date": "2026-09-01", "registrations": 5, "newClients": 3 }
+      { "date": "2026-03-09", "registrations": 4, "newClients": 1 },
+      { "date": "2026-03-10", "registrations": 5, "newClients": 2 },
+      { "date": "2026-03-11", "registrations": 6, "newClients": 2 },
+      { "date": "2026-03-12", "registrations": 4, "newClients": 1 },
+      { "date": "2026-03-13", "registrations": 7, "newClients": 2 },
+      { "date": "2026-03-14", "registrations": 5, "newClients": 2 },
+      { "date": "2026-03-15", "registrations": 5, "newClients": 2 }
     ],
     "leadStatusBreakdown": {
       "newCount": 41,
@@ -281,8 +289,8 @@
   ],
   "reportFilters": {
     "preset": "weekly",
-    "from": "2026-08-26",
-    "to": "2026-09-01",
+    "from": "2026-03-09",
+    "to": "2026-03-15",
     "activityId": "",
     "community": "",
     "leadStatus": "",
@@ -291,9 +299,9 @@
   "reports": {
     "period": {
       "preset": "weekly",
-      "startAt": "2026-08-26T00:00:00.000Z",
-      "endAt": "2026-09-01T23:59:59.000Z",
-      "computedAt": "2026-09-01T08:00:00.000Z"
+      "startAt": "2026-03-09T00:00:00.000Z",
+      "endAt": "2026-03-15T23:59:59.000Z",
+      "computedAt": "2026-03-15T18:00:00.000Z"
     },
     "activitiesHosted": 4,
     "registrations": 36,
@@ -317,6 +325,12 @@
         "activityName": "board games night",
         "communityLabel": "Riverside Rec",
         "registrationCount": 12
+      },
+      {
+        "activityId": "demo-youth-open-play",
+        "activityName": "youth open play",
+        "communityLabel": "Riverside Rec",
+        "registrationCount": 6
       }
     ],
     "leadGrowth": {
@@ -335,25 +349,25 @@
       "campaignsFailed": 1
     },
     "priorPeriod": {
-      "startAt": "2026-08-19T00:00:00.000Z",
-      "endAt": "2026-08-25T23:59:59.000Z",
+      "startAt": "2026-03-02T00:00:00.000Z",
+      "endAt": "2026-03-08T23:59:59.000Z",
       "registrations": 28,
       "newLeads": 8,
       "activitiesHosted": 3,
       "followUpCoveragePercent": 74
     },
     "dailyTrend": [
-      { "date": "2026-08-26", "registrations": 4, "newClients": 2 },
-      { "date": "2026-08-27", "registrations": 5, "newClients": 3 },
-      { "date": "2026-08-28", "registrations": 6, "newClients": 2 },
-      { "date": "2026-08-29", "registrations": 4, "newClients": 1 },
-      { "date": "2026-08-30", "registrations": 7, "newClients": 3 },
-      { "date": "2026-08-31", "registrations": 5, "newClients": 2 },
-      { "date": "2026-09-01", "registrations": 5, "newClients": 3 }
+      { "date": "2026-03-09", "registrations": 4, "newClients": 1 },
+      { "date": "2026-03-10", "registrations": 5, "newClients": 2 },
+      { "date": "2026-03-11", "registrations": 6, "newClients": 2 },
+      { "date": "2026-03-12", "registrations": 4, "newClients": 1 },
+      { "date": "2026-03-13", "registrations": 7, "newClients": 2 },
+      { "date": "2026-03-14", "registrations": 5, "newClients": 2 },
+      { "date": "2026-03-15", "registrations": 5, "newClients": 2 }
     ]
   },
   "website": {
-    "publishedAt": "2026-08-20T12:00:00.000Z",
+    "publishedAt": "2026-03-01T12:00:00.000Z",
     "upcomingActivities": [
       {
         "slug": "sunday-clinic",

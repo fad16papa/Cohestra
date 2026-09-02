@@ -81,14 +81,15 @@ const TIMELINE_TYPES = new Set<ClientTimelineEventType>([
   "next_follow_up_changed",
   "website_inquiry",
 ]);
-const ROOMS = new Set<DemoRoomId>([
+export const REQUIRED_DEMO_ROOMS: readonly DemoRoomId[] = [
   "clients",
   "outreach",
   "dashboard",
   "campaigns",
   "reports",
   "website",
-]);
+];
+const ROOMS = new Set<DemoRoomId>(REQUIRED_DEMO_ROOMS);
 
 function asRecord(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -534,6 +535,23 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
   }
   if (!club.clients.some((client) => client.id === club.followUpClientId)) {
     throw new Error("MarketingDemoClub: followUpClientId must exist in clients");
+  }
+
+  const requiredDetailIds = new Set([
+    club.selectedClientId,
+    club.followUpClientId,
+    ...club.reportsProofClientIds,
+  ]);
+  for (const id of requiredDetailIds) {
+    if (!club.clientDetails[id]) {
+      throw new Error(`MarketingDemoClub: clientDetails.${id} missing`);
+    }
+  }
+
+  for (const room of REQUIRED_DEMO_ROOMS) {
+    if (!club.availableRooms.includes(room)) {
+      throw new Error(`MarketingDemoClub: availableRooms must include ${room}`);
+    }
   }
   if (club.whatsappQuote.clientId !== club.followUpClientId) {
     throw new Error("MarketingDemoClub: WhatsApp quote must belong to the follow-up client");

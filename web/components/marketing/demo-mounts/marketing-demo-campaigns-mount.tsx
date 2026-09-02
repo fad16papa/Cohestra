@@ -18,7 +18,7 @@ export function MarketingDemoCampaignsMount() {
           <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,0.6fr)_minmax(0,0.6fr)] gap-4 border-b border-line bg-paper-warm px-4 py-3 text-[11px] font-medium uppercase tracking-wide text-stone-cinema">
             <span>Subject</span>
             <span>Sent</span>
-            <span>Delivered</span>
+            <span>Recipients</span>
             <span>Failed</span>
           </div>
           {club.campaigns.map((campaign) => (

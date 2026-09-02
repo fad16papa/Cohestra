@@ -451,10 +451,21 @@
     background-color: var(--background);
   }
 
-  /* H3 — cinema DemoClub mounts: muted text on paper-warm must meet AA */
+  /* H3 — cinema DemoClub mounts: muted text on paper-warm must meet AA.
+     Override tokens so chart ticks (`var(--text-muted-warm)`) and opacity
+     utilities (`text-text-muted-warm/90`) inherit stone-cinema, not raw stone. */
+  [data-demo-theme] {
+    --text-muted-warm: var(--stone-cinema);
+    --muted-foreground: var(--stone-cinema);
+    --color-text-muted-warm: var(--stone-cinema);
+    --color-muted-foreground: var(--stone-cinema);
+  }
+
   [data-demo-theme] .text-stone,
   [data-demo-theme] .text-text-muted-warm,
-  [data-demo-theme] .text-muted-foreground {
+  [data-demo-theme] .text-muted-foreground,
+  [data-demo-theme] [class*="text-text-muted-warm/"],
+  [data-demo-theme] [class*="text-muted-foreground/"] {
     color: var(--stone-cinema);
   }
 

@@ -12,6 +12,7 @@ import {
   isDemoRoomAvailable,
   marketingDemoClub,
   parseMarketingDemoClub,
+  REQUIRED_DEMO_ROOMS,
 } from "./marketing-demo-club";
 
 const fixturePath = join(dirname(fileURLToPath(import.meta.url)), "marketing-demo-club.json");
@@ -73,8 +74,47 @@ describe("MarketingDemoClub", () => {
   });
 
   it("keeps all six rooms available (omit is an explicit flag, not a throw)", () => {
-    for (const room of ["clients", "outreach", "dashboard", "campaigns", "reports", "website"] as const) {
+    for (const room of REQUIRED_DEMO_ROOMS) {
       expect(isDemoRoomAvailable(room)).toBe(true);
     }
+  });
+
+  it("requires clientDetails for selected, follow-up, and reports-proof clients", () => {
+    const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as Record<string, unknown>;
+    const details = { ...(raw.clientDetails as Record<string, unknown>) };
+    delete details["demo-elena"];
+    expect(() =>
+      assertDemoClubInvariants(parseMarketingDemoClub({ ...raw, clientDetails: details }))
+    ).toThrow(/clientDetails\.demo-elena/i);
+  });
+
+  it("requires availableRooms to include every cinema room", () => {
+    const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as Record<string, unknown>;
+    expect(() =>
+      assertDemoClubInvariants(parseMarketingDemoClub({ ...raw, availableRooms: [] }))
+    ).toThrow(/availableRooms must include clients/i);
+  });
+
+  it("locks Elena's phone and one March club week across rooms", () => {
+    const elena = marketingDemoClub.clients.find((client) => client.id === "demo-elena");
+    expect(elena?.phone).toBe("+34 612 345 678");
+    expect(marketingDemoClub.clientDetails["demo-elena"]?.phone).toBe("+34 612 345 678");
+
+    expect(marketingDemoClub.reportFilters.from).toBe("2026-03-09");
+    expect(marketingDemoClub.reportFilters.to).toBe("2026-03-15");
+    expect(marketingDemoClub.dashboard.computedAt.startsWith("2026-03-15")).toBe(true);
+    expect(marketingDemoClub.dashboard.newLeadsInPeriod).toBe(marketingDemoClub.reports.newLeads);
+    expect(marketingDemoClub.reports.newLeads).toBe(12);
+
+    const trendNew = marketingDemoClub.dashboard.registrationsTrend.reduce(
+      (sum, point) => sum + point.newClients,
+      0
+    );
+    expect(trendNew).toBe(12);
+    const rankingRegs = marketingDemoClub.reports.activityRanking.reduce(
+      (sum, row) => sum + row.registrationCount,
+      0
+    );
+    expect(rankingRegs).toBe(marketingDemoClub.reports.registrations);
   });
 });

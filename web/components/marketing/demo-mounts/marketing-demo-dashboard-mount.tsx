@@ -26,7 +26,7 @@ export function MarketingDemoDashboardMount() {
     <MarketingDemoTheme>
       <div className="flex h-full min-h-0 flex-col gap-3 bg-paper-warm p-3">
         <div className="rounded-2xl border border-line bg-paper px-4 py-3">
-          <p className="text-xs text-stone-cinema">Riverside Rec · this week</p>
+          <p className="text-xs text-stone-cinema">{club.orgName} · this week</p>
           <p className="text-lg font-semibold text-ink">Good morning, {club.operatorGreeting}</p>
         </div>
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">

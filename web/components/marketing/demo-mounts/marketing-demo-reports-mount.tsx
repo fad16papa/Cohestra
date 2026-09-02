@@ -24,7 +24,7 @@ export function MarketingDemoReportsMount() {
             ["Registrations", String(report.registrations)],
             ["Unique clients", String(report.leadGrowth.totalLeadsAtEnd)],
             ["Follow-up", `${report.followUpStatus.coveragePercent}%`],
-            ["Export", "CSV"],
+            ["New leads", String(report.newLeads)],
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl border border-line bg-paper px-3 py-2.5">
               <p className="text-[11px] font-medium uppercase tracking-wide text-stone-cinema">
