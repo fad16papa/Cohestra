@@ -110,6 +110,19 @@ so that I believe the product is real — not a decorative mock.
   - [x] Typecheck touched files (`strict: true`)
   - [x] Manual: `/#crm` on desktop + mobile/PRM — six inhabited rooms, Elena meta contrast, no network to `/api/v1/*` for cinema mounts (DevTools)
 
+### Review Findings
+
+- [ ] [Review][Patch] H3 remap misses CSS-var ticks and opacity utilities [`web/app/globals.css:454`] — `[data-demo-theme]` remaps `.text-stone` / `.text-text-muted-warm` / `.text-muted-foreground` but Dashboard `DashboardRegistrationsTrendChart` ticks use `fill: var(--text-muted-warm)` (= raw `stone`). Opacity classes like `text-text-muted-warm/90` are also unmapped. AC3: secondary text in live mounts must be `stone-cinema` / `ink` on `paper-warm`, not raw `stone`.
+- [ ] [Review][Patch] Invariants do not require `clientDetails` or a non-empty room set [`web/lib/marketing/marketing-demo-club.ts:509`] — `selectedClientId` / `followUpClientId` must exist in `clients`, but not in `clientDetails`. Clients and Follow-up mounts call `getClientDetail`, which throws. Assert details for those ids (and reports-proof ids used as details). Also require `availableRooms` to list the six rooms so an empty array cannot blank every visual while pills remain.
+- [ ] [Review][Patch] Seed calendar and counts disagree across rooms [`web/lib/marketing/marketing-demo-club.json`] — Locked week is March (Elena timeline Mar 8/9/15, WhatsApp `loggedAt` / campaigns `sentAt`). Dashboard/reports use 2026-08-26–2026-09-01 with copy “this week”. `dashboard.newLeadsInPeriod` is 36 while `reports.newLeads` is 12 and the trend `newClients` sum is 16. Align dates and totals so the six rooms describe one club week.
+- [ ] [Review][Patch] Campaigns “Delivered” column shows `sentCount` [`web/components/marketing/demo-mounts/marketing-demo-campaigns-mount.tsx:31`] — `CampaignListItem` has `sentCount`, not delivered. Relabel the column (e.g. Recipients) or stop presenting sent as delivered.
+- [ ] [Review][Patch] Reports “Export / CSV” tile is hollow chrome [`web/components/marketing/demo-mounts/marketing-demo-reports-mount.tsx:27`] — AC4 prefers omit over inventing decorative UI. Replace with a real seed metric (e.g. new leads) or drop the tile.
+- [ ] [Review][Patch] Elena phone does not match the locked display string [`web/lib/marketing/marketing-demo-club.json:19`] — Story lock is `+34 612 345 678`; seed is `+34612345678`.
+- [ ] [Review][Patch] Dashboard header hardcodes org name [`web/components/marketing/demo-mounts/marketing-demo-dashboard-mount.tsx:29`] — Use `club.orgName` instead of the literal “Riverside Rec”.
+- [x] [Review][Defer] `visual: null` still leaves the seek pill [`web/lib/marketing/product-slides.tsx:45`] — deferred, pre-existing; omit-pill / tablist rebuild is Story 33.5
+- [x] [Review][Defer] Website `SitePageRenderer` still mounts `Link` / `ThemeToggle` [`web/components/marketing/site-page-renderer.tsx:139`] — deferred, pre-existing; cinema visual column is `inert` / `pointer-events-none`; ProductFrame polish is 33.3
+- [x] [Review][Defer] Cinema error boundary fallback remounts the same DemoClub slides [`web/components/marketing/marketing-product-carousel.tsx:117`] — deferred, pre-existing cinema recovery; 33.1 throw path is closed by the `clientDetails` invariant patch above
+
 ## Dev Notes
 
 ### What this story is
