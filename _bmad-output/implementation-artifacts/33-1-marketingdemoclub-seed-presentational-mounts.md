@@ -2,7 +2,7 @@
 story_id: 33.1
 story_key: 33-1-marketingdemoclub-seed-presentational-mounts
 epic: 33
-status: review
+status: done
 baseline_commit: main
 created: 2026-09-01
 depends_on: []
@@ -28,7 +28,7 @@ forward_deps:
 
 # Story 33.1: MarketingDemoClub seed + presentational mounts
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed — comprehensive developer guide created -->
 
@@ -303,6 +303,7 @@ Cursor Grok 4.6
 - Provider wrap at `MarketingProductCarousel`; H3 remap via `[data-demo-theme]` in `globals.css`
 - Vitest 6/6 demo-club + full web suite 151/151; `tsc --noEmit` clean
 - Browser verified on localhost:3000/#crm — Clients/Follow-up/Dashboard/Campaigns/Reports/Website seek; mobile clients body OK
+- Code-review patches applied and re-verified (Elena phone, March week, Recipients, New leads, H3 chart ticks)
 
 ### File List
 
