@@ -1,7 +1,12 @@
+## Deferred from: code review of 33-1-marketingdemoclub-seed-presentational-mounts.md Pass 2 (2026-09-02)
+
+- REQUIRED_DEMO_ROOMS makes `isDemoRoomAvailable` always true — omit-pill / tablist rebuild is Story 33.5
+- Clients list+detail may clip on mobile/PRM — mobile carousel polish is 33.5
+
 ## Deferred from: code review of 33-1-marketingdemoclub-seed-presentational-mounts.md (2026-09-02)
 
 - `visual: null` still leaves the seek pill — omit-pill / tablist rebuild is Story 33.5
-- Website `SitePageRenderer` still mounts `Link` / `ThemeToggle` — cinema visual column is inert; ProductFrame polish is 33.3
+- Website `SitePageRenderer` still mounts `Link` / `ThemeToggle` — cinema visual column is inert; ProductFrame polish is 33.3 (Pass 2 also patches Website mount `inert` for legacy/mobile)
 - Cinema error boundary fallback remounts the same DemoClub slides — pre-existing cinema recovery; 33.1 throw path closed by `clientDetails` invariant patch
 
 ## Deferred from: code review of 32-3 pass 5 (2026-08-31)
