@@ -464,6 +464,7 @@
   [data-demo-theme] .text-stone,
   [data-demo-theme] .text-text-muted-warm,
   [data-demo-theme] .text-muted-foreground,
+  [data-demo-theme] [class*="text-stone/"],
   [data-demo-theme] [class*="text-text-muted-warm/"],
   [data-demo-theme] [class*="text-muted-foreground/"] {
     color: var(--stone-cinema);

@@ -12,7 +12,7 @@ export function MarketingDemoCampaignsMount() {
       <div className="flex h-full min-h-0 flex-col bg-paper-warm p-3">
         <div className="mb-3">
           <p className="text-sm font-semibold text-ink">Campaigns</p>
-          <p className="text-xs text-stone-cinema">Sunday clinic regulars · Riverside Rec</p>
+          <p className="text-xs text-stone-cinema">Sunday clinic regulars · {club.orgName}</p>
         </div>
         <div className="overflow-hidden rounded-xl border border-line bg-paper">
           <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,0.6fr)_minmax(0,0.6fr)] gap-4 border-b border-line bg-paper-warm px-4 py-3 text-[11px] font-medium uppercase tracking-wide text-stone-cinema">

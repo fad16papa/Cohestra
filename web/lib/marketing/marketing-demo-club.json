@@ -176,18 +176,6 @@
       ],
       "timeline": [
         {
-          "eventType": "whatsapp_follow_up_recorded",
-          "occurredAt": "2026-03-09T15:10:00.000Z",
-          "label": "WhatsApp message logged",
-          "activityName": "Sunday clinic",
-          "referralSource": null,
-          "previousLeadStatus": null,
-          "newLeadStatus": null,
-          "registrationId": null,
-          "campaignSubject": null,
-          "note": "Sunday clinic reminder sent"
-        },
-        {
           "eventType": "lead_status_changed",
           "occurredAt": "2026-03-09T15:12:00.000Z",
           "label": "Status → Contacted",
@@ -198,6 +186,18 @@
           "registrationId": null,
           "campaignSubject": null,
           "note": null
+        },
+        {
+          "eventType": "whatsapp_follow_up_recorded",
+          "occurredAt": "2026-03-09T15:10:00.000Z",
+          "label": "WhatsApp message logged",
+          "activityName": "Sunday clinic",
+          "referralSource": null,
+          "previousLeadStatus": null,
+          "newLeadStatus": null,
+          "registrationId": null,
+          "campaignSubject": null,
+          "note": "Sunday clinic reminder sent"
         },
         {
           "eventType": "registration_submitted",
@@ -217,8 +217,8 @@
   "dashboard": {
     "totalLeads": 248,
     "newLeadsInPeriod": 12,
-    "periodDays": 7,
-    "activeActivitiesCount": 4,
+    "periodDays": 8,
+    "activeActivitiesCount": 3,
     "followUpCoveragePercent": 82,
     "activityPerformance": [
       {
@@ -249,15 +249,16 @@
     "computedAt": "2026-03-15T18:00:00.000Z",
     "registrationsInPeriod": 36,
     "registrationsInPreviousPeriod": 28,
-    "trendDays": 7,
+    "trendDays": 8,
     "registrationsTrend": [
-      { "date": "2026-03-09", "registrations": 4, "newClients": 1 },
-      { "date": "2026-03-10", "registrations": 5, "newClients": 2 },
-      { "date": "2026-03-11", "registrations": 6, "newClients": 2 },
+      { "date": "2026-03-08", "registrations": 6, "newClients": 2 },
+      { "date": "2026-03-09", "registrations": 3, "newClients": 1 },
+      { "date": "2026-03-10", "registrations": 4, "newClients": 1 },
+      { "date": "2026-03-11", "registrations": 5, "newClients": 2 },
       { "date": "2026-03-12", "registrations": 4, "newClients": 1 },
-      { "date": "2026-03-13", "registrations": 7, "newClients": 2 },
-      { "date": "2026-03-14", "registrations": 5, "newClients": 2 },
-      { "date": "2026-03-15", "registrations": 5, "newClients": 2 }
+      { "date": "2026-03-13", "registrations": 6, "newClients": 2 },
+      { "date": "2026-03-14", "registrations": 4, "newClients": 1 },
+      { "date": "2026-03-15", "registrations": 4, "newClients": 2 }
     ],
     "leadStatusBreakdown": {
       "newCount": 41,
@@ -289,7 +290,7 @@
   ],
   "reportFilters": {
     "preset": "weekly",
-    "from": "2026-03-09",
+    "from": "2026-03-08",
     "to": "2026-03-15",
     "activityId": "",
     "community": "",
@@ -299,11 +300,11 @@
   "reports": {
     "period": {
       "preset": "weekly",
-      "startAt": "2026-03-09T00:00:00.000Z",
+      "startAt": "2026-03-08T00:00:00.000Z",
       "endAt": "2026-03-15T23:59:59.000Z",
       "computedAt": "2026-03-15T18:00:00.000Z"
     },
-    "activitiesHosted": 4,
+    "activitiesHosted": 3,
     "registrations": 36,
     "newLeads": 12,
     "followUpStatus": {
@@ -346,24 +347,25 @@
     "campaignResults": {
       "available": true,
       "campaignsSent": 2,
-      "campaignsFailed": 1
+      "campaignsFailed": 0
     },
     "priorPeriod": {
-      "startAt": "2026-03-02T00:00:00.000Z",
-      "endAt": "2026-03-08T23:59:59.000Z",
+      "startAt": "2026-02-28T00:00:00.000Z",
+      "endAt": "2026-03-07T23:59:59.000Z",
       "registrations": 28,
       "newLeads": 8,
       "activitiesHosted": 3,
       "followUpCoveragePercent": 74
     },
     "dailyTrend": [
-      { "date": "2026-03-09", "registrations": 4, "newClients": 1 },
-      { "date": "2026-03-10", "registrations": 5, "newClients": 2 },
-      { "date": "2026-03-11", "registrations": 6, "newClients": 2 },
+      { "date": "2026-03-08", "registrations": 6, "newClients": 2 },
+      { "date": "2026-03-09", "registrations": 3, "newClients": 1 },
+      { "date": "2026-03-10", "registrations": 4, "newClients": 1 },
+      { "date": "2026-03-11", "registrations": 5, "newClients": 2 },
       { "date": "2026-03-12", "registrations": 4, "newClients": 1 },
-      { "date": "2026-03-13", "registrations": 7, "newClients": 2 },
-      { "date": "2026-03-14", "registrations": 5, "newClients": 2 },
-      { "date": "2026-03-15", "registrations": 5, "newClients": 2 }
+      { "date": "2026-03-13", "registrations": 6, "newClients": 2 },
+      { "date": "2026-03-14", "registrations": 4, "newClients": 1 },
+      { "date": "2026-03-15", "registrations": 4, "newClients": 2 }
     ]
   },
   "website": {
@@ -381,7 +383,7 @@
       {
         "slug": "board-games-night",
         "name": "board games night",
-        "schedule": "Fridays · 7:30pm",
+        "schedule": "Sundays · 6:00pm",
         "location": "Riverside Rec hall",
         "communityLabel": "Riverside Rec",
         "heroImageUrl": null,

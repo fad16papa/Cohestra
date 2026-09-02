@@ -125,17 +125,17 @@ so that I believe the product is real — not a decorative mock.
 
 ### Review Findings (Pass 2)
 
-- [ ] [Review][Patch] Report “this week” vs locked Sunday clinic Mar 8 [`web/lib/marketing/marketing-demo-club.json`] — Widen the period to include Mar 8 (adjust `reportFilters` / trend / `periodDays` so clinic is in-period). (Pass 2 Decision 1 → widen)
-- [ ] [Review][Patch] Board games schedule day vs registration day [`web/lib/marketing/marketing-demo-club.json`] — Change website schedule copy to Sunday (match Mar 15 registration). (Pass 2 Decision 2 → schedule copy)
-- [ ] [Review][Patch] `dashboardQueueIds` not validated in invariants [`web/lib/marketing/marketing-demo-club.ts:611`] — unknown ids throw from `getDashboardQueue` (same class as the Pass 1 `clientDetails` fix).
-- [ ] [Review][Patch] Website section types can be present but `enabled: false` [`web/lib/marketing/marketing-demo-club.ts`] — invariants only check type presence; disabled sections yield hollow Website chrome.
-- [ ] [Review][Patch] `activeActivitiesCount` is 4 while ranking/performance name 3 [`web/lib/marketing/marketing-demo-club.json`] — set count to 3 or add a fourth named activity.
-- [ ] [Review][Patch] “Unique clients” tile shows all-time book size [`web/components/marketing/demo-mounts/marketing-demo-reports-mount.tsx:25`] — binds `leadGrowth.totalLeadsAtEnd` (248) next to “counted once this week”; relabel to Total clients (or an in-period metric).
-- [ ] [Review][Patch] Jordan timeline not newest-first [`web/lib/marketing/marketing-demo-club.json`] — `lead_status_changed` at 15:12 is listed after WhatsApp at 15:10.
-- [ ] [Review][Patch] H3 misses `text-stone/` opacity utilities [`web/app/globals.css:464`] — bare `.text-stone` is remapped; `text-stone/90` and friends are not.
-- [ ] [Review][Patch] Website mount is interactive on legacy/mobile [`web/components/marketing/demo-mounts/marketing-demo-website-mount.tsx:12`] — `SitePageRenderer` `Link` / `ThemeToggle` are live outside cinema `inert`; wrap the mount body with `inert` / `pointer-events-none` (Task 3: pixels only).
-- [ ] [Review][Patch] `campaignsFailed: 1` while both campaigns are `status: "sent"` [`web/lib/marketing/marketing-demo-club.json`] — recipient `failedCount` is not a failed campaign; set `campaignsFailed` to 0.
-- [ ] [Review][Patch] Campaigns subtitle hardcodes org name [`web/components/marketing/demo-mounts/marketing-demo-campaigns-mount.tsx:15`] — use `club.orgName` (same as Pass 1 dashboard fix).
+- [x] [Review][Patch] Report “this week” vs locked Sunday clinic Mar 8 [`web/lib/marketing/marketing-demo-club.json`] — Widen the period to include Mar 8 (adjust `reportFilters` / trend / `periodDays` so clinic is in-period). (Pass 2 Decision 1 → widen)
+- [x] [Review][Patch] Board games schedule day vs registration day [`web/lib/marketing/marketing-demo-club.json`] — Change website schedule copy to Sunday (match Mar 15 registration). (Pass 2 Decision 2 → schedule copy)
+- [x] [Review][Patch] `dashboardQueueIds` not validated in invariants [`web/lib/marketing/marketing-demo-club.ts:611`] — unknown ids throw from `getDashboardQueue` (same class as the Pass 1 `clientDetails` fix).
+- [x] [Review][Patch] Website section types can be present but `enabled: false` [`web/lib/marketing/marketing-demo-club.ts`] — invariants only check type presence; disabled sections yield hollow Website chrome.
+- [x] [Review][Patch] `activeActivitiesCount` is 4 while ranking/performance name 3 [`web/lib/marketing/marketing-demo-club.json`] — set count to 3 or add a fourth named activity.
+- [x] [Review][Patch] “Unique clients” tile shows all-time book size [`web/components/marketing/demo-mounts/marketing-demo-reports-mount.tsx:25`] — binds `leadGrowth.totalLeadsAtEnd` (248) next to “counted once this week”; relabel to Total clients (or an in-period metric).
+- [x] [Review][Patch] Jordan timeline not newest-first [`web/lib/marketing/marketing-demo-club.json`] — `lead_status_changed` at 15:12 is listed after WhatsApp at 15:10.
+- [x] [Review][Patch] H3 misses `text-stone/` opacity utilities [`web/app/globals.css:464`] — bare `.text-stone` is remapped; `text-stone/90` and friends are not.
+- [x] [Review][Patch] Website mount is interactive on legacy/mobile [`web/components/marketing/demo-mounts/marketing-demo-website-mount.tsx:12`] — `SitePageRenderer` `Link` / `ThemeToggle` are live outside cinema `inert`; wrap the mount body with `inert` / `pointer-events-none` (Task 3: pixels only).
+- [x] [Review][Patch] `campaignsFailed: 1` while both campaigns are `status: "sent"` [`web/lib/marketing/marketing-demo-club.json`] — recipient `failedCount` is not a failed campaign; set `campaignsFailed` to 0.
+- [x] [Review][Patch] Campaigns subtitle hardcodes org name [`web/components/marketing/demo-mounts/marketing-demo-campaigns-mount.tsx:15`] — use `club.orgName` (same as Pass 1 dashboard fix).
 - [x] [Review][Defer] REQUIRED_DEMO_ROOMS makes `isDemoRoomAvailable` always true [`web/lib/marketing/marketing-demo-club.ts:551`] — deferred, pre-existing for 33.1; omit-pill / tablist rebuild is Story 33.5
 - [x] [Review][Defer] Clients list+detail may clip on mobile/PRM [`web/components/marketing/demo-mounts/marketing-demo-clients-mount.tsx`] — deferred, pre-existing layout; mobile carousel polish is 33.5
 

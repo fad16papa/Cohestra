@@ -553,6 +553,16 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
       throw new Error(`MarketingDemoClub: availableRooms must include ${room}`);
     }
   }
+
+  if (club.dashboardQueueIds.length === 0) {
+    throw new Error("MarketingDemoClub: dashboardQueueIds must not be empty");
+  }
+  for (const id of club.dashboardQueueIds) {
+    if (!club.clients.some((client) => client.id === id)) {
+      throw new Error(`MarketingDemoClub: dashboardQueueId ${id} missing from clients`);
+    }
+  }
+
   if (club.whatsappQuote.clientId !== club.followUpClientId) {
     throw new Error("MarketingDemoClub: WhatsApp quote must belong to the follow-up client");
   }
@@ -565,10 +575,12 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
     throw new Error("MarketingDemoClub: Elena must appear in reports-derived proof clients");
   }
 
-  const websiteTypes = club.website.published.sections.map((section) => section.type.toLowerCase());
   for (const type of ["hero", "highlights", "upcomingactivities", "testimonials"]) {
-    if (!websiteTypes.includes(type)) {
-      throw new Error(`MarketingDemoClub: website is missing section type ${type}`);
+    const enabled = club.website.published.sections.some(
+      (section) => section.enabled && section.type.toLowerCase() === type
+    );
+    if (!enabled) {
+      throw new Error(`MarketingDemoClub: website is missing enabled section type ${type}`);
     }
   }
 }

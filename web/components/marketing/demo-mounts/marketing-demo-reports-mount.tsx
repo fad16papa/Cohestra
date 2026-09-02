@@ -22,7 +22,7 @@ export function MarketingDemoReportsMount() {
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {[
             ["Registrations", String(report.registrations)],
-            ["Unique clients", String(report.leadGrowth.totalLeadsAtEnd)],
+            ["Total clients", String(report.leadGrowth.totalLeadsAtEnd)],
             ["Follow-up", `${report.followUpStatus.coveragePercent}%`],
             ["New leads", String(report.newLeads)],
           ].map(([label, value]) => (

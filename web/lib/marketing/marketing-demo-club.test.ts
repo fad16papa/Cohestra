@@ -100,21 +100,57 @@ describe("MarketingDemoClub", () => {
     expect(elena?.phone).toBe("+34 612 345 678");
     expect(marketingDemoClub.clientDetails["demo-elena"]?.phone).toBe("+34 612 345 678");
 
-    expect(marketingDemoClub.reportFilters.from).toBe("2026-03-09");
+    expect(marketingDemoClub.reportFilters.from).toBe("2026-03-08");
     expect(marketingDemoClub.reportFilters.to).toBe("2026-03-15");
+    expect(marketingDemoClub.dashboard.periodDays).toBe(8);
     expect(marketingDemoClub.dashboard.computedAt.startsWith("2026-03-15")).toBe(true);
     expect(marketingDemoClub.dashboard.newLeadsInPeriod).toBe(marketingDemoClub.reports.newLeads);
     expect(marketingDemoClub.reports.newLeads).toBe(12);
+    expect(marketingDemoClub.reports.campaignResults.campaignsFailed).toBe(0);
+    expect(marketingDemoClub.dashboard.activeActivitiesCount).toBe(3);
+    expect(
+      marketingDemoClub.website.upcomingActivities.find((row) =>
+        row.name.toLowerCase().includes("board games")
+      )?.schedule
+    ).toMatch(/Sunday/i);
 
     const trendNew = marketingDemoClub.dashboard.registrationsTrend.reduce(
       (sum, point) => sum + point.newClients,
       0
     );
     expect(trendNew).toBe(12);
+    expect(marketingDemoClub.dashboard.registrationsTrend[0]?.date).toBe("2026-03-08");
     const rankingRegs = marketingDemoClub.reports.activityRanking.reduce(
       (sum, row) => sum + row.registrationCount,
       0
     );
     expect(rankingRegs).toBe(marketingDemoClub.reports.registrations);
+
+    const jordanTimeline = marketingDemoClub.clientDetails["demo-jordan"]?.timeline ?? [];
+    expect(jordanTimeline[0]?.eventType).toBe("lead_status_changed");
+    expect(jordanTimeline[1]?.eventType).toBe("whatsapp_follow_up_recorded");
+  });
+
+  it("requires dashboardQueueIds to resolve to clients", () => {
+    const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as Record<string, unknown>;
+    expect(() =>
+      assertDemoClubInvariants(
+        parseMarketingDemoClub({ ...raw, dashboardQueueIds: ["missing-client"] })
+      )
+    ).toThrow(/dashboardQueueId missing-client/i);
+  });
+
+  it("requires website section types to be enabled", () => {
+    const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as Record<string, unknown>;
+    const website = structuredClone(raw.website) as {
+      published: { sections: Array<{ type: string; enabled: boolean }> };
+    };
+    const hero = website.published.sections.find((section) => section.type === "hero");
+    if (hero) {
+      hero.enabled = false;
+    }
+    expect(() =>
+      assertDemoClubInvariants(parseMarketingDemoClub({ ...raw, website }))
+    ).toThrow(/enabled section type hero/i);
   });
 });

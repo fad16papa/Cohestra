@@ -9,7 +9,11 @@ export function MarketingDemoWebsiteMount() {
 
   return (
     <MarketingDemoTheme>
-      <div className="relative h-full min-h-0 overflow-hidden bg-paper">
+      {/* Presentational only — block ThemeToggle / register Links on legacy + cinema. */}
+      <div
+        className="relative h-full min-h-0 overflow-hidden bg-paper pointer-events-none"
+        inert
+      >
         <SitePageRenderer site={club.website} isPreview showPreviewBanner={false} />
       </div>
     </MarketingDemoTheme>
