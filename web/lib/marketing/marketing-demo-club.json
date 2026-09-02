@@ -1,0 +1,456 @@
+{
+  "orgName": "Riverside Rec",
+  "publicHost": "riverside-rec.cohestra.app",
+  "operatorGreeting": "Maya",
+  "selectedClientId": "demo-elena",
+  "followUpClientId": "demo-jordan",
+  "availableRooms": ["clients", "outreach", "dashboard", "campaigns", "reports", "website"],
+  "reportsProofClientIds": ["demo-elena"],
+  "clientListTotalCount": 248,
+  "whatsappQuote": {
+    "clientId": "demo-jordan",
+    "body": "Hi Jordan — reminder for Sunday clinic at 6pm. See you there!",
+    "loggedAt": "2026-03-09T15:10:00.000Z"
+  },
+  "clients": [
+    {
+      "id": "demo-elena",
+      "fullName": "Elena Martinez",
+      "phone": "+34612345678",
+      "email": "elena@example.com",
+      "consentGiven": true,
+      "nationality": "Spain",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-03-15T18:00:00.000Z",
+      "lastActivityName": "Sunday clinic",
+      "lastOutreachAt": "2026-03-09T15:10:00.000Z",
+      "lastOutreachKind": "whatsapp",
+      "nextFollowUpAt": null,
+      "relativeLabel": "2 days ago"
+    },
+    {
+      "id": "demo-sam",
+      "fullName": "Sam Rivera",
+      "phone": "+12025550198",
+      "email": "sam@example.com",
+      "consentGiven": true,
+      "nationality": "USA",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-01T09:00:00.000Z",
+      "lastActivityName": "board games night",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-jordan",
+      "fullName": "Jordan Kim",
+      "phone": "+821012345678",
+      "email": "jordan@example.com",
+      "consentGiven": true,
+      "nationality": "South Korea",
+      "leadStatus": "contacted",
+      "lastRegistrationAt": "2026-03-08T10:00:00.000Z",
+      "lastActivityName": "WhatsApp follow up",
+      "lastOutreachAt": "2026-03-09T15:10:00.000Z",
+      "lastOutreachKind": "whatsapp",
+      "nextFollowUpAt": "2026-03-10T09:00:00.000Z",
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-priya",
+      "fullName": "Priya Shah",
+      "phone": "+919876543210",
+      "email": "priya@example.com",
+      "consentGiven": true,
+      "nationality": "India",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-08-28T11:00:00.000Z",
+      "lastActivityName": "youth open play",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "4 days ago"
+    }
+  ],
+  "clientDetails": {
+    "demo-elena": {
+      "id": "demo-elena",
+      "fullName": "Elena Martinez",
+      "phone": "+34612345678",
+      "email": "elena@example.com",
+      "profession": null,
+      "nationality": "Spain",
+      "residency": null,
+      "consentGiven": true,
+      "referralSource": null,
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-03-08T10:00:00.000Z",
+      "updatedAt": "2026-03-15T18:00:00.000Z",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-142",
+          "registrationNumber": "142",
+          "activityId": "demo-sunday-clinic",
+          "activityName": "Sunday clinic",
+          "registeredAt": "2026-03-08T10:00:00.000Z",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-158",
+          "registrationNumber": "158",
+          "activityId": "demo-board-games",
+          "activityName": "board games night",
+          "registeredAt": "2026-03-15T18:00:00.000Z",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-03-15T18:00:00.000Z",
+          "label": "Registered board games night",
+          "activityName": "board games night",
+          "referralSource": null,
+          "previousLeadStatus": null,
+          "newLeadStatus": null,
+          "registrationId": "demo-reg-158",
+          "campaignSubject": null,
+          "note": "#158"
+        },
+        {
+          "eventType": "whatsapp_follow_up_recorded",
+          "occurredAt": "2026-03-09T15:10:00.000Z",
+          "label": "WhatsApp logged",
+          "activityName": "Sunday clinic",
+          "referralSource": null,
+          "previousLeadStatus": null,
+          "newLeadStatus": null,
+          "registrationId": null,
+          "campaignSubject": null,
+          "note": "WhatsApp logged"
+        },
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-03-08T10:00:00.000Z",
+          "label": "Registered Sunday clinic",
+          "activityName": "Sunday clinic",
+          "referralSource": null,
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-142",
+          "campaignSubject": null,
+          "note": "#142"
+        }
+      ]
+    },
+    "demo-jordan": {
+      "id": "demo-jordan",
+      "fullName": "Jordan Kim",
+      "phone": "+821012345678",
+      "email": "jordan@example.com",
+      "profession": null,
+      "nationality": "South Korea",
+      "residency": null,
+      "consentGiven": true,
+      "referralSource": null,
+      "notes": null,
+      "leadStatus": "contacted",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": "2026-03-10T09:00:00.000Z",
+      "createdAt": "2026-03-08T10:00:00.000Z",
+      "updatedAt": "2026-03-09T15:10:00.000Z",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-149",
+          "registrationNumber": "149",
+          "activityId": "demo-sunday-clinic",
+          "activityName": "Sunday clinic",
+          "registeredAt": "2026-03-08T11:30:00.000Z",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "whatsapp_follow_up_recorded",
+          "occurredAt": "2026-03-09T15:10:00.000Z",
+          "label": "WhatsApp message logged",
+          "activityName": "Sunday clinic",
+          "referralSource": null,
+          "previousLeadStatus": null,
+          "newLeadStatus": null,
+          "registrationId": null,
+          "campaignSubject": null,
+          "note": "Sunday clinic reminder sent"
+        },
+        {
+          "eventType": "lead_status_changed",
+          "occurredAt": "2026-03-09T15:12:00.000Z",
+          "label": "Status → Contacted",
+          "activityName": null,
+          "referralSource": null,
+          "previousLeadStatus": "new",
+          "newLeadStatus": "contacted",
+          "registrationId": null,
+          "campaignSubject": null,
+          "note": null
+        },
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-03-08T11:30:00.000Z",
+          "label": "Registered Sunday clinic",
+          "activityName": "Sunday clinic",
+          "referralSource": null,
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-149",
+          "campaignSubject": null,
+          "note": "#149"
+        }
+      ]
+    }
+  },
+  "dashboard": {
+    "totalLeads": 248,
+    "newLeadsInPeriod": 36,
+    "periodDays": 7,
+    "activeActivitiesCount": 4,
+    "followUpCoveragePercent": 82,
+    "activityPerformance": [
+      {
+        "activityId": "demo-sunday-clinic",
+        "activityName": "Sunday clinic",
+        "communityLabel": "Riverside Rec",
+        "category": "Clinic",
+        "status": "published",
+        "registrationCount": 18
+      },
+      {
+        "activityId": "demo-board-games",
+        "activityName": "board games night",
+        "communityLabel": "Riverside Rec",
+        "category": "Social",
+        "status": "published",
+        "registrationCount": 12
+      }
+    ],
+    "computedAt": "2026-09-01T08:00:00.000Z",
+    "registrationsInPeriod": 36,
+    "registrationsInPreviousPeriod": 28,
+    "trendDays": 7,
+    "registrationsTrend": [
+      { "date": "2026-08-26", "registrations": 4, "newClients": 2 },
+      { "date": "2026-08-27", "registrations": 5, "newClients": 3 },
+      { "date": "2026-08-28", "registrations": 6, "newClients": 2 },
+      { "date": "2026-08-29", "registrations": 4, "newClients": 1 },
+      { "date": "2026-08-30", "registrations": 7, "newClients": 3 },
+      { "date": "2026-08-31", "registrations": 5, "newClients": 2 },
+      { "date": "2026-09-01", "registrations": 5, "newClients": 3 }
+    ],
+    "leadStatusBreakdown": {
+      "newCount": 41,
+      "contactedCount": 28,
+      "activeCount": 162,
+      "inactiveCount": 17
+    }
+  },
+  "dashboardQueueIds": ["demo-jordan", "demo-sam"],
+  "campaigns": [
+    {
+      "id": "demo-campaign-clinic",
+      "subject": "Sunday clinic reminder",
+      "sentAt": "2026-03-07T16:00:00.000Z",
+      "sentCount": 42,
+      "failedCount": 1,
+      "skippedCount": 0,
+      "status": "sent"
+    },
+    {
+      "id": "demo-campaign-games",
+      "subject": "New board games night",
+      "sentAt": "2026-03-12T17:00:00.000Z",
+      "sentCount": 38,
+      "failedCount": 0,
+      "skippedCount": 2,
+      "status": "sent"
+    }
+  ],
+  "reportFilters": {
+    "preset": "weekly",
+    "from": "2026-08-26",
+    "to": "2026-09-01",
+    "activityId": "",
+    "community": "",
+    "leadStatus": "",
+    "referralSource": ""
+  },
+  "reports": {
+    "period": {
+      "preset": "weekly",
+      "startAt": "2026-08-26T00:00:00.000Z",
+      "endAt": "2026-09-01T23:59:59.000Z",
+      "computedAt": "2026-09-01T08:00:00.000Z"
+    },
+    "activitiesHosted": 4,
+    "registrations": 36,
+    "newLeads": 12,
+    "followUpStatus": {
+      "newCount": 41,
+      "contactedCount": 28,
+      "activeCount": 162,
+      "inactiveCount": 17,
+      "coveragePercent": 82
+    },
+    "activityRanking": [
+      {
+        "activityId": "demo-sunday-clinic",
+        "activityName": "Sunday clinic",
+        "communityLabel": "Riverside Rec",
+        "registrationCount": 18
+      },
+      {
+        "activityId": "demo-board-games",
+        "activityName": "board games night",
+        "communityLabel": "Riverside Rec",
+        "registrationCount": 12
+      }
+    ],
+    "leadGrowth": {
+      "newLeadsInPeriod": 12,
+      "totalLeadsAtEnd": 248,
+      "totalLeadsBeforePeriod": 236
+    },
+    "communityRanking": [
+      { "communityLabel": "Riverside Rec", "registrationCount": 36 }
+    ],
+    "repeatParticipants": 9,
+    "inactiveClients": 17,
+    "campaignResults": {
+      "available": true,
+      "campaignsSent": 2,
+      "campaignsFailed": 1
+    },
+    "priorPeriod": {
+      "startAt": "2026-08-19T00:00:00.000Z",
+      "endAt": "2026-08-25T23:59:59.000Z",
+      "registrations": 28,
+      "newLeads": 8,
+      "activitiesHosted": 3,
+      "followUpCoveragePercent": 74
+    },
+    "dailyTrend": [
+      { "date": "2026-08-26", "registrations": 4, "newClients": 2 },
+      { "date": "2026-08-27", "registrations": 5, "newClients": 3 },
+      { "date": "2026-08-28", "registrations": 6, "newClients": 2 },
+      { "date": "2026-08-29", "registrations": 4, "newClients": 1 },
+      { "date": "2026-08-30", "registrations": 7, "newClients": 3 },
+      { "date": "2026-08-31", "registrations": 5, "newClients": 2 },
+      { "date": "2026-09-01", "registrations": 5, "newClients": 3 }
+    ]
+  },
+  "website": {
+    "publishedAt": "2026-08-20T12:00:00.000Z",
+    "upcomingActivities": [
+      {
+        "slug": "sunday-clinic",
+        "name": "Sunday clinic",
+        "schedule": "Sundays · 6:00pm",
+        "location": "Riverside Rec hall",
+        "communityLabel": "Riverside Rec",
+        "heroImageUrl": null,
+        "accentColor": null
+      },
+      {
+        "slug": "board-games-night",
+        "name": "board games night",
+        "schedule": "Fridays · 7:30pm",
+        "location": "Riverside Rec hall",
+        "communityLabel": "Riverside Rec",
+        "heroImageUrl": null,
+        "accentColor": null
+      }
+    ],
+    "published": {
+      "schemaVersion": 1,
+      "siteName": "Riverside Rec",
+      "accentColor": null,
+      "logoAssetId": null,
+      "presetId": null,
+      "sections": [
+        {
+          "id": "demo-hero",
+          "type": "hero",
+          "enabled": true,
+          "order": 0,
+          "props": {
+            "eyebrow": "Riverside Rec",
+            "headline": "Sunday clinic and board games — same house, every week",
+            "description": "A week inside a community like yours. Scan in, stay on the list, show up Monday.",
+            "variant": "default"
+          }
+        },
+        {
+          "id": "demo-highlights",
+          "type": "highlights",
+          "enabled": true,
+          "order": 1,
+          "props": {
+            "variant": "default",
+            "items": [
+              {
+                "title": "Sunday clinic",
+                "description": "Open mats and a named list — Elena is still on it.",
+                "icon": "calendar"
+              },
+              {
+                "title": "Board games night",
+                "description": "Friday tables, same door as clinic. No extra spreadsheet.",
+                "icon": "users"
+              },
+              {
+                "title": "One public face",
+                "description": "Activities on the homepage stay in sync with the week.",
+                "icon": "qr-code"
+              }
+            ]
+          }
+        },
+        {
+          "id": "demo-upcoming",
+          "type": "upcomingactivities",
+          "enabled": true,
+          "order": 2,
+          "props": {
+            "title": "This week",
+            "limit": 6,
+            "emptyMessage": "New events coming soon.",
+            "variant": "default"
+          }
+        },
+        {
+          "id": "demo-testimonials",
+          "type": "testimonials",
+          "enabled": true,
+          "order": 3,
+          "props": {
+            "title": "What members say",
+            "variant": "default",
+            "items": [
+              {
+                "_key": "t-elena",
+                "quote": "I signed Sunday clinic and they still had my name on Monday.",
+                "name": "Elena Martinez",
+                "role": "Member",
+                "avatarAssetId": ""
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

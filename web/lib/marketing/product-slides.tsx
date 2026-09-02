@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
 
-import { MarketingCrmShowcase } from "@/components/marketing/marketing-crm-showcase";
 import {
-  CampaignsShowcaseMock,
-  DashboardShowcaseMock,
-  OutreachShowcaseMock,
-  ReportsShowcaseMock,
-  WebsiteBuilderShowcaseMock,
-} from "@/components/marketing/marketing-product-showcase-mocks";
+  MarketingDemoCampaignsMount,
+  MarketingDemoClientsMount,
+  MarketingDemoDashboardMount,
+  MarketingDemoFollowupMount,
+  MarketingDemoReportsMount,
+  MarketingDemoWebsiteMount,
+} from "@/components/marketing/demo-mounts";
+import { isDemoRoomAvailable } from "@/lib/marketing/marketing-demo-club";
 
 export type ProductSlideId =
   | "clients"
@@ -41,7 +42,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
       "Full profile with contact details, registration history, and timeline",
       "WhatsApp and Viber open from the profile with messages saved automatically",
     ],
-    visual: <MarketingCrmShowcase compact />,
+    visual: isDemoRoomAvailable("clients") ? <MarketingDemoClientsMount /> : null,
   },
   {
     id: "outreach",
@@ -55,7 +56,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
       "Status flags show who still needs a reply",
       "Dashboard follow-up queue surfaces the next person to contact",
     ],
-    visual: <OutreachShowcaseMock />,
+    visual: isDemoRoomAvailable("outreach") ? <MarketingDemoFollowupMount /> : null,
   },
   {
     id: "dashboard",
@@ -69,7 +70,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
       "Jump to clients, activities, or reports in one click",
       "Updates as your team works through the list",
     ],
-    visual: <DashboardShowcaseMock />,
+    visual: isDemoRoomAvailable("dashboard") ? <MarketingDemoDashboardMount /> : null,
   },
   {
     id: "campaigns",
@@ -83,7 +84,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
       "Delivery and failure counts on every campaign",
       "Campaign history saved on client profiles",
     ],
-    visual: <CampaignsShowcaseMock />,
+    visual: isDemoRoomAvailable("campaigns") ? <MarketingDemoCampaignsMount /> : null,
   },
   {
     id: "reports",
@@ -97,7 +98,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
       "Export CSV on Basic; deeper filters on Core and Pro",
       "Saved views for recurring check-ins",
     ],
-    visual: <ReportsShowcaseMock />,
+    visual: isDemoRoomAvailable("reports") ? <MarketingDemoReportsMount /> : null,
   },
   {
     id: "website",
@@ -111,7 +112,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
       "Draft, preview on desktop and mobile, then publish in one click",
       "Share kit with QR, link, and WhatsApp text ready to paste",
     ],
-    visual: <WebsiteBuilderShowcaseMock />,
+    visual: isDemoRoomAvailable("website") ? <MarketingDemoWebsiteMount /> : null,
   },
 ];
 

@@ -2,7 +2,7 @@
 story_id: 33.1
 story_key: 33-1-marketingdemoclub-seed-presentational-mounts
 epic: 33
-status: ready-for-dev
+status: in-progress
 baseline_commit: main
 created: 2026-09-01
 depends_on: []
@@ -28,7 +28,7 @@ forward_deps:
 
 # Story 33.1: MarketingDemoClub seed + presentational mounts
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed — comprehensive developer guide created -->
 
