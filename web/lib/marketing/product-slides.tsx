@@ -28,7 +28,7 @@ export type ProductSlide = {
   visual: ReactNode;
 };
 
-/** Shared chapter copy + marketing showcase mocks (landing only — not admin). */
+/** Shared chapter copy + DemoClub presentational mounts (landing only — not admin). */
 export const PRODUCT_SLIDES: ProductSlide[] = [
   {
     id: "clients",
