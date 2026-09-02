@@ -2,7 +2,7 @@
 story_id: 33.1
 story_key: 33-1-marketingdemoclub-seed-presentational-mounts
 epic: 33
-status: in-progress
+status: review
 baseline_commit: main
 created: 2026-09-01
 depends_on: []
@@ -28,7 +28,7 @@ forward_deps:
 
 # Story 33.1: MarketingDemoClub seed + presentational mounts
 
-Status: in-progress
+Status: review
 
 <!-- Ultimate context engine analysis completed — comprehensive developer guide created -->
 
@@ -64,51 +64,51 @@ so that I believe the product is real — not a decorative mock.
 
 ## Tasks / Subtasks
 
-- [ ] **Task 1 — Static MarketingDemoClub JSON + types** (AC: 1, 4)
-  - [ ] Add `web/lib/marketing/marketing-demo-club.json` — one fixture, all six rooms
-  - [ ] Add `web/lib/marketing/marketing-demo-club.ts` — typed parse, accessors, `assertDemoClubInvariants()`
-  - [ ] Import JSON as a module (`resolveJsonModule` already true in `web/tsconfig.json`). Do **not** `fetch()` it.
-  - [ ] Lock cast and org (see Dev Notes). No Acme / Your account / `yourclub`.
-  - [ ] Fixture contacts only: `@example.com`, fictional E.164-looking phones
+- [x] **Task 1 — Static MarketingDemoClub JSON + types** (AC: 1, 4)
+  - [x] Add `web/lib/marketing/marketing-demo-club.json` — one fixture, all six rooms
+  - [x] Add `web/lib/marketing/marketing-demo-club.ts` — typed parse, accessors, `assertDemoClubInvariants()`
+  - [x] Import JSON as a module (`resolveJsonModule` already true in `web/tsconfig.json`). Do **not** `fetch()` it.
+  - [x] Lock cast and org (see Dev Notes). No Acme / Your account / `yourclub`.
+  - [x] Fixture contacts only: `@example.com`, fictional E.164-looking phones
 
-- [ ] **Task 2 — MarketingDemoProvider + H3 theme** (AC: 1, 3)
-  - [ ] Add `web/components/marketing/marketing-demo-provider.tsx` (`"use client"`)
-  - [ ] Wrap **once** at `MarketingProductCarousel` root so cinema **and** legacy carousel share the same context
-  - [ ] Add `web/components/marketing/marketing-demo-theme.tsx` (or `data-demo-theme` + CSS in `globals.css` / `brand-tokens.css`) that remaps muted text in mounts to `stone-cinema` / `ink`
-  - [ ] QA target: Elena meta line “Spain · Sunday clinic · 2 days ago” — not marketing copy column
+- [x] **Task 2 — MarketingDemoProvider + H3 theme** (AC: 1, 3)
+  - [x] Add `web/components/marketing/marketing-demo-provider.tsx` (`"use client"`)
+  - [x] Wrap **once** at `MarketingProductCarousel` root so cinema **and** legacy carousel share the same context
+  - [x] Add `web/components/marketing/marketing-demo-theme.tsx` (or `data-demo-theme` + CSS in `globals.css` / `brand-tokens.css`) that remaps muted text in mounts to `stone-cinema` / `ink`
+  - [x] QA target: Elena meta line “Spain · Sunday clinic · 2 days ago” — not marketing copy column
 
-- [ ] **Task 3 — Six presentational mounts** (AC: 2, 4)
-  - [ ] `web/components/marketing/demo-mounts/marketing-demo-clients-mount.tsx`
-  - [ ] `web/components/marketing/demo-mounts/marketing-demo-followup-mount.tsx`
-  - [ ] `web/components/marketing/demo-mounts/marketing-demo-dashboard-mount.tsx`
-  - [ ] `web/components/marketing/demo-mounts/marketing-demo-campaigns-mount.tsx`
-  - [ ] `web/components/marketing/demo-mounts/marketing-demo-reports-mount.tsx`
-  - [ ] `web/components/marketing/demo-mounts/marketing-demo-website-mount.tsx`
-  - [ ] Barrel `web/components/marketing/demo-mounts/index.ts`
-  - [ ] Compose **existing** presentational pieces + typed props (see reuse table). Do not copy-paste a second visual language.
-  - [ ] No `useAuth` / `authFetch` / `fetchClients` / `fetchDashboardMetrics` / `fetchCampaigns` / `fetchReport` / `fetchPublicSite` in mounts
-  - [ ] No `<Link href="/clients/...">`, no WhatsApp/Viber `window.open`, no Publish/save handlers — pixels only
-  - [ ] Website: `SitePageRenderer` + `PublicSitePayload` — section `type` values must be exactly `hero`, `highlights`, `upcomingactivities`, `testimonials` (see `site-page-renderer.tsx` switch). Do **not** invent `activities`. **Not** `WebsiteBuilderPage`, editor rails, Design/Sections/Templates tabs, PRO chip
-  - [ ] If Website mount is too heavy: export `isDemoRoomAvailable("website") === false` and skip that visual. **Do not** change `PRODUCT_SLIDE_COUNT` / pin `70vh × 6` in this story (tablist rebuild is 33.5). Never substitute `WebsiteBuilderShowcaseMock`.
+- [x] **Task 3 — Six presentational mounts** (AC: 2, 4)
+  - [x] `web/components/marketing/demo-mounts/marketing-demo-clients-mount.tsx`
+  - [x] `web/components/marketing/demo-mounts/marketing-demo-followup-mount.tsx`
+  - [x] `web/components/marketing/demo-mounts/marketing-demo-dashboard-mount.tsx`
+  - [x] `web/components/marketing/demo-mounts/marketing-demo-campaigns-mount.tsx`
+  - [x] `web/components/marketing/demo-mounts/marketing-demo-reports-mount.tsx`
+  - [x] `web/components/marketing/demo-mounts/marketing-demo-website-mount.tsx`
+  - [x] Barrel `web/components/marketing/demo-mounts/index.ts`
+  - [x] Compose **existing** presentational pieces + typed props (see reuse table). Do not copy-paste a second visual language.
+  - [x] No `useAuth` / `authFetch` / `fetchClients` / `fetchDashboardMetrics` / `fetchCampaigns` / `fetchReport` / `fetchPublicSite` in mounts
+  - [x] No `<Link href="/clients/...">`, no WhatsApp/Viber `window.open`, no Publish/save handlers — pixels only
+  - [x] Website: `SitePageRenderer` + `PublicSitePayload` — section `type` values must be exactly `hero`, `highlights`, `upcomingactivities`, `testimonials` (see `site-page-renderer.tsx` switch). Do **not** invent `activities`. **Not** `WebsiteBuilderPage`, editor rails, Design/Sections/Templates tabs, PRO chip
+  - [x] If Website mount is too heavy: export `isDemoRoomAvailable("website") === false` and skip that visual. **Do not** change `PRODUCT_SLIDE_COUNT` / pin `70vh × 6` in this story (tablist rebuild is 33.5). Never substitute `WebsiteBuilderShowcaseMock`.
 
-- [ ] **Task 4 — Wire `PRODUCT_SLIDES[].visual`** (AC: 1, 2)
-  - [ ] In `web/lib/marketing/product-slides.tsx`, replace mock visuals with the six mounts
-  - [ ] Keep `ProductSlideId` union and order: `clients` → `outreach` → `dashboard` → `campaigns` → `reports` → `website`
-  - [ ] Do **not** rewrite `eyebrow` / `title` / `lead` / `points` (33.2)
-  - [ ] Do **not** edit `use-marketing-product-cinema.ts` pin math
-  - [ ] Leave `MarketingCrmShowcase` / `*ShowcaseMock` files on disk unused by cinema (33.2 deletes chrome). Do not extend them.
+- [x] **Task 4 — Wire `PRODUCT_SLIDES[].visual`** (AC: 1, 2)
+  - [x] In `web/lib/marketing/product-slides.tsx`, replace mock visuals with the six mounts
+  - [x] Keep `ProductSlideId` union and order: `clients` → `outreach` → `dashboard` → `campaigns` → `reports` → `website`
+  - [x] Do **not** rewrite `eyebrow` / `title` / `lead` / `points` (33.2)
+  - [x] Do **not** edit `use-marketing-product-cinema.ts` pin math
+  - [x] Leave `MarketingCrmShowcase` / `*ShowcaseMock` files on disk unused by cinema (33.2 deletes chrome). Do not extend them.
 
-- [ ] **Task 5 — Tests + verify** (AC: all)
-  - [ ] Vitest: `web/lib/marketing/marketing-demo-club.test.ts`
+- [x] **Task 5 — Tests + verify** (AC: all)
+  - [x] Vitest: `web/lib/marketing/marketing-demo-club.test.ts`
     - Elena appears in clients **and** reports-derived data
     - Jordan is the Follow-up subject; WhatsApp copy mentions Sunday clinic
     - Activities include Sunday clinic + board games night
     - Reject / fail assert if `orgName` matches `/acme|your account|yourclub/i`
     - No `fetch` / cookie usage in loader
-  - [ ] Grep mounts + provider: no `authFetch`, `useAuth`, `document.cookie`
-  - [ ] `cd web && npx vitest run lib/marketing/marketing-demo-club.test.ts`
-  - [ ] Typecheck touched files (`strict: true`)
-  - [ ] Manual: `/#crm` on desktop + mobile/PRM — six inhabited rooms, Elena meta contrast, no network to `/api/v1/*` for cinema mounts (DevTools)
+  - [x] Grep mounts + provider: no `authFetch`, `useAuth`, `document.cookie`
+  - [x] `cd web && npx vitest run lib/marketing/marketing-demo-club.test.ts`
+  - [x] Typecheck touched files (`strict: true`)
+  - [x] Manual: `/#crm` on desktop + mobile/PRM — six inhabited rooms, Elena meta contrast, no network to `/api/v1/*` for cinema mounts (DevTools)
 
 ## Dev Notes
 
@@ -279,10 +279,38 @@ Do **not** put demo JSON under `src/` or call the API. Do not add `app/demo/*` u
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+Cursor Grok 4.6
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- Static Riverside Rec `MarketingDemoClub` JSON + typed loader with module-load invariants
+- Six presentational mounts using LeadStatusBadge, PersonAvatar, TimelineEvent, dashboard trend chart, report ranking chrome, SitePageRenderer (no showcase mocks)
+- Provider wrap at `MarketingProductCarousel`; H3 remap via `[data-demo-theme]` in `globals.css`
+- Vitest 6/6 demo-club + full web suite 151/151; `tsc --noEmit` clean
+- Browser verified on localhost:3000/#crm — Clients/Follow-up/Dashboard/Campaigns/Reports/Website seek; mobile clients body OK
+
 ### File List
+
+- web/lib/marketing/marketing-demo-club.json
+- web/lib/marketing/marketing-demo-club.ts
+- web/lib/marketing/marketing-demo-club.test.ts
+- web/lib/marketing/product-slides.tsx
+- web/components/marketing/marketing-demo-provider.tsx
+- web/components/marketing/marketing-demo-theme.tsx
+- web/components/marketing/marketing-product-carousel.tsx
+- web/components/marketing/demo-mounts/index.ts
+- web/components/marketing/demo-mounts/marketing-demo-clients-mount.tsx
+- web/components/marketing/demo-mounts/marketing-demo-followup-mount.tsx
+- web/components/marketing/demo-mounts/marketing-demo-dashboard-mount.tsx
+- web/components/marketing/demo-mounts/marketing-demo-campaigns-mount.tsx
+- web/components/marketing/demo-mounts/marketing-demo-reports-mount.tsx
+- web/components/marketing/demo-mounts/marketing-demo-website-mount.tsx
+- web/app/globals.css
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/33-1-marketingdemoclub-seed-presentational-mounts.md
+
+### Change Log
+
+- 2026-09-01: Implemented Story 33.1 — MarketingDemoClub seed + presentational mounts for `/#crm`
