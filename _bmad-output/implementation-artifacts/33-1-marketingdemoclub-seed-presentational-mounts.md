@@ -125,8 +125,8 @@ so that I believe the product is real — not a decorative mock.
 
 ### Review Findings (Pass 2)
 
-- [ ] [Review][Decision] Report “this week” vs locked Sunday clinic Mar 8 — Proof line and ranking claim Sunday clinic is in the cinema week, but `reportFilters` / dashboard trend are Mar 9–15 while Elena’s Sunday clinic registration is Mar 8 (locked). Need a choice: widen the period to include Mar 8, or keep the 7-day Mar 9–15 window and stop claiming Sunday clinic is in-period.
-- [ ] [Review][Decision] Board games schedule day vs registration day — Website upcoming activity says board games night is “Fridays · 7:30pm”, but Elena’s registration timestamp is Sunday `2026-03-15T18:00:00.000Z`. Need a choice: change the schedule copy, or move the registration timestamp to a Friday.
+- [ ] [Review][Patch] Report “this week” vs locked Sunday clinic Mar 8 [`web/lib/marketing/marketing-demo-club.json`] — Widen the period to include Mar 8 (adjust `reportFilters` / trend / `periodDays` so clinic is in-period). (Pass 2 Decision 1 → widen)
+- [ ] [Review][Patch] Board games schedule day vs registration day [`web/lib/marketing/marketing-demo-club.json`] — Change website schedule copy to Sunday (match Mar 15 registration). (Pass 2 Decision 2 → schedule copy)
 - [ ] [Review][Patch] `dashboardQueueIds` not validated in invariants [`web/lib/marketing/marketing-demo-club.ts:611`] — unknown ids throw from `getDashboardQueue` (same class as the Pass 1 `clientDetails` fix).
 - [ ] [Review][Patch] Website section types can be present but `enabled: false` [`web/lib/marketing/marketing-demo-club.ts`] — invariants only check type presence; disabled sections yield hollow Website chrome.
 - [ ] [Review][Patch] `activeActivitiesCount` is 4 while ranking/performance name 3 [`web/lib/marketing/marketing-demo-club.json`] — set count to 3 or add a fourth named activity.
