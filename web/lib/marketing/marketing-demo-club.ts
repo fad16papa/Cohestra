@@ -90,6 +90,29 @@ export const REQUIRED_DEMO_ROOMS: readonly DemoRoomId[] = [
   "website",
 ];
 const ROOMS = new Set<DemoRoomId>(REQUIRED_DEMO_ROOMS);
+const ALLOWED_WEBSITE_SECTION_TYPES = new Set([
+  "hero",
+  "highlights",
+  "upcomingactivities",
+  "testimonials",
+]);
+
+function hasRemoteAssetId(value: string | null | undefined): boolean {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+/** Short day label for Follow-up WhatsApp chrome (e.g. "Mar 9"). */
+export function formatDemoWhatsappDay(loggedAt: string): string {
+  const date = new Date(loggedAt);
+  if (Number.isNaN(date.getTime())) {
+    return loggedAt;
+  }
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
 
 function asRecord(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -543,8 +566,19 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
     ...club.reportsProofClientIds,
   ]);
   for (const id of requiredDetailIds) {
-    if (!club.clientDetails[id]) {
+    const detail = club.clientDetails[id];
+    if (!detail) {
       throw new Error(`MarketingDemoClub: clientDetails.${id} missing`);
+    }
+    const client = club.clients.find((row) => row.id === id);
+    if (!client) {
+      throw new Error(`MarketingDemoClub: clientDetails.${id} has no matching clients row`);
+    }
+    if (detail.id !== id || detail.fullName !== client.fullName) {
+      throw new Error(`MarketingDemoClub: clientDetails.${id} identity mismatch`);
+    }
+    if (detail.timeline.length === 0) {
+      throw new Error(`MarketingDemoClub: clientDetails.${id}.timeline empty`);
     }
   }
 
@@ -563,6 +597,13 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
     }
   }
 
+  if (club.campaigns.length === 0) {
+    throw new Error("MarketingDemoClub: campaigns must not be empty");
+  }
+  if (club.reports.activityRanking.length === 0) {
+    throw new Error("MarketingDemoClub: activityRanking must not be empty");
+  }
+
   if (club.whatsappQuote.clientId !== club.followUpClientId) {
     throw new Error("MarketingDemoClub: WhatsApp quote must belong to the follow-up client");
   }
@@ -575,12 +616,47 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
     throw new Error("MarketingDemoClub: Elena must appear in reports-derived proof clients");
   }
 
+  const upcomingNames = club.website.upcomingActivities.map((row) => row.name.toLowerCase());
+  if (!upcomingNames.some((name) => name.includes("sunday clinic"))) {
+    throw new Error("MarketingDemoClub: upcomingActivities missing Sunday clinic");
+  }
+  if (!upcomingNames.some((name) => name.includes("board games"))) {
+    throw new Error("MarketingDemoClub: upcomingActivities missing board games night");
+  }
+
+  if (hasRemoteAssetId(club.website.published.logoAssetId)) {
+    throw new Error("MarketingDemoClub: remote logoAssetId forbidden");
+  }
+  if (club.website.upcomingActivities.some((activity) => hasRemoteAssetId(activity.heroImageUrl))) {
+    throw new Error("MarketingDemoClub: remote heroImageUrl forbidden");
+  }
+
   for (const type of ["hero", "highlights", "upcomingactivities", "testimonials"]) {
     const enabled = club.website.published.sections.some(
       (section) => section.enabled && section.type.toLowerCase() === type
     );
     if (!enabled) {
       throw new Error(`MarketingDemoClub: website is missing enabled section type ${type}`);
+    }
+  }
+
+  for (const section of club.website.published.sections) {
+    if (!section.enabled) {
+      continue;
+    }
+    const type = section.type.toLowerCase();
+    if (!ALLOWED_WEBSITE_SECTION_TYPES.has(type)) {
+      throw new Error(`MarketingDemoClub: unsupported enabled section type ${section.type}`);
+    }
+    const items = Array.isArray(section.props.items) ? section.props.items : [];
+    for (const item of items) {
+      if (typeof item !== "object" || item === null) {
+        continue;
+      }
+      const row = item as Record<string, unknown>;
+      if (hasRemoteAssetId(typeof row.avatarAssetId === "string" ? row.avatarAssetId : null)) {
+        throw new Error("MarketingDemoClub: remote avatarAssetId forbidden");
+      }
     }
   }
 }

@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   assertDemoClubInvariants,
   FORBIDDEN_ORG_PATTERN,
+  formatDemoWhatsappDay,
   getFollowUpClient,
   getReportsProofClients,
   isDemoRoomAvailable,
@@ -152,5 +153,27 @@ describe("MarketingDemoClub", () => {
     expect(() =>
       assertDemoClubInvariants(parseMarketingDemoClub({ ...raw, website }))
     ).toThrow(/enabled section type hero/i);
+  });
+
+  it("keeps board games highlight on Sunday and formats WhatsApp day from loggedAt", () => {
+    const source = readFileSync(fixturePath, "utf8");
+    expect(source).not.toMatch(/Friday tables/i);
+    expect(source).toMatch(/Sunday tables/i);
+    expect(formatDemoWhatsappDay(marketingDemoClub.whatsappQuote.loggedAt)).toBe("Mar 9");
+  });
+
+  it("rejects empty campaigns and remote website assets", () => {
+    const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as Record<string, unknown>;
+    expect(() =>
+      assertDemoClubInvariants(parseMarketingDemoClub({ ...raw, campaigns: [] }))
+    ).toThrow(/campaigns must not be empty/i);
+
+    const website = structuredClone(raw.website) as {
+      published: { logoAssetId: string | null };
+    };
+    website.published.logoAssetId = "asset-123";
+    expect(() =>
+      assertDemoClubInvariants(parseMarketingDemoClub({ ...raw, website }))
+    ).toThrow(/remote logoAssetId forbidden/i);
   });
 });

@@ -6,12 +6,17 @@ import { MarketingDemoTheme } from "@/components/marketing/marketing-demo-theme"
 import { useMarketingDemoClub } from "@/components/marketing/marketing-demo-provider";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { WhatsAppBrandIcon } from "@/components/shared/messenger-brand-icons";
-import { getClientDetail, getFollowUpClient } from "@/lib/marketing/marketing-demo-club";
+import {
+  formatDemoWhatsappDay,
+  getClientDetail,
+  getFollowUpClient,
+} from "@/lib/marketing/marketing-demo-club";
 
 export function MarketingDemoFollowupMount() {
   const club = useMarketingDemoClub();
   const jordan = getFollowUpClient(club);
   const detail = getClientDetail(club, jordan.id);
+  const whatsappDay = formatDemoWhatsappDay(club.whatsappQuote.loggedAt);
 
   return (
     <MarketingDemoTheme>
@@ -35,7 +40,9 @@ export function MarketingDemoFollowupMount() {
               WhatsApp
             </p>
             <p className="mt-2 text-sm text-ink">{club.whatsappQuote.body}</p>
-            <p className="mt-2 text-xs text-stone-cinema">Mar 9 · visible to the whole team</p>
+            <p className="mt-2 text-xs text-stone-cinema">
+              {whatsappDay} · visible to the whole team
+            </p>
           </div>
         </div>
         <div className="min-h-0 px-3 py-2">

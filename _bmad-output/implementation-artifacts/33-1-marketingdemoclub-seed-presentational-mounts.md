@@ -141,9 +141,9 @@ so that I believe the product is real — not a decorative mock.
 
 ### Review Findings (Pass 3)
 
-- [ ] [Review][Patch] Website highlights still say “Friday tables” [`web/lib/marketing/marketing-demo-club.json:427`] — Pass 2 moved board games to Sunday schedules; highlight description still says Friday.
-- [ ] [Review][Patch] Follow-up WhatsApp chrome hardcodes `Mar 9` [`web/components/marketing/demo-mounts/marketing-demo-followup-mount.tsx:38`] — Format from `club.whatsappQuote.loggedAt` (same stale-literal class as Pass 1 orgName).
-- [ ] [Review][Patch] Strengthen DemoClub hollow/network invariants [`web/lib/marketing/marketing-demo-club.ts`] — Require non-empty `campaigns` and `activityRanking`; non-empty timelines for required `clientDetails`; `upcomingActivities` include Sunday clinic + board games; `clientDetails` id/fullName match `clients`; forbid non-null remote `logoAssetId` / `heroImageUrl` / avatar asset ids; reject enabled section types outside the four allowed.
+- [x] [Review][Patch] Website highlights still say “Friday tables” [`web/lib/marketing/marketing-demo-club.json:427`] — Pass 2 moved board games to Sunday schedules; highlight description still says Friday.
+- [x] [Review][Patch] Follow-up WhatsApp chrome hardcodes `Mar 9` [`web/components/marketing/demo-mounts/marketing-demo-followup-mount.tsx:38`] — Format from `club.whatsappQuote.loggedAt` (same stale-literal class as Pass 1 orgName).
+- [x] [Review][Patch] Strengthen DemoClub hollow/network invariants [`web/lib/marketing/marketing-demo-club.ts`] — Require non-empty `campaigns` and `activityRanking`; non-empty timelines for required `clientDetails`; `upcomingActivities` include Sunday clinic + board games; `clientDetails` id/fullName match `clients`; forbid non-null remote `logoAssetId` / `heroImageUrl` / avatar asset ids; reject enabled section types outside the four allowed.
 - [x] [Review][Defer] Cinema stage width keeps Clients/Dashboard on stacked `lg:` layout [`web/components/marketing/demo-mounts/marketing-demo-clients-mount.tsx:23`] — deferred, pre-existing; ProductFrame / mount layout polish is 33.3–33.5 (extends Pass 2 mobile clip defer)
 - [x] [Review][Defer] `SitePageRenderer` Links may still viewport-prefetch `/register/*` despite mount `inert` [`web/components/marketing/site-page-renderer.tsx`] — deferred, pre-existing renderer; demount Links / prefetch=false is 33.3
 
@@ -329,6 +329,7 @@ Cursor Grok 4.6
 - Browser verified on localhost:3000/#crm — Clients/Follow-up/Dashboard/Campaigns/Reports/Website seek; mobile clients body OK
 - Code-review patches applied and re-verified (Elena phone, March week, Recipients, New leads, H3 chart ticks)
 - Pass 2 patches: Mar 8–15 window, board games Sundays, Jordan timeline order, Website mount inert, Total clients tile
+- Pass 3 patches: Sunday tables highlight, WhatsApp day from loggedAt, hollow/network invariants
 
 ### File List
 
@@ -355,3 +356,4 @@ Cursor Grok 4.6
 - 2026-09-01: Implemented Story 33.1 — MarketingDemoClub seed + presentational mounts for `/#crm`
 - 2026-09-02: Applied code-review patches — H3 token remap, invariants, March week seed, campaigns/reports/dashboard copy
 - 2026-09-02: Pass 2 review patches — Mar 8–15 period, Sunday board-games schedule, queue/section invariants, Website `inert`, Total clients tile
+- 2026-09-03: Pass 3 review patches — Sunday highlight copy, WhatsApp day from loggedAt, hollow/network invariants
