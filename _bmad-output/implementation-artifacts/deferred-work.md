@@ -1,3 +1,8 @@
+## Deferred from: code review of 33-1-marketingdemoclub-seed-presentational-mounts.md Pass 3 (2026-09-02)
+
+- Cinema stage width keeps Clients/Dashboard on stacked `lg:` layout — ProductFrame / mount layout polish is 33.3–33.5
+- `SitePageRenderer` Links may still viewport-prefetch `/register/*` despite mount `inert` — demount Links / prefetch=false is 33.3
+
 ## Deferred from: code review of 33-1-marketingdemoclub-seed-presentational-mounts.md Pass 2 (2026-09-02)
 
 - REQUIRED_DEMO_ROOMS makes `isDemoRoomAvailable` always true — omit-pill / tablist rebuild is Story 33.5

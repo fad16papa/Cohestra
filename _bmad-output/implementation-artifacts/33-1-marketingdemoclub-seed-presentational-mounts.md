@@ -139,6 +139,14 @@ so that I believe the product is real — not a decorative mock.
 - [x] [Review][Defer] REQUIRED_DEMO_ROOMS makes `isDemoRoomAvailable` always true [`web/lib/marketing/marketing-demo-club.ts:551`] — deferred, pre-existing for 33.1; omit-pill / tablist rebuild is Story 33.5
 - [x] [Review][Defer] Clients list+detail may clip on mobile/PRM [`web/components/marketing/demo-mounts/marketing-demo-clients-mount.tsx`] — deferred, pre-existing layout; mobile carousel polish is 33.5
 
+### Review Findings (Pass 3)
+
+- [ ] [Review][Patch] Website highlights still say “Friday tables” [`web/lib/marketing/marketing-demo-club.json:427`] — Pass 2 moved board games to Sunday schedules; highlight description still says Friday.
+- [ ] [Review][Patch] Follow-up WhatsApp chrome hardcodes `Mar 9` [`web/components/marketing/demo-mounts/marketing-demo-followup-mount.tsx:38`] — Format from `club.whatsappQuote.loggedAt` (same stale-literal class as Pass 1 orgName).
+- [ ] [Review][Patch] Strengthen DemoClub hollow/network invariants [`web/lib/marketing/marketing-demo-club.ts`] — Require non-empty `campaigns` and `activityRanking`; non-empty timelines for required `clientDetails`; `upcomingActivities` include Sunday clinic + board games; `clientDetails` id/fullName match `clients`; forbid non-null remote `logoAssetId` / `heroImageUrl` / avatar asset ids; reject enabled section types outside the four allowed.
+- [x] [Review][Defer] Cinema stage width keeps Clients/Dashboard on stacked `lg:` layout [`web/components/marketing/demo-mounts/marketing-demo-clients-mount.tsx:23`] — deferred, pre-existing; ProductFrame / mount layout polish is 33.3–33.5 (extends Pass 2 mobile clip defer)
+- [x] [Review][Defer] `SitePageRenderer` Links may still viewport-prefetch `/register/*` despite mount `inert` [`web/components/marketing/site-page-renderer.tsx`] — deferred, pre-existing renderer; demount Links / prefetch=false is 33.3
+
 ## Dev Notes
 
 ### What this story is
