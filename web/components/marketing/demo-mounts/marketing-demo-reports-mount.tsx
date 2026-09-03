@@ -14,7 +14,17 @@ export function MarketingDemoReportsMount() {
   const club = useMarketingDemoClub();
   const report = club.reports;
   const proof = getReportsProofClients(club);
-  const total = report.activityRanking.reduce((sum, row) => sum + row.registrationCount, 0) || 1;
+  // Defensive math: ensure we never compute NaN/Infinity or negative percentages
+  // if a fixture ever changes to include bad values.
+  const safeRows = report.activityRanking.map((row) => ({
+    ...row,
+    registrationCount:
+      Number.isFinite(row.registrationCount) && row.registrationCount > 0
+        ? row.registrationCount
+        : 0,
+  }));
+  const total = safeRows.reduce((sum, row) => sum + row.registrationCount, 0);
+  const safeTotal = Number.isFinite(total) && total > 0 ? total : 1;
 
   return (
     <MarketingDemoTheme>
@@ -44,13 +54,15 @@ export function MarketingDemoReportsMount() {
             description="Sunday clinic leads the week"
           />
           <ul className="space-y-3 px-4 py-3">
-            {report.activityRanking.map((row, index) => (
+            {safeRows.map((row, index) => (
               <li key={row.activityId} className="flex items-center gap-3">
                 <ReportRankBadge rank={index + 1} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">{row.activityName}</p>
                   <div className="mt-1">
-                    <ReportShareBar percent={(row.registrationCount / total) * 100} />
+                    <ReportShareBar
+                      percent={(row.registrationCount / safeTotal) * 100}
+                    />
                   </div>
                 </div>
                 <span className="tabular-nums text-sm text-stone-cinema">

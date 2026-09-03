@@ -154,6 +154,15 @@ so that I believe the product is real — not a decorative mock.
 - [x] [Review][Patch] Ranking/highlights/testimonials can be hollow despite enabled sections [`web/lib/marketing/marketing-demo-club.ts`] — Require `activityRanking` names include Sunday clinic + board games; enabled highlights/testimonials must have at least one titled/quoted item.
 - [x] [Review][Defer] Sunday clinic and board games share `Sundays · 6:00pm` slot [`web/lib/marketing/marketing-demo-club.json`] — deferred, consequence of Pass 2 Decision 2 (match Mar 15 18:00 registration); distinct Sunday times would re-open schedule vs timestamp conflict
 
+### Review Findings (Pass 5)
+
+- [x] [Review][Patch] `MarketingDemoTheme` missing `"use client"` boundary [`web/components/marketing/marketing-demo-theme.tsx:1`] — Next.js client/server boundary.
+- [x] [Review][Patch] DemoClub union casts without membership validation [`web/lib/marketing/marketing-demo-club.ts:288,435`] — validate `ActivityStatus` and `ReportPreset` unions.
+- [x] [Review][Patch] DemoClub `asNumber` accepts `Infinity/-Infinity` [`web/lib/marketing/marketing-demo-club.ts:148`] — reject non-finite numbers.
+- [x] [Review][Patch] DemoClub remote-asset guards skip non-string hero/avatars [`web/lib/marketing/marketing-demo-club.ts:660-707`] — require `string|null`.
+- [x] [Review][Patch] Website section `props` shape not fully validated [`web/lib/marketing/marketing-demo-club.ts:338-341`] — treat arrays/non-plain objects as empty props.
+- [x] [Review][Patch] Reports percent math doesn’t clamp negative/non-finite counts [`web/components/marketing/demo-mounts/marketing-demo-reports-mount.tsx:17,53`] — ensure finite `total` and non-negative `registrationCount`.
+
 ## Dev Notes
 
 ### What this story is

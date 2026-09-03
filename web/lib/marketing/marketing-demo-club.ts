@@ -70,6 +70,8 @@ export type MarketingDemoClub = {
 
 const LEAD_STATUSES = new Set<LeadStatus>(["new", "contacted", "active", "inactive"]);
 const OUTREACH_KINDS = new Set<OutreachKind>(["whatsapp", "viber", "email"]);
+const ACTIVITY_STATUSES = new Set<ActivityStatus>(["draft", "published", "archived"]);
+const REPORT_PRESETS = new Set<ReportPreset>(["weekly", "monthly", "custom"]);
 const TIMELINE_TYPES = new Set<ClientTimelineEventType>([
   "registration_submitted",
   "lead_status_changed",
@@ -146,10 +148,26 @@ function asStringOrNull(value: unknown, label: string): string | null {
 }
 
 function asNumber(value: unknown, label: string): number {
-  if (typeof value !== "number" || Number.isNaN(value)) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
     throw new Error(`MarketingDemoClub: ${label} must be a number`);
   }
   return value;
+}
+
+function asActivityStatus(value: unknown, label: string): ActivityStatus {
+  const status = asString(value, label);
+  if (!ACTIVITY_STATUSES.has(status as ActivityStatus)) {
+    throw new Error(`MarketingDemoClub: ${label} is not an ActivityStatus`);
+  }
+  return status as ActivityStatus;
+}
+
+function asReportPreset(value: unknown, label: string): ReportPreset {
+  const preset = asString(value, label);
+  if (!REPORT_PRESETS.has(preset as ReportPreset)) {
+    throw new Error(`MarketingDemoClub: ${label} is not a ReportPreset`);
+  }
+  return preset as ReportPreset;
 }
 
 function asBoolean(value: unknown, label: string): boolean {
@@ -285,7 +303,10 @@ function parseDashboard(raw: unknown): DashboardMetrics {
           `dashboard.activityPerformance[${index}].communityLabel`
         ),
         category: asString(activity.category, `dashboard.activityPerformance[${index}].category`),
-        status: asString(activity.status, `dashboard.activityPerformance[${index}].status`) as ActivityStatus,
+        status: asActivityStatus(
+          activity.status,
+          `dashboard.activityPerformance[${index}].status`
+        ),
         registrationCount: asNumber(
           activity.registrationCount,
           `dashboard.activityPerformance[${index}].registrationCount`
@@ -335,7 +356,9 @@ function parseWebsite(raw: unknown): PublicSitePayload {
         enabled: asBoolean(section.enabled, `website.published.sections[${index}].enabled`),
         order: asNumber(section.order, `website.published.sections[${index}].order`),
         props:
-          typeof section.props === "object" && section.props !== null
+          typeof section.props === "object" &&
+          section.props !== null &&
+          !Array.isArray(section.props)
             ? (section.props as Record<string, unknown>)
             : {},
       };
@@ -432,7 +455,7 @@ export function parseMarketingDemoClub(raw: unknown): MarketingDemoClub {
       };
     }),
     reportFilters: {
-      preset: asString(filters.preset, "reportFilters.preset") as ReportPreset,
+      preset: asReportPreset(filters.preset, "reportFilters.preset"),
       from: asString(filters.from, "reportFilters.from"),
       to: asString(filters.to, "reportFilters.to"),
       activityId: asPlainString(filters.activityId, "reportFilters.activityId"),
@@ -445,7 +468,7 @@ export function parseMarketingDemoClub(raw: unknown): MarketingDemoClub {
     },
     reports: {
       period: {
-        preset: asString(period.preset, "reports.period.preset"),
+        preset: asReportPreset(period.preset, "reports.period.preset") as string,
         startAt: asString(period.startAt, "reports.period.startAt"),
         endAt: asString(period.endAt, "reports.period.endAt"),
         computedAt: asString(period.computedAt, "reports.period.computedAt"),
@@ -665,12 +688,14 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
     if (!ALLOWED_WEBSITE_SECTION_TYPES.has(type)) {
       throw new Error(`MarketingDemoClub: unsupported enabled section type ${section.type}`);
     }
-    if (
-      hasRemoteAssetId(
-        typeof section.props.heroImageAssetId === "string" ? section.props.heroImageAssetId : null
-      )
-    ) {
-      throw new Error("MarketingDemoClub: remote heroImageAssetId forbidden");
+    const heroImageAssetId = section.props.heroImageAssetId;
+    if (heroImageAssetId != null) {
+      if (typeof heroImageAssetId !== "string") {
+        throw new Error("MarketingDemoClub: heroImageAssetId must be string/null");
+      }
+      if (hasRemoteAssetId(heroImageAssetId)) {
+        throw new Error("MarketingDemoClub: remote heroImageAssetId forbidden");
+      }
     }
     const items = Array.isArray(section.props.items) ? section.props.items : [];
     if (type === "highlights") {
@@ -702,8 +727,14 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
         continue;
       }
       const row = item as Record<string, unknown>;
-      if (hasRemoteAssetId(typeof row.avatarAssetId === "string" ? row.avatarAssetId : null)) {
-        throw new Error("MarketingDemoClub: remote avatarAssetId forbidden");
+      const avatarAssetId = row.avatarAssetId;
+      if (avatarAssetId != null) {
+        if (typeof avatarAssetId !== "string") {
+          throw new Error("MarketingDemoClub: avatarAssetId must be string/null");
+        }
+        if (hasRemoteAssetId(avatarAssetId)) {
+          throw new Error("MarketingDemoClub: remote avatarAssetId forbidden");
+        }
       }
     }
   }
