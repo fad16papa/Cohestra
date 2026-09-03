@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wireframe Postcard → Product Window — Cinema Fidelity Keep</title>
+<style>
+  @font-face {
+    font-family: "KeepDisplay";
+    src: local("Iowan Old Style"), local("Palatino Linotype"), local("Palatino"), local("Book Antiqua"), local("Georgia");
+  }
+  @font-face {
+    font-family: "KeepSans";
+    src: local("Avenir Next"), local("Segoe UI"), local("Helvetica Neue"), local("Helvetica"), local("Arial");
+  }
+  @font-face {
+    font-family: "KeepMono";
+    src: local("SF Mono"), local("Menlo"), local("Consolas"), local("Liberation Mono"), local("Courier New");
+  }
+
+  :root {
+    --stage: #0c1210;
+    --stage-mid: #15201c;
+    --ink: #e8efe9;
+    --ink-dim: #9aafa3;
+    --postcard: #c4b8a4;
+    --postcard-ink: #3a342c;
+    --wire: #8a7f6e;
+    --fail: #e85d4c;
+    --fail-glow: rgba(232, 93, 76, 0.18);
+    --lagoon: #2a9d8f;
+    --lagoon-bright: #3ecfbf;
+    --window: #f4f7f5;
+    --window-ink: #1a2a24;
+    --amber: #e8a838;
+    --proscenium: #1e2e28;
+    --glass: rgba(244, 247, 245, 0.06);
+    --hair: rgba(232, 239, 233, 0.12);
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: "KeepSans", sans-serif;
+    background: var(--stage);
+    color: var(--ink);
+    line-height: 1.55;
+    overflow-x: hidden;
+  }
+
+  /* Film grain */
+  body::after {
+    content: "";
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ─── HERO / PROSCENIUM ─── */
+  .proscenium {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    position: relative;
+    padding: 4rem 1.5rem 5rem;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 110%, rgba(42, 157, 143, 0.15), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 50% 0%, rgba(232, 168, 56, 0.08), transparent 50%),
+      linear-gradient(180deg, #080c0a 0%, var(--stage) 40%, var(--stage-mid) 100%);
+  }
+
+  .proscenium::before {
+    content: "";
+    position: absolute;
+    inset: 0 8% auto;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--amber), var(--lagoon), transparent);
+    opacity: 0.5;
+  }
+
+  .hero-inner {
+    width: min(1100px, 100%);
+    text-align: center;
+  }
+
+  .reel-mark {
+    font-family: "KeepMono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 1.75rem;
+    opacity: 0;
+    animation: rise 0.9s var(--ease) 0.1s forwards;
+  }
+
+  .brand {
+    font-family: "KeepDisplay", Georgia, serif;
+    font-size: clamp(2.8rem, 8vw, 5.5rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    margin-bottom: 1.25rem;
+    opacity: 0;
+    animation: rise 1s var(--ease) 0.25s forwards;
+  }
+
+  .brand em {
+    font-style: italic;
+    color: var(--lagoon-bright);
+  }
+
+  .hero-line {
+    font-size: clamp(1rem, 2.2vw, 1.25rem);
+    color: var(--ink-dim);
+    max-width: 34em;
+    margin: 0 auto 3rem;
+    opacity: 0;
+    animation: rise 1s var(--ease) 0.4s forwards;
+  }
+
+  /* Before / After stage metaphor */
+  .stage-duet {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1.25rem;
+    align-items: stretch;
+    opacity: 0;
+    animation: rise 1.1s var(--ease) 0.55s forwards;
+  }
+
+  @media (max-width: 760px) {
+    .stage-duet { grid-template-columns: 1fr; gap: 2rem; }
+    .duet-arrow { transform: rotate(90deg); margin: 0.5rem auto; }
+  }
+
+  .postcard, .product-window {
+    border-radius: 4px;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .postcard {
+    background: linear-gradient(145deg, #d4c8b2, var(--postcard));
+    color: var(--postcard-ink);
+    padding: 1.25rem 1.35rem 1.5rem;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.2);
+    transform: rotate(-1.5deg);
+    min-height: 220px;
+  }
+
+  .postcard .stamp {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 52px;
+    height: 52px;
+    border: 2px dashed rgba(58, 52, 44, 0.35);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: "KeepMono", monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transform: rotate(12deg);
+    color: rgba(58, 52, 44, 0.5);
+  }
+
+  .postcard h3 {
+    font-family: "KeepDisplay", Georgia, serif;
+    font-size: 1.05rem;
+    margin-bottom: 0.85rem;
+    border-bottom: 1px solid rgba(58, 52, 44, 0.2);
+    padding-bottom: 0.5rem;
+  }
+
+  .wire-ui {
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .wire-bar {
+    height: 10px;
+    background: rgba(58, 52, 44, 0.12);
+    border: 1px dashed var(--wire);
+    border-radius: 2px;
+  }
+  .wire-bar.w60 { width: 60%; }
+  .wire-bar.w40 { width: 40%; }
+  .wire-bar.w80 { width: 80%; }
+
+  .wire-boxes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+
+  .wire-box {
+    height: 48px;
+    border: 1px dashed var(--wire);
+    background: rgba(255,255,255,0.25);
+    border-radius: 2px;
+    display: flex;
+    align-items: flex-end;
+    padding: 0.35rem;
+    font-family: "KeepMono", monospace;
+    font-size: 0.55rem;
+    color: rgba(58, 52, 44, 0.45);
+  }
+
+  .postcard .caption {
+    margin-top: 0.85rem;
+    font-size: 0.72rem;
+    font-style: italic;
+    opacity: 0.7;
+  }
+
+  .duet-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    color: var(--lagoon-bright);
+    align-self: center;
+  }
+
+  .product-window {
+    background: var(--window);
+    color: var(--window-ink);
+    box-shadow:
+      0 30px 60px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(62, 207, 191, 0.35),
+      0 0 40px rgba(42, 157, 143, 0.2);
+    transform: rotate(0.8deg);
+    min-height: 220px;
+  }
+
+  .browser-chrome {
+    background: #e2e8e4;
+    border-bottom: 1px solid #c5d0ca;
+    padding: 0.45rem 0.65rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .traffic {
+    display: flex;
+    gap: 5px;
+  }
+  .traffic span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #b8c4bc;
+  }
+
+  .url-bar {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #c5d0ca;
+    border-radius: 4px;
+    padding: 0.28rem 0.55rem;
+    font-family: "KeepMono", monospace;
+    font-size: 0.62rem;
+    color: #4a5c54;
+  }
+
+  .url-bar b { color: var(--lagoon); font-weight: 600; }
+
+  .window-body {
+    padding: 0.75rem;
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 0.55rem;
+    min-height: 150px;
+  }
+
+  .ghost-side {
+    background: #dce5e0;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 5px;
+  }
+  .ghost-side i {
+    display: block;
+    height: 6px;
+    background: #a8b8b0;
+    border-radius: 1px;
+  }
+  .ghost-side i.on { background: var(--lagoon); height: 14px; }
+
+  .dense-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .dense-row {
+    height: 14px;
+    background: #e8eeea;
+    border-radius: 2px;
+    border: 1px solid #d0dbd5;
+    position: relative;
+  }
+  .dense-row.sel {
+    background: rgba(42, 157, 143, 0.15);
+    border-color: var(--lagoon);
+    box-shadow: 0 0 0 1px rgba(42, 157, 143, 0.3);
+  }
+  .dense-row::after {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 4px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #b5c4bc;
+  }
+  .dense-row.sel::after { background: var(--lagoon); }
+
+  .product-window .window-label {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.65rem;
+    font-family: "KeepMono", monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--lagoon);
+  }
+
+  .scroll-cue {
+    margin-top: 3.5rem;
+    font-family: "KeepMono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    opacity: 0;
+    animation: rise 1s var(--ease) 0.9s forwards, pulse 2.4s ease-in-out 1.5s infinite;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
+  }
+
+  /* ─── NAV DOTS ─── */
+  .spine {
+    position: fixed;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .spine a {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--hair);
+    border: 1px solid rgba(232,239,233,0.25);
+    transition: background 0.3s, transform 0.3s;
+  }
+  .spine a:hover, .spine a.on {
+    background: var(--lagoon-bright);
+    transform: scale(1.35);
+  }
+  @media (max-width: 700px) { .spine { display: none; } }
+
+  /* ─── SECTIONS SHARED ─── */
+  section.act {
+    padding: clamp(3.5rem, 8vw, 6rem) 1.5rem;
+    position: relative;
+  }
+
+  .act-inner {
+    width: min(920px, 100%);
+    margin: 0 auto;
+  }
+
+  .act-tag {
+    font-family: "KeepMono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 0.85rem;
+    display: inline-block;
+  }
+
+  .act h2 {
+    font-family: "KeepDisplay", Georgia, serif;
+    font-size: clamp(1.85rem, 4.5vw, 2.75rem);
+    font-weight: 400;
+    line-height: 1.15;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.015em;
+  }
+
+  .act .lede {
+    color: var(--ink-dim);
+    max-width: 38em;
+    margin-bottom: 2.25rem;
+    font-size: 1.02rem;
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ═══ 1. FAILURE ANALYSIS — Autopsy board ═══ */
+  .act-fail {
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 27px,
+        rgba(232, 93, 76, 0.04) 27px,
+        rgba(232, 93, 76, 0.04) 28px
+      ),
+      var(--stage);
+  }
+  .act-fail .act-tag { color: var(--fail); }
+  .act-fail h2 { color: #ffc4bc; }
+
+  .autopsy {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .defect {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.85rem;
+    align-items: start;
+    padding: 0.85rem 1rem;
+    background: var(--fail-glow);
+    border-left: 3px solid var(--fail);
+    border-radius: 0 4px 4px 0;
+    transition: transform 0.25s var(--ease), background 0.25s;
+  }
+  .defect:hover {
+    transform: translateX(4px);
+    background: rgba(232, 93, 76, 0.28);
+  }
+
+  .sev {
+    font-family: "KeepMono", monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid var(--fail);
+    color: var(--fail);
+    white-space: nowrap;
+    margin-top: 0.15rem;
+  }
+
+  .defect p {
+    font-size: 0.92rem;
+    color: var(--ink);
+  }
+
+  .defect .code {
+    font-family: "KeepMono", monospace;
+    font-size: 0.72rem;
+    color: #ff9a8e;
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+
+  .lesson-strip {
+    margin-top: 2.5rem;
+    padding: 1.35rem 1.5rem;
+    border: 1px solid rgba(232, 168, 56, 0.35);
+    background: rgba(232, 168, 56, 0.08);
+    border-radius: 4px;
+  }
+  .lesson-strip h3 {
+    font-family: "KeepDisplay", Georgia, serif;
+    font-size: 1.15rem;
+    color: var(--amber);
+    margin-bottom: 0.75rem;
+  }
+  .lesson-strip ul {
+    list-style: none;
+    display: grid;
+    gap: 0.45rem;
+  }
+  .lesson-strip li {
+    font-size: 0.9rem;
+    color: var(--ink-dim);
+    padding-left: 1.1rem;
+    position: relative;
+  }
+  .lesson-strip li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: var(--amber);
+  }
+
+  /* ═══ 2. ASSUMPTION REVERSAL — Flip mirrors ═══ */
+  .act-reverse {
+    background: linear-gradient(180deg, var(--stage-mid), #0f1a16);
+  }
+  .act-reverse .act-tag { color: var(--lagoon-bright); }
+
+  .flip-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .flip {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.75rem;
+    align-items: stretch;
+    perspective: 800px;
+  }
+  @media (max-width: 640px) {
+    .flip { grid-template-columns: 1fr; }
+    .flip .mid { transform: rotate(90deg); justify-self: center; }
+  }
+
+  .flip .was, .flip .now {
+    padding: 1rem 1.1rem;
+    border-radius: 4px;
+    font-size: 0.88rem;
+  }
+  .flip .was {
+    background: rgba(232, 93, 76, 0.1);
+    border: 1px solid rgba(232, 93, 76, 0.25);
+    color: #c9a8a3;
+    text-decoration: line-through;
+    text-decoration-color: rgba(232, 93, 76, 0.5);
+  }
+  .flip .now {
+    background: rgba(42, 157, 143, 0.12);
+    border: 1px solid rgba(62, 207, 191, 0.35);
+    color: var(--ink);
+    box-shadow: 0 0 20px rgba(42, 157, 143, 0.08);
+  }
+  .flip .mid {
+    display: flex;
+    align-items: center;
+    font-size: 1.25rem;
+    color: var(--lagoon-bright);
+    font-family: "KeepMono", monospace;
+  }
+  .flip .label {
+    font-family: "KeepMono", monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.35rem;
+    opacity: 0.6;
+    text-decoration: none !important;
+  }
+
+  /* ═══ 3. CROSS-POLLINATION — Specimen gallery ═══ */
+  .act-cross {
+    background:
+      radial-gradient(circle at 10% 20%, rgba(42, 157, 143, 0.07), transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(232, 168, 56, 0.06), transparent 35%),
+      var(--stage);
+  }
+  .act-cross .act-tag { color: var(--amber); }
+
+  .specimens {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .specimen {
+    background: var(--glass);
+    border: 1px solid var(--hair);
+    border-radius: 3px;
+    padding: 1.1rem 1.15rem 1.25rem;
+    position: relative;
+    transition: border-color 0.3s, transform 0.3s var(--ease);
+  }
+  .specimen:hover {
+    border-color: rgba(62, 207, 191, 0.45);
+    transform: translateY(-3px);
+  }
+  .specimen .src {
+    font-family: "KeepMono", monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 0.5rem;
+  }
+  .specimen .take {
+    font-family: "KeepDisplay", Georgia, serif;
+    font-size: 1.05rem;
+    margin-bottom: 0.45rem;
+    line-height: 1.3;
+  }
+  .specimen .apply {
+    font-size: 0.82rem;
+    color: var(--ink-dim);
+  }
+  .specimen .apply em {
+    color: var(--lagoon-bright);
+    font-style: normal;
+  }
+
+  .cross-formula {
+    margin-top: 2.25rem;
+    text-align: center;
+    padding: 1.5rem;
+    border: 1px dashed rgba(62, 207, 191, 0.4);
+    border-radius: 4px;
+    font-family: "KeepDisplay", Georgia, serif;
+    font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+    line-height: 1.4;
+  }
+  .cross-formula span {
+    color: var(--lagoon-bright);
+  }
+
+  /* ═══ 4. MORPHOLOGICAL — Combo matrix ═══ */
+  .act-morph {
+    background: linear-gradient(180deg, #0a100e, #121c18);
+  }
+  .act-morph .act-tag { color: #7ec8ff; }
+
+  .combos {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .combo {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 1rem;
+    padding: 1.1rem 1.2rem;
+    border: 1px solid var(--hair);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.02);
+    transition: border-color 0.3s;
+  }
+  .combo:hover { border-color: rgba(126, 200, 255, 0.35); }
+  .combo.chosen {
+    border-color: var(--lagoon-bright);
+    background: rgba(42, 157, 143, 0.1);
+    box-shadow: 0 0 30px rgba(42, 157, 143, 0.12);
+  }
+
+  .combo .letter {
+    font-family: "KeepDisplay", Georgia, serif;
+    font-size: 2.4rem;
+    line-height: 1;
+    color: #7ec8ff;
+    opacity: 0.7;
+  }
+  .combo.chosen .letter { color: var(--lagoon-bright); opacity: 1; }
+
+  .combo h3 {
+    font-family: "KeepSans", sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    letter-spacing: 0.02em;
+  }
+  .combo.chosen h3::after {
+    content: " ← chosen spine";
+    font-weight: 400;
+    color: var(--lagoon-bright);
+    font-size: 0.8rem;
+  }
+  .combo p {
+    font-size: 0.84rem;
+    color: var(--ink-dim);
+  }
+
+  .params {
+    margin-top: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+  .param {
+    font-family: "KeepMono", monospace;
+    font-size: 0.65rem;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid rgba(126, 200, 255, 0.3);
+    border-radius: 2px;
+    color: #a8d4f0;
+    background: rgba(126, 200, 255, 0.06);
+  }
+
+  /* ═══ 5. REVERSE BRAINSTORM — Danger / Inverse ═══ */
+  .act-howfail {
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 12px,
+        rgba(232, 93, 76, 0.03) 12px,
+        rgba(232, 93, 76, 0.03) 13px
+      ),
+      var(--stage);
+  }
+  .act-howfail .act-tag { color: var(--fail); }
+
+  .fail-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+  @media (max-width: 700px) {
+    .fail-pair { grid-template-columns: 1fr; }
+  }
+
+  .danger-col, .inverse-col {
+    padding: 1.35rem;
+    border-radius: 4px;
+  }
+  .danger-col {
+    background: rgba(232, 93, 76, 0.08);
+    border: 1px solid rgba(232, 93, 76, 0.3);
+  }
+  .inverse-col {
+    background: rgba(42, 157, 143, 0.08);
+    border: 1px solid rgba(62, 207, 191, 0.3);
+  }
+
+  .danger-col h3, .inverse-col h3 {
+    font-family: "KeepMono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .danger-col h3 { color: var(--fail); }
+  .inverse-col h3 { color: var(--lagoon-bright); }
+
+  .danger-col ul, .inverse-col ul {
+    list-style: none;
+    display: grid;
+    gap: 0.55rem;
+  }
+  .danger-col li, .inverse-col li {
+    font-size: 0.88rem;
+    padding-left: 1.15rem;
+    position: relative;
+    color: var(--ink-dim);
+  }
+  .danger-col li::before { content: "✕"; position: absolute; left: 0; color: var(--fail); font-size: 0.75rem; top: 0.15rem; }
+  .inverse-col li::before { content: "✓"; position: absolute; left: 0; color: var(--lagoon-bright); font-size: 0.75rem; top: 0.15rem; }
+
+  /* ═══ 6. PROVOCATION — Manifesto wall ═══ */
+  .act-prov {
+    background: #060908;
+    overflow: hidden;
+  }
+  .act-prov .act-tag { color: var(--amber); }
+
+  .manifesto {
+    display: grid;
+    gap: 0;
+  }
+
+  .prov {
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--hair);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.25rem;
+    align-items: baseline;
+  }
+  .prov:last-child { border-bottom: none; }
+
+  .prov .bang {
+    font-family: "KeepDisplay", Georgia, serif;
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-style: italic;
+    color: var(--amber);
+    line-height: 1;
+    opacity: 0.35;
+  }
+
+  .prov blockquote {
+    font-family: "KeepDisplay", Georgia, serif;
+    font-size: clamp(1.15rem, 2.8vw, 1.55rem);
+    line-height: 1.35;
+    font-style: italic;
+    margin-bottom: 0.5rem;
+  }
+
+  .prov .useful {
+    font-family: "KeepSans", sans-serif;
+    font-style: normal;
+    font-size: 0.88rem;
+    color: var(--lagoon-bright);
+  }
+  .prov .useful::before {
+    content: "→ ";
+    opacity: 0.6;
+  }
+
+  /* ═══ 7. SYNTHESIS — Climax ═══ */
+  .act-synth {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    background:
+      radial-gradient(ellipse 70% 55% at 50% 40%, rgba(42, 157, 143, 0.18), transparent 65%),
+      radial-gradient(ellipse 40% 30% at 50% 100%, rgba(232, 168, 56, 0.1), transparent 50%),
+      linear-gradient(180deg, #060908 0%, #0c1612 50%, #081210 100%);
+    padding-bottom: 5rem;
+  }
+  .act-synth .act-tag { color: var(--lagoon-bright); }
+
+  .climax-title {
+    font-family: "KeepDisplay", Georgia, serif;
+    font-size: clamp(2.2rem, 6vw, 3.8rem);
+    line-height: 1.05;
+    margin-bottom: 0.5rem;
+  }
+  .climax-title .path {
+    display: block;
+    color: var(--lagoon-bright);
+    margin-top: 0.35rem;
+  }
+
+  .root-cause {
+    margin: 1.75rem 0 2.5rem;
+    padding: 1.25rem 1.4rem;
+    border-left: 3px solid var(--amber);
+    background: rgba(232, 168, 56, 0.07);
+    font-size: 0.98rem;
+    color: var(--ink-dim);
+    max-width: 42em;
+  }
+  .root-cause strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .priority-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+  @media (max-width: 680px) {
+    .priority-grid { grid-template-columns: 1fr; }
+  }
+
+  .prio {
+    border-radius: 4px;
+    padding: 1.4rem 1.5rem;
+  }
+  .prio-p0 {
+    background: rgba(42, 157, 143, 0.14);
+    border: 2px solid var(--lagoon-bright);
+    box-shadow: 0 0 40px rgba(42, 157, 143, 0.15);
+  }
+  .prio-p1 {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--hair);
+  }
+
+  .prio .badge {
+    font-family: "KeepMono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    margin-bottom: 0.85rem;
+    display: inline-block;
+  }
+  .prio-p0 .badge { color: var(--lagoon-bright); }
+  .prio-p1 .badge { color: var(--ink-dim); }
+
+  .prio ol {
+    margin-left: 1.15rem;
+    display: grid;
+    gap: 0.55rem;
+  }
+  .prio li {
+    font-size: 0.92rem;
+    color: var(--ink);
+  }
+  .prio-p1 li { color: var(--ink-dim); }
+
+  .handoff {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid rgba(232, 168, 56, 0.3);
+    border-radius: 4px;
+    background: rgba(0,0,0,0.25);
+  }
+  .handoff h3 {
+    font-family: "KeepMono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+  .handoff p {
+    font-size: 0.95rem;
+    color: var(--ink-dim);
+  }
+  .handoff .ac {
+    font-family: "KeepDisplay", Georgia, serif;
+    font-size: 1.2rem;
+    color: var(--ink);
+    font-style: italic;
+    margin-top: 0.35rem;
+  }
+
+  .colophon {
+    margin-top: 4rem;
+    text-align: center;
+    font-family: "KeepMono", monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(154, 175, 163, 0.5);
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<nav class="spine" aria-label="Act navigation">
+  <a href="#hero" class="on" title="Opening"></a>
+  <a href="#fail" title="Failure Analysis"></a>
+  <a href="#reverse" title="Assumption Reversal"></a>
+  <a href="#cross" title="Cross-Pollination"></a>
+  <a href="#morph" title="Morphological"></a>
+  <a href="#howfail" title="Reverse Brainstorm"></a>
+  <a href="#prov" title="Provocation"></a>
+  <a href="#synth" title="Synthesis"></a>
+</nav>
+
+<!-- ════════ OPENING: PROSCENIUM ════════ -->
+<header class="proscenium" id="hero">
+  <div class="hero-inner">
+    <p class="reel-mark">Cohestra · Live Proof Cinema · 2026-09-03</p>
+    <h1 class="brand">From <em>postcard</em><br/>to product window</h1>
+    <p class="hero-line">
+      A keepsake from the session that diagnosed why <code>/#crm</code> reads cheap —
+      and chose the path from emergency anti-cheap to Apple-real fidelity.
+    </p>
+
+    <div class="stage-duet" aria-label="Before and after cinema stage metaphor">
+      <article class="postcard">
+        <div class="stamp">CHEAP</div>
+        <h3>Wireframe postcard</h3>
+        <div class="wire-ui">
+          <div class="wire-bar w80"></div>
+          <div class="wire-bar w60"></div>
+          <div class="wire-boxes">
+            <div class="wire-box">01 / 06</div>
+            <div class="wire-box">mint ░░</div>
+          </div>
+          <div class="wire-bar w40"></div>
+        </div>
+        <p class="caption">Orphaned widgets on paper-warm. Chapter graffiti. Brochure brain.</p>
+      </article>
+
+      <div class="duet-arrow" aria-hidden="true">→</div>
+
+      <article class="product-window">
+        <div class="browser-chrome">
+          <div class="traffic" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div class="url-bar"><b>riverside-rec.cohestra.app</b>/clients</div>
+        </div>
+        <div class="window-body">
+          <div class="ghost-side" aria-hidden="true">
+            <i></i><i class="on"></i><i></i><i></i><i></i>
+          </div>
+          <div class="dense-panel" aria-hidden="true">
+            <div class="dense-row"></div>
+            <div class="dense-row sel"></div>
+            <div class="dense-row"></div>
+            <div class="dense-row"></div>
+            <div class="dense-row"></div>
+            <div class="dense-row"></div>
+            <div class="dense-row"></div>
+            <div class="dense-row"></div>
+          </div>
+        </div>
+        <span class="window-label">ProductFrame</span>
+      </article>
+    </div>
+
+    <p class="scroll-cue">Scroll the reel ↓</p>
+  </div>
+</header>
+
+<!-- ════════ ACT 1: FAILURE ANALYSIS ════════ -->
+<section class="act act-fail" id="fail">
+  <div class="act-inner">
+    <p class="act-tag reveal">Technique · Failure Analysis</p>
+    <h2 class="reveal">Cheap is a defect list,<br/>not a taste debate</h2>
+    <p class="lede reveal">Autopsy of the shipping cinema. Severity stamped. Every failure is diagnosable.</p>
+
+    <div class="autopsy">
+      <div class="defect reveal">
+        <span class="sev">LOUD</span>
+        <div>
+          <span class="code">CHAPTER CHROME</span>
+          <p>Large 01/06 watermarks + CHAPTER N OF 6 + SCROLL TO CONTINUE — pitch deck, not product. Banned by ux-cohestra, still ships.</p>
+        </div>
+      </div>
+      <div class="defect reveal">
+        <span class="sev">SPLIT</span>
+        <div>
+          <span class="code">BROCHURE + WIREFRAME</span>
+          <p>Left column: feature checklist marketing. Right: sparse UI fragments. Two brains fighting one stage.</p>
+        </div>
+      </div>
+      <div class="defect reveal">
+        <span class="sev">FRAME</span>
+        <div>
+          <span class="code">POSTCARD, NOT WINDOW</span>
+          <p>Cropped mounts floating on paper-warm — no device, browser, or app chrome. Apple never shows orphaned widgets.</p>
+        </div>
+      </div>
+      <div class="defect reveal">
+        <span class="sev">DENSITY</span>
+        <div>
+          <span class="code">HOLLOW ATMOSPHERE</span>
+          <p>“Omit hollow UI” became minimal chrome → empty zen. Dashboard tiles thin; Campaigns a 2-row scrap; Reports three bars then void.</p>
+        </div>
+      </div>
+      <div class="defect reveal">
+        <span class="sev">KIT</span>
+        <div>
+          <span class="code">PLACEHOLDER INHABITANTS</span>
+          <p>Initials-only pastel avatars. Timeline as monospace log dump. WhatsApp quote as grey box — no bubble, no CTA.</p>
+        </div>
+      </div>
+      <div class="defect reveal">
+        <span class="sev">CLICHÉ</span>
+        <div>
+          <span class="code">MINT GRADIENT HERO</span>
+          <p>Website soft mint with no photo — classic AI landing placeholder. Appearance toggle chrome, no publish URL or device frame.</p>
+        </div>
+      </div>
+      <div class="defect reveal">
+        <span class="sev">ORDER</span>
+        <div>
+          <span class="code">UNFINISHED CONTRACT</span>
+          <p>Story 33.1 shipped data+mounts; ProductFrame (33.3) and kill-chapter (33.2) deferred. Data alone did not buy fidelity.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="lesson-strip reveal">
+      <h3>Lessons carved in the darkroom</h3>
+      <ul>
+        <li>Apple / Stripe / Linear embed the <em>full UI window</em> — never orphaned widgets</li>
+        <li>Chapter pedagogy destroys trust even if mounts improve</li>
+        <li>Density and chrome beat more feature bullets on the left</li>
+        <li>One inhabited scene beats six sparse rooms</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ ACT 2: ASSUMPTION REVERSAL ════════ -->
+<section class="act act-reverse" id="reverse">
+  <div class="act-inner">
+    <p class="act-tag reveal">Technique · Assumption Reversal</p>
+    <h2 class="reveal">Every sacred “must” flipped</h2>
+    <p class="lede reveal">What we treated as cinema law — struck through. The reverse becomes the design rule.</p>
+
+    <div class="flip-grid">
+      <div class="flip reveal">
+        <div class="was"><span class="label">Assumed</span>Sparse mounts avoid accidental interaction</div>
+        <div class="mid">⇌</div>
+        <div class="now"><span class="label">Rule</span>Dense read-only product with inert overlay is still safe</div>
+      </div>
+      <div class="flip reveal">
+        <div class="was"><span class="label">Assumed</span>No browser chrome = cleaner cinema</div>
+        <div class="mid">⇌</div>
+        <div class="now"><span class="label">Rule</span>Browser / app chrome is what makes it look real</div>
+      </div>
+      <div class="flip reveal">
+        <div class="was"><span class="label">Assumed</span>Feature checklist cards prove value</div>
+        <div class="mid">⇌</div>
+        <div class="now"><span class="label">Rule</span>Kill the checklist — the live screen <em>is</em> the proof</div>
+      </div>
+      <div class="flip reveal">
+        <div class="was"><span class="label">Assumed</span>Chapter numbers help orientation</div>
+        <div class="mid">⇌</div>
+        <div class="now"><span class="label">Rule</span>Chapter numbers scream mock — feeling titles only</div>
+      </div>
+      <div class="flip reveal">
+        <div class="was"><span class="label">Assumed</span>Editorial magazine scroll = premium</div>
+        <div class="mid">⇌</div>
+        <div class="now"><span class="label">Rule</span>Feel like an Apple product pin of real software</div>
+      </div>
+      <div class="flip reveal">
+        <div class="was"><span class="label">Assumed</span>Wide left copy column must stay</div>
+        <div class="mid">⇌</div>
+        <div class="now"><span class="label">Rule</span>Shrink copy; enlarge product stage to ~65–70%</div>
+      </div>
+      <div class="flip reveal">
+        <div class="was"><span class="label">Assumed</span>Epic 33 data-first was visually correct</div>
+        <div class="mid">⇌</div>
+        <div class="now"><span class="label">Rule</span>Frame + kill-chapter lead; data fills the frame</div>
+      </div>
+      <div class="flip reveal">
+        <div class="was"><span class="label">Assumed</span>Fidelity = MarketingDemoClub JSON</div>
+        <div class="mid">⇌</div>
+        <div class="now"><span class="label">Rule</span>Fidelity = chrome + density + imagery + motion</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ ACT 3: CROSS-POLLINATION ════════ -->
+<section class="act act-cross" id="cross">
+  <div class="act-inner">
+    <p class="act-tag reveal">Technique · Cross-Pollination</p>
+    <h2 class="reveal">Borrow the craft,<br/>not the brand</h2>
+    <p class="lede reveal">Specimens from product pages, hospitals, theaters, retail windows — tagged for transplant into Cohestra’s stage.</p>
+
+    <div class="specimens">
+      <article class="specimen reveal">
+        <p class="src">Apple product page</p>
+        <p class="take">Pin one hero shot</p>
+        <p class="apply">ProductFrame <em>full-bleed</em> on the right; short copy; no chapters</p>
+      </article>
+      <article class="specimen reveal">
+        <p class="src">Linear marketing</p>
+        <p class="take">Dense UI in a frame</p>
+        <p class="apply">Light admin in browser chrome with <em>riverside-rec.cohestra.app</em></p>
+      </article>
+      <article class="specimen reveal">
+        <p class="src">Notion gallery</p>
+        <p class="take">Inhabited density</p>
+        <p class="apply">Clients list shows <em>8–10 rows</em> clipped, not 4 floating</p>
+      </article>
+      <article class="specimen reveal">
+        <p class="src">Museum exhibit</p>
+        <p class="take">Artifact in glass</p>
+        <p class="apply">ProductFrame as glass case; copy is a <em>wall label</em></p>
+      </article>
+      <article class="specimen reveal">
+        <p class="src">Theater stage</p>
+        <p class="take">Proscenium arch</p>
+        <p class="apply">Frame is proscenium; chapter watermark is <em>graffiti — remove it</em></p>
+      </article>
+      <article class="specimen reveal">
+        <p class="src">Hospital ER board</p>
+        <p class="take">Urgency density</p>
+        <p class="apply">Follow-up queue denser; status chips <em>louder</em></p>
+      </article>
+      <article class="specimen reveal">
+        <p class="src">Airbnb experience</p>
+        <p class="take">Photography sells place</p>
+        <p class="apply">Website hero: real rec room — <em>or omit the room</em></p>
+      </article>
+      <article class="specimen reveal">
+        <p class="src">Video game HUD</p>
+        <p class="take">Diegetic UI</p>
+        <p class="apply">Seek pills become <em>in-app module switcher</em> inside the frame</p>
+      </article>
+      <article class="specimen reveal">
+        <p class="src">News broadcast</p>
+        <p class="take">Lower-third labels</p>
+        <p class="apply">One feeling line as lower-third; <em>kill checklist stack</em></p>
+      </article>
+      <article class="specimen reveal">
+        <p class="src">Photo studio</p>
+        <p class="take">Lighting hierarchy</p>
+        <p class="apply">Stage darker/warmer; product window <em>brighter</em></p>
+      </article>
+      <article class="specimen reveal">
+        <p class="src">Retail window</p>
+        <p class="take">Mannequin + real product</p>
+        <p class="apply">Seed looks like real tenants with a <em>real URL bar</em></p>
+      </article>
+      <article class="specimen reveal">
+        <p class="src">Movie trailer</p>
+        <p class="take">Cut to climax first</p>
+        <p class="apply">Open on Follow-up or Clients — <em>not equal six chapters</em></p>
+      </article>
+    </div>
+
+    <p class="cross-formula reveal">
+      <span>Apple pin</span> + <span>Linear density</span> + <span>Airbnb photo</span> + <span>museum label</span>
+    </p>
+  </div>
+</section>
+
+<!-- ════════ ACT 4: MORPHOLOGICAL ════════ -->
+<section class="act act-morph" id="morph">
+  <div class="act-inner">
+    <p class="act-tag reveal">Technique · Morphological Analysis</p>
+    <h2 class="reveal">Five combos on the board</h2>
+    <p class="lede reveal">Parameters crossed into directions. One spine chosen. The rest remain as reference constellations.</p>
+
+    <div class="combos">
+      <article class="combo reveal">
+        <div class="letter">A</div>
+        <div>
+          <h3>Apple Real</h3>
+          <p>Browser chrome · admin-parity density · feeling-scene-proof · synthetic portraits · pin-scrub · in-frame tabs · kill all pedagogy</p>
+        </div>
+      </article>
+      <article class="combo reveal">
+        <div class="letter">B</div>
+        <div>
+          <h3>Museum Crop</h3>
+          <p>Glass card · single-climax detail · one-line caption · portraits · row highlight · scrub dots · feeling titles</p>
+        </div>
+      </article>
+      <article class="combo reveal">
+        <div class="letter">C</div>
+        <div>
+          <h3>Sales Demo</h3>
+          <p>Cohestra admin shell · admin-parity · feeling-scene-proof · portraits + hero · chart draw-in · in-frame tabs · kill pedagogy</p>
+        </div>
+      </article>
+      <article class="combo reveal">
+        <div class="letter">D</div>
+        <div>
+          <h3>Mobile First</h3>
+          <p>Phone device · marketing-crop dense · one-line caption · portraits · static · hash only · kill pedagogy</p>
+        </div>
+      </article>
+      <article class="combo chosen reveal">
+        <div class="letter">E</div>
+        <div>
+          <h3>Anti-cheap emergency</h3>
+          <p>Browser chrome · denser mounts · kill chapter NOW · local hero photo · move pills inside frame — the bridge into A</p>
+        </div>
+      </article>
+    </div>
+
+    <div class="params reveal">
+      <span class="param">frame=browser chrome</span>
+      <span class="param">density=admin-parity</span>
+      <span class="param">copy=feeling-scene-proof</span>
+      <span class="param">imagery=portraits+hero</span>
+      <span class="param">nav=in-frame tabs</span>
+      <span class="param">chapter=kill all</span>
+      <span class="param">URL=riverside-rec.cohestra.app</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ ACT 5: REVERSE BRAINSTORM ════════ -->
+<section class="act act-howfail" id="howfail">
+  <div class="act-inner">
+    <p class="act-tag reveal">Technique · Reverse Brainstorming</p>
+    <h2 class="reveal">How to guarantee cheap</h2>
+    <p class="lede reveal">Invent the failure factory — then invert every lever into the rescue kit.</p>
+
+    <div class="fail-pair">
+      <div class="danger-col reveal">
+        <h3>How to fail</h3>
+        <ul>
+          <li>Keep chapter numbers — guarantees cheap</li>
+          <li>Add more checkmark pills — more brochure</li>
+          <li>More whitespace in mounts — more wireframe</li>
+          <li>Mint gradient hero — AI landing cliché</li>
+          <li>Invent a new mock design system — two products</li>
+          <li>Live tenant iframe — PII risk + lag</li>
+          <li>Dark mode cinema — fights paper-warm brand</li>
+          <li>Purple glow SaaS — AI-default aesthetic</li>
+        </ul>
+      </div>
+      <div class="inverse-col reveal">
+        <h3>Inverse rescue</h3>
+        <ul>
+          <li>Delete chapter chrome first</li>
+          <li>Delete checklist cards; write feeling lines</li>
+          <li>Fill whitespace with real admin chrome</li>
+          <li>Replace gradient with photography</li>
+          <li>One design system = real product components</li>
+          <li>Static DemoClub only, richer chrome</li>
+          <li>Stay light paper-warm with denser ink hierarchy</li>
+          <li>Cohestra tokens only — lagoon accents, no purple glow</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ ACT 6: PROVOCATION ════════ -->
+<section class="act act-prov" id="prov">
+  <div class="act-inner">
+    <p class="act-tag reveal">Technique · Provocation</p>
+    <h2 class="reveal">Statements that bruise<br/>into usefulness</h2>
+    <p class="lede reveal">Absurd until they aren’t. Each provocation yields a non-negotiable.</p>
+
+    <div class="manifesto">
+      <div class="prov reveal">
+        <span class="bang">01</span>
+        <div>
+          <blockquote>The cinema is a lie until it has a URL bar.</blockquote>
+          <p class="useful">ProductFrame URL is non-negotiable</p>
+        </div>
+      </div>
+      <div class="prov reveal">
+        <span class="bang">02</span>
+        <div>
+          <blockquote>Ship only two rooms if six can’t be dense.</blockquote>
+          <p class="useful">Quality over coverage</p>
+        </div>
+      </div>
+      <div class="prov reveal">
+        <span class="bang">03</span>
+        <div>
+          <blockquote>The left column is the enemy.</blockquote>
+          <p class="useful">Shrink copy radically</p>
+        </div>
+      </div>
+      <div class="prov reveal">
+        <span class="bang">04</span>
+        <div>
+          <blockquote>Website without a photo is fraud.</blockquote>
+          <p class="useful">Omit Website pill until photo exists</p>
+        </div>
+      </div>
+      <div class="prov reveal">
+        <span class="bang">05</span>
+        <div>
+          <blockquote>Chapter numbers are graffiti on the product.</blockquote>
+          <p class="useful">33.2 is P0</p>
+        </div>
+      </div>
+      <div class="prov reveal">
+        <span class="bang">06</span>
+        <div>
+          <blockquote>Mounts should look boringly like /clients.</blockquote>
+          <p class="useful">Boring = trustworthy</p>
+        </div>
+      </div>
+      <div class="prov reveal">
+        <span class="bang">07</span>
+        <div>
+          <blockquote>If Admin is disappointed, AC failed — DemoClub invariants be damned.</blockquote>
+          <p class="useful">Add visual acceptance criteria</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════ ACT 7: SYNTHESIS CLIMAX ════════ -->
+<section class="act act-synth" id="synth">
+  <div class="act-inner">
+    <p class="act-tag reveal">Synthesis · Chosen direction</p>
+    <h2 class="climax-title reveal">
+      The reel ends here
+      <span class="path">COMBO E → A</span>
+    </h2>
+
+    <p class="root-cause reveal">
+      <strong>Root cause:</strong> unfinished Live Proof Cinema contract — chapter pedagogy still ships;
+      mounts are orphaned sparse fragments without ProductFrame; Website mint gradient;
+      checklist brochure left column. Data and DemoClub alone did not buy fidelity.
+    </p>
+
+    <div class="priority-grid">
+      <div class="prio prio-p0 reveal">
+        <span class="badge">P0 · Ship first</span>
+        <ol>
+          <li>Kill all chapter chrome (watermarks, CHAPTER N OF 6, SCROLL TO CONTINUE)</li>
+          <li>ProductFrame with URL bar <code>riverside-rec.cohestra.app</code></li>
+          <li>Shrink left copy to Feeling → Scene → Proof; kill the four check cards</li>
+        </ol>
+      </div>
+      <div class="prio prio-p1 reveal">
+        <span class="badge">P1 · Then deepen</span>
+        <ol>
+          <li>Admin-parity density quotas (rows, tiles, timeline events)</li>
+          <li>Local synthetic portraits + community hero photo</li>
+          <li>Move seek pills in-frame; omit Website until photo exists</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="handoff reveal">
+      <h3>Handoff</h3>
+      <p>Update Live Proof Cinema UX (bmad-ux) on ux-cohestra-2026-09-01 with fidelity ACs.
+         Reorder Epic 33 so 33.2 + 33.3 lead visual trust before more data polish.</p>
+      <p class="ac">Visual fidelity is an acceptance criterion: if Admin reads cheap, the story fails — even when DemoClub invariants pass.</p>
+    </div>
+
+    <p class="colophon reveal">
+      Brainstorm keep · Cinema product fidelity<br/>
+      Autonomous session · 2026-09-03 · Self-contained artifact
+    </p>
+  </div>
+</section>
+
+<script>
+(function () {
+  var reveals = document.querySelectorAll(".reveal");
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        e.target.classList.add("in");
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+
+  reveals.forEach(function (el) { io.observe(el); });
+
+  var sections = ["hero", "fail", "reverse", "cross", "morph", "howfail", "prov", "synth"];
+  var dots = document.querySelectorAll(".spine a");
+  var sectionEls = sections.map(function (id) { return document.getElementById(id); });
+
+  function syncDots() {
+    var y = window.scrollY + window.innerHeight * 0.35;
+    var active = 0;
+    sectionEls.forEach(function (el, i) {
+      if (el && el.offsetTop <= y) active = i;
+    });
+    dots.forEach(function (d, i) {
+      d.classList.toggle("on", i === active);
+    });
+  }
+
+  window.addEventListener("scroll", syncDots, { passive: true });
+  syncDots();
+})();
+</script>
+</body>
+</html>
