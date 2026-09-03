@@ -176,4 +176,53 @@ describe("MarketingDemoClub", () => {
       assertDemoClubInvariants(parseMarketingDemoClub({ ...raw, website }))
     ).toThrow(/remote logoAssetId forbidden/i);
   });
+
+  it("rejects heroImageAssetId, non-example emails, and hollow ranking/sections", () => {
+    const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as Record<string, unknown>;
+
+    const websiteWithHero = structuredClone(raw.website) as {
+      published: { sections: Array<{ type: string; enabled: boolean; props: Record<string, unknown> }> };
+    };
+    const hero = websiteWithHero.published.sections.find((section) => section.type === "hero");
+    if (hero) {
+      hero.props.heroImageAssetId = "hero-asset";
+    }
+    expect(() =>
+      assertDemoClubInvariants(parseMarketingDemoClub({ ...raw, website: websiteWithHero }))
+    ).toThrow(/remote heroImageAssetId forbidden/i);
+
+    const clients = structuredClone(raw.clients) as Array<{ id: string; email: string }>;
+    const elena = clients.find((client) => client.id === "demo-elena");
+    if (elena) {
+      elena.email = "elena@riverside.rec";
+    }
+    expect(() =>
+      assertDemoClubInvariants(parseMarketingDemoClub({ ...raw, clients }))
+    ).toThrow(/@example\.com/i);
+
+    const reports = structuredClone(raw.reports) as {
+      activityRanking: Array<{ activityName: string }>;
+    };
+    for (const row of reports.activityRanking) {
+      row.activityName = "yoga open mat";
+    }
+    expect(() =>
+      assertDemoClubInvariants(parseMarketingDemoClub({ ...raw, reports }))
+    ).toThrow(/activityRanking missing locked activities/i);
+
+    const websiteHollow = structuredClone(raw.website) as {
+      published: {
+        sections: Array<{ type: string; enabled: boolean; props: { items?: unknown[] } }>;
+      };
+    };
+    const highlights = websiteHollow.published.sections.find(
+      (section) => section.type === "highlights"
+    );
+    if (highlights) {
+      highlights.props.items = [];
+    }
+    expect(() =>
+      assertDemoClubInvariants(parseMarketingDemoClub({ ...raw, website: websiteHollow }))
+    ).toThrow(/highlights items empty/i);
+  });
 });

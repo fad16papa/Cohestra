@@ -603,6 +603,23 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
   if (club.reports.activityRanking.length === 0) {
     throw new Error("MarketingDemoClub: activityRanking must not be empty");
   }
+  const rankingNames = club.reports.activityRanking
+    .map((row) => row.activityName.toLowerCase())
+    .join(" ");
+  if (!rankingNames.includes("sunday clinic") || !rankingNames.includes("board games")) {
+    throw new Error("MarketingDemoClub: activityRanking missing locked activities");
+  }
+
+  for (const client of club.clients) {
+    if (client.email && !client.email.toLowerCase().endsWith("@example.com")) {
+      throw new Error(`MarketingDemoClub: clients.${client.id} email must be @example.com`);
+    }
+  }
+  for (const [id, detail] of Object.entries(club.clientDetails)) {
+    if (detail.email && !detail.email.toLowerCase().endsWith("@example.com")) {
+      throw new Error(`MarketingDemoClub: clientDetails.${id} email must be @example.com`);
+    }
+  }
 
   if (club.whatsappQuote.clientId !== club.followUpClientId) {
     throw new Error("MarketingDemoClub: WhatsApp quote must belong to the follow-up client");
@@ -648,7 +665,38 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
     if (!ALLOWED_WEBSITE_SECTION_TYPES.has(type)) {
       throw new Error(`MarketingDemoClub: unsupported enabled section type ${section.type}`);
     }
+    if (
+      hasRemoteAssetId(
+        typeof section.props.heroImageAssetId === "string" ? section.props.heroImageAssetId : null
+      )
+    ) {
+      throw new Error("MarketingDemoClub: remote heroImageAssetId forbidden");
+    }
     const items = Array.isArray(section.props.items) ? section.props.items : [];
+    if (type === "highlights") {
+      const hasTitle = items.some((item) => {
+        if (typeof item !== "object" || item === null) {
+          return false;
+        }
+        const title = (item as Record<string, unknown>).title;
+        return typeof title === "string" && title.trim().length > 0;
+      });
+      if (!hasTitle) {
+        throw new Error("MarketingDemoClub: highlights items empty");
+      }
+    }
+    if (type === "testimonials") {
+      const hasQuote = items.some((item) => {
+        if (typeof item !== "object" || item === null) {
+          return false;
+        }
+        const quote = (item as Record<string, unknown>).quote;
+        return typeof quote === "string" && quote.trim().length > 0;
+      });
+      if (!hasQuote) {
+        throw new Error("MarketingDemoClub: testimonials items empty");
+      }
+    }
     for (const item of items) {
       if (typeof item !== "object" || item === null) {
         continue;

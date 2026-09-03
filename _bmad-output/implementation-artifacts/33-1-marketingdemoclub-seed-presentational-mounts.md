@@ -149,9 +149,9 @@ so that I believe the product is real — not a decorative mock.
 
 ### Review Findings (Pass 4)
 
-- [ ] [Review][Patch] Pass 3 remote-asset guard misses `heroImageAssetId` [`web/lib/marketing/marketing-demo-club.ts:643`] — `SitePageRenderer` loads `/api/v1/public/campaign-assets/${heroImageAssetId}` from hero props; forbid non-empty `heroImageAssetId` on enabled sections (same NFR5 intent as logo/avatar).
-- [ ] [Review][Patch] Fixture emails not asserted `@example.com` [`web/lib/marketing/marketing-demo-club.ts`] — Task 1 / NFR6 lock; require client + detail emails end with `@example.com` when present.
-- [ ] [Review][Patch] Ranking/highlights/testimonials can be hollow despite enabled sections [`web/lib/marketing/marketing-demo-club.ts`] — Require `activityRanking` names include Sunday clinic + board games; enabled highlights/testimonials must have at least one titled/quoted item.
+- [x] [Review][Patch] Pass 3 remote-asset guard misses `heroImageAssetId` [`web/lib/marketing/marketing-demo-club.ts:643`] — `SitePageRenderer` loads `/api/v1/public/campaign-assets/${heroImageAssetId}` from hero props; forbid non-empty `heroImageAssetId` on enabled sections (same NFR5 intent as logo/avatar).
+- [x] [Review][Patch] Fixture emails not asserted `@example.com` [`web/lib/marketing/marketing-demo-club.ts`] — Task 1 / NFR6 lock; require client + detail emails end with `@example.com` when present.
+- [x] [Review][Patch] Ranking/highlights/testimonials can be hollow despite enabled sections [`web/lib/marketing/marketing-demo-club.ts`] — Require `activityRanking` names include Sunday clinic + board games; enabled highlights/testimonials must have at least one titled/quoted item.
 - [x] [Review][Defer] Sunday clinic and board games share `Sundays · 6:00pm` slot [`web/lib/marketing/marketing-demo-club.json`] — deferred, consequence of Pass 2 Decision 2 (match Mar 15 18:00 registration); distinct Sunday times would re-open schedule vs timestamp conflict
 
 ## Dev Notes
@@ -337,6 +337,7 @@ Cursor Grok 4.6
 - Code-review patches applied and re-verified (Elena phone, March week, Recipients, New leads, H3 chart ticks)
 - Pass 2 patches: Mar 8–15 window, board games Sundays, Jordan timeline order, Website mount inert, Total clients tile
 - Pass 3 patches: Sunday tables highlight, WhatsApp day from loggedAt, hollow/network invariants
+- Pass 4 patches: heroImageAssetId forbid, @example.com emails, ranking + section item hollow guards
 
 ### File List
 
@@ -364,3 +365,4 @@ Cursor Grok 4.6
 - 2026-09-02: Applied code-review patches — H3 token remap, invariants, March week seed, campaigns/reports/dashboard copy
 - 2026-09-02: Pass 2 review patches — Mar 8–15 period, Sunday board-games schedule, queue/section invariants, Website `inert`, Total clients tile
 - 2026-09-03: Pass 3 review patches — Sunday highlight copy, WhatsApp day from loggedAt, hollow/network invariants
+- 2026-09-03: Pass 4 review patches — heroImageAssetId guard, @example.com emails, ranking/highlights/testimonials hollow guards
