@@ -147,6 +147,13 @@ so that I believe the product is real — not a decorative mock.
 - [x] [Review][Defer] Cinema stage width keeps Clients/Dashboard on stacked `lg:` layout [`web/components/marketing/demo-mounts/marketing-demo-clients-mount.tsx:23`] — deferred, pre-existing; ProductFrame / mount layout polish is 33.3–33.5 (extends Pass 2 mobile clip defer)
 - [x] [Review][Defer] `SitePageRenderer` Links may still viewport-prefetch `/register/*` despite mount `inert` [`web/components/marketing/site-page-renderer.tsx`] — deferred, pre-existing renderer; demount Links / prefetch=false is 33.3
 
+### Review Findings (Pass 4)
+
+- [ ] [Review][Patch] Pass 3 remote-asset guard misses `heroImageAssetId` [`web/lib/marketing/marketing-demo-club.ts:643`] — `SitePageRenderer` loads `/api/v1/public/campaign-assets/${heroImageAssetId}` from hero props; forbid non-empty `heroImageAssetId` on enabled sections (same NFR5 intent as logo/avatar).
+- [ ] [Review][Patch] Fixture emails not asserted `@example.com` [`web/lib/marketing/marketing-demo-club.ts`] — Task 1 / NFR6 lock; require client + detail emails end with `@example.com` when present.
+- [ ] [Review][Patch] Ranking/highlights/testimonials can be hollow despite enabled sections [`web/lib/marketing/marketing-demo-club.ts`] — Require `activityRanking` names include Sunday clinic + board games; enabled highlights/testimonials must have at least one titled/quoted item.
+- [x] [Review][Defer] Sunday clinic and board games share `Sundays · 6:00pm` slot [`web/lib/marketing/marketing-demo-club.json`] — deferred, consequence of Pass 2 Decision 2 (match Mar 15 18:00 registration); distinct Sunday times would re-open schedule vs timestamp conflict
+
 ## Dev Notes
 
 ### What this story is

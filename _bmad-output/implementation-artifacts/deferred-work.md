@@ -1,3 +1,7 @@
+## Deferred from: code review of 33-1-marketingdemoclub-seed-presentational-mounts.md Pass 4 (2026-09-03)
+
+- Sunday clinic and board games share `Sundays · 6:00pm` slot — consequence of Pass 2 Decision 2 (match Mar 15 18:00 registration)
+
 ## Deferred from: code review of 33-1-marketingdemoclub-seed-presentational-mounts.md Pass 3 (2026-09-02)
 
 - Cinema stage width keeps Clients/Dashboard on stacked `lg:` layout — ProductFrame / mount layout polish is 33.3–33.5
