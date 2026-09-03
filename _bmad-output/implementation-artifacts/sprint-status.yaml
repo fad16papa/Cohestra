@@ -1,11 +1,11 @@
 # generated: 2026-06-16
-# last_updated: 2026-08-31
+# last_updated: 2026-09-02
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (1–10) + Enterprise (11–29) + Registration Capture (30–32)
-# epics_source: epics.md (1–10) + epics-cohestra-enterprise.md (11–29) + epics-registration-capture.md (30–32)
+# initiative: Platform 0 (1–10) + Enterprise (11–29) + Registration Capture (30–32) + Live Proof Cinema (33)
+# epics_source: epics.md (1–10) + epics-cohestra-enterprise.md (11–29) + epics-registration-capture.md (30–32) + epics-live-proof-cinema.md (33)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -45,7 +45,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-08-31
+last_updated: 2026-09-02
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -328,6 +328,16 @@ development_status:
   32-2-activity-embed-route-and-share-kit-snippet: done
   32-3-website-contact-section-creates-a-client: done
   epic-32-retrospective: done
+
+  # Epic 33 — Live Proof Cinema (marketing /#crm). Source: epics-live-proof-cinema.md
+  # Slice drafted as standalone Epic 1; tracker uses 33 to avoid colliding with Platform Epic 1 (done).
+  epic-33: in-progress
+  33-1-marketingdemoclub-seed-presentational-mounts: done
+  33-2-feeling-copy-kill-chapter-mock-chrome: backlog
+  33-3-preview-productframe-desktop-pin-seek: backlog
+  33-4-cinema-a11y-hash-live-region-dual-state-pills: backlog
+  33-5-mobile-prm-click-tabs-website-omit-cta: backlog
+  epic-33-retrospective: optional
 
 action_items:
   - epic: 16

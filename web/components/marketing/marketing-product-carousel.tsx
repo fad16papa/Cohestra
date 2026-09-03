@@ -2,6 +2,7 @@
 
 import { Component, type ReactNode, useEffect, useState } from "react";
 
+import { MarketingDemoProvider } from "@/components/marketing/marketing-demo-provider";
 import { MarketingProductCarouselLegacy } from "@/components/marketing/marketing-product-carousel.legacy";
 import { MarketingProductCinema } from "@/components/marketing/marketing-product-cinema";
 
@@ -108,15 +109,17 @@ export function MarketingProductCarousel() {
   );
 
   if (mode === "pending" || mode === "legacy") {
-    return legacy;
+    return <MarketingDemoProvider>{legacy}</MarketingDemoProvider>;
   }
 
   return (
-    <CinemaErrorBoundary fallback={legacy}>
-      <MarketingProductCinema
-        key={`cinema-${hashEpoch}`}
-        initialIndex={chapterIndex}
-      />
-    </CinemaErrorBoundary>
+    <MarketingDemoProvider>
+      <CinemaErrorBoundary fallback={legacy}>
+        <MarketingProductCinema
+          key={`cinema-${hashEpoch}`}
+          initialIndex={chapterIndex}
+        />
+      </CinemaErrorBoundary>
+    </MarketingDemoProvider>
   );
 }
