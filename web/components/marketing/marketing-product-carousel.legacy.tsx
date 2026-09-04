@@ -2,9 +2,13 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import { Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { PRODUCT_SLIDES } from "@/lib/marketing/product-slides";
+import {
+  CINEMA_SECTION_LEAD,
+  CINEMA_SECTION_THESIS,
+  PRODUCT_SLIDES,
+} from "@/lib/marketing/product-slides";
 import { cn } from "@/lib/utils";
 
 function CarouselIconButton({
@@ -71,13 +75,8 @@ export function MarketingProductCarouselLegacy({
     <section id={sectionId} className="scroll-mt-24 border-t border-line bg-paper-warm">
       <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-section text-gold-cinema">Inside the workspace</p>
-          <h2 className="text-marketing-section mt-4 text-balance text-ink">
-            One product, one platform, covers all your need
-          </h2>
-          <p className="text-marketing-lead mt-4 text-stone-cinema">
-            Browse each surface at full size — the same views your team uses every week.
-          </p>
+          <h2 className="text-marketing-section text-balance text-ink">{CINEMA_SECTION_THESIS}</h2>
+          <p className="text-marketing-lead mt-4 text-stone-cinema">{CINEMA_SECTION_LEAD}</p>
         </div>
 
         <div className="-mx-5 mt-10 overflow-x-auto px-5 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
@@ -136,7 +135,7 @@ export function MarketingProductCarouselLegacy({
         </div>
 
         <p className="sr-only" aria-live="polite" aria-atomic="true">
-          Showing {slide.navLabel}: {slide.title}
+          {slide.navLabel}. {slide.job}.
         </p>
 
         <div
@@ -152,21 +151,16 @@ export function MarketingProductCarouselLegacy({
               !reducedMotion && "marketing-product-carousel-enter"
             )}
           >
-            <p className="text-section text-gold-cinema">{slide.eyebrow}</p>
-            <h3 className="text-marketing-section mx-auto mt-4 max-w-[18ch] text-balance text-ink lg:mx-0">
-              {slide.title}
+            <p className="text-section text-gold-cinema">{slide.feeling}</p>
+            <h3 className="text-marketing-section mx-auto mt-4 max-w-[22ch] text-balance text-ink lg:mx-0">
+              {slide.feelingLine}
             </h3>
             <p className="text-marketing-lead mx-auto mt-4 max-w-xl text-stone-cinema lg:mx-0">
-              {slide.lead}
+              {slide.scene}
             </p>
-            <ul className="mt-8 space-y-3 text-left text-[0.95rem]">
-              {slide.points.map((point) => (
-                <li key={point} className="flex items-start gap-3 text-ink/85">
-                  <span className="mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-lagoon/12 text-lagoon">
-                    <Check className="size-3.5" aria-hidden />
-                  </span>
-                  {point}
-                </li>
+            <ul className="mt-8 space-y-3 text-left text-[0.95rem] font-medium text-ink">
+              {slide.outcomes.map((outcome) => (
+                <li key={outcome}>{outcome}</li>
               ))}
             </ul>
           </div>

@@ -1,17 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
 
 import { useMarketingProductCinema } from "@/components/marketing/use-marketing-product-cinema";
-import { PRODUCT_SLIDES } from "@/lib/marketing/product-slides";
+import {
+  CINEMA_SECTION_LEAD,
+  CINEMA_SECTION_THESIS,
+  PRODUCT_SLIDES,
+} from "@/lib/marketing/product-slides";
 import { cn } from "@/lib/utils";
 
 function focusTab(id: string) {
   document.getElementById(`product-cinema-tab-${id}`)?.focus({ preventScroll: true });
 }
 
-/** Desktop lg+ chapter cinema — marketing apex `#crm` only. */
+/** Desktop lg+ Live Proof Cinema — marketing apex `#crm` only. */
 export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: number }) {
   const {
     trackRef,
@@ -27,7 +30,6 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
   const [playClimax, setPlayClimax] = useState(false);
   const [focusIndex, setFocusIndex] = useState(initialIndex);
   const slide = PRODUCT_SLIDES[activeIndex]!;
-  const chapterNumber = String(activeIndex + 1).padStart(2, "0");
 
   useEffect(() => {
     if (!climaxArmed) {
@@ -59,13 +61,8 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
     <section id="crm" className="scroll-mt-24 border-t border-line bg-paper-warm">
       <div className="mx-auto max-w-7xl px-5 pt-14 sm:px-8 lg:px-10 lg:pt-16">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-section text-gold-cinema">Inside the workspace</p>
-          <h2 className="text-marketing-section mt-4 text-balance text-ink">
-            One product, one platform, covers all your need
-          </h2>
-          <p className="text-marketing-lead mt-4 text-stone-cinema">
-            Browse each surface at full size — the same views your team uses every week.
-          </p>
+          <h2 className="text-marketing-section text-balance text-ink">{CINEMA_SECTION_THESIS}</h2>
+          <p className="text-marketing-lead mt-4 text-stone-cinema">{CINEMA_SECTION_LEAD}</p>
         </div>
       </div>
 
@@ -147,52 +144,31 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
               aria-labelledby={`product-cinema-tab-${activeId}`}
               className="grid min-h-0 flex-1 items-stretch gap-6 overflow-hidden py-3 lg:grid-cols-[minmax(18rem,0.85fr)_minmax(0,1.7fr)] lg:gap-8 lg:py-4 xl:gap-10"
             >
-              {/* Copy — fills height; each capability gets clear visual weight */}
+              {/* Feeling → Scene → Proof (live stage is Proof) */}
               <div
                 key={`copy-${activeId}`}
                 className="marketing-product-carousel-enter flex h-full min-h-0 flex-col overflow-y-auto pr-1 text-left"
               >
                 <div className="shrink-0">
-                  <div className="flex items-baseline gap-3">
-                    <span
-                      aria-hidden
-                      className="font-[family-name:var(--font-fraunces)] text-4xl font-medium tracking-[-0.03em] text-ink/14 sm:text-5xl"
-                    >
-                      {chapterNumber}
-                    </span>
-                    <p className="text-section text-gold-cinema">{slide.eyebrow}</p>
-                  </div>
+                  <p className="text-section text-gold-cinema">{slide.feeling}</p>
                   <h3 className="mt-3 max-w-[24ch] text-balance font-[family-name:var(--font-fraunces)] text-[clamp(1.95rem,2.8vw,2.85rem)] font-medium leading-[1.1] tracking-[-0.03em] text-ink">
-                    {slide.title}
+                    {slide.feelingLine}
                   </h3>
                   <p className="mt-4 max-w-md text-[1.05rem] leading-relaxed text-stone-cinema xl:text-[1.1rem]">
-                    {slide.lead}
+                    {slide.scene}
                   </p>
                 </div>
 
-                <ul className="mt-6 flex min-h-0 flex-1 flex-col justify-center gap-3 border-y border-line/70 py-5 xl:mt-7 xl:gap-3.5 xl:py-6">
-                  {slide.points.map((point) => (
+                <ul className="mt-8 space-y-3 border-t border-line/70 pt-6">
+                  {slide.outcomes.map((outcome) => (
                     <li
-                      key={point}
-                      className="flex items-start gap-3.5 rounded-2xl bg-paper/70 px-3.5 py-3 shadow-[inset_0_0_0_1px_rgba(7,13,18,0.04)] xl:px-4 xl:py-3.5"
+                      key={outcome}
+                      className="text-[0.98rem] font-medium leading-snug text-ink xl:text-[1.02rem]"
                     >
-                      <span className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-lagoon/14 text-lagoon">
-                        <Check className="size-3.5" strokeWidth={2.75} aria-hidden />
-                      </span>
-                      <span className="text-[0.98rem] font-medium leading-snug text-ink xl:text-[1.02rem]">
-                        {point}
-                      </span>
+                      {outcome}
                     </li>
                   ))}
                 </ul>
-
-                <p className="mt-4 shrink-0 text-[11px] font-semibold uppercase tracking-[0.16em] text-stone-cinema/60">
-                  Chapter {activeIndex + 1} of {PRODUCT_SLIDES.length}
-                  <span className="mx-2 font-normal text-line" aria-hidden>
-                    ·
-                  </span>
-                  <span className="font-medium tracking-[0.12em]">Scroll to continue</span>
-                </p>
               </div>
 
               {/* Product stage — fills remaining height */}
@@ -206,7 +182,7 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
               >
                 <div
                   key={`visual-${activeId}`}
-                  className="marketing-product-carousel-enter flex h-full min-h-0 flex-1 flex-col [&_.marketing-crm-showcase-frame]:h-full [&_.marketing-crm-showcase-surface]:h-full [&_.marketing-crm-showcase-surface]:min-h-0 [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-1 [&>div]:flex-col"
+                  className="marketing-product-carousel-enter flex h-full min-h-0 flex-1 flex-col [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-1 [&>div]:flex-col"
                 >
                   {slide.visual}
                 </div>

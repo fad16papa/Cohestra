@@ -33,7 +33,7 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const [liveAnnouncement, setLiveAnnouncement] = useState(
     () =>
-      `Showing ${PRODUCT_SLIDES[startIndex]!.navLabel}: ${PRODUCT_SLIDES[startIndex]!.title}`
+      `${PRODUCT_SLIDES[startIndex]!.navLabel}. ${PRODUCT_SLIDES[startIndex]!.job}.`
   );
   const [climaxArmed, setClimaxArmed] = useState(false);
   const indexRef = useRef(startIndex);
@@ -52,7 +52,7 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
 
     const run = () => {
       lastAnnouncedRef.current = slide.id;
-      setLiveAnnouncement(`Showing ${slide.navLabel}: ${slide.title}`);
+      setLiveAnnouncement(`${slide.navLabel}. ${slide.job}.`);
     };
 
     if (announceTimerRef.current !== null) {
