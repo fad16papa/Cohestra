@@ -143,10 +143,19 @@ const ALLOWED_WEBSITE_SECTION_TYPES = new Set([
   "highlights",
   "upcomingactivities",
   "testimonials",
+  "footer",
 ]);
 
-function hasRemoteAssetId(value: string | null | undefined): boolean {
-  return typeof value === "string" && value.trim().length > 0;
+/** Forbidden: API asset ids / absolute remote URLs. Allowed: empty or same-origin `/demo/*` photography. */
+export function isForbiddenDemoAssetRef(value: string | null | undefined): boolean {
+  if (typeof value !== "string" || value.trim() === "") {
+    return false;
+  }
+  const trimmed = value.trim();
+  if (trimmed.startsWith("/demo/")) {
+    return false;
+  }
+  return true;
 }
 
 /** Short day label for Follow-up WhatsApp chrome (e.g. "Sep 6"). Uses demo clock timezone when provided. */
@@ -1197,14 +1206,18 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
     throw new Error("MarketingDemoClub: upcomingActivities missing Board Game Night");
   }
 
-  if (hasRemoteAssetId(club.website.published.logoAssetId)) {
+  if (isForbiddenDemoAssetRef(club.website.published.logoAssetId)) {
     throw new Error("MarketingDemoClub: remote logoAssetId forbidden");
   }
-  if (club.website.upcomingActivities.some((activity) => hasRemoteAssetId(activity.heroImageUrl))) {
+  if (
+    club.website.upcomingActivities.some((activity) =>
+      isForbiddenDemoAssetRef(activity.heroImageUrl)
+    )
+  ) {
     throw new Error("MarketingDemoClub: remote heroImageUrl forbidden");
   }
 
-  for (const type of ["hero", "highlights", "upcomingactivities", "testimonials"]) {
+  for (const type of ["hero", "highlights", "upcomingactivities", "testimonials", "footer"]) {
     const enabled = club.website.published.sections.some(
       (section) => section.enabled && section.type.toLowerCase() === type
     );
@@ -1226,8 +1239,17 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
       if (typeof heroImageAssetId !== "string") {
         throw new Error("MarketingDemoClub: heroImageAssetId must be string/null");
       }
-      if (hasRemoteAssetId(heroImageAssetId)) {
+      if (isForbiddenDemoAssetRef(heroImageAssetId)) {
         throw new Error("MarketingDemoClub: remote heroImageAssetId forbidden");
+      }
+    }
+    const heroImageUrl = section.props.heroImageUrl;
+    if (heroImageUrl != null) {
+      if (typeof heroImageUrl !== "string") {
+        throw new Error("MarketingDemoClub: heroImageUrl must be string/null");
+      }
+      if (isForbiddenDemoAssetRef(heroImageUrl)) {
+        throw new Error("MarketingDemoClub: remote heroImageUrl forbidden");
       }
     }
     const items = Array.isArray(section.props.items) ? section.props.items : [];
@@ -1265,7 +1287,7 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
         if (typeof avatarAssetId !== "string") {
           throw new Error("MarketingDemoClub: avatarAssetId must be string/null");
         }
-        if (hasRemoteAssetId(avatarAssetId)) {
+        if (isForbiddenDemoAssetRef(avatarAssetId)) {
           throw new Error("MarketingDemoClub: remote avatarAssetId forbidden");
         }
       }

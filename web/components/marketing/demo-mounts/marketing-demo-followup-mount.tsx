@@ -39,18 +39,21 @@ export function MarketingDemoFollowupMount() {
   const atRisk = listClientsByTriage(club, "atRisk");
   const opportunity = listClientsByTriage(club, "opportunity");
   const queue = [...dueNow, ...atRisk, ...opportunity];
-  const proofAnchors = [
+  const proofAnchors: Array<{
+    id: string;
+    label: string;
+    client: (typeof club.clients)[number];
+  }> = [];
+  for (const row of [
     { id: ANCHOR_IDS.maya, label: "Due today" },
     { id: ANCHOR_IDS.daniel, label: "At risk" },
     { id: ANCHOR_IDS.priya, label: "Opportunity" },
-  ]
-    .map((row) => {
-      const client = club.clients.find((item) => item.id === row.id);
-      return client ? { ...row, client } : null;
-    })
-    .filter((row): row is { id: string; label: string; client: (typeof club.clients)[number] } =>
-      Boolean(row)
-    );
+  ] as const) {
+    const client = club.clients.find((item) => item.id === row.id);
+    if (client) {
+      proofAnchors.push({ id: row.id, label: row.label, client });
+    }
+  }
 
   return (
     <MarketingDemoTheme>

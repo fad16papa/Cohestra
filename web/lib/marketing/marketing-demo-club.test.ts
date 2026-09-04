@@ -171,6 +171,23 @@ describe("MarketingDemoClub Harbourline continuous seed (33.6)", () => {
     ).toBe(true);
   });
 
+  it("projects local /demo photography and footer on the Website room", () => {
+    const hero = marketingDemoClub.website.published.sections.find(
+      (section) => section.type === "hero"
+    );
+    expect(hero?.props.heroImageUrl).toBe("/demo/harbourline-hero.webp");
+    expect(
+      marketingDemoClub.website.published.sections.some(
+        (section) => section.enabled && section.type === "footer"
+      )
+    ).toBe(true);
+    expect(
+      marketingDemoClub.website.upcomingActivities.every(
+        (row) => typeof row.heroImageUrl === "string" && row.heroImageUrl.startsWith("/demo/")
+      )
+    ).toBe(true);
+  });
+
   it("requires clientDetails for anchors and rejects empty campaigns / remote assets", () => {
     const raw = JSON.parse(readFileSync(fixturePath, "utf8")) as Record<string, unknown>;
     const details = { ...(raw.clientDetails as Record<string, unknown>) };

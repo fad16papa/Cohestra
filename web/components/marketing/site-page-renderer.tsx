@@ -162,9 +162,13 @@ function HeroSection({
     typeof section.props.heroImageAssetId === "string"
       ? section.props.heroImageAssetId.trim()
       : "";
+  const localHeroImageUrl =
+    typeof section.props.heroImageUrl === "string" ? section.props.heroImageUrl.trim() : "";
   const heroImageUrl = heroImageAssetId
     ? resolveHeroImageUrl(`/api/v1/public/campaign-assets/${heroImageAssetId}`)
-    : null;
+    : localHeroImageUrl.startsWith("/")
+      ? localHeroImageUrl
+      : null;
   const onDark = Boolean(heroImageUrl);
 
   return (
@@ -697,7 +701,11 @@ export function SitePageRenderer({
     heroSection && typeof heroSection.props.heroImageAssetId === "string"
       ? heroSection.props.heroImageAssetId.trim()
       : "";
-  const hasHeroBanner = hasHero && Boolean(heroImageAssetId);
+  const localHeroImageUrl =
+    heroSection && typeof heroSection.props.heroImageUrl === "string"
+      ? heroSection.props.heroImageUrl.trim()
+      : "";
+  const hasHeroBanner = hasHero && (Boolean(heroImageAssetId) || localHeroImageUrl.startsWith("/"));
   const { scrolled: headerScrolled, anchorRef } = useMarketingHeaderScroll(hasHeroBanner);
   const headerOverHero = hasHeroBanner && !headerScrolled;
 
