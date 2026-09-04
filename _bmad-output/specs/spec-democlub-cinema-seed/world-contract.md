@@ -6,19 +6,35 @@ Load-bearing catalog for the DemoClub cinema seed. Complements `SPEC.md` CAP-1 /
 
 | Field | Contract |
 |-------|----------|
-| `orgName` | Believable club brand (not Acme / yourclub). **Open:** keep Riverside Rec vs rename. |
-| `publicHost` | `{slug}.cohestra.app` matching brand. |
+| `orgName` | **Ikigai Social Club** — fictional Singapore DemoClub (not Cohestra branding; not Acme / yourclub). |
+| `publicHost` | `ikigai-social.cohestra.app` (slug matches brand). |
 | Website FOH | Customer brand dominates; barely looks like Cohestra. |
-| Locale voice | Singapore community life acceptable; timezone **open** (prefer Asia/Singapore). |
+| Locale voice | Singapore community life; `timeZoneId` = **Asia/Singapore**. |
 | Operator greeting | May stay a first name; must not break Anchor continuity if it matches an Anchor (avoid colliding with Maya Santos if greeting stays “Maya”). |
 
 ## Activities / calendar (Anchor + ambient)
 
+**Cinema clock (locked)**
+
+- `timeZoneId`: `Asia/Singapore`
+- `demoNow`: `2026-09-07T09:00:00+08:00` (Monday 09:00)
+- Never use the system clock for relative labels or predicates
+
+**Week spine**
+
+| When (local) | Event | Status at demoNow |
+|--------------|-------|-------------------|
+| Fri Sep 4, 2026 | Prior Golden Hour Run | Completed |
+| Mon Sep 7, 2026 09:00 | — | **Now** |
+| Wed Sep 9, 2026 | Board Game Night | Upcoming |
+| Fri Sep 11, 2026 | Golden Hour Run | Upcoming; **34** active / **42** capacity ⇒ **8** spots left |
+| Sun Sep 13, 2026 | Sunday Pickleball | Upcoming |
+
 **Anchor events (100% continuous)**
 
-1. **Golden Hour Run** — Friday public headline event; capacity **42**; **34** active registrations ⇒ **8** spots left.
-2. **Sunday Pickleball** — recurring; used in attendance / first-timer / return arcs.
-3. **Board Game Night** — recurring social; continuous with Website THIS WEEK and Activities.
+1. **Golden Hour Run** — Friday public headline; capacity **42**; **34** active registrations ⇒ **8** spots left (upcoming Fri Sep 11; prior Fri Sep 4 completed).
+2. **Sunday Pickleball** — recurring (Sun Sep 13); used in attendance / first-timer / return arcs.
+3. **Board Game Night** — recurring social (Wed Sep 9); continuous with Website THIS WEEK and Activities.
 
 **Ambient calendar (examples; not all need full arcs)**  
 Women’s Social Doubles, September Mixer, Corporate Open Play, Beginner Clinic — exist for density; may appear in lists without Anchor-level fingerprints.
@@ -66,7 +82,19 @@ Triage buckets (doctrine): **Due now · At risk · Opportunity · Healthy**.
 - Follow-up room: ruthless hierarchy; urgency from dataset, never red paint.
 - Campaigns / messages live inside Follow-up job for cinema narrative (capabilities may compose from campaign fixtures).
 
-**17 need attention** = count of records matching the locked predicate (open question until predicate frozen). Count must equal fixture cardinality.
+**needsAttention (locked)**
+
+```
+needsAttention = dueNow(6) ∪ atRisk(7) ∪ opportunity(4) = 17
+```
+
+- Buckets are **mutually exclusive** (priority: dueNow > atRisk > opportunity).
+- Count is **derived** — never a stored `needsAttention` flag on the client.
+- **Healthy** is excluded from the 17.
+- Incomplete contact (Marcus missing phone) does **not** inflate the 17; it only constrains actionability (e.g. cannot WhatsApp).
+- UI never hardcodes `17`; CI fails if fixtures under these predicates ≠ 17.
+
+Exact predicates: see `derived-assertions.md`.
 
 ## Campaigns / messages
 
@@ -91,10 +119,9 @@ Referral retention / strongest-repeat statement must be mathematically true on t
 
 ## Dates / timestamps / timezone
 
-- One cinema “now” / computedAt for the week.
-- All Anchor events share one coherent calendar week (or explicitly multi-week Daniel leak span).
-- Relative labels (`18 min ago`, `2 days ago`) must derive from the same clock.
-- **Open:** freeze timezone Asia/Singapore; replace or keep March 2026 week.
+- One cinema `demoNow` / `computedAt` for the week: `2026-09-07T09:00:00+08:00`.
+- All Anchor events share the Sep 2026 week spine above (Daniel may still span prior weeks for the leak arc).
+- Relative labels (`18 min ago`, `2 days ago`) derive from `demoNow` + `Asia/Singapore` — never the system clock.
 
 ## Continuity law
 

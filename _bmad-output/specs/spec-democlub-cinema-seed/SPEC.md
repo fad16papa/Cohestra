@@ -49,6 +49,10 @@ sources:
 - Two-class data only: **Anchor** (100% continuous) vs **Ambient** (statistically coherent; no bespoke six-room narratives).
 - Nothing important may exist in only one room; marketing claims are database assertions.
 - Existing DemoClub hard rules stand unless this SPEC explicitly supersedes them: forbid Acme/yourclub org names; client emails `@example.com`; no remote `logoAssetId` / `heroImageAssetId`.
+- Club brand locked: `orgName` **Ikigai Social Club**; `publicHost` like `ikigai-social.cohestra.app` (fictional SG DemoClub, not Cohestra branding).
+- Deterministic cinema clock only: `timeZoneId` `Asia/Singapore`; `demoNow` `2026-09-07T09:00:00+08:00` — never the system clock.
+- `needsAttention` is derived (`dueNow ∪ atRisk ∪ opportunity` = 17, mutually exclusive; Healthy excluded) — never a stored flag; UI never hardcodes 17; CI fails if predicates ≠ 17.
+- Incomplete contact does not inflate `needsAttention`; it only constrains actionability (Marcus: no WhatsApp).
 - Imperfection propagates: Marcus missing phone ⇒ Follow-up cannot WhatsApp ⇒ AI cannot recommend WhatsApp.
 - Cohestra AI chapter remains product-gated (doctrine): seed must support future reverse-chain; this SPEC does not invent a cinema-only AI surface.
 - BMAD build order for cinema: **Seed → Website → Clients/Activities/Follow-up → Analytics → committed AI surface → cinema polish.**
@@ -67,13 +71,12 @@ A reviewer can pick Maya (or any Anchor), walk Website → … → Analytics (an
 
 ## Assumptions
 
+Resolved facts (no longer open):
+
+- **Club identity.** `orgName` = **Ikigai Social Club** (fictional Singapore DemoClub; not Cohestra branding). `publicHost` like `ikigai-social.cohestra.app`.
+- **Clock.** `timeZoneId` = `Asia/Singapore`. Cinema `demoNow` = `2026-09-07T09:00:00+08:00` (Monday 09:00). Never use the system clock for relative labels or predicates.
+- **Week calendar.** Fri Sep 4 prior Golden Hour completed → Mon Sep 7 now → Wed Sep 9 Board Game Night → Fri Sep 11 Golden Hour Run **34/42** → Sun Sep 13 Sunday Pickleball.
+- **needsAttention.** `dueNow(6) ∪ atRisk(7) ∪ opportunity(4) = 17`, mutually exclusive buckets; derived count never a stored flag; Healthy excluded. Predicate detail in `derived-assertions.md`. Incomplete contact (Marcus missing phone) does **not** inflate the 17 — it only constrains actionability.
+- **UI / CI.** UI never hardcodes `17`; count comes from the same predicates as Follow-up queues. CI fails if fixture cardinality ≠ 17 under those predicates.
 - Golden Hour Run capacity **42** with **34** active registrations ⇒ **8** spots left (doctrine numbers).
-- Board Game Night remains the third recurring Anchor activity (may replace “youth open play” as Anchor; youth may become ambient).
-- `Ikigai Social Club` in doctrine prose was a Website narrative example, not a locked rename of `Riverside Rec` (see open questions).
-- Follow-up “17 need attention” will use an explicit predicate defined in `derived-assertions.md` once confirmed.
-
-## Open questions
-
-1. Keep `orgName` **Riverside Rec** or rename for customer-brand Website (e.g. Ikigai Social Club)?
-2. Freeze cinema week calendar + timezone (confirm **Asia/Singapore** vs keep March 2026 Sunday-clinic week)?
-3. Exact predicate for the **17 need attention** set (due now / at risk / opportunity composition)?
+- Board Game Night is the third recurring Anchor activity (youth open play may remain ambient only).
