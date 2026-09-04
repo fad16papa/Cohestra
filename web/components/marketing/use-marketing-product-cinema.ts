@@ -93,12 +93,12 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
       indexRef.current = next;
       setActiveIndex(next);
 
-      const enteredWebsiteByScrub =
-        PRODUCT_SLIDES[prev]?.id === "reports" &&
-        PRODUCT_SLIDES[next]?.id === "website" &&
+      const enteredAiByScrub =
+        PRODUCT_SLIDES[prev]?.id === "analytics" &&
+        PRODUCT_SLIDES[next]?.id === "intelligence" &&
         scrubbingRef.current;
-      setClimaxArmed(Boolean(enteredWebsiteByScrub));
-      if (PRODUCT_SLIDES[next]?.id !== "website") {
+      setClimaxArmed(Boolean(enteredAiByScrub));
+      if (PRODUCT_SLIDES[next]?.id !== "intelligence") {
         setClimaxArmed(false);
       }
 
@@ -230,7 +230,7 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
     [scrollToIndex]
   );
 
-  const resetToClients = useCallback(() => {
+  const resetToStart = useCallback(() => {
     seekTokenRef.current += 1;
     seekingRef.current = false;
     scrubbingRef.current = false;
@@ -264,6 +264,6 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
     climaxArmed,
     trackHeightVh,
     seekToIndex,
-    resetToClients,
+    resetToStart,
   };
 }

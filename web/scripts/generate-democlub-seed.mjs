@@ -531,7 +531,14 @@ const club = {
   operatorGreeting: "Alex",
   selectedClientId: ANCHORS.maya.id,
   followUpClientId: ANCHORS.maya.id,
-  availableRooms: ["clients", "outreach", "dashboard", "campaigns", "reports", "website"],
+  availableRooms: [
+    "website",
+    "clients",
+    "activities",
+    "outreach",
+    "analytics",
+    "intelligence",
+  ],
   reportsProofClientIds: [ANCHORS.maya.id, ANCHORS.sarah.id],
   clientListTotalCount: 248,
   clock: {

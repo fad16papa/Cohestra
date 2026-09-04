@@ -24,7 +24,7 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
     climaxArmed,
     trackHeightVh,
     seekToIndex,
-    resetToClients,
+    resetToStart,
   } = useMarketingProductCinema(true, initialIndex);
 
   const [playClimax, setPlayClimax] = useState(false);
@@ -48,14 +48,14 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
   useEffect(() => {
     const onHash = () => {
       if (window.location.hash === "#crm") {
-        resetToClients();
+        resetToStart();
         setFocusIndex(0);
         queueMicrotask(() => focusTab(PRODUCT_SLIDES[0]!.id));
       }
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
-  }, [resetToClients]);
+  }, [resetToStart]);
 
   return (
     <section id="crm" className="scroll-mt-24 border-t border-line bg-paper-warm">
@@ -76,7 +76,7 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
           <div className="mx-auto flex h-full w-full max-w-[90rem] min-h-0 flex-col px-5 sm:px-8 lg:px-10">
             <div
               role="tablist"
-              aria-label="Product surfaces"
+              aria-label="Club house tour"
               className="flex shrink-0 flex-wrap justify-center gap-2 border-b border-line/80 bg-paper-warm py-3"
             >
               {PRODUCT_SLIDES.map((item, index) => {
@@ -142,31 +142,25 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
               role="tabpanel"
               id="product-cinema-panel"
               aria-labelledby={`product-cinema-tab-${activeId}`}
-              className="grid min-h-0 flex-1 items-stretch gap-6 overflow-hidden py-3 lg:grid-cols-[minmax(18rem,0.85fr)_minmax(0,1.7fr)] lg:gap-8 lg:py-4 xl:gap-10"
+              className="flex min-h-0 flex-1 flex-col overflow-hidden py-2 lg:py-3"
             >
-              {/* Feeling → Scene → Proof (live stage is Proof) */}
+              {/* Caption strip only — product/world must dominate (~85–90%) */}
               <div
                 key={`copy-${activeId}`}
-                className="marketing-product-carousel-enter flex h-full min-h-0 flex-col overflow-y-auto pr-1 text-left"
+                className="marketing-product-carousel-enter shrink-0 border-b border-line/70 pb-2.5"
               >
-                <div className="shrink-0">
-                  <p className="text-section text-gold-cinema">{slide.feeling}</p>
-                  <h3 className="mt-3 max-w-[24ch] text-balance font-[family-name:var(--font-fraunces)] text-[clamp(1.95rem,2.8vw,2.85rem)] font-medium leading-[1.1] tracking-[-0.03em] text-ink">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-cinema">
+                    {slide.feeling}
+                  </p>
+                  <h3 className="font-[family-name:var(--font-fraunces)] text-[clamp(1.15rem,1.6vw,1.45rem)] font-medium leading-tight tracking-[-0.02em] text-ink">
                     {slide.feelingLine}
                   </h3>
-                  <p className="mt-4 max-w-md text-[1.05rem] leading-relaxed text-stone-cinema xl:text-[1.1rem]">
-                    {slide.scene}
-                  </p>
+                  <p className="max-w-3xl text-sm leading-snug text-stone-cinema">{slide.scene}</p>
                 </div>
-
-                <ul className="mt-8 space-y-3 border-t border-line/70 pt-6">
+                <ul className="sr-only">
                   {slide.outcomes.map((outcome) => (
-                    <li
-                      key={outcome}
-                      className="text-[0.98rem] font-medium leading-snug text-ink xl:text-[1.02rem]"
-                    >
-                      {outcome}
-                    </li>
+                    <li key={outcome}>{outcome}</li>
                   ))}
                 </ul>
               </div>
@@ -174,7 +168,7 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
               {/* Product stage — fills remaining height */}
               <div
                 className={cn(
-                  "marketing-cinema-visual flex h-full min-h-0 min-w-0 flex-col pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
+                  "marketing-cinema-visual mt-2 flex min-h-0 min-w-0 flex-1 flex-col pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
                   playClimax && "marketing-cinema-climax"
                 )}
                 aria-hidden
@@ -182,7 +176,7 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
               >
                 <div
                   key={`visual-${activeId}`}
-                  className="marketing-product-carousel-enter flex h-full min-h-0 flex-1 flex-col [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-1 [&>div]:flex-col"
+                  className="marketing-product-carousel-enter flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-line bg-paper shadow-[0_12px_32px_rgba(7,13,18,0.06)] [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-1 [&>div]:flex-col"
                 >
                   {slide.visual}
                 </div>

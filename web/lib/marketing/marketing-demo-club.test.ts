@@ -14,9 +14,11 @@ import {
   formatDemoWhatsappDay,
   getFollowUpClient,
   getGoldenHourSpots,
+  getIntelligenceBriefs,
   getReportsProofClients,
   getTriageBucket,
   isDemoRoomAvailable,
+  listClientsByTriage,
   marketingDemoClub,
   parseMarketingDemoClub,
   REQUIRED_DEMO_ROOMS,
@@ -109,9 +111,43 @@ describe("MarketingDemoClub Harbourline continuous seed (33.6)", () => {
     ).toThrow(/orgName/i);
   });
 
-  it("keeps all six rooms available", () => {
+  it("keeps all six house-tour rooms available", () => {
+    expect([...REQUIRED_DEMO_ROOMS]).toEqual([
+      "website",
+      "clients",
+      "activities",
+      "outreach",
+      "analytics",
+      "intelligence",
+    ]);
     for (const room of REQUIRED_DEMO_ROOMS) {
       expect(isDemoRoomAvailable(room)).toBe(true);
+    }
+  });
+
+  it("lists triage queues that sum to needsAttention 17", () => {
+    const due = listClientsByTriage(marketingDemoClub, "dueNow");
+    const risk = listClientsByTriage(marketingDemoClub, "atRisk");
+    const opp = listClientsByTriage(marketingDemoClub, "opportunity");
+    expect(due).toHaveLength(6);
+    expect(risk).toHaveLength(7);
+    expect(opp).toHaveLength(4);
+    expect(due.some((c) => c.id === ANCHOR_IDS.maya)).toBe(true);
+    expect(risk.some((c) => c.id === ANCHOR_IDS.daniel)).toBe(true);
+    expect(opp.some((c) => c.id === ANCHOR_IDS.priya)).toBe(true);
+  });
+
+  it("grounds Cohestra AI briefs in seed facts without invented percentages", () => {
+    const briefs = getIntelligenceBriefs(marketingDemoClub);
+    expect(briefs.length).toBeGreaterThanOrEqual(2);
+    const blob = briefs.map((b) => `${b.title} ${b.why.join(" ")}`).join("\n");
+    expect(blob).toMatch(/6 people need follow-up today|6 /);
+    expect(blob).toMatch(/34 of 42|34 \/ 42|34 of 42 registered/);
+    expect(blob).not.toMatch(/\d+%\s*(increase|improvement|lift|growth)/i);
+    expect(blob).not.toMatch(/chatbot|I think|probably/i);
+    for (const brief of briefs) {
+      expect(brief.why.length).toBeGreaterThan(0);
+      expect(brief.activityIds.length).toBeGreaterThan(0);
     }
   });
 

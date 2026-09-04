@@ -5,12 +5,12 @@
   "selectedClientId": "demo-maya",
   "followUpClientId": "demo-maya",
   "availableRooms": [
+    "website",
     "clients",
+    "activities",
     "outreach",
-    "dashboard",
-    "campaigns",
-    "reports",
-    "website"
+    "analytics",
+    "intelligence"
   ],
   "reportsProofClientIds": [
     "demo-maya",
