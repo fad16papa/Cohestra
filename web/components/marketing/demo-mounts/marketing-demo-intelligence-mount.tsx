@@ -58,7 +58,13 @@ export function MarketingDemoIntelligenceMount() {
                   </div>
                 ) : null}
                 <p className="mt-2 text-[11px] text-stone-cinema">
-                  Evidence activities: {brief.activityIds.join(", ")}
+                  Evidence:{" "}
+                  {brief.activityIds
+                    .map(
+                      (id) =>
+                        club.activities.find((activity) => activity.id === id)?.name ?? id
+                    )
+                    .join(" · ")}
                 </p>
               </li>
             );

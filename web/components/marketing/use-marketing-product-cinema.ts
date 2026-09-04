@@ -93,14 +93,7 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
       indexRef.current = next;
       setActiveIndex(next);
 
-      const enteredAiByScrub =
-        PRODUCT_SLIDES[prev]?.id === "analytics" &&
-        PRODUCT_SLIDES[next]?.id === "intelligence" &&
-        scrubbingRef.current;
-      setClimaxArmed(Boolean(enteredAiByScrub));
-      if (PRODUCT_SLIDES[next]?.id !== "intelligence") {
-        setClimaxArmed(false);
-      }
+      setClimaxArmed(false);
 
       announce(next, false);
     }

@@ -104,17 +104,20 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
                           (index + delta + PRODUCT_SLIDES.length) % PRODUCT_SLIDES.length;
                         setFocusIndex(next);
                         focusTab(PRODUCT_SLIDES[next]!.id);
+                        seekToIndex(next);
                       }
                       if (event.key === "Home") {
                         event.preventDefault();
                         setFocusIndex(0);
                         focusTab(PRODUCT_SLIDES[0]!.id);
+                        seekToIndex(0);
                       }
                       if (event.key === "End") {
                         event.preventDefault();
                         const last = PRODUCT_SLIDES.length - 1;
                         setFocusIndex(last);
                         focusTab(PRODUCT_SLIDES[last]!.id);
+                        seekToIndex(last);
                       }
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();

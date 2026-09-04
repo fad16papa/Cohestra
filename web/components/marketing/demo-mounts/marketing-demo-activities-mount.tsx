@@ -31,6 +31,10 @@ export function MarketingDemoActivitiesMount() {
   const selectedId = GOLDEN_HOUR_UPCOMING_ID;
   const selectedOps = getActivityOps(club, selectedId);
   const roster = getActivityRegistrants(club, selectedId).slice(0, 12);
+  const venue =
+    club.website.upcomingActivities.find((row) =>
+      row.name.toLowerCase().includes("golden hour")
+    )?.location ?? "Venue TBD";
 
   return (
     <MarketingDemoTheme>
@@ -44,19 +48,12 @@ export function MarketingDemoActivitiesMount() {
               </p>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {["All", "Published", "Past"].map((chip) => (
-                <span
-                  key={chip}
-                  className={cn(
-                    "rounded-md px-2.5 py-0.5 text-[11px] font-medium",
-                    chip === "Published"
-                      ? "bg-ink text-paper-warm"
-                      : "bg-paper text-stone-cinema ring-1 ring-line"
-                  )}
-                >
-                  {chip}
-                </span>
-              ))}
+              <span className="rounded-md bg-ink px-2.5 py-0.5 text-[11px] font-medium text-paper-warm">
+                Published
+              </span>
+              <span className="rounded-md bg-paper px-2.5 py-0.5 text-[11px] font-medium text-stone-cinema ring-1 ring-line">
+                {club.activities.filter((row) => !row.completed).length} upcoming
+              </span>
             </div>
           </div>
           <ul className="min-h-0 overflow-y-auto">
@@ -107,8 +104,7 @@ export function MarketingDemoActivitiesMount() {
               <div>
                 <p className="text-sm font-semibold text-ink">{selectedOps.activity.name}</p>
                 <p className="text-xs text-stone-cinema">
-                  {formatWhen(selectedOps.activity.startsAt, club.clock.timeZoneId)} · East Coast
-                  Park
+                  {formatWhen(selectedOps.activity.startsAt, club.clock.timeZoneId)} · {venue}
                 </p>
               </div>
               <p className="text-right text-sm font-semibold tabular-nums text-ink">
@@ -120,14 +116,13 @@ export function MarketingDemoActivitiesMount() {
                 {selectedOps.spotsLeft} spots left
               </span>
               <span className="rounded-md bg-paper-warm px-2 py-1 text-stone-cinema ring-1 ring-line">
-                Check-in ready
+                {selectedOps.registered} registered
               </span>
-              <span className="rounded-md bg-paper-warm px-2 py-1 text-stone-cinema ring-1 ring-line">
-                Share kit
-              </span>
-              <span className="rounded-md bg-paper-warm px-2 py-1 text-stone-cinema ring-1 ring-line">
-                Message registrants
-              </span>
+              {selectedOps.firstTimers > 0 ? (
+                <span className="rounded-md bg-paper-warm px-2 py-1 text-stone-cinema ring-1 ring-line">
+                  {selectedOps.firstTimers} first-timers on roster
+                </span>
+              ) : null}
             </div>
           </div>
           <div className="flex items-center justify-between border-b border-line px-4 py-2">

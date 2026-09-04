@@ -8,7 +8,15 @@ import {
   MarketingDemoIntelligenceMount,
   MarketingDemoWebsiteMount,
 } from "@/components/marketing/demo-mounts";
-import { isDemoRoomAvailable } from "@/lib/marketing/marketing-demo-club";
+import {
+  countNeedAttention,
+  getGoldenHourSpots,
+  isDemoRoomAvailable,
+  marketingDemoClub,
+} from "@/lib/marketing/marketing-demo-club";
+
+const GOLDEN = getGoldenHourSpots(marketingDemoClub);
+const ATTENTION = countNeedAttention(marketingDemoClub);
 
 export type ProductSlideId =
   | "website"
@@ -46,10 +54,10 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
     feeling: "Belonging",
     feelingLine: "This is us",
     scene:
-      "Harbourline’s public face — Golden Hour filling, Board Game Night and Sunday Pickleball on the same house.",
+      `Harbourline’s public face — Golden Hour filling (${GOLDEN.going} going · ${GOLDEN.spotsLeft} spots left), Board Game Night and Sunday Pickleball on the same house.`,
     outcomes: [
       "Looks like a real club site",
-      "34 going · 8 spots left",
+      `${GOLDEN.going} going · ${GOLDEN.spotsLeft} spots left`,
       "Same activities as the back office",
     ],
     job: "That could be our club",
@@ -76,7 +84,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
     feeling: "Rhythm",
     feelingLine: "This is what we run",
     scene:
-      "Golden Hour Run at 34 / 42 — capacity, check-ins, no-shows, and first-timers in one operational board.",
+      `Golden Hour Run at ${GOLDEN.going} / ${GOLDEN.capacity} — capacity, check-ins, no-shows, and first-timers in one operational board.`,
     outcomes: [
       "Registrations against capacity",
       "Attendance and no-shows",
@@ -91,7 +99,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
     feeling: "Urgency",
     feelingLine: "This is who needs us now",
     scene:
-      "Due now 6 · At risk 7 · Opportunity 4 — seventeen people who need attention before the week slips.",
+      `Due now ${ATTENTION.dueNow} · At risk ${ATTENTION.atRisk} · Opportunity ${ATTENTION.opportunity} — ${ATTENTION.total} people who need attention before the week slips.`,
     outcomes: [
       "Triage from the dataset, not decoration",
       "Maya due today; Daniel at risk; Priya opportunity",
@@ -121,11 +129,11 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
     feeling: "Direction",
     feelingLine: "This is what we should do next",
     scene:
-      "Grounded briefs only — six due today, Golden Hour near capacity — every claim reverse-chains to the seed.",
+      `${ATTENTION.dueNow} need follow-up today · Golden Hour ${GOLDEN.going} of ${GOLDEN.capacity} — every claim reverse-chains to the seed.`,
     outcomes: [
-      "No chatbot theater",
-      "No invented percentages",
-      "Same facts as Follow-up and Activities",
+      `${ATTENTION.dueNow} due-now people to message`,
+      `Golden Hour ${GOLDEN.spotsLeft} spots left`,
+      `${ATTENTION.atRisk} at-risk to re-engage`,
     ],
     job: "Tell the operator what to do next",
     visual: isDemoRoomAvailable("intelligence") ? <MarketingDemoIntelligenceMount /> : null,

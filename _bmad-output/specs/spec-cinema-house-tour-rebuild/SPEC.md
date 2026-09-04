@@ -2,7 +2,7 @@
 title: 'Cinema house-tour rebuild'
 type: 'feature'
 created: '2026-09-04'
-status: 'in-progress'
+status: 'done'
 route: 'one-shot'
 context:
   - '{project-root}/_bmad-output/specs/spec-democlub-cinema-seed/SPEC.md'
@@ -63,14 +63,14 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] Reorder PRODUCT_SLIDES + room ids; drop standalone Campaigns/Reports chapters
-- [ ] Caption-only cinema layout (no large editorial column)
-- [ ] Activities mount with operational 34/42 fidelity
-- [ ] Follow-up triage control room (6/7/4/17)
-- [ ] Analytics compose dashboard+reports into question-led panels
-- [ ] Cohestra AI mount from derived seed facts only
-- [ ] Unit tests for nav order, composition kill-list, triage display helpers
-- [ ] Visual review evidence at 1440px per chapter
+- [x] Reorder PRODUCT_SLIDES + room ids; drop standalone Campaigns/Reports chapters
+- [x] Caption-only cinema layout (no large editorial column)
+- [x] Activities mount with operational 34/42 fidelity
+- [x] Follow-up triage control room (6/7/4/17)
+- [x] Analytics compose dashboard+reports into question-led panels
+- [x] Cohestra AI mount from derived seed facts only
+- [x] Unit tests for nav order, composition kill-list, triage display helpers
+- [x] Visual review evidence at 1440px per chapter
 
 **Acceptance Criteria:**
 - Given `#crm`, when pills render, then order is Website → Clients → Activities → Follow-up → Analytics → Cohestra AI
@@ -89,3 +89,14 @@ AI briefs are computed helpers over the seed (due-now count, capacity pressure, 
 
 - `cd web && npx vitest run lib/marketing/product-slides.test.ts lib/marketing/marketing-demo-club.test.ts`
 - Visual review screenshots under `/opt/cursor/artifacts/` for each chapter at 1440px
+
+
+## Suggested Review Order
+
+1. [SPEC intent](./SPEC.md) — house-tour doctrine lock
+2. [product-slides.tsx](../../../web/lib/marketing/product-slides.tsx) — nav order + seed-derived captions
+3. [marketing-product-cinema.tsx](../../../web/components/marketing/marketing-product-cinema.tsx) — caption-strip composition
+4. [marketing-demo-followup-mount.tsx](../../../web/components/marketing/demo-mounts/marketing-demo-followup-mount.tsx) — triage 6/7/4/17
+5. [marketing-demo-activities-mount.tsx](../../../web/components/marketing/demo-mounts/marketing-demo-activities-mount.tsx) — 34/42 ops
+6. [marketing-demo-intelligence-mount.tsx](../../../web/components/marketing/demo-mounts/marketing-demo-intelligence-mount.tsx) — grounded briefs only
+7. Artifacts `/opt/cursor/artifacts/cinema-house-tour/` — visual evidence per chapter

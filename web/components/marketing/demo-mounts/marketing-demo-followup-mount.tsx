@@ -7,6 +7,7 @@ import { useMarketingDemoClub } from "@/components/marketing/marketing-demo-prov
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import { WhatsAppBrandIcon } from "@/components/shared/messenger-brand-icons";
 import {
+  ANCHOR_IDS,
   canRecommendWhatsApp,
   countNeedAttention,
   formatDemoWhatsappDay,
@@ -38,6 +39,18 @@ export function MarketingDemoFollowupMount() {
   const atRisk = listClientsByTriage(club, "atRisk");
   const opportunity = listClientsByTriage(club, "opportunity");
   const queue = [...dueNow, ...atRisk, ...opportunity];
+  const proofAnchors = [
+    { id: ANCHOR_IDS.maya, label: "Due today" },
+    { id: ANCHOR_IDS.daniel, label: "At risk" },
+    { id: ANCHOR_IDS.priya, label: "Opportunity" },
+  ]
+    .map((row) => {
+      const client = club.clients.find((item) => item.id === row.id);
+      return client ? { ...row, client } : null;
+    })
+    .filter((row): row is { id: string; label: string; client: (typeof club.clients)[number] } =>
+      Boolean(row)
+    );
 
   return (
     <MarketingDemoTheme>
@@ -123,6 +136,22 @@ export function MarketingDemoFollowupMount() {
               <p className="mt-2 text-xs text-stone-cinema">
                 {whatsappDay} · {canRecommendWhatsApp(club, selected.id) ? "sendable" : "blocked"}
               </p>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {proofAnchors.map(({ client, label }) => (
+                <div
+                  key={client.id}
+                  className={cn(
+                    "rounded-md px-2 py-2 ring-1 ring-line",
+                    client.id === selected.id ? "bg-gold-soft/50" : "bg-paper-warm"
+                  )}
+                >
+                  <p className="truncate text-[10px] font-medium uppercase tracking-wide text-stone-cinema">
+                    {label}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs font-medium text-ink">{client.fullName}</p>
+                </div>
+              ))}
             </div>
           </div>
           <div className="min-h-0 overflow-y-auto px-3 py-2">
