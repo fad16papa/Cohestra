@@ -85,7 +85,7 @@ Cursor Grok 4.5
 
 ### Completion Notes
 Harbourline Social Club continuous seed shipped with frozen Asia/Singapore clock, 34/42 Golden Hour assertion, derived 6+7+4=17 triage, five anchors + reverse-chain tests. Generator script at `web/scripts/generate-democlub-seed.mjs`.
-**Correction:** DemoClub identity must be Harbourline Social Club (`harbourline-social.cohestra.app`) — prior incorrect branding purged repo-wide (zero `rg -ni ikigai` matches). Behavior/math unchanged.
+**Correction:** DemoClub identity must be Harbourline Social Club (`harbourline-social.cohestra.app`) — prior incorrect branding purged repo-wide (case-insensitive search returns zero matches). Behavior/math unchanged.
 
 ### File List
 - web/lib/marketing/marketing-demo-club.json
