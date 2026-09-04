@@ -21,7 +21,7 @@ forward_deps:
 
 # Story 33.6: Ikigai DemoClub continuous seed world
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -62,14 +62,14 @@ So that cinema numbers and people are database assertions — not postcard props
 
 ## Tasks / Subtasks
 
-- [ ] Clock + org identity on seed type/JSON
-- [ ] Activities + registrations for Golden Hour 34/42 + Pickleball + Board Game Night + prior Golden Hour
-- [ ] Five Anchor clientDetails + ambient roster (25–40 visible)
-- [ ] Triage helpers: dueNow / atRisk / opportunity / countNeedAttention
-- [ ] Golden Hour spots helper; assert derived numbers
-- [ ] Reverse-chain tests per Anchor
-- [ ] Update assertDemoClubInvariants + unit tests
-- [ ] Soft-fix mounts/copy that hardcode Riverside/Elena/Sunday clinic to seed-driven or Ikigai/Golden Hour language where they would lie
+- [x] Clock + org identity on seed type/JSON
+- [x] Activities + registrations for Golden Hour 34/42 + Pickleball + Board Game Night + prior Golden Hour
+- [x] Five Anchor clientDetails + ambient roster (25–40 visible)
+- [x] Triage helpers: dueNow / atRisk / opportunity / countNeedAttention
+- [x] Golden Hour spots helper; assert derived numbers
+- [x] Reverse-chain tests per Anchor
+- [x] Update assertDemoClubInvariants + unit tests
+- [x] Soft-fix mounts/copy that hardcode Riverside/Elena/Sunday clinic to seed-driven or Ikigai/Golden Hour language where they would lie
 
 ## Dev Notes
 
@@ -84,7 +84,15 @@ So that cinema numbers and people are database assertions — not postcard props
 Cursor Grok 4.5
 
 ### Completion Notes
-(in progress)
+Ikigai Social Club continuous seed shipped with frozen Asia/Singapore clock, 34/42 Golden Hour assertion, derived 6+7+4=17 triage, five anchors + reverse-chain tests. Generator script at `web/scripts/generate-democlub-seed.mjs`.
 
 ### File List
-(in progress)
+- web/lib/marketing/marketing-demo-club.json
+- web/lib/marketing/marketing-demo-club.ts
+- web/lib/marketing/marketing-demo-club.test.ts
+- web/scripts/generate-democlub-seed.mjs
+- web/lib/marketing/product-slides.tsx
+- web/components/marketing/demo-mounts/marketing-demo-*.tsx (dashboard/campaigns/reports)
+- _bmad-output/specs/spec-democlub-cinema-seed/*
+- _bmad-output/implementation-artifacts/33-6-ikigai-democlub-continuous-seed.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
