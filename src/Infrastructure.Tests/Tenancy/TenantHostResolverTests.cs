@@ -89,7 +89,7 @@ public sealed class TenantHostResolverTests
 
     [Theory]
     [InlineData("acme.129-212-235-2.nip.io", "acme")]
-    [InlineData("ikigai.54-158-128-7.nip.io", "ikigai")]
+    [InlineData("harbourline.54-158-128-7.nip.io", "harbourline")]
     public void ExtractSlug_resolves_nip_io_tenant_hosts(string host, string expectedSlug)
     {
         var config = new ConfigurationBuilder().Build();
@@ -102,11 +102,11 @@ public sealed class TenantHostResolverTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["DEV_TENANT_SLUG"] = "ikigai",
+                ["DEV_TENANT_SLUG"] = "harbourline",
             })
             .Build();
 
-        Assert.Equal("ikigai", TenantHostResolver.ExtractSlug("localhost", config));
+        Assert.Equal("harbourline", TenantHostResolver.ExtractSlug("localhost", config));
     }
 
     [Fact]

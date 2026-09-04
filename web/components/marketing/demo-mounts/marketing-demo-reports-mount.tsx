@@ -46,12 +46,12 @@ export function MarketingDemoReportsMount() {
         </div>
         <p className="text-xs text-stone-cinema">
           {proof.map((client) => client.fullName).join(", ")} counted once this week · Sunday
-          clinic and board games night
+          Golden Hour and Board Game Night
         </p>
         <ReportDepthCard className="min-h-0 flex-1" accent="lagoon">
           <ReportPanelHeader
             title="Activity ranking"
-            description="Sunday clinic leads the week"
+            description="Golden Hour Run leads the week"
           />
           <ul className="space-y-3 px-4 py-3">
             {safeRows.map((row, index) => (

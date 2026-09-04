@@ -257,7 +257,7 @@ Redis is required infrastructure for MVP — not deferred.
 
 **Core data flow:** Activity setup → public Form submit → Registration + Client (deduped) → follow-up actions → aggregated Reports.
 
-Three launch form templates (TGH Tennis, Ikigai Pickleball, Board Game Night) are seed data against a shared JSON schema format — not separate database schemas.
+Three launch form templates (TGH Tennis, Harbourline Pickleball, Board Game Night) are seed data against a shared JSON schema format — not separate database schemas.
 
 **Non-Functional Requirements:**
 

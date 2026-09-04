@@ -1,297 +1,3150 @@
 {
-  "orgName": "Riverside Rec",
-  "publicHost": "riverside-rec.cohestra.app",
-  "operatorGreeting": "Maya",
-  "selectedClientId": "demo-elena",
-  "followUpClientId": "demo-jordan",
-  "availableRooms": ["clients", "outreach", "dashboard", "campaigns", "reports", "website"],
-  "reportsProofClientIds": ["demo-elena"],
+  "orgName": "Harbourline Social Club",
+  "publicHost": "harbourline-social.cohestra.app",
+  "operatorGreeting": "Alex",
+  "selectedClientId": "demo-maya",
+  "followUpClientId": "demo-maya",
+  "availableRooms": [
+    "clients",
+    "outreach",
+    "dashboard",
+    "campaigns",
+    "reports",
+    "website"
+  ],
+  "reportsProofClientIds": [
+    "demo-maya",
+    "demo-sarah"
+  ],
   "clientListTotalCount": 248,
+  "clock": {
+    "timeZoneId": "Asia/Singapore",
+    "demoNow": "2026-09-07T09:00:00+08:00"
+  },
+  "activities": [
+    {
+      "id": "demo-golden-hour-run-prior",
+      "name": "Golden Hour Run",
+      "startsAt": "2026-09-04T18:30:00+08:00",
+      "capacity": 42,
+      "status": "published",
+      "completed": true
+    },
+    {
+      "id": "demo-board-game-night",
+      "name": "Board Game Night",
+      "startsAt": "2026-09-09T19:30:00+08:00",
+      "capacity": 24,
+      "status": "published",
+      "completed": false
+    },
+    {
+      "id": "demo-golden-hour-run",
+      "name": "Golden Hour Run",
+      "startsAt": "2026-09-11T18:30:00+08:00",
+      "capacity": 42,
+      "status": "published",
+      "completed": false
+    },
+    {
+      "id": "demo-sunday-pickleball",
+      "name": "Sunday Pickleball",
+      "startsAt": "2026-09-13T07:00:00+08:00",
+      "capacity": 36,
+      "status": "published",
+      "completed": false
+    }
+  ],
   "whatsappQuote": {
-    "clientId": "demo-jordan",
-    "body": "Hi Jordan — reminder for Sunday clinic at 6pm. See you there!",
-    "loggedAt": "2026-03-09T15:10:00.000Z"
+    "clientId": "demo-maya",
+    "body": "Hi Maya — great to see you at Golden Hour Friday. See you on the next run?",
+    "loggedAt": "2026-09-06T19:00:00+08:00"
   },
   "clients": [
     {
-      "id": "demo-elena",
-      "fullName": "Elena Martinez",
-      "phone": "+34 612 345 678",
-      "email": "elena@example.com",
+      "id": "demo-maya",
+      "fullName": "Maya Santos",
+      "phone": "+65 8123 4501",
+      "email": "maya.santos@example.com",
       "consentGiven": true,
-      "nationality": "Spain",
-      "leadStatus": "active",
-      "lastRegistrationAt": "2026-03-15T18:00:00.000Z",
-      "lastActivityName": "Sunday clinic",
-      "lastOutreachAt": "2026-03-09T15:10:00.000Z",
-      "lastOutreachKind": "whatsapp",
-      "nextFollowUpAt": null,
-      "relativeLabel": "2 days ago"
-    },
-    {
-      "id": "demo-sam",
-      "fullName": "Sam Rivera",
-      "phone": "+12025550198",
-      "email": "sam@example.com",
-      "consentGiven": true,
-      "nationality": "USA",
+      "nationality": "Singapore",
       "leadStatus": "new",
-      "lastRegistrationAt": "2026-03-15T09:00:00.000Z",
-      "lastActivityName": "board games night",
+      "lastRegistrationAt": "2026-09-06T10:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
       "lastOutreachAt": null,
       "lastOutreachKind": null,
       "nextFollowUpAt": null,
       "relativeLabel": "today"
     },
     {
-      "id": "demo-jordan",
-      "fullName": "Jordan Kim",
-      "phone": "+821012345678",
-      "email": "jordan@example.com",
+      "id": "demo-daniel",
+      "fullName": "Daniel Koh",
+      "phone": "+65 8123 4502",
+      "email": "daniel.koh@example.com",
       "consentGiven": true,
-      "nationality": "South Korea",
-      "leadStatus": "contacted",
-      "lastRegistrationAt": "2026-03-08T10:00:00.000Z",
-      "lastActivityName": "WhatsApp follow up",
-      "lastOutreachAt": "2026-03-09T15:10:00.000Z",
-      "lastOutreachKind": "whatsapp",
-      "nextFollowUpAt": "2026-03-10T09:00:00.000Z",
-      "relativeLabel": "yesterday"
-    },
-    {
-      "id": "demo-priya",
-      "fullName": "Priya Shah",
-      "phone": "+919876543210",
-      "email": "priya@example.com",
-      "consentGiven": true,
-      "nationality": "India",
+      "nationality": "Singapore",
       "leadStatus": "active",
-      "lastRegistrationAt": "2026-03-11T11:00:00.000Z",
-      "lastActivityName": "youth open play",
+      "lastRegistrationAt": "2026-08-07T19:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
       "lastOutreachAt": null,
       "lastOutreachKind": null,
       "nextFollowUpAt": null,
-      "relativeLabel": "4 days ago"
+      "relativeLabel": "30 days ago"
+    },
+    {
+      "id": "demo-priya",
+      "fullName": "Priya Nair",
+      "phone": "+65 8123 4503",
+      "email": "priya.nair@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "contacted",
+      "lastRegistrationAt": "2026-09-04T11:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "2 days ago"
+    },
+    {
+      "id": "demo-marcus",
+      "fullName": "Marcus Ong",
+      "phone": null,
+      "email": "marcus.ong@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-03T16:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "3 days ago"
+    },
+    {
+      "id": "demo-sarah",
+      "fullName": "Sarah Tan",
+      "phone": "+65 8123 4504",
+      "email": "sarah.tan@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-06T09:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": "2026-09-05T11:00:00+08:00",
+      "lastOutreachKind": "whatsapp",
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-00",
+      "fullName": "Aisha Lim",
+      "phone": "+65 91000000",
+      "email": "aisha.lim0@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T15:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": "2026-09-06T18:00:00+08:00",
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-01",
+      "fullName": "Ben Ng",
+      "phone": "+65 91000001",
+      "email": "ben.ng1@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "contacted",
+      "lastRegistrationAt": "2026-09-06T15:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": "2026-09-06T18:00:00+08:00",
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-02",
+      "fullName": "Chloe Tan",
+      "phone": "+65 91000002",
+      "email": "chloe.tan2@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-04T14:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": "2026-09-06T18:00:00+08:00",
+      "relativeLabel": "2 days ago"
+    },
+    {
+      "id": "demo-ambient-03",
+      "fullName": "Dev Wong",
+      "phone": "+65 91000003",
+      "email": "dev.wong3@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "contacted",
+      "lastRegistrationAt": "2026-09-04T14:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": "2026-09-07T08:00:00+08:00",
+      "relativeLabel": "2 days ago"
+    },
+    {
+      "id": "demo-ambient-04",
+      "fullName": "Emily Lee",
+      "phone": "+65 91000004",
+      "email": "emily.lee4@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-04T14:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": "2026-09-07T08:00:00+08:00",
+      "relativeLabel": "2 days ago"
+    },
+    {
+      "id": "demo-ambient-10",
+      "fullName": "Kelly Koh",
+      "phone": "+65 91000010",
+      "email": "kelly.koh10@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-08-07T19:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "30 days ago"
+    },
+    {
+      "id": "demo-ambient-11",
+      "fullName": "Liam Low",
+      "phone": "+65 91000011",
+      "email": "liam.low11@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-08-08T19:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "29 days ago"
+    },
+    {
+      "id": "demo-ambient-12",
+      "fullName": "Mei Yeo",
+      "phone": "+65 91000012",
+      "email": "mei.yeo12@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-08-09T19:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "28 days ago"
+    },
+    {
+      "id": "demo-ambient-13",
+      "fullName": "Noah Sim",
+      "phone": "+65 91000013",
+      "email": "noah.sim13@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-08-10T19:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "27 days ago"
+    },
+    {
+      "id": "demo-ambient-14",
+      "fullName": "Olivia Foo",
+      "phone": "+65 91000014",
+      "email": "olivia.foo14@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-08-11T19:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "26 days ago"
+    },
+    {
+      "id": "demo-ambient-15",
+      "fullName": "Peter Ho",
+      "phone": "+65 91000015",
+      "email": "peter.ho15@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-08-12T19:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "25 days ago"
+    },
+    {
+      "id": "demo-ambient-20",
+      "fullName": "Umar Lim",
+      "phone": "+65 91000020",
+      "email": "umar.lim20@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "contacted",
+      "lastRegistrationAt": "2026-09-04T13:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "2 days ago"
+    },
+    {
+      "id": "demo-ambient-21",
+      "fullName": "Vera Ng",
+      "phone": "+65 91000021",
+      "email": "vera.ng21@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "contacted",
+      "lastRegistrationAt": "2026-09-04T13:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "2 days ago"
+    },
+    {
+      "id": "demo-ambient-22",
+      "fullName": "Wei Tan",
+      "phone": "+65 91000022",
+      "email": "wei.tan22@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "contacted",
+      "lastRegistrationAt": "2026-09-04T13:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "2 days ago"
+    },
+    {
+      "id": "demo-ambient-30",
+      "fullName": "Aisha Koh",
+      "phone": "+65 91000030",
+      "email": "aisha.koh30@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-05T10:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-31",
+      "fullName": "Ben Low",
+      "phone": "+65 91000031",
+      "email": "ben.low31@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-06T11:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-32",
+      "fullName": "Chloe Yeo",
+      "phone": "+65 91000032",
+      "email": "chloe.yeo32@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-05T12:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-33",
+      "fullName": "Dev Sim",
+      "phone": "+65 91000033",
+      "email": "dev.sim33@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-06T13:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-34",
+      "fullName": "Emily Foo",
+      "phone": "+65 91000034",
+      "email": "emily.foo34@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-05T14:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-35",
+      "fullName": "Farid Ho",
+      "phone": "+65 91000035",
+      "email": "farid.ho35@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-06T15:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-36",
+      "fullName": "Grace Pang",
+      "phone": "+65 91000036",
+      "email": "grace.pang36@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-05T16:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-37",
+      "fullName": "Hassan Quek",
+      "phone": "+65 91000037",
+      "email": "hassan.quek37@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-06T17:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-38",
+      "fullName": "Ivy Raj",
+      "phone": "+65 91000038",
+      "email": "ivy.raj38@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-05T10:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-39",
+      "fullName": "Jason Singh",
+      "phone": "+65 91000039",
+      "email": "jason.singh39@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-06T11:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-40",
+      "fullName": "Kelly Lim",
+      "phone": "+65 91000040",
+      "email": "kelly.lim40@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-05T12:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-41",
+      "fullName": "Liam Ng",
+      "phone": "+65 91000041",
+      "email": "liam.ng41@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-06T13:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-42",
+      "fullName": "Mei Tan",
+      "phone": "+65 91000042",
+      "email": "mei.tan42@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-05T14:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-43",
+      "fullName": "Noah Wong",
+      "phone": "+65 91000043",
+      "email": "noah.wong43@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-06T15:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-44",
+      "fullName": "Olivia Lee",
+      "phone": "+65 91000044",
+      "email": "olivia.lee44@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-05T16:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-45",
+      "fullName": "Peter Chan",
+      "phone": "+65 91000045",
+      "email": "peter.chan45@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-06T17:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-46",
+      "fullName": "Quinn Goh",
+      "phone": "+65 91000046",
+      "email": "quinn.goh46@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-05T10:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-47",
+      "fullName": "Rachel Teo",
+      "phone": "+65 91000047",
+      "email": "rachel.teo47@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "active",
+      "lastRegistrationAt": "2026-09-06T11:00:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-80",
+      "fullName": "Umar Lim",
+      "phone": "+65 91000080",
+      "email": "umar.lim80@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T08:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-81",
+      "fullName": "Vera Ng",
+      "phone": "+65 91000081",
+      "email": "vera.ng81@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T09:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-82",
+      "fullName": "Wei Tan",
+      "phone": "+65 91000082",
+      "email": "wei.tan82@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T10:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-83",
+      "fullName": "Xena Wong",
+      "phone": "+65 91000083",
+      "email": "xena.wong83@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T11:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-84",
+      "fullName": "Yuki Lee",
+      "phone": "+65 91000084",
+      "email": "yuki.lee84@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T12:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-85",
+      "fullName": "Zara Chan",
+      "phone": "+65 91000085",
+      "email": "zara.chan85@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T13:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-86",
+      "fullName": "Adam Goh",
+      "phone": "+65 91000086",
+      "email": "adam.goh86@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T14:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-87",
+      "fullName": "Beth Teo",
+      "phone": "+65 91000087",
+      "email": "beth.teo87@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T15:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-88",
+      "fullName": "Carl Ong",
+      "phone": "+65 91000088",
+      "email": "carl.ong88@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T16:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-89",
+      "fullName": "Diana Chua",
+      "phone": "+65 91000089",
+      "email": "diana.chua89@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T17:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
+    },
+    {
+      "id": "demo-ambient-90",
+      "fullName": "Aisha Koh",
+      "phone": "+65 91000090",
+      "email": "aisha.koh90@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T08:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "yesterday"
+    },
+    {
+      "id": "demo-ambient-91",
+      "fullName": "Ben Low",
+      "phone": "+65 91000091",
+      "email": "ben.low91@example.com",
+      "consentGiven": true,
+      "nationality": "Singapore",
+      "leadStatus": "new",
+      "lastRegistrationAt": "2026-09-06T09:30:00+08:00",
+      "lastActivityName": "Golden Hour Run",
+      "lastOutreachAt": null,
+      "lastOutreachKind": null,
+      "nextFollowUpAt": null,
+      "relativeLabel": "today"
     }
   ],
   "clientDetails": {
-    "demo-elena": {
-      "id": "demo-elena",
-      "fullName": "Elena Martinez",
-      "phone": "+34 612 345 678",
-      "email": "elena@example.com",
+    "demo-maya": {
+      "id": "demo-maya",
+      "fullName": "Maya Santos",
+      "phone": "+65 8123 4501",
+      "email": "maya.santos@example.com",
       "profession": null,
-      "nationality": "Spain",
-      "residency": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
       "consentGiven": true,
-      "referralSource": null,
+      "referralSource": "Instagram",
+      "notes": "First visit Fri Sep 4 · checked in 18:27 · Running",
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-09-04T12:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-101",
+          "registrationNumber": "101",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-04T12:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-102",
+          "registrationNumber": "102",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T10:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T10:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-102",
+          "campaignSubject": null,
+          "note": "Instagram"
+        },
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-04T12:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-101",
+          "campaignSubject": null,
+          "note": "Checked in Fri 18:27"
+        }
+      ]
+    },
+    "demo-daniel": {
+      "id": "demo-daniel",
+      "fullName": "Daniel Koh",
+      "phone": "+65 8123 4502",
+      "email": "daniel.koh@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "3 activities · At risk · no contact 28+ days",
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-03-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-103",
+          "registrationNumber": "103",
+          "activityId": "demo-board-game-night-old",
+          "activityName": "Board Game Night",
+          "registeredAt": "2026-07-15T12:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-104",
+          "registrationNumber": "104",
+          "activityId": "demo-pickle-old",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-07-27T08:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-105",
+          "registrationNumber": "105",
+          "activityId": "demo-golden-old",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-08-07T19:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-08-07T19:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": "active",
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-105",
+          "campaignSubject": null,
+          "note": "Last seen 31 days ago"
+        }
+      ]
+    },
+    "demo-priya": {
+      "id": "demo-priya",
+      "fullName": "Priya Nair",
+      "phone": "+65 8123 4503",
+      "email": "priya.nair@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Referral from Sarah Tan",
+      "notes": "Referral · attended twice · Opportunity",
+      "leadStatus": "contacted",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-08-20T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-106",
+          "registrationNumber": "106",
+          "activityId": "demo-sunday-pickleball",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-08-30T08:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-107",
+          "registrationNumber": "107",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-04T11:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-04T11:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Referral from Sarah Tan",
+          "previousLeadStatus": "contacted",
+          "newLeadStatus": "contacted",
+          "registrationId": "demo-reg-107",
+          "campaignSubject": null,
+          "note": "Attended · not yet member"
+        }
+      ]
+    },
+    "demo-marcus": {
+      "id": "demo-marcus",
+      "fullName": "Marcus Ong",
+      "phone": null,
+      "email": "marcus.ong@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "Profile incomplete · no-show",
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-09-03T16:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-108",
+          "registrationNumber": "108",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-03T16:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-03T16:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-108",
+          "campaignSubject": null,
+          "note": "No-show · phone missing · email bounced"
+        }
+      ]
+    },
+    "demo-sarah": {
+      "id": "demo-sarah",
+      "fullName": "Sarah Tan",
+      "phone": "+65 8123 4504",
+      "email": "sarah.tan@example.com",
+      "profession": "Member",
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Member",
+      "notes": "Member · referral engine",
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2025-11-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-109",
+          "registrationNumber": "109",
+          "activityId": "demo-pickle-aug",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-08-16T07:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-110",
+          "registrationNumber": "110",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-04T10:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-111",
+          "registrationNumber": "111",
+          "activityId": "demo-board-game-night",
+          "activityName": "Board Game Night",
+          "registeredAt": "2026-09-05T12:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-112",
+          "registrationNumber": "112",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T09:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T09:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Member",
+          "previousLeadStatus": "active",
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-112",
+          "campaignSubject": null,
+          "note": "Loyal member · refers friends"
+        }
+      ]
+    },
+    "demo-ambient-00": {
+      "id": "demo-ambient-00",
+      "fullName": "Aisha Lim",
+      "phone": "+65 91000000",
+      "email": "aisha.lim0@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "Due now",
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": "2026-09-06T18:00:00+08:00",
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-113",
+          "registrationNumber": "113",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-04T14:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-114",
+          "registrationNumber": "114",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T15:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "next_follow_up_changed",
+          "occurredAt": "2026-09-05T10:00:00+08:00",
+          "label": "Follow-up scheduled",
+          "activityName": null,
+          "referralSource": null,
+          "previousLeadStatus": null,
+          "newLeadStatus": null,
+          "registrationId": null,
+          "campaignSubject": null,
+          "note": "Due 2026-09-06"
+        }
+      ]
+    },
+    "demo-ambient-01": {
+      "id": "demo-ambient-01",
+      "fullName": "Ben Ng",
+      "phone": "+65 91000001",
+      "email": "ben.ng1@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "Due now",
+      "leadStatus": "contacted",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": "2026-09-06T18:00:00+08:00",
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-115",
+          "registrationNumber": "115",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-04T14:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-116",
+          "registrationNumber": "116",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T15:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "next_follow_up_changed",
+          "occurredAt": "2026-09-05T10:00:00+08:00",
+          "label": "Follow-up scheduled",
+          "activityName": null,
+          "referralSource": null,
+          "previousLeadStatus": null,
+          "newLeadStatus": null,
+          "registrationId": null,
+          "campaignSubject": null,
+          "note": "Due 2026-09-06"
+        }
+      ]
+    },
+    "demo-ambient-02": {
+      "id": "demo-ambient-02",
+      "fullName": "Chloe Tan",
+      "phone": "+65 91000002",
+      "email": "chloe.tan2@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "Due now",
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": "2026-09-06T18:00:00+08:00",
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-117",
+          "registrationNumber": "117",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-04T14:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "next_follow_up_changed",
+          "occurredAt": "2026-09-05T10:00:00+08:00",
+          "label": "Follow-up scheduled",
+          "activityName": null,
+          "referralSource": null,
+          "previousLeadStatus": null,
+          "newLeadStatus": null,
+          "registrationId": null,
+          "campaignSubject": null,
+          "note": "Due 2026-09-06"
+        }
+      ]
+    },
+    "demo-ambient-03": {
+      "id": "demo-ambient-03",
+      "fullName": "Dev Wong",
+      "phone": "+65 91000003",
+      "email": "dev.wong3@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "Due now",
+      "leadStatus": "contacted",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": "2026-09-07T08:00:00+08:00",
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-118",
+          "registrationNumber": "118",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-04T14:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "next_follow_up_changed",
+          "occurredAt": "2026-09-05T10:00:00+08:00",
+          "label": "Follow-up scheduled",
+          "activityName": null,
+          "referralSource": null,
+          "previousLeadStatus": null,
+          "newLeadStatus": null,
+          "registrationId": null,
+          "campaignSubject": null,
+          "note": "Due 2026-09-07"
+        }
+      ]
+    },
+    "demo-ambient-04": {
+      "id": "demo-ambient-04",
+      "fullName": "Emily Lee",
+      "phone": "+65 91000004",
+      "email": "emily.lee4@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "Due now",
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": "2026-09-07T08:00:00+08:00",
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-119",
+          "registrationNumber": "119",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-04T14:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "next_follow_up_changed",
+          "occurredAt": "2026-09-05T10:00:00+08:00",
+          "label": "Follow-up scheduled",
+          "activityName": null,
+          "referralSource": null,
+          "previousLeadStatus": null,
+          "newLeadStatus": null,
+          "registrationId": null,
+          "campaignSubject": null,
+          "note": "Due 2026-09-07"
+        }
+      ]
+    },
+    "demo-ambient-10": {
+      "id": "demo-ambient-10",
+      "fullName": "Kelly Koh",
+      "phone": "+65 91000010",
+      "email": "kelly.koh10@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "At risk",
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-02-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-120",
+          "registrationNumber": "120",
+          "activityId": "demo-old-run-0",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-08-07T19:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-121",
+          "registrationNumber": "121",
+          "activityId": "demo-old-play-0",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-07-10T07:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-08-07T19:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": "active",
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-120",
+          "campaignSubject": null,
+          "note": "Quiet · at risk"
+        }
+      ]
+    },
+    "demo-ambient-11": {
+      "id": "demo-ambient-11",
+      "fullName": "Liam Low",
+      "phone": "+65 91000011",
+      "email": "liam.low11@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "At risk",
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-02-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-122",
+          "registrationNumber": "122",
+          "activityId": "demo-old-run-1",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-08-08T19:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-123",
+          "registrationNumber": "123",
+          "activityId": "demo-old-play-1",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-07-11T07:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-08-08T19:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": "active",
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-122",
+          "campaignSubject": null,
+          "note": "Quiet · at risk"
+        }
+      ]
+    },
+    "demo-ambient-12": {
+      "id": "demo-ambient-12",
+      "fullName": "Mei Yeo",
+      "phone": "+65 91000012",
+      "email": "mei.yeo12@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "At risk",
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-02-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-124",
+          "registrationNumber": "124",
+          "activityId": "demo-old-run-2",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-08-09T19:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-125",
+          "registrationNumber": "125",
+          "activityId": "demo-old-play-2",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-07-12T07:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-08-09T19:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": "active",
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-124",
+          "campaignSubject": null,
+          "note": "Quiet · at risk"
+        }
+      ]
+    },
+    "demo-ambient-13": {
+      "id": "demo-ambient-13",
+      "fullName": "Noah Sim",
+      "phone": "+65 91000013",
+      "email": "noah.sim13@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "At risk",
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-02-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-126",
+          "registrationNumber": "126",
+          "activityId": "demo-old-run-3",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-08-10T19:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-127",
+          "registrationNumber": "127",
+          "activityId": "demo-old-play-3",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-07-13T07:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-08-10T19:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": "active",
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-126",
+          "campaignSubject": null,
+          "note": "Quiet · at risk"
+        }
+      ]
+    },
+    "demo-ambient-14": {
+      "id": "demo-ambient-14",
+      "fullName": "Olivia Foo",
+      "phone": "+65 91000014",
+      "email": "olivia.foo14@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "At risk",
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-02-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-128",
+          "registrationNumber": "128",
+          "activityId": "demo-old-run-4",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-08-11T19:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-129",
+          "registrationNumber": "129",
+          "activityId": "demo-old-play-4",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-07-14T07:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-08-11T19:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": "active",
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-128",
+          "campaignSubject": null,
+          "note": "Quiet · at risk"
+        }
+      ]
+    },
+    "demo-ambient-15": {
+      "id": "demo-ambient-15",
+      "fullName": "Peter Ho",
+      "phone": "+65 91000015",
+      "email": "peter.ho15@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": "At risk",
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-02-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-130",
+          "registrationNumber": "130",
+          "activityId": "demo-old-run-5",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-08-12T19:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-131",
+          "registrationNumber": "131",
+          "activityId": "demo-old-play-5",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-07-15T07:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-08-12T19:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": "active",
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-130",
+          "campaignSubject": null,
+          "note": "Quiet · at risk"
+        }
+      ]
+    },
+    "demo-ambient-20": {
+      "id": "demo-ambient-20",
+      "fullName": "Umar Lim",
+      "phone": "+65 91000020",
+      "email": "umar.lim20@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Referral from Sarah Tan",
+      "notes": "Opportunity · not member",
+      "leadStatus": "contacted",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-132",
+          "registrationNumber": "132",
+          "activityId": "demo-sunday-pickleball",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-08-20T07:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-133",
+          "registrationNumber": "133",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-04T13:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-04T13:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Referral from Sarah Tan",
+          "previousLeadStatus": "contacted",
+          "newLeadStatus": "contacted",
+          "registrationId": "demo-reg-133",
+          "campaignSubject": null,
+          "note": "Repeat non-member · opportunity"
+        }
+      ]
+    },
+    "demo-ambient-21": {
+      "id": "demo-ambient-21",
+      "fullName": "Vera Ng",
+      "phone": "+65 91000021",
+      "email": "vera.ng21@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Referral from Sarah Tan",
+      "notes": "Opportunity · not member",
+      "leadStatus": "contacted",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-134",
+          "registrationNumber": "134",
+          "activityId": "demo-sunday-pickleball",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-08-21T07:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-135",
+          "registrationNumber": "135",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-04T13:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-04T13:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Referral from Sarah Tan",
+          "previousLeadStatus": "contacted",
+          "newLeadStatus": "contacted",
+          "registrationId": "demo-reg-135",
+          "campaignSubject": null,
+          "note": "Repeat non-member · opportunity"
+        }
+      ]
+    },
+    "demo-ambient-22": {
+      "id": "demo-ambient-22",
+      "fullName": "Wei Tan",
+      "phone": "+65 91000022",
+      "email": "wei.tan22@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Referral from Sarah Tan",
+      "notes": "Opportunity · not member",
+      "leadStatus": "contacted",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-136",
+          "registrationNumber": "136",
+          "activityId": "demo-sunday-pickleball",
+          "activityName": "Sunday Pickleball",
+          "registeredAt": "2026-08-22T07:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-137",
+          "registrationNumber": "137",
+          "activityId": "demo-golden-hour-run-prior",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-04T13:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-04T13:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Referral from Sarah Tan",
+          "previousLeadStatus": "contacted",
+          "newLeadStatus": "contacted",
+          "registrationId": "demo-reg-137",
+          "campaignSubject": null,
+          "note": "Repeat non-member · opportunity"
+        }
+      ]
+    },
+    "demo-ambient-30": {
+      "id": "demo-ambient-30",
+      "fullName": "Aisha Koh",
+      "phone": "+65 91000030",
+      "email": "aisha.koh30@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-139",
+          "registrationNumber": "139",
+          "activityId": "demo-board-game-night",
+          "activityName": "Board Game Night",
+          "registeredAt": "2026-09-05T11:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-138",
+          "registrationNumber": "138",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-05T10:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-05T10:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-138",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-31": {
+      "id": "demo-ambient-31",
+      "fullName": "Ben Low",
+      "phone": "+65 91000031",
+      "email": "ben.low31@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
       "notes": null,
       "leadStatus": "active",
       "isMergeSuspect": false,
       "nextFollowUpAt": null,
-      "createdAt": "2026-03-08T10:00:00.000Z",
-      "updatedAt": "2026-03-15T18:00:00.000Z",
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-140",
+          "registrationNumber": "140",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T11:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T11:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-140",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-32": {
+      "id": "demo-ambient-32",
+      "fullName": "Chloe Yeo",
+      "phone": "+65 91000032",
+      "email": "chloe.yeo32@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
       "registrationHistory": [
         {
           "registrationId": "demo-reg-142",
           "registrationNumber": "142",
-          "activityId": "demo-sunday-clinic",
-          "activityName": "Sunday clinic",
-          "registeredAt": "2026-03-08T10:00:00.000Z",
+          "activityId": "demo-board-game-night",
+          "activityName": "Board Game Night",
+          "registeredAt": "2026-09-05T11:00:00+08:00",
           "answers": []
         },
         {
-          "registrationId": "demo-reg-158",
-          "registrationNumber": "158",
-          "activityId": "demo-board-games",
-          "activityName": "board games night",
-          "registeredAt": "2026-03-15T18:00:00.000Z",
+          "registrationId": "demo-reg-141",
+          "registrationNumber": "141",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-05T12:00:00+08:00",
           "answers": []
         }
       ],
       "timeline": [
         {
           "eventType": "registration_submitted",
-          "occurredAt": "2026-03-15T18:00:00.000Z",
-          "label": "Registered board games night",
-          "activityName": "board games night",
-          "referralSource": null,
-          "previousLeadStatus": null,
-          "newLeadStatus": null,
-          "registrationId": "demo-reg-158",
-          "campaignSubject": null,
-          "note": "#158"
-        },
-        {
-          "eventType": "whatsapp_follow_up_recorded",
-          "occurredAt": "2026-03-09T15:10:00.000Z",
-          "label": "WhatsApp logged",
-          "activityName": "Sunday clinic",
-          "referralSource": null,
-          "previousLeadStatus": null,
-          "newLeadStatus": null,
-          "registrationId": null,
-          "campaignSubject": null,
-          "note": "WhatsApp logged"
-        },
-        {
-          "eventType": "registration_submitted",
-          "occurredAt": "2026-03-08T10:00:00.000Z",
-          "label": "Registered Sunday clinic",
-          "activityName": "Sunday clinic",
-          "referralSource": null,
+          "occurredAt": "2026-09-05T12:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
           "previousLeadStatus": null,
           "newLeadStatus": "active",
-          "registrationId": "demo-reg-142",
+          "registrationId": "demo-reg-141",
           "campaignSubject": null,
-          "note": "#142"
+          "note": null
         }
       ]
     },
-    "demo-jordan": {
-      "id": "demo-jordan",
-      "fullName": "Jordan Kim",
-      "phone": "+821012345678",
-      "email": "jordan@example.com",
+    "demo-ambient-33": {
+      "id": "demo-ambient-33",
+      "fullName": "Dev Sim",
+      "phone": "+65 91000033",
+      "email": "dev.sim33@example.com",
       "profession": null,
-      "nationality": "South Korea",
-      "residency": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
       "consentGiven": true,
-      "referralSource": null,
+      "referralSource": "Instagram",
       "notes": null,
-      "leadStatus": "contacted",
+      "leadStatus": "active",
       "isMergeSuspect": false,
-      "nextFollowUpAt": "2026-03-10T09:00:00.000Z",
-      "createdAt": "2026-03-08T10:00:00.000Z",
-      "updatedAt": "2026-03-09T15:10:00.000Z",
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-143",
+          "registrationNumber": "143",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T13:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T13:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-143",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-34": {
+      "id": "demo-ambient-34",
+      "fullName": "Emily Foo",
+      "phone": "+65 91000034",
+      "email": "emily.foo34@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-145",
+          "registrationNumber": "145",
+          "activityId": "demo-board-game-night",
+          "activityName": "Board Game Night",
+          "registeredAt": "2026-09-05T11:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-144",
+          "registrationNumber": "144",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-05T14:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-05T14:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-144",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-35": {
+      "id": "demo-ambient-35",
+      "fullName": "Farid Ho",
+      "phone": "+65 91000035",
+      "email": "farid.ho35@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-146",
+          "registrationNumber": "146",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T15:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T15:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-146",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-36": {
+      "id": "demo-ambient-36",
+      "fullName": "Grace Pang",
+      "phone": "+65 91000036",
+      "email": "grace.pang36@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-148",
+          "registrationNumber": "148",
+          "activityId": "demo-board-game-night",
+          "activityName": "Board Game Night",
+          "registeredAt": "2026-09-05T11:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-147",
+          "registrationNumber": "147",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-05T16:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-05T16:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-147",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-37": {
+      "id": "demo-ambient-37",
+      "fullName": "Hassan Quek",
+      "phone": "+65 91000037",
+      "email": "hassan.quek37@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
       "registrationHistory": [
         {
           "registrationId": "demo-reg-149",
           "registrationNumber": "149",
-          "activityId": "demo-sunday-clinic",
-          "activityName": "Sunday clinic",
-          "registeredAt": "2026-03-08T11:30:00.000Z",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T17:00:00+08:00",
           "answers": []
         }
       ],
       "timeline": [
         {
-          "eventType": "lead_status_changed",
-          "occurredAt": "2026-03-09T15:12:00.000Z",
-          "label": "Status → Contacted",
-          "activityName": null,
-          "referralSource": null,
-          "previousLeadStatus": "new",
-          "newLeadStatus": "contacted",
-          "registrationId": null,
-          "campaignSubject": null,
-          "note": null
-        },
-        {
-          "eventType": "whatsapp_follow_up_recorded",
-          "occurredAt": "2026-03-09T15:10:00.000Z",
-          "label": "WhatsApp message logged",
-          "activityName": "Sunday clinic",
-          "referralSource": null,
-          "previousLeadStatus": null,
-          "newLeadStatus": null,
-          "registrationId": null,
-          "campaignSubject": null,
-          "note": "Sunday clinic reminder sent"
-        },
-        {
           "eventType": "registration_submitted",
-          "occurredAt": "2026-03-08T11:30:00.000Z",
-          "label": "Registered Sunday clinic",
-          "activityName": "Sunday clinic",
-          "referralSource": null,
+          "occurredAt": "2026-09-06T17:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
           "previousLeadStatus": null,
-          "newLeadStatus": "new",
+          "newLeadStatus": "active",
           "registrationId": "demo-reg-149",
           "campaignSubject": null,
-          "note": "#149"
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-38": {
+      "id": "demo-ambient-38",
+      "fullName": "Ivy Raj",
+      "phone": "+65 91000038",
+      "email": "ivy.raj38@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-151",
+          "registrationNumber": "151",
+          "activityId": "demo-board-game-night",
+          "activityName": "Board Game Night",
+          "registeredAt": "2026-09-05T11:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-150",
+          "registrationNumber": "150",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-05T10:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-05T10:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-150",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-39": {
+      "id": "demo-ambient-39",
+      "fullName": "Jason Singh",
+      "phone": "+65 91000039",
+      "email": "jason.singh39@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-152",
+          "registrationNumber": "152",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T11:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T11:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-152",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-40": {
+      "id": "demo-ambient-40",
+      "fullName": "Kelly Lim",
+      "phone": "+65 91000040",
+      "email": "kelly.lim40@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-154",
+          "registrationNumber": "154",
+          "activityId": "demo-board-game-night",
+          "activityName": "Board Game Night",
+          "registeredAt": "2026-09-05T11:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-153",
+          "registrationNumber": "153",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-05T12:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-05T12:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-153",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-41": {
+      "id": "demo-ambient-41",
+      "fullName": "Liam Ng",
+      "phone": "+65 91000041",
+      "email": "liam.ng41@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-155",
+          "registrationNumber": "155",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T13:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T13:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-155",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-42": {
+      "id": "demo-ambient-42",
+      "fullName": "Mei Tan",
+      "phone": "+65 91000042",
+      "email": "mei.tan42@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-157",
+          "registrationNumber": "157",
+          "activityId": "demo-board-game-night",
+          "activityName": "Board Game Night",
+          "registeredAt": "2026-09-05T11:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-156",
+          "registrationNumber": "156",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-05T14:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-05T14:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-156",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-43": {
+      "id": "demo-ambient-43",
+      "fullName": "Noah Wong",
+      "phone": "+65 91000043",
+      "email": "noah.wong43@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-158",
+          "registrationNumber": "158",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T15:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T15:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-158",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-44": {
+      "id": "demo-ambient-44",
+      "fullName": "Olivia Lee",
+      "phone": "+65 91000044",
+      "email": "olivia.lee44@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-160",
+          "registrationNumber": "160",
+          "activityId": "demo-board-game-night",
+          "activityName": "Board Game Night",
+          "registeredAt": "2026-09-05T11:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-159",
+          "registrationNumber": "159",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-05T16:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-05T16:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-159",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-45": {
+      "id": "demo-ambient-45",
+      "fullName": "Peter Chan",
+      "phone": "+65 91000045",
+      "email": "peter.chan45@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-161",
+          "registrationNumber": "161",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T17:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T17:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-161",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-46": {
+      "id": "demo-ambient-46",
+      "fullName": "Quinn Goh",
+      "phone": "+65 91000046",
+      "email": "quinn.goh46@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-163",
+          "registrationNumber": "163",
+          "activityId": "demo-board-game-night",
+          "activityName": "Board Game Night",
+          "registeredAt": "2026-09-05T11:00:00+08:00",
+          "answers": []
+        },
+        {
+          "registrationId": "demo-reg-162",
+          "registrationNumber": "162",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-05T10:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-05T10:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-162",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-47": {
+      "id": "demo-ambient-47",
+      "fullName": "Rachel Teo",
+      "phone": "+65 91000047",
+      "email": "rachel.teo47@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Website",
+      "notes": null,
+      "leadStatus": "active",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-164",
+          "registrationNumber": "164",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T11:00:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T11:00:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Website",
+          "previousLeadStatus": null,
+          "newLeadStatus": "active",
+          "registrationId": "demo-reg-164",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-80": {
+      "id": "demo-ambient-80",
+      "fullName": "Umar Lim",
+      "phone": "+65 91000080",
+      "email": "umar.lim80@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-165",
+          "registrationNumber": "165",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T08:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T08:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-165",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-81": {
+      "id": "demo-ambient-81",
+      "fullName": "Vera Ng",
+      "phone": "+65 91000081",
+      "email": "vera.ng81@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-166",
+          "registrationNumber": "166",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T09:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T09:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-166",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-82": {
+      "id": "demo-ambient-82",
+      "fullName": "Wei Tan",
+      "phone": "+65 91000082",
+      "email": "wei.tan82@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-167",
+          "registrationNumber": "167",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T10:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T10:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-167",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-83": {
+      "id": "demo-ambient-83",
+      "fullName": "Xena Wong",
+      "phone": "+65 91000083",
+      "email": "xena.wong83@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-168",
+          "registrationNumber": "168",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T11:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T11:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-168",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-84": {
+      "id": "demo-ambient-84",
+      "fullName": "Yuki Lee",
+      "phone": "+65 91000084",
+      "email": "yuki.lee84@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-169",
+          "registrationNumber": "169",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T12:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T12:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-169",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-85": {
+      "id": "demo-ambient-85",
+      "fullName": "Zara Chan",
+      "phone": "+65 91000085",
+      "email": "zara.chan85@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-170",
+          "registrationNumber": "170",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T13:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T13:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-170",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-86": {
+      "id": "demo-ambient-86",
+      "fullName": "Adam Goh",
+      "phone": "+65 91000086",
+      "email": "adam.goh86@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-171",
+          "registrationNumber": "171",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T14:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T14:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-171",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-87": {
+      "id": "demo-ambient-87",
+      "fullName": "Beth Teo",
+      "phone": "+65 91000087",
+      "email": "beth.teo87@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-172",
+          "registrationNumber": "172",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T15:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T15:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-172",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-88": {
+      "id": "demo-ambient-88",
+      "fullName": "Carl Ong",
+      "phone": "+65 91000088",
+      "email": "carl.ong88@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-173",
+          "registrationNumber": "173",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T16:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T16:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-173",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-89": {
+      "id": "demo-ambient-89",
+      "fullName": "Diana Chua",
+      "phone": "+65 91000089",
+      "email": "diana.chua89@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-174",
+          "registrationNumber": "174",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T17:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T17:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-174",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-90": {
+      "id": "demo-ambient-90",
+      "fullName": "Aisha Koh",
+      "phone": "+65 91000090",
+      "email": "aisha.koh90@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-175",
+          "registrationNumber": "175",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T08:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T08:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-175",
+          "campaignSubject": null,
+          "note": null
+        }
+      ]
+    },
+    "demo-ambient-91": {
+      "id": "demo-ambient-91",
+      "fullName": "Ben Low",
+      "phone": "+65 91000091",
+      "email": "ben.low91@example.com",
+      "profession": null,
+      "nationality": "Singapore",
+      "residency": "Singapore",
+      "consentGiven": true,
+      "referralSource": "Instagram",
+      "notes": null,
+      "leadStatus": "new",
+      "isMergeSuspect": false,
+      "nextFollowUpAt": null,
+      "createdAt": "2026-06-01T10:00:00+08:00",
+      "updatedAt": "2026-09-07T09:00:00+08:00",
+      "registrationHistory": [
+        {
+          "registrationId": "demo-reg-176",
+          "registrationNumber": "176",
+          "activityId": "demo-golden-hour-run",
+          "activityName": "Golden Hour Run",
+          "registeredAt": "2026-09-06T09:30:00+08:00",
+          "answers": []
+        }
+      ],
+      "timeline": [
+        {
+          "eventType": "registration_submitted",
+          "occurredAt": "2026-09-06T09:30:00+08:00",
+          "label": "Registered Golden Hour Run",
+          "activityName": "Golden Hour Run",
+          "referralSource": "Instagram",
+          "previousLeadStatus": null,
+          "newLeadStatus": "new",
+          "registrationId": "demo-reg-176",
+          "campaignSubject": null,
+          "note": null
         }
       ]
     }
   },
   "dashboard": {
     "totalLeads": 248,
-    "newLeadsInPeriod": 12,
-    "periodDays": 8,
+    "newLeadsInPeriod": 18,
+    "periodDays": 7,
     "activeActivitiesCount": 3,
-    "followUpCoveragePercent": 82,
+    "followUpCoveragePercent": 79,
     "activityPerformance": [
       {
-        "activityId": "demo-sunday-clinic",
-        "activityName": "Sunday clinic",
-        "communityLabel": "Riverside Rec",
-        "category": "Clinic",
+        "activityId": "demo-golden-hour-run",
+        "activityName": "Golden Hour Run",
+        "communityLabel": "Harbourline Social Club",
+        "category": "Run",
         "status": "published",
-        "registrationCount": 18
+        "registrationCount": 34
       },
       {
-        "activityId": "demo-board-games",
-        "activityName": "board games night",
-        "communityLabel": "Riverside Rec",
+        "activityId": "demo-board-game-night",
+        "activityName": "Board Game Night",
+        "communityLabel": "Harbourline Social Club",
         "category": "Social",
         "status": "published",
-        "registrationCount": 12
+        "registrationCount": 10
       },
       {
-        "activityId": "demo-youth-open-play",
-        "activityName": "youth open play",
-        "communityLabel": "Riverside Rec",
-        "category": "Social",
+        "activityId": "demo-sunday-pickleball",
+        "activityName": "Sunday Pickleball",
+        "communityLabel": "Harbourline Social Club",
+        "category": "Racket",
         "status": "published",
-        "registrationCount": 6
+        "registrationCount": 8
       }
     ],
-    "computedAt": "2026-03-15T18:00:00.000Z",
-    "registrationsInPeriod": 36,
-    "registrationsInPreviousPeriod": 28,
-    "trendDays": 8,
+    "computedAt": "2026-09-07T09:00:00+08:00",
+    "registrationsInPeriod": 48,
+    "registrationsInPreviousPeriod": 36,
+    "trendDays": 7,
     "registrationsTrend": [
-      { "date": "2026-03-08", "registrations": 6, "newClients": 2 },
-      { "date": "2026-03-09", "registrations": 3, "newClients": 1 },
-      { "date": "2026-03-10", "registrations": 4, "newClients": 1 },
-      { "date": "2026-03-11", "registrations": 5, "newClients": 2 },
-      { "date": "2026-03-12", "registrations": 4, "newClients": 1 },
-      { "date": "2026-03-13", "registrations": 6, "newClients": 2 },
-      { "date": "2026-03-14", "registrations": 4, "newClients": 1 },
-      { "date": "2026-03-15", "registrations": 4, "newClients": 2 }
+      {
+        "date": "2026-09-01",
+        "registrations": 5,
+        "newClients": 2
+      },
+      {
+        "date": "2026-09-02",
+        "registrations": 4,
+        "newClients": 1
+      },
+      {
+        "date": "2026-09-03",
+        "registrations": 6,
+        "newClients": 2
+      },
+      {
+        "date": "2026-09-04",
+        "registrations": 12,
+        "newClients": 4
+      },
+      {
+        "date": "2026-09-05",
+        "registrations": 7,
+        "newClients": 3
+      },
+      {
+        "date": "2026-09-06",
+        "registrations": 9,
+        "newClients": 4
+      },
+      {
+        "date": "2026-09-07",
+        "registrations": 5,
+        "newClients": 2
+      }
     ],
     "leadStatusBreakdown": {
-      "newCount": 41,
-      "contactedCount": 28,
-      "activeCount": 162,
-      "inactiveCount": 17
+      "newCount": 44,
+      "contactedCount": 31,
+      "activeCount": 158,
+      "inactiveCount": 15
     }
   },
-  "dashboardQueueIds": ["demo-jordan", "demo-sam"],
+  "dashboardQueueIds": [
+    "demo-maya",
+    "demo-daniel",
+    "demo-priya"
+  ],
   "campaigns": [
     {
-      "id": "demo-campaign-clinic",
-      "subject": "Sunday clinic reminder",
-      "sentAt": "2026-03-07T16:00:00.000Z",
-      "sentCount": 42,
-      "failedCount": 1,
-      "skippedCount": 0,
+      "id": "demo-campaign-golden",
+      "subject": "Golden Hour Run this Friday",
+      "sentAt": "2026-09-05T16:00:00+08:00",
+      "sentCount": 86,
+      "failedCount": 2,
+      "skippedCount": 1,
       "status": "sent"
     },
     {
-      "id": "demo-campaign-games",
-      "subject": "New board games night",
-      "sentAt": "2026-03-12T17:00:00.000Z",
-      "sentCount": 38,
+      "id": "demo-campaign-board",
+      "subject": "Board Game Night Wednesday",
+      "sentAt": "2026-09-06T12:00:00+08:00",
+      "sentCount": 40,
       "failedCount": 0,
-      "skippedCount": 2,
+      "skippedCount": 0,
       "status": "sent"
     }
   ],
   "reportFilters": {
     "preset": "weekly",
-    "from": "2026-03-08",
-    "to": "2026-03-15",
+    "from": "2026-09-01",
+    "to": "2026-09-07",
     "activityId": "",
     "community": "",
     "leadStatus": "",
@@ -300,99 +3153,138 @@
   "reports": {
     "period": {
       "preset": "weekly",
-      "startAt": "2026-03-08T00:00:00.000Z",
-      "endAt": "2026-03-15T23:59:59.000Z",
-      "computedAt": "2026-03-15T18:00:00.000Z"
+      "startAt": "2026-09-01T00:00:00+08:00",
+      "endAt": "2026-09-07T23:59:59+08:00",
+      "computedAt": "2026-09-07T09:00:00+08:00"
     },
     "activitiesHosted": 3,
-    "registrations": 36,
-    "newLeads": 12,
+    "registrations": 48,
+    "newLeads": 18,
     "followUpStatus": {
-      "newCount": 41,
-      "contactedCount": 28,
-      "activeCount": 162,
-      "inactiveCount": 17,
-      "coveragePercent": 82
+      "newCount": 44,
+      "contactedCount": 31,
+      "activeCount": 158,
+      "inactiveCount": 15,
+      "coveragePercent": 79
     },
     "activityRanking": [
       {
-        "activityId": "demo-sunday-clinic",
-        "activityName": "Sunday clinic",
-        "communityLabel": "Riverside Rec",
-        "registrationCount": 18
+        "activityId": "demo-golden-hour-run",
+        "activityName": "Golden Hour Run",
+        "communityLabel": "Harbourline Social Club",
+        "registrationCount": 34
       },
       {
-        "activityId": "demo-board-games",
-        "activityName": "board games night",
-        "communityLabel": "Riverside Rec",
+        "activityId": "demo-board-game-night",
+        "activityName": "Board Game Night",
+        "communityLabel": "Harbourline Social Club",
         "registrationCount": 12
       },
       {
-        "activityId": "demo-youth-open-play",
-        "activityName": "youth open play",
-        "communityLabel": "Riverside Rec",
-        "registrationCount": 6
+        "activityId": "demo-sunday-pickleball",
+        "activityName": "Sunday Pickleball",
+        "communityLabel": "Harbourline Social Club",
+        "registrationCount": 8
       }
     ],
     "leadGrowth": {
-      "newLeadsInPeriod": 12,
+      "newLeadsInPeriod": 18,
       "totalLeadsAtEnd": 248,
-      "totalLeadsBeforePeriod": 236
+      "totalLeadsBeforePeriod": 230
     },
     "communityRanking": [
-      { "communityLabel": "Riverside Rec", "registrationCount": 36 }
+      {
+        "communityLabel": "Harbourline Social Club",
+        "registrationCount": 48
+      }
     ],
-    "repeatParticipants": 9,
-    "inactiveClients": 17,
+    "repeatParticipants": 14,
+    "inactiveClients": 15,
     "campaignResults": {
       "available": true,
       "campaignsSent": 2,
       "campaignsFailed": 0
     },
     "priorPeriod": {
-      "startAt": "2026-02-28T00:00:00.000Z",
-      "endAt": "2026-03-07T23:59:59.000Z",
-      "registrations": 28,
-      "newLeads": 8,
+      "startAt": "2026-08-25T00:00:00+08:00",
+      "endAt": "2026-08-31T23:59:59+08:00",
+      "registrations": 36,
+      "newLeads": 11,
       "activitiesHosted": 3,
-      "followUpCoveragePercent": 74
+      "followUpCoveragePercent": 72
     },
     "dailyTrend": [
-      { "date": "2026-03-08", "registrations": 6, "newClients": 2 },
-      { "date": "2026-03-09", "registrations": 3, "newClients": 1 },
-      { "date": "2026-03-10", "registrations": 4, "newClients": 1 },
-      { "date": "2026-03-11", "registrations": 5, "newClients": 2 },
-      { "date": "2026-03-12", "registrations": 4, "newClients": 1 },
-      { "date": "2026-03-13", "registrations": 6, "newClients": 2 },
-      { "date": "2026-03-14", "registrations": 4, "newClients": 1 },
-      { "date": "2026-03-15", "registrations": 4, "newClients": 2 }
+      {
+        "date": "2026-09-01",
+        "registrations": 5,
+        "newClients": 2
+      },
+      {
+        "date": "2026-09-02",
+        "registrations": 4,
+        "newClients": 1
+      },
+      {
+        "date": "2026-09-03",
+        "registrations": 6,
+        "newClients": 2
+      },
+      {
+        "date": "2026-09-04",
+        "registrations": 12,
+        "newClients": 4
+      },
+      {
+        "date": "2026-09-05",
+        "registrations": 7,
+        "newClients": 3
+      },
+      {
+        "date": "2026-09-06",
+        "registrations": 9,
+        "newClients": 4
+      },
+      {
+        "date": "2026-09-07",
+        "registrations": 5,
+        "newClients": 2
+      }
     ]
   },
   "website": {
-    "publishedAt": "2026-03-01T12:00:00.000Z",
+    "publishedAt": "2026-08-15T12:00:00+08:00",
     "upcomingActivities": [
       {
-        "slug": "sunday-clinic",
-        "name": "Sunday clinic",
-        "schedule": "Sundays · 6:00pm",
-        "location": "Riverside Rec hall",
-        "communityLabel": "Riverside Rec",
+        "slug": "golden-hour-run",
+        "name": "Golden Hour Run",
+        "schedule": "Friday · 6:30 PM · 34 going · 8 spots left",
+        "location": "East Coast Park",
+        "communityLabel": "Harbourline Social Club",
         "heroImageUrl": null,
         "accentColor": null
       },
       {
-        "slug": "board-games-night",
-        "name": "board games night",
-        "schedule": "Sundays · 6:00pm",
-        "location": "Riverside Rec hall",
-        "communityLabel": "Riverside Rec",
+        "slug": "board-game-night",
+        "name": "Board Game Night",
+        "schedule": "Wednesday · 7:30 PM",
+        "location": "Harbourline Clubhouse",
+        "communityLabel": "Harbourline Social Club",
+        "heroImageUrl": null,
+        "accentColor": null
+      },
+      {
+        "slug": "sunday-pickleball",
+        "name": "Sunday Pickleball",
+        "schedule": "Sunday · 7:00 AM",
+        "location": "Kallang Courts",
+        "communityLabel": "Harbourline Social Club",
         "heroImageUrl": null,
         "accentColor": null
       }
     ],
     "published": {
       "schemaVersion": 1,
-      "siteName": "Riverside Rec",
+      "siteName": "Harbourline Social Club",
       "accentColor": null,
       "logoAssetId": null,
       "presetId": null,
@@ -403,9 +3295,9 @@
           "enabled": true,
           "order": 0,
           "props": {
-            "eyebrow": "Riverside Rec",
-            "headline": "Sunday clinic and board games — same house, every week",
-            "description": "A week inside a community like yours. Scan in, stay on the list, show up Monday.",
+            "eyebrow": "Harbourline Social Club",
+            "headline": "A place to move, play and meet good people",
+            "description": "Golden Hour Run is filling up — 34 going · 8 spots left. Same house as Board Game Night and Sunday Pickleball.",
             "variant": "default"
           }
         },
@@ -418,18 +3310,18 @@
             "variant": "default",
             "items": [
               {
-                "title": "Sunday clinic",
-                "description": "Open mats and a named list — Elena is still on it.",
+                "title": "Golden Hour Run",
+                "description": "Friday evenings · 34 going · 8 spots left",
                 "icon": "calendar"
               },
               {
-                "title": "Board games night",
-                "description": "Sunday tables, same door as clinic. No extra spreadsheet.",
+                "title": "Board Game Night",
+                "description": "Wednesday tables at the clubhouse",
                 "icon": "users"
               },
               {
-                "title": "One public face",
-                "description": "Activities on the homepage stay in sync with the week.",
+                "title": "Sunday Pickleball",
+                "description": "Morning courts · beginners welcome",
                 "icon": "qr-code"
               }
             ]
@@ -453,13 +3345,13 @@
           "enabled": true,
           "order": 3,
           "props": {
-            "title": "What members say",
+            "title": "Our community",
             "variant": "default",
             "items": [
               {
-                "_key": "t-elena",
-                "quote": "I signed Sunday clinic and they still had my name on Monday.",
-                "name": "Elena Martinez",
+                "_key": "t-sarah",
+                "quote": "I keep bringing friends to Golden Hour — they actually stay on the list.",
+                "name": "Sarah Tan",
                 "role": "Member",
                 "avatarAssetId": ""
               }

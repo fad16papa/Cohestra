@@ -20,7 +20,7 @@ Community and activity-led businesses already generate leads — tennis clinics,
 
 This product replaces that fragmented stack with a single **Activity Lead Engine**: every activity gets a branded registration page and QR code; every submission flows into one **Master Client List** with full activity and referral context; operators follow up with structure; and reports show which communities convert.
 
-The first delivery is a **custom build for one operator** (Marco) and his existing activity communities — TGH Tennis Club, Ikigai Pickleball, Ikigai Board Game Night — over an **8-week MVP**. Market research validates strong problem-solution fit. The moat is not "better forms"; it is **continuity from activity to pipeline** — deduplicated clients, attribution on every registration, and follow-up coverage operators can measure.
+The first delivery is a **custom build for one operator** (Marco) and his existing activity communities — TGH Tennis Club, Harbourline Pickleball, Harbourline Board Game Night — over an **8-week MVP**. Market research validates strong problem-solution fit. The moat is not "better forms"; it is **continuity from activity to pipeline** — deduplicated clients, attribution on every registration, and follow-up coverage operators can measure.
 
 **Why now:** The client is already running three lead engines. Every new activity added without consolidation deepens the data fragmentation. Consolidating before expansion establishes a baseline for follow-up coverage and activity ROI.
 
@@ -103,7 +103,7 @@ Every activity becomes a measurable lead-generation engine. No lost context afte
 **In (8-week MVP)**
 - Admin auth and dashboard with core metrics
 - Activity Engine: create activities, configure forms, QR codes, public pages
-- Launch templates for TGH Tennis, Ikigai Pickleball, Ikigai Board Game Night
+- Launch templates for TGH Tennis, Harbourline Pickleball, Harbourline Board Game Night
 - Master Client List: profiles, deduplication, relationship view (registration-based)
 - Reports: weekly/monthly views, filters, CSV export
 - Email: `[ASSUMPTION]` manual campaign compose + per-client history; transactional registration confirmation — not automated drip sequences

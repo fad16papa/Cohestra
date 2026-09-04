@@ -182,7 +182,7 @@ export function CommunitiesListPage() {
             id="community-name"
             value={name}
             maxLength={100}
-            placeholder="e.g. Ikigai"
+            placeholder="e.g. Harbourline"
             disabled={communitiesBlocked || saving}
             onChange={(event) => setName(event.target.value)}
           />

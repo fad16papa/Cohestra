@@ -272,7 +272,7 @@ Three ready-made templates replace **all** current fields (you confirm before ap
 | Template | Best for |
 |----------|----------|
 | **TGH Tennis** | Tennis level, clinic interest, referral, consent |
-| **Ikigai Pickleball** | First-timer, level, invited-by, referral, consent |
+| **Harbourline Pickleball** | First-timer, level, invited-by, referral, consent |
 | **Board Game Night** | Residency, consent block, social handle, referral |
 
 **Published** activities: templates are locked until you **Unpublish** from Overview.

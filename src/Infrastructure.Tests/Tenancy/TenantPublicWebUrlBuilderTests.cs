@@ -82,7 +82,7 @@ public sealed class TenantPublicWebUrlBuilderTests
             TenantPublicWebUrlBuilder.BuildPaddleDefaultPaymentLink("https://cohestra.app"));
         Assert.Equal(
             "https://cohestra.app/billing/paddle-return",
-            TenantPublicWebUrlBuilder.BuildPaddleDefaultPaymentLink("https://ikigai.cohestra.app"));
+            TenantPublicWebUrlBuilder.BuildPaddleDefaultPaymentLink("https://harbourline.cohestra.app"));
     }
 
     [Fact]

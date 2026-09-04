@@ -42,7 +42,7 @@ On every API startup the seeder **wipes business data** (clients, registrations,
 
 | Slug | Use for |
 |------|---------|
-| `demo-ikigai-pickleball-intro` | **Full** — max 5 registrants, 5 registered |
+| `demo-harbourline-pickleball-intro` | **Full** — max 5 registrants, 5 registered |
 | `demo-boardgame-night` | Capacity headroom (8/20) |
 | `demo-runners-draft-clinic` | Draft — no public registration |
 | `demo-sunset-archived-social` | Archived |

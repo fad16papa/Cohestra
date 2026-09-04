@@ -587,10 +587,10 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 ### Flow A — UJ-1 Priya starts free (Basic)
 
 1. Priya opens `cohestra.app` → **Start free**.
-2. Completes CAPTCHA, ToS/Privacy, org name, slug `ikigai`, email, password.
+2. Completes CAPTCHA, ToS/Privacy, org name, slug `harbourline`, email, password.
 3. Verifies email OTP → lands on empty Basic dashboard (PlanBadge **Basic**, no Stripe).
 4. Creates Community "Weekend Clinics" → Activity "Sunday clinic" → publishes (within 3).
-5. Opens public stub `ikigai.cohestra.app` — org name + activity link.
+5. Opens public stub `harbourline.cohestra.app` — org name + activity link.
 6. **Climax:** Copies QR / register link; first real registration path works without a card.
 7. Resolution: Uses fixed report + CSV; sees upgrade CTAs for Site Page and Team.
 
@@ -598,15 +598,15 @@ Platform 0 patterns (RegistrationForm, QrPanel, etc.) inherit unless gated above
 
 1. Priya upgrades to Core (Checkout + trial) or already on Core/Pro with free seat.
 2. Settings → Team → invite `marco@…` as Tenant Member.
-3. Marco accepts, sets password, logs in on `ikigai.cohestra.app`.
-4. **Climax:** Marco sees Ikigai clients/dashboard only; Team and Billing hidden.
+3. Marco accepts, sets password, logs in on `harbourline.cohestra.app`.
+4. **Climax:** Marco sees Harbourline clients/dashboard only; Team and Billing hidden.
 5. Edge: On Basic, invite control disabled — "Upgrade to Core for a second seat."
 
 ### Flow C — UJ-3 Elena registers
 
-1. Elena scans QR → `/register/sunday-clinic` on Ikigai subdomain.
+1. Elena scans QR → `/register/sunday-clinic` on Harbourline subdomain.
 2. Completes form → registration number.
-3. **Climax:** Client stored under Ikigai only; Priya sees Elena on dashboard.
+3. **Climax:** Client stored under Harbourline only; Priya sees Elena on dashboard.
 4. Edge: Same phone at another tenant = separate Client.
 
 ### Flow D — UJ-4 Platform Admin Suspend (break-glass)

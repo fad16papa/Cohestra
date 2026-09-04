@@ -118,7 +118,7 @@ Behavioral. Visual specs in `DESIGN.md.Components`.
 | **SegmentPicker** | Campaign compose | Presets: All clients · By Activity · By Lead Status · By Community · Manual multi-select. AND semantics across filters. |
 | **ReportFilterBar** | Reports | Date preset (week/month/custom) + Activity + Community + Lead Status + Referral Source. Export respects active filters. |
 | **QrPanel** | Activity detail · QR tab | Live preview, copy URL, download PNG. QR and URL always match. |
-| **FormFieldEditor** | Activity detail · Form tab | Add/remove/reorder fields via structured list (grip drag or arrows — not canvas DnD). Template picker: TGH Tennis, Ikigai Pickleball, Board Game Night. |
+| **FormFieldEditor** | Activity detail · Form tab | Add/remove/reorder fields via structured list (grip drag or arrows — not canvas DnD). Template picker: TGH Tennis, Harbourline Pickleball, Board Game Night. |
 | **ConsentBlock** | Board Game Night template | Required checkbox before submit. Plain-language consent copy. Cannot submit unchecked. |
 | **WhatsAppButton** | Client profile | Opens `wa.me/{phone}` in new tab/app. Logs "WhatsApp initiated" on timeline when clicked `[ASSUMPTION]`. |
 | **MetricTile** | Dashboard | Tap → filtered Clients list or Activity detail. Empty state when no Activities yet. |
@@ -247,12 +247,12 @@ Admin optimized for laptop; phone admin usable but not primary design target.
 
 **Protagonist:** Elena, first-time player, scans QR at venue. Mobile browser.
 
-1. QR opens `/register/ikigai-pickleball-sunday`.
-2. **ActivityHero** shows clinic name, time, location, Ikigai community tag.
+1. QR opens `/register/harbourline-pickleball-sunday`.
+2. **ActivityHero** shows clinic name, time, location, Harbourline community tag.
 3. Elena scrolls **RegistrationForm** — name, profession, phone, first-timer, level, invited-by, referral source.
 4. Inline validation on blur; submit enabled when valid.
 5. Tap **Join activity**.
-6. **Climax:** Confirmation replaces form — "You're registered for Ikigai Dink & Drive. See you Sunday."
+6. **Climax:** Confirmation replaces form — "You're registered for Harbourline Dink & Drive. See you Sunday."
 7. **Resolution:** Elena closes browser. Marco's dashboard count increments within 60s.
 
 **Edge:** Elena registered for Board Game Night last month with same phone → success shown; existing Client updated; new Registration created.
@@ -292,7 +292,7 @@ Admin optimized for laptop; phone admin usable but not primary design target.
 1. **Reports** → preset **Monthly**.
 2. **ReportFilterBar** — all communities, date range auto-set.
 3. Reviews summary blocks: registrations by Activity, new Clients, community ranking, repeat participants, inactive Clients, campaign results.
-4. Applies filter: Ikigai Pickleball only — summary updates.
+4. Applies filter: Harbourline Pickleball only — summary updates.
 5. **Export CSV**.
 6. **Climax:** File downloads — no manual spreadsheet consolidation.
 7. **Resolution:** Stakeholders decide which activity to scale.
@@ -326,8 +326,8 @@ Platform `{colors.primary}` used when no override. Typography and spacing never 
 | Template | Notable UX |
 |----------|------------|
 | TGH Tennis | Tennis level select, clinic interest, referral source |
-| Ikigai Pickleball | First-timer toggle, playing level, invited-by |
-| Ikigai Board Game Night | **ConsentBlock** required, residency select, social handle |
+| Harbourline Pickleball | First-timer toggle, playing level, invited-by |
+| Harbourline Board Game Night | **ConsentBlock** required, residency select, social handle |
 
 ### Lead Status workflow `[ASSUMPTION]`
 

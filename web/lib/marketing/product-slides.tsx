@@ -43,7 +43,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
     feeling: "Relief",
     feelingLine: "Every person who signs up still has a name on Monday",
     scene:
-      "Elena scanned Sunday clinic. She is still on the list — not a row in a spreadsheet you meant to file.",
+      "Maya scanned Golden Hour Run. She is still on the list — not a row in a spreadsheet you meant to file.",
     outcomes: [
       "One profile from every registration",
       "Status the team can act on",
@@ -58,7 +58,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
     feeling: "Connection",
     feelingLine: "Message them where they already are — and keep the record",
     scene:
-      "WhatsApp to Jordan about Sunday clinic, sitting on the timeline — not in someone’s personal chat.",
+      "WhatsApp to Maya about Golden Hour, sitting on the timeline — not in someone’s personal chat.",
     outcomes: [
       "Open WhatsApp or Viber from the person",
       "The send is logged for the whole team",
@@ -73,7 +73,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
     feeling: "Control",
     feelingLine: "Know what needs you before the session starts",
     scene:
-      "Follow-ups still open, this week’s registrations, Sunday clinic on the board — one calm glance.",
+      "Follow-ups still open, this week’s registrations, Golden Hour on the board — one calm glance.",
     outcomes: [
       "Who still needs a message",
       "This week against last week",
@@ -87,7 +87,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
     navLabel: "Campaigns",
     feeling: "Reach",
     feelingLine: "Reach the right people without exporting your community",
-    scene: "Sunday clinic regulars, not a CSV on someone’s laptop.",
+    scene: "Golden Hour regulars, not a CSV on someone’s laptop.",
     outcomes: [
       "Segment from the people you already have",
       "Preview before you send",
@@ -101,7 +101,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
     navLabel: "Reports",
     feeling: "Proof",
     feelingLine: "Show the week — not a spreadsheet archaeology dig",
-    scene: "Elena counted once. The week is a view, not a scavenger hunt.",
+    scene: "Maya counted once. The week is a view, not a scavenger hunt.",
     outcomes: [
       "Filter the week you actually ran",
       "People and registrations, together",
@@ -116,7 +116,7 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
     feeling: "Pride",
     feelingLine: "Your public face stays tied to the activities you already run",
     scene:
-      "Sunday clinic and board games night on the public page — the same activities as the list, not a second brochure.",
+      "Golden Hour and Board Game Night on the public page — the same activities as the list, not a second brochure.",
     outcomes: [
       "Activities update from the workspace",
       "Preview, then publish",

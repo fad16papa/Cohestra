@@ -56,7 +56,7 @@ The platform promise from the proposal holds for v1: **every activity becomes a 
 ### 2.3 Key User Journeys
 
 - **UJ-1. Elena registers at the Sunday pickleball clinic.**
-  - **Persona + context:** Elena, first-time pickleball player, hears about Ikigai Dink & Drive from a friend and scans the event QR at the venue.
+  - **Persona + context:** Elena, first-time pickleball player, hears about Harbourline Dink & Drive from a friend and scans the event QR at the venue.
   - **Entry state:** Unauthenticated; mobile browser after QR scan.
   - **Path:** Opens public registration page → completes name, profession, contact, first-timer status, playing level, invited-by, referral source → submits consent implicitly via form → sees confirmation.
   - **Climax:** Submission succeeds; Elena knows she's registered without creating an account.
@@ -96,7 +96,7 @@ The platform promise from the proposal holds for v1: **every activity becomes a 
 
 - **Client** — A person in the **Master Client List**, identified primarily by contact details. Holds master profile fields, **Lead Status**, notes, consent and communication preferences, and links to all **Registrations**, **Campaigns**, and follow-up history. Synonyms like "lead" or "contact" in UI copy must map to this term in requirements.
 
-- **Community** — A business grouping for activities and lead attribution (e.g., TGH Tennis Club, Ikigai Pickleball). Operators manage a **Community catalog** (CRUD under Activities → Communities). Each Activity stores a community **label** copied from the catalog at assign time; reports, client filters, and activity filters match on that label. Not a separate tenant.
+- **Community** — A business grouping for activities and lead attribution (e.g., TGH Tennis Club, Harbourline Pickleball). Operators manage a **Community catalog** (CRUD under Activities → Communities). Each Activity stores a community **label** copied from the catalog at assign time; reports, client filters, and activity filters match on that label. Not a separate tenant.
 
 - **Category** — Activity classification (e.g., Tennis Clinic, Pickleball Session). Operators manage a **Category catalog** (CRUD under Activities → Categories). Activities store a category **label** denormalized from the catalog; activity create and list filters use catalog dropdowns.
 
@@ -122,7 +122,7 @@ The platform promise from the proposal holds for v1: **every activity becomes a 
 
 ### 4.1 Activity Engine
 
-**Description:** Operators create and reuse Activities instead of one-off Google Forms. Each Activity includes setup metadata, a configurable Form, a public registration page, and a QR Code. Supports the three existing lead-engine patterns from the proposal (TGH Tennis, Ikigai Pickleball, Ikigai Board Game Night) as launch templates. Realizes UJ-1, UJ-2.
+**Description:** Operators create and reuse Activities instead of one-off Google Forms. Each Activity includes setup metadata, a configurable Form, a public registration page, and a QR Code. Supports the three existing lead-engine patterns from the proposal (TGH Tennis, Harbourline Pickleball, Harbourline Board Game Night) as launch templates. Realizes UJ-1, UJ-2.
 
 **Functional Requirements:**
 
@@ -344,7 +344,7 @@ Only authenticated users can access dashboard, **Client** records, **Activity** 
 - Admin authentication and dashboard (FR-8, FR-9, FR-16)
 - **Master Client List** with profiles, deduplication, relationship view (FR-5, FR-6, FR-7)
 - **Activity Engine**: create Activities, configure Forms, QR codes, public registration pages (FR-1–FR-4)
-- Launch templates for TGH Tennis, Ikigai Pickleball, Ikigai Board Game Night field sets (FR-2)
+- Launch templates for TGH Tennis, Harbourline Pickleball, Harbourline Board Game Night field sets (FR-2)
 - **Reports**: weekly/monthly views, filters, CSV export (FR-10, FR-11)
 - Email **Campaign** foundation: compose, send, templates, per-client history (FR-12, FR-13)
 - WhatsApp click-to-message and manual follow-up status (FR-14, FR-15)
@@ -439,7 +439,7 @@ The following capabilities shipped during droplet UAT hardening (post–§6.4):
 
 ## 10. Why Now
 
-The client already runs active lead engines (TGH Tennis, Ikigai Pickleball, Board Game Night) but loses measurable context once forms are submitted. Consolidating now — before adding more activities — prevents further data fragmentation and establishes a baseline for follow-up coverage and activity ROI reporting.
+The client already runs active lead engines (TGH Tennis, Harbourline Pickleball, Board Game Night) but loses measurable context once forms are submitted. Consolidating now — before adding more activities — prevents further data fragmentation and establishes a baseline for follow-up coverage and activity ROI reporting.
 
 ---
 

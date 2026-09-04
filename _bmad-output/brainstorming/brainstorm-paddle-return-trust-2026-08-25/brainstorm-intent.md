@@ -24,7 +24,7 @@ A leaked `txn_` at worst lands on the right club’s login wall. It must never b
 
 ## Felt legitimacy
 
-Operators hire Paddle as the bank and Cohestra as the club OS. `ikigai.cohestra.app` is the product; `cohestra.app` is Cohestra Inc. An extra domain after typing a card feels like bait-and-switch, especially after the localhost SSL scar and in PH/SG distrust of payment rails.
+Operators hire Paddle as the bank and Cohestra as the club OS. `harbourline.cohestra.app` is the product; `cohestra.app` is Cohestra Inc. An extra domain after typing a card feels like bait-and-switch, especially after the localhost SSL scar and in PH/SG distrust of payment rails.
 
 The locator was hired for **closure**, not routing. Success is proven by a receipt that matches Paddle’s overlay, not by a query string.
 

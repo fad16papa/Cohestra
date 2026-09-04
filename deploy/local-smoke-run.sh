@@ -87,7 +87,7 @@ if [[ -n "$TOKEN" ]]; then
   if [[ "$COUNT" -gt 0 ]]; then
     pass "Admin activities list (${COUNT} activities)"
     # Prefer a published activity that still accepts registrations. The first
-    # published row can be at cap (demo-ikigai-pickleball-intro) or past event end.
+    # published row can be at cap (demo-harbourline-pickleball-intro) or past event end.
     SLUG=$(echo "$ACTIVITIES" | python3 -c "
 import sys, json
 d = json.load(sys.stdin)

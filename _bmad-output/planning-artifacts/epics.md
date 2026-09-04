@@ -20,7 +20,7 @@ This document provides the complete epic and story breakdown for cohestra, decom
 
 FR-1: An authenticated operator can create, edit, and archive an Activity with name, category, schedule, location, status, and business purpose. Archived Activities stop accepting new Registrations but retain historical data. Activity list is searchable and filterable by status and category. Each Activity exposes a unique public registration URL.
 
-FR-2: An operator can define a Form per Activity with required fields, optional fields, custom questions, consent capture, and Referral Source options. Required fields block submission until valid. Form changes apply to new Registrations only; prior submissions retain captured answers. Three preset templates match TGH Tennis, Ikigai Pickleball, and Board Game Night field sets.
+FR-2: An operator can define a Form per Activity with required fields, optional fields, custom questions, consent capture, and Referral Source options. Required fields block submission until valid. Form changes apply to new Registrations only; prior submissions retain captured answers. Three preset templates match TGH Tennis, Harbourline Pickleball, and Board Game Night field sets.
 
 FR-3: The system generates a QR Code and public URL per published Activity. QR resolves to the same URL as the public link. Public page loads on mobile without authentication. Unpublished or archived Activities return a clear unavailable state on the public URL.
 
@@ -104,7 +104,7 @@ NFR-12: All form fields must have visible labels and accessible error descriptio
 
 - **Export format:** CSV for MVP reports export.
 
-- **Three launch form templates:** TGH Tennis, Ikigai Pickleball, Ikigai Board Game Night — seed data against shared JSON schema format, not separate database schemas.
+- **Three launch form templates:** TGH Tennis, Harbourline Pickleball, Harbourline Board Game Night — seed data against shared JSON schema format, not separate database schemas.
 
 - **Lead Status lifecycle:** New → Contacted → Active → Inactive — drives filters, badges, reports, and API segment builder.
 
@@ -164,7 +164,7 @@ UX-DR22: Build SegmentPicker for Campaign compose — presets: All clients, By A
 
 UX-DR23: Build ReportFilterBar — date preset (week/month/custom) + Activity + Community + Lead Status + Referral Source. Filter chips clear individually; "Clear all" resets. Export respects active filters.
 
-UX-DR24: Build FormFieldEditor for Activity detail Form tab — add/remove/reorder fields via structured list (not canvas drag-and-drop). Template picker for TGH Tennis, Ikigai Pickleball, Board Game Night.
+UX-DR24: Build FormFieldEditor for Activity detail Form tab — add/remove/reorder fields via structured list (not canvas drag-and-drop). Template picker for TGH Tennis, Harbourline Pickleball, Board Game Night.
 
 UX-DR25: Activity create flow — wizard: metadata (name, community, category, schedule, location, status draft) → Form configuration → Publish. Unpublished banner on Activity detail: "Not live — publish to generate QR and link."
 
@@ -490,13 +490,13 @@ So that each Activity captures the right information without a developer.
 ### Story 2.5: Launch Form Template Seeds
 
 As an operator,
-I want preset templates for TGH Tennis, Ikigai Pickleball, and Board Game Night,
+I want preset templates for TGH Tennis, Harbourline Pickleball, and Board Game Night,
 So that I can launch activities in under 15 minutes (SM-4).
 
 **Acceptance Criteria:**
 
 **Given** I am configuring a new Activity form
-**When** I select a template (TGH Tennis, Ikigai Pickleball, or Board Game Night)
+**When** I select a template (TGH Tennis, Harbourline Pickleball, or Board Game Night)
 **Then** the form schema populates with the proposal field sets including referral source (FR-2)
 **And** Board Game Night template includes consent field type for ConsentBlock (UX-DR14)
 

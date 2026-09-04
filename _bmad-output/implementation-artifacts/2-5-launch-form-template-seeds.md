@@ -9,14 +9,14 @@ Status: done
 ## Story
 
 As an operator,
-I want preset templates for TGH Tennis, Ikigai Pickleball, and Board Game Night,
+I want preset templates for TGH Tennis, Harbourline Pickleball, and Board Game Night,
 So that I can launch activities in under 15 minutes (SM-4).
 
 ## Acceptance Criteria
 
 1. **AC-2.5.1 — Template picker (FR-2)**
    - **Given** I am configuring a new Activity form
-   - **When** I select a template (TGH Tennis, Ikigai Pickleball, or Board Game Night)
+   - **When** I select a template (TGH Tennis, Harbourline Pickleball, or Board Game Night)
    - **Then** the form schema populates with the proposal field sets including referral source
 
 2. **AC-2.5.2 — ConsentBlock seed (UX-DR14)**
@@ -28,7 +28,7 @@ So that I can launch activities in under 15 minutes (SM-4).
 
 - [x] **Task 1: Template definitions** (AC: 2.5.1, 2.5.2)
   - [x] `web/lib/form-templates.ts` — three `ActivityFormSchema` seeds from addendum.md
-  - [x] TGH Tennis, Ikigai Pickleball, Board Game Night field sets
+  - [x] TGH Tennis, Harbourline Pickleball, Board Game Night field sets
   - [x] `referral_source` on all three; `consent` on Board Game Night
 
 - [x] **Task 2: Template picker UI** (AC: 2.5.1)

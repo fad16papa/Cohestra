@@ -25,8 +25,8 @@
 
 ### Existing lead engines to support
 1. **The Golden Hour Club / TGH Tennis** — name, contact, Instagram, nationality, profession, tennis level, clinic interest, referral source
-2. **Ikigai Dink & Drive (Pickleball / Sunday 7AM)** — name, profession, contact, first-timer, playing level, invited by, referral source
-3. **Ikigai Board Game Night** — full name, phone, profession, residency, community consent, Facebook/Instagram, registration source
+2. **Harbourline Dink & Drive (Pickleball / Sunday 7AM)** — name, profession, contact, first-timer, playing level, invited by, referral source
+3. **Harbourline Board Game Night** — full name, phone, profession, residency, community consent, Facebook/Instagram, registration source
 
 ### Client profile fields
 - Master: name, contact, email/social, profession, nationality, residency, consent, communication preference, lead status, notes, referral/invited-by, duplicate check

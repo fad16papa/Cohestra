@@ -23,8 +23,8 @@ Technical mechanism decisions referenced by the PRD. Canonical architecture deci
 **Production:** `{tenant-slug}.cohestra.app` → nginx → web/API with `Host` header resolution.
 
 **Local development options:**
-1. `/etc/hosts` entries: `ikigai.localhost`, `tgh.localhost`
-2. Env override: `DEV_TENANT_SLUG=ikigai` when using plain `localhost`
+1. `/etc/hosts` entries: `harbourline.localhost`, `tgh.localhost`
+2. Env override: `DEV_TENANT_SLUG=harbourline` when using plain `localhost`
 3. Document in README (spine AD-4 / local-dev convention)
 
 ## Identity model (ratified — AD-7)

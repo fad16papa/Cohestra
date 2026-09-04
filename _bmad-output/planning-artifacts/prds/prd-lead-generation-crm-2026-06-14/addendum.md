@@ -15,10 +15,10 @@ Captured from proposal for implementation alignment. PRD uses **Activity** and *
 ### TGH Tennis Club (The Golden Hour Club)
 - Name, contact number, Instagram, nationality, profession/industry, tennis level, clinic interest, referral source
 
-### Ikigai Dink & Drive (Pickleball / Sunday 7AM Club)
+### Harbourline Dink & Drive (Pickleball / Sunday 7AM Club)
 - Name, profession, contact number, first-timer status, playing level, invited by, referral source
 
-### Ikigai Board Game Night (Play & Laugh)
+### Harbourline Board Game Night (Play & Laugh)
 - Full name, phone, profession, residency status, community consent, Facebook or Instagram, registration source
 
 ## Mechanism decisions (deferred — not PRD scope)

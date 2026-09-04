@@ -33,7 +33,7 @@
 ### C — Community & activity intelligence
 21. Auto-suggest theme from **community catalog** (Tennis → green court palette)
 22. **Smart defaults** when creating activity: inherit community form template
-23. Community **registration landing** — list all upcoming activities for "Ikigai Pickleball"
+23. Community **registration landing** — list all upcoming activities for "Harbourline Pickleball"
 24. **QR kit** includes community logo frame
 25. Cross-activity **series branding** (8-week clinic shares visual identity)
 

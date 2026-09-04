@@ -151,7 +151,7 @@ UX-DR31: Responsive breakpoints — public default full-width below 768px, cente
 
 **Inherited — Form tab authoring (must not regress)**
 
-UX-DR24: `FormFieldEditor` remains a structured list (grip or arrows). Template picker keeps TGH Tennis, Ikigai Pickleball, Board Game Night. Capture adds slash-add palette + saved tenant templates; does not replace the list with a canvas.
+UX-DR24: `FormFieldEditor` remains a structured list (grip or arrows). Template picker keeps TGH Tennis, Harbourline Pickleball, Board Game Night. Capture adds slash-add palette + saved tenant templates; does not replace the list with a canvas.
 
 UX-DR32: Banned — drag-and-drop form builder UI / canvas. Slash-add + saved templates are the Tally steal, not a designer. No column layout. No “typed prose becomes a Field.”
 

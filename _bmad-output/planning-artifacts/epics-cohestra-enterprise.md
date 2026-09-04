@@ -983,7 +983,7 @@ So that Core can compose Essentials layouts and Pro adds Studio sections.
 **Given** upgrade Core → Pro
 **When** plan becomes Pro
 **Then** the same SitePage unlocks Studio sections and Showcase/Event hub presets
-**And** publish remains tenant-scoped (Ikigai publish does not affect another tenant)
+**And** publish remains tenant-scoped (Harbourline publish does not affect another tenant)
 
 **Given** Basic tenant
 **When** SitePage APIs/builder routes are called
@@ -1083,7 +1083,7 @@ So that marketing stays Pro-gated while registration emails still work on all pl
 
 **Given** per-tenant SendGrid sender (From name/email)
 **When** a campaign/send is attempted
-**Then** Ikigai uses Ikigai’s configured sender
+**Then** Harbourline uses Harbourline’s configured sender
 **And** send is blocked if tenant sender is not verified (platform key + per-tenant sender auth)
 
 **Given** Member on Pro

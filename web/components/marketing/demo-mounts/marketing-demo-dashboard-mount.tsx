@@ -39,7 +39,7 @@ export function MarketingDemoDashboardMount() {
           <Metric
             label="Activities"
             value={String(metrics.activeActivitiesCount)}
-            hint="Sunday clinic on the board"
+            hint="Golden Hour on the board"
           />
           <Metric
             label="Follow-up"

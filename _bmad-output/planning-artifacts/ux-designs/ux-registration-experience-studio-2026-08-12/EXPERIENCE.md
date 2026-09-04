@@ -73,9 +73,9 @@ When accent fails WCAG AA against white button text, show inline warning; Save s
 
 ## Key Flows
 
-### UJ-RES-1 — Francis sets Ikigai Pickleball brand once
+### UJ-RES-1 — Francis sets Harbourline Pickleball brand once
 
-Francis opens **Communities → Ikigai Pickleball**, uploads club logo, sets accent `#2d6a4f`, uploads default hero. Saves. Creates new clinic activity, assigns community — hero and accent pre-filled on publish (Story 25.2+). **Climax:** first registrant sees pickleball-branded page without Francis re-uploading the hero.
+Francis opens **Communities → Harbourline Pickleball**, uploads club logo, sets accent `#2d6a4f`, uploads default hero. Saves. Creates new clinic activity, assigns community — hero and accent pre-filled on publish (Story 25.2+). **Climax:** first registrant sees pickleball-branded page without Francis re-uploading the hero.
 
 ### UJ-RES-2 — Francis picks Card preset for a waitlist event
 
