@@ -68,6 +68,11 @@ type SitePageRendererProps = {
   site: PublicSitePayload;
   isPreview?: boolean;
   showPreviewBanner?: boolean;
+  /**
+   * Cinema / DemoClub: hide Cohestra operator chrome (theme toggle, QR hint)
+   * so the public site reads as the club’s own front of house.
+   */
+  clubFacingOnly?: boolean;
 };
 
 type CtaProps = {
@@ -147,10 +152,12 @@ function HeroSection({
   section,
   siteName,
   previewMode,
+  clubFacingOnly = false,
 }: {
   section: SiteSection;
   siteName: string;
   previewMode: SitePreviewLayoutMode;
+  clubFacingOnly?: boolean;
 }) {
   const eyebrow = typeof section.props.eyebrow === "string" ? section.props.eyebrow : "";
   const headline = typeof section.props.headline === "string" ? section.props.headline : siteName;
@@ -270,28 +277,30 @@ function HeroSection({
             ) : null}
           </div>
         )}
-        <p
-          className={previewLayoutClass(previewMode, {
-            full: cn(
-              "mx-auto max-w-lg text-xs leading-relaxed sm:text-sm",
-              onDark ? "text-white/75" : "text-text-muted-warm/90",
-              marketingHeroEnterClass()
-            ),
-            phone: cn(
-              "text-xs leading-relaxed",
-              onDark ? "text-white/70" : "text-text-muted-warm",
-              marketingHeroEnterClass()
-            ),
-            desktop: cn(
-              "mx-auto max-w-lg text-sm",
-              onDark ? "text-white/75" : "text-text-muted-warm/90",
-              marketingHeroEnterClass()
-            ),
-          })}
-          style={marketingHeroEnterStyle(eyebrow ? 240 : 170)}
-        >
-          Have an event link or QR code? Open it directly. No need to start here.
-        </p>
+        {!clubFacingOnly ? (
+          <p
+            className={previewLayoutClass(previewMode, {
+              full: cn(
+                "mx-auto max-w-lg text-xs leading-relaxed sm:text-sm",
+                onDark ? "text-white/75" : "text-text-muted-warm/90",
+                marketingHeroEnterClass()
+              ),
+              phone: cn(
+                "text-xs leading-relaxed",
+                onDark ? "text-white/70" : "text-text-muted-warm",
+                marketingHeroEnterClass()
+              ),
+              desktop: cn(
+                "mx-auto max-w-lg text-sm",
+                onDark ? "text-white/75" : "text-text-muted-warm/90",
+                marketingHeroEnterClass()
+              ),
+            })}
+            style={marketingHeroEnterStyle(eyebrow ? 240 : 170)}
+          >
+            Have an event link or QR code? Open it directly. No need to start here.
+          </p>
+        ) : null}
       </div>
     </MarketingCinematicHero>
   );
@@ -589,6 +598,7 @@ function renderSection(
     showUpcoming: boolean;
     previewMode: SitePreviewLayoutMode;
     isPreview: boolean;
+    clubFacingOnly: boolean;
   }
 ) {
   let node: ReactNode = null;
@@ -600,6 +610,7 @@ function renderSection(
           section={section}
           siteName={context.siteName}
           previewMode={context.previewMode}
+          clubFacingOnly={context.clubFacingOnly}
         />
       );
       break;
@@ -657,6 +668,7 @@ export function SitePageRenderer({
   site,
   isPreview = false,
   showPreviewBanner,
+  clubFacingOnly = false,
 }: SitePageRendererProps) {
   const previewMode = useSitePreviewLayout();
   const shouldShowPreviewBanner = showPreviewBanner ?? (isPreview && !previewMode);
@@ -715,6 +727,7 @@ export function SitePageRenderer({
     showUpcoming,
     previewMode,
     isPreview,
+    clubFacingOnly,
   };
 
   return (
@@ -793,16 +806,18 @@ export function SitePageRenderer({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div
-            className={cn(
-              "rounded-full border p-0.5 transition-colors duration-300",
-              headerOverHero
-                ? "border-white/25 bg-white/10 backdrop-blur-[2px]"
-                : "border-border-warm/60 bg-card/60 shadow-sm backdrop-blur-sm"
-            )}
-          >
-            <ThemeToggle variant="public" />
-          </div>
+          {!clubFacingOnly ? (
+            <div
+              className={cn(
+                "rounded-full border p-0.5 transition-colors duration-300",
+                headerOverHero
+                  ? "border-white/25 bg-white/10 backdrop-blur-[2px]"
+                  : "border-border-warm/60 bg-card/60 shadow-sm backdrop-blur-sm"
+              )}
+            >
+              <ThemeToggle variant="public" />
+            </div>
+          ) : null}
         </div>
         </div>
       </header>

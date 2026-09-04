@@ -787,8 +787,8 @@ const club = {
             variant: "default",
             heroImageUrl: "/demo/harbourline-hero.webp",
             primaryCta: {
-              label: "See Golden Hour Run",
-              href: "#upcoming",
+              label: "See this week’s activities",
+              target: "scroll-upcoming",
             },
           },
         },
