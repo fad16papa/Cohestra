@@ -86,10 +86,10 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
 ### 2.3 Key User Journeys
 
 - **UJ-1. Priya starts free on Basic (primary signup).**
-  - **Persona + context:** Priya, operations lead at Ikigai Sports, trying Cohestra without a card (P6 **Start free**).
+  - **Persona + context:** Priya, operations lead at Harbourline Sports, trying Cohestra without a card (P6 **Start free**).
   - **Entry state:** Unauthenticated; marketing site → **Start free** signup (CAPTCHA + ToS/Privacy acceptance — FR-26 / FR-26a).
   - **Path:** Organization name, **Tenant Slug**, admin email, password → email OTP verify → lands in empty **Basic** tenant dashboard (Plan=Basic, BillingStatus=Free, no Stripe, no SitePage) → creates first **Community** (within 1-community cap) and first **Activity** → publishes (within 3 published cap) → copies QR / register link.
-  - **Climax:** Public stub at `https://ikigai.cohestra.app/` shows org display name + published activities; `/register/{activity-slug}` accepts participants; Priya is sole **Tenant Admin** (1 seat).
+  - **Climax:** Public stub at `https://harbourline.cohestra.app/` shows org display name + published activities; `/register/{activity-slug}` accepts participants; Priya is sole **Tenant Admin** (1 seat).
   - **Resolution:** Workspace ready for real ops on Basic footprint (activities, clients, registration emails, fixed report + CSV). Site Page builder / fixed SitePage and Team invites are Core+ upgrade CTAs (FR-12, FR-6).
   - **Edge cases:** Slug collision — system suggests alternatives before commit. Direct Core/Pro trial is a secondary path (FR-19), not this journey.
 
@@ -97,16 +97,16 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
   - **Persona + context:** Priya (on **Core** or higher — Basic is **1 seat** and cannot invite) needs help running weekend clinics.
   - **Entry state:** Authenticated **Tenant Admin** on a plan with unused seat capacity.
   - **Path:** Settings → Team → invite email → Marco receives invite → sets password → logs in with **Tenant Member** role.
-  - **Climax:** Marco sees dashboard and clients for Ikigai only; cannot access tenant settings or billing.
+  - **Climax:** Marco sees dashboard and clients for Harbourline only; cannot access tenant settings or billing.
   - **Resolution:** Multi-user operations without sharing passwords.
   - **Edge cases:** Invite expires after 7 days; Priya can resend. On **Basic**, Team invite is disabled with upgrade CTA to Core (H3). At Core/Pro seat cap, invite disabled until a seat frees or plan upgrades.
 
-- **UJ-3. Elena registers at Ikigai's Sunday clinic (unchanged participant flow, tenant-scoped).**
+- **UJ-3. Elena registers at Harbourline's Sunday clinic (unchanged participant flow, tenant-scoped).**
   - **Persona + context:** Elena scans QR at venue.
-  - **Entry state:** Mobile browser on `https://ikigai.cohestra.app/register/sunday-clinic`.
-  - **Path:** Completes form → sees registration number → Client dedup runs within **Ikigai tenant only**.
-  - **Climax:** Registration stored under Ikigai; no visibility to other tenants' clients.
-  - **Resolution:** Priya sees Elena on Ikigai dashboard.
+  - **Entry state:** Mobile browser on `https://harbourline.cohestra.app/register/sunday-clinic`.
+  - **Path:** Completes form → sees registration number → Client dedup runs within **Harbourline tenant only**.
+  - **Climax:** Registration stored under Harbourline; no visibility to other tenants' clients.
+  - **Resolution:** Priya sees Elena on Harbourline dashboard.
   - **Edge case:** Same phone registered at a *different tenant* creates a separate **Client** — cross-tenant dedup is intentionally not performed.
 
 - **UJ-4. Platform Admin break-glass Suspend (abuse / ToS / support freeze).**
@@ -117,7 +117,7 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
   - **Resolution:** Platform Admin reactivates (`Status=Active`); prior `BillingStatus` unchanged unless separately adjusted. Unpaid collections remain automated (FR-23), not this journey.
 
 - **UJ-5. Marco runs Monday lead outreach from the Clients queue (Core+).**
-  - **Persona + context:** Marco, **Tenant Member** on Ikigai **Pro**, preparing follow-ups after a busy weekend of registrations.
+  - **Persona + context:** Marco, **Tenant Member** on Harbourline **Pro**, preparing follow-ups after a busy weekend of registrations.
   - **Entry state:** Authenticated; Dashboard shows 14 **New** clients and follow-up coverage below target.
   - **Path:** Opens **Clients** → applies **New** queue filter (or taps Dashboard segment) → scans list showing contact channel and last registration → opens profile → **WhatsApp** or **Viber** click-to-message → records follow-up status → marks **Contacted** → optionally adds **next follow-up date**.
   - **Climax:** Client timeline shows outreach event; Dashboard follow-up coverage increases; Marco never exports a spreadsheet to find phone numbers.
@@ -134,13 +134,13 @@ The inherited **Platform 0** codebase already implements the activity-engine CRM
 
 - **Tenant** — An isolated organization workspace on the Platform. Owns all business data (activities, clients, registrations, campaigns, site configuration). Identified by immutable `TenantId` and a unique **Tenant Slug** used in routing.
 
-- **Tenant Organization** — The business entity represented by a **Tenant** (e.g., Ikigai Sports, TGH Tennis Club). Synonym: **Organization** in UI copy maps to **Tenant**.
+- **Tenant Organization** — The business entity represented by a **Tenant** (e.g., Harbourline Sports, TGH Tennis Club). Synonym: **Organization** in UI copy maps to **Tenant**.
 
 - **Tenant Admin** — Authenticated user with full administrative rights within one **Tenant** (settings, team, billing, plan upgrades, SendGrid sender, plus all operational modules the plan allows). See FR-5.
 
 - **Tenant Member** — Authenticated user with operational rights within one **Tenant** for modules the **plan allows** (activities, clients, reports; campaigns if Pro; SitePage/builder if Core/Pro). No team, billing, or tenant settings. See FR-5.
 
-- **Tenant Slug** — URL-safe unique identifier for a **Tenant** (e.g., `ikigai-sports`). Used for subdomain routing `[ASSUMPTION: {slug}.cohestra.app]`.
+- **Tenant Slug** — URL-safe unique identifier for a **Tenant** (e.g., `harbourline-sports`). Used for subdomain routing `[ASSUMPTION: {slug}.cohestra.app]`.
 
 - **Tenant Context** — Runtime resolution of which **Tenant** a request operates on, derived from host header (subdomain) and/or authenticated JWT `tenant_id` claim.
 
@@ -317,8 +317,8 @@ CSV exports and reports include only records for the authenticated **Tenant**.
 Public and admin web surfaces resolve **Tenant** from subdomain `{tenant-slug}.cohestra.app`. `[ASSUMPTION: apex domain hosts marketing + signup only]`
 
 **Consequences (testable):**
-- `https://ikigai.cohestra.app/` renders Ikigai public home per plan (Basic **stub**, Core fixed SitePage, Pro builder — FR-12).
-- `https://ikigai.cohestra.app/register/{activity-slug}` scopes activity lookup to Ikigai on all plans.
+- `https://harbourline.cohestra.app/` renders Harbourline public home per plan (Basic **stub**, Core fixed SitePage, Pro builder — FR-12).
+- `https://harbourline.cohestra.app/register/{activity-slug}` scopes activity lookup to Harbourline on all plans.
 - Local dev supports `{slug}.localhost` or `?tenant=` override documented in addendum.
 
 #### FR-12: Public site by plan (Essentials / Studio split)
@@ -342,7 +342,7 @@ Public homepage capability depends on `Tenant.Plan`:
 SendGrid sender identity and email footer branding are configurable per **Tenant** within platform guardrails.
 
 **Consequences (testable):**
-- Campaign sent from Ikigai uses Ikigai's configured From name/email.
+- Campaign sent from Harbourline uses Harbourline's configured From name/email.
 - Platform blocks send if tenant sender not verified (inherited delivery checklist, tenant-scoped).
 
 ---
@@ -632,7 +632,7 @@ Operators can optionally set a **next follow-up date** on a **Client** and see o
 - **Cross-tenant discovery marketplace** — out of Option A one-stop definition (§13.1).
 - **Arbitrary custom report builder** (drag-and-drop widgets / ad-hoc SQL) — deferred; Core/Pro use defined query dimensions + filters (FR-15).
 - **Enterprise custom contracts in-app** — sales-led deals use manual invoice; self-serve **Basic is free**; **Core / Pro** via Stripe.
-- **Tenant custom domains** (`events.ikigai.com`) — deferred to v1.1; subdomain only in v1.
+- **Tenant custom domains** (`events.harbourline.com`) — deferred to v1.1; subdomain only in v1.
 - **Fine-grained custom RBAC** (per-module permissions builder) — Admin vs Member only in v1.
 
 ---

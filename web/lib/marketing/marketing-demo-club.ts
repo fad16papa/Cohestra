@@ -86,7 +86,7 @@ export type MarketingDemoClub = {
   website: PublicSitePayload;
 };
 
-export const DEMO_ORG_NAME = "Ikigai Social Club";
+export const DEMO_ORG_NAME = "Harbourline Social Club";
 export const GOLDEN_HOUR_UPCOMING_ID = "demo-golden-hour-run";
 export const ANCHOR_IDS = {
   maya: "demo-maya",

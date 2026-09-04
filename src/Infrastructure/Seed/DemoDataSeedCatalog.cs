@@ -60,7 +60,7 @@ internal static class DemoDataSeedCatalog
             ReferralSource: "Friend",
             Notes: "Primary UAT persona — messenger outreach, full profile.",
             CreatedDaysAgo: 14,
-            RegisterOnActivitySlugs: ["demo-tgh-tennis-open", "demo-ikigai-pickleball-intro"],
+            RegisterOnActivitySlugs: ["demo-tgh-tennis-open", "demo-harbourline-pickleball-intro"],
             Timeline:
             [
                 new(ClientTimelineEventType.WhatsAppInitiated, 10),
@@ -100,7 +100,7 @@ internal static class DemoDataSeedCatalog
             ReferralSource: "WhatsApp group",
             Notes: null,
             CreatedDaysAgo: 9,
-            RegisterOnActivitySlugs: ["demo-ikigai-pickleball-intro"],
+            RegisterOnActivitySlugs: ["demo-harbourline-pickleball-intro"],
             Timeline:
             [
                 new(ClientTimelineEventType.WhatsAppInitiated, 5),
@@ -226,7 +226,7 @@ internal static class DemoDataSeedCatalog
             ReferralSource: "Viber community",
             Notes: "PH E.164 — Viber deep link normalization.",
             CreatedDaysAgo: 16,
-            RegisterOnActivitySlugs: ["demo-ikigai-pickleball-intro"],
+            RegisterOnActivitySlugs: ["demo-harbourline-pickleball-intro"],
             Timeline:
             [
                 new(ClientTimelineEventType.ViberInitiated, 3),
@@ -268,9 +268,9 @@ internal static class DemoDataSeedCatalog
             RegisterPersonaKeys: null,
             SyntheticRegistrationCount: 18),
         new(
-            Slug: "demo-ikigai-pickleball-intro",
-            Name: "Ikigai Pickleball — Intro Class",
-            CommunityLabel: "Ikigai Pickleball",
+            Slug: "demo-harbourline-pickleball-intro",
+            Name: "Harbourline Pickleball — Intro Class",
+            CommunityLabel: "Harbourline Pickleball",
             Category: "Sports",
             Status: ActivityStatus.Published,
             MaxRegistrants: 5,
@@ -280,8 +280,8 @@ internal static class DemoDataSeedCatalog
             SyntheticRegistrationCount: 0),
         new(
             Slug: "demo-boardgame-night",
-            Name: "Ikigai Board Game Night",
-            CommunityLabel: "Ikigai Board Games",
+            Name: "Harbourline Board Game Night",
+            CommunityLabel: "Harbourline Board Games",
             Category: "Social",
             Status: ActivityStatus.Published,
             MaxRegistrants: 20,

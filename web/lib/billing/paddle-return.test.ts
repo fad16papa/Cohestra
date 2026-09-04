@@ -59,7 +59,7 @@ describe("paddle-return", () => {
         "txn_01abc"
       )
     ).toBe("http://localhost:8088/billing/paddle-return?_ptxn=txn_01abc");
-    expect(buildPaddleCheckoutReturnUrl("https://ikigai.cohestra.app")).toBe(
+    expect(buildPaddleCheckoutReturnUrl("https://harbourline.cohestra.app")).toBe(
       "https://cohestra.app/billing/paddle-return"
     );
   });

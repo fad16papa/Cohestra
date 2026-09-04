@@ -6,8 +6,8 @@ Load-bearing catalog for the DemoClub cinema seed. Complements `SPEC.md` CAP-1 /
 
 | Field | Contract |
 |-------|----------|
-| `orgName` | **Ikigai Social Club** — fictional Singapore DemoClub (not Cohestra branding; not Acme / yourclub). |
-| `publicHost` | `ikigai-social.cohestra.app` (slug matches brand). |
+| `orgName` | **Harbourline Social Club** — fictional Singapore DemoClub (not Cohestra branding; not Acme / yourclub). |
+| `publicHost` | `harbourline-social.cohestra.app` (slug matches brand). |
 | Website FOH | Customer brand dominates; barely looks like Cohestra. |
 | Locale voice | Singapore community life; `timeZoneId` = **Asia/Singapore**. |
 | Operator greeting | May stay a first name; must not break Anchor continuity if it matches an Anchor (avoid colliding with Maya Santos if greeting stays “Maya”). |

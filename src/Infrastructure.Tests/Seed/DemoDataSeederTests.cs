@@ -105,7 +105,7 @@ public sealed class DemoDataSeederTests
         Assert.False(await dbContext.Clients.AnyAsync(client => client.FullName == "James Patel" && client.ConsentGiven));
 
         var fullActivity = await dbContext.Activities.SingleAsync(
-            activity => activity.Slug == "demo-ikigai-pickleball-intro");
+            activity => activity.Slug == "demo-harbourline-pickleball-intro");
         Assert.Equal(5, fullActivity.MaxRegistrants);
         Assert.Equal(5, await dbContext.Registrations.CountAsync(registration => registration.ActivityId == fullActivity.Id));
 

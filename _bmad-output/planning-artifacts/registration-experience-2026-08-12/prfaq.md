@@ -10,7 +10,7 @@
 
 **Singapore — [Future date]** — Cohestra, the community events platform for operators who run registrations and follow-up in one place, today announced **Registration Experience Studio**, letting organizers apply their community's look and feel to every activity sign-up page without a web designer.
 
-Until now, operators could customize form *fields* but not the *feeling* of the page — or they reconfigured branding separately for every activity. Registration Experience Studio introduces **Community Brand Kits** (logo, colors, default imagery) and **layout presets** that activities inherit automatically. A pickleball club sets "Ikigai Pickleball" once; each new clinic inherits the brand and publishes with one click.
+Until now, operators could customize form *fields* but not the *feeling* of the page — or they reconfigured branding separately for every activity. Registration Experience Studio introduces **Community Brand Kits** (logo, colors, default imagery) and **layout presets** that activities inherit automatically. A pickleball club sets "Harbourline Pickleball" once; each new clinic inherits the brand and publishes with one click.
 
 "Participants decide whether to trust us in the first three seconds," said a beta operator running tennis and wellness programs. "Our registration page now looks like it belongs to our club — not a generic SaaS form."
 

@@ -26,7 +26,7 @@ proposal_type: 'Client-facing business proposal (12 pages)'
 
 ## Research Overview
 
-This research combines BMad market research with analysis of the Creativorare **Cohestra Web Application** client proposal. The proposal targets a community/activity-led business currently running separate Google Forms (TGH Tennis Club, Ikigai Pickleball, Ikigai Board Game Night) and manual WhatsApp/email follow-up. The recommended product is a custom activity-engine CRM — not a generic horizontal SaaS launch.
+This research combines BMad market research with analysis of the Creativorare **Cohestra Web Application** client proposal. The proposal targets a community/activity-led business currently running separate Google Forms (TGH Tennis Club, Harbourline Pickleball, Harbourline Board Game Night) and manual WhatsApp/email follow-up. The recommended product is a custom activity-engine CRM — not a generic horizontal SaaS launch.
 
 **Methodology:** Web search with source verification (June 2026), cross-referenced against proposal claims, MVP scope, and phased roadmap.
 
@@ -51,7 +51,7 @@ This research combines BMad market research with analysis of the Creativorare **
 | **Vendor** | Creativorare |
 | **Problem** | Fragmented Google Forms, manual client organization, one-by-one WhatsApp/email follow-up, manual reporting, duplicate/inactive lead blind spots |
 | **Solution** | Unified platform: Activity Engine → custom forms → QR registration → master client list → campaigns → reports |
-| **Existing engines** | TGH Tennis Club, Ikigai Dink & Drive (Pickleball), Ikigai Board Game Night |
+| **Existing engines** | TGH Tennis Club, Harbourline Dink & Drive (Pickleball), Harbourline Board Game Night |
 | **MVP (8 weeks)** | Dashboard, master list, activity engine, QR/public pages, legacy form support, basic reports/export, email foundation, WhatsApp click-to-message |
 | **Phase 2** | Email sequences, WhatsApp Business API, referral tracking, lead scoring, attendance check-in, advanced analytics, RBAC, custom report builder |
 
@@ -376,7 +376,7 @@ _Source: [Arcus Japan](https://www.arcuss-japan.com/en/crmblogs/32192), [LeadHer
 
 | Attribute | Profile |
 |-----------|---------|
-| **Who** | Attended 2+ activities or joined a community (TGH, Ikigai clubs) |
+| **Who** | Attended 2+ activities or joined a community (TGH, Harbourline clubs) |
 | **Demographics** | Known profile in master list with activity history |
 | **Psychographics** | Seeks belonging, skill progression, social circle |
 | **Behavior** | Responds to activity reminders; refers friends; may go inactive without re-engagement |

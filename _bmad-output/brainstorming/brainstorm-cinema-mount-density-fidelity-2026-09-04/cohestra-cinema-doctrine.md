@@ -55,7 +55,7 @@ Cinema is a house tour, not a feature carousel. Front door = their brand; Cohest
 | | |
 |---|---|
 | Psychological job | Looks like us. Entry key: if public face feels like their club, the rest of Cohestra becomes believable. Only room outsiders already understand. |
-| Prove | Inhabited club site (Ikigai Social Club): venue/hall/court/room hero photo; THIS WEEK activities with living going/spots; community faces; Friday's event filling up — **34 going · 8 spots left** (first truth only). |
+| Prove | Inhabited club site (Harbourline Social Club): venue/hall/court/room hero photo; THIS WEEK activities with living going/spots; community faces; Friday's event filling up — **34 going · 8 spots left** (first truth only). |
 | Must not show | Mint void + three sentences; KPI / CRM / AI overlay; other club facts that belong in later rooms; Cohestra chrome dominating customer brand. |
 | Product source | `/dashboard/website` |
 
@@ -244,7 +244,7 @@ Cinema may compose, never invent.
 1. **May compose, never invent** — no fake functionality; no world the product cannot inhabit Monday.
 2. **Path B replicas, not live routes** — high-fidelity presentational replicas that look like real functional pages; not live operator routes. Squint test required.
 3. **FeelingCopy caption-only** — ProductFrame is the proof; copy is caption; frame-dominant; copy dial almost zero.
-4. **Website barely Cohestra** — customer brand (Ikigai Social Club inhabited public face); other five rooms = Cohestra machinery behind the door.
+4. **Website barely Cohestra** — customer brand (Harbourline Social Club inhabited public face); other five rooms = Cohestra machinery behind the door.
 5. **House-tour seek order locked** — Website → Clients → Activities → Follow-up → Analytics → Cohestra AI; do not remount old order under new labels.
 6. **One seed, six rooms** — continuous living data; cause-and-effect mandatory.
 7. **No demo-SaaS theater** — kill list enforced; flips only through club-fact voice.

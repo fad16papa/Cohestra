@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Generates web/lib/marketing/marketing-demo-club.json for Story 33.6.
- * Deterministic DemoClub world: Ikigai Social Club, Asia/Singapore clock.
+ * Deterministic DemoClub world: Harbourline Social Club, Asia/Singapore clock.
  */
 import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -9,8 +9,8 @@ import { fileURLToPath } from "node:url";
 
 const DEMO_NOW = "2026-09-07T09:00:00+08:00";
 const TZ = "Asia/Singapore";
-const ORG = "Ikigai Social Club";
-const HOST = "ikigai-social.cohestra.app";
+const ORG = "Harbourline Social Club";
+const HOST = "harbourline-social.cohestra.app";
 const COMMUNITY = ORG;
 
 const GOLDEN_UPCOMING = {
@@ -745,7 +745,7 @@ const club = {
         slug: "board-game-night",
         name: "Board Game Night",
         schedule: "Wednesday · 7:30 PM",
-        location: "Ikigai Clubhouse",
+        location: "Harbourline Clubhouse",
         communityLabel: COMMUNITY,
         heroImageUrl: null,
         accentColor: null,

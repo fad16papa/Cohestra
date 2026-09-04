@@ -3,7 +3,7 @@ import type { ActivityFormSchema, FormFieldDefinition } from "@/lib/activities-a
 export type FormTemplateId =
   | "tgh-tennis"
   | "pickleball-club"
-  | "ikigai-board-game";
+  | "harbourline-board-game";
 
 export type FormTemplate = {
   id: FormTemplateId;
@@ -222,7 +222,7 @@ const pickleballClubSchema: ActivityFormSchema = {
   ],
 };
 
-const ikigaiBoardGameSchema: ActivityFormSchema = {
+const harbourlineBoardGameSchema: ActivityFormSchema = {
   version: 1,
   fields: [
     field({
@@ -283,7 +283,7 @@ const ikigaiBoardGameSchema: ActivityFormSchema = {
       placeholder: null,
       options: null,
       consentText:
-        "I agree to join the Ikigai community updates and event communications for Board Game Night.",
+        "I agree to join the Harbourline community updates and event communications for Board Game Night.",
     }),
     field({
       id: "social_handle",
@@ -327,11 +327,11 @@ export const formTemplates: FormTemplate[] = [
     schema: pickleballClubSchema,
   },
   {
-    id: "ikigai-board-game",
+    id: "harbourline-board-game",
     name: "Board Game Night",
     description:
       "Play & Laugh — residency select, required consent block, social handle.",
-    schema: ikigaiBoardGameSchema,
+    schema: harbourlineBoardGameSchema,
   },
 ];
 

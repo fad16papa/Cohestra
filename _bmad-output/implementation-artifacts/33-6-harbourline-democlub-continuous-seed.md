@@ -1,6 +1,6 @@
 ---
 story_id: 33.6
-story_key: 33-6-ikigai-democlub-continuous-seed
+story_key: 33-6-harbourline-democlub-continuous-seed
 epic: 33
 status: review
 baseline_commit: main
@@ -19,14 +19,14 @@ forward_deps:
   - 33-3-preview-productframe-desktop-pin-seek
 ---
 
-# Story 33.6: Ikigai DemoClub continuous seed world
+# Story 33.6: Harbourline DemoClub continuous seed world
 
 Status: review
 
 ## Story
 
 As a marketing visitor,
-I want every `/#crm` room to project one continuous Ikigai Social Club week,
+I want every `/#crm` room to project one continuous Harbourline Social Club week,
 So that cinema numbers and people are database assertions — not postcard props.
 
 **Spec:** `spec-democlub-cinema-seed`. **Slice:** seed module + helpers + tests only (mount polish / house-tour pill reorder / AI surface = later).
@@ -35,7 +35,7 @@ So that cinema numbers and people are database assertions — not postcard props
 
 1. **Given** the MarketingDemoClub seed  
    **When** it loads  
-   **Then** `orgName` is `Ikigai Social Club` and `publicHost` is `ikigai-social.cohestra.app`  
+   **Then** `orgName` is `Harbourline Social Club` and `publicHost` is `harbourline-social.cohestra.app`  
    **And** it uses frozen clock `Asia/Singapore` / `demoNow = 2026-09-07T09:00:00+08:00` (never system clock)
 
 2. **Given** Anchor events  
@@ -69,7 +69,7 @@ So that cinema numbers and people are database assertions — not postcard props
 - [x] Golden Hour spots helper; assert derived numbers
 - [x] Reverse-chain tests per Anchor
 - [x] Update assertDemoClubInvariants + unit tests
-- [x] Soft-fix mounts/copy that hardcode Riverside/Elena/Sunday clinic to seed-driven or Ikigai/Golden Hour language where they would lie
+- [x] Soft-fix mounts/copy that hardcode Riverside/Elena/Sunday clinic to seed-driven or Harbourline/Golden Hour language where they would lie
 
 ## Dev Notes
 
@@ -84,7 +84,8 @@ So that cinema numbers and people are database assertions — not postcard props
 Cursor Grok 4.5
 
 ### Completion Notes
-Ikigai Social Club continuous seed shipped with frozen Asia/Singapore clock, 34/42 Golden Hour assertion, derived 6+7+4=17 triage, five anchors + reverse-chain tests. Generator script at `web/scripts/generate-democlub-seed.mjs`.
+Harbourline Social Club continuous seed shipped with frozen Asia/Singapore clock, 34/42 Golden Hour assertion, derived 6+7+4=17 triage, five anchors + reverse-chain tests. Generator script at `web/scripts/generate-democlub-seed.mjs`.
+**Correction:** DemoClub identity must be Harbourline Social Club (`harbourline-social.cohestra.app`) — Ikigai naming purged repo-wide (zero `rg -ni ikigai` matches). Behavior/math unchanged.
 
 ### File List
 - web/lib/marketing/marketing-demo-club.json
@@ -94,5 +95,5 @@ Ikigai Social Club continuous seed shipped with frozen Asia/Singapore clock, 34/
 - web/lib/marketing/product-slides.tsx
 - web/components/marketing/demo-mounts/marketing-demo-*.tsx (dashboard/campaigns/reports)
 - _bmad-output/specs/spec-democlub-cinema-seed/*
-- _bmad-output/implementation-artifacts/33-6-ikigai-democlub-continuous-seed.md
+- _bmad-output/implementation-artifacts/33-6-harbourline-democlub-continuous-seed.md
 - _bmad-output/implementation-artifacts/sprint-status.yaml

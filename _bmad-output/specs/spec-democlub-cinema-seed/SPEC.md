@@ -49,7 +49,7 @@ sources:
 - Two-class data only: **Anchor** (100% continuous) vs **Ambient** (statistically coherent; no bespoke six-room narratives).
 - Nothing important may exist in only one room; marketing claims are database assertions.
 - Existing DemoClub hard rules stand unless this SPEC explicitly supersedes them: forbid Acme/yourclub org names; client emails `@example.com`; no remote `logoAssetId` / `heroImageAssetId`.
-- Club brand locked: `orgName` **Ikigai Social Club**; `publicHost` like `ikigai-social.cohestra.app` (fictional SG DemoClub, not Cohestra branding).
+- Club brand locked: `orgName` **Harbourline Social Club**; `publicHost` like `harbourline-social.cohestra.app` (fictional SG DemoClub, not Cohestra branding).
 - Deterministic cinema clock only: `timeZoneId` `Asia/Singapore`; `demoNow` `2026-09-07T09:00:00+08:00` — never the system clock.
 - `needsAttention` is derived (`dueNow ∪ atRisk ∪ opportunity` = 17, mutually exclusive; Healthy excluded) — never a stored flag; UI never hardcodes 17; CI fails if predicates ≠ 17.
 - Incomplete contact does not inflate `needsAttention`; it only constrains actionability (Marcus: no WhatsApp).
@@ -73,7 +73,7 @@ A reviewer can pick Maya (or any Anchor), walk Website → … → Analytics (an
 
 Resolved facts (no longer open):
 
-- **Club identity.** `orgName` = **Ikigai Social Club** (fictional Singapore DemoClub; not Cohestra branding). `publicHost` like `ikigai-social.cohestra.app`.
+- **Club identity.** `orgName` = **Harbourline Social Club** (fictional Singapore DemoClub; not Cohestra branding). `publicHost` like `harbourline-social.cohestra.app`.
 - **Clock.** `timeZoneId` = `Asia/Singapore`. Cinema `demoNow` = `2026-09-07T09:00:00+08:00` (Monday 09:00). Never use the system clock for relative labels or predicates.
 - **Week calendar.** Fri Sep 4 prior Golden Hour completed → Mon Sep 7 now → Wed Sep 9 Board Game Night → Fri Sep 11 Golden Hour Run **34/42** → Sun Sep 13 Sunday Pickleball.
 - **needsAttention.** `dueNow(6) ∪ atRisk(7) ∪ opportunity(4) = 17`, mutually exclusive buckets; derived count never a stored flag; Healthy excluded. Predicate detail in `derived-assertions.md`. Incomplete contact (Marcus missing phone) does **not** inflate the 17 — it only constrains actionability.

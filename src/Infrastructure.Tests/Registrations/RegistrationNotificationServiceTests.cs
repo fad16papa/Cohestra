@@ -92,7 +92,7 @@ public sealed class RegistrationNotificationServiceTests
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
-            Name = "Ikigai",
+            Name = "Harbourline",
             DefaultHeroImageUrl = "/api/v1/public/campaign-assets/99999999-9999-9999-9999-999999999999",
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -106,8 +106,8 @@ public sealed class RegistrationNotificationServiceTests
             Slug = "pickleball",
             Category = "Sports",
             Schedule = "Sun 9:00 AM",
-            Location = "Ikigai Studio",
-            CommunityLabel = "Ikigai",
+            Location = "Harbourline Studio",
+            CommunityLabel = "Harbourline",
             HeroImageUrl = null,
             RegistrationTheme = new RegistrationTheme
             {
@@ -194,7 +194,7 @@ public sealed class RegistrationNotificationServiceTests
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
-            Name = "Ikigai",
+            Name = "Harbourline",
             DefaultHeroImageUrl = $"/api/v1/public/campaign-assets/{communityAssetId}",
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,
@@ -208,8 +208,8 @@ public sealed class RegistrationNotificationServiceTests
             Slug = "pickleball",
             Category = "Sports",
             Schedule = "Sun 9:00 AM",
-            Location = "Ikigai Studio",
-            CommunityLabel = "Ikigai",
+            Location = "Harbourline Studio",
+            CommunityLabel = "Harbourline",
             HeroImageUrl = null,
             RegistrationTheme = new RegistrationTheme { InheritCommunityBrand = true },
             Status = ActivityStatus.Published,
@@ -329,8 +329,8 @@ public sealed class RegistrationNotificationServiceTests
             Slug = "pickleball",
             Category = "Sports",
             Schedule = "Sun 9:00 AM",
-            Location = "Ikigai Studio",
-            CommunityLabel = "Ikigai",
+            Location = "Harbourline Studio",
+            CommunityLabel = "Harbourline",
             Status = ActivityStatus.Published,
             FormSchema = new ActivityFormSchema
             {
@@ -414,8 +414,8 @@ public sealed class RegistrationNotificationServiceTests
             Slug = "pickleball",
             Category = "Sports",
             Schedule = "Sun 9:00 AM",
-            Location = "Ikigai Studio",
-            CommunityLabel = "Ikigai",
+            Location = "Harbourline Studio",
+            CommunityLabel = "Harbourline",
             Status = ActivityStatus.Published,
             FormSchema = new ActivityFormSchema
             {
@@ -542,8 +542,8 @@ public sealed class RegistrationNotificationServiceTests
             Slug = "pickleball",
             Category = "Sports",
             Schedule = "Sun 9:00 AM",
-            Location = "Ikigai Studio",
-            CommunityLabel = "Ikigai",
+            Location = "Harbourline Studio",
+            CommunityLabel = "Harbourline",
             HeroImageUrl = heroImageUrl,
             Status = ActivityStatus.Published,
             CreatedAt = DateTimeOffset.UtcNow,

@@ -13,7 +13,7 @@ public sealed class RegistrationOperatorNotifyEmailBuilderTests
             Phone: "+6591234567",
             Email: "elena@example.com",
             RegistrationNumber: "REG20260616000042",
-            RegistrationsUrl: "http://ikigai.localhost:3000/activities/abc?tab=registrations",
+            RegistrationsUrl: "http://harbourline.localhost:3000/activities/abc?tab=registrations",
             HiddenAnswers: hiddenAnswers ?? []);
 
     [Fact]
@@ -46,7 +46,7 @@ public sealed class RegistrationOperatorNotifyEmailBuilderTests
         Assert.Contains("+6591234567", content.PlainBody);
         Assert.Contains("elena@example.com", content.PlainBody);
         Assert.Contains("REG20260616000042", content.PlainBody);
-        Assert.Contains("http://ikigai.localhost:3000/activities/abc?tab=registrations", content.PlainBody);
+        Assert.Contains("http://harbourline.localhost:3000/activities/abc?tab=registrations", content.PlainBody);
         Assert.Contains("View registrations", content.HtmlBody);
     }
 

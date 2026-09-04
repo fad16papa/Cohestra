@@ -29,7 +29,7 @@ Six high-fidelity presentational replicas (not live operator routes) that pass t
 
 1. **Website** — Pride / FOH entry  
    - Source: `/dashboard/website`  
-   - Prove: inhabited Ikigai Social Club public face — venue photo, THIS WEEK (Friday filling: 34 going · 8 spots left / 42 cap), community faces; feels like *their* club.  
+   - Prove: inhabited Harbourline Social Club public face — venue photo, THIS WEEK (Friday filling: 34 going · 8 spots left / 42 cap), community faces; feels like *their* club.  
    - Not-show: KPI/CRM/AI overlay, mint void, Cohestra chrome, other club facts reserved for later rooms.
 
 2. **Clients** — know everyone  

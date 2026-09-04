@@ -1,6 +1,6 @@
 {
-  "orgName": "Ikigai Social Club",
-  "publicHost": "ikigai-social.cohestra.app",
+  "orgName": "Harbourline Social Club",
+  "publicHost": "harbourline-social.cohestra.app",
   "operatorGreeting": "Alex",
   "selectedClientId": "demo-maya",
   "followUpClientId": "demo-maya",
@@ -3046,7 +3046,7 @@
       {
         "activityId": "demo-golden-hour-run",
         "activityName": "Golden Hour Run",
-        "communityLabel": "Ikigai Social Club",
+        "communityLabel": "Harbourline Social Club",
         "category": "Run",
         "status": "published",
         "registrationCount": 34
@@ -3054,7 +3054,7 @@
       {
         "activityId": "demo-board-game-night",
         "activityName": "Board Game Night",
-        "communityLabel": "Ikigai Social Club",
+        "communityLabel": "Harbourline Social Club",
         "category": "Social",
         "status": "published",
         "registrationCount": 10
@@ -3062,7 +3062,7 @@
       {
         "activityId": "demo-sunday-pickleball",
         "activityName": "Sunday Pickleball",
-        "communityLabel": "Ikigai Social Club",
+        "communityLabel": "Harbourline Social Club",
         "category": "Racket",
         "status": "published",
         "registrationCount": 8
@@ -3171,19 +3171,19 @@
       {
         "activityId": "demo-golden-hour-run",
         "activityName": "Golden Hour Run",
-        "communityLabel": "Ikigai Social Club",
+        "communityLabel": "Harbourline Social Club",
         "registrationCount": 34
       },
       {
         "activityId": "demo-board-game-night",
         "activityName": "Board Game Night",
-        "communityLabel": "Ikigai Social Club",
+        "communityLabel": "Harbourline Social Club",
         "registrationCount": 12
       },
       {
         "activityId": "demo-sunday-pickleball",
         "activityName": "Sunday Pickleball",
-        "communityLabel": "Ikigai Social Club",
+        "communityLabel": "Harbourline Social Club",
         "registrationCount": 8
       }
     ],
@@ -3194,7 +3194,7 @@
     },
     "communityRanking": [
       {
-        "communityLabel": "Ikigai Social Club",
+        "communityLabel": "Harbourline Social Club",
         "registrationCount": 48
       }
     ],
@@ -3259,7 +3259,7 @@
         "name": "Golden Hour Run",
         "schedule": "Friday · 6:30 PM · 34 going · 8 spots left",
         "location": "East Coast Park",
-        "communityLabel": "Ikigai Social Club",
+        "communityLabel": "Harbourline Social Club",
         "heroImageUrl": null,
         "accentColor": null
       },
@@ -3267,8 +3267,8 @@
         "slug": "board-game-night",
         "name": "Board Game Night",
         "schedule": "Wednesday · 7:30 PM",
-        "location": "Ikigai Clubhouse",
-        "communityLabel": "Ikigai Social Club",
+        "location": "Harbourline Clubhouse",
+        "communityLabel": "Harbourline Social Club",
         "heroImageUrl": null,
         "accentColor": null
       },
@@ -3277,14 +3277,14 @@
         "name": "Sunday Pickleball",
         "schedule": "Sunday · 7:00 AM",
         "location": "Kallang Courts",
-        "communityLabel": "Ikigai Social Club",
+        "communityLabel": "Harbourline Social Club",
         "heroImageUrl": null,
         "accentColor": null
       }
     ],
     "published": {
       "schemaVersion": 1,
-      "siteName": "Ikigai Social Club",
+      "siteName": "Harbourline Social Club",
       "accentColor": null,
       "logoAssetId": null,
       "presetId": null,
@@ -3295,7 +3295,7 @@
           "enabled": true,
           "order": 0,
           "props": {
-            "eyebrow": "Ikigai Social Club",
+            "eyebrow": "Harbourline Social Club",
             "headline": "A place to move, play and meet good people",
             "description": "Golden Hour Run is filling up — 34 going · 8 spots left. Same house as Board Game Night and Sunday Pickleball.",
             "variant": "default"

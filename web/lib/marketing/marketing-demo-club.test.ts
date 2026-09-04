@@ -24,10 +24,10 @@ import {
 
 const fixturePath = join(dirname(fileURLToPath(import.meta.url)), "marketing-demo-club.json");
 
-describe("MarketingDemoClub Ikigai continuous seed (33.6)", () => {
-  it("loads Ikigai org with frozen Singapore clock", () => {
+describe("MarketingDemoClub Harbourline continuous seed (33.6)", () => {
+  it("loads Harbourline org with frozen Singapore clock", () => {
     expect(marketingDemoClub.orgName).toBe(DEMO_ORG_NAME);
-    expect(marketingDemoClub.publicHost).toBe("ikigai-social.cohestra.app");
+    expect(marketingDemoClub.publicHost).toBe("harbourline-social.cohestra.app");
     expect(marketingDemoClub.clock.timeZoneId).toBe("Asia/Singapore");
     expect(marketingDemoClub.clock.demoNow).toBe("2026-09-07T09:00:00+08:00");
     expect(() => assertDemoClubInvariants(marketingDemoClub)).not.toThrow();

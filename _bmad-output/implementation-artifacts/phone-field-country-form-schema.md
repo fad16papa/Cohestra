@@ -22,7 +22,7 @@ constraint: no major backend changes
 ## Operator UX
 
 - **Form tab → Field properties:** When type is Phone, **Mobile country** select (Singapore listed first).
-- **Launch templates:** TGH Tennis, Ikigai Pickleball, Board Game Night phone fields ship with `phoneCountry: "SG"`, placeholder `+65 …`.
+- **Launch templates:** TGH Tennis, Harbourline Pickleball, Board Game Night phone fields ship with `phoneCountry: "SG"`, placeholder `+65 …`.
 - **Publish gate:** Phone fields must have a supported `phoneCountry` before publish.
 
 ## Public registration UX

@@ -48,7 +48,7 @@ Authorization: Bearer {{login.response.body.accessToken}}
 
 ###
 
-GET {{Api_HostAddress}}/api/v1/admin/reports?preset=custom&from=2026-06-01&to=2026-06-16&community=Ikigai&leadStatus=new
+GET {{Api_HostAddress}}/api/v1/admin/reports?preset=custom&from=2026-06-01&to=2026-06-16&community=Harbourline&leadStatus=new
 Authorization: Bearer {{login.response.body.accessToken}}
 
 ###
