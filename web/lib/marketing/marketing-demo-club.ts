@@ -48,6 +48,22 @@ export type DemoClientRow = ClientListItem & {
   relativeLabel: string;
 };
 
+export type DemoClock = {
+  timeZoneId: string;
+  demoNow: string;
+};
+
+export type DemoActivityFixture = {
+  id: string;
+  name: string;
+  startsAt: string;
+  capacity: number;
+  status: ActivityStatus;
+  completed: boolean;
+};
+
+export type DemoTriageBucket = "dueNow" | "atRisk" | "opportunity" | "healthy";
+
 export type MarketingDemoClub = {
   orgName: string;
   publicHost: string;
@@ -57,6 +73,8 @@ export type MarketingDemoClub = {
   availableRooms: DemoRoomId[];
   reportsProofClientIds: string[];
   clientListTotalCount: number;
+  clock: DemoClock;
+  activities: DemoActivityFixture[];
   whatsappQuote: DemoWhatsappQuote;
   clients: DemoClientRow[];
   clientDetails: Record<string, ClientDetail>;
@@ -67,6 +85,16 @@ export type MarketingDemoClub = {
   reports: ReportResult;
   website: PublicSitePayload;
 };
+
+export const DEMO_ORG_NAME = "Ikigai Social Club";
+export const GOLDEN_HOUR_UPCOMING_ID = "demo-golden-hour-run";
+export const ANCHOR_IDS = {
+  maya: "demo-maya",
+  daniel: "demo-daniel",
+  priya: "demo-priya",
+  marcus: "demo-marcus",
+  sarah: "demo-sarah",
+} as const;
 
 const LEAD_STATUSES = new Set<LeadStatus>(["new", "contacted", "active", "inactive"]);
 const OUTREACH_KINDS = new Set<OutreachKind>(["whatsapp", "viber", "email"]);
@@ -103,8 +131,8 @@ function hasRemoteAssetId(value: string | null | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-/** Short day label for Follow-up WhatsApp chrome (e.g. "Mar 9"). */
-export function formatDemoWhatsappDay(loggedAt: string): string {
+/** Short day label for Follow-up WhatsApp chrome (e.g. "Sep 6"). Uses demo clock timezone when provided. */
+export function formatDemoWhatsappDay(loggedAt: string, timeZoneId = "Asia/Singapore"): string {
   const date = new Date(loggedAt);
   if (Number.isNaN(date.getTime())) {
     return loggedAt;
@@ -112,8 +140,276 @@ export function formatDemoWhatsappDay(loggedAt: string): string {
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    timeZone: "UTC",
+    timeZone: timeZoneId,
   });
+}
+
+export function getDemoNowMs(club: MarketingDemoClub): number {
+  const ms = Date.parse(club.clock.demoNow);
+  if (Number.isNaN(ms)) {
+    throw new Error("MarketingDemoClub: clock.demoNow is invalid");
+  }
+  return ms;
+}
+
+export function countActivityRegistrations(club: MarketingDemoClub, activityId: string): number {
+  let count = 0;
+  for (const detail of Object.values(club.clientDetails)) {
+    for (const registration of detail.registrationHistory) {
+      if (registration.activityId === activityId) {
+        count += 1;
+      }
+    }
+  }
+  return count;
+}
+
+export function getGoldenHourSpots(club: MarketingDemoClub): {
+  going: number;
+  capacity: number;
+  spotsLeft: number;
+} {
+  const activity = club.activities.find((row) => row.id === GOLDEN_HOUR_UPCOMING_ID);
+  if (!activity) {
+    throw new Error("MarketingDemoClub: Golden Hour upcoming activity missing");
+  }
+  const going = countActivityRegistrations(club, GOLDEN_HOUR_UPCOMING_ID);
+  return {
+    going,
+    capacity: activity.capacity,
+    spotsLeft: activity.capacity - going,
+  };
+}
+
+function isArchived(detail: ClientDetail): boolean {
+  return detail.leadStatus === "inactive";
+}
+
+function isMember(detail: ClientDetail): boolean {
+  if (detail.profession?.toLowerCase() === "member") {
+    return true;
+  }
+  if (detail.referralSource?.toLowerCase() === "member") {
+    return true;
+  }
+  const notes = (detail.notes ?? "").toLowerCase();
+  if (!notes) {
+    return false;
+  }
+  if (notes.includes("not member") || notes.includes("non-member") || notes.includes("not yet member")) {
+    return false;
+  }
+  return notes.includes("loyal member") || notes.includes("member ·");
+}
+
+function hasFutureResolvingFollowUp(detail: ClientDetail, demoNowMs: number): boolean {
+  if (!detail.nextFollowUpAt) {
+    return false;
+  }
+  const due = Date.parse(detail.nextFollowUpAt);
+  return !Number.isNaN(due) && due > demoNowMs;
+}
+
+function hasCompletedFollowUpAfter(detail: ClientDetail, afterMs: number): boolean {
+  return detail.timeline.some((event) => {
+    const at = Date.parse(event.occurredAt);
+    if (Number.isNaN(at) || at < afterMs) {
+      return false;
+    }
+    return (
+      event.eventType === "whatsapp_follow_up_recorded" ||
+      event.eventType === "viber_follow_up_recorded" ||
+      event.eventType === "email_campaign_sent"
+    );
+  });
+}
+
+function earliestAttendanceMs(detail: ClientDetail): number | null {
+  let earliest: number | null = null;
+  for (const registration of detail.registrationHistory) {
+    const at = Date.parse(registration.registeredAt);
+    if (Number.isNaN(at)) {
+      continue;
+    }
+    if (earliest === null || at < earliest) {
+      earliest = at;
+    }
+  }
+  return earliest;
+}
+
+function lastEngagementMs(detail: ClientDetail, client: DemoClientRow): number | null {
+  const candidates: number[] = [];
+  for (const registration of detail.registrationHistory) {
+    const at = Date.parse(registration.registeredAt);
+    if (!Number.isNaN(at)) {
+      candidates.push(at);
+    }
+  }
+  if (client.lastOutreachAt) {
+    const at = Date.parse(client.lastOutreachAt);
+    if (!Number.isNaN(at)) {
+      candidates.push(at);
+    }
+  }
+  if (candidates.length === 0) {
+    return null;
+  }
+  return Math.max(...candidates);
+}
+
+function hasFutureRegistration(detail: ClientDetail, demoNowMs: number): boolean {
+  return detail.registrationHistory.some((registration) => {
+    // Upcoming Golden Hour / Board Game / Pickleball registrations after demoNow count as future plan
+    const at = Date.parse(registration.registeredAt);
+    if (Number.isNaN(at)) {
+      return false;
+    }
+    return (
+      registration.activityId === GOLDEN_HOUR_UPCOMING_ID ||
+      registration.activityId === "demo-board-game-night" ||
+      registration.activityId === "demo-sunday-pickleball"
+    ) && at <= demoNowMs + 14 * 86400000;
+  });
+}
+
+/**
+ * dueNow: follow-up due on/before demoNow OR first activity within prior 72h with no qualifying post follow-up;
+ * active; not archived; no completed follow-up after trigger; no future scheduled follow-up resolving it.
+ */
+export function isDueNow(club: MarketingDemoClub, clientId: string): boolean {
+  const client = club.clients.find((row) => row.id === clientId);
+  const detail = club.clientDetails[clientId];
+  if (!client || !detail || isArchived(detail)) {
+    return false;
+  }
+  if (client.leadStatus === "inactive") {
+    return false;
+  }
+  const demoNowMs = getDemoNowMs(club);
+  if (hasFutureResolvingFollowUp(detail, demoNowMs)) {
+    return false;
+  }
+
+  const dueAt = detail.nextFollowUpAt ? Date.parse(detail.nextFollowUpAt) : NaN;
+  if (!Number.isNaN(dueAt) && dueAt <= demoNowMs) {
+    return true;
+  }
+
+  const firstMs = earliestAttendanceMs(detail);
+  if (firstMs === null) {
+    return false;
+  }
+  const ageMs = demoNowMs - firstMs;
+  if (ageMs < 0 || ageMs > 72 * 3600000) {
+    return false;
+  }
+  if (hasCompletedFollowUpAfter(detail, firstMs)) {
+    return false;
+  }
+  // First-timer path only — do not treat every recent registrant as dueNow
+  const notes = (detail.notes ?? "").toLowerCase();
+  return notes.includes("first visit") && !client.lastOutreachAt;
+}
+
+/**
+ * atRisk: prior meaningful engagement; last engagement outside window (~21d+);
+ * no future registration plan / active follow-up; not dueNow.
+ */
+export function isAtRisk(club: MarketingDemoClub, clientId: string): boolean {
+  if (isDueNow(club, clientId)) {
+    return false;
+  }
+  const client = club.clients.find((row) => row.id === clientId);
+  const detail = club.clientDetails[clientId];
+  if (!client || !detail || isArchived(detail)) {
+    return false;
+  }
+  if (detail.registrationHistory.length < 2) {
+    return false;
+  }
+  const demoNowMs = getDemoNowMs(club);
+  if (hasFutureResolvingFollowUp(detail, demoNowMs)) {
+    return false;
+  }
+  if (detail.nextFollowUpAt) {
+    return false;
+  }
+  // Upcoming event registration after quiet period still counts as a plan — exclude if registered for upcoming Golden Hour
+  if (detail.registrationHistory.some((r) => r.activityId === GOLDEN_HOUR_UPCOMING_ID)) {
+    return false;
+  }
+  const lastMs = lastEngagementMs(detail, client);
+  if (lastMs === null) {
+    return false;
+  }
+  const quietMs = demoNowMs - lastMs;
+  return quietMs >= 21 * 86400000;
+}
+
+/**
+ * opportunity: strong repeat intent, not member, open next step; not dueNow/atRisk.
+ */
+export function isOpportunity(club: MarketingDemoClub, clientId: string): boolean {
+  if (isDueNow(club, clientId) || isAtRisk(club, clientId)) {
+    return false;
+  }
+  const client = club.clients.find((row) => row.id === clientId);
+  const detail = club.clientDetails[clientId];
+  if (!client || !detail || isArchived(detail) || isMember(detail)) {
+    return false;
+  }
+  if (detail.nextFollowUpAt) {
+    return false;
+  }
+  if (detail.registrationHistory.length < 2) {
+    return false;
+  }
+  const referral = (detail.referralSource ?? "").toLowerCase();
+  return referral.includes("referral") || detail.notes?.toLowerCase().includes("opportunity") === true;
+}
+
+export function getTriageBucket(club: MarketingDemoClub, clientId: string): DemoTriageBucket {
+  if (isDueNow(club, clientId)) {
+    return "dueNow";
+  }
+  if (isAtRisk(club, clientId)) {
+    return "atRisk";
+  }
+  if (isOpportunity(club, clientId)) {
+    return "opportunity";
+  }
+  return "healthy";
+}
+
+export function countNeedAttention(club: MarketingDemoClub): {
+  dueNow: number;
+  atRisk: number;
+  opportunity: number;
+  total: number;
+} {
+  let dueNow = 0;
+  let atRisk = 0;
+  let opportunity = 0;
+  for (const client of club.clients) {
+    const bucket = getTriageBucket(club, client.id);
+    if (bucket === "dueNow") {
+      dueNow += 1;
+    } else if (bucket === "atRisk") {
+      atRisk += 1;
+    } else if (bucket === "opportunity") {
+      opportunity += 1;
+    }
+  }
+  return { dueNow, atRisk, opportunity, total: dueNow + atRisk + opportunity };
+}
+
+export function canRecommendWhatsApp(club: MarketingDemoClub, clientId: string): boolean {
+  const detail = club.clientDetails[clientId];
+  if (!detail) {
+    return false;
+  }
+  return typeof detail.phone === "string" && detail.phone.trim().length > 0;
 }
 
 function asRecord(value: unknown, label: string): Record<string, unknown> {
@@ -433,6 +729,27 @@ export function parseMarketingDemoClub(raw: unknown): MarketingDemoClub {
       asString(id, `reportsProofClientIds[${index}]`)
     ),
     clientListTotalCount: asNumber(row.clientListTotalCount, "clientListTotalCount"),
+    clock: (() => {
+      const clock = asRecord(row.clock, "clock");
+      return {
+        timeZoneId: asString(clock.timeZoneId, "clock.timeZoneId"),
+        demoNow: asString(clock.demoNow, "clock.demoNow"),
+      };
+    })(),
+    activities: (() => {
+      const activitiesRaw = Array.isArray(row.activities) ? row.activities : [];
+      return activitiesRaw.map((item, index): DemoActivityFixture => {
+        const activity = asRecord(item, `activities[${index}]`);
+        return {
+          id: asString(activity.id, `activities[${index}].id`),
+          name: asString(activity.name, `activities[${index}].name`),
+          startsAt: asString(activity.startsAt, `activities[${index}].startsAt`),
+          capacity: asNumber(activity.capacity, `activities[${index}].capacity`),
+          status: asActivityStatus(activity.status, `activities[${index}].status`),
+          completed: asBoolean(activity.completed, `activities[${index}].completed`),
+        };
+      });
+    })(),
     whatsappQuote: {
       clientId: asString(quote.clientId, "whatsappQuote.clientId"),
       body: asString(quote.body, "whatsappQuote.body"),
@@ -557,23 +874,42 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
   if (FORBIDDEN_ORG_PATTERN.test(club.orgName) || FORBIDDEN_ORG_PATTERN.test(club.publicHost)) {
     throw new Error("MarketingDemoClub: orgName/publicHost must not be Acme, Your account, or yourclub");
   }
+  if (club.orgName !== DEMO_ORG_NAME) {
+    throw new Error(`MarketingDemoClub: orgName must be ${DEMO_ORG_NAME}`);
+  }
+  if (club.clock.timeZoneId !== "Asia/Singapore") {
+    throw new Error("MarketingDemoClub: clock.timeZoneId must be Asia/Singapore");
+  }
+  if (club.clock.demoNow !== "2026-09-07T09:00:00+08:00") {
+    throw new Error("MarketingDemoClub: clock.demoNow must be 2026-09-07T09:00:00+08:00");
+  }
 
   const names = club.clients.map((client) => client.fullName);
-  if (!names.includes("Elena Martinez") || !names.includes("Jordan Kim")) {
-    throw new Error("MarketingDemoClub: Elena Martinez and Jordan Kim are required");
+  for (const required of ["Maya Santos", "Daniel Koh", "Priya Nair", "Marcus Ong", "Sarah Tan"]) {
+    if (!names.includes(required)) {
+      throw new Error(`MarketingDemoClub: ${required} is required`);
+    }
+  }
+  if (club.clients.length < 25) {
+    throw new Error("MarketingDemoClub: need at least 25 visible clients");
   }
 
   const activityBlob = [
     ...club.clients.map((client) => client.lastActivityName ?? ""),
     ...club.dashboard.activityPerformance.map((row) => row.activityName),
     ...club.website.upcomingActivities.map((row) => row.name),
+    ...club.activities.map((row) => row.name),
     club.whatsappQuote.body,
   ]
     .join(" ")
     .toLowerCase();
 
-  if (!activityBlob.includes("sunday clinic") || !activityBlob.includes("board games")) {
-    throw new Error("MarketingDemoClub: Sunday clinic and board games night are required");
+  if (
+    !activityBlob.includes("golden hour") ||
+    !activityBlob.includes("board game") ||
+    !activityBlob.includes("pickleball")
+  ) {
+    throw new Error("MarketingDemoClub: Golden Hour Run, Board Game Night, and Sunday Pickleball are required");
   }
 
   if (!club.clients.some((client) => client.id === club.selectedClientId)) {
@@ -587,6 +923,7 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
     club.selectedClientId,
     club.followUpClientId,
     ...club.reportsProofClientIds,
+    ...Object.values(ANCHOR_IDS),
   ]);
   for (const id of requiredDetailIds) {
     const detail = club.clientDetails[id];
@@ -603,6 +940,32 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
     if (detail.timeline.length === 0) {
       throw new Error(`MarketingDemoClub: clientDetails.${id}.timeline empty`);
     }
+  }
+
+  const spots = getGoldenHourSpots(club);
+  if (spots.going !== 34 || spots.capacity !== 42 || spots.spotsLeft !== 8) {
+    throw new Error(
+      `MarketingDemoClub: Golden Hour must be 34/42 (8 spots left); got ${spots.going}/${spots.capacity}`
+    );
+  }
+
+  const attention = countNeedAttention(club);
+  if (
+    attention.dueNow !== 6 ||
+    attention.atRisk !== 7 ||
+    attention.opportunity !== 4 ||
+    attention.total !== 17
+  ) {
+    throw new Error(
+      `MarketingDemoClub: needsAttention must be dueNow6/atRisk7/opportunity4/total17; got ${JSON.stringify(attention)}`
+    );
+  }
+
+  if (canRecommendWhatsApp(club, ANCHOR_IDS.marcus)) {
+    throw new Error("MarketingDemoClub: Marcus must not be WhatsApp-eligible");
+  }
+  if (getTriageBucket(club, ANCHOR_IDS.marcus) !== "healthy") {
+    throw new Error("MarketingDemoClub: Marcus incompleteness must not inflate needsAttention");
   }
 
   for (const room of REQUIRED_DEMO_ROOMS) {
@@ -629,7 +992,7 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
   const rankingNames = club.reports.activityRanking
     .map((row) => row.activityName.toLowerCase())
     .join(" ");
-  if (!rankingNames.includes("sunday clinic") || !rankingNames.includes("board games")) {
+  if (!rankingNames.includes("golden hour") || !rankingNames.includes("board game")) {
     throw new Error("MarketingDemoClub: activityRanking missing locked activities");
   }
 
@@ -647,21 +1010,21 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
   if (club.whatsappQuote.clientId !== club.followUpClientId) {
     throw new Error("MarketingDemoClub: WhatsApp quote must belong to the follow-up client");
   }
-  if (!club.whatsappQuote.body.toLowerCase().includes("sunday clinic")) {
-    throw new Error("MarketingDemoClub: WhatsApp quote must mention Sunday clinic");
+  if (!club.whatsappQuote.body.toLowerCase().includes("golden hour")) {
+    throw new Error("MarketingDemoClub: WhatsApp quote must mention Golden Hour");
   }
 
   const proof = getReportsProofClients(club);
-  if (!proof.some((client) => client.fullName === "Elena Martinez")) {
-    throw new Error("MarketingDemoClub: Elena must appear in reports-derived proof clients");
+  if (!proof.some((client) => client.fullName === "Maya Santos")) {
+    throw new Error("MarketingDemoClub: Maya must appear in reports-derived proof clients");
   }
 
   const upcomingNames = club.website.upcomingActivities.map((row) => row.name.toLowerCase());
-  if (!upcomingNames.some((name) => name.includes("sunday clinic"))) {
-    throw new Error("MarketingDemoClub: upcomingActivities missing Sunday clinic");
+  if (!upcomingNames.some((name) => name.includes("golden hour"))) {
+    throw new Error("MarketingDemoClub: upcomingActivities missing Golden Hour Run");
   }
-  if (!upcomingNames.some((name) => name.includes("board games"))) {
-    throw new Error("MarketingDemoClub: upcomingActivities missing board games night");
+  if (!upcomingNames.some((name) => name.includes("board game"))) {
+    throw new Error("MarketingDemoClub: upcomingActivities missing Board Game Night");
   }
 
   if (hasRemoteAssetId(club.website.published.logoAssetId)) {
