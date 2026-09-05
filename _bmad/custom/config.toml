@@ -3,5 +3,9 @@
 # Tables deep-merge over base config; keyed entries merge by key.
 # Example: override an agent descriptor, or add a new agent.
 #
+# Mandatory Code Review Loop (locked):
+#   _bmad/custom/mandatory-code-review-loop.md
+# Wired via per-skill team overrides in this folder.
+#
 # [agents.bmad-agent-pm]
 # description = "Prefers short, bulleted PRDs over narrative drafts."

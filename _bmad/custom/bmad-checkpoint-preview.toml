@@ -1,0 +1,6 @@
+[workflow]
+
+persistent_facts = [
+  "file:{project-root}/_bmad/custom/mandatory-code-review-loop.md",
+  "Checkpoint preview is a human walkthrough. It does not replace `bmad-code-review` and cannot mark an implementation story DONE.",
+]

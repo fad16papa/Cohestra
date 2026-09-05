@@ -1,0 +1,6 @@
+[workflow]
+
+persistent_facts = [
+  "file:{project-root}/_bmad/custom/mandatory-code-review-loop.md",
+  "Course correction does not waive the Mandatory Code Review Loop. Any implementation that results from a sprint change still requires BUILD → TEST → repeating `bmad-code-review` on the final HEAD before DONE.",
+]

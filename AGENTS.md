@@ -3,6 +3,29 @@
 Cohestra — multi-tenant community events + lead-generation platform.
 See `README.md` for the full product overview, endpoints, and Docker Compose workflow.
 
+## Mandatory Code Review Loop
+
+Canonical policy: `_bmad/custom/mandatory-code-review-loop.md`.
+
+Every implementation story MUST pass repeating `bmad-code-review` before DONE.
+
+```
+IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW
+  findings? YES → CLASSIFY → FIX → BUILD → TEST → CODE REVIEW AGAIN
+  findings? NO  → PRODUCT / UX ACCEPTANCE
+  acceptance fails? YES → FIX → BUILD → TEST → CODE REVIEW AGAIN → ACCEPTANCE AGAIN
+  acceptance fails? NO  → STORY DONE
+```
+
+- Review the **current HEAD** only. After fixes, review the new HEAD.
+- Classify findings BLOCKER / MAJOR / MINOR / NIT. Unresolved BLOCKER or MAJOR blocks close.
+- Fix in-scope findings in the current story. Do not open a new story automatically.
+- Never weaken production behavior to make tests green. Never skip a deterministic failing test.
+- Merge only the exact HEAD that passed CI, tests, code review, and product acceptance.
+- After all stories in an epic pass, run a final cross-story epic review.
+
+A story is DONE only when SPEC, IMPLEMENTATION, BUILD, TESTS, BMAD CODE REVIEW (no unresolved BLOCKER/MAJOR), PRODUCT ACCEPTANCE, UX/VISUAL where applicable, CI, and FINAL HEAD REVIEW all pass on the same HEAD.
+
 ## Cursor Cloud specific instructions
 
 The VM snapshot already has .NET 9 SDK (`/usr/local/dotnet`, on `PATH` as `dotnet`),

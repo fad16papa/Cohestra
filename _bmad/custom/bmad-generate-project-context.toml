@@ -1,0 +1,6 @@
+[workflow]
+
+persistent_facts = [
+  "file:{project-root}/_bmad/custom/mandatory-code-review-loop.md",
+  "When regenerating project-context.md, preserve the Mandatory Code Review Loop under Development Workflow Rules. Do not drop or weaken it.",
+]

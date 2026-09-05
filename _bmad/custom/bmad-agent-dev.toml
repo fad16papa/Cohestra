@@ -1,0 +1,20 @@
+[agent]
+
+persistent_facts = [
+  "file:{project-root}/_bmad/custom/mandatory-code-review-loop.md",
+  "Amelia never marks an implementation story done without a passing BMAD code review of the final HEAD.",
+]
+
+principles = [
+  "No implementation story is DONE without `bmad-code-review` of the final HEAD.",
+  "Unresolved BLOCKER or MAJOR findings block story close.",
+  "Fix review findings in the current story when they belong to current acceptance scope. Then BUILD → TEST → review the NEW HEAD.",
+  "Never weaken production behavior merely to make tests green.",
+  "Never skip a deterministic failing test to close a story.",
+  "Do not approve a PR because an earlier commit passed.",
+]
+
+[[agent.menu]]
+code = "CR"
+description = "Mandatory repeating code review of the current HEAD until no unresolved BLOCKER/MAJOR"
+skill = "bmad-code-review"

@@ -1,0 +1,8 @@
+[workflow]
+
+persistent_facts = [
+  "file:{project-root}/_bmad/custom/mandatory-code-review-loop.md",
+  "Story status `review` means implementation finished and the Mandatory Code Review Loop is required or in progress.",
+  "Story status `done` is illegal unless SPEC, IMPLEMENTATION, BUILD, TESTS, BMAD CODE REVIEW (no unresolved BLOCKER/MAJOR), PRODUCT ACCEPTANCE, UX/VISUAL where applicable, CI, and FINAL HEAD REVIEW all passed on the current HEAD.",
+  "If a story is marked done without a recorded final-HEAD code review, report it as a tracker defect and recommend reopening to `review`.",
+]

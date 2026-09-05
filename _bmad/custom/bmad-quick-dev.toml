@@ -1,0 +1,20 @@
+[workflow]
+
+activation_steps_append = [
+  "Load and treat as binding: file:{project-root}/_bmad/custom/mandatory-code-review-loop.md. Quick-dev implementation still requires repeating `bmad-code-review` on the final HEAD before DONE.",
+]
+
+persistent_facts = [
+  "file:{project-root}/_bmad/custom/mandatory-code-review-loop.md",
+  "bmad-quick-dev does not bypass the Mandatory Code Review Loop. Built-in review layers are not a substitute for a passing `bmad-code-review` of the final HEAD.",
+]
+
+on_complete = """
+After quick-dev implementation and its internal review step:
+
+1. BUILD and TEST must be green on the current HEAD.
+2. Run `bmad-code-review` on that HEAD. Repeat after any fix.
+3. Do not mark the work DONE with unresolved BLOCKER or MAJOR findings.
+4. Product/UX acceptance still required. Acceptance failure re-enters FIX → BUILD → TEST → CODE REVIEW AGAIN.
+5. The merge candidate must be the exact HEAD that passed CI, tests, code review, and product acceptance.
+"""

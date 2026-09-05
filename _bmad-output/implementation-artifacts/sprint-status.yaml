@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-09-02
+# last_updated: 2026-09-05
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -23,8 +23,14 @@
 #   - backlog: Story only exists in epic file
 #   - ready-for-dev: Story file created in stories folder
 #   - in-progress: Developer actively working on implementation
-#   - review: Ready for code review (via Dev's code-review workflow)
-#   - done: Story completed
+#   - review: Implementation finished; Mandatory Code Review Loop required
+#             (IMPLEMENT → BUILD → TEST → bmad-code-review, repeat on new HEAD)
+#   - done: Final HEAD passed SPEC, IMPLEMENTATION, BUILD, TESTS,
+#           BMAD CODE REVIEW (no unresolved BLOCKER/MAJOR), PRODUCT ACCEPTANCE,
+#           UX/VISUAL where applicable, CI, and FINAL HEAD REVIEW.
+#           See _bmad/custom/mandatory-code-review-loop.md
+#           Code review is repeating, not one-shot. Do not mark done from
+#           implementation alone or from a review of an older commit.
 #
 # Retrospective Status:
 #   - optional: Can be completed but not required
@@ -40,12 +46,14 @@
 # - Epic transitions to 'in-progress' automatically when first story is created
 # - Stories can be worked in parallel if team capacity allows
 # - Developer typically creates next story after previous one is 'done' to incorporate learnings
-# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Dev moves story to 'review', then MUST run repeating bmad-code-review on the current HEAD
+#   until no unresolved BLOCKER/MAJOR remain, then product/UX acceptance, then done
+#   (see _bmad/custom/mandatory-code-review-loop.md). Checkpoint preview is not a substitute.
 # - Enterprise delivery complete (Epics 11–16 v1); enterprise-launch-checklist done; Epic 17 P1 hardening in progress
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-09-03
+last_updated: 2026-09-05
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
