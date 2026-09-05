@@ -1,13 +1,13 @@
 ---
 epic: 25
 story: 1
-status: review
+status: done
 baseline_commit: 870d3e24d4b03265b91ce0c0948219edd21be9e2
 ---
 
 # Story 25.1: Community brand kit
 
-Status: review
+Status: done
 
 ## Story
 
@@ -140,3 +140,4 @@ Composer
 ### Change Log
 
 - 2026-08-12: Story 25.1 implemented — community brand kit model, API, admin UI, tests.
+- 2026-09-05: Acceptance PASS — closed with Epic 25. Residual coverage gap (Basic logo 403 HTTP test) is not a product blocker.

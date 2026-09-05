@@ -1,13 +1,13 @@
 ---
 epic: 25
 story: 2
-status: review
+status: done
 baseline_commit: 444f125
 ---
 
 # Story 25.2: Activity registration theme JSON
 
-Status: review
+Status: done
 
 ## Story
 
@@ -90,3 +90,4 @@ Composer
 ### Change Log
 
 - 2026-08-12: Story 25.2 — registration theme JSON + community inherit resolution.
+- 2026-09-05: Acceptance PASS — inherit/override resolver and public GET remain on main.

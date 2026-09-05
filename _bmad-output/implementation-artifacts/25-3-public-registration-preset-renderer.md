@@ -1,13 +1,13 @@
 ---
 epic: 25
 story: 3
-status: review
+status: done
 baseline_commit: f5c6005
 ---
 
 # Story 25.3: Public registration preset renderer
 
-Status: review
+Status: done
 
 ## Story
 
@@ -60,3 +60,4 @@ Composer
 ## Change Log
 
 - 2026-08-12: Implemented public preset renderer layouts and accent CSS variable wiring.
+- 2026-09-05: Acceptance PASS — Classic/Card/Immersive/Compact + `--primary` still ship on `/register` and embed.
