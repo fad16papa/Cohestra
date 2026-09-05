@@ -1,0 +1,17 @@
+[workflow]
+
+activation_steps_append = [
+  "Load and treat as binding: file:{project-root}/_bmad/custom/mandatory-code-review-loop.md. Before calling the epic done, confirm a final cross-story epic review ran after all stories passed individually.",
+]
+
+persistent_facts = [
+  "file:{project-root}/_bmad/custom/mandatory-code-review-loop.md",
+  "Epic close requires a final cross-story review: integration gaps, inconsistent patterns, duplicated logic, broken journeys, tenant/permission inconsistencies, cross-feature regressions, observability, production-readiness.",
+  "Epic-review BLOCKER or MAJOR: reopen the appropriate story or create the minimum corrective story, then implement → test → code review → epic acceptance again.",
+]
+
+on_complete = """
+Before marking an epic retrospective complete, confirm the Epic Final Review from `_bmad/custom/mandatory-code-review-loop.md` was executed after all stories passed individually.
+
+If that review found unresolved BLOCKER or MAJOR issues: do not close the epic. Reopen the appropriate story or create the minimum corrective story.
+"""

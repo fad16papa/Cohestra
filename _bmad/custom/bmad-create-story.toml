@@ -1,0 +1,7 @@
+[workflow]
+
+persistent_facts = [
+  "file:{project-root}/_bmad/custom/mandatory-code-review-loop.md",
+  "Every implementation story file must state that DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.",
+  "Do not write stories that treat code review as optional or one-shot.",
+]

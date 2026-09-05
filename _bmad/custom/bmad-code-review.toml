@@ -1,0 +1,24 @@
+[workflow]
+
+activation_steps_append = [
+  "Load and treat as binding: file:{project-root}/_bmad/custom/mandatory-code-review-loop.md. Announce that the Mandatory Code Review Loop is in force and that this review must target the current implementation HEAD.",
+]
+
+persistent_facts = [
+  "file:{project-root}/_bmad/custom/mandatory-code-review-loop.md",
+  "Cohestra code review is a mandatory repeating gate, not a one-shot. Review the current HEAD only.",
+  "Every kept finding must be classified BLOCKER, MAJOR, MINOR, or NIT in addition to patch/defer/dismiss.",
+  "Do not mark a story done while unresolved BLOCKER or MAJOR findings remain.",
+]
+
+on_complete = """
+Apply `_bmad/custom/mandatory-code-review-loop.md` before any status change.
+
+1. Confirm this review was of the current implementation HEAD (not an older commit).
+2. Every kept finding must have severity BLOCKER / MAJOR / MINOR / NIT.
+3. If any BLOCKER or MAJOR is unresolved: do not mark DONE. Do not create a new story. Fix inside the current story when it is in scope, then BUILD → TEST → run `bmad-code-review` again on the NEW HEAD.
+4. If patches were applied in this run: status stays `review` or `in-progress`. The review you just finished is stale. Require a new `bmad-code-review` of the new HEAD.
+5. If no unresolved BLOCKER/MAJOR: proceed to product/UX acceptance. Acceptance failure re-enters FIX → BUILD → TEST → CODE REVIEW AGAIN → ACCEPTANCE AGAIN.
+6. Mark `done` only when SPEC, IMPLEMENTATION, BUILD, TESTS, BMAD CODE REVIEW, PRODUCT ACCEPTANCE, UX/VISUAL (if applicable), CI, and FINAL HEAD REVIEW all pass on the same HEAD.
+7. Never approve a PR because an earlier commit passed.
+"""

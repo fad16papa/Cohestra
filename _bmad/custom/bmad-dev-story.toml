@@ -1,0 +1,24 @@
+[workflow]
+
+activation_steps_append = [
+  "Load and treat as binding: file:{project-root}/_bmad/custom/mandatory-code-review-loop.md. Implementation reaching `review` is not DONE. The next required gate is `bmad-code-review` on the current HEAD after BUILD and TEST.",
+]
+
+persistent_facts = [
+  "file:{project-root}/_bmad/custom/mandatory-code-review-loop.md",
+  "A Cohestra implementation story is never DONE at the end of bmad-dev-story. Status stays review until the Mandatory Code Review Loop passes on the final HEAD.",
+  "Fix code-review findings inside the current story when they belong to current acceptance scope. Do not open a new story automatically.",
+]
+
+on_complete = """
+Implementation complete is not story DONE.
+
+Leave story and sprint-status at `review`.
+Require the next step: BUILD and TEST already passed in this workflow, then run `bmad-code-review` (`bmad-code-review`) on this exact HEAD.
+
+Do not update sprint-status to `done`.
+Do not skip code review because tests passed.
+Do not treat `bmad-checkpoint-preview` as a substitute.
+
+If this session was a review-fix continuation: after BUILD and TEST, run `bmad-code-review` again on the NEW HEAD.
+"""
