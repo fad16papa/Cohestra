@@ -1,6 +1,6 @@
 # Code review — registration Back/Next overflow
 
-**HEAD reviewed:** `230fa24` then patch `HEAD` after shrink hardening  
+**HEAD reviewed:** `da54ba3` (re-review after shrink patch; prior pass was `230fa24`)  
 **PR:** https://github.com/fad16papa/Cohestra/pull/291  
 **Loop:** Mandatory Code Review Loop — current implementation HEAD
 
