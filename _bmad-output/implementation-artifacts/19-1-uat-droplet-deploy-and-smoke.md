@@ -30,6 +30,12 @@ Copied from `epics-cohestra-enterprise.md` Epic 19.1:
 3. `DemoDataSeed__Enabled=false` and `OperatorSeed__Enabled=false` (or documented bootstrap-only exception); `DEV_TENANT_SLUG` not set on the production path.
 4. DNS: apex + wildcard or documented nip.io interim.
 
+## Pre-deployment readiness
+
+**PASS** — `_bmad-output/implementation-artifacts/epic-19-pre-deployment-readiness-2026-09-05.md`
+
+Repo contract, checklists, smoke, rollback, and secrets matrix are ready. This story is still **blocked on owner credentials**.
+
 ## Owner gate (blocks implementation in this environment)
 
 This story cannot be executed in the Cloud Agent VM:
@@ -43,9 +49,10 @@ This story cannot be executed in the Cloud Agent VM:
 
 Required from the owner to continue:
 
-1. UAT droplet IP (or SSH host) and operator SSH access
-2. Or a DigitalOcean API token + permission to create the UAT droplet
-3. Filled UAT secrets (JWT signing key, SendGrid, etc.) — not committed
+1. DigitalOcean access / SSH (existing droplet **or** token to create one)
+2. SendGrid Mail Send key + verified from-addresses
+3. Paddle sandbox credentials (can wait until 19.4)
+4. reCAPTCHA UAT credentials (can wait until 19.3)
 
 ## Repo already ready
 
