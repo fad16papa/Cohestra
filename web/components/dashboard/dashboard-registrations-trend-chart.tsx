@@ -26,6 +26,8 @@ type DashboardRegistrationsTrendChartProps = {
   trendDays: number;
   className?: string;
   compact?: boolean;
+  /** Override default “(UTC)” range copy — e.g. cinema Asia/Singapore world. */
+  rangeTimeZoneLabel?: string;
 };
 
 type TrendTooltipProps = {
@@ -66,6 +68,7 @@ export function DashboardRegistrationsTrendChart({
   trendDays,
   className,
   compact = false,
+  rangeTimeZoneLabel = "UTC",
 }: DashboardRegistrationsTrendChartProps) {
   const gradientIdBase = useId().replace(/:/g, "");
   const registrationsGradientId = `${gradientIdBase}-registrations`;
@@ -93,7 +96,7 @@ export function DashboardRegistrationsTrendChart({
     <DashboardChartCard
       headingId="dashboard-registrations-trend-heading"
       title="Registrations trend"
-      description={`Daily registrations and first-time clients, ${rangeLabel} (UTC).`}
+      description={`Daily registrations and first-time clients, ${rangeLabel} (${rangeTimeZoneLabel}).`}
       className={className}
       headerAside={
         <dl className="flex items-center gap-4 text-right">

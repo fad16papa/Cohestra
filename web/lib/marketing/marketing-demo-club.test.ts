@@ -12,11 +12,15 @@ import {
   DEMO_ORG_NAME,
   FORBIDDEN_ORG_PATTERN,
   formatDemoWhatsappDay,
+  getActivityOps,
   getFollowUpClient,
   getGoldenHourSpots,
+  getIntelligenceBriefs,
   getReportsProofClients,
   getTriageBucket,
+  GOLDEN_HOUR_UPCOMING_ID,
   isDemoRoomAvailable,
+  listClientsByTriage,
   marketingDemoClub,
   parseMarketingDemoClub,
   REQUIRED_DEMO_ROOMS,
@@ -109,10 +113,53 @@ describe("MarketingDemoClub Harbourline continuous seed (33.6)", () => {
     ).toThrow(/orgName/i);
   });
 
-  it("keeps all six rooms available", () => {
+  it("keeps all six house-tour rooms available", () => {
+    expect([...REQUIRED_DEMO_ROOMS]).toEqual([
+      "website",
+      "clients",
+      "activities",
+      "outreach",
+      "analytics",
+      "intelligence",
+    ]);
     for (const room of REQUIRED_DEMO_ROOMS) {
       expect(isDemoRoomAvailable(room)).toBe(true);
     }
+  });
+
+  it("lists triage queues that sum to needsAttention 17", () => {
+    const due = listClientsByTriage(marketingDemoClub, "dueNow");
+    const risk = listClientsByTriage(marketingDemoClub, "atRisk");
+    const opp = listClientsByTriage(marketingDemoClub, "opportunity");
+    expect(due).toHaveLength(6);
+    expect(risk).toHaveLength(7);
+    expect(opp).toHaveLength(4);
+    expect(due.some((c) => c.id === ANCHOR_IDS.maya)).toBe(true);
+    expect(risk.some((c) => c.id === ANCHOR_IDS.daniel)).toBe(true);
+    expect(opp.some((c) => c.id === ANCHOR_IDS.priya)).toBe(true);
+  });
+
+  it("grounds Cohestra AI briefs in seed facts without invented percentages", () => {
+    const briefs = getIntelligenceBriefs(marketingDemoClub);
+    expect(briefs.length).toBeGreaterThanOrEqual(2);
+    const blob = briefs.map((b) => `${b.title} ${b.why.join(" ")}`).join("\n");
+    expect(blob).toMatch(/6 people need follow-up today|6 /);
+    expect(blob).toMatch(/34 of 42|34 \/ 42|34 of 42 registered/);
+    expect(blob).not.toMatch(/\d+%\s*(increase|improvement|lift|growth)/i);
+    expect(blob).not.toMatch(/chatbot|I think|probably/i);
+    expect(blob).not.toMatch(/demoNow|same seed|seeded registration/i);
+    for (const brief of briefs) {
+      expect(brief.why.length).toBeGreaterThan(0);
+      expect(brief.activityIds.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("keeps upcoming Golden Hour check-in count at zero until the session runs", () => {
+    const ops = getActivityOps(marketingDemoClub, GOLDEN_HOUR_UPCOMING_ID);
+    const spots = getGoldenHourSpots(marketingDemoClub);
+    expect(ops.registered).toBe(spots.going);
+    expect(ops.checkedIn).toBe(0);
+    expect(ops.spotsLeft).toBe(spots.spotsLeft);
   });
 
   it("formats WhatsApp day in Asia/Singapore", () => {
@@ -131,6 +178,23 @@ describe("MarketingDemoClub Harbourline continuous seed (33.6)", () => {
     expect(
       marketingDemoClub.reports.activityRanking.some((row) =>
         row.activityName.toLowerCase().includes("golden hour")
+      )
+    ).toBe(true);
+  });
+
+  it("projects local /demo photography and footer on the Website room", () => {
+    const hero = marketingDemoClub.website.published.sections.find(
+      (section) => section.type === "hero"
+    );
+    expect(hero?.props.heroImageUrl).toBe("/demo/harbourline-hero.webp");
+    expect(
+      marketingDemoClub.website.published.sections.some(
+        (section) => section.enabled && section.type === "footer"
+      )
+    ).toBe(true);
+    expect(
+      marketingDemoClub.website.upcomingActivities.every(
+        (row) => typeof row.heroImageUrl === "string" && row.heroImageUrl.startsWith("/demo/")
       )
     ).toBe(true);
   });

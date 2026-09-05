@@ -531,7 +531,14 @@ const club = {
   operatorGreeting: "Alex",
   selectedClientId: ANCHORS.maya.id,
   followUpClientId: ANCHORS.maya.id,
-  availableRooms: ["clients", "outreach", "dashboard", "campaigns", "reports", "website"],
+  availableRooms: [
+    "website",
+    "clients",
+    "activities",
+    "outreach",
+    "analytics",
+    "intelligence",
+  ],
   reportsProofClientIds: [ANCHORS.maya.id, ANCHORS.sarah.id],
   clientListTotalCount: 248,
   clock: {
@@ -738,7 +745,7 @@ const club = {
         schedule: "Friday · 6:30 PM · 34 going · 8 spots left",
         location: "East Coast Park",
         communityLabel: COMMUNITY,
-        heroImageUrl: null,
+        heroImageUrl: "/demo/harbourline-run.webp",
         accentColor: null,
       },
       {
@@ -747,7 +754,7 @@ const club = {
         schedule: "Wednesday · 7:30 PM",
         location: "Harbourline Clubhouse",
         communityLabel: COMMUNITY,
-        heroImageUrl: null,
+        heroImageUrl: "/demo/harbourline-clubhouse.webp",
         accentColor: null,
       },
       {
@@ -756,7 +763,7 @@ const club = {
         schedule: "Sunday · 7:00 AM",
         location: "Kallang Courts",
         communityLabel: COMMUNITY,
-        heroImageUrl: null,
+        heroImageUrl: "/demo/harbourline-run.webp",
         accentColor: null,
       },
     ],
@@ -778,6 +785,11 @@ const club = {
             description:
               "Golden Hour Run is filling up — 34 going · 8 spots left. Same house as Board Game Night and Sunday Pickleball.",
             variant: "default",
+            heroImageUrl: "/demo/harbourline-hero.webp",
+            primaryCta: {
+              label: "See this week’s activities",
+              target: "scroll-upcoming",
+            },
           },
         },
         {
@@ -834,7 +846,33 @@ const club = {
                 role: "Member",
                 avatarAssetId: "",
               },
+              {
+                _key: "t-priya",
+                quote:
+                  "Board Game Night is how I met half my week — Harbourline feels like a real club.",
+                name: "Priya Nair",
+                role: "Regular",
+                avatarAssetId: "",
+              },
+              {
+                _key: "t-daniel",
+                quote:
+                  "Sunday Pickleball got me back after I drifted. Someone actually followed up.",
+                name: "Daniel Koh",
+                role: "Member",
+                avatarAssetId: "",
+              },
             ],
+          },
+        },
+        {
+          id: "demo-footer",
+          type: "footer",
+          enabled: true,
+          order: 4,
+          props: {
+            poweredByLabel:
+              "Harbourline Social Club · harbourline-social.cohestra.app · East Coast, Singapore",
           },
         },
       ],

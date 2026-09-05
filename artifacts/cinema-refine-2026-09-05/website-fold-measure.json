@@ -1,0 +1,45 @@
+{
+  "stageH": 649,
+  "stageW": 1408,
+  "stickyH": 804,
+  "header": {
+    "found": true,
+    "visible": true,
+    "top": 1,
+    "bottom": 55,
+    "text": "HHarbourline Social ClubEast Coast · SingaporeActivitiesCommunityThis weekContactJoin this week"
+  },
+  "hero": {
+    "found": true,
+    "visible": true,
+    "top": 7,
+    "bottom": 279,
+    "text": "A place to move, play and meet good peopleGolden Hour Run is filling up — 34 going · 8 spots left. S"
+  },
+  "upcoming": {
+    "found": true,
+    "visible": true,
+    "top": 341,
+    "bottom": 460,
+    "text": "This week3 this weekGolden Hour RunFriday · 6:30 PM · 34 going · 8 spots leftEast Coast ParkBoard Ga"
+  },
+  "footer": {
+    "found": true,
+    "visible": true,
+    "top": 472,
+    "bottom": 527,
+    "text": "Harbourline Social Club · harbourline-social.cohestra.app · East Coast, SingaporeActivities · Commun"
+  },
+  "highlights": {
+    "found": true,
+    "visible": true,
+    "top": 279,
+    "bottom": 341,
+    "text": "Golden Hour RunFriday evenings · 34 going · 8 spots leftBoard Game NightWednesday tables at the club"
+  },
+  "going": true,
+  "spots": true,
+  "golden": true,
+  "board": true,
+  "pickle": true
+}

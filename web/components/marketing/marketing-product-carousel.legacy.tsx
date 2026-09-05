@@ -82,7 +82,7 @@ export function MarketingProductCarouselLegacy({
         <div className="-mx-5 mt-10 overflow-x-auto px-5 pb-1 sm:mx-0 sm:overflow-visible sm:px-0">
           <div
             role="tablist"
-            aria-label="Product surfaces"
+            aria-label="Club house tour"
             className="flex w-max min-w-full flex-nowrap justify-start gap-2 sm:w-auto sm:flex-wrap sm:justify-center"
           >
             {PRODUCT_SLIDES.map((item, index) => {
@@ -142,23 +142,25 @@ export function MarketingProductCarouselLegacy({
           role="tabpanel"
           id="product-carousel-panel"
           aria-labelledby={`product-carousel-tab-${slide.id}`}
-          className="mt-8 grid items-center gap-8 lg:grid-cols-[minmax(0,2.8fr)_minmax(0,3.2fr)] lg:gap-12"
+          className="mt-6 flex flex-col gap-3"
         >
           <div
             key={`copy-${slide.id}`}
             className={cn(
-              "text-center lg:text-left",
+              "border-b border-line/70 pb-3 text-left",
               !reducedMotion && "marketing-product-carousel-enter"
             )}
           >
-            <p className="text-section text-gold-cinema">{slide.feeling}</p>
-            <h3 className="text-marketing-section mx-auto mt-4 max-w-[22ch] text-balance text-ink lg:mx-0">
-              {slide.feelingLine}
-            </h3>
-            <p className="text-marketing-lead mx-auto mt-4 max-w-xl text-stone-cinema lg:mx-0">
-              {slide.scene}
-            </p>
-            <ul className="mt-8 space-y-3 text-left text-[0.95rem] font-medium text-ink">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-cinema">
+                {slide.feeling}
+              </p>
+              <h3 className="font-[family-name:var(--font-fraunces)] text-[clamp(1.15rem,1.6vw,1.45rem)] font-medium leading-tight text-ink">
+                {slide.feelingLine}
+              </h3>
+              <p className="max-w-3xl text-sm leading-snug text-stone-cinema">{slide.scene}</p>
+            </div>
+            <ul className="sr-only">
               {slide.outcomes.map((outcome) => (
                 <li key={outcome}>{outcome}</li>
               ))}
@@ -168,7 +170,7 @@ export function MarketingProductCarouselLegacy({
           <div
             key={`visual-${slide.id}`}
             className={cn(
-              "min-h-[360px] min-w-0 sm:min-h-[420px] lg:min-h-[520px]",
+              "min-h-[420px] min-w-0 overflow-hidden rounded-md border border-line bg-paper sm:min-h-[480px] lg:min-h-[560px]",
               !reducedMotion && "marketing-product-carousel-enter"
             )}
             aria-hidden

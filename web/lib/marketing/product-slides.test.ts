@@ -9,27 +9,49 @@ import {
   PRODUCT_SLIDES,
 } from "@/lib/marketing/product-slides";
 
-const LOCKED_FEELINGS = [
-  "Relief",
-  "Connection",
-  "Control",
-  "Reach",
-  "Proof",
-  "Pride",
+const HOUSE_TOUR_NAV = [
+  "Website",
+  "Clients",
+  "Activities",
+  "Follow-up",
+  "Analytics",
+  "Cohestra AI",
 ] as const;
 
-describe("PRODUCT_SLIDES feeling copy (Story 33.2)", () => {
+const HOUSE_TOUR_IDS = [
+  "website",
+  "clients",
+  "activities",
+  "outreach",
+  "analytics",
+  "intelligence",
+] as const;
+
+const HOUSE_TOUR_FEELINGS = [
+  "Belonging",
+  "Recognition",
+  "Rhythm",
+  "Urgency",
+  "Clarity",
+  "Direction",
+] as const;
+
+describe("PRODUCT_SLIDES house-tour rebuild", () => {
   it("locks section thesis and lead", () => {
-    expect(CINEMA_SECTION_THESIS).toBe("A week with your people");
+    expect(CINEMA_SECTION_THESIS).toBe("Walk the club before you sign up");
     expect(CINEMA_SECTION_LEAD).toBe(
-      "A week inside a club like yours — the same rooms your team will open on Monday."
+      "A house tour through Harbourline Social Club — the same rooms your team opens on Monday."
     );
   });
 
-  it("uses Feeling → Scene → Proof with ≤3 outcomes and locked feeling words", () => {
+  it("orders Website → Clients → Activities → Follow-up → Analytics → Cohestra AI", () => {
     expect(PRODUCT_SLIDES).toHaveLength(6);
-    expect(PRODUCT_SLIDES.map((s) => s.feeling)).toEqual([...LOCKED_FEELINGS]);
+    expect(PRODUCT_SLIDES.map((s) => s.navLabel)).toEqual([...HOUSE_TOUR_NAV]);
+    expect(PRODUCT_SLIDES.map((s) => s.id)).toEqual([...HOUSE_TOUR_IDS]);
+    expect(PRODUCT_SLIDES.map((s) => s.feeling)).toEqual([...HOUSE_TOUR_FEELINGS]);
+  });
 
+  it("keeps caption-only Feeling → Scene → Proof with ≤3 outcomes", () => {
     for (const slide of PRODUCT_SLIDES) {
       expect(slide.feelingLine.length).toBeGreaterThan(0);
       expect(slide.scene.length).toBeGreaterThan(0);
@@ -39,18 +61,21 @@ describe("PRODUCT_SLIDES feeling copy (Story 33.2)", () => {
     }
   });
 
-  it("does not use taxonomy eyebrows or Pro chip theater in room copy", () => {
+  it("does not use taxonomy eyebrows, Campaigns/Reports chapters, or SaaS theater", () => {
     const blob = PRODUCT_SLIDES.map(
-      (s) => `${s.feeling} ${s.feelingLine} ${s.scene} ${s.outcomes.join(" ")}`
+      (s) => `${s.navLabel} ${s.feeling} ${s.feelingLine} ${s.scene} ${s.outcomes.join(" ")}`
     ).join("\n");
     expect(blob).not.toMatch(/Client CRM|Website builder · Pro|Inside the workspace/i);
+    expect(PRODUCT_SLIDES.some((s) => s.navLabel === "Campaigns")).toBe(false);
+    expect(PRODUCT_SLIDES.some((s) => s.navLabel === "Reports")).toBe(false);
+    expect(PRODUCT_SLIDES.some((s) => s.navLabel === "Dashboard")).toBe(false);
   });
 });
 
-describe("cinema source pedagogy kill (Story 33.2)", () => {
+describe("cinema source pedagogy kill + composition", () => {
   const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
-  it("removes chapter graffiti and checklist chrome from cinema + legacy", () => {
+  it("removes chapter graffiti and keeps caption-strip cinema layout", () => {
     const cinema = readFileSync(
       join(root, "components/marketing/marketing-product-cinema.tsx"),
       "utf8"
@@ -69,7 +94,8 @@ describe("cinema source pedagogy kill (Story 33.2)", () => {
     expect(combined).toContain("CINEMA_SECTION_THESIS");
     expect(combined).toContain("CINEMA_SECTION_LEAD");
     expect(combined).toContain("slide.feeling");
-    expect(combined).toContain("slide.outcomes");
+    expect(combined).toContain("Caption strip");
+    expect(cinema).not.toMatch(/lg:grid-cols-\[minmax\(18rem/);
   });
 
   it("deletes ShowcaseBrowserChrome mock authenticity files", () => {

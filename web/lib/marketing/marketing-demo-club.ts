@@ -31,12 +31,12 @@ import rawClub from "./marketing-demo-club.json";
 export const FORBIDDEN_ORG_PATTERN = /acme|your account|yourclub/i;
 
 export type DemoRoomId =
+  | "website"
   | "clients"
+  | "activities"
   | "outreach"
-  | "dashboard"
-  | "campaigns"
-  | "reports"
-  | "website";
+  | "analytics"
+  | "intelligence";
 
 export type DemoWhatsappQuote = {
   clientId: string;
@@ -112,23 +112,50 @@ const TIMELINE_TYPES = new Set<ClientTimelineEventType>([
   "website_inquiry",
 ]);
 export const REQUIRED_DEMO_ROOMS: readonly DemoRoomId[] = [
-  "clients",
-  "outreach",
-  "dashboard",
-  "campaigns",
-  "reports",
   "website",
+  "clients",
+  "activities",
+  "outreach",
+  "analytics",
+  "intelligence",
 ];
 const ROOMS = new Set<DemoRoomId>(REQUIRED_DEMO_ROOMS);
+
+export type DemoIntelligenceBrief = {
+  id: string;
+  title: string;
+  why: string[];
+  anchorClientIds: string[];
+  activityIds: string[];
+};
+
+export type DemoActivityOps = {
+  activity: DemoActivityFixture;
+  registered: number;
+  spotsLeft: number | null;
+  checkedIn: number;
+  noShows: number;
+  firstTimers: number;
+  waitlist: number;
+};
 const ALLOWED_WEBSITE_SECTION_TYPES = new Set([
   "hero",
   "highlights",
   "upcomingactivities",
   "testimonials",
+  "footer",
 ]);
 
-function hasRemoteAssetId(value: string | null | undefined): boolean {
-  return typeof value === "string" && value.trim().length > 0;
+/** Forbidden: API asset ids / absolute remote URLs. Allowed: empty or same-origin `/demo/*` photography. */
+export function isForbiddenDemoAssetRef(value: string | null | undefined): boolean {
+  if (typeof value !== "string" || value.trim() === "") {
+    return false;
+  }
+  const trimmed = value.trim();
+  if (trimmed.startsWith("/demo/")) {
+    return false;
+  }
+  return true;
 }
 
 /** Short day label for Follow-up WhatsApp chrome (e.g. "Sep 6"). Uses demo clock timezone when provided. */
@@ -402,6 +429,146 @@ export function countNeedAttention(club: MarketingDemoClub): {
     }
   }
   return { dueNow, atRisk, opportunity, total: dueNow + atRisk + opportunity };
+}
+
+export function listClientsByTriage(
+  club: MarketingDemoClub,
+  bucket: DemoTriageBucket
+): DemoClientRow[] {
+  return club.clients.filter((client) => getTriageBucket(club, client.id) === bucket);
+}
+
+export function getActivityRegistrants(
+  club: MarketingDemoClub,
+  activityId: string
+): DemoClientRow[] {
+  const ids = new Set<string>();
+  for (const [clientId, detail] of Object.entries(club.clientDetails)) {
+    if (detail.registrationHistory.some((row) => row.activityId === activityId)) {
+      ids.add(clientId);
+    }
+  }
+  return club.clients.filter((client) => ids.has(client.id));
+}
+
+function notesBlob(detail: ClientDetail): string {
+  const notes = detail.notes ?? "";
+  const timeline = detail.timeline.map((event) => event.note ?? "").join(" ");
+  return `${notes} ${timeline}`.toLowerCase();
+}
+
+export function getActivityOps(club: MarketingDemoClub, activityId: string): DemoActivityOps {
+  const activity = club.activities.find((row) => row.id === activityId);
+  if (!activity) {
+    throw new Error(`MarketingDemoClub: activity ${activityId} missing`);
+  }
+  const registrants = getActivityRegistrants(club, activityId);
+  let checkedIn = 0;
+  let noShows = 0;
+  let firstTimers = 0;
+  for (const client of registrants) {
+    const detail = club.clientDetails[client.id];
+    if (!detail) {
+      continue;
+    }
+    const blob = notesBlob(detail);
+    // Attendance outcomes only apply after the session ran — do not bleed prior-session
+    // "checked in" notes onto an upcoming roster.
+    if (activity.completed) {
+      if (blob.includes("no-show") || blob.includes("no show")) {
+        noShows += 1;
+      } else if (blob.includes("checked in") || blob.includes("check-in")) {
+        checkedIn += 1;
+      } else {
+        checkedIn += 1;
+      }
+    }
+    if (blob.includes("first visit") || blob.includes("first-timer") || blob.includes("first timer")) {
+      firstTimers += 1;
+    }
+  }
+  const registered = countActivityRegistrations(club, activityId);
+  const spotsLeft = activity.completed ? null : Math.max(0, activity.capacity - registered);
+  const waitlist =
+    !activity.completed && registered > activity.capacity ? registered - activity.capacity : 0;
+  return {
+    activity,
+    registered,
+    spotsLeft,
+    checkedIn,
+    noShows,
+    firstTimers,
+    waitlist,
+  };
+}
+
+/**
+ * Seed-grounded operator briefs for Cohestra AI cinema — no invented %.
+ * Reverse-chain: each brief cites triage / capacity / anchor facts already in the seed.
+ */
+export function getIntelligenceBriefs(club: MarketingDemoClub): DemoIntelligenceBrief[] {
+  const attention = countNeedAttention(club);
+  const spots = getGoldenHourSpots(club);
+  const dueNowClients = listClientsByTriage(club, "dueNow");
+  const atRiskClients = listClientsByTriage(club, "atRisk");
+  const opportunityClients = listClientsByTriage(club, "opportunity");
+  const briefs: DemoIntelligenceBrief[] = [
+    {
+      id: "due-now-first-timers",
+      title: `${attention.dueNow} people need follow-up today`,
+      why: [
+        "Attended or registered within the last 72 hours, or follow-up is due today",
+        "No qualifying WhatsApp, Viber, or email follow-up after that trigger",
+      ],
+      anchorClientIds: dueNowClients
+        .map((client) => client.id)
+        .filter((id) => (Object.values(ANCHOR_IDS) as string[]).includes(id)),
+      activityIds: [GOLDEN_HOUR_UPCOMING_ID, "demo-golden-hour-run-prior"],
+    },
+    {
+      id: "golden-hour-capacity",
+      title: "Golden Hour Run is approaching capacity",
+      why: [
+        `${spots.going} of ${spots.capacity} registered for Friday’s run`,
+        `${spots.spotsLeft} spots left before the session fills`,
+      ],
+      anchorClientIds: [ANCHOR_IDS.maya, ANCHOR_IDS.sarah],
+      activityIds: [GOLDEN_HOUR_UPCOMING_ID],
+    },
+  ];
+  if (atRiskClients.length > 0) {
+    const daniel = atRiskClients.find((client) => client.id === ANCHOR_IDS.daniel);
+    briefs.push({
+      id: "at-risk-reengage",
+      title: `${attention.atRisk} previously engaged people are at risk`,
+      why: [
+        "Last meaningful engagement was 21 or more days ago",
+        "No upcoming registration and no scheduled follow-up",
+        daniel
+          ? `${daniel.fullName}: quiet since the last Golden Hour cycle`
+          : "Includes the at-risk roster already on the Follow-up board",
+      ],
+      anchorClientIds: atRiskClients
+        .map((client) => client.id)
+        .filter((id) => (Object.values(ANCHOR_IDS) as string[]).includes(id)),
+      activityIds: ["demo-golden-hour-run-prior"],
+    });
+  }
+  if (opportunityClients.length > 0) {
+    briefs.push({
+      id: "opportunity-intent",
+      title: `${attention.opportunity} strong-intent repeats are open opportunities`,
+      why: [
+        "Repeat participation with referral / opportunity signal",
+        "Not marked member; no open next-follow-up resolving the thread",
+      ],
+      anchorClientIds: opportunityClients
+        .map((client) => client.id)
+        .filter((id) => (Object.values(ANCHOR_IDS) as string[]).includes(id)),
+      activityIds: [GOLDEN_HOUR_UPCOMING_ID, "demo-board-game-night"],
+    });
+  }
+  return briefs;
 }
 
 export function canRecommendWhatsApp(club: MarketingDemoClub, clientId: string): boolean {
@@ -996,6 +1163,18 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
     throw new Error("MarketingDemoClub: activityRanking missing locked activities");
   }
 
+  const briefs = getIntelligenceBriefs(club);
+  if (briefs.length < 2) {
+    throw new Error("MarketingDemoClub: intelligence briefs must include due-now and capacity");
+  }
+  const briefBlob = briefs.map((brief) => `${brief.title} ${brief.why.join(" ")}`).join("\n");
+  if (/\d+%\s*(increase|improvement|lift|growth)/i.test(briefBlob)) {
+    throw new Error("MarketingDemoClub: intelligence briefs must not invent percentage lifts");
+  }
+  if (!briefBlob.includes(String(attention.dueNow)) || !briefBlob.includes("34")) {
+    throw new Error("MarketingDemoClub: intelligence briefs must cite due-now and Golden Hour 34");
+  }
+
   for (const client of club.clients) {
     if (client.email && !client.email.toLowerCase().endsWith("@example.com")) {
       throw new Error(`MarketingDemoClub: clients.${client.id} email must be @example.com`);
@@ -1027,14 +1206,18 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
     throw new Error("MarketingDemoClub: upcomingActivities missing Board Game Night");
   }
 
-  if (hasRemoteAssetId(club.website.published.logoAssetId)) {
+  if (isForbiddenDemoAssetRef(club.website.published.logoAssetId)) {
     throw new Error("MarketingDemoClub: remote logoAssetId forbidden");
   }
-  if (club.website.upcomingActivities.some((activity) => hasRemoteAssetId(activity.heroImageUrl))) {
+  if (
+    club.website.upcomingActivities.some((activity) =>
+      isForbiddenDemoAssetRef(activity.heroImageUrl)
+    )
+  ) {
     throw new Error("MarketingDemoClub: remote heroImageUrl forbidden");
   }
 
-  for (const type of ["hero", "highlights", "upcomingactivities", "testimonials"]) {
+  for (const type of ["hero", "highlights", "upcomingactivities", "testimonials", "footer"]) {
     const enabled = club.website.published.sections.some(
       (section) => section.enabled && section.type.toLowerCase() === type
     );
@@ -1056,8 +1239,17 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
       if (typeof heroImageAssetId !== "string") {
         throw new Error("MarketingDemoClub: heroImageAssetId must be string/null");
       }
-      if (hasRemoteAssetId(heroImageAssetId)) {
+      if (isForbiddenDemoAssetRef(heroImageAssetId)) {
         throw new Error("MarketingDemoClub: remote heroImageAssetId forbidden");
+      }
+    }
+    const heroImageUrl = section.props.heroImageUrl;
+    if (heroImageUrl != null) {
+      if (typeof heroImageUrl !== "string") {
+        throw new Error("MarketingDemoClub: heroImageUrl must be string/null");
+      }
+      if (isForbiddenDemoAssetRef(heroImageUrl)) {
+        throw new Error("MarketingDemoClub: remote heroImageUrl forbidden");
       }
     }
     const items = Array.isArray(section.props.items) ? section.props.items : [];
@@ -1095,7 +1287,7 @@ export function assertDemoClubInvariants(club: MarketingDemoClub): void {
         if (typeof avatarAssetId !== "string") {
           throw new Error("MarketingDemoClub: avatarAssetId must be string/null");
         }
-        if (hasRemoteAssetId(avatarAssetId)) {
+        if (isForbiddenDemoAssetRef(avatarAssetId)) {
           throw new Error("MarketingDemoClub: remote avatarAssetId forbidden");
         }
       }

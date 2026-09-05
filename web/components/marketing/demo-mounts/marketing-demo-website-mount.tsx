@@ -14,7 +14,13 @@ export function MarketingDemoWebsiteMount() {
         className="relative h-full min-h-0 overflow-hidden bg-paper pointer-events-none"
         inert
       >
-        <SitePageRenderer site={club.website} isPreview showPreviewBanner={false} />
+      <SitePageRenderer
+        site={club.website}
+        isPreview
+        showPreviewBanner={false}
+        clubFacingOnly
+        cinemaFold
+      />
       </div>
     </MarketingDemoTheme>
   );

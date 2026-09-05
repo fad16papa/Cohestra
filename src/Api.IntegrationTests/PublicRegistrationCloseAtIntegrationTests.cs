@@ -61,8 +61,23 @@ public sealed class PublicRegistrationCloseAtIntegrationTests(IntegrationTestFix
         IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var activity = dbContext.Activities.Single(item => item.Id == activityId);
-        activity.FormSchema!.Meta ??= new FormSchemaMeta();
-        activity.FormSchema.Meta.RegistrationClosesAt = closesAt.ToUniversalTime();
+        var existing = activity.FormSchema ?? new ActivityFormSchema { Version = 1, Fields = [] };
+        // Reassign FormSchema so EF change-tracks the jsonb column (nested mutate alone is a no-op).
+        activity.FormSchema = new ActivityFormSchema
+        {
+            Version = existing.Version,
+            Fields = existing.Fields,
+            Meta = new FormSchemaMeta
+            {
+                IntroMarkdown = existing.Meta?.IntroMarkdown,
+                SplitIntoSteps = existing.Meta?.SplitIntoSteps ?? false,
+                SuccessCopyMarkdown = existing.Meta?.SuccessCopyMarkdown,
+                ConfirmationEmailSubject = existing.Meta?.ConfirmationEmailSubject,
+                ConfirmationEmailBodyMarkdown = existing.Meta?.ConfirmationEmailBodyMarkdown,
+                ClosedMessage = existing.Meta?.ClosedMessage,
+                RegistrationClosesAt = closesAt.ToUniversalTime(),
+            },
+        };
         await dbContext.SaveChangesAsync();
     }
 

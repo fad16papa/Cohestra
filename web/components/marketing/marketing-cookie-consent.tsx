@@ -12,14 +12,22 @@ export function MarketingCookieConsent() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (!stored) {
+    const sync = () => {
+      // Hide over Live Proof Cinema — Cohestra cookies must not cover Harbourline.
+      if (window.location.hash === "#crm") {
+        setVisible(false);
+        return;
+      }
+      try {
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        setVisible(!stored);
+      } catch {
         setVisible(true);
       }
-    } catch {
-      setVisible(true);
-    }
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
   }, []);
 
   function accept() {

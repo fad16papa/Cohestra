@@ -94,7 +94,14 @@ export function MarketingProductCarousel() {
     if (!id) {
       return;
     }
-    const order = ["clients", "outreach", "dashboard", "campaigns", "reports", "website"];
+    const order = [
+      "website",
+      "clients",
+      "activities",
+      "outreach",
+      "analytics",
+      "intelligence",
+    ];
     const idx = order.indexOf(id);
     if (idx >= 0) {
       setChapterIndex(idx);

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Contracts.Activities;
+using Cohestra.Domain.Activities;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -29,15 +30,16 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
             IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
 
             var schema = BuildMinimalSchema();
+            var firstName = $"First template {Guid.NewGuid():N}";
             using var firstResponse = await adminClient.PostAsJsonAsync(
                 "/api/v1/admin/form-templates",
-                new CreateFormTemplateRequest("First template", schema),
+                new CreateFormTemplateRequest(firstName, schema),
                 IntegrationTestHelpers.JsonOptions);
             Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
 
             using var secondResponse = await adminClient.PostAsJsonAsync(
                 "/api/v1/admin/form-templates",
-                new CreateFormTemplateRequest("Second template", schema),
+                new CreateFormTemplateRequest($"Second template {Guid.NewGuid():N}", schema),
                 IntegrationTestHelpers.JsonOptions);
 
             Assert.Equal(HttpStatusCode.Forbidden, secondResponse.StatusCode);
@@ -123,11 +125,16 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
         tenant.Plan = plan;
         tenant.UpdatedAt = DateTimeOffset.UtcNow;
 
-        var existingTemplates = await dbContext.TenantFormTemplates
+        // Ignore filters so leftover templates from earlier tests always clear for this tenant.
+        var existingTemplates = await dbContext.IgnoreTenantFilters<TenantFormTemplate>()
             .Where(template => template.TenantId == TenantIds.Default)
             .ToListAsync();
         dbContext.TenantFormTemplates.RemoveRange(existingTemplates);
 
         await dbContext.SaveChangesAsync();
+
+        var remaining = await dbContext.IgnoreTenantFilters<TenantFormTemplate>()
+            .CountAsync(template => template.TenantId == TenantIds.Default);
+        Assert.Equal(0, remaining);
     }
 }
