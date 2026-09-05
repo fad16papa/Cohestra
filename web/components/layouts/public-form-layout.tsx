@@ -42,7 +42,7 @@ export function PublicFormLayout({
       </header>
 
       <main className="flex flex-1 flex-col items-center px-5 py-6 pb-8 sm:py-8">
-        <div className="w-full max-w-[480px]">{children}</div>
+        <div className="w-full min-w-0 max-w-[480px]">{children}</div>
       </main>
 
       <footer className="border-t border-border-warm/70 bg-card/60 px-5 py-6 text-center backdrop-blur-sm">
