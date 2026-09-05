@@ -1,8 +1,9 @@
 # Epic 25 Acceptance — Registration Experience Studio
 
 **Date:** 2026-09-05  
-**Decision:** **CLOSE**  
+**Decision:** **CLOSE / FREEZE**  
 **Tracker:** `epic-25` + 25.1–25.5 → `done`  
+**Freeze record:** `_bmad-output/planning-artifacts/epic-25-frozen.md`  
 **Scope of this pass:** completion / acceptance only. No redesign. No new stories.
 
 ## Current state
