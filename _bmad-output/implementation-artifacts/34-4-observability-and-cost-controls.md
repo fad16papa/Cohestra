@@ -1,13 +1,13 @@
 ---
 epic: 34
 story: 4
-status: review
+status: done
 baseline_commit: 6e6387cb3a97773cef60fe6a4ebf89da406fb55c
 ---
 
 # Story 34.4: Observability and cost controls
 
-Status: review
+Status: done
 
 ## Story
 

@@ -1,13 +1,13 @@
 ---
 epic: 34
 story: 1
-status: review
+status: done
 baseline_commit: 43abb8a2b1f49f590b81428342d31897e4b164b9
 ---
 
 # Story 34.1: Deterministic operator brief API
 
-Status: review
+Status: done
 
 ## Story
 

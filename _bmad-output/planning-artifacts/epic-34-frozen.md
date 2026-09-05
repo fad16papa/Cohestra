@@ -1,9 +1,20 @@
-# Epic 34 — FROZEN after merge
+# Epic 34 — CLOSED / FROZEN
 
-Do not start this file as closed until `main` contains PR #287.
+**Merged:** `cc21af7` — feat(intelligence): Cohestra AI MVP — operator brief (#287)  
+**Date:** 2026-09-05
 
-After merge:
+The operator intelligence surface is on `main`.
 
-- Intelligence Brief is the real operator surface.
-- Cinema stays frozen and must not invent a second AI product.
-- Next locked epic: Epic 19 Production Launch Sign-off.
+- Permanent Dashboard “Needs attention” brief
+- Deterministic facts from real tenant data
+- Optional synthesis (off by default) with number/identity guard and fallback
+- Tenant isolation + cost caps + PII-free logs
+
+Cinema remains frozen. Do not invent a second AI product.
+
+**Next locked epic:** Epic 19 — Production Launch Sign-off.
+
+## Deferred residuals (do not reopen unless production blockers)
+
+- Clients URL does not persist `withoutOutreach`
+- Live LLM vendor not required; enable with `Intelligence__SynthesisEnabled` + `Intelligence__ApiKey`
