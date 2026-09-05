@@ -49,7 +49,8 @@ export function MarketingDemoAnalyticsMount() {
       <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-paper-warm p-3">
         <div className="rounded-md border border-line bg-paper px-4 py-3">
           <p className="text-xs text-stone-cinema">
-            {club.orgName} · week of {club.reportFilters.from} → {club.reportFilters.to}
+            {club.orgName} · week of {club.reportFilters.from} → {club.reportFilters.to} ·{" "}
+            {club.clock.timeZoneId}
           </p>
           <p className="mt-1 text-sm font-semibold text-ink">
             Operator questions for {club.operatorGreeting}
@@ -109,6 +110,7 @@ export function MarketingDemoAnalyticsMount() {
                 points={metrics.registrationsTrend}
                 trendDays={metrics.trendDays}
                 compact
+                rangeTimeZoneLabel={club.clock.timeZoneId}
                 className="h-full min-h-[9rem]"
               />
               <dl className="grid grid-cols-2 gap-2 self-start text-sm">

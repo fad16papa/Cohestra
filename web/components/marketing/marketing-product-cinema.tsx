@@ -73,7 +73,7 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
       >
         {/* Full remaining viewport under sticky marketing header */}
         <div className="sticky top-24 z-20 flex h-[calc(100vh-6rem)] flex-col bg-paper-warm">
-          <div className="mx-auto flex h-full w-full max-w-[90rem] min-h-0 flex-col px-5 sm:px-8 lg:px-10">
+          <div className="mx-auto flex h-full w-full max-w-[96rem] min-h-0 flex-col px-2 sm:px-3 lg:px-4">
             <div
               role="tablist"
               aria-label="Club house tour"

@@ -73,7 +73,19 @@ type SitePageRendererProps = {
    * so the public site reads as the club’s own front of house.
    */
   clubFacingOnly?: boolean;
+  /**
+   * Live Proof Cinema: compress hero + section spacing so public hierarchy
+   * (nav, hero, this-week, footer) fits the first sticky viewport.
+   */
+  cinemaFold?: boolean;
 };
+
+const CINEMA_PUBLIC_NAV = [
+  { label: "Activities", href: "#upcoming-activities" },
+  { label: "Community", href: "#community" },
+  { label: "This week", href: "#upcoming-activities" },
+  { label: "Contact", href: "#site-footer" },
+] as const;
 
 type CtaProps = {
   label: string;
@@ -153,13 +165,20 @@ function HeroSection({
   siteName,
   previewMode,
   clubFacingOnly = false,
+  cinemaFold = false,
 }: {
   section: SiteSection;
   siteName: string;
   previewMode: SitePreviewLayoutMode;
   clubFacingOnly?: boolean;
+  cinemaFold?: boolean;
 }) {
-  const eyebrow = typeof section.props.eyebrow === "string" ? section.props.eyebrow : "";
+  const rawEyebrow = typeof section.props.eyebrow === "string" ? section.props.eyebrow : "";
+  // Cinema: brand lives in the header — skip duplicate eyebrow.
+  const eyebrow =
+    cinemaFold || rawEyebrow.trim().toLowerCase() === siteName.trim().toLowerCase()
+      ? ""
+      : rawEyebrow;
   const headline = typeof section.props.headline === "string" ? section.props.headline : siteName;
   const description =
     typeof section.props.description === "string" ? section.props.description : "";
@@ -179,13 +198,21 @@ function HeroSection({
   const onDark = Boolean(heroImageUrl);
 
   return (
-    <MarketingCinematicHero imageUrl={heroImageUrl} previewMode={previewMode}>
+    <MarketingCinematicHero
+      imageUrl={heroImageUrl}
+      previewMode={previewMode}
+      cinemaFold={cinemaFold}
+    >
       <div
-        className={previewLayoutClass(previewMode, {
-          full: "mx-auto max-w-4xl space-y-6 text-center sm:space-y-8",
-          phone: "space-y-4 text-left",
-          desktop: "mx-auto max-w-4xl space-y-8 text-center",
-        })}
+        className={
+          cinemaFold
+            ? "mx-auto max-w-3xl space-y-3 text-center"
+            : previewLayoutClass(previewMode, {
+                full: "mx-auto max-w-4xl space-y-6 text-center sm:space-y-8",
+                phone: "space-y-4 text-left",
+                desktop: "mx-auto max-w-4xl space-y-8 text-center",
+              })
+        }
       >
         {eyebrow ? (
           <MarketingEyebrow
@@ -200,50 +227,66 @@ function HeroSection({
           </MarketingEyebrow>
         ) : null}
         <h1
-          className={previewLayoutClass(previewMode, {
-            full: cn(
-              "text-balance font-bold tracking-tight",
-              onDark
-                ? "text-[clamp(2.25rem,5.5vw+0.75rem,4.75rem)] leading-[1.02] text-white drop-shadow-lg"
-                : "text-marketing-hero text-text-warm",
-              marketingHeroEnterClass()
-            ),
-            phone: cn(
-              "text-[1.875rem] font-bold leading-[1.06] tracking-tight text-balance",
-              onDark ? "text-white drop-shadow-md" : "text-text-warm",
-              marketingHeroEnterClass()
-            ),
-            desktop: cn(
-              "text-balance font-bold tracking-tight",
-              onDark
-                ? "text-[clamp(2.5rem,4vw+1rem,5rem)] leading-[1.02] text-white drop-shadow-lg"
-                : "text-marketing-hero text-text-warm",
-              marketingHeroEnterClass()
-            ),
-          })}
+          className={
+            cinemaFold
+              ? cn(
+                  "text-balance text-[clamp(1.65rem,2.4vw+0.6rem,2.35rem)] font-bold leading-[1.08] tracking-tight",
+                  onDark ? "text-white drop-shadow-lg" : "text-text-warm",
+                  marketingHeroEnterClass()
+                )
+              : previewLayoutClass(previewMode, {
+                  full: cn(
+                    "text-balance font-bold tracking-tight",
+                    onDark
+                      ? "text-[clamp(2.25rem,5.5vw+0.75rem,4.75rem)] leading-[1.02] text-white drop-shadow-lg"
+                      : "text-marketing-hero text-text-warm",
+                    marketingHeroEnterClass()
+                  ),
+                  phone: cn(
+                    "text-[1.875rem] font-bold leading-[1.06] tracking-tight text-balance",
+                    onDark ? "text-white drop-shadow-md" : "text-text-warm",
+                    marketingHeroEnterClass()
+                  ),
+                  desktop: cn(
+                    "text-balance font-bold tracking-tight",
+                    onDark
+                      ? "text-[clamp(2.5rem,4vw+1rem,5rem)] leading-[1.02] text-white drop-shadow-lg"
+                      : "text-marketing-hero text-text-warm",
+                    marketingHeroEnterClass()
+                  ),
+                })
+          }
           style={marketingHeroEnterStyle(eyebrow ? 70 : 0)}
         >
           {headline}
         </h1>
         {description ? (
           <p
-            className={previewLayoutClass(previewMode, {
-              full: cn(
-                "mx-auto max-w-2xl text-marketing-lead",
-                onDark ? "text-white/90 drop-shadow-sm" : "text-text-muted-warm",
-                marketingHeroEnterClass()
-              ),
-              phone: cn(
-                "text-[1rem] leading-relaxed",
-                onDark ? "text-white/85" : "text-text-muted-warm",
-                marketingHeroEnterClass()
-              ),
-              desktop: cn(
-                "mx-auto max-w-2xl text-marketing-lead",
-                onDark ? "text-white/90 drop-shadow-sm" : "text-text-muted-warm",
-                marketingHeroEnterClass()
-              ),
-            })}
+            className={
+              cinemaFold
+                ? cn(
+                    "mx-auto max-w-2xl text-[0.9375rem] leading-snug",
+                    onDark ? "text-white/90 drop-shadow-sm" : "text-text-muted-warm",
+                    marketingHeroEnterClass()
+                  )
+                : previewLayoutClass(previewMode, {
+                    full: cn(
+                      "mx-auto max-w-2xl text-marketing-lead",
+                      onDark ? "text-white/90 drop-shadow-sm" : "text-text-muted-warm",
+                      marketingHeroEnterClass()
+                    ),
+                    phone: cn(
+                      "text-[1rem] leading-relaxed",
+                      onDark ? "text-white/85" : "text-text-muted-warm",
+                      marketingHeroEnterClass()
+                    ),
+                    desktop: cn(
+                      "mx-auto max-w-2xl text-marketing-lead",
+                      onDark ? "text-white/90 drop-shadow-sm" : "text-text-muted-warm",
+                      marketingHeroEnterClass()
+                    ),
+                  })
+            }
             style={marketingHeroEnterStyle(eyebrow ? 130 : 60)}
           >
             {description}
@@ -251,17 +294,24 @@ function HeroSection({
         ) : null}
         {(primaryCta || secondaryCta) && (
           <div
-            className={previewLayoutClass(previewMode, {
-              full: cn(
-                "flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4 [&_a]:w-full sm:[&_a]:w-auto",
-                marketingHeroEnterClass()
-              ),
-              phone: cn("flex flex-col gap-2.5 [&_a]:w-full", marketingHeroEnterClass()),
-              desktop: cn(
-                "flex flex-wrap items-center justify-center gap-4 [&_a]:w-auto",
-                marketingHeroEnterClass()
-              ),
-            })}
+            className={
+              cinemaFold
+                ? cn(
+                    "flex flex-wrap items-center justify-center gap-2.5 [&_a]:w-auto",
+                    marketingHeroEnterClass()
+                  )
+                : previewLayoutClass(previewMode, {
+                    full: cn(
+                      "flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4 [&_a]:w-full sm:[&_a]:w-auto",
+                      marketingHeroEnterClass()
+                    ),
+                    phone: cn("flex flex-col gap-2.5 [&_a]:w-full", marketingHeroEnterClass()),
+                    desktop: cn(
+                      "flex flex-wrap items-center justify-center gap-4 [&_a]:w-auto",
+                      marketingHeroEnterClass()
+                    ),
+                  })
+            }
             style={marketingHeroEnterStyle(eyebrow ? 190 : 120)}
           >
             {primaryCta ? (
@@ -309,11 +359,49 @@ function HeroSection({
 function HighlightsSection({
   section,
   previewMode,
+  cinemaFold = false,
 }: {
   section: SiteSection;
   previewMode: SitePreviewLayoutMode;
+  cinemaFold?: boolean;
 }) {
   const items = Array.isArray(section.props.items) ? section.props.items : [];
+
+  if (cinemaFold) {
+    return (
+      <section
+        aria-label="Club highlights"
+        className="grid grid-cols-1 gap-2 border-y border-border-warm/50 bg-background/80 py-2.5 sm:grid-cols-3 sm:gap-3 sm:py-3"
+      >
+        {items.map((item, index) => {
+          if (typeof item !== "object" || item === null) {
+            return null;
+          }
+          const record = item as Record<string, unknown>;
+          const title = typeof record.title === "string" ? record.title : "";
+          const description = typeof record.description === "string" ? record.description : "";
+          const iconKey = typeof record.icon === "string" ? record.icon : "calendar";
+          const Icon = HIGHLIGHT_ICONS[iconKey] ?? CalendarDays;
+          if (!title) {
+            return null;
+          }
+          return (
+            <div key={`${title}-${index}`} className="flex min-w-0 items-start gap-2.5 px-1">
+              <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <Icon className="size-3.5" aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-text-warm">{title}</p>
+                {description ? (
+                  <p className="truncate text-xs text-text-muted-warm">{description}</p>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </section>
+    );
+  }
 
   return (
     <section
@@ -361,11 +449,45 @@ function HighlightsSection({
 function ActivityCard({
   activity,
   revealDelayMs = 0,
+  cinemaFold = false,
 }: {
   activity: PublicHomepageActivity;
   revealDelayMs?: number;
+  cinemaFold?: boolean;
 }) {
   const heroUrl = resolveHeroImageUrl(activity.heroImageUrl);
+
+  if (cinemaFold) {
+    return (
+      <Link
+        href={`/register/${activity.slug}`}
+        className="group flex min-h-0 overflow-hidden rounded-md border border-border-warm/60 bg-card/90"
+      >
+        {heroUrl ? (
+          <div className="relative w-[4.5rem] shrink-0 overflow-hidden bg-muted/30 sm:w-24">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={heroUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+              decoding="async"
+            />
+          </div>
+        ) : null}
+        <div className="min-w-0 flex-1 px-3 py-2.5">
+          <p className="truncate text-sm font-semibold text-text-warm group-hover:text-primary">
+            {activity.name}
+          </p>
+          {activity.schedule ? (
+            <p className="mt-0.5 truncate text-xs text-text-muted-warm">{activity.schedule}</p>
+          ) : null}
+          {activity.location ? (
+            <p className="mt-0.5 truncate text-[11px] text-text-muted-warm">{activity.location}</p>
+          ) : null}
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <MarketingReveal
@@ -435,10 +557,12 @@ function UpcomingActivitiesSection({
   section,
   activities,
   previewMode,
+  cinemaFold = false,
 }: {
   section: SiteSection;
   activities: PublicHomepageActivity[];
   previewMode: SitePreviewLayoutMode;
+  cinemaFold?: boolean;
 }) {
   const title =
     typeof section.props.title === "string" ? section.props.title : "Upcoming activities";
@@ -446,6 +570,26 @@ function UpcomingActivitiesSection({
     typeof section.props.emptyMessage === "string"
       ? section.props.emptyMessage
       : "New events coming soon.";
+
+  if (cinemaFold) {
+    return (
+      <section id="upcoming-activities" className="scroll-mt-28 pt-3">
+        <div className="mb-2 flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-semibold tracking-tight text-text-warm">{title}</h2>
+          <p className="text-[11px] text-text-muted-warm">{activities.length} this week</p>
+        </div>
+        {activities.length > 0 ? (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {activities.map((activity) => (
+              <ActivityCard key={activity.slug} activity={activity} cinemaFold />
+            ))}
+          </div>
+        ) : (
+          <MarketingEmptyState message={emptyMessage} />
+        )}
+      </section>
+    );
+  }
 
   return (
     <MarketingReveal
@@ -553,9 +697,11 @@ function HowItWorksSection({
 function FooterSection({
   section,
   previewMode,
+  cinemaFold = false,
 }: {
   section: SiteSection;
   previewMode: SitePreviewLayoutMode;
+  cinemaFold?: boolean;
 }) {
   const poweredByLabel =
     typeof section.props.poweredByLabel === "string"
@@ -564,27 +710,55 @@ function FooterSection({
 
   return (
     <footer
+      id="site-footer"
       className={previewLayoutClass(previewMode, {
-        full: "relative z-10 mt-8 border-t border-border-warm/60 bg-background/70 backdrop-blur-md",
-        phone: "relative z-10 mt-6 border-t border-border-warm/60 bg-background/70 backdrop-blur-md",
-        desktop:
-          "relative z-10 mt-10 border-t border-border-warm/60 bg-background/70 backdrop-blur-md",
+        full: cn(
+          "relative z-10 border-t border-border-warm/60 bg-background/70 backdrop-blur-md",
+          cinemaFold ? "mt-3" : "mt-8"
+        ),
+        phone: cn(
+          "relative z-10 border-t border-border-warm/60 bg-background/70 backdrop-blur-md",
+          cinemaFold ? "mt-2" : "mt-6"
+        ),
+        desktop: cn(
+          "relative z-10 border-t border-border-warm/60 bg-background/70 backdrop-blur-md",
+          cinemaFold ? "mt-3" : "mt-10"
+        ),
       })}
     >
       <div
         className={previewLayoutClass(previewMode, {
-          full: "mx-auto flex max-w-7xl justify-center px-4 py-5 sm:px-6 lg:px-10",
-          phone: "flex justify-center px-4 py-4",
-          desktop: "mx-auto flex max-w-7xl justify-center px-10 py-5",
+          full: cn(
+            "mx-auto flex max-w-7xl flex-col items-center gap-1 px-4 sm:px-6 lg:px-10",
+            cinemaFold ? "py-2.5" : "py-5"
+          ),
+          phone: cn("flex flex-col items-center gap-1 px-4", cinemaFold ? "py-2" : "py-4"),
+          desktop: cn(
+            "mx-auto flex max-w-7xl flex-col items-center gap-1 px-10",
+            cinemaFold ? "py-2.5" : "py-5"
+          ),
         })}
       >
-        <p className="text-center text-xs text-muted-foreground sm:text-sm">
+        <p
+          className={cn(
+            "text-center text-muted-foreground",
+            cinemaFold ? "text-[11px] leading-snug" : "text-xs sm:text-sm"
+          )}
+        >
           {poweredByLabel}
-          <span aria-hidden="true" className="px-2 text-border-warm">
-            ·
-          </span>
-          © {new Date().getFullYear()}
         </p>
+        {!cinemaFold ? (
+          <p className="text-center text-xs text-muted-foreground">
+            <span aria-hidden="true" className="px-2 text-border-warm">
+              ·
+            </span>
+            © {new Date().getFullYear()}
+          </p>
+        ) : (
+          <p className="text-center text-[10px] text-muted-foreground">
+            Activities · Community · Membership · © {new Date().getFullYear()}
+          </p>
+        )}
       </div>
     </footer>
   );
@@ -599,11 +773,18 @@ function renderSection(
     previewMode: SitePreviewLayoutMode;
     isPreview: boolean;
     clubFacingOnly: boolean;
+    cinemaFold: boolean;
   }
 ) {
   let node: ReactNode = null;
+  const type = section.type.toLowerCase();
 
-  switch (section.type.toLowerCase()) {
+  // Cinema fold: keep first-viewport hierarchy lean — skip testimonials below the fold.
+  if (context.cinemaFold && type === "testimonials") {
+    return null;
+  }
+
+  switch (type) {
     case "hero":
       node = (
         <HeroSection
@@ -611,11 +792,18 @@ function renderSection(
           siteName={context.siteName}
           previewMode={context.previewMode}
           clubFacingOnly={context.clubFacingOnly}
+          cinemaFold={context.cinemaFold}
         />
       );
       break;
     case "highlights":
-      node = <HighlightsSection section={section} previewMode={context.previewMode} />;
+      node = (
+        <HighlightsSection
+          section={section}
+          previewMode={context.previewMode}
+          cinemaFold={context.cinemaFold}
+        />
+      );
       break;
     case "upcomingactivities":
       node = context.showUpcoming ? (
@@ -623,6 +811,7 @@ function renderSection(
           section={section}
           activities={context.upcomingActivities}
           previewMode={context.previewMode}
+          cinemaFold={context.cinemaFold}
         />
       ) : null;
       break;
@@ -633,7 +822,11 @@ function renderSection(
       node = <CarouselPublicSection section={section} />;
       break;
     case "testimonials":
-      node = <TestimonialsPublicSection section={section} />;
+      node = (
+        <div id="community">
+          <TestimonialsPublicSection section={section} />
+        </div>
+      );
       break;
     case "faq":
       node = <FaqPublicSection section={section} />;
@@ -651,7 +844,13 @@ function renderSection(
       node = <ContactSection section={section} isPreview={context.isPreview} />;
       break;
     case "footer":
-      node = <FooterSection section={section} previewMode={context.previewMode} />;
+      node = (
+        <FooterSection
+          section={section}
+          previewMode={context.previewMode}
+          cinemaFold={context.cinemaFold}
+        />
+      );
       break;
     default:
       node = null;
@@ -669,6 +868,7 @@ export function SitePageRenderer({
   isPreview = false,
   showPreviewBanner,
   clubFacingOnly = false,
+  cinemaFold = false,
 }: SitePageRendererProps) {
   const previewMode = useSitePreviewLayout();
   const shouldShowPreviewBanner = showPreviewBanner ?? (isPreview && !previewMode);
@@ -679,7 +879,10 @@ export function SitePageRenderer({
   const showUpcoming = isUpcomingActivitiesSectionEnabled(published);
   const heroSection = sections.find((section) => section.type.toLowerCase() === "hero");
   const headerEyebrow =
-    heroSection && typeof heroSection.props.eyebrow === "string"
+    !cinemaFold &&
+    heroSection &&
+    typeof heroSection.props.eyebrow === "string" &&
+    heroSection.props.eyebrow.trim().toLowerCase() !== published.siteName.trim().toLowerCase()
       ? heroSection.props.eyebrow
       : "";
 
@@ -718,8 +921,9 @@ export function SitePageRenderer({
       ? heroSection.props.heroImageUrl.trim()
       : "";
   const hasHeroBanner = hasHero && (Boolean(heroImageAssetId) || localHeroImageUrl.startsWith("/"));
-  const { scrolled: headerScrolled, anchorRef } = useMarketingHeaderScroll(hasHeroBanner);
-  const headerOverHero = hasHeroBanner && !headerScrolled;
+  const { scrolled: headerScrolled, anchorRef } = useMarketingHeaderScroll(hasHeroBanner && !cinemaFold);
+  // Cinema fold is dense — keep solid club chrome so nav stays readable over highlights.
+  const headerOverHero = !cinemaFold && hasHeroBanner && !headerScrolled;
 
   const sectionContext = {
     siteName: published.siteName,
@@ -728,6 +932,7 @@ export function SitePageRenderer({
     previewMode,
     isPreview,
     clubFacingOnly,
+    cinemaFold,
   };
 
   return (
@@ -749,15 +954,22 @@ export function SitePageRenderer({
       >
         <div
           className={previewLayoutClass(previewMode, {
-            full: "mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-6 sm:py-3.5 lg:px-10",
+            full: cn(
+              "mx-auto flex w-full max-w-7xl items-center justify-between gap-3 sm:gap-4",
+              cinemaFold ? "px-3 py-2 sm:px-4" : "px-4 py-3 sm:px-6 sm:py-3.5 lg:px-10"
+            ),
             phone: "flex items-center justify-between gap-2.5 px-4 py-3",
-            desktop: "mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-10 py-3.5",
+            desktop: cn(
+              "mx-auto flex w-full max-w-7xl items-center justify-between gap-4",
+              cinemaFold ? "px-4 py-2" : "px-10 py-3.5"
+            ),
           })}
         >
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
           <span
             className={cn(
               "flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl p-2 transition-colors duration-300 sm:size-11",
+              cinemaFold && "size-8 sm:size-9",
               headerOverHero
                 ? "bg-white/10 ring-1 ring-white/25 backdrop-blur-[2px]"
                 : "bg-card/90 shadow-sm ring-1 ring-border-warm/80 backdrop-blur-sm"
@@ -777,6 +989,7 @@ export function SitePageRenderer({
                 aria-hidden
                 className={cn(
                   "text-sm font-semibold tracking-tight sm:text-base",
+                  cinemaFold && "text-xs sm:text-sm",
                   headerOverHero ? "text-white" : "text-text-warm"
                 )}
               >
@@ -802,10 +1015,39 @@ export function SitePageRenderer({
               >
                 {headerEyebrow}
               </p>
+            ) : cinemaFold ? (
+              <p
+                className={cn(
+                  "truncate text-[11px] transition-colors duration-300",
+                  headerOverHero ? "text-white/70" : "text-text-muted-warm"
+                )}
+              >
+                East Coast · Singapore
+              </p>
             ) : null}
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {cinemaFold ? (
+            <nav
+              aria-label="Harbourline"
+              className="hidden items-center gap-1 md:flex"
+            >
+              {CINEMA_PUBLIC_NAV.map((item) => (
+                <span
+                  key={item.label}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                    headerOverHero
+                      ? "text-white/85"
+                      : "text-text-muted-warm hover:text-text-warm"
+                  )}
+                >
+                  {item.label}
+                </span>
+              ))}
+            </nav>
+          ) : null}
           {!clubFacingOnly ? (
             <div
               className={cn(
@@ -817,6 +1059,17 @@ export function SitePageRenderer({
             >
               <ThemeToggle variant="public" />
             </div>
+          ) : cinemaFold ? (
+            <span
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-semibold",
+                headerOverHero
+                  ? "bg-white text-ink"
+                  : "bg-primary text-primary-foreground"
+              )}
+            >
+              Join this week
+            </span>
           ) : null}
         </div>
         </div>
@@ -826,15 +1079,23 @@ export function SitePageRenderer({
         className={previewLayoutClass(previewMode, {
           full: cn(
             "relative z-10 flex w-full min-w-0 flex-1 flex-col",
-            hasHero ? "pb-16 pt-0" : "mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 sm:pb-20 sm:pt-10 lg:px-10 lg:pb-24 lg:pt-14"
+            hasHero
+              ? cinemaFold
+                ? "pb-0 pt-0"
+                : "pb-16 pt-0"
+              : "mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 sm:pb-20 sm:pt-10 lg:px-10 lg:pb-24 lg:pt-14"
           ),
           phone: cn(
             "relative z-10 flex w-full min-w-0 flex-1 flex-col",
-            hasHero ? "pb-12 pt-0" : "mx-auto max-w-none px-4 pb-12 pt-5"
+            hasHero ? (cinemaFold ? "pb-0 pt-0" : "pb-12 pt-0") : "mx-auto max-w-none px-4 pb-12 pt-5"
           ),
           desktop: cn(
             "relative z-10 flex w-full min-w-0 flex-1 flex-col",
-            hasHero ? "pb-24 pt-0" : "mx-auto max-w-7xl px-10 pb-24 pt-14"
+            hasHero
+              ? cinemaFold
+                ? "pb-0 pt-0"
+                : "pb-24 pt-0"
+              : "mx-auto max-w-7xl px-10 pb-24 pt-14"
           ),
         })}
       >
@@ -846,22 +1107,27 @@ export function SitePageRenderer({
           <div
             className={previewLayoutClass(previewMode, {
               full: cn(
-                "mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 sm:px-6 lg:px-10",
-                hasHero && "pt-10 sm:pt-12 lg:pt-16"
+                "mx-auto flex w-full max-w-7xl flex-1 flex-col",
+                cinemaFold ? "px-3 sm:px-4" : "px-4 sm:px-6 lg:px-10",
+                hasHero && (cinemaFold ? "pt-0" : "pt-10 sm:pt-12 lg:pt-16")
               ),
-              phone: cn("flex w-full flex-1 flex-col px-4", hasHero && "pt-6"),
+              phone: cn(
+                "flex w-full flex-1 flex-col px-4",
+                hasHero && (cinemaFold ? "pt-0" : "pt-6")
+              ),
               desktop: cn(
-                "mx-auto flex w-full max-w-7xl flex-1 flex-col px-10",
-                hasHero && "pt-16"
+                "mx-auto flex w-full max-w-7xl flex-1 flex-col",
+                cinemaFold ? "px-4" : "px-10",
+                hasHero && (cinemaFold ? "pt-0" : "pt-16")
               ),
             })}
           >
             {hasHighlights && (
               <div
                 className={previewLayoutClass(previewMode, {
-                  full: "space-y-10 sm:space-y-12 lg:space-y-16",
-                  phone: "space-y-6",
-                  desktop: "space-y-16",
+                  full: cinemaFold ? "space-y-0" : "space-y-10 sm:space-y-12 lg:space-y-16",
+                  phone: cinemaFold ? "space-y-0" : "space-y-6",
+                  desktop: cinemaFold ? "space-y-0" : "space-y-16",
                 })}
               >
                 {highlightsBlock.map((section) => renderSection(section, sectionContext))}

@@ -19,6 +19,7 @@ export function MarketingDemoWebsiteMount() {
         isPreview
         showPreviewBanner={false}
         clubFacingOnly
+        cinemaFold
       />
       </div>
     </MarketingDemoTheme>
