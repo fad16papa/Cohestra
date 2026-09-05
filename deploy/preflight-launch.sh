@@ -102,15 +102,20 @@ else
   warn "reCAPTCHA disabled — enable before public signup (Story 19.3)"
 fi
 
-if [[ -n "${Stripe__SecretKey:-}" ]]; then
-  if [[ "${Stripe__SecretKey}" == sk_live_* ]]; then
-    warn "Stripe live secret key detected — use test keys on UAT"
+if [[ -n "${Stripe__SecretKey:-}" || -n "${Stripe__WebhookSecret:-}" ]]; then
+  fail "Stripe keys must not be set — billing is Paddle (Epic 29 / Story 19.4)"
+fi
+
+if [[ -n "${Paddle__ApiKey:-}" ]]; then
+  require_nonempty "Paddle__WebhookSecret" "${Paddle__WebhookSecret:-}"
+  require_nonempty "Paddle__ClientToken" "${Paddle__ClientToken:-}"
+  if [[ "${Paddle__Environment:-sandbox}" == "production" ]]; then
+    warn "Paddle__Environment=production — UAT should use sandbox until public launch"
   else
-    pass "Stripe test key configured"
+    pass "Paddle sandbox configured"
   fi
-  require_nonempty "Stripe__WebhookSecret" "${Stripe__WebhookSecret:-}"
 else
-  warn "Stripe__SecretKey unset — billing UAT (Story 19.4) will be blocked"
+  warn "Paddle__ApiKey unset — stack smoke (19.1) can proceed; billing UAT (19.4) needs sandbox keys"
 fi
 
 echo ""

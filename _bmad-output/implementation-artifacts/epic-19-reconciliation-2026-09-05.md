@@ -28,4 +28,8 @@ Still in force. No Epic 19 implementation story may skip `bmad-code-review` on t
 - Docker on this VM (not required if deploying remotely)
 - UAT `.env` secrets
 
-Work stops here until the owner provides UAT access. Routine engineering will resume immediately after.
+**2026-09-05 later:** Pre-deployment readiness **PASS**. Canonical: `epic-19-pre-deployment-readiness-2026-09-05.md`.
+
+UAT compose now forwards `Paddle__*` (it previously dropped them). Preflight fails on leftover Stripe keys and warns if Paddle is unset (19.1 may proceed).
+
+Work stops here until the owner provides DigitalOcean/SSH and SendGrid. Routine engineering will resume immediately after.
