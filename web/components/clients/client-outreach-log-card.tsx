@@ -332,9 +332,6 @@ export function ClientOutreachLogCard({
               Viber
             </button>
           </div>
-          {channel === "viber" ? (
-            <p className="text-xs text-text-muted-warm">Logging Viber outreach</p>
-          ) : null}
         </div>
 
         <div className="space-y-1.5">
