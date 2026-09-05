@@ -1211,7 +1211,9 @@ export function RegistrationForm({
           <Button
             type="button"
             variant="outline"
-            className={cn(isPublic && "min-h-12 w-full max-w-full text-base")}
+            className={cn(
+              isPublic && "min-h-12 w-full min-w-0 max-w-full shrink text-base"
+            )}
             onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
           >
             Back
@@ -1219,7 +1221,9 @@ export function RegistrationForm({
         ) : null}
         <Button
           type="submit"
-          className={cn(isPublic && "min-h-12 w-full max-w-full text-base")}
+          className={cn(
+            isPublic && "min-h-12 w-full min-w-0 max-w-full shrink text-base"
+          )}
           disabled={
             (isPreview && !stepsOn) ||
             schema.fields.length === 0 ||
