@@ -256,6 +256,7 @@ development_status:
   epic-18-retrospective: done
 
   # Epic 19 — unblocked 2026-08-23 after Epic 29. Do not put Stripe keys on the droplet.
+  # 2026-09-05: Epic 34 frozen on main; 19.1 blocked on owner UAT droplet/SSH/secrets.
   epic-19: in-progress
   19-1-uat-droplet-deploy-and-smoke: ready-for-dev
   19-2-https-edge-security-header-verify: ready-for-dev
