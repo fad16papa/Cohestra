@@ -4,6 +4,7 @@ using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Intelligence;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Clients;
+using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Tenants;
 using Microsoft.EntityFrameworkCore;
