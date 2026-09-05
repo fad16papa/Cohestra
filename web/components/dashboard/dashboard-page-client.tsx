@@ -9,6 +9,7 @@ import { DashboardCommunityPulse } from "@/components/dashboard/dashboard-commun
 import { DashboardEmptyState } from "@/components/dashboard/dashboard-empty-state";
 import { DashboardFollowUpQueue } from "@/components/dashboard/dashboard-follow-up-queue";
 import { DashboardGreetingHeader } from "@/components/dashboard/dashboard-greeting-header";
+import { DashboardIntelligenceBrief } from "@/components/dashboard/dashboard-intelligence-brief";
 import { DashboardLeadStatusChart } from "@/components/dashboard/dashboard-lead-status-chart";
 import { DashboardMetricsGraphs } from "@/components/dashboard/dashboard-metrics-graphs";
 import { DashboardMetricsTable } from "@/components/dashboard/dashboard-metrics-table";
@@ -185,7 +186,13 @@ export function DashboardPageClient() {
   }
 
   if (hasActivities === false) {
-    return <DashboardEmptyState />;
+    return (
+      <div className="mx-auto max-w-6xl space-y-8">
+        <DashboardGreetingHeader />
+        <DashboardIntelligenceBrief />
+        <DashboardEmptyState />
+      </div>
+    );
   }
 
   if (!metrics) {
@@ -203,6 +210,7 @@ export function DashboardPageClient() {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <DashboardGreetingHeader />
+      <DashboardIntelligenceBrief />
 
       <section className="rounded-xl border border-border-warm bg-card/60 p-4 sm:p-5">
         <DashboardViewSwitcher value={viewMode} onChange={handleViewModeChange} />
