@@ -8,6 +8,8 @@ using Cohestra.Contracts.Site;
 using Cohestra.Contracts.PublicDoor;
 using Cohestra.Domain.Activities;
 using Cohestra.Contracts.Activities;
+using Cohestra.Contracts.Intelligence;
+using Cohestra.Domain.Clients;
 using Cohestra.Domain.Registrations;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
@@ -412,5 +414,40 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
             new DuplicateFormTemplateRequest(null));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [SkippableFact]
+    public async Task Admin_IntelligenceBrief_ExcludesForeignTenantNames()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        const string foreignMarker = "TENANT_B_BRIEF_API_MARKER";
+        await IntegrationTestHelpers.SeedClientAsync(
+            Factory.Services,
+            client =>
+            {
+                client.TenantId = tenantB.Id;
+                client.FullName = foreignMarker;
+                client.LeadStatus = LeadStatus.Active;
+                client.NextFollowUpAt = DateTimeOffset.UtcNow.AddHours(-1);
+            });
+
+        using var adminClient = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+
+        using var response = await adminClient.GetAsync("/api/v1/admin/intelligence/brief");
+        response.EnsureSuccessStatusCode();
+
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(foreignMarker, body, StringComparison.Ordinal);
+
+        var brief = await response.Content.ReadFromJsonAsync<IntelligenceBriefResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(brief);
+        Assert.DoesNotContain(
+            brief!.Insights.SelectMany(insight => insight.Evidence),
+            evidence => evidence.Value.Contains(foreignMarker, StringComparison.Ordinal));
     }
 }

@@ -340,6 +340,14 @@ development_status:
   # Epic 33 — Live Proof Cinema (marketing /#crm). Source: epics-live-proof-cinema.md
   # Slice drafted as standalone Epic 1; tracker uses 33 to avoid colliding with Platform Epic 1 (done).
   epic-33: in-progress
+
+  # Epic 34 — Cohestra Intelligence Brief. Source: planning-artifacts/epics-cohestra-intelligence.md
+  epic-34: in-progress
+  34-1-deterministic-operator-brief-api: in-progress
+  34-2-operator-brief-surface: backlog
+  34-3-optional-ai-synthesis-with-fallback: backlog
+  34-4-observability-and-cost-controls: backlog
+  epic-34-retrospective: optional
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done
   33-6-harbourline-democlub-continuous-seed: done
