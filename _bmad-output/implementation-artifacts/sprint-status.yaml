@@ -289,13 +289,13 @@ development_status:
   23-4-next-follow-up-date: done
   epic-23-retrospective: done
 
-  epic-25: in-progress
-  25-1-community-brand-kit: review
-  25-2-activity-registration-theme: review
-  25-3-public-registration-preset-renderer: review
-  25-4-admin-design-tab-live-preview: review
-  25-5-intro-copy-section-headers: review
-  epic-25-retrospective: optional
+  epic-25: done
+  25-1-community-brand-kit: done
+  25-2-activity-registration-theme: done
+  25-3-public-registration-preset-renderer: done
+  25-4-admin-design-tab-live-preview: done
+  25-5-intro-copy-section-headers: done
+  epic-25-retrospective: done
 
   # Epic 29 — Paddle Billing Migration (Stripe Removal). Adapter-only.
   # Source: planning-artifacts/epic-29-paddle-billing.md
@@ -663,4 +663,37 @@ action_items:
   - epic: 32
     action: "Track deferred embed e2e tests as follow-up if registration capture expands"
     owner: Product
+    status: open
+
+  # Epic 25 retrospective + 2026-09-05 acceptance residuals (not new stories)
+  - epic: 25
+    action: "Sync Epic 25 + Epics 26–28 in sprint-status.yaml"
+    owner: Dev
+    status: done
+    resolution: "Closed on main 2026-09-05; retro restored from unmerged 2026-08-21 close"
+  - epic: 25
+    action: "Fix RegistrationThemeQueriesTests tenant filter alignment"
+    owner: Dev
+    status: done
+    resolution: "Use TenantIds.Default in test; shipped with 2026-08-21 retro branch and later main"
+  - epic: 25
+    action: "Operator UAT — community brand kit + Design tab + public preset smoke on Docker"
+    owner: Operator
+    status: done
+    resolution: "Operator sign-off 2026-08-22 — Design tab, public presets, and branding verified on local Docker"
+  - epic: 25
+    action: "Optional residual: invalidate public activity cache on community brand-kit PATCH (not a 25.x story)"
+    owner: Dev
+    status: open
+  - epic: 25
+    action: "Optional residual: tenant ownership check on public campaign-asset URLs for logo (not a 25.x story)"
+    owner: Dev
+    status: open
+  - epic: 25
+    action: "Document Design tab as primary branding surface (Overview hero/accent retirement)"
+    owner: Product
+    status: open
+  - epic: 25
+    action: "Close draft PR #202 (superseded by epic-25-retro-2026-08-21.md)"
+    owner: Dev
     status: open

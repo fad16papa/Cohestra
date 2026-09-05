@@ -1,13 +1,13 @@
 ---
 epic: 25
 story: 5
-status: review
+status: done
 baseline_commit: f5c6005
 ---
 
 # Story 25.5: Intro copy + section headers
 
-Status: review
+Status: done
 
 ## Story
 
@@ -78,3 +78,4 @@ Composer
 ## Change Log
 
 - 2026-08-12: Added intro markdown meta and section_header field type end-to-end.
+- 2026-09-05: Acceptance PASS — intro markdown and non-input section headers remain on Form tab + public render.

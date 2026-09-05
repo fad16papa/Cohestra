@@ -1,13 +1,13 @@
 ---
 epic: 25
 story: 4
-status: review
+status: done
 baseline_commit: f5c6005
 ---
 
 # Story 25.4: Admin Design tab + live preview
 
-Status: review
+Status: done
 
 ## Story
 
@@ -62,3 +62,4 @@ Composer
 ## Change Log
 
 - 2026-08-12: Added Design tab with live preview and WCAG contrast validation.
+- 2026-09-05: Acceptance PASS — Design tab preview + contrast warning remain the branding home.
