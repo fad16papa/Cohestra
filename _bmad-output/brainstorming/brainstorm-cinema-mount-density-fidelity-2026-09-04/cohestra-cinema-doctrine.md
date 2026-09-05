@@ -1,5 +1,9 @@
 # Cohestra Cinema Doctrine
 
+> **FROZEN 2026-09-05.** Canonical reference for Live Proof Cinema.  
+> Close-out: [`../../planning-artifacts/cinema-frozen.md`](../../planning-artifacts/cinema-frozen.md)  
+> Merged: PR #283 (`4b12cb2`). Do not create cinema stories or reopen visual ideation.
+
 Apex surface: `/#crm`. Scope: Live Proof Cinema for club operators. Source: brainstorm memlog 2026-09-04 (complete). No invention beyond locked decisions.
 
 ## North star

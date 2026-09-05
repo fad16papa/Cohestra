@@ -2,7 +2,7 @@
 title: 'Cinema house-tour rebuild'
 type: 'feature'
 created: '2026-09-04'
-status: 'done'
+status: 'frozen'
 route: 'one-shot'
 context:
   - '{project-root}/_bmad-output/specs/spec-democlub-cinema-seed/SPEC.md'
