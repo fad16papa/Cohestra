@@ -342,11 +342,11 @@ development_status:
   epic-33: in-progress
 
   # Epic 34 — Cohestra Intelligence Brief. Source: planning-artifacts/epics-cohestra-intelligence.md
-  epic-34: in-progress
-  34-1-deterministic-operator-brief-api: review
-  34-2-operator-brief-surface: review
-  34-3-optional-ai-synthesis-with-fallback: review
-  34-4-observability-and-cost-controls: review
+  epic-34: done
+  34-1-deterministic-operator-brief-api: done
+  34-2-operator-brief-surface: done
+  34-3-optional-ai-synthesis-with-fallback: done
+  34-4-observability-and-cost-controls: done
   epic-34-retrospective: optional
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

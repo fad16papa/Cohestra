@@ -1,13 +1,13 @@
 ---
 epic: 34
 story: 2
-status: review
+status: done
 baseline_commit: a207cf4cedaee6d2d8bd744b2b0d119e2437f8c5
 ---
 
 # Story 34.2: Operator brief surface
 
-Status: review
+Status: done
 
 ## Story
 
