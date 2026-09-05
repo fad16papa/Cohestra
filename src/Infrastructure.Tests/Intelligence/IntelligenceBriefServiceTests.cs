@@ -164,6 +164,96 @@ public sealed class IntelligenceBriefServiceTests
     }
 
     [Fact]
+    public async Task GetBrief_CapacityFull_EmitsZeroSpotsLeft()
+    {
+        var tenantId = Guid.CreateVersion7();
+        var current = new CurrentTenant();
+        current.SetResolved(tenantId, "cap-full-brief");
+        await using var db = CreateDb(current);
+        await SeedTenantAsync(db, tenantId);
+
+        var now = DateTimeOffset.UtcNow;
+        var activity = new Activity
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Name = "Packed Session",
+            Slug = "packed-session",
+            Category = "Run",
+            Schedule = "Wed",
+            Location = "Park",
+            Status = ActivityStatus.Published,
+            MaxRegistrants = 1,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        db.Activities.Add(activity);
+        var client = new Client
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            FullName = "Only Seat",
+            LeadStatus = LeadStatus.Active,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        db.Clients.Add(client);
+        db.Registrations.Add(new Registration
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ActivityId = activity.Id,
+            ClientId = client.Id,
+            RegistrationNumber = "REG-FULL",
+            CreatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        var brief = await new IntelligenceBriefService(db, current).GetBriefAsync();
+        var capacity = Assert.Single(brief.Insights, insight => insight.Kind == "capacity_pressure");
+        Assert.Contains("0 spots left", capacity.Title, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task GetBrief_DraftCappedActivity_DoesNotEmitCapacity()
+    {
+        var tenantId = Guid.CreateVersion7();
+        var current = new CurrentTenant();
+        current.SetResolved(tenantId, "cap-draft-brief");
+        await using var db = CreateDb(current);
+        await SeedTenantAsync(db, tenantId);
+
+        var now = DateTimeOffset.UtcNow;
+        db.Activities.Add(new Activity
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Name = "Still Draft",
+            Slug = "still-draft",
+            Category = "Run",
+            Schedule = "Thu",
+            Location = "Park",
+            Status = ActivityStatus.Draft,
+            MaxRegistrants = 2,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        db.Clients.Add(new Client
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            FullName = "Draft Only Tenant",
+            LeadStatus = LeadStatus.Active,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        var brief = await new IntelligenceBriefService(db, current).GetBriefAsync();
+        Assert.DoesNotContain(brief.Insights, insight => insight.Kind == "capacity_pressure");
+    }
+
+    [Fact]
     public async Task GetBrief_NewWithoutOutreach_ExcludesContactedNewPeople()
     {
         var tenantId = Guid.CreateVersion7();

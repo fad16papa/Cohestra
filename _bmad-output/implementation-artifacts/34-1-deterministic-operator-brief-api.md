@@ -1,13 +1,13 @@
 ---
 epic: 34
 story: 1
-status: in-progress
+status: review
 baseline_commit: 43abb8a2b1f49f590b81428342d31897e4b164b9
 ---
 
 # Story 34.1: Deterministic operator brief API
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -86,11 +86,16 @@ Cursor Grok 4.6
 
 ### Debug Log
 
-- Environment VM has no snapshot `dotnet`; install locally before BUILD/TEST.
+- First build failed: `RegistrationTimeZoneDefaults` not in scope — added `using Cohestra.Domain.Tenants`.
+- This VM had no snapshot `dotnet`; installed SDK 9.0.317 to `$HOME/.dotnet`.
+- Postgres/Redis installed locally for integration tests.
 
 ### Completion Notes List
 
-- Implementation written; BUILD/TEST pending toolchain.
+- Deterministic brief API only. No LLM.
+- Code review: `_bmad-output/implementation-artifacts/34-1-code-review-2026-09-05.md` — no BLOCKER/MAJOR.
+- Product acceptance (API): all five truths pass; UX surface is 34.2.
+- CI on PR #287 still required before `done`.
 
 ### File List
 
@@ -102,7 +107,19 @@ Cursor Grok 4.6
 - `src/Infrastructure.Tests/Intelligence/IntelligenceBriefServiceTests.cs`
 - `src/Api.IntegrationTests/IntelligenceBriefIntegrationTests.cs`
 - `src/Api.IntegrationTests/TenantIsolationApiTests.cs`
+- `_bmad-output/implementation-artifacts/34-1-code-review-2026-09-05.md`
 
 ## Change Log
 
 - 2026-09-05: Deterministic operator brief API (facts only, no LLM).
+- 2026-09-05: Mandatory code review — no unresolved BLOCKER/MAJOR; one deferred MINOR.
+
+## Product acceptance (2026-09-05)
+
+| Truth | Result |
+| --- | --- |
+| Product | Operator gets prioritized, evidenced attention items from real tenant data. |
+| Data | Due/outreach/merge/capacity/wow rules match existing Clients/Activities/Dashboard definitions. |
+| UX | N/A for API-only; 34.2 owns the surface. |
+| Integration | TenantOperator, existing deep-link routes, same filter semantics. |
+| Regression | 825 unit + 13 TenantIsolation + 12 brief unit tests green. |
