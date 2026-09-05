@@ -27,4 +27,4 @@
 
 ## Close rule
 
-Mark Epic 34 done after PR #287 merges and `main` is verified. Until then stories stay `review`.
+Verified on `main` at `cc21af7` (PR #287 squash). Stories and epic marked done. Epic 34 is frozen.
