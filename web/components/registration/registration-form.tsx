@@ -1124,7 +1124,7 @@ export function RegistrationForm({
     <form
       ref={formRef}
       className={cn(
-        "flex flex-col gap-[20px]",
+        "flex min-w-0 flex-col gap-[20px]",
         isPreview &&
           "rounded-xl border border-dashed border-border-warm bg-card p-6",
         className
@@ -1206,12 +1206,12 @@ export function RegistrationForm({
         </div>
       ) : null}
 
-      <div className={cn("flex flex-col gap-2", stepsOn && "sm:flex-row")}>
+      <div className="flex w-full min-w-0 flex-col gap-2">
         {stepsOn && stepIndex > 0 ? (
           <Button
             type="button"
             variant="outline"
-            className={cn(isPublic && "min-h-12 w-full text-base")}
+            className={cn(isPublic && "min-h-12 w-full max-w-full text-base")}
             onClick={() => setStepIndex((current) => Math.max(0, current - 1))}
           >
             Back
@@ -1219,7 +1219,7 @@ export function RegistrationForm({
         ) : null}
         <Button
           type="submit"
-          className={cn(isPublic && "min-h-12 w-full text-base")}
+          className={cn(isPublic && "min-h-12 w-full max-w-full text-base")}
           disabled={
             (isPreview && !stepsOn) ||
             schema.fields.length === 0 ||
