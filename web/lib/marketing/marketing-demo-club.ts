@@ -472,14 +472,14 @@ export function getActivityOps(club: MarketingDemoClub, activityId: string): Dem
       continue;
     }
     const blob = notesBlob(detail);
-    if (blob.includes("no-show") || blob.includes("no show")) {
-      noShows += 1;
-    } else if (blob.includes("checked in") || blob.includes("check-in") || activity.completed) {
-      // Completed sessions without no-show note count as checked in when notes mention check-in;
-      // for prior Golden Hour prefer explicit check-in text.
-      if (blob.includes("checked in") || blob.includes("check-in")) {
+    // Attendance outcomes only apply after the session ran — do not bleed prior-session
+    // "checked in" notes onto an upcoming roster.
+    if (activity.completed) {
+      if (blob.includes("no-show") || blob.includes("no show")) {
+        noShows += 1;
+      } else if (blob.includes("checked in") || blob.includes("check-in")) {
         checkedIn += 1;
-      } else if (activity.completed && !blob.includes("no-show")) {
+      } else {
         checkedIn += 1;
       }
     }
@@ -517,8 +517,8 @@ export function getIntelligenceBriefs(club: MarketingDemoClub): DemoIntelligence
       id: "due-now-first-timers",
       title: `${attention.dueNow} people need follow-up today`,
       why: [
-        "Attended or registered within the last 72 hours (or follow-up due on/before demoNow)",
-        "No qualifying WhatsApp / Viber / email follow-up after the trigger",
+        "Attended or registered within the last 72 hours, or follow-up is due today",
+        "No qualifying WhatsApp, Viber, or email follow-up after that trigger",
       ],
       anchorClientIds: dueNowClients
         .map((client) => client.id)
@@ -529,8 +529,8 @@ export function getIntelligenceBriefs(club: MarketingDemoClub): DemoIntelligence
       id: "golden-hour-capacity",
       title: "Golden Hour Run is approaching capacity",
       why: [
-        `${spots.going} of ${spots.capacity} registered`,
-        `${spots.spotsLeft} spots left — pace supported by seeded registration history`,
+        `${spots.going} of ${spots.capacity} registered for Friday’s run`,
+        `${spots.spotsLeft} spots left before the session fills`,
       ],
       anchorClientIds: [ANCHOR_IDS.maya, ANCHOR_IDS.sarah],
       activityIds: [GOLDEN_HOUR_UPCOMING_ID],
@@ -542,11 +542,11 @@ export function getIntelligenceBriefs(club: MarketingDemoClub): DemoIntelligence
       id: "at-risk-reengage",
       title: `${attention.atRisk} previously engaged people are at risk`,
       why: [
-        "Last meaningful engagement ≥21 days ago",
-        "No upcoming registration plan and no scheduled follow-up",
+        "Last meaningful engagement was 21 or more days ago",
+        "No upcoming registration and no scheduled follow-up",
         daniel
-          ? `${daniel.fullName}: quiet since last Golden Hour cycle`
-          : "Includes seeded at-risk roster",
+          ? `${daniel.fullName}: quiet since the last Golden Hour cycle`
+          : "Includes the at-risk roster already on the Follow-up board",
       ],
       anchorClientIds: atRiskClients
         .map((client) => client.id)

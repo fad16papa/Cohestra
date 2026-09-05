@@ -12,11 +12,13 @@ import {
   DEMO_ORG_NAME,
   FORBIDDEN_ORG_PATTERN,
   formatDemoWhatsappDay,
+  getActivityOps,
   getFollowUpClient,
   getGoldenHourSpots,
   getIntelligenceBriefs,
   getReportsProofClients,
   getTriageBucket,
+  GOLDEN_HOUR_UPCOMING_ID,
   isDemoRoomAvailable,
   listClientsByTriage,
   marketingDemoClub,
@@ -145,10 +147,19 @@ describe("MarketingDemoClub Harbourline continuous seed (33.6)", () => {
     expect(blob).toMatch(/34 of 42|34 \/ 42|34 of 42 registered/);
     expect(blob).not.toMatch(/\d+%\s*(increase|improvement|lift|growth)/i);
     expect(blob).not.toMatch(/chatbot|I think|probably/i);
+    expect(blob).not.toMatch(/demoNow|same seed|seeded registration/i);
     for (const brief of briefs) {
       expect(brief.why.length).toBeGreaterThan(0);
       expect(brief.activityIds.length).toBeGreaterThan(0);
     }
+  });
+
+  it("keeps upcoming Golden Hour check-in count at zero until the session runs", () => {
+    const ops = getActivityOps(marketingDemoClub, GOLDEN_HOUR_UPCOMING_ID);
+    const spots = getGoldenHourSpots(marketingDemoClub);
+    expect(ops.registered).toBe(spots.going);
+    expect(ops.checkedIn).toBe(0);
+    expect(ops.spotsLeft).toBe(spots.spotsLeft);
   });
 
   it("formats WhatsApp day in Asia/Singapore", () => {

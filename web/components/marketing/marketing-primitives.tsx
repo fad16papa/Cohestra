@@ -301,7 +301,7 @@ export function MarketingCinematicHero({
         hasImage && !cinemaFold && "-mt-14 sm:-mt-16",
         hasImage && cinemaFold && "-mt-12",
         cinemaFold
-          ? "min-h-[15.5rem] sm:min-h-[17rem]"
+          ? "min-h-[11.5rem] sm:min-h-[15.5rem] lg:min-h-[17rem]"
           : previewLayoutClass(previewMode, {
               full: "min-h-[min(88vh,52rem)]",
               phone: "min-h-[24rem]",
@@ -340,7 +340,7 @@ export function MarketingCinematicHero({
       <div
         className={
           cinemaFold
-            ? "relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-end px-4 pb-5 pt-14 sm:px-6 lg:px-8"
+            ? "relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-end px-4 pb-4 pt-12 sm:px-6 sm:pb-5 sm:pt-14 lg:px-8"
             : previewLayoutClass(previewMode, {
                 full: "relative z-10 mx-auto flex w-full max-w-7xl flex-col justify-center px-4 pb-16 pt-24 sm:px-6 sm:pb-20 sm:pt-28 lg:px-10 lg:pb-24 lg:pt-32",
                 phone: "relative z-10 flex w-full flex-col justify-center px-4 py-12 pt-20",

@@ -56,12 +56,18 @@ export function MarketingDemoIntelligenceMount() {
                 ) : null}
                 <p className="mt-2 text-[11px] text-stone-cinema">
                   Evidence:{" "}
-                  {brief.activityIds
-                    .map(
-                      (id) =>
-                        club.activities.find((activity) => activity.id === id)?.name ?? id
-                    )
-                    .join(" · ")}
+                  {[
+                    ...new Set(
+                      brief.activityIds.map((id) => {
+                        const activity = club.activities.find((row) => row.id === id);
+                        if (!activity) {
+                          return id;
+                        }
+                        const when = activity.startsAt.slice(0, 10);
+                        return `${activity.name} (${when})`;
+                      })
+                    ),
+                  ].join(" · ")}
                 </p>
               </li>
             );
