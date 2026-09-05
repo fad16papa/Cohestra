@@ -13,6 +13,8 @@ sources:
   - ../../brainstorming/brainstorm-cinema-mount-density-fidelity-2026-09-04/cohestra-cinema-doctrine.md
 ---
 
+> **FROZEN 2026-09-05** with Live Proof Cinema. Close-out: [`../../planning-artifacts/cinema-frozen.md`](../../planning-artifacts/cinema-frozen.md). Do not change Harbourline identity, derived numbers, or anchor arcs.
+
 > **Canonical contract.** This SPEC and the files in `companions:` are the complete, preservation-validated contract for what to build, test, and validate. Source documents listed in frontmatter are for traceability only — consult them only if you need narrative rationale or prose color this contract intentionally omits.
 
 # DemoClub cinema seed world

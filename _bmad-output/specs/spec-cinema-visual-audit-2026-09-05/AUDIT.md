@@ -1,7 +1,7 @@
 ---
 title: Cinema visual validation audit (PR #283)
 created: 2026-09-05
-status: ready-for-dev
+status: done
 evidence: /opt/cursor/artifacts/cinema-audit-2026-09-05/
 ---
 

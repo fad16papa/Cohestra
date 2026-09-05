@@ -8,11 +8,12 @@ inputDocuments:
   - _bmad-output/brainstorming/brainstorm-live-product-feeling-cinema-2026-09-01/brainstorm-intent.md
   - _bmad-output/planning-artifacts/architecture.md
   - _bmad-output/planning-artifacts/architecture/architecture-cohestra-enterprise-2026-07-15/ARCHITECTURE-SPINE.md
-status: complete
+status: frozen
 project_name: cohestra
 slice: Live Proof Cinema (marketing /#crm)
 tracker_epic: 33
-updated: 2026-09-01
+updated: 2026-09-05
+frozen_record: planning-artifacts/cinema-frozen.md
 ---
 
 # cohestra - Epic Breakdown (Live Proof Cinema)
