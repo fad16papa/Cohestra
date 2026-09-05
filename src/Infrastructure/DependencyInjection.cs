@@ -10,6 +10,7 @@ using Cohestra.Infrastructure.Outbox;
 using Cohestra.Application.Campaigns;
 using Cohestra.Application.Clients;
 using Cohestra.Application.Dashboard;
+using Cohestra.Application.Intelligence;
 using Cohestra.Application.Email;
 using Cohestra.Application.PublicDoor;
 using Cohestra.Application.Registrations;
@@ -27,6 +28,7 @@ using Cohestra.Infrastructure.Compliance;
 using Cohestra.Infrastructure.Campaigns;
 using Cohestra.Infrastructure.Clients;
 using Cohestra.Infrastructure.Dashboard;
+using Cohestra.Infrastructure.Intelligence;
 using Cohestra.Infrastructure.Email;
 using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
@@ -212,6 +214,28 @@ public static class DependencyInjection
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IClientService, ClientService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.Configure<IntelligenceOptions>(configuration.GetSection(IntelligenceOptions.SectionName));
+        services.AddScoped<IntelligenceBriefService>();
+        services.AddHttpClient<OpenAiCompatibleIntelligenceSynthesizer>((sp, client) =>
+        {
+            var settings = sp.GetRequiredService<IOptions<IntelligenceOptions>>().Value;
+            var baseUrl = string.IsNullOrWhiteSpace(settings.BaseUrl)
+                ? "https://api.openai.com/v1/"
+                : settings.BaseUrl.TrimEnd('/') + "/";
+            client.BaseAddress = new Uri(baseUrl);
+            client.Timeout = TimeSpan.FromSeconds(Math.Clamp(settings.TimeoutSeconds, 2, 20));
+        });
+        services.AddScoped<IIntelligenceSynthesizer>(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<IntelligenceOptions>>().Value;
+            if (!settings.SynthesisEnabled || string.IsNullOrWhiteSpace(settings.ApiKey))
+            {
+                return new DisabledIntelligenceSynthesizer();
+            }
+
+            return sp.GetRequiredService<OpenAiCompatibleIntelligenceSynthesizer>();
+        });
+        services.AddScoped<IIntelligenceBriefService, IntelligenceBriefComposer>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IRegistrationService, RegistrationService>();
         services.AddScoped<IRegistrationNotificationService, RegistrationNotificationService>();
