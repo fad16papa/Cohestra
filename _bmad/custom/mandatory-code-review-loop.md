@@ -95,9 +95,11 @@ Classify every review finding:
 
 Story cannot close with unresolved BLOCKER or MAJOR findings.
 
-MINOR findings should normally be fixed when the change is small and directly related to the story.
+MINOR findings should normally be fixed when the change is small and directly related to the story. A MINOR may be explicitly deferred only with documented rationale and no product, architecture, or security risk.
 
-NIT findings must not create endless polishing loops.
+NIT findings may remain. Do not create endless polishing loops.
+
+Code review must distinguish real defects from taste or preference.
 
 ## Review fix law
 
@@ -123,12 +125,12 @@ Do not rely on a review of an older commit after fixes have been pushed.
 
 If tests fail after a review fix, classify the failure as:
 
-- implementation defect
-- regression
-- stale test
-- flaky test
-- environment issue
-- unrelated pre-existing failure
+- A. implementation defect
+- B. regression
+- C. stale/incorrect test
+- D. flaky test
+- E. infrastructure/environment issue
+- F. unrelated pre-existing failure
 
 Then resolve appropriately.
 
@@ -160,16 +162,22 @@ story implementation
 → product/UX acceptance
 → final HEAD verification
 → merge
+→ post-merge verification
+→ story done
 ```
 
 The merge candidate must be the exact HEAD that passed:
 
-- CI
+- build
 - tests
-- code review
+- BMAD code review
 - product acceptance
+- UX/visual acceptance where applicable
+- CI
 
 Do not approve a PR because an earlier commit passed.
+
+Do not mark the story done merely because the PR merged. Verify `main` afterward.
 
 `bmad-checkpoint-preview` is human walkthrough. It does **not** replace `bmad-code-review`.
 
@@ -222,4 +230,16 @@ CLOSE STORY
 → NEXT STORY
 ```
 
-Never mark sprint-status `done` from implementation alone. `review` means implementation finished and the code-review loop is in progress or required. `done` means this definition of PASS holds for the current HEAD.
+Never mark sprint-status `done` from implementation alone. `review` means implementation finished and the code-review loop is in progress or required. `done` means this definition of PASS holds for the current HEAD on `main` after post-merge verification.
+
+## Product acceptance law
+
+Every implementation story must satisfy:
+
+- **PRODUCT TRUTH** — Does the feature solve the intended user/operator problem?
+- **DATA TRUTH** — Are facts and state correct?
+- **UX TRUTH** — Can a real user understand and operate it?
+- **INTEGRATION TRUTH** — Does it work correctly with existing Cohestra functionality?
+- **REGRESSION TRUTH** — Did existing behavior remain intact?
+
+A story does not become DONE until these are satisfied. Acceptance failure returns through FIX → BUILD → TEST → CODE REVIEW AGAIN → ACCEPTANCE AGAIN.

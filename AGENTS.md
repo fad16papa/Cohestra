@@ -21,7 +21,9 @@ IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW
 - Classify findings BLOCKER / MAJOR / MINOR / NIT. Unresolved BLOCKER or MAJOR blocks close.
 - Fix in-scope findings in the current story. Do not open a new story automatically.
 - Never weaken production behavior to make tests green. Never skip a deterministic failing test.
-- Merge only the exact HEAD that passed CI, tests, code review, and product acceptance.
+- Merge only the exact HEAD that passed build, tests, code review, product acceptance, UX/visual where applicable, and CI.
+- Do not mark a story done merely because the PR merged. Verify `main` afterward.
+- Product acceptance requires product, data, UX, integration, and regression truth.
 - After all stories in an epic pass, run a final cross-story epic review.
 
 A story is DONE only when SPEC, IMPLEMENTATION, BUILD, TESTS, BMAD CODE REVIEW (no unresolved BLOCKER/MAJOR), PRODUCT ACCEPTANCE, UX/VISUAL where applicable, CI, and FINAL HEAD REVIEW all pass on the same HEAD.

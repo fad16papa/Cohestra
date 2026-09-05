@@ -147,7 +147,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ### Development Workflow Rules
 
-- **Mandatory Code Review Loop (locked):** `_bmad/custom/mandatory-code-review-loop.md`. Every implementation story: IMPLEMENT → BUILD → TEST → `bmad-code-review` (repeat until the final HEAD has no unresolved BLOCKER/MAJOR) → product/UX acceptance → DONE. Do not mark `done` from implementation alone. After fixes, review the new HEAD. Fix in-scope findings in the current story. Epic close requires a final cross-story review.
+- **Mandatory Code Review Loop (locked):** `_bmad/custom/mandatory-code-review-loop.md`. Every implementation story: IMPLEMENT → BUILD → TEST → `bmad-code-review` (repeat until the final HEAD has no unresolved BLOCKER/MAJOR) → product/UX acceptance (product, data, UX, integration, regression truth) → DONE. Do not mark `done` from implementation alone or merely because a PR merged; verify `main`. After fixes, review the new HEAD. Fix in-scope findings in the current story. Epic close requires a final cross-story review.
 - **Brownfield:** implement stories against existing `main`-based branches; extend code in place
 - **Branches:** feature work under `cursor/<name>-4da3` (cloud agent convention) or team equivalent — keep Enterprise planning/impl on dedicated branches off `main`
 - **Commits:** imperative, scoped; include story id when implementing (`Add TenantIsolation tests (13.4)`)
