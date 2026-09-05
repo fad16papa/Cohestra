@@ -1,3 +1,7 @@
+## Deferred from: code review of spec-fix-registration-step-buttons.md (2026-09-05)
+
+- `PublicFormLayout` main column `min-w-0` applies to every public form, not only stepped registration — correct flex default for the 480px track; other public pages benefit. No product/arch/security risk.
+
 ## Deferred from: code review of 33-1-marketingdemoclub-seed-presentational-mounts.md Pass 4 (2026-09-03)
 
 - Sunday clinic and board games share `Sundays · 6:00pm` slot — consequence of Pass 2 Decision 2 (match Mar 15 18:00 registration)
