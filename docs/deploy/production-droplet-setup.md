@@ -54,4 +54,4 @@ API startup logs the Cohestra apex return path when `Paddle__ApiKey` is set. San
 
 ## Story 19.4
 
-After 29.7, run **Paddle billing UAT on droplet** — not Stripe.
+After 29.7, run **Paddle billing UAT on droplet** — not Stripe. UAT uses **existing sandbox** credentials only. Live cutover: [paddle-production-cutover.md](./paddle-production-cutover.md) (do not execute without owner approval).
