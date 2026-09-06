@@ -106,6 +106,18 @@ public sealed class ProductionSecurityValidatorTests
     }
 
     [Fact]
+    public void Validate_rejects_padded_password_crm_on_isolated_compose_host()
+    {
+        var configuration = ProductionConfig(
+            "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password= crm ");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("password", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Validate_rejects_password_crm_even_on_isolated_compose_host()
     {
         var configuration = ProductionConfig(

@@ -97,6 +97,7 @@ public static class ProductionSecurityValidator
 
     private static string? ReadPair(string connectionString, string key)
     {
+        string? found = null;
         foreach (var part in connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
             var eq = part.IndexOf('=');
@@ -105,12 +106,12 @@ public static class ProductionSecurityValidator
                 continue;
             }
 
-            if (part[..eq].Equals(key, StringComparison.OrdinalIgnoreCase))
+            if (part[..eq].Trim().Equals(key, StringComparison.OrdinalIgnoreCase))
             {
-                return part[(eq + 1)..];
+                found = part[(eq + 1)..].Trim();
             }
         }
 
-        return null;
+        return found;
     }
 }
