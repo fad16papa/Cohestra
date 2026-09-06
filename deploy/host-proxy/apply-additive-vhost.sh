@@ -71,8 +71,18 @@ if grep -qE '127\.0\.0\.1:8180' "$TMP"; then
   exit 1
 fi
 
+if ! grep -qE "server_name[[:space:]]+${HOST_NAME};" "$TMP"; then
+  echo "REFUSE: generated vhost server_name is not ${HOST_NAME}" >&2
+  exit 1
+fi
+if ! grep -q 'X-Cohestra-Edge-Vhost' "$TMP"; then
+  echo "REFUSE: generated vhost missing X-Cohestra-Edge-Vhost discriminator" >&2
+  exit 1
+fi
+
 echo "Copying additive zz-cohestra-uat.conf into $EDGE_NGINX:/etc/nginx/conf.d/"
 docker cp "$TMP" "$EDGE_NGINX:/etc/nginx/conf.d/zz-cohestra-uat.conf"
+docker exec "$EDGE_NGINX" chmod 644 /etc/nginx/conf.d/zz-cohestra-uat.conf
 
 echo "nginx -t"
 if ! docker exec "$EDGE_NGINX" nginx -t; then
@@ -83,5 +93,12 @@ fi
 
 echo "Reloading $EDGE_NGINX only"
 docker exec "$EDGE_NGINX" nginx -s reload
+sleep 1
+
+echo "Proving Host-header routes to Cohestra (not the existing default_server)"
+if ! bash "$ROOT_DIR/deploy/host-proxy/prove-edge-vhost.sh"; then
+  echo "ADDITIVE VHOST APPLY: FAIL — file left in place for inspect. Do not change DNS." >&2
+  exit 1
+fi
 echo "ADDITIVE VHOST PASS (container writable layer). Persist later with a second bind mount."
 echo "Do not compose up --force-recreate lead-generation-crm merely for this file."

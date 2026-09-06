@@ -101,6 +101,10 @@ Then:
 3. Wait until `cohestra-uat-nginx` is on `cohestra_uat_edge` before `nginx -t`.
 4. `docker exec lead-generation-crm-nginx-1 nginx -t`
 5. Reload (`nginx -s reload`), not a full-stack restart.
+6. `bash deploy/host-proxy/prove-edge-vhost.sh` — Host `uat.cohestra.app` on
+   `:80` must return Cohestra `/ready` (`default-tenant`) and
+   `X-Cohestra-Edge-Vhost: uat`. A 301 to `https://` or `/ready` without
+   `default-tenant` is the existing default_server. Do not change DNS on FAIL.
 
 Do not change existing server blocks, certificates, or the existing hostname.
 

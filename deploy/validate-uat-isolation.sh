@@ -193,6 +193,11 @@ if [[ -f "$EDGE_EXAMPLE" ]]; then
   else
     fail "Example vhost must stay additive (zz- name, no listen default_server)"
   fi
+  if grep -q 'X-Cohestra-Edge-Vhost' "$EDGE_EXAMPLE"; then
+    pass "Example vhost sets X-Cohestra-Edge-Vhost discriminator"
+  else
+    fail "Example vhost must set X-Cohestra-Edge-Vhost so Host-header proof can detect a miss"
+  fi
 else
   fail "Missing deploy/host-proxy/cohestra-uat.nginx.example.conf"
 fi
@@ -248,13 +253,25 @@ if [[ -f "$APPLY" ]]; then
   if grep -q 'zz-cohestra-uat.conf' "$APPLY" \
     && grep -q 'nginx -t' "$APPLY" \
     && grep -q 'thesocialcollectivesg.com' "$APPLY" \
+    && grep -q 'prove-edge-vhost.sh' "$APPLY" \
     && ! grep -vE '^[[:space:]]*(#|echo )' "$APPLY" | grep -Eq 'active-ssl.conf|docker compose up|force-recreate'; then
-    pass "apply-additive-vhost.sh is additive (zz- file, nginx -t before reload, no active-ssl edit)"
+    pass "apply-additive-vhost.sh is additive (zz- file, nginx -t before reload, Host-header proof, no active-ssl edit)"
   else
-    fail "apply-additive-vhost.sh must copy zz- only, test, and never edit active-ssl.conf"
+    fail "apply-additive-vhost.sh must copy zz- only, test, prove Host-header, and never edit active-ssl.conf"
   fi
 else
   fail "Missing deploy/host-proxy/apply-additive-vhost.sh"
+fi
+
+PROVE="$ROOT_DIR/deploy/host-proxy/prove-edge-vhost.sh"
+if [[ -f "$PROVE" ]]; then
+  if grep -q 'default-tenant' "$PROVE" && grep -q 'X-Cohestra-Edge-Vhost' "$PROVE" && grep -q 'uat.cohestra.app' "$PROVE"; then
+    pass "prove-edge-vhost.sh requires default-tenant + edge header on Host uat.cohestra.app"
+  else
+    fail "prove-edge-vhost.sh must require Cohestra default-tenant and X-Cohestra-Edge-Vhost"
+  fi
+else
+  fail "Missing deploy/host-proxy/prove-edge-vhost.sh"
 fi
 
 RECONCILE="$ROOT_DIR/deploy/host-proxy/reconcile-edge-network.sh"
