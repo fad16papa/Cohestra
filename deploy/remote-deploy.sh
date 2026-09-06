@@ -24,6 +24,11 @@ fi
 source "$ROOT_DIR/deploy/cohestra-uat-guards.sh"
 refuse_legacy_compose_project || exit 1
 
+echo ""
+echo "== Port / resource audit (read-only; will not stop existing services) =="
+bash "$ROOT_DIR/deploy/uat-port-audit.sh"
+bash "$ROOT_DIR/deploy/validate-uat-isolation.sh"
+
 echo "== Deploy isolated cohestra-uat =="
 echo "Path:   $ROOT_DIR"
 echo "Branch: $DEPLOY_BRANCH"

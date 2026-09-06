@@ -28,7 +28,9 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/cohestra-uat-guards.sh"
 refuse_legacy_compose_project || exit 1
 
 echo "Isolation reminder: Cohestra project is cohestra-uat (not the live public stack)."
-echo "Host binds are 127.0.0.1:3100 / 5100 / 8180 only. Run deploy/uat-port-audit.sh first."
+echo "Host binds are 127.0.0.1:3100 / 5100 / 8180 only."
+bash deploy/uat-port-audit.sh
+bash deploy/validate-uat-isolation.sh
 echo "Building and starting isolated UAT stack (nginx + web + api + postgres + redis)..."
 bash deploy/uat-compose.sh up -d --build
 

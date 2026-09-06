@@ -114,6 +114,13 @@ else
   pass "Project name is a literal in the compose file"
 fi
 
+WRAPPER="$ROOT_DIR/deploy/uat-compose.sh"
+if [[ -f "$WRAPPER" ]] && grep -q -- '--project-name cohestra-uat' "$WRAPPER"; then
+  pass "uat-compose.sh forces --project-name cohestra-uat"
+else
+  fail "deploy/uat-compose.sh must force --project-name cohestra-uat"
+fi
+
 if [[ -f "$NGINX" ]]; then
   if grep -q 'server web:3000' "$NGINX" && grep -q 'server api:8080' "$NGINX"; then
     pass "nginx upstreams use Docker service names"
