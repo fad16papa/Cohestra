@@ -109,3 +109,21 @@ Reviewed HEAD `95e5bd0` (PR #294) on 2026-09-06. Mandatory loop applied BLOCKER/
 - [x] [Review][Patch] Story AC and env example must not steer at the existing app hostname
 - [x] [Review][Defer] Isolation CI does not run `docker compose config` — deferred, pre-existing CI job has no Docker daemon requirement
 
+### Review Findings (2026-09-06 recaptcha / UAT env)
+
+Reviewed implementation HEADs `45b7a16` → `2e6c73f` → follow-up upsert patch. Artifact: `epic-19-recaptcha-bypass-code-review-2026-09-06.md`.
+
+- [x] [Review][Dismiss] Production captcha-off accepts empty token — owner lock, not a bypass token
+- [x] [Review][Patch] UAT compose must not interpolate leftover captcha bypass keys [docker-compose.uat.yml]
+- [x] [Review][Patch] Generate JWT when missing, short, or placeholder [deploy/reconcile-canonical-uat-env.sh]
+- [x] [Review][Patch] Classify env without sourcing the file [deploy/classify-uat-env.sh]
+- [x] [Review][Patch] Keep local-dev captcha contract on non-production Next builds [web/lib/signup/signup-api.ts]
+- [x] [Review][Patch] Testing environment match must be case-insensitive [GoogleRecaptchaVerifier.cs]
+- [x] [Review][Patch] UAT hosts must not rewrite to production apex [signup-api.ts]
+- [x] [Review][Patch] EmailBranding UAT default follows PUBLIC_BASE_URL [docker-compose.uat.yml]
+- [x] [Review][Patch] Classifier TLS keys are Story 19.2; NEXT_PUBLIC_API_URL is compose-built
+- [x] [Review][Patch] Canonical path is /home/deploy/cohestra, not /tmp
+- [x] [Review][Patch] Reconcile upsert must replace export KEY= / leading whitespace
+- [x] [Review][Defer] First UAT image rebuild is droplet-side — deferred, no stack start yet
+- [x] [Review][Defer] Dev/Testing accept any non-empty captcha token — deferred, pre-existing local-test behavior
+

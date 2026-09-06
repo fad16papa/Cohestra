@@ -34,7 +34,7 @@ text = staged.read_text(encoding="utf-8")
 text = text.replace("\r\n", "\n").replace("\r", "\n")
 
 def upsert(src: str, key: str, value: str) -> str:
-    pat = re.compile(rf"^{re.escape(key)}=.*$", re.M)
+    pat = re.compile(rf"^[ \t]*(?:export[ \t]+)?{re.escape(key)}=.*$", re.M)
     line = f"{key}={value}"
     if pat.search(src):
         return pat.sub(line, src)
@@ -44,11 +44,11 @@ def upsert(src: str, key: str, value: str) -> str:
 
 def remove_keys(src: str, keys: list[str]) -> str:
     for key in keys:
-        src = re.sub(rf"^(export\s+)?{re.escape(key)}=.*\n?", "", src, flags=re.M)
+        src = re.sub(rf"^[ \t]*(?:export[ \t]+)?{re.escape(key)}=.*\n?", "", src, flags=re.M)
     return src
 
 def jwt_value(src: str) -> str:
-    match = re.search(r"^(?:export\s+)?JWT_SIGNING_KEY=(.*)$", src, re.M)
+    match = re.search(r"^[ \t]*(?:export[ \t]+)?JWT_SIGNING_KEY=(.*)$", src, re.M)
     if not match:
         return ""
     return match.group(1).strip().strip("'").strip('"')
