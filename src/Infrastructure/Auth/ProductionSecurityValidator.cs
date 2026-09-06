@@ -53,12 +53,64 @@ public static class ProductionSecurityValidator
                 "DemoDataSeed:Enabled must be false in non-Development environments.");
         }
 
-        var postgres = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
-        if (postgres.Contains("Password=crm", StringComparison.OrdinalIgnoreCase)
-            || postgres.Contains("Username=crm", StringComparison.OrdinalIgnoreCase))
+        ValidateProductionPostgres(configuration.GetConnectionString("DefaultConnection"));
+    }
+
+    private static void ValidateProductionPostgres(string? postgres)
+    {
+        if (string.IsNullOrWhiteSpace(postgres))
+        {
+            return;
+        }
+
+        var host = ReadPair(postgres, "Host");
+        var username = ReadPair(postgres, "Username");
+        var password = ReadPair(postgres, "Password");
+
+        if (string.Equals(password, "crm", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
-                "DefaultConnection uses development database credentials. Configure production secrets via environment.");
+                "DefaultConnection password is the development placeholder. Set a unique UAT/production secret.");
         }
+
+        if (IsLoopbackHost(host))
+        {
+            throw new InvalidOperationException(
+                "DefaultConnection must not target localhost or 127.0.0.1 in Production.");
+        }
+
+        if (string.Equals(username, "crm", StringComparison.OrdinalIgnoreCase)
+            && !IsIsolatedComposePostgresHost(host))
+        {
+            throw new InvalidOperationException(
+                "DefaultConnection Username=crm is only allowed when Host is the isolated Compose service postgres.");
+        }
+    }
+
+    private static bool IsLoopbackHost(string? host) =>
+        string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(host, "127.0.0.1", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(host, "::1", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsIsolatedComposePostgresHost(string? host) =>
+        string.Equals(host, "postgres", StringComparison.OrdinalIgnoreCase);
+
+    private static string? ReadPair(string connectionString, string key)
+    {
+        foreach (var part in connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var eq = part.IndexOf('=');
+            if (eq <= 0)
+            {
+                continue;
+            }
+
+            if (part[..eq].Equals(key, StringComparison.OrdinalIgnoreCase))
+            {
+                return part[(eq + 1)..];
+            }
+        }
+
+        return null;
     }
 }

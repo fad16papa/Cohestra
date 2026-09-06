@@ -2,9 +2,9 @@
 
 ## Hand-off Brief
 
-1. **What happened.** Isolated UAT compose started; dedicated Postgres/Redis became healthy; `cohestra-uat-api` crash-looped with exit **139**; web/nginx stayed Created.
-2. **Where the case stands.** Evidence-light. Screenshot + `docker ps` confirm 139 and healthy data services. Logs, `OOMKilled`, `dotnet --info`, dmesg, and foreground reproduction are **missing**.
-3. **What's needed next.** On the droplet, from `/home/deploy/cohestra`: `bash deploy/host-proxy/capture-api-crash-139.sh` and paste the redacted output. Do not change DNS/vhost. Do not delete volumes.
+1. **What happened.** Isolated UAT compose started; dedicated Postgres/Redis became healthy; `cohestra-uat-api` crash-looped with Docker exit **139**.
+2. **Where the case stands.** CASE 3 confirmed. Source of truth is a managed `InvalidOperationException` from `ProductionSecurityValidator` at `Program.cs:23` — `Username=crm` was treated as a development credential even on isolated `Host=postgres`. `dotnet --info` exits 0. `OOMKilled=false`. Migrations never ran.
+3. **What's needed next.** Ship the validator narrowing, rebuild only the API image, do not wipe volumes. If the next exception says the password is the development placeholder, rotate `POSTGRES_PASSWORD` inside the existing Cohestra Postgres role (no volume delete).
 
 ## Case Info
 
@@ -81,9 +81,8 @@
 
 ### H2: Managed startup exception; 139 is secondary (CASE 3)
 
-**Status:** Open  
-**Would confirm:** foreground run prints `InvalidOperationException` / EF / config error and a non-139 process exit.  
-**Note:** UAT Compose sets `ASPNETCORE_ENVIRONMENT=Production` and `Username=${POSTGRES_USER:-crm}`. `ProductionSecurityValidator` rejects `Username=crm` or `Password=crm` in Production (`src/Infrastructure/Auth/ProductionSecurityValidator.cs`). That is a **managed** throw (normally exit 1), not a proven 139 cause. Look for that message in logs before changing the validator.
+**Status:** Confirmed  
+**Resolution:** Foreground `uat-compose.sh run --rm --no-deps api` printed `InvalidOperationException: DefaultConnection uses development database credentials` at `ProductionSecurityValidator.cs:60`. Docker still reported `foreground_exit=139` and dmesg showed `dotnet` GPF in `libc.so.6` during the crash loop. Treat the managed exception as the startup blocker. Native abort is a consequence of the unhandled throw on this host/runtime, not a missing `dotnet` image.
 
 ### H3: Crash during/after EF migrations (CASE 2)
 
