@@ -73,10 +73,9 @@ just to add Cohestra.
 Do **not** `apt upgrade`, `dist-upgrade`, or reboot during Story 19.1.
 
 ```bash
-# If the Cohestra repo is not on the droplet yet:
-git clone --depth 1 --branch cursor/epic-19-uat-port-isolation-a139 \
-  https://github.com/fad16papa/Cohestra.git /tmp/cohestra-19
-cd /tmp/cohestra-19
+# Canonical tree (never deploy permanently from /tmp):
+bash deploy/prepare-canonical-checkout.sh
+cd /home/deploy/cohestra
 
 bash deploy/host-proxy/live-19-1.sh discover   # read-only
 bash deploy/host-proxy/live-19-1.sh backup     # host config copies, no reload

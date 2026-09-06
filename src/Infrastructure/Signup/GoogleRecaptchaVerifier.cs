@@ -25,7 +25,7 @@ public sealed class GoogleRecaptchaVerifier(
         if (!settings.Enabled)
         {
             // Production/UAT: disabled means no captcha. Do not require a well-known bypass token.
-            if (hostEnvironment.IsDevelopment() || hostEnvironment.EnvironmentName == "Testing")
+            if (AllowsLocalCaptchaBypass())
             {
                 if (!string.IsNullOrWhiteSpace(settings.TestBypassToken)
                     && string.Equals(captchaToken?.Trim(), settings.TestBypassToken, StringComparison.Ordinal))
@@ -46,7 +46,7 @@ public sealed class GoogleRecaptchaVerifier(
 
         if (string.IsNullOrWhiteSpace(settings.SecretKey))
         {
-            if (hostEnvironment.IsDevelopment() || hostEnvironment.EnvironmentName == "Testing")
+            if (AllowsLocalCaptchaBypass())
             {
                 if (!string.IsNullOrWhiteSpace(settings.TestBypassToken)
                     && string.Equals(captchaToken?.Trim(), settings.TestBypassToken, StringComparison.Ordinal))
@@ -102,6 +102,9 @@ public sealed class GoogleRecaptchaVerifier(
 
         return (false, "CAPTCHA verification failed. Try again.");
     }
+
+    private bool AllowsLocalCaptchaBypass() =>
+        hostEnvironment.IsDevelopment() || hostEnvironment.IsEnvironment("Testing");
 
     private sealed class RecaptchaVerifyResponse
     {

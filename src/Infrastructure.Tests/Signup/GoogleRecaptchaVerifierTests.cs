@@ -35,6 +35,15 @@ public sealed class GoogleRecaptchaVerifierTests
     }
 
     [Fact]
+    public async Task Testing_environment_match_is_case_insensitive()
+    {
+        var verifier = Create("testing", enabled: false, bypass: "test-captcha-pass");
+        var (valid, error) = await verifier.VerifyAsync(null, "127.0.0.1");
+        Assert.False(valid);
+        Assert.Contains("CAPTCHA", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Testing_disabled_recaptcha_rejects_missing_token()
     {
         var verifier = Create("Testing", enabled: false, bypass: "test-captcha-pass");

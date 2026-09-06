@@ -263,7 +263,12 @@ export function isRecaptchaEnabled(): boolean {
 }
 
 export function getTestCaptchaToken(): string {
-  return process.env.NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN?.trim() || "";
+  const configured = process.env.NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN?.trim() || "";
+  if (process.env.NODE_ENV === "production") {
+    return configured;
+  }
+
+  return configured || "test-captcha-pass";
 }
 
 export function buildTenantDashboardUrl(slug: string): string {
@@ -293,7 +298,7 @@ export function buildTenantDashboardUrl(slug: string): string {
       return `${protocol}//${slug}.localhost${portSuffix}/dashboard`;
     }
 
-    if (hostname === "uat.cohestra.app") {
+    if (hostname === "uat.cohestra.app" || hostname.endsWith(".uat.cohestra.app")) {
       return `${protocol}//${hostname}${portSuffix}/dashboard`;
     }
 

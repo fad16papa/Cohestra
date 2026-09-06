@@ -3,7 +3,7 @@
 # Does not start Cohestra. Does not touch /root/lead-generation-crm.
 #
 # Usage (on the droplet as deploy):
-#   bash /tmp/cohestra-19/deploy/prepare-canonical-checkout.sh
+#   bash deploy/prepare-canonical-checkout.sh
 
 set -euo pipefail
 
@@ -11,6 +11,10 @@ DEST="${COHESTRA_DEPLOY_ROOT:-/home/deploy/cohestra}"
 BRANCH="${COHESTRA_DEPLOY_BRANCH:-cursor/epic-19-uat-port-isolation-a139}"
 REPO_URL="${COHESTRA_DEPLOY_REPO:-https://github.com/fad16papa/Cohestra.git}"
 
+if [[ "$DEST" == /tmp/* && "${COHESTRA_ALLOW_TMP_DEST:-}" != "1" ]]; then
+  echo "REFUSE: canonical path is /home/deploy/cohestra, not $DEST" >&2
+  exit 1
+fi
 if [[ -e /root/lead-generation-crm && "$DEST" == /root/* ]]; then
   echo "REFUSE: will not use the existing application tree" >&2
   exit 1
@@ -21,6 +25,11 @@ if [[ -d "$DEST/.git" ]]; then
   git -C "$DEST" remote -v
   git -C "$DEST" rev-parse --abbrev-ref HEAD
   git -C "$DEST" rev-parse HEAD
+  current_branch=$(git -C "$DEST" rev-parse --abbrev-ref HEAD)
+  if [[ "$current_branch" != "$BRANCH" && "${COHESTRA_DEPLOY_UPDATE:-}" != "1" ]]; then
+    echo "REFUSE: $DEST is on $current_branch, expected $BRANCH. Set COHESTRA_DEPLOY_UPDATE=1 after inspect." >&2
+    exit 1
+  fi
   echo "Inspect above before mutating. Not fetching unless COHESTRA_DEPLOY_UPDATE=1."
   if [[ "${COHESTRA_DEPLOY_UPDATE:-}" == "1" ]]; then
     git -C "$DEST" fetch origin "$BRANCH"

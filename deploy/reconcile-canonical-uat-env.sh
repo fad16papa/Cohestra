@@ -44,8 +44,14 @@ def upsert(src: str, key: str, value: str) -> str:
 
 def remove_keys(src: str, keys: list[str]) -> str:
     for key in keys:
-        src = re.sub(rf"^{re.escape(key)}=.*\n?", "", src, flags=re.M)
+        src = re.sub(rf"^(export\s+)?{re.escape(key)}=.*\n?", "", src, flags=re.M)
     return src
+
+def jwt_value(src: str) -> str:
+    match = re.search(r"^(?:export\s+)?JWT_SIGNING_KEY=(.*)$", src, re.M)
+    if not match:
+        return ""
+    return match.group(1).strip().strip("'").strip('"')
 
 freeze = {
     "PUBLIC_BASE_URL": "http://uat.cohestra.app",
@@ -84,7 +90,8 @@ out = remove_keys(text, remove)
 for key, value in freeze.items():
     out = upsert(out, key, value)
 
-if not re.search(r"^JWT_SIGNING_KEY=\S", out, re.M):
+existing_jwt = jwt_value(out)
+if len(existing_jwt) < 32 or existing_jwt.startswith("change-me"):
     out = upsert(out, "JWT_SIGNING_KEY", secrets.token_urlsafe(48))
     jwt_status = "GENERATED"
 else:

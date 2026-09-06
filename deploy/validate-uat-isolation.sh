@@ -52,10 +52,17 @@ else
   fail "Missing cohestra_uat_redis_data volume"
 fi
 
-if grep -q 'test-captcha-pass' "$COMPOSE"; then
-  fail "UAT compose must not default a recaptcha test bypass token"
+if grep -qE 'TestBypassToken|NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN|test-captcha-pass' "$COMPOSE"; then
+  fail "UAT compose must not inject or default a recaptcha test bypass token"
 else
-  pass "UAT compose has no test-captcha-pass default"
+  pass "UAT compose does not inject a recaptcha test bypass token"
+fi
+
+DOCKERFILE="$ROOT_DIR/web/Dockerfile"
+if [[ -f "$DOCKERFILE" ]] && grep -qE '^ARG NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN=$' "$DOCKERFILE"; then
+  pass "web Dockerfile test-token ARG defaults empty"
+else
+  fail "web Dockerfile must default NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN to empty"
 fi
 
 APPSETTINGS="$ROOT_DIR/src/Api/appsettings.json"
@@ -74,8 +81,8 @@ fi
 
 CLASSIFY="$ROOT_DIR/deploy/classify-uat-env.sh"
 if [[ -f "$CLASSIFY" ]] \
-  && grep -q 'SelfServeSignup__Recaptcha__TestBypassToken" "REMOVE LOCAL-ONLY"' "$CLASSIFY" \
-  && grep -q 'NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN" "REMOVE LOCAL-ONLY"' "$CLASSIFY"; then
+  && grep -q 'SelfServeSignup__Recaptcha__TestBypassToken.*, "REMOVE LOCAL-ONLY"' "$CLASSIFY" \
+  && grep -q 'NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN.*, "REMOVE LOCAL-ONLY"' "$CLASSIFY"; then
   pass "classifier treats both recaptcha test tokens as REMOVE LOCAL-ONLY"
 else
   fail "classifier must list both recaptcha test-bypass tokens as REMOVE LOCAL-ONLY"

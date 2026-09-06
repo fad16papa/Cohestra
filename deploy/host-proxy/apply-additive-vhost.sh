@@ -11,7 +11,7 @@
 # bind mount; do not replace the existing mount.
 #
 # Usage (on the droplet, AFTER Cohestra internal acceptance):
-#   COHESTRA_UAT_HOSTNAME=uat.example.com bash deploy/host-proxy/apply-additive-vhost.sh
+#   COHESTRA_UAT_HOSTNAME=uat.cohestra.app bash deploy/host-proxy/apply-additive-vhost.sh
 #
 # nginx -t must pass before reload. On -t failure this script does not reload.
 
