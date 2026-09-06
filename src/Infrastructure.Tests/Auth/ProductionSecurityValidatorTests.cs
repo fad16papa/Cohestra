@@ -97,7 +97,7 @@ public sealed class ProductionSecurityValidatorTests
     public void Validate_allows_isolated_compose_postgres_role_crm_with_non_dev_password()
     {
         var configuration = ProductionConfig(
-            "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=uat-unique-not-crm");
+            "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length");
 
         var exception = Record.Exception(() =>
             ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
@@ -133,7 +133,7 @@ public sealed class ProductionSecurityValidatorTests
     public void Validate_rejects_username_crm_on_loopback_even_with_strong_password()
     {
         var configuration = ProductionConfig(
-            "Host=127.0.0.1;Port=5432;Database=cohestra;Username=crm;Password=uat-unique-not-crm");
+            "Host=127.0.0.1;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length");
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
             ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
@@ -145,7 +145,7 @@ public sealed class ProductionSecurityValidatorTests
     public void Validate_rejects_username_crm_on_non_compose_host()
     {
         var configuration = ProductionConfig(
-            "Host=shared-db.example;Port=5432;Database=cohestra;Username=crm;Password=uat-unique-not-crm");
+            "Host=shared-db.example;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length");
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
             ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
