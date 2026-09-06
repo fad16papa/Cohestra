@@ -59,15 +59,28 @@ Reload: `docker exec lead-generation-crm-nginx-1 nginx -s reload`
 - Do not proxy Cohestra to `127.0.0.1:8180`
 - Root session is explained by existing compose under `/root`. Cohestra itself should still be project `cohestra-uat`, not this tree.
 
+## Backup (2026-09-06T12:34:48Z) — PASS
+
+Ran on droplet HEAD `29ba570`. Existing app still 6/6 Healthy. No reload.
+
+| Field | Value |
+|-------|--------|
+| Backup dir | `/root/cohestra-uat-edge-backups/20260906T123448Z` |
+| Manifest | `MANIFEST.txt` (on droplet only — not git) |
+| Copied | `/root/lead-generation-crm/deploy/nginx/active-ssl.conf` → `host-etc_nginx_conf.d_default.conf` |
+| Skipped | certbot volumes / private keys |
+
+Do not commit that directory. Do not print the backup file body.
+
 ## Next
 
-On the same droplet session:
+On the same droplet session (still `29ba570` is fine):
 
 ```bash
 cd /tmp/cohestra-19
-# after pulling the backup/vhost hardening commit if present
-bash deploy/host-proxy/live-19-1.sh backup
 bash deploy/host-proxy/live-19-1.sh attach
 ```
+
+Attach is `docker network connect` only. It must re-verify the existing hostname. If that fails: stop, do not start Cohestra.
 
 No secrets or private keys recorded.
