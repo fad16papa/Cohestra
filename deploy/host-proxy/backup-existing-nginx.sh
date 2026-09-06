@@ -92,6 +92,11 @@ while IFS=$'\t' read -r src dest; do
 done < <(docker inspect --format '{{range .Mounts}}{{if eq .Type "bind"}}{{.Source}}{{"\t"}}{{.Destination}}{{println}}{{end}}{{end}}' "$EDGE_NGINX")
 
 echo "copied=$copied skipped=$skipped" >> "$DEST/MANIFEST.txt"
-echo "BACKUP PASS"
 echo "manifest=$DEST/MANIFEST.txt"
 echo "Do not commit $DEST. Do not print certificate private keys."
+if [[ "$copied" -lt 1 ]]; then
+  echo "BACKUP FAIL: no host-mounted nginx config was copied. Inspect mounts before attach." >&2
+  echo "If config lives only in the image, persist a host bind (or docker cp out) before mutation." >&2
+  exit 1
+fi
+echo "BACKUP PASS"
