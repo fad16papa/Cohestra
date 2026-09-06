@@ -1,6 +1,6 @@
 # BMAD code review — Epic 19 ProductionSecurityValidator UAT allow
 
-**Reviewed implementation HEAD:** see branch tip after this commit  
+**Reviewed implementation HEAD:** `7d251a6`  
 **PR:** https://github.com/fad16papa/Cohestra/pull/294 (draft)  
 **Date:** 2026-09-06
 
