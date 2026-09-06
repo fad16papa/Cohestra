@@ -9,7 +9,7 @@ Locked sequence is now at **Epic 19 — Production Launch Sign-off**.
 | Story | Tracker | Notes |
 | --- | --- | --- |
 | 19.0 Production readiness (dev) | historical | Scripts/docs already on `main` |
-| 19.1 UAT droplet deploy + smoke | ready-for-dev | **Blocked on owner droplet/SSH/secrets** |
+| 19.1 UAT droplet deploy + smoke | ready-for-dev | **Existing droplet Healthy; blocked on owner-workstation SSH** |
 | 19.2 HTTPS + security headers | ready-for-dev | Needs 19.1 live URL |
 | 19.3 reCAPTCHA production | ready-for-dev | Owner keys |
 | 19.4 Paddle billing UAT | ready-for-dev | Sandbox keys on droplet; Stripe cancelled |
@@ -32,4 +32,8 @@ Still in force. No Epic 19 implementation story may skip `bmad-code-review` on t
 
 UAT compose now forwards `Paddle__*` (it previously dropped them). Preflight fails on leftover Stripe keys and warns if Paddle is unset (19.1 may proceed).
 
-Work stops here until the owner provides DigitalOcean/SSH and SendGrid. Routine engineering will resume immediately after.
+**2026-09-06:** Owner decided UAT/19.4 use **existing Paddle sandbox** only. Recon PASS: `epic-19-paddle-sandbox-readiness-2026-09-06.md`. Paddle does not block 19.1. Live cutover is documented and not executed.
+
+**2026-09-06 later:** Existing droplet `129.212.235.2` answers Healthy on :80/:443. SSH from this VM is `publickey` denied (no `cohestra_uat` here — correct). Next: owner runs `deploy/uat-ssh-accept.sh` on the workstation. See `epic-19-uat-access-readiness-2026-09-06.md`.
+
+Work stops at that owner SSH boundary. Routine engineering resumes when key-based login from the workstation is proven.

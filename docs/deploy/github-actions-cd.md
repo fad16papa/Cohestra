@@ -19,6 +19,8 @@ push / merge to main
 
 Secrets stay on the **droplet** in `.env`. GitHub only stores SSH access — not SendGrid or database passwords.
 
+**Epic 19.1** deploys from the **owner workstation** with `~/.ssh/cohestra_uat` via `ssh-agent`. Do **not** upload that private key (or its passphrase) to GitHub `DROPLET_SSH_KEY`, the repo, or BMAD artifacts.
+
 ---
 
 ## Step 1 — One-time droplet setup (SSH)
