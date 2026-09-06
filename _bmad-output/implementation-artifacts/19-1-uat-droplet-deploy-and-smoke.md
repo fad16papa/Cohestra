@@ -36,25 +36,40 @@ Copied from `epics-cohestra-enterprise.md` Epic 19.1:
 
 Repo contract, checklists, smoke, rollback, and secrets matrix are ready. This story is still **blocked on owner credentials**.
 
-## Owner gate (blocks implementation in this environment)
+## Execution gate (2026-09-06)
 
-This story cannot be executed in the Cloud Agent VM:
+The **existing** droplet is in use. Public `/ready` is Healthy. Do not create another droplet.
 
-- No Docker daemon
-- No DigitalOcean token / droplet SSH
-- No UAT public URL
-- Deploying is an irreversible environment action
+```
+SSH ACCESS VALIDATION   ← current owner boundary (workstation key)
+→ SERVER AUDIT
+→ ENV RECONCILIATION
+→ SERVER BASELINE
+→ DEPLOY CURRENT MAIN
+→ DATABASE MIGRATION
+→ START SERVICES
+→ HEALTH CHECKS
+→ PRODUCT SMOKE
+→ RESOURCE CHECK
+→ LOG REVIEW
+→ ACCEPTANCE
+```
 
-**Do not invent a droplet. Do not put secrets in the repo.**
+Paddle full billing lifecycle stays **19.4**. Do not block 19.1 on webhook acceptance.
 
-Required from the owner to continue:
+Owner workstation (do not paste the key or passphrase):
 
-1. DigitalOcean access / SSH (existing droplet **or** token to create one)
-2. SendGrid Mail Send key + verified from-addresses
-3. Paddle sandbox: copy existing **local** `Paddle__*` onto the droplet `.env` when convenient — **not required for 19.1 boot**. Full checkout is 19.4. Do not paste secrets into git/chat.
-4. reCAPTCHA UAT credentials (can wait until 19.3)
+```bash
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/cohestra_uat
+UAT_SSH_USER=YOUR_DEPLOY_USER bash deploy/uat-ssh-accept.sh
+```
 
-Paddle sandbox recon (2026-09-06): **PASS** — `epic-19-paddle-sandbox-readiness-2026-09-06.md`. Live Paddle is a later cutover only.
+Canonical: `epic-19-uat-access-readiness-2026-09-06.md`
+
+**Do not invent a droplet. Do not put secrets or the private key in the repo.**
+
+Paddle sandbox recon: **PASS**. Preserve local sandbox API key, client token, prices. Same webhook route `POST /api/v1/system/paddle/webhook`.
 
 ## Repo already ready
 

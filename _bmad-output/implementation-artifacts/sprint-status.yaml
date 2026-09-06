@@ -256,8 +256,8 @@ development_status:
   epic-18-retrospective: done
 
   # Epic 19 — unblocked 2026-08-23 after Epic 29. Do not put Stripe keys on the droplet.
-  # 2026-09-06: Paddle sandbox recon PASS; reuse local sandbox creds for UAT/19.4.
-  # 19.1 blocked on owner DigitalOcean/SSH + SendGrid. Live Paddle is a later cutover.
+  # 2026-09-06: Existing UAT droplet Healthy. 19.1 blocked on owner-workstation
+  # SSH (~/.ssh/cohestra_uat via ssh-agent). Paddle sandbox preserved; live cutover later.
   epic-19: in-progress
   19-1-uat-droplet-deploy-and-smoke: ready-for-dev
   19-2-https-edge-security-header-verify: ready-for-dev
