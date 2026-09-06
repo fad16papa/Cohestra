@@ -34,12 +34,7 @@ Do **not** invent a droplet. Do **not** commit secrets. Paste values only into t
    - existing UAT droplet host + SSH user/key, or
    - DigitalOcean API token + permission to create the UAT droplet
 2. **SendGrid UAT/live Mail Send key** — `SendGrid__ApiKey` plus verified `SendGrid__FromEmail` / `SendGrid__RegistrationFromEmail` ([sendgrid-production.md](../../docs/deploy/sendgrid-production.md)). Production compose will not start without this.
-3. **Paddle sandbox credentials** (needed for 19.4; 19.1 can start without them):
-   - `Paddle__ApiKey` (`pdl_sdbx_…`)
-   - `Paddle__ClientToken` (`test_…`)
-   - `Paddle__WebhookSecret`
-   - `Paddle__PriceCoreMonthly` / `Annual`, `Paddle__PriceProMonthly` / `Annual`
-   - `Paddle__Environment=sandbox`
+3. **Paddle sandbox** — owner decision 2026-09-06: reuse existing **local** sandbox API key, client token, and price IDs. Copy onto droplet `.env` only. 19.1 can boot without them. UAT webhook secret is a **new sandbox notification destination** after 19.2 HTTPS. No live Paddle keys. See `epic-19-paddle-sandbox-readiness-2026-09-06.md`.
 4. **reCAPTCHA UAT credentials** (needed for 19.3; 19.1 can start with reCAPTCHA off):
    - `SelfServeSignup__Recaptcha__SecretKey`
    - `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`

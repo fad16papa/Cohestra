@@ -51,8 +51,10 @@ Required from the owner to continue:
 
 1. DigitalOcean access / SSH (existing droplet **or** token to create one)
 2. SendGrid Mail Send key + verified from-addresses
-3. Paddle sandbox credentials (can wait until 19.4)
+3. Paddle sandbox: copy existing **local** `Paddle__*` onto the droplet `.env` when convenient — **not required for 19.1 boot**. Full checkout is 19.4. Do not paste secrets into git/chat.
 4. reCAPTCHA UAT credentials (can wait until 19.3)
+
+Paddle sandbox recon (2026-09-06): **PASS** — `epic-19-paddle-sandbox-readiness-2026-09-06.md`. Live Paddle is a later cutover only.
 
 ## Repo already ready
 
