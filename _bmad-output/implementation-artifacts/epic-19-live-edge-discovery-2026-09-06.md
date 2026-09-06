@@ -73,15 +73,28 @@ Ran on droplet HEAD `29ba570`. Existing app still 6/6 Healthy. No reload.
 
 Do not commit that directory. Do not print the backup file body.
 
-## Next
+## Edge attach (2026-09-06) — PASS
 
-On the same droplet session (still `29ba570` is fine):
+Ran on droplet HEAD `29ba570`. Created `cohestra_uat_edge`. Connected
+`lead-generation-crm-nginx-1` without recreate. Second attach was idempotent.
 
-```bash
-cd /tmp/cohestra-19
-bash deploy/host-proxy/live-19-1.sh attach
-```
+Membership after attach:
 
-Attach is `docker network connect` only. It must re-verify the existing hostname. If that fails: stop, do not start Cohestra.
+- `cohestra_uat_edge`
+- `lead-generation-crm_default`
+
+`cohestra-uat-nginx` is not running yet (expected). Do not add `zz-cohestra-uat.conf` yet.
+
+Post-attach existing app: 6/6 healthy. This agent re-checked
+`https://thesocialcollectivesg.com/ready` → 200 Healthy.
+
+## Next — owner env boundary
+
+Do **not** start Cohestra until:
+
+1. A **new** Cohestra UAT hostname (not `thesocialcollectivesg.com`, not the droplet IP)
+2. Droplet `.env` classified from the owner local `.env` (`classify-uat-env.sh`)
+   — PRESERVE Paddle sandbox + SendGrid; never print secret values
+3. `bash deploy/uat-compose.sh up -d --build` as project `cohestra-uat` only
 
 No secrets or private keys recorded.
