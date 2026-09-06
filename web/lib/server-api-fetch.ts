@@ -47,13 +47,18 @@ export function isMarketingApexHost(host: string | null): boolean {
   }
 
   const normalized = host.split(":")[0]?.toLowerCase() ?? "";
-  if (normalized === "cohestra.app" || normalized === "www.cohestra.app") {
+  if (
+    normalized === "cohestra.app"
+    || normalized === "www.cohestra.app"
+    || normalized === "uat.cohestra.app"
+    || normalized === "www.uat.cohestra.app"
+  ) {
     return true;
   }
 
   if (normalized.endsWith(".cohestra.app")) {
     const label = normalized.slice(0, -".cohestra.app".length);
-    return label === "" || label === "www";
+    return label === "" || label === "www" || label === "uat" || label === "www.uat";
   }
 
   if (normalized === "localhost" || normalized === "127.0.0.1" || normalized === "::1") {

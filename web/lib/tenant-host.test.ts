@@ -19,6 +19,15 @@ describe("parseTenantSlugFromHostname", () => {
     expect(parseTenantSlugFromHostname("www.cohestra.app")).toBeNull();
   });
 
+  it("treats uat.cohestra.app as marketing apex and reads {slug}.uat.cohestra.app", () => {
+    expect(parseTenantSlugFromHostname("uat.cohestra.app")).toBeNull();
+    expect(parseTenantSlugFromHostname("www.uat.cohestra.app")).toBeNull();
+    expect(parseTenantSlugFromHostname("creativorare.uat.cohestra.app")).toBe(
+      "creativorare"
+    );
+    expect(parseTenantSlugFromHostname("foo.bar.uat.cohestra.app")).toBeNull();
+  });
+
   it("reads nip.io tenant hosts used in cloud UAT", () => {
     expect(parseTenantSlugFromHostname("acme.129-212-235-2.nip.io")).toBe("acme");
     expect(parseTenantSlugFromHostname("129-212-235-2.nip.io")).toBeNull();

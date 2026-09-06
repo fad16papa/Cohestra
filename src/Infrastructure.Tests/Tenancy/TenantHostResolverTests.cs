@@ -46,6 +46,8 @@ public sealed class TenantHostResolverTests
     [InlineData("evil.com")]
     [InlineData("cohestra.app")]
     [InlineData("www.cohestra.app")]
+    [InlineData("uat.cohestra.app")]
+    [InlineData("www.uat.cohestra.app")]
     [InlineData("129-212-235-2.nip.io")]
     public void ExtractSlug_rejects_non_allowlisted_or_marketing_hosts(string host)
     {
@@ -57,12 +59,24 @@ public sealed class TenantHostResolverTests
     [InlineData("cohestra.app")]
     [InlineData("www.cohestra.app")]
     [InlineData("www.cohestra.app:443")]
+    [InlineData("uat.cohestra.app")]
+    [InlineData("www.uat.cohestra.app")]
     [InlineData("129-212-235-2.nip.io")]
     public void IsMarketingApexHost_detects_production_apex(string host)
     {
         Assert.True(TenantHostResolver.IsMarketingApexHost(host));
         Assert.False(TenantHostResolver.IsMarketingApexHost("acme.cohestra.app"));
+        Assert.False(TenantHostResolver.IsMarketingApexHost("acme.uat.cohestra.app"));
         Assert.False(TenantHostResolver.IsMarketingApexHost("acme.129-212-235-2.nip.io"));
+    }
+
+    [Theory]
+    [InlineData("acme.uat.cohestra.app", "acme")]
+    [InlineData("harbourline.uat.cohestra.app", "harbourline")]
+    public void ExtractSlug_resolves_uat_tenant_hosts(string host, string expectedSlug)
+    {
+        var config = new ConfigurationBuilder().Build();
+        Assert.Equal(expectedSlug, TenantHostResolver.ExtractSlug(host, config));
     }
 
     [Theory]
@@ -220,6 +234,35 @@ public sealed class TenantHostResolverTests
 
         var resolver = new TenantHostResolver(db, new ConfigurationBuilder().Build());
         var result = await resolver.ResolveAsync("cohestra.app");
+
+        Assert.False(result.Succeeded);
+        Assert.True(result.IsMarketingHost);
+        Assert.Null(result.TenantId);
+    }
+
+    [Fact]
+    public async Task ResolveAsync_uat_apex_is_marketing_and_does_not_bind_slug_uat()
+    {
+        await using var db = new CohestraDbContext(
+            new DbContextOptionsBuilder<CohestraDbContext>()
+                .UseInMemoryDatabase(Guid.NewGuid().ToString())
+                .Options);
+
+        var now = DateTimeOffset.UtcNow;
+        db.Tenants.Add(new Tenant
+        {
+            Id = Guid.CreateVersion7(),
+            Slug = "uat",
+            Name = "Must not bind from UAT apex",
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await db.SaveChangesAsync();
+
+        var resolver = new TenantHostResolver(db, new ConfigurationBuilder().Build());
+        var result = await resolver.ResolveAsync("uat.cohestra.app");
 
         Assert.False(result.Succeeded);
         Assert.True(result.IsMarketingHost);

@@ -125,13 +125,14 @@ public sealed class TenantHostResolver(
         };
 
     /// <summary>
-    /// Production apex/www and local bare localhost — marketing-only (no tenant SitePage).
+    /// Production apex/www, UAT apex (uat.cohestra.app), and local bare localhost — marketing-only.
     /// When <see cref="DevTenantSlugConfigKey"/> is set, bare localhost binds to that tenant instead.
     /// </summary>
     public static bool IsMarketingApexHost(string? hostHeader, IConfiguration? configuration = null)
     {
         var host = NormalizeHost(hostHeader);
-        if (host is "cohestra.app" or "www.cohestra.app")
+        if (host is "cohestra.app" or "www.cohestra.app"
+            or "uat.cohestra.app" or "www.uat.cohestra.app")
         {
             return true;
         }
@@ -139,7 +140,7 @@ public sealed class TenantHostResolver(
         if (host.EndsWith(".cohestra.app", StringComparison.Ordinal))
         {
             var without = host[..^".cohestra.app".Length];
-            return without is "www" or "";
+            return without is "www" or "" or "uat" or "www.uat";
         }
 
         if (IsLocalDevApexHost(host) && !HasDevTenantSlugOverride(configuration))
@@ -171,6 +172,17 @@ public sealed class TenantHostResolver(
         if (IsMarketingApexHost(hostHeader, configuration))
         {
             return string.Empty;
+        }
+
+        if (host.EndsWith(".uat.cohestra.app", StringComparison.Ordinal))
+        {
+            var without = host[..^".uat.cohestra.app".Length];
+            if (string.IsNullOrWhiteSpace(without) || without.Contains('.', StringComparison.Ordinal))
+            {
+                return string.Empty;
+            }
+
+            return without;
         }
 
         if (host.EndsWith(".cohestra.app", StringComparison.Ordinal))
