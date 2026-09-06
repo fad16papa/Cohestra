@@ -214,7 +214,7 @@ networks:
     driver: bridge
   uat_edge:
     name: cohestra_uat_edge
-    driver: bridge
+    external: true
 
 volumes:
   postgres_data:

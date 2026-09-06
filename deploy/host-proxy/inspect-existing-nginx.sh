@@ -18,6 +18,8 @@ fi
 
 echo "== container =="
 docker inspect --format 'Name={{.Name}} Image={{.Config.Image}} Restart={{.HostConfig.RestartPolicy.Name}}' "$EDGE_NGINX"
+echo "compose.project=$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' "$EDGE_NGINX")"
+echo "compose.service=$(docker inspect --format '{{index .Config.Labels "com.docker.compose.service"}}' "$EDGE_NGINX")"
 
 echo ""
 echo "== published ports =="

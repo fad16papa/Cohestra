@@ -30,4 +30,12 @@ for arg in "$@"; do
 done
 
 export COMPOSE_PROJECT_NAME=cohestra-uat
+
+if command -v docker >/dev/null 2>&1; then
+  if ! docker network inspect cohestra_uat_edge >/dev/null 2>&1; then
+    echo "Creating external network cohestra_uat_edge (survives compose down)"
+    docker network create --driver bridge --label cohestra.role=edge cohestra_uat_edge
+  fi
+fi
+
 exec docker compose --project-name cohestra-uat -f "$ROOT_DIR/docker-compose.uat.yml" "$@"

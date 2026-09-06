@@ -22,6 +22,12 @@ if ! docker inspect "$EDGE_NGINX" >/dev/null 2>&1; then
   exit 1
 fi
 
+ports=$(docker inspect --format '{{json .NetworkSettings.Ports}}' "$EDGE_NGINX")
+if ! echo "$ports" | grep -Eq '80/tcp|443/tcp'; then
+  echo "REFUSE: $EDGE_NGINX does not publish 80 or 443. Refusing to attach a non-edge container." >&2
+  exit 1
+fi
+
 if ! docker network inspect "$EDGE_NET" >/dev/null 2>&1; then
   echo "Creating $EDGE_NET (empty; Cohestra compose also declares this name)"
   docker network create --driver bridge "$EDGE_NET"
@@ -36,6 +42,10 @@ else
 fi
 
 echo "Existing nginx networks: $(docker inspect -f '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}' "$EDGE_NGINX")"
-echo "Cohestra alias to use in the NEW server block: http://${ALIAS}:80"
+if docker inspect cohestra-uat-nginx >/dev/null 2>&1; then
+  echo "Cohestra nginx is present. Alias: http://${ALIAS}:80"
+else
+  echo "WARN: cohestra-uat-nginx is not running yet. Do not nginx -t a Cohestra vhost until it has joined $EDGE_NET."
+fi
 echo "Do not proxy_pass http://127.0.0.1:8180 from inside $EDGE_NGINX."
-echo "Next: backup existing nginx config, add only the new server block, nginx -t, reload."
+echo "Next: backup existing nginx config, add zz-cohestra-uat.conf only, nginx -t, reload."

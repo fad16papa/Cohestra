@@ -43,9 +43,10 @@ Do **not** `compose up --force-recreate` the existing project just to add a netw
    bash deploy/host-proxy/reconcile-edge-network.sh
    ```
 
-3. Persist the same attachment in the **existing** product’s compose using
-   `lead-generation-crm.edge-overlay.yml` so a later planned recreate keeps the
-   network. Adding the overlay is a config reconciliation, not a live rebuild.
+3. Persist later by editing the **existing** product’s nginx `networks` map
+   and **keeping every network it already has**, plus `cohestra_uat_edge`
+   (`external: true`). Do not `compose up` `lead-generation-crm.edge-overlay.yml`
+   — it is documentation only and has no `services:` on purpose.
 
 ## Existing nginx config
 
@@ -54,9 +55,11 @@ Before any edit: `bash deploy/host-proxy/inspect-existing-nginx.sh` (read-only).
 Then:
 
 1. Backup the mounted nginx config on the droplet.
-2. Add **only** the new server block from `cohestra-uat.nginx.example.conf`.
-3. `docker exec lead-generation-crm-nginx-1 nginx -t`
-4. Reload (`nginx -s reload`), not a full-stack restart.
+2. Add **only** `zz-cohestra-uat.conf` from `cohestra-uat.nginx.example.conf`
+   (the `zz-` prefix keeps it from becoming the HTTP default_server).
+3. Wait until `cohestra-uat-nginx` is on `cohestra_uat_edge` before `nginx -t`.
+4. `docker exec lead-generation-crm-nginx-1 nginx -t`
+5. Reload (`nginx -s reload`), not a full-stack restart.
 
 Do not change existing server blocks, certificates, or the existing hostname.
 

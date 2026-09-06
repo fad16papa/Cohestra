@@ -34,10 +34,10 @@ else
   fail "Missing dedicated network cohestra_uat_internal"
 fi
 
-if grep -q 'name: cohestra_uat_edge' "$COMPOSE"; then
-  pass "Shared edge network cohestra_uat_edge is declared"
+if grep -q 'name: cohestra_uat_edge' "$COMPOSE" && grep -q 'external: true' "$COMPOSE"; then
+  pass "Shared edge network cohestra_uat_edge is external (survives compose down)"
 else
-  fail "Missing dedicated edge network cohestra_uat_edge"
+  fail "cohestra_uat_edge must be a named external network"
 fi
 
 if grep -q 'name: cohestra_uat_postgres_data' "$COMPOSE"; then
@@ -147,10 +147,10 @@ fi
 
 EDGE_EXAMPLE="$ROOT_DIR/deploy/host-proxy/cohestra-uat.nginx.example.conf"
 if [[ -f "$EDGE_EXAMPLE" ]]; then
-  if grep -q 'proxy_pass http://cohestra-uat-nginx:80' "$EDGE_EXAMPLE" && ! grep -q '127.0.0.1:8180' "$EDGE_EXAMPLE"; then
-    pass "Existing-edge example uses Docker DNS alias, not host loopback"
+  if grep -q 'cohestra-uat-nginx' "$EDGE_EXAMPLE" && grep -q 'resolver 127.0.0.11' "$EDGE_EXAMPLE" && ! grep -qE '127\.0\.0\.1[^0-9]' "$EDGE_EXAMPLE"; then
+    pass "Existing-edge example uses Docker DNS + resolver, not host loopback"
   else
-    fail "Existing-edge example must proxy to http://cohestra-uat-nginx:80 (not 127.0.0.1:8180)"
+    fail "Existing-edge example must use resolver + cohestra-uat-nginx (no 127.0.0.1)"
   fi
 else
   fail "Missing deploy/host-proxy/cohestra-uat.nginx.example.conf"
@@ -158,20 +158,21 @@ fi
 
 OVERLAY="$ROOT_DIR/deploy/host-proxy/lead-generation-crm.edge-overlay.yml"
 if [[ -f "$OVERLAY" ]]; then
-  if grep -qE '^  (postgres|redis|api|web):' "$OVERLAY"; then
-    fail "Existing-app edge overlay must not attach data or app services"
+  if grep -qE '^services:' "$OVERLAY"; then
+    fail "Edge overlay must not declare services: (unsafe compose merge)"
   else
-    pass "Existing-app edge overlay mentions nginx/edge only"
+    pass "Edge overlay is documentation-only (no services:)"
   fi
 else
   fail "Missing lead-generation-crm.edge-overlay.yml"
 fi
 
-python3 - "$COMPOSE" <<'PY' || true
+EDGE_TMP=$(mktemp)
+set +e
+python3 - "$COMPOSE" <<'PY' >"$EDGE_TMP" 2>&1
 import sys, re
 path = sys.argv[1]
 text = open(path).read()
-# Split services by top-level service keys
 body = text.split("services:", 1)[1].split("\nnetworks:", 1)[0]
 blocks = {}
 current = None
@@ -193,26 +194,32 @@ if "uat_edge" not in nginx or "uat_internal" not in nginx:
     errors.append("nginx must attach uat_internal and uat_edge")
 if "cohestra-uat-nginx" not in nginx:
     errors.append("nginx must declare alias cohestra-uat-nginx")
-for name in ("postgres", "redis", "api", "web", "certbot"):
-    blk = blocks.get(name, "")
-    if "uat_edge" in blk:
+for name, blk in blocks.items():
+    if name != "nginx" and "uat_edge" in blk:
         errors.append(f"{name} must not join uat_edge")
-    if name in ("postgres", "redis") and "uat_internal" not in blk:
+for name in ("postgres", "redis"):
+    if "uat_internal" not in blocks.get(name, ""):
         errors.append(f"{name} must stay on uat_internal")
-if "0.0.0.0:80" in text or re.search(r"(?<!127\.0\.0\.1:)\$\{NGINX_HTTP_PORT:-80\}:80", text):
+if "0.0.0.0:80" in text:
     errors.append("compose must not claim host 80")
-open("/tmp/uat-isolation-edge.txt", "w").write("\n".join(errors))
+print("\n".join(errors))
 sys.exit(1 if errors else 0)
 PY
-if [[ -f /tmp/uat-isolation-edge.txt && -s /tmp/uat-isolation-edge.txt ]]; then
+PY_RC=$?
+set -e
+if [[ "$PY_RC" -gt 1 ]]; then
+  fail "Edge membership parser crashed"
+  cat "$EDGE_TMP" || true
+elif [[ "$PY_RC" -eq 1 ]]; then
   while IFS= read -r err; do
-    fail "$err"
-  done < /tmp/uat-isolation-edge.txt
+    [[ -n "$err" ]] && fail "$err"
+  done < "$EDGE_TMP"
 else
   pass "Only Cohestra nginx joins cohestra_uat_edge"
   pass "Cohestra nginx has stable alias cohestra-uat-nginx"
-  pass "Postgres/Redis/API/web/certbot stay off the edge network"
+  pass "Non-nginx Cohestra services stay off the edge network"
 fi
+rm -f "$EDGE_TMP"
 
 echo ""
 echo "Passed: $PASS  Failed: $FAIL"

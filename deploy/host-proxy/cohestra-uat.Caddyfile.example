@@ -1,9 +1,6 @@
 # Not used on the current UAT droplet.
 # Public edge is lead-generation-crm-nginx-1 (Docker nginx), not host Caddy.
 #
-# If a host Caddy is introduced later (owner-approved), it still must not
-# proxy to 127.0.0.1:8180 from inside another container.
-
-# uat.example.com {
-#     reverse_proxy cohestra-uat-nginx:80
-# }
+# Host-process Caddy (on Ubuntu, not in Docker) would use 127.0.0.1:8180.
+# A Caddy container on cohestra_uat_edge would use cohestra-uat-nginx:80.
+# Current droplet edge is lead-generation-crm-nginx-1 — use the nginx example.
