@@ -41,16 +41,25 @@ docker inspect --format '{{range .Mounts}}{{.Type}} {{.Source}} -> {{.Destinatio
 
 echo ""
 echo "== nginx -t (read-only test) =="
-docker exec "$EDGE_NGINX" nginx -t
+if ! docker exec "$EDGE_NGINX" nginx -t; then
+  echo "WARN: nginx -t failed on the existing container. Continuing dumps so the operator can see why."
+fi
 
 echo ""
 echo "== include / main config =="
-docker exec "$EDGE_NGINX" sh -c 'ls -la /etc/nginx/nginx.conf /etc/nginx/conf.d 2>/dev/null; echo; echo "--- nginx.conf (includes only) ---"; grep -E "^[[:space:]]*include |^http |^events " /etc/nginx/nginx.conf || true'
+docker exec "$EDGE_NGINX" sh -c '
+  echo "--- directory listing ---"
+  ls -la /etc/nginx /etc/nginx/conf.d /etc/nginx/sites-enabled /etc/nginx/sites-available /etc/nginx/templates /etc/nginx/snippets 2>/dev/null || true
+  echo
+  echo "--- nginx.conf (includes / events / http only) ---"
+  grep -E "^[[:space:]]*include |^http |^events " /etc/nginx/nginx.conf || true
+'
 
 echo ""
 echo "== server blocks (listen / server_name / ssl paths — no key material) =="
 docker exec "$EDGE_NGINX" sh -c '
-  for f in /etc/nginx/nginx.conf /etc/nginx/conf.d/*.conf /etc/nginx/conf.d/*.conf.*; do
+  set +e
+  find /etc/nginx \( -name "*.conf" -o -name "*.template" \) -type f 2>/dev/null | sort | while read -r f; do
     [ -f "$f" ] || continue
     echo "==== $f ===="
     grep -nE "listen |server_name |ssl_certificate|ssl_certificate_key|include |default_server" "$f" || true

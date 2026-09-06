@@ -174,7 +174,7 @@ fi
 
 RECONCILE="$ROOT_DIR/deploy/host-proxy/reconcile-edge-network.sh"
 if [[ -f "$RECONCILE" ]]; then
-  if grep -q 'docker network connect' "$RECONCILE" && ! grep -Eq 'force-recreate|compose up' "$RECONCILE"; then
+  if grep -q 'docker network connect' "$RECONCILE" && ! grep -vE '^[[:space:]]*(#|echo )' "$RECONCILE" | grep -Eq 'force-recreate|docker compose up'; then
     pass "reconcile-edge-network.sh attaches via docker network connect only"
   else
     fail "reconcile-edge-network.sh must use docker network connect and must not recreate"
