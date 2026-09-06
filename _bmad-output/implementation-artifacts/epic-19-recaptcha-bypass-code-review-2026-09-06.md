@@ -1,6 +1,6 @@
 # BMAD code review — Epic 19 UAT recaptcha bypass + env freeze
 
-**Reviewed implementation HEAD:** see latest commit on `cursor/epic-19-uat-port-isolation-a139`  
+**Reviewed implementation HEAD:** `c545b40`  
 **Prior HEADs (invalid after this change):** `a7aeea6`, `45b7a16`, `2e6c73f`  
 **PR:** https://github.com/fad16papa/Cohestra/pull/294 (draft — do not merge)  
 **Date:** 2026-09-06
@@ -41,7 +41,7 @@ Residual MINOR patched after pass 2: `upsert` now replaces `export KEY=` / leadi
 
 ## Decision
 
-**CODE REVIEW: PASS** on the final implementation HEAD (no unresolved BLOCKER / MAJOR).
+**CODE REVIEW: PASS** on `c545b40` (no unresolved BLOCKER / MAJOR).
 
 Do **not** mark Story 19.1 done. Do **not** merge PR #294.  
 Do **not** start `uat-compose.sh` until the owner droplet has:
