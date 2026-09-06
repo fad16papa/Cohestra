@@ -11,9 +11,12 @@
 | COHESTRA PORT ISOLATION | **PASS** — owner host-local `ss`: `127.0.0.1:3100/5100/8180` free; frozen |
 | COHESTRA DATA ISOLATION | **PASS** — dedicated project, internal network, volumes; no host DB/Redis |
 | SHARED UAT HOSTING | **PASS** — ~3.8 GiB RAM, ~2.6 GiB available, existing stack ~270 MiB. Light UAT only. Not production capacity. |
-| EDGE PROXY DESIGN | **PASS in-repo** — `validate-uat-isolation.sh` 26/26. Live attach not applied. |
-| PR #294 MERGE | **BLOCKED** until live attach + CI green + SSH + safe merge/deploy trigger |
-| Exact reviewed implementation HEAD | **`30bf64c`** — BMAD review PASS |
+| EDGE PROXY DESIGN | **PASS in-repo** — live attach not applied (owner-session boundary) |
+| SSH ACCESS | **PASS** — `deploy` + sudo group + docker group (NOPASSWD not required) |
+| DOCKER DEPLOY ACCESS | **PASS** |
+| EXISTING APP BASELINE | **PASS** |
+| PR #294 MERGE | **BLOCKED** until live discover/backup/attach + Cohestra internal + review |
+| Exact reviewed implementation HEAD | see latest review artifact after this revision |
 
 ## Frozen Cohestra host map
 
@@ -51,12 +54,13 @@ someone runs `compose build` on the droplet. Prefer building without a host spik
 Cohestra nginx stays HTTP. Existing certs stay on `lead-generation-crm-nginx-1`.
 Story 19.2 owns Cohestra HTTPS. Do not run Cohestra certbot on the shared host.
 
-## Next (still no Cohestra deploy)
+## Next (SSH gate closed — run on the droplet as `deploy`)
 
-1. Owner SSH (`uat-ssh-accept.sh`) — port audit ≠ SSH.  
-2. On droplet (read-only): `inspect-existing-nginx.sh` — backup mounted nginx/certs.  
-3. `reconcile-edge-network.sh` (connect existing nginx to `cohestra_uat_edge`; do not recreate).  
-4. Then `bash deploy/uat-compose.sh up -d --build`.  
-5. Add only `zz-cohestra-uat.conf`, `nginx -t`, reload.  
-6. Prove existing hostname healthy, then Cohestra via `:8180` and the new hostname.  
-7. Capture `free -h`, `docker stats --no-stream`, `df -h`, `uptime`.
+1. `bash deploy/host-proxy/live-19-1.sh discover` (read-only)  
+2. `bash deploy/host-proxy/live-19-1.sh backup`  
+3. `bash deploy/host-proxy/live-19-1.sh attach` then re-verify existing app  
+4. Reconcile droplet `.env` (preserve Paddle sandbox + SendGrid; set Cohestra UAT hostname)  
+5. Only then `bash deploy/uat-compose.sh up -d --build`  
+6. Prove data targets with `prove-cohestra-data-targets.sh` before migrations  
+7. Internal loopback 3100/5100/8180, then additive `zz-cohestra-uat.conf`, `nginx -t`, reload  
+8. Do not apt upgrade / reboot as part of 19.1.

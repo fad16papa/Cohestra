@@ -172,6 +172,41 @@ else
   fail "Missing deploy/host-proxy/inspect-existing-nginx.sh"
 fi
 
+SSH_ACCEPT="$ROOT_DIR/deploy/uat-ssh-accept.sh"
+if [[ -f "$SSH_ACCEPT" ]]; then
+  if grep -q 'fail "sudo -n' "$SSH_ACCEPT"; then
+    fail "uat-ssh-accept.sh must not require passwordless sudo"
+  elif grep -q 'docker ps' "$SSH_ACCEPT" && grep -q 'docker compose version' "$SSH_ACCEPT" && grep -q 'NOPASSWD' "$SSH_ACCEPT"; then
+    pass "uat-ssh-accept.sh gates on Docker/Compose/sudo group, not NOPASSWD: ALL"
+  else
+    fail "uat-ssh-accept.sh must prove docker, compose, and sudo group without requiring NOPASSWD"
+  fi
+else
+  fail "Missing deploy/uat-ssh-accept.sh"
+fi
+
+BACKUP="$ROOT_DIR/deploy/host-proxy/backup-existing-nginx.sh"
+if [[ -f "$BACKUP" ]]; then
+  if grep -q 'letsencrypt' "$BACKUP" && grep -q 'privkey' "$BACKUP" && ! grep -vE '^[[:space:]]*(#|echo )' "$BACKUP" | grep -Eq 'nginx -s reload|compose up|network connect'; then
+    pass "backup-existing-nginx.sh skips cert/key material and does not reload"
+  else
+    fail "backup-existing-nginx.sh must skip certs/keys and stay non-mutating for nginx"
+  fi
+else
+  fail "Missing deploy/host-proxy/backup-existing-nginx.sh"
+fi
+
+LIVE="$ROOT_DIR/deploy/host-proxy/live-19-1.sh"
+if [[ -f "$LIVE" ]]; then
+  if grep -q 'discover' "$LIVE" && grep -q 'backup' "$LIVE" && grep -q 'attach' "$LIVE" && ! grep -vE '^[[:space:]]*(#|echo )' "$LIVE" | grep -Eq 'uat-compose.sh|zz-cohestra-uat'; then
+    pass "live-19-1.sh is phased and does not start Cohestra or write the vhost"
+  else
+    fail "live-19-1.sh must stay phased discover/backup/attach/verify"
+  fi
+else
+  fail "Missing deploy/host-proxy/live-19-1.sh"
+fi
+
 RECONCILE="$ROOT_DIR/deploy/host-proxy/reconcile-edge-network.sh"
 if [[ -f "$RECONCILE" ]]; then
   if grep -q 'docker network connect' "$RECONCILE" && ! grep -vE '^[[:space:]]*(#|echo )' "$RECONCILE" | grep -Eq 'force-recreate|docker compose up'; then

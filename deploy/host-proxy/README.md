@@ -48,6 +48,26 @@ Do **not** `compose up --force-recreate` the existing project just to add a netw
    (`external: true`). Do not `compose up` `lead-generation-crm.edge-overlay.yml`
    — it is documentation only and has no `services:` on purpose.
 
+## Live phases (on the droplet as `deploy`)
+
+Do **not** `apt upgrade`, `dist-upgrade`, or reboot during Story 19.1.
+
+```bash
+# If the Cohestra repo is not on the droplet yet:
+git clone --depth 1 --branch cursor/epic-19-uat-port-isolation-a139 \
+  https://github.com/fad16papa/Cohestra.git /tmp/cohestra-19
+cd /tmp/cohestra-19
+
+bash deploy/host-proxy/live-19-1.sh discover   # read-only
+bash deploy/host-proxy/live-19-1.sh backup     # host config copies, no reload
+bash deploy/host-proxy/live-19-1.sh attach     # docker network connect + re-verify
+```
+
+Backups land in `~/cohestra-uat-edge-backups/` (not git). Cert/key mounts are skipped.
+
+This Cloud Agent cannot SSH (owner key stays on the Windows workstation).
+Once `deploy@` is logged in, run the commands above **on the droplet**.
+
 ## Existing nginx config
 
 Before any edit: `bash deploy/host-proxy/inspect-existing-nginx.sh` (read-only:

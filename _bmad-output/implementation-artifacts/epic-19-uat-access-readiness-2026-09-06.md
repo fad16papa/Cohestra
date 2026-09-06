@@ -1,7 +1,7 @@
 # Epic 19 — UAT access + config readiness
 
 **Date:** 2026-09-06  
-**Verdict:** **BLOCKED** on owner-workstation SSH (key stays on the owner machine).
+**Verdict:** **SSH ACCESS PASS** (owner-proven 2026-09-06). Live docker exec still requires the owner `deploy@` session — this Cloud Agent has no key.
 
 This Cloud Agent VM has no `~/.ssh/cohestra_uat`, no `ssh-agent`, and no local `.env`. That is correct. The private key must not be copied here.
 
@@ -39,7 +39,7 @@ Acceptance script (run on the **owner workstation**): `deploy/uat-ssh-accept.sh`
 - Private key never on the server or in git  
 - DigitalOcean console as lockout recovery  
 
-Deploy user name is **unknown to this agent**. Owner sets `UAT_SSH_USER`. Do not use `root`.
+Deploy user is **`deploy`** (owner-proven). Do not use `root`. `NOPASSWD: ALL` is not required.
 
 Do **not** put `cohestra_uat` into GitHub `DROPLET_SSH_KEY`. 19.1 deploys from the owner workstation. Existing `deploy.yml` CI path is a separate, older model.
 

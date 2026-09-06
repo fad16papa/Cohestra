@@ -62,7 +62,7 @@ docker exec "$EDGE_NGINX" sh -c '
   find /etc/nginx \( -name "*.conf" -o -name "*.template" \) -type f 2>/dev/null | sort | while read -r f; do
     [ -f "$f" ] || continue
     echo "==== $f ===="
-    grep -nE "listen |server_name |ssl_certificate|ssl_certificate_key|include |default_server" "$f" || true
+    grep -nE "listen |server_name |ssl_certificate|ssl_certificate_key|include |default_server|proxy_pass |upstream " "$f" || true
     echo
   done
 '

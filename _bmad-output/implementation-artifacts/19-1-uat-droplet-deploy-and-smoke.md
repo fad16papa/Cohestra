@@ -43,9 +43,11 @@ The **existing** droplet is in use. Public `/ready` is Healthy. Do not create an
 ```
 PORT PLAN FREEZE          ← DONE 2026-09-06 (host ss: 3100/5100/8180 free)
 EDGE PROXY TOPOLOGY       ← Docker network cohestra_uat_edge + alias (this PR)
-SSH ACCESS VALIDATION     ← still required before deploy automation
+SSH ACCESS VALIDATION     ← PASS (deploy + docker group; NOPASSWD not required)
+DOCKER DEPLOY ACCESS      ← PASS
+EXISTING APP BASELINE     ← PASS (public /ready Healthy)
+LIVE EDGE DISCOVERY       ← owner droplet session (this Cloud Agent has no key)
 → ENV RECONCILIATION
-→ SERVER BASELINE
 → RECONCILE EDGE NETWORK (no recreate of lead-generation-crm-nginx-1)
 → ADD NEW COHESTRA SERVER BLOCK (backup, nginx -t, reload)
 → DEPLOY ISOLATED cohestra-uat
@@ -67,7 +69,7 @@ Owner workstation (do not paste the key or passphrase):
 ```bash
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/cohestra_uat
-UAT_SSH_USER=YOUR_DEPLOY_USER bash deploy/uat-ssh-accept.sh
+UAT_SSH_USER=deploy bash deploy/uat-ssh-accept.sh
 ```
 
 Canonical: `epic-19-uat-access-readiness-2026-09-06.md`
