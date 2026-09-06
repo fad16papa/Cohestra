@@ -12,7 +12,8 @@
 | COHESTRA DATA ISOLATION | **PASS** — dedicated project, internal network, volumes; no host DB/Redis |
 | SHARED UAT HOSTING | **PASS** — ~3.8 GiB RAM, ~2.6 GiB available, existing stack ~270 MiB. Light UAT only. Not production capacity. |
 | EDGE PROXY DESIGN | **PASS in-repo** — `validate-uat-isolation.sh` 26/26. Live attach not applied. |
-| PR #294 MERGE | **BLOCKED** until live attach + CI green + exact-HEAD review + SSH + safe merge/deploy trigger |
+| PR #294 MERGE | **BLOCKED** until live attach + CI green + SSH + safe merge/deploy trigger |
+| Exact reviewed implementation HEAD | **`30bf64c`** — BMAD review PASS |
 
 ## Frozen Cohestra host map
 
