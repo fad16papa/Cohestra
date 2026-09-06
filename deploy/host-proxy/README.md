@@ -48,7 +48,27 @@ Do **not** `compose up --force-recreate` the existing project just to add a netw
    (`external: true`). Do not `compose up` `lead-generation-crm.edge-overlay.yml`
    — it is documentation only and has no `services:` on purpose.
 
-## Live phases (on the droplet as `deploy`)
+## Live discovery (2026-09-06) — PASS
+
+`lead-generation-crm-nginx-1` is Compose service `nginx` in
+`/root/lead-generation-crm/docker-compose.uat.yml`.
+
+- Network today: **`lead-generation-crm_default` only**
+- Public: `0.0.0.0:80` / `:443`
+- **One** read-only bind:
+  `/root/lead-generation-crm/deploy/nginx/active-ssl.conf`
+  → `/etc/nginx/conf.d/default.conf`
+- `include /etc/nginx/conf.d/*.conf`
+- Existing `server_name` is **only** `thesocialcollectivesg.com` (HTTP + HTTPS)
+- Certs stay in `lead-generation-crm_certbot_certs` (do not copy keys)
+- Reload: `docker exec lead-generation-crm-nginx-1 nginx -s reload`
+
+Do **not** edit `active-ssl.conf`. Add `zz-cohestra-uat.conf` as a second
+`conf.d` file (`apply-additive-vhost.sh` after Cohestra is healthy). Persist
+later with a **second** bind mount. Never `compose up` the existing project
+just to add Cohestra.
+
+## Live phases (on the droplet)
 
 Do **not** `apt upgrade`, `dist-upgrade`, or reboot during Story 19.1.
 

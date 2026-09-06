@@ -63,14 +63,22 @@ while IFS=$'\t' read -r src dest; do
       continue
       ;;
   esac
-  if [[ ! -e "$src" ]]; then
-    echo "SKIP missing host source: $src"
-    echo "skipped_source=$src dest=$dest reason=missing-on-host" >> "$DEST/MANIFEST.txt"
-    skipped=$((skipped + 1))
-    continue
-  fi
   safe=$(echo "$dest" | sed 's#^/##' | tr '/' '_')
   target="$DEST/host-$safe"
+  if [[ ! -r "$src" ]]; then
+    echo "Host source unreadable ($src); docker cp $EDGE_NGINX:$dest"
+    mkdir -p "$(dirname "$target")"
+    if docker cp "$EDGE_NGINX:$dest" "$target"; then
+      echo "COPIED via docker cp $dest -> $target"
+      echo "copied_source=$src dest=$dest backup=$target method=docker-cp" >> "$DEST/MANIFEST.txt"
+      copied=$((copied + 1))
+    else
+      echo "SKIP could not docker cp $dest"
+      echo "skipped_source=$src dest=$dest reason=docker-cp-failed" >> "$DEST/MANIFEST.txt"
+      skipped=$((skipped + 1))
+    fi
+    continue
+  fi
   if [[ -d "$src" ]]; then
     mkdir -p "$target"
     # Copy configs only; never .pem/.key

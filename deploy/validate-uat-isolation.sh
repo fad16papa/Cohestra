@@ -207,6 +207,20 @@ else
   fail "Missing deploy/host-proxy/live-19-1.sh"
 fi
 
+APPLY="$ROOT_DIR/deploy/host-proxy/apply-additive-vhost.sh"
+if [[ -f "$APPLY" ]]; then
+  if grep -q 'zz-cohestra-uat.conf' "$APPLY" \
+    && grep -q 'nginx -t' "$APPLY" \
+    && grep -q 'thesocialcollectivesg.com' "$APPLY" \
+    && ! grep -vE '^[[:space:]]*(#|echo )' "$APPLY" | grep -Eq 'active-ssl.conf|docker compose up|force-recreate'; then
+    pass "apply-additive-vhost.sh is additive (zz- file, nginx -t before reload, no active-ssl edit)"
+  else
+    fail "apply-additive-vhost.sh must copy zz- only, test, and never edit active-ssl.conf"
+  fi
+else
+  fail "Missing deploy/host-proxy/apply-additive-vhost.sh"
+fi
+
 RECONCILE="$ROOT_DIR/deploy/host-proxy/reconcile-edge-network.sh"
 if [[ -f "$RECONCILE" ]]; then
   if grep -q 'docker network connect' "$RECONCILE" && ! grep -vE '^[[:space:]]*(#|echo )' "$RECONCILE" | grep -Eq 'force-recreate|docker compose up'; then
