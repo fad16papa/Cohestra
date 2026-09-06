@@ -1,3 +1,9 @@
+## Deferred from: code review of 19-1-uat-droplet-deploy-and-smoke.md (2026-09-06) HEAD 170458c
+
+- `TenantPublicWebUrlBuilder` maps any `*.cohestra.app` PUBLIC_BASE_URL to `https://{slug}.cohestra.app` / `https://cohestra.app`. UAT `http://uat.cohestra.app` therefore emits production apex links (email, invite, Paddle return). Inbound Host parse is fixed; outbound builder is pre-existing. Fix before public signup / email smoke.
+- `buildTenantDashboardUrl` on `uat.cohestra.app` returns same-host `/dashboard` without inserting `{slug}.uat.cohestra.app`.
+- Reserved tenant slugs do not include `uat`, so a workspace named `uat` cannot have a natural production hostname.
+
 ## Deferred from: code review of 19-1-uat-droplet-deploy-and-smoke.md (2026-09-06)
 
 - Isolation CI job does not run `docker compose config` — the UAT isolation contract job is grep/awk on the compose file so it can run without a Docker daemon. Residual: a syntactically invalid compose file could still pass the contract script.

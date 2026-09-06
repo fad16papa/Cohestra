@@ -127,3 +127,14 @@ Reviewed implementation HEADs `45b7a16` → `2e6c73f` → follow-up upsert patch
 - [x] [Review][Defer] First UAT image rebuild is droplet-side — deferred, no stack start yet
 - [x] [Review][Defer] Dev/Testing accept any non-empty captcha token — deferred, pre-existing local-test behavior
 
+### Review Findings (2026-09-06 UAT marketing apex `170458c`)
+
+Mandatory Code Review Loop on implementation HEAD `170458c`. CI: PASS (isolation, .NET, integration, Next, Docker smoke; GG neutral).
+
+- [x] [Review][Dismiss] Copy-pasted host lists — same locked hostname, tested on both sides
+- [x] [Review][Dismiss] resolveMarketingApexUrl / platform-ops collapse to uat apex — intended
+- [x] [Review][Dismiss] C# Host case/port — NormalizeHost already lowercases and strips port
+- [x] [Review][Defer] TenantPublicWebUrlBuilder still rewrites UAT PUBLIC_BASE_URL to production apex [TenantPublicWebUrlBuilder.cs] — deferred, pre-existing; not required for Host-header `/` prove
+- [x] [Review][Defer] buildTenantDashboardUrl on uat apex omits `{slug}` [signup-api.ts] — deferred, pre-existing same-origin patch
+- [x] [Review][Defer] Reserved slug list does not include `uat` [TenantSlugRules.cs] — deferred, pre-existing
+
