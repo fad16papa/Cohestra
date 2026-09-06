@@ -1,25 +1,38 @@
-name: cohestra-infra-uat
+name: cohestra-uat
 
-# UAT / production-style Compose for a single Ubuntu droplet (DigitalOcean).
-# nginx in Docker is the public entry point (see deploy/nginx/app.conf).
-# Postgres and Redis bind to 127.0.0.1 on the droplet for SSH tunnel access (pgAdmin, RedisInsight).
+# Isolated Cohestra UAT on a shared DigitalOcean droplet.
+#
+# This file MUST stay a separate Compose project from any live stack.
+# NEVER: docker compose -p cohestra-infra-uat -f docker-compose.uat.yml up
+# A project named cohestra-infra-uat may already be the public application.
+#
+# Host bindings are loopback-only. The host public reverse proxy owns :80/:443.
+# Postgres and Redis have no host ports — Docker network only.
+#
+# Preferred host map (frozen after uat-port-audit.sh proves them free):
+#   web    127.0.0.1:3100 → container 3000
+#   api    127.0.0.1:5100 → container 8080
+#   nginx  127.0.0.1:8180 → container 80
 #
 # Usage:
-#   cp .env.uat.example .env
-#   docker compose -f docker-compose.uat.yml up -d --build
+#   bash deploy/uat-port-audit.sh          # on the droplet, read-only
+#   cp .env.uat.example .env               # fill secrets
+#   bash deploy/validate-uat-isolation.sh
+#   bash deploy/uat-compose.sh up -d --build
 
 services:
   postgres:
     image: postgres:16-alpine
+    container_name: cohestra-uat-postgres
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-cohestra}
       POSTGRES_USER: ${POSTGRES_USER:-crm}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - uat_internal
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crm} -d ${POSTGRES_DB:-cohestra}"]
       interval: 10s
@@ -28,12 +41,13 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: cohestra-uat-redis
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
-    ports:
-      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      - uat_internal
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -41,10 +55,13 @@ services:
       retries: 5
 
   api:
+    container_name: cohestra-uat-api
     build:
       context: .
       dockerfile: src/Api/Dockerfile
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:${API_HOST_PORT:-5100}:8080"
     expose:
       - "8080"
     volumes:
@@ -52,6 +69,7 @@ services:
       - support_attachments_data:/app/data/support-attachments
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-cohestra};Username=${POSTGRES_USER:-crm};Password=${POSTGRES_PASSWORD}
       ConnectionStrings__Redis: redis:6379
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env (min 32 chars)}
@@ -97,6 +115,8 @@ services:
       Paddle__PriceProMonthly: ${Paddle__PriceProMonthly:-}
       Paddle__PriceProAnnual: ${Paddle__PriceProAnnual:-}
       Paddle__TrialPeriodDays: ${Paddle__TrialPeriodDays:-30}
+    networks:
+      - uat_internal
     depends_on:
       postgres:
         condition: service_healthy
@@ -110,6 +130,7 @@ services:
       start_period: 30s
 
   web:
+    container_name: cohestra-uat-web
     build:
       context: ./web
       dockerfile: Dockerfile
@@ -125,11 +146,16 @@ services:
         NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN: ${NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN:-test-captcha-pass}
         NEXT_PUBLIC_PADDLE_RETURN_ORIGIN: ${NEXT_PUBLIC_PADDLE_RETURN_ORIGIN:-}
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:${WEB_HOST_PORT:-3100}:3000"
     expose:
       - "3000"
     environment:
       NODE_ENV: production
+      PORT: "3000"
       API_URL: http://api:8080
+    networks:
+      - uat_internal
     depends_on:
       api:
         condition: service_healthy
@@ -142,14 +168,16 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
+    container_name: cohestra-uat-nginx
     restart: unless-stopped
     ports:
-      - "${NGINX_HTTP_PORT:-80}:80"
-      - "${NGINX_HTTPS_PORT:-443}:443"
+      - "127.0.0.1:${NGINX_HOST_PORT:-8180}:80"
     volumes:
       - ${NGINX_CONFIG_PATH:-./deploy/nginx/app.conf}:/etc/nginx/conf.d/default.conf:ro
       - certbot_www:/var/www/certbot:ro
       - certbot_certs:/etc/letsencrypt:ro
+    networks:
+      - uat_internal
     depends_on:
       web:
         condition: service_healthy
@@ -164,18 +192,31 @@ services:
 
   certbot:
     image: certbot/certbot:latest
+    container_name: cohestra-uat-certbot
     profiles:
       - tools
     volumes:
       - certbot_www:/var/www/certbot
       - certbot_certs:/etc/letsencrypt
+    networks:
+      - uat_internal
     entrypoint: certbot
+
+networks:
+  uat_internal:
+    name: cohestra_uat_internal
+    driver: bridge
 
 volumes:
   postgres_data:
+    name: cohestra_uat_postgres_data
   redis_data:
+    name: cohestra_uat_redis_data
   campaign_assets_data:
+    name: cohestra_uat_campaign_assets_data
   support_attachments_data:
+    name: cohestra_uat_support_attachments_data
   certbot_www:
+    name: cohestra_uat_certbot_www
   certbot_certs:
-
+    name: cohestra_uat_certbot_certs

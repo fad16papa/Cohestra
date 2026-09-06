@@ -47,6 +47,9 @@ row "LETSENCRYPT_EMAIL" "CHANGE FOR UAT" "${LETSENCRYPT_EMAIL:-}"
 row "DROPLET_IP" "CHANGE FOR UAT" "${DROPLET_IP:-}"
 row "HTTPS_DOMAIN" "CHANGE FOR UAT" "${HTTPS_DOMAIN:-}"
 row "NGINX_CONFIG_PATH" "CHANGE FOR UAT" "${NGINX_CONFIG_PATH:-}"
+row "WEB_HOST_PORT" "PRESERVE" "${WEB_HOST_PORT:-}"
+row "API_HOST_PORT" "PRESERVE" "${API_HOST_PORT:-}"
+row "NGINX_HOST_PORT" "PRESERVE" "${NGINX_HOST_PORT:-}"
 row "Paddle__WebhookSecret" "CHANGE FOR UAT" "${Paddle__WebhookSecret:-}"
 
 row "Paddle__ApiKey" "PRESERVE" "${Paddle__ApiKey:-}"
@@ -92,6 +95,8 @@ row "SelfServeSignup__Recaptcha__TestBypassToken" "REMOVE LOCAL-ONLY" "${SelfSer
 echo ""
 echo "Compose on the droplet sets postgres/redis hosts to service names."
 echo "Do not copy local Host=localhost connection strings onto UAT."
+echo "Shared-host UAT host binds stay 127.0.0.1:3100 / 5100 / 8180 after port audit."
+echo "Do not publish Postgres or Redis. Do not bind Cohestra nginx to :80/:443."
 if [[ -n "${Paddle__ApiKey:-}" ]]; then
   bash "$(dirname "$0")/classify-paddle-env.sh" "${ENV_FILE:-}"
 fi

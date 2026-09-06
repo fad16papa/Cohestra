@@ -1,0 +1,6 @@
+# EXAMPLE ONLY — add a new site. Do not edit the existing application's site.
+
+uat.example.com {
+    encode gzip
+    reverse_proxy 127.0.0.1:8180
+}

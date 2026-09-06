@@ -96,14 +96,20 @@ Do not paste: private key, passphrase, Paddle/SendGrid/JWT secrets.
 
 Optional: confirm deploy username if it is not `ubuntu`.
 
-## 9. Story 19.1 next executable action
+## 9. Port isolation (locked)
+
+Cohestra shares the physical droplet only. It must use project `cohestra-uat`, network `cohestra_uat_internal`, dedicated volumes, and loopback host binds `3100` / `5100` / `8180`. Postgres/Redis: no host ports.
+
+**Do not deploy** until `bash deploy/uat-port-audit.sh` on the droplet proves those loopback ports free. See `epic-19-uat-port-isolation-2026-09-06.md`.
+
+## 10. Story 19.1 next executable action
 
 **Owner:** run `uat-ssh-accept.sh` until PASS.
 
-**Then (still on the workstation):** server audit → classify droplet `.env` (no dump) → `git fetch &&` deploy current `main` via `deploy/remote-deploy.sh` or compose up → `uat-smoke.sh` → resource/log review.
+**Then (still on the workstation):** `uat-port-audit.sh` → freeze port plan → classify droplet `.env` (no dump) → deploy isolated `cohestra-uat` (never `-p cohestra-infra-uat`) → `uat-smoke.sh` → existing-app regression → resource/log review.
 
 This agent continues the moment SSH from an agreed path works. It will not accept a private key paste.
 
-## 10. Secret exposure
+## 11. Secret exposure
 
 No secret values were written to this file, git, or chat. Droplet `/ready` JSON contains only postgres/redis health. SSH probe used `IdentitiesOnly` and `/dev/null` as a non-key (expected deny).

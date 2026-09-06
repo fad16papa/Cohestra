@@ -140,7 +140,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = ForwardedHeaders.XForwardedFor
         | ForwardedHeaders.XForwardedProto
         | ForwardedHeaders.XForwardedHost,
-    // nginx on the same host reaches the API via Docker-published localhost ports
+    // Cohestra nginx (and the host public proxy) reach the API on the Docker network
     KnownNetworks = { },
     KnownProxies = { },
 });

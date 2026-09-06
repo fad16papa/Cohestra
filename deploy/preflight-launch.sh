@@ -106,6 +106,30 @@ if [[ -n "${Stripe__SecretKey:-}" || -n "${Stripe__WebhookSecret:-}" ]]; then
   fail "Stripe keys must not be set — billing is Paddle (Epic 29 / Story 19.4)"
 fi
 
+if [[ "${COMPOSE_PROJECT_NAME:-}" == "cohestra-infra-uat" ]]; then
+  fail "COMPOSE_PROJECT_NAME=cohestra-infra-uat is forbidden on the shared droplet"
+else
+  pass "Compose project is not the live cohestra-infra-uat name"
+fi
+
+if [[ "${NGINX_HTTP_PORT:-}" == "80" || "${NGINX_HTTPS_PORT:-}" == "443" ]]; then
+  fail "Do not bind Cohestra nginx to host 80/443 — the existing public proxy owns those"
+else
+  pass "Cohestra nginx is not targeting host 80/443"
+fi
+
+if [[ -n "${POSTGRES_HOST_PORT:-}" || -n "${REDIS_HOST_PORT:-}" ]]; then
+  fail "Postgres/Redis must not publish host ports on shared UAT"
+else
+  pass "No Postgres/Redis host-port overrides"
+fi
+
+if [[ "${WEB_HOST_PORT:-3100}" == "3000" || "${API_HOST_PORT:-5100}" == "8080" ]]; then
+  fail "Cohestra diagnostic host ports must not reuse container-native 3000/8080 on the shared host"
+else
+  pass "Cohestra diagnostic host ports are isolated defaults or overrides"
+fi
+
 if [[ -n "${Paddle__ApiKey:-}" ]]; then
   require_nonempty "Paddle__WebhookSecret" "${Paddle__WebhookSecret:-}"
   require_nonempty "Paddle__ClientToken" "${Paddle__ClientToken:-}"

@@ -20,10 +20,15 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "== Deploy cohestra =="
+# shellcheck disable=SC1091
+source "$ROOT_DIR/deploy/cohestra-uat-guards.sh"
+refuse_legacy_compose_project || exit 1
+
+echo "== Deploy isolated cohestra-uat =="
 echo "Path:   $ROOT_DIR"
 echo "Branch: $DEPLOY_BRANCH"
 echo "Commit before pull: $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+echo "Compose project: cohestra-uat (never cohestra-infra-uat)"
 
 git fetch origin "$DEPLOY_BRANCH"
 git reset --hard "origin/$DEPLOY_BRANCH"
@@ -31,8 +36,8 @@ git reset --hard "origin/$DEPLOY_BRANCH"
 echo "Commit after pull:  $(git rev-parse --short HEAD)"
 
 echo ""
-echo "== Docker compose build + up =="
-docker compose -f docker-compose.uat.yml up -d --build
+echo "== Docker compose build + up (project cohestra-uat) =="
+bash "$ROOT_DIR/deploy/uat-compose.sh" up -d --build
 
 echo ""
 echo "== Smoke checks =="

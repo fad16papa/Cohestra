@@ -42,16 +42,21 @@ Then rebuild web after changing `PUBLIC_BASE_URL`:
 docker compose up -d --build web
 ```
 
-## UAT / production
+## UAT / production (shared droplet)
+
+Compose project **`cohestra-uat`** publishes Cohestra nginx on **`127.0.0.1:8180` only**.
+The host public reverse proxy owns `:80` / `:443`. See `deploy/host-proxy/`.
 
 ```bash
-docker compose -f docker-compose.uat.yml up -d --build
+bash deploy/uat-port-audit.sh
+bash deploy/validate-uat-isolation.sh
+bash deploy/uat-compose.sh up -d --build
 ```
 
-Set `PUBLIC_BASE_URL` to the URL operators use in the browser, e.g.:
+Set `PUBLIC_BASE_URL` to the **Cohestra UAT hostname**, not the existing application host.
 
-- No domain yet: `http://YOUR_DROPLET_IP`
-- With domain: `https://uat.example.com`
+Do not run `setup-temporary-https.sh` / `switch-https-domain.sh` on the shared droplet
+(`COHESTRA_SHARED_HOST_UAT` defaults to true).
 
 ## Temporary HTTPS (no client domain yet)
 
@@ -82,6 +87,12 @@ bash deploy/switch-https-domain.sh uat.example.com you@example.com
 
 Legacy manual notes: `ssl.conf.example` (host-mounted certs) — prefer the Certbot flow above.
 
+## Host public reverse proxy (shared droplet)
+
+`deploy/host-proxy/` has **example** vhosts that proxy a new Cohestra hostname to
+`127.0.0.1:8180`. Do not replace the existing application’s server block.
+
 ## Legacy host nginx
 
-`uat.conf` was for nginx installed on the Ubuntu host. **Prefer the Docker nginx service** so local and production match.
+`uat.conf` was for nginx installed on the Ubuntu host when Cohestra owned `:80`.
+On the shared droplet that model is retired.

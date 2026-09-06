@@ -49,7 +49,33 @@ echo "PUBLIC_BASE_URL=${BASE_URL}"
 echo ""
 
 echo "== Docker services =="
-docker compose -f docker-compose.uat.yml ps
+bash deploy/uat-compose.sh ps
+
+echo ""
+echo "== Loopback isolation (not public) =="
+LOOPBACK_NGINX="${NGINX_HOST_PORT:-8180}"
+LOOPBACK_WEB="${WEB_HOST_PORT:-3100}"
+LOOPBACK_API="${API_HOST_PORT:-5100}"
+if command -v docker >/dev/null 2>&1 && bash deploy/uat-compose.sh ps -q nginx 2>/dev/null | grep -q .; then
+  if curl -fsS --connect-timeout 3 "http://127.0.0.1:${LOOPBACK_NGINX}/ready" | grep -q '"status":"Healthy"'; then
+    pass "Cohestra nginx loopback :${LOOPBACK_NGINX} /ready"
+  else
+    fail "Cohestra nginx loopback :${LOOPBACK_NGINX} /ready — stack not healthy or ports differ"
+  fi
+  WEB_CODE=$(curl -sS --connect-timeout 3 -o /dev/null -w "%{http_code}" "http://127.0.0.1:${LOOPBACK_WEB}/" || echo "000")
+  if [[ "$WEB_CODE" == "200" || "$WEB_CODE" == "307" || "$WEB_CODE" == "308" ]]; then
+    pass "Cohestra web loopback :${LOOPBACK_WEB} HTTP ${WEB_CODE}"
+  else
+    fail "Cohestra web loopback :${LOOPBACK_WEB} returned ${WEB_CODE}"
+  fi
+  if curl -fsS --connect-timeout 3 "http://127.0.0.1:${LOOPBACK_API}/ready" | grep -q '"status":"Healthy"'; then
+    pass "Cohestra API loopback :${LOOPBACK_API} /ready"
+  else
+    fail "Cohestra API loopback :${LOOPBACK_API} /ready"
+  fi
+else
+  echo "Skipping loopback isolation — isolated compose nginx is not running on this host"
+fi
 
 echo ""
 echo "== nginx /ready =="
@@ -59,7 +85,7 @@ if curl -fsS "${BASE_URL%/}/ready" | grep -q '"status":"Healthy"'; then
   echo ""
 else
   fail "/ready unhealthy — check PUBLIC_BASE_URL and nginx"
-  docker compose -f docker-compose.uat.yml logs --tail=30 nginx api || true
+  bash deploy/uat-compose.sh logs --tail=30 nginx api || true
 fi
 
 echo ""

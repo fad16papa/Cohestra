@@ -46,7 +46,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Email / QR:** SendGrid 9.29.x · QRCoder 1.6.x
 - **API shape:** `/api/v1/...` · ProblemDetails · DTOs in `Contracts` only
 - **Web:** Next.js 16.2.9 · React 19.2.x · TypeScript 5 · Tailwind 4 · shadcn · next-themes 0.4.x
-- **Edge:** nginx 1.27-alpine · Compose projects `cohestra-infra` (local) / `cohestra-infra-uat`
+- **Edge:** nginx 1.27-alpine · Compose projects `cohestra-infra` (local) / `cohestra-uat` (shared-host UAT, loopback 3100/5100/8180, network `cohestra_uat_internal`)
 - **Solution:** `Cohestra.sln` → Api · Application · Domain · Infrastructure · Contracts (+ Api.IntegrationTests, Infrastructure.Tests)
 
 **Agent constraints**

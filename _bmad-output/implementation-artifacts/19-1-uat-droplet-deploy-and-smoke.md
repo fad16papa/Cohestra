@@ -25,7 +25,7 @@ Deployment/infrastructure stories must additionally include **real environment v
 
 Copied from `epics-cohestra-enterprise.md` Epic 19.1:
 
-1. Droplet provisioned per `docs/deploy/digitalocean-uat.md`; `.env` from `.env.uat.example` with strong secrets; `docker compose -f docker-compose.uat.yml up -d --build` succeeds; firewall **22, 80, 443 only**.
+1. Existing droplet reused per `docs/deploy/digitalocean-uat.md`; isolated Compose project `cohestra-uat`; `.env` from `.env.uat.example` with strong secrets; `docker compose -f docker-compose.uat.yml up -d --build` succeeds **after** port audit; firewall **22, 80, 443 only** (host public proxy). Cohestra loopback binds stay off the public internet.
 2. `bash deploy/uat-smoke.sh` with `PUBLIC_BASE_URL` set completes without error.
 3. `DemoDataSeed__Enabled=false` and `OperatorSeed__Enabled=false` (or documented bootstrap-only exception); `DEV_TENANT_SLUG` not set on the production path.
 4. DNS: apex + wildcard or documented nip.io interim.
@@ -42,18 +42,22 @@ The **existing** droplet is in use. Public `/ready` is Healthy. Do not create an
 
 ```
 SSH ACCESS VALIDATION   ← current owner boundary (workstation key)
-→ SERVER AUDIT
+→ SERVER AUDIT (ss + docker ports + memory — deploy/uat-port-audit.sh)
+→ PORT PLAN FREEZE (3100 / 5100 / 8180 or documented nearest unused)
 → ENV RECONCILIATION
 → SERVER BASELINE
-→ DEPLOY CURRENT MAIN
-→ DATABASE MIGRATION
+→ DEPLOY ISOLATED cohestra-uat   ← do not use -p cohestra-infra-uat
+→ DATABASE MIGRATION (Cohestra volume only)
 → START SERVICES
-→ HEALTH CHECKS
+→ HEALTH CHECKS (127.0.0.1:8180 + Cohestra public host)
+→ EXISTING APP REGRESSION CHECK (unchanged hostname)
 → PRODUCT SMOKE
 → RESOURCE CHECK
 → LOG REVIEW
 → ACCEPTANCE
 ```
+
+**Do not deploy** until `uat-port-audit.sh` proves `127.0.0.1:3100`, `:5100`, and `:8180` are free. If occupied, do not stop the occupant; freeze a nearest unused Cohestra-specific port in `.env`.
 
 Paddle full billing lifecycle stays **19.4**. Do not block 19.1 on webhook acceptance.
 
