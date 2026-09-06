@@ -111,10 +111,20 @@ Cohestra hostname. Do not disturb the existing app’s TLS.
 ## After the vhost exists
 
 ```
-# Story 19.1 may use http:// until 19.2 adds Cohestra TLS on the existing edge.
-PUBLIC_BASE_URL=https://YOUR-COHESTRA-UAT-HOSTNAME
-NEXT_PUBLIC_PADDLE_RETURN_ORIGIN=https://YOUR-COHESTRA-UAT-HOSTNAME
+# Locked hostname: cohestra.app. Story 19.1 is HTTP until 19.2 adds TLS.
+PUBLIC_BASE_URL=http://cohestra.app
+NEXT_PUBLIC_PADDLE_RETURN_ORIGIN=http://cohestra.app
 EXISTING_APP_PUBLIC_URL=https://thesocialcollectivesg.com
 ```
+
+Do not point GoDaddy A records at `129.212.235.2` until the additive vhost exists
+(parking IPs today). Then:
+
+| Type | Name | Value |
+|------|------|-------|
+| A | `@` | `129.212.235.2` |
+| A | `www` | `129.212.235.2` (optional) |
+
+Do not change `thesocialcollectivesg.com` DNS.
 
 Paddle webhook stays `POST /api/v1/system/paddle/webhook`.

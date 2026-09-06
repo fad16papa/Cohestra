@@ -88,13 +88,20 @@ Membership after attach:
 Post-attach existing app: 6/6 healthy. This agent re-checked
 `https://thesocialcollectivesg.com/ready` → 200 Healthy.
 
+## Hostname lock (2026-09-06)
+
+Owner GoDaddy domain: **`cohestra.app`** (status IDLE / parking).
+
+Current public DNS is GoDaddy parking (`76.223.105.230` / `13.248.243.5`), **not** the droplet. Leave DNS on parking until Cohestra is internally healthy **and** `zz-cohestra-uat.conf` exists. Otherwise `cohestra.app` would hit the existing default vhost (`thesocialcollectivesg.com`).
+
+Story 19.1 `PUBLIC_BASE_URL=http://cohestra.app` (HTTP first). Story 19.2 owns HTTPS.
+
 ## Next — owner env boundary
 
-Do **not** start Cohestra until:
+Do **not** start Cohestra until the droplet `.env` exists (from the owner local `.env`):
 
-1. A **new** Cohestra UAT hostname (not `thesocialcollectivesg.com`, not the droplet IP)
-2. Droplet `.env` classified from the owner local `.env` (`classify-uat-env.sh`)
-   — PRESERVE Paddle sandbox + SendGrid; never print secret values
+1. Hostname locked: `cohestra.app`
+2. `bash deploy/classify-uat-env.sh` — PRESERVE Paddle sandbox + SendGrid; never print secret values
 3. `bash deploy/uat-compose.sh up -d --build` as project `cohestra-uat` only
 
 No secrets or private keys recorded.
