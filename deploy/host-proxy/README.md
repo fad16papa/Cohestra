@@ -111,20 +111,20 @@ Cohestra hostname. Do not disturb the existing app’s TLS.
 ## After the vhost exists
 
 ```
-# Locked hostname: cohestra.app. Story 19.1 is HTTP until 19.2 adds TLS.
-PUBLIC_BASE_URL=http://cohestra.app
-NEXT_PUBLIC_PADDLE_RETURN_ORIGIN=http://cohestra.app
+# Locked UAT hostname: uat.cohestra.app. Apex cohestra.app stays reserved.
+PUBLIC_BASE_URL=http://uat.cohestra.app
+NEXT_PUBLIC_PADDLE_RETURN_ORIGIN=http://uat.cohestra.app
 EXISTING_APP_PUBLIC_URL=https://thesocialcollectivesg.com
 ```
 
 Do not point GoDaddy A records at `129.212.235.2` until the additive vhost exists
-(parking IPs today). Then:
+(parking IPs today). Then only the UAT hostname:
 
 | Type | Name | Value |
 |------|------|-------|
-| A | `@` | `129.212.235.2` |
-| A | `www` | `129.212.235.2` (optional) |
+| A | `uat` | `129.212.235.2` |
 
+Do not point apex `@` or `www` at UAT. Apex `cohestra.app` stays reserved.
 Do not change `thesocialcollectivesg.com` DNS.
 
 Paddle webhook stays `POST /api/v1/system/paddle/webhook`.

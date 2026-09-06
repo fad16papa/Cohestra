@@ -23,6 +23,7 @@ import { MarketingReveal } from "@/components/marketing/marketing-reveal";
 import { useMarketingHeaderScroll } from "@/components/marketing/use-marketing-header-scroll";
 import {
   checkSignupSlug,
+  isRecaptchaEnabled,
   submitPublicSignup,
   type SlugAvailability,
 } from "@/lib/signup/signup-api";
@@ -104,6 +105,7 @@ export function SignupPageContent() {
     setCaptchaToken(token);
   }, []);
 
+  const recaptchaRequired = isRecaptchaEnabled();
   const canSubmit = useMemo(
     () =>
       accepted
@@ -112,7 +114,7 @@ export function SignupPageContent() {
       && slug.trim().length > 0
       && email.trim().length > 0
       && password.length >= 8
-      && captchaToken
+      && (!recaptchaRequired || Boolean(captchaToken))
       && slugStatus?.available === true
       && !submitting,
     [
@@ -122,6 +124,7 @@ export function SignupPageContent() {
       slug,
       email,
       password,
+      recaptchaRequired,
       captchaToken,
       slugStatus,
       submitting,
@@ -129,7 +132,7 @@ export function SignupPageContent() {
   );
 
   async function handleSubmit() {
-    if (!versions || !captchaToken) {
+    if (!versions || (recaptchaRequired && !captchaToken)) {
       setError("Complete all required fields.");
       return;
     }
@@ -145,7 +148,7 @@ export function SignupPageContent() {
       slug: slug.trim(),
       email: email.trim(),
       password,
-      captchaToken,
+      captchaToken: captchaToken ?? "",
       registrationTimeZoneId: getBrowserTimeZoneId(),
     });
 

@@ -17,6 +17,6 @@ public sealed class RecaptchaSettings
 
     public string SecretKey { get; set; } = string.Empty;
 
-    /// <summary>Accepted when reCAPTCHA is disabled (dev/integration tests).</summary>
-    public string TestBypassToken { get; set; } = "test-captcha-pass";
+    /// <summary>Local/test only. Must stay empty in UAT and Production.</summary>
+    public string TestBypassToken { get; set; } = string.Empty;
 }

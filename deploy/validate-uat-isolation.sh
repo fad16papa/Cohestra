@@ -52,6 +52,35 @@ else
   fail "Missing cohestra_uat_redis_data volume"
 fi
 
+if grep -q 'test-captcha-pass' "$COMPOSE"; then
+  fail "UAT compose must not default a recaptcha test bypass token"
+else
+  pass "UAT compose has no test-captcha-pass default"
+fi
+
+APPSETTINGS="$ROOT_DIR/src/Api/appsettings.json"
+if [[ -f "$APPSETTINGS" ]] && grep -q 'test-captcha-pass' "$APPSETTINGS"; then
+  fail "appsettings.json must not bake a recaptcha test bypass token into UAT/Production"
+else
+  pass "Production appsettings.json has no recaptcha test bypass token"
+fi
+
+SETTINGS_CS="$ROOT_DIR/src/Infrastructure/Signup/SelfServeSignupSettings.cs"
+if [[ -f "$SETTINGS_CS" ]] && grep -qE 'TestBypassToken \{ get; set; \} = "test-captcha-pass"' "$SETTINGS_CS"; then
+  fail "RecaptchaSettings must not default TestBypassToken to test-captcha-pass"
+else
+  pass "RecaptchaSettings default bypass token is empty"
+fi
+
+CLASSIFY="$ROOT_DIR/deploy/classify-uat-env.sh"
+if [[ -f "$CLASSIFY" ]] \
+  && grep -q 'SelfServeSignup__Recaptcha__TestBypassToken" "REMOVE LOCAL-ONLY"' "$CLASSIFY" \
+  && grep -q 'NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN" "REMOVE LOCAL-ONLY"' "$CLASSIFY"; then
+  pass "classifier treats both recaptcha test tokens as REMOVE LOCAL-ONLY"
+else
+  fail "classifier must list both recaptcha test-bypass tokens as REMOVE LOCAL-ONLY"
+fi
+
 if grep -qE '127\.0\.0\.1:\$\{WEB_HOST_PORT:-3100\}:3000' "$COMPOSE"; then
   pass "Web host bind 127.0.0.1:3100 → 3000"
 else

@@ -27,9 +27,12 @@ TMP=$(mktemp)
 cleanup() { rm -f "$TMP"; }
 trap cleanup EXIT
 
-if [[ -z "$HOST_NAME" || "$HOST_NAME" == "uat.example.com" || "$HOST_NAME" == "thesocialcollectivesg.com" ]]; then
-  echo "REFUSE: set COHESTRA_UAT_HOSTNAME to the NEW Cohestra UAT hostname." >&2
-  echo "Never use thesocialcollectivesg.com." >&2
+if [[ -z "$HOST_NAME" || "$HOST_NAME" == "uat.example.com" || "$HOST_NAME" == "thesocialcollectivesg.com" || "$HOST_NAME" == "cohestra.app" ]]; then
+  echo "REFUSE: set COHESTRA_UAT_HOSTNAME to uat.cohestra.app (not apex, not the existing site)." >&2
+  exit 1
+fi
+if [[ "$HOST_NAME" != "uat.cohestra.app" ]]; then
+  echo "REFUSE: locked UAT hostname is uat.cohestra.app (got $HOST_NAME)." >&2
   exit 1
 fi
 if ! echo "$HOST_NAME" | grep -qE '^[A-Za-z0-9.-]+$'; then

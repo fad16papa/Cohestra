@@ -22,16 +22,38 @@ public sealed class GoogleRecaptchaVerifier(
     {
         var settings = options.Value.Recaptcha;
 
-        if (!settings.Enabled
-            || string.IsNullOrWhiteSpace(settings.SecretKey))
+        if (!settings.Enabled)
         {
-            if (string.Equals(captchaToken?.Trim(), settings.TestBypassToken, StringComparison.Ordinal))
-            {
-                return (true, null);
-            }
-
+            // Production/UAT: disabled means no captcha. Do not require a well-known bypass token.
             if (hostEnvironment.IsDevelopment() || hostEnvironment.EnvironmentName == "Testing")
             {
+                if (!string.IsNullOrWhiteSpace(settings.TestBypassToken)
+                    && string.Equals(captchaToken?.Trim(), settings.TestBypassToken, StringComparison.Ordinal))
+                {
+                    return (true, null);
+                }
+
+                if (!string.IsNullOrWhiteSpace(captchaToken))
+                {
+                    return (true, null);
+                }
+
+                return (false, "Complete the CAPTCHA challenge.");
+            }
+
+            return (true, null);
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.SecretKey))
+        {
+            if (hostEnvironment.IsDevelopment() || hostEnvironment.EnvironmentName == "Testing")
+            {
+                if (!string.IsNullOrWhiteSpace(settings.TestBypassToken)
+                    && string.Equals(captchaToken?.Trim(), settings.TestBypassToken, StringComparison.Ordinal))
+                {
+                    return (true, null);
+                }
+
                 if (!string.IsNullOrWhiteSpace(captchaToken))
                 {
                     return (true, null);
