@@ -148,6 +148,14 @@ Do not treat the existing application’s `https://thesocialcollectivesg.com/rea
 
 ## 6. HTTPS
 
+On the **shared** droplet, do **not** run these Cohestra TLS scripts. They refuse
+while `COHESTRA_SHARED_HOST_UAT` is anything other than `false`. Terminate TLS on
+the host public reverse proxy and add a **new** Cohestra hostname
+(`deploy/host-proxy/`).
+
+The options below are for a **dedicated** Cohestra droplet only
+(`COHESTRA_SHARED_HOST_UAT=false`).
+
 ### Option A — Temporary (no client domain)
 
 Use **nip.io** so Let's Encrypt can issue a cert for `129-212-235-2.nip.io` (hyphens instead of dots in your IP):

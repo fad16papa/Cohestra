@@ -25,7 +25,7 @@ Deployment/infrastructure stories must additionally include **real environment v
 
 Copied from `epics-cohestra-enterprise.md` Epic 19.1:
 
-1. Existing droplet reused per `docs/deploy/digitalocean-uat.md`; isolated Compose project `cohestra-uat`; `.env` from `.env.uat.example` with strong secrets; `docker compose -f docker-compose.uat.yml up -d --build` succeeds **after** port audit; firewall **22, 80, 443 only** (host public proxy). Cohestra loopback binds stay off the public internet.
+1. Existing droplet reused per `docs/deploy/digitalocean-uat.md`; isolated Compose project `cohestra-uat`; `.env` from `.env.uat.example` with strong secrets; `bash deploy/uat-compose.sh up -d --build` succeeds **after** port audit; firewall **22, 80, 443 only** (host public proxy). Cohestra loopback binds stay off the public internet.
 2. `bash deploy/uat-smoke.sh` with `PUBLIC_BASE_URL` set completes without error.
 3. `DemoDataSeed__Enabled=false` and `OperatorSeed__Enabled=false` (or documented bootstrap-only exception); `DEV_TENANT_SLUG` not set on the production path.
 4. DNS: apex + wildcard or documented nip.io interim.
@@ -88,3 +88,21 @@ Paddle sandbox recon: **PASS**. Preserve local sandbox API key, client token, pr
 - Live Paddle keys (sandbox only until public launch)
 - Cinema changes
 - Reopening Epic 25 or Epic 34
+
+### Review Findings
+
+Reviewed HEAD `95e5bd0` (PR #294) on 2026-09-06. Mandatory loop applied BLOCKER/MAJOR patches on the following HEAD.
+
+- [x] [Review][Patch] `uat-compose.sh` must refuse later `-p` / `--project-name` [deploy/uat-compose.sh]
+- [x] [Review][Patch] Port audit must fail when `ss` is missing (no false free) [deploy/uat-port-audit.sh]
+- [x] [Review][Patch] Gate `NGINX_HOST_PORT` 80/443, not only retired `NGINX_HTTP_PORT` [deploy/preflight-launch.sh]
+- [x] [Review][Patch] Source droplet `.env` before auditing host ports [deploy/uat-port-audit.sh]
+- [x] [Review][Patch] Treat existing `cohestra-uat` listeners as self on redeploy [deploy/uat-port-audit.sh]
+- [x] [Review][Patch] `remote-deploy.sh` must reset git, then audit the new tree [deploy/remote-deploy.sh]
+- [x] [Review][Patch] Smoke must not skip loopback or default to existing `:80` [deploy/uat-smoke.sh]
+- [x] [Review][Patch] Shared-host TLS refuse must treat anything but explicit false as shared [deploy/cohestra-uat-guards.sh]
+- [x] [Review][Patch] Refuse certbot / SSL nginx config on the shared host [deploy/uat-compose.sh]
+- [x] [Review][Patch] RAM under 3.5 GiB is CONDITIONAL warn, not a port-audit FAIL [deploy/uat-port-audit.sh]
+- [x] [Review][Patch] Story AC and env example must not steer at the existing app hostname
+- [x] [Review][Defer] Isolation CI does not run `docker compose config` — deferred, pre-existing CI job has no Docker daemon requirement
+

@@ -114,8 +114,11 @@ fi
 
 if [[ "${NGINX_HTTP_PORT:-}" == "80" || "${NGINX_HTTPS_PORT:-}" == "443" ]]; then
   fail "Do not bind Cohestra nginx to host 80/443 — the existing public proxy owns those"
+fi
+if [[ "${NGINX_HOST_PORT:-8180}" == "80" || "${NGINX_HOST_PORT:-8180}" == "443" ]]; then
+  fail "NGINX_HOST_PORT must not be 80 or 443 on the shared droplet"
 else
-  pass "Cohestra nginx is not targeting host 80/443"
+  pass "Cohestra nginx host port is not 80/443"
 fi
 
 if [[ -n "${POSTGRES_HOST_PORT:-}" || -n "${REDIS_HOST_PORT:-}" ]]; then

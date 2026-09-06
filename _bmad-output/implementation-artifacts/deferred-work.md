@@ -1,3 +1,7 @@
+## Deferred from: code review of 19-1-uat-droplet-deploy-and-smoke.md (2026-09-06)
+
+- Isolation CI job does not run `docker compose config` — the UAT isolation contract job is grep/awk on the compose file so it can run without a Docker daemon. Residual: a syntactically invalid compose file could still pass the contract script.
+
 ## Deferred from: code review of spec-fix-registration-step-buttons.md (2026-09-05)
 
 - `PublicFormLayout` main column `min-w-0` applies to every public form, not only stepped registration — correct flex default for the 480px track; other public pages benefit. No product/arch/security risk.

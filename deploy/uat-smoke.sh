@@ -22,7 +22,8 @@ if [[ -f .env ]]; then
   set +a
 fi
 
-BASE_URL="${PUBLIC_BASE_URL:-http://127.0.0.1}"
+LOOPBACK_NGINX="${NGINX_HOST_PORT:-8180}"
+BASE_URL="${PUBLIC_BASE_URL:-http://127.0.0.1:${LOOPBACK_NGINX}}"
 
 if [[ -z "${TENANT_HOST:-}" ]]; then
   if [[ "$BASE_URL" == *localhost* ]]; then
@@ -51,12 +52,17 @@ echo ""
 echo "== Docker services =="
 bash deploy/uat-compose.sh ps
 
+if [[ "$BASE_URL" == *thesocialcollectivesg.com* || "$BASE_URL" == *129.212.235.2* ]]; then
+  fail "PUBLIC_BASE_URL points at the existing public application — set the Cohestra UAT hostname"
+fi
+
 echo ""
 echo "== Loopback isolation (not public) =="
-LOOPBACK_NGINX="${NGINX_HOST_PORT:-8180}"
 LOOPBACK_WEB="${WEB_HOST_PORT:-3100}"
 LOOPBACK_API="${API_HOST_PORT:-5100}"
-if command -v docker >/dev/null 2>&1 && bash deploy/uat-compose.sh ps -q nginx 2>/dev/null | grep -q .; then
+if ! command -v docker >/dev/null 2>&1 || ! bash deploy/uat-compose.sh ps -q nginx 2>/dev/null | grep -q .; then
+  fail "Isolated Cohestra nginx is not running — refuse to smoke the existing :80 application"
+else
   if curl -fsS --connect-timeout 3 "http://127.0.0.1:${LOOPBACK_NGINX}/ready" | grep -q '"status":"Healthy"'; then
     pass "Cohestra nginx loopback :${LOOPBACK_NGINX} /ready"
   else
@@ -73,8 +79,16 @@ if command -v docker >/dev/null 2>&1 && bash deploy/uat-compose.sh ps -q nginx 2
   else
     fail "Cohestra API loopback :${LOOPBACK_API} /ready"
   fi
-else
-  echo "Skipping loopback isolation — isolated compose nginx is not running on this host"
+fi
+
+if [[ -n "${EXISTING_APP_PUBLIC_URL:-}" ]]; then
+  echo ""
+  echo "== Existing application regression =="
+  if curl -fsS --connect-timeout 5 "${EXISTING_APP_PUBLIC_URL%/}/ready" | grep -q '"status":"Healthy"'; then
+    pass "Existing app still healthy at EXISTING_APP_PUBLIC_URL"
+  else
+    fail "Existing app /ready failed — Cohestra deploy must not take the public stack down"
+  fi
 fi
 
 echo ""

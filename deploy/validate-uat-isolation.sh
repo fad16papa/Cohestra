@@ -115,10 +115,10 @@ else
 fi
 
 WRAPPER="$ROOT_DIR/deploy/uat-compose.sh"
-if [[ -f "$WRAPPER" ]] && grep -q -- '--project-name cohestra-uat' "$WRAPPER"; then
-  pass "uat-compose.sh forces --project-name cohestra-uat"
+if [[ -f "$WRAPPER" ]] && grep -q -- '--project-name cohestra-uat' "$WRAPPER" && grep -q -- '-p' "$WRAPPER"; then
+  pass "uat-compose.sh forces --project-name cohestra-uat and refuses -p"
 else
-  fail "deploy/uat-compose.sh must force --project-name cohestra-uat"
+  fail "deploy/uat-compose.sh must force --project-name cohestra-uat and refuse -p"
 fi
 
 if [[ -f "$NGINX" ]]; then
