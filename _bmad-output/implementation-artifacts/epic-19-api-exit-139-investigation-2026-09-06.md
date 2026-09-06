@@ -4,7 +4,7 @@
 
 1. **What happened.** Isolated UAT compose started; dedicated Postgres/Redis became healthy; `cohestra-uat-api` crash-looped with Docker exit **139**.
 2. **Where the case stands.** CASE 3 confirmed. Source of truth is a managed `InvalidOperationException` from `ProductionSecurityValidator` at `Program.cs:23` — `Username=crm` was treated as a development credential even on isolated `Host=postgres`. `dotnet --info` exits 0. `OOMKilled=false`. Migrations never ran.
-3. **What's needed next.** Ship the validator narrowing, rebuild only the API image, do not wipe volumes. If the next exception says the password is the development placeholder, rotate `POSTGRES_PASSWORD` inside the existing Cohestra Postgres role (no volume delete).
+3. **What's needed next.** Rebuild at `4c7ec87` proved the next blocker: `POSTGRES_PASSWORD` is still the development placeholder `crm`. Rotate it in place with `deploy/rotate-canonical-uat-postgres-password.sh` (ALTER USER on `cohestra-uat-postgres` only), then recreate API. Do not delete volumes.
 
 ## Case Info
 
