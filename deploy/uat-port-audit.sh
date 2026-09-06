@@ -162,6 +162,20 @@ else
   warn "Memory size unknown — SHARED UAT HOSTING is CONDITIONAL"
 fi
 
+echo ""
+echo "== Swap (optional UAT OOM insurance; not a blocker) =="
+if [[ -r /proc/meminfo ]]; then
+  swap_mb=$(awk '/^SwapTotal:/ {printf "%d", $2/1024}' /proc/meminfo)
+  echo "SwapTotalMiB=${swap_mb:-0}"
+  if [[ "${swap_mb:-0}" -eq 0 ]]; then
+    warn "Host has no swap. Not a blocker. Optional 1–2 GiB swap file is OOM insurance if someone builds images on this droplet."
+    echo "   Prefer sequential / off-host image builds so host RAM spikes stay small. Do not resize the droplet."
+    echo "   Do not require swap for this isolated Compose start."
+  else
+    pass "Swap is present (${swap_mb} MiB) — useful as UAT OOM insurance, not production capacity"
+  fi
+fi
+
 if command -v nproc >/dev/null 2>&1; then
   echo "vCPU=$(nproc)"
 fi

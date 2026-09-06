@@ -50,7 +50,9 @@ Do **not** `compose up --force-recreate` the existing project just to add a netw
 
 ## Existing nginx config
 
-Before any edit: `bash deploy/host-proxy/inspect-existing-nginx.sh` (read-only).
+Before any edit: `bash deploy/host-proxy/inspect-existing-nginx.sh` (read-only:
+container, ports, networks, mounts, includes, `server_name` / listen / cert
+*paths*, persistence). Backup the mounted host Source paths it prints.
 
 Then:
 
@@ -69,6 +71,7 @@ Cohestra hostname. Do not disturb the existing app’s TLS.
 ## After the vhost exists
 
 ```
+# Story 19.1 may use http:// until 19.2 adds Cohestra TLS on the existing edge.
 PUBLIC_BASE_URL=https://YOUR-COHESTRA-UAT-HOSTNAME
 NEXT_PUBLIC_PADDLE_RETURN_ORIGIN=https://YOUR-COHESTRA-UAT-HOSTNAME
 EXISTING_APP_PUBLIC_URL=https://thesocialcollectivesg.com

@@ -152,8 +152,35 @@ if [[ -f "$EDGE_EXAMPLE" ]]; then
   else
     fail "Existing-edge example must use resolver + cohestra-uat-nginx (no 127.0.0.1)"
   fi
+  if grep -q 'zz-cohestra-uat.conf' "$EDGE_EXAMPLE" && ! grep -qE 'listen[^;]*default_server' "$EDGE_EXAMPLE"; then
+    pass "Public proxy snippet is additive (zz-cohestra-uat.conf, not default_server)"
+  else
+    fail "Example vhost must stay additive (zz- name, no listen default_server)"
+  fi
 else
   fail "Missing deploy/host-proxy/cohestra-uat.nginx.example.conf"
+fi
+
+INSPECT="$ROOT_DIR/deploy/host-proxy/inspect-existing-nginx.sh"
+if [[ -f "$INSPECT" ]]; then
+  if grep -vE '^[[:space:]]*(#|echo )' "$INSPECT" | grep -Eq 'network connect|nginx -s reload|compose up|docker cp'; then
+    fail "inspect-existing-nginx.sh must stay read-only (no connect/reload/recreate)"
+  else
+    pass "inspect-existing-nginx.sh is read-only"
+  fi
+else
+  fail "Missing deploy/host-proxy/inspect-existing-nginx.sh"
+fi
+
+RECONCILE="$ROOT_DIR/deploy/host-proxy/reconcile-edge-network.sh"
+if [[ -f "$RECONCILE" ]]; then
+  if grep -q 'docker network connect' "$RECONCILE" && ! grep -Eq 'force-recreate|compose up' "$RECONCILE"; then
+    pass "reconcile-edge-network.sh attaches via docker network connect only"
+  else
+    fail "reconcile-edge-network.sh must use docker network connect and must not recreate"
+  fi
+else
+  fail "Missing deploy/host-proxy/reconcile-edge-network.sh"
 fi
 
 OVERLAY="$ROOT_DIR/deploy/host-proxy/lead-generation-crm.edge-overlay.yml"

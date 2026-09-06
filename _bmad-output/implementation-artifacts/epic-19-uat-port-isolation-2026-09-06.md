@@ -11,8 +11,8 @@
 | COHESTRA PORT ISOLATION | **PASS** — owner host-local `ss`: `127.0.0.1:3100/5100/8180` free; frozen |
 | COHESTRA DATA ISOLATION | **PASS** — dedicated project, internal network, volumes; no host DB/Redis |
 | SHARED UAT HOSTING | **PASS** — ~3.8 GiB RAM, ~2.6 GiB available, existing stack ~270 MiB. Light UAT only. Not production capacity. |
-| EDGE PROXY DESIGN | **corrected in repo** — validate with `validate-uat-isolation.sh`. Live attach not applied. |
-| PR #294 MERGE | **BLOCKED** until CI + exact-HEAD review + safe merge/deploy trigger |
+| EDGE PROXY DESIGN | **PASS in-repo** — `validate-uat-isolation.sh` 26/26. Live attach not applied. |
+| PR #294 MERGE | **BLOCKED** until live attach + CI green + exact-HEAD review + SSH + safe merge/deploy trigger |
 
 ## Frozen Cohestra host map
 
@@ -50,9 +50,12 @@ someone runs `compose build` on the droplet. Prefer building without a host spik
 Cohestra nginx stays HTTP. Existing certs stay on `lead-generation-crm-nginx-1`.
 Story 19.2 owns Cohestra HTTPS. Do not run Cohestra certbot on the shared host.
 
-## Next
+## Next (still no Cohestra deploy)
 
-1. Land topology correction on PR #294 (draft).  
-2. Owner SSH (`uat-ssh-accept.sh`) — still a separate gate.  
-3. Then inspect/backup existing nginx, reconcile edge network (no recreate), add **one** server block, `nginx -t`, reload.  
-4. Only then start `cohestra-uat`.
+1. Owner SSH (`uat-ssh-accept.sh`) — port audit ≠ SSH.  
+2. On droplet (read-only): `inspect-existing-nginx.sh` — backup mounted nginx/certs.  
+3. `reconcile-edge-network.sh` (connect existing nginx to `cohestra_uat_edge`; do not recreate).  
+4. Then `bash deploy/uat-compose.sh up -d --build`.  
+5. Add only `zz-cohestra-uat.conf`, `nginx -t`, reload.  
+6. Prove existing hostname healthy, then Cohestra via `:8180` and the new hostname.  
+7. Capture `free -h`, `docker stats --no-stream`, `df -h`, `uptime`.
