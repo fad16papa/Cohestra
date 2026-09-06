@@ -1,6 +1,9 @@
-# EXAMPLE ONLY — add a new site. Do not edit the existing application's site.
+# Not used on the current UAT droplet.
+# Public edge is lead-generation-crm-nginx-1 (Docker nginx), not host Caddy.
+#
+# If a host Caddy is introduced later (owner-approved), it still must not
+# proxy to 127.0.0.1:8180 from inside another container.
 
-uat.example.com {
-    encode gzip
-    reverse_proxy 127.0.0.1:8180
-}
+# uat.example.com {
+#     reverse_proxy cohestra-uat-nginx:80
+# }

@@ -40,7 +40,7 @@ echo "  1. Edit .env — PUBLIC_BASE_URL must be the Cohestra UAT hostname (not 
 echo "  2. Rebuild if PUBLIC_BASE_URL changed: bash deploy/uat-compose.sh up -d --build web"
 echo "  3. Firewall stays 22, 80, 443 on the HOST public proxy only"
 echo "  4. Create operator at \${PUBLIC_BASE_URL}/register (single account + OTP)"
-echo "  5. Host proxy vhost → 127.0.0.1:8180 — see deploy/host-proxy/"
+echo "  5. Existing edge nginx NEW vhost → http://cohestra-uat-nginx:80 — see deploy/host-proxy/"
 echo ""
 echo "Smoke checks:"
 echo "  bash deploy/uat-smoke.sh"

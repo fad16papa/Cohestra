@@ -4,15 +4,18 @@ name: cohestra-uat
 #
 # This file MUST stay a separate Compose project from any live stack.
 # NEVER: docker compose -p cohestra-infra-uat -f docker-compose.uat.yml up
-# A project named cohestra-infra-uat may already be the public application.
+# NEVER: docker compose -p lead-generation-crm -f docker-compose.uat.yml up
 #
-# Host bindings are loopback-only. The host public reverse proxy owns :80/:443.
-# Postgres and Redis have no host ports — Docker network only.
+# Public :80/:443 belong to lead-generation-crm-nginx-1 (Docker), not host nginx.
+# That container's 127.0.0.1 is itself — do not use 127.0.0.1:8180 as its upstream.
+# Public Cohestra hostname is proxied over Docker network cohestra_uat_edge
+# to alias cohestra-uat-nginx:80. See deploy/host-proxy/.
 #
-# Preferred host map (frozen after uat-port-audit.sh proves them free):
+# Frozen loopback diagnostics (owner-proven free 2026-09-06; do not change):
 #   web    127.0.0.1:3100 → container 3000
 #   api    127.0.0.1:5100 → container 8080
 #   nginx  127.0.0.1:8180 → container 80
+# Postgres and Redis: no host ports.
 #
 # Usage:
 #   bash deploy/uat-port-audit.sh          # on the droplet, read-only
@@ -177,7 +180,10 @@ services:
       - certbot_www:/var/www/certbot:ro
       - certbot_certs:/etc/letsencrypt:ro
     networks:
-      - uat_internal
+      uat_internal:
+      uat_edge:
+        aliases:
+          - cohestra-uat-nginx
     depends_on:
       web:
         condition: service_healthy
@@ -205,6 +211,9 @@ services:
 networks:
   uat_internal:
     name: cohestra_uat_internal
+    driver: bridge
+  uat_edge:
+    name: cohestra_uat_edge
     driver: bridge
 
 volumes:

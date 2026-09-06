@@ -1,0 +1,20 @@
+# Overlay for the EXISTING lead-generation-crm compose project.
+# Attach only the public nginx service to cohestra_uat_edge.
+#
+# Do NOT apply with --force-recreate on a live stack.
+# First attach is: bash deploy/host-proxy/reconcile-edge-network.sh
+# Persist later so the next planned nginx recreate keeps the network:
+#   docker compose -f <existing-compose> -f lead-generation-crm.edge-overlay.yml \
+#     up -d --no-deps --no-recreate nginx
+#
+# Attach public nginx only. Do not list other services here.
+
+networks:
+  cohestra_uat_edge:
+    external: true
+    name: cohestra_uat_edge
+
+services:
+  nginx:
+    networks:
+      cohestra_uat_edge: {}

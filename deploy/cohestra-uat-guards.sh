@@ -23,7 +23,7 @@ refuse_legacy_compose_project() {
 refuse_shared_host_cohestra_tls() {
   if shared_host_uat_enabled; then
     echo "REFUSE: shared-host UAT must not run Cohestra Let's Encrypt / :443 scripts."
-    echo "Terminate TLS on the HOST public reverse proxy and proxy to 127.0.0.1:8180."
+    echo "Terminate TLS on lead-generation-crm-nginx-1 and proxy to http://cohestra-uat-nginx:80."
     echo "See deploy/host-proxy/README.md"
     echo "Set COHESTRA_SHARED_HOST_UAT=false only on a dedicated Cohestra droplet."
     return 1

@@ -44,8 +44,11 @@ docker compose up -d --build web
 
 ## UAT / production (shared droplet)
 
-Compose project **`cohestra-uat`** publishes Cohestra nginx on **`127.0.0.1:8180` only**.
-The host public reverse proxy owns `:80` / `:443`. See `deploy/host-proxy/`.
+Compose project **`cohestra-uat`** publishes Cohestra nginx on **`127.0.0.1:8180` only**
+(diagnostics). Public `:80` / `:443` belong to **`lead-generation-crm-nginx-1`**.
+That container must proxy the Cohestra hostname to **`http://cohestra-uat-nginx:80`**
+on `cohestra_uat_edge`. See `deploy/host-proxy/`. Do not use `127.0.0.1:8180` from
+inside the existing nginx container.
 
 ```bash
 bash deploy/uat-port-audit.sh
@@ -90,7 +93,8 @@ Legacy manual notes: `ssl.conf.example` (host-mounted certs) — prefer the Cert
 ## Host public reverse proxy (shared droplet)
 
 `deploy/host-proxy/` has **example** vhosts that proxy a new Cohestra hostname to
-`127.0.0.1:8180`. Do not replace the existing application’s server block.
+`http://cohestra-uat-nginx:80` on `cohestra_uat_edge`. Do not replace the
+existing application’s server block.
 
 ## Legacy host nginx
 

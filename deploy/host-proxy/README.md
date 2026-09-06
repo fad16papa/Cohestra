@@ -1,51 +1,74 @@
-# Host public reverse proxy — Cohestra UAT hostname
+# Shared Docker edge — Cohestra UAT hostname
 
-The shared droplet must keep **one** public entry layer on `:80` / `:443`.
+The public `:80` / `:443` listener on the UAT droplet is **not** host nginx.
 
-Do **not** apply these snippets blindly. First identify who already owns those ports
-(`bash deploy/uat-port-audit.sh` on the droplet). Public evidence from outside the
-host has shown `nginx/1.27.5` on `129.212.235.2` — that is likely the **existing
-application’s** Docker nginx, not a host-installed proxy.
-
-## Allowed change
-
-Add a **new** Cohestra UAT `server_name` / site that proxies to:
+Owner-proven edge:
 
 ```
-http://127.0.0.1:8180
+Internet
+  → 0.0.0.0:80 / :443
+  → lead-generation-crm-nginx-1
+       ├── existing hostname  → existing web/api   (unchanged)
+       └── Cohestra UAT host  → http://cohestra-uat-nginx:80
+                                    (Docker DNS on cohestra_uat_edge)
 ```
 
-(`NGINX_HOST_PORT` if the frozen map used a different loopback port.)
+Inside `lead-generation-crm-nginx-1`, `127.0.0.1` is **that container**, not the
+Ubuntu host. Do **not** `proxy_pass http://127.0.0.1:8180`.
 
-## Forbidden
+`127.0.0.1:3100` / `:5100` / `:8180` stay Cohestra **host-loopback diagnostics**.
+The edge proxy must not use them.
 
-- Changing the existing application’s hostname, routes, ports, network, Postgres, Redis, volumes, or env
-- Binding Cohestra nginx to `0.0.0.0:80` or `:443`
-- Double TLS (Cohestra nginx stays HTTP; host proxy terminates HTTPS)
-- Joining Cohestra containers to the existing application Docker network
+## Networks
 
-## If :80/:443 are owned by the existing app’s Docker nginx
+| Network | Members |
+|---------|---------|
+| `cohestra_uat_edge` | `lead-generation-crm-nginx-1` + `cohestra-uat-nginx` **only** |
+| `cohestra_uat_internal` | All Cohestra services (nginx, web, api, postgres, redis) |
 
-Do not steal those published ports.
+Cohestra postgres, redis, web, and api must **never** join `cohestra_uat_edge`.
+Existing postgres/redis/api/web must **never** join it.
 
-Owner-approved options:
+Cohestra nginx alias on the edge network: **`cohestra-uat-nginx`**.
 
-1. **Preferred if the existing proxy can add a vhost without changing current routes:** add only the Cohestra hostname server block (examples in this folder) to **that** public proxy.
-2. **If no host proxy exists yet:** introducing a host nginx/Caddy in front of both apps requires remapping the existing app off `0.0.0.0:80/443`. That is a **minimal host-level routing addition** and needs explicit owner approval before anyone touches the live stack.
+## Attach existing nginx without recreating the live stack
+
+Do **not** `compose up --force-recreate` the existing project just to add a network.
+
+1. Cohestra compose creates `cohestra_uat_edge` (after Cohestra is started, or
+   `docker network create cohestra_uat_edge` first).
+2. Idempotent attach (no recreate):
+
+   ```bash
+   bash deploy/host-proxy/reconcile-edge-network.sh
+   ```
+
+3. Persist the same attachment in the **existing** product’s compose using
+   `lead-generation-crm.edge-overlay.yml` so a later planned recreate keeps the
+   network. Adding the overlay is a config reconciliation, not a live rebuild.
+
+## Existing nginx config
+
+Before any edit: `bash deploy/host-proxy/inspect-existing-nginx.sh` (read-only).
+
+Then:
+
+1. Backup the mounted nginx config on the droplet.
+2. Add **only** the new server block from `cohestra-uat.nginx.example.conf`.
+3. `docker exec lead-generation-crm-nginx-1 nginx -t`
+4. Reload (`nginx -s reload`), not a full-stack restart.
+
+Do not change existing server blocks, certificates, or the existing hostname.
+
+Story 19.1 may prove HTTP/internal routing. Story 19.2 owns HTTPS for the
+Cohestra hostname. Do not disturb the existing app’s TLS.
 
 ## After the vhost exists
-
-Set Cohestra `.env`:
 
 ```
 PUBLIC_BASE_URL=https://YOUR-COHESTRA-UAT-HOSTNAME
 NEXT_PUBLIC_PADDLE_RETURN_ORIGIN=https://YOUR-COHESTRA-UAT-HOSTNAME
+EXISTING_APP_PUBLIC_URL=https://thesocialcollectivesg.com
 ```
 
-Rebuild `web` so the baked `NEXT_PUBLIC_API_URL` matches.
-
-Paddle webhook path stays:
-
-```
-POST /api/v1/system/paddle/webhook
-```
+Paddle webhook stays `POST /api/v1/system/paddle/webhook`.

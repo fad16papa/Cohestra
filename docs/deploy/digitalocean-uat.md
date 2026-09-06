@@ -19,26 +19,34 @@ Cohestra UAT is an **isolated** Compose project. It must not take the existing a
 Internet
     │
     ▼
-HOST public reverse proxy (:80 / :443)     ← existing app + new Cohestra hostname
-    ├── existing application hostname  → existing stack (unchanged)
-    └── Cohestra UAT hostname          → 127.0.0.1:8180
-                                              │
-                                              ▼
-                                    cohestra-uat-nginx :80
-                                      ├── /      → web:3000
-                                      └── /api/* → api:8080
-                                                    │
-                                              cohestra_uat_internal
-                                              postgres :5432 (no host port)
-                                              redis    :6379 (no host port)
+0.0.0.0:80 / :443
+    │
+    ▼
+lead-generation-crm-nginx-1          ← existing Docker edge (do not recreate)
+    ├── existing hostname → existing web/api (unchanged)
+    └── Cohestra UAT host → http://cohestra-uat-nginx:80
+                            (Docker DNS on cohestra_uat_edge)
+                                  │
+                                  ▼
+                        cohestra-uat-nginx :80
+                          ├── /      → web:3000     (cohestra_uat_internal)
+                          └── /api/* → api:8080
+                                        │
+                                  postgres :5432 (no host port)
+                                  redis    :6379 (no host port)
 
-Loopback diagnostics (not public):
+Frozen loopback diagnostics (not public, not used by the edge):
   127.0.0.1:3100 → web:3000
   127.0.0.1:5100 → api:8080
   127.0.0.1:8180 → nginx:80
 ```
 
-Compose project: **`cohestra-uat`**. Network: **`cohestra_uat_internal`**.
+Existing loopback publications stay theirs: `127.0.0.1:5432` / `:6379`.
+Do not publish Cohestra Postgres/Redis.
+
+Compose project: **`cohestra-uat`**. Networks: **`cohestra_uat_internal`** + **`cohestra_uat_edge`**.
+
+Inside the existing nginx container, `127.0.0.1:8180` is **wrong**. Use `cohestra-uat-nginx`.
 
 Do **not** deploy with `-p cohestra-infra-uat`. That name may already be the live public stack.
 
@@ -49,7 +57,8 @@ bash deploy/uat-port-audit.sh
 bash deploy/validate-uat-isolation.sh
 ```
 
-Host proxy snippets (not applied automatically): `deploy/host-proxy/`.
+Edge attach + vhost snippets (not applied automatically): `deploy/host-proxy/`.
+Do not recreate `lead-generation-crm-nginx-1` to add the network; use `reconcile-edge-network.sh`.
 
 **Local dev** still uses `docker-compose.yml` (`cohestra-infra`) and may bind host `:80`. That file is not the shared-droplet UAT contract.
 

@@ -1,63 +1,58 @@
-# Epic 19 — Cohestra UAT port / data isolation
+# Epic 19 — Cohestra UAT port / data / edge isolation
 
 **Date:** 2026-09-06  
 **Compose project:** `cohestra-uat`  
-**Network:** `cohestra_uat_internal`
-
-Owner lock: share the physical DigitalOcean UAT droplet; do not share the existing
-application’s Compose project, network, ports, Postgres, Redis, volumes, or env.
+**Networks:** `cohestra_uat_internal` + `cohestra_uat_edge`
 
 ## Verdicts
 
 | Gate | Result |
 |------|--------|
-| COHESTRA PORT ISOLATION (repo contract) | **PASS** — `bash deploy/validate-uat-isolation.sh` |
-| COHESTRA PORT ISOLATION (host loopback occupancy) | **FAIL** — not yet proven. This VM cannot see `127.0.0.1` on the droplet. Do not deploy. |
-| COHESTRA DATA ISOLATION (repo contract) | **PASS** — dedicated project, network, volumes, credentials path, no host DB/Redis publish |
-| SHARED UAT HOSTING | **CONDITIONAL** — 2 vCPU / 4 GiB is tight once the existing stack stays up. Port isolation does not prove RAM. |
+| COHESTRA PORT ISOLATION | **PASS** — owner host-local `ss`: `127.0.0.1:3100/5100/8180` free; frozen |
+| COHESTRA DATA ISOLATION | **PASS** — dedicated project, internal network, volumes; no host DB/Redis |
+| SHARED UAT HOSTING | **PASS** — ~3.8 GiB RAM, ~2.6 GiB available, existing stack ~270 MiB. Light UAT only. Not production capacity. |
+| EDGE PROXY DESIGN | **corrected in repo** — validate with `validate-uat-isolation.sh`. Live attach not applied. |
+| PR #294 MERGE | **BLOCKED** until CI + exact-HEAD review + safe merge/deploy trigger |
 
-External scan from this agent (not a substitute for `ss` on the host):
-
-| Port | `129.212.235.2` |
-|------|-----------------|
-| 22, 80, 443 | OPEN |
-| 3000, 3100, 5100, 8080, 8088, 8180, 5432, 6379 | closed_or_filtered |
-
-Public `/ready` on `:80`/`:443` is **Healthy** for the **existing** application (`Server: nginx/1.27.5`). That listener must stay theirs.
-
-## COHESTRA PORT PLAN (proposed; freeze after host audit)
+## Frozen Cohestra host map
 
 | SERVICE | HOST IP | HOST PORT | CONTAINER PORT | PUBLIC? | OWNER |
 |---------|---------|-----------|----------------|---------|--------|
-| Web | 127.0.0.1 | 3100 | 3000 | NO | Cohestra |
-| API | 127.0.0.1 | 5100 | 8080 | NO | Cohestra |
-| nginx | 127.0.0.1 | 8180 | 80 | NO | Cohestra |
+| Web | 127.0.0.1 | **3100** | 3000 | NO | Cohestra |
+| API | 127.0.0.1 | **5100** | 8080 | NO | Cohestra |
+| nginx | 127.0.0.1 | **8180** | 80 | NO | Cohestra |
 | Postgres | none | none | 5432 | NO | Cohestra |
 | Redis | none | none | 6379 | NO | Cohestra |
-| Public reverse proxy | 0.0.0.0 | 80 / 443 | existing | YES | Shared host |
-| SSH | 0.0.0.0 | 22 | host | YES | Shared host |
 
-If a preferred loopback port is occupied: do not stop the occupant. Choose the nearest unused Cohestra-specific port (`+10` / `+20` / `+100`) and freeze it in `.env` (`WEB_HOST_PORT` / `API_HOST_PORT` / `NGINX_HOST_PORT`).
+Do not change without a genuine future collision.
 
-## Why the Compose project was renamed
+## Existing stack (owner-discovered)
 
-`docker-compose.uat.yml` previously used `name: cohestra-infra-uat` and published
-`:80` / `:443` plus loopback Postgres/Redis. A `compose up` of that file on the
-shared droplet could recreate or steal the live public stack.
+- `lead-generation-crm-nginx-1` owns `0.0.0.0:80` and `:443`
+- Existing loopback: `127.0.0.1:5432` / `:6379`
+- SSH: `0.0.0.0:22`
+- Do not change those mappings
 
-Isolated UAT now uses **`cohestra-uat`**. Scripts refuse `COMPOSE_PROJECT_NAME=cohestra-infra-uat`.
+## Corrected edge
+
+`lead-generation-crm-nginx-1` + `cohestra-uat-nginx` on `cohestra_uat_edge`.
+Upstream: `http://cohestra-uat-nginx:80` (Docker DNS).
+`127.0.0.1:8180` from inside the existing nginx container is **wrong**.
+
+## Swap
+
+No swap on the host. Not a blocker. Optional 1–2 GiB swap is UAT OOM insurance if
+someone runs `compose build` on the droplet. Prefer building without a host spike
+(or sequential builds). Do not resize the droplet. Re-check `free -h` after start.
 
 ## TLS
 
-Cohestra nginx stays HTTP. Shared-host UAT terminates TLS at the host public reverse
-proxy. `setup-temporary-https.sh` and `switch-https-domain.sh` refuse unless
-`COHESTRA_SHARED_HOST_UAT=false` (dedicated droplet only).
+Cohestra nginx stays HTTP. Existing certs stay on `lead-generation-crm-nginx-1`.
+Story 19.2 owns Cohestra HTTPS. Do not run Cohestra certbot on the shared host.
 
-## Next safe action
+## Next
 
-1. Owner workstation: `uat-ssh-accept.sh` until PASS.  
-2. On the droplet (read-only): `bash deploy/uat-port-audit.sh`.  
-3. If 3100 / 5100 / 8180 are free, freeze that map.  
-4. Add a **new** Cohestra hostname on the existing public proxy → `127.0.0.1:8180`. Do not change the existing application hostname.  
-5. Only then: isolated `bash deploy/uat-compose.sh up -d --build`.  
-6. Prove existing app still healthy, then Cohestra loopback + public host.
+1. Land topology correction on PR #294 (draft).  
+2. Owner SSH (`uat-ssh-accept.sh`) — still a separate gate.  
+3. Then inspect/backup existing nginx, reconcile edge network (no recreate), add **one** server block, `nginx -t`, reload.  
+4. Only then start `cohestra-uat`.

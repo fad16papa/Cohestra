@@ -41,23 +41,24 @@ Repo contract, checklists, smoke, rollback, and secrets matrix are ready. This s
 The **existing** droplet is in use. Public `/ready` is Healthy. Do not create another droplet.
 
 ```
-SSH ACCESS VALIDATION   ← current owner boundary (workstation key)
-→ SERVER AUDIT (ss + docker ports + memory — deploy/uat-port-audit.sh)
-→ PORT PLAN FREEZE (3100 / 5100 / 8180 or documented nearest unused)
+PORT PLAN FREEZE          ← DONE 2026-09-06 (host ss: 3100/5100/8180 free)
+EDGE PROXY TOPOLOGY       ← Docker network cohestra_uat_edge + alias (this PR)
+SSH ACCESS VALIDATION     ← still required before deploy automation
 → ENV RECONCILIATION
 → SERVER BASELINE
-→ DEPLOY ISOLATED cohestra-uat   ← do not use -p cohestra-infra-uat
+→ RECONCILE EDGE NETWORK (no recreate of lead-generation-crm-nginx-1)
+→ ADD NEW COHESTRA SERVER BLOCK (backup, nginx -t, reload)
+→ DEPLOY ISOLATED cohestra-uat
 → DATABASE MIGRATION (Cohestra volume only)
-→ START SERVICES
-→ HEALTH CHECKS (127.0.0.1:8180 + Cohestra public host)
-→ EXISTING APP REGRESSION CHECK (unchanged hostname)
+→ HEALTH CHECKS (loopback 8180 + Cohestra host via existing edge)
+→ EXISTING APP REGRESSION CHECK (thesocialcollectivesg.com unchanged)
 → PRODUCT SMOKE
-→ RESOURCE CHECK
+→ RESOURCE CHECK (free -h, docker stats, df, uptime)
 → LOG REVIEW
 → ACCEPTANCE
 ```
 
-**Do not deploy** until `uat-port-audit.sh` proves `127.0.0.1:3100`, `:5100`, and `:8180` are free. If occupied, do not stop the occupant; freeze a nearest unused Cohestra-specific port in `.env`.
+**Port isolation PASS.** Do **not** deploy until the Docker edge topology is in this PR, CI is green, and owner SSH is available. Existing edge must proxy to `http://cohestra-uat-nginx:80`, not `127.0.0.1:8180`.
 
 Paddle full billing lifecycle stays **19.4**. Do not block 19.1 on webhook acceptance.
 

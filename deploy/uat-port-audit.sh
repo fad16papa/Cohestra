@@ -29,7 +29,7 @@ warn() { echo "WARN: $1"; WARN=$((WARN + 1)); }
 
 echo "== Cohestra UAT port / resource audit (read-only) =="
 echo "This script never stops or modifies the existing application."
-echo "Auditing ports from .env when present: WEB=$PREFERRED_WEB API=$PREFERRED_API NGINX=$PREFERRED_NGINX"
+echo "Frozen map (2026-09-06): WEB=$PREFERRED_WEB API=$PREFERRED_API NGINX=$PREFERRED_NGINX"
 echo ""
 
 # shellcheck disable=SC1091
