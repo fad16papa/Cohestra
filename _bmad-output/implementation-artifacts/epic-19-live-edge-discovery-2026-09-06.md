@@ -13,7 +13,7 @@
 | LIVE EDGE DISCOVERY | **PASS** |
 | EXISTING APP BASELINE | **PASS** (6/6) |
 | EDGE NETWORK | **NOT YET** — only `lead-generation-crm_default` today |
-| BACKUP | **NOT YET** |
+| BACKUP | **PASS** — `20260906T123448Z` |
 | COHESTRA INTERNAL DEPLOYMENT | **NOT YET** |
 | HOST PATCH / REBOOT | **DEFERRED** — still do not apt upgrade / reboot |
 
