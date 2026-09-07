@@ -291,10 +291,18 @@ if [[ -f "$TLS_APPLY" ]]; then
     && grep -q 'prove-edge-tls.sh' "$TLS_APPLY" \
     && grep -q 'nginx -t' "$TLS_APPLY" \
     && grep -q 'id -u' "$TLS_APPLY" \
+    && grep -q 'mailto:' "$TLS_APPLY" \
+    && grep -q 'acme_http01_preflight' "$TLS_APPLY" \
+    && grep -q -- '--cert-name' "$TLS_APPLY" \
     && ! grep -vE '^[[:space:]]*(#|echo )' "$TLS_APPLY" | grep -Eq 'active-ssl.conf|cohestra-uat-certbot|docker compose up|force-recreate'; then
     pass "apply-additive-tls.sh uses existing edge certbot volumes and never edits active-ssl.conf"
   else
     fail "apply-additive-tls.sh must issue on existing volumes, test, prove, and never recreate the live stack"
+  fi
+  if grep -q 'resolve_acme_email' "$TLS_APPLY" && grep -q 'pref_email' "$TLS_APPLY"; then
+    pass "apply-additive-tls.sh resolves ACME contact from account mailto / pref_email without printing it"
+  else
+    fail "apply-additive-tls.sh must find ACME contact on existing accounts, not only ^email="
   fi
 else
   fail "Missing deploy/host-proxy/apply-additive-tls.sh"
@@ -302,13 +310,24 @@ fi
 
 TLS_PROVE="$ROOT_DIR/deploy/host-proxy/prove-edge-tls.sh"
 if [[ -f "$TLS_PROVE" ]]; then
-  if grep -q 'https://' "$TLS_PROVE" && grep -q 'default-tenant' "$TLS_PROVE" && grep -q 'Strict-Transport-Security' "$TLS_PROVE"; then
+  if grep -q 'https://' "$TLS_PROVE" && grep -q 'default-tenant' "$TLS_PROVE" && grep -q 'Strict-Transport-Security' "$TLS_PROVE" && grep -q 'subjectAltName' "$TLS_PROVE"; then
     pass "prove-edge-tls.sh requires HTTPS Cohestra /ready + HSTS"
   else
     fail "prove-edge-tls.sh must require https://uat.cohestra.app /ready and HSTS"
   fi
 else
   fail "Missing deploy/host-proxy/prove-edge-tls.sh"
+fi
+
+TLS_DIAG="$ROOT_DIR/deploy/host-proxy/diagnose-edge-tls.sh"
+if [[ -f "$TLS_DIAG" ]]; then
+  if grep -q 'sni_leaf' "$TLS_DIAG" && ! grep -vE '^[[:space:]]*(#|echo )' "$TLS_DIAG" | grep -Eq 'certonly|nginx -s reload|compose up'; then
+    pass "diagnose-edge-tls.sh is read-only SNI/vhost status (no certbot, no reload)"
+  else
+    fail "diagnose-edge-tls.sh must stay read-only"
+  fi
+else
+  fail "Missing deploy/host-proxy/diagnose-edge-tls.sh"
 fi
 
 PROVE="$ROOT_DIR/deploy/host-proxy/prove-edge-vhost.sh"

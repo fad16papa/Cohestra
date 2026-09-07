@@ -9,6 +9,9 @@
 #
 # Usage (as deploy, after HTTP EDGE VHOST PROOF: PASS):
 #   COHESTRA_UAT_HOSTNAME=uat.cohestra.app bash deploy/host-proxy/apply-additive-tls.sh
+#
+# If this script prints REFUSE about ACME contact, set LETSENCRYPT_EMAIL in
+# THIS shell only (do not paste the value into chat) and re-run.
 
 set -euo pipefail
 
@@ -55,6 +58,36 @@ if ! docker volume inspect "$CERT_VOL" >/dev/null 2>&1 || ! docker volume inspec
   exit 1
 fi
 
+# Newer certbot stores contact on the ACME account (mailto:), not ^email= in renewal.
+# Also accept pref_email = in renewal files. Never print the resolved value.
+resolve_acme_email() {
+  local found="${LETSENCRYPT_EMAIL:-}"
+  if [[ -n "$found" && "$found" == *@* ]]; then
+    printf '%s' "$found"
+    return 0
+  fi
+  found=$(docker exec "$EDGE_NGINX" sh -c '
+    set +e
+    for f in /etc/letsencrypt/renewal/*.conf; do
+      [ -f "$f" ] || continue
+      line=$(grep -E "^(pref_)?email[[:space:]]*=" "$f" 2>/dev/null | head -1)
+      if [ -n "$line" ]; then
+        echo "$line" | cut -d= -f2 | tr -d "[:space:]"
+        exit 0
+      fi
+    done
+    if [ -d /etc/letsencrypt/accounts ]; then
+      mailto=$(grep -rho "mailto:[^\"]*" /etc/letsencrypt/accounts 2>/dev/null | head -1)
+      echo "${mailto#mailto:}"
+    fi
+  ' || true)
+  if [[ -n "$found" && "$found" == *@* ]]; then
+    printf '%s' "$found"
+    return 0
+  fi
+  return 1
+}
+
 install_conf() {
   local src="$1"
   docker cp "$src" "$EDGE_NGINX:/etc/nginx/conf.d/zz-cohestra-uat.conf"
@@ -87,26 +120,42 @@ if ! install_conf "$TMP"; then
   exit 1
 fi
 
-echo "== Phase 2: Let's Encrypt for ${HOST_NAME} only =="
-email="${LETSENCRYPT_EMAIL:-}"
-if [[ -z "$email" ]]; then
-  email=$(docker exec "$EDGE_NGINX" sh -c \
-    'grep -h "^email" /etc/letsencrypt/renewal/*.conf 2>/dev/null | head -1 | cut -d= -f2 | tr -d "[:space:]"' || true)
+echo "== ACME HTTP-01 preflight =="
+TOKEN="cohestra-preflight-$(date +%s)"
+docker exec "$EDGE_NGINX" sh -c \
+  "mkdir -p /var/www/certbot/.well-known/acme-challenge && printf 'preflight-ok\n' > /var/www/certbot/.well-known/acme-challenge/${TOKEN}"
+pre=$(curl -sS --connect-timeout 8 "http://${HOST_NAME}/.well-known/acme-challenge/${TOKEN}" || true)
+docker exec "$EDGE_NGINX" rm -f "/var/www/certbot/.well-known/acme-challenge/${TOKEN}"
+if [[ "$(printf '%s' "$pre" | tr -d '\r\n')" != "preflight-ok" ]]; then
+  echo "ADDITIVE TLS: FAIL — HTTP-01 webroot not reachable at http://${HOST_NAME}/.well-known/acme-challenge/" >&2
+  echo "body_preview=$(printf '%s' "$pre" | tr -cd '[:print:]' | head -c 80)" >&2
+  echo "Let's Encrypt would fail the same way. HTTP vhost left with ACME location." >&2
+  exit 1
 fi
-if [[ -z "$email" || "$email" != *@* ]]; then
-  echo "REFUSE: set LETSENCRYPT_EMAIL (value is not printed)." >&2
+echo "acme_http01_preflight=PASS"
+
+echo "== Phase 2: Let's Encrypt for ${HOST_NAME} only =="
+email=""
+if ! email=$(resolve_acme_email); then
+  echo "REFUSE: no ACME contact on the existing edge account." >&2
+  echo "In THIS shell only (do not paste the value into chat):" >&2
+  echo "  export LETSENCRYPT_EMAIL='you@your-domain'" >&2
+  echo "Then re-run apply-additive-tls.sh" >&2
   exit 1
 fi
 echo "certbot_email=SET"
 echo "certbot_volumes=${CERT_WWW_VOL} ${CERT_VOL}"
 echo "certbot_name=${HOST_NAME}"
+echo "certbot_image=certbot/certbot:latest (pull may take a minute)"
 
 if ! docker run --rm \
   -v "${CERT_WWW_VOL}:/var/www/certbot" \
   -v "${CERT_VOL}:/etc/letsencrypt" \
   certbot/certbot:latest \
   certonly --webroot -w /var/www/certbot \
+  --cert-name "$HOST_NAME" \
   -d "$HOST_NAME" \
+  --preferred-challenges http \
   --non-interactive --agree-tos --keep-until-expiring \
   --email "$email"; then
   echo "ADDITIVE TLS: FAIL — certbot did not issue. HTTP vhost left with ACME location." >&2

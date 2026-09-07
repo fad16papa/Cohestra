@@ -25,15 +25,15 @@ echo "== Edge TLS proof =="
 echo "UAT: https://${HOST_NAME}"
 echo ""
 
-subj=$(echo | openssl s_client -servername "$HOST_NAME" -connect 127.0.0.1:443 2>/dev/null \
-  | openssl x509 -noout -subject 2>/dev/null || true)
-echo "leaf_subject=${subj:-MISSING}"
-if echo "$subj" | grep -q "$HOST_NAME"; then
+leaf=$(echo | openssl s_client -servername "$HOST_NAME" -connect 127.0.0.1:443 2>/dev/null \
+  | openssl x509 -noout -subject -ext subjectAltName 2>/dev/null || true)
+echo "leaf=${leaf:-MISSING}"
+if echo "$leaf" | grep -q "$HOST_NAME"; then
   pass "TLS leaf names $HOST_NAME"
 else
   fail "TLS leaf does not name $HOST_NAME — still the existing default_server cert"
 fi
-if echo "$subj" | grep -q "$EXISTING_HOST"; then
+if echo "$leaf" | grep -q "$EXISTING_HOST"; then
   fail "TLS leaf is the existing hostname cert — refuse"
 fi
 

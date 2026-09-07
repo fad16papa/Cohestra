@@ -116,6 +116,14 @@ Encrypt name `uat.cohestra.app` in `lead-generation-crm_certbot_certs`, then
 run `cohestra-uat-certbot` or `setup-temporary-https.sh` on this shared host.
 Do not re-run `apply-additive-vhost.sh` after TLS (it would drop `listen 443`).
 
+Browser `NET::ERR_CERT_COMMON_NAME_INVALID` + HSTS on `https://uat.cohestra.app`
+means `:443` is still the existing default_server cert. HTTP UAT can be fine.
+Do not treat the screenshot as TLS PASS. Run
+`bash deploy/host-proxy/diagnose-edge-tls.sh` (read-only) then
+`apply-additive-tls.sh` as **deploy** from `/home/deploy/cohestra`. Paste the
+`EDGE TLS PROOF` lines. If apply refuses ACME contact, set `LETSENCRYPT_EMAIL`
+in that shell only — do not paste the email, keys, or `.env` values.
+
 ## After the vhost exists
 
 ```
