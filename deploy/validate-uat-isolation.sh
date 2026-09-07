@@ -198,8 +198,30 @@ if [[ -f "$EDGE_EXAMPLE" ]]; then
   else
     fail "Example vhost must set X-Cohestra-Edge-Vhost so Host-header proof can detect a miss"
   fi
+  if grep -q 'acme-challenge' "$EDGE_EXAMPLE"; then
+    pass "Example HTTP vhost serves ACME on the existing edge webroot"
+  else
+    fail "Example HTTP vhost must include /.well-known/acme-challenge/ for Story 19.2"
+  fi
 else
   fail "Missing deploy/host-proxy/cohestra-uat.nginx.example.conf"
+fi
+
+TLS_EXAMPLE="$ROOT_DIR/deploy/host-proxy/cohestra-uat.nginx.tls.example.conf"
+if [[ -f "$TLS_EXAMPLE" ]]; then
+  if grep -q 'listen 443 ssl' "$TLS_EXAMPLE" \
+    && grep -q '/etc/letsencrypt/live/uat.cohestra.app/' "$TLS_EXAMPLE" \
+    && grep -q 'Strict-Transport-Security' "$TLS_EXAMPLE" \
+    && grep -q 'cohestra-uat-nginx' "$TLS_EXAMPLE" \
+    && ! grep -q 'thesocialcollectivesg.com' "$TLS_EXAMPLE" \
+    && ! grep -vE '^[[:space:]]*#' "$TLS_EXAMPLE" | grep -qE '127\.0\.0\.1:8180' \
+    && ! grep -qE 'listen[^;]*default_server' "$TLS_EXAMPLE"; then
+    pass "TLS example is additive HTTPS for uat.cohestra.app on the existing edge"
+  else
+    fail "TLS example must listen 443 for uat.cohestra.app only, HSTS, Docker DNS, no existing cert/host"
+  fi
+else
+  fail "Missing deploy/host-proxy/cohestra-uat.nginx.tls.example.conf"
 fi
 
 INSPECT="$ROOT_DIR/deploy/host-proxy/inspect-existing-nginx.sh"
@@ -261,6 +283,32 @@ if [[ -f "$APPLY" ]]; then
   fi
 else
   fail "Missing deploy/host-proxy/apply-additive-vhost.sh"
+fi
+
+TLS_APPLY="$ROOT_DIR/deploy/host-proxy/apply-additive-tls.sh"
+if [[ -f "$TLS_APPLY" ]]; then
+  if grep -q 'lead-generation-crm_certbot_certs' "$TLS_APPLY" \
+    && grep -q 'prove-edge-tls.sh' "$TLS_APPLY" \
+    && grep -q 'nginx -t' "$TLS_APPLY" \
+    && grep -q 'id -u' "$TLS_APPLY" \
+    && ! grep -vE '^[[:space:]]*(#|echo )' "$TLS_APPLY" | grep -Eq 'active-ssl.conf|cohestra-uat-certbot|docker compose up|force-recreate'; then
+    pass "apply-additive-tls.sh uses existing edge certbot volumes and never edits active-ssl.conf"
+  else
+    fail "apply-additive-tls.sh must issue on existing volumes, test, prove, and never recreate the live stack"
+  fi
+else
+  fail "Missing deploy/host-proxy/apply-additive-tls.sh"
+fi
+
+TLS_PROVE="$ROOT_DIR/deploy/host-proxy/prove-edge-tls.sh"
+if [[ -f "$TLS_PROVE" ]]; then
+  if grep -q 'https://' "$TLS_PROVE" && grep -q 'default-tenant' "$TLS_PROVE" && grep -q 'Strict-Transport-Security' "$TLS_PROVE"; then
+    pass "prove-edge-tls.sh requires HTTPS Cohestra /ready + HSTS"
+  else
+    fail "prove-edge-tls.sh must require https://uat.cohestra.app /ready and HSTS"
+  fi
+else
+  fail "Missing deploy/host-proxy/prove-edge-tls.sh"
 fi
 
 PROVE="$ROOT_DIR/deploy/host-proxy/prove-edge-vhost.sh"

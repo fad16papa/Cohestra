@@ -108,8 +108,12 @@ Then:
 
 Do not change existing server blocks, certificates, or the existing hostname.
 
-Story 19.1 may prove HTTP/internal routing. Story 19.2 owns HTTPS for the
-Cohestra hostname. Do not disturb the existing app’s TLS.
+Story 19.1 may prove HTTP/internal routing. Story 19.2 adds **additive** HTTPS
+on the same existing edge container (`apply-additive-tls.sh`): a new Let's
+Encrypt name `uat.cohestra.app` in `lead-generation-crm_certbot_certs`, then
+`listen 443` in `zz-cohestra-uat.conf` only. Do **not** regenerate
+`active-ssl.conf`. Do **not** use the existing site certificate. Do **not**
+run `cohestra-uat-certbot` or `setup-temporary-https.sh` on this shared host.
 
 ## After the vhost exists
 
