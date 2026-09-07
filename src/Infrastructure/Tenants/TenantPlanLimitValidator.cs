@@ -1,7 +1,9 @@
 namespace Cohestra.Infrastructure.Tenants;
 
 /// <summary>
-/// Plan capacity checks aligned with admin shell limit dials (block at used &gt;= limit).
+/// Per-action plan capacity checks aligned with admin shell limit dials (block at used &gt;= limit).
+/// Workspace-wide read-only is a different gate: <c>TenantAccessService.IsOverAdminRecoverableLimits</c>
+/// uses used &gt; limit so sitting at cap still allows other admin writes.
 /// </summary>
 public static class TenantPlanLimitValidator
 {

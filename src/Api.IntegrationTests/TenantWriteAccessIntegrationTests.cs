@@ -57,7 +57,7 @@ public sealed class TenantWriteAccessIntegrationTests(IntegrationTestFixture fix
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
         await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
 
-        var seededCommunityIds = await SeedDefaultTenantCommunitiesToProCapAsync();
+        var seededCommunityIds = await SeedDefaultTenantCommunitiesOverProCapAsync();
 
         try
         {
@@ -124,7 +124,7 @@ public sealed class TenantWriteAccessIntegrationTests(IntegrationTestFixture fix
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
         await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
 
-        var seededCommunityIds = await SeedDefaultTenantCommunitiesToProCapAsync();
+        var seededCommunityIds = await SeedDefaultTenantCommunitiesOverProCapAsync();
 
         try
         {
@@ -218,26 +218,104 @@ public sealed class TenantWriteAccessIntegrationTests(IntegrationTestFixture fix
         return previous;
     }
 
-    private async Task<List<Guid>> SeedDefaultTenantCommunitiesToProCapAsync()
+    [SkippableFact]
+    public async Task TenantAdmin_CanCreateActivityAndCategory_WhenBasicAtCommunityCap()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        using var platformClient = Factory.CreateClient();
+        var platformToken = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platformClient);
+        IntegrationTestHelpers.UseBearerToken(platformClient, platformToken);
+
+        var slug = $"basic-cap-{Guid.NewGuid():N}"[..16];
+        var tenant = await IntegrationTestHelpers.CreateTenantViaPlatformAsync(
+            platformClient,
+            "Basic At Cap",
+            slug,
+            $"admin@{slug}.test");
+
+        var (user, _) = await IntegrationTestHelpers.CreateTenantAdminUserAsync(
+            Factory.Services,
+            tenant.Id,
+            $"admin-{Guid.NewGuid():N}@example.com");
+
+        using var client = Factory.CreateClient();
+        IntegrationTestHelpers.UseTenantHost(client, slug);
+        IntegrationTestHelpers.UseBearerToken(
+            client,
+            IntegrationTestHelpers.MintTenantAccessToken(
+                Factory.Services,
+                user,
+                tenant.Id,
+                TenantMembershipRole.TenantAdmin));
+
+        var communityName = $"First community {Guid.NewGuid():N}"[..28];
+        using var firstCommunity = await client.PostAsJsonAsync(
+            "/api/v1/admin/communities",
+            new CreateCommunityRequest(communityName),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.Created, firstCommunity.StatusCode);
+
+        using var secondCommunity = await client.PostAsJsonAsync(
+            "/api/v1/admin/communities",
+            new CreateCommunityRequest($"Second {Guid.NewGuid():N}"[..28]),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.Forbidden, secondCommunity.StatusCode);
+        Assert.Equal(
+            "plan_locked",
+            await IntegrationTestHelpers.ReadProblemErrorCodeAsync(secondCommunity));
+
+        using var categoryResponse = await client.PostAsJsonAsync(
+            "/api/v1/admin/categories",
+            new CreateCategoryRequest($"Social {Guid.NewGuid():N}"[..20]),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.Created, categoryResponse.StatusCode);
+
+        using var activityResponse = await client.PostAsJsonAsync(
+            "/api/v1/admin/activities",
+            new CreateActivityRequest(
+                Name: $"First event {Guid.NewGuid():N}"[..32],
+                Category: "Social",
+                Schedule: "Saturday 10:00",
+                Location: "Test Court",
+                CommunityLabel: communityName,
+                Status: ActivityStatus.Draft.ToString().ToLowerInvariant(),
+                MaxRegistrants: null),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.Created, activityResponse.StatusCode);
+
+        using var shellResponse = await client.GetAsync("/api/v1/admin/shell");
+        shellResponse.EnsureSuccessStatusCode();
+        var shell = await shellResponse.Content.ReadFromJsonAsync<TenantShellResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(shell);
+        Assert.Null(shell!.BillingBanner);
+        var communitiesDial = shell.LimitDials.Single(d => d.Key == "communities");
+        Assert.True(communitiesDial.Blocked);
+        Assert.Equal(1, communitiesDial.Used);
+        Assert.Equal(1, communitiesDial.Limit);
+    }
+
+    private async Task<List<Guid>> SeedDefaultTenantCommunitiesOverProCapAsync()
     {
         await using var scope = Factory.Services.CreateAsyncScope();
         IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
 
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
-        var cap = TenantPlanLimits.For(TenantPlan.Pro).Communities;
+        var overflowTarget = TenantPlanLimits.For(TenantPlan.Pro).Communities + 1;
         var current = await dbContext.Communities
             .CountAsync(c => c.TenantId == TenantIds.Default);
 
         var added = new List<Guid>();
         var now = DateTimeOffset.UtcNow;
-        for (var index = current; index < cap; index++)
+        for (var index = current; index < overflowTarget; index++)
         {
             var id = Guid.NewGuid();
             dbContext.Communities.Add(new Community
             {
                 Id = id,
                 TenantId = TenantIds.Default,
-                Name = $"Read-only cap {id:N}"[..28],
+                Name = $"Read-only overflow {id:N}"[..28],
                 CreatedAt = now,
                 UpdatedAt = now,
             });
