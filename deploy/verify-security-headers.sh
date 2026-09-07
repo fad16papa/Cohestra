@@ -14,13 +14,27 @@
 set -euo pipefail
 
 BASE_URL="${1:-${PUBLIC_BASE_URL:-http://localhost:8088}}"
-TENANT_HOST="${TENANT_HOST:-default.localhost:8088}"
 EXPECT_HSTS=false
 
 if [[ "$BASE_URL" == https://* ]]; then
   EXPECT_HSTS=true
 fi
 
+# Public UAT must send Host: uat.cohestra.app. The local-docker default
+# (default.localhost:8088) misses the additive edge vhost and looks like
+# "no security headers" even when smoke already passed.
+if [[ -z "${TENANT_HOST:-}" ]]; then
+  TENANT_HOST=$(python3 -c "from urllib.parse import urlparse; print(urlparse('${BASE_URL}').netloc or '')")
+  if [[ -z "$TENANT_HOST" || "$TENANT_HOST" == localhost* || "$TENANT_HOST" == 127.0.0.1* ]]; then
+    TENANT_HOST="default.localhost:8088"
+  fi
+fi
+if [[ "$BASE_URL" == *uat.cohestra.app* && "$TENANT_HOST" != *uat.cohestra.app* ]]; then
+  echo "REFUSE: TENANT_HOST must be uat.cohestra.app when checking https://uat.cohestra.app" >&2
+  exit 1
+fi
+
+echo "Checking ${BASE_URL%/}/ (Host: ${TENANT_HOST})"
 HEADERS=$(curl -sSI -H "Host: ${TENANT_HOST}" "${BASE_URL%/}/" || true)
 
 if [[ -z "$HEADERS" ]]; then
@@ -78,7 +92,7 @@ fi
 if [[ "$FAIL" -gt 0 ]]; then
   echo ""
   echo "Header dump:"
-  echo "$HEADERS" | grep -iE '^(x-frame|x-content|referrer|permissions|content-security|strict-transport)' || true
+  echo "$HEADERS" | grep -iE '^(HTTP/|location:|host:|x-frame|x-content|referrer|permissions|content-security|strict-transport|x-cohestra)' || true
   exit 1
 fi
 

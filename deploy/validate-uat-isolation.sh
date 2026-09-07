@@ -340,6 +340,18 @@ else
   fail "Missing deploy/host-proxy/flip-public-base-https.sh"
 fi
 
+HEADERS_SH="$ROOT_DIR/deploy/verify-security-headers.sh"
+if [[ -f "$HEADERS_SH" ]]; then
+  if grep -q 'TENANT_HOST must be uat.cohestra.app' "$HEADERS_SH" \
+    && grep -q 'urlparse' "$HEADERS_SH"; then
+    pass "verify-security-headers.sh derives Host from the public UAT URL"
+  else
+    fail "verify-security-headers.sh must not default Host to default.localhost on uat.cohestra.app"
+  fi
+else
+  fail "Missing deploy/verify-security-headers.sh"
+fi
+
 TLS_DIAG="$ROOT_DIR/deploy/host-proxy/diagnose-edge-tls.sh"
 if [[ -f "$TLS_DIAG" ]]; then
   if grep -q 'sni_leaf' "$TLS_DIAG" && ! grep -vE '^[[:space:]]*(#|echo )' "$TLS_DIAG" | grep -Eq 'certonly|nginx -s reload|compose up'; then
