@@ -274,6 +274,17 @@ else
   fail "Missing deploy/host-proxy/prove-edge-vhost.sh"
 fi
 
+PREPARE="$ROOT_DIR/deploy/prepare-canonical-checkout.sh"
+if [[ -f "$PREPARE" ]]; then
+  if grep -q 'id -u' "$PREPARE" && grep -q 'sudo -iu deploy' "$PREPARE"; then
+    pass "prepare-canonical-checkout.sh refuses root so git pull cannot be skipped"
+  else
+    fail "prepare-canonical-checkout.sh must refuse root (dubious ownership skips the pull)"
+  fi
+else
+  fail "Missing deploy/prepare-canonical-checkout.sh"
+fi
+
 RECONCILE="$ROOT_DIR/deploy/host-proxy/reconcile-edge-network.sh"
 if [[ -f "$RECONCILE" ]]; then
   if grep -q 'docker network connect' "$RECONCILE" && ! grep -vE '^[[:space:]]*(#|echo )' "$RECONCILE" | grep -Eq 'force-recreate|docker compose up'; then

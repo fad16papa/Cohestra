@@ -11,6 +11,14 @@ DEST="${COHESTRA_DEPLOY_ROOT:-/home/deploy/cohestra}"
 BRANCH="${COHESTRA_DEPLOY_BRANCH:-cursor/epic-19-uat-port-isolation-a139}"
 REPO_URL="${COHESTRA_DEPLOY_REPO:-https://github.com/fad16papa/Cohestra.git}"
 
+if [[ "$(id -u)" -eq 0 && "${COHESTRA_ALLOW_ROOT:-}" != "1" ]]; then
+  echo "REFUSE: run as deploy, not root. Root git hits dubious ownership and skips the pull;" >&2
+  echo "        Docker then rebuilds from a stale tree (CACHED COPY src)." >&2
+  echo "        sudo -iu deploy" >&2
+  echo "        cd /home/deploy/cohestra && COHESTRA_DEPLOY_UPDATE=1 bash deploy/prepare-canonical-checkout.sh" >&2
+  exit 1
+fi
+
 if [[ "$DEST" == /tmp/* && "${COHESTRA_ALLOW_TMP_DEST:-}" != "1" ]]; then
   echo "REFUSE: canonical path is /home/deploy/cohestra, not $DEST" >&2
   exit 1
