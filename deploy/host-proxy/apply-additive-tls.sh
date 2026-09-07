@@ -58,6 +58,15 @@ if ! docker volume inspect "$CERT_VOL" >/dev/null 2>&1 || ! docker volume inspec
   exit 1
 fi
 
+# Read ACME files from the existing certs volume (same mount certbot uses).
+# Nginx may not expose accounts/ or renewal email. Never print the address.
+acme_certs_sh() {
+  docker run --rm --entrypoint sh \
+    -v "${CERT_VOL}:/etc/letsencrypt" \
+    certbot/certbot:latest \
+    -c "$1"
+}
+
 # Newer certbot stores contact on the ACME account (mailto:), not ^email= in renewal.
 # Also accept pref_email = in renewal files. Never print the resolved value.
 resolve_acme_email() {
@@ -66,7 +75,7 @@ resolve_acme_email() {
     printf '%s' "$found"
     return 0
   fi
-  found=$(docker exec "$EDGE_NGINX" sh -c '
+  found=$(acme_certs_sh '
     set +e
     for f in /etc/letsencrypt/renewal/*.conf; do
       [ -f "$f" ] || continue
@@ -77,7 +86,7 @@ resolve_acme_email() {
       fi
     done
     if [ -d /etc/letsencrypt/accounts ]; then
-      mailto=$(grep -rho "mailto:[^\"]*" /etc/letsencrypt/accounts 2>/dev/null | head -1)
+      mailto=$(grep -rho "mailto:[^\"[:space:]]*" /etc/letsencrypt/accounts 2>/dev/null | head -1)
       echo "${mailto#mailto:}"
     fi
   ' || true)
@@ -145,6 +154,8 @@ fi
 echo "acme_http01_preflight=PASS"
 
 echo "== Phase 2: Let's Encrypt for ${HOST_NAME} only =="
+echo "acme_renewal_confs=$(acme_certs_sh 'ls /etc/letsencrypt/renewal 2>/dev/null | wc -l')"
+echo "acme_account_jsons=$(acme_certs_sh 'find /etc/letsencrypt/accounts -name regr.json 2>/dev/null | wc -l')"
 email=""
 if ! email=$(resolve_acme_email); then
   echo "REFUSE: no ACME contact on the existing edge account." >&2

@@ -299,7 +299,7 @@ if [[ -f "$TLS_APPLY" ]]; then
   else
     fail "apply-additive-tls.sh must issue on existing volumes, test, prove, and never recreate the live stack"
   fi
-  if grep -q 'resolve_acme_email' "$TLS_APPLY" && grep -q 'pref_email' "$TLS_APPLY"; then
+  if grep -q 'resolve_acme_email' "$TLS_APPLY" && grep -q 'pref_email' "$TLS_APPLY" && grep -q 'acme_certs_sh' "$TLS_APPLY"; then
     pass "apply-additive-tls.sh resolves ACME contact from account mailto / pref_email without printing it"
   else
     fail "apply-additive-tls.sh must find ACME contact on existing accounts, not only ^email="
