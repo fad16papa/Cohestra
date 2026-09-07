@@ -130,10 +130,15 @@ in that shell only — do not paste the email, keys, or `.env` values.
 
 ## After the vhost exists
 
+After `EDGE TLS PROOF: PASS`, flip those keys with
+`bash deploy/host-proxy/flip-public-base-https.sh` (never prints secrets), then
+rebuild **web** and recreate **api** via `uat-compose.sh`. Do not compose the
+existing app.
+
 ```
 # Locked UAT hostname: uat.cohestra.app. Apex cohestra.app stays reserved.
-PUBLIC_BASE_URL=http://uat.cohestra.app
-NEXT_PUBLIC_PADDLE_RETURN_ORIGIN=http://uat.cohestra.app
+PUBLIC_BASE_URL=https://uat.cohestra.app
+NEXT_PUBLIC_PADDLE_RETURN_ORIGIN=https://uat.cohestra.app
 EXISTING_APP_PUBLIC_URL=https://thesocialcollectivesg.com
 ```
 

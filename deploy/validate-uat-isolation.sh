@@ -326,6 +326,20 @@ else
   fail "Missing deploy/host-proxy/prove-edge-tls.sh"
 fi
 
+FLIP_HTTPS="$ROOT_DIR/deploy/host-proxy/flip-public-base-https.sh"
+if [[ -f "$FLIP_HTTPS" ]]; then
+  if grep -q 'https://uat.cohestra.app' "$FLIP_HTTPS" \
+    && grep -q 'PUBLIC_BASE_URL' "$FLIP_HTTPS" \
+    && grep -q 'secrets_not_printed' "$FLIP_HTTPS" \
+    && ! grep -vE '^[[:space:]]*(#|echo )' "$FLIP_HTTPS" | grep -Eq 'active-ssl.conf|lead-generation-crm|compose up'; then
+    pass "flip-public-base-https.sh flips only locked UAT public URLs and never prints secrets"
+  else
+    fail "flip-public-base-https.sh must only rewrite uat.cohestra.app public URLs"
+  fi
+else
+  fail "Missing deploy/host-proxy/flip-public-base-https.sh"
+fi
+
 TLS_DIAG="$ROOT_DIR/deploy/host-proxy/diagnose-edge-tls.sh"
 if [[ -f "$TLS_DIAG" ]]; then
   if grep -q 'sni_leaf' "$TLS_DIAG" && ! grep -vE '^[[:space:]]*(#|echo )' "$TLS_DIAG" | grep -Eq 'certonly|nginx -s reload|compose up'; then

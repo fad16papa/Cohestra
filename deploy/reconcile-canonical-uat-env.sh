@@ -54,9 +54,9 @@ def jwt_value(src: str) -> str:
     return match.group(1).strip().strip("'").strip('"')
 
 freeze = {
-    "PUBLIC_BASE_URL": "http://uat.cohestra.app",
-    "NEXT_PUBLIC_PADDLE_RETURN_ORIGIN": "http://uat.cohestra.app",
-    "EmailBranding__WebsiteUrl": "http://uat.cohestra.app",
+    "PUBLIC_BASE_URL": "https://uat.cohestra.app",
+    "NEXT_PUBLIC_PADDLE_RETURN_ORIGIN": "https://uat.cohestra.app",
+    "EmailBranding__WebsiteUrl": "https://uat.cohestra.app",
     "WEB_HOST_PORT": "3100",
     "API_HOST_PORT": "5100",
     "NGINX_HOST_PORT": "8180",
@@ -103,7 +103,7 @@ tmp.write_text(out, encoding="utf-8")
 tmp.replace(canonical)
 print("jwt_signing_key=" + jwt_status)
 print("canonical=" + str(canonical))
-print("hostname=http://uat.cohestra.app")
+print("hostname=https://uat.cohestra.app")
 print("local_only_keys_removed=yes")
 print("secrets_not_printed=yes")
 PY
