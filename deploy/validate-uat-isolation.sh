@@ -304,6 +304,13 @@ if [[ -f "$TLS_APPLY" ]]; then
   else
     fail "apply-additive-tls.sh must find ACME contact on existing accounts, not only ^email="
   fi
+  if grep -q 'acme_www_sh' "$TLS_APPLY" \
+    && grep -q -- '--entrypoint sh' "$TLS_APPLY" \
+    && ! grep -E 'docker exec.*mkdir.*certbot|docker exec.*acme-challenge' "$TLS_APPLY"; then
+    pass "apply-additive-tls.sh writes ACME tokens via the existing www volume, not nginx exec"
+  else
+    fail "apply-additive-tls.sh must not mkdir the ACME webroot inside the existing nginx container"
+  fi
 else
   fail "Missing deploy/host-proxy/apply-additive-tls.sh"
 fi

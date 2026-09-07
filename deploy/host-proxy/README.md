@@ -116,6 +116,10 @@ Encrypt name `uat.cohestra.app` in `lead-generation-crm_certbot_certs`, then
 run `cohestra-uat-certbot` or `setup-temporary-https.sh` on this shared host.
 Do not re-run `apply-additive-vhost.sh` after TLS (it would drop `listen 443`).
 
+The existing nginx mounts `/var/www/certbot` **read-only**. ACME writes (preflight
+and `certbot`) use `lead-generation-crm_certbot_www` via a throwaway container.
+Do not `docker exec` mkdir on that path inside `lead-generation-crm-nginx-1`.
+
 Browser `NET::ERR_CERT_COMMON_NAME_INVALID` + HSTS on `https://uat.cohestra.app`
 means `:443` is still the existing default_server cert. HTTP UAT can be fine.
 Do not treat the screenshot as TLS PASS. Run

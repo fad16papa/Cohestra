@@ -29,6 +29,12 @@ if ! docker inspect "$EDGE_NGINX" >/dev/null 2>&1; then
   exit 1
 fi
 
+www_rw=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/var/www/certbot"}}{{.RW}} {{.Name}}{{end}}{{end}}' "$EDGE_NGINX" || true)
+echo "nginx_acme_www_mount=${www_rw:-missing}"
+if echo "$www_rw" | grep -q '^false'; then
+  echo "nginx_acme_www_writable=no  (expected — write via certbot www volume, not docker exec)"
+fi
+
 if docker exec "$EDGE_NGINX" test -f /etc/nginx/conf.d/zz-cohestra-uat.conf; then
   echo "zz_vhost=present"
   if docker exec "$EDGE_NGINX" grep -q 'listen 443' /etc/nginx/conf.d/zz-cohestra-uat.conf; then

@@ -120,12 +120,22 @@ if ! install_conf "$TMP"; then
   exit 1
 fi
 
+# Existing nginx mounts the ACME webroot read-only. Writes go through a
+# throwaway certbot container on lead-generation-crm_certbot_www (rw).
+acme_www_sh() {
+  docker run --rm --entrypoint sh \
+    -v "${CERT_WWW_VOL}:/var/www/certbot" \
+    certbot/certbot:latest \
+    -c "$1"
+}
+
 echo "== ACME HTTP-01 preflight =="
+echo "certbot_image=certbot/certbot:latest (pull may take a minute)"
+docker pull certbot/certbot:latest
 TOKEN="cohestra-preflight-$(date +%s)"
-docker exec "$EDGE_NGINX" sh -c \
-  "mkdir -p /var/www/certbot/.well-known/acme-challenge && printf 'preflight-ok\n' > /var/www/certbot/.well-known/acme-challenge/${TOKEN}"
+acme_www_sh "mkdir -p /var/www/certbot/.well-known/acme-challenge && printf 'preflight-ok\n' > /var/www/certbot/.well-known/acme-challenge/${TOKEN}"
 pre=$(curl -sS --connect-timeout 8 "http://${HOST_NAME}/.well-known/acme-challenge/${TOKEN}" || true)
-docker exec "$EDGE_NGINX" rm -f "/var/www/certbot/.well-known/acme-challenge/${TOKEN}"
+acme_www_sh "rm -f /var/www/certbot/.well-known/acme-challenge/${TOKEN}"
 if [[ "$(printf '%s' "$pre" | tr -d '\r\n')" != "preflight-ok" ]]; then
   echo "ADDITIVE TLS: FAIL — HTTP-01 webroot not reachable at http://${HOST_NAME}/.well-known/acme-challenge/" >&2
   echo "body_preview=$(printf '%s' "$pre" | tr -cd '[:print:]' | head -c 80)" >&2
@@ -146,7 +156,6 @@ fi
 echo "certbot_email=SET"
 echo "certbot_volumes=${CERT_WWW_VOL} ${CERT_VOL}"
 echo "certbot_name=${HOST_NAME}"
-echo "certbot_image=certbot/certbot:latest (pull may take a minute)"
 
 if ! docker run --rm \
   -v "${CERT_WWW_VOL}:/var/www/certbot" \
