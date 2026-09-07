@@ -124,6 +124,10 @@ public sealed class TenantWriteAccessIntegrationTests(IntegrationTestFixture fix
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
         await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
 
+        var recoverySlug = $"recovery-archive-{Guid.NewGuid():N}"[..24];
+        var published = await IntegrationTestHelpers.SeedPublishedActivityAsync(
+            Factory.Services,
+            recoverySlug);
         var seededCommunityIds = await SeedDefaultTenantCommunitiesOverProCapAsync();
 
         try
@@ -146,11 +150,8 @@ public sealed class TenantWriteAccessIntegrationTests(IntegrationTestFixture fix
 
             Assert.Equal(HttpStatusCode.Forbidden, createResponse.StatusCode);
 
-            var activityId = await FindPublishedActivityIdAsync();
-            Assert.NotEqual(Guid.Empty, activityId);
-
             using var archiveResponse = await client.PostAsync(
-                $"/api/v1/admin/activities/{activityId}/archive",
+                $"/api/v1/admin/activities/{published.Id}/archive",
                 null);
 
             Assert.Equal(HttpStatusCode.OK, archiveResponse.StatusCode);
@@ -158,24 +159,25 @@ public sealed class TenantWriteAccessIntegrationTests(IntegrationTestFixture fix
         finally
         {
             await DeleteCommunitiesAsync(seededCommunityIds);
+            await RestoreActivityStatusAsync(published.Id, ActivityStatus.Published);
         }
     }
 
-    private async Task<Guid> FindPublishedActivityIdAsync()
+    private async Task RestoreActivityStatusAsync(Guid activityId, ActivityStatus status)
     {
         await using var scope = Factory.Services.CreateAsyncScope();
         IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
 
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
-        var activityId = await dbContext.Activities
-            .AsNoTracking()
-            .Where(a => a.TenantId == TenantIds.Default && a.Status == ActivityStatus.Published)
-            .Select(a => a.Id)
-            .FirstOrDefaultAsync();
+        var activity = await dbContext.Activities.FirstOrDefaultAsync(a => a.Id == activityId);
+        if (activity is null)
+        {
+            return;
+        }
 
-        return activityId == Guid.Empty
-            ? throw new InvalidOperationException("Expected at least one published activity for recovery test.")
-            : activityId;
+        activity.Status = status;
+        activity.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync();
     }
 
     private async Task<HttpClient> CreateTenantMemberClientAsync()
@@ -260,14 +262,15 @@ public sealed class TenantWriteAccessIntegrationTests(IntegrationTestFixture fix
             "/api/v1/admin/communities",
             new CreateCommunityRequest($"Second {Guid.NewGuid():N}"[..28]),
             IntegrationTestHelpers.JsonOptions);
-        Assert.Equal(HttpStatusCode.Forbidden, secondCommunity.StatusCode);
-        Assert.Equal(
-            "plan_locked",
-            await IntegrationTestHelpers.ReadProblemErrorCodeAsync(secondCommunity));
+        Assert.Equal(HttpStatusCode.BadRequest, secondCommunity.StatusCode);
+        var secondDetail = await secondCommunity.Content.ReadAsStringAsync();
+        Assert.Contains("at capacity", secondDetail, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("read-only", secondDetail, StringComparison.OrdinalIgnoreCase);
 
+        var categoryName = $"Social {Guid.NewGuid():N}"[..20];
         using var categoryResponse = await client.PostAsJsonAsync(
             "/api/v1/admin/categories",
-            new CreateCategoryRequest($"Social {Guid.NewGuid():N}"[..20]),
+            new CreateCategoryRequest(categoryName),
             IntegrationTestHelpers.JsonOptions);
         Assert.Equal(HttpStatusCode.Created, categoryResponse.StatusCode);
 
@@ -275,7 +278,7 @@ public sealed class TenantWriteAccessIntegrationTests(IntegrationTestFixture fix
             "/api/v1/admin/activities",
             new CreateActivityRequest(
                 Name: $"First event {Guid.NewGuid():N}"[..32],
-                Category: "Social",
+                Category: categoryName,
                 Schedule: "Saturday 10:00",
                 Location: "Test Court",
                 CommunityLabel: communityName,
