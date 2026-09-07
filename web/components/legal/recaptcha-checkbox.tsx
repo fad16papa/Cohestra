@@ -95,6 +95,10 @@ export function RecaptchaCheckbox({ onTokenChange, disabled }: RecaptchaCheckbox
   }, [disabled, enabled, onTokenChange]);
 
   if (!enabled) {
+    if (!getTestCaptchaToken()) {
+      return null;
+    }
+
     return (
       <p className="rounded-md border border-line bg-paper-warm px-3 py-2 text-xs text-stone">
         CAPTCHA bypass enabled for local development.

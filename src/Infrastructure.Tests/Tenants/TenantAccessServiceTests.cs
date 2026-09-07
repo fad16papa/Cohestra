@@ -21,7 +21,7 @@ public sealed class TenantAccessServiceTests
     }
 
     [Fact]
-    public void IsOverAdminRecoverableLimits_BlocksAtCapForResources()
+    public void IsOverAdminRecoverableLimits_AllowsAtCapForResources()
     {
         var limits = TenantPlanLimits.For(TenantPlan.Core);
         var usage = new TenantUsageSnapshot(
@@ -30,7 +30,33 @@ public sealed class TenantAccessServiceTests
             limits.PublishedActivities,
             0);
 
-        Assert.True(TenantAccessService.IsOverAdminRecoverableLimits(TenantPlan.Core, usage));
+        Assert.False(TenantAccessService.IsOverAdminRecoverableLimits(TenantPlan.Core, usage));
+    }
+
+    [Fact]
+    public void IsOverAdminRecoverableLimits_BlocksWhenResourcesExceedCap()
+    {
+        var limits = TenantPlanLimits.For(TenantPlan.Basic);
+        var usage = new TenantUsageSnapshot(
+            limits.Seats,
+            limits.Communities + 1,
+            limits.PublishedActivities,
+            0);
+
+        Assert.True(TenantAccessService.IsOverAdminRecoverableLimits(TenantPlan.Basic, usage));
+    }
+
+    [Fact]
+    public void IsOverAdminRecoverableLimits_BlocksWhenPublishedExceedsCap()
+    {
+        var limits = TenantPlanLimits.For(TenantPlan.Basic);
+        var usage = new TenantUsageSnapshot(
+            limits.Seats,
+            limits.Communities,
+            limits.PublishedActivities + 1,
+            0);
+
+        Assert.True(TenantAccessService.IsOverAdminRecoverableLimits(TenantPlan.Basic, usage));
     }
 
     [Fact]
@@ -49,7 +75,20 @@ public sealed class TenantAccessServiceTests
     }
 
     [Fact]
-    public void IsOverPlanLimits_BlocksAtCapForResources()
+    public void IsOverPlanLimits_AllowsResourcesAtCapacity()
+    {
+        var limits = TenantPlanLimits.For(TenantPlan.Core);
+        var usage = new TenantUsageSnapshot(
+            limits.Seats,
+            limits.Communities,
+            limits.PublishedActivities,
+            0);
+
+        Assert.False(TenantAccessService.IsOverPlanLimits(TenantPlan.Core, usage));
+    }
+
+    [Fact]
+    public void IsOverPlanLimits_StillBlocksAtRegistrationCap()
     {
         var limits = TenantPlanLimits.For(TenantPlan.Core);
         var usage = new TenantUsageSnapshot(
@@ -59,6 +98,7 @@ public sealed class TenantAccessServiceTests
             limits.RegistrationsPerMonth);
 
         Assert.True(TenantAccessService.IsOverPlanLimits(TenantPlan.Core, usage));
+        Assert.False(TenantAccessService.IsOverAdminRecoverableLimits(TenantPlan.Core, usage));
     }
 
     [Fact]

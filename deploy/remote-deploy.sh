@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Called on the droplet by GitHub Actions (or manually after SSH).
-# Pulls latest main and rebuilds the Docker stack.
+# Pulls latest main and rebuilds the isolated Cohestra UAT stack.
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
@@ -20,7 +20,7 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "== Deploy cohestra =="
+echo "== Deploy isolated cohestra-uat =="
 echo "Path:   $ROOT_DIR"
 echo "Branch: $DEPLOY_BRANCH"
 echo "Commit before pull: $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
@@ -30,9 +30,27 @@ git reset --hard "origin/$DEPLOY_BRANCH"
 
 echo "Commit after pull:  $(git rev-parse --short HEAD)"
 
+if [[ -f .env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
+
+# shellcheck disable=SC1091
+source "$ROOT_DIR/deploy/cohestra-uat-guards.sh"
+refuse_legacy_compose_project || exit 1
+refuse_ssl_nginx_config || exit 1
+refuse_public_cohestra_host_ports || exit 1
+
 echo ""
-echo "== Docker compose build + up =="
-docker compose -f docker-compose.uat.yml up -d --build
+echo "== Port / resource audit of the tree that will start =="
+bash "$ROOT_DIR/deploy/uat-port-audit.sh"
+bash "$ROOT_DIR/deploy/validate-uat-isolation.sh"
+
+echo ""
+echo "== Docker compose build + up (project cohestra-uat) =="
+bash "$ROOT_DIR/deploy/uat-compose.sh" up -d --build
 
 echo ""
 echo "== Smoke checks =="

@@ -169,6 +169,16 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
+  uat-isolation:
+    name: UAT isolation contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate isolated UAT compose
+        run: bash deploy/validate-uat-isolation.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest

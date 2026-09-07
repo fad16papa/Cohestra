@@ -36,4 +36,12 @@ public interface ITenantHostResolver
     Task<TenantDoorResolution> ResolveDoorAsync(
         string? hostHeader,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Bind ambient tenant from a JWT <c>tenant_id</c> on a marketing apex
+    /// (no tenant Host). Never trusts X-Tenant-Id.
+    /// </summary>
+    Task<TenantHostResolution> ResolveByIdAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
 }

@@ -135,6 +135,12 @@ internal static class IntegrationTestHelpers
         client.DefaultRequestHeaders.Host = $"{slug}.localhost";
     }
 
+    /// <summary>UAT / production marketing apex — no tenant slug in Host.</summary>
+    internal static void UseMarketingApexHost(HttpClient client, string host = "uat.cohestra.app")
+    {
+        client.DefaultRequestHeaders.Host = host;
+    }
+
     internal static async Task<TenantResponse> CreateTenantViaPlatformAsync(
         HttpClient platformClient,
         string name,

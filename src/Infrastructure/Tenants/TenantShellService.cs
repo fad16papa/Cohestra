@@ -197,25 +197,40 @@ public sealed class TenantShellService(CohestraDbContext dbContext) : ITenantShe
                 AdminOnlyCta: true);
         }
 
-        var overLimitDial = limitDials.FirstOrDefault(d =>
-            d.Blocked
-            && !string.Equals(d.Key, "seats", StringComparison.Ordinal));
-        if (overLimitDial is not null)
+        // At-cap communities/published keep dials Blocked (disable Add / publish #N+1)
+        // but do not freeze the workspace. Overflow (used > limit) is FR-24 read-only.
+        var canUpgrade = tenant.Plan is TenantPlan.Basic or TenantPlan.Core;
+        var upgradeLabel = isTenantAdmin && canUpgrade ? "Upgrade plan" : null;
+        var upgradeHref = isTenantAdmin && canUpgrade
+            ? $"/billing/checkout?plan={SuggestUpgradePlanSlug(tenant.Plan)}&interval=monthly&start=1"
+            : null;
+
+        var overflowDial = limitDials.FirstOrDefault(d =>
+            !string.Equals(d.Key, "seats", StringComparison.Ordinal)
+            && !string.Equals(d.Key, "registrations", StringComparison.Ordinal)
+            && d.Used > d.Limit);
+        if (overflowDial is not null)
         {
-            var canUpgrade = tenant.Plan is TenantPlan.Basic or TenantPlan.Core;
-            var upgradePlan = SuggestUpgradePlanSlug(tenant.Plan);
-            var isRegistrationCap = string.Equals(
-                overLimitDial.Key,
-                "registrations",
-                StringComparison.Ordinal);
             return new BillingBannerResponse(
-                isRegistrationCap ? "registration_cap" : "read_only_over_limit",
-                isRegistrationCap ? "Monthly registration cap reached" : "Plan limit reached",
-                isRegistrationCap
-                    ? $"{overLimitDial.Label} is at capacity ({overLimitDial.Used:N0}/{overLimitDial.Limit:N0}). Public sign-ups are paused until the next reset{(canUpgrade ? " or you upgrade" : "")}."
-                    : $"{overLimitDial.Label} is at capacity ({overLimitDial.Used}/{overLimitDial.Limit}). Archive or unpublish items{(canUpgrade ? ", or upgrade your plan" : "")}.",
-                isTenantAdmin && canUpgrade ? "Upgrade plan" : null,
-                isTenantAdmin && canUpgrade ? $"/billing/checkout?plan={upgradePlan}&interval=monthly&start=1" : null,
+                "read_only_over_limit",
+                "Plan limit reached",
+                $"{overflowDial.Label} exceeds the plan limit ({overflowDial.Used}/{overflowDial.Limit}). Archive or unpublish items{(canUpgrade ? ", or upgrade your plan" : "")}.",
+                upgradeLabel,
+                upgradeHref,
+                AdminOnlyCta: true);
+        }
+
+        var registrationCapDial = limitDials.FirstOrDefault(d =>
+            d.Blocked
+            && string.Equals(d.Key, "registrations", StringComparison.Ordinal));
+        if (registrationCapDial is not null)
+        {
+            return new BillingBannerResponse(
+                "registration_cap",
+                "Monthly registration cap reached",
+                $"{registrationCapDial.Label} is at capacity ({registrationCapDial.Used:N0}/{registrationCapDial.Limit:N0}). Public sign-ups are paused until the next reset{(canUpgrade ? " or you upgrade" : "")}.",
+                upgradeLabel,
+                upgradeHref,
                 AdminOnlyCta: true);
         }
 

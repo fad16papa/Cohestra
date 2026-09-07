@@ -187,6 +187,72 @@ public sealed class TenantResolutionMiddlewareTests
     }
 
     [Fact]
+    public async Task Handoff_exchange_on_marketing_apex_continues_without_tenant_host()
+    {
+        var context = CreateContext(
+            "/api/v1/auth/handoff/exchange",
+            host: "uat.cohestra.app",
+            authenticated: false,
+            roles: [],
+            tenantId: null);
+        var current = new CurrentTenant();
+        var called = false;
+
+        var middleware = new TenantResolutionMiddleware(_ =>
+        {
+            called = true;
+            return Task.CompletedTask;
+        });
+
+        await middleware.InvokeAsync(
+            context,
+            new StubHostResolver(TenantHostResolution.MarketingOnly()),
+            current,
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
+
+        Assert.True(called);
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+        Assert.False(current.IsResolved);
+        Assert.True(current.IsMarketingHost);
+        Assert.Null(current.TenantId);
+    }
+
+    [Fact]
+    public async Task Admin_on_marketing_apex_binds_tenant_from_jwt()
+    {
+        var tenantId = TenantIds.Default;
+        var context = CreateContext(
+            "/api/v1/admin/me",
+            host: "uat.cohestra.app",
+            authenticated: true,
+            roles: [OperatorSeeder.TenantAdminRole],
+            tenantId: tenantId);
+        var current = new CurrentTenant();
+        var called = false;
+
+        var middleware = new TenantResolutionMiddleware(_ =>
+        {
+            called = true;
+            return Task.CompletedTask;
+        });
+
+        await middleware.InvokeAsync(
+            context,
+            new StubHostResolver(
+                TenantHostResolution.MarketingOnly(),
+                TenantHostResolution.Ok(tenantId, "acme")),
+            current,
+            NullLogger<TenantResolutionMiddleware>.Instance,
+            EmptyConfiguration);
+
+        Assert.True(called);
+        Assert.True(current.IsResolved);
+        Assert.Equal(tenantId, current.TenantId);
+        Assert.Equal("acme", current.Slug);
+    }
+
+    [Fact]
     public async Task Public_marketing_apex_returns_404_without_tenant_context()
     {
         var context = CreateContext(
@@ -421,12 +487,31 @@ public sealed class TenantResolutionMiddlewareTests
         return context;
     }
 
-    private sealed class StubHostResolver(TenantHostResolution resolution) : ITenantHostResolver
+    private sealed class StubHostResolver(
+        TenantHostResolution resolution,
+        TenantHostResolution? byId = null) : ITenantHostResolver
     {
         public Task<TenantHostResolution> ResolveAsync(
             string? hostHeader,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(resolution);
+
+        public Task<TenantHostResolution> ResolveByIdAsync(
+            Guid tenantId,
+            CancellationToken cancellationToken = default)
+        {
+            if (byId is { } explicitById)
+            {
+                return Task.FromResult(explicitById);
+            }
+
+            if (resolution.Succeeded && resolution.TenantId == tenantId)
+            {
+                return Task.FromResult(resolution);
+            }
+
+            return Task.FromResult(TenantHostResolution.Fail("Unknown tenant workspace."));
+        }
 
         public Task<TenantDoorResolution> ResolveDoorAsync(
             string? hostHeader,

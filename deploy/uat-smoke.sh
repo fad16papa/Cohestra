@@ -22,7 +22,8 @@ if [[ -f .env ]]; then
   set +a
 fi
 
-BASE_URL="${PUBLIC_BASE_URL:-http://127.0.0.1}"
+LOOPBACK_NGINX="${NGINX_HOST_PORT:-8180}"
+BASE_URL="${PUBLIC_BASE_URL:-http://127.0.0.1:${LOOPBACK_NGINX}}"
 
 if [[ -z "${TENANT_HOST:-}" ]]; then
   if [[ "$BASE_URL" == *localhost* ]]; then
@@ -49,7 +50,46 @@ echo "PUBLIC_BASE_URL=${BASE_URL}"
 echo ""
 
 echo "== Docker services =="
-docker compose -f docker-compose.uat.yml ps
+bash deploy/uat-compose.sh ps
+
+if [[ "$BASE_URL" == *thesocialcollectivesg.com* || "$BASE_URL" == *129.212.235.2* ]]; then
+  fail "PUBLIC_BASE_URL points at the existing public application — set the Cohestra UAT hostname"
+fi
+
+echo ""
+echo "== Loopback isolation (not public) =="
+LOOPBACK_WEB="${WEB_HOST_PORT:-3100}"
+LOOPBACK_API="${API_HOST_PORT:-5100}"
+if ! command -v docker >/dev/null 2>&1 || ! bash deploy/uat-compose.sh ps -q nginx 2>/dev/null | grep -q .; then
+  fail "Isolated Cohestra nginx is not running — refuse to smoke the existing :80 application"
+else
+  if curl -fsS --connect-timeout 3 "http://127.0.0.1:${LOOPBACK_NGINX}/ready" | grep -q '"status":"Healthy"'; then
+    pass "Cohestra nginx loopback :${LOOPBACK_NGINX} /ready"
+  else
+    fail "Cohestra nginx loopback :${LOOPBACK_NGINX} /ready — stack not healthy or ports differ"
+  fi
+  WEB_CODE=$(curl -sS --connect-timeout 3 -o /dev/null -w "%{http_code}" "http://127.0.0.1:${LOOPBACK_WEB}/" || echo "000")
+  if [[ "$WEB_CODE" == "200" || "$WEB_CODE" == "307" || "$WEB_CODE" == "308" ]]; then
+    pass "Cohestra web loopback :${LOOPBACK_WEB} HTTP ${WEB_CODE}"
+  else
+    fail "Cohestra web loopback :${LOOPBACK_WEB} returned ${WEB_CODE}"
+  fi
+  if curl -fsS --connect-timeout 3 "http://127.0.0.1:${LOOPBACK_API}/ready" | grep -q '"status":"Healthy"'; then
+    pass "Cohestra API loopback :${LOOPBACK_API} /ready"
+  else
+    fail "Cohestra API loopback :${LOOPBACK_API} /ready"
+  fi
+fi
+
+if [[ -n "${EXISTING_APP_PUBLIC_URL:-}" ]]; then
+  echo ""
+  echo "== Existing application regression =="
+  if curl -fsS --connect-timeout 5 "${EXISTING_APP_PUBLIC_URL%/}/ready" | grep -q '"status":"Healthy"'; then
+    pass "Existing app still healthy at EXISTING_APP_PUBLIC_URL"
+  else
+    fail "Existing app /ready failed — Cohestra deploy must not take the public stack down"
+  fi
+fi
 
 echo ""
 echo "== nginx /ready =="
@@ -59,7 +99,7 @@ if curl -fsS "${BASE_URL%/}/ready" | grep -q '"status":"Healthy"'; then
   echo ""
 else
   fail "/ready unhealthy — check PUBLIC_BASE_URL and nginx"
-  docker compose -f docker-compose.uat.yml logs --tail=30 nginx api || true
+  bash deploy/uat-compose.sh logs --tail=30 nginx api || true
 fi
 
 echo ""

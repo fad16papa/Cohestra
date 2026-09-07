@@ -34,7 +34,7 @@ public sealed class ResilientAuthHandoffStore(
 
     public async Task<AuthHandoffPayload?> ExchangeAsync(
         string code,
-        Guid expectedTenantId,
+        Guid? expectedTenantId,
         CancellationToken cancellationToken = default)
     {
         try

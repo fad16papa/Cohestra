@@ -241,6 +241,18 @@ public sealed class TenantJwtHostAlignmentMiddlewareTests
             CancellationToken cancellationToken = default) =>
             Task.FromResult(resolution);
 
+        public Task<TenantHostResolution> ResolveByIdAsync(
+            Guid tenantId,
+            CancellationToken cancellationToken = default)
+        {
+            if (resolution.Succeeded && resolution.TenantId == tenantId)
+            {
+                return Task.FromResult(resolution);
+            }
+
+            return Task.FromResult(TenantHostResolution.Fail("Unknown tenant workspace."));
+        }
+
         public Task<TenantDoorResolution> ResolveDoorAsync(
             string? hostHeader,
             CancellationToken cancellationToken = default)

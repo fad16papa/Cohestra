@@ -1,0 +1,33 @@
+# DOCUMENTATION ONLY — do not `compose up` this overlay on the live stack.
+#
+# Merging `networks:` onto the existing nginx service can REPLACE its current
+# networks and disconnect web/api. The safe first attach is:
+#   bash deploy/host-proxy/reconcile-edge-network.sh
+#   (docker network connect — no recreate)
+#
+# Persist later (not a first-step apply):
+# 1. Keep the existing bind:
+#    /root/lead-generation-crm/deploy/nginx/active-ssl.conf
+#      -> /etc/nginx/conf.d/default.conf
+# 2. Add a SECOND bind for zz-cohestra-uat.conf -> conf.d/zz-cohestra-uat.conf
+# 3. Add `cohestra_uat_edge` to nginx `networks` WHILE KEEPING
+#    `lead-generation-crm_default`.
+#
+# Persist by adding `cohestra_uat_edge` to the EXISTING product's nginx
+# `networks` map WHILE KEEPING every network it already has. Example shape:
+#
+#   networks:
+#     existing_app_net: {}
+#     cohestra_uat_edge:
+#       name: cohestra_uat_edge
+#       external: true
+#
+# Service key must match the live compose service (confirm with
+# inspect-existing-nginx.sh labels). Do not add other services.
+#
+# This file intentionally has no `services:` keys so it cannot be applied blindly.
+
+networks:
+  cohestra_uat_edge:
+    external: true
+    name: cohestra_uat_edge

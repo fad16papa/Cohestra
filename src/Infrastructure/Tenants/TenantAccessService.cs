@@ -109,12 +109,17 @@ public sealed class TenantAccessService(CohestraDbContext dbContext) : ITenantAc
         IsOverAdminRecoverableLimits(plan, usage)
         || IsOverRegistrationLimit(plan, usage);
 
+    /// <summary>
+    /// Workspace-wide read-only after a downgrade leaves usage above the new cap.
+    /// Sitting at cap (<c>used == limit</c>) stays writable; add-community and publish
+    /// are gated separately by <see cref="TenantPlanLimitValidator"/> (<c>used &gt;= limit</c>).
+    /// </summary>
     internal static bool IsOverAdminRecoverableLimits(TenantPlan plan, TenantUsageSnapshot usage)
     {
         var limits = TenantPlanLimits.For(plan);
         return usage.SeatsUsed > limits.Seats
-            || usage.Communities >= limits.Communities
-            || usage.PublishedActivities >= limits.PublishedActivities;
+            || usage.Communities > limits.Communities
+            || usage.PublishedActivities > limits.PublishedActivities;
     }
 
     internal static bool IsOverRegistrationLimit(TenantPlan plan, TenantUsageSnapshot usage)

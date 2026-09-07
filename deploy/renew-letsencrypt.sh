@@ -6,8 +6,12 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+# shellcheck disable=SC1091
+source "$ROOT_DIR/deploy/cohestra-uat-guards.sh"
+refuse_legacy_compose_project || exit 1
+refuse_shared_host_cohestra_tls || exit 1
 
-docker compose -f docker-compose.uat.yml --profile tools run --rm certbot renew --webroot -w /var/www/certbot
-docker compose -f docker-compose.uat.yml exec nginx nginx -s reload
+bash "$ROOT_DIR/deploy/uat-compose.sh" --profile tools run --rm certbot renew --webroot -w /var/www/certbot
+bash "$ROOT_DIR/deploy/uat-compose.sh" exec nginx nginx -s reload
 
 echo "Certificate renewal check complete."

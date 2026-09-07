@@ -52,6 +52,18 @@ describe("resolvePlatformOpsRedirectUrl", () => {
     ).toBe("https://cohestra.app/platform/login");
   });
 
+  it("keeps UAT tenant hosts on uat.cohestra.app, not production apex", () => {
+    expect(
+      resolvePlatformOpsRedirectUrl(
+        "https://creativorare.uat.cohestra.app",
+        "/platform/login"
+      )
+    ).toBe("https://uat.cohestra.app/platform/login");
+    expect(
+      resolvePlatformOpsRedirectUrl("http://uat.cohestra.app", "/platform/login")
+    ).toBeNull();
+  });
+
   it("redirects nip.io tenant hosts using parseTenantSlugFromHostname", () => {
     expect(
       resolvePlatformOpsRedirectUrl(

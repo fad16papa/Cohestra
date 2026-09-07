@@ -161,7 +161,33 @@ public sealed class TenantShellServiceTests
             BillingStatus = BillingStatus.Active,
         };
 
-        var blockedDial = new Cohestra.Contracts.Admin.LimitDialResponse(
+        var overflowDial = new Cohestra.Contracts.Admin.LimitDialResponse(
+            "communities",
+            "Communities",
+            2,
+            1,
+            100,
+            Warn: false,
+            Blocked: true,
+            Hint: null);
+
+        var banner = TenantShellService.BuildBillingBanner(tenant, [overflowDial], isTenantAdmin: true);
+
+        Assert.NotNull(banner);
+        Assert.Equal("read_only_over_limit", banner!.Variant);
+        Assert.Equal("/billing/checkout?plan=core&interval=monthly&start=1", banner.CtaHref);
+    }
+
+    [Fact]
+    public void BuildBillingBanner_CommunitiesAtCap_DoesNotShowWorkspaceReadOnlyBanner()
+    {
+        var tenant = new Tenant
+        {
+            Plan = TenantPlan.Basic,
+            BillingStatus = BillingStatus.Active,
+        };
+
+        var atCapDial = new Cohestra.Contracts.Admin.LimitDialResponse(
             "communities",
             "Communities",
             1,
@@ -171,11 +197,29 @@ public sealed class TenantShellServiceTests
             Blocked: true,
             Hint: null);
 
-        var banner = TenantShellService.BuildBillingBanner(tenant, [blockedDial], isTenantAdmin: true);
+        Assert.Null(TenantShellService.BuildBillingBanner(tenant, [atCapDial], isTenantAdmin: true));
+    }
 
-        Assert.NotNull(banner);
-        Assert.Equal("read_only_over_limit", banner!.Variant);
-        Assert.Equal("/billing/checkout?plan=core&interval=monthly&start=1", banner.CtaHref);
+    [Fact]
+    public void BuildBillingBanner_PublishedAtCap_DoesNotShowWorkspaceReadOnlyBanner()
+    {
+        var tenant = new Tenant
+        {
+            Plan = TenantPlan.Basic,
+            BillingStatus = BillingStatus.Active,
+        };
+
+        var atCapDial = new Cohestra.Contracts.Admin.LimitDialResponse(
+            "published",
+            "Published activities",
+            4,
+            4,
+            100,
+            Warn: false,
+            Blocked: true,
+            Hint: null);
+
+        Assert.Null(TenantShellService.BuildBillingBanner(tenant, [atCapDial], isTenantAdmin: true));
     }
 
     [Fact]
@@ -190,7 +234,7 @@ public sealed class TenantShellServiceTests
         var blockedDial = new Cohestra.Contracts.Admin.LimitDialResponse(
             "published",
             "Published activities",
-            50,
+            51,
             50,
             100,
             Warn: false,
@@ -201,6 +245,43 @@ public sealed class TenantShellServiceTests
 
         Assert.NotNull(banner);
         Assert.Null(banner!.CtaHref);
+    }
+
+    [Fact]
+    public void BuildBillingBanner_AtCapCommunitiesPlusRegistrationCap_ShowsRegistrationBanner()
+    {
+        var tenant = new Tenant
+        {
+            Plan = TenantPlan.Basic,
+            BillingStatus = BillingStatus.Active,
+        };
+
+        var communitiesAtCap = new Cohestra.Contracts.Admin.LimitDialResponse(
+            "communities",
+            "Communities",
+            1,
+            1,
+            100,
+            Warn: false,
+            Blocked: true,
+            Hint: null);
+        var registrationsAtCap = new Cohestra.Contracts.Admin.LimitDialResponse(
+            "registrations",
+            "Registrations this month (UTC)",
+            250,
+            250,
+            100,
+            Warn: false,
+            Blocked: true,
+            Hint: "Resets Oct 1");
+
+        var banner = TenantShellService.BuildBillingBanner(
+            tenant,
+            [communitiesAtCap, registrationsAtCap],
+            isTenantAdmin: true);
+
+        Assert.NotNull(banner);
+        Assert.Equal("registration_cap", banner!.Variant);
     }
 
     [Fact]

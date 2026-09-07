@@ -8,8 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace Cohestra.Api.Infrastructure;
 
 /// <summary>
-/// Blocks mutating admin API calls when tenant is read-only (OnHold or ReadOnly_OverLimit).
-/// Limit-recovery writes (archive, unpublish, remove member) remain allowed when over plan caps.
+/// Blocks mutating admin API calls when tenant is read-only (OnHold or usage above plan caps).
+/// Sitting at cap is not read-only. Limit-recovery writes remain allowed when usage exceeds caps.
 /// </summary>
 public sealed partial class TenantWriteAccessMiddleware(
     RequestDelegate next,

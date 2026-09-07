@@ -1,93 +1,68 @@
 # pgAdmin & RedisInsight (UAT / production droplet)
 
-Postgres and Redis are **not** exposed on the public internet. They listen on **127.0.0.1** inside the droplet so you can reach them safely with **SSH port forwarding** from your laptop.
+Cohestra Postgres and Redis are **not** published on the host. They listen only on the
+`cohestra_uat_internal` Docker network (`postgres:5432`, `redis:6379`).
 
 Do **not** open ports 5432 or 6379 in the DigitalOcean cloud firewall.
+Do **not** add `5432:5432` or `6379:6379` to `docker-compose.uat.yml`.
 
-## Prerequisites
-
-- SSH access to the Ubuntu droplet
-- `docker compose -f docker-compose.uat.yml ps` shows `postgres` and `redis` healthy
-- Credentials from the server `.env` file (`POSTGRES_PASSWORD`, etc.)
-
-## Connect pgAdmin to PostgreSQL
-
-### 1. Open an SSH tunnel (keep this terminal open)
-
-From your **local** machine:
+## CLI on the droplet (preferred)
 
 ```bash
-ssh -N -L 15432:127.0.0.1:5432 root@YOUR_DROPLET_IP
+bash deploy/uat-compose.sh exec postgres \
+  psql -U crm -d cohestra
+
+bash deploy/uat-compose.sh exec redis redis-cli ping
 ```
 
-Use your droplet user if not `root`. `-N` means no remote shell — only forwarding.
-
-### 2. Register the server in pgAdmin
-
-| Field | Value |
-|-------|-------|
-| Host | `localhost` |
-| Port | `15432` (local tunnel port) |
-| Maintenance database | `cohestra` |
-| Username | `crm` (or `POSTGRES_USER` from `.env`) |
-| Password | `POSTGRES_PASSWORD` from server `.env` |
-
-**SSL mode:** Prefer (or Disable for tunnel-only UAT).
-
-### 3. Verify
-
-Run in pgAdmin query tool:
-
-```sql
-SELECT COUNT(*) FROM "AspNetUsers";
-```
-
-## Connect RedisInsight to Redis
-
-### 1. Open an SSH tunnel
-
-In a **second** local terminal (or combine tunnels in one SSH command):
+Backup:
 
 ```bash
-ssh -N -L 16379:127.0.0.1:6379 root@YOUR_DROPLET_IP
+bash deploy/uat-compose.sh exec postgres \
+  pg_dump -U crm cohestra > backup-$(date +%F).sql
 ```
 
-**Combined tunnel (Postgres + Redis in one SSH session):**
+## pgAdmin via SSH (container IP, no host publish)
+
+The host can reach the container address on the Cohestra network. Resolve it on the
+droplet, then tunnel to that IP.
+
+On the droplet:
+
+```bash
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' cohestra-uat-postgres
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' cohestra-uat-redis
+```
+
+From the laptop (replace the IPs):
 
 ```bash
 ssh -N \
-  -L 15432:127.0.0.1:5432 \
-  -L 16379:127.0.0.1:6379 \
-  root@YOUR_DROPLET_IP
+  -L 15432:COHESTRA_POSTGRES_IP:5432 \
+  -L 16379:COHESTRA_REDIS_IP:6379 \
+  DEPLOY_USER@YOUR_DROPLET_IP
 ```
 
-### 2. Add database in RedisInsight
+Then in pgAdmin: Host `localhost`, Port `15432`, database `cohestra`, user `crm`,
+password from the Cohestra `.env` (`POSTGRES_PASSWORD`).
 
-| Field | Value |
-|-------|-------|
-| Host | `127.0.0.1` |
-| Port | `16379` |
-| Database alias | `cohestra-uat` |
+RedisInsight: `127.0.0.1:16379`. Default Redis has no password; the SSH session is
+the access control.
 
-No password is configured on the default Redis container (internal Docker network only). The tunnel is your access control.
-
-### 3. What to expect
-
-- **Refresh tokens** — keys used by JWT refresh flow
-- **OTP codes** — short-lived operator registration / password-reset codes
-- **Rate limit counters** — public registration throttling
+Do not point these tunnels at the **existing application’s** Postgres/Redis.
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| Connection refused on localhost | SSH tunnel not running, or stack not up on droplet |
-| pgAdmin auth failed | Wrong `POSTGRES_PASSWORD` — check server `.env` |
+| Connection refused | Isolated stack not up, or you tunneled to a host port that no longer exists |
+| Wrong database | Confirm container name `cohestra-uat-postgres`, project `cohestra-uat` |
+| pgAdmin auth failed | Wrong `POSTGRES_PASSWORD` — Cohestra `.env` only |
 | Tunnel drops when laptop sleeps | Re-run the `ssh -N -L ...` command |
-| Port already in use locally | Change `15432` / `16379` to another free local port |
 
 ## Security notes
 
-- Never bind Postgres/Redis to `0.0.0.0` on the droplet.
+- Never bind Cohestra Postgres/Redis to `0.0.0.0`.
 - Never add 5432/6379 to the DigitalOcean firewall inbound rules.
+- Never reuse the existing application’s volume or credentials.
 - Rotate `POSTGRES_PASSWORD` if it was ever shared insecurely.

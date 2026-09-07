@@ -11,23 +11,58 @@ Deploy Activity Lead to a single DigitalOcean droplet for client UAT or producti
 | Region | Closest to operators (Philippines → Singapore or Bangalore) |
 | Backups | Enable weekly droplet backups before UAT |
 
-## Architecture on the droplet
+## Architecture on the shared droplet
+
+Cohestra UAT is an **isolated** Compose project. It must not take the existing application’s ports, network, Postgres, Redis, or volumes.
 
 ```
-Internet (:80 HTTP, :443 when TLS is configured)
+Internet
     │
     ▼
-nginx container (deploy/nginx/app.conf)
-    ├── /          → web:3000   (Next.js)
-    └── /api/*     → api:8080   (ASP.NET Core)
-                          │
-                    postgres + redis (Docker network)
-                    also bound to 127.0.0.1:5432 / :6379 for SSH tunnels
+0.0.0.0:80 / :443
+    │
+    ▼
+lead-generation-crm-nginx-1          ← existing Docker edge (do not recreate)
+    ├── existing hostname → existing web/api (unchanged)
+    └── Cohestra UAT host → http://cohestra-uat-nginx:80
+                            (Docker DNS on cohestra_uat_edge)
+                                  │
+                                  ▼
+                        cohestra-uat-nginx :80
+                          ├── /      → web:3000     (cohestra_uat_internal)
+                          └── /api/* → api:8080
+                                        │
+                                  postgres :5432 (no host port)
+                                  redis    :6379 (no host port)
+
+Frozen loopback diagnostics (not public, not used by the edge):
+  127.0.0.1:3100 → web:3000
+  127.0.0.1:5100 → api:8080
+  127.0.0.1:8180 → nginx:80
 ```
 
-**Local dev uses the same nginx routing** — only `docker-compose.yml` vs `docker-compose.uat.yml` differs (secrets, Production env, port binds).
+Existing loopback publications stay theirs: `127.0.0.1:5432` / `:6379`.
+Do not publish Cohestra Postgres/Redis.
 
-Postgres and Redis are **not** on the public internet. Use **[SSH tunnels for pgAdmin & RedisInsight](./database-tools.md)**.
+Compose project: **`cohestra-uat`**. Networks: **`cohestra_uat_internal`** + **`cohestra_uat_edge`**.
+
+Inside the existing nginx container, `127.0.0.1:8180` is **wrong**. Use `cohestra-uat-nginx`.
+
+Do **not** deploy with `-p cohestra-infra-uat`. That name may already be the live public stack.
+
+On the droplet, prove ports are free before `compose up`:
+
+```bash
+bash deploy/uat-port-audit.sh
+bash deploy/validate-uat-isolation.sh
+```
+
+Edge attach + vhost snippets (not applied automatically): `deploy/host-proxy/`.
+Do not recreate `lead-generation-crm-nginx-1` to add the network; use `reconcile-edge-network.sh`.
+
+**Local dev** still uses `docker-compose.yml` (`cohestra-infra`) and may bind host `:80`. That file is not the shared-droplet UAT contract.
+
+Postgres and Redis are **Docker-network only**. Use **[database-tools.md](./database-tools.md)**.
 
 ## 1. DNS (optional until you have a domain)
 
@@ -42,10 +77,10 @@ Create or attach a firewall with **inbound** rules only for:
 | Port | Purpose |
 |------|---------|
 | 22 | SSH |
-| 80 | HTTP (Docker nginx) |
-| 443 | HTTPS (when TLS certs are mounted) |
+| 80 | HTTP — host public reverse proxy only |
+| 443 | HTTPS — host public reverse proxy only |
 
-Do **not** open 5432, 6379, 3000, or 8080 publicly.
+Do **not** open 3100, 5100, 8180, 5432, 6379, 3000, or 8080 publicly. Those Cohestra binds are loopback-only or internal.
 
 ## 3. Server bootstrap
 
@@ -85,7 +120,7 @@ Optional:
 
 | Variable | Notes |
 |----------|-------|
-| `NGINX_HTTP_PORT` | Default `80` — change if port conflict |
+| `WEB_HOST_PORT` / `API_HOST_PORT` / `NGINX_HOST_PORT` | Frozen loopback map: `3100` / `5100` / `8180` unless `uat-port-audit.sh` records a collision |
 | `SendGrid__RegistrationFromEmail` | OTP / registration mail |
 | `EmailBranding__WebsiteUrl` | Footer link in emails |
 | `LANDING_*` / `NEXT_PUBLIC_LANDING_*` | **Fallback-only** — seeds a fresh Site Page on first deploy and powers env landing when no published site exists. After Epic 9, edit homepage copy in **Website builder**; do not rebuild `web` for copy changes. See also `SiteLanding__*` on the **api** service in `docker-compose.uat.yml`. |
@@ -104,20 +139,31 @@ openssl rand -base64 48   # JWT
 Rebuild after changing `PUBLIC_BASE_URL` (baked into the web image):
 
 ```bash
-docker compose -f docker-compose.uat.yml up -d --build web
+bash deploy/uat-compose.sh up -d --build web
 ```
 
-## 5. Verify nginx (Docker)
+## 5. Verify Cohestra nginx (loopback) and the host proxy
 
-No host nginx install required. Config lives at `deploy/nginx/app.conf`.
+Cohestra nginx is **not** the public `:80` listener on a shared droplet. Config lives at `deploy/nginx/app.conf`.
 
 ```bash
-curl -sI http://YOUR_DROPLET_IP/ | head -3
-curl -s http://YOUR_DROPLET_IP/ready
-docker compose -f docker-compose.uat.yml logs nginx
+curl -sI http://127.0.0.1:8180/ | head -3
+curl -s http://127.0.0.1:8180/ready
+curl -sI https://YOUR-COHESTRA-UAT-HOSTNAME/ | head -3
+bash deploy/uat-compose.sh logs nginx
 ```
 
+Do not treat the existing application’s `https://thesocialcollectivesg.com/ready` as Cohestra UAT.
+
 ## 6. HTTPS
+
+On the **shared** droplet, do **not** run these Cohestra TLS scripts. They refuse
+while `COHESTRA_SHARED_HOST_UAT` is anything other than `false`. Terminate TLS on
+the host public reverse proxy and add a **new** Cohestra hostname
+(`deploy/host-proxy/`).
+
+The options below are for a **dedicated** Cohestra droplet only
+(`COHESTRA_SHARED_HOST_UAT=false`).
 
 ### Option A — Temporary (no client domain)
 
@@ -178,19 +224,19 @@ Sandbox is **disabled** on this deploy. The API will not start in Production wit
 ### Logs
 
 ```bash
-docker compose -f docker-compose.uat.yml logs -f nginx api web
+bash deploy/uat-compose.sh logs -f nginx api web
 ```
 
 ### Restart / update
 
 ```bash
-docker compose -f docker-compose.uat.yml up -d
+bash deploy/uat-compose.sh up -d
 # Rebuild web if PUBLIC_BASE_URL changed:
-docker compose -f docker-compose.uat.yml up -d --build web
+bash deploy/uat-compose.sh up -d --build web
 
 # New release:
 git pull
-docker compose -f docker-compose.uat.yml up -d --build
+bash deploy/uat-compose.sh up -d --build
 ```
 
 Migrations apply automatically on API startup.
@@ -198,7 +244,7 @@ Migrations apply automatically on API startup.
 ### Backup Postgres
 
 ```bash
-docker compose -f docker-compose.uat.yml exec postgres \
+bash deploy/uat-compose.sh exec postgres \
   pg_dump -U crm cohestra > backup-$(date +%F).sql
 ```
 
@@ -206,8 +252,8 @@ docker compose -f docker-compose.uat.yml exec postgres \
 
 - [ ] `.env` not committed to git
 - [ ] Unique `JWT_SIGNING_KEY` per environment
-- [ ] Postgres/Redis not in public firewall (only 127.0.0.1 on droplet)
-- [ ] Only nginx ports 80/443 exposed publicly
+- [ ] Postgres/Redis have no host ports and are not in the public firewall
+- [ ] Only the host public reverse proxy exposes 80/443; Cohestra 3100/5100/8180 stay on 127.0.0.1
 - [ ] HTTPS enabled before sharing URL widely (when domain available)
 - [ ] SendGrid API key only on server
 - [ ] `DemoDataSeed__Enabled=false` and `OperatorSeed__Enabled=false` (defaults in compose)
@@ -217,8 +263,8 @@ docker compose -f docker-compose.uat.yml exec postgres \
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.yml` | Local development (nginx on `:80`, same routing as prod) |
-| `docker-compose.uat.yml` | UAT / production-style (Production env, secrets required) |
+| `docker-compose.yml` | Local development (`cohestra-infra`, nginx on `:80`) |
+| `docker-compose.uat.yml` | Isolated shared-host UAT (`cohestra-uat`, loopback 3100/5100/8180) |
 
 ## Troubleshooting
 

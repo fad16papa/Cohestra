@@ -22,16 +22,38 @@ public sealed class GoogleRecaptchaVerifier(
     {
         var settings = options.Value.Recaptcha;
 
-        if (!settings.Enabled
-            || string.IsNullOrWhiteSpace(settings.SecretKey))
+        if (!settings.Enabled)
         {
-            if (string.Equals(captchaToken?.Trim(), settings.TestBypassToken, StringComparison.Ordinal))
+            // Production/UAT: disabled means no captcha. Do not require a well-known bypass token.
+            if (AllowsLocalCaptchaBypass())
             {
-                return (true, null);
+                if (!string.IsNullOrWhiteSpace(settings.TestBypassToken)
+                    && string.Equals(captchaToken?.Trim(), settings.TestBypassToken, StringComparison.Ordinal))
+                {
+                    return (true, null);
+                }
+
+                if (!string.IsNullOrWhiteSpace(captchaToken))
+                {
+                    return (true, null);
+                }
+
+                return (false, "Complete the CAPTCHA challenge.");
             }
 
-            if (hostEnvironment.IsDevelopment() || hostEnvironment.EnvironmentName == "Testing")
+            return (true, null);
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.SecretKey))
+        {
+            if (AllowsLocalCaptchaBypass())
             {
+                if (!string.IsNullOrWhiteSpace(settings.TestBypassToken)
+                    && string.Equals(captchaToken?.Trim(), settings.TestBypassToken, StringComparison.Ordinal))
+                {
+                    return (true, null);
+                }
+
                 if (!string.IsNullOrWhiteSpace(captchaToken))
                 {
                     return (true, null);
@@ -80,6 +102,9 @@ public sealed class GoogleRecaptchaVerifier(
 
         return (false, "CAPTCHA verification failed. Try again.");
     }
+
+    private bool AllowsLocalCaptchaBypass() =>
+        hostEnvironment.IsDevelopment() || hostEnvironment.IsEnvironment("Testing");
 
     private sealed class RecaptchaVerifyResponse
     {

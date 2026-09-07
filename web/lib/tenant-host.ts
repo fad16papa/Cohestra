@@ -9,12 +9,30 @@ export function parseTenantSlugFromHostname(hostname: string): string | null {
     return host.slice(0, -".localhost".length);
   }
 
+  if (host === "uat.cohestra.app" || host === "www.uat.cohestra.app") {
+    return null;
+  }
+
+  if (host.endsWith(".uat.cohestra.app")) {
+    const slug = host.slice(0, -".uat.cohestra.app".length);
+    if (!slug || slug.includes(".")) {
+      return null;
+    }
+
+    return slug;
+  }
+
   if (
     host.endsWith(".cohestra.app") &&
     host !== "cohestra.app" &&
     host !== "www.cohestra.app"
   ) {
-    return host.slice(0, -".cohestra.app".length);
+    const slug = host.slice(0, -".cohestra.app".length);
+    if (!slug || slug.includes(".")) {
+      return null;
+    }
+
+    return slug;
   }
 
   if (host.endsWith(".nip.io")) {

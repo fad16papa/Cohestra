@@ -213,4 +213,68 @@ public sealed class AuthHandoffIntegrationTests(IntegrationTestFixture fixture)
 
         successResponse.EnsureSuccessStatusCode();
     }
+
+    [SkippableFact]
+    public async Task HandoffExchange_OnUatMarketingApex_Succeeds_AndAdminMeWorks()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var slug = $"apex-{Guid.NewGuid():N}"[..20];
+        var email = $"apex-{Guid.NewGuid():N}@example.com";
+        const string otpCode = "445566";
+
+        using var signupClient = Factory.CreateClient();
+        using var signupResponse = await signupClient.PostAsJsonAsync(
+            "/api/v1/public/signup",
+            new PublicSignupRequest(
+                AcceptTermsAndPrivacy: true,
+                TermsVersion: "2026-07-21",
+                PrivacyVersion: "2026-07-21",
+                OrgName: "Apex Atelier",
+                Slug: slug,
+                Email: email,
+                Password: "ChangeMe123!",
+                CaptchaToken: "test-captcha-pass"));
+
+        Assert.Equal(HttpStatusCode.Created, signupResponse.StatusCode);
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var otpStore = scope.ServiceProvider.GetRequiredService<IAuthOtpStore>();
+            await otpStore.TryStoreAsync(
+                email,
+                OtpPurpose.EmailVerification,
+                otpCode,
+                TimeSpan.FromMinutes(10));
+        }
+
+        using var verifyResponse = await signupClient.PostAsJsonAsync(
+            "/api/v1/public/signup/verify-email",
+            new SignupVerifyEmailRequest(email, otpCode, slug, ForCheckout: true));
+
+        verifyResponse.EnsureSuccessStatusCode();
+        var verifyPayload = await verifyResponse.Content.ReadFromJsonAsync<SignupVerifyEmailResponse>(
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.NotNull(verifyPayload);
+        Assert.False(string.IsNullOrWhiteSpace(verifyPayload.HandoffCode));
+
+        using var apexClient = Factory.CreateClient();
+        IntegrationTestHelpers.UseMarketingApexHost(apexClient);
+
+        using var exchangeResponse = await apexClient.PostAsJsonAsync(
+            "/api/v1/auth/handoff/exchange",
+            new AuthHandoffExchangeRequest(verifyPayload.HandoffCode));
+
+        exchangeResponse.EnsureSuccessStatusCode();
+        var tokens = await exchangeResponse.Content.ReadFromJsonAsync<AuthTokenResponse>(
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.NotNull(tokens);
+        Assert.False(string.IsNullOrWhiteSpace(tokens.AccessToken));
+
+        IntegrationTestHelpers.UseBearerToken(apexClient, tokens.AccessToken);
+        using var meResponse = await apexClient.GetAsync("/api/v1/admin/me");
+        meResponse.EnsureSuccessStatusCode();
+    }
 }

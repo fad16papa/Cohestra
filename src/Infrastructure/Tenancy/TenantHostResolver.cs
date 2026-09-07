@@ -58,6 +58,32 @@ public sealed class TenantHostResolver(
         return TenantHostResolution.Fail("Could not resolve tenant from Host.");
     }
 
+    public async Task<TenantHostResolution> ResolveByIdAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        if (tenantId == Guid.Empty)
+        {
+            return TenantHostResolution.Fail("JWT tenant_id is invalid.");
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return TenantHostResolution.Fail("Unknown tenant workspace.");
+        }
+
+        if (tenant.Status != TenantStatus.Active)
+        {
+            return TenantHostResolution.Fail($"Tenant workspace '{tenant.Slug}' is not available.");
+        }
+
+        return TenantHostResolution.Ok(tenant.Id, tenant.Slug);
+    }
+
     public async Task<TenantDoorResolution> ResolveDoorAsync(
         string? hostHeader,
         CancellationToken cancellationToken = default)
@@ -125,13 +151,14 @@ public sealed class TenantHostResolver(
         };
 
     /// <summary>
-    /// Production apex/www and local bare localhost — marketing-only (no tenant SitePage).
+    /// Production apex/www, UAT apex (uat.cohestra.app), and local bare localhost — marketing-only.
     /// When <see cref="DevTenantSlugConfigKey"/> is set, bare localhost binds to that tenant instead.
     /// </summary>
     public static bool IsMarketingApexHost(string? hostHeader, IConfiguration? configuration = null)
     {
         var host = NormalizeHost(hostHeader);
-        if (host is "cohestra.app" or "www.cohestra.app")
+        if (host is "cohestra.app" or "www.cohestra.app"
+            or "uat.cohestra.app" or "www.uat.cohestra.app")
         {
             return true;
         }
@@ -139,7 +166,7 @@ public sealed class TenantHostResolver(
         if (host.EndsWith(".cohestra.app", StringComparison.Ordinal))
         {
             var without = host[..^".cohestra.app".Length];
-            return without is "www" or "";
+            return without is "www" or "" or "uat" or "www.uat";
         }
 
         if (IsLocalDevApexHost(host) && !HasDevTenantSlugOverride(configuration))
@@ -171,6 +198,17 @@ public sealed class TenantHostResolver(
         if (IsMarketingApexHost(hostHeader, configuration))
         {
             return string.Empty;
+        }
+
+        if (host.EndsWith(".uat.cohestra.app", StringComparison.Ordinal))
+        {
+            var without = host[..^".uat.cohestra.app".Length];
+            if (string.IsNullOrWhiteSpace(without) || without.Contains('.', StringComparison.Ordinal))
+            {
+                return string.Empty;
+            }
+
+            return without;
         }
 
         if (host.EndsWith(".cohestra.app", StringComparison.Ordinal))

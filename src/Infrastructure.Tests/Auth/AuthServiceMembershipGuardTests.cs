@@ -870,7 +870,7 @@ public sealed class AuthServiceMembershipGuardTests
 
         public Task<AuthHandoffPayload?> ExchangeAsync(
             string code,
-            Guid expectedTenantId,
+            Guid? expectedTenantId,
             CancellationToken cancellationToken = default) =>
             Task.FromResult<AuthHandoffPayload?>(null);
     }

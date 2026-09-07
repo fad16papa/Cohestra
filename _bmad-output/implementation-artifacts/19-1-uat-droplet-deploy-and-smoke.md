@@ -25,7 +25,7 @@ Deployment/infrastructure stories must additionally include **real environment v
 
 Copied from `epics-cohestra-enterprise.md` Epic 19.1:
 
-1. Droplet provisioned per `docs/deploy/digitalocean-uat.md`; `.env` from `.env.uat.example` with strong secrets; `docker compose -f docker-compose.uat.yml up -d --build` succeeds; firewall **22, 80, 443 only**.
+1. Existing droplet reused per `docs/deploy/digitalocean-uat.md`; isolated Compose project `cohestra-uat`; `.env` from `.env.uat.example` with strong secrets; `bash deploy/uat-compose.sh up -d --build` succeeds **after** port audit; firewall **22, 80, 443 only** (host public proxy). Cohestra loopback binds stay off the public internet.
 2. `bash deploy/uat-smoke.sh` with `PUBLIC_BASE_URL` set completes without error.
 3. `DemoDataSeed__Enabled=false` and `OperatorSeed__Enabled=false` (or documented bootstrap-only exception); `DEV_TENANT_SLUG` not set on the production path.
 4. DNS: apex + wildcard or documented nip.io interim.
@@ -41,19 +41,26 @@ Repo contract, checklists, smoke, rollback, and secrets matrix are ready. This s
 The **existing** droplet is in use. Public `/ready` is Healthy. Do not create another droplet.
 
 ```
-SSH ACCESS VALIDATION   ← current owner boundary (workstation key)
-→ SERVER AUDIT
+PORT PLAN FREEZE          ← DONE 2026-09-06 (host ss: 3100/5100/8180 free)
+EDGE PROXY TOPOLOGY       ← Docker network cohestra_uat_edge + alias (this PR)
+SSH ACCESS VALIDATION     ← PASS (deploy + docker group; NOPASSWD not required)
+DOCKER DEPLOY ACCESS      ← PASS
+EXISTING APP BASELINE     ← PASS (public /ready Healthy)
+LIVE EDGE DISCOVERY       ← owner droplet session (this Cloud Agent has no key)
 → ENV RECONCILIATION
-→ SERVER BASELINE
-→ DEPLOY CURRENT MAIN
-→ DATABASE MIGRATION
-→ START SERVICES
-→ HEALTH CHECKS
+→ RECONCILE EDGE NETWORK (no recreate of lead-generation-crm-nginx-1)
+→ ADD NEW COHESTRA SERVER BLOCK (backup, nginx -t, reload)
+→ DEPLOY ISOLATED cohestra-uat
+→ DATABASE MIGRATION (Cohestra volume only)
+→ HEALTH CHECKS (loopback 8180 + Cohestra host via existing edge)
+→ EXISTING APP REGRESSION CHECK (thesocialcollectivesg.com unchanged)
 → PRODUCT SMOKE
-→ RESOURCE CHECK
+→ RESOURCE CHECK (free -h, docker stats, df, uptime)
 → LOG REVIEW
 → ACCEPTANCE
 ```
+
+**Port isolation PASS.** Do **not** deploy until the Docker edge topology is in this PR, CI is green, and owner SSH is available. Existing edge must proxy to `http://cohestra-uat-nginx:80`, not `127.0.0.1:8180`.
 
 Paddle full billing lifecycle stays **19.4**. Do not block 19.1 on webhook acceptance.
 
@@ -62,7 +69,7 @@ Owner workstation (do not paste the key or passphrase):
 ```bash
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/cohestra_uat
-UAT_SSH_USER=YOUR_DEPLOY_USER bash deploy/uat-ssh-accept.sh
+UAT_SSH_USER=deploy bash deploy/uat-ssh-accept.sh
 ```
 
 Canonical: `epic-19-uat-access-readiness-2026-09-06.md`
@@ -84,3 +91,50 @@ Paddle sandbox recon: **PASS**. Preserve local sandbox API key, client token, pr
 - Live Paddle keys (sandbox only until public launch)
 - Cinema changes
 - Reopening Epic 25 or Epic 34
+
+### Review Findings
+
+Reviewed HEAD `95e5bd0` (PR #294) on 2026-09-06. Mandatory loop applied BLOCKER/MAJOR patches on the following HEAD.
+
+- [x] [Review][Patch] `uat-compose.sh` must refuse later `-p` / `--project-name` [deploy/uat-compose.sh]
+- [x] [Review][Patch] Port audit must fail when `ss` is missing (no false free) [deploy/uat-port-audit.sh]
+- [x] [Review][Patch] Gate `NGINX_HOST_PORT` 80/443, not only retired `NGINX_HTTP_PORT` [deploy/preflight-launch.sh]
+- [x] [Review][Patch] Source droplet `.env` before auditing host ports [deploy/uat-port-audit.sh]
+- [x] [Review][Patch] Treat existing `cohestra-uat` listeners as self on redeploy [deploy/uat-port-audit.sh]
+- [x] [Review][Patch] `remote-deploy.sh` must reset git, then audit the new tree [deploy/remote-deploy.sh]
+- [x] [Review][Patch] Smoke must not skip loopback or default to existing `:80` [deploy/uat-smoke.sh]
+- [x] [Review][Patch] Shared-host TLS refuse must treat anything but explicit false as shared [deploy/cohestra-uat-guards.sh]
+- [x] [Review][Patch] Refuse certbot / SSL nginx config on the shared host [deploy/uat-compose.sh]
+- [x] [Review][Patch] RAM under 3.5 GiB is CONDITIONAL warn, not a port-audit FAIL [deploy/uat-port-audit.sh]
+- [x] [Review][Patch] Story AC and env example must not steer at the existing app hostname
+- [x] [Review][Defer] Isolation CI does not run `docker compose config` — deferred, pre-existing CI job has no Docker daemon requirement
+
+### Review Findings (2026-09-06 recaptcha / UAT env)
+
+Reviewed implementation HEADs `45b7a16` → `2e6c73f` → follow-up upsert patch. Artifact: `epic-19-recaptcha-bypass-code-review-2026-09-06.md`.
+
+- [x] [Review][Dismiss] Production captcha-off accepts empty token — owner lock, not a bypass token
+- [x] [Review][Patch] UAT compose must not interpolate leftover captcha bypass keys [docker-compose.uat.yml]
+- [x] [Review][Patch] Generate JWT when missing, short, or placeholder [deploy/reconcile-canonical-uat-env.sh]
+- [x] [Review][Patch] Classify env without sourcing the file [deploy/classify-uat-env.sh]
+- [x] [Review][Patch] Keep local-dev captcha contract on non-production Next builds [web/lib/signup/signup-api.ts]
+- [x] [Review][Patch] Testing environment match must be case-insensitive [GoogleRecaptchaVerifier.cs]
+- [x] [Review][Patch] UAT hosts must not rewrite to production apex [signup-api.ts]
+- [x] [Review][Patch] EmailBranding UAT default follows PUBLIC_BASE_URL [docker-compose.uat.yml]
+- [x] [Review][Patch] Classifier TLS keys are Story 19.2; NEXT_PUBLIC_API_URL is compose-built
+- [x] [Review][Patch] Canonical path is /home/deploy/cohestra, not /tmp
+- [x] [Review][Patch] Reconcile upsert must replace export KEY= / leading whitespace
+- [x] [Review][Defer] First UAT image rebuild is droplet-side — deferred, no stack start yet
+- [x] [Review][Defer] Dev/Testing accept any non-empty captcha token — deferred, pre-existing local-test behavior
+
+### Review Findings (2026-09-06 UAT marketing apex `170458c`)
+
+Mandatory Code Review Loop on implementation HEAD `170458c`. CI: PASS (isolation, .NET, integration, Next, Docker smoke; GG neutral).
+
+- [x] [Review][Dismiss] Copy-pasted host lists — same locked hostname, tested on both sides
+- [x] [Review][Dismiss] resolveMarketingApexUrl / platform-ops collapse to uat apex — intended
+- [x] [Review][Dismiss] C# Host case/port — NormalizeHost already lowercases and strips port
+- [x] [Review][Defer] TenantPublicWebUrlBuilder still rewrites UAT PUBLIC_BASE_URL to production apex [TenantPublicWebUrlBuilder.cs] — deferred, pre-existing; not required for Host-header `/` prove
+- [x] [Review][Defer] buildTenantDashboardUrl on uat apex omits `{slug}` [signup-api.ts] — deferred, pre-existing same-origin patch
+- [x] [Review][Defer] Reserved slug list does not include `uat` [TenantSlugRules.cs] — deferred, pre-existing
+

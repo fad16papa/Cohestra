@@ -71,7 +71,7 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
 
         if (IsTenantBoundAnonymousAuthPath(path))
         {
-            await HandlePublicAsync(context, hostResolver, currentTenant, logger);
+            await HandleHandoffExchangeAsync(context, hostResolver, currentTenant, logger);
             return;
         }
 
@@ -110,6 +110,26 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         }
 
         await next(context);
+    }
+
+    private async Task HandleHandoffExchangeAsync(
+        HttpContext context,
+        ITenantHostResolver hostResolver,
+        CurrentTenant currentTenant,
+        ILogger<TenantResolutionMiddleware> logger)
+    {
+        var resolution = await hostResolver.ResolveAsync(
+            TenantRequestHost.GetEffectiveHost(context),
+            context.RequestAborted);
+
+        if (resolution.IsMarketingHost)
+        {
+            currentTenant.SetMarketingHost();
+            await next(context);
+            return;
+        }
+
+        await HandlePublicAsync(context, hostResolver, currentTenant, logger);
     }
 
     private async Task HandlePublicAsync(
@@ -187,8 +207,33 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         var resolution = await hostResolver.ResolveAsync(
             TenantRequestHost.GetEffectiveHost(context),
             context.RequestAborted);
-        if (resolution.IsMarketingHost
-            || !resolution.Succeeded
+
+        if (resolution.IsMarketingHost)
+        {
+            var jwtTenant = await hostResolver.ResolveByIdAsync(claimTenantId, context.RequestAborted);
+            if (!jwtTenant.Succeeded || jwtTenant.TenantId is null || string.IsNullOrWhiteSpace(jwtTenant.Slug))
+            {
+                await WriteForbiddenAsync(
+                    context,
+                    jwtTenant.ErrorDetail ?? "Could not resolve tenant from JWT.");
+                return;
+            }
+
+            currentTenant.SetResolved(jwtTenant.TenantId.Value, jwtTenant.Slug);
+            using (logger.BeginScope(new Dictionary<string, object?>
+            {
+                ["tenantId"] = jwtTenant.TenantId.Value,
+                ["tenantSlug"] = jwtTenant.Slug,
+                ["isMarketingHost"] = true,
+            }))
+            {
+                await next(context);
+            }
+
+            return;
+        }
+
+        if (!resolution.Succeeded
             || resolution.TenantId is null
             || string.IsNullOrWhiteSpace(resolution.Slug))
         {

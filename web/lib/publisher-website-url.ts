@@ -24,8 +24,18 @@ function resolveTenantSlug(door: PublicDoorPayload, origin: string): string | nu
       return hostname.slice(0, -".localhost".length);
     }
 
+    if (hostname === "uat.cohestra.app" || hostname === "www.uat.cohestra.app") {
+      return null;
+    }
+
+    if (hostname.endsWith(".uat.cohestra.app")) {
+      const slug = hostname.slice(0, -".uat.cohestra.app".length);
+      return slug && !slug.includes(".") ? slug : null;
+    }
+
     if (hostname.endsWith(".cohestra.app") && hostname !== "cohestra.app") {
-      return hostname.slice(0, -".cohestra.app".length);
+      const slug = hostname.slice(0, -".cohestra.app".length);
+      return slug && !slug.includes(".") ? slug : null;
     }
 
     if (hostname.endsWith(".nip.io")) {
@@ -50,6 +60,14 @@ export function resolveMarketingApexUrl(origin: string): string {
 
     if (hostname.endsWith(".localhost") && hostname !== "localhost") {
       return `${url.protocol}//localhost${portSuffix}`;
+    }
+
+    if (hostname === "uat.cohestra.app" || hostname === "www.uat.cohestra.app") {
+      return `${url.protocol}//uat.cohestra.app${portSuffix}`;
+    }
+
+    if (hostname.endsWith(".uat.cohestra.app")) {
+      return `${url.protocol}//uat.cohestra.app${portSuffix}`;
     }
 
     if (

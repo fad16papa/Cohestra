@@ -35,7 +35,7 @@ public sealed class RedisAuthHandoffStore(
 
     public async Task<AuthHandoffPayload?> ExchangeAsync(
         string code,
-        Guid expectedTenantId,
+        Guid? expectedTenantId,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(code))
@@ -70,7 +70,7 @@ public sealed class RedisAuthHandoffStore(
 
         if (payload is null
             || payload.TenantId == Guid.Empty
-            || payload.TenantId != expectedTenantId)
+            || (expectedTenantId is Guid requiredTenant && payload.TenantId != requiredTenant))
         {
             await db.StringSetAsync(key, value, ttl.Value);
             return null;

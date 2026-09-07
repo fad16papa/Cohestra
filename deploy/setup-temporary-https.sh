@@ -20,7 +20,11 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
-COMPOSE=(docker compose -f docker-compose.uat.yml --profile tools)
+# shellcheck disable=SC1091
+source "$ROOT_DIR/deploy/cohestra-uat-guards.sh"
+refuse_legacy_compose_project || exit 1
+refuse_shared_host_cohestra_tls || exit 1
+COMPOSE=(bash "$ROOT_DIR/deploy/uat-compose.sh" --profile tools)
 
 if [[ ! -f .env ]]; then
   echo "ERROR: .env not found. Copy .env.uat.example to .env first."
