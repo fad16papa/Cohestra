@@ -114,6 +114,7 @@ Encrypt name `uat.cohestra.app` in `lead-generation-crm_certbot_certs`, then
 `listen 443` in `zz-cohestra-uat.conf` only. Do **not** regenerate
 `active-ssl.conf`. Do **not** use the existing site certificate. Do **not**
 run `cohestra-uat-certbot` or `setup-temporary-https.sh` on this shared host.
+Do not re-run `apply-additive-vhost.sh` after TLS (it would drop `listen 443`).
 
 ## After the vhost exists
 
