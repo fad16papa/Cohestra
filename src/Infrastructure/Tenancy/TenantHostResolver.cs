@@ -58,6 +58,32 @@ public sealed class TenantHostResolver(
         return TenantHostResolution.Fail("Could not resolve tenant from Host.");
     }
 
+    public async Task<TenantHostResolution> ResolveByIdAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        if (tenantId == Guid.Empty)
+        {
+            return TenantHostResolution.Fail("JWT tenant_id is invalid.");
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return TenantHostResolution.Fail("Unknown tenant workspace.");
+        }
+
+        if (tenant.Status != TenantStatus.Active)
+        {
+            return TenantHostResolution.Fail($"Tenant workspace '{tenant.Slug}' is not available.");
+        }
+
+        return TenantHostResolution.Ok(tenant.Id, tenant.Slug);
+    }
+
     public async Task<TenantDoorResolution> ResolveDoorAsync(
         string? hostHeader,
         CancellationToken cancellationToken = default)

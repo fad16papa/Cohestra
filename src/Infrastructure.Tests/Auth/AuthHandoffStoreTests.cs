@@ -48,4 +48,25 @@ public sealed class AuthHandoffStoreTests
         var second = await store.ExchangeAsync(code, tenantA);
         Assert.Null(second);
     }
+
+    [Fact]
+    public async Task InMemoryExchange_on_marketing_apex_accepts_code_without_host_tenant()
+    {
+        var store = new InMemoryAuthHandoffStore(
+            Options.Create(new AuthHandoffOptions { TtlSeconds = 120 }));
+        var tenantId = Guid.CreateVersion7();
+        var payload = new AuthHandoffPayload(
+            tenantId,
+            "apex-tenant",
+            "access-token",
+            "refresh-token",
+            900);
+
+        var (code, _) = await store.CreateAsync(payload);
+        var exchanged = await store.ExchangeAsync(code, expectedTenantId: null);
+
+        Assert.NotNull(exchanged);
+        Assert.Equal(tenantId, exchanged!.TenantId);
+        Assert.Null(await store.ExchangeAsync(code, expectedTenantId: null));
+    }
 }

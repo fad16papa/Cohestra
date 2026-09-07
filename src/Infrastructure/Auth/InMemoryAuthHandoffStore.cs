@@ -26,7 +26,7 @@ public sealed class InMemoryAuthHandoffStore(IOptions<AuthHandoffOptions> option
 
     public Task<AuthHandoffPayload?> ExchangeAsync(
         string code,
-        Guid expectedTenantId,
+        Guid? expectedTenantId,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(code))
@@ -46,7 +46,7 @@ public sealed class InMemoryAuthHandoffStore(IOptions<AuthHandoffOptions> option
             return Task.FromResult<AuthHandoffPayload?>(null);
         }
 
-        if (entry.Payload.TenantId != expectedTenantId)
+        if (expectedTenantId is Guid requiredTenant && entry.Payload.TenantId != requiredTenant)
         {
             return Task.FromResult<AuthHandoffPayload?>(null);
         }

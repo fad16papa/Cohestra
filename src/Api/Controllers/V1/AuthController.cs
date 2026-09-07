@@ -105,14 +105,23 @@ public class AuthController(
             return BadRequestProblem("Invalid or expired handoff code.");
         }
 
-        if (!currentTenant.IsResolved || currentTenant.TenantId is null)
+        Guid? expectedTenantId = null;
+        if (currentTenant.IsMarketingHost)
+        {
+            expectedTenantId = null;
+        }
+        else if (currentTenant.IsResolved && currentTenant.TenantId is Guid tenantId)
+        {
+            expectedTenantId = tenantId;
+        }
+        else
         {
             return BadRequestProblem("Invalid or expired handoff code.");
         }
 
         var payload = await authHandoffStore.ExchangeAsync(
             request.Code.Trim(),
-            currentTenant.TenantId.Value,
+            expectedTenantId,
             cancellationToken);
 
         if (payload is null)
