@@ -561,7 +561,13 @@ export function ActivityFormTab({
             key={mode.id}
             type="button"
             role="tab"
+            id={`form-studio-tab-${mode.id}`}
             aria-selected={formStudioMode === mode.id}
+            aria-controls={
+              mode.id === "build"
+                ? "form-studio-build-panel"
+                : "form-studio-preview-panel"
+            }
             onClick={() => setFormStudioMode(mode.id)}
             className={cn(
               "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors -mb-px",
@@ -575,7 +581,13 @@ export function ActivityFormTab({
         ))}
       </nav>
 
-      <div hidden={formStudioMode !== "build"} className="space-y-8">
+      <div
+        role="tabpanel"
+        id="form-studio-build-panel"
+        aria-labelledby="form-studio-tab-build"
+        hidden={formStudioMode !== "build"}
+        className="space-y-8"
+      >
       {!isArchived ? (
         <div
           className={cn(
@@ -972,23 +984,30 @@ export function ActivityFormTab({
       />
       </div>
 
-      <div hidden={formStudioMode !== "preview"} className="min-w-0">
-        <RegistrationPublicPreviewShell
-          slug={activity.slug}
-          name={activity.name}
-          schedule={activity.schedule}
-          location={activity.location}
-          communityLabel={activity.communityLabel}
-          formSchema={draftSchema}
-          formStatus={isDirty ? "unsaved" : "saved"}
-          previewKey={previewKey}
-          theme={previewTheme}
-          publicPageHref={
-            activity.status === "published" ? `/register/${activity.slug}` : null
-          }
-          scrollClassName="max-h-[min(calc(100dvh-14rem),80dvh)]"
-        />
-      </div>
+      {formStudioMode === "preview" ? (
+        <div
+          role="tabpanel"
+          id="form-studio-preview-panel"
+          aria-labelledby="form-studio-tab-preview"
+          className="min-w-0"
+        >
+          <RegistrationPublicPreviewShell
+            key={previewKey}
+            slug={activity.slug}
+            name={activity.name}
+            schedule={activity.schedule}
+            location={activity.location}
+            communityLabel={activity.communityLabel}
+            formSchema={draftSchema}
+            formStatus={isDirty ? "unsaved" : "saved"}
+            theme={previewTheme}
+            publicPageHref={
+              activity.status === "published" ? `/register/${activity.slug}` : null
+            }
+            scrollClassName="max-h-[min(calc(100dvh-14rem),80dvh)]"
+          />
+        </div>
+      ) : null}
 
       <AlertDialog
         open={applyDialogOpen}
