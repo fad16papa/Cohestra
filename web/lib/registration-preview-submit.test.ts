@@ -14,15 +14,22 @@ const schema: ActivityFormSchema = {
       type: "text",
       label: "Full name",
       required: true,
+      placeholder: null,
+      options: null,
+      consentText: null,
     },
     {
       id: "email",
       type: "email",
       label: "Email",
       required: true,
+      placeholder: null,
+      options: null,
+      consentText: null,
     },
   ],
   meta: {
+    introMarkdown: null,
     successCopyMarkdown: "Thanks, {{full_name}} — see you soon!",
   },
 };
