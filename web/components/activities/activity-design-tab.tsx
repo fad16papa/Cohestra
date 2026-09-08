@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { PublicRegistrationOpen } from "@/components/registration/public-registration-open";
-import { RegistrationPreviewChrome } from "@/components/registration/registration-preview-chrome";
+import { RegistrationPublicPreviewShell } from "@/components/registration/registration-public-preview-shell";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +12,6 @@ import {
   updateActivity,
   type Activity,
   type RegistrationTheme,
-  type RegistrationThemePreset,
 } from "@/lib/activities-api";
 import { uploadBrandingAsset } from "@/lib/campaigns-api";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
@@ -22,6 +20,10 @@ import {
   registrationPresetLabels,
   registrationPresetOptions,
 } from "@/lib/registration-theme-utils";
+import {
+  resolveRegistrationPreviewTheme,
+  themeFromActivity,
+} from "@/lib/registration-preview-theme";
 import { cn } from "@/lib/utils";
 
 type ActivityDesignTabProps = {
@@ -30,17 +32,8 @@ type ActivityDesignTabProps = {
   onDirtyChange?: (dirty: boolean) => void;
 };
 
-type PreviewViewport = "mobile" | "desktop";
-
-function themeFromActivity(activity: Activity): RegistrationTheme {
-  return (
-    activity.registrationTheme ?? {
-      preset: activity.resolvedRegistrationTheme.preset,
-      inheritCommunityBrand: true,
-      accentColor: null,
-      heroImageUrl: null,
-    }
-  );
+function themeFromActivityRecord(activity: Activity): RegistrationTheme {
+  return themeFromActivity(activity);
 }
 
 export function ActivityDesignTab({
@@ -51,57 +44,29 @@ export function ActivityDesignTab({
   const { authFetch } = useAuth();
   const heroFileInputRef = useRef<HTMLInputElement>(null);
   const [draftTheme, setDraftTheme] = useState<RegistrationTheme>(() =>
-    themeFromActivity(activity)
+    themeFromActivityRecord(activity)
   );
-  const [previewViewport, setPreviewViewport] = useState<PreviewViewport>("mobile");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingHero, setIsUploadingHero] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setDraftTheme(themeFromActivity(activity));
+    setDraftTheme(themeFromActivityRecord(activity));
   }, [activity.id, activity.registrationTheme, activity.resolvedRegistrationTheme.preset]);
 
   const isArchived = activity.status === "archived";
-  const savedTheme = themeFromActivity(activity);
+  const savedTheme = themeFromActivityRecord(activity);
   const isDirty = JSON.stringify(draftTheme) !== JSON.stringify(savedTheme);
 
   useEffect(() => {
     onDirtyChange?.(isDirty);
   }, [isDirty, onDirtyChange]);
 
-  const previewResolved = useMemo(() => {
-    const inherit = draftTheme.inheritCommunityBrand;
-    const communityResolved = activity.resolvedRegistrationTheme;
-
-    let accent = draftTheme.accentColor?.trim() || null;
-    let hero = draftTheme.heroImageUrl?.trim() || null;
-    let logo = communityResolved.logoAssetId;
-
-    if (inherit) {
-      accent =
-        accent ??
-        communityResolved.accentColor ??
-        activity.accentColor;
-      hero =
-        hero ??
-        communityResolved.heroImageUrl ??
-        activity.heroImageUrl;
-      logo = communityResolved.logoAssetId;
-    } else {
-      accent = accent ?? activity.accentColor;
-      hero = hero ?? activity.heroImageUrl;
-      logo = null;
-    }
-
-    return {
-      preset: draftTheme.preset,
-      accentColor: accent,
-      heroImageUrl: hero,
-      logoAssetId: logo,
-    };
-  }, [activity, draftTheme, savedTheme]);
+  const previewResolved = useMemo(
+    () => resolveRegistrationPreviewTheme(activity, draftTheme),
+    [activity, draftTheme]
+  );
 
   const contrastOk = accentMeetsWcagAaOnWhiteText(previewResolved.accentColor);
   const heroPreviewUrl = resolveHeroImageUrl(previewResolved.heroImageUrl);
@@ -157,7 +122,7 @@ export function ActivityDesignTab({
     })
       .then((updated) => {
         onActivityUpdated(updated);
-        setDraftTheme(themeFromActivity(updated));
+        setDraftTheme(themeFromActivityRecord(updated));
         setSavedMessage("Design saved.");
       })
       .catch((saveError) => {
@@ -345,57 +310,20 @@ export function ActivityDesignTab({
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <Label>Live preview</Label>
-            <div className="flex gap-1 rounded-lg border border-border-warm p-1">
-              <button
-                type="button"
-                className={cn(
-                  "rounded-md px-3 py-1 text-xs font-medium",
-                  previewViewport === "mobile"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-text-muted-warm"
-                )}
-                onClick={() => setPreviewViewport("mobile")}
-              >
-                Mobile
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  "rounded-md px-3 py-1 text-xs font-medium",
-                  previewViewport === "desktop"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-text-muted-warm"
-                )}
-                onClick={() => setPreviewViewport("desktop")}
-              >
-                Desktop
-              </button>
-            </div>
-          </div>
-          <RegistrationPreviewChrome
+          <Label>Live preview</Label>
+          <RegistrationPublicPreviewShell
+            slug={activity.slug}
+            name={activity.name}
+            schedule={activity.schedule}
+            location={activity.location}
+            communityLabel={activity.communityLabel}
+            formSchema={activity.formSchema}
             formStatus="saved"
-            className={cn(
-              "mx-auto",
-              previewViewport === "mobile" ? "max-w-[375px]" : "max-w-3xl"
-            )}
-            scrollClassName="max-h-[min(36rem,70dvh)]"
-          >
-            <PublicRegistrationOpen
-              slug={activity.slug}
-              name={activity.name}
-              schedule={activity.schedule}
-              location={activity.location}
-              communityLabel={activity.communityLabel}
-              heroImageUrl={previewResolved.heroImageUrl}
-              accentColor={previewResolved.accentColor}
-              logoAssetId={previewResolved.logoAssetId}
-              preset={previewResolved.preset as RegistrationThemePreset}
-              formSchema={activity.formSchema}
-              variant="preview"
-            />
-          </RegistrationPreviewChrome>
+            theme={previewResolved}
+            publicPageHref={
+              activity.status === "published" ? `/register/${activity.slug}` : null
+            }
+          />
         </div>
       </div>
 
