@@ -7,8 +7,7 @@ import { FormFieldEditor } from "@/components/activities/form-field-editor";
 import { ActivityCloseAtPicker } from "@/components/activities/activity-close-at-picker";
 import { FormTemplatePicker } from "@/components/activities/form-template-picker";
 import { PipingCheatsheet } from "@/components/activities/piping-cheatsheet";
-import { RegistrationForm } from "@/components/registration/registration-form";
-import { RegistrationIntroCopy } from "@/components/registration/registration-intro-copy";
+import { RegistrationFormPreviewPane } from "@/components/registration/registration-form-preview-pane";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button } from "@/components/ui/button";
@@ -946,19 +945,16 @@ export function ActivityFormTab({
         >
           Preview
         </h3>
-        <div className="registration-preview-surface max-h-[min(36rem,70dvh)] overflow-y-auto overscroll-y-contain rounded-xl border border-border-warm bg-background p-4 [-webkit-overflow-scrolling:touch] sm:p-5">
-          {introMarkdown ? (
-            <RegistrationIntroCopy
-              introMarkdown={introMarkdown}
-              className="mb-4 space-y-3"
-            />
-          ) : null}
-          <RegistrationForm
-            key={previewKey}
-            schema={draftSchema}
-            variant="preview"
-          />
-        </div>
+        <RegistrationFormPreviewPane
+          schema={draftSchema}
+          formStatus={isDirty ? "unsaved" : "saved"}
+          previewKey={previewKey}
+          activityName={activity.name}
+          schedule={activity.schedule}
+          location={activity.location}
+          communityLabel={activity.communityLabel}
+          introMarkdown={introMarkdown}
+        />
       </section>
 
       <AlertDialog

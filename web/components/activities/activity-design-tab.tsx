@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { PublicRegistrationOpen } from "@/components/registration/public-registration-open";
+import { RegistrationPreviewChrome } from "@/components/registration/registration-preview-chrome";
 import { useAuth } from "@/components/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -373,11 +374,13 @@ export function ActivityDesignTab({
               </button>
             </div>
           </div>
-          <div
+          <RegistrationPreviewChrome
+            formStatus="saved"
             className={cn(
-              "registration-preview-surface mx-auto overflow-hidden rounded-xl border border-border-warm bg-background p-4",
+              "mx-auto",
               previewViewport === "mobile" ? "max-w-[375px]" : "max-w-3xl"
             )}
+            scrollClassName="max-h-[min(36rem,70dvh)]"
           >
             <PublicRegistrationOpen
               slug={activity.slug}
@@ -392,7 +395,7 @@ export function ActivityDesignTab({
               formSchema={activity.formSchema}
               variant="preview"
             />
-          </div>
+          </RegistrationPreviewChrome>
         </div>
       </div>
 

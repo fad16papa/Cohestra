@@ -8,6 +8,7 @@ import { RegistrationIntroCopy } from "@/components/registration/registration-in
 import { RegistrationSuccessScreen } from "@/components/registration/registration-success-screen";
 import type { ActivityFormSchema, RegistrationThemePreset } from "@/lib/activities-api";
 import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
+import { simulateRegistrationPreviewSubmit } from "@/lib/registration-preview-submit";
 import { cn } from "@/lib/utils";
 
 type PublicRegistrationOpenProps = {
@@ -51,6 +52,7 @@ export function PublicRegistrationOpen({
 }: PublicRegistrationOpenProps) {
   const [submitted, setSubmitted] = useState(false);
   const isEmbed = variant === "embed";
+  const isPreview = variant === "preview";
   const [registrationNumber, setRegistrationNumber] = useState<string | null>(null);
   const [confirmationEmailSent, setConfirmationEmailSent] = useState(false);
   const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
@@ -85,6 +87,7 @@ export function PublicRegistrationOpen({
         confirmationEmailSent={confirmationEmailSent}
         confirmationEmail={confirmationEmail}
         websiteLink={websiteLink}
+        isSimulated={isPreview}
         onRegisterAnother={() => {
           setRegistrationNumber(null);
           setConfirmationEmailSent(false);
@@ -103,8 +106,13 @@ export function PublicRegistrationOpen({
         ) : null}
         <RegistrationForm
           schema={formSchema}
-          variant={variant === "preview" ? "preview" : "public"}
+          variant={isPreview ? "preview" : "public"}
           activitySlug={slug}
+          onPreviewSubmit={
+            isPreview
+              ? (answers) => simulateRegistrationPreviewSubmit(formSchema, answers)
+              : undefined
+          }
           onSubmitted={(result) => {
             setRegistrationNumber(result.registrationNumber);
             setConfirmationEmailSent(result.confirmationEmailSent);

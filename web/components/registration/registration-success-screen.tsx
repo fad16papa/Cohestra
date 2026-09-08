@@ -19,6 +19,8 @@ type RegistrationSuccessScreenProps = {
   confirmationEmailSent?: boolean;
   confirmationEmail?: string | null;
   websiteLink?: PublisherWebsiteLink | null;
+  /** Studio preview — success UI only; no registration was persisted. */
+  isSimulated?: boolean;
   onRegisterAnother: () => void;
 };
 
@@ -32,6 +34,7 @@ export function RegistrationSuccessScreen({
   confirmationEmailSent = false,
   confirmationEmail = null,
   websiteLink = null,
+  isSimulated = false,
   onRegisterAnother,
 }: RegistrationSuccessScreenProps) {
   const [copied, setCopied] = useState(false);
@@ -60,11 +63,22 @@ export function RegistrationSuccessScreen({
           <CheckCircle2 className="size-7 sm:size-8" aria-hidden />
         </span>
         <h2 className="mt-4 text-public-hero text-balance text-text-warm sm:mt-5">
-          You&apos;re registered!
+          {isSimulated ? "Preview success screen" : "You&apos;re registered!"}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-text-muted-warm">
-          We&apos;ve saved your spot for{" "}
-          <span className="font-medium text-text-warm">{activityName}</span>.
+          {isSimulated ? (
+            <>
+              This is how registrants will see the thank-you page.{" "}
+              <span className="font-medium text-text-warm">
+                No registration was created.
+              </span>
+            </>
+          ) : (
+            <>
+              We&apos;ve saved your spot for{" "}
+              <span className="font-medium text-text-warm">{activityName}</span>.
+            </>
+          )}
         </p>
         {personalizedParagraphs.length > 0 ? (
           <div className="mt-3 space-y-2">
@@ -89,13 +103,15 @@ export function RegistrationSuccessScreen({
 
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
           <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
-            Registration ID
+            {isSimulated ? "Preview registration ID" : "Registration ID"}
           </p>
           <p className="mt-2 break-all font-mono text-base font-semibold tracking-wide text-text-warm sm:text-lg">
             {registrationNumber}
           </p>
           <p className="mt-2 text-sm leading-relaxed text-text-muted-warm">
-            Show this ID at check-in so we can validate your registration.
+            {isSimulated
+              ? "Real registrants receive an ID like this after they submit."
+              : "Show this ID at check-in so we can validate your registration."}
           </p>
           <Button
             type="button"
@@ -122,7 +138,22 @@ export function RegistrationSuccessScreen({
         </div>
 
         <p className="text-center text-sm leading-relaxed text-text-muted-warm">
-          {confirmationEmailSent && confirmationEmail ? (
+          {isSimulated ? (
+            <>
+              Confirmation emails are not sent from preview.{" "}
+              {confirmationEmail ? (
+                <>
+                  A real submit would use{" "}
+                  <span className="font-medium break-all text-text-warm">
+                    {confirmationEmail}
+                  </span>
+                  .
+                </>
+              ) : (
+                <>Add an email field to preview confirmation copy.</>
+              )}
+            </>
+          ) : confirmationEmailSent && confirmationEmail ? (
             <>
               A confirmation email was sent to{" "}
               <span className="font-medium break-all text-text-warm">{confirmationEmail}</span>.
@@ -152,7 +183,9 @@ export function RegistrationSuccessScreen({
             onClick={onRegisterAnother}
           >
             <RotateCcw className="size-4 shrink-0" aria-hidden />
-            <span className="truncate">Register another person</span>
+            <span className="truncate">
+              {isSimulated ? "Back to preview form" : "Register another person"}
+            </span>
           </Button>
         </div>
       </div>
