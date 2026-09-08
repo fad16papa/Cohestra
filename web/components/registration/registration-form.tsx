@@ -39,6 +39,10 @@ type RegistrationFormProps = {
   activitySlug?: string;
   onSubmitted?: (result: PublicRegistrationSubmitResult) => void;
   onSubmitError?: (message: string | null) => void;
+  /** Studio preview only — simulates submit locally; never hits the public API. */
+  onPreviewSubmit?: (
+    answers: Record<string, unknown>
+  ) => Promise<PublicRegistrationSubmitResult>;
 };
 
 type FieldErrors = Record<string, string>;
@@ -299,6 +303,7 @@ export function RegistrationForm({
   activitySlug,
   onSubmitted,
   onSubmitError,
+  onPreviewSubmit,
 }: RegistrationFormProps) {
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -400,7 +405,7 @@ export function RegistrationForm({
   }
 
   function performSubmit() {
-    if (isPreview || !activitySlug || isSubmitting) {
+    if (isSubmitting) {
       return;
     }
 
@@ -426,19 +431,50 @@ export function RegistrationForm({
     setSubmitError(null);
     setSubmitErrorCode(null);
     onSubmitError?.(null);
+
+    const answers = {
+      ...values,
+      ...(typeof window !== "undefined"
+        ? collectHiddenAnswers(
+            schema.fields,
+            new URLSearchParams(window.location.search)
+          )
+        : {}),
+    };
+
+    if (isPreview) {
+      if (!onPreviewSubmit) {
+        return;
+      }
+
+      setIsSubmitting(true);
+      void onPreviewSubmit(answers)
+        .then((result) => {
+          onSubmitted?.(result);
+        })
+        .catch((error) => {
+          const message =
+            error instanceof Error && error.message
+              ? error.message
+              : "Could not run preview submission.";
+          setSubmitError(message);
+          onSubmitError?.(message);
+        })
+        .finally(() => {
+          setIsSubmitting(false);
+        });
+      return;
+    }
+
+    if (!activitySlug) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     if (!idempotencyKeyRef.current) {
       idempotencyKeyRef.current = createIdempotencyKey();
     }
-
-    const answers = {
-      ...values,
-      ...collectHiddenAnswers(
-        schema.fields,
-        new URLSearchParams(window.location.search)
-      ),
-    };
 
     void submitPublicRegistration(activitySlug, answers, {
       idempotencyKey: idempotencyKeyRef.current,
@@ -1132,12 +1168,6 @@ export function RegistrationForm({
       onSubmit={handleSubmit}
       noValidate
     >
-      {isPreview ? (
-        <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
-          Registration preview
-        </p>
-      ) : null}
-
       {schema.fields.length === 0 ? (
         <p className="text-sm text-text-muted-warm">
           {isPreview
@@ -1225,18 +1255,20 @@ export function RegistrationForm({
             isPublic && "min-h-12 w-full min-w-0 max-w-full shrink text-base"
           )}
           disabled={
-            (isPreview && !stepsOn) ||
             schema.fields.length === 0 ||
             isSubmitting ||
-            (!isPreview && !activitySlug && isLastStep)
+            (!isPreview && !activitySlug && isLastStep) ||
+            (isPreview && !onPreviewSubmit)
           }
         >
-          {isPreview && isLastStep
-            ? "Preview only"
-            : isSubmitting
-              ? "Submitting…"
-              : stepsOn && !isLastStep
-                ? "Next"
+          {isSubmitting
+            ? isPreview
+              ? "Previewing…"
+              : "Submitting…"
+            : stepsOn && !isLastStep
+              ? "Next"
+              : isPreview
+                ? "Preview submit"
                 : "Join activity"}
         </Button>
       </div>

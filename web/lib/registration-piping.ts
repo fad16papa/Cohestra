@@ -86,3 +86,87 @@ export function substitutePipingPreview(
     .replace(UNKNOWN_TOKEN_PATTERN, "")
     .replace(UNCLOSED_TOKEN_PATTERN, "");
 }
+
+function formatAnswerForPiping(value: unknown): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  if (typeof value === "object" && value !== null && "phone" in value) {
+    const phone = value as { phone?: unknown; country?: unknown };
+    const local = typeof phone.phone === "string" ? phone.phone.trim() : "";
+    const country = typeof phone.country === "string" ? phone.country.trim() : "";
+    return [country, local].filter(Boolean).join(" ").trim();
+  }
+
+  return "";
+}
+
+function findAnswerByFieldId(
+  answers: Record<string, unknown>,
+  fieldId: string
+): unknown {
+  if (fieldId in answers) {
+    return answers[fieldId];
+  }
+
+  const normalized = fieldId.toLowerCase();
+  const match = Object.entries(answers).find(
+    ([key]) => key.toLowerCase() === normalized
+  );
+  return match?.[1];
+}
+
+/** Substitute participant tokens using preview form answers (Studio simulated submit). */
+export function substitutePipingAnswers(
+  template: string | null | undefined,
+  schema: ActivityFormSchema,
+  answers: Record<string, unknown>
+): string {
+  if (!template?.trim()) {
+    return "";
+  }
+
+  const substituted = template.replace(
+    PARTICIPANT_TOKEN_PATTERN,
+    (_match, token?: string, fieldId?: string) => {
+      if (token) {
+        const normalized = token.toLowerCase();
+        if (normalized === "full_name") {
+          const direct =
+            formatAnswerForPiping(findAnswerByFieldId(answers, "full_name")) ||
+            formatAnswerForPiping(findAnswerByFieldId(answers, "name"));
+          return direct || PIPING_SAMPLE_NAME;
+        }
+        if (normalized === "email") {
+          const direct = formatAnswerForPiping(findAnswerByFieldId(answers, "email"));
+          return direct || PIPING_SAMPLE_EMAIL;
+        }
+        if (normalized === "phone") {
+          const direct = formatAnswerForPiping(findAnswerByFieldId(answers, "phone"));
+          return direct || PIPING_SAMPLE_PHONE;
+        }
+      }
+      if (fieldId) {
+        const field = findFieldById(schema, fieldId);
+        if (!field || !isPipingEligibleField(field)) {
+          return "";
+        }
+        return formatAnswerForPiping(findAnswerByFieldId(answers, fieldId));
+      }
+      return "";
+    }
+  );
+
+  return substituted
+    .replace(UNKNOWN_TOKEN_PATTERN, "")
+    .replace(UNCLOSED_TOKEN_PATTERN, "");
+}

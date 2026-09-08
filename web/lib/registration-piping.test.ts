@@ -8,6 +8,7 @@ import {
   PIPING_SAMPLE_NAME,
   splitParticipantCopyParagraphs,
   substitutePipingPreview,
+  substitutePipingAnswers,
 } from "@/lib/registration-piping";
 
 const schema: ActivityFormSchema = {
@@ -83,6 +84,14 @@ describe("registration-piping", () => {
   it("clears empty and unclosed tokens in preview", () => {
     expect(substitutePipingPreview("Hi {{}} there", schema)).toBe("Hi  there");
     expect(substitutePipingPreview("Hi {{full_name there", schema)).toBe("Hi ");
+  });
+
+  it("substitutes participant tokens from preview answers", () => {
+    expect(
+      substitutePipingAnswers("Hello {{full_name}}", schema, {
+        full_name: "Francis",
+      })
+    ).toBe("Hello Francis");
   });
 
   it("normalizes carriage returns and unicode line separators", () => {
