@@ -7,7 +7,7 @@ import { FormFieldEditor } from "@/components/activities/form-field-editor";
 import { ActivityCloseAtPicker } from "@/components/activities/activity-close-at-picker";
 import { FormTemplatePicker } from "@/components/activities/form-template-picker";
 import { PipingCheatsheet } from "@/components/activities/piping-cheatsheet";
-import { RegistrationFormPreviewPane } from "@/components/registration/registration-form-preview-pane";
+import { RegistrationPublicPreviewShell } from "@/components/registration/registration-public-preview-shell";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button } from "@/components/ui/button";
@@ -65,12 +65,21 @@ import {
   type SavedFormTemplateSummary,
 } from "@/lib/form-templates-api";
 import { applyMissingStepBuckets } from "@/lib/form-steps";
+import { buildFormStudioPreviewKey } from "@/lib/form-studio-preview-key";
+import { resolvePersistedRegistrationPreviewTheme } from "@/lib/registration-preview-theme";
 import { registrationPresetLabels } from "@/lib/registration-theme-utils";
 import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
 
 const publishedTemplateLockReason =
   "Templates replace the entire form. Unpublish from Overview to apply one.";
+
+type FormStudioMode = "build" | "preview";
+
+const FORM_STUDIO_MODES: { id: FormStudioMode; label: string }[] = [
+  { id: "build", label: "Build form" },
+  { id: "preview", label: "Preview" },
+];
 
 type ActivityFormTabProps = {
   activity: Activity;
@@ -122,6 +131,7 @@ export function ActivityFormTab({
   const [pendingPresetApply, setPendingPresetApply] =
     useState<RegistrationThemePreset | null>(null);
   const [presetDialogOpen, setPresetDialogOpen] = useState(false);
+  const [formStudioMode, setFormStudioMode] = useState<FormStudioMode>("build");
 
   const isArchived = activity.status === "archived";
   const isDraft = activity.status === "draft";
@@ -141,13 +151,8 @@ export function ActivityFormTab({
   const savedPublishGateIssues = getPublishGateIssues(activity.formSchema, {
     slug: activity.slug,
   });
-  const previewKey = [
-    draftSchema.meta?.splitIntoSteps ? "steps" : "page",
-    ...draftSchema.fields.map(
-      (field) =>
-        `${field.id}:${field.type}:${field.step ?? ""}:${field.visibleWhen?.fieldId ?? ""}:${field.visibleWhen?.equals ?? ""}:${field.visibleWhen?.notEquals ?? ""}`
-    ),
-  ].join("|");
+  const previewKey = buildFormStudioPreviewKey(draftSchema);
+  const previewTheme = resolvePersistedRegistrationPreviewTheme(activity);
   const introMarkdown = draftSchema.meta?.introMarkdown ?? null;
   const closedMessage = draftSchema.meta?.closedMessage ?? null;
   const registrationClosesAt = draftSchema.meta?.registrationClosesAt ?? null;
@@ -545,7 +550,32 @@ export function ActivityFormTab({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      <nav
+        role="tablist"
+        aria-label="Form studio modes"
+        className="flex gap-1 overflow-x-auto border-b border-border-warm"
+      >
+        {FORM_STUDIO_MODES.map((mode) => (
+          <button
+            key={mode.id}
+            type="button"
+            role="tab"
+            aria-selected={formStudioMode === mode.id}
+            onClick={() => setFormStudioMode(mode.id)}
+            className={cn(
+              "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors -mb-px",
+              formStudioMode === mode.id
+                ? "border-primary text-text-warm"
+                : "border-transparent text-text-muted-warm hover:text-text-warm"
+            )}
+          >
+            {mode.label}
+          </button>
+        ))}
+      </nav>
+
+      <div hidden={formStudioMode !== "build"} className="space-y-8">
       {!isArchived ? (
         <div
           className={cn(
@@ -674,8 +704,11 @@ export function ActivityFormTab({
         />
       ) : null}
 
-      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3">
         <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+            Form setup
+          </p>
           <h3 className="text-section text-text-warm">Intro copy</h3>
           <p className="mt-0.5 text-sm text-text-muted-warm">
             Optional welcome text shown above the registration fields on the public page.
@@ -683,12 +716,12 @@ export function ActivityFormTab({
         </div>
         <textarea
           id="form-intro-markdown"
-          rows={4}
+          rows={3}
           maxLength={4000}
           value={introMarkdown ?? ""}
           disabled={isArchived || isSaving}
           placeholder="Welcome! Tell registrants what to expect…"
-          className="flex min-h-[5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+          className="flex min-h-[3.5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
           onChange={(event) => {
             const nextIntro = event.target.value.trim() ? event.target.value : null;
             setDraftSchema((current) => ({
@@ -702,7 +735,7 @@ export function ActivityFormTab({
         </p>
       </section>
 
-      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3">
         <div>
           <h3 className="text-section text-text-warm">Closed message</h3>
           <p className="mt-0.5 text-sm text-text-muted-warm">
@@ -712,12 +745,12 @@ export function ActivityFormTab({
         </div>
         <textarea
           id="form-closed-message"
-          rows={4}
+          rows={3}
           maxLength={2000}
           value={closedMessage ?? ""}
           disabled={isArchived || isSaving}
           placeholder="Waitlist opens Monday on WhatsApp."
-          className="flex min-h-[5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+          className="flex min-h-[3.5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
           onChange={(event) => {
             const next = event.target.value.trim() ? event.target.value : null;
             setDraftSchema((current) => ({
@@ -731,7 +764,7 @@ export function ActivityFormTab({
         </p>
       </section>
 
-      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3">
         <div>
           <h3 className="text-section text-text-warm">Close-at</h3>
           <p className="mt-0.5 text-sm text-text-muted-warm">
@@ -768,9 +801,12 @@ export function ActivityFormTab({
         ) : null}
       </section>
 
-      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+              After registration
+            </p>
             <h3 className="text-section text-text-warm">Thank-you copy</h3>
             <p className="mt-0.5 text-sm text-text-muted-warm">
               Optional message on the success screen after submit. Use tokens like{" "}
@@ -787,12 +823,12 @@ export function ActivityFormTab({
         </div>
         <textarea
           id="form-success-copy-markdown"
-          rows={3}
+          rows={2}
           maxLength={2000}
           value={successCopyMarkdown ?? ""}
           disabled={isArchived || isSaving}
           placeholder="See you Saturday, {{full_name}}."
-          className="flex min-h-[4rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+          className="flex min-h-[2.75rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
           onChange={(event) => {
             const next = event.target.value.trim() ? event.target.value : null;
             setDraftSchema((current) => ({
@@ -811,7 +847,7 @@ export function ActivityFormTab({
         ) : null}
       </section>
 
-      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="text-section text-text-warm">Confirmation email</h3>
@@ -866,12 +902,12 @@ export function ActivityFormTab({
           </div>
           <textarea
             id="form-confirmation-email-body-markdown"
-            rows={3}
+            rows={2}
             maxLength={2000}
             value={confirmationEmailBodyMarkdown ?? ""}
             disabled={isArchived || isSaving}
             placeholder="Save the date — we look forward to seeing you there, {{full_name}}."
-            className="flex min-h-[4rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+            className="flex min-h-[2.75rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
             onChange={(event) => {
               const next = event.target.value.trim() ? event.target.value : null;
               setDraftSchema((current) => ({
@@ -885,7 +921,7 @@ export function ActivityFormTab({
         </label>
       </section>
 
-      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-4">
+      <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3">
         <div className="flex items-start gap-3">
           <input
             id="split-into-steps"
@@ -934,28 +970,25 @@ export function ActivityFormTab({
         stepsEnabled={Boolean(draftSchema.meta?.splitIntoSteps)}
         stepsLocked={stepsLocked}
       />
+      </div>
 
-      <section
-        aria-labelledby="form-live-preview-heading"
-        className="min-w-0 space-y-3 border-t border-border-warm pt-8"
-      >
-        <h3
-          id="form-live-preview-heading"
-          className="text-section text-text-warm"
-        >
-          Preview
-        </h3>
-        <RegistrationFormPreviewPane
-          schema={draftSchema}
-          formStatus={isDirty ? "unsaved" : "saved"}
-          previewKey={previewKey}
-          activityName={activity.name}
+      <div hidden={formStudioMode !== "preview"} className="min-w-0">
+        <RegistrationPublicPreviewShell
+          slug={activity.slug}
+          name={activity.name}
           schedule={activity.schedule}
           location={activity.location}
           communityLabel={activity.communityLabel}
-          introMarkdown={introMarkdown}
+          formSchema={draftSchema}
+          formStatus={isDirty ? "unsaved" : "saved"}
+          previewKey={previewKey}
+          theme={previewTheme}
+          publicPageHref={
+            activity.status === "published" ? `/register/${activity.slug}` : null
+          }
+          scrollClassName="max-h-[min(calc(100dvh-14rem),80dvh)]"
         />
-      </section>
+      </div>
 
       <AlertDialog
         open={applyDialogOpen}
