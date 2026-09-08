@@ -25,7 +25,6 @@ type RegistrationPublicPreviewShellProps = {
   formSchema: ActivityFormSchema | null;
   formStatus: RegistrationPreviewFormStatus;
   theme: ResolvedRegistrationPreviewTheme;
-  previewKey?: string | number;
   publicPageHref?: string | null;
   scrollClassName?: string;
   className?: string;
@@ -40,7 +39,6 @@ export function RegistrationPublicPreviewShell({
   formSchema,
   formStatus,
   theme,
-  previewKey,
   publicPageHref = null,
   scrollClassName = "max-h-[min(36rem,70dvh)]",
   className,
@@ -75,7 +73,6 @@ export function RegistrationPublicPreviewShell({
         scrollClassName={scrollClassName}
       >
         <PublicRegistrationOpen
-          key={previewKey}
           slug={slug}
           name={name}
           schedule={schedule}

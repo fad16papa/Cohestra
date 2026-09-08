@@ -47,4 +47,18 @@ describe("buildFormStudioPreviewKey", () => {
       buildFormStudioPreviewKey(structuredClone(baseSchema))
     );
   });
+
+  it("does not change for draft edits outside preview-visible material", () => {
+    const saved = buildFormStudioPreviewKey(baseSchema);
+    const withClosedMessage = buildFormStudioPreviewKey({
+      ...baseSchema,
+      meta: {
+        introMarkdown: null,
+        closedMessage: "Registration is closed.",
+        confirmationEmailSubject: "See you soon",
+      },
+    });
+
+    expect(saved).toBe(withClosedMessage);
+  });
 });
