@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { MarketingCinemaRollProvider } from "@/components/marketing/marketing-cinema-roll-context";
 import { useMarketingProductCinema } from "@/components/marketing/use-marketing-product-cinema";
 import {
   CINEMA_SECTION_LEAD,
@@ -20,12 +21,25 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
     trackRef,
     activeIndex,
     activeId,
+    chapterProgress,
+    beat,
+    beatCount,
     liveAnnouncement,
     climaxArmed,
     trackHeightVh,
     seekToIndex,
     resetToStart,
   } = useMarketingProductCinema(true, initialIndex);
+
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReducedMotion(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
 
   const [playClimax, setPlayClimax] = useState(false);
   const [focusIndex, setFocusIndex] = useState(initialIndex);
@@ -177,12 +191,25 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
                 aria-hidden
                 inert
               >
-                <div
-                  key={`visual-${activeId}`}
-                  className="marketing-product-carousel-enter flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-line bg-paper shadow-[0_12px_32px_rgba(7,13,18,0.06)] [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-1 [&>div]:flex-col"
+                <MarketingCinemaRollProvider
+                  value={{
+                    activeIndex,
+                    activeId,
+                    chapterProgress,
+                    beat,
+                    beatCount,
+                    reducedMotion,
+                  }}
                 >
-                  {slide.visual}
-                </div>
+                  <div
+                    key={`visual-${activeId}`}
+                    className="marketing-cinema-room-enter flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-line bg-paper shadow-[0_12px_32px_rgba(7,13,18,0.06)] [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-1 [&>div]:flex-col"
+                    data-cinema-room={activeId}
+                    data-cinema-beat={beat}
+                  >
+                    {slide.visual}
+                  </div>
+                </MarketingCinemaRollProvider>
               </div>
             </div>
           </div>

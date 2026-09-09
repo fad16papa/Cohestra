@@ -145,6 +145,41 @@
     animation: marketing-product-carousel-enter 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
+  @keyframes marketing-cinema-room-enter {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 10px, 0);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  .marketing-cinema-room-enter {
+    animation: marketing-cinema-room-enter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .marketing-cinema-roll-panel {
+    transition:
+      opacity 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .marketing-cinema-roll-selected {
+    transition:
+      background-color 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .marketing-cinema-roll-emphasis {
+    transition:
+      opacity 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+      border-color 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+      background-color 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
   @keyframes marketing-cinema-climax {
     0% {
       transform: scale(1) translate3d(0, 0, 0);
@@ -453,11 +488,18 @@
     .marketing-product-lift,
     .marketing-hero-stack-card,
     .marketing-product-carousel-enter,
+    .marketing-cinema-room-enter,
     .marketing-cinema-climax {
       animation: none;
       opacity: 1;
       transform: none;
       filter: none;
+    }
+
+    .marketing-cinema-roll-panel,
+    .marketing-cinema-roll-selected,
+    .marketing-cinema-roll-emphasis {
+      transition: none;
     }
 
     .marketing-atelier-btn:hover {

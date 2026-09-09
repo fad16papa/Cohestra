@@ -2,6 +2,7 @@
 
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import { TimelineEvent } from "@/components/clients/timeline-event";
+import { useMarketingCinemaRoll } from "@/components/marketing/marketing-cinema-roll-context";
 import { MarketingDemoTheme } from "@/components/marketing/marketing-demo-theme";
 import { useMarketingDemoClub } from "@/components/marketing/marketing-demo-provider";
 import { PersonAvatar } from "@/components/shared/person-avatar";
@@ -12,7 +13,6 @@ import {
   countNeedAttention,
   formatDemoWhatsappDay,
   getClientDetail,
-  getFollowUpClient,
   getTriageBucket,
   listClientsByTriage,
   type DemoTriageBucket,
@@ -27,10 +27,11 @@ const BUCKET_LABEL: Record<Exclude<DemoTriageBucket, "healthy">, string> = {
 
 export function MarketingDemoFollowupMount() {
   const club = useMarketingDemoClub();
+  const { beat, reducedMotion } = useMarketingCinemaRoll("outreach");
   const attention = countNeedAttention(club);
-  const selected = getFollowUpClient(club);
-  const detail = getClientDetail(club, selected.id);
-  const selectedBucket = getTriageBucket(club, selected.id);
+  const anchorId = ANCHOR_IDS.maya;
+  const detail = getClientDetail(club, anchorId);
+  const selectedBucket = getTriageBucket(club, anchorId);
   const whatsappDay = formatDemoWhatsappDay(
     club.whatsappQuote.loggedAt,
     club.clock.timeZoneId
@@ -55,6 +56,9 @@ export function MarketingDemoFollowupMount() {
     }
   }
 
+  const emphasizeDueNow = beat >= 1;
+  const showAction = beat >= 2;
+
   return (
     <MarketingDemoTheme>
       <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]">
@@ -74,7 +78,11 @@ export function MarketingDemoFollowupMount() {
               ).map(([key, value]) => (
                 <div
                   key={key}
-                  className="rounded-md bg-paper px-2.5 py-2 ring-1 ring-line"
+                  className={cn(
+                    "marketing-cinema-roll-emphasis rounded-md bg-paper px-2.5 py-2 ring-1 ring-line",
+                    emphasizeDueNow && key === "dueNow" && "ring-gold-cinema/50 bg-gold-soft/30",
+                    !emphasizeDueNow && "opacity-100"
+                  )}
                 >
                   <p className="text-[10px] font-medium uppercase tracking-wide text-stone-cinema">
                     {BUCKET_LABEL[key]}
@@ -87,14 +95,16 @@ export function MarketingDemoFollowupMount() {
           <ul className="min-h-0 overflow-y-auto">
             {queue.map((client) => {
               const bucket = getTriageBucket(club, client.id);
-              const isSelected = client.id === selected.id;
+              const isSelected = showAction && client.id === anchorId;
               const waOk = canRecommendWhatsApp(club, client.id);
+              const dimmed = emphasizeDueNow && bucket !== "dueNow" && !isSelected;
               return (
                 <li
                   key={client.id}
                   className={cn(
-                    "flex items-center gap-3 border-b border-line px-4 py-2.5",
-                    isSelected && "bg-gold-soft/40"
+                    "marketing-cinema-roll-selected flex items-center gap-3 border-b border-line px-4 py-2.5",
+                    isSelected && "bg-gold-soft/40 ring-1 ring-inset ring-gold-cinema/30",
+                    dimmed && "opacity-55"
                   )}
                 >
                   <PersonAvatar name={client.fullName} size="sm" />
@@ -113,7 +123,13 @@ export function MarketingDemoFollowupMount() {
           </ul>
         </div>
 
-        <div className="flex min-h-0 flex-col bg-paper">
+        <div
+          className={cn(
+            "marketing-cinema-roll-panel flex min-h-0 flex-col bg-paper",
+            showAction ? "opacity-100" : "opacity-70",
+            reducedMotion && "opacity-100"
+          )}
+        >
           <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
             <div className="flex min-w-0 items-center gap-3">
               <PersonAvatar name={detail.fullName} />
@@ -130,14 +146,19 @@ export function MarketingDemoFollowupMount() {
             <LeadStatusBadge status={detail.leadStatus} />
           </div>
           <div className="border-b border-line px-4 py-3">
-            <div className="rounded-md border border-line bg-paper-warm px-3 py-3">
+            <div
+              className={cn(
+                "marketing-cinema-roll-emphasis rounded-md border border-line bg-paper-warm px-3 py-3",
+                showAction && "border-whatsapp/30 ring-1 ring-whatsapp/20"
+              )}
+            >
               <p className="inline-flex items-center gap-1.5 text-xs font-medium text-ink">
                 <WhatsAppBrandIcon className="text-whatsapp" />
                 WhatsApp · team log
               </p>
               <p className="mt-2 text-sm text-ink">{club.whatsappQuote.body}</p>
               <p className="mt-2 text-xs text-stone-cinema">
-                {whatsappDay} · {canRecommendWhatsApp(club, selected.id) ? "sendable" : "blocked"}
+                {whatsappDay} · {canRecommendWhatsApp(club, anchorId) ? "sendable" : "blocked"}
               </p>
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2">
@@ -145,8 +166,10 @@ export function MarketingDemoFollowupMount() {
                 <div
                   key={client.id}
                   className={cn(
-                    "rounded-md px-2 py-2 ring-1 ring-line",
-                    client.id === selected.id ? "bg-gold-soft/50" : "bg-paper-warm"
+                    "marketing-cinema-roll-selected rounded-md px-2 py-2 ring-1 ring-line",
+                    client.id === anchorId && showAction
+                      ? "bg-gold-soft/50 ring-gold-cinema/40"
+                      : "bg-paper-warm"
                   )}
                 >
                   <p className="truncate text-[10px] font-medium uppercase tracking-wide text-stone-cinema">
@@ -157,7 +180,12 @@ export function MarketingDemoFollowupMount() {
               ))}
             </div>
           </div>
-          <div className="min-h-0 overflow-y-auto px-3 py-2">
+          <div
+            className={cn(
+              "marketing-cinema-roll-panel min-h-0 overflow-y-auto px-3 py-2",
+              showAction ? "opacity-100" : "opacity-0"
+            )}
+          >
             {detail.timeline.map((item, index) => (
               <TimelineEvent key={`${item.eventType}-${item.occurredAt}-${index}`} item={item} />
             ))}
