@@ -61,6 +61,14 @@ describe("PRODUCT_SLIDES house-tour rebuild", () => {
     }
   });
 
+  it("Website room copy communicates Website Studio authorship", () => {
+    const website = PRODUCT_SLIDES.find((slide) => slide.id === "website");
+    expect(website).toBeDefined();
+    const blob = `${website?.scene} ${website?.outcomes.join(" ")} ${website?.job}`;
+    expect(blob).toMatch(/Website Studio|Built inside Cohestra/i);
+    expect(blob).toMatch(/Preview and publish/i);
+  });
+
   it("does not use taxonomy eyebrows, Campaigns/Reports chapters, or SaaS theater", () => {
     const blob = PRODUCT_SLIDES.map(
       (s) => `${s.navLabel} ${s.feeling} ${s.feelingLine} ${s.scene} ${s.outcomes.join(" ")}`
@@ -96,6 +104,26 @@ describe("cinema source pedagogy kill + composition", () => {
     expect(combined).toContain("slide.feeling");
     expect(combined).toContain("Caption strip");
     expect(cinema).not.toMatch(/lg:grid-cols-\[minmax\(18rem/);
+  });
+
+  it("mounts Website Studio shell around SitePageRenderer", () => {
+    const mount = readFileSync(
+      join(root, "components/marketing/demo-mounts/marketing-demo-website-mount.tsx"),
+      "utf8"
+    );
+    const shell = readFileSync(
+      join(
+        root,
+        "components/marketing/demo-mounts/marketing-demo-website-studio-shell.tsx"
+      ),
+      "utf8"
+    );
+    expect(mount).toContain("MarketingDemoWebsiteStudioShell");
+    expect(mount).toContain("SitePageRenderer");
+    expect(shell).toContain("Website Studio");
+    expect(shell).toContain("data-cinema-website-studio");
+    expect(shell).toContain("Page sections");
+    expect(shell).toContain("Live site canvas");
   });
 
   it("deletes ShowcaseBrowserChrome mock authenticity files", () => {
