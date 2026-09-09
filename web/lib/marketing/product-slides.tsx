@@ -54,13 +54,13 @@ export const PRODUCT_SLIDES: ProductSlide[] = [
     feeling: "Belonging",
     feelingLine: "This is us",
     scene:
-      `Harbourline’s public face — Golden Hour filling (${GOLDEN.going} going · ${GOLDEN.spotsLeft} spots left), Board Game Night and Sunday Pickleball on the same house.`,
+      `Website Studio open on Harbourline — sections on the left, live site in the centre, Golden Hour (${GOLDEN.going} going · ${GOLDEN.spotsLeft} spots left) pulled from the same activities you publish.`,
     outcomes: [
-      "Looks like a real club site",
-      `${GOLDEN.going} going · ${GOLDEN.spotsLeft} spots left`,
-      "Same activities as the back office",
+      "Built inside Cohestra, not pasted in",
+      `${GOLDEN.going} going · ${GOLDEN.spotsLeft} spots left on the public site`,
+      "Preview and publish on the real builder",
     ],
-    job: "That could be our club",
+    job: "We edit our club site here",
     visual: isDemoRoomAvailable("website") ? <MarketingDemoWebsiteMount /> : null,
   },
   {
