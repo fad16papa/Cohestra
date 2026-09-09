@@ -1,6 +1,6 @@
 # Story 33.8 — Website Cinema Studio Proof
 
-**Status:** review  
+**Status:** done  
 **Epic:** 33 Live Proof Cinema  
 **Scope exception:** Website room only; other Cinema rooms frozen
 
@@ -17,7 +17,7 @@ Transform Website cinema from finished Harbourline site into **Website Studio + 
 - [x] Harbourline world unchanged (Golden Hour 34/8, three activities)
 - [x] Other cinema rooms untouched
 - [x] Unit tests for helpers + slide/mount composition
-- [ ] Browser visual checkpoint (desktop + mobile)
+- [x] Browser visual checkpoint (desktop + mobile)
 
 ## Non-goals
 
