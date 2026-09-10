@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardRegistrationsTrendChart } from "@/components/dashboard/dashboard-registrations-trend-chart";
+import { useMarketingCinemaRoll } from "@/components/marketing/marketing-cinema-roll-context";
 import { MarketingDemoTheme } from "@/components/marketing/marketing-demo-theme";
 import { useMarketingDemoClub } from "@/components/marketing/marketing-demo-provider";
 import {
@@ -14,9 +15,11 @@ import {
   getGoldenHourSpots,
   getReportsProofClients,
 } from "@/lib/marketing/marketing-demo-club";
+import { cn } from "@/lib/utils";
 
 export function MarketingDemoAnalyticsMount() {
   const club = useMarketingDemoClub();
+  const { beat } = useMarketingCinemaRoll("analytics");
   const report = club.reports;
   const metrics = club.dashboard;
   const attention = countNeedAttention(club);
@@ -44,6 +47,8 @@ export function MarketingDemoAnalyticsMount() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4);
 
+  const emphasizeTrend = beat >= 1;
+
   return (
     <MarketingDemoTheme>
       <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto bg-paper-warm p-3">
@@ -58,7 +63,12 @@ export function MarketingDemoAnalyticsMount() {
         </div>
 
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-2">
-          <section className="rounded-md border border-line bg-paper">
+          <section
+            className={cn(
+              "marketing-cinema-roll-emphasis rounded-md border border-line bg-paper",
+              !emphasizeTrend && "opacity-100"
+            )}
+          >
             <ReportPanelHeader
               title="Where are repeat attendees coming from?"
               description={
@@ -100,7 +110,12 @@ export function MarketingDemoAnalyticsMount() {
             </ul>
           </section>
 
-          <section className="rounded-md border border-line bg-paper xl:col-span-2">
+          <section
+            className={cn(
+              "marketing-cinema-roll-emphasis rounded-md border border-line bg-paper xl:col-span-2",
+              emphasizeTrend && "ring-1 ring-gold-cinema/25 border-gold-cinema/20"
+            )}
+          >
             <ReportPanelHeader
               title="First-timer return and follow-up effectiveness"
               description={`${attention.total} need attention · coverage ${report.followUpStatus.coveragePercent}% · ${proof.map((c) => c.fullName).join(", ")} counted once`}

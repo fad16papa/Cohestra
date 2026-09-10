@@ -1,6 +1,7 @@
 "use client";
 
 import { ActivityStatusBadge } from "@/components/activities/activity-status-badge";
+import { useMarketingCinemaRoll } from "@/components/marketing/marketing-cinema-roll-context";
 import { MarketingDemoTheme } from "@/components/marketing/marketing-demo-theme";
 import { useMarketingDemoClub } from "@/components/marketing/marketing-demo-provider";
 import { PersonAvatar } from "@/components/shared/person-avatar";
@@ -28,6 +29,7 @@ function formatWhen(iso: string, timeZoneId: string): string {
 
 export function MarketingDemoActivitiesMount() {
   const club = useMarketingDemoClub();
+  const { beat } = useMarketingCinemaRoll("activities");
   const selectedId = GOLDEN_HOUR_UPCOMING_ID;
   const selectedOps = getActivityOps(club, selectedId);
   const roster = getActivityRegistrants(club, selectedId).slice(0, 12);
@@ -36,9 +38,17 @@ export function MarketingDemoActivitiesMount() {
       row.name.toLowerCase().includes("golden hour")
     )?.location ?? "Venue TBD";
 
+  const showSelection = beat >= 1;
+  const showOperations = beat >= 2;
+
   return (
     <MarketingDemoTheme>
-      <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div
+        className={cn(
+          "grid h-full min-h-0 grid-cols-1",
+          showSelection && "lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]"
+        )}
+      >
         <div className="flex min-h-0 flex-col border-r border-line bg-paper-warm">
           <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
             <div>
@@ -59,13 +69,13 @@ export function MarketingDemoActivitiesMount() {
           <ul className="min-h-0 overflow-y-auto">
             {club.activities.map((activity) => {
               const ops = getActivityOps(club, activity.id);
-              const isSelected = activity.id === selectedId;
+              const isSelected = showSelection && activity.id === selectedId;
               return (
                 <li
                   key={activity.id}
                   className={cn(
-                    "border-b border-line px-4 py-3",
-                    isSelected && "bg-gold-soft/40"
+                    "marketing-cinema-roll-selected border-b border-line px-4 py-3",
+                    isSelected && "bg-gold-soft/40 ring-1 ring-inset ring-gold-cinema/30"
                   )}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -98,7 +108,8 @@ export function MarketingDemoActivitiesMount() {
           </ul>
         </div>
 
-        <div className="flex min-h-0 flex-col bg-paper">
+        {showSelection ? (
+        <div className="marketing-cinema-roll-panel flex min-h-0 flex-col bg-paper">
           <div className="border-b border-line px-4 py-3">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -111,7 +122,12 @@ export function MarketingDemoActivitiesMount() {
                 {selectedOps.registered} / {selectedOps.activity.capacity}
               </p>
             </div>
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+            <div
+              className={cn(
+                "marketing-cinema-roll-emphasis mt-3 flex flex-wrap gap-2 text-[11px]",
+                showOperations ? "opacity-100" : "opacity-60"
+              )}
+            >
               <span className="rounded-md bg-paper-warm px-2 py-1 text-stone-cinema ring-1 ring-line">
                 {selectedOps.spotsLeft} spots left
               </span>
@@ -124,7 +140,12 @@ export function MarketingDemoActivitiesMount() {
                 </span>
               ) : null}
             </div>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div
+              className={cn(
+                "marketing-cinema-roll-panel mt-3 flex flex-wrap gap-2",
+                showOperations ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+              )}
+            >
               <span className="rounded-md bg-ink px-2.5 py-1.5 text-[11px] font-medium text-paper-warm">
                 Check-in ready · {selectedOps.registered - selectedOps.checkedIn}
               </span>
@@ -138,13 +159,23 @@ export function MarketingDemoActivitiesMount() {
               ) : null}
             </div>
           </div>
-          <div className="flex items-center justify-between border-b border-line px-4 py-2">
+          <div
+            className={cn(
+              "marketing-cinema-roll-panel flex items-center justify-between border-b border-line px-4 py-2",
+              showOperations ? "opacity-100" : "opacity-0"
+            )}
+          >
             <p className="text-xs font-medium uppercase tracking-wide text-stone-cinema">
               Registrations
             </p>
             <p className="text-xs text-stone-cinema">{selectedOps.registered} people</p>
           </div>
-          <ul className="min-h-0 overflow-y-auto">
+          <ul
+            className={cn(
+              "marketing-cinema-roll-panel min-h-0 overflow-y-auto",
+              showOperations ? "opacity-100" : "opacity-0"
+            )}
+          >
             {roster.map((client) => (
               <li
                 key={client.id}
@@ -162,6 +193,7 @@ export function MarketingDemoActivitiesMount() {
             ))}
           </ul>
         </div>
+        ) : null}
       </div>
     </MarketingDemoTheme>
   );

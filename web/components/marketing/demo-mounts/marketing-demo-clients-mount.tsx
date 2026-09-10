@@ -2,6 +2,7 @@
 
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import { TimelineEvent } from "@/components/clients/timeline-event";
+import { useMarketingCinemaRoll } from "@/components/marketing/marketing-cinema-roll-context";
 import { MarketingDemoTheme } from "@/components/marketing/marketing-demo-theme";
 import { useMarketingDemoClub } from "@/components/marketing/marketing-demo-provider";
 import { PersonAvatar } from "@/components/shared/person-avatar";
@@ -10,10 +11,10 @@ import {
   ViberBrandIcon,
 } from "@/components/shared/messenger-brand-icons";
 import {
+  ANCHOR_IDS,
   canRecommendWhatsApp,
   clientMetaLine,
   getClientDetail,
-  getSelectedClient,
   getTriageBucket,
 } from "@/lib/marketing/marketing-demo-club";
 import { leadStatusLabels } from "@/lib/clients-api";
@@ -44,12 +45,20 @@ function nextActionLabel(
 
 export function MarketingDemoClientsMount() {
   const club = useMarketingDemoClub();
-  const selected = getSelectedClient(club);
-  const detail = getClientDetail(club, selected.id);
+  const { beat } = useMarketingCinemaRoll("clients");
+  const anchorId = ANCHOR_IDS.maya;
+  const detail = getClientDetail(club, anchorId);
+  const showSelection = beat >= 1;
+  const showContext = beat >= 2;
 
   return (
     <MarketingDemoTheme>
-      <div className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div
+        className={cn(
+          "grid h-full min-h-0 grid-cols-1",
+          showSelection && "lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]"
+        )}
+      >
         <div className="flex min-h-0 flex-col border-r border-line bg-paper-warm">
           <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
             <div>
@@ -77,14 +86,14 @@ export function MarketingDemoClientsMount() {
           </div>
           <ul className="min-h-0 overflow-y-auto">
             {club.clients.map((client) => {
-              const isSelected = client.id === selected.id;
+              const isSelected = showSelection && client.id === anchorId;
               const rowDetail = club.clientDetails[client.id];
               return (
                 <li
                   key={client.id}
                   className={cn(
-                    "flex items-center gap-3 border-b border-line px-4 py-2.5",
-                    isSelected && "bg-gold-soft/40"
+                    "marketing-cinema-roll-selected flex items-center gap-3 border-b border-line px-4 py-2.5",
+                    isSelected && "bg-gold-soft/40 ring-1 ring-inset ring-gold-cinema/30"
                   )}
                 >
                   <PersonAvatar name={client.fullName} size="sm" />
@@ -101,7 +110,8 @@ export function MarketingDemoClientsMount() {
             })}
           </ul>
         </div>
-        <div className="flex min-h-0 flex-col bg-paper">
+        {showSelection ? (
+        <div className="marketing-cinema-roll-panel flex min-h-0 flex-col bg-paper">
           <div className="flex items-start justify-between gap-3 border-b border-line px-4 py-3">
             <div className="flex min-w-0 items-center gap-3">
               <PersonAvatar name={detail.fullName} />
@@ -110,7 +120,12 @@ export function MarketingDemoClientsMount() {
                 <p className="text-xs text-stone-cinema">
                   {detail.email ?? "No email"} · {detail.phone ?? "No phone"}
                 </p>
-                <p className="mt-1 text-xs text-stone-cinema">
+                <p
+                  className={cn(
+                    "mt-1 text-xs text-stone-cinema",
+                    !showContext && "line-clamp-1"
+                  )}
+                >
                   {detail.nationality ?? "—"} · {leadStatusLabels[detail.leadStatus]} ·{" "}
                   {detail.referralSource ?? "Source unknown"}
                 </p>
@@ -120,12 +135,12 @@ export function MarketingDemoClientsMount() {
               <span
                 className={cn(
                   "inline-flex size-8 items-center justify-center rounded-full",
-                  canRecommendWhatsApp(club, selected.id)
+                  canRecommendWhatsApp(club, anchorId)
                     ? "bg-whatsapp/15 text-whatsapp"
                     : "bg-paper-warm text-stone-cinema opacity-40"
                 )}
                 title={
-                  canRecommendWhatsApp(club, selected.id)
+                  canRecommendWhatsApp(club, anchorId)
                     ? "WhatsApp"
                     : "WhatsApp blocked — phone missing"
                 }
@@ -137,10 +152,15 @@ export function MarketingDemoClientsMount() {
               </span>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2 border-b border-line px-4 py-3 text-xs">
+          <div
+            className={cn(
+              "marketing-cinema-roll-emphasis grid grid-cols-2 gap-2 border-b border-line px-4 py-3 text-xs",
+              showContext ? "opacity-100" : "opacity-70"
+            )}
+          >
             <div className="rounded-md bg-paper-warm px-3 py-2 ring-1 ring-line">
               <p className="text-stone-cinema">Next action</p>
-              <p className="mt-0.5 font-medium text-ink">{nextActionLabel(club, selected.id)}</p>
+              <p className="mt-0.5 font-medium text-ink">{nextActionLabel(club, anchorId)}</p>
             </div>
             <div className="rounded-md bg-paper-warm px-3 py-2 ring-1 ring-line">
               <p className="text-stone-cinema">Notes</p>
@@ -149,7 +169,12 @@ export function MarketingDemoClientsMount() {
               </p>
             </div>
           </div>
-          <div className="border-b border-line px-4 py-2">
+          <div
+            className={cn(
+              "marketing-cinema-roll-panel border-b border-line px-4 py-2",
+              showContext ? "opacity-100" : "opacity-0"
+            )}
+          >
             <p className="text-[11px] font-medium uppercase tracking-wide text-stone-cinema">
               Activity history
             </p>
@@ -165,12 +190,18 @@ export function MarketingDemoClientsMount() {
               ))}
             </ul>
           </div>
-          <div className="min-h-0 overflow-y-auto px-3 py-2">
+          <div
+            className={cn(
+              "marketing-cinema-roll-panel min-h-0 overflow-y-auto px-3 py-2",
+              showContext ? "opacity-100" : "opacity-0"
+            )}
+          >
             {detail.timeline.map((item, index) => (
               <TimelineEvent key={`${item.eventType}-${item.occurredAt}-${index}`} item={item} />
             ))}
           </div>
         </div>
+        ) : null}
       </div>
     </MarketingDemoTheme>
   );
