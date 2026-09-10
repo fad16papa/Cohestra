@@ -1,6 +1,6 @@
 # Story 33.11 — Cinema Roll Motion System
 
-**Status:** review  
+**Status:** done  
 **Epic:** 33 Live Proof Cinema  
 **Scope:** Clients, Activities, Follow-up, Analytics continuity, Cohestra AI
 

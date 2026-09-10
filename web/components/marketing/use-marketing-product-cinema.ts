@@ -224,20 +224,34 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
         return;
       }
 
+      let finished = false;
       const finish = () => {
-        if (token !== seekTokenRef.current) {
+        if (finished || token !== seekTokenRef.current) {
           return;
         }
+        finished = true;
+        window.removeEventListener("scrollend", onScrollEnd);
         seekingRef.current = false;
         updateFromScroll();
       };
 
       const onScrollEnd = () => {
-        window.removeEventListener("scrollend", onScrollEnd);
         finish();
       };
       window.addEventListener("scrollend", onScrollEnd, { once: true });
-      window.setTimeout(finish, 1200);
+
+      const pollUntilArrived = () => {
+        if (finished || token !== seekTokenRef.current) {
+          return;
+        }
+        if (Math.abs(window.scrollY - nextY) <= 2) {
+          finish();
+          return;
+        }
+        window.requestAnimationFrame(pollUntilArrived);
+      };
+      window.requestAnimationFrame(pollUntilArrived);
+      window.setTimeout(finish, 4000);
     },
     [announce, syncRollState, updateFromScroll]
   );
