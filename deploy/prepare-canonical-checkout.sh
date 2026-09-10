@@ -8,7 +8,7 @@
 set -euo pipefail
 
 DEST="${COHESTRA_DEPLOY_ROOT:-/home/deploy/cohestra}"
-BRANCH="${COHESTRA_DEPLOY_BRANCH:-cursor/epic-19-uat-port-isolation-a139}"
+BRANCH="${COHESTRA_DEPLOY_BRANCH:-main}"
 REPO_URL="${COHESTRA_DEPLOY_REPO:-https://github.com/fad16papa/Cohestra.git}"
 
 if [[ "$(id -u)" -eq 0 && "${COHESTRA_ALLOW_ROOT:-}" != "1" ]]; then
