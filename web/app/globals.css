@@ -160,6 +160,18 @@
     animation: marketing-cinema-room-enter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
+  .marketing-cinema-reel-stage {
+    isolation: isolate;
+  }
+
+  .marketing-cinema-reel-layer {
+    will-change: transform, opacity;
+  }
+
+  .marketing-cinema-reel-caption {
+    will-change: transform, opacity;
+  }
+
   .marketing-cinema-roll-panel {
     transition:
       opacity 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -498,8 +510,11 @@
 
     .marketing-cinema-roll-panel,
     .marketing-cinema-roll-selected,
-    .marketing-cinema-roll-emphasis {
+    .marketing-cinema-roll-emphasis,
+    .marketing-cinema-reel-layer,
+    .marketing-cinema-reel-caption {
       transition: none;
+      will-change: auto;
     }
 
     .marketing-atelier-btn:hover {
