@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  computeCinemaReelState,
+  computeRoomBeat,
+  type CinemaReelState,
+} from "@/lib/marketing/cinema-reel";
+import {
   beatCountForSlide,
   clamp,
-  computeBeatIndex,
-  computeChapterProgress,
   indexFromProgress,
   seekProgressForIndex,
 } from "@/lib/marketing/cinema-roll";
@@ -22,22 +25,21 @@ import {
 export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
   const startIndex = clamp(initialIndex, 0, PRODUCT_SLIDE_COUNT - 1);
   const trackRef = useRef<HTMLDivElement>(null);
+  const [reel, setReel] = useState<CinemaReelState>(() =>
+    computeCinemaReelState(seekProgressForIndex(startIndex, PRODUCT_SLIDE_COUNT))
+  );
   const [activeIndex, setActiveIndex] = useState(startIndex);
-  const [globalProgress, setGlobalProgress] = useState(0);
-  const [chapterProgress, setChapterProgress] = useState(0);
   const [beat, setBeat] = useState(0);
-  const [scrollDirection, setScrollDirection] = useState<"down" | "up" | "none">("none");
+  const [scrollDirection, setScrollDirection] = useState<"up" | "down" | "none">("none");
   const [liveAnnouncement, setLiveAnnouncement] = useState(
     () =>
       `${PRODUCT_SLIDES[startIndex]!.navLabel}. ${PRODUCT_SLIDES[startIndex]!.job}.`
   );
-  const [climaxArmed, setClimaxArmed] = useState(false);
   const indexRef = useRef(startIndex);
   const seekingRef = useRef(false);
   const seekTokenRef = useRef(0);
   const announceTimerRef = useRef<number | null>(null);
   const lastAnnouncedRef = useRef(PRODUCT_SLIDES[startIndex]!.id);
-  const scrubbingRef = useRef(false);
   const mountedSeekDoneRef = useRef(false);
   const lastProgressRef = useRef(0);
   const beatRef = useRef(0);
@@ -78,30 +80,24 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
     return clamp(scrolled / scrollable, 0, 1);
   }, []);
 
-  const syncRollState = useCallback(
-    (progress: number, nextIndex: number) => {
-      const local = computeChapterProgress(progress, PRODUCT_SLIDE_COUNT, nextIndex);
-      const slideId = PRODUCT_SLIDES[nextIndex]!.id as ProductSlideId;
-      const beatCount = beatCountForSlide(slideId);
-      const nextBeat = computeBeatIndex(local, beatCount);
+  const syncReelState = useCallback((progress: number, semanticIndex: number) => {
+    if (progress > lastProgressRef.current + 0.0001) {
+      setScrollDirection("down");
+    } else if (progress < lastProgressRef.current - 0.0001) {
+      setScrollDirection("up");
+    }
+    lastProgressRef.current = progress;
 
-      if (progress > lastProgressRef.current + 0.0001) {
-        setScrollDirection("down");
-      } else if (progress < lastProgressRef.current - 0.0001) {
-        setScrollDirection("up");
-      }
-      lastProgressRef.current = progress;
+    const nextReel = computeCinemaReelState(progress);
+    setReel(nextReel);
 
-      setGlobalProgress(progress);
-      setChapterProgress(local);
-
-      if (nextBeat !== beatRef.current) {
-        beatRef.current = nextBeat;
-        setBeat(nextBeat);
-      }
-    },
-    []
-  );
+    const slideId = PRODUCT_SLIDES[semanticIndex]!.id as ProductSlideId;
+    const nextBeat = computeRoomBeat(slideId, nextReel.storyProgress);
+    if (nextBeat !== beatRef.current) {
+      beatRef.current = nextBeat;
+      setBeat(nextBeat);
+    }
+  }, []);
 
   const updateFromScroll = useCallback(() => {
     if (!enabled || seekingRef.current) {
@@ -119,12 +115,11 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
     if (next !== indexRef.current) {
       indexRef.current = next;
       setActiveIndex(next);
-      setClimaxArmed(false);
       announce(next, false);
     }
 
-    syncRollState(progress, indexRef.current);
-  }, [announce, enabled, readProgress, syncRollState]);
+    syncReelState(progress, indexRef.current);
+  }, [announce, enabled, readProgress, syncReelState]);
 
   const cancelSmoothSeek = useCallback(() => {
     if (!seekingRef.current) {
@@ -164,12 +159,11 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
       if (!inTrack) {
         return;
       }
-      scrubbingRef.current = true;
       if (seekingRef.current) {
         cancelSmoothSeek();
       }
       if (event.type === "wheel" || event.type === "touchmove") {
-        scrubbingRef.current = true;
+        /* scrub intent */
       }
     };
 
@@ -210,13 +204,10 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
       indexRef.current = target;
       setActiveIndex(target);
       announce(target, true);
-      setClimaxArmed(false);
-      syncRollState(progress, target);
+      syncReelState(progress, target);
 
       const token = ++seekTokenRef.current;
       seekingRef.current = behavior === "smooth";
-      scrubbingRef.current = false;
-
       window.scrollTo({ top: nextY, behavior });
 
       if (behavior === "auto") {
@@ -253,7 +244,7 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
       window.requestAnimationFrame(pollUntilArrived);
       window.setTimeout(finish, 4000);
     },
-    [announce, syncRollState, updateFromScroll]
+    [announce, syncReelState, updateFromScroll]
   );
 
   const seekToIndex = useCallback(
@@ -267,8 +258,6 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
   const resetToStart = useCallback(() => {
     seekTokenRef.current += 1;
     seekingRef.current = false;
-    scrubbingRef.current = false;
-    setClimaxArmed(false);
     scrollToIndex(0, "auto");
   }, [scrollToIndex]);
 
@@ -292,15 +281,14 @@ export function useMarketingProductCinema(enabled: boolean, initialIndex = 0) {
 
   return {
     trackRef,
+    reel,
     activeIndex,
     activeId,
-    globalProgress,
-    chapterProgress,
+    chapterProgress: reel.storyProgress,
     beat,
     beatCount,
     scrollDirection,
     liveAnnouncement,
-    climaxArmed,
     trackHeightVh,
     seekToIndex,
     resetToStart,

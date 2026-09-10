@@ -102,7 +102,9 @@ describe("cinema source pedagogy kill + composition", () => {
     expect(combined).toContain("CINEMA_SECTION_THESIS");
     expect(combined).toContain("CINEMA_SECTION_LEAD");
     expect(combined).toContain("slide.feeling");
-    expect(combined).toContain("Caption strip");
+    expect(cinema).toContain("MarketingCinemaCaptionStrip");
+    expect(cinema).toContain("MarketingCinemaReelStage");
+    expect(cinema).not.toMatch(/key=\{`visual-/);
     expect(cinema).not.toMatch(/lg:grid-cols-\[minmax\(18rem/);
   });
 

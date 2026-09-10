@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import { MarketingCinemaRollProvider } from "@/components/marketing/marketing-cinema-roll-context";
+import { MarketingCinemaCaptionStrip } from "@/components/marketing/marketing-cinema-caption-strip";
+import { MarketingCinemaReelStage } from "@/components/marketing/marketing-cinema-reel-stage";
 import { useMarketingProductCinema } from "@/components/marketing/use-marketing-product-cinema";
 import {
   CINEMA_SECTION_LEAD,
@@ -19,19 +20,17 @@ function focusTab(id: string) {
 export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: number }) {
   const {
     trackRef,
+    reel,
     activeIndex,
     activeId,
-    chapterProgress,
-    beat,
-    beatCount,
     liveAnnouncement,
-    climaxArmed,
     trackHeightVh,
     seekToIndex,
     resetToStart,
   } = useMarketingProductCinema(true, initialIndex);
 
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [focusIndex, setFocusIndex] = useState(initialIndex);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -40,24 +39,6 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
     query.addEventListener("change", sync);
     return () => query.removeEventListener("change", sync);
   }, []);
-
-  const [playClimax, setPlayClimax] = useState(false);
-  const [focusIndex, setFocusIndex] = useState(initialIndex);
-  const slide = PRODUCT_SLIDES[activeIndex]!;
-
-  useEffect(() => {
-    if (!climaxArmed) {
-      setPlayClimax(false);
-      return;
-    }
-    setPlayClimax(false);
-    const arm = window.requestAnimationFrame(() => setPlayClimax(true));
-    const timer = window.setTimeout(() => setPlayClimax(false), 520);
-    return () => {
-      window.cancelAnimationFrame(arm);
-      window.clearTimeout(timer);
-    };
-  }, [climaxArmed]);
 
   useEffect(() => {
     const onHash = () => {
@@ -85,7 +66,6 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
         className="relative mt-8"
         style={{ height: `${trackHeightVh}vh` }}
       >
-        {/* Full remaining viewport under sticky marketing header */}
         <div className="sticky top-24 z-20 flex h-[calc(100vh-6rem)] flex-col bg-paper-warm">
           <div className="mx-auto flex h-full w-full max-w-[96rem] min-h-0 flex-col px-2 sm:px-3 lg:px-4">
             <div
@@ -94,8 +74,13 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
               className="flex shrink-0 flex-wrap justify-center gap-2 border-b border-line/80 bg-paper-warm py-3"
             >
               {PRODUCT_SLIDES.map((item, index) => {
-                const isSelected = index === activeIndex;
+                const pillIndex =
+                  reel.handoffProgress >= 0.5 && reel.currentIndex < reel.nextIndex
+                    ? reel.nextIndex
+                    : reel.currentIndex;
+                const isSelected = index === pillIndex;
                 const isFocused = index === focusIndex;
+                const showProgress = isSelected && index === reel.currentIndex;
                 return (
                   <button
                     key={item.id}
@@ -139,13 +124,23 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
                       }
                     }}
                     className={cn(
-                      "shrink-0 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper-warm",
+                      "relative shrink-0 rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-paper-warm",
                       isSelected
                         ? "border-ink bg-ink text-paper shadow-[0_8px_20px_rgba(7,13,18,0.12)]"
                         : "border-line-strong bg-paper text-stone-cinema hover:border-ink/25 hover:text-ink"
                     )}
                   >
                     {item.navLabel}
+                    {showProgress ? (
+                      <span
+                        className="pointer-events-none absolute inset-x-3 bottom-1 h-0.5 origin-left rounded-full bg-gold-cinema/70"
+                        style={{
+                          transform: `scaleX(${Math.max(reel.roomProgress, 0.04)})`,
+                          opacity: reducedMotion ? 0.85 : 1,
+                        }}
+                        aria-hidden
+                      />
+                    ) : null}
                   </button>
                 );
               })}
@@ -158,58 +153,21 @@ export function MarketingProductCinema({ initialIndex = 0 }: { initialIndex?: nu
             <div
               role="tabpanel"
               id="product-cinema-panel"
-              aria-labelledby={`product-cinema-tab-${activeId}`}
+              aria-labelledby={`product-cinema-tab-${
+                reel.handoffProgress >= 0.5 && reel.currentIndex < reel.nextIndex
+                  ? PRODUCT_SLIDES[reel.nextIndex]!.id
+                  : activeId
+              }`}
               className="flex min-h-0 flex-1 flex-col overflow-hidden py-2 lg:py-3"
             >
-              {/* Caption strip only — product/world must dominate (~85–90%) */}
-              <div
-                key={`copy-${activeId}`}
-                className="marketing-product-carousel-enter shrink-0 border-b border-line/70 pb-2.5"
-              >
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-cinema">
-                    {slide.feeling}
-                  </p>
-                  <h3 className="font-[family-name:var(--font-fraunces)] text-[clamp(1.15rem,1.6vw,1.45rem)] font-medium leading-tight tracking-[-0.02em] text-ink">
-                    {slide.feelingLine}
-                  </h3>
-                  <p className="max-w-3xl text-sm leading-snug text-stone-cinema">{slide.scene}</p>
-                </div>
-                <ul className="sr-only">
-                  {slide.outcomes.map((outcome) => (
-                    <li key={outcome}>{outcome}</li>
-                  ))}
-                </ul>
-              </div>
+              <MarketingCinemaCaptionStrip reel={reel} reducedMotion={reducedMotion} />
 
-              {/* Product stage — fills remaining height */}
               <div
-                className={cn(
-                  "marketing-cinema-visual mt-2 flex min-h-0 min-w-0 flex-1 flex-col pointer-events-none transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
-                  playClimax && "marketing-cinema-climax"
-                )}
+                className="marketing-cinema-visual mt-2 flex min-h-0 min-w-0 flex-1 flex-col pointer-events-none"
                 aria-hidden
                 inert
               >
-                <MarketingCinemaRollProvider
-                  value={{
-                    activeIndex,
-                    activeId,
-                    chapterProgress,
-                    beat,
-                    beatCount,
-                    reducedMotion,
-                  }}
-                >
-                  <div
-                    key={`visual-${activeId}`}
-                    className="marketing-cinema-room-enter flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-line bg-paper shadow-[0_12px_32px_rgba(7,13,18,0.06)] [&>div]:flex [&>div]:h-full [&>div]:min-h-0 [&>div]:flex-1 [&>div]:flex-col"
-                    data-cinema-room={activeId}
-                    data-cinema-beat={beat}
-                  >
-                    {slide.visual}
-                  </div>
-                </MarketingCinemaRollProvider>
+                <MarketingCinemaReelStage reel={reel} reducedMotion={reducedMotion} />
               </div>
             </div>
           </div>
