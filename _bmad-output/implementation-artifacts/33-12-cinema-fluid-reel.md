@@ -1,6 +1,6 @@
 # Story 33.12 — Full Fluid Cinema Reel
 
-**Status:** review  
+**Status:** done  
 **Epic:** 33 Live Proof Cinema
 
 ## Acceptance Criteria
