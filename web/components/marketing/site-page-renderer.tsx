@@ -860,7 +860,11 @@ function renderSection(
     return null;
   }
 
-  return <div key={section.id}>{node}</div>;
+  return (
+    <div key={section.id} data-site-preview-section-id={section.id}>
+      {node}
+    </div>
+  );
 }
 
 export function SitePageRenderer({

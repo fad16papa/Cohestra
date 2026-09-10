@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  forwardRef,
+  type ReactNode,
+} from "react";
 import { Maximize2, Minimize2, Monitor, Smartphone } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,31 +21,73 @@ import { cn } from "@/lib/utils";
 
 export type WebsitePreviewDeviceMode = "phone" | "desktop";
 
+export type WebsiteLivePreviewHandle = {
+  scrollToSection: (sectionId: string) => void;
+};
+
 type WebsiteLivePreviewProps = {
   deviceMode: WebsitePreviewDeviceMode;
   onDeviceModeChange: (mode: WebsitePreviewDeviceMode) => void;
   siteHostname: string;
   children: ReactNode;
-  /** Mobile preview tab — use more of the viewport height. */
-  fillViewport?: boolean;
+  /** Fill the bounded studio preview column (desktop split/preview modes). */
+  bounded?: boolean;
+  /** Highlight section id for scroll-into-view from editor selection. */
+  highlightSectionId?: string | null;
+  className?: string;
 };
 
-export function WebsiteLivePreview({
-  deviceMode,
-  onDeviceModeChange,
-  siteHostname,
-  children,
-  fillViewport = false,
-}: WebsiteLivePreviewProps) {
+export const WebsiteLivePreview = forwardRef<
+  WebsiteLivePreviewHandle,
+  WebsiteLivePreviewProps
+>(function WebsiteLivePreview(
+  {
+    deviceMode,
+    onDeviceModeChange,
+    siteHostname,
+    children,
+    bounded = false,
+    highlightSectionId = null,
+    className,
+  },
+  ref,
+) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const [desktopScale, setDesktopScale] = useState(1);
   const [phoneScale, setPhoneScale] = useState(1);
-  const [scaledCanvasHeight, setScaledCanvasHeight] = useState<number | null>(null);
-  const [scaledPhoneHeight, setScaledPhoneHeight] = useState<number | null>(null);
+  const [scaledCanvasHeight, setScaledCanvasHeight] = useState<number | null>(
+    null,
+  );
   const phoneFrameRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const scrollToSection = useCallback((sectionId: string) => {
+    const container = viewportRef.current;
+    if (!container) {
+      return;
+    }
+
+    const target = container.querySelector(
+      `[data-site-preview-section-id="${sectionId}"]`,
+    );
+    if (!(target instanceof HTMLElement)) {
+      return;
+    }
+
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  useImperativeHandle(ref, () => ({ scrollToSection }), [scrollToSection]);
+
+  useEffect(() => {
+    if (!highlightSectionId) {
+      return;
+    }
+
+    scrollToSection(highlightSectionId);
+  }, [highlightSectionId, scrollToSection, deviceMode]);
 
   const updateDesktopScale = useCallback(() => {
     const viewport = viewportRef.current;
@@ -45,7 +95,10 @@ export function WebsiteLivePreview({
       return;
     }
 
-    const nextScale = Math.min(1, viewport.clientWidth / PREVIEW_DESKTOP_CANVAS_WIDTH);
+    const nextScale = Math.min(
+      1,
+      viewport.clientWidth / PREVIEW_DESKTOP_CANVAS_WIDTH,
+    );
     setDesktopScale(nextScale);
   }, [deviceMode]);
 
@@ -56,7 +109,10 @@ export function WebsiteLivePreview({
     }
 
     const frameWidth = PREVIEW_PHONE_WIDTH + 20;
-    const nextScale = Math.min(1, Math.max(0.55, (viewport.clientWidth - 16) / frameWidth));
+    const nextScale = Math.min(
+      1,
+      Math.max(0.55, (viewport.clientWidth - 16) / frameWidth),
+    );
     setPhoneScale(nextScale);
   }, [deviceMode]);
 
@@ -76,7 +132,7 @@ export function WebsiteLivePreview({
     observer.observe(viewport);
 
     return () => observer.disconnect();
-  }, [updateDesktopScale, updatePhoneScale, isFullscreen, deviceMode]);
+  }, [updateDesktopScale, updatePhoneScale, isFullscreen, deviceMode, bounded]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -98,31 +154,13 @@ export function WebsiteLivePreview({
   }, [deviceMode, desktopScale]);
 
   useEffect(() => {
-    const frame = phoneFrameRef.current;
-    if (!frame || deviceMode !== "phone") {
-      setScaledPhoneHeight(null);
-      return;
-    }
-
-    const syncHeight = () => {
-      setScaledPhoneHeight(frame.offsetHeight * phoneScale);
-    };
-
-    syncHeight();
-
-    const observer = new ResizeObserver(syncHeight);
-    observer.observe(frame);
-
-    return () => observer.disconnect();
-  }, [deviceMode, phoneScale]);
-
-  useEffect(() => {
     const onFullscreenChange = () => {
       setIsFullscreen(document.fullscreenElement === shellRef.current);
     };
 
     document.addEventListener("fullscreenchange", onFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
 
   async function toggleFullscreen() {
@@ -138,48 +176,47 @@ export function WebsiteLivePreview({
     await shellRef.current.requestFullscreen();
   }
 
-  const deviceToggle = (
-    <div className="inline-flex rounded-md border border-border-warm/80 bg-background/90 p-0.5 shadow-sm">
-      <Button
-        type="button"
-        size="sm"
-        variant={deviceMode === "phone" ? "default" : "ghost"}
-        className="h-7 px-2"
-        aria-pressed={deviceMode === "phone"}
-        onClick={() => onDeviceModeChange("phone")}
-      >
-        <Smartphone className="size-3.5" aria-hidden />
-        <span className="sr-only sm:not-sr-only sm:ml-1.5 sm:inline">Phone</span>
-      </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant={deviceMode === "desktop" ? "default" : "ghost"}
-        className="h-7 px-2"
-        aria-pressed={deviceMode === "desktop"}
-        onClick={() => onDeviceModeChange("desktop")}
-      >
-        <Monitor className="size-3.5" aria-hidden />
-        <span className="sr-only sm:not-sr-only sm:ml-1.5 sm:inline">Desktop</span>
-      </Button>
-    </div>
-  );
-
-  return (
-    <section
-      id="website-builder-live-preview"
-      ref={shellRef}
-      className="flex min-h-0 min-w-0 flex-col gap-2 lg:sticky lg:top-4 lg:self-start"
-    >
-      <div className="flex items-center justify-between gap-2 px-0.5">
-        <p className="text-sm font-medium text-text-warm">Live preview</p>
+  const previewToolbar = (
+    <div className="flex items-center justify-between gap-2 border-b border-border-warm/60 bg-card/80 px-2.5 py-1.5 sm:px-3">
+      <span className="text-xs font-medium text-text-muted-warm">Preview</span>
+      <div className="flex items-center gap-1.5">
+        <div className="inline-flex rounded-md border border-border-warm/80 bg-background/90 p-0.5">
+          <Button
+            type="button"
+            size="sm"
+            variant={deviceMode === "phone" ? "default" : "ghost"}
+            className="h-7 px-2"
+            aria-pressed={deviceMode === "phone"}
+            onClick={() => onDeviceModeChange("phone")}
+          >
+            <Smartphone className="size-3.5" aria-hidden />
+            <span className="sr-only sm:not-sr-only sm:ml-1.5 sm:inline">
+              Phone
+            </span>
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={deviceMode === "desktop" ? "default" : "ghost"}
+            className="h-7 px-2"
+            aria-pressed={deviceMode === "desktop"}
+            onClick={() => onDeviceModeChange("desktop")}
+          >
+            <Monitor className="size-3.5" aria-hidden />
+            <span className="sr-only sm:not-sr-only sm:ml-1.5 sm:inline">
+              Desktop
+            </span>
+          </Button>
+        </div>
         <Button
           type="button"
           size="sm"
           variant="outline"
           className="h-7 px-2"
           onClick={() => void toggleFullscreen()}
-          aria-label={isFullscreen ? "Exit fullscreen preview" : "Fullscreen preview"}
+          aria-label={
+            isFullscreen ? "Exit fullscreen preview" : "Fullscreen preview"
+          }
         >
           {isFullscreen ? (
             <Minimize2 className="size-3.5" aria-hidden />
@@ -188,34 +225,39 @@ export function WebsiteLivePreview({
           )}
         </Button>
       </div>
+    </div>
+  );
 
+  return (
+    <section
+      id="website-builder-live-preview"
+      ref={shellRef}
+      className={cn(
+        "flex min-h-0 min-w-0 flex-col",
+        bounded && "h-full overflow-hidden",
+        className,
+      )}
+    >
       <div
         className={cn(
-          "flex flex-1 flex-col overflow-hidden rounded-xl border border-border-warm bg-muted/30 shadow-sm ring-1 ring-border-warm/60",
-          fillViewport
-            ? "min-h-[min(72dvh,720px)]"
-            : "min-h-[min(48dvh,520px)] sm:min-h-[min(58dvh,680px)] lg:min-h-[min(68dvh,780px)] xl:min-h-[min(78dvh,860px)]"
+          "flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border-warm bg-muted/30 shadow-sm ring-1 ring-border-warm/60",
+          !bounded &&
+            "min-h-[min(48dvh,520px)] sm:min-h-[min(58dvh,680px)]",
         )}
         data-site-preview-pane
       >
         {deviceMode === "phone" ? (
           <div
             ref={viewportRef}
-            className="flex flex-1 flex-col bg-gradient-to-b from-muted/40 to-muted/20"
+            className="flex min-h-0 flex-1 flex-col bg-gradient-to-b from-muted/40 to-muted/20"
             data-site-preview-pane
           >
-            <div className="flex items-center justify-between gap-2 border-b border-border-warm/60 bg-card/70 px-3 py-2">
-              <span className="min-w-0 flex-1 truncate text-center text-[11px] font-medium text-text-muted-warm">
-                {siteHostname}
-              </span>
-              {deviceToggle}
-            </div>
-            <div className="flex flex-1 items-start justify-center overflow-auto p-2 sm:p-4 lg:p-6">
+            {previewToolbar}
+            <div className="flex min-h-0 flex-1 items-start justify-center overflow-auto p-2 sm:p-4">
               <div
-                className="mx-auto"
+                className="mx-auto shrink-0"
                 style={{
                   width: (PREVIEW_PHONE_WIDTH + 20) * phoneScale,
-                  height: scaledPhoneHeight ?? undefined,
                 }}
               >
                 <div
@@ -227,10 +269,18 @@ export function WebsiteLivePreview({
                   }}
                 >
                   <div className="flex items-center justify-center gap-2 bg-zinc-800 px-4 py-2">
-                    <span className="h-1.5 w-12 rounded-full bg-zinc-600" aria-hidden />
+                    <span
+                      className="h-1.5 w-12 rounded-full bg-zinc-600"
+                      aria-hidden
+                    />
                   </div>
                   <div
-                    className="max-h-[min(56dvh,640px)] overflow-x-hidden overflow-y-auto bg-background sm:max-h-[min(68dvh,760px)]"
+                    className={cn(
+                      "overflow-x-hidden overflow-y-auto bg-background",
+                      bounded
+                        ? "max-h-[min(62dvh,720px)]"
+                        : "max-h-[min(56dvh,640px)] sm:max-h-[min(68dvh,760px)]",
+                    )}
                     style={{ width: PREVIEW_PHONE_WIDTH }}
                   >
                     <SitePreviewLayoutProvider mode="phone">
@@ -258,8 +308,8 @@ export function WebsiteLivePreview({
               <div className="mx-auto min-w-0 flex-1 truncate rounded-md bg-muted/60 px-3 py-1 text-center text-[11px] text-text-muted-warm">
                 {siteHostname}
               </div>
-              {deviceToggle}
             </div>
+            {previewToolbar}
             <div
               ref={viewportRef}
               className="min-h-0 flex-1 overflow-x-auto overflow-y-auto bg-muted/20 p-3 sm:p-4"
@@ -296,11 +346,11 @@ export function WebsiteLivePreview({
         )}
       </div>
 
-      <p className="text-center text-[11px] text-text-muted-warm">
+      <p className="mt-1.5 text-center text-[11px] text-text-muted-warm">
         {deviceMode === "phone"
-          ? `${PREVIEW_PHONE_WIDTH}px — mobile layout`
-          : `Scaled from ${PREVIEW_DESKTOP_CANVAS_WIDTH}px — desktop layout`}
+          ? `${PREVIEW_PHONE_WIDTH}px mobile layout`
+          : `${PREVIEW_DESKTOP_CANVAS_WIDTH}px desktop — scroll inside preview`}
       </p>
     </section>
   );
-}
+});
