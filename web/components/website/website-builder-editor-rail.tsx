@@ -11,6 +11,8 @@ type WebsiteBuilderEditorRailProps = {
   designPanel: ReactNode;
   sectionsPanel: ReactNode;
   templatesPanel: ReactNode;
+  /** When true, tabs render in WebsiteBuilderWorkspaceBar instead. */
+  hideTabs?: boolean;
 };
 
 const TABS: { id: WebsiteBuilderEditorTab; label: string; tourAttr?: string }[] = [
@@ -25,35 +27,38 @@ export function WebsiteBuilderEditorRail({
   designPanel,
   sectionsPanel,
   templatesPanel,
+  hideTabs = false,
 }: WebsiteBuilderEditorRailProps) {
   return (
     <div className="flex min-h-0 flex-col gap-2">
-      <div
-        className="inline-flex w-full rounded-lg border border-border-warm bg-card p-1"
-        role="tablist"
-        aria-label="Website builder sections"
-      >
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            id={`website-builder-tab-${tab.id}`}
-            data-tour={tab.tourAttr}
-            aria-selected={activeTab === tab.id}
-            aria-controls={`website-builder-panel-${tab.id}`}
-            className={cn(
-              "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              activeTab === tab.id
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-text-muted-warm hover:bg-muted/60 hover:text-text-warm"
-            )}
-            onClick={() => onTabChange(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {!hideTabs ? (
+        <div
+          className="inline-flex w-full rounded-lg border border-border-warm bg-card p-1"
+          role="tablist"
+          aria-label="Website builder sections"
+        >
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              id={`website-builder-tab-${tab.id}`}
+              data-tour={tab.tourAttr}
+              aria-selected={activeTab === tab.id}
+              aria-controls={`website-builder-panel-${tab.id}`}
+              className={cn(
+                "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                activeTab === tab.id
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-text-muted-warm hover:bg-muted/60 hover:text-text-warm"
+              )}
+              onClick={() => onTabChange(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className="min-h-0 space-y-2">
         <TabPanel id="design" activeTab={activeTab}>

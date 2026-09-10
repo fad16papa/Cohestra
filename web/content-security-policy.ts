@@ -18,7 +18,7 @@ const PRODUCTION_CONNECT_SRC =
   "connect-src 'self' https://nominatim.openstreetmap.org https://api.paddle.com https://sandbox-api.paddle.com https://cdn.paddle.com https://sandbox-cdn.paddle.com";
 
 const DEV_CONNECT_SRC =
-  "connect-src 'self' ws: wss: https://nominatim.openstreetmap.org https://api.paddle.com https://sandbox-api.paddle.com https://cdn.paddle.com https://sandbox-cdn.paddle.com";
+  "connect-src 'self' http://localhost:8080 ws: wss: https://nominatim.openstreetmap.org https://api.paddle.com https://sandbox-api.paddle.com https://cdn.paddle.com https://sandbox-cdn.paddle.com";
 
 function buildFrameAncestorsDirective(frameAncestors?: readonly string[]): string {
   if (!frameAncestors || frameAncestors.length === 0) {

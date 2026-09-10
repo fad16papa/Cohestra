@@ -33,9 +33,23 @@ import {
 } from "@/components/website/website-builder-editor-rail";
 import type { WebsiteBuilderEditorTab } from "@/lib/website-builder-tour";
 import { WebsiteBuilderOnboardingTour } from "@/components/website/website-builder-onboarding-tour";
-import { WebsitePublishReadinessPanel } from "@/components/website/website-publish-readiness-panel";
 import { WebsiteTemplatesPanel } from "@/components/website/website-templates-panel";
-import { WebsiteLivePreview } from "@/components/website/website-live-preview";
+import {
+  WebsiteLivePreview,
+  type WebsiteLivePreviewHandle,
+} from "@/components/website/website-live-preview";
+import { WebsiteBuilderWorkspaceBar } from "@/components/website/website-builder-workspace-bar";
+import { WebsiteAddSectionDialog } from "@/components/website/website-add-section-dialog";
+import { useWebsiteStudioHeight } from "@/hooks/use-website-studio-height";
+import {
+  getDefaultWorkspaceMode,
+  isSplitWorkspaceAvailable,
+  normalizeWorkspaceMode,
+  shouldShowEditorPane,
+  shouldShowPreviewPane,
+  WORKSPACE_SPLIT_EDITOR_MAX_PX,
+  type WebsiteBuilderWorkspaceMode,
+} from "@/lib/website-builder-workspace";
 import { WebsiteSharePreview } from "@/components/website/website-share-preview";
 import { WebsitePublishSuccessDialog } from "@/components/website/website-publish-success-dialog";
 import {
@@ -195,6 +209,13 @@ export function WebsiteBuilderPage() {
   const [deviceMode, setDeviceMode] = useState<DeviceMode>("desktop");
   const [mobileWorkspace, setMobileWorkspace] = useState<MobileWorkspace>("edit");
   const isWideLayout = useSyncMedia("(min-width: 1024px)");
+  const [viewportWidth, setViewportWidth] = useState(0);
+  const [workspaceMode, setWorkspaceMode] =
+    useState<WebsiteBuilderWorkspaceMode>("build");
+  const studioAnchorRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<WebsiteLivePreviewHandle>(null);
+  const workspaceInitializedRef = useRef(false);
+  const studioHeight = useWebsiteStudioHeight(studioAnchorRef);
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isPreviewOpening, setIsPreviewOpening] = useState(false);
@@ -237,6 +258,46 @@ export function WebsiteBuilderPage() {
       setDeviceMode("phone");
     }
   }, [isWideLayout]);
+
+  useEffect(() => {
+    const update = () => setViewportWidth(window.innerWidth);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  useEffect(() => {
+    if (viewportWidth <= 0) {
+      return;
+    }
+
+    setWorkspaceMode((current) =>
+      normalizeWorkspaceMode(current, viewportWidth),
+    );
+  }, [viewportWidth]);
+
+  useEffect(() => {
+    if (viewportWidth <= 0 || workspaceInitializedRef.current || !isWideLayout) {
+      return;
+    }
+
+    setWorkspaceMode(getDefaultWorkspaceMode(viewportWidth));
+    workspaceInitializedRef.current = true;
+  }, [viewportWidth, isWideLayout]);
+
+  useEffect(() => {
+    if (!expandedSectionId) {
+      return;
+    }
+
+    if (
+      !shouldShowPreviewPane(workspaceMode, !isWideLayout, mobileWorkspace)
+    ) {
+      return;
+    }
+
+    previewRef.current?.scrollToSection(expandedSectionId);
+  }, [expandedSectionId, isWideLayout, mobileWorkspace, workspaceMode]);
 
   const ACCENT_INVALID_MESSAGE =
     "Enter a valid accent color (#RGB or #RRGGBB) before saving.";
@@ -479,11 +540,6 @@ export function WebsiteBuilderPage() {
   const tourSteps = useMemo(
     () => getWebsiteBuilderTourSteps(shell?.plan ?? "Core"),
     [shell?.plan]
-  );
-
-  const enabledSectionCount = useMemo(
-    () => draft?.sections.filter((section) => section.enabled).length ?? 0,
-    [draft]
   );
 
   const [publicSiteUrl, setPublicSiteUrl] = useState(() => resolvePublicSiteUrl());
@@ -1038,8 +1094,24 @@ export function WebsiteBuilderPage() {
     upcomingActivities,
   };
 
+  const splitAvailable = isSplitWorkspaceAvailable(viewportWidth);
+  const showEditor = shouldShowEditorPane(
+    workspaceMode,
+    !isWideLayout,
+    mobileWorkspace,
+  );
+  const showPreview = shouldShowPreviewPane(
+    workspaceMode,
+    !isWideLayout,
+    mobileWorkspace,
+  );
+
   return (
-    <div className="space-y-2">
+    <div
+      ref={studioAnchorRef}
+      className="flex min-h-0 flex-col gap-2"
+      style={studioHeight ? { height: studioHeight } : undefined}
+    >
       <WebsiteBuilderToolbar
         siteUrl={publicSiteUrl}
         siteDisplayUrl={publicSiteDisplayUrl}
@@ -1052,10 +1124,7 @@ export function WebsiteBuilderPage() {
             ? `Last saved ${formatLastSaved(adminData.draftUpdatedAt)}`
             : null
         }
-        publishedAt={adminData.publishedAt}
-        upcomingActivityCount={upcomingActivities.length}
-        enabledSectionCount={enabledSectionCount}
-        publishBlockerCount={publishGate.blockers.length}
+        publishGate={publishGate}
         checklistHidden={!checklistVisible}
         isPreviewOpening={isPreviewOpening}
         isDirty={isDirty}
@@ -1079,62 +1148,44 @@ export function WebsiteBuilderPage() {
         onPublish={() => void handleOpenPublishDialog()}
       />
 
-      <WebsitePublishReadinessPanel gate={publishGate} />
-
-      {!isWideLayout ? (
-        <div
-          className="inline-flex w-full rounded-lg border border-border-warm bg-card p-1 lg:hidden"
-          role="tablist"
-          aria-label="Builder workspace"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mobileWorkspace === "edit"}
-            className={cn(
-              "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              mobileWorkspace === "edit"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-text-muted-warm hover:bg-muted/60 hover:text-text-warm"
-            )}
-            onClick={() => setMobileWorkspace("edit")}
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={mobileWorkspace === "preview"}
-            className={cn(
-              "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-              mobileWorkspace === "preview"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-text-muted-warm hover:bg-muted/60 hover:text-text-warm"
-            )}
-            onClick={() => setMobileWorkspace("preview")}
-          >
-            Preview
-          </button>
-        </div>
-      ) : null}
+      <WebsiteBuilderWorkspaceBar
+        editorTab={editorTab}
+        onEditorTabChange={setEditorTab}
+        workspaceMode={workspaceMode}
+        onWorkspaceModeChange={setWorkspaceMode}
+        splitAvailable={splitAvailable}
+        isMobile={!isWideLayout}
+        mobileWorkspace={mobileWorkspace}
+        onMobileWorkspaceChange={setMobileWorkspace}
+      />
 
       <div
         className={cn(
-          "grid gap-3",
-          isWideLayout &&
-            "lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-start"
+          "flex min-h-0 flex-1 gap-3",
+          workspaceMode === "split" && isWideLayout && "flex-row",
+          workspaceMode !== "split" && isWideLayout && "flex-col",
+          !isWideLayout && "flex-col",
         )}
       >
+        {showEditor ? (
         <div
           className={cn(
-            "min-w-0",
-            !isWideLayout && mobileWorkspace !== "edit" && "hidden",
-            isWideLayout && "lg:max-h-[calc(100dvh-11rem)] lg:overflow-y-auto lg:overscroll-y-contain lg:pr-1"
+            "min-h-0 min-w-0 overflow-y-auto overscroll-y-contain pr-0.5",
+            workspaceMode === "split" && isWideLayout && "shrink-0",
           )}
+          style={
+            workspaceMode === "split" && isWideLayout
+              ? {
+                  width: `min(100%, ${WORKSPACE_SPLIT_EDITOR_MAX_PX}px)`,
+                  maxWidth: WORKSPACE_SPLIT_EDITOR_MAX_PX,
+                }
+              : undefined
+          }
         >
         <WebsiteBuilderEditorRail
           activeTab={editorTab}
           onTabChange={setEditorTab}
+          hideTabs={isWideLayout}
           designPanel={
             <>
               {checklistPrefsReady && checklistVisible ? (
@@ -1176,27 +1227,19 @@ export function WebsiteBuilderPage() {
                 onRemoveSection={handleRequestRemoveSection}
                 onHeroUploadBusyChange={setIsHeroUploading}
               />
-              <div className="space-y-1.5 border-t border-border-warm pt-3">
-                <p className="text-sm font-medium text-text-warm">Add section</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {addableSectionTypes.map((type) => (
-                    <Button
-                      key={type}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8"
-                      disabled={editorDisabled}
-                      onClick={() => handleAddSection(type)}
-                    >
-                      + {SECTION_TYPE_LABELS[type] ?? type}
-                    </Button>
-                  ))}
-                </div>
-                <p className="text-xs text-text-muted-warm">
-                  Up to {MAX_SECTIONS} sections.
-                </p>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-warm pt-3">
+                <p className="text-sm font-medium text-text-warm">Sections</p>
+                <WebsiteAddSectionDialog
+                  plan={shell?.plan ?? "Core"}
+                  disabled={editorDisabled}
+                  currentSectionCount={draft.sections.length}
+                  addableTypes={addableSectionTypes}
+                  onAddSection={handleAddSection}
+                />
               </div>
+              <p className="text-xs text-text-muted-warm">
+                Up to {MAX_SECTIONS} sections · drag to reorder
+              </p>
             </section>
           }
           templatesPanel={
@@ -1229,22 +1272,30 @@ export function WebsiteBuilderPage() {
           }
         />
         </div>
+        ) : null}
 
+        {showPreview ? (
         <div
           className={cn(
-            "min-w-0",
-            !isWideLayout && mobileWorkspace !== "preview" && "hidden"
+            "min-h-0 min-w-0",
+            workspaceMode === "split" && isWideLayout && "min-w-0 flex-1",
+            workspaceMode === "preview" && isWideLayout && "min-h-0 flex-1",
+            !isWideLayout && "min-h-0 flex-1",
           )}
         >
         <WebsiteLivePreview
+          ref={previewRef}
+          bounded
           deviceMode={deviceMode}
           onDeviceModeChange={setDeviceMode}
           siteHostname={publicSiteHostname}
-          fillViewport={!isWideLayout && mobileWorkspace === "preview"}
+          highlightSectionId={expandedSectionId}
+          className="h-full"
         >
           <SitePageRenderer site={previewPayload} isPreview />
         </WebsiteLivePreview>
         </div>
+        ) : null}
       </div>
 
       <WebsiteBuilderOnboardingTour
