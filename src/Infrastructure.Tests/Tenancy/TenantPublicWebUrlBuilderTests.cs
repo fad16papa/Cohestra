@@ -38,6 +38,30 @@ public sealed class TenantPublicWebUrlBuilderTests
     }
 
     [Fact]
+    public void BuildTenantPath_uatApex_usesUatTenantSubdomain()
+    {
+        var url = TenantPublicWebUrlBuilder.BuildTenantPath(
+            "https://uat.cohestra.app",
+            "creativorare",
+            "/register/sunday-dragon-highlander-2");
+
+        Assert.Equal(
+            "https://creativorare.uat.cohestra.app/register/sunday-dragon-highlander-2",
+            url);
+    }
+
+    [Fact]
+    public void BuildTenantPath_uatTenantHost_preservesOrigin()
+    {
+        var url = TenantPublicWebUrlBuilder.BuildTenantPath(
+            "https://creativorare.uat.cohestra.app",
+            "creativorare",
+            "/dashboard");
+
+        Assert.Equal("https://creativorare.uat.cohestra.app/dashboard", url);
+    }
+
+    [Fact]
     public void BuildTenantPath_nipIoApex_buildsTenantSubdomain()
     {
         var url = TenantPublicWebUrlBuilder.BuildTenantPath(
@@ -66,6 +90,12 @@ public sealed class TenantPublicWebUrlBuilderTests
         Assert.Equal(
             "https://129-212-235-2.nip.io",
             TenantPublicWebUrlBuilder.BuildMarketingApexOrigin("https://acme.129-212-235-2.nip.io"));
+        Assert.Equal(
+            "https://uat.cohestra.app",
+            TenantPublicWebUrlBuilder.BuildMarketingApexOrigin("https://uat.cohestra.app"));
+        Assert.Equal(
+            "https://uat.cohestra.app",
+            TenantPublicWebUrlBuilder.BuildMarketingApexOrigin("https://creativorare.uat.cohestra.app"));
     }
 
     [Fact]

@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-09-09
+# last_updated: 2026-09-12
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -53,7 +53,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-09-09
+last_updated: 2026-09-12
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -261,7 +261,7 @@ development_status:
   # Isolation review on 95e5bd0 found BLOCKER/MAJOR; patches applied, story stays in-progress.
   epic-19: in-progress
   19-1-uat-droplet-deploy-and-smoke: in-progress
-  19-2-https-edge-security-header-verify: ready-for-dev
+  19-2-https-edge-security-header-verify: review
   19-3-recaptcha-production-enablement: ready-for-dev
   19-4-paddle-billing-uat-on-droplet: ready-for-dev
   19-5-operator-core-flows-launch-signoff: ready-for-dev

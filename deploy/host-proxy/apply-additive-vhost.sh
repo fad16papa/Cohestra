@@ -18,9 +18,11 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# shellcheck source=deploy/host-proxy/cohestra-uat-server-names.sh
+source "$ROOT_DIR/deploy/host-proxy/cohestra-uat-server-names.sh"
 EDGE_NGINX="${EXISTING_EDGE_NGINX_CONTAINER:-lead-generation-crm-nginx-1}"
 ALIAS="${COHESTRA_EDGE_ALIAS:-cohestra-uat-nginx}"
-HOST_NAME="${COHESTRA_UAT_HOSTNAME:-}"
+HOST_NAME="${COHESTRA_UAT_HOSTNAME:-$COHESTRA_UAT_PLATFORM_HOST}"
 EXAMPLE="$ROOT_DIR/deploy/host-proxy/cohestra-uat.nginx.example.conf"
 TMP=$(mktemp)
 
@@ -61,7 +63,7 @@ if ! echo "$nets" | grep -qw cohestra_uat_edge; then
   exit 1
 fi
 
-sed "s/server_name uat.example.com;/server_name ${HOST_NAME};/" "$EXAMPLE" > "$TMP"
+render_cohestra_uat_nginx "$EXAMPLE" "$TMP"
 if grep -q 'thesocialcollectivesg.com' "$TMP"; then
   echo "REFUSE: generated vhost mentions the existing hostname" >&2
   exit 1
@@ -71,8 +73,8 @@ if grep -qE '127\.0\.0\.1:8180' "$TMP"; then
   exit 1
 fi
 
-if ! grep -qE "server_name[[:space:]]+${HOST_NAME};" "$TMP"; then
-  echo "REFUSE: generated vhost server_name is not ${HOST_NAME}" >&2
+if ! grep -qE "server_name[[:space:]]+${HOST_NAME}[[:space:]]+\*\.${HOST_NAME};" "$TMP"; then
+  echo "REFUSE: generated vhost server_name must include ${HOST_NAME} and *.${HOST_NAME}" >&2
   exit 1
 fi
 if ! grep -q 'X-Cohestra-Edge-Vhost' "$TMP"; then
