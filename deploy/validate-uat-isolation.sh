@@ -333,6 +333,7 @@ if [[ -f "$WILDCARD_TLS" ]]; then
     && grep -q '\*\.uat\.cohestra\.app' "$WILDCARD_TLS" \
     && grep -q 'prove-edge-tls-wildcard.sh' "$WILDCARD_TLS" \
     && grep -q 'verify-existing-app.sh' "$WILDCARD_TLS" \
+    && ! grep -q 'manual-public-ip-logging-ok' "$WILDCARD_TLS" \
     && ! grep -vE '^[[:space:]]*(#|echo )' "$WILDCARD_TLS" | grep -Eq 'active-ssl.conf|cohestra-uat-certbot|setup-temporary-https|switch-https-domain|docker compose up|force-recreate'; then
     pass "apply-additive-tls-wildcard.sh uses DNS-01 for uat + *.uat.cohestra.app without touching existing site TLS"
   else
