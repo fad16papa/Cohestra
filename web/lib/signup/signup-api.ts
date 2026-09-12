@@ -298,8 +298,12 @@ export function buildTenantDashboardUrl(slug: string): string {
       return `${protocol}//${slug}.localhost${portSuffix}/dashboard`;
     }
 
-    if (hostname === "uat.cohestra.app" || hostname.endsWith(".uat.cohestra.app")) {
-      return `${protocol}//${hostname}${portSuffix}/dashboard`;
+    if (hostname === "uat.cohestra.app" || hostname === "www.uat.cohestra.app") {
+      return `${protocol}//${slug}.uat.cohestra.app${portSuffix}/dashboard`;
+    }
+
+    if (hostname.endsWith(".uat.cohestra.app")) {
+      return `${origin}/dashboard`;
     }
 
     if (hostname.endsWith(".cohestra.app")) {

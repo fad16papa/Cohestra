@@ -109,12 +109,33 @@ Then:
 Do not change existing server blocks, certificates, or the existing hostname.
 
 Story 19.1 may prove HTTP/internal routing. Story 19.2 adds **additive** HTTPS
-on the same existing edge container (`apply-additive-tls.sh`): a new Let's
-Encrypt name `uat.cohestra.app` in `lead-generation-crm_certbot_certs`, then
-`listen 443` in `zz-cohestra-uat.conf` only. Do **not** regenerate
+on the same existing edge container. The certificate must cover **both**:
+
+- `uat.cohestra.app` (platform marketing apex)
+- `*.uat.cohestra.app` (tenant namespace, e.g. `creativorare.uat.cohestra.app`)
+
+Use **`apply-additive-tls-wildcard.sh`** (DNS-01). HTTP-01
+`apply-additive-tls.sh` remains for legacy single-name bootstrap only and
+**cannot** issue `*.uat.cohestra.app`.
+
+The new Let's Encrypt lineage lives in `lead-generation-crm_certbot_certs`,
+then `listen 443` in `zz-cohestra-uat.conf` only. Do **not** regenerate
 `active-ssl.conf`. Do **not** use the existing site certificate. Do **not**
 run `cohestra-uat-certbot` or `setup-temporary-https.sh` on this shared host.
 Do not re-run `apply-additive-vhost.sh` after TLS (it would drop `listen 443`).
+
+### Wildcard TLS (Story 19.2)
+
+```bash
+# As deploy@129.212.235.2 from /home/deploy/cohestra
+bash deploy/host-proxy/apply-additive-tls-wildcard.sh
+# Owner gate: add GoDaddy TXT at _acme-challenge.uat.cohestra.app when prompted
+bash deploy/host-proxy/prove-edge-tls-wildcard.sh
+bash deploy/host-proxy/persist-cohestra-vhost.sh   # host export; bind mount still owner follow-up
+```
+
+Certificate renewal for DNS-01 wildcard is **manual** unless a vetted DNS provider
+plugin is added later. See script output for expiry and renewal steps.
 
 The existing nginx mounts `/var/www/certbot` **read-only**. ACME writes (preflight
 and `certbot`) use `lead-generation-crm_certbot_www` via a throwaway container.
@@ -148,8 +169,10 @@ Do not point GoDaddy A records at `129.212.235.2` until the additive vhost exist
 | Type | Name | Value |
 |------|------|-------|
 | A | `uat` | `129.212.235.2` |
+| A | `*.uat` | `129.212.235.2` |
 
-Do not point apex `@` or `www` at UAT. Apex `cohestra.app` stays reserved.
+Do not point apex `@` or `www` at UAT. Do not point `*.cohestra.app` at UAT.
+Apex `cohestra.app` stays reserved.
 Do not change `thesocialcollectivesg.com` DNS.
 
 Paddle webhook stays `POST /api/v1/system/paddle/webhook`.

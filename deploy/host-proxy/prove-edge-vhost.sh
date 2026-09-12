@@ -5,12 +5,19 @@
 #
 # Usage (on the droplet, after apply-additive-vhost.sh):
 #   bash deploy/host-proxy/prove-edge-vhost.sh
+#
+# Tenant example host: creativorare.uat.cohestra.app
 
 set -euo pipefail
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# shellcheck source=deploy/host-proxy/cohestra-uat-server-names.sh
+source "$ROOT_DIR/deploy/host-proxy/cohestra-uat-server-names.sh"
 EDGE_NGINX="${EXISTING_EDGE_NGINX_CONTAINER:-lead-generation-crm-nginx-1}"
 ALIAS="${COHESTRA_EDGE_ALIAS:-cohestra-uat-nginx}"
-HOST_NAME="${COHESTRA_UAT_HOSTNAME:-uat.cohestra.app}"
+HOST_NAME="${COHESTRA_UAT_HOSTNAME:-$COHESTRA_UAT_PLATFORM_HOST}"
+TENANT_HOST="${COHESTRA_UAT_TENANT_EXAMPLE}"
+REGISTRATION_PATH="${COHESTRA_UAT_REGISTRATION_PATH:-/register/sunday-dragon-highlander-2}"
 EXISTING_HOST="${EXISTING_APP_HOST:-thesocialcollectivesg.com}"
 EXISTING_URL="${EXISTING_APP_PUBLIC_URL:-https://thesocialcollectivesg.com}"
 LOOPBACK_NGINX="${NGINX_HOST_PORT:-8180}"
@@ -46,11 +53,11 @@ if ! docker exec "$EDGE_NGINX" test -f /etc/nginx/conf.d/zz-cohestra-uat.conf; t
 else
   docker exec "$EDGE_NGINX" grep -nE 'server_name |listen |proxy_pass |set \$cohestra|X-Cohestra-Edge-Vhost' \
     /etc/nginx/conf.d/zz-cohestra-uat.conf || true
-  if docker exec "$EDGE_NGINX" grep -qE "server_name[[:space:]]+${HOST_NAME};" \
+  if docker exec "$EDGE_NGINX" grep -qE "server_name[[:space:]]+${HOST_NAME}[[:space:]]+\*\.${HOST_NAME};" \
     /etc/nginx/conf.d/zz-cohestra-uat.conf; then
-    pass "zz-cohestra-uat.conf server_name is $HOST_NAME"
+    pass "zz-cohestra-uat.conf server_name includes platform + tenant wildcard"
   else
-    fail "zz-cohestra-uat.conf server_name is not $HOST_NAME — Host-header will miss this vhost"
+    fail "zz-cohestra-uat.conf server_name missing ${HOST_NAME} and *.${HOST_NAME}"
   fi
   if docker exec "$EDGE_NGINX" grep -qE '127\.0\.0\.1:8180' /etc/nginx/conf.d/zz-cohestra-uat.conf; then
     fail "zz-cohestra-uat.conf proxies to host loopback"
@@ -100,8 +107,24 @@ else
   fail "Host $HOST_NAME :80 missing X-Cohestra-Edge-Vhost — additive vhost did not match"
 fi
 
+tenant_hdr=$(mktemp)
+tenant_body=$(mktemp)
+tenant_code=$(curl -sS --connect-timeout 5 -D "$tenant_hdr" -o "$tenant_body" -w '%{http_code}' \
+  -H "Host: ${TENANT_HOST}" "http://127.0.0.1${REGISTRATION_PATH}" || echo "000")
+echo "tenant ${REGISTRATION_PATH} HTTP $tenant_code"
+if [[ "$tenant_code" == "200" || "$tenant_code" == "404" ]]; then
+  pass "Host $TENANT_HOST :80 routes to Cohestra edge (HTTP $tenant_code)"
+else
+  fail "Host $TENANT_HOST :80 registration HTTP $tenant_code"
+fi
+if grep -qiE '^X-Cohestra-Edge-Vhost:[[:space:]]*uat' "$tenant_hdr"; then
+  pass "Host $TENANT_HOST :80 carries X-Cohestra-Edge-Vhost"
+else
+  fail "Host $TENANT_HOST :80 missing X-Cohestra-Edge-Vhost"
+fi
+
 home_hdr=$(mktemp)
-trap 'rm -f "$uat_hdr" "$uat_body" "$home_hdr"' EXIT
+trap 'rm -f "$uat_hdr" "$uat_body" "$tenant_hdr" "$tenant_body" "$home_hdr"' EXIT
 home_code=$(curl -sS --connect-timeout 5 -D "$home_hdr" -o /dev/null -w '%{http_code}' \
   -H "Host: ${HOST_NAME}" "http://127.0.0.1/" || echo "000")
 home_loc=$(grep -iE '^Location:' "$home_hdr" | head -n1 | tr -d '\r' || true)

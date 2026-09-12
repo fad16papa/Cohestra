@@ -210,13 +210,14 @@ fi
 TLS_EXAMPLE="$ROOT_DIR/deploy/host-proxy/cohestra-uat.nginx.tls.example.conf"
 if [[ -f "$TLS_EXAMPLE" ]]; then
   if grep -q 'listen 443 ssl' "$TLS_EXAMPLE" \
+    && grep -q '\*\.uat\.example\.com' "$TLS_EXAMPLE" \
     && grep -q '/etc/letsencrypt/live/uat.cohestra.app/' "$TLS_EXAMPLE" \
     && grep -q 'Strict-Transport-Security' "$TLS_EXAMPLE" \
     && grep -q 'cohestra-uat-nginx' "$TLS_EXAMPLE" \
     && ! grep -q 'thesocialcollectivesg.com' "$TLS_EXAMPLE" \
     && ! grep -vE '^[[:space:]]*#' "$TLS_EXAMPLE" | grep -qE '127\.0\.0\.1:8180' \
     && ! grep -qE 'listen[^;]*default_server' "$TLS_EXAMPLE"; then
-    pass "TLS example is additive HTTPS for uat.cohestra.app on the existing edge"
+    pass "TLS example is additive HTTPS for uat.cohestra.app + tenant wildcard on the existing edge"
   else
     fail "TLS example must listen 443 for uat.cohestra.app only, HSTS, Docker DNS, no existing cert/host"
   fi
@@ -326,6 +327,34 @@ else
   fail "Missing deploy/host-proxy/prove-edge-tls.sh"
 fi
 
+WILDCARD_TLS="$ROOT_DIR/deploy/host-proxy/apply-additive-tls-wildcard.sh"
+if [[ -f "$WILDCARD_TLS" ]]; then
+  if grep -q 'preferred-challenges dns' "$WILDCARD_TLS" \
+    && grep -q '\*\.uat\.cohestra\.app' "$WILDCARD_TLS" \
+    && grep -q 'prove-edge-tls-wildcard.sh' "$WILDCARD_TLS" \
+    && grep -q 'verify-existing-app.sh' "$WILDCARD_TLS" \
+    && ! grep -vE '^[[:space:]]*(#|echo )' "$WILDCARD_TLS" | grep -Eq 'active-ssl.conf|cohestra-uat-certbot|setup-temporary-https|switch-https-domain|docker compose up|force-recreate'; then
+    pass "apply-additive-tls-wildcard.sh uses DNS-01 for uat + *.uat.cohestra.app without touching existing site TLS"
+  else
+    fail "apply-additive-tls-wildcard.sh must DNS-01 wildcard issue, prove, and never recreate the live stack"
+  fi
+else
+  fail "Missing deploy/host-proxy/apply-additive-tls-wildcard.sh"
+fi
+
+WILDCARD_PROVE="$ROOT_DIR/deploy/host-proxy/prove-edge-tls-wildcard.sh"
+if [[ -f "$WILDCARD_PROVE" ]]; then
+  if grep -q '\*\.uat\.cohestra\.app' "$WILDCARD_PROVE" \
+    && grep -q 'creativorare.uat.cohestra.app' "$WILDCARD_PROVE" \
+    && grep -q 'thesocialcollectivesg.com' "$WILDCARD_PROVE"; then
+    pass "prove-edge-tls-wildcard.sh requires platform + tenant wildcard TLS and existing-site regression"
+  else
+    fail "prove-edge-tls-wildcard.sh must prove tenant wildcard TLS and existing app cert"
+  fi
+else
+  fail "Missing deploy/host-proxy/prove-edge-tls-wildcard.sh"
+fi
+
 FLIP_HTTPS="$ROOT_DIR/deploy/host-proxy/flip-public-base-https.sh"
 if [[ -f "$FLIP_HTTPS" ]]; then
   if grep -q 'https://uat.cohestra.app' "$FLIP_HTTPS" \
@@ -365,8 +394,8 @@ fi
 
 PROVE="$ROOT_DIR/deploy/host-proxy/prove-edge-vhost.sh"
 if [[ -f "$PROVE" ]]; then
-  if grep -q 'default-tenant' "$PROVE" && grep -q 'X-Cohestra-Edge-Vhost' "$PROVE" && grep -q 'uat.cohestra.app' "$PROVE"; then
-    pass "prove-edge-vhost.sh requires default-tenant + edge header on Host uat.cohestra.app"
+  if grep -q 'default-tenant' "$PROVE" && grep -q 'X-Cohestra-Edge-Vhost' "$PROVE" && grep -q 'uat.cohestra.app' "$PROVE" && grep -q 'creativorare.uat.cohestra.app' "$PROVE"; then
+    pass "prove-edge-vhost.sh requires default-tenant + edge header on platform and tenant Host headers"
   else
     fail "prove-edge-vhost.sh must require Cohestra default-tenant and X-Cohestra-Edge-Vhost"
   fi

@@ -16,6 +16,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+# shellcheck source=deploy/host-proxy/cohestra-uat-server-names.sh
+source "$ROOT_DIR/deploy/host-proxy/cohestra-uat-server-names.sh"
 EDGE_NGINX="${EXISTING_EDGE_NGINX_CONTAINER:-lead-generation-crm-nginx-1}"
 ALIAS="${COHESTRA_EDGE_ALIAS:-cohestra-uat-nginx}"
 HOST_NAME="${COHESTRA_UAT_HOSTNAME:-}"
@@ -110,7 +112,7 @@ install_conf() {
   return 0
 }
 
-sed "s/server_name uat.example.com;/server_name ${HOST_NAME};/g" "$HTTP_EXAMPLE" > "$TMP"
+render_cohestra_uat_nginx "$HTTP_EXAMPLE" "$TMP"
 if grep -q 'thesocialcollectivesg.com' "$TMP" || grep -qE '127\.0\.0\.1:8180' "$TMP"; then
   echo "REFUSE: HTTP vhost mentions existing hostname or host loopback" >&2
   exit 1
@@ -191,7 +193,7 @@ if docker exec "$EDGE_NGINX" test -f /etc/letsencrypt/live/thesocialcollectivesg
 fi
 
 echo "== Phase 3: additive HTTPS server_name =="
-sed "s/server_name uat.example.com;/server_name ${HOST_NAME};/g" "$TLS_EXAMPLE" > "$TMP"
+render_cohestra_uat_nginx "$TLS_EXAMPLE" "$TMP"
 if grep -q 'thesocialcollectivesg.com' "$TMP" || grep -qE '127\.0\.0\.1:8180' "$TMP"; then
   echo "REFUSE: TLS vhost mentions existing hostname or host loopback" >&2
   exit 1

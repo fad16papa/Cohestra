@@ -49,6 +49,16 @@ public static class TenantPublicWebUrlBuilder
             }
         }
 
+        if (host.Equals("uat.cohestra.app", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"https://{slug}.uat.cohestra.app";
+        }
+
+        if (host.EndsWith(".uat.cohestra.app", StringComparison.OrdinalIgnoreCase))
+        {
+            return baseUri.GetLeftPart(UriPartial.Authority);
+        }
+
         if (host.Equals("cohestra.app", StringComparison.OrdinalIgnoreCase)
             || host.Equals("www.cohestra.app", StringComparison.OrdinalIgnoreCase))
         {
@@ -108,6 +118,13 @@ public static class TenantPublicWebUrlBuilder
             }
 
             return $"{scheme}://{nipHost}{portSuffix}";
+        }
+
+        if (host.Equals("uat.cohestra.app", StringComparison.OrdinalIgnoreCase)
+            || host.Equals("www.uat.cohestra.app", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith(".uat.cohestra.app", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"https://uat.cohestra.app{portSuffix}";
         }
 
         if (host.Equals("cohestra.app", StringComparison.OrdinalIgnoreCase)

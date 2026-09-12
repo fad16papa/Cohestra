@@ -1,7 +1,7 @@
 ## Deferred from: code review of 19-1-uat-droplet-deploy-and-smoke.md (2026-09-06) HEAD 170458c
 
-- `TenantPublicWebUrlBuilder` maps any `*.cohestra.app` PUBLIC_BASE_URL to `https://{slug}.cohestra.app` / `https://cohestra.app`. UAT `http://uat.cohestra.app` therefore emits production apex links (email, invite, Paddle return). Inbound Host parse is fixed; outbound builder is pre-existing. Fix before public signup / email smoke.
-- `buildTenantDashboardUrl` on `uat.cohestra.app` returns same-host `/dashboard` without inserting `{slug}.uat.cohestra.app`.
+- ~~`TenantPublicWebUrlBuilder` UAT apex outbound URLs~~ — fixed Epic 19.2 branch `cursor/epic-19-wildcard-tls-a139` (2026-09-12).
+- ~~`buildTenantDashboardUrl` on `uat.cohestra.app`~~ — fixed same branch.
 - Reserved tenant slugs do not include `uat`, so a workspace named `uat` cannot have a natural production hostname.
 
 ## Deferred from: code review of 19-1-uat-droplet-deploy-and-smoke.md (2026-09-06)
