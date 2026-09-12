@@ -177,7 +177,6 @@ if ! docker run --rm \
   -d "$HOST_NAME" \
   -d "$COHESTRA_UAT_WILDCARD_HOST" \
   --non-interactive --agree-tos --keep-until-expiring \
-  --manual-public-ip-logging-ok \
   --email "$email" \
   --manual-auth-hook /usr/local/bin/cohestra-dns-auth \
   --manual-cleanup-hook /usr/local/bin/cohestra-dns-cleanup; then
