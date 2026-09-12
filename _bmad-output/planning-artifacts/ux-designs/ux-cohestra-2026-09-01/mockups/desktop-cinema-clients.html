@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Key screen — Desktop cinema · Clients</title>
+  <style>
+    /*
+      Governs this screen (Live Proof Cinema spines, 2026-09-01):
+      DESIGN.md — Brand & Style (Midnight Atelier, live product-as-proof);
+        Colors (paper-warm / ink / lagoon / gold-cinema / stone-cinema / line);
+        Typography (marketing-section thesis, feeling-title, feeling-scene, outcome-line, label);
+        Layout & Spacing (A4 32/68, cinema-gutter-lg 40px, stage min 520px, header-offset 6rem);
+        Elevation (product-frame: radius 24, hairline, one shadow — A1 thin Cohestra window);
+        Components: SectionHeader (A3/A6), SeekPills, ink-progress (A7), CinemaStage, FeelingCopy, ProductFrame.
+      EXPERIENCE.md — Foundation (desktop pin cinema); IA §Section + Rooms 1. Clients (Relief);
+        Component Patterns: SectionHeader, SeekPills, InkProgress, CinemaStage, FeelingCopy, ProductFrame, LiveRegion;
+        State Patterns: Cold load / Hash #crm / In-pin Clients @ progress 0;
+        Interaction Primitives: one sticky under header (C1); native scroll seek;
+        Accessibility Floor: FeelingCopy = tabpanel (C2); ProductFrame aria-hidden+inert (H1/H2);
+          DemoClub secondary text = stone-cinema (H3); dual-state pills (H4);
+        Key Flows: Flow A step 2 — Maya lands on Clients, Elena on the list.
+      LOCKS: A1 thin window (no dots) · A3 thesis · A4 32/68 · A6 no eyebrow · A7 thin ink · C1 one sticky.
+    */
+    :root {
+      --paper-warm: #F3F5F7;
+      --paper: #FAFBFC;
+      --ink: #070D12;
+      --ink-soft: #141C24;
+      --stone-cinema: #5A636E;
+      --gold-cinema: #6E5A32;
+      --lagoon: #0B6B63;
+      --lagoon-fg: #F3FFFC;
+      --line: #E6E9ED;
+      --line-strong: #D0D5DB;
+      --success: #1F7A5C;
+      --warn: #9A6700;
+      --status-new: #2563EB;
+      --serif: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      --sans: "Plus Jakarta Sans", "Plus Jakarta", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      --header-offset: 6rem;
+      --frame-shadow: 0 40px 80px rgba(7, 13, 18, 0.14);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: var(--sans);
+      color: var(--ink);
+      background: var(--paper);
+      -webkit-font-smoothing: antialiased;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0);
+      white-space: nowrap; border: 0;
+    }
+
+    .studio {
+      min-height: 100vh;
+      padding: 40px 32px 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      background: var(--paper);
+    }
+
+    /* Device = marketing viewport. Not product chrome — no traffic-light dots. */
+    .device {
+      width: min(1240px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--paper-warm);
+      box-shadow: 0 24px 56px rgba(7, 13, 18, 0.08);
+      overflow: hidden;
+    }
+
+    .mkt-header {
+      height: var(--header-offset);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(250, 251, 252, 0.92);
+      border-bottom: 1px solid var(--line);
+      position: relative;
+      z-index: 30;
+    }
+    .wordmark {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.55rem;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .mkt-nav {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--stone-cinema);
+    }
+    .mkt-nav .on { color: var(--ink); }
+
+    /* SectionHeader — not sticky; intro may scroll away */
+    .section-intro {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 80px 40px 32px;
+      text-align: center;
+    }
+    .h2 {
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+    .section-lead {
+      margin: 16px 0 0;
+      font-size: clamp(1rem, 1.2vw + 0.75rem, 1.0625rem);
+      line-height: 1.65;
+      color: var(--stone-cinema);
+    }
+
+    /* C1: ONE sticky cinema chrome under header. Pills shrink-0 inside; stage fills rest. */
+    .cinema-sticky {
+      position: relative;
+      z-index: 20;
+      background: var(--paper-warm);
+      padding: 0 40px 40px;
+      max-width: 90rem;
+      margin: 0 auto;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 0 10px;
+      background: var(--paper-warm);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 9999px;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      line-height: 1.35;
+      border: 1px solid var(--line-strong);
+      background: var(--paper);
+      color: var(--stone-cinema);
+      white-space: nowrap;
+    }
+    .pill.is-active {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+      box-shadow: 0 8px 20px rgba(7, 13, 18, 0.12);
+    }
+    /* H4: focus = ring only (selected already ink). Rest state: selected tab is in tab order. */
+    .pill.is-active.is-focus {
+      outline: 2px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    .ink-track {
+      height: 2px;
+      background: var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .ink-fill {
+      height: 100%;
+      width: 16.67%;
+      background: var(--ink);
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(0, 32%) minmax(0, 68%);
+      gap: 32px;
+      align-items: stretch;
+      min-height: 520px;
+      padding-top: 28px;
+    }
+
+    .feeling {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+    .feeling-word {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-cinema);
+    }
+    .feeling-title {
+      margin: 12px 0 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      max-width: 16ch;
+    }
+    .feeling-scene {
+      margin: 16px 0 0;
+      font-size: clamp(1rem, 1.1vw + 0.75rem, 1.0625rem);
+      line-height: 1.6;
+      color: var(--stone-cinema);
+      max-width: 36em;
+    }
+    .outcomes {
+      list-style: none;
+      margin: 24px 0 0;
+      padding: 16px 0 0;
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .outcomes li {
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+
+    /* A1 ProductFrame — thin Cohestra window. No dots, no URL bar. H1/H2 preview crop. */
+    .product-frame {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--paper);
+      box-shadow: var(--frame-shadow);
+      overflow: hidden;
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+      cursor: default;
+    }
+    .product-body {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      overflow: hidden;
+    }
+
+    .list-pane {
+      border-right: 1px solid var(--line);
+      background: var(--paper);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .crm-head {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .crm-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .crm-mark { width: 20px; height: 20px; color: var(--lagoon); flex-shrink: 0; }
+    .crm-title {
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .count {
+      border-radius: 999px;
+      background: rgba(11, 107, 99, 0.10);
+      color: var(--lagoon);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+    }
+    .search {
+      margin-top: 14px;
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper-warm);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      font-size: 0.875rem;
+      color: var(--stone-cinema);
+    }
+    .filters { margin-top: 12px; display: flex; gap: 8px; }
+    .chip {
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--stone-cinema);
+    }
+    .chip.is-on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+    .cols {
+      display: grid;
+      grid-template-columns: 1.4fr 0.7fr;
+      gap: 8px;
+      padding: 8px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--stone-cinema);
+      border-bottom: 1px solid var(--line);
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 20px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13.5px;
+    }
+    .row.is-sel {
+      background: rgba(11, 107, 99, 0.05);
+      box-shadow: inset 4px 0 0 var(--lagoon);
+    }
+    .who { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; font-weight: 600; }
+    .who-meta { min-width: 0; }
+    .who-meta strong { display: block; font-weight: 600; color: var(--ink); }
+    .who-meta span {
+      display: block;
+      font-weight: 400;
+      font-size: 12px;
+      color: var(--stone-cinema);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .av {
+      width: 28px; height: 28px; border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .av-em { background: rgba(11, 107, 99, 0.14); color: var(--lagoon); }
+    .av-sr { background: rgba(7, 13, 18, 0.08); color: var(--ink); }
+    .av-jk { background: rgba(110, 90, 50, 0.16); color: var(--gold-cinema); }
+    .av-ps { background: rgba(11, 107, 99, 0.08); color: var(--lagoon); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .badge-active { background: var(--success); }
+    .badge-new { background: var(--status-new); }
+    .badge-contacted { background: var(--warn); }
+
+    .profile-pane {
+      background: rgba(243, 245, 247, 0.7);
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .profile-top { display: flex; align-items: flex-start; gap: 12px; }
+    .av-lg {
+      width: 40px; height: 40px; border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      background: rgba(11, 107, 99, 0.14); color: var(--lagoon);
+      flex-shrink: 0;
+    }
+    .profile-name {
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .profile-nat {
+      margin: 2px 0 0;
+      font-size: 0.875rem;
+      color: var(--stone-cinema);
+    }
+    .card {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--paper);
+      padding: 14px 16px;
+    }
+    .card-label {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--stone-cinema);
+    }
+    .card p + p { margin: 4px 0 0; }
+    .contact-mail { margin: 8px 0 0; font-size: 15px; color: var(--ink); }
+    .contact-phone { font-size: 15px; color: var(--stone-cinema); }
+    .actions {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .action {
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .action.wa {
+      border-color: rgba(11, 107, 99, 0.25);
+      background: rgba(11, 107, 99, 0.08);
+      color: var(--lagoon);
+    }
+    .tl { margin: 0; padding: 12px 0 0; list-style: none; }
+    .tl li { display: flex; gap: 10px; padding: 0 0 12px; }
+    .tl li:last-child { padding-bottom: 0; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 999px;
+      background: var(--line-strong);
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+    .dot.lagoon { background: var(--lagoon); }
+    .tl-label { margin: 0; font-size: 13.5px; font-weight: 500; color: var(--ink); }
+    .tl-meta { margin: 2px 0 0; font-size: 12.5px; color: var(--stone-cinema); }
+
+    .caption {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--stone-cinema);
+    }
+  </style>
+</head>
+<body>
+  <div class="studio">
+    <div class="device">
+      <header class="mkt-header">
+        <div class="wordmark">Cohestra</div>
+        <nav class="mkt-nav" aria-label="Marketing">
+          <span>Features</span>
+          <span>Document</span>
+          <span class="on">Clients</span>
+          <span>How it works</span>
+          <span>Pricing</span>
+          <span>FAQ</span>
+          <span>Sign in</span>
+        </nav>
+      </header>
+
+      <div class="section-intro">
+        <h2 class="h2">A week with your people</h2>
+        <p class="section-lead">A week inside a club like yours — the same rooms your team will open on Monday.</p>
+      </div>
+
+      <div class="cinema-sticky">
+        <div class="pill-row" role="tablist" aria-label="Product surfaces">
+          <span class="pill is-active is-focus" role="tab" id="tab-clients" aria-selected="true" aria-controls="feeling-panel" tabindex="0">Clients</span>
+          <span class="pill" role="tab" id="tab-outreach" aria-selected="false" aria-controls="feeling-panel" tabindex="-1">Follow-up</span>
+          <span class="pill" role="tab" id="tab-dashboard" aria-selected="false" aria-controls="feeling-panel" tabindex="-1">Dashboard</span>
+          <span class="pill" role="tab" id="tab-campaigns" aria-selected="false" aria-controls="feeling-panel" tabindex="-1">Campaigns</span>
+          <span class="pill" role="tab" id="tab-reports" aria-selected="false" aria-controls="feeling-panel" tabindex="-1">Reports</span>
+          <span class="pill" role="tab" id="tab-website" aria-selected="false" aria-controls="feeling-panel" tabindex="-1">Website</span>
+        </div>
+        <div class="ink-track" aria-hidden="true"><div class="ink-fill"></div></div>
+
+        <p class="sr-only" aria-live="polite" aria-atomic="true">Clients. I won’t lose a person after they scan the QR.</p>
+
+        <div class="stage">
+          <div class="feeling" role="tabpanel" id="feeling-panel" aria-labelledby="tab-clients">
+            <p class="feeling-word">Relief</p>
+            <h3 class="feeling-title">Every person who signs up still has a name on Monday</h3>
+            <p class="feeling-scene">Elena scanned Sunday clinic. She is still on the list — not a row in a spreadsheet you meant to file.</p>
+            <ul class="outcomes">
+              <li>One profile from every registration</li>
+              <li>Status the team can act on</li>
+              <li>History that travels with the person</li>
+            </ul>
+          </div>
+
+          <div class="product-frame" aria-hidden="true" inert>
+            <div class="product-body">
+              <div class="list-pane">
+                <div class="crm-head">
+                  <div class="crm-title-row">
+                    <svg class="crm-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                      <circle cx="9" cy="7" r="3.25" stroke="currentColor" stroke-width="1.75"/>
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+                    </svg>
+                    <p class="crm-title">Clients</p>
+                    <span class="count">248</span>
+                  </div>
+                  <div class="search">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.75"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+                    Search by name or nationality
+                  </div>
+                  <div class="filters">
+                    <span class="chip is-on">All</span>
+                    <span class="chip">New</span>
+                    <span class="chip">Contacted</span>
+                    <span class="chip">Active</span>
+                  </div>
+                </div>
+                <div class="cols"><span>Name</span><span>Status</span></div>
+                <div class="row is-sel">
+                  <div class="who">
+                    <span class="av av-em">EM</span>
+                    <div class="who-meta">
+                      <strong>Elena Martinez</strong>
+                      <span>Spain · Sunday clinic · 2 days ago</span>
+                    </div>
+                  </div>
+                  <span class="badge badge-active">Active</span>
+                </div>
+                <div class="row">
+                  <div class="who">
+                    <span class="av av-sr">SR</span>
+                    <div class="who-meta">
+                      <strong>Sam Rivera</strong>
+                      <span>USA · board games night · today</span>
+                    </div>
+                  </div>
+                  <span class="badge badge-new">New</span>
+                </div>
+                <div class="row">
+                  <div class="who">
+                    <span class="av av-jk">JK</span>
+                    <div class="who-meta">
+                      <strong>Jordan Kim</strong>
+                      <span>South Korea · WhatsApp follow up · yesterday</span>
+                    </div>
+                  </div>
+                  <span class="badge badge-contacted">Contacted</span>
+                </div>
+                <div class="row">
+                  <div class="who">
+                    <span class="av av-ps">PS</span>
+                    <div class="who-meta">
+                      <strong>Priya Shah</strong>
+                      <span>India · youth open play · 4 days ago</span>
+                    </div>
+                  </div>
+                  <span class="badge badge-active">Active</span>
+                </div>
+              </div>
+
+              <div class="profile-pane">
+                <div class="profile-top">
+                  <span class="av-lg">EM</span>
+                  <div style="flex:1;min-width:0">
+                    <p class="profile-name">Elena Martinez</p>
+                    <p class="profile-nat">Spain</p>
+                  </div>
+                  <span class="badge badge-active">Active</span>
+                </div>
+                <div class="card">
+                  <p class="card-label">Contact</p>
+                  <p class="contact-mail">elena@example.com</p>
+                  <p class="contact-phone">+34 612 345 678</p>
+                </div>
+                <div class="actions">
+                  <span class="action wa">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l.9-4.2A8 8 0 1 1 20 12Z" stroke="currentColor" stroke-width="1.75"/><path d="M9.2 10.2c.4 1.6 1.9 3.1 3.6 3.6.3.1.6 0 .8-.2l.7-.9c.2-.2.1-.5 0-.7l-.6-.6c-.2-.2-.2-.5 0-.8l.9-1.2c.2-.2.1-.5-.1-.7L13.2 8c-.3-.3-.7-.3-1 0A6.4 6.4 0 0 0 9.2 10.2Z" fill="currentColor"/></svg>
+                    WhatsApp
+                  </span>
+                  <span class="action">Viber</span>
+                </div>
+                <div class="card" style="flex:1">
+                  <p class="card-label">Relationship timeline</p>
+                  <ul class="tl">
+                    <li>
+                      <span class="dot"></span>
+                      <div>
+                        <p class="tl-label">Registered Sunday clinic</p>
+                        <p class="tl-meta">Mar 8 · Registration #142</p>
+                      </div>
+                    </li>
+                    <li>
+                      <span class="dot lagoon"></span>
+                      <div>
+                        <p class="tl-label">WhatsApp message logged</p>
+                        <p class="tl-meta">Mar 9 · Welcome note sent</p>
+                      </div>
+                    </li>
+                    <li>
+                      <span class="dot"></span>
+                      <div>
+                        <p class="tl-label">Registered board games night</p>
+                        <p class="tl-meta">Mar 15 · Registration #158</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Desktop ≥lg · one sticky cinema · Clients · Elena inhabited</p>
+  </div>
+</body>
+</html>

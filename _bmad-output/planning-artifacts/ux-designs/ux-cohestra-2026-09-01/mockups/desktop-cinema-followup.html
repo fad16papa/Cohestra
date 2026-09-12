@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Key screen — Desktop cinema · Follow-up</title>
+  <style>
+    /*
+      Governs this screen (Live Proof Cinema spines, 2026-09-01):
+      DESIGN.md — Components: SeekPills (Follow-up selected), ink-progress (A7, ~2/6),
+        FeelingCopy (Connection), ProductFrame (A1 thin Cohestra window),
+        ClimaxMicroBeat (A2: scale settled at 1; M translateY −4px micro remainder).
+        Elevation: one shadow on the frame; no gold flash, no lagoon ring, no bounce.
+      EXPERIENCE.md — IA Rooms 2. Follow-up (Connection, climax room);
+        Component Patterns: ClimaxMicroBeat (scrub-entry Clients→Follow-up only; not pill skip);
+        State: Climax spent — frame at rest scale 1; WhatsApp-on-timeline on stage;
+        H1: preview not operable (pointer-events none; no hover/active leak);
+        H2: no inner scroll — cinematic crop;
+        Key Flows: Flow A step 4 climax — WhatsApp to Jordan about Sunday clinic on the timeline.
+      LOCKS: A1 no dots · A2 climax content + settled scale · A4 32/68 · C1 one sticky · H1 preview.
+    */
+    :root {
+      --paper-warm: #F3F5F7;
+      --paper: #FAFBFC;
+      --ink: #070D12;
+      --stone-cinema: #5A636E;
+      --gold-cinema: #6E5A32;
+      --lagoon: #0B6B63;
+      --line: #E6E9ED;
+      --line-strong: #D0D5DB;
+      --success: #1F7A5C;
+      --warn: #9A6700;
+      --serif: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      --sans: "Plus Jakarta Sans", "Plus Jakarta", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      --header-offset: 6rem;
+      --frame-shadow: 0 40px 80px rgba(7, 13, 18, 0.14);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: var(--sans);
+      color: var(--ink);
+      background: var(--paper);
+      -webkit-font-smoothing: antialiased;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0);
+      white-space: nowrap; border: 0;
+    }
+
+    .studio {
+      min-height: 100vh;
+      padding: 40px 32px 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      background: var(--paper);
+    }
+
+    .device {
+      width: min(1240px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--paper-warm);
+      box-shadow: 0 24px 56px rgba(7, 13, 18, 0.08);
+      overflow: hidden;
+    }
+
+    .mkt-header {
+      height: var(--header-offset);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+      background: rgba(250, 251, 252, 0.92);
+      border-bottom: 1px solid var(--line);
+      position: relative;
+      z-index: 30;
+    }
+    .wordmark {
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.55rem;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .mkt-nav {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--stone-cinema);
+    }
+    .mkt-nav .on { color: var(--ink); }
+
+    .section-intro {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 80px 40px 32px;
+      text-align: center;
+    }
+    .h2 {
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+    }
+    .section-lead {
+      margin: 16px 0 0;
+      font-size: clamp(1rem, 1.2vw + 0.75rem, 1.0625rem);
+      line-height: 1.65;
+      color: var(--stone-cinema);
+    }
+
+    .cinema-sticky {
+      position: relative;
+      z-index: 20;
+      background: var(--paper-warm);
+      padding: 0 40px 48px;
+      max-width: 90rem;
+      margin: 0 auto;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 0 10px;
+      background: var(--paper-warm);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 9999px;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      line-height: 1.35;
+      border: 1px solid var(--line-strong);
+      background: var(--paper);
+      color: var(--stone-cinema);
+      white-space: nowrap;
+    }
+    .pill.is-active {
+      background: var(--ink);
+      color: var(--paper);
+      border-color: var(--ink);
+      box-shadow: 0 8px 20px rgba(7, 13, 18, 0.12);
+    }
+    .pill.is-active.is-focus {
+      outline: 2px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    .ink-track {
+      height: 2px;
+      background: var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .ink-fill {
+      height: 100%;
+      width: 33.33%;
+      background: var(--ink);
+    }
+
+    .stage {
+      display: grid;
+      grid-template-columns: minmax(0, 32%) minmax(0, 68%);
+      gap: 32px;
+      align-items: stretch;
+      min-height: 520px;
+      padding-top: 28px;
+    }
+
+    .feeling {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+    .feeling-word {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-cinema);
+    }
+    .feeling-title {
+      margin: 12px 0 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      max-width: 18ch;
+    }
+    .feeling-scene {
+      margin: 16px 0 0;
+      font-size: clamp(1rem, 1.1vw + 0.75rem, 1.0625rem);
+      line-height: 1.6;
+      color: var(--stone-cinema);
+      max-width: 36em;
+    }
+    .outcomes {
+      list-style: none;
+      margin: 24px 0 0;
+      padding: 16px 0 0;
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .outcomes li {
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+
+    /* A2 settled: scale 1. M: translateY −4px as the only remaining micro emphasis. */
+    .product-frame {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--paper);
+      box-shadow: var(--frame-shadow);
+      overflow: hidden;
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+      cursor: default;
+      transform: translateY(-4px);
+    }
+    .product-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 22px 24px 24px;
+      background: rgba(243, 245, 247, 0.45);
+      overflow: hidden;
+    }
+
+    .profile-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .av-lg {
+      width: 40px; height: 40px; border-radius: 999px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      background: rgba(110, 90, 50, 0.16); color: var(--gold-cinema);
+      flex-shrink: 0;
+    }
+    .profile-name {
+      margin: 0;
+      font-family: var(--serif);
+      font-weight: 500;
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .profile-nat {
+      margin: 4px 0 0;
+      font-size: 0.9375rem;
+      color: var(--stone-cinema);
+    }
+    .need {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--gold-cinema);
+      background: rgba(110, 90, 50, 0.10);
+      border: 1px solid rgba(110, 90, 50, 0.18);
+      flex-shrink: 0;
+    }
+
+    .actions {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .action {
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .action.wa {
+      border-color: rgba(11, 107, 99, 0.22);
+      background: rgba(11, 107, 99, 0.08);
+      color: var(--lagoon);
+    }
+
+    /* Climax object: WhatsApp already on the timeline — inhabited, not a CTA. */
+    .wa-moment {
+      margin-top: 16px;
+      border: 1px solid rgba(11, 107, 99, 0.22);
+      border-radius: 16px;
+      background: var(--paper);
+      padding: 16px 18px 14px;
+      flex-shrink: 0;
+    }
+    .wa-kicker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--lagoon);
+    }
+    .wa-quote {
+      margin: 10px 0 0;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--ink);
+    }
+    .wa-logged {
+      margin: 10px 0 0;
+      font-size: 12.5px;
+      color: var(--stone-cinema);
+    }
+
+    .timeline {
+      margin-top: 16px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--paper);
+      padding: 16px 18px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .card-label {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--stone-cinema);
+    }
+    .tl { margin: 12px 0 0; padding: 0; list-style: none; }
+    .tl li { display: flex; gap: 10px; padding: 0 0 12px; }
+    .tl li:last-child { padding-bottom: 0; }
+    .tl li.is-climax {
+      margin: 0 -6px 10px;
+      padding: 10px 8px 12px;
+      border-radius: 10px;
+      background: rgba(11, 107, 99, 0.06);
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 999px;
+      background: var(--line-strong);
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+    .dot.lagoon { background: var(--lagoon); }
+    .tl-label { margin: 0; font-size: 13.5px; font-weight: 500; color: var(--ink); }
+    .tl-meta { margin: 2px 0 0; font-size: 12.5px; color: var(--stone-cinema); }
+
+    .caption {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--stone-cinema);
+    }
+  </style>
+</head>
+<body>
+  <div class="studio">
+    <div class="device">
+      <header class="mkt-header">
+        <div class="wordmark">Cohestra</div>
+        <nav class="mkt-nav" aria-label="Marketing">
+          <span>Features</span>
+          <span>Document</span>
+          <span class="on">Clients</span>
+          <span>How it works</span>
+          <span>Pricing</span>
+          <span>FAQ</span>
+          <span>Sign in</span>
+        </nav>
+      </header>
+
+      <div class="section-intro">
+        <h2 class="h2">A week with your people</h2>
+        <p class="section-lead">A week inside a club like yours — the same rooms your team will open on Monday.</p>
+      </div>
+
+      <div class="cinema-sticky">
+        <div class="pill-row" role="tablist" aria-label="Product surfaces">
+          <span class="pill" role="tab" id="tab-clients" aria-selected="false" aria-controls="feeling-panel" tabindex="-1">Clients</span>
+          <span class="pill is-active is-focus" role="tab" id="tab-outreach" aria-selected="true" aria-controls="feeling-panel" tabindex="0">Follow-up</span>
+          <span class="pill" role="tab" id="tab-dashboard" aria-selected="false" aria-controls="feeling-panel" tabindex="-1">Dashboard</span>
+          <span class="pill" role="tab" id="tab-campaigns" aria-selected="false" aria-controls="feeling-panel" tabindex="-1">Campaigns</span>
+          <span class="pill" role="tab" id="tab-reports" aria-selected="false" aria-controls="feeling-panel" tabindex="-1">Reports</span>
+          <span class="pill" role="tab" id="tab-website" aria-selected="false" aria-controls="feeling-panel" tabindex="-1">Website</span>
+        </div>
+        <div class="ink-track" aria-hidden="true"><div class="ink-fill"></div></div>
+
+        <p class="sr-only" aria-live="polite" aria-atomic="true">Follow-up. Messaging lives where the lead lives.</p>
+
+        <div class="stage">
+          <div class="feeling" role="tabpanel" id="feeling-panel" aria-labelledby="tab-outreach">
+            <p class="feeling-word">Connection</p>
+            <h3 class="feeling-title">Message them where they already are — and keep the record</h3>
+            <p class="feeling-scene">WhatsApp to Jordan about Sunday clinic, sitting on the timeline — not in someone’s personal chat.</p>
+            <ul class="outcomes">
+              <li>Open WhatsApp or Viber from the person</li>
+              <li>The send is logged for the whole team</li>
+              <li>Nobody gets the same ping twice</li>
+            </ul>
+          </div>
+
+          <div class="product-frame" aria-hidden="true" inert>
+            <div class="product-body">
+              <div class="profile-top">
+                <div style="display:flex;gap:12px;align-items:flex-start;min-width:0">
+                  <span class="av-lg">JK</span>
+                  <div>
+                    <p class="profile-name">Jordan Kim</p>
+                    <p class="profile-nat">South Korea · Contacted</p>
+                  </div>
+                </div>
+                <span class="need">Needs follow-up</span>
+              </div>
+
+              <div class="actions">
+                <span class="action wa">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l.9-4.2A8 8 0 1 1 20 12Z" stroke="currentColor" stroke-width="1.75"/></svg>
+                  WhatsApp
+                </span>
+                <span class="action">Viber</span>
+              </div>
+
+              <div class="wa-moment">
+                <div class="wa-kicker">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l.9-4.2A8 8 0 1 1 20 12Z" stroke="currentColor" stroke-width="1.75"/></svg>
+                  WhatsApp on the timeline
+                </div>
+                <p class="wa-quote">“Hi Jordan — reminder for Sunday clinic at 6pm. See you there!”</p>
+                <p class="wa-logged">Logged on timeline · Mar 9 · visible to the whole team</p>
+              </div>
+
+              <div class="timeline">
+                <p class="card-label">Relationship timeline</p>
+                <ul class="tl">
+                  <li class="is-climax">
+                    <span class="dot lagoon"></span>
+                    <div>
+                      <p class="tl-label">WhatsApp message logged</p>
+                      <p class="tl-meta">Mar 9 · Sunday clinic reminder sent</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="dot"></span>
+                    <div>
+                      <p class="tl-label">Registered Sunday clinic</p>
+                      <p class="tl-meta">Mar 8 · Registration #149</p>
+                    </div>
+                  </li>
+                  <li>
+                    <span class="dot"></span>
+                    <div>
+                      <p class="tl-label">Status changed to Contacted</p>
+                      <p class="tl-meta">Mar 9 · After the send</p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="caption">Desktop ≥lg · Follow-up climax · WhatsApp-on-timeline · scale settled</p>
+  </div>
+</body>
+</html>
