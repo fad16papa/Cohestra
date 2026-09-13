@@ -53,8 +53,21 @@ json_txt_contains_token() {
     | grep -Fq "$validation"
 }
 
+# Let's Encrypt queries authoritative NS; GoDaddy must serve the TXT here.
+authoritative_sees_token() {
+  for ns in ns75.domaincontrol.com ns76.domaincontrol.com; do
+    if ! nslookup -type=TXT "$txt_name" "$ns" 2>/dev/null | grep -Fq "$validation"; then
+      echo "authoritative_miss ns=$ns domain=$domain" >&2
+      return 1
+    fi
+  done
+  return 0
+}
+
 resolver_sees_token() {
-  json_txt_contains_token "$(doh_google)" && json_txt_contains_token "$(doh_cloudflare)"
+  json_txt_contains_token "$(doh_google)" \
+    && json_txt_contains_token "$(doh_cloudflare)" \
+    && authoritative_sees_token
 }
 
 attempt=0
