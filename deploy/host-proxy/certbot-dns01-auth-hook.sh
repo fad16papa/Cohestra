@@ -20,6 +20,7 @@ owner_msg() {
   echo "Record type: TXT"
   echo "Record name: $txt_name"
   echo "Record value: $validation"
+  echo "GoDaddy name field: _acme-challenge.uat"
   echo "Keep ALL required TXT values until certbot finishes every domain."
   echo "========================================"
   echo ""
@@ -32,32 +33,51 @@ if [ -d /acme-out ] && [ -w /acme-out ]; then
   echo "instructions_file=/acme-out/${safe}.txt" >&2
 fi
 
-fetch_txt_response() {
-  if command -v curl >/dev/null 2>&1; then
-    curl -fsS --connect-timeout 10 "https://dns.google/resolve?name=${txt_name}&type=TXT" 2>/dev/null || true
-    return 0
-  fi
-  if command -v wget >/dev/null 2>&1; then
-    wget -qO- --timeout=10 "https://dns.google/resolve?name=${txt_name}&type=TXT" 2>/dev/null || true
-    return 0
-  fi
-  echo "dns_probe=NO_CURL_OR_WGET" >&2
-  return 1
+doh_google() {
+  curl -fsS --connect-timeout 10 \
+    "https://dns.google/resolve?name=${txt_name}&type=TXT" 2>/dev/null || true
 }
 
-txt_visible() {
-  body=$(fetch_txt_response) || return 1
-  echo "$body" | tr -d '"' | grep -Fq "$validation"
+doh_cloudflare() {
+  curl -fsS --connect-timeout 10 \
+    -H 'accept: application/dns-json' \
+    "https://cloudflare-dns.com/dns-query?name=${txt_name}&type=TXT" 2>/dev/null || true
+}
+
+# Match only TXT answer payloads (avoid false positives elsewhere in JSON).
+json_txt_contains_token() {
+  body=$1
+  [ -n "$body" ] || return 1
+  echo "$body" | grep -o '"data":"[^"]*"' 2>/dev/null \
+    | tr -d '\\"' \
+    | grep -Fq "$validation"
+}
+
+resolver_sees_token() {
+  json_txt_contains_token "$(doh_google)" && json_txt_contains_token "$(doh_cloudflare)"
 }
 
 attempt=0
-while [ "$attempt" -lt 40 ]; do
+stable=0
+while [ "$attempt" -lt 60 ]; do
   attempt=$((attempt + 1))
-  if txt_visible; then
-    echo "dns_propagation=PASS attempt=$attempt domain=$domain" >&2
-    exit 0
+  if resolver_sees_token; then
+    stable=$((stable + 1))
+    echo "dns_propagation=SEEN attempt=$attempt stable=$stable/3 resolvers=google+cloudflare domain=$domain" >&2
+    if [ "$stable" -ge 3 ]; then
+      echo "dns_propagation=STABILIZING sleep=120s domain=$domain" >&2
+      sleep 120
+      if resolver_sees_token; then
+        echo "dns_propagation=PASS attempt=$attempt domain=$domain" >&2
+        exit 0
+      fi
+      echo "dns_propagation=UNSTABLE after stabilize domain=$domain" >&2
+      stable=0
+    fi
+  else
+    stable=0
+    echo "waiting_for_dns attempt=$attempt domain=$domain" >&2
   fi
-  echo "waiting_for_dns attempt=$attempt domain=$domain" >&2
   sleep 30
 done
 
