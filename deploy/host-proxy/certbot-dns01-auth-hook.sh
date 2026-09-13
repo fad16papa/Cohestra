@@ -12,16 +12,25 @@ case "$domain" in
 esac
 txt_name="_acme-challenge.${base}"
 
-echo ""
-echo "========================================"
-echo "OWNER DNS ACTION REQUIRED (DNS-01)"
-echo "Domain being validated: $domain"
-echo "Record type: TXT"
-echo "Record name: $txt_name"
-echo "Record value: $validation"
-echo "Keep ALL required TXT values until certbot finishes every domain."
-echo "========================================"
-echo ""
+owner_msg() {
+  echo ""
+  echo "========================================"
+  echo "OWNER DNS ACTION REQUIRED (DNS-01)"
+  echo "Domain being validated: $domain"
+  echo "Record type: TXT"
+  echo "Record name: $txt_name"
+  echo "Record value: $validation"
+  echo "Keep ALL required TXT values until certbot finishes every domain."
+  echo "========================================"
+  echo ""
+}
+
+owner_msg >&2
+if [ -d /acme-out ] && [ -w /acme-out ]; then
+  safe=$(echo "$domain" | tr '/ *' '___')
+  owner_msg > "/acme-out/${safe}.txt"
+  echo "instructions_file=/acme-out/${safe}.txt" >&2
+fi
 
 fetch_txt_response() {
   if command -v curl >/dev/null 2>&1; then
@@ -45,10 +54,10 @@ attempt=0
 while [ "$attempt" -lt 40 ]; do
   attempt=$((attempt + 1))
   if txt_visible; then
-    echo "dns_propagation=PASS attempt=$attempt domain=$domain"
+    echo "dns_propagation=PASS attempt=$attempt domain=$domain" >&2
     exit 0
   fi
-  echo "waiting_for_dns attempt=$attempt domain=$domain"
+  echo "waiting_for_dns attempt=$attempt domain=$domain" >&2
   sleep 30
 done
 
