@@ -117,8 +117,12 @@ restore_previous_vhost() {
   fi
 }
 
-if [[ ! -x "$AUTH_HOOK" || ! -x "$CLEANUP_HOOK" ]]; then
-  echo "REFUSE: certbot DNS hook scripts missing or not executable" >&2
+if [[ ! -f "$AUTH_HOOK" || ! -f "$CLEANUP_HOOK" ]]; then
+  echo "REFUSE: certbot DNS hook scripts missing" >&2
+  exit 1
+fi
+if head -1 "$AUTH_HOOK" | grep -qE 'bash'; then
+  echo "REFUSE: certbot-dns01-auth-hook.sh must use /bin/sh (git pull origin main)." >&2
   exit 1
 fi
 
@@ -178,8 +182,8 @@ if ! docker run --rm \
   -d "$COHESTRA_UAT_WILDCARD_HOST" \
   --non-interactive --agree-tos --keep-until-expiring \
   --email "$email" \
-  --manual-auth-hook /usr/local/bin/cohestra-dns-auth \
-  --manual-cleanup-hook /usr/local/bin/cohestra-dns-cleanup; then
+  --manual-auth-hook "sh /usr/local/bin/cohestra-dns-auth" \
+  --manual-cleanup-hook "sh /usr/local/bin/cohestra-dns-cleanup"; then
   restore_previous_vhost
   echo "ADDITIVE WILDCARD TLS: FAIL — certbot DNS-01 did not complete" >&2
   exit 1

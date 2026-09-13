@@ -331,6 +331,7 @@ WILDCARD_TLS="$ROOT_DIR/deploy/host-proxy/apply-additive-tls-wildcard.sh"
 if [[ -f "$WILDCARD_TLS" ]]; then
   if grep -q 'preferred-challenges dns' "$WILDCARD_TLS" \
     && grep -q '\*\.uat\.cohestra\.app' "$WILDCARD_TLS" \
+    && grep -q 'sh /usr/local/bin/cohestra-dns-auth' "$WILDCARD_TLS" \
     && grep -q 'prove-edge-tls-wildcard.sh' "$WILDCARD_TLS" \
     && grep -q 'verify-existing-app.sh' "$WILDCARD_TLS" \
     && ! grep -q 'manual-public-ip-logging-ok' "$WILDCARD_TLS" \
