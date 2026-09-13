@@ -169,14 +169,22 @@ echo "certbot_domains=${HOST_NAME} ${COHESTRA_UAT_WILDCARD_HOST}"
 echo "certbot_method=DNS-01"
 echo "certbot_volumes=${CERT_VOL}"
 
+ACME_OUT="${ROOT_DIR}/.acme-dns-challenge"
+mkdir -p "$ACME_OUT"
+chmod 700 "$ACME_OUT"
+echo "dns01_instructions_dir=${ACME_OUT}"
+echo "If this step looks idle, watch: tail -f ${ACME_OUT}/*.txt"
+echo "Or: docker logs \$(docker ps -q --filter ancestor=certbot/certbot | head -1) 2>&1 | tail -20"
+
 docker pull certbot/certbot:latest
 
-if ! docker run --rm \
+if ! docker run --rm -i \
   -v "${CERT_VOL}:/etc/letsencrypt" \
+  -v "${ACME_OUT}:/acme-out" \
   -v "${ROOT_DIR}/deploy/host-proxy/certbot-dns01-auth-hook.sh:/usr/local/bin/cohestra-dns-auth:ro" \
   -v "${ROOT_DIR}/deploy/host-proxy/certbot-dns01-cleanup-hook.sh:/usr/local/bin/cohestra-dns-cleanup:ro" \
   certbot/certbot:latest \
-  certonly --manual --preferred-challenges dns \
+  certonly --manual --preferred-challenges dns -v \
   --cert-name "$HOST_NAME" \
   -d "$HOST_NAME" \
   -d "$COHESTRA_UAT_WILDCARD_HOST" \
