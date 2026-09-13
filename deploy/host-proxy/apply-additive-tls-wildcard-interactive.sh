@@ -84,6 +84,8 @@ echo "  bash deploy/host-proxy/verify-acme-txt.sh _acme-challenge.uat.cohestra.a
 echo "Authoritative NS must show the token (ns75/ns76), not only 8.8.8.8."
 echo ""
 
+bash "$ROOT_DIR/deploy/host-proxy/clear-certbot-lock.sh"
+
 if ! docker run -it --rm \
   -v "${CERT_VOL}:/etc/letsencrypt" \
   certbot/certbot:latest \

@@ -177,6 +177,7 @@ echo "If this step looks idle, watch: tail -f ${ACME_OUT}/*.txt"
 echo "Or: docker logs \$(docker ps -q --filter ancestor=certbot/certbot | head -1) 2>&1 | tail -20"
 
 docker pull certbot/certbot:latest
+bash "$ROOT_DIR/deploy/host-proxy/clear-certbot-lock.sh"
 
 if ! docker run --rm -i \
   -v "${CERT_VOL}:/etc/letsencrypt" \
