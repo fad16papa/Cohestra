@@ -188,7 +188,7 @@ if ! docker run --rm -i \
   --cert-name "$HOST_NAME" \
   -d "$HOST_NAME" \
   -d "$COHESTRA_UAT_WILDCARD_HOST" \
-  --non-interactive --agree-tos --keep-until-expiring \
+  --non-interactive --agree-tos --force-renewal \
   --email "$email" \
   --manual-auth-hook "sh /usr/local/bin/cohestra-dns-auth" \
   --manual-cleanup-hook "sh /usr/local/bin/cohestra-dns-cleanup"; then
