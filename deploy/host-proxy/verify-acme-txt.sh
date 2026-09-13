@@ -7,8 +7,18 @@ EXPECTED="${2:-}"
 
 echo "TXT name: ${TXT_NAME}"
 for resolver in 8.8.8.8 1.1.1.1; do
-  echo "--- @${resolver} ---"
+  echo "--- public @${resolver} ---"
   out=$(dig +short TXT "$TXT_NAME" @"$resolver" 2>/dev/null || true)
+  echo "${out:-<no answer>}"
+  if [[ -n "$EXPECTED" && "$out" == *"$EXPECTED"* ]]; then
+    echo "MATCH expected token"
+  fi
+done
+
+echo "--- authoritative (GoDaddy NS for cohestra.app) ---"
+for ns in $(dig +short NS cohestra.app | sed 's/\.$//'); do
+  echo "@${ns}"
+  out=$(dig +short TXT "$TXT_NAME" @"$ns" 2>/dev/null || true)
   echo "${out:-<no answer>}"
   if [[ -n "$EXPECTED" && "$out" == *"$EXPECTED"* ]]; then
     echo "MATCH expected token"
