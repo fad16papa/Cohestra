@@ -9,12 +9,40 @@ function isLocalhostHostname(hostname: string): boolean {
   return hostname === "localhost" || hostname === "127.0.0.1";
 }
 
+/** Tenant hosts serve /api on the same origin as the Next app (edge nginx). */
+function shouldUseBrowserOriginForApi(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  if (host.endsWith(".localhost")) {
+    return true;
+  }
+
+  if (host.endsWith(".uat.cohestra.app") && host !== "uat.cohestra.app") {
+    return true;
+  }
+
+  if (
+    host.endsWith(".cohestra.app")
+    && host !== "cohestra.app"
+    && host !== "www.cohestra.app"
+    && host !== "uat.cohestra.app"
+    && !host.endsWith(".uat.cohestra.app")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 /** Browser-facing API base URL (from build-time / runtime public env). */
 export function getPublicApiBaseUrl(): string {
   const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
 
   if (typeof window !== "undefined") {
     const origin = normalizeBaseUrl(window.location.origin);
+    if (shouldUseBrowserOriginForApi(window.location.hostname)) {
+      return origin;
+    }
+
     if (configured) {
       try {
         const configuredHost = new URL(configured).hostname;
