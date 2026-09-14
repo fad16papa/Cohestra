@@ -33,9 +33,14 @@ export function buildScheduleUpdatePayload(dateTimeLocal: string): {
   schedule: string;
   scheduledStartsAt: string;
 } {
+  const date = new Date(dateTimeLocal);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Choose a valid date and time for the schedule.");
+  }
+
   return {
     schedule: formatScheduleForStorage(dateTimeLocal),
-    scheduledStartsAt: new Date(dateTimeLocal).toISOString(),
+    scheduledStartsAt: date.toISOString(),
   };
 }
 
