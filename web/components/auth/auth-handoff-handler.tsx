@@ -27,29 +27,36 @@ function AuthHandoffHandlerContent({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     void (async () => {
-      const session = await exchangeAuthHandoff(handoffCode);
-      if (cancelled) {
-        return;
-      }
-
-      if (!session) {
-        setFailed(true);
-        setPending(false);
-        return;
-      }
-
-      setAuthSession(session);
       try {
-        const profile = await fetchSessionProfile(session.accessToken);
+        const session = await exchangeAuthHandoff(handoffCode);
         if (cancelled) {
           return;
         }
 
-        applyProfile(profile);
-        const url = new URL(window.location.href);
-        url.searchParams.delete("handoff");
-        router.replace(`${url.pathname}${url.search}${url.hash}`);
-        setPending(false);
+        if (!session) {
+          setFailed(true);
+          setPending(false);
+          return;
+        }
+
+        setAuthSession(session);
+        try {
+          const profile = await fetchSessionProfile(session.accessToken);
+          if (cancelled) {
+            return;
+          }
+
+          applyProfile(profile);
+          const url = new URL(window.location.href);
+          url.searchParams.delete("handoff");
+          router.replace(`${url.pathname}${url.search}${url.hash}`);
+          setPending(false);
+        } catch {
+          if (!cancelled) {
+            setFailed(true);
+            setPending(false);
+          }
+        }
       } catch {
         if (!cancelled) {
           setFailed(true);
