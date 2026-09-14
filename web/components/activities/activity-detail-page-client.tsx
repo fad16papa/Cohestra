@@ -76,25 +76,24 @@ function ActivityQuickFacts({
 }: ActivityQuickFactsProps) {
   return (
     <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+      <div className="contents">
         <ActivityOverviewScheduleFactsLabel />
         <dd className="text-sm text-text-warm">
           <ActivityOverviewSchedule
-            variant="facts"
             activity={activity}
             onActivityUpdated={onActivityUpdated}
             onDirtyChange={onScheduleDirtyChange}
           />
         </dd>
       </div>
-      <div className="space-y-1">
+      <div className="contents">
         <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted-warm">
           <MapPin className="size-3.5" aria-hidden />
           Location
         </dt>
         <dd className="text-sm text-text-warm">{activity.location}</dd>
       </div>
-      <div className="space-y-1">
+      <div className="contents">
         <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
           Registrations
         </dt>
@@ -104,7 +103,7 @@ function ActivityQuickFacts({
             : `${activity.registrationCount} (no cap)`}
         </dd>
       </div>
-      <div className="space-y-1">
+      <div className="contents">
         <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
           Public URL
         </dt>

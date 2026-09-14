@@ -17,8 +17,6 @@ type ActivityOverviewScheduleProps = {
   activity: Activity;
   onActivityUpdated: (activity: Activity) => void;
   onDirtyChange?: (dirty: boolean) => void;
-  /** When true, render inside the Overview facts grid (Schedule column). */
-  variant?: "card" | "facts";
 };
 
 function isDraftActivity(activity: Activity): boolean {
@@ -29,7 +27,6 @@ export function ActivityOverviewSchedule({
   activity,
   onActivityUpdated,
   onDirtyChange,
-  variant = "facts",
 }: ActivityOverviewScheduleProps) {
   const { authFetch } = useAuth();
   const isDraft = isDraftActivity(activity);
@@ -81,7 +78,7 @@ export function ActivityOverviewSchedule({
   }
 
   if (!isDraft) {
-    const readonly = (
+    return (
       <>
         <p className="text-sm text-text-warm">{activity.schedule}</p>
         <p className="text-xs text-text-muted-warm">
@@ -89,22 +86,9 @@ export function ActivityOverviewSchedule({
         </p>
       </>
     );
-
-    if (variant === "facts") {
-      return readonly;
-    }
-
-    return (
-      <div className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
-          Schedule
-        </p>
-        {readonly}
-      </div>
-    );
   }
 
-  const editor = (
+  return (
     <div className="space-y-2">
       <ActivitySchedulePicker
         inputId="activity-overview-schedule"
@@ -112,6 +96,7 @@ export function ActivityOverviewSchedule({
         onChange={setDateTimeLocal}
         disabled={isSaving}
         requireFutureDate={false}
+        showLabel={false}
       />
       <div className="flex flex-wrap items-center gap-2">
         <Button
@@ -137,22 +122,6 @@ export function ActivityOverviewSchedule({
       <p className="text-xs text-text-muted-warm">
         Locks after publish. Check date and time before you go live.
       </p>
-    </div>
-  );
-
-  if (variant === "facts") {
-    return editor;
-  }
-
-  return (
-    <div className="space-y-3 rounded-lg border border-border-warm bg-card p-4">
-      <div>
-        <h3 className="text-section text-text-warm">Schedule</h3>
-        <p className="mt-0.5 text-sm text-text-muted-warm">
-          Set the event date and time before you publish.
-        </p>
-      </div>
-      {editor}
     </div>
   );
 }
