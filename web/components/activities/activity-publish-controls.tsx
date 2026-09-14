@@ -133,6 +133,7 @@ export function ActivityPublishControls({
       const updated = await publishActivity(authFetch, activity.id);
       onActivityUpdated(updated);
       setPublishDialogOpen(false);
+      await refreshShell();
       setSuccess("Activity is live.");
     } catch (publishError) {
       setError(
@@ -276,6 +277,9 @@ export function ActivityPublishControls({
         activity={activity}
         isPublishing={isPublishing}
         onOpenChange={(open) => {
+          if (isPublishing && !open) {
+            return;
+          }
           setPublishDialogOpen(open);
           if (!open) {
             setError(null);

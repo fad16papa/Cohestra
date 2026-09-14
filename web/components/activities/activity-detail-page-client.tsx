@@ -263,28 +263,26 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
         ))}
       </nav>
 
-      {activeTab === "overview" ? (
-        <div className="space-y-8">
-          <ActivityPublishControls
-            activity={activity}
-            onActivityUpdated={handleActivityUpdated}
-            unsavedTabs={{
-              form: formDirty,
-              design: designDirty,
-              schedule: scheduleDirty,
-            }}
-          />
-          <ActivityQuickFacts
-            activity={activity}
-            onActivityUpdated={handleActivityUpdated}
-            onScheduleDirtyChange={setScheduleDirty}
-          />
-          <ActivityCapacityPanel
-            activity={activity}
-            onActivityUpdated={handleActivityUpdated}
-          />
-        </div>
-      ) : null}
+      <div hidden={activeTab !== "overview"} className="space-y-8">
+        <ActivityPublishControls
+          activity={activity}
+          onActivityUpdated={handleActivityUpdated}
+          unsavedTabs={{
+            form: formDirty,
+            design: designDirty,
+            schedule: scheduleDirty,
+          }}
+        />
+        <ActivityQuickFacts
+          activity={activity}
+          onActivityUpdated={handleActivityUpdated}
+          onScheduleDirtyChange={setScheduleDirty}
+        />
+        <ActivityCapacityPanel
+          activity={activity}
+          onActivityUpdated={handleActivityUpdated}
+        />
+      </div>
 
       <div hidden={activeTab !== "design"}>
         <ActivityDesignTab

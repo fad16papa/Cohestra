@@ -22,6 +22,12 @@ describe("activityScheduleToDateTimeLocal", () => {
     expect(payload.scheduledStartsAt).toContain("2026");
   });
 
+  it("rejects invalid datetime-local values", () => {
+    expect(() => buildScheduleUpdatePayload("")).toThrow(
+      "Choose a valid date and time for the schedule."
+    );
+  });
+
   it("detects unchanged schedule", () => {
     const activity = {
       schedule: "Sat, 19 Sept 2026, 10:00 am",

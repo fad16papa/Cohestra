@@ -44,17 +44,14 @@ export function ActivityPublishConfirmDialog({
             </span>
             <div className="space-y-2">
               <AlertDialogTitle>Publish this activity?</AlertDialogTitle>
-              <AlertDialogDescription asChild>
-                <div className="space-y-4 text-sm text-text-muted-warm">
-                  <p>
-                    Registration will open at{" "}
-                    <code className="rounded bg-muted px-1 py-0.5 text-xs text-text-warm">
-                      /register/{activity.slug}
-                    </code>
-                    . That link uses this slug while the activity stays published.
-                    Confirm these details are correct.
-                  </p>
-
+              <AlertDialogDescription>
+                Registration will open at{" "}
+                <code className="rounded bg-muted px-1 py-0.5 text-xs text-text-warm">
+                  /register/{activity.slug}
+                </code>
+                . Confirm the summary below before you publish.
+              </AlertDialogDescription>
+              <div className="space-y-4 text-sm text-text-muted-warm">
                   <dl className="grid gap-2 rounded-md border border-border-warm bg-muted/30 p-3 text-text-warm">
                     <div className="contents">
                       <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
@@ -103,8 +100,7 @@ export function ActivityPublishConfirmDialog({
                       live unless your plan restricts it.
                     </p>
                   </div>
-                </div>
-              </AlertDialogDescription>
+              </div>
             </div>
           </div>
         </AlertDialogHeader>

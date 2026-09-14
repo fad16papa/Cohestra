@@ -52,9 +52,9 @@ export function ActivityOverviewSchedule({
     setSavedMessage(null);
     setIsSaving(true);
 
-    const { schedule, scheduledStartsAt } = buildScheduleUpdatePayload(dateTimeLocal);
-
     try {
+      const { schedule, scheduledStartsAt } =
+        buildScheduleUpdatePayload(dateTimeLocal);
       const updated = await updateActivity(authFetch, activity.id, {
         name: activity.name,
         category: activity.category,
