@@ -127,14 +127,14 @@ export function ActivityOverviewSchedule({
   );
 }
 
-export function ActivityOverviewScheduleFactsLabel() {
+export function ActivityOverviewScheduleLabel() {
   return (
-    <dt
+    <span
       id="activity-overview-schedule-label"
       className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted-warm"
     >
-      <Calendar className="size-3.5" aria-hidden />
+      <Calendar className="size-3.5 shrink-0" aria-hidden />
       Schedule
-    </dt>
+    </span>
   );
 }
