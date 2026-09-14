@@ -326,7 +326,8 @@ public sealed class ActivityService(
         }
 
         activity.Schedule = normalizedSchedule;
-        if (request.ScheduledStartsAt.HasValue || activity.ScheduledStartsAt is null || scheduleChanged)
+        if (activity.Status != ActivityStatus.Published
+            && (request.ScheduledStartsAt.HasValue || activity.ScheduledStartsAt is null || scheduleChanged))
         {
             activity.ScheduledStartsAt = NormalizeScheduledStartsAt(
                 request.ScheduledStartsAt,

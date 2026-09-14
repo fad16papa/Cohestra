@@ -92,6 +92,7 @@ export function ActivityOverviewSchedule({
     <div className="space-y-2">
       <ActivitySchedulePicker
         inputId="activity-overview-schedule"
+        labelledById="activity-overview-schedule-label"
         value={dateTimeLocal}
         onChange={setDateTimeLocal}
         disabled={isSaving}
@@ -128,7 +129,10 @@ export function ActivityOverviewSchedule({
 
 export function ActivityOverviewScheduleFactsLabel() {
   return (
-    <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+    <dt
+      id="activity-overview-schedule-label"
+      className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted-warm"
+    >
       <Calendar className="size-3.5" aria-hidden />
       Schedule
     </dt>

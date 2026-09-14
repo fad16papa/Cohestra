@@ -56,25 +56,25 @@ export function ActivityPublishConfirmDialog({
                   </p>
 
                   <dl className="grid gap-2 rounded-md border border-border-warm bg-muted/30 p-3 text-text-warm">
-                    <div>
+                    <div className="contents">
                       <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
                         Activity
                       </dt>
                       <dd className="mt-0.5">{activity.name}</dd>
                     </div>
-                    <div>
+                    <div className="contents">
                       <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
                         Schedule
                       </dt>
                       <dd className="mt-0.5">{activity.schedule}</dd>
                     </div>
-                    <div>
+                    <div className="contents">
                       <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
                         Location
                       </dt>
                       <dd className="mt-0.5">{activity.location}</dd>
                     </div>
-                    <div>
+                    <div className="contents">
                       <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
                         Community · category
                       </dt>
@@ -82,7 +82,7 @@ export function ActivityPublishConfirmDialog({
                         {activity.communityLabel} · {activity.category}
                       </dd>
                     </div>
-                    <div>
+                    <div className="contents">
                       <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
                         Registrations
                       </dt>
