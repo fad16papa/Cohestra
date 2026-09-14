@@ -7,6 +7,7 @@ import {
   ArchiveActivityDialog,
   type ArchiveActivityDialogVariant,
 } from "@/components/activities/archive-activity-dialog";
+import { ActivityPublishConfirmDialog } from "@/components/activities/activity-publish-confirm-dialog";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { PlanLimitAlert } from "@/components/shell/plan-limit-alert";
@@ -37,6 +38,7 @@ type ActivityPublishControlsProps = {
   unsavedTabs?: {
     form?: boolean;
     design?: boolean;
+    schedule?: boolean;
   };
 };
 
@@ -54,6 +56,7 @@ export function ActivityPublishControls({
   const [isUnpublishing, setIsUnpublishing] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
   const [unpublishDialogOpen, setUnpublishDialogOpen] = useState(false);
+  const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [archiveDialogVariant, setArchiveDialogVariant] =
     useState<ArchiveActivityDialogVariant>("upcoming");
@@ -65,6 +68,9 @@ export function ActivityPublishControls({
   const unsavedPublishIssues = [
     unsavedTabs?.form ? "Save your form on the Form tab before publishing." : null,
     unsavedTabs?.design ? "Save your design on the Design tab before publishing." : null,
+    unsavedTabs?.schedule
+      ? "Save the schedule on Overview before publishing."
+      : null,
   ].filter((issue): issue is string => issue !== null);
   const publishedLimitMessage = getPublishedActivitiesLimitMessage(shell);
   const publishBlocked = publishGateIssues.length > 0 || unsavedPublishIssues.length > 0;
@@ -126,6 +132,7 @@ export function ActivityPublishControls({
     try {
       const updated = await publishActivity(authFetch, activity.id);
       onActivityUpdated(updated);
+      setPublishDialogOpen(false);
       setSuccess("Activity is live.");
     } catch (publishError) {
       setError(
@@ -196,9 +203,9 @@ export function ActivityPublishControls({
               <Button
                 type="button"
                 disabled={isBusy || publishBlocked || publishPlanBlocked}
-                onClick={() => void handlePublish()}
+                onClick={() => setPublishDialogOpen(true)}
               >
-                {isPublishing ? "Publishing…" : "Publish"}
+                Publish
               </Button>
             ) : null}
 
@@ -263,6 +270,19 @@ export function ActivityPublishControls({
           </p>
         ) : null}
       </div>
+
+      <ActivityPublishConfirmDialog
+        open={publishDialogOpen}
+        activity={activity}
+        isPublishing={isPublishing}
+        onOpenChange={(open) => {
+          setPublishDialogOpen(open);
+          if (!open) {
+            setError(null);
+          }
+        }}
+        onConfirm={() => void handlePublish()}
+      />
 
       <ArchiveActivityDialog
         open={archiveDialogOpen}

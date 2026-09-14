@@ -306,6 +306,25 @@ public sealed class ActivityService(
         activity.Category = request.Category.Trim();
         var normalizedSchedule = request.Schedule.Trim();
         var scheduleChanged = !string.Equals(activity.Schedule, normalizedSchedule, StringComparison.Ordinal);
+        if (activity.Status == ActivityStatus.Published)
+        {
+            if (scheduleChanged)
+            {
+                throw new InvalidOperationException(
+                    "Published activities cannot change schedule. Unpublish from Overview first.");
+            }
+
+            if (request.ScheduledStartsAt.HasValue)
+            {
+                var nextStartsAt = request.ScheduledStartsAt.Value.ToUniversalTime();
+                if (activity.ScheduledStartsAt != nextStartsAt)
+                {
+                    throw new InvalidOperationException(
+                        "Published activities cannot change schedule. Unpublish from Overview first.");
+                }
+            }
+        }
+
         activity.Schedule = normalizedSchedule;
         if (request.ScheduledStartsAt.HasValue || activity.ScheduledStartsAt is null || scheduleChanged)
         {
