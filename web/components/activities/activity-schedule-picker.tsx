@@ -18,6 +18,8 @@ type ActivitySchedulePickerProps = {
   requireFutureDate?: boolean;
   inputId?: string;
   showLabel?: boolean;
+  /** Visible label element id (Overview facts grid). */
+  labelledById?: string;
 };
 
 const dateTimeInputClassName =
@@ -30,6 +32,7 @@ export function ActivitySchedulePicker({
   requireFutureDate = true,
   inputId = "activity-schedule",
   showLabel = true,
+  labelledById,
 }: ActivitySchedulePickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const preview = value ? formatScheduleForStorage(value) : null;
@@ -75,7 +78,10 @@ export function ActivitySchedulePicker({
           min={requireFutureDate ? minScheduleDateTimeLocal() : undefined}
           onChange={(event) => onChange(event.target.value)}
           className={dateTimeInputClassName}
-          aria-label={showLabel ? undefined : "Schedule date and time"}
+          aria-labelledby={labelledById}
+          aria-label={
+            showLabel || labelledById ? undefined : "Schedule date and time"
+          }
         />
       </div>
       <p className="min-h-8 text-xs text-text-muted-warm">

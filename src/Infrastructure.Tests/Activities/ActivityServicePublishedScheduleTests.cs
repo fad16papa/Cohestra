@@ -99,6 +99,48 @@ public sealed class ActivityServicePublishedScheduleTests
         Assert.Contains("cannot change schedule", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task UpdateAsync_DoesNotBackfillScheduledStartsAtWhenPublished()
+    {
+        await using var dbContext = CreateDbContext();
+        SeedCatalog(dbContext);
+
+        var activity = new Activity
+        {
+            Id = Guid.NewGuid(),
+            TenantId = TestTenantId,
+            Name = "Published clinic",
+            Slug = "published-clinic-3",
+            Category = "Tennis",
+            Schedule = "Sat, 19 Sept 2026, 10:00 am",
+            ScheduledStartsAt = null,
+            Location = "Court A",
+            CommunityLabel = "Youth",
+            Status = ActivityStatus.Published,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        };
+        dbContext.Activities.Add(activity);
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext);
+
+        await service.UpdateAsync(
+            activity.Id,
+            new UpdateActivityRequest(
+                "Published clinic",
+                "Tennis",
+                "Sat, 19 Sept 2026, 10:00 am",
+                "Court A",
+                "Youth",
+                HeroImageUrl: null,
+                AccentColor: null),
+            CancellationToken.None);
+
+        var reloaded = await dbContext.Activities.AsNoTracking().SingleAsync(a => a.Id == activity.Id);
+        Assert.Null(reloaded.ScheduledStartsAt);
+    }
+
     private static void SeedCatalog(CohestraDbContext dbContext)
     {
         var now = DateTimeOffset.UtcNow;
