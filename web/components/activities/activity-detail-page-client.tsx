@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Calendar, MapPin } from "lucide-react";
+import { ArrowLeft, MapPin } from "lucide-react";
 
 import { ActivityDesignTab } from "@/components/activities/activity-design-tab";
 import { ActivityCapacityPanel } from "@/components/activities/activity-capacity-panel";
 import { ActivityFormTab } from "@/components/activities/activity-form-tab";
+import { ActivityOverviewSchedule } from "@/components/activities/activity-overview-schedule";
 import { ActivityPublishControls } from "@/components/activities/activity-publish-controls";
 import { ActivityScheduleConflictAlert } from "@/components/activities/activity-schedule-conflict-alert";
 import { ActivityShareKitPanel } from "@/components/activities/activity-share-kit-panel";
@@ -63,13 +64,6 @@ function ActivityQuickFacts({ activity }: { activity: Activity }) {
     <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <div className="space-y-1">
         <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted-warm">
-          <Calendar className="size-3.5" aria-hidden />
-          Schedule
-        </dt>
-        <dd className="text-sm text-text-warm">{activity.schedule}</dd>
-      </div>
-      <div className="space-y-1">
-        <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted-warm">
           <MapPin className="size-3.5" aria-hidden />
           Location
         </dt>
@@ -112,6 +106,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formDirty, setFormDirty] = useState(false);
   const [designDirty, setDesignDirty] = useState(false);
+  const [scheduleDirty, setScheduleDirty] = useState(false);
   const [activeTab, setActiveTab] = useState<ActivityDetailTab>(() => {
     const tab = searchParams.get("tab");
     return isActivityDetailTab(tab) ? tab : "overview";
@@ -252,7 +247,13 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
             unsavedTabs={{
               form: formDirty,
               design: designDirty,
+              schedule: scheduleDirty,
             }}
+          />
+          <ActivityOverviewSchedule
+            activity={activity}
+            onActivityUpdated={handleActivityUpdated}
+            onDirtyChange={setScheduleDirty}
           />
           <ActivityQuickFacts activity={activity} />
           <ActivityCapacityPanel
