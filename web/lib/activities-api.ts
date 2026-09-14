@@ -429,7 +429,7 @@ function parseActivity(raw: Record<string, unknown>): Activity {
     registrationTheme: parseRegistrationTheme(registrationThemeRaw),
     resolvedRegistrationTheme: parseResolvedRegistrationTheme(resolvedThemeRaw),
     showOnHomepage,
-    status: status as ActivityStatus,
+    status: status.toLowerCase() as ActivityStatus,
     formSchema: parseFormSchema(formSchemaRaw),
     maxRegistrants:
       typeof maxRegistrantsRaw === "number" && Number.isFinite(maxRegistrantsRaw)

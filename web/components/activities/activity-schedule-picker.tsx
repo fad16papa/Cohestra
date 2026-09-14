@@ -14,6 +14,9 @@ type ActivitySchedulePickerProps = {
   value: string;
   onChange: (dateTimeLocal: string) => void;
   disabled?: boolean;
+  /** When false, draft edits may keep or pick dates before today (Overview). */
+  requireFutureDate?: boolean;
+  inputId?: string;
 };
 
 const dateTimeInputClassName =
@@ -23,6 +26,8 @@ export function ActivitySchedulePicker({
   value,
   onChange,
   disabled = false,
+  requireFutureDate = true,
+  inputId = "activity-schedule",
 }: ActivitySchedulePickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const preview = value ? formatScheduleForStorage(value) : null;
@@ -46,7 +51,7 @@ export function ActivitySchedulePicker({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="activity-schedule">Schedule</Label>
+      <Label htmlFor={inputId}>Schedule</Label>
       <div className="relative">
         <button
           type="button"
@@ -60,12 +65,12 @@ export function ActivitySchedulePicker({
         </button>
         <Input
           ref={inputRef}
-          id="activity-schedule"
+          id={inputId}
           type="datetime-local"
           required
           disabled={disabled}
           value={value}
-          min={minScheduleDateTimeLocal()}
+          min={requireFutureDate ? minScheduleDateTimeLocal() : undefined}
           onChange={(event) => onChange(event.target.value)}
           className={dateTimeInputClassName}
         />

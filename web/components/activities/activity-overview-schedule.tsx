@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Calendar } from "lucide-react";
 
 import { ActivitySchedulePicker } from "@/components/activities/activity-schedule-picker";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -16,15 +17,22 @@ type ActivityOverviewScheduleProps = {
   activity: Activity;
   onActivityUpdated: (activity: Activity) => void;
   onDirtyChange?: (dirty: boolean) => void;
+  /** When true, render inside the Overview facts grid (Schedule column). */
+  variant?: "card" | "facts";
 };
+
+function isDraftActivity(activity: Activity): boolean {
+  return activity.status.toLowerCase() === "draft";
+}
 
 export function ActivityOverviewSchedule({
   activity,
   onActivityUpdated,
   onDirtyChange,
+  variant = "facts",
 }: ActivityOverviewScheduleProps) {
   const { authFetch } = useAuth();
-  const isDraft = activity.status === "draft";
+  const isDraft = isDraftActivity(activity);
   const [dateTimeLocal, setDateTimeLocal] = useState(() =>
     activityScheduleToDateTimeLocal(activity)
   );
@@ -62,7 +70,7 @@ export function ActivityOverviewSchedule({
         maxRegistrants: activity.maxRegistrants,
       });
       onActivityUpdated(updated);
-      setSavedMessage("Schedule saved.");
+      setSavedMessage("Saved");
     } catch (saveError) {
       setError(
         saveError instanceof Error ? saveError.message : "Could not save schedule."
@@ -73,36 +81,42 @@ export function ActivityOverviewSchedule({
   }
 
   if (!isDraft) {
+    const readonly = (
+      <>
+        <p className="text-sm text-text-warm">{activity.schedule}</p>
+        <p className="text-xs text-text-muted-warm">
+          Unpublish from Overview to change the schedule.
+        </p>
+      </>
+    );
+
+    if (variant === "facts") {
+      return readonly;
+    }
+
     return (
       <div className="space-y-1">
         <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
           Schedule
         </p>
-        <p className="text-sm text-text-warm">{activity.schedule}</p>
-        <p className="text-xs text-text-muted-warm">
-          Published — unpublish from Overview to change the schedule.
-        </p>
+        {readonly}
       </div>
     );
   }
 
-  return (
-    <div className="space-y-3 rounded-lg border border-border-warm bg-card p-4">
-      <div>
-        <h3 className="text-section text-text-warm">Schedule</h3>
-        <p className="mt-0.5 text-sm text-text-muted-warm">
-          Set the event date and time before you publish. This locks once the activity is
-          live.
-        </p>
-      </div>
+  const editor = (
+    <div className="space-y-2">
       <ActivitySchedulePicker
+        inputId="activity-overview-schedule"
         value={dateTimeLocal}
         onChange={setDateTimeLocal}
         disabled={isSaving}
+        requireFutureDate={false}
       />
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
+          size="sm"
           variant="outline"
           disabled={!isDirty || isSaving}
           onClick={() => void handleSaveSchedule()}
@@ -110,16 +124,44 @@ export function ActivityOverviewSchedule({
           {isSaving ? "Saving…" : "Save schedule"}
         </Button>
         {savedMessage ? (
-          <p role="status" className="text-sm text-text-muted-warm">
+          <span role="status" className="text-xs text-text-muted-warm">
             {savedMessage}
-          </p>
+          </span>
         ) : null}
       </div>
       {error ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-xs text-destructive">
           {error}
         </p>
       ) : null}
+      <p className="text-xs text-text-muted-warm">
+        Locks after publish. Check date and time before you go live.
+      </p>
     </div>
+  );
+
+  if (variant === "facts") {
+    return editor;
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg border border-border-warm bg-card p-4">
+      <div>
+        <h3 className="text-section text-text-warm">Schedule</h3>
+        <p className="mt-0.5 text-sm text-text-muted-warm">
+          Set the event date and time before you publish.
+        </p>
+      </div>
+      {editor}
+    </div>
+  );
+}
+
+export function ActivityOverviewScheduleFactsLabel() {
+  return (
+    <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+      <Calendar className="size-3.5" aria-hidden />
+      Schedule
+    </dt>
   );
 }
