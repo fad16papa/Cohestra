@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -11,7 +12,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import type { Activity } from "@/lib/activities-api";
 
 type ActivityPublishConfirmDialogProps = {
@@ -51,7 +51,8 @@ export function ActivityPublishConfirmDialog({
                     <code className="rounded bg-muted px-1 py-0.5 text-xs text-text-warm">
                       /register/{activity.slug}
                     </code>
-                    . Confirm these details are correct.
+                    . That link uses this slug while the activity stays published.
+                    Confirm these details are correct.
                   </p>
 
                   <dl className="grid gap-2 rounded-md border border-border-warm bg-muted/30 p-3 text-text-warm">
@@ -96,12 +97,6 @@ export function ActivityPublishConfirmDialog({
                       <li>
                         Replacing the whole form with a template (unpublish from Overview)
                       </li>
-                      <li>
-                        The public registration path{" "}
-                        <code className="rounded bg-muted px-1 py-0.5 text-xs">
-                          /register/{activity.slug}
-                        </code>
-                      </li>
                     </ul>
                     <p>
                       You can still update design, form fields, capacity, and branding while
@@ -115,13 +110,12 @@ export function ActivityPublishConfirmDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isPublishing}>Cancel</AlertDialogCancel>
-          <Button
-            type="button"
+          <AlertDialogAction
             disabled={isPublishing}
             onClick={onConfirm}
           >
             {isPublishing ? "Publishing…" : "Publish"}
-          </Button>
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

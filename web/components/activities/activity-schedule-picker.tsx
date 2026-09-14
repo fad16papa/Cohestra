@@ -17,6 +17,7 @@ type ActivitySchedulePickerProps = {
   /** When false, draft edits may keep or pick dates before today (Overview). */
   requireFutureDate?: boolean;
   inputId?: string;
+  showLabel?: boolean;
 };
 
 const dateTimeInputClassName =
@@ -28,6 +29,7 @@ export function ActivitySchedulePicker({
   disabled = false,
   requireFutureDate = true,
   inputId = "activity-schedule",
+  showLabel = true,
 }: ActivitySchedulePickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const preview = value ? formatScheduleForStorage(value) : null;
@@ -51,7 +53,7 @@ export function ActivitySchedulePicker({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={inputId}>Schedule</Label>
+      {showLabel ? <Label htmlFor={inputId}>Schedule</Label> : null}
       <div className="relative">
         <button
           type="button"
@@ -73,6 +75,7 @@ export function ActivitySchedulePicker({
           min={requireFutureDate ? minScheduleDateTimeLocal() : undefined}
           onChange={(event) => onChange(event.target.value)}
           className={dateTimeInputClassName}
+          aria-label={showLabel ? undefined : "Schedule date and time"}
         />
       </div>
       <p className="min-h-8 text-xs text-text-muted-warm">
