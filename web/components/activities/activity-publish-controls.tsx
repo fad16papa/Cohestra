@@ -184,7 +184,7 @@ export function ActivityPublishControls({
       <div className="space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-section text-text-warm">Publishing</h3>
+            <h3 className="text-sm font-semibold text-text-warm">Publishing</h3>
             {activity.status === "published" ? (
               <p className="mt-0.5 text-sm text-text-muted-warm">
                 Live at{" "}

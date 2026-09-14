@@ -3,12 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
-import {
-  ActivityOverviewSchedule,
-  ActivityOverviewScheduleFactsLabel,
-} from "@/components/activities/activity-overview-schedule";
+import { ActivityOverviewEventDetails } from "@/components/activities/activity-overview-event-details";
 
 import { ActivityDesignTab } from "@/components/activities/activity-design-tab";
 import { ActivityCapacityPanel } from "@/components/activities/activity-capacity-panel";
@@ -60,60 +57,6 @@ function ActivityBackLink() {
       <ArrowLeft className="size-4 shrink-0" aria-hidden />
       Back to activities
     </Link>
-  );
-}
-
-type ActivityQuickFactsProps = {
-  activity: Activity;
-  onActivityUpdated: (activity: Activity) => void;
-  onScheduleDirtyChange?: (dirty: boolean) => void;
-};
-
-function ActivityQuickFacts({
-  activity,
-  onActivityUpdated,
-  onScheduleDirtyChange,
-}: ActivityQuickFactsProps) {
-  return (
-    <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <div className="contents">
-        <ActivityOverviewScheduleFactsLabel />
-        <dd className="text-sm text-text-warm">
-          <ActivityOverviewSchedule
-            activity={activity}
-            onActivityUpdated={onActivityUpdated}
-            onDirtyChange={onScheduleDirtyChange}
-          />
-        </dd>
-      </div>
-      <div className="contents">
-        <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted-warm">
-          <MapPin className="size-3.5" aria-hidden />
-          Location
-        </dt>
-        <dd className="text-sm text-text-warm">{activity.location}</dd>
-      </div>
-      <div className="contents">
-        <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
-          Registrations
-        </dt>
-        <dd className="text-sm text-text-warm">
-          {activity.maxRegistrants != null
-            ? `${activity.registrationCount} / ${activity.maxRegistrants}`
-            : `${activity.registrationCount} (no cap)`}
-        </dd>
-      </div>
-      <div className="contents">
-        <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
-          Public URL
-        </dt>
-        <dd className="text-sm">
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-text-warm">
-            /register/{activity.slug}
-          </code>
-        </dd>
-      </div>
-    </dl>
   );
 }
 
@@ -263,17 +206,19 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
         ))}
       </nav>
 
-      <div hidden={activeTab !== "overview"} className="space-y-8">
-        <ActivityPublishControls
-          activity={activity}
-          onActivityUpdated={handleActivityUpdated}
-          unsavedTabs={{
-            form: formDirty,
-            design: designDirty,
-            schedule: scheduleDirty,
-          }}
-        />
-        <ActivityQuickFacts
+      <div hidden={activeTab !== "overview"} className="space-y-6">
+        <section className="rounded-xl border border-border-warm bg-card p-5">
+          <ActivityPublishControls
+            activity={activity}
+            onActivityUpdated={handleActivityUpdated}
+            unsavedTabs={{
+              form: formDirty,
+              design: designDirty,
+              schedule: scheduleDirty,
+            }}
+          />
+        </section>
+        <ActivityOverviewEventDetails
           activity={activity}
           onActivityUpdated={handleActivityUpdated}
           onScheduleDirtyChange={setScheduleDirty}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Users } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
@@ -65,6 +67,13 @@ export function ActivityCapacityPanel({
     planRegistrationLimit == null &&
     shellError != null;
 
+  const registrationSummary =
+    activity.maxRegistrants != null
+      ? `${activity.registrationCount} / ${activity.maxRegistrants} registered${
+          activity.registrationCount >= activity.maxRegistrants ? " · cap reached" : ""
+        }`
+      : `${activity.registrationCount} registered · no cap on this activity`;
+
   async function handleSave() {
     if (isArchived || !isDirty || isSaving || mustWaitForShell || shellLimitsUnavailable) {
       return;
@@ -102,7 +111,7 @@ export function ActivityCapacityPanel({
         maxRegistrants: parsedCap,
       });
       onActivityUpdated(updated);
-      setSavedMessage("Registration cap saved.");
+      setSavedMessage("Saved");
     } catch (saveError) {
       setError(
         saveError instanceof Error
@@ -115,84 +124,100 @@ export function ActivityCapacityPanel({
   }
 
   return (
-    <section className="space-y-4 rounded-xl border border-border-warm bg-card p-5">
-      <div>
-        <h3 className="text-sm font-semibold text-text-warm">Registration cap</h3>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Optional limit on how many people can register for this activity. Leave blank
-          for unlimited registrations on this activity (monthly plan usage still applies).
-        </p>
-        {planRegistrationLimit != null ? (
-          <p className="mt-1 text-xs text-text-muted-warm">
-            Your plan allows up to{" "}
-            {formatPlanRegistrationLimit(planRegistrationLimit)} registrations per month
-            across all activities.
+    <section
+      aria-labelledby="activity-capacity-heading"
+      className="rounded-xl border border-border-warm bg-card p-5"
+    >
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3
+            id="activity-capacity-heading"
+            className="flex items-center gap-2 text-sm font-semibold text-text-warm"
+          >
+            <Users className="size-4 text-text-muted-warm" aria-hidden />
+            Registration cap
+          </h3>
+          <p className="mt-1 max-w-2xl text-sm text-text-muted-warm">
+            Optional limit for this activity. Leave blank for unlimited sign-ups here
+            (monthly plan usage still applies).
+            {planRegistrationLimit != null ? (
+              <>
+                {" "}
+                Plan ceiling:{" "}
+                {formatPlanRegistrationLimit(planRegistrationLimit)}/month tenant-wide.
+              </>
+            ) : null}
           </p>
-        ) : null}
+        </div>
+        <p className="text-sm font-medium text-text-warm sm:text-right">
+          {registrationSummary}
+          {" · "}
+          <Link
+            href={`/activities/${activity.id}?tab=registrations`}
+            className="font-normal text-primary underline-offset-2 hover:underline"
+          >
+            View list
+          </Link>
+        </p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="activity-max-registrants">Max registrants (optional)</Label>
-        <Input
-          id="activity-max-registrants"
-          type="number"
-          min={1}
-          max={planRegistrationLimit ?? undefined}
-          inputMode="numeric"
-          placeholder="Unlimited"
-          value={maxRegistrants}
-          disabled={isArchived}
-          onChange={(event) => {
-            setMaxRegistrants(event.target.value);
-            setSavedMessage(null);
-            setError(null);
-          }}
-        />
-        {activity.maxRegistrants != null ? (
-          <p className="text-xs text-text-muted-warm">
-            {activity.registrationCount} / {activity.maxRegistrants} registered
-            {activity.registrationCount >= activity.maxRegistrants
-              ? " — cap reached"
-              : ""}
-          </p>
-        ) : (
-          <p className="text-xs text-text-muted-warm">
-            {activity.registrationCount} registered · no cap set
-          </p>
-        )}
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+        <div className="min-w-0 flex-1 space-y-2 sm:max-w-xs">
+          <Label htmlFor="activity-max-registrants">Max registrants (optional)</Label>
+          <Input
+            id="activity-max-registrants"
+            type="number"
+            min={1}
+            max={planRegistrationLimit ?? undefined}
+            inputMode="numeric"
+            placeholder="Unlimited"
+            value={maxRegistrants}
+            disabled={isArchived}
+            onChange={(event) => {
+              setMaxRegistrants(event.target.value);
+              setSavedMessage(null);
+              setError(null);
+            }}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={
+              isArchived ||
+              !isDirty ||
+              isSaving ||
+              mustWaitForShell ||
+              shellLimitsUnavailable ||
+              Boolean(formatError) ||
+              Boolean(planCapError)
+            }
+            onClick={() => void handleSave()}
+          >
+            {isSaving ? "Saving…" : "Save cap"}
+          </Button>
+          {savedMessage ? (
+            <span role="status" className="text-xs text-text-muted-warm">
+              {savedMessage}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {mustWaitForShell ? (
-        <p className="text-sm text-text-muted-warm">Loading plan limits…</p>
+        <p className="mt-2 text-sm text-text-muted-warm">Loading plan limits…</p>
       ) : null}
       {shellLimitsUnavailable ? (
-        <p className="text-sm text-destructive">
-          Plan limits could not be loaded. Refresh the page before setting a registration cap.
+        <p className="mt-2 text-sm text-destructive">
+          Plan limits could not be loaded. Refresh the page before setting a cap.
         </p>
       ) : null}
       {validationError && !error ? (
-        <p className="text-sm text-destructive">{validationError}</p>
+        <p className="mt-2 text-sm text-destructive">{validationError}</p>
       ) : null}
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      {savedMessage ? (
-        <p className="text-sm text-primary">{savedMessage}</p>
-      ) : null}
-
-      <Button
-        type="button"
-        disabled={
-          isArchived ||
-          !isDirty ||
-          isSaving ||
-          mustWaitForShell ||
-          shellLimitsUnavailable ||
-          Boolean(formatError) ||
-          Boolean(planCapError)
-        }
-        onClick={() => void handleSave()}
-      >
-        {isSaving ? "Saving…" : "Save cap"}
-      </Button>
+      {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
     </section>
   );
 }
