@@ -5,10 +5,14 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, MapPin } from "lucide-react";
 
+import {
+  ActivityOverviewSchedule,
+  ActivityOverviewScheduleFactsLabel,
+} from "@/components/activities/activity-overview-schedule";
+
 import { ActivityDesignTab } from "@/components/activities/activity-design-tab";
 import { ActivityCapacityPanel } from "@/components/activities/activity-capacity-panel";
 import { ActivityFormTab } from "@/components/activities/activity-form-tab";
-import { ActivityOverviewSchedule } from "@/components/activities/activity-overview-schedule";
 import { ActivityPublishControls } from "@/components/activities/activity-publish-controls";
 import { ActivityScheduleConflictAlert } from "@/components/activities/activity-schedule-conflict-alert";
 import { ActivityShareKitPanel } from "@/components/activities/activity-share-kit-panel";
@@ -59,9 +63,30 @@ function ActivityBackLink() {
   );
 }
 
-function ActivityQuickFacts({ activity }: { activity: Activity }) {
+type ActivityQuickFactsProps = {
+  activity: Activity;
+  onActivityUpdated: (activity: Activity) => void;
+  onScheduleDirtyChange?: (dirty: boolean) => void;
+};
+
+function ActivityQuickFacts({
+  activity,
+  onActivityUpdated,
+  onScheduleDirtyChange,
+}: ActivityQuickFactsProps) {
   return (
     <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-2 sm:col-span-2 lg:col-span-1">
+        <ActivityOverviewScheduleFactsLabel />
+        <dd className="text-sm text-text-warm">
+          <ActivityOverviewSchedule
+            variant="facts"
+            activity={activity}
+            onActivityUpdated={onActivityUpdated}
+            onDirtyChange={onScheduleDirtyChange}
+          />
+        </dd>
+      </div>
       <div className="space-y-1">
         <dt className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted-warm">
           <MapPin className="size-3.5" aria-hidden />
@@ -250,12 +275,11 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
               schedule: scheduleDirty,
             }}
           />
-          <ActivityOverviewSchedule
+          <ActivityQuickFacts
             activity={activity}
             onActivityUpdated={handleActivityUpdated}
-            onDirtyChange={setScheduleDirty}
+            onScheduleDirtyChange={setScheduleDirty}
           />
-          <ActivityQuickFacts activity={activity} />
           <ActivityCapacityPanel
             activity={activity}
             onActivityUpdated={handleActivityUpdated}
