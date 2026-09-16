@@ -65,6 +65,8 @@ export type FormSchemaMeta = {
   confirmationEmailBodyMarkdown?: string | null;
   closedMessage?: string | null;
   registrationClosesAt?: string | null;
+  /** Core/Pro only. false hides tenant website link on this registration page. */
+  showPublisherWebsiteLink?: boolean | null;
 };
 
 export type ActivityFormSchema = {
@@ -172,6 +174,8 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
     const closedMessage = metaRecord.closedMessage ?? metaRecord.ClosedMessage;
     const registrationClosesAt =
       metaRecord.registrationClosesAt ?? metaRecord.RegistrationClosesAt;
+    const showPublisherWebsiteLink =
+      metaRecord.showPublisherWebsiteLink ?? metaRecord.ShowPublisherWebsiteLink;
     meta = {
       introMarkdown:
         typeof introMarkdown === "string" && introMarkdown.trim()
@@ -199,6 +203,8 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
         typeof registrationClosesAt === "string" && registrationClosesAt.trim()
           ? registrationClosesAt.trim()
           : null,
+      showPublisherWebsiteLink:
+        typeof showPublisherWebsiteLink === "boolean" ? showPublisherWebsiteLink : null,
     };
   }
 

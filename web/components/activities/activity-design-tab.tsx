@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { RegistrationPublicPreviewShell } from "@/components/registration/registration-public-preview-shell";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,9 @@ import {
   resolveRegistrationPreviewTheme,
   themeFromActivity,
 } from "@/lib/registration-preview-theme";
+import type { PublicDoorPayload } from "@/lib/public-door-payload";
+import { resolveRegistrationPublisherWebsiteLink } from "@/lib/publisher-website-url";
+import { isCoreOrAbove } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
 
 type ActivityDesignTabProps = {
@@ -42,6 +46,8 @@ export function ActivityDesignTab({
   onDirtyChange,
 }: ActivityDesignTabProps) {
   const { authFetch } = useAuth();
+  const { shell } = useTenantShell();
+  const plan = shell?.plan ?? "Basic";
   const heroFileInputRef = useRef<HTMLInputElement>(null);
   const [draftTheme, setDraftTheme] = useState<RegistrationTheme>(() =>
     themeFromActivityRecord(activity)
@@ -67,6 +73,28 @@ export function ActivityDesignTab({
     () => resolveRegistrationPreviewTheme(activity, draftTheme),
     [activity, draftTheme]
   );
+
+  const previewWebsiteLink = useMemo(() => {
+    if (typeof window === "undefined" || !isCoreOrAbove(plan)) {
+      return null;
+    }
+
+    const door: PublicDoorPayload = {
+      kind: "active",
+      plan,
+      tenantName: shell?.tenantName ?? null,
+      tenantSlug: shell?.tenantSlug ?? null,
+      site: null,
+      stubActivities: [],
+      builderLocked: false,
+    };
+
+    return resolveRegistrationPublisherWebsiteLink(
+      door,
+      window.location.origin,
+      activity.formSchema
+    );
+  }, [activity.formSchema, plan, shell?.tenantName, shell?.tenantSlug]);
 
   const contrastOk = accentMeetsWcagAaOnWhiteText(previewResolved.accentColor);
   const heroPreviewUrl = resolveHeroImageUrl(previewResolved.heroImageUrl);
@@ -323,6 +351,7 @@ export function ActivityDesignTab({
             publicPageHref={
               activity.status === "published" ? `/register/${activity.slug}` : null
             }
+            websiteLink={previewWebsiteLink}
           />
         </div>
       </div>

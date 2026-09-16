@@ -5,8 +5,35 @@ namespace Cohestra.Infrastructure.Activities;
 
 internal static class FormSchemaPlanGate
 {
+    internal static void NormalizePublisherWebsiteLink(ActivityFormSchema schema, TenantPlan plan)
+    {
+        if (schema.Meta is null)
+        {
+            return;
+        }
+
+        if (plan is TenantPlan.Basic)
+        {
+            schema.Meta.ShowPublisherWebsiteLink = null;
+            return;
+        }
+
+        if (plan is TenantPlan.Core or TenantPlan.Pro or TenantPlan.Enterprise)
+        {
+            return;
+        }
+
+        schema.Meta.ShowPublisherWebsiteLink = null;
+    }
+
     internal static void EnsureAllowed(ActivityFormSchema schema, TenantPlan plan)
     {
+        if (schema.Meta is { ShowPublisherWebsiteLink: true } && plan is TenantPlan.Basic)
+        {
+            throw new FormSchemaPlanLockedException(
+                "Linking your Cohestra website on registration forms requires a Core or Pro plan.");
+        }
+
         var hasRecipes = schema.Fields.Any(field => field.VisibleWhen is not null);
         var hasSteps = schema.Meta is { SplitIntoSteps: true };
         var hasCorePlusFields = schema.Fields.Any(field =>

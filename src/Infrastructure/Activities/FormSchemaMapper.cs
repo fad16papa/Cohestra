@@ -47,6 +47,7 @@ internal static class FormSchemaMapper
                     schema.Meta.ConfirmationEmailSubject,
                     schema.Meta.ConfirmationEmailBodyMarkdown,
                     schema.Meta.ClosedMessage,
-                    schema.Meta.RegistrationClosesAt));
+                    schema.Meta.RegistrationClosesAt,
+                    schema.Meta.ShowPublisherWebsiteLink));
     }
 }

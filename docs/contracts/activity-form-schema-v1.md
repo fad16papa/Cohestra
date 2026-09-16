@@ -29,6 +29,7 @@ Referenced by:
 | `meta.confirmationEmailBodyMarkdown` | string | no | Confirmation email closing message with piping tokens (max 2000). Layout unchanged. |
 | `meta.closedMessage` | string | no | Operator copy when the public Form is unavailable (max 2000). Markdown-lite; HTML stripped on render. Reason chip still shows. |
 | `meta.registrationClosesAt` | string (ISO-8601 UTC instant) | no | Optional datetime after which public GET/submit reject. Empty = no datetime close. Operator picker displays in the Activity/tenant timezone. Past Close-at at save is allowed. |
+| `meta.showPublisherWebsiteLink` | boolean | no | **Core/Pro+ only.** When `false`, hide the tenant Cohestra website link on this registration page and confirmation screen. When omitted or `true`, eligible plans show the link (legacy default: show). Basic saves normalize this to omitted; enabling on Basic returns `403 plan_locked`. |
 
 ### Piping tokens (v1.1 additive)
 

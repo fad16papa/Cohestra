@@ -13,6 +13,7 @@ import {
   type RegistrationPreviewViewport,
 } from "@/components/registration/registration-preview-viewport-toggle";
 import type { ActivityFormSchema, RegistrationThemePreset } from "@/lib/activities-api";
+import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
 import type { ResolvedRegistrationPreviewTheme } from "@/lib/registration-preview-theme";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,7 @@ type RegistrationPublicPreviewShellProps = {
   publicPageHref?: string | null;
   scrollClassName?: string;
   className?: string;
+  websiteLink?: PublisherWebsiteLink | null;
 };
 
 export function RegistrationPublicPreviewShell({
@@ -42,6 +44,7 @@ export function RegistrationPublicPreviewShell({
   publicPageHref = null,
   scrollClassName = "max-h-[min(36rem,70dvh)]",
   className,
+  websiteLink = null,
 }: RegistrationPublicPreviewShellProps) {
   const [viewport, setViewport] = useState<RegistrationPreviewViewport>("mobile");
 
@@ -68,7 +71,7 @@ export function RegistrationPublicPreviewShell({
         formStatus={formStatus}
         className={cn(
           "mx-auto w-full",
-          viewport === "mobile" ? "max-w-[375px]" : "max-w-3xl"
+          viewport === "mobile" ? "max-w-[375px]" : "max-w-[480px]"
         )}
         scrollClassName={scrollClassName}
       >
@@ -83,6 +86,7 @@ export function RegistrationPublicPreviewShell({
           logoAssetId={theme.logoAssetId}
           preset={theme.preset as RegistrationThemePreset}
           formSchema={formSchema}
+          websiteLink={websiteLink}
           variant="preview"
         />
       </RegistrationPreviewChrome>

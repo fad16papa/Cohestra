@@ -30,6 +30,12 @@ public sealed class FormSchemaMeta
 
     /// <summary>Optional UTC instant after which public registration closes.</summary>
     public DateTimeOffset? RegistrationClosesAt { get; set; }
+
+    /// <summary>
+    /// Core/Pro only. When false, hide the tenant Cohestra website link on this registration page.
+    /// Null preserves legacy default (show link for eligible plans).
+    /// </summary>
+    public bool? ShowPublisherWebsiteLink { get; set; }
 }
 
 public sealed class FormFieldDefinition
