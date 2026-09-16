@@ -1,3 +1,4 @@
+import type { ActivityFormSchema } from "@/lib/activities-api";
 import type { PublicDoorPayload } from "@/lib/public-door-api";
 
 export type PublisherWebsiteLink = {
@@ -91,13 +92,60 @@ export function resolveMarketingApexUrl(origin: string): string {
   }
 }
 
+function isCoreOrAbovePlan(plan: string | null | undefined): boolean {
+  const normalizedPlan = plan?.trim().toLowerCase();
+  return (
+    normalizedPlan === "core" ||
+    normalizedPlan === "pro" ||
+    normalizedPlan === "enterprise"
+  );
+}
+
+/** Whether this registration form should show the tenant Cohestra website link (Core/Pro). */
+export function isPublisherWebsiteLinkEnabledForForm(
+  plan: string | null | undefined,
+  formSchema: ActivityFormSchema | null | undefined
+): boolean {
+  if (!isCoreOrAbovePlan(plan)) {
+    return false;
+  }
+
+  return formSchema?.meta?.showPublisherWebsiteLink !== false;
+}
+
+/** Footer link for the public registration layout (Basic → marketing apex only). */
+export function buildPublicRegistrationLayoutFooterLink(
+  door: PublicDoorPayload,
+  origin: string
+): PublisherWebsiteLink | null {
+  const plan = door.plan?.trim().toLowerCase();
+  if (plan !== "basic") {
+    return null;
+  }
+
+  return buildPublisherWebsiteLink(door, origin);
+}
+
+/** Per-activity tenant website link on the registration page (Core/Pro, optional). */
+export function resolveRegistrationPublisherWebsiteLink(
+  door: PublicDoorPayload,
+  origin: string,
+  formSchema: ActivityFormSchema | null | undefined
+): PublisherWebsiteLink | null {
+  if (!isPublisherWebsiteLinkEnabledForForm(door.plan, formSchema)) {
+    return null;
+  }
+
+  return buildPublisherWebsiteLink(door, origin);
+}
+
 export function buildPublisherWebsiteLink(
   door: PublicDoorPayload,
   origin: string
 ): PublisherWebsiteLink | null {
   const plan = door.plan?.trim().toLowerCase();
 
-  if (plan === "core" || plan === "pro") {
+  if (isCoreOrAbovePlan(plan)) {
     let displayHost: string | null = null;
     try {
       displayHost = new URL(origin).host;

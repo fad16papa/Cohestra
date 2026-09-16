@@ -19,7 +19,7 @@ export function PublicFormLayout({
   websiteLink = null,
 }: PublicFormLayoutProps) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-surface-warm">
+    <div className="flex min-h-0 flex-1 flex-col overflow-x-hidden bg-surface-warm">
       <header className="border-b border-border-warm/70 bg-card/80 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-[480px] items-center justify-between gap-3 px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
@@ -41,8 +41,8 @@ export function PublicFormLayout({
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col items-center px-5 py-6 pb-8 sm:py-8">
-        <div className="w-full min-w-0 max-w-[480px]">{children}</div>
+      <main className="flex flex-1 flex-col items-center px-4 py-6 pb-8 sm:px-5 sm:py-8">
+        <div className="w-full min-w-0 max-w-[480px] overflow-x-hidden">{children}</div>
       </main>
 
       <footer className="border-t border-border-warm/70 bg-card/60 px-5 py-6 text-center backdrop-blur-sm">

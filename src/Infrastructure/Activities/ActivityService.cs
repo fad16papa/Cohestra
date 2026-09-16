@@ -1249,15 +1249,6 @@ public sealed class ActivityService(
             return;
         }
 
-        var hasRecipes = schema.Fields.Any(field => field.VisibleWhen is not null);
-        var hasSteps = schema.Meta is { SplitIntoSteps: true };
-        var hasCorePlusFields = schema.Fields.Any(field =>
-            FormFieldTypes.CorePlusOnly.Contains(field.Type));
-        if (!hasRecipes && !hasSteps && !hasCorePlusFields)
-        {
-            return;
-        }
-
         var plan = await dbContext.Tenants
             .AsNoTracking()
             .Where(tenant => tenant.Id == tenantId)
@@ -1269,6 +1260,14 @@ public sealed class ActivityService(
             throw new InvalidOperationException("Tenant not found for form schema plan gate.");
         }
 
-        FormSchemaPlanGate.EnsureAllowed(schema, plan.Value);
+        var hasRecipes = schema.Fields.Any(field => field.VisibleWhen is not null);
+        var hasSteps = schema.Meta is { SplitIntoSteps: true };
+        var hasCorePlusFields = schema.Fields.Any(field =>
+            FormFieldTypes.CorePlusOnly.Contains(field.Type));
+        if (hasRecipes || hasSteps || hasCorePlusFields)
+        {
+            FormSchemaPlanGate.EnsureAllowed(schema, plan.Value);
+        }
+        FormSchemaPlanGate.NormalizePublisherWebsiteLink(schema, plan.Value);
     }
 }

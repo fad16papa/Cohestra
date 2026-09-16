@@ -8,6 +8,7 @@ import { RegistrationIntroCopy } from "@/components/registration/registration-in
 import { RegistrationSuccessScreen } from "@/components/registration/registration-success-screen";
 import type { ActivityFormSchema, RegistrationThemePreset } from "@/lib/activities-api";
 import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
+import { PublisherWebsiteTextLink } from "@/components/registration/publisher-website-link";
 import { simulateRegistrationPreviewSubmit } from "@/lib/registration-preview-submit";
 import { cn } from "@/lib/utils";
 
@@ -128,17 +129,27 @@ export function PublicRegistrationOpen({
       </p>
     );
 
+  const registrationWebsiteFooter =
+    (variant === "public" || variant === "preview") && websiteLink ? (
+      <div className="border-t border-border-warm/70 pt-6 text-center">
+        <PublisherWebsiteTextLink link={websiteLink} />
+      </div>
+    ) : null;
+
   if (preset === "card") {
     return (
       <div
-        className={cn("rounded-xl bg-[var(--paper-warm,#f3f5f7)] p-4 sm:p-6")}
+        className={cn(
+          "min-w-0 overflow-x-hidden rounded-xl bg-[var(--paper-warm,#f3f5f7)] p-4 sm:p-6"
+        )}
         style={brandingStyle}
       >
-        <div className="mx-auto max-w-xl space-y-6">
+        <div className="mx-auto w-full min-w-0 max-w-xl space-y-6">
           {hero}
           <FormSection className="rounded-xl border border-border-warm bg-card p-4 shadow-md sm:p-6">
             {formBody}
           </FormSection>
+          {registrationWebsiteFooter}
         </div>
       </div>
     );
@@ -146,10 +157,11 @@ export function PublicRegistrationOpen({
 
   if (preset === "immersive") {
     return (
-      <div className={cn("space-y-0")} style={brandingStyle}>
+      <div className={cn("min-w-0 space-y-0 overflow-x-hidden")} style={brandingStyle}>
         {hero}
         <FormSection className="-mt-6 rounded-t-2xl border border-border-warm bg-card px-4 pb-6 pt-8 shadow-lg sm:px-6">
           {formBody}
+          {registrationWebsiteFooter}
         </FormSection>
       </div>
     );
@@ -157,17 +169,19 @@ export function PublicRegistrationOpen({
 
   if (preset === "compact" || isEmbed) {
     return (
-      <div className={cn("space-y-5")} style={brandingStyle}>
+      <div className={cn("min-w-0 space-y-5 overflow-x-hidden")} style={brandingStyle}>
         {hero}
         <FormSection>{formBody}</FormSection>
+        {!isEmbed ? registrationWebsiteFooter : null}
       </div>
     );
   }
 
   return (
-    <div className={cn("space-y-8")} style={brandingStyle}>
+    <div className={cn("min-w-0 space-y-8 overflow-x-hidden")} style={brandingStyle}>
       {hero}
       <FormSection>{formBody}</FormSection>
+      {registrationWebsiteFooter}
     </div>
   );
 }

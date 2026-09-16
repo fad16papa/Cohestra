@@ -4,7 +4,7 @@ import { PublicRegistrationOpen } from "@/components/registration/public-registr
 import { PublicRegistrationUnavailable } from "@/components/registration/public-registration-unavailable";
 import { fetchPublicDoorServer } from "@/lib/public-door-api";
 import { fetchPublicActivityBySlugServer } from "@/lib/public-registration-server-api";
-import { buildPublisherWebsiteLink } from "@/lib/publisher-website-url";
+import { resolveRegistrationPublisherWebsiteLink } from "@/lib/publisher-website-url";
 import { getRequestOrigin } from "@/lib/request-origin";
 import { buildActivityRegistrationMetadata } from "@/lib/site-seo-metadata";
 
@@ -56,7 +56,9 @@ export default async function PublicRegistrationPage({
 
   const { activity } = result;
   const [door, origin] = await Promise.all([fetchPublicDoorServer(), getRequestOrigin()]);
-  const websiteLink = origin ? buildPublisherWebsiteLink(door, origin) : null;
+  const websiteLink = origin
+    ? resolveRegistrationPublisherWebsiteLink(door, origin, activity.formSchema)
+    : null;
   const closedMessage = activity.formSchema?.meta?.closedMessage ?? null;
 
   if (activity.isRegistrationFull) {

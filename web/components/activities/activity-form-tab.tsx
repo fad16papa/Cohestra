@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LayoutTemplate } from "lucide-react";
 
 import { FormFieldEditor } from "@/components/activities/form-field-editor";
@@ -68,7 +68,13 @@ import { applyMissingStepBuckets } from "@/lib/form-steps";
 import { buildFormStudioPreviewKey } from "@/lib/form-studio-preview-key";
 import { resolvePersistedRegistrationPreviewTheme } from "@/lib/registration-preview-theme";
 import { registrationPresetLabels } from "@/lib/registration-theme-utils";
+import type { PublicDoorPayload } from "@/lib/public-door-payload";
+import { resolveRegistrationPublisherWebsiteLink } from "@/lib/publisher-website-url";
 import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
+import {
+  publicSiteHostnameFromUrl,
+  resolvePublicSiteDisplayUrl,
+} from "@/lib/tenant-public-url";
 import { cn } from "@/lib/utils";
 
 const publishedTemplateLockReason =
@@ -161,6 +167,30 @@ export function ActivityFormTab({
   const confirmationEmailSubject = draftSchema.meta?.confirmationEmailSubject ?? null;
   const confirmationEmailBodyMarkdown =
     draftSchema.meta?.confirmationEmailBodyMarkdown ?? null;
+  const showPublisherWebsiteLink =
+    draftSchema.meta?.showPublisherWebsiteLink !== false;
+  const tenantSiteDisplayUrl = resolvePublicSiteDisplayUrl(shell?.tenantSlug);
+  const previewWebsiteLink = useMemo(() => {
+    if (typeof window === "undefined" || !isCoreOrAbove(plan)) {
+      return null;
+    }
+
+    const door: PublicDoorPayload = {
+      kind: "active",
+      plan,
+      tenantName: shell?.tenantName ?? null,
+      tenantSlug: shell?.tenantSlug ?? null,
+      site: null,
+      stubActivities: [],
+      builderLocked: false,
+    };
+
+    return resolveRegistrationPublisherWebsiteLink(
+      door,
+      window.location.origin,
+      draftSchema
+    );
+  }, [draftSchema, plan, shell?.tenantName, shell?.tenantSlug]);
   const successCopyPreview = substitutePipingPreview(successCopyMarkdown, draftSchema);
 
   function insertIntoMetaField(
@@ -776,6 +806,58 @@ export function ActivityFormTab({
         </p>
       </section>
 
+      {isCoreOrAbove(plan) ? (
+        <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+              Website connection
+            </p>
+            <h3 className="text-section text-text-warm">Tenant website link</h3>
+            <p className="mt-0.5 text-sm text-text-muted-warm">
+              Optionally show a link to your Cohestra website on this registration page
+              and confirmation screen. Registration still works through{" "}
+              <code className="rounded bg-muted px-1 text-xs">/register/{activity.slug}</code>{" "}
+              either way.
+            </p>
+          </div>
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border-warm bg-muted/20 p-3">
+            <input
+              type="checkbox"
+              className="mt-1 size-4 shrink-0 rounded border-input"
+              checked={showPublisherWebsiteLink}
+              disabled={isArchived || isSaving}
+              onChange={(event) => {
+                const enabled = event.target.checked;
+                setDraftSchema((current) => ({
+                  ...current,
+                  meta: mergeFormSchemaMeta(current, {
+                    showPublisherWebsiteLink: enabled ? true : false,
+                  }),
+                }));
+              }}
+            />
+            <span className="min-w-0 space-y-1">
+              <span className="block text-sm font-medium text-text-warm">
+                Show link to my Cohestra website
+              </span>
+              <span className="block text-xs text-text-muted-warm">
+                {tenantSiteDisplayUrl ? (
+                  <>
+                    Visitors see a link to{" "}
+                    <span className="font-medium text-text-warm">
+                      {publicSiteHostnameFromUrl(tenantSiteDisplayUrl)}
+                    </span>
+                    .
+                  </>
+                ) : (
+                  "Uses your workspace public site URL when published."
+                )}
+              </span>
+            </span>
+          </label>
+        </section>
+      ) : null}
+
       <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3">
         <div>
           <h3 className="text-section text-text-warm">Close-at</h3>
@@ -1005,6 +1087,7 @@ export function ActivityFormTab({
               activity.status === "published" ? `/register/${activity.slug}` : null
             }
             scrollClassName="max-h-[min(calc(100dvh-14rem),80dvh)]"
+            websiteLink={previewWebsiteLink}
           />
         </div>
       ) : null}

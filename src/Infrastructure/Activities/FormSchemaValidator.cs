@@ -143,6 +143,7 @@ internal static partial class FormSchemaValidator
                     ConfirmationEmailBodyMarkdown = TrimOptionalMeta(schema.Meta.ConfirmationEmailBodyMarkdown),
                     ClosedMessage = TrimOptionalMeta(schema.Meta.ClosedMessage),
                     RegistrationClosesAt = schema.Meta.RegistrationClosesAt?.ToUniversalTime(),
+                    ShowPublisherWebsiteLink = schema.Meta.ShowPublisherWebsiteLink,
                 },
             Fields = schema.Fields
                 .Select(field => new FormFieldDefinition
