@@ -53,6 +53,8 @@ public sealed class ActivityRegistrationExperiencePlanIntegrationTests(Integrati
         Assert.Equal(HttpStatusCode.Forbidden, updateResponse.StatusCode);
         var body = await updateResponse.Content.ReadAsStringAsync();
         Assert.Contains("plan_locked", body, StringComparison.OrdinalIgnoreCase);
+
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
     }
 
     private async Task SetDefaultTenantPlanAsync(TenantPlan plan)

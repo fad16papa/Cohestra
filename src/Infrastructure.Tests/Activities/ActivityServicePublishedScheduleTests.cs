@@ -7,6 +7,7 @@ using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
+using Xunit;
 
 namespace Cohestra.Infrastructure.Tests.Activities;
 
@@ -99,7 +100,7 @@ public sealed class ActivityServicePublishedScheduleTests
         Assert.Contains("cannot change schedule", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task UpdateAsync_DoesNotBackfillScheduledStartsAtWhenPublished()
     {
         await using var dbContext = CreateDbContext();
@@ -188,12 +189,25 @@ public sealed class ActivityServicePublishedScheduleTests
     {
         var currentTenant = new CurrentTenant();
         currentTenant.SetResolved(TestTenantId, "test");
-        var redis = ConnectionMultiplexer.Connect(
-            "127.0.0.1:6379,abortConnect=false,connectTimeout=2000,syncTimeout=2000");
+        IConnectionMultiplexer? redis = null;
+        try
+        {
+            redis = ConnectionMultiplexer.Connect(
+                "127.0.0.1:6379,abortConnect=false,connectTimeout=2000,syncTimeout=2000");
+            if (!redis.IsConnected)
+            {
+                Skip.If(true, "Redis unavailable for ActivityServicePublishedScheduleTests.");
+            }
+        }
+        catch (RedisConnectionException)
+        {
+            Skip.If(true, "Redis unavailable for ActivityServicePublishedScheduleTests.");
+        }
+
         return new ActivityService(
             dbContext,
             Options.Create(new PublicWebOptions()),
-            new RedisPublicActivityCache(redis),
+            new RedisPublicActivityCache(redis!),
             currentTenant);
     }
 }
