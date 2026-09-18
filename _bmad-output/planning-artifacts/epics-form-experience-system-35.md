@@ -21,6 +21,10 @@ Community operators create premium, Activity-aware registration experiences usin
 | 35.6 | Form Studio Experience controls | Design tab IA (Experience / Brand / Controls) |
 | 35.7 | Entitlements + Activity context + regression | Plan gates, domain signals, full test matrix |
 
+## Epic-level verification debt (before epic close)
+
+**LIVE RESPONSIVE MATRIX:** Before Epic 35 may be closed, verify **Modern Centered**, **Split Event**, **Event Poster**, and **Conversational** (if shipped) at **1440 / 1024 / 768 / 430 / 390 / 360** on live dev/UAT using repository browser/e2e infrastructure and real public/preview routes. Stories 35.2–35.4 used contract/CSS evidence where live stack was unavailable.
+
 ## Non-goals (Epic scope boundary)
 
 - Website Builder revamp, Cinema, Epic 19 infra, Paddle changes

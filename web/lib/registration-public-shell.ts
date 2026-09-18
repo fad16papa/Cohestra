@@ -8,6 +8,7 @@ export type RegistrationPublicShellKind =
   | "card"
   | "immersive"
   | "split-event"
+  | "event-poster"
   | "compact"
   | "modern-centered";
 
@@ -33,6 +34,10 @@ export function pickRegistrationPublicShellKind(
 
   if (experience.layout === "split") {
     return "split-event";
+  }
+
+  if (experience.layout === "poster") {
+    return "event-poster";
   }
 
   return "modern-centered";

@@ -3,10 +3,8 @@
 import { useMemo, useState } from "react";
 
 import { ResponsiveBannerImage } from "@/components/ui/responsive-banner-image";
-import {
-  buildRegistrationCapacitySummary,
-  type RegistrationCapacitySummary,
-} from "@/lib/registration-capacity-summary";
+import { RegistrationCapacityStatus } from "@/components/registration/registration-capacity-status";
+import { buildRegistrationCapacitySummary } from "@/lib/registration-capacity-summary";
 import { campaignAssetPath } from "@/lib/registration-theme-utils";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
 import { cn } from "@/lib/utils";
@@ -24,41 +22,6 @@ type RegistrationSplitExperiencePanelProps = {
   isRegistrationFull?: boolean;
   className?: string;
 };
-
-function CapacityStatus({ summary }: { summary: RegistrationCapacitySummary }) {
-  if (summary.kind === "hidden") {
-    return null;
-  }
-
-  if (summary.kind === "going-only") {
-    return (
-      <p className="text-sm font-medium text-text-warm" aria-live="polite">
-        {summary.label}
-      </p>
-    );
-  }
-
-  if (summary.kind === "full") {
-    return (
-      <p className="text-sm font-medium text-destructive" aria-live="polite">
-        {summary.label}
-      </p>
-    );
-  }
-
-  return (
-    <div
-      className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-warm"
-      aria-live="polite"
-    >
-      <span className="font-medium">{summary.goingLabel}</span>
-      <span className="text-text-muted-warm" aria-hidden>
-        ·
-      </span>
-      <span>{summary.spotsLabel}</span>
-    </div>
-  );
-}
 
 export function RegistrationSplitExperiencePanel({
   name,
@@ -142,7 +105,7 @@ export function RegistrationSplitExperiencePanel({
         {location ? <p>{location}</p> : null}
       </div>
 
-      <CapacityStatus summary={capacity} />
+      <RegistrationCapacityStatus summary={capacity} />
     </aside>
   );
 }

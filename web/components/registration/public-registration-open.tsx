@@ -3,6 +3,7 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 
 import { ActivityHero } from "@/components/registration/activity-hero";
+import { RegistrationPosterExperiencePanel } from "@/components/registration/registration-poster-experience-panel";
 import { RegistrationSplitExperiencePanel } from "@/components/registration/registration-split-experience-panel";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { RegistrationIntroCopy } from "@/components/registration/registration-intro-copy";
@@ -215,6 +216,35 @@ export function PublicRegistrationOpen({
         {hero}
         <FormSection>{formBody}</FormSection>
         {!isEmbed ? registrationWebsiteFooter : null}
+      </div>
+    );
+  }
+
+  if (shellKind === "event-poster") {
+    return (
+      <div
+        className={cn(
+          "mx-auto flex w-full min-w-0 max-w-[480px] flex-col gap-6 overflow-x-hidden sm:gap-7"
+        )}
+        style={brandingStyle}
+      >
+        <RegistrationPosterExperiencePanel
+          name={name}
+          schedule={schedule}
+          location={location}
+          communityLabel={communityLabel}
+          heroImageUrl={heroImageUrl}
+          logoAssetId={logoAssetId}
+          accentColor={accentColor}
+          showHeroImage={!submitted}
+          registrationCount={registrationCount}
+          maxRegistrants={maxRegistrants}
+          isRegistrationFull={isRegistrationFull}
+        />
+        <FormSection className="space-y-5 rounded-xl border border-border-warm/80 bg-card/50 px-4 py-5 sm:px-5">
+          {formBody}
+        </FormSection>
+        {registrationWebsiteFooter}
       </div>
     );
   }

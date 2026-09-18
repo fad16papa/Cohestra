@@ -82,7 +82,9 @@ export function RegistrationPublicPreviewShell({
             ? "max-w-[375px]"
             : isSplitLayout
               ? "max-w-[960px]"
-              : "max-w-[480px]"
+              : isPosterLayout
+                ? "max-w-[560px]"
+                : "max-w-[480px]"
         )}
         scrollClassName={scrollClassName}
       >

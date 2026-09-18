@@ -78,6 +78,36 @@ describe("pickRegistrationPublicShellKind", () => {
     ).toBe("split-event");
   });
 
+  it("selects event-poster when resolved layout is poster", () => {
+    expect(
+      pickRegistrationPublicShellKind("classic", {
+        ...baseTheme,
+        preset: "classic",
+        resolvedExperience: {
+          layout: "poster",
+          style: "editorial",
+          flow: "single-page",
+          heroDisplay: "cover",
+        },
+      }, false)
+    ).toBe("event-poster");
+  });
+
+  it("embed stays compact even when layout is poster", () => {
+    expect(
+      pickRegistrationPublicShellKind("classic", {
+        ...baseTheme,
+        preset: "classic",
+        resolvedExperience: {
+          layout: "poster",
+          style: "modern",
+          flow: "single-page",
+          heroDisplay: "cover",
+        },
+      }, true)
+    ).toBe("compact");
+  });
+
   it("embed stays compact even when layout is split", () => {
     expect(
       pickRegistrationPublicShellKind("classic", {
