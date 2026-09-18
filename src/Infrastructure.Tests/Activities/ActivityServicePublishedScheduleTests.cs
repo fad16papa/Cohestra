@@ -189,7 +189,7 @@ public sealed class ActivityServicePublishedScheduleTests
         var currentTenant = new CurrentTenant();
         currentTenant.SetResolved(TestTenantId, "test");
         var redis = ConnectionMultiplexer.Connect(
-            "127.0.0.1:6379,abortConnect=false,connectTimeout=50,syncTimeout=50");
+            "127.0.0.1:6379,abortConnect=false,connectTimeout=2000,syncTimeout=2000");
         return new ActivityService(
             dbContext,
             Options.Create(new PublicWebOptions()),
