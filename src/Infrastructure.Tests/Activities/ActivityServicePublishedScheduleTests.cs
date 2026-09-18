@@ -15,7 +15,7 @@ public sealed class ActivityServicePublishedScheduleTests
 {
     private static readonly Guid TestTenantId = Guid.Parse("33333333-3333-3333-3333-333333333333");
 
-    [Fact]
+    [SkippableFact]
     public async Task UpdateAsync_RejectsScheduleChangeWhenPublished()
     {
         await using var dbContext = CreateDbContext();
@@ -57,7 +57,7 @@ public sealed class ActivityServicePublishedScheduleTests
         Assert.Contains("cannot change schedule", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task UpdateAsync_RejectsScheduledStartsAtChangeWhenPublished()
     {
         await using var dbContext = CreateDbContext();
