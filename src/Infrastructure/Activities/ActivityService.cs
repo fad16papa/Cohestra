@@ -351,6 +351,24 @@ public sealed class ActivityService(
                 throw new InvalidOperationException(themeError);
             }
 
+            var tenantPlan = await dbContext.Tenants
+                .AsNoTracking()
+                .Where(tenant => tenant.Id == tenantId)
+                .Select(tenant => (TenantPlan?)tenant.Plan)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (tenantPlan is null)
+            {
+                throw new InvalidOperationException("Tenant not found for registration theme plan gate.");
+            }
+
+            var experiencePlanError = RegistrationExperiencePlanGate.EnsureAllowed(theme!, tenantPlan.Value);
+            if (experiencePlanError is not null)
+            {
+                throw new FormSchemaPlanLockedException(experiencePlanError);
+            }
+
+            RegistrationExperiencePlanGate.NormalizeForPlan(theme!, tenantPlan.Value);
             activity.RegistrationTheme = RegistrationThemeValidator.Normalize(theme!);
         }
 

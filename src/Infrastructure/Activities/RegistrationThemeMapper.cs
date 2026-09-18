@@ -16,7 +16,14 @@ internal static class RegistrationThemeMapper
             RegistrationThemeValidator.NormalizePreset(theme.Preset),
             theme.InheritCommunityBrand,
             theme.AccentColor,
-            theme.HeroImageUrl);
+            theme.HeroImageUrl,
+            theme.Experience is null
+                ? null
+                : new RegistrationExperienceDto(
+                    theme.Experience.Layout,
+                    theme.Experience.Style,
+                    theme.Experience.Flow,
+                    theme.Experience.HeroDisplay));
     }
 
     public static RegistrationTheme? FromDto(RegistrationThemeDto? dto)
@@ -32,6 +39,15 @@ internal static class RegistrationThemeMapper
             InheritCommunityBrand = dto.InheritCommunityBrand,
             AccentColor = dto.AccentColor,
             HeroImageUrl = dto.HeroImageUrl,
+            Experience = dto.Experience is null
+                ? null
+                : new RegistrationExperience
+                {
+                    Layout = dto.Experience.Layout,
+                    Style = dto.Experience.Style,
+                    Flow = dto.Experience.Flow,
+                    HeroDisplay = dto.Experience.HeroDisplay,
+                },
         };
     }
 }

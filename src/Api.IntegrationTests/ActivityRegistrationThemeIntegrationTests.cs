@@ -97,6 +97,8 @@ public sealed class ActivityRegistrationThemeIntegrationTests(IntegrationTestFix
         Assert.Equal("#2d6a4f", updated.ResolvedRegistrationTheme.AccentColor);
         Assert.Equal("https://example.com/community-hero.jpg", updated.ResolvedRegistrationTheme.HeroImageUrl);
         Assert.Equal(logoId, updated.ResolvedRegistrationTheme.LogoAssetId);
+        Assert.Equal("card", updated.ResolvedRegistrationTheme.ResolvedExperience.Layout);
+        Assert.Equal("modern", updated.ResolvedRegistrationTheme.ResolvedExperience.Style);
 
         var publicResponse = await client.GetAsync($"/api/v1/public/activities/{slug}");
         publicResponse.EnsureSuccessStatusCode();

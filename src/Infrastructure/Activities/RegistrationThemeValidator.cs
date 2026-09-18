@@ -17,7 +17,42 @@ internal static class RegistrationThemeValidator
         }
 
         return ActivityBrandingValidator.ValidateAccentColor(theme.AccentColor)
-            ?? ActivityBrandingValidator.ValidateHeroImageUrl(theme.HeroImageUrl);
+            ?? ActivityBrandingValidator.ValidateHeroImageUrl(theme.HeroImageUrl)
+            ?? ValidateExperience(theme.Experience);
+    }
+
+    private static string? ValidateExperience(RegistrationExperience? experience)
+    {
+        if (experience is null)
+        {
+            return null;
+        }
+
+        if (experience.Layout is not null
+            && !RegistrationExperienceLayouts.All.Contains(experience.Layout))
+        {
+            return "Registration experience layout is not supported.";
+        }
+
+        if (experience.Style is not null
+            && !RegistrationExperienceStyles.All.Contains(experience.Style))
+        {
+            return "Registration experience style is not supported.";
+        }
+
+        if (experience.Flow is not null
+            && !RegistrationExperienceFlows.All.Contains(experience.Flow))
+        {
+            return "Registration experience flow is not supported.";
+        }
+
+        if (experience.HeroDisplay is not null
+            && !RegistrationExperienceHeroDisplays.All.Contains(experience.HeroDisplay))
+        {
+            return "Registration experience hero display is not supported.";
+        }
+
+        return null;
     }
 
     public static string? ValidateThemeAccent(RegistrationTheme? theme) =>
@@ -32,8 +67,28 @@ internal static class RegistrationThemeValidator
             InheritCommunityBrand = theme.InheritCommunityBrand,
             AccentColor = ActivityBrandingValidator.NormalizeAccentColor(theme.AccentColor),
             HeroImageUrl = ActivityBrandingValidator.NormalizeHeroImageUrl(theme.HeroImageUrl),
+            Experience = NormalizeExperience(theme.Experience),
         };
     }
+
+    private static RegistrationExperience? NormalizeExperience(RegistrationExperience? experience)
+    {
+        if (experience is null)
+        {
+            return null;
+        }
+
+        return new RegistrationExperience
+        {
+            Layout = NormalizeOptional(experience.Layout, RegistrationExperienceLayouts.All),
+            Style = NormalizeOptional(experience.Style, RegistrationExperienceStyles.All),
+            Flow = NormalizeOptional(experience.Flow, RegistrationExperienceFlows.All),
+            HeroDisplay = NormalizeOptional(experience.HeroDisplay, RegistrationExperienceHeroDisplays.All),
+        };
+    }
+
+    private static string? NormalizeOptional(string? value, IReadOnlySet<string> allowed) =>
+        value is not null && allowed.Contains(value) ? value : null;
 
     public static string NormalizePreset(string? preset) =>
         preset is not null && RegistrationThemePresets.All.Contains(preset)
