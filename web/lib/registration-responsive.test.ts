@@ -22,6 +22,18 @@ describe("registration responsive layout contract", () => {
       "utf8"
     );
     expect(source).toMatch(/max-w-\[480px\]/);
+    expect(source).toMatch(/max-w-\[960px\]/);
+  });
+
+  it("Split Event shell uses responsive grid collapse", () => {
+    const source = readFileSync(
+      join(process.cwd(), "components/registration/public-registration-open.tsx"),
+      "utf8"
+    );
+    expect(source).toMatch(/split-event/);
+    expect(source).toMatch(/lg:grid-cols-\[minmax\(0,2fr\)_minmax\(0,3fr\)\]/);
+    expect(source).toMatch(/RegistrationSplitExperiencePanel/);
+    expect(source).toMatch(/w-screen/);
   });
 
   it("PublicRegistrationOpen guards overflow on public surfaces", () => {

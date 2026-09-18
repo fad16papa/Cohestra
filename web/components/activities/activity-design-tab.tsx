@@ -352,6 +352,13 @@ export function ActivityDesignTab({
               activity.status === "published" ? `/register/${activity.slug}` : null
             }
             websiteLink={previewWebsiteLink}
+            registrationCount={activity.registrationCount}
+            maxRegistrants={activity.maxRegistrants}
+            isRegistrationFull={
+              activity.maxRegistrants != null &&
+              activity.maxRegistrants > 0 &&
+              activity.registrationCount >= activity.maxRegistrants
+            }
           />
         </div>
       </div>

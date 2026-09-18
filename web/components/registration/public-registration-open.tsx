@@ -3,6 +3,7 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 
 import { ActivityHero } from "@/components/registration/activity-hero";
+import { RegistrationSplitExperiencePanel } from "@/components/registration/registration-split-experience-panel";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { RegistrationIntroCopy } from "@/components/registration/registration-intro-copy";
 import { RegistrationSuccessScreen } from "@/components/registration/registration-success-screen";
@@ -32,6 +33,9 @@ type PublicRegistrationOpenProps = {
   formSchema: ActivityFormSchema | null;
   websiteLink?: PublisherWebsiteLink | null;
   variant?: "public" | "preview" | "embed";
+  registrationCount?: number | null;
+  maxRegistrants?: number | null;
+  isRegistrationFull?: boolean;
 };
 
 function FormSection({
@@ -58,6 +62,9 @@ export function PublicRegistrationOpen({
   formSchema,
   websiteLink = null,
   variant = "public",
+  registrationCount = null,
+  maxRegistrants = null,
+  isRegistrationFull = false,
 }: PublicRegistrationOpenProps) {
   const [submitted, setSubmitted] = useState(false);
   const isEmbed = variant === "embed";
@@ -208,6 +215,42 @@ export function PublicRegistrationOpen({
         {hero}
         <FormSection>{formBody}</FormSection>
         {!isEmbed ? registrationWebsiteFooter : null}
+      </div>
+    );
+  }
+
+  if (shellKind === "split-event") {
+    return (
+      <div
+        className={cn(
+          "relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 overflow-x-hidden px-4 sm:px-5",
+          "lg:px-6"
+        )}
+        style={brandingStyle}
+      >
+        <div
+          className={cn(
+            "mx-auto flex w-full min-w-0 max-w-5xl flex-col gap-6 overflow-x-hidden",
+            "lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-8"
+          )}
+        >
+        <RegistrationSplitExperiencePanel
+          name={name}
+          schedule={schedule}
+          location={location}
+          communityLabel={communityLabel}
+          heroImageUrl={heroImageUrl}
+          logoAssetId={logoAssetId}
+          showHeroImage={!submitted}
+          registrationCount={registrationCount}
+          maxRegistrants={maxRegistrants}
+          isRegistrationFull={isRegistrationFull}
+        />
+        <div className="flex min-w-0 flex-col gap-5">
+          <FormSection className="space-y-5">{formBody}</FormSection>
+          {registrationWebsiteFooter}
+        </div>
+        </div>
       </div>
     );
   }

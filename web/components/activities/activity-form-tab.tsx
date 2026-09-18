@@ -1088,6 +1088,13 @@ export function ActivityFormTab({
             }
             scrollClassName="max-h-[min(calc(100dvh-14rem),80dvh)]"
             websiteLink={previewWebsiteLink}
+            registrationCount={activity.registrationCount}
+            maxRegistrants={activity.maxRegistrants}
+            isRegistrationFull={
+              activity.maxRegistrants != null &&
+              activity.maxRegistrants > 0 &&
+              activity.registrationCount >= activity.maxRegistrants
+            }
           />
         </div>
       ) : null}

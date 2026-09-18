@@ -7,6 +7,7 @@ import {
 export type RegistrationPublicShellKind =
   | "card"
   | "immersive"
+  | "split-event"
   | "compact"
   | "modern-centered";
 
@@ -28,6 +29,10 @@ export function pickRegistrationPublicShellKind(
 
   if (preset === "compact" || isEmbed) {
     return "compact";
+  }
+
+  if (experience.layout === "split") {
+    return "split-event";
   }
 
   return "modern-centered";

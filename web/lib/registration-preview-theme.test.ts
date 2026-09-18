@@ -60,6 +60,18 @@ describe("registration preview theme", () => {
     expect(resolved.heroImageUrl).toBeNull();
   });
 
+  it("resolves split layout from draft experience overrides", () => {
+    const resolved = resolveRegistrationPreviewTheme(activity, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: { layout: "split", style: "modern", flow: "single-page", heroDisplay: "split" },
+    });
+
+    expect(resolved.resolvedExperience.layout).toBe("split");
+  });
+
   it("follows draft preset for experience layout, not stale persisted resolvedExperience", () => {
     const cardPersisted = {
       ...activity,

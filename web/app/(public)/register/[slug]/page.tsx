@@ -123,6 +123,9 @@ export default async function PublicRegistrationPage({
       resolvedExperience={activity.resolvedExperience}
       formSchema={activity.formSchema}
       websiteLink={websiteLink}
+      registrationCount={activity.registrationCount}
+      maxRegistrants={activity.maxRegistrants}
+      isRegistrationFull={activity.isRegistrationFull}
     />
   );
 }

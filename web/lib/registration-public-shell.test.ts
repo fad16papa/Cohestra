@@ -62,4 +62,34 @@ describe("pickRegistrationPublicShellKind", () => {
       }, false)
     ).toBe("compact");
   });
+
+  it("selects split-event when resolved layout is split", () => {
+    expect(
+      pickRegistrationPublicShellKind("classic", {
+        ...baseTheme,
+        preset: "classic",
+        resolvedExperience: {
+          layout: "split",
+          style: "modern",
+          flow: "single-page",
+          heroDisplay: "split",
+        },
+      }, false)
+    ).toBe("split-event");
+  });
+
+  it("embed stays compact even when layout is split", () => {
+    expect(
+      pickRegistrationPublicShellKind("classic", {
+        ...baseTheme,
+        preset: "classic",
+        resolvedExperience: {
+          layout: "split",
+          style: "modern",
+          flow: "single-page",
+          heroDisplay: "split",
+        },
+      }, true)
+    ).toBe("compact");
+  });
 });
