@@ -353,7 +353,7 @@ public sealed class ActivityService(
 
             var tenantPlan = await dbContext.Tenants
                 .AsNoTracking()
-                .Where(tenant => tenant.Id == tenantId)
+                .Where(tenant => tenant.Id == activity.TenantId)
                 .Select(tenant => (TenantPlan?)tenant.Plan)
                 .FirstOrDefaultAsync(cancellationToken);
 
