@@ -31,5 +31,7 @@ describe("registration responsive layout contract", () => {
     );
     expect(source).toMatch(/overflow-x-hidden/);
     expect(source).toMatch(/min-w-0/);
+    expect(source).toMatch(/resolveRegistrationExperience/);
+    expect(source).toMatch(/max-w-\[480px\]/);
   });
 });

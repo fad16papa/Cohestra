@@ -6,10 +6,18 @@ import { ActivityHero } from "@/components/registration/activity-hero";
 import { RegistrationForm } from "@/components/registration/registration-form";
 import { RegistrationIntroCopy } from "@/components/registration/registration-intro-copy";
 import { RegistrationSuccessScreen } from "@/components/registration/registration-success-screen";
-import type { ActivityFormSchema, RegistrationThemePreset } from "@/lib/activities-api";
+import type {
+  ActivityFormSchema,
+  RegistrationThemePreset,
+  ResolvedRegistrationExperience,
+} from "@/lib/activities-api";
 import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
 import { PublisherWebsiteTextLink } from "@/components/registration/publisher-website-link";
 import { simulateRegistrationPreviewSubmit } from "@/lib/registration-preview-submit";
+import {
+  resolveRegistrationExperience,
+  type RegistrationThemeWithExperience,
+} from "@/lib/registration-experience";
 import { cn } from "@/lib/utils";
 
 type PublicRegistrationOpenProps = {
@@ -22,6 +30,7 @@ type PublicRegistrationOpenProps = {
   accentColor?: string | null;
   logoAssetId?: string | null;
   preset?: RegistrationThemePreset;
+  resolvedExperience?: ResolvedRegistrationExperience | null;
   formSchema: ActivityFormSchema | null;
   websiteLink?: PublisherWebsiteLink | null;
   variant?: "public" | "preview" | "embed";
@@ -34,7 +43,7 @@ function FormSection({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={cn("w-full", className)}>{children}</div>;
+  return <div className={cn("w-full min-w-0", className)}>{children}</div>;
 }
 
 export function PublicRegistrationOpen({
@@ -47,6 +56,7 @@ export function PublicRegistrationOpen({
   accentColor,
   logoAssetId = null,
   preset = "classic",
+  resolvedExperience = null,
   formSchema,
   websiteLink = null,
   variant = "public",
@@ -62,6 +72,16 @@ export function PublicRegistrationOpen({
     ? ({ "--primary": accentColor } as CSSProperties)
     : undefined;
   const introMarkdown = formSchema?.meta?.introMarkdown ?? null;
+
+  const themeForExperience: RegistrationThemeWithExperience = {
+    preset,
+    inheritCommunityBrand: true,
+    accentColor: null,
+    heroImageUrl: null,
+    resolvedExperience:
+      resolvedExperience as RegistrationThemeWithExperience["resolvedExperience"],
+  };
+  const experience = resolveRegistrationExperience(themeForExperience);
 
   const hero = (
     <ActivityHero
@@ -102,7 +122,7 @@ export function PublicRegistrationOpen({
         {introMarkdown ? (
           <RegistrationIntroCopy
             introMarkdown={introMarkdown}
-            className="space-y-3 pb-2"
+            className="space-y-3 pb-1"
           />
         ) : null}
         <RegistrationForm
@@ -131,12 +151,25 @@ export function PublicRegistrationOpen({
 
   const registrationWebsiteFooter =
     (variant === "public" || variant === "preview") && websiteLink ? (
-      <div className="border-t border-border-warm/70 pt-6 text-center">
+      <div className="border-t border-border-warm/70 pt-5 text-center">
         <PublisherWebsiteTextLink link={websiteLink} />
       </div>
     ) : null;
 
-  if (preset === "card") {
+  const modernCenteredShell = (
+    <div
+      className={cn(
+        "mx-auto flex w-full min-w-0 max-w-[480px] flex-col gap-6 overflow-x-hidden sm:gap-7"
+      )}
+      style={brandingStyle}
+    >
+      {hero}
+      <FormSection className="space-y-5">{formBody}</FormSection>
+      {registrationWebsiteFooter}
+    </div>
+  );
+
+  if (preset === "card" || experience.layout === "card") {
     return (
       <div
         className={cn(
@@ -155,7 +188,7 @@ export function PublicRegistrationOpen({
     );
   }
 
-  if (preset === "immersive") {
+  if (preset === "immersive" || experience.layout === "immersive") {
     return (
       <div className={cn("min-w-0 space-y-0 overflow-x-hidden")} style={brandingStyle}>
         {hero}
@@ -177,11 +210,5 @@ export function PublicRegistrationOpen({
     );
   }
 
-  return (
-    <div className={cn("min-w-0 space-y-8 overflow-x-hidden")} style={brandingStyle}>
-      {hero}
-      <FormSection>{formBody}</FormSection>
-      {registrationWebsiteFooter}
-    </div>
-  );
+  return modernCenteredShell;
 }

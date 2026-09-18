@@ -29,6 +29,7 @@ describe("registration preview theme", () => {
     expect(resolved.accentColor).toBe("#222222");
     expect(resolved.logoAssetId).toBe("logo-123");
     expect(resolved.preset).toBe("classic");
+    expect(resolved.resolvedExperience.layout).toBe("centered");
   });
 
   it("uses activity overrides when inherit is off", () => {

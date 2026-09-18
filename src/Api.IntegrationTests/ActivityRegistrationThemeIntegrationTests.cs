@@ -109,6 +109,8 @@ public sealed class ActivityRegistrationThemeIntegrationTests(IntegrationTestFix
         Assert.Equal("card", published!.Preset);
         Assert.Equal("#2d6a4f", published.AccentColor);
         Assert.Equal(logoId, published.LogoAssetId);
+        Assert.Equal("card", published.ResolvedExperience.Layout);
+        Assert.Equal("modern", published.ResolvedExperience.Style);
 
         await client.DeleteAsync($"/api/v1/admin/communities/{community.Id}");
     }

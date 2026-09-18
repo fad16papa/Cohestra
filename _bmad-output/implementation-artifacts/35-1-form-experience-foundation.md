@@ -1,6 +1,7 @@
 # Story 35.1 — Form Experience foundation
 
-**Status:** review  
+**Status:** done  
+**Accepted:** 2026-09-18 (BMAD loop: code review, adversarial, test architecture, CI run 35363135401 green)
 **Epic:** 35 Modern Form Experience System
 
 ## Acceptance criteria

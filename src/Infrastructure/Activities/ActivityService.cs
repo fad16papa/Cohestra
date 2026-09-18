@@ -915,7 +915,8 @@ public sealed class ActivityService(
             registrationCount,
             ActivityCapacityValidator.IsRegistrationFull(activity.MaxRegistrants, registrationCount),
             IsRegistrationPaused: false,
-            isRegistrationClosedAt);
+            isRegistrationClosedAt,
+            resolved.ResolvedExperience);
     }
 
     private async Task<PublicActivityResponse> EnrichWithRegistrationPauseStateAsync(

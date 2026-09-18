@@ -85,6 +85,7 @@ export function RegistrationPublicPreviewShell({
           accentColor={theme.accentColor}
           logoAssetId={theme.logoAssetId}
           preset={theme.preset as RegistrationThemePreset}
+          resolvedExperience={theme.resolvedExperience}
           formSchema={formSchema}
           websiteLink={websiteLink}
           variant="preview"
