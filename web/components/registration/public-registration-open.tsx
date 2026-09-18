@@ -14,10 +14,8 @@ import type {
 import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
 import { PublisherWebsiteTextLink } from "@/components/registration/publisher-website-link";
 import { simulateRegistrationPreviewSubmit } from "@/lib/registration-preview-submit";
-import {
-  resolveRegistrationExperience,
-  type RegistrationThemeWithExperience,
-} from "@/lib/registration-experience";
+import type { RegistrationThemeWithExperience } from "@/lib/registration-experience";
+import { pickRegistrationPublicShellKind } from "@/lib/registration-public-shell";
 import { cn } from "@/lib/utils";
 
 type PublicRegistrationOpenProps = {
@@ -81,7 +79,11 @@ export function PublicRegistrationOpen({
     resolvedExperience:
       resolvedExperience as RegistrationThemeWithExperience["resolvedExperience"],
   };
-  const experience = resolveRegistrationExperience(themeForExperience);
+  const shellKind = pickRegistrationPublicShellKind(
+    preset,
+    themeForExperience,
+    isEmbed
+  );
 
   const hero = (
     <ActivityHero
@@ -169,7 +171,7 @@ export function PublicRegistrationOpen({
     </div>
   );
 
-  if (preset === "card" || experience.layout === "card") {
+  if (shellKind === "card") {
     return (
       <div
         className={cn(
@@ -188,7 +190,7 @@ export function PublicRegistrationOpen({
     );
   }
 
-  if (preset === "immersive" || experience.layout === "immersive") {
+  if (shellKind === "immersive") {
     return (
       <div className={cn("min-w-0 space-y-0 overflow-x-hidden")} style={brandingStyle}>
         {hero}
@@ -200,7 +202,7 @@ export function PublicRegistrationOpen({
     );
   }
 
-  if (preset === "compact" || isEmbed) {
+  if (shellKind === "compact") {
     return (
       <div className={cn("min-w-0 space-y-5 overflow-x-hidden")} style={brandingStyle}>
         {hero}

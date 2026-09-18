@@ -55,13 +55,14 @@ export function resolveRegistrationPreviewTheme(
     logo = null;
   }
 
+  // Preview follows draft/saved theme preset + optional experience overrides only.
+  // Do not pass persisted resolvedExperience — it stays stale when the draft preset changes.
   const resolvedExperience = resolveRegistrationExperience({
     preset: theme.preset,
     inheritCommunityBrand: theme.inheritCommunityBrand,
     accentColor: theme.accentColor,
     heroImageUrl: theme.heroImageUrl,
     experience: theme.experience,
-    resolvedExperience: communityResolved.resolvedExperience ?? null,
   } as Parameters<typeof resolveRegistrationExperience>[0]) as ResolvedRegistrationExperience;
 
   return {

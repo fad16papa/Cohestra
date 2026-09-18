@@ -60,6 +60,32 @@ describe("registration preview theme", () => {
     expect(resolved.heroImageUrl).toBeNull();
   });
 
+  it("follows draft preset for experience layout, not stale persisted resolvedExperience", () => {
+    const cardPersisted = {
+      ...activity,
+      resolvedRegistrationTheme: {
+        ...activity.resolvedRegistrationTheme,
+        preset: "card" as const,
+        resolvedExperience: {
+          layout: "card",
+          style: "modern",
+          flow: "single-page",
+          heroDisplay: "cover",
+        },
+      },
+    } as Activity;
+
+    const resolved = resolveRegistrationPreviewTheme(cardPersisted, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+    });
+
+    expect(resolved.preset).toBe("classic");
+    expect(resolved.resolvedExperience.layout).toBe("centered");
+  });
+
   it("uses persisted activity theme for form preview", () => {
     const withOverride = {
       ...activity,

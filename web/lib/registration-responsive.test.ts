@@ -31,7 +31,15 @@ describe("registration responsive layout contract", () => {
     );
     expect(source).toMatch(/overflow-x-hidden/);
     expect(source).toMatch(/min-w-0/);
-    expect(source).toMatch(/resolveRegistrationExperience/);
+    expect(source).toMatch(/pickRegistrationPublicShellKind/);
     expect(source).toMatch(/max-w-\[480px\]/);
+  });
+
+  it("PublicFormLayout main does not flex-grow (footer follows content)", () => {
+    const source = readFileSync(
+      join(process.cwd(), "components/layouts/public-form-layout.tsx"),
+      "utf8"
+    );
+    expect(source).not.toMatch(/main className="[^"]*flex-1/);
   });
 });
