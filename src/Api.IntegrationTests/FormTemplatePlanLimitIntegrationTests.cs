@@ -24,6 +24,7 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
         try
         {
             await EnsureDefaultTenantPlanAsync(TenantPlan.Basic);
+            await IntegrationTestHelpers.ClearDefaultTenantFormTemplatesAsync(Factory.Services);
 
             using var adminClient = Factory.CreateClient();
             var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
@@ -52,6 +53,7 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
         }
         finally
         {
+            await IntegrationTestHelpers.ClearDefaultTenantFormTemplatesAsync(Factory.Services);
             await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
         }
     }
@@ -126,12 +128,8 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
         tenant.UpdatedAt = DateTimeOffset.UtcNow;
 
         // Ignore filters so leftover templates from earlier tests always clear for this tenant.
-        var existingTemplates = await dbContext.IgnoreTenantFilters<TenantFormTemplate>()
-            .Where(template => template.TenantId == TenantIds.Default)
-            .ToListAsync();
-        dbContext.TenantFormTemplates.RemoveRange(existingTemplates);
-
         await dbContext.SaveChangesAsync();
+        await IntegrationTestHelpers.ClearDefaultTenantFormTemplatesAsync(Factory.Services);
 
         var remaining = await dbContext.IgnoreTenantFilters<TenantFormTemplate>()
             .CountAsync(template => template.TenantId == TenantIds.Default);
