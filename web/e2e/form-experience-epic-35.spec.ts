@@ -4,10 +4,13 @@ import {
   applyRegistrationTheme,
   EPIC_35_EXPERIENCES,
   EPIC_35_VIEWPORTS,
+  applyRegistrationTheme,
   fetchActivity,
   findActivityIdBySlug,
   loginOperator,
+  loginOperatorSession,
   resolvePublishedE2eSlug,
+  seedOperatorAuthSession,
   tenantWebBase,
 } from "./helpers/registration-e2e-api";
 
@@ -130,30 +133,35 @@ test.describe("Epic 35 — conversational live interaction", () => {
 test.describe("Epic 35 — Form Studio unsaved preview", () => {
   test("Design draft flow appears in Form Preview without save", async ({ page, request }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    test.setTimeout(120_000);
 
-    const token = await loginOperator(request);
+    const session = await loginOperatorSession(request);
+    const token = session.accessToken;
     const slug = await resolvePublishedE2eSlug(request, token, PREFERRED_SLUG);
     const activityId = await findActivityIdBySlug(request, token, slug);
+    const activityRecord = await fetchActivity(request, token, activityId);
     const base = tenantWebBase();
 
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(`${base}/login`, { waitUntil: "domcontentloaded" });
-    await page.locator("#email").fill("operator@cohestra.local");
-    await page.locator("#password").fill("ChangeMe123!");
-    await page.getByRole("button", { name: /sign in/i }).click();
-    await page.waitForURL(/\/activities/, { timeout: 60_000 });
+    await applyRegistrationTheme(
+      request,
+      token,
+      activityId,
+      activityRecord,
+      EPIC_35_EXPERIENCES.find((e) => e.label === "modern-centered")!.theme
+    );
 
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await seedOperatorAuthSession(page, session);
     await page.goto(`${base}/activities/${activityId}?tab=design`, { waitUntil: "domcontentloaded" });
 
     const splitRadio = page.getByRole("radio", { name: /Split Event/i });
-    if (await splitRadio.isVisible().catch(() => false)) {
-      await splitRadio.click();
-    }
+    await expect(splitRadio).toBeVisible({ timeout: 30_000 });
+    await splitRadio.click();
 
     await page.goto(`${base}/activities/${activityId}?tab=form`, { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: /^Preview$/i }).click();
 
-    await expect(page.locator('[class*="lg:grid-cols"]').first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[class*="lg:grid-cols"]').first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(/preview/i).first()).toBeVisible();
   });
 });

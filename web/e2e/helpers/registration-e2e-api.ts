@@ -110,7 +110,15 @@ function tenantHostHeader(): string {
   }
 }
 
-export async function loginOperator(request: APIRequestContext): Promise<string> {
+export type OperatorSession = {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+};
+
+export async function loginOperatorSession(
+  request: APIRequestContext
+): Promise<OperatorSession> {
   const response = await request.post(`${API_BASE}/api/v1/auth/login`, {
     data: { email: OPERATOR_EMAIL, password: OPERATOR_PASSWORD },
     headers: { Host: tenantHostHeader() },
@@ -118,11 +126,34 @@ export async function loginOperator(request: APIRequestContext): Promise<string>
   if (!response.ok()) {
     throw new Error(`Operator login failed: ${response.status()} ${await response.text()}`);
   }
-  const body = (await response.json()) as { accessToken?: string };
-  if (!body.accessToken) {
-    throw new Error("Login response missing accessToken");
+  const body = (await response.json()) as {
+    accessToken?: string;
+    refreshToken?: string;
+    expiresIn?: number;
+  };
+  if (!body.accessToken || !body.refreshToken) {
+    throw new Error("Login response missing tokens");
   }
-  return body.accessToken;
+  const expiresInSec = body.expiresIn ?? 3600;
+  return {
+    accessToken: body.accessToken,
+    refreshToken: body.refreshToken,
+    expiresAt: Date.now() + expiresInSec * 1000,
+  };
+}
+
+export async function loginOperator(request: APIRequestContext): Promise<string> {
+  const session = await loginOperatorSession(request);
+  return session.accessToken;
+}
+
+export async function seedOperatorAuthSession(
+  page: import("@playwright/test").Page,
+  session: OperatorSession
+): Promise<void> {
+  await page.addInitScript((stored) => {
+    localStorage.setItem("auth_session", JSON.stringify(stored));
+  }, session);
 }
 
 export async function findActivityIdBySlug(
