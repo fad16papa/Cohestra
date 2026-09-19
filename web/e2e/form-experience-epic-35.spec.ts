@@ -138,8 +138,8 @@ test.describe("Epic 35 — Form Studio unsaved preview", () => {
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${base}/login`);
-    await page.getByLabel(/email/i).fill("operator@cohestra.local");
-    await page.getByLabel(/password/i).fill("ChangeMe123!");
+    await page.getByLabel(/^email$/i).fill("operator@cohestra.local");
+    await page.getByLabel(/^password$/i).fill("ChangeMe123!");
     await page.getByRole("button", { name: /sign in/i }).click();
     await page.waitForURL(/\/(dashboard|activities)/, { timeout: 30_000 });
 
