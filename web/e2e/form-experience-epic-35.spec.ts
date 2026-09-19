@@ -7,10 +7,12 @@ import {
   fetchActivity,
   findActivityIdBySlug,
   loginOperator,
+  resolvePublishedE2eSlug,
   tenantWebBase,
 } from "./helpers/registration-e2e-api";
 
-const SLUG = process.env.REGISTRATION_E2E_SLUG ?? "demo-marina-social-meetup";
+const PREFERRED_SLUG =
+  process.env.REGISTRATION_E2E_SLUG ?? "demo-marina-social-meetup";
 
 async function assertNoHorizontalOverflow(page: import("@playwright/test").Page) {
   const overflow = await page.evaluate(() => {
@@ -46,11 +48,13 @@ test.describe("Epic 35 — live public registration matrix", () => {
   let activityId: string;
   let activityRecord: Record<string, unknown>;
   let token: string;
+  let slug: string;
 
   test.beforeAll(async ({ request }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
     token = await loginOperator(request);
-    activityId = await findActivityIdBySlug(request, token, SLUG);
+    slug = await resolvePublishedE2eSlug(request, token, PREFERRED_SLUG);
+    activityId = await findActivityIdBySlug(request, token, slug);
     activityRecord = await fetchActivity(request, token, activityId);
   });
 
@@ -63,7 +67,7 @@ test.describe("Epic 35 — live public registration matrix", () => {
 
         await page.setViewportSize({ width: viewport.width, height: viewport.height });
         const base = tenantWebBase();
-        const response = await page.goto(`${base}/register/${SLUG}`, {
+        const response = await page.goto(`${base}/register/${slug}`, {
           waitUntil: "domcontentloaded",
           timeout: 30_000,
         });
@@ -85,7 +89,8 @@ test.describe("Epic 35 — conversational live interaction", () => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
 
     const token = await loginOperator(request);
-    const activityId = await findActivityIdBySlug(request, token, SLUG);
+    const slug = await resolvePublishedE2eSlug(request, token, PREFERRED_SLUG);
+    const activityId = await findActivityIdBySlug(request, token, slug);
     const activityRecord = await fetchActivity(request, token, activityId);
     const conversational = EPIC_35_EXPERIENCES.find((e) => e.label === "conversational")!;
 
@@ -93,7 +98,7 @@ test.describe("Epic 35 — conversational live interaction", () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     const base = tenantWebBase();
-    await page.goto(`${base}/register/${SLUG}`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${base}/register/${slug}`, { waitUntil: "domcontentloaded" });
 
     const continueBtn = page.getByRole("button", { name: /^Continue$/i });
     const joinBtn = page.getByRole("button", { name: /join activity/i });
@@ -127,7 +132,8 @@ test.describe("Epic 35 — Form Studio unsaved preview", () => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
 
     const token = await loginOperator(request);
-    const activityId = await findActivityIdBySlug(request, token, SLUG);
+    const slug = await resolvePublishedE2eSlug(request, token, PREFERRED_SLUG);
+    const activityId = await findActivityIdBySlug(request, token, slug);
     const base = tenantWebBase();
 
     await page.setViewportSize({ width: 1440, height: 900 });

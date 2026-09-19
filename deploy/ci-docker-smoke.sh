@@ -52,6 +52,7 @@ echo "== Epic 35 Form Experience browser matrix =="
 PUBLIC_BASE_URL=http://localhost:8088 \
   E2E_LIVE_STACK=1 \
   E2E_API_BASE_URL=http://localhost:8088 \
+  REGISTRATION_E2E_SLUG=demo-wellness-morning-yoga \
   npm run test:e2e -- e2e/form-experience-epic-35.spec.ts
 
 echo "CI Docker smoke passed."

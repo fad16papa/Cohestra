@@ -130,26 +130,63 @@ export async function findActivityIdBySlug(
   token: string,
   slug: string
 ): Promise<string> {
-  const response = await request.get(
-    `${API_BASE}/api/v1/admin/activities?page=1&pageSize=50&search=${encodeURIComponent(slug)}`,
-    {
+  for (let page = 1; page <= 5; page += 1) {
+    const response = await request.get(
+      `${API_BASE}/api/v1/admin/activities?page=${page}&pageSize=50`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Host: tenantHostHeader(),
+        },
+      }
+    );
+    if (!response.ok()) {
+      throw new Error(`List activities failed: ${response.status()}`);
+    }
+    const body = (await response.json()) as {
+      items?: Array<{ id: string; slug: string; status?: string }>;
+      totalCount?: number;
+    };
+    const match = body.items?.find((item) => item.slug === slug);
+    if (match) {
+      return match.id;
+    }
+    const loaded = page * 50;
+    if (!body.items?.length || (body.totalCount != null && loaded >= body.totalCount)) {
+      break;
+    }
+  }
+
+  throw new Error(`Activity slug not found: ${slug}`);
+}
+
+export async function resolvePublishedE2eSlug(
+  request: APIRequestContext,
+  token: string,
+  preferredSlug: string
+): Promise<string> {
+  try {
+    await findActivityIdBySlug(request, token, preferredSlug);
+    return preferredSlug;
+  } catch {
+    const response = await request.get(`${API_BASE}/api/v1/admin/activities?page=1&pageSize=50`, {
       headers: {
         Authorization: `Bearer ${token}`,
         Host: tenantHostHeader(),
       },
+    });
+    if (!response.ok()) {
+      throw new Error(`List activities failed: ${response.status()}`);
     }
-  );
-  if (!response.ok()) {
-    throw new Error(`List activities failed: ${response.status()}`);
+    const body = (await response.json()) as {
+      items?: Array<{ slug: string; status?: string }>;
+    };
+    const published = body.items?.find((item) => item.status === "published");
+    if (!published) {
+      throw new Error("No published activity available for Epic 35 e2e.");
+    }
+    return published.slug;
   }
-  const body = (await response.json()) as {
-    items?: Array<{ id: string; slug: string }>;
-  };
-  const match = body.items?.find((item) => item.slug === slug);
-  if (!match) {
-    throw new Error(`Activity slug not found: ${slug}`);
-  }
-  return match.id;
 }
 
 export async function applyRegistrationTheme(
