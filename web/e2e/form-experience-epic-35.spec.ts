@@ -25,22 +25,39 @@ async function assertNoHorizontalOverflow(page: import("@playwright/test").Page)
   expect(overflow).toBeLessThanOrEqual(1);
 }
 
+function previewSurface(page: import("@playwright/test").Page) {
+  return page.locator(".registration-preview-surface").first();
+}
+
+async function setPreviewViewportDesktop(page: import("@playwright/test").Page) {
+  const toggle = page.getByRole("group", { name: /Preview viewport/i });
+  if (await toggle.isVisible().catch(() => false)) {
+    await toggle.getByRole("button", { name: /^Desktop$/i }).click();
+  }
+}
+
 async function assertExperienceShell(
   page: import("@playwright/test").Page,
-  expectShell: (typeof EPIC_35_EXPERIENCES)[number]["expect"]
+  expectShell: (typeof EPIC_35_EXPERIENCES)[number]["expect"],
+  scope?: import("@playwright/test").Locator
 ) {
+  const root = scope ?? page;
+
   if (expectShell.splitPanel) {
-    await expect(page.locator('[class*="lg:grid-cols"]').first()).toBeVisible();
+    if (scope) {
+      await setPreviewViewportDesktop(page);
+    }
+    await expect(root.locator('[class*="lg:grid-cols"]').first()).toBeVisible();
   }
   if (expectShell.posterPanel) {
-    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+    await expect(root.getByRole("heading", { level: 1 }).first()).toBeVisible();
   }
   if (expectShell.conversational) {
-    await expect(page.getByText(/Question \d+ of \d+/)).toBeVisible();
-    await expect(page.getByRole("button", { name: /continue|join activity/i })).toBeVisible();
+    await expect(root.getByText(/Question \d+ of \d+/)).toBeVisible();
+    await expect(root.getByRole("button", { name: /continue|join activity/i })).toBeVisible();
   }
   if (expectShell.centered && !expectShell.conversational) {
-    const join = page.getByRole("button", { name: /join activity/i });
+    const join = root.getByRole("button", { name: /join activity/i });
     await expect(join).toBeVisible();
   }
 }
@@ -166,7 +183,12 @@ test.describe("Epic 35 — Form Studio unsaved preview", () => {
 
     await selectExperienceLayoutLabel(page, /Split Event/i);
 
-    await expect(page.locator('[class*="lg:grid-cols"]').first()).toBeVisible({ timeout: 30_000 });
+    const preview = previewSurface(page);
+    await expect(preview).toBeVisible({ timeout: 30_000 });
+    await setPreviewViewportDesktop(page);
+    await expect(preview.locator('[class*="lg:grid-cols"]').first()).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(page.getByText(/Live preview/i)).toBeVisible();
   });
 
@@ -200,7 +222,9 @@ test.describe("Epic 35 — Form Studio unsaved preview", () => {
       await page.locator("#form-studio-tab-preview").click();
       await expect(page.locator("#form-studio-preview-panel")).toBeVisible();
 
-      await assertExperienceShell(page, experience.expect);
+      const preview = previewSurface(page);
+      await expect(preview).toBeVisible({ timeout: 30_000 });
+      await assertExperienceShell(page, experience.expect, preview);
     });
   }
 });
