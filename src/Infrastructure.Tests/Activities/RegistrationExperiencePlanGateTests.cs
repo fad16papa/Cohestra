@@ -20,6 +20,19 @@ public sealed class RegistrationExperiencePlanGateTests
     }
 
     [Fact]
+    public void EnsureAllowed_BasicPosterLayout_ReturnsError()
+    {
+        var theme = new RegistrationTheme
+        {
+            Experience = new RegistrationExperience { Layout = RegistrationExperienceLayouts.Poster },
+        };
+
+        var error = RegistrationExperiencePlanGate.EnsureAllowed(theme, TenantPlan.Basic);
+
+        Assert.NotNull(error);
+    }
+
+    [Fact]
     public void EnsureAllowed_BasicCardLayout_Allowed()
     {
         var theme = new RegistrationTheme

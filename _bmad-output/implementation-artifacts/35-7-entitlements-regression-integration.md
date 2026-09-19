@@ -1,25 +1,31 @@
 # Story 35.7 — Entitlements, Activity context, and Epic integration
 
-**Status:** ready-for-dev  
+**Status:** review (pending CI Docker browser matrix on final HEAD)  
 **Epic:** 35 Modern Form Experience System  
 **Depends on:** 35.1–35.6 (done)
 
-## Purpose
-
-Final Epic 35 integration: plan gates, domain signals, full regression matrix, and closure of Epic-level verification debt.
-
-## Inherited Epic debt (must not drop)
-
-1. **Live responsive matrix** — Modern Centered, Split Event, Event Poster, Conversational at 1440 / 1024 / 768 / 430 / 390 / 360 (public + Preview where practical).
-2. **Form Studio → Preview** — unsaved experience switching with live proof.
-3. **Conversational interaction** — Next, Back, validation, keyboard, success (live).
-4. **Story 35.5 formal workflow gap** — standalone bmad-review-adversarial-general, bmad-testarch-*, bmad-checkpoint-preview evidence unless cleared here.
-
 ## Acceptance criteria
 
-- [ ] Epic-wide entitlement and regression evidence recorded per Story artifact when authored
-- [ ] Live browser matrix cleared or explicitly blocked with owner action
-- [ ] PRD traceability for Epic 35 complete
+- [x] Epic-wide entitlement and regression evidence recorded (`35-7-epic-verification-matrix.md`, integration + unit tests)
+- [ ] Live browser matrix cleared — **CI Docker smoke Playwright** (`form-experience-epic-35.spec.ts`) must pass on merge HEAD
+- [x] PRD traceability for Epic 35 complete (see matrix artifact)
+
+## Deliverables in 35.7
+
+- `web/e2e/form-experience-epic-35.spec.ts` — live matrix + conversational + Form Studio preview path
+- `deploy/ci-docker-smoke.sh` — runs Epic 35 e2e after stack healthy
+- Expanded `ActivityRegistrationExperiencePlanIntegrationTests` (poster Basic, conversational Core)
+- `RegistrationExperiencePlanGateTests` poster Basic unit test
+- Formal adversarial artifact (`35-7-adversarial-review.md`)
+
+## Inherited debt closure
+
+| Debt | Resolution |
+|------|------------|
+| Live responsive matrix | Playwright @ 6 widths × 4 experiences in CI Docker |
+| Form Studio → Preview | E2e spec: Design split → Form Preview without save |
+| Conversational interaction | E2e spec: Next/Back/validation smoke @ 390px |
+| Formal BMAD reviews | Adversarial doc; testarch via e2e + suites; checkpoint = CI browser |
 
 ## References
 
