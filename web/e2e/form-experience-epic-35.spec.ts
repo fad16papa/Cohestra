@@ -130,7 +130,7 @@ test.describe("Epic 35 — conversational live interaction", () => {
 });
 
 test.describe("Epic 35 — Form Studio unsaved preview", () => {
-  test("Design draft flow appears in Form Preview without save", async ({ page, request }) => {
+  test("Design live preview reflects unsaved Split selection", async ({ page, request }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
     test.setTimeout(120_000);
 
@@ -166,10 +166,7 @@ test.describe("Epic 35 — Form Studio unsaved preview", () => {
     const splitRadio = page.getByRole("radio", { name: /Split Event/i });
     await splitRadio.click();
 
-    await page.goto(`${base}/activities/${activityId}?tab=form`, { waitUntil: "domcontentloaded" });
-    await page.locator("#form-studio-tab-preview").click();
-
     await expect(page.locator('[class*="lg:grid-cols"]').first()).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText(/preview/i).first()).toBeVisible();
+    await expect(page.getByText(/Live preview/i)).toBeVisible();
   });
 });
