@@ -26,5 +26,8 @@ public sealed class RegistrationTheme
 
     public string? HeroImageUrl { get; set; }
 
+    /// <summary>Optional composable experience (layout/style/flow). Null → derive from <see cref="Preset"/>.</summary>
+    public RegistrationExperience? Experience { get; set; }
+
     public static RegistrationTheme Default { get; } = new();
 }

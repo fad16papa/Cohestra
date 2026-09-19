@@ -1,5 +1,11 @@
-import type { ActivityFormSchema, ActivityStatus, RegistrationThemePreset } from "@/lib/activities-api";
+import type {
+  ActivityFormSchema,
+  ActivityStatus,
+  RegistrationThemePreset,
+  ResolvedRegistrationExperience,
+} from "@/lib/activities-api";
 import { parseFormSchema } from "@/lib/activities-api";
+import { resolveRegistrationExperience } from "@/lib/registration-experience";
 import { getPublicApiBaseUrl } from "@/lib/api";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
 import { parseProblemFields } from "@/lib/problem-details";
@@ -23,6 +29,7 @@ export type PublicActivity = {
   preset: RegistrationThemePreset;
   logoAssetId: string | null;
   formSchema: ActivityFormSchema | null;
+  resolvedExperience: ResolvedRegistrationExperience;
 };
 
 function parseActivityStatus(raw: unknown): ActivityStatus {
@@ -56,6 +63,8 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
   const presetRaw = raw.preset ?? raw.Preset;
   const logoAssetId = raw.logoAssetId ?? raw.LogoAssetId;
   const formSchema = raw.formSchema ?? raw.FormSchema;
+  const resolvedExperienceRaw =
+    raw.resolvedExperience ?? raw.ResolvedExperience;
 
   if (
     typeof slug !== "string" ||
@@ -102,7 +111,36 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
       formSchema === null || formSchema === undefined
         ? null
         : parseFormSchema(formSchema),
+    resolvedExperience: parsePublicResolvedExperience(resolvedExperienceRaw, preset),
   };
+}
+
+function parsePublicResolvedExperience(
+  raw: unknown,
+  preset: RegistrationThemePreset
+): ResolvedRegistrationExperience {
+  if (raw && typeof raw === "object") {
+    const record = raw as Record<string, unknown>;
+    const layout = record.layout ?? record.Layout;
+    const style = record.style ?? record.Style;
+    const flow = record.flow ?? record.Flow;
+    const heroDisplay = record.heroDisplay ?? record.HeroDisplay;
+    if (
+      typeof layout === "string" &&
+      typeof style === "string" &&
+      typeof flow === "string" &&
+      typeof heroDisplay === "string"
+    ) {
+      return { layout, style, flow, heroDisplay };
+    }
+  }
+
+  return resolveRegistrationExperience({
+    preset,
+    inheritCommunityBrand: true,
+    accentColor: null,
+    heroImageUrl: null,
+  }) as ResolvedRegistrationExperience;
 }
 
 export type PublicActivityFetchResult =

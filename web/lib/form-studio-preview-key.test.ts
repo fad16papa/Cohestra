@@ -48,6 +48,24 @@ describe("buildFormStudioPreviewKey", () => {
     );
   });
 
+  it("changes when experience flow changes", () => {
+    const saved = buildFormStudioPreviewKey(baseSchema, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+    });
+    const conversational = buildFormStudioPreviewKey(baseSchema, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: { flow: "conversational", layout: "centered" },
+    });
+
+    expect(saved).not.toBe(conversational);
+  });
+
   it("does not change for draft edits outside preview-visible material", () => {
     const saved = buildFormStudioPreviewKey(baseSchema);
     const withClosedMessage = buildFormStudioPreviewKey({

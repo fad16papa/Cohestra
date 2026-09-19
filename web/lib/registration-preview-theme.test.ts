@@ -29,6 +29,7 @@ describe("registration preview theme", () => {
     expect(resolved.accentColor).toBe("#222222");
     expect(resolved.logoAssetId).toBe("logo-123");
     expect(resolved.preset).toBe("classic");
+    expect(resolved.resolvedExperience.layout).toBe("centered");
   });
 
   it("uses activity overrides when inherit is off", () => {
@@ -57,6 +58,78 @@ describe("registration preview theme", () => {
 
     const resolved = resolvePersistedRegistrationPreviewTheme(bareActivity);
     expect(resolved.heroImageUrl).toBeNull();
+  });
+
+  it("resolves conversational flow from draft experience overrides", () => {
+    const resolved = resolveRegistrationPreviewTheme(activity, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: {
+        layout: "centered",
+        style: "modern",
+        flow: "conversational",
+        heroDisplay: "cover",
+      },
+    });
+
+    expect(resolved.resolvedExperience.flow).toBe("conversational");
+  });
+
+  it("resolves poster layout from draft experience overrides", () => {
+    const resolved = resolveRegistrationPreviewTheme(activity, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: {
+        layout: "poster",
+        style: "editorial",
+        flow: "single-page",
+        heroDisplay: "cover",
+      },
+    });
+
+    expect(resolved.resolvedExperience.layout).toBe("poster");
+  });
+
+  it("resolves split layout from draft experience overrides", () => {
+    const resolved = resolveRegistrationPreviewTheme(activity, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: { layout: "split", style: "modern", flow: "single-page", heroDisplay: "split" },
+    });
+
+    expect(resolved.resolvedExperience.layout).toBe("split");
+  });
+
+  it("follows draft preset for experience layout, not stale persisted resolvedExperience", () => {
+    const cardPersisted = {
+      ...activity,
+      resolvedRegistrationTheme: {
+        ...activity.resolvedRegistrationTheme,
+        preset: "card" as const,
+        resolvedExperience: {
+          layout: "card",
+          style: "modern",
+          flow: "single-page",
+          heroDisplay: "cover",
+        },
+      },
+    } as Activity;
+
+    const resolved = resolveRegistrationPreviewTheme(cardPersisted, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+    });
+
+    expect(resolved.preset).toBe("classic");
+    expect(resolved.resolvedExperience.layout).toBe("centered");
   });
 
   it("uses persisted activity theme for form preview", () => {

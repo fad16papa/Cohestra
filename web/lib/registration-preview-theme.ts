@@ -2,13 +2,16 @@ import type {
   Activity,
   RegistrationTheme,
   RegistrationThemePreset,
+  ResolvedRegistrationExperience,
 } from "@/lib/activities-api";
+import { resolveRegistrationExperience } from "@/lib/registration-experience";
 
 export type ResolvedRegistrationPreviewTheme = {
   preset: RegistrationThemePreset;
   accentColor: string | null;
   heroImageUrl: string | null;
   logoAssetId: string | null;
+  resolvedExperience: ResolvedRegistrationExperience;
 };
 
 export function themeFromActivity(activity: Activity): RegistrationTheme {
@@ -23,7 +26,10 @@ export function themeFromActivity(activity: Activity): RegistrationTheme {
 }
 
 export function resolveRegistrationPreviewTheme(
-  activity: Pick<Activity, "heroImageUrl" | "accentColor" | "resolvedRegistrationTheme">,
+  activity: Pick<
+    Activity,
+    "heroImageUrl" | "accentColor" | "resolvedRegistrationTheme"
+  >,
   theme: RegistrationTheme
 ): ResolvedRegistrationPreviewTheme {
   const inherit = theme.inheritCommunityBrand;
@@ -49,11 +55,22 @@ export function resolveRegistrationPreviewTheme(
     logo = null;
   }
 
+  // Preview follows draft/saved theme preset + optional experience overrides only.
+  // Do not pass persisted resolvedExperience — it stays stale when the draft preset changes.
+  const resolvedExperience = resolveRegistrationExperience({
+    preset: theme.preset,
+    inheritCommunityBrand: theme.inheritCommunityBrand,
+    accentColor: theme.accentColor,
+    heroImageUrl: theme.heroImageUrl,
+    experience: theme.experience,
+  } as Parameters<typeof resolveRegistrationExperience>[0]) as ResolvedRegistrationExperience;
+
   return {
     preset: theme.preset,
     accentColor: accent,
     heroImageUrl: hero,
     logoAssetId: logo,
+    resolvedExperience,
   };
 }
 

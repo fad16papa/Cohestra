@@ -30,6 +30,9 @@ type RegistrationPublicPreviewShellProps = {
   scrollClassName?: string;
   className?: string;
   websiteLink?: PublisherWebsiteLink | null;
+  registrationCount?: number | null;
+  maxRegistrants?: number | null;
+  isRegistrationFull?: boolean;
 };
 
 export function RegistrationPublicPreviewShell({
@@ -45,8 +48,12 @@ export function RegistrationPublicPreviewShell({
   scrollClassName = "max-h-[min(36rem,70dvh)]",
   className,
   websiteLink = null,
+  registrationCount = null,
+  maxRegistrants = null,
+  isRegistrationFull = false,
 }: RegistrationPublicPreviewShellProps) {
   const [viewport, setViewport] = useState<RegistrationPreviewViewport>("mobile");
+  const isSplitLayout = theme.resolvedExperience.layout === "split";
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -71,7 +78,11 @@ export function RegistrationPublicPreviewShell({
         formStatus={formStatus}
         className={cn(
           "mx-auto w-full",
-          viewport === "mobile" ? "max-w-[375px]" : "max-w-[480px]"
+          viewport === "mobile"
+            ? "max-w-[375px]"
+            : isSplitLayout
+              ? "max-w-[960px]"
+              : "max-w-[480px]"
         )}
         scrollClassName={scrollClassName}
       >
@@ -85,9 +96,13 @@ export function RegistrationPublicPreviewShell({
           accentColor={theme.accentColor}
           logoAssetId={theme.logoAssetId}
           preset={theme.preset as RegistrationThemePreset}
+          resolvedExperience={theme.resolvedExperience}
           formSchema={formSchema}
           websiteLink={websiteLink}
           variant="preview"
+          registrationCount={registrationCount}
+          maxRegistrants={maxRegistrants}
+          isRegistrationFull={isRegistrationFull}
         />
       </RegistrationPreviewChrome>
     </div>
