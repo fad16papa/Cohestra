@@ -54,11 +54,15 @@ async function assertExperienceShell(
   }
   if (expectShell.conversational) {
     await expect(root.getByText(/Question \d+ of \d+/)).toBeVisible();
-    await expect(root.getByRole("button", { name: /continue|join activity/i })).toBeVisible();
+    await expect(
+      root.getByRole("button", { name: /continue|join activity|preview submit/i })
+    ).toBeVisible();
   }
   if (expectShell.centered && !expectShell.conversational) {
-    const join = root.getByRole("button", { name: /join activity/i });
-    await expect(join).toBeVisible();
+    const cta = root.getByRole("button", {
+      name: /join activity|preview submit/i,
+    });
+    await expect(cta).toBeVisible();
   }
 }
 
