@@ -1,6 +1,6 @@
 # Epic 35: Modern Form Experience System
 
-**Status:** review (35.7 CI browser matrix gate)  
+**Status:** done  
 **Source PRD:** `_bmad-output/planning-artifacts/prds/prd-form-experience-system-2026-09-18/prd.md`  
 **Architecture:** `_bmad-output/planning-artifacts/architecture-form-experience-system-2026-09-18.md`  
 **UX:** `_bmad-output/planning-artifacts/ux-designs/ux-form-experience-system-2026-09-18/EXPERIENCE.md`

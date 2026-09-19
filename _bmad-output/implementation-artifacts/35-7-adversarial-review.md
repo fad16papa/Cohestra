@@ -27,4 +27,4 @@
 
 ## Blockers for Epic close
 
-- None from adversarial review once **CI Docker Epic 35 e2e** is green on final HEAD.
+- None — CI Docker Epic 35 e2e green on HEAD `c0e9fcc` (run 35454127263).

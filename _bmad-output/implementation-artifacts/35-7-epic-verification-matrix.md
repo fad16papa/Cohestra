@@ -1,7 +1,8 @@
 # Story 35.7 — Epic 35 verification matrix
 
 **Generated:** 2026-09-19  
-**Branch:** `cursor/modern-form-experience-system-a139`
+**Branch:** `cursor/modern-form-experience-system-a139`  
+**Final CI:** GitHub Actions run [35454127263](https://github.com/fad16papa/Cohestra/actions/runs/35454127263) @ `c0e9fcc8ab3c454c1a5623afcb95e555850a89e8` (all jobs success)
 
 ## Live browser matrix (Epic closure gate)
 
