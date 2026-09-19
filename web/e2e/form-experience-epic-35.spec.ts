@@ -152,13 +152,22 @@ test.describe("Epic 35 — Form Studio unsaved preview", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await seedOperatorAuthSession(page, session);
     await page.goto(`${base}/activities/${activityId}?tab=design`, { waitUntil: "domcontentloaded" });
+    if (page.url().includes("/login")) {
+      await page.evaluate((stored) => {
+        localStorage.setItem("auth_session", JSON.stringify(stored));
+      }, session);
+      await page.goto(`${base}/activities/${activityId}?tab=design`, { waitUntil: "domcontentloaded" });
+    }
+
+    await expect(page.getByRole("heading", { name: /Registration design/i })).toBeVisible({
+      timeout: 30_000,
+    });
 
     const splitRadio = page.getByRole("radio", { name: /Split Event/i });
-    await expect(splitRadio).toBeVisible({ timeout: 30_000 });
     await splitRadio.click();
 
     await page.goto(`${base}/activities/${activityId}?tab=form`, { waitUntil: "domcontentloaded" });
-    await page.getByRole("button", { name: /^Preview$/i }).click();
+    await page.locator("#form-studio-tab-preview").click();
 
     await expect(page.locator('[class*="lg:grid-cols"]').first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(/preview/i).first()).toBeVisible();
