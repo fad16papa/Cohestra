@@ -1,4 +1,4 @@
-import type { APIRequestContext } from "@playwright/test";
+import { expect, type APIRequestContext } from "@playwright/test";
 
 const API_BASE =
   process.env.E2E_API_BASE_URL ??
@@ -134,7 +134,13 @@ export async function loginOperatorSession(
   if (!body.accessToken || !body.refreshToken) {
     throw new Error("Login response missing tokens");
   }
-  const expiresInSec = body.expiresIn ?? 3600;
+  const raw = body as {
+    expiresIn?: number;
+    expiresInSeconds?: number;
+    ExpiresInSeconds?: number;
+  };
+  const expiresInSec =
+    raw.expiresInSeconds ?? raw.ExpiresInSeconds ?? raw.expiresIn ?? 3600;
   return {
     accessToken: body.accessToken,
     refreshToken: body.refreshToken,
@@ -154,6 +160,54 @@ export async function seedOperatorAuthSession(
   await page.addInitScript((stored) => {
     localStorage.setItem("auth_session", JSON.stringify(stored));
   }, session);
+}
+
+/** Wait until admin shell is past auth guard (not login redirect). */
+export async function waitForOperatorWorkspace(
+  page: import("@playwright/test").Page
+): Promise<void> {
+  await page.waitForFunction(
+    () =>
+      !window.location.pathname.includes("/login") &&
+      !document.body.textContent?.includes("Loading admin workspace"),
+    undefined,
+    { timeout: 60_000 }
+  );
+}
+
+/** Experience layout cards use sr-only radios — click the visible label card. */
+export async function selectExperienceLayoutLabel(
+  page: import("@playwright/test").Page,
+  layoutLabel: RegExp
+): Promise<void> {
+  const card = page.locator("label").filter({ hasText: layoutLabel }).first();
+  await expect(card).toBeVisible({ timeout: 30_000 });
+  await card.click();
+}
+
+export async function openActivityTab(
+  page: import("@playwright/test").Page,
+  activityId: string,
+  tab: "overview" | "design" | "form" | "registrations" | "share",
+  session: OperatorSession
+): Promise<void> {
+  const base = tenantWebBase();
+  await seedOperatorAuthSession(page, session);
+  await page.goto(`${base}/activities/${activityId}?tab=${tab}`, {
+    waitUntil: "domcontentloaded",
+  });
+  if (page.url().includes("/login")) {
+    await page.evaluate((stored) => {
+      localStorage.setItem("auth_session", JSON.stringify(stored));
+    }, session);
+    await page.goto(`${base}/activities/${activityId}?tab=${tab}`, {
+      waitUntil: "domcontentloaded",
+    });
+  }
+  await waitForOperatorWorkspace(page);
+  await expect(page.getByRole("tab", { name: new RegExp(tab, "i"), selected: true })).toBeVisible({
+    timeout: 30_000,
+  });
 }
 
 export async function findActivityIdBySlug(

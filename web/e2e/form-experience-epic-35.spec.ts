@@ -8,8 +8,9 @@ import {
   findActivityIdBySlug,
   loginOperator,
   loginOperatorSession,
+  openActivityTab,
   resolvePublishedE2eSlug,
-  seedOperatorAuthSession,
+  selectExperienceLayoutLabel,
   tenantWebBase,
 } from "./helpers/registration-e2e-api";
 
@@ -130,43 +131,76 @@ test.describe("Epic 35 — conversational live interaction", () => {
 });
 
 test.describe("Epic 35 — Form Studio unsaved preview", () => {
-  test("Design live preview reflects unsaved Split selection", async ({ page, request }) => {
-    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
-    test.setTimeout(120_000);
+  test.describe.configure({ mode: "serial" });
 
-    const session = await loginOperatorSession(request);
-    const token = session.accessToken;
-    const slug = await resolvePublishedE2eSlug(request, token, PREFERRED_SLUG);
-    const activityId = await findActivityIdBySlug(request, token, slug);
-    const activityRecord = await fetchActivity(request, token, activityId);
-    const base = tenantWebBase();
+  let activityId: string;
+  let activityRecord: Record<string, unknown>;
+  let session: Awaited<ReturnType<typeof loginOperatorSession>>;
+
+  test.beforeAll(async ({ request }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    session = await loginOperatorSession(request);
+    const slug = await resolvePublishedE2eSlug(request, session.accessToken, PREFERRED_SLUG);
+    activityId = await findActivityIdBySlug(request, session.accessToken, slug);
+    activityRecord = await fetchActivity(request, session.accessToken, activityId);
 
     await applyRegistrationTheme(
       request,
-      token,
+      session.accessToken,
       activityId,
       activityRecord,
       EPIC_35_EXPERIENCES.find((e) => e.label === "modern-centered")!.theme
     );
+  });
+
+  test("Design live preview reflects unsaved Split selection", async ({ page }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    test.setTimeout(120_000);
 
     await page.setViewportSize({ width: 1440, height: 900 });
-    await seedOperatorAuthSession(page, session);
-    await page.goto(`${base}/activities/${activityId}?tab=design`, { waitUntil: "domcontentloaded" });
-    if (page.url().includes("/login")) {
-      await page.evaluate((stored) => {
-        localStorage.setItem("auth_session", JSON.stringify(stored));
-      }, session);
-      await page.goto(`${base}/activities/${activityId}?tab=design`, { waitUntil: "domcontentloaded" });
-    }
+    await openActivityTab(page, activityId, "design", session);
 
     await expect(page.getByRole("heading", { name: /Registration design/i })).toBeVisible({
       timeout: 30_000,
     });
 
-    const splitRadio = page.getByRole("radio", { name: /Split Event/i });
-    await splitRadio.click();
+    await selectExperienceLayoutLabel(page, /Split Event/i);
 
     await expect(page.locator('[class*="lg:grid-cols"]').first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(/Live preview/i)).toBeVisible();
   });
+
+  for (const experience of EPIC_35_EXPERIENCES) {
+    test(`Form Studio Preview tab reflects unsaved ${experience.label}`, async ({ page }) => {
+      test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+      test.setTimeout(120_000);
+
+      const layoutLabel =
+        experience.label === "modern-centered"
+          ? /Modern Centered/i
+          : experience.label === "split-event"
+            ? /Split Event/i
+            : experience.label === "event-poster"
+              ? /Event Poster/i
+              : /Modern Centered/i;
+
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await openActivityTab(page, activityId, "design", session);
+      await selectExperienceLayoutLabel(page, layoutLabel);
+
+      if (experience.label === "conversational") {
+        const flowCard = page.locator("label").filter({ hasText: /Conversational/i }).first();
+        await expect(flowCard).toBeVisible();
+        await flowCard.click();
+      }
+
+      await page.getByRole("tab", { name: /^Form$/i }).click();
+      await expect(page.getByRole("tab", { name: /^Form$/i, selected: true })).toBeVisible();
+
+      await page.locator("#form-studio-tab-preview").click();
+      await expect(page.locator("#form-studio-preview-panel")).toBeVisible();
+
+      await assertExperienceShell(page, experience.expect);
+    });
+  }
 });
