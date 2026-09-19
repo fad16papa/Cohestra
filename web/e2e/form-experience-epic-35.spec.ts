@@ -26,7 +26,7 @@ async function assertNoHorizontalOverflow(page: import("@playwright/test").Page)
 }
 
 function previewSurface(page: import("@playwright/test").Page) {
-  return page.locator(".registration-preview-surface").first();
+  return page.locator(".registration-preview-surface").filter({ visible: true });
 }
 
 async function setPreviewViewportDesktop(page: import("@playwright/test").Page) {
