@@ -7,7 +7,7 @@
 ## Acceptance criteria
 
 - [x] Epic-wide entitlement and regression evidence recorded (`35-7-epic-verification-matrix.md`, integration + unit tests)
-- [x] Live browser matrix cleared — CI run **35454127263** @ HEAD `c0e9fcc` (Docker smoke: 29 Playwright tests including Form Studio Design + Preview)
+- [x] Live browser matrix cleared — CI run **35454565436** @ HEAD `0e94066` (Docker smoke: Epic 35 Playwright matrix + Form Studio Design/Preview)
 - [x] PRD traceability for Epic 35 complete (see matrix artifact)
 
 ## Deliverables in 35.7
