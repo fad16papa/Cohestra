@@ -23,12 +23,15 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
 
         try
         {
-            await EnsureDefaultTenantPlanAsync(TenantPlan.Basic);
+            await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
             await IntegrationTestHelpers.ClearDefaultTenantFormTemplatesAsync(Factory.Services);
+            await EnsureDefaultTenantPlanAsync(TenantPlan.Basic);
 
             using var adminClient = Factory.CreateClient();
             var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
             IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+
+            await AssertFormTemplateUsageAsync(adminClient, expectedUsed: 0, expectedLimit: 1);
 
             var schema = BuildMinimalSchema();
             var firstName = $"First template {Guid.NewGuid():N}";
@@ -36,7 +39,12 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
                 "/api/v1/admin/form-templates",
                 new CreateFormTemplateRequest(firstName, schema),
                 IntegrationTestHelpers.JsonOptions);
-            Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+            if (firstResponse.StatusCode != HttpStatusCode.Created)
+            {
+                var setupFailure = await ReadProblemDetailAsync(firstResponse);
+                Assert.Fail(
+                    $"Expected Created for first Basic template, got {(int)firstResponse.StatusCode}: {setupFailure}");
+            }
 
             using var secondResponse = await adminClient.PostAsJsonAsync(
                 "/api/v1/admin/form-templates",
@@ -62,25 +70,34 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
     public async Task CreateFormTemplate_WhenDuplicateName_Returns409Conflict()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
-        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
 
-        using var adminClient = Factory.CreateClient();
-        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
-        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+        try
+        {
+            await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+            await IntegrationTestHelpers.ClearDefaultTenantFormTemplatesAsync(Factory.Services);
 
-        var schema = BuildMinimalSchema();
-        using var firstResponse = await adminClient.PostAsJsonAsync(
-            "/api/v1/admin/form-templates",
-            new CreateFormTemplateRequest("Saturday tennis", schema),
-            IntegrationTestHelpers.JsonOptions);
-        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+            using var adminClient = Factory.CreateClient();
+            var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+            IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
 
-        using var duplicateResponse = await adminClient.PostAsJsonAsync(
-            "/api/v1/admin/form-templates",
-            new CreateFormTemplateRequest("Saturday tennis", schema),
-            IntegrationTestHelpers.JsonOptions);
+            var schema = BuildMinimalSchema();
+            using var firstResponse = await adminClient.PostAsJsonAsync(
+                "/api/v1/admin/form-templates",
+                new CreateFormTemplateRequest("Saturday tennis", schema),
+                IntegrationTestHelpers.JsonOptions);
+            Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
 
-        Assert.Equal(HttpStatusCode.Conflict, duplicateResponse.StatusCode);
+            using var duplicateResponse = await adminClient.PostAsJsonAsync(
+                "/api/v1/admin/form-templates",
+                new CreateFormTemplateRequest("Saturday tennis", schema),
+                IntegrationTestHelpers.JsonOptions);
+
+            Assert.Equal(HttpStatusCode.Conflict, duplicateResponse.StatusCode);
+        }
+        finally
+        {
+            await IntegrationTestHelpers.ClearDefaultTenantFormTemplatesAsync(Factory.Services);
+        }
     }
 
     private static ActivityFormSchemaDto BuildMinimalSchema() =>
@@ -97,6 +114,21 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
                     null,
                     null),
             ]);
+
+    private static async Task AssertFormTemplateUsageAsync(
+        HttpClient adminClient,
+        int expectedUsed,
+        int expectedLimit)
+    {
+        using var listResponse = await adminClient.GetAsync("/api/v1/admin/form-templates");
+        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
+
+        var list = await listResponse.Content.ReadFromJsonAsync<FormTemplateListResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(list);
+        Assert.Equal(expectedUsed, list!.Usage.Used);
+        Assert.Equal(expectedLimit, list.Usage.Limit);
+    }
 
     private static async Task<string> ReadProblemDetailAsync(HttpResponseMessage response)
     {
