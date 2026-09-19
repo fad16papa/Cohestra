@@ -23,7 +23,7 @@ Community operators create premium, Activity-aware registration experiences usin
 
 ## Epic-level verification debt (before epic close)
 
-**LIVE RESPONSIVE MATRIX:** Before Epic 35 may be closed, verify **Modern Centered**, **Split Event**, **Event Poster**, and **Conversational** (if shipped) at **1440 / 1024 / 768 / 430 / 390 / 360** on live dev/UAT using repository browser/e2e infrastructure and real public/preview routes. Stories 35.2–35.4 used contract/CSS evidence where live stack was unavailable.
+**LIVE RESPONSIVE MATRIX:** Before Epic 35 may be closed, verify **Modern Centered**, **Split Event**, **Event Poster**, and **Conversational** at **1440 / 1024 / 768 / 430 / 390 / 360** on live dev/UAT using repository browser/e2e infrastructure and real public/preview routes. Required contexts: public registration + Form Studio Preview where practical. **Conversational** also requires live interaction proof (Next, Back, validation, keyboard, success). Stories 35.2–35.5 used contract/CSS evidence where live stack was unavailable.
 
 ## Non-goals (Epic scope boundary)
 

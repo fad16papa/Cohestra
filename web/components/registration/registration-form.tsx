@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 
 import { PhoneFieldInput } from "@/components/registration/phone-field-input";
 import { Button } from "@/components/ui/button";
@@ -30,13 +30,21 @@ import {
   submitPublicRegistration,
   type PublicRegistrationSubmitResult,
 } from "@/lib/public-registration-api";
+import {
+  clampConversationalStepIndex,
+  isConversationalDisplayOnlyStep,
+  listConversationalSteps,
+} from "@/lib/conversational-form-steps";
 import { cn } from "@/lib/utils";
+
+export type RegistrationFormFlowMode = "default" | "conversational";
 
 type RegistrationFormProps = {
   schema: ActivityFormSchema;
   variant?: "public" | "preview";
   className?: string;
   activitySlug?: string;
+  flowMode?: RegistrationFormFlowMode;
   onSubmitted?: (result: PublicRegistrationSubmitResult) => void;
   onSubmitError?: (message: string | null) => void;
   /** Studio preview only — simulates submit locally; never hits the public API. */
@@ -301,6 +309,7 @@ export function RegistrationForm({
   variant = "public",
   className,
   activitySlug,
+  flowMode = "default",
   onSubmitted,
   onSubmitError,
   onPreviewSubmit,
@@ -309,11 +318,13 @@ export function RegistrationForm({
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<FieldErrors>({});
   const [stepIndex, setStepIndex] = useState(0);
+  const [conversationalStepIndex, setConversationalStepIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitErrorCode, setSubmitErrorCode] = useState<string | null>(null);
   const idempotencyKeyRef = useRef<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const conversationalStepRef = useRef<HTMLDivElement>(null);
 
   const isPreview = variant === "preview";
   const isPublic = !isPreview;
@@ -342,7 +353,45 @@ export function RegistrationForm({
     });
   }
 
-  const stepsOn = Boolean(schema.meta?.splitIntoSteps);
+  const conversationalOn = flowMode === "conversational";
+  const conversationalSteps = conversationalOn
+    ? listConversationalSteps(schema.fields, values, {
+        includeHiddenPreview: isPreview,
+      })
+    : [];
+  const conversationalStepCount = conversationalSteps.length;
+  const safeConversationalIndex = clampConversationalStepIndex(
+    conversationalStepIndex,
+    conversationalStepCount
+  );
+  const currentConversationalField =
+    conversationalSteps[safeConversationalIndex] ?? null;
+  const isLastConversationalStep =
+    conversationalStepCount === 0 ||
+    safeConversationalIndex >= conversationalStepCount - 1;
+
+  useEffect(() => {
+    if (!conversationalOn) {
+      return;
+    }
+
+    setConversationalStepIndex((current) =>
+      clampConversationalStepIndex(current, conversationalStepCount)
+    );
+  }, [conversationalOn, conversationalStepCount, schema.fields]);
+
+  useEffect(() => {
+    if (!conversationalOn || !conversationalStepRef.current) {
+      return;
+    }
+
+    const focusTarget = conversationalStepRef.current.querySelector<HTMLElement>(
+      "input:not([type=hidden]), select, textarea, button[type=button]"
+    );
+    (focusTarget ?? conversationalStepRef.current).focus({ preventScroll: true });
+  }, [conversationalOn, safeConversationalIndex, currentConversationalField?.id]);
+
+  const stepsOn = conversationalOn ? false : Boolean(schema.meta?.splitIntoSteps);
   const stepIds = stepsOn
     ? usedFormSteps(schema.fields, { includeHidden: isPreview })
     : [];
@@ -410,7 +459,21 @@ export function RegistrationForm({
     }
 
     if (!validateAllFields()) {
-      if (stepsOn && stepIds.length > 0) {
+      if (conversationalOn && conversationalSteps.length > 0) {
+        const firstInvalidIndex = conversationalSteps.findIndex((field) => {
+          if (
+            isConversationalDisplayOnlyStep(field) ||
+            !isFieldVisible(field, values, schema.fields)
+          ) {
+            return false;
+          }
+
+          return validateField(field, values[field.id]) !== null;
+        });
+        if (firstInvalidIndex >= 0) {
+          setConversationalStepIndex(firstInvalidIndex);
+        }
+      } else if (stepsOn && stepIds.length > 0) {
         const firstInvalid = stepIds.findIndex((step) =>
           fieldsForStep(schema.fields, step).some((field) => {
             if (isNonInputFieldType(field.type) || !isFieldVisible(field, values, schema.fields)) {
@@ -499,8 +562,40 @@ export function RegistrationForm({
       });
   }
 
+  function validateCurrentConversationalField(): boolean {
+    if (!currentConversationalField) {
+      return true;
+    }
+
+    if (isConversationalDisplayOnlyStep(currentConversationalField)) {
+      return true;
+    }
+
+    return validateFields([currentConversationalField]);
+  }
+
+  function advanceConversationalFlow() {
+    if (!validateCurrentConversationalField()) {
+      return;
+    }
+
+    if (isLastConversationalStep) {
+      performSubmit();
+      return;
+    }
+
+    setConversationalStepIndex((current) =>
+      clampConversationalStepIndex(current + 1, conversationalStepCount)
+    );
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (conversationalOn) {
+      advanceConversationalFlow();
+      return;
+    }
+
     if (stepsOn && !isLastStep) {
       if (validateCurrentStep()) {
         setStepIndex((current) => current + 1);
@@ -509,6 +604,24 @@ export function RegistrationForm({
     }
 
     performSubmit();
+  }
+
+  function handleConversationalFormKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    if (!conversationalOn || event.key !== "Enter" || event.shiftKey) {
+      return;
+    }
+
+    const target = event.target;
+    if (target instanceof HTMLTextAreaElement) {
+      return;
+    }
+
+    if (target instanceof HTMLButtonElement && target.type === "button") {
+      return;
+    }
+
+    event.preventDefault();
+    advanceConversationalFlow();
   }
 
   function renderFieldError(fieldId: string, error?: string) {
@@ -1166,6 +1279,7 @@ export function RegistrationForm({
         className
       )}
       onSubmit={handleSubmit}
+      onKeyDown={conversationalOn ? handleConversationalFormKeyDown : undefined}
       noValidate
     >
       {schema.fields.length === 0 ? (
@@ -1176,15 +1290,37 @@ export function RegistrationForm({
         </p>
       ) : (
         <>
-          {stepsOn && currentStep ? (
-            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted-warm">
-              {formStepLabels[currentStep]} ({stepIndex + 1} of {stepIds.length})
-            </p>
-          ) : null}
-          {(stepsOn && currentStep
-            ? fieldsForStep(schema.fields, currentStep)
-            : schema.fields
-          ).map((field) => renderField(field))}
+          {conversationalOn && conversationalStepCount > 0 ? (
+            <>
+              <p
+                className="text-xs font-medium text-text-muted-warm"
+                aria-live="polite"
+              >
+                Question {safeConversationalIndex + 1} of {conversationalStepCount}
+              </p>
+              <div
+                ref={conversationalStepRef}
+                tabIndex={-1}
+                className="motion-safe:transition-opacity motion-safe:duration-150 outline-none"
+              >
+                {currentConversationalField
+                  ? renderField(currentConversationalField)
+                  : null}
+              </div>
+            </>
+          ) : (
+            <>
+              {stepsOn && currentStep ? (
+                <p className="text-xs font-semibold uppercase tracking-wide text-text-muted-warm">
+                  {formStepLabels[currentStep]} ({stepIndex + 1} of {stepIds.length})
+                </p>
+              ) : null}
+              {(stepsOn && currentStep
+                ? fieldsForStep(schema.fields, currentStep)
+                : schema.fields
+              ).map((field) => renderField(field))}
+            </>
+          )}
         </>
       )}
 
@@ -1237,7 +1373,20 @@ export function RegistrationForm({
       ) : null}
 
       <div className="flex w-full min-w-0 flex-col gap-2">
-        {stepsOn && stepIndex > 0 ? (
+        {conversationalOn && safeConversationalIndex > 0 ? (
+          <Button
+            type="button"
+            variant="outline"
+            className={cn(
+              isPublic && "min-h-12 w-full min-w-0 max-w-full shrink text-base"
+            )}
+            onClick={() =>
+              setConversationalStepIndex((current) => Math.max(0, current - 1))
+            }
+          >
+            Back
+          </Button>
+        ) : stepsOn && stepIndex > 0 ? (
           <Button
             type="button"
             variant="outline"
@@ -1257,19 +1406,25 @@ export function RegistrationForm({
           disabled={
             schema.fields.length === 0 ||
             isSubmitting ||
-            (!isPreview && !activitySlug && isLastStep) ||
-            (isPreview && !onPreviewSubmit)
+            (conversationalOn
+              ? isLastConversationalStep &&
+                ((!isPreview && !activitySlug) ||
+                  (isPreview && !onPreviewSubmit))
+              : (!isPreview && !activitySlug && isLastStep) ||
+                (isPreview && !onPreviewSubmit))
           }
         >
           {isSubmitting
             ? isPreview
               ? "Previewing…"
               : "Submitting…"
-            : stepsOn && !isLastStep
-              ? "Next"
-              : isPreview
-                ? "Preview submit"
-                : "Join activity"}
+            : conversationalOn && !isLastConversationalStep
+              ? "Continue"
+              : stepsOn && !isLastStep
+                ? "Next"
+                : isPreview
+                  ? "Preview submit"
+                  : "Join activity"}
         </Button>
       </div>
     </form>

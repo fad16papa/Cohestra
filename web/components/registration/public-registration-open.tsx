@@ -16,7 +16,11 @@ import type {
 import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
 import { PublisherWebsiteTextLink } from "@/components/registration/publisher-website-link";
 import { simulateRegistrationPreviewSubmit } from "@/lib/registration-preview-submit";
-import type { RegistrationThemeWithExperience } from "@/lib/registration-experience";
+import {
+  resolveRegistrationExperience,
+  type RegistrationThemeWithExperience,
+} from "@/lib/registration-experience";
+import type { RegistrationFormFlowMode } from "@/components/registration/registration-form";
 import { pickRegistrationPublicShellKind } from "@/lib/registration-public-shell";
 import { cn } from "@/lib/utils";
 
@@ -87,6 +91,11 @@ export function PublicRegistrationOpen({
     resolvedExperience:
       resolvedExperience as RegistrationThemeWithExperience["resolvedExperience"],
   };
+  const effectiveExperience = resolveRegistrationExperience(themeForExperience);
+  const registrationFlowMode: RegistrationFormFlowMode =
+    effectiveExperience.flow === "conversational" ? "conversational" : "default";
+  const formSchemaKey = formSchema?.fields.map((field) => field.id).join(",") ?? "";
+
   const shellKind = pickRegistrationPublicShellKind(
     preset,
     themeForExperience,
@@ -136,8 +145,10 @@ export function PublicRegistrationOpen({
           />
         ) : null}
         <RegistrationForm
+          key={`${slug}-${registrationFlowMode}-${formSchemaKey}`}
           schema={formSchema}
           variant={isPreview ? "preview" : "public"}
+          flowMode={registrationFlowMode}
           activitySlug={slug}
           onPreviewSubmit={
             isPreview

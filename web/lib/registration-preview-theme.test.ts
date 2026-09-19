@@ -60,6 +60,23 @@ describe("registration preview theme", () => {
     expect(resolved.heroImageUrl).toBeNull();
   });
 
+  it("resolves conversational flow from draft experience overrides", () => {
+    const resolved = resolveRegistrationPreviewTheme(activity, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: {
+        layout: "centered",
+        style: "modern",
+        flow: "conversational",
+        heroDisplay: "cover",
+      },
+    });
+
+    expect(resolved.resolvedExperience.flow).toBe("conversational");
+  });
+
   it("resolves poster layout from draft experience overrides", () => {
     const resolved = resolveRegistrationPreviewTheme(activity, {
       preset: "classic",

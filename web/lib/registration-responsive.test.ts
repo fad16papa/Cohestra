@@ -25,6 +25,22 @@ describe("registration responsive layout contract", () => {
     expect(source).toMatch(/max-w-\[960px\]/);
   });
 
+  it("PublicRegistrationOpen passes conversational flowMode to RegistrationForm", () => {
+    const openSource = readFileSync(
+      join(process.cwd(), "components/registration/public-registration-open.tsx"),
+      "utf8"
+    );
+    const formSource = readFileSync(
+      join(process.cwd(), "components/registration/registration-form.tsx"),
+      "utf8"
+    );
+    expect(openSource).toMatch(/registrationFlowMode/);
+    expect(openSource).toMatch(/flowMode=\{registrationFlowMode\}/);
+    expect(formSource).toMatch(/flowMode === "conversational"/);
+    expect(formSource).toMatch(/listConversationalSteps/);
+    expect(formSource).toMatch(/firstInvalidIndex/);
+  });
+
   it("Event Poster shell uses poster panel and shared form section", () => {
     const source = readFileSync(
       join(process.cwd(), "components/registration/public-registration-open.tsx"),
