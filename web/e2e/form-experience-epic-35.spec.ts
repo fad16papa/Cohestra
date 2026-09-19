@@ -4,7 +4,6 @@ import {
   applyRegistrationTheme,
   EPIC_35_EXPERIENCES,
   EPIC_35_VIEWPORTS,
-  applyRegistrationTheme,
   fetchActivity,
   findActivityIdBySlug,
   loginOperator,
