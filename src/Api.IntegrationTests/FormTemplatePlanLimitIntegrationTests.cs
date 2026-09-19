@@ -3,10 +3,6 @@ using System.Net.Http.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Contracts.Activities;
 using Cohestra.Domain.Activities;
-using Cohestra.Domain.Tenants;
-using Cohestra.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Cohestra.Api.IntegrationTests;
 
@@ -21,49 +17,59 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
 
-        try
+        var slug = $"basic-ft-{Guid.NewGuid():N}"[..16];
+        var adminEmail = $"admin-{slug}@example.com";
+
+        using var platformClient = Factory.CreateClient();
+        var platformToken = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platformClient);
+        IntegrationTestHelpers.UseBearerToken(platformClient, platformToken);
+
+        var tenant = await IntegrationTestHelpers.CreateTenantViaPlatformAsync(
+            platformClient,
+            "Basic form template cap",
+            slug,
+            adminEmail);
+
+        var (adminUser, adminPassword) = await IntegrationTestHelpers.CreateTenantAdminUserAsync(
+            Factory.Services,
+            tenant.Id,
+            adminEmail);
+
+        using var adminClient = Factory.CreateClient();
+        IntegrationTestHelpers.UseTenantHost(adminClient, slug);
+        var accessToken = await IntegrationTestHelpers.LoginAsync(
+            adminClient,
+            adminUser.Email!,
+            adminPassword);
+        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+
+        await AssertFormTemplateUsageAsync(adminClient, expectedUsed: 0, expectedLimit: 1);
+
+        var schema = BuildMinimalSchema();
+        var firstName = $"First template {Guid.NewGuid():N}";
+        using var firstResponse = await adminClient.PostAsJsonAsync(
+            "/api/v1/admin/form-templates",
+            new CreateFormTemplateRequest(firstName, schema),
+            IntegrationTestHelpers.JsonOptions);
+        if (firstResponse.StatusCode != HttpStatusCode.Created)
         {
-            await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
-            await IntegrationTestHelpers.ClearDefaultTenantFormTemplatesAsync(Factory.Services);
-            await EnsureDefaultTenantPlanAsync(TenantPlan.Basic);
-
-            using var adminClient = Factory.CreateClient();
-            var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
-            IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
-
-            await AssertFormTemplateUsageAsync(adminClient, expectedUsed: 0, expectedLimit: 1);
-
-            var schema = BuildMinimalSchema();
-            var firstName = $"First template {Guid.NewGuid():N}";
-            using var firstResponse = await adminClient.PostAsJsonAsync(
-                "/api/v1/admin/form-templates",
-                new CreateFormTemplateRequest(firstName, schema),
-                IntegrationTestHelpers.JsonOptions);
-            if (firstResponse.StatusCode != HttpStatusCode.Created)
-            {
-                var setupFailure = await ReadProblemDetailAsync(firstResponse);
-                Assert.Fail(
-                    $"Expected Created for first Basic template, got {(int)firstResponse.StatusCode}: {setupFailure}");
-            }
-
-            using var secondResponse = await adminClient.PostAsJsonAsync(
-                "/api/v1/admin/form-templates",
-                new CreateFormTemplateRequest($"Second template {Guid.NewGuid():N}", schema),
-                IntegrationTestHelpers.JsonOptions);
-
-            Assert.Equal(HttpStatusCode.Forbidden, secondResponse.StatusCode);
-
-            var errorCode = await IntegrationTestHelpers.ReadProblemErrorCodeAsync(secondResponse);
-            Assert.Equal("plan_locked", errorCode);
-
-            var detail = await ReadProblemDetailAsync(secondResponse);
-            Assert.Contains("Core saves up to 5 form recipes", detail, StringComparison.OrdinalIgnoreCase);
+            var setupFailure = await ReadProblemDetailAsync(firstResponse);
+            Assert.Fail(
+                $"Expected Created for first Basic template, got {(int)firstResponse.StatusCode}: {setupFailure}");
         }
-        finally
-        {
-            await IntegrationTestHelpers.ClearDefaultTenantFormTemplatesAsync(Factory.Services);
-            await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
-        }
+
+        using var secondResponse = await adminClient.PostAsJsonAsync(
+            "/api/v1/admin/form-templates",
+            new CreateFormTemplateRequest($"Second template {Guid.NewGuid():N}", schema),
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.Forbidden, secondResponse.StatusCode);
+
+        var errorCode = await IntegrationTestHelpers.ReadProblemErrorCodeAsync(secondResponse);
+        Assert.Equal("plan_locked", errorCode);
+
+        var detail = await ReadProblemDetailAsync(secondResponse);
+        Assert.Contains("Core saves up to 5 form recipes", detail, StringComparison.OrdinalIgnoreCase);
     }
 
     [SkippableFact]
@@ -149,22 +155,4 @@ public sealed class FormTemplatePlanLimitIntegrationTests(IntegrationTestFixture
         return raw;
     }
 
-    private async Task EnsureDefaultTenantPlanAsync(TenantPlan plan)
-    {
-        await using var scope = Factory.Services.CreateAsyncScope();
-        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
-
-        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
-        var tenant = await dbContext.Tenants.FirstAsync(t => t.Id == TenantIds.Default);
-        tenant.Plan = plan;
-        tenant.UpdatedAt = DateTimeOffset.UtcNow;
-
-        // Ignore filters so leftover templates from earlier tests always clear for this tenant.
-        await dbContext.SaveChangesAsync();
-        await IntegrationTestHelpers.ClearDefaultTenantFormTemplatesAsync(Factory.Services);
-
-        var remaining = await dbContext.IgnoreTenantFilters<TenantFormTemplate>()
-            .CountAsync(template => template.TenantId == TenantIds.Default);
-        Assert.Equal(0, remaining);
-    }
 }
