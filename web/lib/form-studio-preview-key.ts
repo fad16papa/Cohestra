@@ -1,8 +1,14 @@
-import type { ActivityFormSchema } from "@/lib/activities-api";
+import type { ActivityFormSchema, RegistrationTheme } from "@/lib/activities-api";
+import { buildExperiencePreviewKey } from "@/lib/registration-experience-studio";
 
 /** Stable key for remounting preview when draft schema materially changes. */
-export function buildFormStudioPreviewKey(schema: ActivityFormSchema): string {
+export function buildFormStudioPreviewKey(
+  schema: ActivityFormSchema,
+  theme?: RegistrationTheme | null
+): string {
+  const experiencePart = theme ? buildExperiencePreviewKey(theme) : "";
   return [
+    experiencePart,
     schema.meta?.splitIntoSteps ? "steps" : "page",
     schema.meta?.introMarkdown ?? "",
     schema.meta?.successCopyMarkdown ?? "",

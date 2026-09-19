@@ -358,7 +358,9 @@ development_status:
   35-2-modern-centered-polish: done
   35-3-split-event-layout: done
   35-4-event-poster-rsvp: done
-  35-5-conversational-flow: backlog
+  35-5-conversational-flow: done
+  35-6-form-studio-experience-controls: done
+  35-7-entitlements-regression-integration: ready-for-dev
   epic-35-retrospective: optional
 
   33-1-marketingdemoclub-seed-presentational-mounts: done

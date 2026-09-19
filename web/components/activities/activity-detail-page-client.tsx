@@ -20,7 +20,8 @@ import { useActivityScheduleConflicts } from "@/components/activities/use-activi
 import { useAuth } from "@/components/auth/auth-provider";
 import { useAdminPageMeta } from "@/components/layouts/admin-shell-context";
 import { ProductErrorState } from "@/components/shared/product-error-state";
-import { fetchActivityById, type Activity } from "@/lib/activities-api";
+import { fetchActivityById, type Activity, type RegistrationTheme } from "@/lib/activities-api";
+import { themeFromActivity } from "@/lib/registration-preview-theme";
 import { getPublishGateIssues } from "@/lib/form-schema-utils";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +74,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formDirty, setFormDirty] = useState(false);
   const [designDirty, setDesignDirty] = useState(false);
+  const [designDraftTheme, setDesignDraftTheme] = useState<RegistrationTheme | null>(null);
   const [scheduleDirty, setScheduleDirty] = useState(false);
   const [activeTab, setActiveTab] = useState<ActivityDetailTab>(() => {
     const tab = searchParams.get("tab");
@@ -114,9 +116,16 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     };
   }, [authFetch, id]);
 
+  useEffect(() => {
+    if (activity) {
+      setDesignDraftTheme(themeFromActivity(activity));
+    }
+  }, [activity?.id, activity?.registrationTheme, activity?.resolvedRegistrationTheme]);
+
   const handleActivityUpdated = useCallback(
     (updated: Activity) => {
       setActivity(updated);
+      setDesignDraftTheme(themeFromActivity(updated));
       refresh();
     },
     [refresh]
@@ -235,6 +244,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
           activity={activity}
           onActivityUpdated={handleActivityUpdated}
           onDirtyChange={setDesignDirty}
+          onDraftThemeChange={setDesignDraftTheme}
         />
       </div>
 
@@ -244,6 +254,8 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
           activity={activity}
           onActivityUpdated={handleActivityUpdated}
           onDirtyChange={setFormDirty}
+          designDraftTheme={designDraftTheme}
+          designPreviewDirty={designDirty}
         />
       </div>
 
