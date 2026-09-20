@@ -7,6 +7,11 @@ public sealed class ActivityFormSchema
     public FormSchemaMeta? Meta { get; set; }
 
     public List<FormFieldDefinition> Fields { get; set; } = [];
+
+    /// <summary>
+    /// Optional visual composition (v2). When null, consumers synthesize linear fieldRef nodes from <see cref="Fields"/>.
+    /// </summary>
+    public List<FormCompositionNode>? Composition { get; set; }
 }
 
 public sealed class FormSchemaMeta

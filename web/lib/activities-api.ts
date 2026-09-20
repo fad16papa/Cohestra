@@ -69,10 +69,32 @@ export type FormSchemaMeta = {
   showPublisherWebsiteLink?: boolean | null;
 };
 
+export type FormCompositionContentProps = {
+  text?: string | null;
+  level?: number | null;
+  imageUrl?: string | null;
+  alt?: string | null;
+};
+
+export type FormCompositionNode = {
+  id: string;
+  kind: string;
+  fieldId?: string | null;
+  contentType?: string | null;
+  content?: FormCompositionContentProps | null;
+  title?: string | null;
+  description?: string | null;
+  children?: FormCompositionNode[] | null;
+  columns?: FormCompositionNode[][] | null;
+  domain?: string | null;
+};
+
 export type ActivityFormSchema = {
   version: number;
   meta?: FormSchemaMeta | null;
   fields: FormFieldDefinition[];
+  /** Stored for v2; API may return synthesized effective composition on read. */
+  composition?: FormCompositionNode[] | null;
 };
 
 export type RegistrationThemePreset = "classic" | "card" | "immersive" | "compact";
@@ -292,6 +314,101 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
         infoText: typeof infoText === "string" ? infoText : null,
       });
     }),
+    composition: parseFormComposition(schema.composition ?? schema.Composition),
+  };
+}
+
+function parseFormComposition(raw: unknown): FormCompositionNode[] | null {
+  if (raw === null || raw === undefined) {
+    return null;
+  }
+
+  if (!Array.isArray(raw)) {
+    throw new Error("Invalid activity form schema composition");
+  }
+
+  return raw.map(parseFormCompositionNode);
+}
+
+function parseFormCompositionNode(raw: unknown): FormCompositionNode {
+  if (typeof raw !== "object" || raw === null) {
+    throw new Error("Invalid composition node");
+  }
+
+  const node = raw as Record<string, unknown>;
+  const id = node.id ?? node.Id;
+  const kind = node.kind ?? node.Kind;
+  if (typeof id !== "string" || typeof kind !== "string") {
+    throw new Error("Invalid composition node");
+  }
+
+  const contentRaw = node.content ?? node.Content;
+  let content: FormCompositionContentProps | null = null;
+  if (contentRaw && typeof contentRaw === "object") {
+    const contentRecord = contentRaw as Record<string, unknown>;
+    content = {
+      text:
+        typeof contentRecord.text === "string"
+          ? contentRecord.text
+          : typeof contentRecord.Text === "string"
+            ? contentRecord.Text
+            : null,
+      level:
+        typeof contentRecord.level === "number"
+          ? contentRecord.level
+          : typeof contentRecord.Level === "number"
+            ? contentRecord.Level
+            : null,
+      imageUrl:
+        typeof contentRecord.imageUrl === "string"
+          ? contentRecord.imageUrl
+          : typeof contentRecord.ImageUrl === "string"
+            ? contentRecord.ImageUrl
+            : null,
+      alt:
+        typeof contentRecord.alt === "string"
+          ? contentRecord.alt
+          : typeof contentRecord.Alt === "string"
+            ? contentRecord.Alt
+            : null,
+    };
+  }
+
+  const childrenRaw = node.children ?? node.Children;
+  const columnsRaw = node.columns ?? node.Columns;
+
+  return {
+    id,
+    kind,
+    fieldId:
+      typeof (node.fieldId ?? node.FieldId) === "string"
+        ? ((node.fieldId ?? node.FieldId) as string)
+        : null,
+    contentType:
+      typeof (node.contentType ?? node.ContentType) === "string"
+        ? ((node.contentType ?? node.ContentType) as string)
+        : null,
+    content,
+    title:
+      typeof (node.title ?? node.Title) === "string"
+        ? ((node.title ?? node.Title) as string)
+        : null,
+    description:
+      typeof (node.description ?? node.Description) === "string"
+        ? ((node.description ?? node.Description) as string)
+        : null,
+    children: Array.isArray(childrenRaw)
+      ? childrenRaw.map(parseFormCompositionNode)
+      : null,
+    columns: Array.isArray(columnsRaw)
+      ? columnsRaw.map((column) =>
+          Array.isArray(column) ? column.map(parseFormCompositionNode) : []
+        )
+      : null,
+    domain:
+      typeof (node.domain ?? node.Domain) === "string"
+        ? ((node.domain ?? node.Domain) as string)
+        : null,
   };
 }
 

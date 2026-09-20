@@ -48,6 +48,9 @@ internal static class FormSchemaMapper
                     schema.Meta.ConfirmationEmailBodyMarkdown,
                     schema.Meta.ClosedMessage,
                     schema.Meta.RegistrationClosesAt,
-                    schema.Meta.ShowPublisherWebsiteLink));
+                    schema.Meta.ShowPublisherWebsiteLink),
+            FormSchemaCompositionNormalizer.HasStoredComposition(schema)
+                ? FormSchemaCompositionMapper.MapToDto(schema.Composition!)
+                : null);
     }
 }

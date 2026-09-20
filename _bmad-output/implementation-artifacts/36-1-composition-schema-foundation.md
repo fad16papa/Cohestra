@@ -1,7 +1,7 @@
 # Story 36.1 — Composition schema foundation
 
 **Epic:** 36  
-**Status:** ready  
+**Status:** review  
 **Depends on:** Epic 36 planning artifacts (merged)
 
 ## User story

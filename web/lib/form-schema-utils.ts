@@ -2,8 +2,10 @@ import type {
   ActivityFormSchema,
   FormFieldDefinition,
   FormFieldType,
+  FormCompositionNode,
   FormSchemaMeta,
 } from "@/lib/activities-api";
+import { getEffectiveComposition, hasStoredComposition } from "@/lib/form-composition";
 import {
   applyPhoneFieldDefaults,
   DEFAULT_PHONE_COUNTRY,
@@ -87,11 +89,40 @@ export function normalizeFormSchema(
     return emptyFormSchema();
   }
 
+  const fields = schema.fields.map((field) => applyPhoneFieldDefaults({ ...field }));
+
   return {
     version: schema.version,
     meta: schema.meta ?? null,
-    fields: schema.fields.map((field) => applyPhoneFieldDefaults({ ...field })),
+    fields,
+    composition: hasStoredComposition(schema.composition)
+      ? schema.composition!
+      : null,
   };
+}
+
+/** Strip synthesized/read-only composition before persisting v1 schemas. */
+export function formSchemaForPersist(schema: ActivityFormSchema): ActivityFormSchema {
+  if (schema.version !== 2) {
+    return {
+      version: schema.version,
+      meta: schema.meta ?? null,
+      fields: schema.fields,
+    };
+  }
+
+  return {
+    version: schema.version,
+    meta: schema.meta ?? null,
+    fields: schema.fields,
+    composition: schema.composition ?? null,
+  };
+}
+
+export function getFormSchemaEffectiveComposition(
+  schema: ActivityFormSchema
+): FormCompositionNode[] {
+  return getEffectiveComposition(schema.fields, schema.composition ?? null);
 }
 
 export function createFieldId(type: FormFieldType, existingIds: Set<string>): string {
