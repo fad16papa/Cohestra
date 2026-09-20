@@ -23,6 +23,10 @@ import {
   filterFormFieldPaletteItems,
   getFormFieldPaletteGroups,
 } from "@/lib/form-field-palette";
+import {
+  compositionHasPresentationBlocks,
+  CONVERSATIONAL_PRESENTATION_NOTICE,
+} from "@/lib/form-composition-presentation";
 import { getDuplicateFieldIds } from "@/lib/form-schema-utils";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +39,8 @@ type FormCompositionBuilderProps = {
   corePlusLocked?: boolean;
   stepsEnabled?: boolean;
   stepsLocked?: boolean;
+  /** When true, show notice if presentation blocks will not appear on public conversational flow. */
+  conversationalFlowActive?: boolean;
 };
 
 const panelShell =
@@ -121,6 +127,7 @@ export function FormCompositionBuilder({
   corePlusLocked = false,
   stepsEnabled = false,
   stepsLocked = false,
+  conversationalFlowActive = false,
 }: FormCompositionBuilderProps) {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -218,6 +225,10 @@ export function FormCompositionBuilder({
     }
   }
 
+  const showConversationalPresentationNotice =
+    conversationalFlowActive &&
+    compositionHasPresentationBlocks(schema.fields, schema.composition);
+
   return (
     <div className={cn("space-y-4", className)}>
       <div>
@@ -227,6 +238,15 @@ export function FormCompositionBuilder({
           you edit — save when ready.
         </p>
       </div>
+
+      {showConversationalPresentationNotice ? (
+        <div
+          role="status"
+          className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
+        >
+          {CONVERSATIONAL_PRESENTATION_NOTICE}
+        </div>
+      ) : null}
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,18rem)]">
         <aside className={cn(panelShell, "p-3")}>
