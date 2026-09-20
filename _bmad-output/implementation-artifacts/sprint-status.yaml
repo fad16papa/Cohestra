@@ -367,7 +367,7 @@ development_status:
   epic-36: planned
   36-1-composition-schema-foundation: done
   36-2-builder-palette-reorder: done
-  36-3-content-blocks-sections: in-progress
+  36-3-content-blocks-sections: done
   36-4-columns-responsive-composition: backlog
   36-5-design-tokens-modern-centered: backlog
   36-6-preview-viewports-operator-ux: backlog
