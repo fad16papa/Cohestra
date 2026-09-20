@@ -1,6 +1,6 @@
 # Epic 36: Form Studio 2.0 — Visual Form Builder
 
-**Status:** in-progress (36.1–36.7 accepted; 36.7 merge + post-merge CI pending close)  
+**Status:** closed (36.1–36.7 accepted + merged; post-merge CI `35525772496` SUCCESS on `8b88114`)  
 **Source PRD:** `_bmad-output/planning-artifacts/prds/prd-form-studio-2-0-2026-09-20/prd.md`  
 **Architecture:** `_bmad-output/planning-artifacts/architecture-form-studio-2-0-2026-09-20/ARCHITECTURE-SPINE.md`  
 **UX:** `_bmad-output/planning-artifacts/ux-designs/ux-form-studio-2-0-2026-09-20/`
