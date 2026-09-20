@@ -26,12 +26,12 @@ const baseV1 = {
 };
 
 describe("form composition columns", () => {
-  it("adds columns with two non-empty columns", () => {
+  it("adds columns with two empty columns for authoring", () => {
     const next = addColumnsBlock(baseV1);
     const columns = next.composition?.find((node) => node.kind === "columns");
     expect(columns?.columns).toHaveLength(2);
-    expect(columns?.columns?.[0]?.length).toBeGreaterThan(0);
-    expect(columns?.columns?.[1]?.length).toBeGreaterThan(0);
+    expect(columns?.columns?.[0]).toEqual([]);
+    expect(columns?.columns?.[1]).toEqual([]);
   });
 
   it("unwraps column children when columns row is deleted", () => {
@@ -73,23 +73,24 @@ describe("form composition columns", () => {
     expect(before).not.toBe(after);
   });
 
-  it("supports cross-container drag reorder via canvas rows", () => {
+  it("moves a top-level field into a column when dropped on the columns row", () => {
     let schema = addInputFieldBlock(baseV1, "text");
     schema = addColumnsBlock(schema);
     const rows = getBuilderCanvasRows(schema);
-    const fieldRowIndex = rows.findIndex((row) => row.node.kind === "fieldRef");
-    const columnChildIndex = rows.findIndex(
-      (row) =>
-        row.columnIndex === 0 &&
-        row.node.kind === "content" &&
-        row.node.contentType === "heading"
+    const fieldRowIndex = rows.findIndex(
+      (row) => row.node.kind === "fieldRef" && row.node.fieldId === "text"
     );
+    const columnsRowIndex = rows.findIndex((row) => row.node.kind === "columns");
     expect(fieldRowIndex).toBeGreaterThanOrEqual(0);
-    expect(columnChildIndex).toBeGreaterThanOrEqual(0);
-    schema = reorderCompositionBlocks(schema, fieldRowIndex, columnChildIndex);
+    expect(columnsRowIndex).toBeGreaterThanOrEqual(0);
+    schema = reorderCompositionBlocks(schema, fieldRowIndex, columnsRowIndex);
     const columnsNode = schema.composition?.find((node) => node.kind === "columns");
     expect(
-      columnsNode?.columns?.[0]?.some((node) => node.kind === "fieldRef")
+      columnsNode?.columns?.some((column) =>
+        column.some(
+          (node) => node.kind === "fieldRef" && node.fieldId === "text"
+        )
+      )
     ).toBe(true);
   });
 });

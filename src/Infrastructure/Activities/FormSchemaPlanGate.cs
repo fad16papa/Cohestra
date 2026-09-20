@@ -38,8 +38,9 @@ internal static class FormSchemaPlanGate
         var hasSteps = schema.Meta is { SplitIntoSteps: true };
         var hasCorePlusFields = schema.Fields.Any(field =>
             FormFieldTypes.CorePlusOnly.Contains(field.Type));
+        var hasColumns = CompositionUsesColumns(schema.Composition);
 
-        if (!hasRecipes && !hasSteps && !hasCorePlusFields)
+        if (!hasRecipes && !hasSteps && !hasCorePlusFields && !hasColumns)
         {
             return;
         }
@@ -60,6 +61,53 @@ internal static class FormSchemaPlanGate
         {
             throw new FormSchemaPlanLockedException(
                 "Split into steps requires a Pro plan.");
+        }
+
+        if (hasColumns && plan is TenantPlan.Basic)
+        {
+            throw new FormSchemaPlanLockedException(
+                "Two-column layouts require a Core or Pro plan.");
+        }
+    }
+
+    internal static bool CompositionUsesColumns(IReadOnlyList<FormCompositionNode>? composition)
+    {
+        if (composition is null or { Count: 0 })
+        {
+            return false;
+        }
+
+        return Walk(composition);
+
+        static bool Walk(IEnumerable<FormCompositionNode> nodes)
+        {
+            foreach (var node in nodes)
+            {
+                if (node.Kind == FormCompositionKinds.Columns)
+                {
+                    return true;
+                }
+
+                if (node.Children is { Count: > 0 } && Walk(node.Children))
+                {
+                    return true;
+                }
+
+                if (node.Columns is not { Count: > 0 })
+                {
+                    continue;
+                }
+
+                foreach (var column in node.Columns)
+                {
+                    if (column is { Count: > 0 } && Walk(column))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

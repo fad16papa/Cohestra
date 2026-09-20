@@ -49,4 +49,33 @@ describe("form-composition-client", () => {
       issue.includes("more than once")
     )).toBe(true);
   });
+
+  it("flags empty columns before save", () => {
+    const schema: ActivityFormSchema = {
+      version: 2,
+      fields: [
+        {
+          id: "email",
+          type: "email",
+          label: "Email",
+          required: true,
+          placeholder: null,
+          options: null,
+          consentText: null,
+        },
+      ],
+      composition: [
+        {
+          id: "cols",
+          kind: "columns",
+          columns: [[], []],
+        },
+        { id: "ref", kind: "fieldRef", fieldId: "email" },
+      ],
+    };
+
+    expect(getCompositionClientIssues(schema)).toContain(
+      'Columns block "cols" cannot have an empty column.'
+    );
+  });
 });

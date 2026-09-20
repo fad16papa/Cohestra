@@ -276,6 +276,62 @@ public sealed class FormSchemaCompositionIntegrationTests(IntegrationTestFixture
         AssertCompositionTreeEqual(schema.Composition!, saved!.FormSchema!.Composition!);
     }
 
+    [SkippableFact]
+    public async Task SaveFormSchema_BasicTenantColumnsComposition_Returns403PlanLocked()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var (client, activity) = await CreateBasicTenantWithPublishedActivityAsync();
+        var schema = BuildColumnsCompositionSchema();
+
+        using var saveResponse = await client.PutAsJsonAsync(
+            $"/api/v1/admin/activities/{activity.Id}/form-schema",
+            new SaveActivityFormSchemaRequest(schema),
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.Forbidden, saveResponse.StatusCode);
+        var body = await saveResponse.Content.ReadAsStringAsync();
+        Assert.Contains("plan_locked", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Two-column", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task<(HttpClient Client, Activity Activity)> CreateBasicTenantWithPublishedActivityAsync()
+    {
+        var slug = $"cols-basic-{Guid.NewGuid():N}"[..16];
+        var adminEmail = $"admin-{slug}@example.com";
+
+        using var platformClient = Factory.CreateClient();
+        var platformToken = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platformClient);
+        IntegrationTestHelpers.UseBearerToken(platformClient, platformToken);
+
+        var tenant = await IntegrationTestHelpers.CreateTenantViaPlatformAsync(
+            platformClient,
+            "Columns plan gate",
+            slug,
+            adminEmail);
+
+        var (_, adminPassword) = await IntegrationTestHelpers.CreateTenantAdminUserAsync(
+            Factory.Services,
+            tenant.Id,
+            adminEmail);
+
+        var activitySlug = $"act-{Guid.NewGuid():N}"[..20];
+        var activity = await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            tenant.Id,
+            activitySlug);
+
+        var client = Factory.CreateClient();
+        IntegrationTestHelpers.UseTenantHost(client, slug);
+        var accessToken = await IntegrationTestHelpers.LoginAsync(
+            client,
+            adminEmail,
+            adminPassword);
+        IntegrationTestHelpers.UseBearerToken(client, accessToken);
+
+        return (client, activity);
+    }
+
     private static ActivityFormSchemaDto BuildColumnsCompositionSchema()
     {
         return new ActivityFormSchemaDto(

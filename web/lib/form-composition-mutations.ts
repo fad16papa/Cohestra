@@ -226,24 +226,7 @@ export function addColumnsBlock(
   const node: FormCompositionNode = {
     id: createCompositionNodeId("columns"),
     kind: "columns",
-    columns: [
-      [
-        {
-          id: createCompositionNodeId("heading"),
-          kind: "content",
-          contentType: "heading",
-          content: { text: "Left column", level: 3 },
-        },
-      ],
-      [
-        {
-          id: createCompositionNodeId("heading"),
-          kind: "content",
-          contentType: "heading",
-          content: { text: "Right column", level: 3 },
-        },
-      ],
-    ],
+    columns: [[], []],
   };
 
   const containerPath = resolveInsertionTarget(base, options?.selectedBlockId ?? null);
@@ -377,6 +360,10 @@ export function reorderCompositionBlocks(
   }
 
   if (containerPathsEqual(fromRow.containerPath, toRow.containerPath)) {
+    if (toRow.node.kind === "columns" || fromRow.node.kind === "columns") {
+      return moveCompositionBlockBetweenRows(base, fromRow, toRow);
+    }
+
     return reorderSiblingsInContainer(
       base,
       fromRow.containerPath,
@@ -418,6 +405,28 @@ export function moveCompositionBlockBetweenRows(
   const anchorLocation = findNodeLocation(root, anchorNodeId);
   if (!anchorLocation) {
     return schema;
+  }
+
+  if (anchorLocation.node.kind === "columns") {
+    const columns = anchorLocation.node.columns ?? [[], []];
+    const targetColumn: 0 | 1 =
+      (columns[0]?.length ?? 0) === 0
+        ? 0
+        : (columns[1]?.length ?? 0) === 0
+          ? 1
+          : 0;
+    const targetPath = [
+      ...anchorLocation.containerPath,
+      anchorLocation.indexInContainer,
+      targetColumn,
+    ];
+
+    return insertNodeInContainer(
+      without,
+      targetPath,
+      removed,
+      columns[targetColumn]?.length ?? 0
+    );
   }
 
   return insertNodeInContainer(

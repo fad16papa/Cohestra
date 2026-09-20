@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical, Lock, Plus, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { FormCompositionInspector } from "@/components/activities/form-composition-inspector";
@@ -22,6 +22,7 @@ import {
   type ContentBlockType,
 } from "@/lib/form-composition-mutations";
 import {
+  COLUMNS_LOCKED_REASON,
   filterFormFieldPaletteItems,
   getFormFieldPaletteGroups,
 } from "@/lib/form-field-palette";
@@ -252,6 +253,10 @@ export function FormCompositionBuilder({
   }
 
   function addColumns() {
+    if (corePlusLocked) {
+      return;
+    }
+
     const next = addColumnsBlock(schema, { selectedBlockId });
     applySchema(next);
     selectNewBlock(next);
@@ -362,12 +367,26 @@ export function FormCompositionBuilder({
               </button>
               <button
                 type="button"
-                disabled={disabled}
+                disabled={disabled || corePlusLocked}
+                title={corePlusLocked ? COLUMNS_LOCKED_REASON : undefined}
                 onClick={addColumns}
-                className="mt-1 flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                className={cn(
+                  "mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  corePlusLocked
+                    ? "cursor-not-allowed text-text-muted-warm opacity-70"
+                    : "text-text-warm hover:bg-muted/50"
+                )}
               >
+                {corePlusLocked ? (
+                  <Lock className="size-3.5 shrink-0" aria-hidden />
+                ) : null}
                 Two-column row
               </button>
+              {corePlusLocked ? (
+                <p className="mt-1 px-1 text-xs text-text-muted-warm">
+                  {COLUMNS_LOCKED_REASON}
+                </p>
+              ) : null}
             </div>
           </div>
           <Button

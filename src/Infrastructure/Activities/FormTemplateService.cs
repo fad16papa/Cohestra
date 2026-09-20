@@ -323,7 +323,8 @@ public sealed class FormTemplateService(
         var hasCorePlusFields = schema.Fields.Any(field =>
             FormFieldTypes.CorePlusOnly.Contains(field.Type));
 
-        if (!hasRecipes && !hasSteps && !hasCorePlusFields)
+        var hasColumns = FormSchemaPlanGate.CompositionUsesColumns(schema.Composition);
+        if (!hasRecipes && !hasSteps && !hasCorePlusFields && !hasColumns)
         {
             return;
         }
@@ -346,6 +347,12 @@ public sealed class FormTemplateService(
         {
             throw new FormSchemaPlanLockedException(
                 "Split into steps requires a Pro plan.");
+        }
+
+        if (hasColumns && plan is TenantPlan.Basic)
+        {
+            throw new FormSchemaPlanLockedException(
+                "Two-column layouts require a Core or Pro plan.");
         }
     }
 
