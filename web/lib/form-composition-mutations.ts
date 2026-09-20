@@ -132,7 +132,14 @@ export function syncCompositionAfterFieldIdChange(
   previousFieldId: string,
   nextFieldId: string
 ): ActivityFormSchema {
-  if (previousFieldId === nextFieldId) {
+  if (previousFieldId === nextFieldId || !nextFieldId.trim()) {
+    return schema;
+  }
+
+  const duplicateField = schema.fields.some(
+    (field) => field.id === nextFieldId && field.id !== previousFieldId
+  );
+  if (duplicateField) {
     return schema;
   }
 

@@ -147,6 +147,21 @@ export function FormFieldEditor({
 
       const updated = { ...field, ...patch };
 
+      if (patch.id !== undefined) {
+        const trimmed = patch.id.trim();
+        if (
+          !isValidFieldId(trimmed) ||
+          schema.fields.some(
+            (candidate, candidateIndex) =>
+              candidateIndex !== fieldIndex && candidate.id === trimmed
+          )
+        ) {
+          updated.id = field.id;
+        } else {
+          updated.id = trimmed;
+        }
+      }
+
       if (patch.type && patch.type !== field.type) {
         if (fieldNeedsOptions(patch.type) && !updated.options?.length) {
           updated.options = [
@@ -207,8 +222,8 @@ export function FormFieldEditor({
     if (
       previousField &&
       nextField &&
-      patch.id &&
-      patch.id !== previousField.id
+      nextField.id !== previousField.id &&
+      isValidFieldId(nextField.id)
     ) {
       const { previousBlockId, nextBlockId } = compositionBlockIdAfterFieldRename(
         previousField.id,

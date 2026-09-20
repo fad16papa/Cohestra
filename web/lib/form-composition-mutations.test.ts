@@ -97,6 +97,22 @@ describe("form-composition-mutations", () => {
     expect(reordered.fields.map((f) => f.id).sort()).toEqual(["email", "name"]);
   });
 
+  it("does not sync composition when rename collides with existing field id", () => {
+    const editable = ensureBuilderEditableSchema(v1Schema);
+    const withRenamedField = {
+      ...editable,
+      fields: editable.fields.map((f) =>
+        f.id === "name" ? { ...f, id: "email" } : f
+      ),
+    };
+    const synced = syncCompositionAfterFieldIdChange(
+      withRenamedField,
+      "name",
+      "email"
+    );
+    expect(synced.composition?.find((n) => n.fieldId === "name")).toBeDefined();
+  });
+
   it("keeps fieldRef in sync when field id changes", () => {
     const editable = ensureBuilderEditableSchema(v1Schema);
     const renamed = syncCompositionAfterFieldIdChange(
