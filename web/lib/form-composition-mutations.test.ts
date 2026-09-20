@@ -59,6 +59,34 @@ describe("form-composition-mutations", () => {
     });
   });
 
+  it("reorders canvas indices without moving non-fieldRef siblings", () => {
+    const editable = ensureBuilderEditableSchema(v1Schema);
+    const withDivider: ActivityFormSchema = {
+      ...editable,
+      composition: [
+        editable.composition![0]!,
+        {
+          id: "divider-1",
+          kind: "content",
+          contentType: "divider",
+        },
+        editable.composition![1]!,
+      ],
+    };
+
+    const reordered = reorderCompositionBlocks(withDivider, 0, 1);
+    expect(reordered.composition?.map((node) => node.kind)).toEqual([
+      "fieldRef",
+      "content",
+      "fieldRef",
+    ]);
+    expect(
+      reordered.composition
+        ?.filter((node) => node.kind === "fieldRef")
+        .map((node) => node.fieldId)
+    ).toEqual(["email", "name"]);
+  });
+
   it("reorders composition without changing field ids", () => {
     const editable = ensureBuilderEditableSchema(v1Schema);
     const reordered = reorderCompositionBlocks(editable, 0, 1);

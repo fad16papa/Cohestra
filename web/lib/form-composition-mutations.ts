@@ -91,27 +91,39 @@ export function removeFieldRefBlock(
 
 export function reorderCompositionBlocks(
   schema: ActivityFormSchema,
-  fromIndex: number,
-  toIndex: number
+  fromCanvasIndex: number,
+  toCanvasIndex: number
 ): ActivityFormSchema {
   const base = ensureBuilderEditableSchema(schema);
-  const nodes = [...(base.composition ?? [])];
+  const composition = [...(base.composition ?? [])];
+  const fieldRefSlotIndexes: number[] = [];
+
+  composition.forEach((node, index) => {
+    if (node.kind === "fieldRef") {
+      fieldRefSlotIndexes.push(index);
+    }
+  });
+
   if (
-    fromIndex < 0 ||
-    toIndex < 0 ||
-    fromIndex >= nodes.length ||
-    toIndex >= nodes.length ||
-    fromIndex === toIndex
+    fromCanvasIndex < 0 ||
+    toCanvasIndex < 0 ||
+    fromCanvasIndex >= fieldRefSlotIndexes.length ||
+    toCanvasIndex >= fieldRefSlotIndexes.length ||
+    fromCanvasIndex === toCanvasIndex
   ) {
     return base;
   }
 
-  const [moved] = nodes.splice(fromIndex, 1);
-  nodes.splice(toIndex, 0, moved!);
+  const fieldRefNodes = fieldRefSlotIndexes.map((index) => composition[index]!);
+  const [moved] = fieldRefNodes.splice(fromCanvasIndex, 1);
+  fieldRefNodes.splice(toCanvasIndex, 0, moved!);
+  fieldRefSlotIndexes.forEach((slotIndex, refIndex) => {
+    composition[slotIndex] = fieldRefNodes[refIndex]!;
+  });
 
   return {
     ...base,
-    composition: nodes,
+    composition,
   };
 }
 
@@ -137,9 +149,34 @@ export function syncCompositionAfterFieldIdChange(
     };
   });
 
+  const fields = base.fields.map((field) => {
+    if (field.visibleWhen?.fieldId !== previousFieldId) {
+      return field;
+    }
+
+    return {
+      ...field,
+      visibleWhen: {
+        ...field.visibleWhen,
+        fieldId: nextFieldId,
+      },
+    };
+  });
+
   return {
     ...base,
+    fields,
     composition,
+  };
+}
+
+export function compositionBlockIdAfterFieldRename(
+  previousFieldId: string,
+  nextFieldId: string
+): { previousBlockId: string; nextBlockId: string } {
+  return {
+    previousBlockId: compositionBlockIdForField(previousFieldId),
+    nextBlockId: compositionBlockIdForField(nextFieldId),
   };
 }
 

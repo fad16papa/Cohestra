@@ -1,7 +1,7 @@
 # Story 36.2 — Builder shell + palette + reorder UI
 
 **Epic:** 36  
-**Status:** in-progress  
+**Status:** review  
 **Depends on:** 36.1 accepted
 
 ## User story
@@ -18,17 +18,18 @@ As a tenant operator, I can see my form as ordered blocks, add fields from a pal
 
 ## Acceptance
 
-- [ ] Builder shell replaces linear-only field list for Form tab Build mode
-- [ ] Palette adds field + matching fieldRef atomically
-- [ ] Reorder updates composition; field IDs stable
-- [ ] Keyboard move up/down works
-- [ ] Selection by block id survives reorder
-- [ ] Empty state with primary add action
-- [ ] Unsaved draft visible in Preview
-- [ ] Public RegistrationForm renders fields in composition order
-- [ ] v1 forms open and edit without manual migration until save
-- [ ] Save/reload preserves order (v2)
-- [ ] Tests + code review + checkpoint
+- [x] Builder shell replaces linear-only field list for Form tab Build mode
+- [x] Palette adds field + matching fieldRef atomically
+- [x] Reorder updates composition; field IDs stable
+- [x] Keyboard move up/down works
+- [x] Selection by block id survives reorder
+- [x] Empty state with primary add action
+- [x] Unsaved draft visible in Preview (composition in preview key + draft schema)
+- [x] Public RegistrationForm renders fields in composition order
+- [x] v1 forms open and edit without manual migration until save (ensureBuilderEditableSchema on mutate)
+- [x] Save/reload preserves order (v2) — `FormSchemaCompositionIntegrationTests` + client persist round-trip tests
+- [x] Automated builder flow tests + adversarial fixes (canvas reorder, selection on id rename)
+- [ ] Live operator checkpoint (see `36-2-builder-checkpoint-evidence.md`) — required before DONE
 
 ## Out of scope
 

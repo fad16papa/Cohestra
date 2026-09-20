@@ -1,4 +1,5 @@
 import type { ActivityFormSchema, RegistrationTheme } from "@/lib/activities-api";
+import { getEffectiveComposition } from "@/lib/form-composition";
 import { flattenFieldRefOrder } from "@/lib/form-composition-order";
 import { buildExperiencePreviewKey } from "@/lib/registration-experience-studio";
 
@@ -8,7 +9,9 @@ export function buildFormStudioPreviewKey(
   theme?: RegistrationTheme | null
 ): string {
   const experiencePart = theme ? buildExperiencePreviewKey(theme) : "";
-  const compositionOrder = flattenFieldRefOrder(schema.composition ?? null).join(",");
+  const compositionOrder = flattenFieldRefOrder(
+    getEffectiveComposition(schema.fields, schema.composition ?? null)
+  ).join(",");
 
   return [
     experiencePart,

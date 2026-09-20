@@ -301,6 +301,9 @@ export function FormCompositionBuilder({
           stepsLocked={stepsLocked}
           inspectorOnly
           inspectorFieldIndex={selectedFieldIndex}
+          onCompositionBlockIdRenamed={(_previous, nextBlockId) => {
+            setSelectedBlockId(nextBlockId);
+          }}
           className="min-h-[20rem] lg:min-h-[28rem]"
         />
       </div>

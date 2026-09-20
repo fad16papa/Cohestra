@@ -16,7 +16,10 @@ import type {
   FormFieldType,
   FormFieldVisibleWhen,
 } from "@/lib/activities-api";
-import { syncCompositionAfterFieldIdChange } from "@/lib/form-composition-mutations";
+import {
+  compositionBlockIdAfterFieldRename,
+  syncCompositionAfterFieldIdChange,
+} from "@/lib/form-composition-mutations";
 import {
   createDefaultField,
   fieldAllowsMinMax,
@@ -51,6 +54,8 @@ type FormFieldEditorProps = {
   /** Story 36.2 — render field properties panel only (composition builder inspector). */
   inspectorOnly?: boolean;
   inspectorFieldIndex?: number | null;
+  /** When field id changes, composition block ids change — keep canvas selection in sync. */
+  onCompositionBlockIdRenamed?: (previousBlockId: string, nextBlockId: string) => void;
 };
 
 const editorPanelShellClassName =
@@ -97,6 +102,7 @@ export function FormFieldEditor({
   stepsLocked = false,
   inspectorOnly = false,
   inspectorFieldIndex = null,
+  onCompositionBlockIdRenamed,
 }: FormFieldEditorProps) {
   const [addType, setAddType] = useState<FormFieldType>("text");
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -204,6 +210,10 @@ export function FormFieldEditor({
       patch.id &&
       patch.id !== previousField.id
     ) {
+      const { previousBlockId, nextBlockId } = compositionBlockIdAfterFieldRename(
+        previousField.id,
+        nextField.id
+      );
       onChange(
         syncCompositionAfterFieldIdChange(
           { ...schema, fields: next },
@@ -211,6 +221,7 @@ export function FormFieldEditor({
           nextField.id
         )
       );
+      onCompositionBlockIdRenamed?.(previousBlockId, nextBlockId);
       return;
     }
 
@@ -252,7 +263,14 @@ export function FormFieldEditor({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (paletteOpen || event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) {
+      if (
+        inspectorOnly ||
+        paletteOpen ||
+        event.key !== "/" ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey
+      ) {
         return;
       }
 
@@ -272,7 +290,7 @@ export function FormFieldEditor({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [disabled, paletteOpen]);
+  }, [disabled, inspectorOnly, paletteOpen]);
 
   function removeField(index: number) {
     updateFields(schema.fields.filter((_, fieldIndex) => fieldIndex !== index));
