@@ -1,8 +1,9 @@
 # Story 36.4 — Columns + responsive composition
 
 **Epic:** 36  
-**Status:** in-progress  
-**Depends on:** 36.3 merged (`2c38cb8`)
+**Status:** in-progress (review — entitlement + empty-column UX landed; live matrix pending)  
+**Depends on:** 36.3 merged (`2c38cb8`)  
+**Implementation HEAD:** `dae02a0` (branch `cursor/epic-36-story-36-4-columns-responsive-a139`)
 
 ## User story
 
@@ -10,8 +11,8 @@ As a tenant operator, I can add two-column rows to my registration form so relat
 
 ## Acceptance
 
-- [ ] Palette: Structure → 2-column row
-- [ ] Exactly two equal columns; mobile stacks left then right (DOM order)
+- [x] Palette: Structure → 2-column row (Core+; Basic locked UI + server gate per FR-FS2-27/29)
+- [x] Exactly two equal columns; mobile stacks left then right (DOM order)
 - [ ] fieldRef and content blocks inside columns
 - [ ] Section → Columns nesting per architecture (depth cap 3)
 - [ ] No columns-in-columns; server/client validation aligned
@@ -21,7 +22,19 @@ As a tenant operator, I can add two-column rows to my registration form so relat
 - [ ] RegistrationCompositionRenderer responsive grid
 - [ ] Save/reload integration test
 - [ ] Conversational warning includes columns
-- [ ] BMAD gates + CI
+- [ ] BMAD gates + CI (automated green on HEAD pending final CI run; full live matrix incomplete)
+
+## Entitlements (canonical PRD)
+
+- **FR-FS2-26 Basic:** no columns (sections + content only)
+- **FR-FS2-27 Core+:** columns included
+- **FR-FS2-29:** server enforcement — `FormSchemaPlanGate`, `ActivityService` / template save paths, integration test `SaveFormSchema_BasicTenantColumnsComposition_Returns403PlanLocked`
+
+## Empty columns
+
+- New rows seed `[[], []]` (no placeholder headings)
+- Save blocked while a column is empty (client + server validators)
+- Builder shows dashed **Left/Right column — drag blocks here** drop targets
 
 ## Non-goals
 
