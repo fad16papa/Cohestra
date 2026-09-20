@@ -28,6 +28,7 @@ import {
 } from "@/lib/registration-experience";
 import type { RegistrationFormFlowMode } from "@/components/registration/registration-form";
 import { pickRegistrationPublicShellKind } from "@/lib/registration-public-shell";
+import { buildFormDomainContext } from "@/lib/form-domain-blocks";
 import { cn } from "@/lib/utils";
 
 type PublicRegistrationOpenProps = {
@@ -112,6 +113,15 @@ export function PublicRegistrationOpen({
   const registrationFlowMode: RegistrationFormFlowMode =
     effectiveExperience.flow === "conversational" ? "conversational" : "default";
   const formSchemaKey = formSchema?.fields.map((field) => field.id).join(",") ?? "";
+  const domainContext = buildFormDomainContext({
+    schedule,
+    location,
+    communityLabel,
+    logoAssetId,
+    registrationCount,
+    maxRegistrants,
+    isRegistrationFull,
+  });
 
   const shellKind = pickRegistrationPublicShellKind(
     preset,
@@ -174,6 +184,7 @@ export function PublicRegistrationOpen({
           publicSurfaceStyle={modernCenteredSurfaceStyle ?? undefined}
           designTokens={effectiveDesignTokens}
           activitySlug={slug}
+          domainContext={domainContext}
           onPreviewSubmit={
             isPreview
               ? (answers) => simulateRegistrationPreviewSubmit(formSchema, answers)

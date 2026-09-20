@@ -4,6 +4,7 @@ import type {
   FormFieldDefinition,
   FormFieldType,
 } from "@/lib/activities-api";
+import type { FormCompositionDomainType } from "@/lib/form-domain-blocks";
 import {
   createDefaultField,
   isHiddenFieldType,
@@ -257,6 +258,28 @@ export function addColumnsBlock(
     id: createCompositionNodeId("columns"),
     kind: "columns",
     columns: [[], []],
+  };
+
+  const containerPath = resolveInsertionTarget(base, options?.selectedBlockId ?? null);
+  const insertIndex = insertionIndexAfterSelection(
+    base,
+    options?.selectedBlockId ?? null,
+    containerPath
+  );
+
+  return insertNodeInContainer(base, containerPath, node, insertIndex);
+}
+
+export function addDomainBlock(
+  schema: ActivityFormSchema,
+  domain: FormCompositionDomainType,
+  options?: { selectedBlockId?: string | null }
+): ActivityFormSchema {
+  const base = ensureBuilderEditableSchema(schema);
+  const node: FormCompositionNode = {
+    id: createCompositionNodeId(domain),
+    kind: "domain",
+    domain,
   };
 
   const containerPath = resolveInsertionTarget(base, options?.selectedBlockId ?? null);

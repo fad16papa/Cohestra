@@ -195,4 +195,42 @@ public sealed class FormSchemaCompositionTests
 
         Assert.Contains("unknown field", error, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public void ValidateDto_AcceptsCanonicalDomainBlocks()
+    {
+        var dto = new ActivityFormSchemaDto(
+            2,
+            [new FormFieldDefinitionDto("email", FormFieldTypes.Email, "Email", true, null, null, null, null)],
+            Composition:
+            [
+                new FormCompositionNodeDto(
+                    "details",
+                    FormCompositionKinds.Domain,
+                    Domain: FormCompositionDomainTypes.ActivityDetails),
+                new FormCompositionNodeDto("n1", FormCompositionKinds.FieldRef, FieldId: "email"),
+            ]);
+
+        Assert.Null(FormSchemaValidator.ValidateDto(dto));
+    }
+
+    [Fact]
+    public void ValidateDto_RejectsUnknownDomainType()
+    {
+        var dto = new ActivityFormSchemaDto(
+            2,
+            [new FormFieldDefinitionDto("email", FormFieldTypes.Email, "Email", true, null, null, null, null)],
+            Composition:
+            [
+                new FormCompositionNodeDto(
+                    "bad",
+                    FormCompositionKinds.Domain,
+                    Domain: "location"),
+                new FormCompositionNodeDto("n1", FormCompositionKinds.FieldRef, FieldId: "email"),
+            ]);
+
+        var error = FormSchemaValidator.ValidateDto(dto);
+
+        Assert.Contains("Unsupported domain", error, StringComparison.OrdinalIgnoreCase);
+    }
 }

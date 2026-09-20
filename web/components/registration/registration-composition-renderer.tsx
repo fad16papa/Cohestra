@@ -2,18 +2,24 @@
 
 import type { ReactNode } from "react";
 
+import { RegistrationDomainBlock } from "@/components/registration/registration-domain-block";
 import type {
   ActivityFormSchema,
   FormCompositionNode,
   FormFieldDefinition,
 } from "@/lib/activities-api";
 import { getEffectiveComposition } from "@/lib/form-composition";
+import {
+  resolveFormDomainBlock,
+  type FormDomainContext,
+} from "@/lib/form-domain-blocks";
 import { cn } from "@/lib/utils";
 
 type RegistrationCompositionRendererProps = {
   schema: ActivityFormSchema;
   renderField: (field: FormFieldDefinition) => ReactNode;
   className?: string;
+  domainContext?: FormDomainContext | null;
 };
 
 function renderContentNode(node: FormCompositionNode): ReactNode {
@@ -66,7 +72,8 @@ function renderContentNode(node: FormCompositionNode): ReactNode {
 function renderNodes(
   nodes: FormCompositionNode[],
   fieldsById: Map<string, FormFieldDefinition>,
-  renderField: (field: FormFieldDefinition) => ReactNode
+  renderField: (field: FormFieldDefinition) => ReactNode,
+  domainContext?: FormDomainContext | null
 ): ReactNode[] {
   const output: ReactNode[] = [];
 
@@ -104,7 +111,7 @@ function renderNodes(
             <p className="text-sm text-text-muted-warm">{node.description}</p>
           ) : null}
           <div className="space-y-4">
-            {renderNodes(node.children ?? [], fieldsById, renderField)}
+            {renderNodes(node.children ?? [], fieldsById, renderField, domainContext)}
           </div>
         </section>
       );
@@ -119,13 +126,23 @@ function renderNodes(
           className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2"
         >
           <div className="flex min-w-0 flex-col gap-4">
-            {renderNodes(left ?? [], fieldsById, renderField)}
+            {renderNodes(left ?? [], fieldsById, renderField, domainContext)}
           </div>
           <div className="flex min-w-0 flex-col gap-4">
-            {renderNodes(right ?? [], fieldsById, renderField)}
+            {renderNodes(right ?? [], fieldsById, renderField, domainContext)}
           </div>
         </div>
       );
+      continue;
+    }
+
+    if (node.kind === "domain") {
+      const resolved = resolveFormDomainBlock(node.domain, domainContext);
+      if (resolved.visible) {
+        output.push(
+          <RegistrationDomainBlock key={node.id} resolved={resolved} />
+        );
+      }
     }
   }
 
@@ -136,6 +153,7 @@ export function RegistrationCompositionRenderer({
   schema,
   renderField,
   className,
+  domainContext = null,
 }: RegistrationCompositionRendererProps) {
   const composition = getEffectiveComposition(
     schema.fields,
@@ -145,7 +163,7 @@ export function RegistrationCompositionRenderer({
 
   return (
     <div className={cn("flex min-w-0 flex-col gap-4", className)}>
-      {renderNodes(composition, fieldsById, renderField)}
+      {renderNodes(composition, fieldsById, renderField, domainContext)}
     </div>
   );
 }

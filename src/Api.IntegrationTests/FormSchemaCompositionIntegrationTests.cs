@@ -295,6 +295,57 @@ public sealed class FormSchemaCompositionIntegrationTests(IntegrationTestFixture
         Assert.Contains("Two-column", body, StringComparison.OrdinalIgnoreCase);
     }
 
+    [SkippableFact]
+    public async Task SaveFormSchema_DomainComposition_RoundTripsStructure()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+
+        using var client = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(client);
+        IntegrationTestHelpers.UseBearerToken(client, accessToken);
+
+        var slug = $"dom-{Guid.NewGuid():N}"[..18];
+        var activity = await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            TenantIds.Default,
+            slug);
+
+        var schema = BuildDomainCompositionSchema();
+        using var saveResponse = await client.PutAsJsonAsync(
+            $"/api/v1/admin/activities/{activity.Id}/form-schema",
+            new SaveActivityFormSchemaRequest(schema),
+            IntegrationTestHelpers.JsonOptions);
+        saveResponse.EnsureSuccessStatusCode();
+
+        var saved = await saveResponse.Content.ReadFromJsonAsync<ActivityResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(saved?.FormSchema?.Composition);
+        AssertCompositionTreeEqual(schema.Composition!, saved!.FormSchema!.Composition!);
+        Assert.DoesNotContain(
+            saved.FormSchema.Fields.Select(field => field.Id),
+            id => id.Contains("activity", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [SkippableFact]
+    public async Task SaveFormSchema_BasicTenantDomainComposition_Returns403PlanLocked()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var (client, activity) = await CreateBasicTenantWithPublishedActivityAsync();
+        var schema = BuildDomainCompositionSchema();
+
+        using var saveResponse = await client.PutAsJsonAsync(
+            $"/api/v1/admin/activities/{activity.Id}/form-schema",
+            new SaveActivityFormSchemaRequest(schema),
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.Forbidden, saveResponse.StatusCode);
+        var body = await saveResponse.Content.ReadAsStringAsync();
+        Assert.Contains("plan_locked", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Activity and community", body, StringComparison.OrdinalIgnoreCase);
+    }
+
     private async Task<(HttpClient Client, Activity Activity)> CreateBasicTenantWithPublishedActivityAsync()
     {
         var slug = $"cols-basic-{Guid.NewGuid():N}"[..16];
@@ -386,6 +437,43 @@ public sealed class FormSchemaCompositionIntegrationTests(IntegrationTestFixture
                                 FieldId: "last_name"),
                         ],
                     ]),
+                new FormCompositionNodeDto(
+                    "ref-email",
+                    FormCompositionKinds.FieldRef,
+                    FieldId: "email"),
+            ]);
+    }
+
+    private static ActivityFormSchemaDto BuildDomainCompositionSchema()
+    {
+        return new ActivityFormSchemaDto(
+            Version: 2,
+            Fields:
+            [
+                new FormFieldDefinitionDto(
+                    "email",
+                    FormFieldTypes.Email,
+                    "Email",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+            ],
+            Composition:
+            [
+                new FormCompositionNodeDto(
+                    "activity-details",
+                    FormCompositionKinds.Domain,
+                    Domain: FormCompositionDomainTypes.ActivityDetails),
+                new FormCompositionNodeDto(
+                    "capacity",
+                    FormCompositionKinds.Domain,
+                    Domain: FormCompositionDomainTypes.CapacityStatus),
+                new FormCompositionNodeDto(
+                    "community",
+                    FormCompositionKinds.Domain,
+                    Domain: FormCompositionDomainTypes.CommunityIdentity),
                 new FormCompositionNodeDto(
                     "ref-email",
                     FormCompositionKinds.FieldRef,
@@ -501,6 +589,7 @@ public sealed class FormSchemaCompositionIntegrationTests(IntegrationTestFixture
             Assert.Equal(exp.Content?.Level, act.Content?.Level);
             Assert.Equal(exp.Title, act.Title);
             Assert.Equal(exp.Description, act.Description);
+            Assert.Equal(exp.Domain, act.Domain);
 
             if (exp.Children is { Count: > 0 })
             {

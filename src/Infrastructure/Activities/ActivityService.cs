@@ -1292,7 +1292,8 @@ public sealed class ActivityService(
         var hasCorePlusFields = schema.Fields.Any(field =>
             FormFieldTypes.CorePlusOnly.Contains(field.Type));
         var hasColumns = FormSchemaPlanGate.CompositionUsesColumns(schema.Composition);
-        if (hasRecipes || hasSteps || hasCorePlusFields || hasColumns)
+        var hasDomain = FormSchemaPlanGate.CompositionUsesDomain(schema.Composition);
+        if (hasRecipes || hasSteps || hasCorePlusFields || hasColumns || hasDomain)
         {
             FormSchemaPlanGate.EnsureAllowed(schema, plan.Value);
         }
