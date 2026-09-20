@@ -1,7 +1,9 @@
 # Story (follow-up) — Modern Centered visual-quality correction
 
-**Status:** backlog (post–Epic 35 defect investigation)  
-**Epic:** New follow-up (do **not** reopen Epic 35)
+**Status:** absorbed  
+**Epic:** **36.5** (Form Studio 2.0 — do **not** reopen Epic 35)
+
+Absorbed into Epic 36 Story 36.5 (Design tokens + Modern/Minimal + Modern Centered). Implementation may land via PR #324 rebased onto Epic 36 work.
 
 ## Problem
 
