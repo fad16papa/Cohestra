@@ -247,6 +247,152 @@ public sealed class FormSchemaCompositionIntegrationTests(IntegrationTestFixture
         }
     }
 
+    [SkippableFact]
+    public async Task SaveFormSchema_ColumnsComposition_RoundTripsStructure()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+
+        using var client = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(client);
+        IntegrationTestHelpers.UseBearerToken(client, accessToken);
+
+        var slug = $"cols-{Guid.NewGuid():N}"[..18];
+        var activity = await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            TenantIds.Default,
+            slug);
+
+        var schema = BuildColumnsCompositionSchema();
+        using var saveResponse = await client.PutAsJsonAsync(
+            $"/api/v1/admin/activities/{activity.Id}/form-schema",
+            new SaveActivityFormSchemaRequest(schema),
+            IntegrationTestHelpers.JsonOptions);
+        saveResponse.EnsureSuccessStatusCode();
+
+        var saved = await saveResponse.Content.ReadFromJsonAsync<ActivityResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(saved?.FormSchema?.Composition);
+        AssertCompositionTreeEqual(schema.Composition!, saved!.FormSchema!.Composition!);
+    }
+
+    [SkippableFact]
+    public async Task SaveFormSchema_BasicTenantColumnsComposition_Returns403PlanLocked()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var (client, activity) = await CreateBasicTenantWithPublishedActivityAsync();
+        var schema = BuildColumnsCompositionSchema();
+
+        using var saveResponse = await client.PutAsJsonAsync(
+            $"/api/v1/admin/activities/{activity.Id}/form-schema",
+            new SaveActivityFormSchemaRequest(schema),
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.Forbidden, saveResponse.StatusCode);
+        var body = await saveResponse.Content.ReadAsStringAsync();
+        Assert.Contains("plan_locked", body, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Two-column", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task<(HttpClient Client, Activity Activity)> CreateBasicTenantWithPublishedActivityAsync()
+    {
+        var slug = $"cols-basic-{Guid.NewGuid():N}"[..16];
+        var adminEmail = $"admin-{slug}@example.com";
+
+        using var platformClient = Factory.CreateClient();
+        var platformToken = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platformClient);
+        IntegrationTestHelpers.UseBearerToken(platformClient, platformToken);
+
+        var tenant = await IntegrationTestHelpers.CreateTenantViaPlatformAsync(
+            platformClient,
+            "Columns plan gate",
+            slug,
+            adminEmail);
+
+        var (_, adminPassword) = await IntegrationTestHelpers.CreateTenantAdminUserAsync(
+            Factory.Services,
+            tenant.Id,
+            adminEmail);
+
+        var activitySlug = $"act-{Guid.NewGuid():N}"[..20];
+        var activity = await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            tenant.Id,
+            activitySlug);
+
+        var client = Factory.CreateClient();
+        IntegrationTestHelpers.UseTenantHost(client, slug);
+        var accessToken = await IntegrationTestHelpers.LoginAsync(
+            client,
+            adminEmail,
+            adminPassword);
+        IntegrationTestHelpers.UseBearerToken(client, accessToken);
+
+        return (client, activity);
+    }
+
+    private static ActivityFormSchemaDto BuildColumnsCompositionSchema()
+    {
+        return new ActivityFormSchemaDto(
+            Version: 2,
+            Fields:
+            [
+                new FormFieldDefinitionDto(
+                    "first_name",
+                    FormFieldTypes.Text,
+                    "First name",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+                new FormFieldDefinitionDto(
+                    "last_name",
+                    FormFieldTypes.Text,
+                    "Last name",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+                new FormFieldDefinitionDto(
+                    "email",
+                    FormFieldTypes.Email,
+                    "Email",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+            ],
+            Composition:
+            [
+                new FormCompositionNodeDto(
+                    "cols-names",
+                    FormCompositionKinds.Columns,
+                    Columns:
+                    [
+                        [
+                            new FormCompositionNodeDto(
+                                "ref-first",
+                                FormCompositionKinds.FieldRef,
+                                FieldId: "first_name"),
+                        ],
+                        [
+                            new FormCompositionNodeDto(
+                                "ref-last",
+                                FormCompositionKinds.FieldRef,
+                                FieldId: "last_name"),
+                        ],
+                    ]),
+                new FormCompositionNodeDto(
+                    "ref-email",
+                    FormCompositionKinds.FieldRef,
+                    FieldId: "email"),
+            ]);
+    }
+
     private static ActivityFormSchemaDto BuildMixedCompositionSchema()
     {
         return new ActivityFormSchemaDto(
@@ -364,6 +510,20 @@ public sealed class FormSchemaCompositionIntegrationTests(IntegrationTestFixture
             else
             {
                 Assert.True(act.Children is null or { Count: 0 });
+            }
+
+            if (exp.Columns is { Count: > 0 })
+            {
+                Assert.NotNull(act.Columns);
+                Assert.Equal(exp.Columns.Count, act.Columns!.Count);
+                for (var columnIndex = 0; columnIndex < exp.Columns.Count; columnIndex++)
+                {
+                    AssertCompositionTreeEqual(exp.Columns[columnIndex], act.Columns[columnIndex]);
+                }
+            }
+            else
+            {
+                Assert.True(act.Columns is null or { Count: 0 });
             }
         }
     }

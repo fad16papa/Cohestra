@@ -52,6 +52,9 @@ export const formFieldPaletteAlwaysGroup: FormFieldPaletteGroup = {
 export const CORE_PLUS_LOCKED_REASON =
   "Scale and emergency contact require Core or Pro.";
 
+export const COLUMNS_LOCKED_REASON =
+  "Two-column rows require Core or Pro.";
+
 export function getFormFieldPaletteGroups(
   corePlusLocked = false
 ): FormFieldPaletteGroup[] {

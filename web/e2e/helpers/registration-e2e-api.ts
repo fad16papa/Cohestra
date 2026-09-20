@@ -205,7 +205,13 @@ export async function openActivityTab(
     });
   }
   await waitForOperatorWorkspace(page);
-  await expect(page.getByRole("tab", { name: new RegExp(tab, "i"), selected: true })).toBeVisible({
+  const tabPattern =
+    tab === "form"
+      ? /^Form$/
+      : tab === "design"
+        ? /^Design$/
+        : new RegExp(tab, "i");
+  await expect(page.getByRole("tab", { name: tabPattern, selected: true })).toBeVisible({
     timeout: 30_000,
   });
 }
@@ -302,6 +308,73 @@ export async function applyRegistrationTheme(
   });
   if (!response.ok()) {
     throw new Error(`Update activity theme failed: ${response.status()} ${await response.text()}`);
+  }
+}
+
+export async function createDraftActivity(
+  request: APIRequestContext,
+  token: string,
+  slugPrefix: string
+): Promise<{ id: string; slug: string }> {
+  const slug = `${slugPrefix}-${Date.now().toString(36)}`.slice(0, 24);
+  const response = await request.post(`${API_BASE}/api/v1/admin/activities`, {
+    data: {
+      name: `E2E Columns ${slug}`,
+      category: "Social",
+      schedule: "Sat 10:00",
+      location: "Online",
+      communityLabel: "Riverside Runners",
+      status: "draft",
+    },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Host: tenantHostHeader(),
+    },
+  });
+  if (!response.ok()) {
+    throw new Error(`Create activity failed: ${response.status()} ${await response.text()}`);
+  }
+  const body = (await response.json()) as { id: string; slug: string };
+  return { id: body.id, slug: body.slug };
+}
+
+export async function saveActivityFormSchema(
+  request: APIRequestContext,
+  token: string,
+  activityId: string,
+  formSchema: Record<string, unknown>
+): Promise<void> {
+  const response = await request.put(
+    `${API_BASE}/api/v1/admin/activities/${activityId}/form-schema`,
+    {
+      data: { formSchema },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Host: tenantHostHeader(),
+      },
+    }
+  );
+  if (!response.ok()) {
+    throw new Error(`Save form schema failed: ${response.status()} ${await response.text()}`);
+  }
+}
+
+export async function publishActivity(
+  request: APIRequestContext,
+  token: string,
+  activityId: string
+): Promise<void> {
+  const response = await request.post(
+    `${API_BASE}/api/v1/admin/activities/${activityId}/publish`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Host: tenantHostHeader(),
+      },
+    }
+  );
+  if (!response.ok()) {
+    throw new Error(`Publish activity failed: ${response.status()} ${await response.text()}`);
   }
 }
 

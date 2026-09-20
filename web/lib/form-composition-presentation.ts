@@ -13,7 +13,11 @@ export function compositionHasPresentationBlocks(
 
   function walk(nodes: FormCompositionNode[]): boolean {
     for (const node of nodes) {
-      if (node.kind === "content" || node.kind === "section") {
+      if (
+        node.kind === "content" ||
+        node.kind === "section" ||
+        node.kind === "columns"
+      ) {
         return true;
       }
     }
@@ -25,4 +29,4 @@ export function compositionHasPresentationBlocks(
 }
 
 export const CONVERSATIONAL_PRESENTATION_NOTICE =
-  "Conversational flow shows one question at a time. Headings, paragraphs, dividers, and sections are not shown on the public form—use Single page flow to display them.";
+  "Conversational flow shows one question at a time. Headings, paragraphs, dividers, sections, and column layouts are not shown on the public form—use Single page flow to display them.";

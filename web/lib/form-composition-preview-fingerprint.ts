@@ -22,6 +22,14 @@ function fingerprintNode(node: FormCompositionNode): string {
     );
   }
 
+  if (node.kind === "columns" && node.columns?.length === 2) {
+    segments.push(
+      `cols(${node.columns
+        .map((column) => column.map(fingerprintNode).join("\u001f"))
+        .join("\u001e")})`
+    );
+  }
+
   return segments.join("\u001e");
 }
 

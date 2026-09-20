@@ -1283,7 +1283,8 @@ public sealed class ActivityService(
         var hasSteps = schema.Meta is { SplitIntoSteps: true };
         var hasCorePlusFields = schema.Fields.Any(field =>
             FormFieldTypes.CorePlusOnly.Contains(field.Type));
-        if (hasRecipes || hasSteps || hasCorePlusFields)
+        var hasColumns = FormSchemaPlanGate.CompositionUsesColumns(schema.Composition);
+        if (hasRecipes || hasSteps || hasCorePlusFields || hasColumns)
         {
             FormSchemaPlanGate.EnsureAllowed(schema, plan.Value);
         }
