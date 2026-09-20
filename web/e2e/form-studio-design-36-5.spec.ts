@@ -1,49 +1,97 @@
 import { expect, test } from "@playwright/test";
 
 import {
+  applyRegistrationTheme,
+  fetchActivity,
   findActivityIdBySlug,
-  loginOperatorSession,
-  openActivityTab,
-  selectExperienceLayoutLabel,
+  loginOperator,
+  resolvePublishedE2eSlug,
+  tenantWebBase,
 } from "./helpers/registration-e2e-api";
 
-const DRAFT_SLUG = "demo-runners-draft-clinic";
+const PREFERRED_SLUG =
+  process.env.REGISTRATION_E2E_SLUG ?? "demo-wellness-morning-yoga";
 
-async function selectVisibleRadioCard(page: import("@playwright/test").Page, label: RegExp) {
-  const card = page.locator("label").filter({ hasText: label }).first();
-  await expect(card).toBeVisible({ timeout: 30_000 });
-  await card.click();
-}
+test.describe("Story 36.5 — public design tokens and Modern Centered style", () => {
+  test.describe.configure({ mode: "serial" });
 
-test.describe("Story 36.5 — design tokens and Modern Centered style", () => {
-  test("Modern vs Minimal updates preview shell data attribute", async ({
+  let token: string;
+  let slug: string;
+  let activityId: string;
+  let activityRecord: Record<string, unknown>;
+
+  test.beforeAll(async ({ request }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    token = await loginOperator(request);
+    slug = await resolvePublishedE2eSlug(request, token, PREFERRED_SLUG);
+    activityId = await findActivityIdBySlug(request, token, slug);
+    activityRecord = await fetchActivity(request, token, activityId);
+  });
+
+  test("Modern vs Minimal style on public Modern Centered shell", async ({
     page,
     request,
   }) => {
-    const session = await loginOperatorSession(request);
-    const activityId = await findActivityIdBySlug(request, session.accessToken, DRAFT_SLUG);
-    await openActivityTab(page, activityId, "design", session);
-    await selectExperienceLayoutLabel(page, /Modern Centered/i);
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
 
-    const previewShell = page.locator('[data-registration-shell="modern-centered"]');
-    await expect(previewShell).toBeVisible({ timeout: 30_000 });
+    await applyRegistrationTheme(request, token, activityId, activityRecord, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: {
+        layout: "centered",
+        style: "modern",
+        flow: "single-page",
+        heroDisplay: "cover",
+      },
+    });
 
-    await selectVisibleRadioCard(page, /^Modern$/i);
-    await expect(previewShell).toHaveAttribute("data-registration-style", "modern");
+    const base = tenantWebBase();
+    await page.goto(`${base}/register/${slug}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-registration-shell="modern-centered"]')).toHaveAttribute(
+      "data-registration-style",
+      "modern"
+    );
 
-    await selectVisibleRadioCard(page, /^Minimal$/i);
-    await expect(previewShell).toHaveAttribute("data-registration-style", "minimal");
+    await applyRegistrationTheme(request, token, activityId, activityRecord, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: {
+        layout: "centered",
+        style: "minimal",
+        flow: "single-page",
+        heroDisplay: "cover",
+      },
+    });
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-registration-shell="modern-centered"]')).toHaveAttribute(
+      "data-registration-style",
+      "minimal"
+    );
   });
 
-  test("Compact typography token applies tighter form spacing", async ({ page, request }) => {
-    const session = await loginOperatorSession(request);
-    const activityId = await findActivityIdBySlug(request, session.accessToken, DRAFT_SLUG);
-    await openActivityTab(page, activityId, "design", session);
-    await selectExperienceLayoutLabel(page, /Modern Centered/i);
+  test("Compact typography token on public form", async ({ page, request }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
 
-    await page.getByText("Typography scale").scrollIntoViewIfNeeded();
-    await selectVisibleRadioCard(page, /^Compact$/i);
+    await applyRegistrationTheme(request, token, activityId, activityRecord, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: {
+        layout: "centered",
+        style: "modern",
+        flow: "single-page",
+        heroDisplay: "cover",
+      },
+      designTokens: { typographyScale: "compact" },
+    });
 
+    await page.goto(`${tenantWebBase()}/register/${slug}`, { waitUntil: "domcontentloaded" });
     const form = page.locator('[data-registration-shell="modern-centered"] form').first();
     await expect(form).toBeVisible({ timeout: 30_000 });
     await expect(form).toHaveClass(/space-y-3\.5/);

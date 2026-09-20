@@ -20,6 +20,13 @@ export type ExperienceFixture = {
       flow?: string | null;
       heroDisplay?: string | null;
     } | null;
+    designTokens?: {
+      typographyScale?: string | null;
+      fieldSize?: string | null;
+      fieldRadius?: string | null;
+      buttonWidth?: string | null;
+      surfaceEmphasis?: string | null;
+    } | null;
   };
   expect: {
     splitPanel?: boolean;
