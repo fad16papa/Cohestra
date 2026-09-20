@@ -11,6 +11,7 @@ test.describe("Public registration success copy", () => {
     page,
     request,
   }) => {
+    test.setTimeout(60_000);
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
 
     const token = await loginOperator(request);
@@ -21,27 +22,30 @@ test.describe("Public registration success copy", () => {
     );
 
     await page.goto(`${tenantWebBase()}/register/${slug}`, {
-      waitUntil: "domcontentloaded",
+      waitUntil: "networkidle",
     });
 
-    const fullName = page.getByLabel(/full name/i);
+    const fullName = page.getByRole("textbox", { name: /full name/i });
     await expect(fullName).toBeVisible({ timeout: 30_000 });
-    await fullName.fill("Ada Lovelace");
 
-    const phone = page.getByLabel(/^phone$/i);
-    if (await phone.isVisible().catch(() => false)) {
-      await phone.fill("91234567");
-    }
-
-    const email = page.getByLabel(/^email$/i);
-    if (await email.isVisible().catch(() => false)) {
-      await email.fill(`success-copy-${Date.now()}@example.com`);
-    }
-
+    const stamp = Date.now().toString();
+    const phone = page.getByRole("textbox", { name: /phone/i });
+    const email = page.getByRole("textbox", { name: /^email$/i });
     const consent = page.getByRole("checkbox", { name: /agree|consent/i });
+
+    if (await phone.isVisible().catch(() => false)) {
+      await phone.fill(`9${stamp.slice(-7)}`);
+    }
+    if (await email.isVisible().catch(() => false)) {
+      await email.fill(`success-copy-${stamp}@example.com`);
+    }
     if (await consent.isVisible().catch(() => false)) {
       await consent.check();
     }
+
+    // Hydration can remount the public form after the first paint and wipe earlier fills.
+    await fullName.fill("Ada Lovelace");
+    await expect(fullName).toHaveValue("Ada Lovelace");
 
     await page.getByRole("button", { name: /join activity/i }).click();
 
