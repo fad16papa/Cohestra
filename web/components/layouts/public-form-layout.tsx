@@ -21,7 +21,7 @@ export function PublicFormLayout({
   return (
     <div className="flex min-h-dvh flex-col overflow-x-hidden bg-surface-warm">
       <header className="border-b border-border-warm/70 bg-card/80 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-[480px] items-center justify-between gap-3 px-5 py-4">
+        <div className="mx-auto flex w-full max-w-[720px] items-center justify-between gap-3 px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 p-2 ring-1 ring-primary/15">
               <Image
@@ -42,11 +42,11 @@ export function PublicFormLayout({
       </header>
 
       <main className="flex flex-col items-center px-4 py-6 pb-6 sm:px-5 sm:py-8">
-        <div className="w-full min-w-0 max-w-[480px] overflow-x-hidden">{children}</div>
+        <div className="w-full min-w-0 max-w-[720px] overflow-x-hidden">{children}</div>
       </main>
 
       <footer className="border-t border-border-warm/70 bg-card/60 px-5 py-6 text-center backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-[480px] flex-col items-center gap-3">
+        <div className="mx-auto flex w-full max-w-[720px] flex-col items-center gap-3">
           <p className="text-sm font-medium text-text-warm">{PLATFORM_BYLINE}</p>
           {websiteLink ? <PublisherWebsiteTextLink link={websiteLink} /> : null}
           <p className="text-xs text-text-muted-warm">

@@ -54,6 +54,10 @@ export function RegistrationPublicPreviewShell({
 }: RegistrationPublicPreviewShellProps) {
   const [viewport, setViewport] = useState<RegistrationPreviewViewport>("mobile");
   const isSplitLayout = theme.resolvedExperience.layout === "split";
+  const isWideCenteredLayout =
+    theme.resolvedExperience.layout === "centered" ||
+    theme.resolvedExperience.layout === "card" ||
+    theme.resolvedExperience.layout === "immersive";
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -82,7 +86,9 @@ export function RegistrationPublicPreviewShell({
             ? "max-w-[375px]"
             : isSplitLayout
               ? "max-w-[960px]"
-              : "max-w-[480px]"
+              : isWideCenteredLayout
+                ? "max-w-[720px]"
+                : "max-w-[480px]"
         )}
         scrollClassName={scrollClassName}
       >
