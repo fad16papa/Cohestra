@@ -25,6 +25,10 @@ export function flattenFieldRefOrder(
         fieldIds.push(node.fieldId.trim());
       } else if (node.kind === "section" && node.children?.length) {
         walk(node.children);
+      } else if (node.kind === "columns" && node.columns?.length) {
+        for (const column of node.columns) {
+          walk(column);
+        }
       }
     }
   }

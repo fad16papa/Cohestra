@@ -10,11 +10,13 @@ import { Button } from "@/components/ui/button";
 import type { ActivityFormSchema, FormCompositionNode, FormFieldType } from "@/lib/activities-api";
 import { findCompositionNode } from "@/lib/form-composition-tree";
 import {
+  addColumnsBlock,
   addContentBlock,
   addInputFieldBlock,
   addSectionBlock,
   findFieldIndexByBlockId,
   getBuilderCanvasRows,
+  moveCompositionBlockToColumn,
   removeCompositionBlock,
   reorderCompositionBlocks,
   type ContentBlockType,
@@ -55,6 +57,10 @@ function blockTypeLabel(node: FormCompositionNode): string {
     return "Section";
   }
 
+  if (node.kind === "columns") {
+    return "Two-column row";
+  }
+
   if (node.kind === "content") {
     if (node.contentType === "heading") {
       return "Heading";
@@ -91,6 +97,10 @@ function blockTitle(
     return node.title?.trim() || "Section";
   }
 
+  if (node.kind === "columns") {
+    return "Two-column row";
+  }
+
   return node.id;
 }
 
@@ -110,7 +120,8 @@ function adjacentCanvasRowIndex(
     index >= 0 && index < rows.length;
     index += direction
   ) {
-    if (rows[index]!.containerPath.join(".") === pathKey) {
+    const candidate = rows[index]!;
+    if (candidate.containerPath.join(".") === pathKey) {
       return index;
     }
   }
@@ -168,6 +179,7 @@ export function FormCompositionBuilder({
 
   const selectedFieldIndex = findFieldIndexByBlockId(schema, selectedBlockId);
   const selectedNode = findCompositionNode(schema, selectedBlockId);
+  const selectedRow = canvasRows.find((row) => row.node.id === selectedBlockId);
 
   const applySchema = useCallback(
     (next: ActivityFormSchema) => {
@@ -175,6 +187,40 @@ export function FormCompositionBuilder({
     },
     [onChange]
   );
+
+  const columnMoveControls =
+    selectedRow?.columnIndex !== undefined && selectedBlockId && selectedNode ? (
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={disabled || selectedRow.columnIndex === 0}
+          aria-label={`Move ${blockTitle(selectedNode, schema)} to left column`}
+          onClick={() =>
+            applySchema(
+              moveCompositionBlockToColumn(schema, selectedBlockId, 0)
+            )
+          }
+        >
+          Move to left column
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={disabled || selectedRow.columnIndex === 1}
+          aria-label={`Move ${blockTitle(selectedNode, schema)} to right column`}
+          onClick={() =>
+            applySchema(
+              moveCompositionBlockToColumn(schema, selectedBlockId, 1)
+            )
+          }
+        >
+          Move to right column
+        </Button>
+      </div>
+    ) : null;
 
   function selectNewBlock(next: ActivityFormSchema) {
     const rows = getBuilderCanvasRows(next);
@@ -201,6 +247,12 @@ export function FormCompositionBuilder({
 
   function addSection() {
     const next = addSectionBlock(schema, { selectedBlockId });
+    applySchema(next);
+    selectNewBlock(next);
+  }
+
+  function addColumns() {
+    const next = addColumnsBlock(schema, { selectedBlockId });
     applySchema(next);
     selectNewBlock(next);
   }
@@ -308,6 +360,14 @@ export function FormCompositionBuilder({
               >
                 Section
               </button>
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={addColumns}
+                className="mt-1 flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Two-column row
+              </button>
             </div>
           </div>
           <Button
@@ -370,7 +430,12 @@ export function FormCompositionBuilder({
                   return (
                     <li
                       key={node.id}
-                      style={{ marginLeft: `${row.containerPath.length * 12}px` }}
+                      style={{
+                        marginLeft: `${
+                          row.containerPath.length * 12 +
+                          (row.columnIndex ?? 0) * 16
+                        }px`,
+                      }}
                       onDragEnter={(event) => {
                         if (disabled || dragFromIndexRef.current === null) {
                           return;
@@ -520,27 +585,33 @@ export function FormCompositionBuilder({
                 Select a block to configure its settings.
               </p>
             ) : selectedNode.kind === "fieldRef" && selectedFieldIndex !== null ? (
-              <FormFieldEditor
-                schema={schema}
-                onChange={onChange}
-                disabled={disabled}
-                recipesLocked={recipesLocked}
-                corePlusLocked={corePlusLocked}
-                stepsEnabled={stepsEnabled}
-                stepsLocked={stepsLocked}
-                inspectorOnly
-                inspectorFieldIndex={selectedFieldIndex}
-                onCompositionBlockIdRenamed={(_previous, nextBlockId) => {
-                  setSelectedBlockId(nextBlockId);
-                }}
-              />
+              <>
+                {columnMoveControls}
+                <FormFieldEditor
+                  schema={schema}
+                  onChange={onChange}
+                  disabled={disabled}
+                  recipesLocked={recipesLocked}
+                  corePlusLocked={corePlusLocked}
+                  stepsEnabled={stepsEnabled}
+                  stepsLocked={stepsLocked}
+                  inspectorOnly
+                  inspectorFieldIndex={selectedFieldIndex}
+                  onCompositionBlockIdRenamed={(_previous, nextBlockId) => {
+                    setSelectedBlockId(nextBlockId);
+                  }}
+                />
+              </>
             ) : (
-              <FormCompositionInspector
-                schema={schema}
-                node={selectedNode}
-                onChange={onChange}
-                disabled={disabled}
-              />
+              <>
+                {columnMoveControls}
+                <FormCompositionInspector
+                  schema={schema}
+                  node={selectedNode}
+                  onChange={onChange}
+                  disabled={disabled}
+                />
+              </>
             )}
           </div>
         </section>

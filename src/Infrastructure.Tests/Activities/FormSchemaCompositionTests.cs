@@ -80,6 +80,35 @@ public sealed class FormSchemaCompositionTests
     }
 
     [Fact]
+    public void MapToDomain_RoundTripsColumnsComposition()
+    {
+        var dto = new ActivityFormSchemaDto(
+            2,
+            [
+                new FormFieldDefinitionDto("a", FormFieldTypes.Text, "A", true, null, null, null, null),
+                new FormFieldDefinitionDto("b", FormFieldTypes.Text, "B", true, null, null, null, null),
+            ],
+            Composition:
+            [
+                new FormCompositionNodeDto(
+                    "cols-1",
+                    FormCompositionKinds.Columns,
+                    Columns:
+                    [
+                        [new FormCompositionNodeDto("n1", FormCompositionKinds.FieldRef, FieldId: "a")],
+                        [new FormCompositionNodeDto("n2", FormCompositionKinds.FieldRef, FieldId: "b")],
+                    ]),
+            ]);
+
+        var domain = FormSchemaValidator.MapToDomain(dto);
+        var mappedBack = FormSchemaMapper.ToDto(domain);
+
+        Assert.NotNull(mappedBack?.Composition);
+        Assert.Equal(FormCompositionKinds.Columns, mappedBack!.Composition![0].Kind);
+        Assert.Equal(2, mappedBack.Composition[0].Columns!.Count);
+    }
+
+    [Fact]
     public void ValidateModel_RejectsVersion1WithStoredComposition()
     {
         var schema = new ActivityFormSchema

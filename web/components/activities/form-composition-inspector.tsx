@@ -142,5 +142,15 @@ export function FormCompositionInspector({
     );
   }
 
+  if (node.kind === "columns") {
+    return (
+      <p className="text-sm text-text-muted-warm">
+        Two equal columns on desktop and tablet; blocks stack in order (left, then
+        right) on mobile. Add blocks to each column from the structure list. Deleting
+        this row moves all column blocks up one level.
+      </p>
+    );
+  }
+
   return null;
 }

@@ -16,10 +16,13 @@ import {
 } from "@/lib/form-composition";
 import { createCompositionNodeId } from "@/lib/form-composition-ids";
 import {
+  containerPathsEqual,
   findNodeLocation,
   flattenCompositionCanvas,
+  getSiblingListAtPath,
   getTopLevelComposition,
   insertNodeInContainer,
+  removeNodeFromContainer,
   reorderSiblingsInContainer,
   type CompositionContainerPath,
 } from "@/lib/form-composition-tree";
@@ -75,6 +78,14 @@ function resolveInsertionTarget(
 
   if (location.node.kind === "section") {
     return [...location.containerPath, location.indexInContainer];
+  }
+
+  if (location.node.kind === "columns") {
+    return [
+      ...location.containerPath,
+      location.indexInContainer,
+      0,
+    ];
   }
 
   return location.containerPath;
@@ -207,6 +218,44 @@ export function addSectionBlock(
   return insertNodeInContainer(base, containerPath, node, insertIndex);
 }
 
+export function addColumnsBlock(
+  schema: ActivityFormSchema,
+  options?: { selectedBlockId?: string | null }
+): ActivityFormSchema {
+  const base = ensureBuilderEditableSchema(schema);
+  const node: FormCompositionNode = {
+    id: createCompositionNodeId("columns"),
+    kind: "columns",
+    columns: [
+      [
+        {
+          id: createCompositionNodeId("heading"),
+          kind: "content",
+          contentType: "heading",
+          content: { text: "Left column", level: 3 },
+        },
+      ],
+      [
+        {
+          id: createCompositionNodeId("heading"),
+          kind: "content",
+          contentType: "heading",
+          content: { text: "Right column", level: 3 },
+        },
+      ],
+    ],
+  };
+
+  const containerPath = resolveInsertionTarget(base, options?.selectedBlockId ?? null);
+  const insertIndex = insertionIndexAfterSelection(
+    base,
+    options?.selectedBlockId ?? null,
+    containerPath
+  );
+
+  return insertNodeInContainer(base, containerPath, node, insertIndex);
+}
+
 function collectFieldRefs(node: FormCompositionNode, fieldIds: string[]): void {
   if (node.kind === "fieldRef" && node.fieldId) {
     fieldIds.push(node.fieldId);
@@ -217,6 +266,22 @@ function collectFieldRefs(node: FormCompositionNode, fieldIds: string[]): void {
       collectFieldRefs(child, fieldIds);
     }
   }
+
+  if (node.kind === "columns" && node.columns?.length) {
+    for (const column of node.columns) {
+      for (const child of column) {
+        collectFieldRefs(child, fieldIds);
+      }
+    }
+  }
+}
+
+function unwrapColumnsChildren(node: FormCompositionNode): FormCompositionNode[] {
+  if (node.kind !== "columns" || !node.columns?.length) {
+    return [];
+  }
+
+  return [...(node.columns[0] ?? []), ...(node.columns[1] ?? [])];
 }
 
 export function removeCompositionBlock(
@@ -248,6 +313,8 @@ export function removeCompositionBlock(
       const next = [...nodes];
       if (target.kind === "section" && target.children?.length) {
         next.splice(index, 1, ...target.children);
+      } else if (target.kind === "columns") {
+        next.splice(index, 1, ...unwrapColumnsChildren(target));
       } else {
         next.splice(index, 1);
       }
@@ -256,14 +323,26 @@ export function removeCompositionBlock(
 
     const [head, ...tail] = path;
     return nodes.map((node, nodeIndex) => {
-      if (nodeIndex !== head || node.kind !== "section") {
+      if (nodeIndex !== head) {
         return node;
       }
 
-      return {
-        ...node,
-        children: removeFromList(node.children ?? [], tail, targetId),
-      };
+      if (node.kind === "section") {
+        return {
+          ...node,
+          children: removeFromList(node.children ?? [], tail, targetId),
+        };
+      }
+
+      if (node.kind === "columns" && tail.length >= 1) {
+        const columnIndex = tail[0]!;
+        const rest = tail.slice(1);
+        const columns = [...(node.columns ?? [[], []])];
+        columns[columnIndex] = removeFromList(columns[columnIndex] ?? [], rest, targetId);
+        return { ...node, columns };
+      }
+
+      return node;
     });
   }
 
@@ -297,15 +376,102 @@ export function reorderCompositionBlocks(
     return base;
   }
 
-  if (fromRow.containerPath.join(".") !== toRow.containerPath.join(".")) {
+  if (containerPathsEqual(fromRow.containerPath, toRow.containerPath)) {
+    return reorderSiblingsInContainer(
+      base,
+      fromRow.containerPath,
+      fromRow.indexInContainer,
+      toRow.indexInContainer
+    );
+  }
+
+  return moveCompositionBlockBetweenRows(base, fromRow, {
+    ...toRow,
+    node: toRow.node,
+  });
+}
+
+export function moveCompositionBlockBetweenRows(
+  schema: ActivityFormSchema,
+  fromRow: {
+    containerPath: CompositionContainerPath;
+    indexInContainer: number;
+  },
+  toRow: {
+    containerPath: CompositionContainerPath;
+    indexInContainer: number;
+    node: FormCompositionNode;
+  }
+): ActivityFormSchema {
+  const anchorNodeId = toRow.node.id;
+  const { schema: without, removed } = removeNodeFromContainer(
+    schema,
+    fromRow.containerPath,
+    fromRow.indexInContainer
+  );
+
+  if (!removed) {
+    return schema;
+  }
+
+  const root = without.composition ?? getTopLevelComposition(without);
+  const anchorLocation = findNodeLocation(root, anchorNodeId);
+  if (!anchorLocation) {
+    return schema;
+  }
+
+  return insertNodeInContainer(
+    without,
+    anchorLocation.containerPath,
+    removed,
+    anchorLocation.indexInContainer
+  );
+}
+
+export function moveCompositionBlockToColumn(
+  schema: ActivityFormSchema,
+  blockId: string,
+  targetColumn: 0 | 1
+): ActivityFormSchema {
+  const base = ensureBuilderEditableSchema(schema);
+  const location = findNodeLocation(getCanvasComposition(base), blockId);
+  if (
+    !location ||
+    location.node.kind === "columns" ||
+    location.columnIndex === undefined
+  ) {
     return base;
   }
 
-  return reorderSiblingsInContainer(
+  if (location.columnIndex === targetColumn) {
+    return base;
+  }
+
+  const targetPath = [
+    ...location.containerPath.slice(0, -1),
+    targetColumn,
+  ];
+
+  const { schema: without, removed } = removeNodeFromContainer(
     base,
-    fromRow.containerPath,
-    fromRow.indexInContainer,
-    toRow.indexInContainer
+    location.containerPath,
+    location.indexInContainer
+  );
+
+  if (!removed) {
+    return base;
+  }
+
+  const targetList = getSiblingListAtPath(
+    without.composition ?? getTopLevelComposition(without),
+    targetPath
+  );
+
+  return insertNodeInContainer(
+    without,
+    targetPath,
+    removed,
+    targetList?.length ?? 0
   );
 }
 
@@ -347,6 +513,13 @@ export function syncCompositionAfterFieldIdChange(
 
       if (node.kind === "section" && node.children?.length) {
         return { ...node, children: walk(node.children) };
+      }
+
+      if (node.kind === "columns" && node.columns?.length) {
+        return {
+          ...node,
+          columns: node.columns.map((column) => walk(column)),
+        };
       }
 
       return node;

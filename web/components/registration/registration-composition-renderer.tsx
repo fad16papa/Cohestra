@@ -108,6 +108,24 @@ function renderNodes(
           </div>
         </section>
       );
+      continue;
+    }
+
+    if (node.kind === "columns" && node.columns?.length === 2) {
+      const [left, right] = node.columns;
+      output.push(
+        <div
+          key={node.id}
+          className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2"
+        >
+          <div className="flex min-w-0 flex-col gap-4">
+            {renderNodes(left ?? [], fieldsById, renderField)}
+          </div>
+          <div className="flex min-w-0 flex-col gap-4">
+            {renderNodes(right ?? [], fieldsById, renderField)}
+          </div>
+        </div>
+      );
     }
   }
 
