@@ -1,11 +1,15 @@
-import type { ActivityFormSchema, FormFieldDefinition } from "@/lib/activities-api";
+import type {
+  ActivityFormSchema,
+  FormCompositionNode,
+  FormFieldDefinition,
+} from "@/lib/activities-api";
 import {
   FORM_SCHEMA_VERSION_V2,
   getEffectiveComposition,
   hasStoredComposition,
 } from "@/lib/form-composition";
 
-/** Top-level fieldRef order for public single-page rendering. */
+/** Depth-first fieldRef order across sections (presentation nodes skipped). */
 export function flattenFieldRefOrder(
   composition: ActivityFormSchema["composition"]
 ): string[] {
@@ -13,9 +17,20 @@ export function flattenFieldRefOrder(
     return [];
   }
 
-  return composition
-    .filter((node) => node.kind === "fieldRef" && node.fieldId?.trim())
-    .map((node) => node.fieldId!.trim());
+  const fieldIds: string[] = [];
+
+  function walk(nodes: FormCompositionNode[]): void {
+    for (const node of nodes) {
+      if (node.kind === "fieldRef" && node.fieldId?.trim()) {
+        fieldIds.push(node.fieldId.trim());
+      } else if (node.kind === "section" && node.children?.length) {
+        walk(node.children);
+      }
+    }
+  }
+
+  walk(composition);
+  return fieldIds;
 }
 
 export function orderFieldsByComposition(

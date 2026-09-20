@@ -58,12 +58,21 @@ describe("form composition content blocks", () => {
   });
 
   it("unwraps section children when section is deleted", () => {
-    let schema = addSectionBlock(baseV1);
+    let schema = addContentBlock(baseV1, "heading");
+    schema = addSectionBlock(schema);
     const sectionId = schema.composition?.find((node) => node.kind === "section")?.id;
     expect(sectionId).toBeTruthy();
     schema = addInputFieldBlock(schema, "text", { selectedBlockId: sectionId });
+    schema = addContentBlock(schema, "paragraph", { selectedBlockId: sectionId });
+    schema = addInputFieldBlock(schema, "text", { selectedBlockId: sectionId });
+    schema = addInputFieldBlock(schema, "text");
+    const beforeIds = getBuilderCanvasRows(schema).map((row) => row.node.id);
     schema = removeCompositionBlock(schema, sectionId!);
     expect(schema.composition?.some((node) => node.kind === "section")).toBe(false);
-    expect(schema.composition?.some((node) => node.kind === "fieldRef")).toBe(true);
+    const afterIds = getBuilderCanvasRows(schema).map((row) => row.node.id);
+    expect(afterIds.filter((id) => beforeIds.includes(id)).length).toBeGreaterThan(0);
+    expect(
+      getBuilderCanvasRows(schema).filter((row) => row.node.kind === "fieldRef").length
+    ).toBe(4);
   });
 });
