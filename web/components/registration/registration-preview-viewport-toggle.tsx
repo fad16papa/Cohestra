@@ -1,14 +1,24 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import type { RegistrationPreviewViewport } from "@/lib/registration-preview-viewport";
 
-export type RegistrationPreviewViewport = "mobile" | "desktop";
+export type { RegistrationPreviewViewport };
 
 type RegistrationPreviewViewportToggleProps = {
   value: RegistrationPreviewViewport;
   onChange: (viewport: RegistrationPreviewViewport) => void;
   className?: string;
 };
+
+const OPTIONS: Array<{
+  id: RegistrationPreviewViewport;
+  label: string;
+}> = [
+  { id: "mobile", label: "Mobile" },
+  { id: "tablet", label: "Tablet" },
+  { id: "desktop", label: "Desktop" },
+];
 
 export function RegistrationPreviewViewportToggle({
   value,
@@ -21,35 +31,33 @@ export function RegistrationPreviewViewportToggle({
         "flex gap-1 rounded-lg border border-border-warm p-1",
         className
       )}
-      role="group"
+      role="radiogroup"
       aria-label="Preview viewport"
     >
-      <button
-        type="button"
-        aria-pressed={value === "mobile"}
-        className={cn(
-          "rounded-md px-3 py-1 text-xs font-medium",
-          value === "mobile"
-            ? "bg-primary text-primary-foreground"
-            : "text-text-muted-warm"
-        )}
-        onClick={() => onChange("mobile")}
-      >
-        Mobile
-      </button>
-      <button
-        type="button"
-        aria-pressed={value === "desktop"}
-        className={cn(
-          "rounded-md px-3 py-1 text-xs font-medium",
-          value === "desktop"
-            ? "bg-primary text-primary-foreground"
-            : "text-text-muted-warm"
-        )}
-        onClick={() => onChange("desktop")}
-      >
-        Desktop
-      </button>
+      {OPTIONS.map((option) => {
+        const selected = value === option.id;
+        return (
+          <label
+            key={option.id}
+            className={cn(
+              "cursor-pointer rounded-md px-3 py-1 text-xs font-medium focus-within:outline-none focus-within:ring-2 focus-within:ring-ring",
+              selected
+                ? "bg-primary text-primary-foreground"
+                : "text-text-muted-warm hover:text-text-warm"
+            )}
+          >
+            <input
+              type="radio"
+              name="preview-viewport"
+              value={option.id}
+              checked={selected}
+              onChange={() => onChange(option.id)}
+              className="sr-only"
+            />
+            {option.label}
+          </label>
+        );
+      })}
     </div>
   );
 }

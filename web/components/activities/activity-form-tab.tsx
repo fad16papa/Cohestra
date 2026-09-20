@@ -67,6 +67,7 @@ import {
   type SavedFormTemplateSummary,
 } from "@/lib/form-templates-api";
 import { applyMissingStepBuckets } from "@/lib/form-steps";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { buildFormStudioPreviewKey } from "@/lib/form-studio-preview-key";
 import { activeExperienceFlow } from "@/lib/registration-experience-studio";
 import {
@@ -168,7 +169,10 @@ export function ActivityFormTab({
     slug: activity.slug,
   });
   const previewThemeSource = designDraftTheme ?? themeFromActivity(activity);
-  const previewKey = buildFormStudioPreviewKey(draftSchema, previewThemeSource);
+  const previewKey = useDebouncedValue(
+    buildFormStudioPreviewKey(draftSchema, previewThemeSource),
+    200
+  );
   const previewTheme = useMemo(
     () => resolveRegistrationPreviewTheme(activity, previewThemeSource),
     [activity, previewThemeSource]
@@ -1091,7 +1095,7 @@ export function ActivityFormTab({
           className="min-w-0"
         >
           <RegistrationPublicPreviewShell
-            key={previewKey}
+            remountKey={previewKey}
             slug={activity.slug}
             name={activity.name}
             schedule={activity.schedule}

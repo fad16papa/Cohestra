@@ -63,8 +63,8 @@ async function dragBlockToDropZone(page: Page, blockTitle: RegExp, dropText: Reg
 }
 
 async function setPreviewViewport(page: Page, mode: "Desktop" | "Mobile") {
-  const toggle = page.getByRole("group", { name: /Preview viewport/i });
-  await toggle.getByRole("button", { name: new RegExp(`^${mode}$`, "i") }).click();
+  const toggle = page.getByRole("radiogroup", { name: /Preview viewport/i });
+  await toggle.locator("label").filter({ hasText: new RegExp(`^${mode}$`, "i") }).click();
 }
 
 test.describe("Story 36.4 — live Form Studio checkpoint", () => {

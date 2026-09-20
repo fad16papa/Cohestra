@@ -30,9 +30,9 @@ function previewSurface(page: import("@playwright/test").Page) {
 }
 
 async function setPreviewViewportDesktop(page: import("@playwright/test").Page) {
-  const toggle = page.getByRole("group", { name: /Preview viewport/i });
+  const toggle = page.getByRole("radiogroup", { name: /Preview viewport/i });
   if (await toggle.isVisible().catch(() => false)) {
-    await toggle.getByRole("button", { name: /^Desktop$/i }).click();
+    await toggle.locator("label").filter({ hasText: /^Desktop$/i }).click();
   }
 }
 
