@@ -47,6 +47,9 @@ type FormFieldEditorProps = {
   corePlusLocked?: boolean;
   stepsEnabled?: boolean;
   stepsLocked?: boolean;
+  /** Story 36.2 — render field properties panel only (composition builder inspector). */
+  inspectorOnly?: boolean;
+  inspectorFieldIndex?: number | null;
 };
 
 const editorPanelShellClassName =
@@ -91,11 +94,13 @@ export function FormFieldEditor({
   corePlusLocked = false,
   stepsEnabled = false,
   stepsLocked = false,
+  inspectorOnly = false,
+  inspectorFieldIndex = null,
 }: FormFieldEditorProps) {
   const [addType, setAddType] = useState<FormFieldType>("text");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(
-    schema.fields.length > 0 ? 0 : null
+    inspectorOnly ? inspectorFieldIndex : schema.fields.length > 0 ? 0 : null
   );
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
@@ -107,6 +112,11 @@ export function FormFieldEditor({
   );
 
   useEffect(() => {
+    if (inspectorOnly) {
+      setSelectedIndex(inspectorFieldIndex);
+      return;
+    }
+
     if (schema.fields.length === 0) {
       setSelectedIndex(null);
       return;
@@ -115,7 +125,7 @@ export function FormFieldEditor({
     if (selectedIndex === null || selectedIndex >= schema.fields.length) {
       setSelectedIndex(Math.max(0, schema.fields.length - 1));
     }
-  }, [schema.fields.length, selectedIndex]);
+  }, [inspectorFieldIndex, inspectorOnly, schema.fields.length, selectedIndex]);
 
   function updateFields(fields: FormFieldDefinition[]) {
     onChange({ ...schema, fields });
@@ -331,6 +341,45 @@ export function FormFieldEditor({
 
   const selectedField =
     selectedIndex !== null ? schema.fields[selectedIndex] ?? null : null;
+
+  if (inspectorOnly) {
+    return (
+      <section className={cn(editorPanelShellClassName, className)}>
+        <div className="border-b border-border-warm px-4 py-3">
+          <h4 className="text-sm font-semibold text-text-warm">Field properties</h4>
+          <p className="mt-1 text-xs text-text-muted-warm">
+            {selectedField
+              ? `Editing ${selectedField.label || selectedField.id}`
+              : "Select a block in the form structure to edit its field."}
+          </p>
+        </div>
+        <div className={cn(editorPanelScrollClassName, "px-4 py-4")}>
+          {!selectedField || selectedIndex === null ? (
+            <p className="text-sm text-text-muted-warm">
+              Select a field block to configure label, validation, and options.
+            </p>
+          ) : (
+            <FieldPropertiesEditor
+              field={selectedField}
+              index={selectedIndex}
+              fields={schema.fields}
+              disabled={disabled}
+              recipesLocked={recipesLocked}
+              stepsEnabled={stepsEnabled}
+              stepsLocked={stepsLocked}
+              duplicateFieldIds={duplicateFieldIds}
+              onUpdate={(patch) => updateField(selectedIndex, patch)}
+              onAddOption={() => addOption(selectedIndex)}
+              onUpdateOption={(optionIndex, patch) =>
+                updateOption(selectedIndex, optionIndex, patch)
+              }
+              onRemoveOption={(optionIndex) => removeOption(selectedIndex, optionIndex)}
+            />
+          )}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <div className={cn("space-y-4", className)}>
