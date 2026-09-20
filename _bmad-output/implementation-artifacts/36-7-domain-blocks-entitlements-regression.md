@@ -1,6 +1,6 @@
 # Story 36.7: Domain blocks + entitlements + Epic integration
 
-Status: review
+Status: accepted
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 
@@ -228,8 +228,10 @@ Unauthorized models: NONE
 ### Debug Log References
 
 - Post-36.6 main `a569938` + CI `35524668730` SUCCESS
-- Implementation commit `a6859ae` (plus follow-up)
+- Implementation HEAD `9f10d4c`
 - PR #332
+- PR CI `35525192908` SUCCESS (`a6859ae`)
+- PR CI `35525370447` SUCCESS (`9f10d4c`)
 
 ### Completion Notes List
 
