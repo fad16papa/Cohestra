@@ -39,6 +39,15 @@ export function getPublicApiBaseUrl(): string {
 
   if (typeof window !== "undefined") {
     const origin = normalizeBaseUrl(window.location.origin);
+    if (
+      process.env.NODE_ENV === "development" &&
+      configured &&
+      shouldUseBrowserOriginForApi(window.location.hostname)
+    ) {
+      // Native dev (no nginx /api proxy): tenant hosts must call the API port directly.
+      return normalizeBaseUrl(configured);
+    }
+
     if (shouldUseBrowserOriginForApi(window.location.hostname)) {
       return origin;
     }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { LayoutTemplate } from "lucide-react";
 
-import { FormFieldEditor } from "@/components/activities/form-field-editor";
+import { FormCompositionBuilder } from "@/components/activities/form-composition-builder";
 import { ActivityCloseAtPicker } from "@/components/activities/activity-close-at-picker";
 import { FormTemplatePicker } from "@/components/activities/form-template-picker";
 import { PipingCheatsheet } from "@/components/activities/piping-cheatsheet";
@@ -1067,7 +1067,7 @@ export function ActivityFormTab({
         </div>
       </section>
 
-      <FormFieldEditor
+      <FormCompositionBuilder
         schema={draftSchema}
         onChange={setDraftSchema}
         disabled={isArchived}

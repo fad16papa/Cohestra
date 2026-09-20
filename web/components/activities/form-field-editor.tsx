@@ -17,6 +17,10 @@ import type {
   FormFieldVisibleWhen,
 } from "@/lib/activities-api";
 import {
+  compositionBlockIdAfterFieldRename,
+  syncCompositionAfterFieldIdChange,
+} from "@/lib/form-composition-mutations";
+import {
   createDefaultField,
   fieldAllowsMinMax,
   fieldNeedsConsentText,
@@ -47,6 +51,11 @@ type FormFieldEditorProps = {
   corePlusLocked?: boolean;
   stepsEnabled?: boolean;
   stepsLocked?: boolean;
+  /** Story 36.2 — render field properties panel only (composition builder inspector). */
+  inspectorOnly?: boolean;
+  inspectorFieldIndex?: number | null;
+  /** When field id changes, composition block ids change — keep canvas selection in sync. */
+  onCompositionBlockIdRenamed?: (previousBlockId: string, nextBlockId: string) => void;
 };
 
 const editorPanelShellClassName =
@@ -91,11 +100,14 @@ export function FormFieldEditor({
   corePlusLocked = false,
   stepsEnabled = false,
   stepsLocked = false,
+  inspectorOnly = false,
+  inspectorFieldIndex = null,
+  onCompositionBlockIdRenamed,
 }: FormFieldEditorProps) {
   const [addType, setAddType] = useState<FormFieldType>("text");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(
-    schema.fields.length > 0 ? 0 : null
+    inspectorOnly ? inspectorFieldIndex : schema.fields.length > 0 ? 0 : null
   );
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
@@ -107,6 +119,11 @@ export function FormFieldEditor({
   );
 
   useEffect(() => {
+    if (inspectorOnly) {
+      setSelectedIndex(inspectorFieldIndex);
+      return;
+    }
+
     if (schema.fields.length === 0) {
       setSelectedIndex(null);
       return;
@@ -115,19 +132,35 @@ export function FormFieldEditor({
     if (selectedIndex === null || selectedIndex >= schema.fields.length) {
       setSelectedIndex(Math.max(0, schema.fields.length - 1));
     }
-  }, [schema.fields.length, selectedIndex]);
+  }, [inspectorFieldIndex, inspectorOnly, schema.fields.length, selectedIndex]);
 
   function updateFields(fields: FormFieldDefinition[]) {
     onChange({ ...schema, fields });
   }
 
   function updateField(index: number, patch: Partial<FormFieldDefinition>) {
+    const previousField = schema.fields[index];
     const next = schema.fields.map((field, fieldIndex) => {
       if (fieldIndex !== index) {
         return field;
       }
 
       const updated = { ...field, ...patch };
+
+      if (patch.id !== undefined) {
+        const trimmed = patch.id.trim();
+        if (
+          !isValidFieldId(trimmed) ||
+          schema.fields.some(
+            (candidate, candidateIndex) =>
+              candidateIndex !== fieldIndex && candidate.id === trimmed
+          )
+        ) {
+          updated.id = field.id;
+        } else {
+          updated.id = trimmed;
+        }
+      }
 
       if (patch.type && patch.type !== field.type) {
         if (fieldNeedsOptions(patch.type) && !updated.options?.length) {
@@ -185,6 +218,28 @@ export function FormFieldEditor({
       return updated;
     });
 
+    const nextField = next[index];
+    if (
+      previousField &&
+      nextField &&
+      nextField.id !== previousField.id &&
+      isValidFieldId(nextField.id)
+    ) {
+      const { previousBlockId, nextBlockId } = compositionBlockIdAfterFieldRename(
+        previousField.id,
+        nextField.id
+      );
+      onChange(
+        syncCompositionAfterFieldIdChange(
+          { ...schema, fields: next },
+          previousField.id,
+          nextField.id
+        )
+      );
+      onCompositionBlockIdRenamed?.(previousBlockId, nextBlockId);
+      return;
+    }
+
     updateFields(next);
   }
 
@@ -223,7 +278,14 @@ export function FormFieldEditor({
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (paletteOpen || event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) {
+      if (
+        inspectorOnly ||
+        paletteOpen ||
+        event.key !== "/" ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey
+      ) {
         return;
       }
 
@@ -243,7 +305,7 @@ export function FormFieldEditor({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [disabled, paletteOpen]);
+  }, [disabled, inspectorOnly, paletteOpen]);
 
   function removeField(index: number) {
     updateFields(schema.fields.filter((_, fieldIndex) => fieldIndex !== index));
@@ -331,6 +393,45 @@ export function FormFieldEditor({
 
   const selectedField =
     selectedIndex !== null ? schema.fields[selectedIndex] ?? null : null;
+
+  if (inspectorOnly) {
+    return (
+      <section className={cn(editorPanelShellClassName, className)}>
+        <div className="border-b border-border-warm px-4 py-3">
+          <h4 className="text-sm font-semibold text-text-warm">Field properties</h4>
+          <p className="mt-1 text-xs text-text-muted-warm">
+            {selectedField
+              ? `Editing ${selectedField.label || selectedField.id}`
+              : "Select a block in the form structure to edit its field."}
+          </p>
+        </div>
+        <div className={cn(editorPanelScrollClassName, "px-4 py-4")}>
+          {!selectedField || selectedIndex === null ? (
+            <p className="text-sm text-text-muted-warm">
+              Select a field block to configure label, validation, and options.
+            </p>
+          ) : (
+            <FieldPropertiesEditor
+              field={selectedField}
+              index={selectedIndex}
+              fields={schema.fields}
+              disabled={disabled}
+              recipesLocked={recipesLocked}
+              stepsEnabled={stepsEnabled}
+              stepsLocked={stepsLocked}
+              duplicateFieldIds={duplicateFieldIds}
+              onUpdate={(patch) => updateField(selectedIndex, patch)}
+              onAddOption={() => addOption(selectedIndex)}
+              onUpdateOption={(optionIndex, patch) =>
+                updateOption(selectedIndex, optionIndex, patch)
+              }
+              onRemoveOption={(optionIndex) => removeOption(selectedIndex, optionIndex)}
+            />
+          )}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <div className={cn("space-y-4", className)}>

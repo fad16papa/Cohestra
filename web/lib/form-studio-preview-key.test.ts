@@ -66,6 +66,39 @@ describe("buildFormStudioPreviewKey", () => {
     expect(saved).not.toBe(conversational);
   });
 
+  it("changes when composition field order changes", () => {
+    const v2Base: ActivityFormSchema = {
+      version: 2,
+      fields: [
+        ...baseSchema.fields,
+        {
+          id: "email",
+          type: "email",
+          label: "Email",
+          required: true,
+          placeholder: null,
+          options: null,
+          consentText: null,
+        },
+      ],
+      composition: [
+        { id: "ref-name", kind: "fieldRef", fieldId: "full_name" },
+        { id: "ref-email", kind: "fieldRef", fieldId: "email" },
+      ],
+    };
+    const reordered: ActivityFormSchema = {
+      ...v2Base,
+      composition: [
+        { id: "ref-email", kind: "fieldRef", fieldId: "email" },
+        { id: "ref-name", kind: "fieldRef", fieldId: "full_name" },
+      ],
+    };
+
+    expect(buildFormStudioPreviewKey(v2Base)).not.toBe(
+      buildFormStudioPreviewKey(reordered)
+    );
+  });
+
   it("does not change for draft edits outside preview-visible material", () => {
     const saved = buildFormStudioPreviewKey(baseSchema);
     const withClosedMessage = buildFormStudioPreviewKey({

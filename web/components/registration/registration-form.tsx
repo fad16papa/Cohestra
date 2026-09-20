@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 
 import { PhoneFieldInput } from "@/components/registration/phone-field-input";
 import { Button } from "@/components/ui/button";
@@ -35,6 +42,7 @@ import {
   isConversationalDisplayOnlyStep,
   listConversationalSteps,
 } from "@/lib/conversational-form-steps";
+import { orderFieldsByComposition } from "@/lib/form-composition-order";
 import { cn } from "@/lib/utils";
 
 export type RegistrationFormFlowMode = "default" | "conversational";
@@ -326,6 +334,16 @@ export function RegistrationForm({
   const formRef = useRef<HTMLFormElement>(null);
   const conversationalStepRef = useRef<HTMLDivElement>(null);
 
+  const orderedFields = useMemo(
+    () =>
+      orderFieldsByComposition(
+        schema.fields,
+        schema.composition ?? null,
+        schema.version ?? 1
+      ),
+    [schema.fields, schema.composition, schema.version]
+  );
+
   const isPreview = variant === "preview";
   const isPublic = !isPreview;
 
@@ -355,7 +373,7 @@ export function RegistrationForm({
 
   const conversationalOn = flowMode === "conversational";
   const conversationalSteps = conversationalOn
-    ? listConversationalSteps(schema.fields, values, {
+    ? listConversationalSteps(orderedFields, values, {
         includeHiddenPreview: isPreview,
       })
     : [];
@@ -393,7 +411,7 @@ export function RegistrationForm({
 
   const stepsOn = conversationalOn ? false : Boolean(schema.meta?.splitIntoSteps);
   const stepIds = stepsOn
-    ? usedFormSteps(schema.fields, { includeHidden: isPreview })
+    ? usedFormSteps(orderedFields, { includeHidden: isPreview })
     : [];
   const currentStep = stepIds[Math.min(stepIndex, Math.max(stepIds.length - 1, 0))] ?? stepIds[0] ?? null;
   const isLastStep = !stepsOn || stepIndex >= stepIds.length - 1;
@@ -442,7 +460,7 @@ export function RegistrationForm({
   }
 
   function validateAllFields(): boolean {
-    return validateFields(schema.fields);
+    return validateFields(orderedFields);
   }
 
   function validateCurrentStep(): boolean {
@@ -450,7 +468,7 @@ export function RegistrationForm({
       return validateAllFields();
     }
 
-    return validateFields(fieldsForStep(schema.fields, currentStep));
+    return validateFields(fieldsForStep(orderedFields, currentStep));
   }
 
   function performSubmit() {
@@ -475,7 +493,7 @@ export function RegistrationForm({
         }
       } else if (stepsOn && stepIds.length > 0) {
         const firstInvalid = stepIds.findIndex((step) =>
-          fieldsForStep(schema.fields, step).some((field) => {
+          fieldsForStep(orderedFields, step).some((field) => {
             if (isNonInputFieldType(field.type) || !isFieldVisible(field, values, schema.fields)) {
               return false;
             }
@@ -1316,8 +1334,8 @@ export function RegistrationForm({
                 </p>
               ) : null}
               {(stepsOn && currentStep
-                ? fieldsForStep(schema.fields, currentStep)
-                : schema.fields
+                ? fieldsForStep(orderedFields, currentStep)
+                : orderedFields
               ).map((field) => renderField(field))}
             </>
           )}
