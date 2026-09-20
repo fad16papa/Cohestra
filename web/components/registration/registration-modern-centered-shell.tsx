@@ -27,6 +27,7 @@ type RegistrationModernCenteredShellProps = {
   brandingStyle?: CSSProperties;
   formSection: ReactNode;
   footer?: ReactNode;
+  showRegistrationHeading?: boolean;
 };
 
 export function RegistrationModernCenteredShell({
@@ -45,6 +46,7 @@ export function RegistrationModernCenteredShell({
   brandingStyle,
   formSection,
   footer = null,
+  showRegistrationHeading = true,
 }: RegistrationModernCenteredShellProps) {
   const surfaceStyle: ModernCenteredSurfaceStyle =
     normalizeModernCenteredStyle(experienceStyle);
@@ -77,10 +79,15 @@ export function RegistrationModernCenteredShell({
 
       <div className={tokens.sectionDivider} role="presentation" />
 
-      <section className={tokens.formSurface} aria-labelledby="registration-form-heading">
-        <h2 id="registration-form-heading" className={tokens.formHeading}>
-          Registration
-        </h2>
+      <section
+        className={tokens.formSurface}
+        aria-labelledby={showRegistrationHeading ? "registration-form-heading" : undefined}
+      >
+        {showRegistrationHeading ? (
+          <h2 id="registration-form-heading" className={tokens.formHeading}>
+            Registration
+          </h2>
+        ) : null}
         {formSection}
       </section>
 
