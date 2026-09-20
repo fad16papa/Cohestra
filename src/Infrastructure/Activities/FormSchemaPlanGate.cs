@@ -39,8 +39,9 @@ internal static class FormSchemaPlanGate
         var hasCorePlusFields = schema.Fields.Any(field =>
             FormFieldTypes.CorePlusOnly.Contains(field.Type));
         var hasColumns = CompositionUsesColumns(schema.Composition);
+        var hasDomain = CompositionUsesDomain(schema.Composition);
 
-        if (!hasRecipes && !hasSteps && !hasCorePlusFields && !hasColumns)
+        if (!hasRecipes && !hasSteps && !hasCorePlusFields && !hasColumns && !hasDomain)
         {
             return;
         }
@@ -68,27 +69,41 @@ internal static class FormSchemaPlanGate
             throw new FormSchemaPlanLockedException(
                 "Two-column layouts require a Core or Pro plan.");
         }
+
+        if (hasDomain && plan is TenantPlan.Basic)
+        {
+            throw new FormSchemaPlanLockedException(
+                "Activity and community blocks require a Core or Pro plan.");
+        }
     }
 
-    internal static bool CompositionUsesColumns(IReadOnlyList<FormCompositionNode>? composition)
+    internal static bool CompositionUsesColumns(IReadOnlyList<FormCompositionNode>? composition) =>
+        CompositionUsesKind(composition, FormCompositionKinds.Columns);
+
+    internal static bool CompositionUsesDomain(IReadOnlyList<FormCompositionNode>? composition) =>
+        CompositionUsesKind(composition, FormCompositionKinds.Domain);
+
+    private static bool CompositionUsesKind(
+        IReadOnlyList<FormCompositionNode>? composition,
+        string kind)
     {
         if (composition is null or { Count: 0 })
         {
             return false;
         }
 
-        return Walk(composition);
+        return Walk(composition, kind);
 
-        static bool Walk(IEnumerable<FormCompositionNode> nodes)
+        static bool Walk(IEnumerable<FormCompositionNode> nodes, string targetKind)
         {
             foreach (var node in nodes)
             {
-                if (node.Kind == FormCompositionKinds.Columns)
+                if (string.Equals(node.Kind, targetKind, StringComparison.Ordinal))
                 {
                     return true;
                 }
 
-                if (node.Children is { Count: > 0 } && Walk(node.Children))
+                if (node.Children is { Count: > 0 } && Walk(node.Children, targetKind))
                 {
                     return true;
                 }
@@ -100,7 +115,7 @@ internal static class FormSchemaPlanGate
 
                 foreach (var column in node.Columns)
                 {
-                    if (column is { Count: > 0 } && Walk(column))
+                    if (column is { Count: > 0 } && Walk(column, targetKind))
                     {
                         return true;
                     }

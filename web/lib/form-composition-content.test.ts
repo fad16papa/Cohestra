@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   addContentBlock,
+  addDomainBlock,
   addInputFieldBlock,
   addSectionBlock,
   getBuilderCanvasRows,
@@ -49,6 +50,26 @@ describe("form composition content blocks", () => {
       "content",
       "fieldRef",
     ]);
+  });
+
+  it("adds domain blocks without creating response fields", () => {
+    const next = addDomainBlock(baseV1, "activityDetails");
+    expect(next.fields).toHaveLength(1);
+    const domain = next.composition?.find((node) => node.kind === "domain");
+    expect(domain).toMatchObject({
+      kind: "domain",
+      domain: "activityDetails",
+    });
+    expect(domain?.id).toBeTruthy();
+    expect(JSON.stringify(domain)).not.toMatch(/East Coast|Friday|Harbourline/);
+  });
+
+  it("deletes a domain block without removing fields", () => {
+    let schema = addDomainBlock(baseV1, "capacityStatus");
+    const domainId = schema.composition?.find((node) => node.kind === "domain")?.id;
+    schema = removeCompositionBlock(schema, domainId!);
+    expect(schema.fields).toHaveLength(1);
+    expect(schema.composition?.some((node) => node.kind === "domain")).toBe(false);
   });
 
   it("adds section with required child heading", () => {

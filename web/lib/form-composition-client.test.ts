@@ -78,4 +78,42 @@ describe("form-composition-client", () => {
       'Columns block "cols" cannot have an empty column.'
     );
   });
+
+  it("accepts canonical domain blocks and rejects unknown domain types", () => {
+    const fields = [
+      {
+        id: "email",
+        type: "email" as const,
+        label: "Email",
+        required: true,
+        placeholder: null,
+        options: null,
+        consentText: null,
+      },
+    ];
+
+    const valid: ActivityFormSchema = {
+      version: 2,
+      fields,
+      composition: [
+        { id: "details", kind: "domain", domain: "activityDetails" },
+        { id: "ref", kind: "fieldRef", fieldId: "email" },
+      ],
+    };
+    expect(getCompositionClientIssues(valid)).toEqual([]);
+
+    const invalid: ActivityFormSchema = {
+      version: 2,
+      fields,
+      composition: [
+        { id: "bad", kind: "domain", domain: "location" },
+        { id: "ref", kind: "fieldRef", fieldId: "email" },
+      ],
+    };
+    expect(
+      getCompositionClientIssues(invalid).some((issue) =>
+        issue.includes("unsupported Activity block")
+      )
+    ).toBe(true);
+  });
 });

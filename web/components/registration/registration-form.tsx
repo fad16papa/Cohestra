@@ -51,6 +51,7 @@ import {
   FORM_SCHEMA_VERSION_V2,
   hasStoredComposition,
 } from "@/lib/form-composition";
+import type { FormDomainContext } from "@/lib/form-domain-blocks";
 import { orderFieldsByComposition } from "@/lib/form-composition-order";
 import {
   modernCenteredFormFieldClass,
@@ -83,6 +84,8 @@ type RegistrationFormProps = {
   onPreviewSubmit?: (
     answers: Record<string, unknown>
   ) => Promise<PublicRegistrationSubmitResult>;
+  /** Live Activity/Community context for domain blocks. Not persisted in FormSchema. */
+  domainContext?: FormDomainContext | null;
 };
 
 type FieldErrors = Record<string, string>;
@@ -347,6 +350,7 @@ export function RegistrationForm({
   onPreviewSubmit,
   publicSurfaceStyle,
   designTokens = null,
+  domainContext = null,
 }: RegistrationFormProps) {
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -1389,6 +1393,7 @@ export function RegistrationForm({
                 <RegistrationCompositionRenderer
                   schema={schema}
                   renderField={renderField}
+                  domainContext={domainContext}
                 />
               ) : (
                 (stepsOn && currentStep

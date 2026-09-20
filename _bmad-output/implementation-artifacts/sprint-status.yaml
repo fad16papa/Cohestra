@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-09-12
+# last_updated: 2026-09-20
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -53,7 +53,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-09-12
+last_updated: 2026-09-20
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -364,15 +364,15 @@ development_status:
   epic-35-retrospective: optional
 
   # Epic 36 — Form Studio 2.0 Visual Form Builder. Source: epics-form-studio-2-0-36.md
-  epic-36: planned
+  epic-36: in-progress
   36-1-composition-schema-foundation: done
   36-2-builder-palette-reorder: done
   36-3-content-blocks-sections: done
   36-4-columns-responsive-composition: done
   36-5-design-tokens-modern-centered: done
   36-6-preview-viewports-operator-ux: done
-  36-7-domain-blocks-entitlements-regression: ready-for-dev
-  epic-36-retrospective: optional
+  36-7-domain-blocks-entitlements-regression: done
+  epic-36-retrospective: done
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

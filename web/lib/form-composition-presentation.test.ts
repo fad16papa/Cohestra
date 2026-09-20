@@ -37,6 +37,15 @@ describe("compositionHasPresentationBlocks", () => {
     ).toBe(true);
   });
 
+  it("returns true when a domain block exists", () => {
+    expect(
+      compositionHasPresentationBlocks(fields, [
+        { id: "details", kind: "domain", domain: "activityDetails" },
+        { id: "ref-email", kind: "fieldRef", fieldId: "email" },
+      ])
+    ).toBe(true);
+  });
+
   it("returns true when section exists", () => {
     expect(
       compositionHasPresentationBlocks(fields, [

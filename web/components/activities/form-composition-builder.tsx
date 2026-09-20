@@ -12,6 +12,7 @@ import { findCompositionNode } from "@/lib/form-composition-tree";
 import {
   addColumnsBlock,
   addContentBlock,
+  addDomainBlock,
   addInputFieldBlock,
   addSectionBlock,
   findFieldIndexByBlockId,
@@ -26,6 +27,12 @@ import {
   filterFormFieldPaletteItems,
   getFormFieldPaletteGroups,
 } from "@/lib/form-field-palette";
+import {
+  DOMAIN_LOCKED_REASON,
+  FORM_COMPOSITION_DOMAIN_TYPES,
+  FORM_DOMAIN_BLOCK_LABELS,
+  type FormCompositionDomainType,
+} from "@/lib/form-domain-blocks";
 import {
   compositionHasPresentationBlocks,
   CONVERSATIONAL_PRESENTATION_NOTICE,
@@ -74,6 +81,10 @@ function blockTypeLabel(node: FormCompositionNode): string {
     }
   }
 
+  if (node.kind === "domain") {
+    return "Connected to this Activity";
+  }
+
   return node.kind;
 }
 
@@ -100,6 +111,13 @@ function blockTitle(
 
   if (node.kind === "columns") {
     return "Two-column row";
+  }
+
+  if (node.kind === "domain") {
+    return (
+      FORM_DOMAIN_BLOCK_LABELS[node.domain as FormCompositionDomainType] ??
+      "Activity block"
+    );
   }
 
   return node.id;
@@ -262,6 +280,16 @@ export function FormCompositionBuilder({
     selectNewBlock(next);
   }
 
+  function addDomain(domain: FormCompositionDomainType) {
+    if (corePlusLocked) {
+      return;
+    }
+
+    const next = addDomainBlock(schema, domain, { selectedBlockId });
+    applySchema(next);
+    selectNewBlock(next);
+  }
+
   function moveBlock(flatIndex: number, direction: -1 | 1) {
     const target = adjacentCanvasRowIndex(canvasRows, flatIndex, direction);
     if (target === null) {
@@ -385,6 +413,36 @@ export function FormCompositionBuilder({
               {corePlusLocked ? (
                 <p className="mt-1 px-1 text-xs text-text-muted-warm">
                   {COLUMNS_LOCKED_REASON}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted-warm">
+                Activity
+              </p>
+              {FORM_COMPOSITION_DOMAIN_TYPES.map((domain) => (
+                <button
+                  key={domain}
+                  type="button"
+                  disabled={disabled || corePlusLocked}
+                  title={corePlusLocked ? DOMAIN_LOCKED_REASON : undefined}
+                  onClick={() => addDomain(domain)}
+                  className={cn(
+                    "mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    corePlusLocked
+                      ? "cursor-not-allowed text-text-muted-warm opacity-70"
+                      : "text-text-warm hover:bg-muted/50"
+                  )}
+                >
+                  {corePlusLocked ? (
+                    <Lock className="size-3.5 shrink-0" aria-hidden />
+                  ) : null}
+                  {FORM_DOMAIN_BLOCK_LABELS[domain]}
+                </button>
+              ))}
+              {corePlusLocked ? (
+                <p className="mt-1 px-1 text-xs text-text-muted-warm">
+                  {DOMAIN_LOCKED_REASON}
                 </p>
               ) : null}
             </div>

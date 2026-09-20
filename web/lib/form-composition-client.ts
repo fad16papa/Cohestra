@@ -1,5 +1,6 @@
 import type { ActivityFormSchema, FormCompositionNode } from "@/lib/activities-api";
 import { FORM_SCHEMA_VERSION_V2, hasStoredComposition } from "@/lib/form-composition";
+import { isFormCompositionDomainType } from "@/lib/form-domain-blocks";
 import { isHiddenFieldType } from "@/lib/form-schema-utils";
 
 const MAX_DEPTH = 3;
@@ -93,6 +94,19 @@ export function getCompositionClientIssues(schema: ActivityFormSchema): string[]
                 walk(column, depth + 1);
               }
             }
+          }
+
+          break;
+        }
+        case "domain": {
+          if (node.children?.length || node.columns?.length) {
+            issues.push(`Block "${node.id}" cannot contain nested blocks.`);
+          }
+
+          if (!isFormCompositionDomainType(node.domain)) {
+            issues.push(
+              `Block "${node.id}" has an unsupported Activity block type.`
+            );
           }
 
           break;

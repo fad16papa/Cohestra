@@ -324,7 +324,8 @@ public sealed class FormTemplateService(
             FormFieldTypes.CorePlusOnly.Contains(field.Type));
 
         var hasColumns = FormSchemaPlanGate.CompositionUsesColumns(schema.Composition);
-        if (!hasRecipes && !hasSteps && !hasCorePlusFields && !hasColumns)
+        var hasDomain = FormSchemaPlanGate.CompositionUsesDomain(schema.Composition);
+        if (!hasRecipes && !hasSteps && !hasCorePlusFields && !hasColumns && !hasDomain)
         {
             return;
         }
@@ -353,6 +354,12 @@ public sealed class FormTemplateService(
         {
             throw new FormSchemaPlanLockedException(
                 "Two-column layouts require a Core or Pro plan.");
+        }
+
+        if (hasDomain && plan is TenantPlan.Basic)
+        {
+            throw new FormSchemaPlanLockedException(
+                "Activity and community blocks require a Core or Pro plan.");
         }
     }
 
