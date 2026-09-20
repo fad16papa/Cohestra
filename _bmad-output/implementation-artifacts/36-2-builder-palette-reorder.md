@@ -1,8 +1,8 @@
 # Story 36.2 — Builder shell + palette + reorder UI
 
 **Epic:** 36  
-**Status:** review  
-**Depends on:** 36.1 accepted
+**Status:** accepted  
+**Depends on:** 36.1 accepted (merged `1904628`)
 
 ## User story
 
@@ -22,14 +22,19 @@ As a tenant operator, I can see my form as ordered blocks, add fields from a pal
 - [x] Palette adds field + matching fieldRef atomically
 - [x] Reorder updates composition; field IDs stable
 - [x] Keyboard move up/down works
-- [x] Selection by block id survives reorder
+- [x] Drag reorder (row drop targets + dataTransfer ref fallback)
+- [x] Selection by block id survives reorder and field id rename
 - [x] Empty state with primary add action
-- [x] Unsaved draft visible in Preview (composition in preview key + draft schema)
+- [x] Unsaved draft visible in Preview
 - [x] Public RegistrationForm renders fields in composition order
-- [x] v1 forms open and edit without manual migration until save (ensureBuilderEditableSchema on mutate)
-- [x] Save/reload preserves order (v2) — `FormSchemaCompositionIntegrationTests` + client persist round-trip tests
-- [x] Automated builder flow tests + adversarial fixes (canvas reorder, selection on id rename)
-- [ ] Live operator checkpoint (see `36-2-builder-checkpoint-evidence.md`) — required before DONE
+- [x] v1 forms open and edit without manual migration until save
+- [x] Save/reload preserves order (v2) — integration + live checkpoint
+- [x] bmad-code-review / adversarial / checkpoint (HEAD `a317cdc`, PR #327 CI green)
+
+## Evidence
+
+- Live checkpoint: `/opt/cursor/artifacts/bmad-36-2-SUCCESS-final-report.md`, drag fix `bmad-36-2-drag-after-fix.png`
+- CI: run [35504739482](https://github.com/fad16papa/Cohestra/actions/runs/35504739482)
 
 ## Out of scope
 
