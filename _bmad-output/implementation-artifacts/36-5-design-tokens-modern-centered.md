@@ -1,9 +1,12 @@
 # Story 36.5 — Design tokens + Modern/Minimal + Modern Centered
 
 **Epic:** 36  
-**Status:** in-progress  
+**Status:** done (pending product sign-off)  
 **Depends on:** 36.4 merged (`0ccfd0a`)  
-**Branch:** `cursor/epic-36-story-36-5-design-tokens-a139`
+**Branch:** `cursor/epic-36-story-36-5-design-tokens-a139`  
+**HEAD:** `a196ee7`  
+**PR:** #330  
+**CI:** `35521741332` SUCCESS
 
 ## User story
 
