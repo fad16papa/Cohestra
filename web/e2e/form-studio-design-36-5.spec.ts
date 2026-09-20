@@ -4,9 +4,16 @@ import {
   findActivityIdBySlug,
   loginOperatorSession,
   openActivityTab,
+  selectExperienceLayoutLabel,
 } from "./helpers/registration-e2e-api";
 
 const DRAFT_SLUG = "demo-runners-draft-clinic";
+
+async function selectVisibleRadioCard(page: import("@playwright/test").Page, label: RegExp) {
+  const card = page.locator("label").filter({ hasText: label }).first();
+  await expect(card).toBeVisible({ timeout: 30_000 });
+  await card.click();
+}
 
 test.describe("Story 36.5 — design tokens and Modern Centered style", () => {
   test("Modern vs Minimal updates preview shell data attribute", async ({
@@ -16,14 +23,15 @@ test.describe("Story 36.5 — design tokens and Modern Centered style", () => {
     const session = await loginOperatorSession(request);
     const activityId = await findActivityIdBySlug(request, session.accessToken, DRAFT_SLUG);
     await openActivityTab(page, activityId, "design", session);
+    await selectExperienceLayoutLabel(page, /Modern Centered/i);
 
     const previewShell = page.locator('[data-registration-shell="modern-centered"]');
     await expect(previewShell).toBeVisible({ timeout: 30_000 });
 
-    await page.getByRole("radio", { name: /^Modern$/i }).first().check();
+    await selectVisibleRadioCard(page, /^Modern$/i);
     await expect(previewShell).toHaveAttribute("data-registration-style", "modern");
 
-    await page.getByRole("radio", { name: /^Minimal$/i }).first().check();
+    await selectVisibleRadioCard(page, /^Minimal$/i);
     await expect(previewShell).toHaveAttribute("data-registration-style", "minimal");
   });
 
@@ -31,12 +39,12 @@ test.describe("Story 36.5 — design tokens and Modern Centered style", () => {
     const session = await loginOperatorSession(request);
     const activityId = await findActivityIdBySlug(request, session.accessToken, DRAFT_SLUG);
     await openActivityTab(page, activityId, "design", session);
+    await selectExperienceLayoutLabel(page, /Modern Centered/i);
 
-    await page.getByRole("radio", { name: /^Compact$/i }).check();
+    await page.getByText("Typography scale").scrollIntoViewIfNeeded();
+    await selectVisibleRadioCard(page, /^Compact$/i);
 
-    const form = page
-      .locator('[data-registration-shell="modern-centered"] form')
-      .first();
+    const form = page.locator('[data-registration-shell="modern-centered"] form').first();
     await expect(form).toBeVisible({ timeout: 30_000 });
     await expect(form).toHaveClass(/space-y-3\.5/);
   });
