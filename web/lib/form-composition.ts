@@ -1,41 +1,9 @@
-import type { FormFieldDefinition } from "@/lib/activities-api";
+import type { FormCompositionNode, FormFieldDefinition } from "@/lib/activities-api";
+
+export type { FormCompositionNode } from "@/lib/activities-api";
 
 export const FORM_SCHEMA_VERSION_V1 = 1;
 export const FORM_SCHEMA_VERSION_V2 = 2;
-
-export type FormCompositionContentType = "heading" | "paragraph" | "divider" | "image";
-
-export type FormCompositionDomainType =
-  | "activityDetails"
-  | "communityIdentity"
-  | "capacityStatus";
-
-export type FormCompositionKind =
-  | "fieldRef"
-  | "content"
-  | "section"
-  | "columns"
-  | "domain";
-
-export type FormCompositionContentProps = {
-  text?: string | null;
-  level?: number | null;
-  imageUrl?: string | null;
-  alt?: string | null;
-};
-
-export type FormCompositionNode = {
-  id: string;
-  kind: FormCompositionKind;
-  fieldId?: string | null;
-  contentType?: FormCompositionContentType | null;
-  content?: FormCompositionContentProps | null;
-  title?: string | null;
-  description?: string | null;
-  children?: FormCompositionNode[] | null;
-  columns?: FormCompositionNode[][] | null;
-  domain?: FormCompositionDomainType | null;
-};
 
 export function synthesizeLinearComposition(
   fields: FormFieldDefinition[]

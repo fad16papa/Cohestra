@@ -134,6 +134,7 @@ public sealed class FormSchemaCompositionTests
         Assert.Equal("Form schema version 2 requires composition.", error);
     }
 
+    [Fact]
     public void ValidateDto_RejectsDuplicateFieldRef()
     {
         var dto = new ActivityFormSchemaDto(
@@ -150,6 +151,7 @@ public sealed class FormSchemaCompositionTests
         Assert.Contains("more than once", error, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
     public void ValidateDto_RejectsUnknownFieldRef()
     {
         var dto = new ActivityFormSchemaDto(
