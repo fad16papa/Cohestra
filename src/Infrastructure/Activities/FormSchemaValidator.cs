@@ -28,14 +28,33 @@ internal static partial class FormSchemaValidator
             return "fields is required.";
         }
 
+        if (schema.Version is not FormSchemaCompositionNormalizer.SupportedSchemaVersionV1
+            and not FormSchemaCompositionNormalizer.SupportedSchemaVersionV2)
+        {
+            return "Form schema version must be 1 or 2.";
+        }
+
+        if (schema.Version == FormSchemaCompositionNormalizer.SupportedSchemaVersionV1
+            && schema.Composition is { Count: > 0 })
+        {
+            return "Composition requires form schema version 2.";
+        }
+
+        if (schema.Version == FormSchemaCompositionNormalizer.SupportedSchemaVersionV2
+            && (schema.Composition is null || schema.Composition.Count == 0))
+        {
+            return "Form schema version 2 requires composition.";
+        }
+
         return ValidateModel(MapToDomain(schema));
     }
 
     public static string? ValidateModel(ActivityFormSchema schema)
     {
-        if (schema.Version != 1)
+        if (schema.Version is not FormSchemaCompositionNormalizer.SupportedSchemaVersionV1
+            and not FormSchemaCompositionNormalizer.SupportedSchemaVersionV2)
         {
-            return "Form schema version must be 1.";
+            return "Form schema version must be 1 or 2.";
         }
 
         if (schema.Fields is null)
@@ -117,6 +136,27 @@ internal static partial class FormSchemaValidator
             }
         }
 
+        if (schema.Version == FormSchemaCompositionNormalizer.SupportedSchemaVersionV1
+            && FormSchemaCompositionNormalizer.HasStoredComposition(schema))
+        {
+            return "Form schema version 1 cannot include composition.";
+        }
+
+        if (schema.Version == FormSchemaCompositionNormalizer.SupportedSchemaVersionV2
+            && !FormSchemaCompositionNormalizer.HasStoredComposition(schema))
+        {
+            return "Form schema version 2 requires composition.";
+        }
+
+        if (FormSchemaCompositionNormalizer.HasStoredComposition(schema))
+        {
+            var compositionError = FormSchemaCompositionValidator.Validate(schema);
+            if (compositionError is not null)
+            {
+                return compositionError;
+            }
+        }
+
         return null;
     }
 
@@ -182,6 +222,9 @@ internal static partial class FormSchemaValidator
                     InfoText = MapInfoText(field),
                 })
                 .ToList(),
+            Composition = schema.Version == FormSchemaCompositionNormalizer.SupportedSchemaVersionV2
+                ? FormSchemaCompositionMapper.MapToDomain(schema.Composition!)
+                : null,
         };
     }
 

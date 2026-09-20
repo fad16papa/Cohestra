@@ -42,6 +42,7 @@ import {
   getFormSchemaClientIssues,
   getPublishGateIssues,
   mergeFormSchemaMeta,
+  formSchemaForPersist,
   normalizeFormSchema,
 } from "@/lib/form-schema-utils";
 import { substitutePipingPreview } from "@/lib/registration-piping";
@@ -575,7 +576,7 @@ export function ActivityFormTab({
       const updated = await saveActivityFormSchema(
         authFetch,
         activity.id,
-        applyMissingStepBuckets(draftSchema)
+        formSchemaForPersist(applyMissingStepBuckets(draftSchema))
       );
       onActivityUpdated(updated);
       setDraftSchema(normalizeFormSchema(updated.formSchema));

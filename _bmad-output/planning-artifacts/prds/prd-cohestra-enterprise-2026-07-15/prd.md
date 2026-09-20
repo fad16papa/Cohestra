@@ -2,12 +2,13 @@
 title: Cohestra Enterprise — Multi-Tenant SaaS
 status: draft
 created: 2026-07-15
-updated: 2026-08-23
+updated: 2026-09-20
 gtm_pricing: section-13
 sources:
   - _bmad-output/planning-artifacts/sprint-change-proposal-2026-07-14.md
   - _bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md
   - _bmad-output/planning-artifacts/architecture.md
+  - _bmad-output/planning-artifacts/prds/prd-form-studio-2-0-2026-09-20/prd.md
 product_boundary:
   cohestra: Multi-tenant enterprise SaaS (this PRD)
   lead_generation_crm: Single-operator product — separate repo, unchanged
@@ -1094,6 +1095,7 @@ Full pricing page copy: `docs/marketing/pricing-tiers.md`
 | `bmad-check-implementation-readiness` | Align PRD + architecture + UX before dev | After UX |
 | `bmad-sprint-planning` | Enterprise sprint status | After epics |
 | Pricing page | `docs/marketing/pricing-tiers.md` | **Done** — cohestra.app copy draft |
+| **Form Studio 2.0 (Epic 36)** | Visual form builder — composition, blocks, design tokens | **PRD final** — `prds/prd-form-studio-2-0-2026-09-20/prd.md` |
 
 **Inherited PRD reference:** Platform 0 domain FRs remain authoritative for feature behavior inside tenant scope: `_bmad-output/planning-artifacts/prds/prd-lead-generation-crm-2026-06-14/prd.md`.
 
