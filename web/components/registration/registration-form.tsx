@@ -42,6 +42,11 @@ import {
   isConversationalDisplayOnlyStep,
   listConversationalSteps,
 } from "@/lib/conversational-form-steps";
+import { RegistrationCompositionRenderer } from "@/components/registration/registration-composition-renderer";
+import {
+  FORM_SCHEMA_VERSION_V2,
+  hasStoredComposition,
+} from "@/lib/form-composition";
 import { orderFieldsByComposition } from "@/lib/form-composition-order";
 import { cn } from "@/lib/utils";
 
@@ -410,6 +415,11 @@ export function RegistrationForm({
   }, [conversationalOn, safeConversationalIndex, currentConversationalField?.id]);
 
   const stepsOn = conversationalOn ? false : Boolean(schema.meta?.splitIntoSteps);
+  const compositionRendererOn =
+    !conversationalOn &&
+    !stepsOn &&
+    schema.version === FORM_SCHEMA_VERSION_V2 &&
+    hasStoredComposition(schema.composition);
   const stepIds = stepsOn
     ? usedFormSteps(orderedFields, { includeHidden: isPreview })
     : [];
@@ -1333,10 +1343,17 @@ export function RegistrationForm({
                   {formStepLabels[currentStep]} ({stepIndex + 1} of {stepIds.length})
                 </p>
               ) : null}
-              {(stepsOn && currentStep
-                ? fieldsForStep(orderedFields, currentStep)
-                : orderedFields
-              ).map((field) => renderField(field))}
+              {compositionRendererOn ? (
+                <RegistrationCompositionRenderer
+                  schema={schema}
+                  renderField={renderField}
+                />
+              ) : (
+                (stepsOn && currentStep
+                  ? fieldsForStep(orderedFields, currentStep)
+                  : orderedFields
+                ).map((field) => renderField(field))
+              )}
             </>
           )}
         </>

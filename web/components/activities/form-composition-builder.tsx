@@ -3,22 +3,27 @@
 import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { FormCompositionInspector } from "@/components/activities/form-composition-inspector";
 import { FormFieldEditor } from "@/components/activities/form-field-editor";
 import { FormFieldPaletteDialog } from "@/components/activities/form-field-palette-dialog";
 import { Button } from "@/components/ui/button";
-import type { ActivityFormSchema, FormFieldType } from "@/lib/activities-api";
+import type { ActivityFormSchema, FormCompositionNode, FormFieldType } from "@/lib/activities-api";
+import { findCompositionNode } from "@/lib/form-composition-tree";
 import {
+  addContentBlock,
   addInputFieldBlock,
+  addSectionBlock,
   findFieldIndexByBlockId,
-  getCanvasComposition,
-  removeFieldRefBlock,
+  getBuilderCanvasRows,
+  removeCompositionBlock,
   reorderCompositionBlocks,
+  type ContentBlockType,
 } from "@/lib/form-composition-mutations";
 import {
   filterFormFieldPaletteItems,
   getFormFieldPaletteGroups,
 } from "@/lib/form-field-palette";
-import { formFieldTypeLabels, getDuplicateFieldIds } from "@/lib/form-schema-utils";
+import { getDuplicateFieldIds } from "@/lib/form-schema-utils";
 import { cn } from "@/lib/utils";
 
 type FormCompositionBuilderProps = {
@@ -34,6 +39,78 @@ type FormCompositionBuilderProps = {
 
 const panelShell =
   "flex min-h-[20rem] min-w-0 flex-col rounded-xl border border-border-warm bg-card lg:min-h-[28rem]";
+
+function blockTypeLabel(node: FormCompositionNode): string {
+  if (node.kind === "fieldRef") {
+    return "Input field";
+  }
+
+  if (node.kind === "section") {
+    return "Section";
+  }
+
+  if (node.kind === "content") {
+    if (node.contentType === "heading") {
+      return "Heading";
+    }
+    if (node.contentType === "paragraph") {
+      return "Paragraph";
+    }
+    if (node.contentType === "divider") {
+      return "Divider";
+    }
+  }
+
+  return node.kind;
+}
+
+function blockTitle(
+  node: FormCompositionNode,
+  schema: ActivityFormSchema
+): string {
+  if (node.kind === "fieldRef" && node.fieldId) {
+    const field = schema.fields.find((entry) => entry.id === node.fieldId);
+    return field?.label ?? node.fieldId;
+  }
+
+  if (node.kind === "content") {
+    if (node.contentType === "divider") {
+      return "Divider";
+    }
+
+    return node.content?.text?.trim() || blockTypeLabel(node);
+  }
+
+  if (node.kind === "section") {
+    return node.title?.trim() || "Section";
+  }
+
+  return node.id;
+}
+
+function adjacentCanvasRowIndex(
+  rows: ReturnType<typeof getBuilderCanvasRows>,
+  flatIndex: number,
+  direction: -1 | 1
+): number | null {
+  const row = rows[flatIndex];
+  if (!row) {
+    return null;
+  }
+
+  const pathKey = row.containerPath.join(".");
+  for (
+    let index = flatIndex + direction;
+    index >= 0 && index < rows.length;
+    index += direction
+  ) {
+    if (rows[index]!.containerPath.join(".") === pathKey) {
+      return index;
+    }
+  }
+
+  return null;
+}
 
 export function FormCompositionBuilder({
   schema,
@@ -60,7 +137,7 @@ export function FormCompositionBuilder({
     return Number.isFinite(parsed) ? parsed : null;
   }
 
-  const canvasNodes = useMemo(() => getCanvasComposition(schema), [schema]);
+  const canvasRows = useMemo(() => getBuilderCanvasRows(schema), [schema]);
   const paletteGroups = useMemo(
     () => getFormFieldPaletteGroups(corePlusLocked),
     [corePlusLocked]
@@ -83,6 +160,7 @@ export function FormCompositionBuilder({
   );
 
   const selectedFieldIndex = findFieldIndexByBlockId(schema, selectedBlockId);
+  const selectedNode = findCompositionNode(schema, selectedBlockId);
 
   const applySchema = useCallback(
     (next: ActivityFormSchema) => {
@@ -91,17 +169,42 @@ export function FormCompositionBuilder({
     [onChange]
   );
 
-  function addFieldType(type: FormFieldType) {
-    const next = addInputFieldBlock(schema, type, { stepsEnabled });
-    applySchema(next);
-    const newBlock = next.composition?.[next.composition.length - 1];
-    if (newBlock?.id) {
-      setSelectedBlockId(newBlock.id);
+  function selectNewBlock(next: ActivityFormSchema) {
+    const rows = getBuilderCanvasRows(next);
+    const last = rows[rows.length - 1];
+    if (last?.node.id) {
+      setSelectedBlockId(last.node.id);
     }
   }
 
-  function moveBlock(index: number, direction: -1 | 1) {
-    applySchema(reorderCompositionBlocks(schema, index, index + direction));
+  function addFieldType(type: FormFieldType) {
+    const next = addInputFieldBlock(schema, type, {
+      stepsEnabled,
+      selectedBlockId,
+    });
+    applySchema(next);
+    selectNewBlock(next);
+  }
+
+  function addContent(contentType: ContentBlockType) {
+    const next = addContentBlock(schema, contentType, { selectedBlockId });
+    applySchema(next);
+    selectNewBlock(next);
+  }
+
+  function addSection() {
+    const next = addSectionBlock(schema, { selectedBlockId });
+    applySchema(next);
+    selectNewBlock(next);
+  }
+
+  function moveBlock(flatIndex: number, direction: -1 | 1) {
+    const target = adjacentCanvasRowIndex(canvasRows, flatIndex, direction);
+    if (target === null) {
+      return;
+    }
+
+    applySchema(reorderCompositionBlocks(schema, flatIndex, target));
   }
 
   function reorderTo(fromIndex: number, toIndex: number) {
@@ -109,7 +212,7 @@ export function FormCompositionBuilder({
   }
 
   function removeBlock(blockId: string) {
-    applySchema(removeFieldRefBlock(schema, blockId));
+    applySchema(removeCompositionBlock(schema, blockId));
     if (selectedBlockId === blockId) {
       setSelectedBlockId(null);
     }
@@ -130,18 +233,62 @@ export function FormCompositionBuilder({
           <h4 className="px-1 text-xs font-semibold uppercase tracking-wide text-text-muted-warm">
             Block palette
           </h4>
-          <div className="mt-3 min-h-0 flex-1 space-y-1 overflow-y-auto">
-            {paletteItems.map((item) => (
+          <div className="mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto">
+            <div>
+              <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted-warm">
+                Input
+              </p>
+              <div className="mt-1 space-y-1">
+                {paletteItems.map((item) => (
+                  <button
+                    key={item.type}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => addFieldType(item.type)}
+                    className="flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted-warm">
+                Content
+              </p>
+              <div className="mt-1 space-y-1">
+                {(
+                  [
+                    ["heading", "Heading"],
+                    ["paragraph", "Paragraph"],
+                    ["divider", "Divider"],
+                  ] as const
+                ).map(([type, label]) => (
+                  <button
+                    key={type}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => addContent(type)}
+                    className="flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted-warm">
+                Structure
+              </p>
               <button
-                key={item.type}
                 type="button"
                 disabled={disabled}
-                onClick={() => addFieldType(item.type)}
-                className="flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={addSection}
+                className="mt-1 flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
               >
-                {item.label}
+                Section
               </button>
-            ))}
+            </div>
           </div>
           <Button
             type="button"
@@ -166,7 +313,7 @@ export function FormCompositionBuilder({
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto p-3">
-            {canvasNodes.length === 0 ? (
+            {canvasRows.length === 0 ? (
               <div className="flex flex-col items-center gap-4 px-4 py-12 text-center">
                 <p className="text-sm text-text-muted-warm">
                   Add your first field to start building this registration form.
@@ -193,14 +340,17 @@ export function FormCompositionBuilder({
                   event.dataTransfer.dropEffect = "move";
                 }}
               >
-                {canvasNodes.map((node, index) => {
-                  const field = schema.fields.find((f) => f.id === node.fieldId);
+                {canvasRows.map((row, index) => {
+                  const { node } = row;
                   const isSelected = selectedBlockId === node.id;
                   const isDragging = dragIndex === index;
                   const isDropTarget = dropIndex === index && dragIndex !== index;
+                  const canMoveUp = adjacentCanvasRowIndex(canvasRows, index, -1) !== null;
+                  const canMoveDown = adjacentCanvasRowIndex(canvasRows, index, 1) !== null;
                   return (
                     <li
                       key={node.id}
+                      style={{ marginLeft: `${row.containerPath.length * 12}px` }}
                       onDragEnter={(event) => {
                         if (disabled || dragFromIndexRef.current === null) {
                           return;
@@ -247,7 +397,7 @@ export function FormCompositionBuilder({
                             type="button"
                             draggable={!disabled}
                             disabled={disabled}
-                            aria-label={`Drag to reorder ${field?.label ?? node.id}`}
+                            aria-label={`Drag to reorder ${blockTitle(node, schema)}`}
                             aria-grabbed={isDragging}
                             onDragStart={(event) => {
                               if (disabled) {
@@ -277,8 +427,8 @@ export function FormCompositionBuilder({
                               type="button"
                               variant="outline"
                               size="icon-xs"
-                              disabled={disabled || index === 0}
-                              aria-label={`Move ${field?.label ?? "field"} up`}
+                              disabled={disabled || !canMoveUp}
+                              aria-label={`Move ${blockTitle(node, schema)} up`}
                               onClick={() => moveBlock(index, -1)}
                             >
                               <ChevronUp className="size-4" />
@@ -287,8 +437,8 @@ export function FormCompositionBuilder({
                               type="button"
                               variant="outline"
                               size="icon-xs"
-                              disabled={disabled || index === canvasNodes.length - 1}
-                              aria-label={`Move ${field?.label ?? "field"} down`}
+                              disabled={disabled || !canMoveDown}
+                              aria-label={`Move ${blockTitle(node, schema)} down`}
                               onClick={() => moveBlock(index, 1)}
                             >
                               <ChevronDown className="size-4" />
@@ -304,11 +454,14 @@ export function FormCompositionBuilder({
                             className="min-w-0 flex-1 rounded-md px-2 py-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             <p className="truncate text-sm font-medium text-text-warm">
-                              {index + 1}. {field?.label ?? "Missing field"}
+                              {index + 1}. {blockTitle(node, schema)}
                             </p>
                             <p className="mt-0.5 truncate text-xs text-text-muted-warm">
-                              {field ? formFieldTypeLabels[field.type] : "fieldRef"}
-                              {field?.required ? " · Required" : ""}
+                              {blockTypeLabel(node)}
+                              {node.kind === "fieldRef" &&
+                              schema.fields.find((f) => f.id === node.fieldId)?.required
+                                ? " · Required"
+                                : ""}
                             </p>
                           </button>
 
@@ -317,7 +470,7 @@ export function FormCompositionBuilder({
                             variant="outline"
                             size="icon-xs"
                             disabled={disabled}
-                            aria-label={`Remove ${field?.label ?? "field"}`}
+                            aria-label={`Remove ${blockTitle(node, schema)}`}
                             onClick={() => removeBlock(node.id)}
                           >
                             <Trash2 className="size-4" />
@@ -332,21 +485,45 @@ export function FormCompositionBuilder({
           </div>
         </section>
 
-        <FormFieldEditor
-          schema={schema}
-          onChange={onChange}
-          disabled={disabled}
-          recipesLocked={recipesLocked}
-          corePlusLocked={corePlusLocked}
-          stepsEnabled={stepsEnabled}
-          stepsLocked={stepsLocked}
-          inspectorOnly
-          inspectorFieldIndex={selectedFieldIndex}
-          onCompositionBlockIdRenamed={(_previous, nextBlockId) => {
-            setSelectedBlockId(nextBlockId);
-          }}
-          className="min-h-[20rem] lg:min-h-[28rem]"
-        />
+        <section className={cn(panelShell, "min-h-[20rem] lg:min-h-[28rem]")}>
+          <div className="border-b border-border-warm px-4 py-3">
+            <h4 className="text-sm font-semibold text-text-warm">Block properties</h4>
+            <p className="mt-1 text-xs text-text-muted-warm">
+              {selectedNode
+                ? `${blockTypeLabel(selectedNode)} · ${blockTitle(selectedNode, schema)}`
+                : "Select a block in the form structure to edit it."}
+            </p>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+            {!selectedNode ? (
+              <p className="text-sm text-text-muted-warm">
+                Select a block to configure its settings.
+              </p>
+            ) : selectedNode.kind === "fieldRef" && selectedFieldIndex !== null ? (
+              <FormFieldEditor
+                schema={schema}
+                onChange={onChange}
+                disabled={disabled}
+                recipesLocked={recipesLocked}
+                corePlusLocked={corePlusLocked}
+                stepsEnabled={stepsEnabled}
+                stepsLocked={stepsLocked}
+                inspectorOnly
+                inspectorFieldIndex={selectedFieldIndex}
+                onCompositionBlockIdRenamed={(_previous, nextBlockId) => {
+                  setSelectedBlockId(nextBlockId);
+                }}
+              />
+            ) : (
+              <FormCompositionInspector
+                schema={schema}
+                node={selectedNode}
+                onChange={onChange}
+                disabled={disabled}
+              />
+            )}
+          </div>
+        </section>
       </div>
 
       <FormFieldPaletteDialog

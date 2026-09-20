@@ -59,32 +59,27 @@ describe("form-composition-mutations", () => {
     });
   });
 
-  it("reorders canvas indices without moving non-fieldRef siblings", () => {
-    const editable = ensureBuilderEditableSchema(v1Schema);
-    const withDivider: ActivityFormSchema = {
-      ...editable,
+  it("reorders mixed top-level blocks via canvas rows", () => {
+    let schema = ensureBuilderEditableSchema(v1Schema);
+    schema = {
+      ...schema,
       composition: [
-        editable.composition![0]!,
+        schema.composition![0]!,
         {
           id: "divider-1",
           kind: "content",
           contentType: "divider",
         },
-        editable.composition![1]!,
+        schema.composition![1]!,
       ],
     };
 
-    const reordered = reorderCompositionBlocks(withDivider, 0, 1);
+    const reordered = reorderCompositionBlocks(schema, 0, 1);
     expect(reordered.composition?.map((node) => node.kind)).toEqual([
-      "fieldRef",
       "content",
       "fieldRef",
+      "fieldRef",
     ]);
-    expect(
-      reordered.composition
-        ?.filter((node) => node.kind === "fieldRef")
-        .map((node) => node.fieldId)
-    ).toEqual(["email", "name"]);
   });
 
   it("reorders composition without changing field ids", () => {
