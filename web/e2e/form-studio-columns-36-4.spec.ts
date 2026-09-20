@@ -181,6 +181,10 @@ test.describe("Story 36.4 — live Form Studio checkpoint", () => {
 test.describe("Story 36.4 — Basic plan UI lock", () => {
   test("Two-column row disabled on Basic", async ({ page, request }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    test.skip(
+      (process.env.PUBLIC_BASE_URL ?? "").includes(":8088") || process.env.CI === "true",
+      "Basic UI plan flip uses host Postgres; server gate covered by dotnet integration tests in CI."
+    );
 
     const { execSync } = await import("node:child_process");
     execSync(
