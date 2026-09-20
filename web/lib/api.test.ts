@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
 
-import { getPublicApiBaseUrl } from "@/lib/api";
+import { getPublicApiBaseUrl, getTenantForwardedHostHeaders } from "@/lib/api";
 
 describe("getPublicApiBaseUrl", () => {
   afterEach(() => {

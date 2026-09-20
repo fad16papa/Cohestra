@@ -33,6 +33,19 @@ function shouldUseBrowserOriginForApi(hostname: string): boolean {
   return false;
 }
 
+/** When the browser calls the API on another origin (native dev), forward tenant host. */
+export function getTenantForwardedHostHeaders(): Record<string, string> {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  if (shouldUseBrowserOriginForApi(window.location.hostname)) {
+    return { "X-Forwarded-Host": window.location.host };
+  }
+
+  return {};
+}
+
 /** Browser-facing API base URL (from build-time / runtime public env). */
 export function getPublicApiBaseUrl(): string {
   const configured = process.env.NEXT_PUBLIC_API_URL?.trim();

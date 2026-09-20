@@ -6,7 +6,7 @@ import type {
 } from "@/lib/activities-api";
 import { parseFormSchema } from "@/lib/activities-api";
 import { resolveRegistrationExperience } from "@/lib/registration-experience";
-import { getPublicApiBaseUrl } from "@/lib/api";
+import { getPublicApiBaseUrl, getTenantForwardedHostHeaders } from "@/lib/api";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
 import { parseProblemFields } from "@/lib/problem-details";
 import { PUBLIC_PLAN_REGISTRATION_LIMIT_COPY } from "@/lib/public-registration-messages";
@@ -156,7 +156,10 @@ export async function fetchPublicActivityBySlug(
   try {
     const response = await fetch(
       `${baseUrl}/api/v1/public/activities/${encodeURIComponent(slug)}`,
-      { cache: "no-store" }
+      {
+        cache: "no-store",
+        headers: getTenantForwardedHostHeaders(),
+      }
     );
 
     if (response.status === 404) {
@@ -201,6 +204,7 @@ export async function submitPublicRegistration(
       headers: {
         "Content-Type": "application/json",
         "Idempotency-Key": idempotencyKey,
+        ...getTenantForwardedHostHeaders(),
       },
       body: JSON.stringify({
         activitySlug,
