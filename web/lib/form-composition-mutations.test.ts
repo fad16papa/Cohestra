@@ -8,6 +8,7 @@ import {
   getCanvasComposition,
   removeFieldRefBlock,
   reorderCompositionBlocks,
+  syncCompositionAfterFieldIdChange,
 } from "@/lib/form-composition-mutations";
 import { FORM_SCHEMA_VERSION_V2 } from "@/lib/form-composition";
 
@@ -66,6 +67,19 @@ describe("form-composition-mutations", () => {
       "name",
     ]);
     expect(reordered.fields.map((f) => f.id).sort()).toEqual(["email", "name"]);
+  });
+
+  it("keeps fieldRef in sync when field id changes", () => {
+    const editable = ensureBuilderEditableSchema(v1Schema);
+    const renamed = syncCompositionAfterFieldIdChange(
+      { ...editable, fields: editable.fields.map((f) => (f.id === "name" ? { ...f, id: "full_name" } : f)) },
+      "name",
+      "full_name"
+    );
+    expect(getCanvasComposition(renamed).find((n) => n.fieldId === "full_name")).toMatchObject({
+      id: "field-ref-full_name",
+      kind: "fieldRef",
+    });
   });
 
   it("removes fieldRef and matching field", () => {

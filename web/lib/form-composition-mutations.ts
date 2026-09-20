@@ -115,6 +115,34 @@ export function reorderCompositionBlocks(
   };
 }
 
+export function syncCompositionAfterFieldIdChange(
+  schema: ActivityFormSchema,
+  previousFieldId: string,
+  nextFieldId: string
+): ActivityFormSchema {
+  if (previousFieldId === nextFieldId) {
+    return schema;
+  }
+
+  const base = ensureBuilderEditableSchema(schema);
+  const composition = (base.composition ?? []).map((node) => {
+    if (node.kind !== "fieldRef" || node.fieldId !== previousFieldId) {
+      return node;
+    }
+
+    return {
+      ...node,
+      id: compositionBlockIdForField(nextFieldId),
+      fieldId: nextFieldId,
+    };
+  });
+
+  return {
+    ...base,
+    composition,
+  };
+}
+
 export function findFieldIndexByBlockId(
   schema: ActivityFormSchema,
   blockId: string | null

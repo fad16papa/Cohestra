@@ -16,6 +16,7 @@ import type {
   FormFieldType,
   FormFieldVisibleWhen,
 } from "@/lib/activities-api";
+import { syncCompositionAfterFieldIdChange } from "@/lib/form-composition-mutations";
 import {
   createDefaultField,
   fieldAllowsMinMax,
@@ -132,6 +133,7 @@ export function FormFieldEditor({
   }
 
   function updateField(index: number, patch: Partial<FormFieldDefinition>) {
+    const previousField = schema.fields[index];
     const next = schema.fields.map((field, fieldIndex) => {
       if (fieldIndex !== index) {
         return field;
@@ -194,6 +196,23 @@ export function FormFieldEditor({
 
       return updated;
     });
+
+    const nextField = next[index];
+    if (
+      previousField &&
+      nextField &&
+      patch.id &&
+      patch.id !== previousField.id
+    ) {
+      onChange(
+        syncCompositionAfterFieldIdChange(
+          { ...schema, fields: next },
+          previousField.id,
+          nextField.id
+        )
+      );
+      return;
+    }
 
     updateFields(next);
   }
