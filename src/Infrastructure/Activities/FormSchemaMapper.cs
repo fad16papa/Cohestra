@@ -49,7 +49,8 @@ internal static class FormSchemaMapper
                     schema.Meta.ClosedMessage,
                     schema.Meta.RegistrationClosesAt,
                     schema.Meta.ShowPublisherWebsiteLink),
-            FormSchemaCompositionNormalizer.HasStoredComposition(schema)
+            schema.Version == FormSchemaCompositionNormalizer.SupportedSchemaVersionV2
+            && FormSchemaCompositionNormalizer.HasStoredComposition(schema)
                 ? FormSchemaCompositionMapper.MapToDto(schema.Composition!)
                 : null);
     }

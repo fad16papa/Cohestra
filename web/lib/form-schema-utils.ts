@@ -5,6 +5,7 @@ import type {
   FormCompositionNode,
   FormSchemaMeta,
 } from "@/lib/activities-api";
+import { getCompositionClientIssues } from "@/lib/form-composition-client";
 import { getEffectiveComposition, hasStoredComposition } from "@/lib/form-composition";
 import {
   applyPhoneFieldDefaults,
@@ -461,7 +462,7 @@ export function getDuplicateFieldIds(
 export function getFormSchemaClientIssues(
   schema: ActivityFormSchema
 ): string[] {
-  const issues: string[] = [];
+  const issues: string[] = [...getCompositionClientIssues(schema)];
   const duplicateIds = getDuplicateFieldIds(schema.fields);
   const reportedDuplicateIds = new Set<string>();
 

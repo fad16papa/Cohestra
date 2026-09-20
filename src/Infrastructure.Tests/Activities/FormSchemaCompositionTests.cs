@@ -80,6 +80,76 @@ public sealed class FormSchemaCompositionTests
     }
 
     [Fact]
+    public void ValidateModel_RejectsVersion1WithStoredComposition()
+    {
+        var schema = new ActivityFormSchema
+        {
+            Version = 1,
+            Fields =
+            [
+                new FormFieldDefinition
+                {
+                    Id = "email",
+                    Type = FormFieldTypes.Email,
+                    Label = "Email",
+                    Required = true,
+                },
+            ],
+            Composition =
+            [
+                new FormCompositionNode
+                {
+                    Id = "n1",
+                    Kind = FormCompositionKinds.FieldRef,
+                    FieldId = "email",
+                },
+            ],
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.Equal("Form schema version 1 cannot include composition.", error);
+    }
+
+    [Fact]
+    public void ValidateModel_RejectsVersion2WithoutComposition()
+    {
+        var schema = new ActivityFormSchema
+        {
+            Version = 2,
+            Fields =
+            [
+                new FormFieldDefinition
+                {
+                    Id = "email",
+                    Type = FormFieldTypes.Email,
+                    Label = "Email",
+                    Required = true,
+                },
+            ],
+        };
+
+        var error = FormSchemaValidator.ValidateModel(schema);
+
+        Assert.Equal("Form schema version 2 requires composition.", error);
+    }
+
+    public void ValidateDto_RejectsDuplicateFieldRef()
+    {
+        var dto = new ActivityFormSchemaDto(
+            2,
+            [new FormFieldDefinitionDto("email", FormFieldTypes.Email, "Email", true, null, null, null, null)],
+            Composition:
+            [
+                new FormCompositionNodeDto("n1", FormCompositionKinds.FieldRef, FieldId: "email"),
+                new FormCompositionNodeDto("n2", FormCompositionKinds.FieldRef, FieldId: "email"),
+            ]);
+
+        var error = FormSchemaValidator.ValidateDto(dto);
+
+        Assert.Contains("more than once", error, StringComparison.OrdinalIgnoreCase);
+    }
+
     public void ValidateDto_RejectsUnknownFieldRef()
     {
         var dto = new ActivityFormSchemaDto(

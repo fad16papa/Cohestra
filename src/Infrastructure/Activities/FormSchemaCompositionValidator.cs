@@ -22,6 +22,7 @@ internal static class FormSchemaCompositionValidator
             StringComparer.Ordinal);
         var nodeIds = new HashSet<string>(StringComparer.Ordinal);
         var referencedFieldIds = new HashSet<string>(StringComparer.Ordinal);
+        var fieldRefCounts = new Dictionary<string, int>(StringComparer.Ordinal);
         var nodeCount = 0;
 
         string? Walk(IReadOnlyList<FormCompositionNode> nodes, int depth)
@@ -66,10 +67,26 @@ internal static class FormSchemaCompositionValidator
                             return $"Composition node '{id}' references unknown field '{fieldId}'.";
                         }
 
+                        if (RejectUnexpectedChildStructure(node, id, kind) is { } structureError)
+                        {
+                            return structureError;
+                        }
+
+                        fieldRefCounts[fieldId] = fieldRefCounts.GetValueOrDefault(fieldId) + 1;
+                        if (fieldRefCounts[fieldId] > 1)
+                        {
+                            return $"Field '{fieldId}' is referenced more than once in composition.";
+                        }
+
                         referencedFieldIds.Add(fieldId);
                         break;
                     }
                     case FormCompositionKinds.Content:
+                        if (RejectUnexpectedChildStructure(node, id, kind) is { } leafStructureError)
+                        {
+                            return leafStructureError;
+                        }
+
                         if (ValidateContentNode(node, id) is { } contentError)
                         {
                             return contentError;
@@ -77,6 +94,11 @@ internal static class FormSchemaCompositionValidator
 
                         break;
                     case FormCompositionKinds.Section:
+                        if (node.Columns is { Count: > 0 })
+                        {
+                            return $"Section node '{id}' cannot include columns.";
+                        }
+
                         if (node.Title is { Length: > MaxSectionTitleLength })
                         {
                             return $"Section title cannot exceed {MaxSectionTitleLength} characters.";
@@ -99,6 +121,11 @@ internal static class FormSchemaCompositionValidator
 
                         break;
                     case FormCompositionKinds.Columns:
+                        if (node.Children is { Count: > 0 })
+                        {
+                            return $"Columns node '{id}' cannot include children.";
+                        }
+
                         if (node.Columns is not { Count: 2 })
                         {
                             return $"Columns node '{id}' must define exactly two columns.";
@@ -119,6 +146,11 @@ internal static class FormSchemaCompositionValidator
 
                         break;
                     case FormCompositionKinds.Domain:
+                        if (RejectUnexpectedChildStructure(node, id, kind) is { } domainStructureError)
+                        {
+                            return domainStructureError;
+                        }
+
                         if (ValidateDomainNode(node, id) is { } domainError)
                         {
                             return domainError;
@@ -141,7 +173,7 @@ internal static class FormSchemaCompositionValidator
 
         foreach (var field in schema.Fields)
         {
-            if (IsNonInputPresentationField(field.Type))
+            if (field.Type == FormFieldTypes.Hidden)
             {
                 continue;
             }
@@ -155,8 +187,23 @@ internal static class FormSchemaCompositionValidator
         return null;
     }
 
-    private static bool IsNonInputPresentationField(string type) =>
-        type is FormFieldTypes.SectionHeader or FormFieldTypes.Info;
+    private static string? RejectUnexpectedChildStructure(
+        FormCompositionNode node,
+        string id,
+        string kind)
+    {
+        if (node.Children is { Count: > 0 })
+        {
+            return $"Composition node '{id}' ({kind}) cannot include children.";
+        }
+
+        if (node.Columns is { Count: > 0 })
+        {
+            return $"Composition node '{id}' ({kind}) cannot include columns.";
+        }
+
+        return null;
+    }
 
     private static string? ValidateContentNode(FormCompositionNode node, string id)
     {

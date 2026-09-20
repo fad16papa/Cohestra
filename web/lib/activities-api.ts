@@ -314,8 +314,16 @@ export function parseFormSchema(raw: unknown): ActivityFormSchema | null {
         infoText: typeof infoText === "string" ? infoText : null,
       });
     }),
-    composition: parseFormComposition(schema.composition ?? schema.Composition),
+    composition: parseFormCompositionLenient(schema.composition ?? schema.Composition),
   };
+}
+
+function parseFormCompositionLenient(raw: unknown): FormCompositionNode[] | null {
+  try {
+    return parseFormComposition(raw);
+  } catch {
+    return null;
+  }
 }
 
 function parseFormComposition(raw: unknown): FormCompositionNode[] | null {
@@ -401,9 +409,13 @@ function parseFormCompositionNode(raw: unknown): FormCompositionNode {
       ? childrenRaw.map(parseFormCompositionNode)
       : null,
     columns: Array.isArray(columnsRaw)
-      ? columnsRaw.map((column) =>
-          Array.isArray(column) ? column.map(parseFormCompositionNode) : []
-        )
+      ? columnsRaw.map((column) => {
+          if (!Array.isArray(column)) {
+            throw new Error("Invalid composition column");
+          }
+
+          return column.map(parseFormCompositionNode);
+        })
       : null,
     domain:
       typeof (node.domain ?? node.Domain) === "string"

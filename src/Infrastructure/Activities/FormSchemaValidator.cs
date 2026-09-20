@@ -136,6 +136,18 @@ internal static partial class FormSchemaValidator
             }
         }
 
+        if (schema.Version == FormSchemaCompositionNormalizer.SupportedSchemaVersionV1
+            && FormSchemaCompositionNormalizer.HasStoredComposition(schema))
+        {
+            return "Form schema version 1 cannot include composition.";
+        }
+
+        if (schema.Version == FormSchemaCompositionNormalizer.SupportedSchemaVersionV2
+            && !FormSchemaCompositionNormalizer.HasStoredComposition(schema))
+        {
+            return "Form schema version 2 requires composition.";
+        }
+
         if (FormSchemaCompositionNormalizer.HasStoredComposition(schema))
         {
             var compositionError = FormSchemaCompositionValidator.Validate(schema);

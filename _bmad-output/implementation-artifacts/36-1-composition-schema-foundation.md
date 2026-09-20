@@ -18,10 +18,10 @@ As a platform developer, I need an evolved form schema with a composition layer 
 
 ## Acceptance
 
-- [ ] Legacy v1 schemas normalize to equivalent linear composition
-- [ ] Validation/submission still uses `fields[]` only
-- [ ] Integration test: save/load activity form with composition
-- [ ] bmad-code-review: no duplicate submission path
+- [x] Legacy v1 schemas normalize to equivalent linear composition (`FormSchemaCompositionNormalizer`, `getFormSchemaEffectiveComposition`)
+- [x] Validation/submission still uses `fields[]` only
+- [x] Unit tests: save/load mapping v2 composition (`FormSchemaCompositionTests`)
+- [ ] bmad-code-review: no duplicate submission path (pending review)
 
 ## Out of scope
 
