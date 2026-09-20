@@ -420,6 +420,7 @@ export function moveCompositionBlockBetweenRows(
     indexInContainer: number;
     node: FormCompositionNode;
     isColumnDropTarget?: boolean;
+    columnIndex?: 0 | 1;
   }
 ): ActivityFormSchema {
   const { schema: without, removed } = removeNodeFromContainer(
