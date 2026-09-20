@@ -8,6 +8,12 @@ import { Button } from "@/components/ui/button";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
 import { splitParticipantCopyParagraphs } from "@/lib/registration-piping";
+import {
+  REGISTRATION_SUCCESS_CHECKIN_HINT,
+  REGISTRATION_SUCCESS_HEADING,
+  REGISTRATION_SUCCESS_PREVIEW_HEADING,
+  REGISTRATION_SUCCESS_SAVED_PREFIX,
+} from "@/lib/registration-success-copy";
 
 type RegistrationSuccessScreenProps = {
   activityName: string;
@@ -63,7 +69,7 @@ export function RegistrationSuccessScreen({
           <CheckCircle2 className="size-7 sm:size-8" aria-hidden />
         </span>
         <h2 className="mt-4 text-public-hero text-balance text-text-warm sm:mt-5">
-          {isSimulated ? "Preview success screen" : "You&apos;re registered!"}
+          {isSimulated ? REGISTRATION_SUCCESS_PREVIEW_HEADING : REGISTRATION_SUCCESS_HEADING}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-text-muted-warm">
           {isSimulated ? (
@@ -75,7 +81,7 @@ export function RegistrationSuccessScreen({
             </>
           ) : (
             <>
-              We&apos;ve saved your spot for{" "}
+              {REGISTRATION_SUCCESS_SAVED_PREFIX}{" "}
               <span className="font-medium text-text-warm">{activityName}</span>.
             </>
           )}
@@ -162,10 +168,10 @@ export function RegistrationSuccessScreen({
             <>
               We could not send a confirmation email to{" "}
               <span className="font-medium break-all text-text-warm">{confirmationEmail}</span>.
-              Save your registration ID below — you&apos;ll need it at check-in.
+              {REGISTRATION_SUCCESS_CHECKIN_HINT}
             </>
           ) : (
-            <>Save your registration ID below — you&apos;ll need it at check-in.</>
+            REGISTRATION_SUCCESS_CHECKIN_HINT
           )}
         </p>
 
