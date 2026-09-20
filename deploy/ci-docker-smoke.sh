@@ -59,6 +59,6 @@ echo "== Story 36.4 columns Form Studio + public matrix =="
 PUBLIC_BASE_URL=http://localhost:8088 \
   E2E_LIVE_STACK=1 \
   E2E_API_BASE_URL=http://localhost:8088 \
-  npm run test:e2e -- e2e/form-studio-columns-36-4.spec.ts e2e/form-studio-design-36-5.spec.ts
+  npm run test:e2e -- e2e/form-studio-columns-36-4.spec.ts e2e/form-studio-design-36-5.spec.ts e2e/form-studio-design-36-5-checkpoint.spec.ts
 
 echo "CI Docker smoke passed."

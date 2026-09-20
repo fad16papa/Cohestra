@@ -374,25 +374,26 @@ export function RegistrationForm({
   const isPublic = !isPreview;
 
   const centeredFieldClass = modernCenteredFormFieldClass(publicSurfaceStyle);
-  const tokenFieldClass =
-    isPublic && designTokens
-      ? mergeDesignTokenFieldClass(designTokens, centeredFieldClass)
-      : centeredFieldClass;
-  const publicControlClass = isPublic
+  const tokenFieldClass = designTokens
+    ? mergeDesignTokenFieldClass(designTokens, centeredFieldClass)
+    : centeredFieldClass;
+  const applyDesignChrome = isPublic || Boolean(designTokens);
+  const publicControlClass = applyDesignChrome
     ? tokenFieldClass ?? "min-h-12 text-base"
     : undefined;
   const publicSelectClass = cn(
     "flex w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-    isPublic ? tokenFieldClass ?? "min-h-12 text-base" : "h-9"
+    applyDesignChrome ? tokenFieldClass ?? "min-h-12 text-base" : "h-9"
   );
-  const publicSubmitClass =
-    isPublic && designTokens
-      ? registrationFormSubmitButtonClass(designTokens)
-      : modernCenteredSubmitButtonClass(publicSurfaceStyle);
-  const publicFormTypographyClass =
-    isPublic && designTokens ? registrationFormTypographyClass(designTokens) : undefined;
-  const publicFormSpacingClass =
-    isPublic && designTokens ? registrationFormBlockSpacingClass(designTokens) : undefined;
+  const publicSubmitClass = designTokens
+    ? registrationFormSubmitButtonClass(designTokens)
+    : modernCenteredSubmitButtonClass(publicSurfaceStyle);
+  const publicFormTypographyClass = designTokens
+    ? registrationFormTypographyClass(designTokens)
+    : undefined;
+  const publicFormSpacingClass = designTokens
+    ? registrationFormBlockSpacingClass(designTokens)
+    : undefined;
 
   function markTouched(fieldId: string) {
     setTouched((current) => ({ ...current, [fieldId]: true }));

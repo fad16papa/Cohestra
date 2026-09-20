@@ -1,12 +1,10 @@
 # Story 36.5 — Design tokens + Modern/Minimal + Modern Centered
 
 **Epic:** 36  
-**Status:** done (pending product sign-off)  
+**Status:** accepted  
 **Depends on:** 36.4 merged (`0ccfd0a`)  
 **Branch:** `cursor/epic-36-story-36-5-design-tokens-a139`  
-**HEAD:** `a196ee7`  
-**PR:** #330  
-**CI:** `35521741332` SUCCESS
+**PR:** #330
 
 ## User story
 
@@ -21,7 +19,7 @@ As a tenant operator, I can tune bounded design tokens and Modern vs Minimal sty
 - [x] Preview + public use `PublicRegistrationOpen` + shared `RegistrationForm` with resolved tokens
 - [x] Basic: Modern/Minimal + essential tokens; Core+ gates on spacious/comfortable/lg/elevated (FR-FS2-26–29)
 - [x] Legacy forms: null tokens → safe defaults (BC)
-- [ ] BMAD gates + CI + live checkpoint
+- [x] BMAD gates + CI + live checkpoint
 
 ## PRD / UX / Architecture
 
