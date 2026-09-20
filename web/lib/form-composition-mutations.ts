@@ -136,10 +136,10 @@ export function syncCompositionAfterFieldIdChange(
     return schema;
   }
 
-  const duplicateField = schema.fields.some(
-    (field) => field.id === nextFieldId && field.id !== previousFieldId
-  );
-  if (duplicateField) {
+  const fieldsWithNextId = schema.fields.filter(
+    (field) => field.id === nextFieldId
+  ).length;
+  if (fieldsWithNextId !== 1) {
     return schema;
   }
 
