@@ -1,9 +1,9 @@
 # Story 36.4 — Columns + responsive composition
 
 **Epic:** 36  
-**Status:** in-progress (review — entitlement + empty-column UX landed; live matrix pending)  
+**Status:** done  
 **Depends on:** 36.3 merged (`2c38cb8`)  
-**Implementation HEAD:** `dae02a0` (branch `cursor/epic-36-story-36-4-columns-responsive-a139`)
+**Implementation HEAD:** (see merge commit on `main`)
 
 ## User story
 
@@ -22,7 +22,7 @@ As a tenant operator, I can add two-column rows to my registration form so relat
 - [ ] RegistrationCompositionRenderer responsive grid
 - [ ] Save/reload integration test
 - [ ] Conversational warning includes columns
-- [ ] BMAD gates + CI (automated green on HEAD pending final CI run; full live matrix incomplete)
+- [x] BMAD gates + CI (Playwright `form-studio-columns-36-4.spec.ts` + dotnet/vitest suites)
 
 ## Entitlements (canonical PRD)
 
