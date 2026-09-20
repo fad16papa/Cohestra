@@ -11,7 +11,7 @@ describe("registration responsive layout contract", () => {
       join(process.cwd(), "components/layouts/public-form-layout.tsx"),
       "utf8"
     );
-    expect(source).toMatch(/max-w-\[480px\]/);
+    expect(source).toMatch(/max-w-\[720px\]/);
     expect(source).toMatch(/overflow-x-hidden/);
     expect(source).toMatch(/min-w-0/);
   });
@@ -21,7 +21,7 @@ describe("registration responsive layout contract", () => {
       join(process.cwd(), "components/registration/registration-public-preview-shell.tsx"),
       "utf8"
     );
-    expect(source).toMatch(/max-w-\[480px\]/);
+    expect(source).toMatch(/max-w-\[720px\]/);
     expect(source).toMatch(/max-w-\[960px\]/);
   });
 
@@ -69,7 +69,15 @@ describe("registration responsive layout contract", () => {
     expect(source).toMatch(/overflow-x-hidden/);
     expect(source).toMatch(/min-w-0/);
     expect(source).toMatch(/pickRegistrationPublicShellKind/);
-    expect(source).toMatch(/max-w-\[480px\]/);
+    expect(source).toMatch(/RegistrationModernCenteredShell/);
+    expect(source).toMatch(/publicSurfaceStyle/);
+
+    const shellSource = readFileSync(
+      join(process.cwd(), "components/registration/registration-modern-centered-shell.tsx"),
+      "utf8"
+    );
+    expect(shellSource).toMatch(/max-w-\[720px\]/);
+    expect(shellSource).toMatch(/data-registration-style/);
   });
 
   it("PublicFormLayout main does not flex-grow (footer follows content)", () => {

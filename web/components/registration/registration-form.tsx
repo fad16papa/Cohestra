@@ -48,6 +48,11 @@ import {
   hasStoredComposition,
 } from "@/lib/form-composition";
 import { orderFieldsByComposition } from "@/lib/form-composition-order";
+import {
+  modernCenteredFormFieldClass,
+  modernCenteredSubmitButtonClass,
+  type ModernCenteredSurfaceStyle,
+} from "@/lib/registration-center-style";
 import { cn } from "@/lib/utils";
 
 export type RegistrationFormFlowMode = "default" | "conversational";
@@ -58,6 +63,8 @@ type RegistrationFormProps = {
   className?: string;
   activitySlug?: string;
   flowMode?: RegistrationFormFlowMode;
+  /** Modern Centered shell only — applies modern/minimal field + CTA treatment. */
+  publicSurfaceStyle?: ModernCenteredSurfaceStyle;
   onSubmitted?: (result: PublicRegistrationSubmitResult) => void;
   onSubmitError?: (message: string | null) => void;
   /** Studio preview only — simulates submit locally; never hits the public API. */
@@ -326,6 +333,7 @@ export function RegistrationForm({
   onSubmitted,
   onSubmitError,
   onPreviewSubmit,
+  publicSurfaceStyle,
 }: RegistrationFormProps) {
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -352,11 +360,17 @@ export function RegistrationForm({
   const isPreview = variant === "preview";
   const isPublic = !isPreview;
 
-  const publicControlClass = isPublic ? "min-h-12 text-base" : undefined;
+  const centeredFieldClass = modernCenteredFormFieldClass(publicSurfaceStyle);
+  const publicControlClass = isPublic
+    ? centeredFieldClass ?? "min-h-12 text-base"
+    : undefined;
   const publicSelectClass = cn(
     "flex w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-    isPublic ? "min-h-12 text-base" : "h-9"
+    isPublic
+      ? centeredFieldClass ?? "min-h-12 text-base"
+      : "h-9"
   );
+  const publicSubmitClass = modernCenteredSubmitButtonClass(publicSurfaceStyle);
 
   function markTouched(fieldId: string) {
     setTouched((current) => ({ ...current, [fieldId]: true }));
@@ -1436,7 +1450,9 @@ export function RegistrationForm({
         <Button
           type="submit"
           className={cn(
-            isPublic && "min-h-12 w-full min-w-0 max-w-full shrink text-base"
+            isPublic &&
+              (publicSubmitClass ??
+                "min-h-12 w-full min-w-0 max-w-full shrink text-base")
           )}
           disabled={
             schema.fields.length === 0 ||

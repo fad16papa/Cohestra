@@ -1,9 +1,12 @@
 import type { RegistrationCapacitySummary } from "@/lib/registration-capacity-summary";
+import { cn } from "@/lib/utils";
 
 export function RegistrationCapacityStatus({
   summary,
+  className,
 }: {
   summary: RegistrationCapacitySummary;
+  className?: string;
 }) {
   if (summary.kind === "hidden") {
     return null;
@@ -11,7 +14,10 @@ export function RegistrationCapacityStatus({
 
   if (summary.kind === "going-only") {
     return (
-      <p className="text-sm font-medium text-text-warm" aria-live="polite">
+      <p
+        className={cn("text-sm font-medium text-text-warm", className)}
+        aria-live="polite"
+      >
         {summary.label}
       </p>
     );
@@ -19,7 +25,10 @@ export function RegistrationCapacityStatus({
 
   if (summary.kind === "full") {
     return (
-      <p className="text-sm font-medium text-destructive" aria-live="polite">
+      <p
+        className={cn("text-sm font-medium text-destructive", className)}
+        aria-live="polite"
+      >
         {summary.label}
       </p>
     );
@@ -27,7 +36,10 @@ export function RegistrationCapacityStatus({
 
   return (
     <div
-      className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-warm"
+      className={cn(
+        "flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-warm",
+        className
+      )}
       aria-live="polite"
     >
       <span className="font-medium">{summary.goingLabel}</span>
