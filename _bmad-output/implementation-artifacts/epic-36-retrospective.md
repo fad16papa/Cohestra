@@ -1,8 +1,10 @@
 # Epic 36 retrospective — Form Studio 2.0 Visual Form Builder
 
-**Epic:** 36 (close pending post-merge CI on Story 36.7)  
+**Epic:** 36 (CLOSED)  
 **Stories:** 36.1–36.7  
-**Source PRs:** #325–#332 (36.1–36.7)
+**Source PRs:** #325–#332  
+**Merge:** PR #332 @ `8b88114`  
+**Post-merge CI:** `35525772496` SUCCESS
 
 ## What worked
 

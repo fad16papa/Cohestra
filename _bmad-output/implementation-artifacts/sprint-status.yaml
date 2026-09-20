@@ -364,7 +364,7 @@ development_status:
   epic-35-retrospective: optional
 
   # Epic 36 — Form Studio 2.0 Visual Form Builder. Source: epics-form-studio-2-0-36.md
-  epic-36: in-progress
+  epic-36: done
   36-1-composition-schema-foundation: done
   36-2-builder-palette-reorder: done
   36-3-content-blocks-sections: done
