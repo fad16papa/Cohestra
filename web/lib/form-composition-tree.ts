@@ -10,6 +10,8 @@ export type CanvasRow = {
   indexInContainer: number;
   /** When inside a columns block, 0 = left, 1 = right. */
   columnIndex?: 0 | 1;
+  /** Canvas-only target for dropping blocks into an empty column (not persisted). */
+  isColumnDropTarget?: boolean;
 };
 
 export function getTopLevelComposition(

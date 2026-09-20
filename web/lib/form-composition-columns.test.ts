@@ -80,10 +80,12 @@ describe("form composition columns", () => {
     const fieldRowIndex = rows.findIndex(
       (row) => row.node.kind === "fieldRef" && row.node.fieldId === "text"
     );
-    const columnsRowIndex = rows.findIndex((row) => row.node.kind === "columns");
+    const leftDropIndex = rows.findIndex(
+      (row) => row.isColumnDropTarget && row.columnIndex === 0
+    );
     expect(fieldRowIndex).toBeGreaterThanOrEqual(0);
-    expect(columnsRowIndex).toBeGreaterThanOrEqual(0);
-    schema = reorderCompositionBlocks(schema, fieldRowIndex, columnsRowIndex);
+    expect(leftDropIndex).toBeGreaterThanOrEqual(0);
+    schema = reorderCompositionBlocks(schema, fieldRowIndex, leftDropIndex);
     const columnsNode = schema.composition?.find((node) => node.kind === "columns");
     expect(
       columnsNode?.columns?.some((column) =>

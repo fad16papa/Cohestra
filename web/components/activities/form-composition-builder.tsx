@@ -441,6 +441,66 @@ export function FormCompositionBuilder({
               >
                 {canvasRows.map((row, index) => {
                   const { node } = row;
+                  if (row.isColumnDropTarget) {
+                    const columnLabel =
+                      row.columnIndex === 0 ? "Left column" : "Right column";
+                    const isDropTarget =
+                      dropIndex === index && dragIndex !== index;
+                    return (
+                      <li
+                        key={node.id}
+                        style={{
+                          marginLeft: `${
+                            row.containerPath.length * 12 +
+                            (row.columnIndex ?? 0) * 16
+                          }px`,
+                        }}
+                        onDragEnter={(event) => {
+                          if (disabled || dragFromIndexRef.current === null) {
+                            return;
+                          }
+                          event.preventDefault();
+                          setDropIndex(index);
+                        }}
+                        onDragOver={(event) => {
+                          if (disabled || dragFromIndexRef.current === null) {
+                            return;
+                          }
+                          event.preventDefault();
+                          event.dataTransfer.dropEffect = "move";
+                          setDropIndex(index);
+                        }}
+                        onDrop={(event) => {
+                          if (disabled) {
+                            return;
+                          }
+                          event.preventDefault();
+                          const fromIndex = resolveDragFromIndex(event);
+                          if (fromIndex === null || fromIndex === index) {
+                            dragFromIndexRef.current = null;
+                            setDragIndex(null);
+                            setDropIndex(null);
+                            return;
+                          }
+                          reorderTo(fromIndex, index);
+                          dragFromIndexRef.current = null;
+                          setDragIndex(null);
+                          setDropIndex(null);
+                        }}
+                      >
+                        <div
+                          className={cn(
+                            "rounded-lg border border-dashed border-border-warm px-3 py-2 text-xs text-text-muted-warm",
+                            isDropTarget &&
+                              "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
+                          )}
+                        >
+                          {columnLabel} — drag blocks here
+                        </div>
+                      </li>
+                    );
+                  }
+
                   const isSelected = selectedBlockId === node.id;
                   const isDragging = dragIndex === index;
                   const isDropTarget = dropIndex === index && dragIndex !== index;

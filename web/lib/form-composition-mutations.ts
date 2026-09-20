@@ -59,7 +59,37 @@ export function getCanvasComposition(
 }
 
 export function getBuilderCanvasRows(schema: ActivityFormSchema) {
-  return flattenCompositionCanvas(getCanvasComposition(schema));
+  const base = flattenCompositionCanvas(getCanvasComposition(schema));
+  const expanded: typeof base = [];
+
+  for (const row of base) {
+    expanded.push(row);
+
+    if (row.node.kind !== "columns" || row.node.columns?.length !== 2) {
+      continue;
+    }
+
+    for (let columnIndex = 0; columnIndex < 2; columnIndex += 1) {
+      if ((row.node.columns[columnIndex]?.length ?? 0) > 0) {
+        continue;
+      }
+
+      expanded.push({
+        node: {
+          id: `${row.node.id}__drop_${columnIndex}`,
+          kind: "content",
+          contentType: "paragraph",
+          content: { text: "" },
+        },
+        containerPath: [...row.containerPath, row.indexInContainer, columnIndex],
+        indexInContainer: 0,
+        columnIndex: columnIndex as 0 | 1,
+        isColumnDropTarget: true,
+      });
+    }
+  }
+
+  return expanded;
 }
 
 function resolveInsertionTarget(
@@ -360,7 +390,11 @@ export function reorderCompositionBlocks(
   }
 
   if (containerPathsEqual(fromRow.containerPath, toRow.containerPath)) {
-    if (toRow.node.kind === "columns" || fromRow.node.kind === "columns") {
+    if (
+      toRow.isColumnDropTarget ||
+      toRow.node.kind === "columns" ||
+      fromRow.node.kind === "columns"
+    ) {
       return moveCompositionBlockBetweenRows(base, fromRow, toRow);
     }
 
@@ -372,10 +406,7 @@ export function reorderCompositionBlocks(
     );
   }
 
-  return moveCompositionBlockBetweenRows(base, fromRow, {
-    ...toRow,
-    node: toRow.node,
-  });
+  return moveCompositionBlockBetweenRows(base, fromRow, toRow);
 }
 
 export function moveCompositionBlockBetweenRows(
@@ -388,9 +419,9 @@ export function moveCompositionBlockBetweenRows(
     containerPath: CompositionContainerPath;
     indexInContainer: number;
     node: FormCompositionNode;
+    isColumnDropTarget?: boolean;
   }
 ): ActivityFormSchema {
-  const anchorNodeId = toRow.node.id;
   const { schema: without, removed } = removeNodeFromContainer(
     schema,
     fromRow.containerPath,
@@ -401,6 +432,35 @@ export function moveCompositionBlockBetweenRows(
     return schema;
   }
 
+  if (toRow.isColumnDropTarget) {
+    const dropMatch = /^(.+)__drop_(0|1)$/.exec(toRow.node.id);
+    const columnIndex = (toRow.columnIndex ??
+      (dropMatch ? Number(dropMatch[2]) : NaN)) as 0 | 1;
+    const columnsBlockId = dropMatch?.[1];
+    if (columnsBlockId && (columnIndex === 0 || columnIndex === 1)) {
+      const root = without.composition ?? getTopLevelComposition(without);
+      const columnsLocation = findNodeLocation(root, columnsBlockId);
+      if (columnsLocation?.node.kind === "columns") {
+        const targetPath = [
+          ...columnsLocation.containerPath,
+          columnsLocation.indexInContainer,
+          columnIndex,
+        ];
+        const columnLength =
+          columnsLocation.node.columns?.[columnIndex]?.length ?? 0;
+        return insertNodeInContainer(
+          without,
+          targetPath,
+          removed,
+          columnLength
+        );
+      }
+    }
+
+    return schema;
+  }
+
+  const anchorNodeId = toRow.node.id;
   const root = without.composition ?? getTopLevelComposition(without);
   const anchorLocation = findNodeLocation(root, anchorNodeId);
   if (!anchorLocation) {
