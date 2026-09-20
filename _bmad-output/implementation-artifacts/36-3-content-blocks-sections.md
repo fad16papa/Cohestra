@@ -1,7 +1,7 @@
 # Story 36.3 — Content blocks + sections
 
 **Epic:** 36  
-**Status:** done  
+**Status:** review (BMAD residuals — see final report)  
 **Depends on:** 36.2 merged (`3f2d4fe`)  
 **Final HEAD:** `0e0c4ad`  
 **PR:** #328  
