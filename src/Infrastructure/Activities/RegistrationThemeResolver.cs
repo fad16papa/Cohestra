@@ -30,11 +30,14 @@ internal static class RegistrationThemeResolver
             logo = null;
         }
 
+        var resolvedExperience = RegistrationExperienceResolver.Resolve(stored);
+
         return new ResolvedRegistrationThemeDto(
             RegistrationThemeValidator.NormalizePreset(stored.Preset),
             inherit,
             ActivityBrandingValidator.NormalizeAccentColor(accent),
             ActivityBrandingValidator.NormalizeHeroImageUrl(hero),
-            CommunityBrandingValidator.NormalizeLogoAssetId(logo));
+            CommunityBrandingValidator.NormalizeLogoAssetId(logo),
+            RegistrationExperienceResolver.ToDto(resolvedExperience));
     }
 }

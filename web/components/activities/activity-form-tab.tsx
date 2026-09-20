@@ -35,6 +35,7 @@ import {
   type Activity,
   type ActivityFormSchema,
   type FormSchemaMeta,
+  type RegistrationTheme,
   type RegistrationThemePreset,
 } from "@/lib/activities-api";
 import {
@@ -66,7 +67,10 @@ import {
 } from "@/lib/form-templates-api";
 import { applyMissingStepBuckets } from "@/lib/form-steps";
 import { buildFormStudioPreviewKey } from "@/lib/form-studio-preview-key";
-import { resolvePersistedRegistrationPreviewTheme } from "@/lib/registration-preview-theme";
+import {
+  resolveRegistrationPreviewTheme,
+  themeFromActivity,
+} from "@/lib/registration-preview-theme";
 import { registrationPresetLabels } from "@/lib/registration-theme-utils";
 import type { PublicDoorPayload } from "@/lib/public-door-payload";
 import { resolveRegistrationPublisherWebsiteLink } from "@/lib/publisher-website-url";
@@ -91,12 +95,16 @@ type ActivityFormTabProps = {
   activity: Activity;
   onActivityUpdated: (activity: Activity) => void;
   onDirtyChange?: (dirty: boolean) => void;
+  designDraftTheme?: RegistrationTheme | null;
+  designPreviewDirty?: boolean;
 };
 
 export function ActivityFormTab({
   activity,
   onActivityUpdated,
   onDirtyChange,
+  designDraftTheme = null,
+  designPreviewDirty = false,
 }: ActivityFormTabProps) {
   const { authFetch } = useAuth();
   const { shell } = useTenantShell();
@@ -157,8 +165,12 @@ export function ActivityFormTab({
   const savedPublishGateIssues = getPublishGateIssues(activity.formSchema, {
     slug: activity.slug,
   });
-  const previewKey = buildFormStudioPreviewKey(draftSchema);
-  const previewTheme = resolvePersistedRegistrationPreviewTheme(activity);
+  const previewThemeSource = designDraftTheme ?? themeFromActivity(activity);
+  const previewKey = buildFormStudioPreviewKey(draftSchema, previewThemeSource);
+  const previewTheme = useMemo(
+    () => resolveRegistrationPreviewTheme(activity, previewThemeSource),
+    [activity, previewThemeSource]
+  );
   const introMarkdown = draftSchema.meta?.introMarkdown ?? null;
   const closedMessage = draftSchema.meta?.closedMessage ?? null;
   const registrationClosesAt = draftSchema.meta?.registrationClosesAt ?? null;
@@ -1081,13 +1093,20 @@ export function ActivityFormTab({
             location={activity.location}
             communityLabel={activity.communityLabel}
             formSchema={draftSchema}
-            formStatus={isDirty ? "unsaved" : "saved"}
+            formStatus={isDirty || designPreviewDirty ? "unsaved" : "saved"}
             theme={previewTheme}
             publicPageHref={
               activity.status === "published" ? `/register/${activity.slug}` : null
             }
             scrollClassName="max-h-[min(calc(100dvh-14rem),80dvh)]"
             websiteLink={previewWebsiteLink}
+            registrationCount={activity.registrationCount}
+            maxRegistrants={activity.maxRegistrants}
+            isRegistrationFull={
+              activity.maxRegistrants != null &&
+              activity.maxRegistrants > 0 &&
+              activity.registrationCount >= activity.maxRegistrants
+            }
           />
         </div>
       ) : null}

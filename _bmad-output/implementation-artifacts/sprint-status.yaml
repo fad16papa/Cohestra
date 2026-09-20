@@ -351,6 +351,18 @@ development_status:
   34-3-optional-ai-synthesis-with-fallback: done
   34-4-observability-and-cost-controls: done
   epic-34-retrospective: optional
+
+  # Epic 35 — Modern Form Experience System. Source: epics-form-experience-system-35.md
+  epic-35: done
+  35-1-form-experience-foundation: done
+  35-2-modern-centered-polish: done
+  35-3-split-event-layout: done
+  35-4-event-poster-rsvp: done
+  35-5-conversational-flow: done
+  35-6-form-studio-experience-controls: done
+  35-7-entitlements-regression-integration: done
+  epic-35-retrospective: optional
+
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done
   33-6-harbourline-democlub-continuous-seed: done

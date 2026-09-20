@@ -120,8 +120,12 @@ export default async function PublicRegistrationPage({
       accentColor={activity.accentColor}
       logoAssetId={activity.logoAssetId}
       preset={activity.preset}
+      resolvedExperience={activity.resolvedExperience}
       formSchema={activity.formSchema}
       websiteLink={websiteLink}
+      registrationCount={activity.registrationCount}
+      maxRegistrants={activity.maxRegistrants}
+      isRegistrationFull={activity.isRegistrationFull}
     />
   );
 }

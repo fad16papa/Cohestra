@@ -16,24 +16,27 @@ import {
 } from "@/lib/activities-api";
 import { uploadBrandingAsset } from "@/lib/campaigns-api";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
+import { RegistrationExperienceControls } from "@/components/activities/registration-experience-controls";
 import {
   accentMeetsWcagAaOnWhiteText,
   registrationPresetLabels,
   registrationPresetOptions,
 } from "@/lib/registration-theme-utils";
+import { registrationThemeForSave } from "@/lib/registration-experience-studio";
 import {
   resolveRegistrationPreviewTheme,
   themeFromActivity,
 } from "@/lib/registration-preview-theme";
 import type { PublicDoorPayload } from "@/lib/public-door-payload";
 import { resolveRegistrationPublisherWebsiteLink } from "@/lib/publisher-website-url";
-import { isCoreOrAbove } from "@/lib/shell/tenant-shell-api";
+import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
 
 type ActivityDesignTabProps = {
   activity: Activity;
   onActivityUpdated: (activity: Activity) => void;
   onDirtyChange?: (dirty: boolean) => void;
+  onDraftThemeChange?: (theme: RegistrationTheme) => void;
 };
 
 function themeFromActivityRecord(activity: Activity): RegistrationTheme {
@@ -44,6 +47,7 @@ export function ActivityDesignTab({
   activity,
   onActivityUpdated,
   onDirtyChange,
+  onDraftThemeChange,
 }: ActivityDesignTabProps) {
   const { authFetch } = useAuth();
   const { shell } = useTenantShell();
@@ -59,7 +63,7 @@ export function ActivityDesignTab({
 
   useEffect(() => {
     setDraftTheme(themeFromActivityRecord(activity));
-  }, [activity.id, activity.registrationTheme, activity.resolvedRegistrationTheme.preset]);
+  }, [activity.id, activity.registrationTheme, activity.resolvedRegistrationTheme]);
 
   const isArchived = activity.status === "archived";
   const savedTheme = themeFromActivityRecord(activity);
@@ -68,6 +72,10 @@ export function ActivityDesignTab({
   useEffect(() => {
     onDirtyChange?.(isDirty);
   }, [isDirty, onDirtyChange]);
+
+  useEffect(() => {
+    onDraftThemeChange?.(draftTheme);
+  }, [draftTheme, onDraftThemeChange]);
 
   const previewResolved = useMemo(
     () => resolveRegistrationPreviewTheme(activity, draftTheme),
@@ -141,12 +149,7 @@ export function ActivityDesignTab({
       heroImageUrl: activity.heroImageUrl,
       accentColor: activity.accentColor,
       maxRegistrants: activity.maxRegistrants,
-      registrationTheme: {
-        preset: draftTheme.preset,
-        inheritCommunityBrand: draftTheme.inheritCommunityBrand,
-        accentColor: draftTheme.accentColor?.trim() || null,
-        heroImageUrl: draftTheme.heroImageUrl?.trim() || null,
-      },
+      registrationTheme: registrationThemeForSave(draftTheme),
     })
       .then((updated) => {
         onActivityUpdated(updated);
@@ -169,7 +172,8 @@ export function ActivityDesignTab({
         <div>
           <h3 className="text-section text-text-warm">Registration design</h3>
           <p className="mt-0.5 text-sm text-text-muted-warm">
-            Choose a layout preset and community inherit behavior for the public page.
+            Configure experience, brand, and layout presets. Preview updates as you edit — save
+            when ready.
           </p>
         </div>
         <Button
@@ -181,41 +185,88 @@ export function ActivityDesignTab({
         </Button>
       </div>
 
-      <div className="space-y-4">
-        <Label className="block">Layout preset</Label>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {registrationPresetOptions.map((preset) => (
-            <button
-              key={preset}
-              type="button"
+      <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
+        <div className="space-y-8 min-w-0">
+          <section className="space-y-4 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
+                Experience
+              </h4>
+              <p className="mt-1 text-xs text-text-muted-warm">
+                Layout, flow, and style for the public registration page.
+              </p>
+            </div>
+            <RegistrationExperienceControls
+              plan={plan}
+              draftTheme={draftTheme}
               disabled={isArchived}
-              onClick={() => setDraftTheme((current) => ({ ...current, preset }))}
-              className={cn(
-                "rounded-xl border p-4 text-left transition-colors",
-                draftTheme.preset === preset
-                  ? "border-primary bg-gold-soft/40 ring-2 ring-primary/30"
-                  : "border-border-warm bg-card hover:border-primary/40"
-              )}
-            >
-              <span className="text-sm font-medium text-text-warm">
-                {registrationPresetLabels[preset]}
-              </span>
-              <span className="mt-1 block text-xs text-text-muted-warm">
-                {preset === "classic"
-                  ? "Hero stack + form"
-                  : preset === "card"
-                    ? "Form on elevated card"
-                    : preset === "immersive"
-                      ? "Tall hero, form scrolls up"
-                      : "Minimal hero, form-first"}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+              onThemeChange={setDraftTheme}
+            />
+          </section>
 
-      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-        <div className="space-y-4 self-start rounded-xl border border-border-warm bg-card p-4">
+          <section className="space-y-4 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
+                Advanced layouts
+              </h4>
+              <p className="mt-1 text-xs text-text-muted-warm">
+                Legacy presets (card, immersive hero, compact). These override the Experience
+                layout above.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {registrationPresetOptions.map((preset) => {
+                const immersiveLocked = preset === "immersive" && !isProPlan(plan);
+                return (
+                <button
+                  key={preset}
+                  type="button"
+                  disabled={isArchived || immersiveLocked}
+                  onClick={() => {
+                    if (immersiveLocked) {
+                      return;
+                    }
+                    setDraftTheme((current) => ({ ...current, preset }));
+                  }}
+                  className={cn(
+                    "rounded-xl border p-4 text-left transition-colors",
+                    draftTheme.preset === preset
+                      ? "border-primary bg-gold-soft/40 ring-2 ring-primary/30"
+                      : "border-border-warm bg-card hover:border-primary/40"
+                  )}
+                >
+                  <span className="text-sm font-medium text-text-warm">
+                    {registrationPresetLabels[preset]}
+                  </span>
+                  <span className="mt-1 block text-xs text-text-muted-warm">
+                    {preset === "classic"
+                      ? "Hero stack + form (pairs with Experience layouts)"
+                      : preset === "card"
+                        ? "Form on elevated card"
+                        : preset === "immersive"
+                          ? "Tall hero, form scrolls up (Pro)"
+                          : "Minimal hero, form-first"}
+                  </span>
+                  {immersiveLocked ? (
+                    <span className="mt-2 block text-xs text-text-muted-warm">
+                      Immersive hero preset requires Pro.
+                    </span>
+                  ) : null}
+                </button>
+              );
+              })}
+            </div>
+          </section>
+
+          <section className="space-y-4 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
+                Brand
+              </h4>
+              <p className="mt-1 text-xs text-text-muted-warm">
+                Community inherit, accent, and hero overrides.
+              </p>
+            </div>
           <div className="flex items-center justify-between gap-3">
             <Label htmlFor="inherit-community-brand">Inherit community brand</Label>
             <input
@@ -335,10 +386,11 @@ export function ActivityDesignTab({
               />
             ) : null}
           </div>
+          </section>
         </div>
 
-        <div className="space-y-3">
-          <Label>Live preview</Label>
+        <div className="space-y-3 lg:sticky lg:top-4">
+          <p className="text-sm font-medium text-text-warm">Live preview</p>
           <RegistrationPublicPreviewShell
             slug={activity.slug}
             name={activity.name}
@@ -346,12 +398,19 @@ export function ActivityDesignTab({
             location={activity.location}
             communityLabel={activity.communityLabel}
             formSchema={activity.formSchema}
-            formStatus="saved"
+            formStatus={isDirty ? "unsaved" : "saved"}
             theme={previewResolved}
             publicPageHref={
               activity.status === "published" ? `/register/${activity.slug}` : null
             }
             websiteLink={previewWebsiteLink}
+            registrationCount={activity.registrationCount}
+            maxRegistrants={activity.maxRegistrants}
+            isRegistrationFull={
+              activity.maxRegistrants != null &&
+              activity.maxRegistrants > 0 &&
+              activity.registrationCount >= activity.maxRegistrants
+            }
           />
         </div>
       </div>

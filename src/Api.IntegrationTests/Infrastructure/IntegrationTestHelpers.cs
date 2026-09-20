@@ -80,6 +80,27 @@ internal static class IntegrationTestHelpers
         await dbContext.SaveChangesAsync();
     }
 
+    /// <summary>
+    /// Removes saved form templates for the default tenant so plan-limit tests start from zero usage.
+    /// </summary>
+    internal static async Task ClearDefaultTenantFormTemplatesAsync(IServiceProvider services)
+    {
+        await using var scope = services.CreateAsyncScope();
+        BindDefaultTenant(scope.ServiceProvider);
+
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var existingTemplates = await dbContext.IgnoreTenantFilters<TenantFormTemplate>()
+            .Where(template => template.TenantId == TenantIds.Default)
+            .ToListAsync();
+        if (existingTemplates.Count == 0)
+        {
+            return;
+        }
+
+        dbContext.TenantFormTemplates.RemoveRange(existingTemplates);
+        await dbContext.SaveChangesAsync();
+    }
+
     internal static async Task<string> LoginAsOperatorAsync(HttpClient client)
     {
         var response = await client.PostAsJsonAsync(

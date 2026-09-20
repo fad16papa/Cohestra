@@ -77,15 +77,31 @@ export type ActivityFormSchema = {
 
 export type RegistrationThemePreset = "classic" | "card" | "immersive" | "compact";
 
+export type RegistrationExperienceConfig = {
+  layout?: string | null;
+  style?: string | null;
+  flow?: string | null;
+  heroDisplay?: string | null;
+};
+
+export type ResolvedRegistrationExperience = {
+  layout: string;
+  style: string;
+  flow: string;
+  heroDisplay: string;
+};
+
 export type RegistrationTheme = {
   preset: RegistrationThemePreset;
   inheritCommunityBrand: boolean;
   accentColor: string | null;
   heroImageUrl: string | null;
+  experience?: RegistrationExperienceConfig | null;
 };
 
 export type ResolvedRegistrationTheme = RegistrationTheme & {
   logoAssetId: string | null;
+  resolvedExperience?: ResolvedRegistrationExperience | null;
 };
 
 export type Activity = {
@@ -353,11 +369,29 @@ function parseRegistrationTheme(raw: unknown): RegistrationTheme | null {
     throw new Error("Invalid registration theme payload");
   }
 
+  const experienceRaw = theme.experience ?? theme.Experience;
+  let experience: RegistrationExperienceConfig | null = null;
+  if (experienceRaw && typeof experienceRaw === "object") {
+    const exp = experienceRaw as Record<string, unknown>;
+    experience = {
+      layout: typeof exp.layout === "string" ? exp.layout : typeof exp.Layout === "string" ? exp.Layout : null,
+      style: typeof exp.style === "string" ? exp.style : typeof exp.Style === "string" ? exp.Style : null,
+      flow: typeof exp.flow === "string" ? exp.flow : typeof exp.Flow === "string" ? exp.Flow : null,
+      heroDisplay:
+        typeof exp.heroDisplay === "string"
+          ? exp.heroDisplay
+          : typeof exp.HeroDisplay === "string"
+            ? exp.HeroDisplay
+            : null,
+    };
+  }
+
   return {
     preset,
     inheritCommunityBrand,
     accentColor: typeof accentColor === "string" ? accentColor : null,
     heroImageUrl: typeof heroImageUrl === "string" ? heroImageUrl : null,
+    experience,
   };
 }
 
@@ -375,10 +409,30 @@ function parseResolvedRegistrationTheme(raw: unknown): ResolvedRegistrationTheme
 
   const record = raw as Record<string, unknown>;
   const logoAssetId = record.logoAssetId ?? record.LogoAssetId;
+  const resolvedExperienceRaw =
+    record.resolvedExperience ?? record.ResolvedExperience;
+
+  let resolvedExperience: ResolvedRegistrationExperience | null = null;
+  if (resolvedExperienceRaw && typeof resolvedExperienceRaw === "object") {
+    const resolved = resolvedExperienceRaw as Record<string, unknown>;
+    const layout = resolved.layout ?? resolved.Layout;
+    const style = resolved.style ?? resolved.Style;
+    const flow = resolved.flow ?? resolved.Flow;
+    const heroDisplay = resolved.heroDisplay ?? resolved.HeroDisplay;
+    if (
+      typeof layout === "string" &&
+      typeof style === "string" &&
+      typeof flow === "string" &&
+      typeof heroDisplay === "string"
+    ) {
+      resolvedExperience = { layout, style, flow, heroDisplay };
+    }
+  }
 
   return {
     ...theme,
     logoAssetId: typeof logoAssetId === "string" ? logoAssetId : null,
+    resolvedExperience,
   };
 }
 

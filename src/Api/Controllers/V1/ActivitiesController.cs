@@ -117,6 +117,10 @@ public class ActivitiesController(IActivityService activityService) : Controller
         {
             return BadRequestProblem(ex.Message);
         }
+        catch (FormSchemaPlanLockedException ex)
+        {
+            return PlanLockedProblem(ex.Message);
+        }
     }
 
     [HttpPatch("{id:guid}/show-on-homepage")]
