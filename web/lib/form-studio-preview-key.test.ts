@@ -99,6 +99,121 @@ describe("buildFormStudioPreviewKey", () => {
     );
   });
 
+  it("changes when nested paragraph text changes inside a section", () => {
+    const v2WithSection: ActivityFormSchema = {
+      version: 2,
+      fields: [
+        {
+          id: "field_a",
+          type: "text",
+          label: "A",
+          required: true,
+          placeholder: null,
+          options: null,
+          consentText: null,
+        },
+      ],
+      composition: [
+        {
+          id: "section-1",
+          kind: "section",
+          title: "About you",
+          children: [
+            {
+              id: "heading-1",
+              kind: "content",
+              contentType: "heading",
+              content: { text: "About you", level: 2 },
+            },
+            {
+              id: "para-1",
+              kind: "content",
+              contentType: "paragraph",
+              content: { text: "Original" },
+            },
+            { id: "ref-a", kind: "fieldRef", fieldId: "field_a" },
+          ],
+        },
+      ],
+    };
+    const updatedParagraph: ActivityFormSchema = {
+      ...v2WithSection,
+      composition: [
+        {
+          ...v2WithSection.composition![0],
+          children: v2WithSection.composition![0].children!.map((child) =>
+            child.id === "para-1"
+              ? {
+                  ...child,
+                  content: { text: "Updated" },
+                }
+              : child
+          ),
+        },
+      ],
+    };
+
+    expect(buildFormStudioPreviewKey(v2WithSection)).not.toBe(
+      buildFormStudioPreviewKey(updatedParagraph)
+    );
+  });
+
+  it("changes when child order changes inside a section", () => {
+    const sectionBase: ActivityFormSchema = {
+      version: 2,
+      fields: [
+        {
+          id: "field_a",
+          type: "text",
+          label: "A",
+          required: true,
+          placeholder: null,
+          options: null,
+          consentText: null,
+        },
+      ],
+      composition: [
+        {
+          id: "section-1",
+          kind: "section",
+          title: "Prefs",
+          children: [
+            {
+              id: "heading-1",
+              kind: "content",
+              contentType: "heading",
+              content: { text: "Prefs", level: 2 },
+            },
+            { id: "ref-a", kind: "fieldRef", fieldId: "field_a" },
+            {
+              id: "para-1",
+              kind: "content",
+              contentType: "paragraph",
+              content: { text: "Note" },
+            },
+          ],
+        },
+      ],
+    };
+    const reorderedChildren: ActivityFormSchema = {
+      ...sectionBase,
+      composition: [
+        {
+          ...sectionBase.composition![0],
+          children: [
+            sectionBase.composition![0].children![0],
+            sectionBase.composition![0].children![2],
+            sectionBase.composition![0].children![1],
+          ],
+        },
+      ],
+    };
+
+    expect(buildFormStudioPreviewKey(sectionBase)).not.toBe(
+      buildFormStudioPreviewKey(reorderedChildren)
+    );
+  });
+
   it("does not change for draft edits outside preview-visible material", () => {
     const saved = buildFormStudioPreviewKey(baseSchema);
     const withClosedMessage = buildFormStudioPreviewKey({

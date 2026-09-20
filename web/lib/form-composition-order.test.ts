@@ -42,6 +42,22 @@ describe("form-composition-order", () => {
     expect(flattenFieldRefOrder(schema.composition)).toEqual(["b", "a"]);
   });
 
+  it("orders nested section fieldRefs depth-first", () => {
+    const composition = [
+      { id: "ref-top", kind: "fieldRef" as const, fieldId: "top" },
+      {
+        id: "section-1",
+        kind: "section" as const,
+        title: "Inner",
+        children: [
+          { id: "ref-inner", kind: "fieldRef" as const, fieldId: "inner" },
+        ],
+      },
+      { id: "ref-tail", kind: "fieldRef" as const, fieldId: "tail" },
+    ];
+    expect(flattenFieldRefOrder(composition)).toEqual(["top", "inner", "tail"]);
+  });
+
   it("falls back to field array order for v1", () => {
     const fields = [
       {

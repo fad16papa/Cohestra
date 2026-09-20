@@ -68,6 +68,7 @@ import {
 } from "@/lib/form-templates-api";
 import { applyMissingStepBuckets } from "@/lib/form-steps";
 import { buildFormStudioPreviewKey } from "@/lib/form-studio-preview-key";
+import { activeExperienceFlow } from "@/lib/registration-experience-studio";
 import {
   resolveRegistrationPreviewTheme,
   themeFromActivity,
@@ -172,6 +173,8 @@ export function ActivityFormTab({
     () => resolveRegistrationPreviewTheme(activity, previewThemeSource),
     [activity, previewThemeSource]
   );
+  const conversationalFlowActive =
+    activeExperienceFlow(previewThemeSource) === "conversational";
   const introMarkdown = draftSchema.meta?.introMarkdown ?? null;
   const closedMessage = draftSchema.meta?.closedMessage ?? null;
   const registrationClosesAt = draftSchema.meta?.registrationClosesAt ?? null;
@@ -1076,6 +1079,7 @@ export function ActivityFormTab({
         corePlusLocked={corePlusLocked}
         stepsEnabled={Boolean(draftSchema.meta?.splitIntoSteps)}
         stepsLocked={stepsLocked}
+        conversationalFlowActive={conversationalFlowActive}
       />
       </div>
 

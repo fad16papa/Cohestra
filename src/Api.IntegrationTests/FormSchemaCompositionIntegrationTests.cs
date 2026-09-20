@@ -4,6 +4,9 @@ using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Contracts.Activities;
 using Cohestra.Domain.Activities;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Cohestra.Api.IntegrationTests;
 
@@ -148,5 +151,220 @@ public sealed class FormSchemaCompositionIntegrationTests(IntegrationTestFixture
         Assert.NotNull(saved?.FormSchema);
         Assert.Equal(1, saved!.FormSchema!.Version);
         Assert.Null(saved.FormSchema.Composition);
+    }
+
+    [SkippableFact]
+    public async Task SaveFormSchema_MixedComposition_RoundTripsNestedStructure()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+
+        using var client = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(client);
+        IntegrationTestHelpers.UseBearerToken(client, accessToken);
+
+        var slug = $"mix-{Guid.NewGuid():N}"[..18];
+        var activity = await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            TenantIds.Default,
+            slug);
+
+        var mixedSchema = BuildMixedCompositionSchema();
+
+        using var saveResponse = await client.PutAsJsonAsync(
+            $"/api/v1/admin/activities/{activity.Id}/form-schema",
+            new SaveActivityFormSchemaRequest(mixedSchema),
+            IntegrationTestHelpers.JsonOptions);
+        saveResponse.EnsureSuccessStatusCode();
+
+        var saved = await saveResponse.Content.ReadFromJsonAsync<ActivityResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(saved?.FormSchema);
+        AssertCompositionTreeEqual(mixedSchema.Composition!, saved!.FormSchema!.Composition!);
+
+        using var reloadResponse = await client.GetAsync(
+            $"/api/v1/admin/activities/{activity.Id}");
+        reloadResponse.EnsureSuccessStatusCode();
+        var reloaded = await reloadResponse.Content.ReadFromJsonAsync<ActivityResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(reloaded?.FormSchema?.Composition);
+        AssertCompositionTreeEqual(mixedSchema.Composition!, reloaded!.FormSchema!.Composition!);
+    }
+
+    [SkippableFact]
+    public async Task SubmitPublicRegistration_MixedComposition_PersistsOnlyFieldAnswers()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+
+        using var client = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(client);
+        IntegrationTestHelpers.UseBearerToken(client, accessToken);
+
+        var slug = $"mix-reg-{Guid.NewGuid():N}"[..18];
+        var activity = await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            TenantIds.Default,
+            slug);
+
+        var mixedSchema = BuildMixedCompositionSchema();
+        using var saveResponse = await client.PutAsJsonAsync(
+            $"/api/v1/admin/activities/{activity.Id}/form-schema",
+            new SaveActivityFormSchemaRequest(mixedSchema),
+            IntegrationTestHelpers.JsonOptions);
+        saveResponse.EnsureSuccessStatusCode();
+
+        var email = $"mix-{Guid.NewGuid():N}@example.com";
+        var submitResponse = await IntegrationTestHelpers.SubmitRegistrationAsync(
+            Factory.CreateClient(),
+            slug,
+            new Dictionary<string, object?>
+            {
+                ["field_a"] = "Ada Lovelace",
+                ["field_b"] = "b@example.com",
+                ["field_c"] = "c@example.com",
+                ["consent"] = true,
+            });
+
+        Assert.Equal("created", submitResponse.Status);
+
+        await using var scope = Factory.Services.CreateAsyncScope();
+        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var registration = await dbContext.Registrations
+            .AsNoTracking()
+            .SingleAsync(item => item.Id == submitResponse.RegistrationId);
+
+        Assert.True(registration.Answers.ContainsKey("field_a"));
+        Assert.True(registration.Answers.ContainsKey("field_b"));
+        Assert.True(registration.Answers.ContainsKey("field_c"));
+        foreach (var key in registration.Answers.Keys)
+        {
+            Assert.DoesNotContain(
+                key,
+                new[] { "heading", "paragraph", "divider", "section", "heading-top", "para-top" },
+                StringComparer.Ordinal);
+        }
+    }
+
+    private static ActivityFormSchemaDto BuildMixedCompositionSchema()
+    {
+        return new ActivityFormSchemaDto(
+            Version: 2,
+            Fields:
+            [
+                new FormFieldDefinitionDto(
+                    "field_a",
+                    FormFieldTypes.Text,
+                    "Field A",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+                new FormFieldDefinitionDto(
+                    "field_b",
+                    FormFieldTypes.Email,
+                    "Field B",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+                new FormFieldDefinitionDto(
+                    "field_c",
+                    FormFieldTypes.Email,
+                    "Field C",
+                    true,
+                    null,
+                    null,
+                    null,
+                    null),
+                new FormFieldDefinitionDto(
+                    "consent",
+                    FormFieldTypes.Consent,
+                    "Consent",
+                    true,
+                    null,
+                    null,
+                    "I agree.",
+                    null),
+            ],
+            Composition:
+            [
+                new FormCompositionNodeDto(
+                    "heading-top",
+                    FormCompositionKinds.Content,
+                    ContentType: FormCompositionContentTypes.Heading,
+                    Content: new FormCompositionContentPropsDto("About you", 2)),
+                new FormCompositionNodeDto(
+                    "ref-field-a",
+                    FormCompositionKinds.FieldRef,
+                    FieldId: "field_a"),
+                new FormCompositionNodeDto(
+                    "para-top",
+                    FormCompositionKinds.Content,
+                    ContentType: FormCompositionContentTypes.Paragraph,
+                    Content: new FormCompositionContentPropsDto(
+                        "We'll only use this for the activity.")),
+                new FormCompositionNodeDto(
+                    "section-prefs",
+                    FormCompositionKinds.Section,
+                    Title: "Preferences",
+                    Children:
+                    [
+                        new FormCompositionNodeDto(
+                            "heading-section",
+                            FormCompositionKinds.Content,
+                            ContentType: FormCompositionContentTypes.Heading,
+                            Content: new FormCompositionContentPropsDto("Preferences", 2)),
+                        new FormCompositionNodeDto(
+                            "ref-field-b",
+                            FormCompositionKinds.FieldRef,
+                            FieldId: "field_b"),
+                    ]),
+                new FormCompositionNodeDto(
+                    "divider-1",
+                    FormCompositionKinds.Content,
+                    ContentType: FormCompositionContentTypes.Divider),
+                new FormCompositionNodeDto(
+                    "ref-field-c",
+                    FormCompositionKinds.FieldRef,
+                    FieldId: "field_c"),
+                new FormCompositionNodeDto(
+                    "ref-consent",
+                    FormCompositionKinds.FieldRef,
+                    FieldId: "consent"),
+            ]);
+    }
+
+    private static void AssertCompositionTreeEqual(
+        IReadOnlyList<FormCompositionNodeDto> expected,
+        IReadOnlyList<FormCompositionNodeDto> actual)
+    {
+        Assert.Equal(expected.Count, actual.Count);
+        for (var index = 0; index < expected.Count; index++)
+        {
+            var exp = expected[index];
+            var act = actual[index];
+            Assert.Equal(exp.Id, act.Id);
+            Assert.Equal(exp.Kind, act.Kind);
+            Assert.Equal(exp.FieldId, act.FieldId);
+            Assert.Equal(exp.ContentType, act.ContentType);
+            Assert.Equal(exp.Content?.Text, act.Content?.Text);
+            Assert.Equal(exp.Content?.Level, act.Content?.Level);
+            Assert.Equal(exp.Title, act.Title);
+            Assert.Equal(exp.Description, act.Description);
+
+            if (exp.Children is { Count: > 0 })
+            {
+                Assert.NotNull(act.Children);
+                AssertCompositionTreeEqual(exp.Children, act.Children);
+            }
+            else
+            {
+                Assert.True(act.Children is null or { Count: 0 });
+            }
+        }
     }
 }

@@ -13,6 +13,10 @@ import {
   type RegistrationPreviewViewport,
 } from "@/components/registration/registration-preview-viewport-toggle";
 import type { ActivityFormSchema, RegistrationThemePreset } from "@/lib/activities-api";
+import {
+  compositionHasPresentationBlocks,
+  CONVERSATIONAL_PRESENTATION_NOTICE,
+} from "@/lib/form-composition-presentation";
 import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
 import type { ResolvedRegistrationPreviewTheme } from "@/lib/registration-preview-theme";
 import { cn } from "@/lib/utils";
@@ -54,6 +58,10 @@ export function RegistrationPublicPreviewShell({
 }: RegistrationPublicPreviewShellProps) {
   const [viewport, setViewport] = useState<RegistrationPreviewViewport>("mobile");
   const isSplitLayout = theme.resolvedExperience.layout === "split";
+  const showConversationalPresentationNotice =
+    theme.resolvedExperience.flow === "conversational" &&
+    formSchema != null &&
+    compositionHasPresentationBlocks(formSchema.fields, formSchema.composition);
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -74,6 +82,14 @@ export function RegistrationPublicPreviewShell({
           onChange={setViewport}
         />
       </div>
+      {showConversationalPresentationNotice ? (
+        <div
+          role="status"
+          className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
+        >
+          {CONVERSATIONAL_PRESENTATION_NOTICE}
+        </div>
+      ) : null}
       <RegistrationPreviewChrome
         formStatus={formStatus}
         className={cn(

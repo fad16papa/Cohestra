@@ -14,7 +14,18 @@ import {
   hasStoredComposition,
   synthesizeLinearComposition,
 } from "@/lib/form-composition";
+import { createCompositionNodeId } from "@/lib/form-composition-ids";
+import {
+  findNodeLocation,
+  flattenCompositionCanvas,
+  getTopLevelComposition,
+  insertNodeInContainer,
+  reorderSiblingsInContainer,
+  type CompositionContainerPath,
+} from "@/lib/form-composition-tree";
 import { autoBucketField } from "@/lib/form-steps";
+
+export type ContentBlockType = "heading" | "paragraph" | "divider";
 
 export function compositionBlockIdForField(fieldId: string): string {
   return `field-ref-${fieldId}`;
@@ -37,18 +48,67 @@ export function ensureBuilderEditableSchema(
   };
 }
 
+/** Top-level composition nodes for the builder canvas (Story 36.3+). */
 export function getCanvasComposition(
   schema: ActivityFormSchema
 ): FormCompositionNode[] {
-  return getEffectiveComposition(schema.fields, schema.composition ?? null).filter(
-    (node) => node.kind === "fieldRef"
-  );
+  return getTopLevelComposition(ensureBuilderEditableSchema(schema));
+}
+
+export function getBuilderCanvasRows(schema: ActivityFormSchema) {
+  return flattenCompositionCanvas(getCanvasComposition(schema));
+}
+
+function resolveInsertionTarget(
+  schema: ActivityFormSchema,
+  selectedBlockId: string | null
+): CompositionContainerPath {
+  if (!selectedBlockId) {
+    return [];
+  }
+
+  const root = getCanvasComposition(schema);
+  const location = findNodeLocation(root, selectedBlockId);
+  if (!location) {
+    return [];
+  }
+
+  if (location.node.kind === "section") {
+    return [...location.containerPath, location.indexInContainer];
+  }
+
+  return location.containerPath;
+}
+
+function insertionIndexAfterSelection(
+  schema: ActivityFormSchema,
+  selectedBlockId: string | null,
+  containerPath: CompositionContainerPath
+): number | undefined {
+  if (!selectedBlockId) {
+    return undefined;
+  }
+
+  const location = findNodeLocation(getCanvasComposition(schema), selectedBlockId);
+  if (!location) {
+    return undefined;
+  }
+
+  if (location.node.kind === "section") {
+    return undefined;
+  }
+
+  if (location.containerPath.join(".") !== containerPath.join(".")) {
+    return undefined;
+  }
+
+  return location.indexInContainer + 1;
 }
 
 export function addInputFieldBlock(
   schema: ActivityFormSchema,
   type: FormFieldType,
-  options?: { stepsEnabled?: boolean }
+  options?: { stepsEnabled?: boolean; selectedBlockId?: string | null }
 ): ActivityFormSchema {
   const base = ensureBuilderEditableSchema(schema);
   const fieldIds = new Set(base.fields.map((field) => field.id));
@@ -57,36 +117,171 @@ export function addInputFieldBlock(
     field.step = autoBucketField(field);
   }
 
-  const composition = [...(base.composition ?? [])];
-  composition.push({
+  const block: FormCompositionNode = {
     id: compositionBlockIdForField(field.id),
     kind: "fieldRef",
     fieldId: field.id,
-  });
+  };
 
-  return {
+  const containerPath = resolveInsertionTarget(base, options?.selectedBlockId ?? null);
+  const insertIndex = insertionIndexAfterSelection(
+    base,
+    options?.selectedBlockId ?? null,
+    containerPath
+  );
+
+  const withField = {
     ...base,
     fields: [...base.fields, field],
-    composition,
   };
+
+  return insertNodeInContainer(withField, containerPath, block, insertIndex);
 }
 
-export function removeFieldRefBlock(
+export function addContentBlock(
+  schema: ActivityFormSchema,
+  contentType: ContentBlockType,
+  options?: { selectedBlockId?: string | null }
+): ActivityFormSchema {
+  const base = ensureBuilderEditableSchema(schema);
+  const node: FormCompositionNode =
+    contentType === "heading"
+      ? {
+          id: createCompositionNodeId("heading"),
+          kind: "content",
+          contentType: "heading",
+          content: { text: "Section heading", level: 2 },
+        }
+      : contentType === "paragraph"
+        ? {
+            id: createCompositionNodeId("paragraph"),
+            kind: "content",
+            contentType: "paragraph",
+            content: { text: "Add explanatory text for registrants." },
+          }
+        : {
+            id: createCompositionNodeId("divider"),
+            kind: "content",
+            contentType: "divider",
+            content: null,
+          };
+
+  const containerPath = resolveInsertionTarget(base, options?.selectedBlockId ?? null);
+  const insertIndex = insertionIndexAfterSelection(
+    base,
+    options?.selectedBlockId ?? null,
+    containerPath
+  );
+
+  return insertNodeInContainer(base, containerPath, node, insertIndex);
+}
+
+export function addSectionBlock(
+  schema: ActivityFormSchema,
+  options?: { selectedBlockId?: string | null }
+): ActivityFormSchema {
+  const base = ensureBuilderEditableSchema(schema);
+  const sectionId = createCompositionNodeId("section");
+  const node: FormCompositionNode = {
+    id: sectionId,
+    kind: "section",
+    title: "New section",
+    description: null,
+    children: [
+      {
+        id: createCompositionNodeId("heading"),
+        kind: "content",
+        contentType: "heading",
+        content: { text: "New section", level: 2 },
+      },
+    ],
+  };
+
+  const containerPath = resolveInsertionTarget(base, options?.selectedBlockId ?? null);
+  const insertIndex = insertionIndexAfterSelection(
+    base,
+    options?.selectedBlockId ?? null,
+    containerPath
+  );
+
+  return insertNodeInContainer(base, containerPath, node, insertIndex);
+}
+
+function collectFieldRefs(node: FormCompositionNode, fieldIds: string[]): void {
+  if (node.kind === "fieldRef" && node.fieldId) {
+    fieldIds.push(node.fieldId);
+  }
+
+  if (node.kind === "section" && node.children?.length) {
+    for (const child of node.children) {
+      collectFieldRefs(child, fieldIds);
+    }
+  }
+}
+
+export function removeCompositionBlock(
   schema: ActivityFormSchema,
   blockId: string
 ): ActivityFormSchema {
   const base = ensureBuilderEditableSchema(schema);
-  const target = (base.composition ?? []).find((node) => node.id === blockId);
-  if (!target || target.kind !== "fieldRef" || !target.fieldId) {
+  const root = [...(base.composition ?? [])];
+  const location = findNodeLocation(root, blockId);
+  if (!location) {
     return base;
   }
 
-  const fieldId = target.fieldId;
+  const fieldIdsToRemove: string[] = [];
+  collectFieldRefs(location.node, fieldIdsToRemove);
+
+  function removeFromList(
+    nodes: FormCompositionNode[],
+    path: CompositionContainerPath,
+    targetId: string
+  ): FormCompositionNode[] {
+    if (path.length === 0) {
+      const index = nodes.findIndex((node) => node.id === targetId);
+      if (index < 0) {
+        return nodes;
+      }
+
+      const target = nodes[index]!;
+      const next = [...nodes];
+      if (target.kind === "section" && target.children?.length) {
+        next.splice(index, 1, ...target.children);
+      } else {
+        next.splice(index, 1);
+      }
+      return next;
+    }
+
+    const [head, ...tail] = path;
+    return nodes.map((node, nodeIndex) => {
+      if (nodeIndex !== head || node.kind !== "section") {
+        return node;
+      }
+
+      return {
+        ...node,
+        children: removeFromList(node.children ?? [], tail, targetId),
+      };
+    });
+  }
+
+  const composition = removeFromList(root, location.containerPath, blockId);
+
   return {
     ...base,
-    fields: base.fields.filter((field) => field.id !== fieldId),
-    composition: (base.composition ?? []).filter((node) => node.id !== blockId),
+    fields: base.fields.filter((field) => !fieldIdsToRemove.includes(field.id)),
+    composition,
   };
+}
+
+/** @deprecated alias */
+export function removeFieldRefBlock(
+  schema: ActivityFormSchema,
+  blockId: string
+): ActivityFormSchema {
+  return removeCompositionBlock(schema, blockId);
 }
 
 export function reorderCompositionBlocks(
@@ -95,36 +290,31 @@ export function reorderCompositionBlocks(
   toCanvasIndex: number
 ): ActivityFormSchema {
   const base = ensureBuilderEditableSchema(schema);
-  const composition = [...(base.composition ?? [])];
-  const fieldRefSlotIndexes: number[] = [];
-
-  composition.forEach((node, index) => {
-    if (node.kind === "fieldRef") {
-      fieldRefSlotIndexes.push(index);
-    }
-  });
-
-  if (
-    fromCanvasIndex < 0 ||
-    toCanvasIndex < 0 ||
-    fromCanvasIndex >= fieldRefSlotIndexes.length ||
-    toCanvasIndex >= fieldRefSlotIndexes.length ||
-    fromCanvasIndex === toCanvasIndex
-  ) {
+  const rows = getBuilderCanvasRows(base);
+  const fromRow = rows[fromCanvasIndex];
+  const toRow = rows[toCanvasIndex];
+  if (!fromRow || !toRow) {
     return base;
   }
 
-  const fieldRefNodes = fieldRefSlotIndexes.map((index) => composition[index]!);
-  const [moved] = fieldRefNodes.splice(fromCanvasIndex, 1);
-  fieldRefNodes.splice(toCanvasIndex, 0, moved!);
-  fieldRefSlotIndexes.forEach((slotIndex, refIndex) => {
-    composition[slotIndex] = fieldRefNodes[refIndex]!;
-  });
+  if (fromRow.containerPath.join(".") !== toRow.containerPath.join(".")) {
+    return base;
+  }
 
-  return {
-    ...base,
-    composition,
-  };
+  return reorderSiblingsInContainer(
+    base,
+    fromRow.containerPath,
+    fromRow.indexInContainer,
+    toRow.indexInContainer
+  );
+}
+
+export function reorderCanvasRow(
+  schema: ActivityFormSchema,
+  fromCanvasIndex: number,
+  toCanvasIndex: number
+): ActivityFormSchema {
+  return reorderCompositionBlocks(schema, fromCanvasIndex, toCanvasIndex);
 }
 
 export function syncCompositionAfterFieldIdChange(
@@ -144,17 +334,26 @@ export function syncCompositionAfterFieldIdChange(
   }
 
   const base = ensureBuilderEditableSchema(schema);
-  const composition = (base.composition ?? []).map((node) => {
-    if (node.kind !== "fieldRef" || node.fieldId !== previousFieldId) {
-      return node;
-    }
 
-    return {
-      ...node,
-      id: compositionBlockIdForField(nextFieldId),
-      fieldId: nextFieldId,
-    };
-  });
+  function walk(nodes: FormCompositionNode[]): FormCompositionNode[] {
+    return nodes.map((node) => {
+      if (node.kind === "fieldRef" && node.fieldId === previousFieldId) {
+        return {
+          ...node,
+          id: compositionBlockIdForField(nextFieldId),
+          fieldId: nextFieldId,
+        };
+      }
+
+      if (node.kind === "section" && node.children?.length) {
+        return { ...node, children: walk(node.children) };
+      }
+
+      return node;
+    });
+  }
+
+  const composition = walk(base.composition ?? []);
 
   const fields = base.fields.map((field) => {
     if (field.visibleWhen?.fieldId !== previousFieldId) {
@@ -195,15 +394,24 @@ export function findFieldIndexByBlockId(
     return null;
   }
 
-  const node = (schema.composition ?? getCanvasComposition(schema)).find(
-    (entry) => entry.id === blockId
-  );
+  const node = findCompositionNodeInTree(schema, blockId);
   if (!node?.fieldId) {
     return null;
   }
 
   const index = schema.fields.findIndex((field) => field.id === node.fieldId);
   return index >= 0 ? index : null;
+}
+
+function findCompositionNodeInTree(
+  schema: ActivityFormSchema,
+  blockId: string
+): FormCompositionNode | null {
+  const location = findNodeLocation(
+    getCanvasComposition(schema),
+    blockId
+  );
+  return location?.node ?? null;
 }
 
 export function updateFieldAtIndex(
