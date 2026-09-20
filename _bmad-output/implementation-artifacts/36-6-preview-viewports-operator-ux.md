@@ -1,7 +1,7 @@
 # Story 36.6 — Preview viewports + operator UX polish
 
 **Epic:** 36  
-**Status:** in-progress  
+**Status:** accepted  
 **Depends on:** 36.5 merged (`5eedda8`)  
 **Branch:** `cursor/epic-36-story-36-6-preview-viewports-a139`
 
