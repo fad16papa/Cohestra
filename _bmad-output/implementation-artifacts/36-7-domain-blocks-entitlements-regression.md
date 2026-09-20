@@ -1,6 +1,6 @@
 # Story 36.7: Domain blocks + entitlements + Epic integration
 
-Status: ready-for-dev
+Status: review
 
 <!-- Ultimate context engine analysis completed - comprehensive developer guide created -->
 
@@ -220,10 +220,57 @@ Keep domain resolution in `web/lib` (pure). Keep presentational output in `web/c
 
 ### Agent Model Used
 
-Grok 4.6 (primary) / Composer 2.5 (bounded secondary, if used)
+Grok 4.6 (primary technical authority)  
+Composer 2.5: not used this turn (architecture + implementation stayed on Grok)  
+Auto model selection: DISABLED  
+Unauthorized models: NONE
 
 ### Debug Log References
 
+- Post-36.6 main `a569938` + CI `35524668730` SUCCESS
+- Implementation commit `a6859ae` (plus follow-up)
+- PR #332
+
 ### Completion Notes List
 
+- Canonical domain kinds only: activityDetails, communityIdentity, capacityStatus
+- Shared `FormDomainContext` — no schema copies, no per-block fetch
+- activityDetails is complementary (When/Where only); title stays in shells
+- Core+ UI lock + `FormSchemaPlanGate` 403
+- Conversational notice includes Activity/community blocks
+- Live Playwright preview passed on demo draft
+- 36.4 create/publish e2e hit env `read_only_over_limit` on default tenant — not a 36.7 schema defect
+
+### Reviews (Grok 4.6)
+
+**bmad-code-review (HEAD):** no BLOCKER / no in-scope MAJOR.  
+MINOR: FormTemplateService still duplicates plan-gate branches (pre-existing; domain check added in both places).  
+NIT: UI lock copy omits “plan” vs server “Core or Pro plan”.
+
+**Adversarial:** missing location/logo/unlimited capacity hide; unknown domain type hidden + rejected; no foreign Activity id in schema; duplicates allowed; domain-in-section/columns supported; Conversational omits presentation; Basic API bypass 403; legacy v1 untouched. Duplicate When/Where vs shell is an operator choice, not auto-hidden.
+
+**Testarch:** resolver, mutation, client validator, plan gate, integration save/403/submit, Preview e2e covered. Residual: no dedicated Basic UI e2e (requires Basic tenant); 36.4 publish matrix blocked by local plan-limit env.
+
 ### File List
+
+- `_bmad-output/implementation-artifacts/36-7-domain-blocks-entitlements-regression.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/planning-artifacts/epics-form-studio-2-0-36.md`
+- `src/Infrastructure/Activities/FormSchemaPlanGate.cs`
+- `src/Infrastructure/Activities/ActivityService.cs`
+- `src/Infrastructure/Activities/FormTemplateService.cs`
+- `src/Infrastructure.Tests/Activities/FormSchemaPlanGateDomainTests.cs`
+- `src/Infrastructure.Tests/Activities/FormSchemaCompositionTests.cs`
+- `src/Api.IntegrationTests/FormSchemaCompositionIntegrationTests.cs`
+- `web/lib/form-domain-blocks.ts`
+- `web/lib/form-domain-blocks.test.ts`
+- `web/lib/form-composition-mutations.ts`
+- `web/lib/form-composition-client.ts`
+- `web/lib/form-composition-presentation.ts`
+- `web/components/registration/registration-domain-block.tsx`
+- `web/components/registration/registration-composition-renderer.tsx`
+- `web/components/registration/registration-form.tsx`
+- `web/components/registration/public-registration-open.tsx`
+- `web/components/activities/form-composition-builder.tsx`
+- `web/components/activities/form-composition-inspector.tsx`
+- `web/e2e/form-studio-domain-36-7.spec.ts`

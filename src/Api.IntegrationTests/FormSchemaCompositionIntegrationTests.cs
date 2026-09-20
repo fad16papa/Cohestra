@@ -328,6 +328,56 @@ public sealed class FormSchemaCompositionIntegrationTests(IntegrationTestFixture
     }
 
     [SkippableFact]
+    public async Task SubmitPublicRegistration_DomainComposition_ExcludesDomainKeys()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+
+        using var client = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(client);
+        IntegrationTestHelpers.UseBearerToken(client, accessToken);
+
+        var slug = $"dom-reg-{Guid.NewGuid():N}"[..18];
+        var activity = await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            TenantIds.Default,
+            slug);
+
+        var schema = BuildDomainCompositionSchema();
+        using var saveResponse = await client.PutAsJsonAsync(
+            $"/api/v1/admin/activities/{activity.Id}/form-schema",
+            new SaveActivityFormSchemaRequest(schema),
+            IntegrationTestHelpers.JsonOptions);
+        saveResponse.EnsureSuccessStatusCode();
+
+        var submitResponse = await IntegrationTestHelpers.SubmitRegistrationAsync(
+            Factory.CreateClient(),
+            slug,
+            new Dictionary<string, object?>
+            {
+                ["email"] = $"dom-{Guid.NewGuid():N}@example.com",
+            });
+
+        Assert.Equal("created", submitResponse.Status);
+
+        await using var scope = Factory.Services.CreateAsyncScope();
+        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var registration = await dbContext.Registrations
+            .AsNoTracking()
+            .SingleAsync(item => item.Id == submitResponse.RegistrationId);
+
+        Assert.True(registration.Answers.ContainsKey("email"));
+        foreach (var key in registration.Answers.Keys)
+        {
+            Assert.DoesNotContain(
+                key,
+                new[] { "activityDetails", "communityIdentity", "capacityStatus", "activity-details", "capacity", "community" },
+                StringComparer.Ordinal);
+        }
+    }
+
+    [SkippableFact]
     public async Task SaveFormSchema_BasicTenantDomainComposition_Returns403PlanLocked()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   addColumnsBlock,
+  addDomainBlock,
   addInputFieldBlock,
   getBuilderCanvasRows,
   moveCompositionBlockToColumn,
@@ -42,6 +43,17 @@ describe("form composition columns", () => {
     schema = removeCompositionBlock(schema, columnsId!);
     expect(schema.composition?.some((node) => node.kind === "columns")).toBe(false);
     expect(schema.composition?.some((node) => node.kind === "fieldRef")).toBe(true);
+  });
+
+  it("places a domain block in a column without creating a field", () => {
+    let schema = addColumnsBlock(baseV1);
+    const columnsId = schema.composition?.find((node) => node.kind === "columns")?.id;
+    schema = addDomainBlock(schema, "capacityStatus", { selectedBlockId: columnsId });
+    const left = schema.composition?.find((node) => node.kind === "columns")?.columns?.[0];
+    expect(left?.some((node) => node.kind === "domain" && node.domain === "capacityStatus")).toBe(
+      true
+    );
+    expect(schema.fields).toHaveLength(1);
   });
 
   it("moves a block between columns", () => {

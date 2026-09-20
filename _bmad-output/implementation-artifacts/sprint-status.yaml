@@ -371,7 +371,7 @@ development_status:
   36-4-columns-responsive-composition: done
   36-5-design-tokens-modern-centered: done
   36-6-preview-viewports-operator-ux: done
-  36-7-domain-blocks-entitlements-regression: in-progress
+  36-7-domain-blocks-entitlements-regression: review
   epic-36-retrospective: optional
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
