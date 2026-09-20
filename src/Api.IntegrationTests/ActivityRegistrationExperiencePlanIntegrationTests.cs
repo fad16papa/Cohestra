@@ -109,6 +109,38 @@ public sealed class ActivityRegistrationExperiencePlanIntegrationTests(Integrati
         Assert.Contains("plan_locked", body, StringComparison.OrdinalIgnoreCase);
     }
 
+    [SkippableFact]
+    public async Task UpdateActivity_BasicTenantElevatedDesignTokens_Returns403PlanLocked()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var (client, activity) = await CreateTenantWithPublishedActivityAsync(TenantPlan.Basic);
+
+        using var updateResponse = await client.PutAsJsonAsync(
+            $"/api/v1/admin/activities/{activity.Id}",
+            new UpdateActivityRequest(
+                activity.Name,
+                activity.Category,
+                activity.Schedule,
+                activity.Location,
+                activity.CommunityLabel,
+                HeroImageUrl: activity.HeroImageUrl,
+                AccentColor: activity.AccentColor,
+                MaxRegistrants: activity.MaxRegistrants,
+                RegistrationTheme: new RegistrationThemeDto(
+                    Preset: "classic",
+                    InheritCommunityBrand: true,
+                    AccentColor: null,
+                    HeroImageUrl: null,
+                    DesignTokens: new RegistrationDesignTokensDto(
+                        SurfaceEmphasis: "elevated"))),
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.Forbidden, updateResponse.StatusCode);
+        var body = await updateResponse.Content.ReadAsStringAsync();
+        Assert.Contains("plan_locked", body, StringComparison.OrdinalIgnoreCase);
+    }
+
     private async Task<(HttpClient Client, Activity Activity)> CreateTenantWithPublishedActivityAsync(
         TenantPlan plan)
     {

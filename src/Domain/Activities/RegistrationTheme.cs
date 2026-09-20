@@ -29,5 +29,8 @@ public sealed class RegistrationTheme
     /// <summary>Optional composable experience (layout/style/flow). Null → derive from <see cref="Preset"/>.</summary>
     public RegistrationExperience? Experience { get; set; }
 
+    /// <summary>Bounded public design tokens (typography, fields, button, surface).</summary>
+    public RegistrationDesignTokens? DesignTokens { get; set; }
+
     public static RegistrationTheme Default { get; } = new();
 }

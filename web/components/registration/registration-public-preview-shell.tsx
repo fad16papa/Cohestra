@@ -62,6 +62,10 @@ export function RegistrationPublicPreviewShell({
     theme.resolvedExperience.flow === "conversational" &&
     formSchema != null &&
     compositionHasPresentationBlocks(formSchema.fields, formSchema.composition);
+  const isWideCenteredLayout =
+    theme.resolvedExperience.layout === "centered" ||
+    theme.resolvedExperience.layout === "card" ||
+    theme.resolvedExperience.layout === "immersive";
 
   return (
     <div className={cn("space-y-3", className)}>
@@ -98,7 +102,9 @@ export function RegistrationPublicPreviewShell({
             ? "max-w-[375px]"
             : isSplitLayout
               ? "max-w-[960px]"
-              : "max-w-[480px]"
+              : isWideCenteredLayout
+                ? "max-w-[720px]"
+                : "max-w-[480px]"
         )}
         scrollClassName={scrollClassName}
       >
@@ -113,6 +119,7 @@ export function RegistrationPublicPreviewShell({
           logoAssetId={theme.logoAssetId}
           preset={theme.preset as RegistrationThemePreset}
           resolvedExperience={theme.resolvedExperience}
+          resolvedDesignTokens={theme.resolvedDesignTokens}
           formSchema={formSchema}
           websiteLink={websiteLink}
           variant="preview"

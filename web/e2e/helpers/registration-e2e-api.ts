@@ -20,6 +20,13 @@ export type ExperienceFixture = {
       flow?: string | null;
       heroDisplay?: string | null;
     } | null;
+    designTokens?: {
+      typographyScale?: string | null;
+      fieldSize?: string | null;
+      fieldRadius?: string | null;
+      buttonWidth?: string | null;
+      surfaceEmphasis?: string | null;
+    } | null;
   };
   expect: {
     splitPanel?: boolean;
@@ -347,10 +354,11 @@ export async function saveActivityFormSchema(
   const response = await request.put(
     `${API_BASE}/api/v1/admin/activities/${activityId}/form-schema`,
     {
-      data: { formSchema },
+      data: JSON.stringify({ formSchema }),
       headers: {
         Authorization: `Bearer ${token}`,
         Host: tenantHostHeader(),
+        "Content-Type": "application/json",
       },
     }
   );

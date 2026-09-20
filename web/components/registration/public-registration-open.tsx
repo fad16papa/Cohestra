@@ -3,6 +3,10 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 
 import { ActivityHero } from "@/components/registration/activity-hero";
+import { RegistrationModernCenteredShell } from "@/components/registration/registration-modern-centered-shell";
+import {
+  normalizeModernCenteredStyle,
+} from "@/lib/registration-center-style";
 import { RegistrationPosterExperiencePanel } from "@/components/registration/registration-poster-experience-panel";
 import { RegistrationSplitExperiencePanel } from "@/components/registration/registration-split-experience-panel";
 import { RegistrationForm } from "@/components/registration/registration-form";
@@ -11,8 +15,10 @@ import { RegistrationSuccessScreen } from "@/components/registration/registratio
 import type {
   ActivityFormSchema,
   RegistrationThemePreset,
+  ResolvedRegistrationDesignTokens,
   ResolvedRegistrationExperience,
 } from "@/lib/activities-api";
+import { resolveRegistrationDesignTokens } from "@/lib/registration-design-tokens";
 import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
 import { PublisherWebsiteTextLink } from "@/components/registration/publisher-website-link";
 import { simulateRegistrationPreviewSubmit } from "@/lib/registration-preview-submit";
@@ -35,6 +41,7 @@ type PublicRegistrationOpenProps = {
   logoAssetId?: string | null;
   preset?: RegistrationThemePreset;
   resolvedExperience?: ResolvedRegistrationExperience | null;
+  resolvedDesignTokens?: ResolvedRegistrationDesignTokens | null;
   formSchema: ActivityFormSchema | null;
   websiteLink?: PublisherWebsiteLink | null;
   variant?: "public" | "preview" | "embed";
@@ -64,6 +71,7 @@ export function PublicRegistrationOpen({
   logoAssetId = null,
   preset = "classic",
   resolvedExperience = null,
+  resolvedDesignTokens = null,
   formSchema,
   websiteLink = null,
   variant = "public",
@@ -92,6 +100,15 @@ export function PublicRegistrationOpen({
       resolvedExperience as RegistrationThemeWithExperience["resolvedExperience"],
   };
   const effectiveExperience = resolveRegistrationExperience(themeForExperience);
+  const effectiveDesignTokens =
+    resolvedDesignTokens ??
+    resolveRegistrationDesignTokens({
+      preset,
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: effectiveExperience,
+    });
   const registrationFlowMode: RegistrationFormFlowMode =
     effectiveExperience.flow === "conversational" ? "conversational" : "default";
   const formSchemaKey = formSchema?.fields.map((field) => field.id).join(",") ?? "";
@@ -101,6 +118,11 @@ export function PublicRegistrationOpen({
     themeForExperience,
     isEmbed
   );
+
+  const modernCenteredSurfaceStyle =
+    shellKind === "modern-centered"
+      ? normalizeModernCenteredStyle(effectiveExperience.style)
+      : null;
 
   const hero = (
     <ActivityHero
@@ -149,6 +171,8 @@ export function PublicRegistrationOpen({
           schema={formSchema}
           variant={isPreview ? "preview" : "public"}
           flowMode={registrationFlowMode}
+          publicSurfaceStyle={modernCenteredSurfaceStyle ?? undefined}
+          designTokens={effectiveDesignTokens}
           activitySlug={slug}
           onPreviewSubmit={
             isPreview
@@ -178,16 +202,25 @@ export function PublicRegistrationOpen({
     ) : null;
 
   const modernCenteredShell = (
-    <div
-      className={cn(
-        "mx-auto flex w-full min-w-0 max-w-[480px] flex-col gap-6 overflow-x-hidden sm:gap-7"
-      )}
-      style={brandingStyle}
-    >
-      {hero}
-      <FormSection className="space-y-5">{formBody}</FormSection>
-      {registrationWebsiteFooter}
-    </div>
+    <RegistrationModernCenteredShell
+      name={name}
+      schedule={schedule}
+      location={location}
+      communityLabel={communityLabel}
+      heroImageUrl={heroImageUrl}
+      logoAssetId={logoAssetId}
+      accentColor={accentColor}
+      showHeroImage={!submitted}
+      registrationCount={registrationCount}
+      maxRegistrants={maxRegistrants}
+      isRegistrationFull={isRegistrationFull}
+      experienceStyle={effectiveExperience.style}
+      surfaceEmphasis={effectiveDesignTokens.surfaceEmphasis}
+      brandingStyle={brandingStyle}
+      formSection={<FormSection className="space-y-5">{formBody}</FormSection>}
+      footer={registrationWebsiteFooter}
+      showRegistrationHeading={!submitted}
+    />
   );
 
   if (shellKind === "card") {

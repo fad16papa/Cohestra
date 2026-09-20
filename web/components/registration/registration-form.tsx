@@ -13,7 +13,11 @@ import { PhoneFieldInput } from "@/components/registration/phone-field-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { ActivityFormSchema, FormFieldDefinition } from "@/lib/activities-api";
+import type {
+  ActivityFormSchema,
+  FormFieldDefinition,
+  ResolvedRegistrationDesignTokens,
+} from "@/lib/activities-api";
 import { isHiddenFieldType, isNonInputFieldType } from "@/lib/form-schema-utils";
 import { collectHiddenAnswers } from "@/lib/hidden-field-query";
 import { isIsoCalendarDate } from "@/lib/iso-calendar-date";
@@ -48,6 +52,17 @@ import {
   hasStoredComposition,
 } from "@/lib/form-composition";
 import { orderFieldsByComposition } from "@/lib/form-composition-order";
+import {
+  modernCenteredFormFieldClass,
+  modernCenteredSubmitButtonClass,
+  type ModernCenteredSurfaceStyle,
+} from "@/lib/registration-center-style";
+import {
+  mergeDesignTokenFieldClass,
+  registrationFormBlockSpacingClass,
+  registrationFormSubmitButtonClass,
+  registrationFormTypographyClass,
+} from "@/lib/registration-design-tokens";
 import { cn } from "@/lib/utils";
 
 export type RegistrationFormFlowMode = "default" | "conversational";
@@ -58,6 +73,10 @@ type RegistrationFormProps = {
   className?: string;
   activitySlug?: string;
   flowMode?: RegistrationFormFlowMode;
+  /** Modern Centered shell only — applies modern/minimal field + CTA treatment. */
+  publicSurfaceStyle?: ModernCenteredSurfaceStyle;
+  /** Resolved design tokens (public + preview). */
+  designTokens?: ResolvedRegistrationDesignTokens | null;
   onSubmitted?: (result: PublicRegistrationSubmitResult) => void;
   onSubmitError?: (message: string | null) => void;
   /** Studio preview only — simulates submit locally; never hits the public API. */
@@ -326,6 +345,8 @@ export function RegistrationForm({
   onSubmitted,
   onSubmitError,
   onPreviewSubmit,
+  publicSurfaceStyle,
+  designTokens = null,
 }: RegistrationFormProps) {
   const [values, setValues] = useState<Record<string, unknown>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -352,11 +373,27 @@ export function RegistrationForm({
   const isPreview = variant === "preview";
   const isPublic = !isPreview;
 
-  const publicControlClass = isPublic ? "min-h-12 text-base" : undefined;
+  const centeredFieldClass = modernCenteredFormFieldClass(publicSurfaceStyle);
+  const tokenFieldClass = designTokens
+    ? mergeDesignTokenFieldClass(designTokens, centeredFieldClass)
+    : centeredFieldClass;
+  const applyDesignChrome = isPublic || Boolean(designTokens);
+  const publicControlClass = applyDesignChrome
+    ? tokenFieldClass ?? "min-h-12 text-base"
+    : undefined;
   const publicSelectClass = cn(
     "flex w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-    isPublic ? "min-h-12 text-base" : "h-9"
+    applyDesignChrome ? tokenFieldClass ?? "min-h-12 text-base" : "h-9"
   );
+  const publicSubmitClass = designTokens
+    ? registrationFormSubmitButtonClass(designTokens)
+    : modernCenteredSubmitButtonClass(publicSurfaceStyle);
+  const publicFormTypographyClass = designTokens
+    ? registrationFormTypographyClass(designTokens)
+    : undefined;
+  const publicFormSpacingClass = designTokens
+    ? registrationFormBlockSpacingClass(designTokens)
+    : undefined;
 
   function markTouched(fieldId: string) {
     setTouched((current) => ({ ...current, [fieldId]: true }));
@@ -1179,7 +1216,10 @@ export function RegistrationForm({
             rows={3}
             className={cn(
               "flex min-h-20 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
-              isPublic && "min-h-12 text-base"
+              isPublic &&
+                (publicControlClass
+                  ? cn(publicControlClass, "min-h-20 py-3 text-base")
+                  : "min-h-12 text-base")
             )}
           />
           {renderFieldError(fieldId, error)}
@@ -1301,7 +1341,9 @@ export function RegistrationForm({
     <form
       ref={formRef}
       className={cn(
-        "flex min-w-0 flex-col gap-[20px]",
+        "flex min-w-0 flex-col",
+        publicFormSpacingClass ?? "gap-[20px]",
+        publicFormTypographyClass,
         isPreview &&
           "rounded-xl border border-dashed border-border-warm bg-card p-6",
         className
@@ -1436,7 +1478,9 @@ export function RegistrationForm({
         <Button
           type="submit"
           className={cn(
-            isPublic && "min-h-12 w-full min-w-0 max-w-full shrink text-base"
+            isPublic &&
+              (publicSubmitClass ??
+                "min-h-12 w-full min-w-0 max-w-full shrink text-base")
           )}
           disabled={
             schema.fields.length === 0 ||

@@ -2,9 +2,11 @@ import type {
   ActivityFormSchema,
   ActivityStatus,
   RegistrationThemePreset,
+  ResolvedRegistrationDesignTokens,
   ResolvedRegistrationExperience,
 } from "@/lib/activities-api";
 import { parseFormSchema } from "@/lib/activities-api";
+import { resolveRegistrationDesignTokens } from "@/lib/registration-design-tokens";
 import { resolveRegistrationExperience } from "@/lib/registration-experience";
 import { getPublicApiBaseUrl, getTenantForwardedHostHeaders } from "@/lib/api";
 import { createIdempotencyKey } from "@/lib/idempotency-key";
@@ -30,6 +32,7 @@ export type PublicActivity = {
   logoAssetId: string | null;
   formSchema: ActivityFormSchema | null;
   resolvedExperience: ResolvedRegistrationExperience;
+  resolvedDesignTokens: ResolvedRegistrationDesignTokens;
 };
 
 function parseActivityStatus(raw: unknown): ActivityStatus {
@@ -65,6 +68,8 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
   const formSchema = raw.formSchema ?? raw.FormSchema;
   const resolvedExperienceRaw =
     raw.resolvedExperience ?? raw.ResolvedExperience;
+  const resolvedDesignTokensRaw =
+    raw.resolvedDesignTokens ?? raw.ResolvedDesignTokens;
 
   if (
     typeof slug !== "string" ||
@@ -86,6 +91,8 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
     presetRaw === "classic"
       ? presetRaw
       : "classic";
+
+  const resolvedExperience = parsePublicResolvedExperience(resolvedExperienceRaw, preset);
 
   return {
     slug,
@@ -111,7 +118,12 @@ export function parsePublicActivity(raw: Record<string, unknown>): PublicActivit
       formSchema === null || formSchema === undefined
         ? null
         : parseFormSchema(formSchema),
-    resolvedExperience: parsePublicResolvedExperience(resolvedExperienceRaw, preset),
+    resolvedExperience,
+    resolvedDesignTokens: parsePublicResolvedDesignTokens(
+      resolvedDesignTokensRaw,
+      preset,
+      resolvedExperience
+    ),
   };
 }
 
@@ -141,6 +153,44 @@ function parsePublicResolvedExperience(
     accentColor: null,
     heroImageUrl: null,
   }) as ResolvedRegistrationExperience;
+}
+
+function parsePublicResolvedDesignTokens(
+  raw: unknown,
+  preset: RegistrationThemePreset,
+  resolvedExperience: ResolvedRegistrationExperience
+): ResolvedRegistrationDesignTokens {
+  if (raw && typeof raw === "object") {
+    const record = raw as Record<string, unknown>;
+    const typographyScale = record.typographyScale ?? record.TypographyScale;
+    const fieldSize = record.fieldSize ?? record.FieldSize;
+    const fieldRadius = record.fieldRadius ?? record.FieldRadius;
+    const buttonWidth = record.buttonWidth ?? record.ButtonWidth;
+    const surfaceEmphasis = record.surfaceEmphasis ?? record.SurfaceEmphasis;
+    if (
+      typeof typographyScale === "string" &&
+      typeof fieldSize === "string" &&
+      typeof fieldRadius === "string" &&
+      typeof buttonWidth === "string" &&
+      typeof surfaceEmphasis === "string"
+    ) {
+      return {
+        typographyScale,
+        fieldSize,
+        fieldRadius,
+        buttonWidth,
+        surfaceEmphasis,
+      };
+    }
+  }
+
+  return resolveRegistrationDesignTokens({
+    preset,
+    inheritCommunityBrand: true,
+    accentColor: null,
+    heroImageUrl: null,
+    experience: resolvedExperience,
+  });
 }
 
 export type PublicActivityFetchResult =

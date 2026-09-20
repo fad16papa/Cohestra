@@ -368,7 +368,14 @@ public sealed class ActivityService(
                 throw new FormSchemaPlanLockedException(experiencePlanError);
             }
 
+            var designTokensPlanError = RegistrationDesignTokensPlanGate.EnsureAllowed(theme!, tenantPlan.Value);
+            if (designTokensPlanError is not null)
+            {
+                throw new FormSchemaPlanLockedException(designTokensPlanError);
+            }
+
             RegistrationExperiencePlanGate.NormalizeForPlan(theme!, tenantPlan.Value);
+            RegistrationDesignTokensPlanGate.NormalizeForPlan(theme!, tenantPlan.Value);
             activity.RegistrationTheme = RegistrationThemeValidator.Normalize(theme!);
         }
 
@@ -916,7 +923,8 @@ public sealed class ActivityService(
             ActivityCapacityValidator.IsRegistrationFull(activity.MaxRegistrants, registrationCount),
             IsRegistrationPaused: false,
             isRegistrationClosedAt,
-            resolved.ResolvedExperience);
+            resolved.ResolvedExperience,
+            resolved.ResolvedDesignTokens);
     }
 
     private async Task<PublicActivityResponse> EnrichWithRegistrationPauseStateAsync(

@@ -121,6 +121,7 @@ export default async function PublicRegistrationPage({
       logoAssetId={activity.logoAssetId}
       preset={activity.preset}
       resolvedExperience={activity.resolvedExperience}
+      resolvedDesignTokens={activity.resolvedDesignTokens}
       formSchema={activity.formSchema}
       websiteLink={websiteLink}
       registrationCount={activity.registrationCount}

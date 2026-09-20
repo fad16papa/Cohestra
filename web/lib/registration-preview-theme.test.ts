@@ -132,6 +132,28 @@ describe("registration preview theme", () => {
     expect(resolved.resolvedExperience.layout).toBe("centered");
   });
 
+  it("resolves draft designTokens for unsaved Preview without persisted resolvedDesignTokens", () => {
+    const resolved = resolveRegistrationPreviewTheme(activity, {
+      preset: "classic",
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: { layout: "centered", style: "minimal", flow: "single-page", heroDisplay: "cover" },
+      designTokens: {
+        typographyScale: "compact",
+        fieldSize: "default",
+        fieldRadius: "sm",
+        buttonWidth: "auto",
+        surfaceEmphasis: "flat",
+      },
+    });
+
+    expect(resolved.resolvedExperience.style).toBe("minimal");
+    expect(resolved.resolvedDesignTokens.typographyScale).toBe("compact");
+    expect(resolved.resolvedDesignTokens.buttonWidth).toBe("auto");
+    expect(resolved.resolvedDesignTokens.surfaceEmphasis).toBe("flat");
+  });
+
   it("uses persisted activity theme for form preview", () => {
     const withOverride = {
       ...activity,

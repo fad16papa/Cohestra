@@ -18,5 +18,6 @@ public sealed record PublicActivityResponse(
     bool IsRegistrationFull,
     bool IsRegistrationPaused,
     bool IsRegistrationClosedAt,
-    ResolvedRegistrationExperienceDto ResolvedExperience);
+    ResolvedRegistrationExperienceDto ResolvedExperience,
+    ResolvedRegistrationDesignTokensDto ResolvedDesignTokens);
 
