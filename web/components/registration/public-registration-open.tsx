@@ -204,6 +204,7 @@ export function PublicRegistrationOpen({
       brandingStyle={brandingStyle}
       formSection={<FormSection className="space-y-5">{formBody}</FormSection>}
       footer={registrationWebsiteFooter}
+      showRegistrationHeading={!submitted}
     />
   );
 

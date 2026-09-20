@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import { RegistrationActivityMetadata } from "@/components/registration/registration-activity-metadata";
 import { RegistrationCapacityStatus } from "@/components/registration/registration-capacity-status";
@@ -58,6 +58,10 @@ export function RegistrationModernCenteredExperiencePanel({
     [logoAssetId]
   );
   const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [resolvedHeroImageUrl]);
 
   const showImage =
     showHeroImage && resolvedHeroImageUrl && !imageFailed;
