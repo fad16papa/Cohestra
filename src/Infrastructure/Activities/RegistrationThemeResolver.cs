@@ -31,6 +31,7 @@ internal static class RegistrationThemeResolver
         }
 
         var resolvedExperience = RegistrationExperienceResolver.Resolve(stored);
+        var resolvedDesignTokens = RegistrationDesignTokensResolver.Resolve(stored);
 
         return new ResolvedRegistrationThemeDto(
             RegistrationThemeValidator.NormalizePreset(stored.Preset),
@@ -38,6 +39,7 @@ internal static class RegistrationThemeResolver
             ActivityBrandingValidator.NormalizeAccentColor(accent),
             ActivityBrandingValidator.NormalizeHeroImageUrl(hero),
             CommunityBrandingValidator.NormalizeLogoAssetId(logo),
-            RegistrationExperienceResolver.ToDto(resolvedExperience));
+            RegistrationExperienceResolver.ToDto(resolvedExperience),
+            RegistrationDesignTokensResolver.ToDto(resolvedDesignTokens));
     }
 }

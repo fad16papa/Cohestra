@@ -9,6 +9,7 @@ describe("form studio design tab contract", () => {
       "utf8"
     );
     expect(designSource).toMatch(/RegistrationExperienceControls/);
+    expect(designSource).toMatch(/RegistrationDesignTokenControls/);
     expect(designSource).toMatch(/registrationThemeForSave/);
     expect(designSource).toMatch(/resolveRegistrationPreviewTheme/);
     expect(designSource).not.toMatch(/Preview Mode/);

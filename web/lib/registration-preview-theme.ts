@@ -2,8 +2,10 @@ import type {
   Activity,
   RegistrationTheme,
   RegistrationThemePreset,
+  ResolvedRegistrationDesignTokens,
   ResolvedRegistrationExperience,
 } from "@/lib/activities-api";
+import { resolveRegistrationDesignTokens } from "@/lib/registration-design-tokens";
 import { resolveRegistrationExperience } from "@/lib/registration-experience";
 
 export type ResolvedRegistrationPreviewTheme = {
@@ -12,6 +14,7 @@ export type ResolvedRegistrationPreviewTheme = {
   heroImageUrl: string | null;
   logoAssetId: string | null;
   resolvedExperience: ResolvedRegistrationExperience;
+  resolvedDesignTokens: ResolvedRegistrationDesignTokens;
 };
 
 export function themeFromActivity(activity: Activity): RegistrationTheme {
@@ -65,12 +68,22 @@ export function resolveRegistrationPreviewTheme(
     experience: theme.experience,
   } as Parameters<typeof resolveRegistrationExperience>[0]) as ResolvedRegistrationExperience;
 
+  const resolvedDesignTokens = resolveRegistrationDesignTokens({
+    preset: theme.preset,
+    inheritCommunityBrand: theme.inheritCommunityBrand,
+    accentColor: theme.accentColor,
+    heroImageUrl: theme.heroImageUrl,
+    experience: theme.experience,
+    designTokens: theme.designTokens,
+  });
+
   return {
     preset: theme.preset,
     accentColor: accent,
     heroImageUrl: hero,
     logoAssetId: logo,
     resolvedExperience,
+    resolvedDesignTokens,
   };
 }
 

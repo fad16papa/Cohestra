@@ -16,6 +16,7 @@ import {
 } from "@/lib/activities-api";
 import { uploadBrandingAsset } from "@/lib/campaigns-api";
 import { resolveHeroImageUrl } from "@/lib/resolve-hero-image-url";
+import { RegistrationDesignTokenControls } from "@/components/activities/registration-design-token-controls";
 import { RegistrationExperienceControls } from "@/components/activities/registration-experience-controls";
 import {
   accentMeetsWcagAaOnWhiteText,
@@ -197,6 +198,24 @@ export function ActivityDesignTab({
               </p>
             </div>
             <RegistrationExperienceControls
+              plan={plan}
+              draftTheme={draftTheme}
+              disabled={isArchived}
+              onThemeChange={setDraftTheme}
+            />
+          </section>
+
+          <section className="space-y-4 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
+                Design tokens
+              </h4>
+              <p className="mt-1 text-xs text-text-muted-warm">
+                Typography, fields, button, and form surface — applied on Preview and public
+                registration.
+              </p>
+            </div>
+            <RegistrationDesignTokenControls
               plan={plan}
               draftTheme={draftTheme}
               disabled={isArchived}

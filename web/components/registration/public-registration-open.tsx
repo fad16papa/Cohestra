@@ -15,8 +15,10 @@ import { RegistrationSuccessScreen } from "@/components/registration/registratio
 import type {
   ActivityFormSchema,
   RegistrationThemePreset,
+  ResolvedRegistrationDesignTokens,
   ResolvedRegistrationExperience,
 } from "@/lib/activities-api";
+import { resolveRegistrationDesignTokens } from "@/lib/registration-design-tokens";
 import type { PublisherWebsiteLink } from "@/lib/publisher-website-url";
 import { PublisherWebsiteTextLink } from "@/components/registration/publisher-website-link";
 import { simulateRegistrationPreviewSubmit } from "@/lib/registration-preview-submit";
@@ -39,6 +41,7 @@ type PublicRegistrationOpenProps = {
   logoAssetId?: string | null;
   preset?: RegistrationThemePreset;
   resolvedExperience?: ResolvedRegistrationExperience | null;
+  resolvedDesignTokens?: ResolvedRegistrationDesignTokens | null;
   formSchema: ActivityFormSchema | null;
   websiteLink?: PublisherWebsiteLink | null;
   variant?: "public" | "preview" | "embed";
@@ -68,6 +71,7 @@ export function PublicRegistrationOpen({
   logoAssetId = null,
   preset = "classic",
   resolvedExperience = null,
+  resolvedDesignTokens = null,
   formSchema,
   websiteLink = null,
   variant = "public",
@@ -96,6 +100,15 @@ export function PublicRegistrationOpen({
       resolvedExperience as RegistrationThemeWithExperience["resolvedExperience"],
   };
   const effectiveExperience = resolveRegistrationExperience(themeForExperience);
+  const effectiveDesignTokens =
+    resolvedDesignTokens ??
+    resolveRegistrationDesignTokens({
+      preset,
+      inheritCommunityBrand: true,
+      accentColor: null,
+      heroImageUrl: null,
+      experience: effectiveExperience,
+    });
   const registrationFlowMode: RegistrationFormFlowMode =
     effectiveExperience.flow === "conversational" ? "conversational" : "default";
   const formSchemaKey = formSchema?.fields.map((field) => field.id).join(",") ?? "";
@@ -159,6 +172,7 @@ export function PublicRegistrationOpen({
           variant={isPreview ? "preview" : "public"}
           flowMode={registrationFlowMode}
           publicSurfaceStyle={modernCenteredSurfaceStyle ?? undefined}
+          designTokens={effectiveDesignTokens}
           activitySlug={slug}
           onPreviewSubmit={
             isPreview
@@ -201,6 +215,7 @@ export function PublicRegistrationOpen({
       maxRegistrants={maxRegistrants}
       isRegistrationFull={isRegistrationFull}
       experienceStyle={effectiveExperience.style}
+      surfaceEmphasis={effectiveDesignTokens.surfaceEmphasis}
       brandingStyle={brandingStyle}
       formSection={<FormSection className="space-y-5">{formBody}</FormSection>}
       footer={registrationWebsiteFooter}

@@ -119,6 +119,7 @@ export function RegistrationPublicPreviewShell({
           logoAssetId={theme.logoAssetId}
           preset={theme.preset as RegistrationThemePreset}
           resolvedExperience={theme.resolvedExperience}
+          resolvedDesignTokens={theme.resolvedDesignTokens}
           formSchema={formSchema}
           websiteLink={websiteLink}
           variant="preview"

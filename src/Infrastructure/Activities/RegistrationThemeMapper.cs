@@ -23,7 +23,40 @@ internal static class RegistrationThemeMapper
                     theme.Experience.Layout,
                     theme.Experience.Style,
                     theme.Experience.Flow,
-                    theme.Experience.HeroDisplay));
+                    theme.Experience.HeroDisplay),
+            ToDesignTokensDto(theme.DesignTokens));
+    }
+
+    private static RegistrationDesignTokensDto? ToDesignTokensDto(RegistrationDesignTokens? tokens)
+    {
+        if (tokens is null)
+        {
+            return null;
+        }
+
+        return new RegistrationDesignTokensDto(
+            tokens.TypographyScale,
+            tokens.FieldSize,
+            tokens.FieldRadius,
+            tokens.ButtonWidth,
+            tokens.SurfaceEmphasis);
+    }
+
+    private static RegistrationDesignTokens? FromDesignTokensDto(RegistrationDesignTokensDto? dto)
+    {
+        if (dto is null)
+        {
+            return null;
+        }
+
+        return new RegistrationDesignTokens
+        {
+            TypographyScale = dto.TypographyScale,
+            FieldSize = dto.FieldSize,
+            FieldRadius = dto.FieldRadius,
+            ButtonWidth = dto.ButtonWidth,
+            SurfaceEmphasis = dto.SurfaceEmphasis,
+        };
     }
 
     public static RegistrationTheme? FromDto(RegistrationThemeDto? dto)
@@ -48,6 +81,7 @@ internal static class RegistrationThemeMapper
                     Flow = dto.Experience.Flow,
                     HeroDisplay = dto.Experience.HeroDisplay,
                 },
+            DesignTokens = FromDesignTokensDto(dto.DesignTokens),
         };
     }
 }

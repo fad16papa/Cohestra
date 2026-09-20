@@ -113,17 +113,35 @@ export type ResolvedRegistrationExperience = {
   heroDisplay: string;
 };
 
+export type RegistrationDesignTokens = {
+  typographyScale?: string | null;
+  fieldSize?: string | null;
+  fieldRadius?: string | null;
+  buttonWidth?: string | null;
+  surfaceEmphasis?: string | null;
+};
+
+export type ResolvedRegistrationDesignTokens = {
+  typographyScale: string;
+  fieldSize: string;
+  fieldRadius: string;
+  buttonWidth: string;
+  surfaceEmphasis: string;
+};
+
 export type RegistrationTheme = {
   preset: RegistrationThemePreset;
   inheritCommunityBrand: boolean;
   accentColor: string | null;
   heroImageUrl: string | null;
   experience?: RegistrationExperienceConfig | null;
+  designTokens?: RegistrationDesignTokens | null;
 };
 
 export type ResolvedRegistrationTheme = RegistrationTheme & {
   logoAssetId: string | null;
   resolvedExperience?: ResolvedRegistrationExperience | null;
+  resolvedDesignTokens?: ResolvedRegistrationDesignTokens | null;
 };
 
 export type Activity = {
@@ -498,6 +516,44 @@ function parseRegistrationTheme(raw: unknown): RegistrationTheme | null {
     throw new Error("Invalid registration theme payload");
   }
 
+  const designTokensRaw = theme.designTokens ?? theme.DesignTokens;
+  let designTokens: RegistrationDesignTokens | null = null;
+  if (designTokensRaw && typeof designTokensRaw === "object") {
+    const dt = designTokensRaw as Record<string, unknown>;
+    designTokens = {
+      typographyScale:
+        typeof dt.typographyScale === "string"
+          ? dt.typographyScale
+          : typeof dt.TypographyScale === "string"
+            ? dt.TypographyScale
+            : null,
+      fieldSize:
+        typeof dt.fieldSize === "string"
+          ? dt.fieldSize
+          : typeof dt.FieldSize === "string"
+            ? dt.FieldSize
+            : null,
+      fieldRadius:
+        typeof dt.fieldRadius === "string"
+          ? dt.fieldRadius
+          : typeof dt.FieldRadius === "string"
+            ? dt.FieldRadius
+            : null,
+      buttonWidth:
+        typeof dt.buttonWidth === "string"
+          ? dt.buttonWidth
+          : typeof dt.ButtonWidth === "string"
+            ? dt.ButtonWidth
+            : null,
+      surfaceEmphasis:
+        typeof dt.surfaceEmphasis === "string"
+          ? dt.surfaceEmphasis
+          : typeof dt.SurfaceEmphasis === "string"
+            ? dt.SurfaceEmphasis
+            : null,
+    };
+  }
+
   const experienceRaw = theme.experience ?? theme.Experience;
   let experience: RegistrationExperienceConfig | null = null;
   if (experienceRaw && typeof experienceRaw === "object") {
@@ -521,6 +577,38 @@ function parseRegistrationTheme(raw: unknown): RegistrationTheme | null {
     accentColor: typeof accentColor === "string" ? accentColor : null,
     heroImageUrl: typeof heroImageUrl === "string" ? heroImageUrl : null,
     experience,
+    designTokens,
+  };
+}
+
+function parseResolvedDesignTokens(raw: unknown): ResolvedRegistrationDesignTokens | null {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const typographyScale = record.typographyScale ?? record.TypographyScale;
+  const fieldSize = record.fieldSize ?? record.FieldSize;
+  const fieldRadius = record.fieldRadius ?? record.FieldRadius;
+  const buttonWidth = record.buttonWidth ?? record.ButtonWidth;
+  const surfaceEmphasis = record.surfaceEmphasis ?? record.SurfaceEmphasis;
+
+  if (
+    typeof typographyScale !== "string" ||
+    typeof fieldSize !== "string" ||
+    typeof fieldRadius !== "string" ||
+    typeof buttonWidth !== "string" ||
+    typeof surfaceEmphasis !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    typographyScale,
+    fieldSize,
+    fieldRadius,
+    buttonWidth,
+    surfaceEmphasis,
   };
 }
 
@@ -540,6 +628,9 @@ function parseResolvedRegistrationTheme(raw: unknown): ResolvedRegistrationTheme
   const logoAssetId = record.logoAssetId ?? record.LogoAssetId;
   const resolvedExperienceRaw =
     record.resolvedExperience ?? record.ResolvedExperience;
+
+  const resolvedDesignTokensRaw =
+    record.resolvedDesignTokens ?? record.ResolvedDesignTokens;
 
   let resolvedExperience: ResolvedRegistrationExperience | null = null;
   if (resolvedExperienceRaw && typeof resolvedExperienceRaw === "object") {
@@ -562,6 +653,7 @@ function parseResolvedRegistrationTheme(raw: unknown): ResolvedRegistrationTheme
     ...theme,
     logoAssetId: typeof logoAssetId === "string" ? logoAssetId : null,
     resolvedExperience,
+    resolvedDesignTokens: parseResolvedDesignTokens(resolvedDesignTokensRaw),
   };
 }
 

@@ -9,6 +9,11 @@ import {
   type RegistrationExperienceStyle,
   type RegistrationThemeWithExperience,
 } from "@/lib/registration-experience";
+import {
+  designTokensPreviewKey,
+  hasStoredDesignTokens,
+  resolveRegistrationDesignTokens,
+} from "@/lib/registration-design-tokens";
 
 function asExperienceTheme(theme: RegistrationTheme): RegistrationThemeWithExperience {
   return theme as RegistrationThemeWithExperience;
@@ -202,12 +207,14 @@ export function activeExperienceStyle(theme: RegistrationTheme): RegistrationExp
 
 export function buildExperiencePreviewKey(theme: RegistrationTheme): string {
   const resolved = resolveRegistrationExperience(asExperienceTheme(theme));
+  const tokens = resolveRegistrationDesignTokens(theme);
   return [
     theme.preset,
     resolved.layout,
     resolved.style,
     resolved.flow,
     resolved.heroDisplay,
+    designTokensPreviewKey(tokens),
   ].join("|");
 }
 
@@ -220,11 +227,15 @@ export function registrationThemeForSave(theme: RegistrationTheme): Registration
       experience.flow != null ||
       experience.heroDisplay != null);
 
+  const designTokens = theme.designTokens;
+  const hasDesignTokens = hasStoredDesignTokens(designTokens);
+
   return {
     preset: theme.preset,
     inheritCommunityBrand: theme.inheritCommunityBrand,
     accentColor: theme.accentColor?.trim() || null,
     heroImageUrl: theme.heroImageUrl?.trim() || null,
     ...(hasExperience ? { experience } : {}),
+    ...(hasDesignTokens ? { designTokens } : {}),
   };
 }

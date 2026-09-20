@@ -24,6 +24,7 @@ type RegistrationModernCenteredShellProps = {
   maxRegistrants?: number | null;
   isRegistrationFull?: boolean;
   experienceStyle: RegistrationExperienceStyle;
+  surfaceEmphasis?: string | null;
   brandingStyle?: CSSProperties;
   formSection: ReactNode;
   footer?: ReactNode;
@@ -43,6 +44,7 @@ export function RegistrationModernCenteredShell({
   maxRegistrants = null,
   isRegistrationFull = false,
   experienceStyle,
+  surfaceEmphasis = null,
   brandingStyle,
   formSection,
   footer = null,
@@ -51,6 +53,12 @@ export function RegistrationModernCenteredShell({
   const surfaceStyle: ModernCenteredSurfaceStyle =
     normalizeModernCenteredStyle(experienceStyle);
   const tokens = modernCenteredStyleTokens(surfaceStyle);
+  const formSurfaceClass = cn(
+    tokens.formSurface,
+    surfaceEmphasis === "flat" &&
+      "!border-0 !bg-transparent !px-0 !py-0 !shadow-none backdrop-blur-none",
+    surfaceEmphasis === "elevated" && "!shadow-md !bg-card/95"
+  );
 
   return (
     <div
@@ -80,7 +88,7 @@ export function RegistrationModernCenteredShell({
       <div className={tokens.sectionDivider} role="presentation" />
 
       <section
-        className={tokens.formSurface}
+        className={formSurfaceClass}
         aria-labelledby={showRegistrationHeading ? "registration-form-heading" : undefined}
       >
         {showRegistrationHeading ? (

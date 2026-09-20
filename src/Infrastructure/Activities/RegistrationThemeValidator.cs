@@ -18,7 +18,48 @@ internal static class RegistrationThemeValidator
 
         return ActivityBrandingValidator.ValidateAccentColor(theme.AccentColor)
             ?? ActivityBrandingValidator.ValidateHeroImageUrl(theme.HeroImageUrl)
-            ?? ValidateExperience(theme.Experience);
+            ?? ValidateExperience(theme.Experience)
+            ?? ValidateDesignTokens(theme.DesignTokens);
+    }
+
+    private static string? ValidateDesignTokens(RegistrationDesignTokens? tokens)
+    {
+        if (tokens is null)
+        {
+            return null;
+        }
+
+        if (tokens.TypographyScale is not null
+            && !RegistrationTypographyScales.All.Contains(tokens.TypographyScale))
+        {
+            return "Registration design typography scale is not supported.";
+        }
+
+        if (tokens.FieldSize is not null
+            && !RegistrationFieldSizes.All.Contains(tokens.FieldSize))
+        {
+            return "Registration design field size is not supported.";
+        }
+
+        if (tokens.FieldRadius is not null
+            && !RegistrationFieldRadii.All.Contains(tokens.FieldRadius))
+        {
+            return "Registration design field radius is not supported.";
+        }
+
+        if (tokens.ButtonWidth is not null
+            && !RegistrationButtonWidths.All.Contains(tokens.ButtonWidth))
+        {
+            return "Registration design button width is not supported.";
+        }
+
+        if (tokens.SurfaceEmphasis is not null
+            && !RegistrationSurfaceEmphases.All.Contains(tokens.SurfaceEmphasis))
+        {
+            return "Registration design surface emphasis is not supported.";
+        }
+
+        return null;
     }
 
     private static string? ValidateExperience(RegistrationExperience? experience)
@@ -68,6 +109,24 @@ internal static class RegistrationThemeValidator
             AccentColor = ActivityBrandingValidator.NormalizeAccentColor(theme.AccentColor),
             HeroImageUrl = ActivityBrandingValidator.NormalizeHeroImageUrl(theme.HeroImageUrl),
             Experience = NormalizeExperience(theme.Experience),
+            DesignTokens = NormalizeDesignTokens(theme.DesignTokens),
+        };
+    }
+
+    private static RegistrationDesignTokens? NormalizeDesignTokens(RegistrationDesignTokens? tokens)
+    {
+        if (tokens is null)
+        {
+            return null;
+        }
+
+        return new RegistrationDesignTokens
+        {
+            TypographyScale = NormalizeOptional(tokens.TypographyScale, RegistrationTypographyScales.All),
+            FieldSize = NormalizeOptional(tokens.FieldSize, RegistrationFieldSizes.All),
+            FieldRadius = NormalizeOptional(tokens.FieldRadius, RegistrationFieldRadii.All),
+            ButtonWidth = NormalizeOptional(tokens.ButtonWidth, RegistrationButtonWidths.All),
+            SurfaceEmphasis = NormalizeOptional(tokens.SurfaceEmphasis, RegistrationSurfaceEmphases.All),
         };
     }
 
