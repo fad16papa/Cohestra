@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
 
 import { PublicRegistrationOpen } from "@/components/registration/public-registration-open";
@@ -8,10 +8,13 @@ import {
   RegistrationPreviewChrome,
   type RegistrationPreviewFormStatus,
 } from "@/components/registration/registration-preview-chrome";
+import { RegistrationPreviewViewportToggle } from "@/components/registration/registration-preview-viewport-toggle";
 import {
-  RegistrationPreviewViewportToggle,
+  persistRegistrationPreviewViewport,
+  readStoredRegistrationPreviewViewport,
+  registrationPreviewSurfaceMaxWidthClass,
   type RegistrationPreviewViewport,
-} from "@/components/registration/registration-preview-viewport-toggle";
+} from "@/lib/registration-preview-viewport";
 import type { ActivityFormSchema, RegistrationThemePreset } from "@/lib/activities-api";
 import {
   compositionHasPresentationBlocks,
@@ -37,6 +40,8 @@ type RegistrationPublicPreviewShellProps = {
   registrationCount?: number | null;
   maxRegistrants?: number | null;
   isRegistrationFull?: boolean;
+  /** Remounts the public tree only — viewport chrome stays mounted. */
+  remountKey?: string;
 };
 
 export function RegistrationPublicPreviewShell({
@@ -55,20 +60,27 @@ export function RegistrationPublicPreviewShell({
   registrationCount = null,
   maxRegistrants = null,
   isRegistrationFull = false,
+  remountKey = "preview",
 }: RegistrationPublicPreviewShellProps) {
-  const [viewport, setViewport] = useState<RegistrationPreviewViewport>("mobile");
-  const isSplitLayout = theme.resolvedExperience.layout === "split";
+  const [viewport, setViewport] = useState<RegistrationPreviewViewport>(() =>
+    readStoredRegistrationPreviewViewport(
+      typeof window === "undefined" ? null : window.sessionStorage
+    )
+  );
   const showConversationalPresentationNotice =
     theme.resolvedExperience.flow === "conversational" &&
     formSchema != null &&
     compositionHasPresentationBlocks(formSchema.fields, formSchema.composition);
-  const isWideCenteredLayout =
-    theme.resolvedExperience.layout === "centered" ||
-    theme.resolvedExperience.layout === "card" ||
-    theme.resolvedExperience.layout === "immersive";
+
+  useEffect(() => {
+    persistRegistrationPreviewViewport(
+      typeof window === "undefined" ? null : window.sessionStorage,
+      viewport
+    );
+  }, [viewport]);
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-3", className)} data-preview-viewport={viewport}>
       <div className="flex flex-wrap items-center justify-end gap-2">
         {publicPageHref ? (
           <a
@@ -83,7 +95,13 @@ export function RegistrationPublicPreviewShell({
         ) : null}
         <RegistrationPreviewViewportToggle
           value={viewport}
-          onChange={setViewport}
+          onChange={(next) => {
+            persistRegistrationPreviewViewport(
+              typeof window === "undefined" ? null : window.sessionStorage,
+              next
+            );
+            setViewport(next);
+          }}
         />
       </div>
       {showConversationalPresentationNotice ? (
@@ -98,17 +116,15 @@ export function RegistrationPublicPreviewShell({
         formStatus={formStatus}
         className={cn(
           "mx-auto w-full",
-          viewport === "mobile"
-            ? "max-w-[375px]"
-            : isSplitLayout
-              ? "max-w-[960px]"
-              : isWideCenteredLayout
-                ? "max-w-[720px]"
-                : "max-w-[480px]"
+          registrationPreviewSurfaceMaxWidthClass(
+            viewport,
+            theme.resolvedExperience.layout
+          )
         )}
         scrollClassName={scrollClassName}
       >
         <PublicRegistrationOpen
+          key={remountKey}
           slug={slug}
           name={name}
           schedule={schedule}

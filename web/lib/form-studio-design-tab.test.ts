@@ -34,5 +34,8 @@ describe("form studio design tab contract", () => {
     );
     expect(formSource).toMatch(/designDraftTheme/);
     expect(formSource).toMatch(/buildFormStudioPreviewKey\(draftSchema, previewThemeSource\)/);
+    expect(formSource).toMatch(/useDebouncedValue/);
+    expect(formSource).toMatch(/remountKey=\{previewKey\}/);
+    expect(formSource).not.toMatch(/<RegistrationPublicPreviewShell\s+key=\{previewKey\}/);
   });
 });

@@ -21,8 +21,8 @@ describe("registration responsive layout contract", () => {
       join(process.cwd(), "components/registration/registration-public-preview-shell.tsx"),
       "utf8"
     );
-    expect(source).toMatch(/max-w-\[720px\]/);
-    expect(source).toMatch(/max-w-\[960px\]/);
+    expect(source).toMatch(/registrationPreviewSurfaceMaxWidthClass/);
+    expect(source).toMatch(/RegistrationPreviewViewportToggle/);
   });
 
   it("PublicRegistrationOpen passes conversational flowMode to RegistrationForm", () => {
