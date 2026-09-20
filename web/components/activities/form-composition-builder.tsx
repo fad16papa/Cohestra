@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronUp, GripVertical, Plus, Trash2 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { FormFieldEditor } from "@/components/activities/form-field-editor";
 import { FormFieldPaletteDialog } from "@/components/activities/form-field-palette-dialog";
@@ -49,6 +49,16 @@ export function FormCompositionBuilder({
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const dragFromIndexRef = useRef<number | null>(null);
+
+  function resolveDragFromIndex(event: React.DragEvent): number | null {
+    if (dragFromIndexRef.current !== null) {
+      return dragFromIndexRef.current;
+    }
+
+    const parsed = Number.parseInt(event.dataTransfer.getData("text/plain"), 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
 
   const canvasNodes = useMemo(() => getCanvasComposition(schema), [schema]);
   const paletteGroups = useMemo(
@@ -171,14 +181,59 @@ export function FormCompositionBuilder({
                 </Button>
               </div>
             ) : (
-              <ul className="space-y-2" role="listbox" aria-label="Form blocks">
+              <ul
+                className="space-y-2"
+                role="listbox"
+                aria-label="Form blocks"
+                onDragOver={(event) => {
+                  if (disabled || dragFromIndexRef.current === null) {
+                    return;
+                  }
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "move";
+                }}
+              >
                 {canvasNodes.map((node, index) => {
                   const field = schema.fields.find((f) => f.id === node.fieldId);
                   const isSelected = selectedBlockId === node.id;
                   const isDragging = dragIndex === index;
                   const isDropTarget = dropIndex === index && dragIndex !== index;
                   return (
-                    <li key={node.id}>
+                    <li
+                      key={node.id}
+                      onDragEnter={(event) => {
+                        if (disabled || dragFromIndexRef.current === null) {
+                          return;
+                        }
+                        event.preventDefault();
+                        setDropIndex(index);
+                      }}
+                      onDragOver={(event) => {
+                        if (disabled || dragFromIndexRef.current === null) {
+                          return;
+                        }
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = "move";
+                        setDropIndex(index);
+                      }}
+                      onDrop={(event) => {
+                        if (disabled) {
+                          return;
+                        }
+                        event.preventDefault();
+                        const fromIndex = resolveDragFromIndex(event);
+                        if (fromIndex === null || fromIndex === index) {
+                          dragFromIndexRef.current = null;
+                          setDragIndex(null);
+                          setDropIndex(null);
+                          return;
+                        }
+                        reorderTo(fromIndex, index);
+                        dragFromIndexRef.current = null;
+                        setDragIndex(null);
+                        setDropIndex(null);
+                      }}
+                    >
                       <div
                         className={cn(
                           "rounded-lg border border-transparent p-2 transition-colors",
@@ -200,10 +255,12 @@ export function FormCompositionBuilder({
                               }
                               event.dataTransfer.effectAllowed = "move";
                               event.dataTransfer.setData("text/plain", String(index));
+                              dragFromIndexRef.current = index;
                               setDragIndex(index);
                               setDropIndex(index);
                             }}
                             onDragEnd={() => {
+                              dragFromIndexRef.current = null;
                               setDragIndex(null);
                               setDropIndex(null);
                             }}
@@ -244,22 +301,6 @@ export function FormCompositionBuilder({
                             aria-selected={isSelected}
                             disabled={disabled}
                             onClick={() => setSelectedBlockId(node.id)}
-                            onDragOver={(event) => {
-                              if (disabled || dragIndex === null) {
-                                return;
-                              }
-                              event.preventDefault();
-                              setDropIndex(index);
-                            }}
-                            onDrop={(event) => {
-                              if (disabled || dragIndex === null) {
-                                return;
-                              }
-                              event.preventDefault();
-                              reorderTo(dragIndex, index);
-                              setDragIndex(null);
-                              setDropIndex(null);
-                            }}
                             className="min-w-0 flex-1 rounded-md px-2 py-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             <p className="truncate text-sm font-medium text-text-warm">
