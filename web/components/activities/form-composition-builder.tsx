@@ -354,7 +354,7 @@ export function FormCompositionBuilder({
                     type="button"
                     disabled={disabled}
                     onClick={() => addFieldType(item.type)}
-                    className="flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none motion-safe:transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none motion-press hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {item.label}
                   </button>
@@ -378,7 +378,7 @@ export function FormCompositionBuilder({
                     type="button"
                     disabled={disabled}
                     onClick={() => addContent(type)}
-                    className="flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none motion-safe:transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none motion-press hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {label}
                   </button>
@@ -393,7 +393,7 @@ export function FormCompositionBuilder({
                 type="button"
                 disabled={disabled}
                 onClick={addSection}
-                className="mt-1 flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none motion-safe:transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
+                className="mt-1 flex w-full rounded-lg px-2 py-2 text-left text-sm text-text-warm outline-none motion-press hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Section
               </button>
@@ -406,7 +406,7 @@ export function FormCompositionBuilder({
                   "mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   corePlusLocked
                     ? "cursor-not-allowed text-text-muted-warm opacity-70"
-                    : "text-text-warm motion-safe:transition-colors hover:bg-muted/50"
+                    : "text-text-warm motion-press hover:bg-muted/50"
                 )}
               >
                 {corePlusLocked ? (
@@ -435,7 +435,7 @@ export function FormCompositionBuilder({
                     "mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     corePlusLocked
                       ? "cursor-not-allowed text-text-muted-warm opacity-70"
-                      : "text-text-warm motion-safe:transition-colors hover:bg-muted/50"
+                      : "text-text-warm motion-press hover:bg-muted/50"
                   )}
                 >
                   {corePlusLocked ? (
