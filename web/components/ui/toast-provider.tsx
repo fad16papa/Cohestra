@@ -11,6 +11,7 @@ import {
 } from "react";
 import { AlertCircle, CheckCircle2, Sparkles, X } from "lucide-react";
 
+import { BUILDER_PRESENCE_ENTER_CLASS } from "@/lib/builder-motion";
 import { cn } from "@/lib/utils";
 
 type ToastVariant = "default" | "error" | "success";
@@ -153,6 +154,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role={isError ? "alert" : "status"}
             aria-live={isError ? "assertive" : "polite"}
             className={cn(
+              BUILDER_PRESENCE_ENTER_CLASS,
               "pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border border-l-4 bg-card/95 px-4 py-3 text-sm shadow-lg backdrop-blur-md",
               isError &&
                 "border-red-300 border-l-red-600 bg-red-50 text-red-950 shadow-red-200/60 ring-1 ring-red-500/25 dark:border-red-900 dark:border-l-red-500 dark:bg-red-950/50 dark:text-red-50 dark:shadow-red-950/40",

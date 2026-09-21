@@ -122,6 +122,7 @@ import {
 } from "@/lib/website-builder-preferences";
 import { getWebsiteBuilderTourSteps } from "@/lib/website-builder-tour";
 import { isBasicPlan } from "@/lib/shell/tenant-shell-api";
+import { BuilderSurface } from "@/components/motion/builder-surface";
 import { cn } from "@/lib/utils";
 
 type DeviceMode = "phone" | "desktop";
@@ -1161,14 +1162,16 @@ export function WebsiteBuilderPage() {
 
       <div
         className={cn(
-          "flex min-h-0 flex-1 gap-3",
+          "flex min-h-0 min-w-0 flex-1 gap-3 overflow-x-clip",
           workspaceMode === "split" && isWideLayout && "flex-row",
           workspaceMode !== "split" && isWideLayout && "flex-col",
           !isWideLayout && "flex-col",
         )}
       >
-        {showEditor ? (
-        <div
+        <BuilderSurface
+          active={showEditor}
+          keepMounted
+          level="context"
           className={cn(
             "min-h-0 min-w-0 overflow-y-auto overscroll-y-contain pr-0.5",
             workspaceMode === "split" && isWideLayout && "shrink-0",
@@ -1271,11 +1274,12 @@ export function WebsiteBuilderPage() {
             />
           }
         />
-        </div>
-        ) : null}
+        </BuilderSurface>
 
-        {showPreview ? (
-        <div
+        <BuilderSurface
+          active={showPreview}
+          keepMounted={false}
+          level="context"
           className={cn(
             "min-h-0 min-w-0",
             workspaceMode === "split" && isWideLayout && "min-w-0 flex-1",
@@ -1294,8 +1298,7 @@ export function WebsiteBuilderPage() {
         >
           <SitePageRenderer site={previewPayload} isPreview />
         </WebsiteLivePreview>
-        </div>
-        ) : null}
+        </BuilderSurface>
       </div>
 
       <WebsiteBuilderOnboardingTour

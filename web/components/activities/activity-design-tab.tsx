@@ -23,6 +23,7 @@ import {
   registrationPresetLabels,
   registrationPresetOptions,
 } from "@/lib/registration-theme-utils";
+import { BUILDER_SELECTION_CLASS } from "@/lib/builder-motion";
 import { registrationThemeForSave } from "@/lib/registration-experience-studio";
 import {
   resolveRegistrationPreviewTheme,
@@ -248,7 +249,8 @@ export function ActivityDesignTab({
                     setDraftTheme((current) => ({ ...current, preset }));
                   }}
                   className={cn(
-                    "rounded-xl border p-4 text-left transition-colors",
+                    BUILDER_SELECTION_CLASS,
+                    "rounded-xl border p-4 text-left",
                     draftTheme.preset === preset
                       ? "border-primary bg-gold-soft/40 ring-2 ring-primary/30"
                       : "border-border-warm bg-card hover:border-primary/40"

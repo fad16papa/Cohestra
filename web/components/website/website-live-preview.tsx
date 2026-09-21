@@ -17,6 +17,7 @@ import {
   PREVIEW_PHONE_WIDTH,
   SitePreviewLayoutProvider,
 } from "@/lib/site-preview-layout";
+import { BUILDER_TAB_ENTER_CLASS } from "@/lib/builder-motion";
 import { cn } from "@/lib/utils";
 
 export type WebsitePreviewDeviceMode = "phone" | "desktop";
@@ -249,7 +250,10 @@ export const WebsiteLivePreview = forwardRef<
         {deviceMode === "phone" ? (
           <div
             ref={viewportRef}
-            className="flex min-h-0 flex-1 flex-col bg-gradient-to-b from-muted/40 to-muted/20"
+            className={cn(
+              BUILDER_TAB_ENTER_CLASS,
+              "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-clip bg-gradient-to-b from-muted/40 to-muted/20",
+            )}
             data-site-preview-pane
           >
             {previewToolbar}
@@ -298,7 +302,12 @@ export const WebsiteLivePreview = forwardRef<
             </div>
           </div>
         ) : (
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div
+            className={cn(
+              BUILDER_TAB_ENTER_CLASS,
+              "flex min-h-0 min-w-0 flex-1 flex-col overflow-x-clip",
+            )}
+          >
             <div className="flex items-center gap-2 border-b border-border-warm bg-card/80 px-3 py-2">
               <span className="flex gap-1.5" aria-hidden>
                 <span className="size-2.5 rounded-full bg-red-400/90" />

@@ -82,6 +82,7 @@ import {
   publicSiteHostnameFromUrl,
   resolvePublicSiteDisplayUrl,
 } from "@/lib/tenant-public-url";
+import { BuilderSurface } from "@/components/motion/builder-surface";
 import { cn } from "@/lib/utils";
 
 const publishedTemplateLockReason =
@@ -620,7 +621,7 @@ export function ActivityFormTab({
             }
             onClick={() => setFormStudioMode(mode.id)}
             className={cn(
-              "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors -mb-px",
+              "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium -mb-px motion-safe:transition-colors",
               formStudioMode === mode.id
                 ? "border-primary text-text-warm"
                 : "border-transparent text-text-muted-warm hover:text-text-warm"
@@ -631,11 +632,13 @@ export function ActivityFormTab({
         ))}
       </nav>
 
-      <div
+      <BuilderSurface
         role="tabpanel"
         id="form-studio-build-panel"
         aria-labelledby="form-studio-tab-build"
-        hidden={formStudioMode !== "build"}
+        active={formStudioMode === "build"}
+        keepMounted
+        level="context"
         className="space-y-8"
       >
       {!isArchived ? (
@@ -1085,15 +1088,17 @@ export function ActivityFormTab({
         stepsLocked={stepsLocked}
         conversationalFlowActive={conversationalFlowActive}
       />
-      </div>
+      </BuilderSurface>
 
-      {formStudioMode === "preview" ? (
-        <div
-          role="tabpanel"
-          id="form-studio-preview-panel"
-          aria-labelledby="form-studio-tab-preview"
-          className="min-w-0"
-        >
+      <BuilderSurface
+        role="tabpanel"
+        id="form-studio-preview-panel"
+        aria-labelledby="form-studio-tab-preview"
+        active={formStudioMode === "preview"}
+        keepMounted={false}
+        level="context"
+        className="min-w-0"
+      >
           <RegistrationPublicPreviewShell
             remountKey={previewKey}
             slug={activity.slug}
@@ -1117,8 +1122,7 @@ export function ActivityFormTab({
               activity.registrationCount >= activity.maxRegistrants
             }
           />
-        </div>
-      ) : null}
+      </BuilderSurface>
 
       <AlertDialog
         open={applyDialogOpen}
