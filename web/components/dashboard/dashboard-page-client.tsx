@@ -163,7 +163,7 @@ export function DashboardPageClient() {
   if (status === "loading" || !initialized) {
     return (
       <div className="mx-auto max-w-6xl space-y-8">
-        <div className="animate-pulse space-y-3">
+        <div className="motion-safe:animate-pulse space-y-3">
           <div className="h-8 w-48 rounded-lg bg-muted" />
           <div className="h-4 w-72 rounded-md bg-muted/70" />
         </div>

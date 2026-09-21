@@ -66,17 +66,16 @@ export function MetricTile({
   ariaLabel,
   hint = "View details",
   delta,
-  animationDelayMs = 0,
+  animationDelayMs: _animationDelayMs = 0,
   isRefreshing = false,
 }: MetricTileProps) {
   return (
     <Link
       href={href}
       aria-label={ariaLabel}
-      style={{ animationDelay: `${animationDelayMs}ms` }}
       className={cn(
-        "animate-fade-in-up group block rounded-xl border border-border-warm bg-card/90 px-5 py-6 backdrop-blur-sm transition-all",
-        "border-t-2 border-t-primary/30 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md",
+        "motion-press group block rounded-xl border border-border-warm bg-card/90 px-5 py-6 backdrop-blur-sm",
+        "border-t-2 border-t-primary/30 hover:-translate-y-px hover:border-primary/30 hover:shadow-md",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isRefreshing && "motion-safe:animate-pulse"
       )}

@@ -48,7 +48,7 @@ export function WebsiteBuilderEditorRail({
               aria-selected={activeTab === tab.id}
               aria-controls={`website-builder-panel-${tab.id}`}
               className={cn(
-                "flex-1 rounded-md px-3 py-2 text-sm font-medium motion-safe:transition-colors",
+                "flex-1 rounded-md px-3 py-2 text-sm font-medium motion-local",
                 activeTab === tab.id
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-text-muted-warm hover:bg-muted/60 hover:text-text-warm"

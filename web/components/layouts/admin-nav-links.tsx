@@ -55,7 +55,7 @@ function ActivitiesNavSection({
               : undefined
           }
           className={cn(
-            "flex min-h-11 flex-1 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            "flex min-h-11 flex-1 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium motion-press outline-none focus-visible:ring-2 focus-visible:ring-ring",
             compact && "justify-center px-2 lg:justify-start lg:px-3",
             isParentActive
               ? "text-text-warm"
@@ -71,13 +71,13 @@ function ActivitiesNavSection({
           aria-expanded={expanded}
           onClick={() => setExpanded((value) => !value)}
           className={cn(
-            "flex min-h-11 min-w-11 items-center justify-center rounded-md text-text-muted-warm transition-colors hover:bg-muted hover:text-text-warm",
+            "flex min-h-11 min-w-11 items-center justify-center rounded-md text-text-muted-warm motion-press hover:bg-muted hover:text-text-warm",
             "outline-none focus-visible:ring-2 focus-visible:ring-ring",
             compact && "sr-only lg:flex"
           )}
         >
           <ChevronDown
-            className={cn("size-4 transition-transform duration-200", expanded && "rotate-180")}
+            className={cn("size-4 motion-press", expanded && "rotate-180")}
             aria-hidden
           />
         </button>
@@ -100,7 +100,7 @@ function ActivitiesNavSection({
                 onClick={onNavigate}
                 aria-current={isChildActive ? "page" : undefined}
                 className={cn(
-                  "min-h-10 rounded-md px-3 py-2 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "min-h-10 rounded-md px-3 py-2 text-sm motion-press outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   compact && "px-2 text-xs lg:px-3 lg:text-sm",
                   isChildActive
                     ? "bg-primary font-medium text-primary-foreground"
@@ -153,7 +153,7 @@ export function AdminNavLinks({
             title={compact ? item.label : undefined}
             aria-current={isAdminNavItemActive(pathname, item.href) ? "page" : undefined}
             className={cn(
-              "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium motion-press outline-none focus-visible:ring-2 focus-visible:ring-ring",
               compact && "justify-center px-2 lg:justify-start lg:px-3",
               isAdminNavItemActive(pathname, item.href)
                 ? "bg-primary/10 text-text-warm shadow-sm shadow-primary/5 ring-1 ring-primary/10"

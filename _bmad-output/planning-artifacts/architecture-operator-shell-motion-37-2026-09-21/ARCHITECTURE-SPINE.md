@@ -26,9 +26,9 @@
 
 ## AD-3 CSS motion, no View Transitions API, no JS animation library
 
-**Binds:** Reuse existing `.animate-page-enter` (opacity + `translateY`, ~350ms, ease-out).  
+**Binds:** Reuse existing `.animate-page-enter` (opacity + `translateY`, **280ms**, ease-out). Story 37.3 retuned this from 350ms so route enter stays inside the context budget (180–300ms) and does not feel slower than overlays.  
 **Prevents:** `startViewTransition`, framer-motion, GSAP, WAAPI timelines.  
-**Rule:** Transform and opacity only. No layout properties (`top`/`height`/`width`) in the enter animation.
+**Rule:** Transform and opacity only. No layout properties (`top`/`height`/`width`) in the enter animation. Operational admin surfaces must not stack a second enter (`animate-fade-in-up` is marketing/cinema-duration; do not use it under `AdminRouteTransition`).
 
 ## AD-4 Reduced motion is CSS, not a JS gate on first paint
 

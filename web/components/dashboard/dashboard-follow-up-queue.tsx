@@ -118,7 +118,7 @@ export function DashboardFollowUpQueue() {
         aria-label="Loading follow-up queue"
         className="rounded-2xl border border-border-warm bg-card/80 p-5 shadow-sm"
       >
-        <div className="animate-pulse space-y-3">
+        <div className="motion-safe:animate-pulse space-y-3">
           <div className="h-5 w-40 rounded-md bg-muted" />
           <div className="h-12 rounded-xl bg-muted/70" />
           <div className="h-12 rounded-xl bg-muted/70" />

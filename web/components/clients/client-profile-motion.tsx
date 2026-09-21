@@ -1,24 +1,25 @@
+import type { ReactNode } from "react";
+
 import { cn } from "@/lib/utils";
 
 type ClientProfileSectionProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   animationDelayMs?: number;
   className?: string;
 };
 
-/** Staggered enter + subtle hover lift for client profile stack. */
+/** Profile stack section. Route enter owns page motion; hover is press-level only. */
 export function ClientProfileSection({
   children,
-  animationDelayMs = 0,
+  animationDelayMs: _animationDelayMs = 0,
   className,
 }: ClientProfileSectionProps) {
   return (
     <div
       className={cn(
-        "animate-fade-in-up motion-safe:transition-[transform,box-shadow,opacity] motion-safe:duration-300 motion-safe:hover:-translate-y-px",
+        "motion-press hover:-translate-y-px",
         className
       )}
-      style={{ animationDelay: `${animationDelayMs}ms` }}
     >
       {children}
     </div>
@@ -32,13 +33,13 @@ export function ClientProfileExpandableRegion({
   className,
 }: {
   expanded: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }) {
   return (
     <div
       className={cn(
-        "grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none",
+        "grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none",
         expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
         className
       )}
@@ -49,7 +50,7 @@ export function ClientProfileExpandableRegion({
 }
 
 export const clientProfileFieldRowClassName =
-  "rounded-lg px-2 py-1.5 motion-safe:transition-colors motion-safe:duration-200 motion-safe:hover:bg-muted/30";
+  "rounded-lg px-2 py-1.5 motion-local hover:bg-muted/30";
 
 export const clientProfileCardClassName =
-  "motion-safe:transition-shadow motion-safe:duration-300 motion-safe:hover:shadow-sm";
+  "motion-press hover:shadow-sm";

@@ -232,7 +232,7 @@ export function DashboardCommunityPulse({
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted/60 sm:mt-2 sm:h-2">
                     <div
                       className={cn(
-                        "h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-700",
+                        "h-full rounded-full bg-gradient-to-r from-primary to-accent motion-safe:transition-[width] motion-safe:duration-300 motion-reduce:transition-none",
                         "motion-safe:animate-pulse"
                       )}
                       style={{ width: `${widthPercent}%` }}

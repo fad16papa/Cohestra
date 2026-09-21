@@ -621,7 +621,7 @@ export function ActivityFormTab({
             }
             onClick={() => setFormStudioMode(mode.id)}
             className={cn(
-              "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium -mb-px motion-safe:transition-colors",
+              "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium -mb-px motion-local",
               formStudioMode === mode.id
                 ? "border-primary text-text-warm"
                 : "border-transparent text-text-muted-warm hover:text-text-warm"

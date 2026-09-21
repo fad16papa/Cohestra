@@ -80,7 +80,7 @@ export function AdminMobileTabBar() {
                     type="button"
                     onClick={() => setMenuOpen(true)}
                     className={cn(
-                      "flex w-full flex-col items-center gap-1 px-2 py-2.5 text-[11px] font-medium transition-colors",
+                      "flex w-full flex-col items-center gap-1 px-2 py-2.5 text-[11px] font-medium motion-press",
                       active ? "text-primary" : "text-text-muted-warm"
                     )}
                   >
@@ -96,7 +96,7 @@ export function AdminMobileTabBar() {
                 <Link
                   href={item.href ?? "/dashboard"}
                   className={cn(
-                    "flex flex-col items-center gap-1 px-2 py-2.5 text-[11px] font-medium transition-colors",
+                    "flex flex-col items-center gap-1 px-2 py-2.5 text-[11px] font-medium motion-press",
                     active ? "text-primary" : "text-text-muted-warm"
                   )}
                   aria-current={active ? "page" : undefined}

@@ -61,7 +61,7 @@ export function SettingsWorkspaceNav() {
             href={item.href}
             className={cn(
               "group flex min-h-[4.5rem] items-center gap-3 rounded-xl border border-border-warm bg-card/90 px-4 py-3",
-              "transition-all hover:border-primary/25 hover:bg-card hover:shadow-sm"
+              "motion-press hover:border-primary/25 hover:bg-card hover:shadow-sm"
             )}
           >
             <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -71,7 +71,7 @@ export function SettingsWorkspaceNav() {
               <span className="flex items-center gap-1 text-sm font-semibold text-text-warm">
                 {item.label}
                 <ChevronRight
-                  className="size-4 text-text-muted-warm transition-transform group-hover:translate-x-0.5"
+                  className="size-4 text-text-muted-warm motion-press group-hover:translate-x-px"
                   aria-hidden
                 />
               </span>

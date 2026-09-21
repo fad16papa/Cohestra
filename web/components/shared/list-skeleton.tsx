@@ -11,7 +11,7 @@ export function ListSkeleton({ rows = 5, className }: ListSkeletonProps) {
       {Array.from({ length: rows }).map((_, index) => (
         <div
           key={index}
-          className="flex animate-pulse items-center gap-4 rounded-xl border border-border-warm bg-card px-4 py-4"
+          className="flex motion-safe:animate-pulse items-center gap-4 rounded-xl border border-border-warm bg-card px-4 py-4"
         >
           <div className="size-10 shrink-0 rounded-full bg-muted" />
           <div className="min-w-0 flex-1 space-y-2">
@@ -39,7 +39,7 @@ export function MetricSkeletonGrid({ count = 4 }: MetricSkeletonProps) {
       {Array.from({ length: count }).map((_, index) => (
         <div
           key={index}
-          className="animate-pulse rounded-xl border border-border-warm bg-card/80 px-5 py-6"
+          className="motion-safe:animate-pulse rounded-xl border border-border-warm bg-card/80 px-5 py-6"
         >
           <div className="h-8 w-16 rounded-md bg-muted" />
           <div className="mt-3 h-4 w-24 rounded-md bg-muted/80" />
@@ -63,7 +63,7 @@ export function CardGridSkeleton({ count = 6 }: CardGridSkeletonProps) {
       {Array.from({ length: count }).map((_, index) => (
         <div
           key={index}
-          className="animate-pulse rounded-xl border border-border-warm bg-card p-5"
+          className="motion-safe:animate-pulse rounded-xl border border-border-warm bg-card p-5"
         >
           <div className="h-5 w-2/3 rounded-md bg-muted" />
           <div className="mt-3 h-3 w-full rounded-md bg-muted/70" />

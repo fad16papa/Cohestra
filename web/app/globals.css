@@ -468,7 +468,7 @@
   }
 
   .animate-page-enter {
-    animation: page-enter 0.35s ease-out forwards;
+    animation: page-enter 0.28s ease-out forwards;
   }
 
   @keyframes builder-context-enter {
@@ -507,6 +507,19 @@
   .builder-selection {
     transition-property: box-shadow, border-color, background-color;
     transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+
+  /* Press 80–140ms / local 140–220ms. Used by chrome, not a new animation system. */
+  .motion-press {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: 100ms;
+    transition-timing-function: ease-out;
+  }
+
+  .motion-local {
+    transition-property: color, background-color, border-color, box-shadow;
+    transition-duration: 160ms;
     transition-timing-function: ease-out;
   }
 
@@ -580,6 +593,11 @@
     }
 
     .builder-selection {
+      transition: none;
+    }
+
+    .motion-press,
+    .motion-local {
       transition: none;
     }
 

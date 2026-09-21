@@ -13,6 +13,7 @@ Operators moving between admin routes get one short, shared page-enter motion. F
 |----|-------|---------|
 | 37.1 | Shared admin route-transition primitive | Pathname-keyed CSS enter, Form Studio/state invariants, reduced motion, tests |
 | 37.2 | Builder studio motion coverage | Website Studio + Form Studio local motion, Build↔Preview state preservation, reduced motion, no hidden preview work |
+| 37.3 | Motion polish and interaction consistency | Product-wide audit; retune timing; remove stacked/cinematic admin motion; reduced-motion gaps |
 
 ## Non-goals
 

@@ -204,7 +204,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
             aria-selected={activeTab === tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors -mb-px",
+              "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium -mb-px motion-local",
               activeTab === tab.id
                 ? "border-primary text-text-warm"
                 : "border-transparent text-text-muted-warm hover:text-text-warm"
