@@ -66,7 +66,7 @@ function TabButton({
       aria-selected={active}
       aria-controls={ariaControls}
       className={cn(
-        "rounded-md px-3 py-1.5 text-sm font-medium motion-safe:transition-colors",
+        "rounded-md px-3 py-1.5 text-sm font-medium motion-local",
         active
           ? "bg-primary text-primary-foreground shadow-sm"
           : "text-text-muted-warm hover:bg-muted/60 hover:text-text-warm",

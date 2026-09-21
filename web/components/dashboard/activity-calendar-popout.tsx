@@ -71,7 +71,7 @@ function ActivityCalendarItem({
   return (
     <div
       className={cn(
-        "rounded-lg border border-border-warm bg-card/80 transition-colors",
+        "rounded-lg border border-border-warm bg-card/80 motion-local",
         STATUS_RING_STYLES[activity.status],
         hasConflict && "border-amber-300/80 dark:border-amber-800/80",
         expanded && "ring-1"
@@ -80,7 +80,7 @@ function ActivityCalendarItem({
       <div className="flex items-start gap-1.5 p-2">
         <button
           type="button"
-          className="mt-0.5 shrink-0 rounded p-0.5 text-text-muted-warm hover:bg-muted/60 hover:text-text-warm"
+          className="mt-0.5 shrink-0 rounded p-0.5 text-text-muted-warm motion-press hover:bg-muted/60 hover:text-text-warm"
           aria-expanded={expanded}
           aria-label={expanded ? "Collapse activity title" : "Expand activity title"}
           onClick={() => setExpanded((current) => !current)}
@@ -278,7 +278,7 @@ export function ActivityCalendarPopout({
               type="button"
               onClick={() => toggleStatusFilter(filter.id)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium motion-local",
                 statusFilters[filter.id]
                   ? "border-border-warm bg-surface-warm/60 text-text-warm"
                   : "border-transparent bg-muted/40 text-text-muted-warm line-through opacity-60"
@@ -358,7 +358,7 @@ export function ActivityCalendarPopout({
                         type="button"
                         onClick={() => setSelectedDateKey(key)}
                         className={cn(
-                          "flex min-h-11 flex-col items-center justify-start rounded-lg px-0.5 py-1 text-xs transition-colors",
+                          "flex min-h-11 flex-col items-center justify-start rounded-lg px-0.5 py-1 text-xs motion-press",
                           inMonth ? "text-text-warm" : "text-text-muted-warm/50",
                           isSelected &&
                             hasConflicts &&
@@ -491,23 +491,27 @@ export function ActivityCalendarNudge({ className }: ActivityCalendarNudgeProps)
 
   return (
     <>
-      <div className={cn("pointer-events-none fixed inset-0 z-40", className)}>
-        <div className="pointer-events-auto absolute right-3 bottom-3 sm:right-5 sm:bottom-5">
-          <Button
-            type="button"
-            size="lg"
-            className={cn(
-              "h-12 gap-2 rounded-full px-4 shadow-lg shadow-primary/20",
-              open && "ring-2 ring-primary/30"
-            )}
-            aria-expanded={open}
-            aria-controls="activity-calendar-popout"
-            onClick={() => setOpen((current) => !current)}
-          >
-            <CalendarDays className="size-4" aria-hidden />
-            <span className="hidden sm:inline">Calendar</span>
-          </Button>
-        </div>
+      <div
+        className={cn(
+          "pointer-events-auto fixed right-3 z-40",
+          "bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:right-5 md:bottom-5",
+          className
+        )}
+      >
+        <Button
+          type="button"
+          size="lg"
+          className={cn(
+            "h-12 gap-2 rounded-full px-4 shadow-lg shadow-primary/20",
+            open && "ring-2 ring-primary/30"
+          )}
+          aria-expanded={open}
+          aria-controls="activity-calendar-popout"
+          onClick={() => setOpen((current) => !current)}
+        >
+          <CalendarDays className="size-4" aria-hidden />
+          <span className="hidden sm:inline">Calendar</span>
+        </Button>
       </div>
 
       <ActivityCalendarPopout open={open} onOpenChange={setOpen} />

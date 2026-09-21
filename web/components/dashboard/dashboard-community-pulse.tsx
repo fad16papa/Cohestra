@@ -97,7 +97,7 @@ export function DashboardCommunityPulse({
               </thead>
               <tbody className="divide-y divide-border-warm">
                 {communities.map((community) => (
-                  <tr key={community.id} className="transition-colors hover:bg-muted/20">
+                  <tr key={community.id} className="motion-local hover:bg-muted/20">
                     <td className="px-4 py-3 font-medium text-text-warm sm:px-5">
                       <Link
                         href={`/activities/communities/${community.id}`}
@@ -216,7 +216,7 @@ export function DashboardCommunityPulse({
               <li key={community.id}>
                 <Link
                   href={`/activities/communities/${community.id}`}
-                  className="group flex min-h-[var(--dashboard-panel-row-height,4.5rem)] flex-col justify-center px-3 py-2.5 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:px-4"
+                  className="group flex min-h-[var(--dashboard-panel-row-height,4.5rem)] flex-col justify-center px-3 py-2.5 motion-press hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:px-4"
                 >
                   <div className="flex items-center justify-between gap-2 text-sm">
                     <span
@@ -232,7 +232,7 @@ export function DashboardCommunityPulse({
                   <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted/60 sm:mt-2 sm:h-2">
                     <div
                       className={cn(
-                        "h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-700",
+                        "h-full rounded-full bg-gradient-to-r from-primary to-accent motion-safe:transition-[width] motion-safe:duration-300 motion-reduce:transition-none",
                         "motion-safe:animate-pulse"
                       )}
                       style={{ width: `${widthPercent}%` }}

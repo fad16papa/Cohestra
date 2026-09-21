@@ -31,7 +31,7 @@ export function AdminBreadcrumbs({ items, className }: AdminBreadcrumbsProps) {
               {item.href && !isLast ? (
                 <Link
                   href={item.href}
-                  className="truncate text-text-muted-warm transition-colors hover:text-text-warm"
+                  className="truncate text-text-muted-warm motion-press hover:text-text-warm"
                 >
                   {item.label}
                 </Link>

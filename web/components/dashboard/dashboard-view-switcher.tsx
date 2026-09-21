@@ -50,7 +50,7 @@ export function DashboardViewSwitcher({
               aria-pressed={isActive}
               onClick={() => onChange(option.value)}
               className={cn(
-                "inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors sm:min-w-[7.5rem] sm:flex-none",
+                "inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium motion-local sm:min-w-[7.5rem] sm:flex-none",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 isActive
                   ? "bg-background text-text-warm shadow-sm"

@@ -38,8 +38,8 @@ export function DashboardQuickActions() {
             key={action.href}
             href={action.href}
             className={cn(
-              "group relative overflow-hidden rounded-xl border border-border-warm bg-card/80 p-4 transition-all",
-              "hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md",
+              "group relative overflow-hidden rounded-xl border border-border-warm bg-card/80 p-4 motion-press",
+              "hover:-translate-y-px hover:border-primary/30 hover:shadow-md",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             )}
           >
@@ -55,7 +55,7 @@ export function DashboardQuickActions() {
                 <Icon className="size-5" aria-hidden />
               </span>
               <ArrowUpRight
-                className="size-4 text-text-muted-warm transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary"
+                className="size-4 text-text-muted-warm motion-press group-hover:-translate-y-px group-hover:translate-x-px group-hover:text-primary"
                 aria-hidden
               />
             </div>

@@ -308,7 +308,7 @@ export function ClientOutreachLogCard({
               aria-checked={channel === "whatsapp"}
               onClick={() => handleChannelChange("whatsapp")}
               className={cn(
-                "flex-1 px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                "flex-1 px-3 py-2 text-sm font-medium motion-local disabled:cursor-not-allowed disabled:opacity-50",
                 channel === "whatsapp"
                   ? "bg-whatsapp text-whatsapp-foreground"
                   : "bg-background text-text-muted-warm hover:bg-muted/60"
@@ -323,7 +323,7 @@ export function ClientOutreachLogCard({
               aria-checked={channel === "viber"}
               onClick={() => handleChannelChange("viber")}
               className={cn(
-                "flex-1 px-3 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                "flex-1 px-3 py-2 text-sm font-medium motion-local disabled:cursor-not-allowed disabled:opacity-50",
                 channel === "viber"
                   ? "bg-viber text-viber-foreground"
                   : "bg-background text-text-muted-warm hover:bg-muted/60"

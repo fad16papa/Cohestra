@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const filterSelectClassName =
-  "h-9 w-full cursor-pointer appearance-none rounded-xl border-0 bg-muted/55 px-3.5 pr-9 text-sm font-medium text-text-warm shadow-none outline-none transition-[background-color,box-shadow,color] hover:bg-muted/75 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-muted/35 dark:hover:bg-muted/50";
+  "h-9 w-full cursor-pointer appearance-none rounded-xl border-0 bg-muted/55 px-3.5 pr-9 text-sm font-medium text-text-warm shadow-none outline-none motion-local hover:bg-muted/75 focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-muted/35 dark:hover:bg-muted/50";
 
 type FilterSelectProps = React.ComponentProps<"select"> & {
   /** Highlights the control when a non-default filter is applied. */

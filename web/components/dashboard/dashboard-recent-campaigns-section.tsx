@@ -110,7 +110,7 @@ export function DashboardRecentCampaignsSection() {
               href={`/campaigns/${campaign.id}`}
               className={cn(
                 "grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_auto_auto] gap-4 border-b border-border-warm px-4 py-3 text-sm",
-                "transition-colors last:border-b-0 hover:bg-muted/40"
+                "motion-press last:border-b-0 hover:bg-muted/40"
               )}
             >
               <span className="truncate font-medium text-text-warm">{campaign.subject}</span>

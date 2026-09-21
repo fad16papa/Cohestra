@@ -20,7 +20,7 @@ function RecoveryFilterChipButton({ chip }: { chip: RecoveryFilterChip }) {
       aria-pressed={chip.active}
       onClick={chip.onClick}
       className={cn(
-        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors",
+        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium motion-local",
         chip.active
           ? "border-primary bg-primary/10 text-primary"
           : "border-border-warm bg-background text-text-muted-warm hover:border-primary/30 hover:text-text-warm"

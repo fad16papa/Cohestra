@@ -40,7 +40,7 @@ export function RegistrationPreviewViewportToggle({
           <label
             key={option.id}
             className={cn(
-              "cursor-pointer rounded-md px-3 py-1 text-xs font-medium motion-safe:transition-colors focus-within:outline-none focus-within:ring-2 focus-within:ring-ring",
+              "cursor-pointer rounded-md px-3 py-1 text-xs font-medium motion-local focus-within:outline-none focus-within:ring-2 focus-within:ring-ring",
               selected
                 ? "bg-primary text-primary-foreground"
                 : "text-text-muted-warm hover:text-text-warm"

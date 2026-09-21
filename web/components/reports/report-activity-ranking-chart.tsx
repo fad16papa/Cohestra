@@ -84,7 +84,7 @@ export function ReportActivityRankingChart({ items }: ReportActivityRankingChart
                   <li key={item.activityId}>
                     <Link
                       href={`/activities/${item.activityId}`}
-                      className="group flex items-start gap-3 rounded-lg px-1 py-1.5 transition-colors hover:bg-muted/30"
+                      className="group flex items-start gap-3 rounded-lg px-1 py-1.5 motion-press hover:bg-muted/30"
                     >
                       <ReportRankBadge rank={rank} />
                       <div className="min-w-0 flex-1">

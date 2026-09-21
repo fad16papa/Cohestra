@@ -198,7 +198,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 className={cn(
-                  "shrink-0 rounded-md px-2 py-1 text-sm font-medium transition-colors",
+                  "shrink-0 rounded-md px-2 py-1 text-sm font-medium motion-press",
                   isError
                     ? "text-red-700 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-950/60"
                     : "text-primary hover:bg-primary/10"
@@ -214,7 +214,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <button
               type="button"
               className={cn(
-                "shrink-0 rounded-md p-1 transition-colors hover:bg-muted",
+                "shrink-0 rounded-md p-1 motion-press hover:bg-muted",
                 isError
                   ? "text-red-700/80 hover:text-red-900 dark:text-red-300/80 dark:hover:text-red-200"
                   : "text-text-muted-warm hover:text-text-warm"

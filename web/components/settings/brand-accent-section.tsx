@@ -129,7 +129,7 @@ export function BrandAccentSection({ embedded = false }: { embedded?: boolean })
                     aria-pressed={isActive}
                     onClick={() => void selectPreset(preset.id)}
                     className={cn(
-                      "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
+                      "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm motion-local outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
                       isActive
                         ? "border-primary bg-primary/5 text-text-warm"
                         : "border-border-warm bg-card text-text-muted-warm hover:bg-muted/50"

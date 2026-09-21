@@ -152,7 +152,7 @@ export function DashboardIntelligenceBrief() {
       </div>
 
       {loading ? (
-        <div className="animate-pulse space-y-3" aria-busy="true" aria-live="polite">
+        <div className="motion-safe:animate-pulse space-y-3" aria-busy="true" aria-live="polite">
           <div className="h-16 rounded-xl bg-muted/70" />
           <div className="h-16 rounded-xl bg-muted/50" />
         </div>

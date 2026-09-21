@@ -1041,7 +1041,7 @@ export function WebsiteBuilderPage() {
     return (
       <div className="space-y-6">
         <PageHeader title="Website Builder" description="Customize your public homepage" />
-        <div className="h-96 animate-pulse rounded-xl border border-border-warm bg-muted/30" />
+        <div className="h-96 motion-safe:animate-pulse rounded-xl border border-border-warm bg-muted/30" />
       </div>
     );
   }
@@ -1065,8 +1065,8 @@ export function WebsiteBuilderPage() {
           description="Customize your public homepage"
         />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-          <div className="h-72 animate-pulse rounded-xl border border-border-warm bg-muted/30 sm:h-96" />
-          <div className="h-72 animate-pulse rounded-xl border border-border-warm bg-muted/30 sm:h-96" />
+          <div className="h-72 motion-safe:animate-pulse rounded-xl border border-border-warm bg-muted/30 sm:h-96" />
+          <div className="h-72 motion-safe:animate-pulse rounded-xl border border-border-warm bg-muted/30 sm:h-96" />
         </div>
       </div>
     );

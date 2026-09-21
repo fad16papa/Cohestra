@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 import {
   ADMIN_ROUTE_ENTER_CLASS,
+  ADMIN_ROUTE_ENTER_DURATION,
   adminRouteTransitionKey,
 } from "@/lib/admin-route-motion";
 
@@ -59,7 +60,9 @@ describe("adminRouteTransitionKey", () => {
 describe("admin route motion integration", () => {
   it("keeps the enter class name aligned with CSS", () => {
     expect(ADMIN_ROUTE_ENTER_CLASS).toBe("animate-page-enter");
+    expect(ADMIN_ROUTE_ENTER_DURATION).toBe("0.28s");
     expect(GLOBALS_SOURCE).toContain(".animate-page-enter");
+    expect(GLOBALS_SOURCE).toContain("page-enter 0.28s ease-out");
     expect(GLOBALS_SOURCE).toMatch(
       /prefers-reduced-motion:\s*reduce[\s\S]*\.animate-page-enter/
     );

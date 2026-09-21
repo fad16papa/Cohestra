@@ -130,7 +130,7 @@ export function DashboardActivityPerformanceTable({
                 return (
                   <tr
                     key={item.activityId}
-                    className="h-[var(--dashboard-table-row-height)] transition-colors hover:bg-muted/20"
+                    className="h-[var(--dashboard-table-row-height)] motion-local hover:bg-muted/20"
                   >
                     <td className="px-4 py-2 tabular-nums text-text-muted-warm sm:px-5">
                       {index + 1}

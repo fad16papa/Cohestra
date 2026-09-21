@@ -103,7 +103,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
       <div>
         <Link
           href="/campaigns"
-          className="text-sm text-text-muted-warm transition-colors hover:text-text-warm"
+          className="text-sm text-text-muted-warm motion-press hover:text-text-warm"
         >
           ← Back to campaigns
         </Link>
@@ -172,7 +172,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                       <div className="min-w-0">
                         <Link
                           href={`/clients/${recipient.clientId}`}
-                          className="truncate text-sm font-medium text-text-warm transition-colors hover:text-primary"
+                          className="truncate text-sm font-medium text-text-warm motion-press hover:text-primary"
                         >
                           {recipient.fullName}
                         </Link>

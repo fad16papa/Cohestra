@@ -25,7 +25,7 @@ export function ActivityPerformanceRow({
       href={`/activities/${item.activityId}`}
       aria-label={`View ${item.activityName} — ${item.registrationCount} registrations`}
       className={cn(
-        "group flex min-h-[var(--dashboard-panel-row-height,4.5rem)] items-center gap-2.5 px-3 py-2.5 transition-colors sm:gap-4 sm:px-4 sm:py-3",
+        "group flex min-h-[var(--dashboard-panel-row-height,4.5rem)] items-center gap-2.5 px-3 py-2.5 motion-press sm:gap-4 sm:px-4 sm:py-3",
         "hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       )}
     >

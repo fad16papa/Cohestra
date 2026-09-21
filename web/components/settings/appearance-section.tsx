@@ -54,7 +54,7 @@ export function AppearanceSection({ embedded = false }: { embedded?: boolean }) 
               disabled={isSaving && !isActive}
               onClick={() => void selectPreference(option)}
               className={cn(
-                "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
+                "flex-1 rounded-md px-3 py-2 text-sm font-medium motion-local outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
                 isActive
                   ? "bg-primary text-primary-foreground"
                   : "text-foreground hover:bg-muted"

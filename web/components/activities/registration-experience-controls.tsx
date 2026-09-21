@@ -52,7 +52,7 @@ function OptionCard({
   return (
     <label
       className={cn(
-        "relative flex cursor-pointer rounded-xl border p-4 text-left transition-colors",
+        "relative flex cursor-pointer rounded-xl border p-4 text-left motion-local",
         selected && !locked
           ? "border-primary bg-gold-soft/40 ring-2 ring-primary/30"
           : "border-border-warm bg-card hover:border-primary/40",

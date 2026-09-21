@@ -29,7 +29,7 @@ export function SettingsMobileSectionTabs({
               onClick={() => onSelect(section.id)}
               aria-current={active ? "true" : undefined}
               className={cn(
-                "shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
+                "shrink-0 rounded-full px-3.5 py-2 text-sm font-medium motion-local",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 active
                   ? "bg-primary text-primary-foreground shadow-sm"

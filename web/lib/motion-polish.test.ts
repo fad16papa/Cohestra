@@ -1,0 +1,114 @@
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+import { ADMIN_ROUTE_ENTER_DURATION } from "@/lib/admin-route-motion";
+
+const GLOBALS_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../app/globals.css"),
+  "utf8"
+);
+const BUTTON_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/ui/button.tsx"),
+  "utf8"
+);
+const METRIC_TILE_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/dashboard/metric-tile.tsx"),
+  "utf8"
+);
+const CLIENT_PROFILE_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/clients/client-profile-motion.tsx"),
+  "utf8"
+);
+const DIALOG_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/ui/dialog.tsx"),
+  "utf8"
+);
+const SKELETON_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/shared/list-skeleton.tsx"),
+  "utf8"
+);
+const NAV_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/layouts/admin-nav-links.tsx"),
+  "utf8"
+);
+const FILTER_SELECT_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/ui/filter-select.tsx"),
+  "utf8"
+);
+const SETTINGS_RAIL_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/settings/settings-left-rail.tsx"),
+  "utf8"
+);
+const SETTINGS_TABS_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/settings/settings-mobile-section-tabs.tsx"),
+  "utf8"
+);
+const SHEET_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/ui/sheet.tsx"),
+  "utf8"
+);
+const CALENDAR_NUDGE_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/dashboard/activity-calendar-popout.tsx"),
+  "utf8"
+);
+
+describe("37.3 motion polish contracts", () => {
+  it("keeps route enter inside the 180–300ms context budget", () => {
+    expect(ADMIN_ROUTE_ENTER_DURATION).toBe("0.28s");
+    expect(GLOBALS_SOURCE).toContain("page-enter 0.28s ease-out");
+    expect(GLOBALS_SOURCE).not.toContain("page-enter 0.35s");
+  });
+
+  it("defines press and local tokens with reduced-motion disable", () => {
+    expect(GLOBALS_SOURCE).toContain(".motion-press");
+    expect(GLOBALS_SOURCE).toContain(".motion-local");
+    expect(GLOBALS_SOURCE).toMatch(
+      /prefers-reduced-motion:\s*reduce[\s\S]*\.motion-press/
+    );
+  });
+
+  it("does not use transition-all on the shared button", () => {
+    expect(BUTTON_SOURCE).toContain("motion-press");
+    expect(BUTTON_SOURCE).not.toContain("transition-all");
+  });
+
+  it("does not stack cinematic fade-in-up under admin route enter", () => {
+    expect(METRIC_TILE_SOURCE).not.toContain("animate-fade-in-up");
+    expect(METRIC_TILE_SOURCE).toContain("motion-press");
+    expect(CLIENT_PROFILE_SOURCE).not.toContain("animate-fade-in-up");
+    expect(CLIENT_PROFILE_SOURCE).toContain("motion-press");
+  });
+
+  it("uses a faster overlay exit than enter", () => {
+    expect(DIALOG_SOURCE).toContain("duration-200");
+    expect(DIALOG_SOURCE).toContain("data-ending-style:duration-150");
+  });
+
+  it("gates list skeletons and nav chrome on motion-safe tokens", () => {
+    expect(SKELETON_SOURCE).toContain("motion-safe:animate-pulse");
+    expect(SKELETON_SOURCE).not.toMatch(/className="flex animate-pulse/);
+    expect(NAV_SOURCE).toContain("motion-press");
+    expect(NAV_SOURCE).not.toContain("transition-all");
+  });
+
+  it("uses press/local tokens on settings chrome and shared filters", () => {
+    expect(SETTINGS_RAIL_SOURCE).toContain("motion-press");
+    expect(SETTINGS_RAIL_SOURCE).not.toContain("transition-colors");
+    expect(SETTINGS_TABS_SOURCE).toContain("motion-local");
+    expect(FILTER_SELECT_SOURCE).toContain("motion-local");
+    expect(FILTER_SELECT_SOURCE).not.toContain("transition-[");
+  });
+
+  it("keeps sheet overlay exit faster than enter", () => {
+    expect(SHEET_SOURCE).toContain("duration-200");
+    expect(SHEET_SOURCE).toContain("data-ending-style:duration-150");
+  });
+
+  it("keeps the calendar FAB off the mobile tab bar stacking layer", () => {
+    expect(CALENDAR_NUDGE_SOURCE).not.toContain("pointer-events-none fixed inset-0");
+    expect(CALENDAR_NUDGE_SOURCE).toContain(
+      "bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
+    );
+  });
+});

@@ -61,14 +61,14 @@ export function AdminUserMenu() {
         <div className="p-1.5">
           <Link
             href="/settings"
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-text-warm transition-colors hover:bg-muted/60"
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-text-warm motion-press hover:bg-muted/60"
           >
             <Settings className="size-4 text-text-muted-warm" aria-hidden />
             Settings
           </Link>
           <button
             type="button"
-            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-destructive motion-press hover:bg-destructive/10"
             onClick={logout}
           >
             <LogOut className="size-4" aria-hidden />

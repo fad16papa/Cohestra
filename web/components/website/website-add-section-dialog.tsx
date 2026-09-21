@@ -58,7 +58,7 @@ function SectionPickerGroup({
             type="button"
             disabled={disabled}
             className={cn(
-              "rounded-lg border border-border-warm bg-background px-3 py-2 text-left text-sm font-medium text-text-warm motion-safe:transition-colors",
+              "rounded-lg border border-border-warm bg-background px-3 py-2 text-left text-sm font-medium text-text-warm motion-press",
               "hover:border-primary/40 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50",
             )}
             onClick={() => {

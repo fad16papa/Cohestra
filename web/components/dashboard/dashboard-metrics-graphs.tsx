@@ -108,12 +108,12 @@ export function DashboardMetricsGraphs({
             key={item.label}
             href={item.href}
             aria-label={item.ariaLabel}
-            className="group px-4 py-4 transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5"
+            className="group px-4 py-4 motion-press hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5"
           >
             <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
               {item.label}
             </dt>
-            <dd className="mt-1.5 tabular-nums text-2xl font-semibold text-text-warm transition-colors group-hover:text-primary">
+            <dd className="mt-1.5 tabular-nums text-2xl font-semibold text-text-warm motion-press group-hover:text-primary">
               {item.displayValue}
             </dd>
             <dd className="mt-1 text-xs text-text-muted-warm">{item.caption}</dd>

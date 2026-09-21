@@ -14,7 +14,7 @@ type AdminNavFooterProps = {
 
 function footerLinkClassName(active: boolean): string {
   return cn(
-    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium motion-press",
     "outline-none focus-visible:ring-2 focus-visible:ring-ring",
     active
       ? "bg-primary/10 text-text-warm"

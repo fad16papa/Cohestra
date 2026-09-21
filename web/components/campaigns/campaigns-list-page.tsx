@@ -160,7 +160,7 @@ export function CampaignsListPage() {
             <Link
               key={campaign.id}
               href={`/campaigns/${campaign.id}`}
-              className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,0.8fr)] gap-4 border-b border-border-warm px-4 py-4 text-sm transition-colors last:border-b-0 hover:bg-muted/40"
+              className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,0.8fr)] gap-4 border-b border-border-warm px-4 py-4 text-sm motion-press last:border-b-0 hover:bg-muted/40"
             >
               <span className="truncate font-medium text-text-warm">
                 {campaign.subject}

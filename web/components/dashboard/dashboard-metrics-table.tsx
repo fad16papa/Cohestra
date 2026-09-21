@@ -163,7 +163,7 @@ function MetricsTableCard({
           </thead>
           <tbody className="divide-y divide-border-warm">
             {rows.map((row) => (
-              <tr key={row.metric} className="group transition-colors hover:bg-muted/20">
+              <tr key={row.metric} className="group motion-local hover:bg-muted/20">
                 <td className="px-4 py-2.5 font-medium text-text-warm sm:px-5">
                   <Link
                     href={row.href}
