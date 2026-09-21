@@ -109,7 +109,7 @@ function TokenRadioGroup<T extends string>({
             <label
               key={option.id}
               className={cn(
-                "flex cursor-pointer rounded-lg border p-3 text-left transition-colors",
+                "flex cursor-pointer rounded-lg border p-3 text-left motion-local",
                 selected
                   ? "border-primary bg-gold-soft/40 ring-2 ring-primary/30"
                   : "border-border-warm bg-card hover:border-primary/40",
@@ -196,7 +196,7 @@ export function RegistrationDesignTokenControls({
               <label
                 key={option.id}
                 className={cn(
-                  "flex cursor-pointer rounded-lg border p-3 text-left transition-colors",
+                  "flex cursor-pointer rounded-lg border p-3 text-left motion-local",
                   selected
                     ? "border-primary bg-gold-soft/40 ring-2 ring-primary/30"
                     : "border-border-warm bg-card hover:border-primary/40",

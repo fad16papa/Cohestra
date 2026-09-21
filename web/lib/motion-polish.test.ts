@@ -32,6 +32,22 @@ const NAV_SOURCE = readFileSync(
   resolve(import.meta.dirname, "../components/layouts/admin-nav-links.tsx"),
   "utf8"
 );
+const FILTER_SELECT_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/ui/filter-select.tsx"),
+  "utf8"
+);
+const SETTINGS_RAIL_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/settings/settings-left-rail.tsx"),
+  "utf8"
+);
+const SETTINGS_TABS_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/settings/settings-mobile-section-tabs.tsx"),
+  "utf8"
+);
+const SHEET_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/ui/sheet.tsx"),
+  "utf8"
+);
 
 describe("37.3 motion polish contracts", () => {
   it("keeps route enter inside the 180–300ms context budget", () => {
@@ -70,5 +86,18 @@ describe("37.3 motion polish contracts", () => {
     expect(SKELETON_SOURCE).not.toMatch(/className="flex animate-pulse/);
     expect(NAV_SOURCE).toContain("motion-press");
     expect(NAV_SOURCE).not.toContain("transition-all");
+  });
+
+  it("uses press/local tokens on settings chrome and shared filters", () => {
+    expect(SETTINGS_RAIL_SOURCE).toContain("motion-press");
+    expect(SETTINGS_RAIL_SOURCE).not.toContain("transition-colors");
+    expect(SETTINGS_TABS_SOURCE).toContain("motion-local");
+    expect(FILTER_SELECT_SOURCE).toContain("motion-local");
+    expect(FILTER_SELECT_SOURCE).not.toContain("transition-[");
+  });
+
+  it("keeps sheet overlay exit faster than enter", () => {
+    expect(SHEET_SOURCE).toContain("duration-200");
+    expect(SHEET_SOURCE).toContain("data-ending-style:duration-150");
   });
 });

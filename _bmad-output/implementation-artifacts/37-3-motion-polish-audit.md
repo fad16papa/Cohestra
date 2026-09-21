@@ -29,7 +29,10 @@ See product brief ACs 1–20. Binding constraints: preserve 37.1/37.2 primitives
 | MEDIUM | Activity tabs / dashboard switcher / mobile nav missing `motion-safe` | Align with Form Studio tabs |
 | MEDIUM | Skeletons `animate-pulse` ignore reduced motion | `motion-safe:animate-pulse` |
 | MEDIUM | Community pulse bar `duration-700` | `duration-300` + PRM |
+| MEDIUM | Remaining operator chrome used ungated `transition-colors` (settings, filters, lists, billing, Form Design) | Map to `motion-press` / `motion-local` so PRM disables leftover hover animation |
 | LOW | Accordion profile expand 300ms slightly slow for local | 200ms |
+| LOW | Follow-up highlight card `duration-300` | `motion-local` 160ms |
+| LOW | Dashboard `<tr>` hover used `transition-colors`; do not use `motion-press` (transform on table-row) | `motion-local` |
 
 ## Non-goals
 

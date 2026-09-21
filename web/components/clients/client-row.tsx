@@ -188,7 +188,7 @@ export function ClientRow({
   const lastOutreach = formatLastOutreachCaption(client);
 
   const rowStateClassName = cn(
-    "border-b border-border-warm border-l-4 border-l-transparent transition-colors",
+    "border-b border-border-warm border-l-4 border-l-transparent motion-press",
     "hover:border-l-primary hover:bg-muted/40",
     selected && "border-l-primary bg-primary/5"
   );

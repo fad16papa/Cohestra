@@ -32,7 +32,7 @@ export const clientsTableHeaderClassName =
   "text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm";
 
 export const clientsTableHeaderButtonClassName =
-  "w-full min-w-0 truncate p-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm transition-colors hover:text-text-warm";
+  "w-full min-w-0 truncate p-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm motion-press hover:text-text-warm";
 
 /** @deprecated Use clientsTableContactColumnClassName */
 export const clientsTableTextColumnClassName = clientsTableContactColumnClassName;

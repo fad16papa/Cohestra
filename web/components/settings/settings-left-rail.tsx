@@ -48,7 +48,7 @@ function NavButton({
       aria-current={active ? "page" : undefined}
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
+        "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm motion-press",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         active
           ? "bg-primary/10 font-medium text-text-warm"
@@ -76,7 +76,7 @@ export function SettingsLeftRail({
   return (
     <aside
       className={cn(
-        "flex shrink-0 flex-col border-border-warm/80 bg-card/50 transition-[width] duration-200",
+        "flex shrink-0 flex-col border-border-warm/80 bg-card/50 motion-safe:transition-[width] motion-safe:duration-200",
         collapsed ? "w-14" : "w-56",
         className
       )}
@@ -92,7 +92,7 @@ export function SettingsLeftRail({
             type="button"
             onClick={onToggleCollapsed}
             aria-label={collapsed ? "Expand section navigation" : "Collapse section navigation"}
-            className="ml-auto flex size-9 items-center justify-center rounded-lg text-text-muted-warm hover:bg-muted/60 hover:text-text-warm"
+            className="ml-auto flex size-9 items-center justify-center rounded-lg text-text-muted-warm motion-press hover:bg-muted/60 hover:text-text-warm"
           >
             {collapsed ? (
               <ChevronRight className="size-4" aria-hidden />
@@ -143,7 +143,7 @@ export function SettingsLeftRail({
           href="/settings/team"
           title={collapsed ? "Team" : undefined}
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted-warm transition-colors hover:bg-muted/60 hover:text-text-warm",
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted-warm motion-press hover:bg-muted/60 hover:text-text-warm",
             collapsed && "justify-center px-2"
           )}
         >
@@ -155,7 +155,7 @@ export function SettingsLeftRail({
             href="/settings/billing"
             title={collapsed ? "Billing" : undefined}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted-warm transition-colors hover:bg-muted/60 hover:text-text-warm",
+              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted-warm motion-press hover:bg-muted/60 hover:text-text-warm",
               collapsed && "justify-center px-2"
             )}
           >

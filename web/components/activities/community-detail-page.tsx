@@ -121,7 +121,7 @@ export function CommunityDetailPage({ id }: CommunityDetailPageProps) {
       <div>
         <Link
           href="/activities/communities"
-          className="text-sm text-text-muted-warm transition-colors hover:text-text-warm"
+          className="text-sm text-text-muted-warm motion-press hover:text-text-warm"
         >
           ← Back to communities
         </Link>

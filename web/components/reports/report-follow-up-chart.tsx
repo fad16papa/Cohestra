@@ -149,7 +149,7 @@ export function ReportFollowUpChart({ followUpStatus }: ReportFollowUpChartProps
                 <li key={slice.key}>
                   <Link
                     href={slice.href}
-                    className="group flex items-center gap-3 py-2.5 transition-colors hover:bg-muted/25"
+                    className="group flex items-center gap-3 py-2.5 motion-press hover:bg-muted/25"
                   >
                     <span
                       aria-hidden

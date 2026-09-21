@@ -171,7 +171,7 @@ export function DashboardFollowUpQueue() {
           <li key={client.id}>
             <Link
               href={`/clients/${client.id}`}
-              className="group flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 transition-colors hover:border-border-warm hover:bg-muted/40"
+              className="group flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 motion-press hover:border-border-warm hover:bg-muted/40"
             >
               <PersonAvatar name={client.fullName} size="sm" />
               <div className="min-w-0 flex-1">

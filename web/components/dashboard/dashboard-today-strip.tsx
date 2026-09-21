@@ -72,7 +72,7 @@ export function DashboardTodayStrip({
           <li key={item.href + item.label}>
             <Link
               href={item.href}
-              className="group inline-flex items-center gap-2 rounded-lg border border-border-warm/80 bg-background/60 px-3 py-2 text-sm transition-colors hover:border-primary/30 hover:bg-background"
+              className="group inline-flex items-center gap-2 rounded-lg border border-border-warm/80 bg-background/60 px-3 py-2 text-sm motion-press hover:border-primary/30 hover:bg-background"
             >
               <span className={item.emphasis ? "font-medium text-text-warm" : "text-text-muted-warm"}>
                 {item.label}

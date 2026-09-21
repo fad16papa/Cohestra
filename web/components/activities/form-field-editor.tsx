@@ -500,7 +500,7 @@ export function FormFieldEditor({
                   >
                     <div
                       className={cn(
-                        "rounded-lg border border-transparent p-2 transition-colors",
+                        "rounded-lg border border-transparent p-2 motion-press",
                         isSelected && "border-border-warm bg-muted/40",
                         isDragging && "opacity-50",
                         isDropTarget && "border-primary/40 bg-primary/5 ring-1 ring-primary/20"

@@ -79,7 +79,7 @@ function IntervalToggle({
             aria-checked={active}
             onClick={() => onChange(value)}
             className={cn(
-              "flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:flex-none",
+              "flex-1 rounded-lg px-4 py-2.5 text-sm font-medium motion-local sm:flex-none",
               active
                 ? "bg-background text-text-warm shadow-sm"
                 : "text-text-muted-warm hover:text-text-warm"
@@ -140,7 +140,7 @@ function SelectablePlanCard({
       aria-checked={active}
       onClick={onSelect}
       className={cn(
-        "flex h-full flex-col rounded-2xl border p-5 text-left transition-colors sm:p-6",
+        "flex h-full flex-col rounded-2xl border p-5 text-left motion-press sm:p-6",
         active
           ? "border-primary bg-primary/5 ring-1 ring-primary/30"
           : "border-border-warm bg-background hover:border-primary/40"

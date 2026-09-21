@@ -160,7 +160,7 @@ export function ThemeToggle({ variant = "admin", className }: ThemeToggleProps) 
                 onClick={() => selectTheme(option)}
                 onKeyDown={(event) => handleOptionKeyDown(event, index)}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
+                  "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm motion-local outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "text-foreground hover:bg-muted"

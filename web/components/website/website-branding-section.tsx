@@ -344,7 +344,7 @@ export const WebsiteBrandingSection = forwardRef<
                   aria-pressed={isActive}
                   onClick={() => selectPreset(preset.id)}
                   className={cn(
-                    "inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm",
+                    "inline-flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs motion-local outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm",
                     isActive
                       ? "border-primary bg-primary/5 text-text-warm"
                       : "border-border-warm bg-card text-text-muted-warm hover:bg-muted/50"

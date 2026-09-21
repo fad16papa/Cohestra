@@ -81,7 +81,7 @@ export function MetricTile({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-display-sm text-text-warm transition-colors group-hover:text-primary">
+        <p className="text-display-sm text-text-warm group-hover:text-primary">
           {value}
         </p>
         {delta ? <DeltaChip delta={delta} /> : null}

@@ -356,7 +356,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
               type="button"
               className={cn(
                 "inline-flex items-center gap-2 rounded-full border border-border-warm",
-                "bg-muted/40 px-3 py-1 text-sm text-text-muted-warm transition-colors hover:bg-muted"
+                "bg-muted/40 px-3 py-1 text-sm text-text-muted-warm motion-local hover:bg-muted"
               )}
               onClick={() => clearFilter(chip.key)}
             >

@@ -113,9 +113,8 @@ export const ClientFollowUpDateField = forwardRef<
       ref={sectionRef}
       id="client-next-follow-up-card"
       className={cn(
-        "rounded-2xl border border-border-warm bg-card p-4 shadow-sm motion-safe:transition-[box-shadow,border-color] motion-safe:duration-300",
-        highlighted &&
-          "border-primary ring-2 ring-primary/25 motion-safe:transition-[box-shadow,border-color]",
+        "rounded-2xl border border-border-warm bg-card p-4 shadow-sm motion-local",
+        highlighted && "border-primary ring-2 ring-primary/25",
         className
       )}
       aria-labelledby="client-follow-up-date-heading"

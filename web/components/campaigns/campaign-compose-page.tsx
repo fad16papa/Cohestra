@@ -372,7 +372,7 @@ export function CampaignComposePage() {
       <div>
         <Link
           href="/campaigns"
-          className="text-sm text-text-muted-warm transition-colors hover:text-text-warm"
+          className="text-sm text-text-muted-warm motion-press hover:text-text-warm"
         >
           ← Back to campaigns
         </Link>

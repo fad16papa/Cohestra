@@ -53,7 +53,7 @@ function ActivityBackLink() {
   return (
     <Link
       href="/activities"
-      className="inline-flex items-center gap-2 text-sm text-text-muted-warm transition-colors hover:text-text-warm"
+      className="inline-flex items-center gap-2 text-sm text-text-muted-warm motion-press hover:text-text-warm"
     >
       <ArrowLeft className="size-4 shrink-0" aria-hidden />
       Back to activities
