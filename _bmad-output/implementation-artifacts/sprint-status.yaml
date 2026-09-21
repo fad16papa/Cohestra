@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-09-20
+# last_updated: 2026-09-21
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -53,7 +53,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-09-20
+last_updated: 2026-09-21
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -373,6 +373,10 @@ development_status:
   36-6-preview-viewports-operator-ux: done
   36-7-domain-blocks-entitlements-regression: done
   epic-36-retrospective: done
+
+  # Epic 37 — Operator shell motion. Source: epics-operator-shell-motion-37.md
+  epic-37: in-progress
+  37-1-shared-admin-route-motion: review
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done
