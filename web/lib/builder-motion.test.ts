@@ -127,10 +127,11 @@ describe("BuilderSurface primitive", () => {
   it("does not remount keep-mounted children and does not use forbidden APIs", () => {
     expect(SURFACE_SOURCE).toContain("keepMounted");
     expect(SURFACE_SOURCE).toContain("skipInitialEnterRef");
+    expect(SURFACE_SOURCE).toContain("min-w-0");
+    expect(SURFACE_SOURCE).not.toContain("overflow-x-clip");
     expect(SURFACE_SOURCE).not.toContain("dangerouslySetInnerHTML");
     expect(SURFACE_SOURCE).not.toContain("startViewTransition");
     expect(SURFACE_SOURCE).not.toContain("framer-motion");
-    expect(SURFACE_SOURCE).toContain("overflow-x-clip");
   });
 });
 

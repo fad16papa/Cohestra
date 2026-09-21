@@ -41,7 +41,6 @@ import { getDuplicateFieldIds } from "@/lib/form-schema-utils";
 import {
   BUILDER_PRESENCE_ENTER_CLASS,
   BUILDER_SELECTION_CLASS,
-  BUILDER_TAB_ENTER_CLASS,
 } from "@/lib/builder-motion";
 import { cn } from "@/lib/utils";
 
@@ -723,13 +722,7 @@ export function FormCompositionBuilder({
                 : "Select a block in the form structure to edit it."}
             </p>
           </div>
-          <div
-            key={selectedBlockId ?? "empty"}
-            className={cn(
-              BUILDER_TAB_ENTER_CLASS,
-              "min-h-0 flex-1 overflow-y-auto px-4 py-4",
-            )}
-          >
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
             {!selectedNode ? (
               <p className="text-sm text-text-muted-warm">
                 Select a block to configure its settings.

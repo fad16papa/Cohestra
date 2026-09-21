@@ -49,7 +49,7 @@ export function BuilderSurface({
       data-builder-keep-mounted={keepMounted ? "true" : "false"}
       hidden={!active}
       className={cn(
-        "min-w-0 overflow-x-clip",
+        "min-w-0",
         playEnter && BUILDER_MOTION_LEVEL_CLASS[level],
         className,
       )}
