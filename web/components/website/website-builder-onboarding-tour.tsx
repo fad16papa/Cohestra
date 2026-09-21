@@ -262,7 +262,7 @@ export function WebsiteBuilderOnboardingTour({
 
       {targetRect ? (
         <div
-          className="pointer-events-none fixed rounded-xl ring-4 ring-primary/80 ring-offset-2 ring-offset-background transition-[top,left,width,height] duration-150"
+          className="pointer-events-none fixed rounded-xl ring-4 ring-primary/80 ring-offset-2 ring-offset-background transition-[top,left,width,height] duration-150 motion-reduce:transition-none"
           style={{
             top: targetRect.top,
             left: targetRect.left,
@@ -276,7 +276,7 @@ export function WebsiteBuilderOnboardingTour({
       <div
         ref={tooltipRef}
         className={cn(
-          "fixed z-[201] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl transition-[top,left] duration-150",
+          "fixed z-[201] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl transition-[top,left] duration-150 motion-reduce:transition-none",
           !targetRect && "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         )}
         style={

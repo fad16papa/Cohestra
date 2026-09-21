@@ -53,8 +53,13 @@
 **Binds:** Transition wrapper uses `min-w-0 overflow-x-clip`. Parent admin column already `overflow-hidden`.  
 **Prevents:** Enter `translateY` / descendant overflow creating horizontal mobile scroll.
 
+## AD-8 Builder studios use local surface motion, not route identity
+
+**Binds:** Website Studio and Form Studio mode/tab/preview changes use `BuilderSurface` + CSS builder enter classes (`builder-context-enter`, `builder-tab-enter`, `builder-presence-enter`). Route primitive stays pathname-only (AD-2).  
+**Prevents:** Wrapping studio modes in `AdminRouteTransition`; keep-mounted live preview trees; canvas scale or keystroke animation; new animation libraries; unifying Website and Form editor internals.  
+**Rule:** Editor/build trees may `keepMounted`. Live preview (`WebsiteLivePreview` / `RegistrationPublicPreviewShell`) unmounts while the operator is editing. Motion is opacity and optional small `translateY` only — never layout properties, never scale of the edited canvas. `prefers-reduced-motion: reduce` disables builder enter classes in `globals.css` (SSR-safe). Shared tokens/primitives only.
+
 ## Deferred
 
 - Migrating `ClientProfileSection` / marketing cinema to the admin primitive.
 - View Transitions API for public registration.
-- Animating Form Studio Build ↔ Preview (must stay instant; draft preservation wins).

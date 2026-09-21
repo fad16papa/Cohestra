@@ -471,6 +471,45 @@
     animation: page-enter 0.35s ease-out forwards;
   }
 
+  @keyframes builder-context-enter {
+    from {
+      opacity: 0;
+      transform: translateY(0.25rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes builder-fade-enter {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .builder-context-enter {
+    animation: builder-context-enter 0.18s ease-out both;
+  }
+
+  .builder-tab-enter,
+  .builder-presence-enter {
+    animation: builder-fade-enter 0.12s ease-out both;
+  }
+
+  .builder-presence-enter {
+    animation-duration: 0.14s;
+  }
+
+  .builder-selection {
+    transition-property: box-shadow, border-color, background-color;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+
   .admin-ambient {
     background-color: var(--background);
   }
@@ -531,6 +570,27 @@
     }
 
     .animate-page-enter {
+      animation: none;
+    }
+
+    .builder-context-enter,
+    .builder-tab-enter,
+    .builder-presence-enter {
+      animation: none;
+    }
+
+    .builder-selection {
+      transition: none;
+    }
+
+    [data-slot="dialog-content"],
+    [data-slot="dialog-overlay"],
+    [data-slot="alert-dialog-content"],
+    [data-slot="alert-dialog-overlay"],
+    [data-slot="sheet-content"],
+    [data-slot="sheet-overlay"],
+    [data-slot="popover-content"] {
+      transition: none;
       animation: none;
     }
 

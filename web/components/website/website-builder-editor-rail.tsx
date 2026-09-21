@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { BuilderSurface } from "@/components/motion/builder-surface";
 import type { WebsiteBuilderEditorTab } from "@/lib/website-builder-tour";
 
 type WebsiteBuilderEditorRailProps = {
@@ -47,7 +48,7 @@ export function WebsiteBuilderEditorRail({
               aria-selected={activeTab === tab.id}
               aria-controls={`website-builder-panel-${tab.id}`}
               className={cn(
-                "flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex-1 rounded-md px-3 py-2 text-sm font-medium motion-safe:transition-colors",
                 activeTab === tab.id
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-text-muted-warm hover:bg-muted/60 hover:text-text-warm"
@@ -87,15 +88,16 @@ function TabPanel({
   const isActive = activeTab === id;
 
   return (
-    <div
+    <BuilderSurface
       id={`website-builder-panel-${id}`}
       role="tabpanel"
       aria-labelledby={`website-builder-tab-${id}`}
-      hidden={!isActive}
-      className={cn(!isActive && "hidden")}
+      active={isActive}
+      keepMounted
+      level="tab"
     >
       {children}
-    </div>
+    </BuilderSurface>
   );
 }
 

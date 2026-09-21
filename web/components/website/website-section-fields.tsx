@@ -40,6 +40,10 @@ import {
 import { getSectionSummary } from "@/lib/site-builder-utils";
 import { isProtectedFromRemoval } from "@/lib/site-sections/registry";
 import { cn } from "@/lib/utils";
+import {
+  BUILDER_PRESENCE_ENTER_CLASS,
+  BUILDER_SELECTION_CLASS,
+} from "@/lib/builder-motion";
 import { MarketingSectionFields } from "@/components/website/marketing-section-fields";
 import {
   buildCtaTargetOptions,
@@ -822,7 +826,9 @@ export function WebsiteSectionList({
             data-website-section-id={section.id}
             ref={isExpanded ? expandedRef : undefined}
             className={cn(
-              "relative overflow-hidden rounded-xl border bg-card transition-shadow",
+              BUILDER_PRESENCE_ENTER_CLASS,
+              BUILDER_SELECTION_CLASS,
+              "relative overflow-hidden rounded-xl border bg-card",
               isHighlighted && "ring-2 ring-primary/50",
               isDragging && "opacity-50",
               isExpanded
