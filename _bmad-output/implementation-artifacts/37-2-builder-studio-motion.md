@@ -65,23 +65,24 @@ so that the workspace feels continuous without destroying drafts, remounting the
 
 ## Tasks / Subtasks
 
-- [ ] Task 1 — Shared tokens + primitive (AC: 38, 39)
-  - [ ] CSS builder enter/selection classes + PRM in `globals.css`
-  - [ ] `web/lib/builder-motion.ts`
-  - [ ] `web/components/motion/builder-surface.tsx`
-- [ ] Task 2 — Form Studio (AC: 33–36, 38)
-  - [ ] Build keepMounted / Preview unmount
-  - [ ] Field selection + presence
-  - [ ] Design preset selection
-- [ ] Task 3 — Website Studio (AC: 29–32, 37)
-  - [ ] Editor keepMounted / Preview unmount in build-only
-  - [ ] Editor tab local enter
-  - [ ] Section selection + presence
-  - [ ] Preview device frame opacity enter
-- [ ] Task 4 — Overlays + reduced motion (AC: 39)
-  - [ ] Dialog / alert-dialog / sheet / popover PRM
-- [ ] Task 5 — Tests (AC: 29–39)
-  - [ ] `web/lib/builder-motion.test.ts` source-read studios
+- [x] Task 1 — Shared tokens + primitive (AC: 38, 39)
+  - [x] CSS builder enter/selection classes + PRM in `globals.css`
+  - [x] `web/lib/builder-motion.ts`
+  - [x] `web/components/motion/builder-surface.tsx`
+- [x] Task 2 — Form Studio (AC: 33–36, 38)
+  - [x] Build keepMounted / Preview unmount
+  - [x] Field selection + presence
+  - [x] Design preset selection
+- [x] Task 3 — Website Studio (AC: 29–32, 37)
+  - [x] Editor keepMounted / Preview unmount in build-only
+  - [x] Editor tab local enter
+  - [x] Section selection + presence
+  - [x] Preview device frame opacity enter
+- [x] Task 4 — Overlays + reduced motion (AC: 39)
+  - [x] Dialog / alert-dialog / sheet / popover PRM
+- [x] Task 5 — Tests (AC: 29–39)
+  - [x] `web/lib/builder-motion.test.ts` source-read studios
+- [ ] Task 6 — Live UX acceptance (AC: 40)
 
 ## Dev Notes
 
@@ -121,8 +122,40 @@ Grok 4.6 (primary). Composer 2.5 not used.
 
 ### Completion Notes List
 
+- Shared CSS tokens + `BuilderSurface` (keepMounted editors, unmount live preview).
+- Form Studio Build stays mounted; Preview remounts with `draftSchema`.
+- Website Studio editor stays mounted across Build↔Preview; `SitePageRenderer` still unmounts in build-only.
+- Overlay primitives honor `prefers-reduced-motion`.
+- Vitest 361 passed including 13 builder-motion tests.
+
 ### File List
+
+- `_bmad-output/planning-artifacts/architecture-operator-shell-motion-37-2026-09-21/ARCHITECTURE-SPINE.md`
+- `_bmad-output/planning-artifacts/epics-operator-shell-motion-37.md`
+- `_bmad-output/implementation-artifacts/37-2-builder-studio-motion.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `web/lib/builder-motion.ts`
+- `web/lib/builder-motion.test.ts`
+- `web/components/motion/builder-surface.tsx`
+- `web/app/globals.css`
+- `web/components/activities/activity-form-tab.tsx`
+- `web/components/activities/form-composition-builder.tsx`
+- `web/components/activities/activity-design-tab.tsx`
+- `web/components/website/website-builder-page.tsx`
+- `web/components/website/website-builder-editor-rail.tsx`
+- `web/components/website/website-builder-workspace-bar.tsx`
+- `web/components/website/website-live-preview.tsx`
+- `web/components/website/website-section-fields.tsx`
+- `web/components/website/website-add-section-dialog.tsx`
+- `web/components/website/website-builder-onboarding-tour.tsx`
+- `web/components/registration/registration-preview-viewport-toggle.tsx`
+- `web/components/ui/dialog.tsx`
+- `web/components/ui/alert-dialog.tsx`
+- `web/components/ui/sheet.tsx`
+- `web/components/ui/popover.tsx`
+- `web/components/ui/toast-provider.tsx`
 
 ## Change Log
 
 - 2026-09-21: Story opened — builder studio motion coverage.
+- 2026-09-21: Implemented builder tokens, BuilderSurface, studio integrations, overlay PRM.
