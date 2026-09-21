@@ -1,12 +1,12 @@
 ---
-status: in-progress
+status: review
 story_key: 37-3-motion-polish-audit
 epic: 37
 ---
 
 # Story 37.3: Motion polish and interaction consistency audit
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -48,6 +48,69 @@ Grok 4.6 (primary). Composer 2.5 not used.
 
 ### File List
 
+Chrome and tokens: `web/app/globals.css`, `web/lib/admin-route-motion.ts`, `web/components/ui/button.tsx`, `web/components/ui/dialog.tsx`, `web/components/ui/alert-dialog.tsx`, `web/components/ui/sheet.tsx`, `web/components/ui/input.tsx`, `web/components/ui/filter-select.tsx`, `web/components/ui/toast-provider.tsx`.
+
 ## Change Log
 
 - 2026-09-21: Story opened — product-wide motion polish.
+- 2026-09-21: Pass 1 — route enter 280ms, drop stacked fade-in-up, press/local tokens, overlay exit 150ms, PRM skeletons.
+- 2026-09-21: Pass 2 — remaining operator `transition-colors` mapped to press/local (settings, lists, billing, Form Design, reports, campaigns). Table rows use `motion-local` (no transform).
+- 2026-09-21: Pass 3 — Form Studio palette rows to `motion-press`. Live route audit (desktop / 390 / reduced-motion). Grok review: no BLOCKER/MAJOR.
+
+## Grok 4.6 code review (HEAD 57e8e2b)
+
+Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor.
+
+| Sev | Finding | Disposition |
+|-----|---------|-------------|
+| — | 37.1/37.2 primitives rewritten | None. `AdminRouteTransition`, pathname key, `BuilderSurface`, keepMounted editors preserved. |
+| — | New animation library | None. |
+| MINOR | Website builder onboarding tour (`z-[200]`) intercepts later Preview clicks until dismissed | Pre-existing tour, not a 37.3 motion defect. Dismiss/Skip. |
+| NIT | Mobile tab bar "More" label occluded by calendar FAB | Pre-existing chrome overlap; document overflow remained 0. Out of 37.3 motion scope. |
+
+Unresolved BLOCKER/MAJOR: none.
+
+## Live UX
+
+Operator `operator@cohestra.local` against `http://default.localhost:3000`.
+
+Passes: desktop 1440, mobile 390, `reducedMotion: reduce`.
+
+- Route wrapper `[data-admin-route-transition]` present on every audited admin route.
+- Document `overflowX` = 0 on Dashboard, Website Studio, Clients, Client detail, Activities, Campaigns, Reports, Settings, Billing, Team, Activity Form, Activity Design.
+- Browser Back/Forward returned to Dashboard without login bounce or overflow.
+- Follow-up card visible on client detail.
+- Form Studio: Build form + Preview (safety indicator visible). Activity Design tab (experience cards) verified.
+- Website Studio: Design/Sections/Templates + Build workspace; onboarding tour overlay is the existing 5-step tour.
+- Cohestra AI = Dashboard "Needs attention" intelligence brief.
+- Screenshots: `/opt/cursor/artifacts/screenshots/37-3-live/`.
+
+## Coverage matrix
+
+| Surface | Navigation | Click feedback | Local state | Overlay | Loading | Mobile | Reduced motion | Verified |
+| ------- | ---------- | -------------- | ----------- | ------- | ------- | ------ | -------------- | -------- |
+| Dashboard | Y | Y press tiles/rows | Y view switcher | Calendar popout | Y PRM skeletons | Y 390 | Y | Y |
+| Website Studio | Y pathname | Y tokens | Y Design/Sections/Build tabs | Tour + publish dialogs | Y | Y 390 | Y | Y |
+| Clients list | Y | Y row/chips | Y filters | — | Y | Y 390 | Y | Y |
+| Client detail / follow-up | Y | Y | Y follow-up card | outreach radios | Y | Y 390 | Y | Y |
+| Activities list | Y submenu | Y cards/chips | Y filters | — | Y | Y 390 | Y | Y |
+| Activity detail + Form Studio | Y tabs | Y | Y Build/Preview | — | Y | Y Form | Y | Y |
+| Activity Design | Y | Y experience cards | Y | — | — | — | Y tokens | Y |
+| Campaigns | Y | Y rows | — | — | — | Y 390 | Y | Y |
+| Reports / Analytics | Y | Y filters | Y filter bar | — | empty state | Y 390 | Y | Y |
+| Cohestra AI | via Dashboard | Y buttons | details | — | Y skeleton | Y 390 | Y | Y |
+| Settings | Y rail + mobile chips | Y | Y appearance radios | user menu popover | — | Y 390 | Y | Y |
+| Billing / subscription | Y | Y interval/plan | Y | — | — | Y 390 | Y | Y |
+| Team / onboarding chrome | Y | Y | — | — | — | Y 390 | Y | Y |
+| Shared buttons/overlays | — | Y `motion-press` | Y `motion-local` | dialog/sheet 200/150 | Y | — | Y CSS | Y |
+
+## Tests
+
+- `cd web && npx vitest run` — 369 passed
+- `cd web && npx tsc --noEmit` — passed
+- `cd web && npx next build` — compiled + TypeScript passed
+- GitHub CI on `cursor/motion-polish-audit-a139` — .NET, API integration, Next.js, UAT isolation, GitGuardian passed; Docker stack smoke still running at last check
+
+## Status
+
+NOT ACCEPTED until Docker smoke completes on HEAD `57e8e2b`, PR is reviewed, merged, and post-merge `main` is verified. Epic 37 stays open until then.
