@@ -491,23 +491,27 @@ export function ActivityCalendarNudge({ className }: ActivityCalendarNudgeProps)
 
   return (
     <>
-      <div className={cn("pointer-events-none fixed inset-0 z-40", className)}>
-        <div className="pointer-events-auto absolute right-3 bottom-3 sm:right-5 sm:bottom-5">
-          <Button
-            type="button"
-            size="lg"
-            className={cn(
-              "h-12 gap-2 rounded-full px-4 shadow-lg shadow-primary/20",
-              open && "ring-2 ring-primary/30"
-            )}
-            aria-expanded={open}
-            aria-controls="activity-calendar-popout"
-            onClick={() => setOpen((current) => !current)}
-          >
-            <CalendarDays className="size-4" aria-hidden />
-            <span className="hidden sm:inline">Calendar</span>
-          </Button>
-        </div>
+      <div
+        className={cn(
+          "pointer-events-auto fixed right-3 z-40",
+          "bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:right-5 md:bottom-5",
+          className
+        )}
+      >
+        <Button
+          type="button"
+          size="lg"
+          className={cn(
+            "h-12 gap-2 rounded-full px-4 shadow-lg shadow-primary/20",
+            open && "ring-2 ring-primary/30"
+          )}
+          aria-expanded={open}
+          aria-controls="activity-calendar-popout"
+          onClick={() => setOpen((current) => !current)}
+        >
+          <CalendarDays className="size-4" aria-hidden />
+          <span className="hidden sm:inline">Calendar</span>
+        </Button>
       </div>
 
       <ActivityCalendarPopout open={open} onOpenChange={setOpen} />

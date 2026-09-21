@@ -33,6 +33,7 @@ See product brief ACs 1–20. Binding constraints: preserve 37.1/37.2 primitives
 | LOW | Accordion profile expand 300ms slightly slow for local | 200ms |
 | LOW | Follow-up highlight card `duration-300` | `motion-local` 160ms |
 | LOW | Dashboard `<tr>` hover used `transition-colors`; do not use `motion-press` (transform on table-row) | `motion-local` |
+| HIGH | Calendar FAB used a `fixed inset-0 z-40` hit layer over the 390px More tab | Position FAB above the tab bar; drop the full-viewport wrapper |
 
 ## Non-goals
 
@@ -55,7 +56,7 @@ Chrome and tokens: `web/app/globals.css`, `web/lib/admin-route-motion.ts`, `web/
 - 2026-09-21: Story opened — product-wide motion polish.
 - 2026-09-21: Pass 1 — route enter 280ms, drop stacked fade-in-up, press/local tokens, overlay exit 150ms, PRM skeletons.
 - 2026-09-21: Pass 2 — remaining operator `transition-colors` mapped to press/local (settings, lists, billing, Form Design, reports, campaigns). Table rows use `motion-local` (no transform).
-- 2026-09-21: Pass 3 — Form Studio palette rows to `motion-press`. Live route audit (desktop / 390 / reduced-motion). Grok review: no BLOCKER/MAJOR.
+- 2026-09-21: Pass 4 — calendar FAB no longer covers the 390px More tab (drop `fixed inset-0` hit layer).
 
 ## Grok 4.6 code review (HEAD 57e8e2b)
 
@@ -66,7 +67,7 @@ Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor.
 | — | 37.1/37.2 primitives rewritten | None. `AdminRouteTransition`, pathname key, `BuilderSurface`, keepMounted editors preserved. |
 | — | New animation library | None. |
 | MINOR | Website builder onboarding tour (`z-[200]`) intercepts later Preview clicks until dismissed | Pre-existing tour, not a 37.3 motion defect. Dismiss/Skip. |
-| NIT | Mobile tab bar "More" label occluded by calendar FAB | Pre-existing chrome overlap; document overflow remained 0. Out of 37.3 motion scope. |
+| HIGH | Calendar FAB `fixed inset-0 z-40` intercepts 390px More tab | Fixed: FAB sits above the tab bar; no full-viewport hit layer. |
 
 Unresolved BLOCKER/MAJOR: none.
 
@@ -84,6 +85,10 @@ Passes: desktop 1440, mobile 390, `reducedMotion: reduce`.
 - Website Studio: Design/Sections/Templates + Build workspace; onboarding tour overlay is the existing 5-step tour.
 - Cohestra AI = Dashboard "Needs attention" intelligence brief.
 - Screenshots: `/opt/cursor/artifacts/screenshots/37-3-live/`.
+- Interactive corroboration ([Live 37.3 motion polish UX](bc-7cd28ede-4134-5b07-8939-02cf77632c33)): no stacked cinematic enter; Website Studio typing latency none; draft headline preserved. Gaps that session left (Reports, Billing, Cohestra AI, 390 Website, reduced-motion) were covered in the Playwright pass above.
+- Overlay follow-up: account menu opens and Escape closes it. Calendar FAB no longer intercepts the 390px More tab; More opens the nav sheet with overflow 0.
+
+## Coverage matrix
 
 ## Coverage matrix
 
@@ -99,7 +104,7 @@ Passes: desktop 1440, mobile 390, `reducedMotion: reduce`.
 | Campaigns | Y | Y rows | — | — | — | Y 390 | Y | Y |
 | Reports / Analytics | Y | Y filters | Y filter bar | — | empty state | Y 390 | Y | Y |
 | Cohestra AI | via Dashboard | Y buttons | details | — | Y skeleton | Y 390 | Y | Y |
-| Settings | Y rail + mobile chips | Y | Y appearance radios | user menu popover | — | Y 390 | Y | Y |
+| Settings | Y rail + mobile chips | Y | Y appearance radios | user menu popover + More sheet | — | Y 390 | Y | Y |
 | Billing / subscription | Y | Y interval/plan | Y | — | — | Y 390 | Y | Y |
 | Team / onboarding chrome | Y | Y | — | — | — | Y 390 | Y | Y |
 | Shared buttons/overlays | — | Y `motion-press` | Y `motion-local` | dialog/sheet 200/150 | Y | — | Y CSS | Y |

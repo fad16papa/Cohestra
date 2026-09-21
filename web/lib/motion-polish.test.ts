@@ -48,6 +48,10 @@ const SHEET_SOURCE = readFileSync(
   resolve(import.meta.dirname, "../components/ui/sheet.tsx"),
   "utf8"
 );
+const CALENDAR_NUDGE_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/dashboard/activity-calendar-popout.tsx"),
+  "utf8"
+);
 
 describe("37.3 motion polish contracts", () => {
   it("keeps route enter inside the 180–300ms context budget", () => {
@@ -99,5 +103,12 @@ describe("37.3 motion polish contracts", () => {
   it("keeps sheet overlay exit faster than enter", () => {
     expect(SHEET_SOURCE).toContain("duration-200");
     expect(SHEET_SOURCE).toContain("data-ending-style:duration-150");
+  });
+
+  it("keeps the calendar FAB off the mobile tab bar stacking layer", () => {
+    expect(CALENDAR_NUDGE_SOURCE).not.toContain("pointer-events-none fixed inset-0");
+    expect(CALENDAR_NUDGE_SOURCE).toContain(
+      "bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
+    );
   });
 });
