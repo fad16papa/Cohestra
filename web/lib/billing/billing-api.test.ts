@@ -1,16 +1,13 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import { describe, expect, it, vi } from "vitest";
 
 import {
   BILLING_RECONCILE_REASONS,
+  checkoutReconcileKey,
+  createCheckoutReconcileGate,
   reconcileBillingFromProviderWithAuth,
+  resolveCheckoutReturnTrigger,
   shouldRequestBillingProviderSync,
 } from "@/lib/billing/billing-api";
-
-const webRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 function summaryPayload(configured: boolean, plan = "Pro") {
   return {
@@ -138,24 +135,91 @@ describe("reconcileBillingFromProviderWithAuth", () => {
   });
 });
 
-describe("billing-sync trigger ownership", () => {
-  it("keeps checkout-return reconcile on the admin layout only", () => {
-    const settings = readFileSync(
-      join(webRoot, "components/settings/settings-billing-page-content.tsx"),
-      "utf8"
-    );
-    const layout = readFileSync(
-      join(webRoot, "components/layouts/dashboard-layout.tsx"),
-      "utf8"
-    );
-    const shell = readFileSync(
-      join(webRoot, "components/shell/tenant-shell-provider.tsx"),
-      "utf8"
-    );
+describe("resolveCheckoutReturnTrigger", () => {
+  it("does not treat ordinary navigation or dashboard view queries as checkout return", () => {
+    expect(
+      resolveCheckoutReturnTrigger({
+        billing: null,
+        sessionId: null,
+        ptxn: null,
+        transactionId: null,
+      }).shouldReconcile
+    ).toBe(false);
+    expect(
+      resolveCheckoutReturnTrigger({
+        billing: null,
+        sessionId: "view-session",
+        ptxn: null,
+        transactionId: null,
+      }).shouldReconcile
+    ).toBe(false);
+    expect(
+      resolveCheckoutReturnTrigger({
+        billing: "incomplete",
+        sessionId: "txn_1",
+        ptxn: null,
+        transactionId: null,
+      }).shouldReconcile
+    ).toBe(false);
+  });
 
-    expect(settings).not.toContain("reconcileBillingFromProvider");
-    expect(settings).not.toContain("billing/sync");
-    expect(layout).toContain("BILLING_RECONCILE_REASONS.checkoutReturn");
-    expect(shell).not.toContain("billing/sync");
+  it("accepts a validated checkout-return", () => {
+    expect(
+      resolveCheckoutReturnTrigger({
+        billing: "success",
+        sessionId: "txn_1",
+        ptxn: null,
+        transactionId: null,
+      })
+    ).toEqual({ shouldReconcile: true, checkoutSessionId: "txn_1" });
+    expect(
+      resolveCheckoutReturnTrigger({
+        billing: null,
+        sessionId: null,
+        ptxn: "txn_ptxn",
+        transactionId: null,
+      }).shouldReconcile
+    ).toBe(true);
+  });
+});
+
+describe("createCheckoutReconcileGate", () => {
+  it("reuses one in-flight attempt per tenant and return key", async () => {
+    const gate = createCheckoutReconcileGate();
+    const start = vi.fn(async () => ({ synced: true }));
+    const key = checkoutReconcileKey("studio", "txn_1");
+
+    const first = gate.run(key, start);
+    const second = gate.run(key, start);
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      { synced: true },
+      { synced: true },
+    ]);
+    expect(start).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not share a checkout attempt across tenants", async () => {
+    const gate = createCheckoutReconcileGate();
+    const startA = vi.fn(async () => ({ synced: true }));
+    const startB = vi.fn(async () => ({ synced: true }));
+
+    await gate.run(checkoutReconcileKey("tenant-a", "txn_1"), startA);
+    await gate.run(checkoutReconcileKey("tenant-b", "txn_1"), startB);
+
+    expect(startA).toHaveBeenCalledTimes(1);
+    expect(startB).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows an intentional retry after a real failure", async () => {
+    const gate = createCheckoutReconcileGate();
+    const start = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("provider failed"))
+      .mockResolvedValueOnce({ synced: true });
+    const key = checkoutReconcileKey("studio", "txn_1");
+
+    await expect(gate.run(key, start)).rejects.toThrow("provider failed");
+    await expect(gate.run(key, start)).resolves.toEqual({ synced: true });
+    expect(start).toHaveBeenCalledTimes(2);
   });
 });

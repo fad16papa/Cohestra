@@ -16,7 +16,10 @@ import { TenantShellProvider, useTenantShell } from "@/components/shell/tenant-s
 import { useToast } from "@/components/ui/toast-provider";
 import {
   BILLING_RECONCILE_REASONS,
+  checkoutReconcileKey,
+  createCheckoutReconcileGate,
   reconcileBillingFromProviderWithAuth,
+  resolveCheckoutReturnTrigger,
 } from "@/lib/billing/billing-api";
 import { adminRouteTransitionKey } from "@/lib/admin-route-motion";
 
@@ -30,36 +33,41 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
   const { authFetch } = useAuth();
   const { shell, refreshShell } = useTenantShell();
   const { showSuccessToast, showToast } = useToast();
-  const checkoutInFlight = useRef(new Map<string, Promise<{ synced: boolean }>>());
-  const billingSuccess = searchParams.get("billing") === "success";
-  const checkoutSessionId =
-    searchParams.get("session_id")
-    ?? searchParams.get("_ptxn")
-    ?? searchParams.get("transaction_id");
+  const checkoutGateRef = useRef<ReturnType<typeof createCheckoutReconcileGate> | null>(
+    null
+  );
+  const checkoutReturn = resolveCheckoutReturnTrigger({
+    billing: searchParams.get("billing"),
+    sessionId: searchParams.get("session_id"),
+    ptxn: searchParams.get("_ptxn"),
+    transactionId: searchParams.get("transaction_id"),
+  });
   const billingMessage = searchParams.get("billing_message");
   const shellReady = shell != null;
   const isTenantAdmin = shell?.isTenantAdmin === true;
+  const tenantSlug = shell?.tenantSlug ?? "";
 
   useEffect(() => {
-    if (!billingSuccess && !checkoutSessionId) {
+    if (!checkoutReturn.shouldReconcile) {
       return;
     }
 
-    if (!shellReady || !isTenantAdmin) {
+    if (!shellReady || !isTenantAdmin || !tenantSlug) {
       return;
     }
 
-    const triggerKey = checkoutSessionId ?? "billing-success";
+    const triggerKey = checkoutReconcileKey(
+      tenantSlug,
+      checkoutReturn.checkoutSessionId
+    );
+    checkoutGateRef.current ??= createCheckoutReconcileGate();
     let cancelled = false;
-    const pending =
-      checkoutInFlight.current.get(triggerKey)
-      ?? checkoutInFlight.current.set(
-        triggerKey,
-        reconcileBillingFromProviderWithAuth(authFetch, {
-          reason: BILLING_RECONCILE_REASONS.checkoutReturn,
-          checkoutSessionId,
-        }).then((result) => ({ synced: result.synced }))
-      ).get(triggerKey)!;
+    const pending = checkoutGateRef.current.run(triggerKey, () =>
+      reconcileBillingFromProviderWithAuth(authFetch, {
+        reason: BILLING_RECONCILE_REASONS.checkoutReturn,
+        checkoutSessionId: checkoutReturn.checkoutSessionId,
+      }).then((result) => ({ synced: result.synced }))
+    );
 
     async function afterCheckout() {
       try {
@@ -107,13 +115,14 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
   }, [
     authFetch,
     billingMessage,
-    billingSuccess,
-    checkoutSessionId,
+    checkoutReturn.checkoutSessionId,
+    checkoutReturn.shouldReconcile,
     isTenantAdmin,
     refreshShell,
     shellReady,
     showSuccessToast,
     showToast,
+    tenantSlug,
   ]);
 
   return (

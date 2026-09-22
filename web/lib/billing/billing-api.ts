@@ -103,6 +103,59 @@ export function shouldRequestBillingProviderSync(input: {
   );
 }
 
+export function resolveCheckoutReturnTrigger(input: {
+  billing: string | null;
+  sessionId: string | null;
+  ptxn: string | null;
+  transactionId: string | null;
+}): { shouldReconcile: boolean; checkoutSessionId: string | null } {
+  const billingSuccess = input.billing === "success";
+  const paddleReturnId = input.ptxn ?? input.transactionId;
+  if (!billingSuccess && !paddleReturnId) {
+    return { shouldReconcile: false, checkoutSessionId: null };
+  }
+
+  return {
+    shouldReconcile: true,
+    checkoutSessionId: input.sessionId ?? paddleReturnId,
+  };
+}
+
+export function checkoutReconcileKey(
+  tenantSlug: string,
+  checkoutSessionId: string | null
+): string {
+  return `${tenantSlug}::${checkoutSessionId ?? "billing-success"}`;
+}
+
+export function createCheckoutReconcileGate() {
+  let active: { key: string; promise: Promise<{ synced: boolean }> } | null = null;
+
+  return {
+    run(
+      key: string,
+      start: () => Promise<{ synced: boolean }>
+    ): Promise<{ synced: boolean }> {
+      if (active?.key === key) {
+        return active.promise;
+      }
+
+      const promise = start().then(
+        (result) => result,
+        (error: unknown) => {
+          if (active?.key === key) {
+            active = null;
+          }
+
+          throw error;
+        }
+      );
+      active = { key, promise };
+      return promise;
+    },
+  };
+}
+
 export async function fetchBillingSummaryWithAuth(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>
 ): Promise<BillingSummary> {

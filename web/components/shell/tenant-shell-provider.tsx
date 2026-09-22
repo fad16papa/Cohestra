@@ -53,7 +53,15 @@ export function TenantShellProvider({ children }: { children: ReactNode }) {
   }, [authFetch, status]);
 
   useEffect(() => {
-    void refreshShell();
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) {
+        void refreshShell();
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [refreshShell]);
 
   useEffect(() => {

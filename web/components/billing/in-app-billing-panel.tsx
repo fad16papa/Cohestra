@@ -117,8 +117,6 @@ export function InAppBillingPanel({
 
   const loadBasicCapability = useCallback(async () => {
     const generation = ++loadGeneration.current;
-    setLoading(true);
-    setError(null);
     try {
       const summary = await fetchBillingSummaryWithAuth(authFetch);
       if (generation !== loadGeneration.current) {
@@ -126,6 +124,7 @@ export function InAppBillingPanel({
       }
 
       setBillingConfigured(summary.billingConfigured);
+      setError(null);
     } catch (err) {
       if (generation !== loadGeneration.current) {
         return;
@@ -141,8 +140,6 @@ export function InAppBillingPanel({
 
   const loadDetails = useCallback(async () => {
     const generation = ++loadGeneration.current;
-    setLoading(true);
-    setError(null);
     try {
       const next = await fetchBillingDetailsWithAuth(authFetch);
       if (generation !== loadGeneration.current) {
@@ -182,6 +179,7 @@ export function InAppBillingPanel({
 
   useEffect(() => {
     if (shellPlan === "Basic") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch after mount
       void loadBasicCapability();
       return;
     }
