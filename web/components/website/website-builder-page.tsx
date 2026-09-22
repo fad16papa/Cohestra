@@ -122,6 +122,10 @@ import {
 } from "@/lib/website-builder-preferences";
 import { getWebsiteBuilderTourSteps } from "@/lib/website-builder-tour";
 import { isBasicPlan } from "@/lib/shell/tenant-shell-api";
+import {
+  isPlanLockedError,
+  shouldSkipWebsiteAdminFetch,
+} from "@/lib/plan-entitlement";
 import { BuilderSurface } from "@/components/motion/builder-surface";
 import { cn } from "@/lib/utils";
 
@@ -195,6 +199,7 @@ export function WebsiteBuilderPage() {
   const { showToast, showErrorToast, showSuccessToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [planLocked, setPlanLocked] = useState(false);
   const [adminData, setAdminData] = useState<SitePageAdmin | null>(null);
   const [draft, setDraft] = useState<SiteSectionsDocument | null>(null);
   const [savedSnapshot, setSavedSnapshot] = useState<string>("");
@@ -494,6 +499,7 @@ export function WebsiteBuilderPage() {
   const loadSite = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
+    setPlanLocked(false);
 
     try {
       const [siteAdmin, activities, upcoming] = await Promise.all([
@@ -508,6 +514,12 @@ export function WebsiteBuilderPage() {
       setPublishedActivities(activities);
       setUpcomingActivities(upcoming);
     } catch (error) {
+      if (isPlanLockedError(error)) {
+        setPlanLocked(true);
+        setLoadError(null);
+        return;
+      }
+
       setLoadError(
         error instanceof Error
           ? error.message
@@ -519,8 +531,19 @@ export function WebsiteBuilderPage() {
   }, [authFetch]);
 
   useEffect(() => {
+    if (shellLoading) {
+      return;
+    }
+
+    if (shouldSkipWebsiteAdminFetch(shell?.plan)) {
+      setLoading(false);
+      setPlanLocked(true);
+      setLoadError(null);
+      return;
+    }
+
     void loadSite();
-  }, [loadSite]);
+  }, [loadSite, shell?.plan, shellLoading]);
 
   useEffect(() => {
     const initial = readInitialChecklistVisibility();
@@ -1046,13 +1069,13 @@ export function WebsiteBuilderPage() {
     );
   }
 
-  if (shell && isBasicPlan(shell.plan)) {
+  if ((shell && isBasicPlan(shell.plan)) || planLocked) {
     return (
       <UpgradePanel
         title="Unlock a branded public homepage"
         description="Basic includes a simple stub listing. Upgrade to Core for a fixed branded homepage, or Pro for the full website builder with custom sections."
         requiredPlan="Core"
-        isTenantAdmin={shell.isTenantAdmin}
+        isTenantAdmin={shell?.isTenantAdmin ?? false}
       />
     );
   }

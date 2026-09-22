@@ -380,6 +380,11 @@ development_status:
   37-2-builder-studio-motion: review
   37-3-motion-polish-audit: review
 
+  # Epic 38 — Product Experience 2.0 entitlement / billing truth
+  epic-38: in-progress
+  38-1-billing-sync-environment-and-error-behavior: done
+  38-2-basic-website-entitlement-api-behavior: in-progress
+
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done
   33-6-harbourline-democlub-continuous-seed: done

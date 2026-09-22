@@ -1,4 +1,5 @@
 using Cohestra.Application.RateLimiting;
+using Cohestra.Application.Tenants;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,33 @@ public sealed class GlobalExceptionHandler(
         Exception exception,
         CancellationToken cancellationToken)
     {
+        if (exception is PlanEntitlementException planLocked)
+        {
+            logger.LogInformation(
+                "Plan entitlement denied for {Feature} (requires {RequiredPlan}) during {Method} {Path}",
+                planLocked.Feature,
+                planLocked.RequiredPlan,
+                httpContext.Request.Method,
+                httpContext.Request.Path);
+
+            var locked = new ProblemDetails
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "Forbidden",
+                Detail = planLocked.Message,
+                Instance = httpContext.Request.Path,
+            };
+            locked.Extensions["errorCode"] = planLocked.ErrorCode;
+            locked.Extensions["feature"] = planLocked.Feature;
+            locked.Extensions["requiredPlan"] = planLocked.RequiredPlan;
+            locked.Extensions["traceId"] = httpContext.TraceIdentifier;
+
+            httpContext.Response.StatusCode = locked.Status.Value;
+            httpContext.Response.ContentType = "application/problem+json";
+            await httpContext.Response.WriteAsJsonAsync(locked, cancellationToken);
+            return true;
+        }
+
         if (exception is RateLimiterUnavailableException rateLimiterUnavailable)
         {
             logger.LogWarning(
