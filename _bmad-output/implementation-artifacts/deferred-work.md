@@ -693,6 +693,11 @@
 - Complimentary tenants are not guarded inside `TenantBillingPlanSync` mutators — jobs already skip complimentary for delinquency; webhook/service callers reject complimentary money paths
 - Operator still needs live Paddle sandbox keys + webhook tunnel to record 29.7 screenshot evidence (automated process tests cover the adapter)
 
+## Deferred from: code review of 38-1-billing-sync-environment-and-error-behavior.md (2026-09-22)
+
+- Configured Paddle live checkout cannot be exercised in this environment — covered by helper + `PaddleBillingServiceTests` with FakePaddle
+- Invited non-owner admin on a leftover checkout query sees layout toast only — Settings already hides owner-only billing
+
 ## Deferred from: cinema house-tour rebuild review (2026-09-04)
 
 - `getActivityOps` attendance/no-show counts are note-text heuristics until registration rows carry structured check-in fields

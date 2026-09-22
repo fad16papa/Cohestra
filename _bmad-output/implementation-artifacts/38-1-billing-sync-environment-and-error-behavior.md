@@ -11,7 +11,7 @@ readiness: ready
 
 # Story 38.1: Billing-sync environment and error behavior
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -115,7 +115,16 @@ Grok 4.6
 - Client POST only after GET `billingConfigured` and reason `checkout-return` or `explicit-refresh`.
 - Checkout return is owned by `dashboard-layout` with an in-flight promise keyed by session so Strict Mode / Billing nested routes do not double-POST.
 - Billing page shows named unavailable copy; Refresh is operator-initiated.
-- Suites: web vitest 378; Infrastructure.Tests 915; Integration 112; Playwright live 38.1 passed; tsc/build passed. Lint still has pre-existing repo errors.
+- Suites: web vitest 379; Infrastructure.Tests 915; Integration 112; Playwright live 38.1 passed; tsc/build passed. Lint still has pre-existing repo errors.
+
+### Review Findings
+
+- [x] [Review][Patch] Checkout-return double POST from layout + Billing page — fixed: Billing page no longer auto-reconciles; layout owns the trigger.
+- [x] [Review][Patch] Strict Mode latch skipped refreshShell / failure toast — fixed: in-flight promise keyed by session id.
+- [x] [Review][Patch] Basic→paid load race — fixed: generation guard on capability/details loads.
+- [x] [Review][Patch] Success toast after skipped unconfigured sync — fixed: toast only when `synced`.
+- [x] [Review][Defer] Configured Paddle live checkout cannot be exercised in this environment — deferred, covered by helper + service tests with FakePaddle.
+- [x] [Review][Defer] Invited non-owner admin on a leftover checkout query sees layout toast only — deferred, settings already hides owner-only billing.
 
 ### File List
 
