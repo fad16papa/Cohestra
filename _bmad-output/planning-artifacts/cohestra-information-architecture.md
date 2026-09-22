@@ -1,15 +1,21 @@
 ---
 title: Cohestra Product Experience 2.0 — information architecture
-phase: 0.1
-status: audit-complete
+phase: 1
+status: phase1-proposed
 created: 2026-09-22
 updated: 2026-09-22
 head_phase0: 5c3fe75d
+head_phase0_1: 63fc97fa
+canonical_design: docs/DESIGN.md
 ---
 
 # Cohestra information architecture
 
-Phase 0 map of **what exists**, not a proposed IA rewrite. Journey steps are reconstructed from code, operator manual, and prior EXPERIENCE spines. They are **not** user-research transcripts.
+§1–8 remain the Phase 0.1 map of **what exists** (accepted audit). They are not user-research transcripts.
+
+§9–10 are the **Phase 1 proposed IA** required by D1–D4 and `docs/DESIGN.md`. They are not implemented.
+
+Named protagonists below are inherited from existing spines (Priya operator, Elena registrant). They are planning devices, not interview subjects.
 
 Named protagonists below are inherited from existing spines (Priya operator, Elena registrant). They are planning devices, not interview subjects.
 
@@ -234,24 +240,28 @@ Each journey: steps as the product is wired today. Climax beat named. Gaps calle
 
 ---
 
-## 5. IA conflicts to resolve in Phase 1 (not now)
+## 5. IA conflicts — resolved in Phase 1 contract (not implemented)
 
-1. Cinema names vs console names (PX2-IA-001).
-2. Follow-up as room vs widget (PX2-IA-002).
-3. Website naming and mobile placement (PX2-IA-003/004).
-4. Hide vs lock vs panel for plan/role (PX2-IA-005, PX2-ENT-001).
-5. Settings URL vs in-page sections (shareable deep links).
-6. Dashboard view mode URL vs localStorage.
-7. Platform visual system: keep sparse vs inherit Atelier (PX2-SYS-001).
-8. `/site` spine vs `/dashboard/website` code.
+Conflicts below were open in Phase 0.1. Product-owner D1–D13 plus `docs/DESIGN.md` now resolve them. **Implementation is Epics 39–42, not this file.**
 
-Do **not** change nav IA in implementation until a Phase 1 story implements D1–D4. Epic 37 still forbids changing navigation IA as a motion story. Owner answers are in §7; they are **not** implemented in Phase 0.1.
+| # | Conflict | Phase 1 resolution |
+|---|----------|-------------------|
+| 1 | Cinema vs console names (PX2-IA-001) | **D1:** Dashboard, Clients, Activities, Follow-up, Analytics, Cohestra AI, Website, Campaigns. |
+| 2 | Follow-up room vs widget (PX2-IA-002) | **D2:** Follow-up is a primary room. Opportunity is a follow-up state/category. |
+| 3 | Website naming + mobile (PX2-IA-003/004) | **D1/D3:** Nav “Website”; title “Website Studio”; path `/dashboard/website`. Mobile under More. |
+| 4 | Hide vs lock (PX2-IA-005, PX2-ENT-001) | **D4:** Discoverable modules visible + lock + plan label. Structurally unavailable hidden. |
+| 5 | Settings URL vs in-page | **D17:** nested routes `/settings/profile`, `/settings/team`, `/settings/billing`, `/settings/{area}`. Redirect `?section=` / old ids. Preserve permissions. |
+| 6 | Dashboard view mode URL vs localStorage | **D18:** `?view=overview\|graphs\|table`. Default may omit the parameter. Stored preference only when URL has no `view`. |
+| 7 | Platform visual system (PX2-SYS-001) | **D10:** inherit semantic tokens; sparse layout may remain. |
+| 8 | `/site` vs `/dashboard/website` | Keep `/dashboard/website`. Do not add `/site`. |
+
+Do **not** change nav IA until Epic 39 stories implement D1–D4. Epic 37 still forbids changing navigation IA as a **motion** story.
 
 ---
 
-## 6. Outline — `docs/DESIGN.md` (not written this phase)
+## 6. Outline — `docs/DESIGN.md` (authored in Phase 1)
 
-Propose this outline only. Do **not** author final visual identity here.
+Phase 1 authored `docs/DESIGN.md` as the living contract (D13). The Phase 0.1 outline below is **history**. Do not treat it as the current spine.
 
 ```
 docs/DESIGN.md
@@ -297,13 +307,13 @@ docs/DESIGN.md
      - Do not invent a third palette
 ```
 
-Companion later (not this phase): `docs/EXPERIENCE.md` or `_bmad-output/planning-artifacts/ux-designs/ux-cohestra-2026-09-22/`.
+Companion later (not required to start Epics 38–43): a future EXPERIENCE companion may hold journey-level behavior. Until then, `docs/DESIGN.md` + this IA + the backlog are sufficient. `docs/DESIGN.md` wins on conflict.
 
 ---
 
-## 7. Product-owner decisions (D1–D13) — recorded, not implemented
+## 7. Product-owner decisions (D1–D13) — encoded in Phase 1, not implemented
 
-Phase 0.1 records the owner’s answers. **Do not implement these in Phase 0.1.** Implementation backlog is **not** opened. `docs/DESIGN.md` is **not** authored.
+Phase 0.1 recorded the owner’s answers. Phase 1 encodes them in `docs/DESIGN.md` and the Epic 38–43 backlog. **Still not implemented in product UI.**
 
 | # | Resolution | Implementation |
 |---|------------|----------------|
@@ -319,7 +329,14 @@ Phase 0.1 records the owner’s answers. **Do not implement these in Phase 0.1.*
 | D10 | Platform inherits shared semantic tokens and a11y rules. Platform layouts/density may remain; migrate `--plat-*` gradually. | Deferred. LIVE platform directory captured. |
 | D11 | Deliberate App Router error and not-found experiences are required in a **future** story. | Deferred. LIVE Next default 404 at `/nope-px2-audit`. |
 | D12 | Dev/test-only fixtures for Member, Basic, Suspended, OnHold approved. Never alter production data. | Local-only fixtures used this run; **no production seeder**. |
-| D13 | `docs/DESIGN.md` will be the canonical living design contract. BMAD planning artifacts keep evidence, rationale, and history. | **Not authored this phase.** |
+| D13 | `docs/DESIGN.md` is the canonical living design contract. BMAD planning artifacts keep evidence, rationale, and history. | **Authored in Phase 1.** Implementation still deferred to Epics 38–43. |
+| D14 | Canonical Analytics route `/analytics`. | Epic 39.1 + 41.1. `/reports` compatibility redirect. |
+| D15 | Canonical Cohestra AI route `/ai`. Label remains “Cohestra AI”. | Epic 39.1 + 41.2. Conflicting routes redirect. |
+| D16 | Opportunity is a Follow-up category (Due now, At risk, Opportunity, Healthy). Not a room or sales-pipeline stage. No invented scoring. | Epic 40.2 |
+| D17 | Settings nested routes; redirect `?section=`; preserve permissions. | Epic 43.1 |
+| D18 | Dashboard `?view=overview\|graphs\|table`; default may omit param; history wins over stored preference. | Epic 40.1 |
+| D19 | Dashboard `h1` is “Dashboard”. Greeting is supporting copy. | Epic 39.4 + 40.1 |
+| D20 | Cookie banner reserves space, safe areas, Accept / Reject non-essential / Preferences; legal first; no dark patterns. | Epic 43.5 |
 
 **Non-decisions (locked):** Epic 35 shells/flows/entitlements; Epic 36 composition/renderer/submit; Epic 37 100/160/280 and CSS reduced-motion; server-side plan gates; no new animation libraries.
 
@@ -339,3 +356,94 @@ Today’s code uses `xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,18rem)
 - `web/lib/admin-nav.ts`
 - `web/lib/marketing/product-slides.tsx`
 - `docs/user-manual/cohestra-operator-manual.md`
+- `docs/DESIGN.md` (Phase 1 canonical)
+- `_bmad-output/planning-artifacts/cohestra-content-language.md`
+- `_bmad-output/planning-artifacts/cohestra-product-experience-2-backlog.md`
+
+---
+
+## 9. Phase 1 proposed operator sitemap (not shipped)
+
+This is the target map for Epic 39+. §2 remains the shipped map.
+
+```
+Dashboard                         /dashboard
+  Needs attention                 section (not a route)
+  Needs follow-up                 widget → /follow-up
+Clients                           /clients?…
+  Profile                         /clients/{id}
+Activities                        /activities
+  New activity                    /activities/new
+  Activity                        /activities/{id}?tab=overview|design|form|registrations|share
+    Form Studio                   tab=form (not a primary room)
+  Communities                     /activities/communities
+  Categories                      /activities/categories
+Follow-up                         /follow-up
+  Due now · At risk · Opportunity · Healthy
+Analytics                         /analytics
+  /reports → /analytics           compatibility redirect (preserve ?preset=)
+  Reports / presets / export      capabilities
+Cohestra AI                       /ai
+  conflicting intelligence URLs   compatibility redirect
+Website (title: Website Studio)   /dashboard/website
+Campaigns                         /campaigns
+Dashboard views                   /dashboard · ?view=overview|graphs|table
+Settings                          /settings → first allowed nested route
+  Profile                         /settings/profile
+  Team                            /settings/team
+  Billing                         /settings/billing
+  Other areas                     /settings/{area}
+  Legacy                          ?section= / activeId → nested route
+Checkout                          /billing/checkout
+```
+
+**Desktop primary (D1):** Dashboard · Clients · Activities · Follow-up · Analytics · Cohestra AI · Website · Campaigns.
+
+**Mobile primary (D3):** Home · Clients · Activities · Follow-up · More.  
+**More contains:** Analytics · Cohestra AI · Website · Campaigns · Settings · Team/Billing (role-gated).  
+**Website is never the Home tab.**
+
+**Footer (unchanged rule):** TenantAdmin Settings · Team · Billing (Billing if Basic or billing owner). Member: Settings only.
+
+**Still not primary rooms:** Opportunity, Reports, Needs attention, Form Studio, Onboarding, Communities, Categories.
+
+### 9.1 Cinema vs console (target)
+
+| Cinema pill | Target surface | Match? |
+|-------------|----------------|--------|
+| Website | `/dashboard/website` titled Website Studio | Yes |
+| Clients | `/clients` | Yes |
+| Activities | `/activities` | Yes |
+| Follow-up | `/follow-up` | Yes (after 40.2) |
+| Analytics | `/analytics` | Yes (after 41.1) |
+| Cohestra AI | `/ai` | Yes (after 41.2) |
+| Opportunity (copy) | Follow-up category | Yes — not a pill |
+
+### 9.2 Entitlement in IA (D4)
+
+| Item | Nav | Destination |
+|------|-----|-------------|
+| Website on Basic | Visible + lock | Priced UpgradePanel; API 4xx not 500 |
+| Campaigns on Basic/Core | Visible + lock | Priced UpgradePanel |
+| Analytics advanced on Basic | Room visible; advanced controls locked | UpgradePanel Core |
+| Team on Basic | Visible to Admin + lock | UpgradePanel Core |
+| Member Team/Billing admin | Hidden | Redirect or denied primitive |
+| Basic tenant-URL control | Hidden | — |
+
+---
+
+## 10. Phase 1 journey deltas (proposed)
+
+Shipped journeys in §4 stay as evidence. Deltas only:
+
+| Journey | Change when stories land |
+|---------|--------------------------|
+| 4.1 Dashboard | `h1` “Dashboard”; greeting is supporting text. Views via `?view=`. Needs attention stays a section. Queue “View all” → `/follow-up`. |
+| 4.2–4.3 Clients | Chips/profile link into Follow-up room; Opportunity is not a clients tab. |
+| 4.6 Follow-up | First-class `/follow-up` with Due now / At risk / Opportunity / Healthy (story 40.2). |
+| 4.7 Opportunities | Absorbed as Follow-up category. Still no `/opportunities`. Not a sales-pipeline stage. |
+| 4.8 Analytics | Canonical `/analytics`; `/reports` redirects (preserve presets). |
+| 4.9 Cohestra AI | Canonical `/ai`; label “Cohestra AI”; dashboard section remains. |
+| 4.10 Website | Mobile via More; title Website Studio. |
+| 4.11 Form Studio | 1024–1279 two-pane + inspector (D7); 44px handles. |
+| 4.13 Settings | Nested `/settings/{area}`; `?section=` redirects; permissions unchanged. |
