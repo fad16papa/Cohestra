@@ -1,9 +1,10 @@
 ---
 title: Cohestra Product Experience 2.0 — UI inventory
-phase: 0
-status: baseline
+phase: 0.1
+status: audit-complete
 created: 2026-09-22
-head: bc5cc43f
+updated: 2026-09-22
+head_phase0: 5c3fe75d
 evidence_classes:
   - CODE — inspected in repository at HEAD
   - LIVE — observed in this session's local browser/API
@@ -53,7 +54,7 @@ There is **no** named `PermissionDenied` component. Entitlement UI is `UpgradePa
 | Path | Kind | File | Roles | Plan | States in code | Live |
 |------|------|------|-------|------|----------------|------|
 | `/` apex | full | `web/app/page.tsx` → `SiteLandingPage` / `MarketingHomePage` | anonymous; signed-in marketing visitors redirected via `resolvePostLoginPath` | none | hashes `#atelier` `#features` `#how-it-works` `#pricing` `#faq` `#crm` (cinema) | LIVE (6 viewports; cookie overlay) |
-| `/` tenant host | full | same → `SitePageRenderer` / `StubHome` / `TenantMaintenancePage` | anonymous | Basic → `StubHome` when `door.plan === "Basic"`; Core/Pro published site or stub | `preview` token; `suspended` → maintenance; `archived`/`unknown` → `notFound()` | BLOCKED until tenant host + API door |
+| `/` tenant host | full | same → `SitePageRenderer` / `StubHome` / `TenantMaintenancePage` | anonymous | Basic → `StubHome` when `door.plan === "Basic"`; Core/Pro published site or stub | `preview` token; `suspended` → maintenance; `archived`/`unknown` → `notFound()` | LIVE Basic stub + OnHold stub + Suspended maintenance |
 | `/pricing` | full | `web/app/pricing/page.tsx` | anonymous | compares Basic/Core/Pro | monthly/annual toggle | PARTIAL |
 | `/docs` | full | `web/app/docs/page.tsx` | anonymous | none | hash-selected section; search filter | PARTIAL |
 | `/privacy` | full | `web/app/privacy/page.tsx` | anonymous | none | API version fail → bundled copy | PARTIAL |
@@ -83,8 +84,8 @@ There is **no** named `PermissionDenied` component. Entitlement UI is `UpgradePa
 
 | Path | Kind | File | Roles | Plan | States in code | Live |
 |------|------|------|-------|------|----------------|------|
-| `/register/[slug]` | full | `web/app/(public)/register/[slug]/page.tsx` + `PublicRegistrationOpen` | anonymous | paused/full/close-at/`plan-limit` | `not-found`, `error`, `full`, `plan-limit`, `close-at`, `unavailable`, success `RegistrationSuccessScreen` | LIVE Centered (`demo-marina-social-meetup`, `demo-wellness-morning-yoga`); other shells not switched |
-| `/embed/register/[slug]` | full | `web/app/embed/register/[slug]/page.tsx` | anonymous | same | same + chrome-light embed | BLOCKED |
+| `/register/[slug]` | full | `web/app/(public)/register/[slug]/page.tsx` + `PublicRegistrationOpen` | anonymous | paused/full/close-at/`plan-limit` | `not-found`, `error`, `full`, `plan-limit`, `close-at`, `unavailable`, success `RegistrationSuccessScreen` | LIVE Centered + validation + success `REG20260922000101`; Split/Poster/Conversational via Design preview only |
+| `/embed/register/[slug]` | full | `web/app/embed/register/[slug]/page.tsx` | anonymous | same | same + chrome-light embed | LIVE marina 1440 + 390 |
 
 **Protected Epic 35 shells (code):** `modern-centered` · `split-event` · `event-poster` · `conversational` (+ `card` / `immersive` / `compact`). One renderer: `PublicRegistrationOpen`. Hidden fields may prefill from query param = field id.
 
@@ -101,30 +102,30 @@ Chrome: `DashboardLayout` — sidebar (`md+`), top bar, billing banner, mobile t
 | Path | Kind | File / primary | Roles | Plan | States in code | Live |
 |------|------|----------------|-------|------|----------------|------|
 | `/dashboard` | full | `DashboardPageClient` | TenantAdmin, TenantMember | empty copy varies by plan; no hard lock | skeletons; `ProductErrorState`; `DashboardEmptyState`; overview/graphs/tables | LIVE populated Pro (6 viewports) |
-| `/dashboard` `overview` | in-page | localStorage `cohestra.dashboard.viewMode` | same | — | onboarding checklist; follow-up queue; metrics; intelligence brief | BLOCKED |
-| `/dashboard` `graphs` | in-page | same | same | — | charts + pulse | BLOCKED |
-| `/dashboard` `tables` | in-page | same | same | — | tables + pulse | BLOCKED |
-| `/dashboard/website` | full | `WebsiteBuilderPage` (nav **Website**) | same | **Basic → `UpgradePanel` Core** | loading; error; dirty; publish success; revert confirm; tour; checklist | BLOCKED |
-| `/activities` | full | `ActivitiesListPage` | same | published-activity cap banners | `CardGridSkeleton`; empty; filters; archive | BLOCKED |
-| `/activities/new` | full | `CreateActivityForm` | same | create warnings vs plan | catalog error; submit error | BLOCKED |
-| `/activities/[id]` | full | `ActivityDetailPageClient` `?tab=` | same | Design/Form plan locks | loading; error; publish gates | BLOCKED |
-| `/activities/[id]?tab=overview` | tab | overview | same | — | schedule, capacity, publish | BLOCKED |
-| `/activities/[id]?tab=design` | tab | Design / Experience | same | Split/Poster **Core**; Conversational/Immersive **Pro** | locked controls | BLOCKED |
-| `/activities/[id]?tab=form` | tab | **Form Studio** Build/Preview | same | recipes/columns/domain **Core**; split-into-steps **Pro** | empty; dirty; preview success | BLOCKED |
-| `/activities/[id]?tab=registrations` | tab | registrations | same | — | list | BLOCKED |
-| `/activities/[id]?tab=share` | tab | share kit | same | — | publish-gate issues | BLOCKED |
-| `/activities/communities` | full | `CommunitiesListPage` | same | `isCommunitiesBlocked` | loading; error; delete dialog | BLOCKED |
+| `/dashboard` `overview` | in-page | localStorage `cohestra.dashboard.viewMode` | same | — | onboarding checklist; follow-up queue; metrics; intelligence brief | LIVE Pro + Basic empty + OnHold empty + Member |
+| `/dashboard` `graphs` | in-page | same | same | — | charts + pulse | LIVE 1440 (Phase 0) |
+| `/dashboard` `tables` | in-page | same | same | — | tables + pulse | LIVE 1440 (Phase 0) |
+| `/dashboard/website` | full | `WebsiteBuilderPage` (nav **Website**) | same | **Basic → `UpgradePanel` Core** | loading; error; dirty; publish success; revert confirm; tour; checklist | LIVE Pro tour + Basic UpgradePanel (API 500 under lock) |
+| `/activities` | full | `ActivitiesListPage` | same | published-activity cap banners | `CardGridSkeleton`; empty; filters; archive | LIVE Pro (Phase 0) |
+| `/activities/new` | full | `CreateActivityForm` | same | create warnings vs plan | catalog error; submit error | LIVE 1440 |
+| `/activities/[id]` | full | `ActivityDetailPageClient` `?tab=` | same | Design/Form plan locks | loading; error; publish gates | LIVE published marina + archived (Phase 0) |
+| `/activities/[id]?tab=overview` | tab | overview | same | — | schedule, capacity, publish | LIVE |
+| `/activities/[id]?tab=design` | tab | Design / Experience | same | Split/Poster **Core**; Conversational/Immersive **Pro** | locked controls | LIVE Split/Poster/Conversational selected unsaved |
+| `/activities/[id]?tab=form` | tab | **Form Studio** Build/Preview | same | recipes/columns/domain **Core**; split-into-steps **Pro** | empty; dirty; preview success | LIVE published Build + Preview |
+| `/activities/[id]?tab=registrations` | tab | registrations | same | — | list | PARTIAL (tab present, not dedicated shot) |
+| `/activities/[id]?tab=share` | tab | share kit | same | — | publish-gate issues | PARTIAL |
+| `/activities/communities` | full | `CommunitiesListPage` | same | `isCommunitiesBlocked` | loading; error; delete dialog | LIVE 1440 |
 | `/activities/communities/[id]` | full | `CommunityDetailPage` | same | default form template **Core** | loading; error; empty clients | BLOCKED |
-| `/activities/categories` | full | `CategoriesListPage` | same | none in page | loading; error; delete | BLOCKED |
-| `/clients` | full | `ClientsListPage` | same | filtered CSV **Core+**; campaign handoff **Pro** | `ListSkeleton`; empty; no-match; messenger confirm | BLOCKED |
-| `/clients/[id]` | full | `ClientProfilePage` | same | none in page | `ProfileSkeleton`; error; merge-suspect | BLOCKED |
-| `/campaigns` | full | `CampaignsListPage` | same | **non-Pro → UpgradePanel Pro** | skeleton; empty; list error; delivery checklist | BLOCKED |
-| `/campaigns/new` | full | `CampaignComposePage` | same | no UpgradePanel in file (list gated; API `[RequireProPlan]`) | preview dialog; send confirm; `clientIds` | BLOCKED |
+| `/activities/categories` | full | `CategoriesListPage` | same | none in page | loading; error; delete | LIVE 1440 |
+| `/clients` | full | `ClientsListPage` | same | filtered CSV **Core+**; campaign handoff **Pro** | `ListSkeleton`; empty; no-match; messenger confirm | LIVE Pro + Member 390 |
+| `/clients/[id]` | full | `ClientProfilePage` | same | none in page | `ProfileSkeleton`; error; merge-suspect | LIVE James Rivera |
+| `/campaigns` | full | `CampaignsListPage` | same | **non-Pro → UpgradePanel Pro** | skeleton; empty; list error; delivery checklist | LIVE Pro + Basic UpgradePanel |
+| `/campaigns/new` | full | `CampaignComposePage` | same | no UpgradePanel in file (list gated; API `[RequireProPlan]`) | preview dialog; send confirm; `clientIds` | LIVE compose + preview (not sent) |
 | `/campaigns/[id]` | full | `CampaignDetailPage` | same | none in file | loading; error; sent/failed/skipped | BLOCKED |
-| `/reports` | full | `ReportsPageClient` | same | Basic + advanced filters → UpgradePanel Core | loading; stale; error; empty period; export disabled | BLOCKED |
-| `/settings` | full | `SettingsPageContent` | Member: personal only; Admin: workspace | custom domain “coming soon” | section switcher; mobile Context sheet | BLOCKED |
-| `/settings/team` | full | `SettingsTeamPageContent` | **TenantAdmin**; else redirect/copy | Basic `invitesAllowed=false` → UpgradePanel Core | loading; error; seat cap; remove/revoke | BLOCKED |
-| `/settings/billing` | full | `SettingsBillingPageContent` | **TenantAdmin** | nav if Basic **or** billing owner | `billing=incomplete`; post-checkout sync | BLOCKED |
+| `/reports` | full | `ReportsPageClient` | same | Basic + advanced filters → UpgradePanel Core | loading; stale; error; empty period; export disabled | LIVE Pro + Basic |
+| `/settings` | full | `SettingsPageContent` | Member: personal only; Admin: workspace | custom domain “coming soon” | section switcher; mobile Context sheet | LIVE Admin + Member |
+| `/settings/team` | full | `SettingsTeamPageContent` | **TenantAdmin**; else redirect/copy | Basic `invitesAllowed=false` → UpgradePanel Core | loading; error; seat cap; remove/revoke | LIVE Admin; Member redirects |
+| `/settings/billing` | full | `SettingsBillingPageContent` | **TenantAdmin** | nav if Basic **or** billing owner | `billing=incomplete`; post-checkout sync | LIVE Admin + Member |
 | `/billing/checkout` | full | `CheckoutPageContent` (admin guard) | authenticated tenant | `plan=core\|pro` | loading; canceled; deferred downgrade; sign-in copy | BLOCKED |
 | `/billing/paddle-return` | full | `PaddleReturnPageContent` | `_ptxn` / `transactionId` | none | missing txn; collecting | BLOCKED (no Paddle txn) |
 
@@ -164,10 +165,10 @@ Editor tabs: `design` | `sections` | `templates`. Workspace: `build` | `split` |
 
 | Path | Kind | File | Roles | States | Live |
 |------|------|------|-------|--------|------|
-| `/platform` | full | tenant directory + create | PlatformAdmin | loading; error; empty match; create | BLOCKED until platform login |
-| `/platform/tenants/[id]` | full | detail + ops | PlatformAdmin | loading; not found; suspend; archive; complimentary | BLOCKED |
-| `/platform/support` | full | inbox | PlatformAdmin | loading; error; empty | BLOCKED |
-| `/platform/support/[id]` | full | issue + snapshot | PlatformAdmin | loading; not found | BLOCKED |
+| `/platform` | full | tenant directory + create | PlatformAdmin | loading; error; empty match; create | LIVE directory (fixtures) |
+| `/platform/tenants/[id]` | full | detail + ops | PlatformAdmin | loading; not found; suspend; archive; complimentary | LIVE `px2-basic` (no destructive click) |
+| `/platform/support` | full | inbox | PlatformAdmin | loading; error; empty | LIVE empty inbox |
+| `/platform/support/[id]` | full | issue + snapshot | PlatformAdmin | loading; not found | BLOCKED (no issue) |
 | `/platform/support/report` | full | volume | PlatformAdmin | custom range not ready; empty | BLOCKED |
 
 Platform layout does **not** use `AdminRouteTransition` (Epic 37 AD-1).
@@ -283,6 +284,6 @@ Playwright `baseURL` default is `http://localhost:8088` (nginx Compose). Native 
 | Safe action taken | Installed .NET 9.0.318 to `$HOME/.dotnet`; `apt` PostgreSQL 16 + Redis; `npm ci`; created role `crm` / DBs `cohestra` + `cohestra_test`; added `127.0.0.1 default.localhost`; started API + Next in tmux. **No production UI or runtime behavior edited.** |
 | Seeded users (intended) | `operator@cohestra.local` / `ChangeMe123!`; `platform-admin@cohestra.local` / `ChangeMe123!` once `PlatformAdminSeed__Enabled=true` |
 | Demo seed | Development `DemoDataSeed:Enabled=true`, promote default tenant to **Pro Trialing** |
-| Member / Basic / OnHold / Suspended | **Not seeded** — those states require extra fixtures |
+| Member / Basic / OnHold / Suspended | **Local-only fixtures** in `cohestra` (D12). Not a production seeder. |
 
-Minimum action to close BLOCKED admin/public-reg cells: wait for API health + demo seed, then browser login on `http://localhost:3000/login` and `http://default.localhost:3000/register/{demo-slug}`. Do **not** change application code to fabricate those states.
+Phase 0.1 closed the previous BLOCKED admin/public-reg cells with live captures and local fixtures. See `evidence/px2-phase01/` and the UX audit closure table. Do **not** change application code to fabricate those states.

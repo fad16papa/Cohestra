@@ -1,9 +1,10 @@
 ---
 title: Cohestra Product Experience 2.0 — information architecture
-phase: 0
-status: baseline
+phase: 0.1
+status: audit-complete
 created: 2026-09-22
-head: bc5cc43f
+updated: 2026-09-22
+head_phase0: 5c3fe75d
 ---
 
 # Cohestra information architecture
@@ -54,9 +55,11 @@ Settings                          /settings   (in-page sections)
 Checkout                          /billing/checkout
 ```
 
-**Not in sitemap (named in cinema or docs):** Follow-up, Opportunities, Analytics, Cohestra AI, Form Studio, Onboarding, Website Studio.
+**Not in sitemap today (named in cinema or docs):** Follow-up, Opportunities, Analytics, Cohestra AI, Form Studio, Onboarding, Website Studio.
 
-**Mobile primary:** Home · Activities · Clients · More. Website is not a tab (PX2-IA-004).
+**Mobile primary today:** Home · Activities · Clients · More. Website highlights Home (PX2-IA-004).
+
+**D1–D3 (PO, not implemented):** Canonical rooms are Dashboard, Clients, Activities, Follow-up, Analytics, Cohestra AI, Website, Campaigns. Follow-up remains a primary room (Opportunity is a follow-up state). Mobile Website belongs under More. Preferred mobile: Home, Clients, Activities, Follow-up, More. Website page may be titled “Website Studio.” “Needs attention” stays a dashboard section. “Reports” is an Analytics capability.
 
 **Footer (TenantAdmin):** Settings · Team · Billing (Billing if Basic or billing owner). Member: Settings only.
 
@@ -137,7 +140,7 @@ Each journey: steps as the product is wired today. Climax beat named. Gaps calle
 
 **Climax:** “You're registered!”  
 **Protected:** layouts, flows, responsiveness, entitlements, submission semantics.  
-**Live this run:** BLOCKED until demo slug.
+**Live this run:** Centered public + embed + validation + success (`REG20260922000101`). Split / Poster / Conversational captured on Design tab live preview without save.
 
 ### 4.6 Follow-up (as shipped)
 
@@ -242,7 +245,7 @@ Each journey: steps as the product is wired today. Climax beat named. Gaps calle
 7. Platform visual system: keep sparse vs inherit Atelier (PX2-SYS-001).
 8. `/site` spine vs `/dashboard/website` code.
 
-Do **not** change nav IA in implementation until the product owner picks these. Epic 37 explicitly forbids changing navigation IA as a motion story.
+Do **not** change nav IA in implementation until a Phase 1 story implements D1–D4. Epic 37 still forbids changing navigation IA as a motion story. Owner answers are in §7; they are **not** implemented in Phase 0.1.
 
 ---
 
@@ -298,27 +301,31 @@ Companion later (not this phase): `docs/EXPERIENCE.md` or `_bmad-output/planning
 
 ---
 
-## 7. Ranked Phase 1 decisions for the product owner
+## 7. Product-owner decisions (D1–D13) — recorded, not implemented
 
-Stop here until these are answered. Implementation backlog is **not** opened in Phase 0.
+Phase 0.1 records the owner’s answers. **Do not implement these in Phase 0.1.** Implementation backlog is **not** opened. `docs/DESIGN.md` is **not** authored.
 
-| # | Decision | Why it blocks | Options (not a recommendation ritual — pick) | If deferred |
-|---|----------|---------------|----------------------------------------------|-------------|
-| D1 | Naming glossary: cinema vs console | Restyle will paint the wrong labels | A) Rename console to cinema (Follow-up, Analytics, Cohestra AI, Website Studio). B) Keep console names; cinema stays metaphor. C) Hybrid glossary | Any visual/nav story will rework copy twice |
-| D2 | Is Follow-up a first-class room? | Journey 4.6 vs cinema | A) Add `/follow-up` (or nav alias). B) Keep widget+clients; change cinema. C) Expand dashboard queue only | PX2-IA-002 stays open |
-| D3 | Website mobile IA | Phone operators lose the studio | A) Website tab. B) Website under More. C) Keep under Home (document as intentional) | PX2-IA-004 |
-| D4 | Nav entitlement pattern | Basic/Member see Pro map | A) Hide. B) Lock badge. C) Keep destination UpgradePanel | PX2-ENT-001 |
-| D5 | AA muted token | 3.00:1 body text | A) Promote `--stone-cinema` to admin muted. B) New AA stone. C) Accept fail (not AA) | Contrast work blocked |
-| D6 | Button / touch floor | 32 vs 44 vs public 48 | A) 44 on touch, 32 desktop. B) Leave chrome 32; 44 only studios/public. C) 48 primary per 2026-07 DESIGN | Touch stories will fight |
-| D7 | Form Studio 1024 vs 1280 three-pane | Spec vs code | A) Implement 1024 three-pane. B) Amend EXPERIENCE to 1280 + drawer | PX2-RESP-001; do not touch composition |
-| D8 | Overlay primitive + duration | A11Y + Epic 37 | A) All overlays through `ui/dialog`; duration = local 160. B) Document 200ms overlay token. C) Campaign dialogs only | Keyboard/PRM debt remains |
-| D9 | Heading / landmark contract | AT + Settings | A) Chrome title not h1; page owns h1. B) Chrome is sole h1; pages start h2. C) Status quo | Header restyle unsafe |
-| D10 | Platform console craft | Parallel `--plat-*` | A) Keep sparse. B) Inherit Atelier | Accidental restyle risk |
-| D11 | State kit at router | 404/error voice | A) Add `error.tsx`/`not-found.tsx` using ProductErrorState. B) Defer | Unknown URLs stay Next-default |
-| D12 | Member + Basic + status fixtures | Cannot accept ENT/status | A) Seed Member, Basic, Suspended, OnHold in Development. B) Manual fixtures only | Phase 1 visual QA stays BLOCKED for those states |
-| D13 | `docs/DESIGN.md` vs `_bmad-output` spine | Two homes already exist | A) `docs/DESIGN.md` is the engineer-facing extract. B) Only `_bmad-output/planning-artifacts/ux-designs/`. C) Both, with inherit | Writers will fork again |
+| # | Resolution | Implementation |
+|---|------------|----------------|
+| D1 | Canonical nav: Dashboard, Clients, Activities, Follow-up, Analytics, Cohestra AI, Website, Campaigns. “Needs attention” = dashboard section. “Reports” = Analytics capability. Website page may be titled “Website Studio.” | Deferred |
+| D2 | Follow-up remains a primary room. Dashboard widgets link to it. Opportunity is a follow-up state/category, not a primary room. | Deferred |
+| D3 | Mobile Website belongs under More, not Home. Preferred primary: Home, Clients, Activities, Follow-up, More. | Deferred |
+| D4 | Major upgrade-discoverable modules stay visible with lock + plan label; must not be a generic upgrade dead end. Structurally inapplicable controls stay hidden (including Basic tenant-URL). | Deferred. LIVE Basic Website/Campaigns already use priced `UpgradePanel`, not a blank lock. |
+| D5 | Future semantic `--text-muted` ≥4.5:1 for normal text. Do not globally reuse the cinema-specific token. | Deferred. LIVE `--stone`/`--paper` is 3.00:1. |
+| D6 | ~40px dense desktop; 44px touch/mobile min; 48px prominent public actions. | Deferred |
+| D7 | Form Studio three panes at ≥1280. At 1024–1279 use two-pane / collapsible inspector. Update planning spec only. | Spec updated here; **not implemented** |
+| D8 | Future overlays: shared accessible dialog primitive + 160ms local motion. Press stays 100ms. | Deferred |
+| D9 | Each route owns exactly one page-level h1. Shell owns one main and must not add a competing route heading. | Deferred. LIVE Settings still has 2 mains + dual h1. |
+| D10 | Platform inherits shared semantic tokens and a11y rules. Platform layouts/density may remain; migrate `--plat-*` gradually. | Deferred. LIVE platform directory captured. |
+| D11 | Deliberate App Router error and not-found experiences are required in a **future** story. | Deferred. LIVE Next default 404 at `/nope-px2-audit`. |
+| D12 | Dev/test-only fixtures for Member, Basic, Suspended, OnHold approved. Never alter production data. | Local-only fixtures used this run; **no production seeder**. |
+| D13 | `docs/DESIGN.md` will be the canonical living design contract. BMAD planning artifacts keep evidence, rationale, and history. | **Not authored this phase.** |
 
 **Non-decisions (locked):** Epic 35 shells/flows/entitlements; Epic 36 composition/renderer/submit; Epic 37 100/160/280 and CSS reduced-motion; server-side plan gates; no new animation libraries.
+
+### D7 planning spec (1024–1279)
+
+Today’s code uses `xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,18rem)]` (three panes ≥1280). EXPERIENCE 36 asked for three panes ≥1024. **Owner:** keep three panes at ≥1280; at 1024–1279 specify a two-pane canvas + collapsible inspector (not a long unguided stack). Implementation is a future Form Studio chrome story and **must not** change composition schema or renderer.
 
 ---
 

@@ -1,9 +1,10 @@
 ---
 title: Cohestra Product Experience 2.0 — visual QA matrix
-phase: 0
-status: baseline
+phase: 0.1
+status: audit-complete
 created: 2026-09-22
-head: bc5cc43f
+updated: 2026-09-22
+head_phase0: 5c3fe75d
 viewports:
   - 1440x900
   - 1280x800
@@ -34,9 +35,9 @@ Cells record **this Phase 0 run**. They are not a promise that the product passe
 | BLOCKED | Environment, auth, seed, or third-party prevented inspection |
 | N/A | Viewport or state does not apply |
 
-**This run’s environment:** Personal Cloud VM lacked the advertised Cohestra snapshot. Postgres 16, Redis, .NET 9.0.318, and `web/node_modules` were installed without editing application source. API + Next were started in tmux. Operator login on `http://default.localhost:3000/login` succeeded (Pro, Trialing, 48 clients, 10 activities). Playwright captured marketing, public registration, and authenticated admin at the six viewports. PlatformAdmin login returned **Invalid email or password** — platform console remains BLOCKED.
+**This run’s environment:** Personal Cloud VM lacked the advertised Cohestra snapshot. Native API `:8080` + Next `:3000`. Phase 0 captured marketing + Pro admin. Phase 0.1 completed remaining coverage, local fixtures, a11y, performance, and checks.
 
-Do not fabricate screenshots. Representative PNGs: `/opt/cursor/artifacts/px2_*.png` and `/tmp/px2-qa/`.
+Do not fabricate screenshots. Durable evidence: `_bmad-output/planning-artifacts/evidence/px2-phase01/` (repository-relative). Walkthrough copies also exist under `/opt/cursor/artifacts/px2_*.png`.
 
 ---
 
@@ -49,10 +50,10 @@ Do not fabricate screenshots. Representative PNGs: `/opt/cursor/artifacts/px2_*.
 | `/` marketing | LIVE | LIVE | LIVE | LIVE | LIVE | LIVE | Cookie banner covers CTAs at 390; nav “Document” |
 | `/pricing` | LIVE | LIVE | LIVE | LIVE | LIVE | LIVE | 4 plan cards; compare table omits Enterprise |
 | `/docs` | LIVE | — | LIVE | LIVE | — | LIVE | CORE set |
-| `/privacy` `/terms` | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | not opened this pass |
+| `/privacy` `/terms` | LIVE | — | — | — | — | — | Phase 0.1 1440 legal pages |
 | `/login` apex | LIVE | LIVE | LIVE | LIVE | LIVE | LIVE | |
 | `/login` tenant host | LIVE | LIVE | LIVE | LIVE | LIVE | LIVE | workspace notice `default.localhost:3000` |
-| `/platform/login` | LIVE | — | LIVE | LIVE | — | LIVE | PlatformAdmin seed failed (invalid password) |
+| `/platform/login` | LIVE | — | LIVE | LIVE | — | LIVE | Phase 0.1 login succeeded after local hash align |
 | `/signup` | LIVE | — | LIVE | LIVE | — | LIVE | recaptcha off |
 | `/register` bootstrap | LIVE | — | LIVE | LIVE | — | LIVE | “One workspace, one operator.” |
 | `/forgot-password` | LIVE | — | LIVE | LIVE | — | LIVE | |
@@ -63,14 +64,14 @@ Do not fabricate screenshots. Representative PNGs: `/opt/cursor/artifacts/px2_*.
 
 | Surface | 1440 | 1280 | 1024 | 768 | 430 | 390 | Notes |
 |---------|------|------|------|-----|-----|-----|-------|
-| `{slug}/` stub | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | demo tenant is Pro; Basic unseeded |
+| `{slug}/` stub | LIVE | — | — | — | — | — | `px2-basic` + `px2-onhold` public doors |
 | `{slug}/` SitePage / stub mix | LIVE | — | LIVE | LIVE | — | LIVE | `default.localhost:3000/` opened (Pro) |
-| `{slug}/` Suspended | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | unseeded |
+| `{slug}/` Suspended | LIVE | — | — | — | — | — | `px2-suspended` “is on hold” |
 | `/register/demo-marina-social-meetup` Centered | LIVE | LIVE | LIVE | LIVE | LIVE | LIVE | activity band + form; 11 going; no overflow observed |
 | `/register/demo-wellness-morning-yoga` | LIVE | — | LIVE | LIVE | — | LIVE | second published shell |
-| `/register/{slug}` Split / Poster / Conversational | E2E | E2E | E2E | E2E | E2E | E2E | e2e exists; **not switched live this pass** (would mutate theme) |
-| Embed register | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | |
-| Success | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | not submitted (avoid mutating demo) |
+| `/register/{slug}` Split / Poster / Conversational | LIVE | — | — | — | — | — | Design tab live preview, **not saved**; public theme left Centered |
+| Embed register | LIVE | — | — | — | — | LIVE | chrome-light marina embed |
+| Success | LIVE | — | — | — | — | — | `REG20260922000101` disposable |
 | Unavailable / full / plan-limit | CODE | CODE | CODE | CODE | CODE | CODE | `PublicRegistrationUnavailable` |
 
 ### Admin — populated (default demo = Pro Trialing **when seed completes**)
@@ -83,15 +84,15 @@ Do not fabricate screenshots. Representative PNGs: `/opt/cursor/artifacts/px2_*.
 | `/dashboard/website` build | LIVE | LIVE | LIVE | LIVE | LIVE | LIVE | first-run tour overlay; Edit/Preview on 390; Home tab active |
 | `/dashboard/website` preview | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | tour not dismissed (avoid mutating) |
 | `/activities` | LIVE | LIVE | LIVE | LIVE | LIVE | LIVE | list includes archived first |
-| `/activities/new` | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | not opened |
-| Activity overview / form / design | LIVE | — | LIVE | — | — | LIVE | first card was **archived** — form read-only; composition builder not in first viewport |
-| Form Studio preview D/T/M | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | published-activity recapture timed out |
-| Communities / categories | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | not opened |
+| `/activities/new` | LIVE | — | — | — | — | — | Phase 0.1 |
+| Activity overview / form / design | LIVE | — | LIVE | — | — | LIVE | Phase 0 archived first card; 0.1 used published marina |
+| Form Studio preview D/T/M | LIVE | — | LIVE | — | — | LIVE | published marina Build + Preview |
+| Communities / categories | LIVE | — | — | — | — | — | 1440 |
 | `/clients` | LIVE | LIVE | LIVE | LIVE | LIVE | LIVE | chips + table 1440; cards 390; Active chip truncates |
 | `/clients?followUpDue=true` | LIVE | — | — | — | — | LIVE | |
-| `/clients/{id}` | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | href resolved; follow-up recapture timed out |
+| `/clients/{id}` | LIVE | — | — | — | — | LIVE | James Rivera after reseed |
 | `/campaigns` | LIVE | — | LIVE | — | — | LIVE | Pro populated |
-| `/campaigns/new` + dialogs | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | BLOCKED | not opened (avoid send) |
+| `/campaigns/new` + dialogs | LIVE | — | — | — | — | LIVE | Preview opened; **not sent** |
 | `/reports` weekly | LIVE | — | LIVE | LIVE | — | LIVE | |
 | `/settings` | LIVE | LIVE | LIVE | LIVE | LIVE | LIVE | **2 × `<main>`**, h1 Settings + Default |
 | `/settings/team` | LIVE | — | — | — | — | LIVE | dual h1 “Team” |
@@ -107,19 +108,19 @@ Do not fabricate screenshots. Representative PNGs: `/opt/cursor/artifacts/px2_*.
 | Loading | `ListSkeleton` / `MetricSkeletonGrid` / `ProfileSkeleton` / “Loading admin workspace…” | BLOCKED (flash only) |
 | Error | `ProductErrorState` on dashboard/activity/client; inline elsewhere | BLOCKED (need API down) |
 | Disabled | publish gates, export disabled, locked palette items | CODE / BLOCKED |
-| Permission denied | inline copy; no component | BLOCKED (no Member) |
-| Entitlement gated | `UpgradePanel` Website/Campaigns/Reports/Team/templates | BLOCKED (demo is Pro; Basic unseeded) |
+| Permission denied | inline copy; no component | LIVE Member `/settings/team` → `/settings` |
+| Entitlement gated | `UpgradePanel` Website/Campaigns/Reports/Team/templates | LIVE Basic Website + Campaigns priced panels |
 | Destructive | archive, delete community/category, remove member, suspend, revert website | CODE / BLOCKED |
-| Success | publish dialog, registration success, billing toast, campaign sent | BLOCKED |
-| 404 / crash | Next default (no `not-found.tsx` / `error.tsx`) | BLOCKED |
+| Success | publish dialog, registration success, billing toast, campaign sent | LIVE registration success |
+| 404 / crash | Next default (no `not-found.tsx` / `error.tsx`) | LIVE `/nope-px2-audit` |
 
 ### Platform
 
 | Surface | All viewports | Notes |
 |---------|---------------|-------|
-| `/platform` | BLOCKED | needs PlatformAdmin login |
-| `/platform/tenants/{id}` | BLOCKED | suspend/archive destructive |
-| `/platform/support*` | BLOCKED | |
+| `/platform` | LIVE | directory; fixture tenants; hide-demo checkbox hid `default` |
+| `/platform/tenants/{id}` | LIVE | `px2-basic` detail (no suspend clicked) |
+| `/platform/support*` | LIVE | inbox empty |
 
 ---
 
@@ -127,15 +128,15 @@ Do not fabricate screenshots. Representative PNGs: `/opt/cursor/artifacts/px2_*.
 
 | Check | Method available this run | Result |
 |-------|---------------------------|--------|
-| Keyboard / focus order | CODE + partial LIVE | CODE: Button has ring; gaps on pulse/queue/studio tabs/toasts/custom dialogs. Full Tab pass not run |
-| Landmarks / semantics | LIVE + CODE | Settings: **2 `<main>`**, h1 `Settings` + `Default`. Team/Billing: two h1s with the same label. Shell landmarks otherwise present. No skip link |
-| Accessible names | CODE | Many `aria-label`s on dashboard; command palette Search labelled |
-| Contrast | Token math | `--stone`/`--paper` **3.00:1**. Cinema stone **5.88:1**. Dark muted **8.90:1**. LIVE meter not run |
-| Touch targets | LIVE + CODE | Mobile tab bar present and tappable-looking; calendar FAB overlaps cards/queue; Form Studio handle not measured on published build (archived form only) |
-| Zoom / reflow | LIVE | BLOCKED (not zoomed) |
-| Reduced motion | CODE + one shot | Dashboard 1440 `prefers-reduced-motion: reduce` captured; campaign dialogs not slotted |
-| Overflow / truncation | LIVE | Admin captured routes: **scrollWidth − clientWidth ≤ 1**. Clients 390: Active chip truncates. Activity title truncates in mobile chrome |
-| Console / hydration | LIVE | Every authenticated admin page logged **503** (resource unidentified in notes). Website also **404** (missing assets). Hydration warnings not isolated |
+| Keyboard / focus order | LIVE | 18-tab pass on dashboard: sidebar then footer. Logical. Visible focus often `outline: none` + weak shadow |
+| Landmarks / semantics | LIVE + CODE | Settings: **2 `<main>`**, h1 `Settings` + `Default`. No skip link (count 0) |
+| Accessible names | LIVE | Chrome labelled. Intelligence numeric links lack extra names |
+| Contrast | LIVE meter + tokens | `--stone`/`--paper` **3.00:1** (85 unique fails). `--gold` **3.13:1**. Cinema stone **5.88:1** (unused on admin) |
+| Touch targets | LIVE | Desktop chrome 32–36px; mobile chips/icons 32px; public Join ~48px |
+| Zoom / reflow | LIVE | CSS zoom 200% on 720×450; overflow 0 |
+| Reduced motion | LIVE | Sampled `transitionDuration: 0s` |
+| Overflow / truncation | LIVE | Admin captured routes: **scrollWidth − clientWidth ≤ 1**. Clients 390: Active chip truncates |
+| Console / hydration | LIVE | Isolated **POST /api/v1/admin/billing/sync → 503**. Basic Website **GET /admin/site → 500** |
 
 ---
 
@@ -165,12 +166,16 @@ Do not fabricate screenshots. Representative PNGs: `/opt/cursor/artifacts/px2_*.
 
 **Completed this run:** marketing + login + public Marina/Yoga registration + authenticated Pro admin (dashboard/clients/activities/website/reports/campaigns/settings/team/billing) at the six viewports (CORE subset where noted). Zero measured horizontal overflow on those admin URLs.
 
-**Still BLOCKED / partial:** Split/Poster/Conversational live switch; embed; registration success (not submitted); published Form Studio three-pane; client profile; campaign compose dialogs; communities/categories; checkout; Platform console UI; Member; Basic; Suspended; OnHold; keyboard Tab pass; contrast meter.
+**Still ENVIRONMENT-BLOCKED:** Paddle checkout, invite-accept token, signup verify, VoiceOver/NVDA, production RUM.
+
+**Closed in 0.1:** Split/Poster/Conversational (Design preview, unsaved); embed; registration success; published Form Studio; client profile; campaign compose/preview; communities/categories; Platform console; Member/Basic/Suspended/OnHold fixtures; keyboard; contrast; zoom; reduced motion; performance.
 
 ---
 
 ## 5. Artifact policy
 
-Phase 0 screenshots, when captured, belong under walkthrough artifacts (immutable) and should be referenced by route + viewport + state. None are attached at first write because no authenticated LIVE pass has completed.
+Durable Phase 0.1 screenshots live at `_bmad-output/planning-artifacts/evidence/px2-phase01/` and must be referenced with repository-relative paths. Do not use `blob:vscode-file` URLs.
 
 Do not reuse cinema-audit PNGs as operator evidence.
+
+See `cohestra-ux-audit.md` Phase 0.1 closure table for VERIFIED / ENVIRONMENT-BLOCKED / PRODUCT-DEFECT / DEFERRED dispositions.

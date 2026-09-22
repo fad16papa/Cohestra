@@ -1,9 +1,10 @@
 ---
 title: Cohestra Product Experience 2.0 — component and token inventory
-phase: 0
-status: baseline
+phase: 0.1
+status: audit-complete
 created: 2026-09-22
-head: bc5cc43f
+updated: 2026-09-22
+head_phase0: 5c3fe75d
 ---
 
 # Cohestra component and token inventory
@@ -249,4 +250,17 @@ Builder chrome (Form Studio DESIGN.md class strings): `builderRow` `rounded-lg b
 | `ux-in-app-billing-2026-08-09/EXPERIENCE.md` | final, no DESIGN |
 | Epic 37 | architecture spine only — no ux-designs folder |
 
-**GAP:** no Product Experience 2.0 DESIGN.md/EXPERIENCE.md yet. Phase 0 must not finalize those spines. Outline for `docs/DESIGN.md` lives in `cohestra-information-architecture.md`.
+**GAP:** no Product Experience 2.0 DESIGN.md/EXPERIENCE.md yet. Phase 0.1 does **not** author `docs/DESIGN.md` (D13 deferred). Outline remains in `cohestra-information-architecture.md`.
+
+---
+
+## 12. Phase 0.1 token / primitive notes (evidence, not implementation)
+
+| Decision | Planning note | LIVE |
+|----------|---------------|------|
+| D5 `--text-muted` | New semantic token ≥4.5:1. Do not globally reuse `--stone-cinema`. | `--stone` on `--paper` measured **3.00:1**; `--gold` **3.13:1** |
+| D6 density | 40 desktop / 44 touch / 48 public | Button default 32; public Join 48; mobile chips 32 |
+| D8 overlays | Shared `ui/dialog` + 160ms local; press 100 | Campaign preview + command palette remain custom |
+| D10 platform | Inherit semantic tokens gradually | `--plat-*` still on `/platform` |
+
+Canonical closure table: `cohestra-ux-audit.md` Phase 0.1 closure.

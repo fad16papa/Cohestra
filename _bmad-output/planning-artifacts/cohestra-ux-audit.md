@@ -1,12 +1,14 @@
 ---
 title: Cohestra Product Experience 2.0 — UX audit
-phase: 0
-status: baseline
+phase: 0.1
+status: audit-complete
 created: 2026-09-22
-head: bc5cc43f
-method: code-authoritative + local environment attempt; live browser cells labeled
+updated: 2026-09-22
+head_phase0: 5c3fe75d
+method: code-authoritative + local live browser; evidence classes labeled
 user_research: none in this run — do not treat findings as interview evidence
 telemetry: none found in web/ (no gtag / posthog / mixpanel / trackEvent)
+evidence: _bmad-output/planning-artifacts/evidence/px2-phase01/
 ---
 
 # Cohestra UX audit
@@ -28,11 +30,11 @@ Confidence: High = cited in code or measured in this run. Medium = code + reason
 
 ## Environment and coverage
 
-This VM did **not** match AGENTS.md’s prebuilt Cohestra snapshot. Toolchain was installed without changing application source. API `:8080` and Next `:3000` ran. Demo seed: default tenant **Pro / Trialing**, 48 clients, 10 activities. Operator login on `default.localhost` succeeded. Playwright captured marketing, public registration, and authenticated admin at the requested viewports.
+This VM did **not** match AGENTS.md’s prebuilt Cohestra snapshot. Toolchain was installed without changing application source. API `:8080` and Next `:3000` ran. Demo seed: default tenant **Pro / Trialing**. Operator login on `default.localhost` succeeded.
 
-**Still BLOCKED:** Member, Basic, Suspended, OnHold, embed, registration success (not submitted), campaign compose dialogs, published Form Studio three-pane (first activity was archived), Platform console UI (browser login showed invalid password; user row exists; API login earlier returned a token).
+**Phase 0.1 live (2026-09-22):** remaining coverage, local-only fixtures (D12), 503 diagnosis, a11y + performance baselines, and check commands. Evidence: `_bmad-output/planning-artifacts/evidence/px2-phase01/`. D1–D13 are **product-owner resolved** and **not implemented**.
 
-**Do not treat remaining BLOCKED cells as pass or fail.**
+Evidence classes used below: **OBSERVED LIVE**, **CODE**, **ENVIRONMENT-BLOCKED**, **INFERRED**.
 
 Research/telemetry **GAP:** no operator interviews, no product analytics, no AT CI. Cinema visual audit (2026-09-05) is marketing-only and is not this initiative’s baseline.
 
@@ -67,7 +69,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P1 |
 | Root cause | Cinema copy locked as marketing-only; console IA grew separately; no shared naming glossary. |
 | Related | `PRODUCT_SLIDES`, `adminNavItems`, `DashboardIntelligenceBrief`, `ReportsPageClient` |
-| Suggested outcome | Product owner picks one public name per job (or an explicit “cinema is metaphor, console is ops” rule) before any restyle. |
+| Suggested outcome | **D1 RESOLVED (not implemented):** Dashboard, Clients, Activities, Follow-up, Analytics, Cohestra AI, Website, Campaigns. “Needs attention” is a dashboard section. “Reports” is an Analytics capability. Website page may be titled “Website Studio.” |
 | Confidence | High |
 | Validation needed | LIVE cinema vs LIVE dashboard side-by-side; support-search logs (**GAP**) |
 
@@ -83,7 +85,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P1 |
 | Root cause | Lead-queue work was implemented as filters + a dashboard widget, not a room. |
 | Related | `DashboardFollowUpQueue`, `use-clients-list-filters.ts`, `client-follow-up-panel.tsx` (dead) |
-| Suggested outcome | Decide: promote Follow-up to a nav room, or keep it as dashboard+clients and stop selling it as a peer chapter. |
+| Suggested outcome | **D2 RESOLVED (not implemented):** Follow-up remains a primary room. Dashboard widgets link to it. Opportunity is a follow-up state/category, not a separate primary room. |
 | Confidence | High |
 | Validation needed | LIVE dashboard overview empty + populated; clients `followUpDue` chip |
 
@@ -115,7 +117,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P1 |
 | Root cause | Mobile IA is a 4-tab subset that treats `/dashboard/*` as Home. |
 | Related | `AdminMobileTabBar`, `adminNavItems` |
-| Suggested outcome | Website is a first-class mobile destination **or** explicitly under More — not Home. Do not invent a fifth tab without PO. |
+| Suggested outcome | **D3 RESOLVED (not implemented):** On mobile, Website belongs under More, not Home. Preferred primary destinations: Home, Clients, Activities, Follow-up, More. |
 | Confidence | High |
 | Validation needed | LIVE 390px on `/dashboard/website` |
 
@@ -131,7 +133,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P2 |
 | Root cause | Nav is a static array; entitlement is page-level. |
 | Related | `admin-nav.ts`, `UpgradePanel`, `admin-nav-footer.tsx` |
-| Suggested outcome | Decide hide vs lock-with-badge vs keep destination UpgradePanel. Apply the same rule to Member. |
+| Suggested outcome | **D4 RESOLVED (not implemented):** Major upgrade-discoverable modules remain visible with a lock and plan label, but must not lead to a generic upgrade dead end. Structurally inapplicable controls stay hidden (including the Basic tenant-URL option). |
 | Confidence | High |
 | Validation needed | LIVE Basic + Member (both **unseeded** — GAP) |
 
@@ -179,7 +181,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P2 |
 | Root cause | Title owned by chrome **and** pages; no heading contract. |
 | Related | `page-header.tsx`, `settings-page-header.tsx`, `{typography.section}`, `{typography.display-sm}` |
-| Suggested outcome | One document h1 per view; content starts at h2. |
+| Suggested outcome | **D9 RESOLVED (not implemented):** Each route owns exactly one page-level h1. The shell owns one main landmark and must not introduce a competing route heading. |
 | Confidence | High |
 | Validation needed | LIVE heading map on Dashboard, Campaigns, Settings, Website |
 
@@ -211,7 +213,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P1 |
 | Root cause | Feature dialogs bypass Base UI primitive. |
 | Related | `dialog.tsx`, `globals.css` `[data-slot="dialog-*"]` PRM |
-| Suggested outcome | Same dialog primitive as the rest of admin (trap, Esc, labelled title, PRM). Do not restyle campaign compose. |
+| Suggested outcome | **D8 RESOLVED (not implemented):** Future overlays use the shared accessible dialog primitive and 160ms local motion. Press feedback remains 100ms. |
 | Confidence | High (structure) / Medium (trap) |
 | Validation needed | LIVE keyboard on compose |
 
@@ -227,7 +229,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P1 |
 | Root cause | Midnight Atelier stone was chosen for atmosphere; cinema later patched AA only for demo mounts. |
 | Related | `{colors.stone}`, `{colors.stone-cinema}`, `ProductEmptyState` description |
-| Suggested outcome | One AA muted token for operator UI (cinema stone or equivalent). Do not invent a third grey in Phase 0. |
+| Suggested outcome | **D5 RESOLVED (not implemented):** Create a future semantic `--text-muted` token meeting at least 4.5:1 for normal text. Do **not** globally reuse the cinema-specific token. LIVE meter 2026-09-22: `--stone` `#8b939c` on `--paper` `#fafbfc` is **3.00:1**; `--gold` on paper is **3.13:1**. |
 | Confidence | High (tokens measured) |
 | Validation needed | LIVE meter on muted labels with and without brand accent |
 
@@ -275,7 +277,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P2 |
 | Root cause | shadcn/Base UI density, not a Cohestra token. |
 | Related | `buttonVariants`, Epic 35 public field/button tokens |
-| Suggested outcome | Define a product min target (44 touch / 32 desktop) **without** changing Epic 35 public CTA sizes. |
+| Suggested outcome | **D6 RESOLVED (not implemented):** Target ~40px controls in dense desktop interfaces, 44px minimum for touch/mobile, 48px for prominent public actions. LIVE: default buttons 32px; public Join 48px (`min-h-12`); mobile clients chips 32px. |
 | Confidence | High |
 | Validation needed | LIVE touch on list actions |
 
@@ -307,7 +309,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P2 |
 | Root cause | Tailwind `xl` used instead of the written 1024 contract. |
 | Related | Epic 36 builder shell; do not change composition semantics |
-| Suggested outcome | Honor the written 1024 three-pane **or** amend EXPERIENCE to 1280. PO decision. |
+| Suggested outcome | **D7 RESOLVED (spec only, not implemented):** Three panes at ≥1280px. At 1024–1279 use a deliberate two-pane / collapsible-inspector composition. Do not implement in Phase 0.1. LIVE 1440 first fold of published Form Studio is the template gallery; composition builder is below the fold. |
 | Confidence | High |
 | Validation needed | LIVE 1024 vs 1280 |
 
@@ -371,7 +373,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P2 |
 | Root cause | UI lock is a page, not IA. |
 | Related | `upgrade-panel.tsx`, `RequireProPlanFilter` |
-| Suggested outcome | Same as PX2-IA-005 — pick hide / badge / panel. Server gates stay. |
+| Suggested outcome | **D4 RESOLVED (not implemented):** Keep major modules visible with lock + plan label; no generic upgrade dead end. LIVE Basic Website/Campaigns show `UpgradePanel` with Core/Pro prices and Start trial — not a blank lock. |
 | Confidence | High |
 | Validation needed | LIVE Basic (**unseeded**) |
 
@@ -387,7 +389,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P2 |
 | Root cause | Membership added without a denied template or seed. |
 | Related | `SettingsTeamPageContent`, `OperatorSeeder` |
-| Suggested outcome | One denied/upgrade empty; seed one Member in Development. **Env fixture, not a UI rewrite.** |
+| Suggested outcome | **D12 RESOLVED:** local-only Member fixture used in Phase 0.1 (`px2-member@cohestra.local` on default). LIVE: Member settings is personal-only; `/settings/team` redirects to `/settings`. Denied remains inline/redirect, not a shared primitive. |
 | Confidence | High |
 | Validation needed | LIVE Member JWT |
 
@@ -405,7 +407,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Related | `TenantAccessEvaluator`, `BillingBannerBar` |
 | Suggested outcome | Distinct copy per dial. Do not change access evaluator in UX 2.0 without PO. |
 | Confidence | High |
-| Validation needed | LIVE Suspended + OnHold fixtures (**unseeded**) |
+| Validation needed | LIVE Suspended + OnHold fixtures — **done** (local-only `px2-suspended` / `px2-onhold`) |
 
 ### PX2-STATE-001 — No App Router error / 404 / loading
 
@@ -419,7 +421,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P1 |
 | Root cause | State kit never lifted to the router. |
 | Related | `ProductErrorState` |
-| Suggested outcome | Root + admin `not-found` / `error` using the existing error primitive. |
+| Suggested outcome | **D11 RESOLVED (future story, not implemented):** Deliberate App Router error and not-found experiences are required. LIVE `/nope-px2-audit` is Next default “404 | This page could not be found.” |
 | Confidence | High |
 | Validation needed | LIVE `/nope` |
 
@@ -451,7 +453,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P2 |
 | Root cause | Epic 37 scoped chrome + builders; leftover overlay timings. |
 | Related | Epic 37 AD-1–AD-8 — **do not change 100/160/280** |
-| Suggested outcome | Map overlays onto local (160) or keep 200 as a documented overlay token. Force campaign dialogs through slotted primitives. |
+| Suggested outcome | **D8 RESOLVED (not implemented):** overlays → shared dialog + 160ms local; press stays 100ms. LIVE campaign Preview is a custom `role=dialog` without the slotted primitive. Command palette is also custom; Esc closed one of two dialogs and restored focus to `BODY`. |
 | Confidence | High |
 | Validation needed | LIVE PRM + route enter; do not regress Form Studio draft survival |
 
@@ -467,7 +469,7 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Severity | P3 |
 | Root cause | Platform built as a sparse console. |
 | Related | `--plat-ink`, `--plat-lagoon` |
-| Suggested outcome | PO: keep sparse console **or** inherit Midnight Atelier. Do not silently restyle. |
+| Suggested outcome | **D10 RESOLVED (not implemented):** Platform inherits shared semantic tokens and accessibility rules. Platform-specific layouts/density may remain; duplicate raw `--plat-*` colors migrate gradually. LIVE `/platform` directory confirmed (sparse console, fixture tenants visible). |
 | Confidence | High |
 | Validation needed | LIVE `/platform` |
 
@@ -535,21 +537,22 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Confidence | High |
 | Validation needed | Already LIVE |
 
-### PX2-LIVE-004 — Authenticated pages log 503 (and Website 404)
+### PX2-LIVE-004 — Authenticated pages POST `/billing/sync` → 503
 
 | Field | Value |
 |-------|--------|
-| Route / state | every captured admin URL |
-| Role / plan | TenantAdmin Pro |
-| Viewport | all captured |
-| Evidence **OBSERVED LIVE** | Playwright `console` error `503 Service Unavailable` on dashboard, clients, activities, website, reports, campaigns, settings. Website also 404. Pages still rendered. Resource URL not isolated (follow-up script timed out). |
-| User impact | Unknown missing capability; noise in console; possible broken image/telemetry. |
+| Route / state | every new TenantAdmin browser context |
+| Role / plan | TenantAdmin (any plan that mounts the shell) |
+| Viewport | all |
+| Evidence **OBSERVED LIVE** | Isolated request: `POST http://localhost:8080/api/v1/admin/billing/sync` → **503** body `{"title":"Billing unavailable","status":503,"detail":"Paddle is not configured in this environment."}`. Caller: `tenant-shell-provider.tsx` (sessionStorage once per tab). Pages still rendered. Write-up: `evidence/px2-phase01/503-diagnosis.md`. |
+| User impact | Console noise on every admin entry in any environment without Paddle. Billing status is not refreshed. |
 | Severity | P2 |
-| Root cause | Unidentified failed fetch (not fatal to first paint). |
-| Related | admin data loaders, website assets |
-| Suggested outcome | Identify the 503 URL; do not paper over by swallowing console errors. |
-| Confidence | Medium (status seen; URL not captured) |
-| Validation needed | Network panel on one admin page |
+| Root cause | Shell auto-syncs without checking `billingConfigured`. API 503 for missing Paddle is intentional. |
+| Classification | **PRODUCT-DEFECT** (unconditional session sync) on top of **environment-expected** Paddle-missing 503. Not incidental. |
+| Related | `BillingController.Sync`, `syncBillingFromProviderWithAuth` |
+| Suggested outcome | Future story: skip sync when billing is unconfigured, or treat 503 as a named billing-unavailable state. Do not swallow console errors as the fix. |
+| Confidence | High |
+| Validation needed | Done |
 
 ### PX2-LIVE-005 — First Form Studio open was an archived activity
 
@@ -593,21 +596,91 @@ Playwright counted **2 `<main>`** and h1 `["Settings","Default"]` at every captu
 
 ---
 
+### PX2-ENT-004 — Basic Website plan gate returns HTTP 500
+
+| Field | Value |
+|-------|--------|
+| Route / state | `/dashboard/website` on local Basic fixture |
+| Role / plan | TenantAdmin Basic (`px2-basic`) |
+| Viewport | 1440 |
+| Evidence **OBSERVED LIVE** | UI shows `UpgradePanel` “Unlock a branded public homepage” with Core/Pro cards (not a generic dead end). Network: `GET /api/v1/admin/site` → **500** `{"title":"An unexpected error occurred.","status":500,"detail":"Site pages require a Core plan or higher."}`. |
+| User impact | Browser console error on a known entitlement; operators may see a flash of ProductErrorState depending on fetch handling. |
+| Severity | P2 |
+| Classification | **PRODUCT-DEFECT** — a known plan lock should be 403 / `plan_locked`, not 500. |
+| Confidence | High |
+
+### PX2-ENT-005 — Suspended copy still says “on hold”
+
+| Field | Value |
+|-------|--------|
+| Route / state | `http://px2-suspended.localhost:3000/` |
+| Evidence **OBSERVED LIVE** | “WORKSPACE PAUSED” / “PX2 Suspended Fixture is on hold” / “This is not ordinary billing.” Admin login on the same host stays on `/login` (access blocked). |
+| Classification | Confirms PX2-ENT-003. **VERIFIED.** |
+
+### PX2-A11Y-008 — Live keyboard / contrast / touch baseline
+
+| Check | OBSERVED LIVE (2026-09-22) |
+|-------|----------------------------|
+| Skip link | **0** on admin dashboard |
+| Focus order | Sidebar Dashboard → Website → Activities → expand → Clients → Campaigns → Reports → Settings… Logical. |
+| Visible focus | First 18 tabs: `outline: none 1px`; some box-shadow rings. Pulse/queue links remain weak. |
+| Command palette | ⌘K opens custom `role=dialog` (count 2 including cookie/backdrop). Focus starts in dialog. Esc left 1 dialog; focus restored to `BODY`, not the Search control. |
+| Accessible names | Chrome labelled. Intelligence count/name links have visible text but no extra `aria-label` (counted as unnamed by the scraper). |
+| 200% zoom | CSS `zoom:2` on 720×450; overflow 0. |
+| Reduced motion | `transitionDuration` sample `0s` on dashboard/clients. |
+| Touch | Desktop below-40: command palette 36px, appearance 32px, queue actions 28px. Mobile clients: chips 32px, messenger icons 32px, export 28px. Public Join remains ~48px. |
+| Contrast | `--stone` on `--paper` **3.00:1** (85 failing unique samples). `--gold` on paper **3.13:1**. |
+
+---
+
 ## What is not claimed
 
 - No user-research quotes. No “operators told us…”.
-- No live contrast meter on a rendered page (token math only).
 - No VoiceOver/NVDA session.
-- No claim that Epic 35 shells fail their e2e matrix — those specs exist and skip without `E2E_LIVE_STACK=1`.
+- No claim that Epic 35 shells fail their e2e matrix. Live-stack e2e this run: 61 passed, 5 skipped, 2 failed — failures predate this PR (see `evidence/px2-phase01/checks.md`).
 - No claim that 32px buttons fail WCAG 2.2 2.5.8.
+- Local Navigation Timing is **not** production RUM.
 - Cinema 2026-09-05 audit is **not** reused as operator-console evidence.
+- D1–D13 are recorded, not implemented. `docs/DESIGN.md` is **not** authored.
 
 ## Telemetry / research gaps
 
-| Gap | Why it matters | Minimum close |
-|-----|----------------|---------------|
-| No product analytics | Cannot rank Website-under-Home mis-taps or UpgradePanel bounce | Events: nav, upgrade view, dialog dismiss method |
-| No AT CI | A11Y-004/005/007 are static | axe + contrast on `--text-muted-warm` vs `--paper` |
-| No TenantMember / Basic / Suspended / OnHold seed | ENT and status findings are code-only | Dev fixtures, not production behavior change |
-| No live 6-viewport pass this run | Visual QA matrix incomplete | Browser pass after API health |
-| Operator manual June 2026 | Training contradicts Team | Docs update after naming decisions |
+| Gap | Why it matters | Status after 0.1 |
+|-----|----------------|------------------|
+| No product analytics | Cannot rank Website-under-Home mis-taps or UpgradePanel bounce | Still GAP |
+| No AT CI | Keyboard/contrast are one-off | Manual baseline recorded |
+| Member / Basic / Suspended / OnHold | Were unseeded | **Local fixtures only** — not a production seeder |
+| Operator manual June 2026 | Training contradicts Team | Still GAP; wait for D1 copy |
+
+---
+
+## Phase 0.1 closure
+
+| Former gap | Disposition | Evidence |
+|------------|-------------|----------|
+| Authenticated 503 URL unknown | **PRODUCT-DEFECT** (unconditional `/billing/sync`) on environment-expected Paddle 503 | `evidence/px2-phase01/503-diagnosis.md`, `diag-dashboard-503_1440x900.png` |
+| PR screenshot `blob:vscode-file` / `/tmp` links | **VERIFIED** — replaced with repo paths | `evidence/px2-phase01/*` |
+| Client profile | **VERIFIED** | `client-profile_1440x900.png` James Rivera |
+| Campaign compose / preview (no send) | **VERIFIED** | `campaign-compose_*.png`, `campaign-preview_1440x900.png` |
+| Public embed | **VERIFIED** | `public-embed_1440x900.png`, `_390x844.png` |
+| Registration validation + success | **VERIFIED** | validation 7 alerts; success `REG20260922000101` |
+| Published Form Studio | **VERIFIED** (first fold = templates; composition below fold) | `form-studio-published_*.png`, `form-studio-preview_1440x900.png` |
+| Platform console | **VERIFIED** | `platform-home_1440x900.png`, support, tenant detail |
+| Split Event / Event Poster / Conversational | **VERIFIED** (Design tab live preview, **not saved**) | `design-split/poster/conversational_1440x900.png` |
+| Basic / Pro / TenantMember / Suspended / OnHold | **VERIFIED** via local-only fixtures | `basic-*`, `member-*`, `suspended-*`, `onhold-*` |
+| Keyboard / focus / dialog / skip / names | **VERIFIED** (manual baseline) | `phase01-report.json` `a11y` |
+| 200% zoom + reduced motion | **VERIFIED** | `a11y-zoom-200_720x450.png`, `a11y-reduced-motion_1440x900.png` |
+| Touch-target review | **VERIFIED** | report `touchTargets` / `mobileTouch` |
+| Contrast across semantic tokens | **VERIFIED** | live 3.00:1 stone; 3.13:1 gold |
+| Performance baseline | **VERIFIED** (local only) | `phase01-report.json` `performance` |
+| Typecheck / build / unit / e2e | **VERIFIED** with known pre-existing e2e fails | `evidence/px2-phase01/checks.md` |
+| D1–D13 implementation | **DEFERRED WITH PRODUCT-OWNER APPROVAL** | decisions recorded; no UI/runtime change |
+| `docs/DESIGN.md` authoring | **DEFERRED WITH PRODUCT-OWNER APPROVAL** | D13: living contract later |
+| Form Studio 1024 two-pane | **DEFERRED WITH PRODUCT-OWNER APPROVAL** | D7 spec-only |
+| App Router error/not-found | **DEFERRED WITH PRODUCT-OWNER APPROVAL** | D11; Next default 404 captured |
+| Production seeder for fixtures | **DEFERRED WITH PRODUCT-OWNER APPROVAL** | D12 local-only |
+| Paddle checkout / invite token / signup verify | **ENVIRONMENT-BLOCKED** | third-party / token |
+| VoiceOver/NVDA / production RUM | **ENVIRONMENT-BLOCKED** | tools not in this VM |
+| Basic `GET /admin/site` 500 | **PRODUCT-DEFECT** | recorded, not fixed (audit-only) |
+
+Phase 0 **can close**: 503 explained; evidence reviewable; critical role/plan/form variants covered; a11y + performance baselines exist; remaining gaps have disposition. Phase 1 is **not** started.
