@@ -1,0 +1,2110 @@
+{
+  "startedAt": "2026-09-22T15:12:56.560Z",
+  "environment": {
+    "host": "local Cloud VM",
+    "api": "http://localhost:8080",
+    "web": "http://localhost:3000",
+    "note": "Local measurements only. Not production."
+  },
+  "failingRequests": [
+    {
+      "screen": "dashboard-503-diagnosis",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "client-profile",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "client-profile",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4\",\"traceId\":\"0HNOONFPBEP7P:00000002\"}"
+    },
+    {
+      "screen": "client-profile",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4\",\"traceId\":\"0HNOONFPBEP7O:00000004\"}"
+    },
+    {
+      "screen": "client-profile",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "client-profile",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4\",\"traceId\":\"0HNOONFPBEP7U:00000002\"}"
+    },
+    {
+      "screen": "client-profile",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4\",\"traceId\":\"0HNOONFPBEP7R:00000004\"}"
+    },
+    {
+      "screen": "campaign-compose",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "campaign-compose",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "campaign-preview",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "form-studio-published",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP8H:00000004\"}"
+    },
+    {
+      "screen": "form-studio-published",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP8L:00000002\"}"
+    },
+    {
+      "screen": "form-studio-published",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "form-studio-published",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP8S:00000002\"}"
+    },
+    {
+      "screen": "form-studio-published",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP8O:00000004\"}"
+    },
+    {
+      "screen": "form-studio-published",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "form-studio-published",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP90:00000002\"}"
+    },
+    {
+      "screen": "form-studio-published",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP8V:00000003\"}"
+    },
+    {
+      "screen": "form-studio-published",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "activity-design",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP94:00000003\"}"
+    },
+    {
+      "screen": "activity-design",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP93:00000006\"}"
+    },
+    {
+      "screen": "activity-design",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "communities",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "categories",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "activity-new",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "not-found",
+      "method": "GET",
+      "url": "http://localhost:3000/nope-px2-audit",
+      "status": 404,
+      "resourceType": "document",
+      "body": "<!DOCTYPE html><html lang=\"en\" class=\"geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable inter_fe8b9d92-module__LINzvG__variable fraunces_27e3b677-module__Fuko2q__variable plusjakartasans_b7d3017e-module__SXJAYG__variable h-full antialiased\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/_next/static/chunks/%5Broot-of-the-server%5D__1_res8j._.css\" data-precedence=\"next_static/chunks/[root-of-the-server]__1_res8j._.css\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_1di75ot._.js\"/><script src=\"/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_090k2jm.js\" async=\"\"></scrip"
+    },
+    {
+      "screen": "a11y-dashboard",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "settings-reconfirm",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "basic-dashboard",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "basic-website",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/site",
+      "status": 500,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"An unexpected error occurred.\",\"status\":500,\"detail\":\"Site pages require a Core plan or higher.\",\"instance\":\"/api/v1/admin/site\",\"traceId\":\"0HNOONFPBEPD0:00000002\"}"
+    },
+    {
+      "screen": "basic-website",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/admin/site",
+      "status": 500,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"An unexpected error occurred.\",\"status\":500,\"detail\":\"Site pages require a Core plan or higher.\",\"instance\":\"/api/v1/admin/site\",\"traceId\":\"0HNOONFPBEPCV:00000002\"}"
+    },
+    {
+      "screen": "basic-website",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/public/site",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.4\",\"title\":\"Not Found\",\"status\":404,\"detail\":\"Marketing host has no tenant SitePage context.\",\"instance\":\"/api/v1/public/site\",\"errorCode\":\"tenant_unresolved\",\"traceId\":\"0HNOONFPBEPCU:00000003\"}"
+    },
+    {
+      "screen": "basic-website",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "basic-website",
+      "method": "GET",
+      "url": "http://localhost:8080/api/v1/public/site",
+      "status": 404,
+      "resourceType": "fetch",
+      "body": "{\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.4\",\"title\":\"Not Found\",\"status\":404,\"detail\":\"Marketing host has no tenant SitePage context.\",\"instance\":\"/api/v1/public/site\",\"errorCode\":\"tenant_unresolved\",\"traceId\":\"0HNOONFPBEPCU:00000004\"}"
+    },
+    {
+      "screen": "basic-campaigns",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "basic-reports",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "basic-settings",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    },
+    {
+      "screen": "onhold-dashboard",
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    }
+  ],
+  "coverage": [
+    {
+      "id": "client-profile",
+      "url": "http://default.localhost:3000/clients/78923af9-403e-4655-85ca-d967d4be22f4",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Profile"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n8/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nClients\nProfile\nPROFILE\nPro\nTrialing\nSearch\n⌘K\nOP\nOperator\nS",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4\",\"traceId\":\"0HNOONFPBEP7P:00000002\"}"
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4\",\"traceId\":\"0HNOONFPBEP7O:00000004\"}"
+        }
+      ]
+    },
+    {
+      "id": "client-profile",
+      "url": "http://default.localhost:3000/clients/78923af9-403e-4655-85ca-d967d4be22f4",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Profile"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Clients\nProfile\nPROFILE\nPro\nOP\nSOMETHING WENT WRONG\n\nClient not found.\n\nTry again\nBack to clients\nHome\nActivities\nClients\nMore\n\nCohestra by Creativorare · 2026",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4\",\"traceId\":\"0HNOONFPBEP7U:00000002\"}"
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/clients/78923af9-403e-4655-85ca-d967d4be22f4\",\"traceId\":\"0HNOONFPBEP7R:00000004\"}"
+        }
+      ]
+    },
+    {
+      "id": "campaign-compose",
+      "url": "http://default.localhost:3000/campaigns/new",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Campaign"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n8/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nCampaigns\nCampaign\nCAMPAIGN\nPro\nTrialing\nSearch\n⌘K\nOP\nOperat",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "campaign-compose",
+      "url": "http://default.localhost:3000/campaigns/new",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Campaign"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Campaigns\nCampaign\nCAMPAIGN\nPro\nOP\n← Back to campaigns\nCompose campaign\n\nChoose recipients, write your message, and send to consented leads with email on file.\n\nEmail delivery needs attention\n\nCampaigns may not reach inboxes until SendGrid is configured and verified. Sending from noreply@cohestra.app.\n\n!\n\nSendGrid API key\n— Action required\n\nNo SendGrid API k",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "campaign-preview",
+      "url": "http://default.localhost:3000/campaigns/new",
+      "dialogs": 1,
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n8/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nCampaigns\nCampaign\nCAMPAIGN\nPro\nTrialing\nSearch\n⌘K\nOP\nOperat",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "form-studio-published",
+      "url": "http://default.localhost:3000/activities/52d3f411-c935-4100-a9fe-28386749e871?tab=form",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Activity"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nAll activities\nCommunities\nCategories\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n8/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nActivities\nActivity\nAC",
+      "failed": [
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP8H:00000004\"}"
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP8L:00000002\"}"
+        },
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "form-studio-published",
+      "url": "http://default.localhost:3000/activities/52d3f411-c935-4100-a9fe-28386749e871?tab=form",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Activity"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nAll activities\nCommunities\nCategories\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n8/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nActivities\nActivity\nAC",
+      "failed": [
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP8S:00000002\"}"
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP8O:00000004\"}"
+        },
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "form-studio-published",
+      "url": "http://default.localhost:3000/activities/52d3f411-c935-4100-a9fe-28386749e871?tab=form",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Activity"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Activities\nActivity\nACTIVITY\nPro\nOP\nSOMETHING WENT WRONG\n\nRequest failed (404)\n\nTry again\nBack to activities\nHome\nActivities\nClients\nMore\n\nCohestra by Creativorare · 2026",
+      "failed": [
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP90:00000002\"}"
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP8V:00000003\"}"
+        },
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "activity-design",
+      "url": "http://default.localhost:3000/activities/52d3f411-c935-4100-a9fe-28386749e871?tab=design",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Activity"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nAll activities\nCommunities\nCategories\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n8/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nActivities\nActivity\nAC",
+      "failed": [
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP94:00000003\"}"
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.5\",\"title\":\"Not Found\",\"status\":404,\"instance\":\"/api/v1/admin/activities/52d3f411-c935-4100-a9fe-28386749e871\",\"traceId\":\"0HNOONFPBEP93:00000006\"}"
+        },
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "design-split",
+      "selected": false,
+      "note": "Layout card not visible"
+    },
+    {
+      "id": "design-poster",
+      "selected": false,
+      "note": "Layout card not visible"
+    },
+    {
+      "id": "design-conversational",
+      "selected": false,
+      "note": "Layout card not visible"
+    },
+    {
+      "id": "communities",
+      "url": "http://default.localhost:3000/activities/communities",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Communities"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nAll activities\nCommunities\nCategories\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n8/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nActivities\nCommunities",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "categories",
+      "url": "http://default.localhost:3000/activities/categories",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Categories"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nAll activities\nCommunities\nCategories\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n8/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nActivities\nCategories\n",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "activity-new",
+      "url": "http://default.localhost:3000/activities/new",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "New activity"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nAll activities\nCommunities\nCategories\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n8/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nActivities\nNew activit",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "privacy",
+      "url": "http://localhost:3000/privacy",
+      "status": 200,
+      "overflow": 0,
+      "mains": 0,
+      "h1": [
+        "Privacy Policy"
+      ],
+      "landmarks": [
+        "header",
+        "nav",
+        "footer",
+        "nav",
+        "nav",
+        "nav"
+      ],
+      "bodySnippet": "Cohestra\nFeatures\nDocument\nClients\nHow it works\nPricing\nFAQ\nSign in\n\nLEGAL\n\nPrivacy Policy\n\nEffective version: 2026-07-21\n\nOverview\n\nThis Privacy Policy explains how Cohestra collects, uses, and protects personal information when you use our platform.\n\nCohestra acts as a processor for registration data your organization collects from participants, and as a c",
+      "failed": []
+    },
+    {
+      "id": "terms",
+      "url": "http://localhost:3000/terms",
+      "status": 200,
+      "overflow": 0,
+      "mains": 0,
+      "h1": [
+        "Terms of Service"
+      ],
+      "landmarks": [
+        "header",
+        "nav",
+        "footer",
+        "nav",
+        "nav",
+        "nav"
+      ],
+      "bodySnippet": "Cohestra\nFeatures\nDocument\nClients\nHow it works\nPricing\nFAQ\nSign in\n\nLEGAL\n\nTerms of Service\n\nEffective version: 2026-07-21\n\nOverview\n\nThese Terms of Service (“Terms”) govern your use of Cohestra, a multi-tenant community operations platform operated by Cohestra.\n\nBy creating an account or using the service, you agree to these Terms and our Privacy Policy.\n\n",
+      "failed": []
+    },
+    {
+      "id": "not-found",
+      "url": "http://localhost:3000/nope-px2-audit",
+      "status": 404,
+      "overflow": 0,
+      "mains": 0,
+      "h1": [
+        "404"
+      ],
+      "landmarks": [
+        "footer"
+      ],
+      "bodySnippet": "404\nThis page could not be found.\n\nCohestra by Creativorare · 2026",
+      "failed": [
+        {
+          "method": "GET",
+          "url": "http://localhost:3000/nope-px2-audit",
+          "status": 404,
+          "resourceType": "document",
+          "body": "<!DOCTYPE html><html lang=\"en\" class=\"geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__variable inter_fe8b9d92-module__LINzvG__variable fraunces_27e3b677-module__Fuko2q__variable plusjakartasans_b7d3017e-module__SXJAYG__variable h-full antialiased\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/_next/static/chunks/%5Broot-of-the-server%5D__1_res8j._.css\" data-precedence=\"next_static/chunks/[root-of-the-server]__1_res8j._.css\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/%5Bturbopack%5D_browser_dev_hmr-client_hmr-client_ts_1di75ot._.js\"/><script src=\"/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_090k2jm.js\" async=\"\"></scrip"
+        }
+      ]
+    },
+    {
+      "id": "public-embed",
+      "url": "http://default.localhost:3000/embed/register/demo-marina-social-meetup",
+      "status": 200,
+      "overflow": 0,
+      "mains": 0,
+      "h1": [
+        "Marina Pickleball — Member Social"
+      ],
+      "landmarks": [
+        "header"
+      ],
+      "bodySnippet": "MARINA PICKLEBALL CLUB\n\nMarina Pickleball — Member Social\n\nTue, Sep 29, 2026, 5:00 PM\n\nMarina Pickleball Club venue\n\nFull name *\nPhone *\n+65\n\nLocal SG mobile — country is set by the activity form.\n\nEmail\nI agree to be contacted about community activities. *\nJoin activity",
+      "failed": []
+    },
+    {
+      "id": "public-embed",
+      "url": "http://default.localhost:3000/embed/register/demo-marina-social-meetup",
+      "status": 200,
+      "overflow": 0,
+      "mains": 0,
+      "h1": [
+        "Marina Pickleball — Member Social"
+      ],
+      "landmarks": [
+        "header"
+      ],
+      "bodySnippet": "MARINA PICKLEBALL CLUB\n\nMarina Pickleball — Member Social\n\nTue, Sep 29, 2026, 5:00 PM\n\nMarina Pickleball Club venue\n\nFull name *\nPhone *\n+65\n\nLocal SG mobile — country is set by the activity form.\n\nEmail\nI agree to be contacted about community activities. *\nJoin activity",
+      "failed": []
+    },
+    {
+      "id": "registration-validation",
+      "url": "http://default.localhost:3000/register/demo-marina-social-meetup",
+      "alerts": 7,
+      "bodySnippet": "Cohestra\n\nCommunity registration\n\nAppearance\n\nMARINA PICKLEBALL CLUB\n\nMarina Pickleball — Member Social\nWhen\nTue, Sep 29, 2026, 5:00 PM\nWhere\nMarina Pickleball Club venue\n\n11 going\n\nRegistration\nFull name *\n\nThis field is required.\n\nPhone *\n+65\n\nLocal SG mobile — country is set by the activity form.\n\nThis field is required.\n\nEmail\nI agree to be contacted abo",
+      "failed": []
+    },
+    {
+      "id": "registration-success",
+      "url": "http://default.localhost:3000/register/demo-marina-social-meetup",
+      "bodySnippet": "Cohestra\n\nCommunity registration\n\nAppearance\n\nMARINA PICKLEBALL CLUB\n\nMarina Pickleball — Member Social\nWhen\nTue, Sep 29, 2026, 5:00 PM\nWhere\nMarina Pickleball Club venue\n\n11 going\n\nRegistration\nFull name *\nPhone *\n+65\n\nLocal SG mobile — country is set by the activity form.\n\nThis field is required.\n\nEmail\nI agree to be contacted about community activities. *\nJoin activity\nVisit default Cohestra\n\nC",
+      "failed": []
+    },
+    {
+      "id": "settings-reconfirm",
+      "url": "http://default.localhost:3000/settings",
+      "status": 200,
+      "overflow": 0,
+      "mains": 2,
+      "h1": [
+        "Settings",
+        "Default"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "main",
+        "header",
+        "nav",
+        "aside",
+        "nav",
+        "main",
+        "header",
+        "aside",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n8/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nSETTINGS\nPro\nTrialing\nSearch\n⌘K\nOP\nOperator\n\nWORKSPACE\n\nDefa",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "platform-home",
+      "url": "http://localhost:3000/platform",
+      "h1": [
+        "Tenant directory"
+      ],
+      "bodySnippet": "Cohestra\n\nPlatform\n\nTenants\nSupport\nplatform-admin@cohestra.local\nSign out\nTenant directory\n\nSearch workspaces by slug or name. Counts are aggregates only — no client export.\n\nCreate tenant\nSearch tenants and issues\nSearch\nSearch tenants\nFilter by status\nAll statuses\nActive\nSuspended\nArchived\nFilter by billing\nAll billing\nFree\nActive\nPastDue\nCanceled\nSearch\nHide demo / load-test workspaces\nSLUG\tNA",
+      "failed": []
+    },
+    {
+      "id": "platform-home",
+      "url": "http://localhost:3000/platform",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Tenant directory"
+      ],
+      "landmarks": [
+        "header",
+        "nav",
+        "main",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nPlatform\n\nTenants\nSupport\nplatform-admin@cohestra.local\nSign out\nTenant directory\n\nSearch workspaces by slug or name. Counts are aggregates only — no client export.\n\nCreate tenant\nSearch tenants and issues\nSearch\nSearch tenants\nFilter by status\nAll statuses\nActive\nSuspended\nArchived\nFilter by billing\nAll billing\nFree\nActive\nPastDue\nCanceled\nSearch\n",
+      "failed": []
+    },
+    {
+      "id": "platform-support",
+      "url": "http://localhost:3000/platform/support",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Support inbox"
+      ],
+      "landmarks": [
+        "header",
+        "nav",
+        "main",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nPlatform\n\nTenants\nSupport\nplatform-admin@cohestra.local\nSign out\nSupport inbox\n\nMatch Gmail [SUP…] subjects to the correct tenant and operator.\n\nVolume report\nSearch tenants and issues\nSearch\nSearch support issues\nFilter by status\nAll statuses\nOpen\nIn Progress\nWaiting On Operator\nResolved\nClosed\nSearch\nISSUE\tTENANT\tOPERATOR\tSUBJECT\tSTATUS\tCREATED\nN",
+      "failed": []
+    },
+    {
+      "id": "platform-tenant-detail",
+      "url": "http://localhost:3000/platform/tenants/b1111111-1111-4111-8111-111111111111",
+      "bodySnippet": "Cohestra\n\nPlatform\n\nTenants\nSupport\nplatform-admin@cohestra.local\nSign out\nDIRECTORY\npx2-basic\n\nPX2 Basic Fixture · created 2026-09-22\n\nStatus Active·Plan Basic·Sponsored·Billing Free\n\nAdmin contact px2-basic-admin@cohestra.local\n\nTENANT SNAPSHOT\nPlan\nBasic\nStatus\nActive\nBilling\nFree\nComplimentary\nYes\nSeats\n1/1\nCommunities\n0/1\nPublished activities\n0/4\nRegist",
+      "failed": []
+    },
+    {
+      "id": "login-basic",
+      "url": "http://px2-basic.localhost:3000/dashboard",
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n1/1\nCommunities\n0/1\nPublished activities\n0/4\nRegistrations this month (UTC)\n0/250\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nDASHBOARD\nBasic\nSponsored\nUpdated 3:14 PM\nSearch\n⌘K\nPB\nPx2 Basic Admin\n\nTuesday, September 22\n\nGood afternoon, Px2 Basic Admin\n\nYour outreach"
+    },
+    {
+      "id": "login-onhold",
+      "url": "http://px2-onhold.localhost:3000/dashboard",
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n1/10\nCommunities\n0/10\nPublished activities\n0/50\nRegistrations this month (UTC)\n0/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nDASHBOARD\nPro\nOnHold\nSponsored\nUpdated 3:14 PM\nSearch\n⌘K\nPO\nPx2 Onhold Admin\n\nTuesday, September 22\n\nGood afternoon, Px2 Onhold Admin\n\nYo"
+    },
+    {
+      "id": "login-suspended-admin",
+      "url": "http://px2-suspended.localhost:3000/login",
+      "bodySnippet": "Cohestra\nAppearance\n\nOPERATOR WORKSPACE\n\nSign in\n\nManage activities, your client list, and outreach from one workspace.\n\nPX2 Suspended Fixture workspace\n\nSigning in at px2-suspended.localhost:3000. This URL is your workspace address and stays the same after restarts or rebuilds.\n\nEmail address\nPassword\n\nTenant workspace 'px2-suspended' is not available.\n\nSign in to workspace\n\nFor authorized operat"
+    },
+    {
+      "id": "login-member",
+      "url": "http://default.localhost:3000/dashboard",
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n5/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nSettings\nDASHBOARD\nPro\nTrialing\nUpdated 3:13 PM\nSearch\n⌘K\nPM\nPx2 Member\n\nTuesday, September 22\n\nGood afternoon, Px2 Member\n\nYour outr"
+    },
+    {
+      "id": "basic-dashboard",
+      "url": "http://px2-basic.localhost:3000/dashboard",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Dashboard"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n1/1\nCommunities\n0/1\nPublished activities\n0/4\nRegistrations this month (UTC)\n0/250\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nDASHBOARD\nBasic\nSponsored\nUpdated 3:14 PM\nSearch\n⌘K\nPB\nPx2 Basic Admin\n\nTuesday, September 22\n\nGood a",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "basic-website",
+      "url": "http://px2-basic.localhost:3000/dashboard/website",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Website"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n1/1\nCommunities\n0/1\nPublished activities\n0/4\nRegistrations this month (UTC)\n0/250\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nDashboard\nWebsite\nWEBSITE\nBasic\nSponsored\nSearch\n⌘K\nPB\nPx2 Basic Admin\nUnlock a branded public homepa",
+      "failed": [
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/site",
+          "status": 500,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"An unexpected error occurred.\",\"status\":500,\"detail\":\"Site pages require a Core plan or higher.\",\"instance\":\"/api/v1/admin/site\",\"traceId\":\"0HNOONFPBEPD0:00000002\"}"
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/admin/site",
+          "status": 500,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"An unexpected error occurred.\",\"status\":500,\"detail\":\"Site pages require a Core plan or higher.\",\"instance\":\"/api/v1/admin/site\",\"traceId\":\"0HNOONFPBEPCV:00000002\"}"
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/public/site",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.4\",\"title\":\"Not Found\",\"status\":404,\"detail\":\"Marketing host has no tenant SitePage context.\",\"instance\":\"/api/v1/public/site\",\"errorCode\":\"tenant_unresolved\",\"traceId\":\"0HNOONFPBEPCU:00000003\"}"
+        },
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        },
+        {
+          "method": "GET",
+          "url": "http://localhost:8080/api/v1/public/site",
+          "status": 404,
+          "resourceType": "fetch",
+          "body": "{\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.4\",\"title\":\"Not Found\",\"status\":404,\"detail\":\"Marketing host has no tenant SitePage context.\",\"instance\":\"/api/v1/public/site\",\"errorCode\":\"tenant_unresolved\",\"traceId\":\"0HNOONFPBEPCU:00000004\"}"
+        }
+      ]
+    },
+    {
+      "id": "basic-campaigns",
+      "url": "http://px2-basic.localhost:3000/campaigns",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Campaigns"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n1/1\nCommunities\n0/1\nPublished activities\n0/4\nRegistrations this month (UTC)\n0/250\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nCAMPAIGNS\nBasic\nSponsored\nSearch\n⌘K\nPB\nPx2 Basic Admin\nEmail campaigns are a Pro craft\n\nCampaigns unl",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "basic-reports",
+      "url": "http://px2-basic.localhost:3000/reports?preset=weekly",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Reports"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n1/1\nCommunities\n0/1\nPublished activities\n0/4\nRegistrations this month (UTC)\n0/250\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nREPORTS\nBasic\nSponsored\nSearch\n⌘K\nPB\nPx2 Basic Admin\nReports\n\nUnderstand what happened, why it matter",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "basic-settings",
+      "url": "http://px2-basic.localhost:3000/settings",
+      "status": 200,
+      "overflow": 0,
+      "mains": 2,
+      "h1": [
+        "Settings",
+        "PX2 Basic Fixture"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "main",
+        "header",
+        "nav",
+        "aside",
+        "nav",
+        "main",
+        "header",
+        "aside",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n1/1\nCommunities\n0/1\nPublished activities\n0/4\nRegistrations this month (UTC)\n0/250\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nSETTINGS\nBasic\nSponsored\nSearch\n⌘K\nPB\nPx2 Basic Admin\n\nWORKSPACE\n\nPX2 Basic Fixture\nBasic\nSponsored\n\n",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "basic-public",
+      "url": "http://px2-basic.localhost:3000/",
+      "status": 200,
+      "overflow": 0,
+      "mains": 0,
+      "h1": [
+        "PX2 Basic Fixture"
+      ],
+      "landmarks": [
+        "header"
+      ],
+      "bodySnippet": "PUBLIC DOOR\n\nPX2 Basic Fixture\n\nBrowse published activities and register in a few steps.\n\nPUBLISHED ACTIVITIES\n\nNo published activities yet.",
+      "failed": []
+    },
+    {
+      "id": "onhold-dashboard",
+      "url": "http://px2-onhold.localhost:3000/dashboard",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Dashboard"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n1/10\nCommunities\n0/10\nPublished activities\n0/50\nRegistrations this month (UTC)\n0/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nDASHBOARD\nPro\nOnHold\nSponsored\nUpdated 3:14 PM\nSearch\n⌘K\nPO\nPx2 Onhold Admin\n\nTuesday, September ",
+      "failed": [
+        {
+          "method": "POST",
+          "url": "http://localhost:8080/api/v1/admin/billing/sync",
+          "status": 503,
+          "resourceType": "fetch",
+          "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+        }
+      ]
+    },
+    {
+      "id": "onhold-public",
+      "url": "http://px2-onhold.localhost:3000/",
+      "status": 200,
+      "overflow": 0,
+      "mains": 0,
+      "h1": [
+        "PX2 OnHold Fixture"
+      ],
+      "landmarks": [
+        "header"
+      ],
+      "bodySnippet": "PUBLIC DOOR\n\nPX2 OnHold Fixture\n\nBrowse published activities and register in a few steps.\n\nPUBLISHED ACTIVITIES\n\nNo published activities yet.",
+      "failed": []
+    },
+    {
+      "id": "suspended-public",
+      "url": "http://px2-suspended.localhost:3000/",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "PX2 Suspended Fixture is on hold"
+      ],
+      "landmarks": [
+        "main"
+      ],
+      "bodySnippet": "WORKSPACE PAUSED\n\nPX2 Suspended Fixture is on hold\n\nAccess is temporarily frozen while a platform review or support matter is resolved. This is not ordinary billing. Signed-in operators can open Settings → Help & support to reach Creativorare with a screenshot and support ID.",
+      "failed": []
+    },
+    {
+      "id": "suspended-admin",
+      "url": "http://px2-suspended.localhost:3000/login",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Sign in"
+      ],
+      "landmarks": [
+        "header",
+        "main",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\nAppearance\n\nOPERATOR WORKSPACE\n\nSign in\n\nManage activities, your client list, and outreach from one workspace.\n\nPX2 Suspended Fixture workspace\n\nSigning in at px2-suspended.localhost:3000. This URL is your workspace address and stays the same after restarts or rebuilds.\n\nEmail address\nPassword\nSign in to workspace\n\nFor authorized operators only.\n\nFo",
+      "failed": []
+    },
+    {
+      "id": "member-dashboard",
+      "url": "http://default.localhost:3000/dashboard",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Dashboard"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n5/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nSettings\nDASHBOARD\nPro\nTrialing\nUpdated 3:13 PM\nSearch\n⌘K\nPM\nPx2 Member\n\nTuesday, September 2",
+      "failed": []
+    },
+    {
+      "id": "member-settings",
+      "url": "http://default.localhost:3000/settings",
+      "status": 200,
+      "overflow": 0,
+      "mains": 2,
+      "h1": [
+        "Settings",
+        "Default"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "main",
+        "header",
+        "nav",
+        "aside",
+        "nav",
+        "main",
+        "header",
+        "aside",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n5/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nSETTINGS\nPro\nTrialing\nSearch\n⌘K\nPM\nPx2 Member\n\nWORKSPACE\n\nDefault\nPro\nTrialing\n\nUse the secti",
+      "failed": []
+    },
+    {
+      "id": "member-team",
+      "url": "http://default.localhost:3000/settings",
+      "status": 200,
+      "overflow": 0,
+      "mains": 2,
+      "h1": [
+        "Settings",
+        "Default"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "main",
+        "header",
+        "nav",
+        "aside",
+        "nav",
+        "main",
+        "header",
+        "aside",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n5/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nSETTINGS\nPro\nTrialing\nSearch\n⌘K\nPM\nPx2 Member\n\nWORKSPACE\n\nDefault\nPro\nTrialing\n\nUse the secti",
+      "failed": []
+    },
+    {
+      "id": "member-billing",
+      "url": "http://default.localhost:3000/settings/billing",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Billing"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "nav",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n5/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nSettings\nSettings\nBilling\nBILLING\nPro\nTrialing\nSearch\n⌘K\nPM\nPx2 Member\n\nBilling settings are ",
+      "failed": []
+    },
+    {
+      "id": "member-clients",
+      "url": "http://default.localhost:3000/clients",
+      "status": 200,
+      "overflow": 0,
+      "mains": 1,
+      "h1": [
+        "Clients"
+      ],
+      "landmarks": [
+        "aside",
+        "nav",
+        "header",
+        "main",
+        "nav",
+        "footer"
+      ],
+      "bodySnippet": "CLIENTS\nPro\nPM\nClients\n\nOne row per contact — repeat sign-ups merge by phone or email.\n\nExport CSV\nSTATUS\nNew\n13\nContacted\n12\nActive\n12\nInactive\n11\nQUICK\nFollow-up due\n0\nRegistered this week\nMerge suspects\n2\nSearch & filters\nLS\nLiam Singh\n+65980000045\nSTATUS\nNew\nLAST OUTREACH\n\nNever\n\nLAST REGISTRATION\nEastside Tennis Collective Skills Clinic\nSep 22\nMS\nMaria ",
+      "failed": []
+    }
+  ],
+  "a11y": {
+    "skipLinks": 0,
+    "focusSequence": [
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Dashboard",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 12,
+        "y": 68
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Website",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 12,
+        "y": 116
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Activities",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 12,
+        "y": 164
+      },
+      {
+        "tag": "BUTTON",
+        "id": "",
+        "role": null,
+        "name": "Expand activities menu",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 11,
+        "y": 163
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Clients",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 12,
+        "y": 212
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Campaigns",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 12,
+        "y": 260
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Reports",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 12,
+        "y": 308
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Settings",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 8,
+        "y": 708
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Team",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 8,
+        "y": 752
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Billing",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 8,
+        "y": 796
+      },
+      {
+        "tag": "BUTTON",
+        "id": "",
+        "role": null,
+        "name": "Open command palette",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 1113,
+        "y": 10
+      },
+      {
+        "tag": "BUTTON",
+        "id": "base-ui-_r_1_",
+        "role": null,
+        "name": "Appearance: System, currently light",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 1251,
+        "y": 12
+      },
+      {
+        "tag": "BUTTON",
+        "id": "base-ui-_r_3_",
+        "role": null,
+        "name": "Open account menu",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 1295,
+        "y": 10
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Open new people",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 1228,
+        "y": 366
+      },
+      {
+        "tag": "SUMMARY",
+        "id": "",
+        "role": null,
+        "name": "Why this is true",
+        "outline": "auto 1px",
+        "boxShadow": "none",
+        "x": 302,
+        "y": 431
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Open activity",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 1256,
+        "y": 497
+      },
+      {
+        "tag": "SUMMARY",
+        "id": "",
+        "role": null,
+        "name": "Why this is true",
+        "outline": "auto 1px",
+        "boxShadow": "none",
+        "x": 302,
+        "y": 562
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "role": null,
+        "name": "Open merge suspects",
+        "outline": "none 1px",
+        "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0",
+        "x": 1201,
+        "y": 628
+      }
+    ],
+    "commandPalette": {
+      "dialogOpen": 2,
+      "focusInDialog": true,
+      "dialogAfterEsc": 1,
+      "focusAfterEsc": "BODY Cohestra\n\nCommunity platform\n\nDashboard\n",
+      "primitive": "custom role=dialog, not ui/dialog"
+    },
+    "unnamedControls": [
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/clients?leadStatus=new\">13</a>",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/clients?leadStatus=new\">Olivia Santos</a",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/clients?leadStatus=new\">Ava Tan</a>",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/clients?leadStatus=new\">Emma Davis</a>",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/clients?leadStatus=new\">Sophia R.</a>",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/clients?leadStatus=new\">Sophia Reyes</a>",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/activities/a25c249c-39ea-4def-a2d5-121f8",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/activities/a25c249c-39ea-4def-a2d5-121f8",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/activities/a25c249c-39ea-4def-a2d5-121f8",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/clients?mergeSuspect=true\">2</a>",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/clients?mergeSuspect=true\">Sophia R.</a>",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/clients?mergeSuspect=true\">Sophia Reyes<",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/reports\">34</a>",
+      "<a class=\"font-medium text-text-warm underline-offset-4 hover:underline\" href=\"/reports\">35</a>"
+    ],
+    "touchTargets": {
+      "below40": [
+        {
+          "name": "Open command palette",
+          "w": 126,
+          "h": 36
+        },
+        {
+          "name": "Appearance: System, currently light",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "name": "Open account menu",
+          "w": 121,
+          "h": 36
+        },
+        {
+          "name": "Open new people",
+          "w": 150,
+          "h": 28
+        },
+        {
+          "name": "",
+          "w": 14,
+          "h": 20
+        },
+        {
+          "name": "",
+          "w": 85,
+          "h": 20
+        },
+        {
+          "name": "",
+          "w": 48,
+          "h": 20
+        },
+        {
+          "name": "",
+          "w": 79,
+          "h": 20
+        },
+        {
+          "name": "",
+          "w": 61,
+          "h": 20
+        },
+        {
+          "name": "",
+          "w": 90,
+          "h": 20
+        },
+        {
+          "name": "Open activity",
+          "w": 122,
+          "h": 28
+        },
+        {
+          "name": "",
+          "w": 9,
+          "h": 20
+        },
+        {
+          "name": "",
+          "w": 9,
+          "h": 20
+        },
+        {
+          "name": "",
+          "w": 10,
+          "h": 20
+        },
+        {
+          "name": "Open merge suspects",
+          "w": 177,
+          "h": 28
+        },
+        {
+          "name": "",
+          "w": 8,
+          "h": 20
+        },
+        {
+          "name": "",
+          "w": 61,
+          "h": 20
+        },
+        {
+          "name": "",
+          "w": 90,
+          "h": 20
+        },
+        {
+          "name": "Open reports",
+          "w": 122,
+          "h": 28
+        },
+        {
+          "name": "",
+          "w": 18,
+          "h": 20
+        },
+        {
+          "name": "",
+          "w": 18,
+          "h": 20
+        },
+        {
+          "name": "23 new leads this week",
+          "w": 200,
+          "h": 38
+        },
+        {
+          "name": "Leads still waiting for first follow-up",
+          "w": 276,
+          "h": 38
+        },
+        {
+          "name": "8 live activities accepting registration",
+          "w": 295,
+          "h": 38
+        },
+        {
+          "name": "View queue",
+          "w": 114,
+          "h": 28
+        }
+      ],
+      "below44": 36,
+      "sample": [
+        {
+          "name": "Dashboard",
+          "w": 215,
+          "h": 44
+        },
+        {
+          "name": "Website",
+          "w": 215,
+          "h": 44
+        },
+        {
+          "name": "Activities",
+          "w": 215,
+          "h": 44
+        },
+        {
+          "name": "Expand activities menu",
+          "w": 44,
+          "h": 44
+        },
+        {
+          "name": "Clients",
+          "w": 215,
+          "h": 44
+        },
+        {
+          "name": "Campaigns",
+          "w": 215,
+          "h": 44
+        },
+        {
+          "name": "Reports",
+          "w": 215,
+          "h": 44
+        },
+        {
+          "name": "Settings",
+          "w": 223,
+          "h": 40
+        },
+        {
+          "name": "Team",
+          "w": 223,
+          "h": 40
+        },
+        {
+          "name": "Billing",
+          "w": 223,
+          "h": 40
+        },
+        {
+          "name": "Open command palette",
+          "w": 126,
+          "h": 36
+        },
+        {
+          "name": "Open command palette",
+          "w": 0,
+          "h": 0
+        },
+        {
+          "name": "Appearance: System, currently light",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "name": "Open account menu",
+          "w": 121,
+          "h": 36
+        },
+        {
+          "name": "Open new people",
+          "w": 150,
+          "h": 28
+        }
+      ]
+    },
+    "contrastLive": [
+      {
+        "text": "Cohestra",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Dashboard",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Dashboard",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Website",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Website",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Activities",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Activities",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Clients",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Clients",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Campaigns",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Campaigns",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Reports",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Reports",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "2/10",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "8/50",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "100/5000",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "DASHBOARD",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "OP\nOperator",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "OP",
+        "color": "rgb(11, 107, 99)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 3.3
+      },
+      {
+        "text": "Operator",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Tuesday, September 22",
+        "color": "rgb(11, 107, 99)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 3.3
+      },
+      {
+        "text": "Good afternoon, Operator",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Needs attention",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "13 new people have no outreach yet",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      },
+      {
+        "text": "Harbourline Pickleball — Intro Class has",
+        "color": "rgb(7, 13, 18)",
+        "bg": "rgba(0, 0, 0, 0)",
+        "ratio": 1.08
+      }
+    ],
+    "contrastPassCount": 26,
+    "contrastFailCount": 26,
+    "zoom200": {
+      "overflow": 0,
+      "note": "CSS zoom:2 on 720x450 (simulates 200% of 1440)"
+    },
+    "reducedMotion": {
+      "transitionDurationSample": "0s"
+    },
+    "mobileTouch": {
+      "below44": [
+        {
+          "name": "Open command palette",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "name": "Appearance: System, currently light",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "name": "Open account menu",
+          "w": 50,
+          "h": 36
+        },
+        {
+          "name": "Export CSV",
+          "w": 116,
+          "h": 28
+        },
+        {
+          "name": "New\n13",
+          "w": 89,
+          "h": 32
+        },
+        {
+          "name": "Contacted\n12",
+          "w": 132,
+          "h": 32
+        },
+        {
+          "name": "Active\n12",
+          "w": 100,
+          "h": 32
+        },
+        {
+          "name": "Inactive\n11",
+          "w": 111,
+          "h": 32
+        },
+        {
+          "name": "Follow-up due\n0",
+          "w": 150,
+          "h": 32
+        },
+        {
+          "name": "Registered this week",
+          "w": 167,
+          "h": 32
+        },
+        {
+          "name": "Merge suspects\n2",
+          "w": 161,
+          "h": 32
+        },
+        {
+          "name": "Search & filters",
+          "w": 324,
+          "h": 20
+        },
+        {
+          "name": "LS\nLiam Singh\n+65980000045",
+          "w": 492,
+          "h": 40
+        },
+        {
+          "name": "Mark Liam Singh as contacted",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "name": "Open WhatsApp for Liam Singh",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "name": "Open Viber for Liam Singh",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "name": "Eastside Tennis Collective Skills Clinic",
+          "w": 608,
+          "h": 36
+        },
+        {
+          "name": "MS\nMaria Santos\n+639171234567",
+          "w": 528,
+          "h": 40
+        },
+        {
+          "name": "Open WhatsApp for Maria Santos",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "name": "Open Viber for Maria Santos",
+          "w": 32,
+          "h": 32
+        }
+      ],
+      "below44Count": 122
+    }
+  },
+  "performance": [
+    {
+      "route": "marketing-home",
+      "url": "http://localhost:3000/",
+      "wallMs": 413,
+      "type": "navigate",
+      "dcl": 111,
+      "load": 372,
+      "ttfb": 78,
+      "transferSize": 19597,
+      "fp": 284,
+      "fcp": 284,
+      "method": "Playwright Chromium headless, Navigation Timing + Paint Timing, waitUntil=load, 1440x900"
+    },
+    {
+      "route": "dashboard",
+      "url": "http://default.localhost:3000/dashboard",
+      "wallMs": 229,
+      "type": "navigate",
+      "dcl": 51,
+      "load": 211,
+      "ttfb": 27,
+      "transferSize": 6717,
+      "fp": 72,
+      "fcp": 72,
+      "method": "Playwright Chromium headless, Navigation Timing + Paint Timing, waitUntil=load, 1440x900"
+    },
+    {
+      "route": "clients",
+      "url": "http://default.localhost:3000/clients",
+      "wallMs": 232,
+      "type": "navigate",
+      "dcl": 50,
+      "load": 214,
+      "ttfb": 26,
+      "transferSize": 6549,
+      "fp": 68,
+      "fcp": 68,
+      "method": "Playwright Chromium headless, Navigation Timing + Paint Timing, waitUntil=load, 1440x900"
+    },
+    {
+      "route": "form-studio",
+      "url": "http://default.localhost:3000/activities/52d3f411-c935-4100-a9fe-28386749e871?tab=form",
+      "wallMs": 292,
+      "type": "navigate",
+      "dcl": 93,
+      "load": 267,
+      "ttfb": 59,
+      "transferSize": 6843,
+      "fp": 100,
+      "fcp": 100,
+      "method": "Playwright Chromium headless, Navigation Timing + Paint Timing, waitUntil=load, 1440x900"
+    },
+    {
+      "route": "public-register",
+      "url": "http://default.localhost:3000/register/demo-marina-social-meetup",
+      "wallMs": 321,
+      "type": "navigate",
+      "dcl": 133,
+      "load": 298,
+      "ttfb": 88,
+      "transferSize": 10395,
+      "fp": 208,
+      "fcp": 208,
+      "method": "Playwright Chromium headless, Navigation Timing + Paint Timing, waitUntil=load, 1440x900"
+    }
+  ],
+  "errors": [],
+  "operatorLogin": {
+    "url": "http://default.localhost:3000/dashboard",
+    "body": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n8/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nDASHBOARD\nPro\nTrialing\nUpdated 3:12 PM\nSearch\n⌘K\nOP\nOperator\n\nTuesday, September 22\n\nGood afternoon,"
+  },
+  "diagnosisUnique": [
+    {
+      "method": "POST",
+      "url": "http://localhost:8080/api/v1/admin/billing/sync",
+      "status": 503,
+      "resourceType": "fetch",
+      "body": "{\"title\":\"Billing unavailable\",\"status\":503,\"detail\":\"Paddle is not configured in this environment.\"}"
+    }
+  ],
+  "finishedAt": "2026-09-22T15:14:55.672Z"
+}

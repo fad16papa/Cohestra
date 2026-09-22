@@ -1,0 +1,315 @@
+{
+  "notes": [
+    {
+      "id": "client-profile",
+      "url": "http://default.localhost:3000/clients/00eed4e7-a967-427a-8ace-c8a24f4291c1",
+      "body": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n5/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nClients\nJames Rivera\nJAMES RIVERA\nPro\nTrialing\nSearch\n⌘K\nOP\nOperator\nJR\nJames Rivera\nContacted\n+65 9800 0003 0\ndemo.user"
+    },
+    {
+      "id": "client-profile-390",
+      "body": "Clients\nJames Rivera\nJAMES RIVERA\nPro\nOP\nJR\nJames Rivera\nContacted\n+65 9800 0003 0\ndemo.user030@demo.cohestra.local\nWhatsApp\nViber\nLead status\nNew\nContacted\nActive\nInactive\nMaster profile\nConsolidated contact and follow-up fields. Edit to correct or enrich the master record after"
+    },
+    {
+      "id": "form-studio-1440",
+      "body": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nAll activities\nCommunities\nCategories\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n5/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nActivities\nMarina Pickleball — Member Social\nMARINA PICKLEBALL — MEMBER SOCIAL\nPro"
+    },
+    {
+      "id": "form-studio-preview",
+      "body": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nAll activities\nCommunities\nCategories\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n5/50\nRegistrations this month (UTC)\n100/5000\n\nResets"
+    },
+    {
+      "id": "form-studio-1024",
+      "body": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nAll activities\nCommunities\nCategories\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n5/50\nRegistrations this month (UTC)\n100/5000\n\nResets"
+    },
+    {
+      "id": "form-studio-390",
+      "body": "Activities\nMarina Pickleball — Member Social\nMARINA PICKLEBALL — MEMBER SOCIAL\nPro\nOP\nBack to activities\nMarina Pickleball — Member Social\n\nMarina Pickleball Club · Social\n\nPublished\nOverview\nDesign\nForm\nRegistrations\nShare kit\nBuild form\nPreview\n\nRegistration form\n\nLive — change"
+    },
+    {
+      "id": "activity-design",
+      "labels": [
+        "Max registrants (optional)",
+        "Modern CenteredClean, focused registration with your Activity and branding.",
+        "Split EventActivity context and registration side-by-side on larger screens.",
+        "Event PosterRSVP-style Activity presentation, then registration.",
+        "Single pageAll fields on one scrollable form.",
+        "ConversationalOne question at a time with Continue and Back.",
+        "ModernDefault Cohestra spacing and typography.",
+        "MinimalQuieter chrome; form-first emphasis.",
+        "CompactTighter labels and field spacing.",
+        "DefaultBalanced rhythm for most forms.",
+        "SpaciousMore breathing room between blocks.",
+        "DefaultStandard touch-friendly height.",
+        "ComfortableTaller inputs for long forms.",
+        "SubtleSmall corner radius.",
+        "RoundedDefault rounded inputs.",
+        "SoftGenerous corner radius.",
+        "Full widthCTA spans the form column.",
+        "AutoCTA sizes to label with minimum width.",
+        "FlatMinimal borders and no elevation.",
+        "SoftLight surface separation.",
+        "ElevatedCard-like form surface on Modern Centered.",
+        "Inherit community brand",
+        "Accent override",
+        "Hero override",
+        "Mobile",
+        "Tablet",
+        "Desktop",
+        "Full name *",
+        "Phone *",
+        "Email",
+        "I agree to be contacted about community activities. *",
+        "Show link to my Cohestra websiteVisitors see a link to default.localhost.",
+        "Close-at",
+        "SubjectInsert token",
+        "Closing messageInsert token",
+        "Split into steps",
+        "Registration link"
+      ],
+      "body": "Cohestra\n\nCommunity platform\n\nDashboard\nWebsite\nActivities\nAll activities\nCommunities\nCategories\nClients\nCampaigns\nReports\n\nPLAN HEADROOM\n\nTeam seats\n2/10\nCommunities\n8/10\n\nUpgrade before you hit capacity.\n\nPublished activities\n5/50\nRegistrations this month (UTC)\n100/5000\n\nResets Oct 1, 2026, 00:00 UTC\n\nWORKSPACE\n\nSettings\nTeam\nBilling\nActivities\nMarina Pickleball — Member Social\nMARINA PICKLEBALL — MEMBER SOCIAL\nPro"
+    },
+    {
+      "id": "design-split",
+      "selected": true,
+      "saved": false
+    },
+    {
+      "id": "design-poster",
+      "selected": true,
+      "saved": false
+    },
+    {
+      "id": "design-conversational",
+      "selected": true,
+      "saved": false
+    },
+    {
+      "id": "registration-validation",
+      "alerts": 7,
+      "body": "Cohestra\n\nCommunity registration\n\nAppearance\n\nMARINA PICKLEBALL CLUB\n\nMarina Pickleball — Member Social\nWhen\nTue, Sep 29, 2026, 5:00 PM\nWhere\nMarina Pickleball Club venue\n\n11 going\n\nRegistration\nFull name *\n\nThis field is required.\n\nPhone *\n+65\n\nLocal SG mobile — country is set by the activity form.\n\nThis field is required.\n\nEmail\nI agree to be contacted abo"
+    },
+    {
+      "id": "registration-success",
+      "url": "http://default.localhost:3000/register/demo-marina-social-meetup",
+      "body": "Cohestra\n\nCommunity registration\n\nAppearance\n\nMARINA PICKLEBALL CLUB\n\nMarina Pickleball — Member Social\nWhen\nTue, Sep 29, 2026, 5:00 PM\nWhere\nMarina Pickleball Club venue\n\n11 going\n\nYou're registered!\n\nWe've saved your spot for Marina Pickleball — Member Social.\n\nMARINA PICKLEBALL CLUB\n\nREGISTRATION ID\n\nREG20260922000101\n\nShow this ID at check-in so we can validate your registration.\n\nCopy registration ID\n\nTue, Sep 29, 2026, 5:00 PM\n\nMarina Pickleball Club venue\n\nSave your registration ID below "
+    }
+  ],
+  "contrast": {
+    "fail": [
+      {
+        "text": "Community platform",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "PLAN HEADROOM",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Team seats",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Communities",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "8/10",
+        "color": "rgb(166, 139, 91)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3.13
+      },
+      {
+        "text": "Upgrade before you hit capacity.",
+        "color": "rgb(166, 139, 91)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3.13
+      },
+      {
+        "text": "Published activities",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Registrations this month (UTC)",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Resets Oct 1, 2026, 00:00 UTC",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "WORKSPACE",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Settings",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Team",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Billing",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Pro",
+        "color": "rgb(166, 139, 91)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3.13
+      },
+      {
+        "text": "Trialing",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Updated 3:18 PM",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Search ⌘K",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Search",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Your outreach cockpit — see what needs attention, ",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "From your workspace data",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "They are still New and have no email, WhatsApp, or",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Registration matching flagged these records. Confi",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Both counts are raw registration rows in successiv",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Cards, rankings, and quick actions",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Graphs",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      }
+    ],
+    "failCount": 85,
+    "passCount": 120,
+    "stone": [
+      {
+        "text": "Community platform",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "PLAN HEADROOM",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Team seats",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Communities",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Published activities",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Registrations this month (UTC)",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Resets Oct 1, 2026, 00:00 UTC",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "WORKSPACE",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Settings",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      },
+      {
+        "text": "Team",
+        "color": "rgb(139, 147, 156)",
+        "bg": "rgb(250, 251, 252)",
+        "ratio": 3
+      }
+    ]
+  }
+}
