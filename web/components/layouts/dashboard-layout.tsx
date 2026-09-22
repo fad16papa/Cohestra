@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { DashboardMetricsRefreshProvider } from "@/components/dashboard/dashboard-metrics-refresh-context";
@@ -30,41 +30,46 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
   const { authFetch } = useAuth();
   const { shell, refreshShell } = useTenantShell();
   const { showSuccessToast, showToast } = useToast();
+  const checkoutInFlight = useRef(new Map<string, Promise<{ synced: boolean }>>());
+  const billingSuccess = searchParams.get("billing") === "success";
+  const checkoutSessionId =
+    searchParams.get("session_id")
+    ?? searchParams.get("_ptxn")
+    ?? searchParams.get("transaction_id");
+  const billingMessage = searchParams.get("billing_message");
+  const shellReady = shell != null;
+  const isTenantAdmin = shell?.isTenantAdmin === true;
 
   useEffect(() => {
-    const billingSuccess = searchParams.get("billing") === "success";
-    const checkoutSessionId =
-      searchParams.get("session_id")
-      ?? searchParams.get("_ptxn")
-      ?? searchParams.get("transaction_id");
-    const billingMessage = searchParams.get("billing_message");
     if (!billingSuccess && !checkoutSessionId) {
       return;
     }
 
-    let cancelled = false;
+    if (!shellReady || !isTenantAdmin) {
+      return;
+    }
 
-    async function syncAfterCheckout() {
-      let reconciled = false;
-      try {
-        await reconcileBillingFromProviderWithAuth(authFetch, {
+    const triggerKey = checkoutSessionId ?? "billing-success";
+    let cancelled = false;
+    const pending =
+      checkoutInFlight.current.get(triggerKey)
+      ?? checkoutInFlight.current.set(
+        triggerKey,
+        reconcileBillingFromProviderWithAuth(authFetch, {
           reason: BILLING_RECONCILE_REASONS.checkoutReturn,
           checkoutSessionId,
-        });
-        reconciled = true;
-      } catch (err) {
-        if (!cancelled) {
-          showToast(
-            err instanceof Error
-              ? err.message
-              : "Could not refresh billing after checkout. Open Settings → Billing to try again."
-          );
-        }
-      }
+        }).then((result) => ({ synced: result.synced }))
+      ).get(triggerKey)!;
 
-      if (!cancelled) {
+    async function afterCheckout() {
+      try {
+        const result = await pending;
+        if (cancelled) {
+          return;
+        }
+
         await refreshShell();
-        if (reconciled && billingMessage) {
+        if (result.synced && billingMessage) {
           showSuccessToast(billingMessage);
         }
 
@@ -82,15 +87,34 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
         } catch {
           // Ignore malformed storage payloads.
         }
+      } catch (err) {
+        if (!cancelled) {
+          showToast(
+            err instanceof Error
+              ? err.message
+              : "Could not refresh billing after checkout. Open Settings → Billing to try again."
+          );
+          await refreshShell();
+        }
       }
     }
 
-    void syncAfterCheckout();
+    void afterCheckout();
 
     return () => {
       cancelled = true;
     };
-  }, [authFetch, refreshShell, searchParams, showSuccessToast, showToast]);
+  }, [
+    authFetch,
+    billingMessage,
+    billingSuccess,
+    checkoutSessionId,
+    isTenantAdmin,
+    refreshShell,
+    shellReady,
+    showSuccessToast,
+    showToast,
+  ]);
 
   return (
     <div

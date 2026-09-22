@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Mail, Pencil, Phone, User } from "lucide-react";
 
 import { PhoneCountrySelect } from "@/components/activities/phone-country-select";
@@ -113,32 +113,70 @@ export function InAppBillingPanel({
   }, []);
 
   const operatorEmail = profile?.email ?? "";
+  const loadGeneration = useRef(0);
 
   const loadBasicCapability = useCallback(async () => {
+    const generation = ++loadGeneration.current;
     setLoading(true);
     setError(null);
     try {
       const summary = await fetchBillingSummaryWithAuth(authFetch);
+      if (generation !== loadGeneration.current) {
+        return;
+      }
+
       setBillingConfigured(summary.billingConfigured);
     } catch (err) {
+      if (generation !== loadGeneration.current) {
+        return;
+      }
+
       setError(err instanceof Error ? err.message : "Could not load billing details.");
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) {
+        setLoading(false);
+      }
     }
   }, [authFetch]);
 
   const loadDetails = useCallback(async () => {
+    const generation = ++loadGeneration.current;
     setLoading(true);
     setError(null);
     try {
       const next = await fetchBillingDetailsWithAuth(authFetch);
+      if (generation !== loadGeneration.current) {
+        return;
+      }
+
       setDetails(next);
       setBillingConfigured(next.summary.billingConfigured);
       applyContactForm(next.contact);
     } catch (err) {
+      if (generation !== loadGeneration.current) {
+        return;
+      }
+
+      try {
+        const summary = await fetchBillingSummaryWithAuth(authFetch);
+        if (generation !== loadGeneration.current) {
+          return;
+        }
+
+        setBillingConfigured(summary.billingConfigured);
+        if (!summary.billingConfigured) {
+          setError(null);
+          return;
+        }
+      } catch {
+        // Keep the original details error when capability lookup also fails.
+      }
+
       setError(err instanceof Error ? err.message : "Could not load billing details.");
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) {
+        setLoading(false);
+      }
     }
   }, [authFetch, applyContactForm]);
 
@@ -160,7 +198,6 @@ export function InAppBillingPanel({
       });
       setBillingConfigured(result.summary.billingConfigured);
       if (!result.summary.billingConfigured) {
-        setError(BILLING_UNAVAILABLE_COPY);
         return;
       }
       await onRefreshShell();

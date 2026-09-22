@@ -139,7 +139,7 @@ export async function reconcileBillingFromProviderWithAuth(
   return { summary: synced, synced: true };
 }
 
-export async function syncBillingFromProviderWithAuth(
+async function syncBillingFromProviderWithAuth(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>,
   checkoutSessionId?: string | null
 ): Promise<BillingSummary> {

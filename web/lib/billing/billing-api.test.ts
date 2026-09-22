@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -5,6 +9,8 @@ import {
   reconcileBillingFromProviderWithAuth,
   shouldRequestBillingProviderSync,
 } from "@/lib/billing/billing-api";
+
+const webRoot = join(dirname(fileURLToPath(import.meta.url)), "../..");
 
 function summaryPayload(configured: boolean, plan = "Pro") {
   return {
@@ -129,5 +135,27 @@ describe("reconcileBillingFromProviderWithAuth", () => {
         reason: BILLING_RECONCILE_REASONS.explicitRefresh,
       })
     ).rejects.toThrow("Paddle is not configured in this environment.");
+  });
+});
+
+describe("billing-sync trigger ownership", () => {
+  it("keeps checkout-return reconcile on the admin layout only", () => {
+    const settings = readFileSync(
+      join(webRoot, "components/settings/settings-billing-page-content.tsx"),
+      "utf8"
+    );
+    const layout = readFileSync(
+      join(webRoot, "components/layouts/dashboard-layout.tsx"),
+      "utf8"
+    );
+    const shell = readFileSync(
+      join(webRoot, "components/shell/tenant-shell-provider.tsx"),
+      "utf8"
+    );
+
+    expect(settings).not.toContain("reconcileBillingFromProvider");
+    expect(settings).not.toContain("billing/sync");
+    expect(layout).toContain("BILLING_RECONCILE_REASONS.checkoutReturn");
+    expect(shell).not.toContain("billing/sync");
   });
 });

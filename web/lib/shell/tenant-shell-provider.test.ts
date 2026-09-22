@@ -5,7 +5,10 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const providerSource = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), "tenant-shell-provider.tsx"),
+  join(
+    dirname(fileURLToPath(import.meta.url)),
+    "../../components/shell/tenant-shell-provider.tsx"
+  ),
   "utf8"
 );
 

@@ -2,7 +2,7 @@
 id: 38.1
 key: 38-1-billing-sync-environment-and-error-behavior
 title: Billing-sync environment and error behavior
-status: in-progress
+status: review
 epic: 38
 created: 2026-09-22
 baseline_commit: 9515ac3a
@@ -89,7 +89,7 @@ Webhooks are the normal update path once Paddle is configured. Client sync is a 
 - [x] Billing panel: named unconfigured state; Refresh uses helper; no loop
 - [x] Backend: GET unconfigured configured=false; Sync 503; Member 403
 - [x] Playwright: fresh context, dashboard/clients emit no billing/sync
-- [ ] Run affected unit/integration/frontend suites, lint/typecheck/build
+- [x] Run affected unit/integration/frontend suites, lint/typecheck/build
 
 ## Non-goals
 
@@ -111,13 +111,19 @@ Grok 4.6
 
 ### Completion Notes List
 
+- Removed TenantShellProvider once-per-tab POST `/admin/billing/sync`.
+- Client POST only after GET `billingConfigured` and reason `checkout-return` or `explicit-refresh`.
+- Checkout return is owned by `dashboard-layout` with an in-flight promise keyed by session so Strict Mode / Billing nested routes do not double-POST.
+- Billing page shows named unavailable copy; Refresh is operator-initiated.
+- Suites: web vitest 378; Infrastructure.Tests 915; Integration 112; Playwright live 38.1 passed; tsc/build passed. Lint still has pre-existing repo errors.
+
 ### File List
 
 - `_bmad-output/implementation-artifacts/38-1-billing-sync-environment-and-error-behavior.md`
 - `web/lib/billing/billing-api.ts`
 - `web/lib/billing/billing-api.test.ts`
 - `web/components/shell/tenant-shell-provider.tsx`
-- `web/components/shell/tenant-shell-provider.test.ts`
+- `web/lib/shell/tenant-shell-provider.test.ts`
 - `web/components/layouts/dashboard-layout.tsx`
 - `web/components/settings/settings-billing-page-content.tsx`
 - `web/components/billing/in-app-billing-panel.tsx`
