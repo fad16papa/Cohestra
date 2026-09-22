@@ -6,7 +6,10 @@ import { useSearchParams } from "next/navigation";
 import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
-import { syncBillingFromProviderWithAuth } from "@/lib/billing/billing-api";
+import {
+  BILLING_RECONCILE_REASONS,
+  reconcileBillingFromProviderWithAuth,
+} from "@/lib/billing/billing-api";
 import { isPaddleTransactionId } from "@/lib/billing/paddle-return";
 
 function isPaidPlan(plan: string): boolean {
@@ -30,13 +33,16 @@ function SettingsBillingBody() {
       return;
     }
 
-    if (shell.plan !== "Basic" && !checkoutSessionId) {
+    if (!checkoutSessionId) {
       return;
     }
 
     autoSyncedRef.current = true;
-    void syncBillingFromProviderWithAuth(authFetch, checkoutSessionId)
-      .then(async (summary) => {
+    void reconcileBillingFromProviderWithAuth(authFetch, {
+      reason: BILLING_RECONCILE_REASONS.checkoutReturn,
+      checkoutSessionId,
+    })
+      .then(async ({ summary }) => {
         await refreshShell();
         if (isPaidPlan(summary.plan)) {
           setIncompleteNotice(false);

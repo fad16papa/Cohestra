@@ -14,7 +14,10 @@ import { AdminRouteTransition } from "@/components/motion/admin-route-transition
 import { BillingBannerBar } from "@/components/shell/billing-banner";
 import { TenantShellProvider, useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { useToast } from "@/components/ui/toast-provider";
-import { syncBillingFromProviderWithAuth } from "@/lib/billing/billing-api";
+import {
+  BILLING_RECONCILE_REASONS,
+  reconcileBillingFromProviderWithAuth,
+} from "@/lib/billing/billing-api";
 import { adminRouteTransitionKey } from "@/lib/admin-route-motion";
 
 type DashboardLayoutProps = {
@@ -42,15 +45,26 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
     let cancelled = false;
 
     async function syncAfterCheckout() {
+      let reconciled = false;
       try {
-        await syncBillingFromProviderWithAuth(authFetch, checkoutSessionId);
-      } catch {
-        // Webhook may have already synced; still refresh shell below.
+        await reconcileBillingFromProviderWithAuth(authFetch, {
+          reason: BILLING_RECONCILE_REASONS.checkoutReturn,
+          checkoutSessionId,
+        });
+        reconciled = true;
+      } catch (err) {
+        if (!cancelled) {
+          showToast(
+            err instanceof Error
+              ? err.message
+              : "Could not refresh billing after checkout. Open Settings → Billing to try again."
+          );
+        }
       }
 
       if (!cancelled) {
         await refreshShell();
-        if (billingMessage) {
+        if (reconciled && billingMessage) {
           showSuccessToast(billingMessage);
         }
 

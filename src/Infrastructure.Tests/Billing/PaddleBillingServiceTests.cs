@@ -23,6 +23,65 @@ public sealed class PaddleBillingServiceTests
     }
 
     [Fact]
+    public async Task GetSummary_reports_unconfigured_paddle_without_calling_provider()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db);
+        var service = PaddleBillingTestHarness.CreateService(db, settings: new PaddleSettings());
+
+        var summary = await service.GetSummaryAsync(tenant.Id);
+
+        Assert.False(summary.BillingConfigured);
+        Assert.Null(summary.ClientToken);
+        Assert.Equal(TenantPlan.Basic, summary.Plan);
+    }
+
+    [Fact]
+    public async Task Sync_unconfigured_returns_local_summary_without_calling_provider()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db);
+        var client = new FakePaddleApiClient();
+        var service = PaddleBillingTestHarness.CreateService(db, client, settings: new PaddleSettings());
+
+        var summary = await service.SyncFromProviderAsync(tenant.Id, "txn_anything");
+
+        Assert.False(summary.BillingConfigured);
+        Assert.Equal(0, client.GetTransactionCalls);
+        Assert.Equal(TenantPlan.Basic, summary.Plan);
+    }
+
+    [Fact]
+    public async Task GetSummary_is_scoped_to_the_requested_tenant()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenantA = PaddleBillingTestHarness.SeedTenant(db);
+        var tenantB = new Tenant
+        {
+            Id = Guid.NewGuid(),
+            Slug = "other-studio",
+            Name = "Other Studio",
+            Plan = TenantPlan.Pro,
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Active,
+            AdminContactEmail = "other@example.com",
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        };
+        db.Tenants.Add(tenantB);
+        await db.SaveChangesAsync();
+        var service = PaddleBillingTestHarness.CreateService(db, settings: new PaddleSettings());
+
+        var summaryA = await service.GetSummaryAsync(tenantA.Id);
+        var summaryB = await service.GetSummaryAsync(tenantB.Id);
+
+        Assert.Equal(TenantPlan.Basic, summaryA.Plan);
+        Assert.Equal(TenantPlan.Pro, summaryB.Plan);
+        Assert.False(summaryA.BillingConfigured);
+        Assert.False(summaryB.BillingConfigured);
+    }
+
+    [Fact]
     public async Task Checkout_complimentary_tenant_is_rejected()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();

@@ -28,8 +28,11 @@ import {
   type BillingDetails,
 } from "@/lib/billing/billing-details-api";
 import {
+  BILLING_RECONCILE_REASONS,
+  BILLING_UNAVAILABLE_COPY,
   createBillingPortalSession,
-  syncBillingFromProviderWithAuth,
+  fetchBillingSummaryWithAuth,
+  reconcileBillingFromProviderWithAuth,
 } from "@/lib/billing/billing-api";
 import {
   formatScheduledChangeLabel,
@@ -85,6 +88,7 @@ export function InAppBillingPanel({
 }: InAppBillingPanelProps) {
   const { authFetch, profile } = useAuth();
   const [details, setDetails] = useState<BillingDetails | null>(null);
+  const [billingConfigured, setBillingConfigured] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -110,12 +114,26 @@ export function InAppBillingPanel({
 
   const operatorEmail = profile?.email ?? "";
 
+  const loadBasicCapability = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const summary = await fetchBillingSummaryWithAuth(authFetch);
+      setBillingConfigured(summary.billingConfigured);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load billing details.");
+    } finally {
+      setLoading(false);
+    }
+  }, [authFetch]);
+
   const loadDetails = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const next = await fetchBillingDetailsWithAuth(authFetch);
       setDetails(next);
+      setBillingConfigured(next.summary.billingConfigured);
       applyContactForm(next.contact);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load billing details.");
@@ -125,23 +143,70 @@ export function InAppBillingPanel({
   }, [authFetch, applyContactForm]);
 
   useEffect(() => {
+    if (shellPlan === "Basic") {
+      void loadBasicCapability();
+      return;
+    }
+
     void loadDetails();
-  }, [loadDetails]);
+  }, [loadBasicCapability, loadDetails, shellPlan]);
 
   const refreshAll = async () => {
     setSyncing(true);
+    setError(null);
     try {
-      await syncBillingFromProviderWithAuth(authFetch);
+      const result = await reconcileBillingFromProviderWithAuth(authFetch, {
+        reason: BILLING_RECONCILE_REASONS.explicitRefresh,
+      });
+      setBillingConfigured(result.summary.billingConfigured);
+      if (!result.summary.billingConfigured) {
+        setError(BILLING_UNAVAILABLE_COPY);
+        return;
+      }
       await onRefreshShell();
-      await loadDetails();
+      if (shellPlan !== "Basic") {
+        await loadDetails();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not refresh billing status.");
     } finally {
       setSyncing(false);
     }
   };
 
   if (shellPlan === "Basic") {
+    if (loading && billingConfigured === null && !error) {
+      return <p className="text-sm text-text-muted-warm">Loading billing details…</p>;
+    }
+
+    if (billingConfigured === false) {
+      return (
+        <p role="status" className="text-sm text-text-warm">
+          {BILLING_UNAVAILABLE_COPY}
+        </p>
+      );
+    }
+
+    if (error && billingConfigured !== true) {
+      return (
+        <div className="space-y-3">
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+          <Button type="button" variant="outline" size="sm" onClick={() => void loadBasicCapability()}>
+            Try again
+          </Button>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-4">
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
         <UpgradePanel
           title="Upgrade your workspace"
           description="Compare Core and Pro, choose monthly or yearly billing, then continue to checkout to start your trial."
@@ -178,7 +243,7 @@ export function InAppBillingPanel({
   const contact = details?.contact;
   const subscription = details?.subscription;
   const invoices = details?.invoices ?? [];
-  const billingConfigured = details?.summary.billingConfigured ?? false;
+  const configured = billingConfigured ?? details?.summary.billingConfigured ?? false;
   const changePlanHref = `/billing/checkout?plan=${checkoutPlanParam(shellPlan)}&interval=${checkoutIntervalParam(details?.summary.billingInterval)}`;
   const hasActivePaidSubscription =
     shellBillingStatus === "Trialing"
@@ -275,8 +340,10 @@ export function InAppBillingPanel({
         ) : null}
       </div>
 
-      {!billingConfigured ? (
-        <p className="text-sm text-text-muted-warm">Billing is not configured in this environment.</p>
+      {!configured ? (
+        <p role="status" className="text-sm text-text-warm">
+          {BILLING_UNAVAILABLE_COPY}
+        </p>
       ) : (
         <>
           <BillingSection title="Payment method">

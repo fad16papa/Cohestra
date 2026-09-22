@@ -34,6 +34,21 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
         Assert.NotNull(summary.ProLimits);
         Assert.Equal(3, summary.CoreLimits.Seats);
         Assert.Equal(10, summary.ProLimits.Seats);
+        Assert.False(summary.BillingConfigured);
+    }
+
+    [SkippableFact]
+    public async Task TenantAdmin_Sync_WhenPaddleNotConfigured_Returns503()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+
+        using var client = Factory.CreateClient();
+        var token = await IntegrationTestHelpers.LoginAsOperatorAsync(client);
+        IntegrationTestHelpers.UseBearerToken(client, token);
+
+        using var response = await client.PostAsync("/api/v1/admin/billing/sync", content: null);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
     }
 
     [SkippableFact]

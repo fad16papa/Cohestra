@@ -33,6 +33,9 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
         using var billingGetResponse = await client.GetAsync("/api/v1/admin/billing");
         await AssertForbiddenAsync(billingGetResponse);
 
+        using var billingSyncResponse = await client.PostAsync("/api/v1/admin/billing/sync", content: null);
+        await AssertForbiddenAsync(billingSyncResponse);
+
         using var checkoutResponse = await client.PostAsJsonAsync(
             "/api/v1/admin/billing/checkout",
             new CreateCheckoutSessionRequest(

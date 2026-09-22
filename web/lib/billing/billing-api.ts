@@ -78,6 +78,31 @@ export async function createBillingPortalSession(
   return portalUrl;
 }
 
+export const BILLING_RECONCILE_REASONS = {
+  checkoutReturn: "checkout-return",
+  explicitRefresh: "explicit-refresh",
+} as const;
+
+export type BillingReconcileReason =
+  (typeof BILLING_RECONCILE_REASONS)[keyof typeof BILLING_RECONCILE_REASONS];
+
+export const BILLING_UNAVAILABLE_COPY =
+  "Billing isn't configured in this environment. Paddle isn't available here. You can keep working; plan status may be stale.";
+
+export function shouldRequestBillingProviderSync(input: {
+  billingConfigured: boolean;
+  reason: BillingReconcileReason | null;
+}): boolean {
+  if (!input.billingConfigured) {
+    return false;
+  }
+
+  return (
+    input.reason === BILLING_RECONCILE_REASONS.checkoutReturn
+    || input.reason === BILLING_RECONCILE_REASONS.explicitRefresh
+  );
+}
+
 export async function fetchBillingSummaryWithAuth(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>
 ): Promise<BillingSummary> {
@@ -88,6 +113,30 @@ export async function fetchBillingSummaryWithAuth(
   }
 
   return mapBillingSummary(raw);
+}
+
+export async function reconcileBillingFromProviderWithAuth(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  options: {
+    reason: BillingReconcileReason;
+    checkoutSessionId?: string | null;
+  }
+): Promise<{ summary: BillingSummary; synced: boolean }> {
+  const summary = await fetchBillingSummaryWithAuth(authFetch);
+  if (
+    !shouldRequestBillingProviderSync({
+      billingConfigured: summary.billingConfigured,
+      reason: options.reason,
+    })
+  ) {
+    return { summary, synced: false };
+  }
+
+  const synced = await syncBillingFromProviderWithAuth(
+    authFetch,
+    options.checkoutSessionId
+  );
+  return { summary: synced, synced: true };
 }
 
 export async function syncBillingFromProviderWithAuth(
