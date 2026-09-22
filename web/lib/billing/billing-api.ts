@@ -78,6 +78,84 @@ export async function createBillingPortalSession(
   return portalUrl;
 }
 
+export const BILLING_RECONCILE_REASONS = {
+  checkoutReturn: "checkout-return",
+  explicitRefresh: "explicit-refresh",
+} as const;
+
+export type BillingReconcileReason =
+  (typeof BILLING_RECONCILE_REASONS)[keyof typeof BILLING_RECONCILE_REASONS];
+
+export const BILLING_UNAVAILABLE_COPY =
+  "Billing isn't configured in this environment. Paddle isn't available here. You can keep working; plan status may be stale.";
+
+export function shouldRequestBillingProviderSync(input: {
+  billingConfigured: boolean;
+  reason: BillingReconcileReason | null;
+}): boolean {
+  if (!input.billingConfigured) {
+    return false;
+  }
+
+  return (
+    input.reason === BILLING_RECONCILE_REASONS.checkoutReturn
+    || input.reason === BILLING_RECONCILE_REASONS.explicitRefresh
+  );
+}
+
+export function resolveCheckoutReturnTrigger(input: {
+  billing: string | null;
+  sessionId: string | null;
+  ptxn: string | null;
+  transactionId: string | null;
+}): { shouldReconcile: boolean; checkoutSessionId: string | null } {
+  const billingSuccess = input.billing === "success";
+  const paddleReturnId = input.ptxn ?? input.transactionId;
+  if (!billingSuccess && !paddleReturnId) {
+    return { shouldReconcile: false, checkoutSessionId: null };
+  }
+
+  return {
+    shouldReconcile: true,
+    checkoutSessionId: input.sessionId ?? paddleReturnId,
+  };
+}
+
+export function checkoutReconcileKey(
+  tenantSlug: string,
+  checkoutSessionId: string | null
+): string {
+  return `${tenantSlug}::${checkoutSessionId ?? "billing-success"}`;
+}
+
+export function createCheckoutReconcileGate() {
+  let active: { key: string; promise: Promise<{ synced: boolean }> } | null = null;
+
+  return {
+    run(
+      key: string,
+      start: () => Promise<{ synced: boolean }>
+    ): Promise<{ synced: boolean }> {
+      if (active?.key === key) {
+        return active.promise;
+      }
+
+      const promise = start().then(
+        (result) => result,
+        (error: unknown) => {
+          if (active?.key === key) {
+            active = null;
+          }
+
+          throw error;
+        }
+      );
+      active = { key, promise };
+      return promise;
+    },
+  };
+}
+
 export async function fetchBillingSummaryWithAuth(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>
 ): Promise<BillingSummary> {
@@ -90,7 +168,31 @@ export async function fetchBillingSummaryWithAuth(
   return mapBillingSummary(raw);
 }
 
-export async function syncBillingFromProviderWithAuth(
+export async function reconcileBillingFromProviderWithAuth(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  options: {
+    reason: BillingReconcileReason;
+    checkoutSessionId?: string | null;
+  }
+): Promise<{ summary: BillingSummary; synced: boolean }> {
+  const summary = await fetchBillingSummaryWithAuth(authFetch);
+  if (
+    !shouldRequestBillingProviderSync({
+      billingConfigured: summary.billingConfigured,
+      reason: options.reason,
+    })
+  ) {
+    return { summary, synced: false };
+  }
+
+  const synced = await syncBillingFromProviderWithAuth(
+    authFetch,
+    options.checkoutSessionId
+  );
+  return { summary: synced, synced: true };
+}
+
+async function syncBillingFromProviderWithAuth(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>,
   checkoutSessionId?: string | null
 ): Promise<BillingSummary> {

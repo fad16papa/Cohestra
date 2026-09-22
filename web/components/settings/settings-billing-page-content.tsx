@@ -1,12 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
-import { useAuth } from "@/components/auth/auth-provider";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
-import { syncBillingFromProviderWithAuth } from "@/lib/billing/billing-api";
 import { isPaddleTransactionId } from "@/lib/billing/paddle-return";
 
 function isPaidPlan(plan: string): boolean {
@@ -14,36 +12,14 @@ function isPaidPlan(plan: string): boolean {
 }
 
 function SettingsBillingBody() {
-  const { authFetch } = useAuth();
   const { shell, refreshShell } = useTenantShell();
   const searchParams = useSearchParams();
-  const autoSyncedRef = useRef(false);
   const checkoutIncomplete = searchParams.get("billing") === "incomplete";
   const checkoutSessionId =
     searchParams.get("session_id")
     ?? searchParams.get("_ptxn")
     ?? searchParams.get("transaction_id");
-  const [incompleteNotice, setIncompleteNotice] = useState(checkoutIncomplete);
-
-  useEffect(() => {
-    if (!shell?.isTenantAdmin || autoSyncedRef.current) {
-      return;
-    }
-
-    if (shell.plan !== "Basic" && !checkoutSessionId) {
-      return;
-    }
-
-    autoSyncedRef.current = true;
-    void syncBillingFromProviderWithAuth(authFetch, checkoutSessionId)
-      .then(async (summary) => {
-        await refreshShell();
-        if (isPaidPlan(summary.plan)) {
-          setIncompleteNotice(false);
-        }
-      })
-      .catch(() => undefined);
-  }, [authFetch, checkoutSessionId, refreshShell, shell?.isTenantAdmin, shell?.plan]);
+  const [incompleteNotice] = useState(checkoutIncomplete);
 
   if (!shell?.isTenantAdmin) {
     return (

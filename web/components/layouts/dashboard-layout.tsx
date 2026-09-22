@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { DashboardMetricsRefreshProvider } from "@/components/dashboard/dashboard-metrics-refresh-context";
@@ -14,7 +14,13 @@ import { AdminRouteTransition } from "@/components/motion/admin-route-transition
 import { BillingBannerBar } from "@/components/shell/billing-banner";
 import { TenantShellProvider, useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { useToast } from "@/components/ui/toast-provider";
-import { syncBillingFromProviderWithAuth } from "@/lib/billing/billing-api";
+import {
+  BILLING_RECONCILE_REASONS,
+  checkoutReconcileKey,
+  createCheckoutReconcileGate,
+  reconcileBillingFromProviderWithAuth,
+  resolveCheckoutReturnTrigger,
+} from "@/lib/billing/billing-api";
 import { adminRouteTransitionKey } from "@/lib/admin-route-motion";
 
 type DashboardLayoutProps = {
@@ -27,30 +33,51 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
   const { authFetch } = useAuth();
   const { shell, refreshShell } = useTenantShell();
   const { showSuccessToast, showToast } = useToast();
+  const checkoutGateRef = useRef<ReturnType<typeof createCheckoutReconcileGate> | null>(
+    null
+  );
+  const checkoutReturn = resolveCheckoutReturnTrigger({
+    billing: searchParams.get("billing"),
+    sessionId: searchParams.get("session_id"),
+    ptxn: searchParams.get("_ptxn"),
+    transactionId: searchParams.get("transaction_id"),
+  });
+  const billingMessage = searchParams.get("billing_message");
+  const shellReady = shell != null;
+  const isTenantAdmin = shell?.isTenantAdmin === true;
+  const tenantSlug = shell?.tenantSlug ?? "";
 
   useEffect(() => {
-    const billingSuccess = searchParams.get("billing") === "success";
-    const checkoutSessionId =
-      searchParams.get("session_id")
-      ?? searchParams.get("_ptxn")
-      ?? searchParams.get("transaction_id");
-    const billingMessage = searchParams.get("billing_message");
-    if (!billingSuccess && !checkoutSessionId) {
+    if (!checkoutReturn.shouldReconcile) {
       return;
     }
 
+    if (!shellReady || !isTenantAdmin || !tenantSlug) {
+      return;
+    }
+
+    const triggerKey = checkoutReconcileKey(
+      tenantSlug,
+      checkoutReturn.checkoutSessionId
+    );
+    checkoutGateRef.current ??= createCheckoutReconcileGate();
     let cancelled = false;
+    const pending = checkoutGateRef.current.run(triggerKey, () =>
+      reconcileBillingFromProviderWithAuth(authFetch, {
+        reason: BILLING_RECONCILE_REASONS.checkoutReturn,
+        checkoutSessionId: checkoutReturn.checkoutSessionId,
+      }).then((result) => ({ synced: result.synced }))
+    );
 
-    async function syncAfterCheckout() {
+    async function afterCheckout() {
       try {
-        await syncBillingFromProviderWithAuth(authFetch, checkoutSessionId);
-      } catch {
-        // Webhook may have already synced; still refresh shell below.
-      }
+        const result = await pending;
+        if (cancelled) {
+          return;
+        }
 
-      if (!cancelled) {
         await refreshShell();
-        if (billingMessage) {
+        if (result.synced && billingMessage) {
           showSuccessToast(billingMessage);
         }
 
@@ -68,15 +95,35 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
         } catch {
           // Ignore malformed storage payloads.
         }
+      } catch (err) {
+        if (!cancelled) {
+          showToast(
+            err instanceof Error
+              ? err.message
+              : "Could not refresh billing after checkout. Open Settings → Billing to try again."
+          );
+          await refreshShell();
+        }
       }
     }
 
-    void syncAfterCheckout();
+    void afterCheckout();
 
     return () => {
       cancelled = true;
     };
-  }, [authFetch, refreshShell, searchParams, showSuccessToast, showToast]);
+  }, [
+    authFetch,
+    billingMessage,
+    checkoutReturn.checkoutSessionId,
+    checkoutReturn.shouldReconcile,
+    isTenantAdmin,
+    refreshShell,
+    shellReady,
+    showSuccessToast,
+    showToast,
+    tenantSlug,
+  ]);
 
   return (
     <div

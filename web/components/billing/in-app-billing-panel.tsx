@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Mail, Pencil, Phone, User } from "lucide-react";
 
 import { PhoneCountrySelect } from "@/components/activities/phone-country-select";
@@ -28,8 +28,11 @@ import {
   type BillingDetails,
 } from "@/lib/billing/billing-details-api";
 import {
+  BILLING_RECONCILE_REASONS,
+  BILLING_UNAVAILABLE_COPY,
   createBillingPortalSession,
-  syncBillingFromProviderWithAuth,
+  fetchBillingSummaryWithAuth,
+  reconcileBillingFromProviderWithAuth,
 } from "@/lib/billing/billing-api";
 import {
   formatScheduledChangeLabel,
@@ -85,6 +88,7 @@ export function InAppBillingPanel({
 }: InAppBillingPanelProps) {
   const { authFetch, profile } = useAuth();
   const [details, setDetails] = useState<BillingDetails | null>(null);
+  const [billingConfigured, setBillingConfigured] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
@@ -109,39 +113,135 @@ export function InAppBillingPanel({
   }, []);
 
   const operatorEmail = profile?.email ?? "";
+  const loadGeneration = useRef(0);
 
-  const loadDetails = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const loadBasicCapability = useCallback(async () => {
+    const generation = ++loadGeneration.current;
     try {
-      const next = await fetchBillingDetailsWithAuth(authFetch);
-      setDetails(next);
-      applyContactForm(next.contact);
+      const summary = await fetchBillingSummaryWithAuth(authFetch);
+      if (generation !== loadGeneration.current) {
+        return;
+      }
+
+      setBillingConfigured(summary.billingConfigured);
+      setError(null);
     } catch (err) {
+      if (generation !== loadGeneration.current) {
+        return;
+      }
+
       setError(err instanceof Error ? err.message : "Could not load billing details.");
     } finally {
-      setLoading(false);
+      if (generation === loadGeneration.current) {
+        setLoading(false);
+      }
+    }
+  }, [authFetch]);
+
+  const loadDetails = useCallback(async () => {
+    const generation = ++loadGeneration.current;
+    try {
+      const next = await fetchBillingDetailsWithAuth(authFetch);
+      if (generation !== loadGeneration.current) {
+        return;
+      }
+
+      setDetails(next);
+      setBillingConfigured(next.summary.billingConfigured);
+      applyContactForm(next.contact);
+    } catch (err) {
+      if (generation !== loadGeneration.current) {
+        return;
+      }
+
+      try {
+        const summary = await fetchBillingSummaryWithAuth(authFetch);
+        if (generation !== loadGeneration.current) {
+          return;
+        }
+
+        setBillingConfigured(summary.billingConfigured);
+        if (!summary.billingConfigured) {
+          setError(null);
+          return;
+        }
+      } catch {
+        // Keep the original details error when capability lookup also fails.
+      }
+
+      setError(err instanceof Error ? err.message : "Could not load billing details.");
+    } finally {
+      if (generation === loadGeneration.current) {
+        setLoading(false);
+      }
     }
   }, [authFetch, applyContactForm]);
 
   useEffect(() => {
+    if (shellPlan === "Basic") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch after mount
+      void loadBasicCapability();
+      return;
+    }
+
     void loadDetails();
-  }, [loadDetails]);
+  }, [loadBasicCapability, loadDetails, shellPlan]);
 
   const refreshAll = async () => {
     setSyncing(true);
+    setError(null);
     try {
-      await syncBillingFromProviderWithAuth(authFetch);
+      const result = await reconcileBillingFromProviderWithAuth(authFetch, {
+        reason: BILLING_RECONCILE_REASONS.explicitRefresh,
+      });
+      setBillingConfigured(result.summary.billingConfigured);
+      if (!result.summary.billingConfigured) {
+        return;
+      }
       await onRefreshShell();
-      await loadDetails();
+      if (shellPlan !== "Basic") {
+        await loadDetails();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not refresh billing status.");
     } finally {
       setSyncing(false);
     }
   };
 
   if (shellPlan === "Basic") {
+    if (loading && billingConfigured === null && !error) {
+      return <p className="text-sm text-text-muted-warm">Loading billing details…</p>;
+    }
+
+    if (billingConfigured === false) {
+      return (
+        <p role="status" className="text-sm text-text-warm">
+          {BILLING_UNAVAILABLE_COPY}
+        </p>
+      );
+    }
+
+    if (error && billingConfigured !== true) {
+      return (
+        <div className="space-y-3">
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+          <Button type="button" variant="outline" size="sm" onClick={() => void loadBasicCapability()}>
+            Try again
+          </Button>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-4">
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
         <UpgradePanel
           title="Upgrade your workspace"
           description="Compare Core and Pro, choose monthly or yearly billing, then continue to checkout to start your trial."
@@ -178,7 +278,7 @@ export function InAppBillingPanel({
   const contact = details?.contact;
   const subscription = details?.subscription;
   const invoices = details?.invoices ?? [];
-  const billingConfigured = details?.summary.billingConfigured ?? false;
+  const configured = billingConfigured ?? details?.summary.billingConfigured ?? false;
   const changePlanHref = `/billing/checkout?plan=${checkoutPlanParam(shellPlan)}&interval=${checkoutIntervalParam(details?.summary.billingInterval)}`;
   const hasActivePaidSubscription =
     shellBillingStatus === "Trialing"
@@ -275,8 +375,10 @@ export function InAppBillingPanel({
         ) : null}
       </div>
 
-      {!billingConfigured ? (
-        <p className="text-sm text-text-muted-warm">Billing is not configured in this environment.</p>
+      {!configured ? (
+        <p role="status" className="text-sm text-text-warm">
+          {BILLING_UNAVAILABLE_COPY}
+        </p>
       ) : (
         <>
           <BillingSection title="Payment method">
