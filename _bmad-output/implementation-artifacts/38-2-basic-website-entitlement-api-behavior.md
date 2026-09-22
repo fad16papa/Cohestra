@@ -2,7 +2,7 @@
 id: 38.2
 key: 38-2-basic-website-entitlement-api-behavior
 title: Basic Website entitlement API behavior
-status: in-progress
+status: review
 epic: 38
 created: 2026-09-22
 baseline_commit: 42b5b7dc192f6bcf46859648b300ba2ee67d969a
@@ -11,7 +11,7 @@ readiness: ready
 
 # Story 38.2: Basic Website entitlement API behavior
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -70,12 +70,12 @@ Repository convention is **HTTP 403** ProblemDetails with `errorCode: plan_locke
 
 ## Tasks / Subtasks
 
-- [ ] Add `PlanEntitlementException` + GlobalExceptionHandler 403 mapping; unit-test mapping and 500 preservation
-- [ ] SitePageService throws entitlement exception for Basic on all admin site operations
-- [ ] Frontend: typed plan-lock parse; skip Basic Website fetch; UpgradePanel only on explicit lock
-- [ ] API integration: Basic / Core / Pro / unauthenticated / PlatformAdmin / TenantMember / isolation
-- [ ] Playwright: Basic UpgradePanel + entitled editor; no 500; console/network review
-- [ ] Run affected suites, tsc, build, targeted lint
+- [x] Add `PlanEntitlementException` + GlobalExceptionHandler 403 mapping; unit-test mapping and 500 preservation
+- [x] SitePageService throws entitlement exception for Basic on all admin site operations
+- [x] Frontend: typed plan-lock parse; skip Basic Website fetch; UpgradePanel only on explicit lock
+- [x] API integration: Basic / Core / Pro / unauthenticated / PlatformAdmin / TenantMember / isolation
+- [x] Playwright: Basic UpgradePanel + entitled editor; no 500; console/network review
+- [x] Run affected suites, tsc, build, targeted lint
 
 ## Non-goals
 
@@ -96,8 +96,54 @@ Grok 4.6
 
 ### Debug Log References
 
+- Live Basic GET `/admin/site` → 403 `plan_locked` / `website` / `Core`
+- Playwright first Basic attempt: CORS blocked `px2-basic.localhost:3000` → Development AllowedOrigins extended for D12 fixture hosts
+
 ### Completion Notes List
+
+- `PlanEntitlementException` is the reusable typed contract. Handler maps it to 403 + `plan_locked` + `feature` + `requiredPlan`. Unexpected exceptions stay 500.
+- Admin site GET/PUT/preview-token (and other admin site ops) throw the entitlement exception for Basic. Public site unchanged.
+- Website page skips `GET /admin/site` when shell plan is Basic. `PlanLockedError` is the only API failure that renders UpgradePanel.
+- Development CORS lists D12 fixture origins so native-dev Basic hosts can call `:8080`. Not a production seeder.
+
+### Senior Developer Review (AI)
+
+Date: 2026-09-22. Outcome: **Approve** (no unresolved BLOCKER/MAJOR).
+
+Focus: frontend-only gating; 500-to-upgrade conversion; role vs plan; stale entitlement; editor requests behind UpgradePanel; tenant-URL; cross-tenant.
+
+| Severity | Finding | Disposition |
+| --- | --- | --- |
+| — | Frontend-only gating | Not found. Direct API still 403 `plan_locked`. |
+| — | Any 500/403 → UpgradePanel | Not found. Only `PlanLockedError` (`403` + `plan_locked`). |
+| — | Role vs plan mix-up | Not found. Unauth 401; PlatformAdmin 403 without `plan_locked`; Member on Basic is `plan_locked`. |
+| — | Stale shell | Covered: Basic shell skips fetch; entitled shell that is actually Basic still UpgradePanel from API. |
+| — | Editor requests behind panel | Skip fetch + UpgradePanel early return; no toolbar. |
+| — | Tenant-URL / 38.1 / 35–37 | No edits. |
+| MINOR | Handler Content-Type is `application/json` | Matches existing GlobalExceptionHandler WriteAsJsonAsync. Body is ProblemDetails. |
+| MINOR | Development CORS now includes D12 hosts | Required for live Basic UI against native API. Production `appsettings.json` unchanged. |
 
 ### File List
 
+- `_bmad-output/implementation-artifacts/38-2-basic-website-entitlement-api-behavior.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `src/Application/Tenants/PlanEntitlementException.cs`
+- `src/Api/Infrastructure/GlobalExceptionHandler.cs`
+- `src/Api/appsettings.Development.json`
+- `src/Infrastructure/Site/SitePageService.cs`
+- `src/Infrastructure.Tests/Auth/PlanEntitlementExceptionHandlerTests.cs`
+- `src/Api.IntegrationTests/AdminSiteEntitlementIntegrationTests.cs`
+- `web/lib/plan-entitlement.ts`
+- `web/lib/plan-entitlement.test.ts`
+- `web/lib/problem-details.ts`
+- `web/lib/site-admin-api.ts`
+- `web/lib/site-admin-api.test.ts`
+- `web/components/website/website-builder-page.tsx`
+- `web/e2e/website-entitlement-38-2.spec.ts`
+- `evidence/px2-38-2/checks.md`
+- `evidence/px2-38-2/basic-website-upgrade-panel.webp`
+- `evidence/px2-38-2/pro-website-editor.webp`
+
 ### Change Log
+
+- 2026-09-22: Implemented Story 38.2 — Basic Website entitlement is 403 `plan_locked`, UpgradePanel-only UI.

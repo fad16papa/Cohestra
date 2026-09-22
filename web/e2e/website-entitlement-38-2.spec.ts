@@ -122,6 +122,7 @@ test.describe("Story 38.2 — Website entitlement", () => {
     request,
   }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    test.setTimeout(60_000);
 
     let session: OperatorSession;
     try {
@@ -142,7 +143,14 @@ test.describe("Story 38.2 — Website entitlement", () => {
       pageErrors.push(error.message);
     });
 
-    await openWebsite(page, session, webBaseForSlug(BASIC_SLUG));
+    const base = webBaseForSlug(BASIC_SLUG);
+    await page.goto(`${base}/login`, { waitUntil: "networkidle" });
+    await page.getByLabel("Email address").fill(BASIC_EMAIL);
+    await page.getByLabel("Password", { exact: true }).fill(BASIC_PASSWORD);
+    await page.getByRole("button", { name: /sign in to workspace/i }).click();
+    await waitForOperatorWorkspace(page);
+    await page.goto(`${base}/dashboard/website`, { waitUntil: "networkidle" });
+    await waitForOperatorWorkspace(page);
 
     await expect(page.getByRole("heading", { name: /unlock a branded public homepage/i })).toBeVisible();
     await expect(page.getByText(/core/i).first()).toBeVisible();

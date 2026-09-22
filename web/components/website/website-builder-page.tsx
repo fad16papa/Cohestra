@@ -536,9 +536,6 @@ export function WebsiteBuilderPage() {
     }
 
     if (shouldSkipWebsiteAdminFetch(shell?.plan)) {
-      setLoading(false);
-      setPlanLocked(true);
-      setLoadError(null);
       return;
     }
 

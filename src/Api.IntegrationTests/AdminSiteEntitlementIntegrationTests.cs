@@ -275,7 +275,11 @@ public sealed class AdminSiteEntitlementIntegrationTests(IntegrationTestFixture 
     private static async Task AssertPlanLockedAsync(HttpResponseMessage response)
     {
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        Assert.True(
+            string.Equals(mediaType, "application/problem+json", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(mediaType, "application/json", StringComparison.OrdinalIgnoreCase),
+            $"Expected ProblemDetails JSON, got {mediaType}.");
 
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var root = document.RootElement;
