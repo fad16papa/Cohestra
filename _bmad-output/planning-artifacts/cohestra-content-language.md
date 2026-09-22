@@ -63,7 +63,10 @@ Mobile More sheet labels use the same canonical names (Website, not Website Buil
 | Client | A person in the tenant relationship graph | Lead (as room), Contact (as room) |
 | Lead status | New / Contacted / Active / Inactive on a client | Pipeline stage names from other CRMs |
 | Follow-up | The work of returning to a person | Outreach (room name) |
-| Opportunity | A follow-up **category/state** for people worth a next commercial or hosting conversation | A separate app area |
+| Opportunity | A Follow-up **category** for a clear next conversation that is not already done | A nav room, a sales-pipeline stage |
+| Due now | Follow-up category: action needed now | Overdue (as a separate room) |
+| At risk | Follow-up category: quiet known relationship | A Clients lead-status |
+| Healthy | Follow-up category: current relationship; excluded from needs attention | “Done” as a pipeline stage |
 | Registration | A person’s signup on an activity | Submission, ticket (unless later sold) |
 | Community | A grouping of activities | Club (unless tenant-branded) |
 | Website Studio | Editor for the public home | Website Builder (toolbar leftover) |
@@ -83,19 +86,20 @@ Mobile More sheet labels use the same canonical names (Website, not Website Buil
 
 ---
 
-## 4. Opportunity as a follow-up category (D2)
+## 4. Follow-up categories (D2 + D16)
 
-Opportunity is **not** a primary destination. It is a filter/state inside Follow-up.
+Opportunity is **not** a primary destination, **not** a top-level nav room, and **not** a formal sales-pipeline stage. It is one Follow-up category.
 
-Proposed shipped categories (PO may refine — see backlog unresolved decisions):
+Preserved categories (cinema doctrine labels, now PO-closed):
 
-| Category | Operator meaning |
+| Category | Intended meaning |
 |----------|------------------|
-| Overdue | Follow-up date in the past |
-| Due | Follow-up date today / in the current window |
-| New | Registered or created; no outreach yet |
-| Opportunity | Operator- or rule-marked: worth a next conversation (cinema triage) |
-| Done / scheduled | Has a future follow-up date and recent outreach |
+| Due now | Someone needs a follow-up action now — a due or overdue follow-up, or a just-finished activity with no outreach yet. |
+| At risk | A known relationship has gone quiet. The next conversation is to prevent a leak. |
+| Opportunity | Stronger intent or an obvious next conversation that is not already done or scheduled. Hosting or membership ask is allowed language; CRM “stage” language is not. |
+| Healthy | The relationship is current. Healthy people stay visible so operators can see who is fine; they are not part of “needs attention.” |
+
+**Do not invent scoring.** Phase 1 does not define numeric windows, points, or mutually exclusive assignment algorithms. Cinema seed counts (6 / 7 / 4 / 17) are demo evidence only. Implementation stories use existing follow-up dates and outreach records unless a later PO-approved model exists.
 
 Do not invent an `/opportunities` route in Epics 38–43.
 
@@ -164,7 +168,7 @@ Do not:
 
 ## 8. AI copy (Cohestra AI)
 
-- Lead with the next action: “3 people are overdue — open Follow-up.”
+- Lead with the next action: “3 people are Due now — open Follow-up.”
 - Evidence: “Based on follow-up dates, not a prediction.”
 - Uncertainty: “Not enough activity this week to summarize.”
 - Never: “As an AI language model,” emoji storms, or fake confidence.
@@ -186,15 +190,26 @@ Room heading (`h1`): **Cohestra AI**.
 
 ---
 
-## 10. Platform copy
+## 10. Routes and labels (D14–D20)
+
+| Surface | Canonical | Visible label | Compatibility |
+|---------|-----------|---------------|---------------|
+| Analytics | `/analytics` | Analytics | `/reports` and `?preset=` redirect here |
+| Cohestra AI | `/ai` | Cohestra AI | Any conflicting intelligence URL redirects here |
+| Dashboard | `/dashboard` · optional `?view=` | `h1` **Dashboard** | Greeting is supporting text, not an `h1` |
+| Settings | `/settings/profile`, `/settings/team`, `/settings/billing`, `/settings/{area}` | Section name is the page `h1` | `?section=` and old in-page ids redirect |
+
+Cookie actions (D20): **Accept**, **Reject non-essential**, **Preferences**. Do not use “OK” alone or a single Accept that implies optional cookies.
+
+## 11. Platform copy
 
 Platform stays sparse and operational: tenant name, plan, status, billing status. Use the same Suspended vs On hold words. No cinema metaphors. No impersonation language.
 
 ---
 
-## 11. Sources
+## 12. Sources
 
-- D1–D4, D13 — `docs/DESIGN.md` §2–3, §20
+- D1–D4, D13–D20 — `docs/DESIGN.md` §2–3, §20
 - PX2-IA-001, PX2-IA-002, PX2-IA-003, PX2-IA-006, PX2-ENT-003, PX2-ENT-004, PX2-ENT-005
 - `web/lib/marketing/product-slides.tsx` vs `web/lib/admin-nav.ts` (shipped drift)
 - `docs/user-manual/cohestra-operator-manual.md` (June 2026 — stale “one operator”; update when copy stories land)

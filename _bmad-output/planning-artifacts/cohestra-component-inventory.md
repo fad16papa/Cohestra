@@ -230,7 +230,7 @@ Builder chrome (Form Studio DESIGN.md class strings): `builderRow` `rounded-lg b
 |---------|-----------|-----------------|
 | Empty | `ProductEmptyState` | dashboard dashed chart empties; communities/categories `td`; invoices/support one-liners; platform `--plat-stone`; `MarketingEmptyState` |
 | Error | `ProductErrorState` | inline “Could not load…” on campaigns/reports/website |
-| Page header | `PageHeader` | communities/categories/reports/create-activity inline h2; Settings/Team/Billing h1; dashboard greeting; website toolbar |
+| Page header | `PageHeader` | communities/categories/reports/create-activity inline h2; Settings/Team/Billing h1; dashboard greeting **must not remain an `h1` (D19)**; website toolbar |
 | Button | `Button` h-8 | public min-h-12; platform native min-h-11; marketing `.marketing-atelier-btn`; register gradient; toast raw button |
 | Card | rarely `Card` | custom `rounded-xl\|2xl border border-border-warm bg-card/80 shadow-sm` |
 | Table | none | HTML table, CSS grid, `role="row"`, `PlatformDataTable`, `DashboardScrollTable` |
@@ -321,3 +321,9 @@ Copied from DESIGN.md §19: a one-off ships only if the story names it, it does 
 | D10 | Platform section §2 `--plat-*` becomes deprecated aliases |
 | D11 | §7 “Missing App Router files” becomes a 39.5 story, not a permanent gap |
 | D13 | This file is history + shipped catalog; DESIGN.md is law |
+| D14–D15 | Nav/href inventory: `/analytics` and `/ai` become canonical; `/reports` and conflicting intelligence URLs are redirects |
+| D16 | No Opportunities primitive. Follow-up filters use Due now / At risk / Opportunity / Healthy — no scoring component |
+| D17 | Settings in-page `activeId` is replaced by nested routes + redirects; Team/Billing paths stay, Profile is `/settings/profile` |
+| D18 | Dashboard view switcher reads `?view=`; localStorage is fallback only |
+| D19 | Dashboard greeting is not an `h1`; shared page header supplies “Dashboard” |
+| D20 | Cookie consent leaves the dialog-that-covers-CTA pattern; non-modal reserved-space banner with Accept / Reject non-essential / Preferences |

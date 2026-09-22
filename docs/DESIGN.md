@@ -186,9 +186,9 @@ Full glossary and error-message rules live in `_bmad-output/planning-artifacts/c
 | Clients | Contacts, leads (as a room name) |
 | Activities | Events (as a room name) |
 | Follow-up | Needs follow-up (as a room). Queue widgets may say “Needs follow-up.” |
-| Opportunity | A follow-up **state / category**, never a primary nav room |
-| Analytics | Reports (as a room name). “Reports” is an Analytics capability / export. |
-| Cohestra AI | Needs attention (as a room). “Needs attention” is a dashboard section. |
+| Opportunity | A Follow-up **category** only — not a primary room and not a sales-pipeline stage |
+| Analytics | Reports (as a room name). Canonical route **`/analytics`**. “Reports” is an Analytics capability / export. `/reports` is a compatibility redirect. |
+| Cohestra AI | Needs attention (as a room). Canonical route **`/ai`**. Visible label remains **Cohestra AI**. “Needs attention” is a dashboard section. |
 | Website | Website Builder, `/site` (as a label). Page title may be **Website Studio**. Path stays `/dashboard/website` unless a later story moves it. |
 | Form Studio | The Activity `Form` tab. Not a primary nav room. |
 | Campaigns | Broadcasts, blasts |
@@ -221,15 +221,17 @@ Order, labels, and intended hrefs:
 | 2 | Clients | `/clients` | Relationship list + profile. |
 | 3 | Activities | `/activities` | List; children Communities / Categories remain secondary. |
 | 4 | Follow-up | `/follow-up` | **New primary room.** Dashboard widgets link here. |
-| 5 | Analytics | `/analytics` (alias `/reports`) | “Reports” is a capability inside Analytics. Existing `/reports` may redirect. |
-| 6 | Cohestra AI | `/ai` | Room for the intelligence brief and next actions. Dashboard keeps a “Needs attention” section that links here. |
+| 5 | Analytics | `/analytics` | Canonical route. “Reports” is a capability inside Analytics. Existing `/reports` (and query presets) **must** compatibility-redirect here — do not silently 404. |
+| 6 | Cohestra AI | `/ai` | Canonical route. Visible label remains **Cohestra AI**. Dashboard keeps a “Needs attention” section that links here. Any conflicting intelligence URL **must** compatibility-redirect — do not silently remove it. |
 | 7 | Website | `/dashboard/website` | Page title **Website Studio**. |
 | 8 | Campaigns | `/campaigns` | Discoverable; lock on Basic/Core. |
 
 **Not primary rooms:** Settings, Team, Billing, Communities, Categories, Form Studio, Opportunity, Needs attention, Reports.
 
-**Desktop footer (TenantAdmin):** Settings · Team · Billing (Billing if Basic or billing owner).  
-**Desktop footer (TenantMember):** Settings only.
+**Desktop footer (TenantAdmin):** Settings → `/settings/profile` · Team → `/settings/team` · Billing → `/settings/billing` (Billing if Basic or billing owner).
+**Desktop footer (TenantMember):** Settings → `/settings/profile` only.
+
+**Settings nested routes (resolved):** `/settings` redirects to the first allowed nested route (`/settings/profile` for members; same or workspace default for admins). Additional areas follow `/settings/{area}` (plan, brand, organization, notifications, embed, domain, support, appearance). Existing `?section=` and in-page `activeId` links **must** compatibility-redirect. Permissions and entitlements do not change.
 
 ### 3.2 Mobile primary destinations (<768)
 
@@ -250,6 +252,35 @@ More-sheet items follow D4: paid modules visible with lock + plan label; structu
 - Dashboard / Home is active only on `/dashboard` (not `/dashboard/website` or other `/dashboard/*` tools).
 - Activities is active for `/activities`, `/activities/new`, and `/activities/{id}` including Form Studio. Communities and Categories are Activities children.
 - Follow-up is active on `/follow-up` and may stay visually related when a profile was opened **from** Follow-up (back affordance), but `/clients/{id}` is a Clients route for landmarks and `h1`.
+- Analytics is active on `/analytics` (and during the `/reports` redirect hop).
+- Cohestra AI is active on `/ai`.
+
+### 3.4 Follow-up categories (resolved)
+
+Opportunity is a **Follow-up category**. It is not a top-level room and not a formal sales-pipeline stage.
+
+Preserved categories (cinema doctrine labels; **no new scoring engine**):
+
+| Category | Intended meaning |
+|----------|------------------|
+| Due now | A follow-up is due now. |
+| At risk | A known relationship has gone quiet; the next conversation is to prevent a leak. |
+| Opportunity | Stronger intent or an obvious next conversation that is not already done. Not a pipeline stage. |
+| Healthy | The relationship is current; not in the “needs attention” set. |
+
+Do not invent numeric windows, scores, or assignment algorithms in this contract. Implementation uses existing follow-up dates and outreach records unless a later PO-approved model exists. Cinema seed cardinalities (6 / 7 / 4 / 17) are demo evidence, not production rules.
+
+### 3.5 Dashboard view mode (resolved)
+
+Dashboard views are URL-addressable:
+
+| Query | View |
+|-------|------|
+| omitted or `?view=overview` | Overview (default) |
+| `?view=graphs` | Graphs |
+| `?view=table` | Table |
+
+Back/forward and shared URLs **must** preserve the selected view. A stored preference (e.g. localStorage) may apply **only** when the URL does not specify `view`. Invalid `view` values fall back to overview.
 
 ---
 
@@ -280,6 +311,7 @@ Document title: `{Page h1} · {Tenant or Cohestra}`.
 - Sidebar: expanded 240px ≥1024; compact 64px with visible text alternative (tooltip + `sr-only`) at 768–1023.
 - Mobile tab bar: 5 destinations, ≥44px hit area, `md:hidden`.
 - Page header: `h1` (`{typography.display-sm}` or `{typography.title}` by density) + optional description + **one** primary action + overflow menu for secondary actions.
+- **Dashboard `h1` is exactly “Dashboard.”** Personalized greetings (“Good morning, Maya”) are supporting copy under or beside the `h1` — never a second heading.
 - Content width: `max-w-7xl` for operational lists; studios may go full bleed inside `<main>`.
 - Gutters: 16px <768 · 24px 768–1023 · 32px ≥1024.
 
@@ -452,7 +484,7 @@ Rules:
 
 ### 10.4 Tabs
 
-- In-page views (Dashboard Overview/Graphs/Tables; Activity Design/Form/…). Prefer URL or shareable query where the view is a job, not only `localStorage`.
+- Dashboard views use `?view=overview|graphs|table` (§3.5). Other in-page jobs (Activity Design/Form/…) keep their existing query or tab contracts.
 - Selected tab: lagoon underline or hairline, 3:1 against unselected.
 - Activity Form tab **is** Form Studio. Do not add a second Form Studio nav item.
 
@@ -462,7 +494,7 @@ Rules:
 - Local motion **160ms**. Press remains 100ms.
 - Sheets for mobile inspectors and the More menu.
 - Command palette must use the same accessible overlay contract.
-- Cookie consent on marketing is a **non-modal banner**. It must not cover the primary hire CTA (PX2-LIVE-001).
+- Cookie consent is a **non-modal banner** that **reserves layout space** (including mobile safe areas) so it never covers primary actions (PX2-LIVE-001). Required actions: keyboard-accessible **Accept**, **Reject non-essential**, and **Preferences**. No misleading visual hierarchy and no preselected optional consent. Legal-policy text stays outside the UI story unless an approved policy already defines it.
 
 Campaign email preview and insert-QR are not exempt.
 
@@ -666,6 +698,13 @@ Unreviewed one-offs (custom `role="dialog"`, raw Tailwind red, second `<main>`) 
 | D11 | §11 App Router error and not-found are required. |
 | D12 | Fixtures for Member / Basic / Suspended / OnHold are **dev/test only**. Never production data. |
 | D13 | This file is the living contract. BMAD artifacts keep history. |
+| D14 | Canonical Analytics route is `/analytics`. `/reports` (including presets) compatibility-redirects. |
+| D15 | Canonical Cohestra AI route is `/ai`. Visible label remains “Cohestra AI”. Conflicting routes compatibility-redirect. |
+| D16 | Opportunity is a Follow-up category (Due now, At risk, Opportunity, Healthy). Not a room. Not a sales-pipeline stage. No invented scoring. |
+| D17 | Settings use nested routes (`/settings/profile`, `/settings/team`, `/settings/billing`, `/settings/{area}`). Redirect `?section=` / old in-page ids. Preserve permissions. |
+| D18 | Dashboard view is `?view=overview\|graphs\|table`. Default may omit the parameter. History and shared URLs win over stored preference. |
+| D19 | Dashboard owns exactly one page-level `h1`: “Dashboard”. Greetings are supporting copy. |
+| D20 | Cookie banner: legal requirements first; reserve space / safe areas; Accept, Reject non-essential, Preferences; no dark patterns; policy text out of scope unless already approved. |
 
 ---
 
@@ -683,6 +722,6 @@ Unreviewed one-offs (custom `role="dialog"`, raw Tailwind red, second `<main>`) 
 - Restyle production UI from this Phase 1 PR.
 - Open a second palette or a second dialog primitive.
 - Hide Follow-up inside Clients filters as the only destination.
-- Cover primary CTAs with a modal cookie sheet.
+- Cover primary CTAs with a cookie sheet, or pre-tick optional consent.
 - Swallow billing 503 as “fine” without a named state.
 - Mark a story done without the mandatory code-review loop once implementation begins.

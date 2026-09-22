@@ -250,8 +250,8 @@ Conflicts below were open in Phase 0.1. Product-owner D1–D13 plus `docs/DESIGN
 | 2 | Follow-up room vs widget (PX2-IA-002) | **D2:** Follow-up is a primary room. Opportunity is a follow-up state/category. |
 | 3 | Website naming + mobile (PX2-IA-003/004) | **D1/D3:** Nav “Website”; title “Website Studio”; path `/dashboard/website`. Mobile under More. |
 | 4 | Hide vs lock (PX2-IA-005, PX2-ENT-001) | **D4:** Discoverable modules visible + lock + plan label. Structurally unavailable hidden. |
-| 5 | Settings URL vs in-page | **Unresolved U4:** keep in-page; optional `?section=` in story 43.1. |
-| 6 | Dashboard view mode URL vs localStorage | **Unresolved U5:** prefer URL in story 40.1. |
+| 5 | Settings URL vs in-page | **D17:** nested routes `/settings/profile`, `/settings/team`, `/settings/billing`, `/settings/{area}`. Redirect `?section=` / old ids. Preserve permissions. |
+| 6 | Dashboard view mode URL vs localStorage | **D18:** `?view=overview\|graphs\|table`. Default may omit the parameter. Stored preference only when URL has no `view`. |
 | 7 | Platform visual system (PX2-SYS-001) | **D10:** inherit semantic tokens; sparse layout may remain. |
 | 8 | `/site` vs `/dashboard/website` | Keep `/dashboard/website`. Do not add `/site`. |
 
@@ -307,7 +307,7 @@ docs/DESIGN.md
      - Do not invent a third palette
 ```
 
-Companion later (not required to start Epics 38–43): a future `docs/EXPERIENCE.md` may hold journey-level behavior. Until then, `docs/DESIGN.md` + this IA + the backlog are sufficient. `docs/DESIGN.md` wins on conflict.
+Companion later (not required to start Epics 38–43): a future EXPERIENCE companion may hold journey-level behavior. Until then, `docs/DESIGN.md` + this IA + the backlog are sufficient. `docs/DESIGN.md` wins on conflict.
 
 ---
 
@@ -330,6 +330,13 @@ Phase 0.1 recorded the owner’s answers. Phase 1 encodes them in `docs/DESIGN.m
 | D11 | Deliberate App Router error and not-found experiences are required in a **future** story. | Deferred. LIVE Next default 404 at `/nope-px2-audit`. |
 | D12 | Dev/test-only fixtures for Member, Basic, Suspended, OnHold approved. Never alter production data. | Local-only fixtures used this run; **no production seeder**. |
 | D13 | `docs/DESIGN.md` is the canonical living design contract. BMAD planning artifacts keep evidence, rationale, and history. | **Authored in Phase 1.** Implementation still deferred to Epics 38–43. |
+| D14 | Canonical Analytics route `/analytics`. | Epic 39.1 + 41.1. `/reports` compatibility redirect. |
+| D15 | Canonical Cohestra AI route `/ai`. Label remains “Cohestra AI”. | Epic 39.1 + 41.2. Conflicting routes redirect. |
+| D16 | Opportunity is a Follow-up category (Due now, At risk, Opportunity, Healthy). Not a room or sales-pipeline stage. No invented scoring. | Epic 40.2 |
+| D17 | Settings nested routes; redirect `?section=`; preserve permissions. | Epic 43.1 |
+| D18 | Dashboard `?view=overview\|graphs\|table`; default may omit param; history wins over stored preference. | Epic 40.1 |
+| D19 | Dashboard `h1` is “Dashboard”. Greeting is supporting copy. | Epic 39.4 + 40.1 |
+| D20 | Cookie banner reserves space, safe areas, Accept / Reject non-essential / Preferences; legal first; no dark patterns. | Epic 43.5 |
 
 **Non-decisions (locked):** Epic 35 shells/flows/entitlements; Epic 36 composition/renderer/submit; Epic 37 100/160/280 and CSS reduced-motion; server-side plan gates; no new animation libraries.
 
@@ -371,16 +378,22 @@ Activities                        /activities
     Form Studio                   tab=form (not a primary room)
   Communities                     /activities/communities
   Categories                      /activities/categories
-Follow-up                         /follow-up          ← new primary room
-  Opportunity                     filter/state only
-Analytics                         /analytics          ← room name; /reports redirects
+Follow-up                         /follow-up
+  Due now · At risk · Opportunity · Healthy
+Analytics                         /analytics
+  /reports → /analytics           compatibility redirect (preserve ?preset=)
   Reports / presets / export      capabilities
-Cohestra AI                       /ai                 ← new primary room
+Cohestra AI                       /ai
+  conflicting intelligence URLs   compatibility redirect
 Website (title: Website Studio)   /dashboard/website
 Campaigns                         /campaigns
-Settings                          /settings           (footer)
+Dashboard views                   /dashboard · ?view=overview|graphs|table
+Settings                          /settings → first allowed nested route
+  Profile                         /settings/profile
   Team                            /settings/team
   Billing                         /settings/billing
+  Other areas                     /settings/{area}
+  Legacy                          ?section= / activeId → nested route
 Checkout                          /billing/checkout
 ```
 
@@ -425,11 +438,12 @@ Shipped journeys in §4 stay as evidence. Deltas only:
 
 | Journey | Change when stories land |
 |---------|--------------------------|
-| 4.1 Dashboard | Needs attention stays a section. Queue “View all” → `/follow-up`. |
+| 4.1 Dashboard | `h1` “Dashboard”; greeting is supporting text. Views via `?view=`. Needs attention stays a section. Queue “View all” → `/follow-up`. |
 | 4.2–4.3 Clients | Chips/profile link into Follow-up room; Opportunity is not a clients tab. |
-| 4.6 Follow-up | Becomes a first-class journey on `/follow-up` (story 40.2). |
-| 4.7 Opportunities | Absorbed as Follow-up category. Still no `/opportunities`. |
-| 4.8 Analytics | `/analytics`; Reports is export/preset language. |
-| 4.9 Cohestra AI | `/ai` room; dashboard section remains. |
+| 4.6 Follow-up | First-class `/follow-up` with Due now / At risk / Opportunity / Healthy (story 40.2). |
+| 4.7 Opportunities | Absorbed as Follow-up category. Still no `/opportunities`. Not a sales-pipeline stage. |
+| 4.8 Analytics | Canonical `/analytics`; `/reports` redirects (preserve presets). |
+| 4.9 Cohestra AI | Canonical `/ai`; label “Cohestra AI”; dashboard section remains. |
 | 4.10 Website | Mobile via More; title Website Studio. |
 | 4.11 Form Studio | 1024–1279 two-pane + inspector (D7); 44px handles. |
+| 4.13 Settings | Nested `/settings/{area}`; `?section=` redirects; permissions unchanged. |

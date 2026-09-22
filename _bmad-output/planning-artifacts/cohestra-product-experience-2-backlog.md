@@ -9,6 +9,7 @@ content_language: _bmad-output/planning-artifacts/cohestra-content-language.md
 head_phase0_1: 63fc97fa
 main_after_339: 809efb21
 implementation: not-started
+po_closeout: D14-D20
 ---
 
 # Product Experience 2.0 — ranked epic and story roadmap
@@ -54,6 +55,39 @@ Rejected alternatives:
 | 4 | **41** Intelligence and Communication | Analytics room, Cohestra AI room, Campaigns overlays | 38.6, 39 |
 | 5 | **42** Creation Studios | Website Studio + Form Studio compositions, preview/publish | 38.2, 39, Epic 35–37 locks |
 | 6 | **43** System Areas and Product-Wide Closure | Settings, Team, Billing, Platform, leftover consistency | 38–42 |
+
+### 1.1 Story-title matrix
+
+| ID | Title | Depends on |
+|----|-------|------------|
+| 38.1 | Billing-sync environment and error behavior | Phase 0.1 |
+| 38.2 | Basic Website entitlement API behavior | Phase 0.1 |
+| 38.3 | E2E tenant and theme isolation | Phase 0.1 |
+| 38.4 | Semantic tokens and accessible text | — |
+| 38.5 | Shared heading, landmark, and skip-link contract | — |
+| 38.6 | Shared accessible overlay contract | — |
+| 39.1 | Desktop shell and canonical rooms | 38.4–38.6 |
+| 39.2 | Mobile navigation | 39.1, 38.6 |
+| 39.3 | Entitlement visibility | 38.2, 39.1 |
+| 39.4 | Page-header hierarchy | 38.5 |
+| 39.5 | Route error and not-found states | 38.5 |
+| 40.1 | Dashboard as relationship command center | 39.1, 39.4 |
+| 40.2 | Follow-up primary room | 39.1, 40.1 |
+| 40.3 | Clients list and client profile | 38.6, 39.4 |
+| 40.4 | Activities and opportunities-as-category | 40.2 |
+| 40.5 | Cross-module continuity | 40.1–40.4 |
+| 41.1 | Analytics room | 39.1, 38.4 |
+| 41.2 | Cohestra AI room | 39.1, 40.1 |
+| 41.3 | Campaigns | 38.6, 39.3 |
+| 42.1 | Website Studio chrome and placement | 38.2, 39.2 |
+| 42.2 | Form Studio responsive composition (D7) | 38.5, 39 |
+| 42.3 | Form Studio touch and builder controls | 42.2 |
+| 42.4 | Preview and publishing continuity | 38.3, 42.1–42.3 |
+| 43.1 | Settings nested routes | 38.5, 39.4 |
+| 43.2 | Team and permissions | 39.3, 43.1 |
+| 43.3 | Billing presentation | 38.1, 43.1 |
+| 43.4 | Platform administration | 38.4, 38.6 |
+| 43.5 | Responsive, accessibility, visual, and consistency closure | 38–43.4 |
 
 Stories below all use the same required fields.
 
@@ -105,7 +139,7 @@ Each story includes:
 
 **Responsive.** Chrome-only; all viewports.
 
-**Accessibility.** Named state must be readable text ≥4.5:1; not color-only.
+**Accessibility.** Named state must be readable text ≥4.5:1; not color-only. Reduced-motion: no additional animation for the billing note.
 
 **Protected 35–37.** No registration/studio/motion change.
 
@@ -183,7 +217,7 @@ Each story includes:
 
 **Responsive.** All viewports; dark mode re-measure.
 
-**Accessibility.** WCAG 1.4.3 AA for normal muted text. Document pairings.
+**Accessibility.** WCAG 1.4.3 AA for normal muted text. Document pairings. Reduced-motion does not apply to static token remaps.
 
 **Protected 35–37.** Public shells may consume `--text-muted` only if preview parity and e2e contrast-independent assertions still pass. Do not change experience enums.
 
@@ -259,21 +293,21 @@ Each story includes:
 
 **Roles / plans / routes / states.** All tenant operators; desktop ≥768.
 
-**Scope.** Rail order and labels per DESIGN.md §3.1. Add routes or redirects: `/follow-up`, `/analytics` (alias `/reports`), `/ai`. Website breadcrumb title Website Studio. Footer unchanged.
+**Scope.** Rail order and labels per DESIGN.md §3.1. Canonical routes: `/follow-up`, **`/analytics`**, **`/ai`**. Visible AI label remains **Cohestra AI**. Compatibility redirects: `/reports` → `/analytics` (preserve `?preset=` and other queries); any conflicting intelligence URL → `/ai` (do not silently 404). Website breadcrumb title Website Studio. Footer: Settings → `/settings/profile`, Team → `/settings/team`, Billing → `/settings/billing`.
 
-**Non-goals.** Do not build Follow-up/AI/Analytics **features** (40–41). Do not change mobile yet (39.2). Do not restyle cinema.
+**Non-goals.** Do not build Follow-up/AI/Analytics **features** (40–41). Do not change mobile yet (39.2). Do not restyle cinema. Do not invent `/opportunities`.
 
-**UX / states.** Empty rooms may use `ProductEmptyState` “Coming into this epic” only if the destination is wired; prefer stub rooms with honest empty states that 40/41 fill.
+**UX / states.** Stub rooms use `ProductEmptyState` / loading skeleton / `ProductErrorState` until 40–41 fill them. Redirects are silent and permission-preserving.
 
-**Responsive.** Rail compact 768–1023; expanded ≥1024 (DESIGN.md §4.2).
+**Responsive.** Rail compact 768–1023; expanded ≥1024 (DESIGN.md §4.2). Reduced-motion: no extra nav animation beyond Epic 37 press/local.
 
-**Accessibility.** One nav landmark; current page `aria-current`. One `h1` per new stub.
+**Accessibility.** One nav landmark; current page `aria-current`. One `h1` per new stub. Skip link still reaches `#main`.
 
 **Protected 35–37.** Epic 37 forbids changing IA **as a motion story**; this is the IA story. Do not change pathname-key rules.
 
-**QA.** Nav snapshot tests; visual 1440/1024/768; cinema vs rail label table.
+**QA.** Nav snapshot tests; visual 1440/1024/768; cinema vs rail label table; `/reports?preset=weekly` lands on Analytics weekly.
 
-**Risks.** Deep links to `/reports` must redirect. Training docs drift until 43.
+**Risks.** Bookmarks to `/reports`. Training docs drift until 43.
 
 ---
 
@@ -337,21 +371,21 @@ Each story includes:
 
 **Roles / plans / routes / states.** All admin rooms.
 
-**Scope.** One shared page header: `h1` + description + primary action. Adopt on Dashboard, Clients, Activities, new rooms, Settings. Website `h1` = Website Studio.
+**Scope.** One shared page header: `h1` + description + primary action. Adopt on Dashboard, Clients, Activities, new rooms, Settings. Website `h1` = Website Studio. **Dashboard `h1` is exactly “Dashboard” (D19).** Personalized greeting is supporting text in the header region, not a heading.
 
-**Non-goals.** Do not build every table. Do not restyle marketing headers.
+**Non-goals.** Do not build every table. Do not restyle marketing headers. Do not drop the greeting — demote it.
 
-**UX / states.** Header persists through loading.
+**UX / states.** Header (including the single `h1`) persists through loading, empty, and error.
 
 **Responsive.** Action wraps under title `<768`; 44px actions.
 
-**Accessibility.** Heading order `h1` → `h2` sections only.
+**Accessibility.** Heading order `h1` → `h2` sections only. Greeting is not an `h1`/`h2`.
 
-**Protected 35–37.** Activity Design/Form toolbars may keep studio chrome; page still has one `h1`.
+**Protected 35–37.** Activity Design/Form toolbars may keep studio chrome; page still has one `h1`. Reduced-motion: header has no independent animation.
 
-**QA.** Header visual on 6 rooms × 1440/390.
+**QA.** Header visual on 6 rooms × 1440/390. Dashboard heading map: one `h1` “Dashboard”.
 
-**Risks.** Greeting header on Dashboard vs `h1` “Dashboard” — pick one `h1` (prefer “Dashboard” or tenant greeting, not both).
+**Risks.** Screen-reader users who used the greeting as the page title.
 
 ---
 
@@ -395,21 +429,21 @@ Each story includes:
 
 **Roles / plans / routes / states.** All tenant operators; empty / populated / error / onboarding / Basic vs Pro.
 
-**Scope.** Hierarchy: Needs attention (section) → Needs follow-up (links to `/follow-up`) → today/work → supporting metrics. Apply tokens/header/density. Graphs/Tables remain views, prefer shareable query over localStorage-only.
+**Scope.** Hierarchy: Needs attention (section) → Needs follow-up (links to `/follow-up`) → today/work → supporting metrics. Apply tokens/header/density. **`h1` is “Dashboard”; greeting is supporting copy (D19).** Views are URL-addressable: `?view=overview` · `?view=graphs` · `?view=table`. Default **may omit** the parameter (overview). Back/forward and shared URLs preserve the view. A stored preference applies **only** when `view` is absent. Invalid `view` → overview.
 
-**Non-goals.** Do not move AI generation logic. Do not hide metrics entirely. Do not implement `/ai` content (41.2).
+**Non-goals.** Do not move AI generation logic. Do not hide metrics entirely. Do not implement `/ai` content (41.2). Do not key Epic 37 route-enter on the `view` query (pathname-only).
 
-**UX / states.** Empty (`DashboardEmptyState`), loading skeletons, brief error ≠ “all caught up,” onboarding checklist verbs aligned to rooms.
+**UX / states.** Empty (`DashboardEmptyState`), loading skeletons, brief error ≠ “all caught up,” onboarding checklist verbs aligned to rooms. Each view has loading / empty / error.
 
-**Responsive.** Phone: stacked cards, no `min-w-[40rem]` graph trap (PX2-RESP-003). 1440: two-column optional, not nested card theater.
+**Responsive.** Phone: stacked cards, no `min-w-[40rem]` graph trap (PX2-RESP-003). 1440: two-column optional, not nested card theater. View switcher ≥44px on touch.
 
-**Accessibility.** Section labels; insight links named; 40/44 controls.
+**Accessibility.** Section labels; insight links named; 40/44 controls. View switcher is tabs or radiogroup with `aria-current`. Reduced-motion: view swap uses local 160ms or instant under PRM.
 
-**Protected 35–37.** Route enter 280ms pathname-only.
+**Protected 35–37.** Route enter 280ms pathname-only — **do not remount Form Studio or destroy dashboard data because `view` changed** via a route-enter wrapper. Prefer client state + URL, not a new pathname.
 
-**QA.** Visual 1440/390 empty+populated (populated via demo). Keyboard from skip link to queue.
+**QA.** Visual 1440/390 empty+populated (populated via demo). Keyboard from skip link to queue. History: overview → graphs → back. Shared `?view=table` opens table.
 
-**Risks.** Removing a widget operators rely on; keep performance table as a section, not a room.
+**Risks.** Removing a widget operators rely on; keep performance table as a section, not a room. Treating `view` as a path segment would reopen Epic 37 draft-survival rules.
 
 ---
 
@@ -419,23 +453,23 @@ Each story includes:
 
 **Evidence.** IA §4.6–4.7; unused `client-follow-up-panel.tsx`.
 
-**Roles / plans / routes / states.** Admin + Member; all plans. States: overdue, due, new, opportunity, empty, loading, error.
+**Roles / plans / routes / states.** Admin + Member; all plans. States: **Due now, At risk, Opportunity, Healthy**, empty, loading, error, permission (member can view, cannot change workspace settings).
 
-**Scope.** Ship `/follow-up` as the room: filters for categories (content-language §4), list, links to profile. Dashboard “View all” → this room. Reuse panel/queue data; do not fork APIs without cause.
+**Scope.** Ship `/follow-up` as the room: filters for the four preserved categories (content-language §4 / D16), list, links to profile. Dashboard “View all” → this room. Reuse panel/queue data; do not fork APIs without cause. Opportunity is a **category**, not a room and not a sales-pipeline stage.
 
-**Non-goals.** No `/opportunities`. No automated messaging. No schema rewrite of follow-up dates.
+**Non-goals.** No `/opportunities`. No automated messaging. No schema rewrite of follow-up dates. **No invented scoring, numeric windows, or cinema 6/7/4/17 rules in production.**
 
-**UX / states.** Empty: “No one needs follow-up.” Filter empty vs global empty. Row → `/clients/{id}`.
+**UX / states.** Empty: “No one needs follow-up.” Filter empty vs global empty. Healthy is listable but excluded from “needs attention.” Row → `/clients/{id}`.
 
-**Responsive.** Cards `<768`; table ≥1024; 44px rows on phone.
+**Responsive.** Cards `<768`; table ≥1024; 44px rows and category chips on phone (full labels or scroll, no clip).
 
-**Accessibility.** `h1` Follow-up; filters named; status not color-only.
+**Accessibility.** `h1` Follow-up; filters named; status not color-only. Reduced-motion: filter/list updates local 160ms or instant.
 
-**Protected 35–37.** None beyond shell.
+**Protected 35–37.** None beyond shell. Do not restyle cinema DemoClub buckets as if they were the production engine.
 
-**QA.** E2E: dashboard widget → room → profile. Visual category chips (no 390 truncation — see also 43.5).
+**QA.** E2E: dashboard widget → room → profile. Visual category chips at 390. Member can open the room.
 
-**Risks.** Dual-writing queue vs room; keep one query.
+**Risks.** Dual-writing queue vs room; keep one query. Importing cinema seed predicates as a hidden scoring model.
 
 ---
 
@@ -529,7 +563,7 @@ Each story includes:
 
 **Roles / plans / routes / states.** Basic weekly; Core+ advanced; loading/stale/error/empty period/export disabled.
 
-**Scope.** Room name Analytics (`/analytics`, `/reports` redirect). Presets remain capabilities. Cross-link Dashboard Graphs. Apply header/tokens/table. Keep Basic weekly without a dead end.
+**Scope.** Canonical room **`/analytics` (D14)**. `/reports` and `/reports?preset=…` **must** compatibility-redirect (preserve query). Presets remain capabilities. Cross-link Dashboard Graphs (`/dashboard?view=graphs`). Apply header/tokens/table. Keep Basic weekly without a dead end. `h1` is “Analytics”.
 
 **Non-goals.** No unimplemented “saved views” unless already coded. No new metrics invention.
 
@@ -541,9 +575,9 @@ Each story includes:
 
 **Protected 35–37.** None.
 
-**QA.** Basic vs Pro reports screenshots; redirect `/reports` → `/analytics`.
+**QA.** Basic vs Pro screenshots; `/reports?preset=weekly` → Analytics weekly; `/reports?preset=monthly` still Core-locked after redirect.
 
-**Risks.** Bookmarks to `/reports?preset=`.
+**Risks.** Losing preset query on redirect. Entitlement changing because the path changed (must not).
 
 ---
 
@@ -555,9 +589,9 @@ Each story includes:
 
 **Roles / plans / routes / states.** All operators; `deterministic` / `synthesized` / `insufficientData` / error.
 
-**Scope.** `/ai` with `h1` Cohestra AI. Dashboard section remains Needs attention and links here. Evidence + uncertainty + one next action (DESIGN.md §16). Reuse brief API.
+**Scope.** Canonical **`/ai` (D15)**. Visible `h1` and nav label remain **Cohestra AI**. Dashboard section remains Needs attention and links here. Evidence + uncertainty + one next action (DESIGN.md §16). Reuse brief API. Any conflicting intelligence URL **must** compatibility-redirect to `/ai` (do not silently remove it).
 
-**Non-goals.** Do not enable synthesis by default. Do not add free-chat. Do not restyle DemoClub cinema.
+**Non-goals.** Do not enable synthesis by default. Do not add free-chat. Do not restyle DemoClub cinema. Do not rename the product to “AI” or “Copilot.”
 
 **UX / states.** insufficientData ≠ empty success. Error uses ProductErrorState.
 
@@ -719,21 +753,21 @@ Each story includes:
 
 **Roles / plans / routes / states.** Admin workspace sections; Member personal-only.
 
-**Scope.** Apply shell contract. Tablet: two-pane or Context sheet (define one). Optional `?section=` deep link (unresolved PO — implement if approved).
+**Scope.** Nested routes **(D17):** `/settings/profile`, `/settings/team`, `/settings/billing`, and `/settings/{area}` for plan, brand, organization, notifications, embed, domain, support, appearance. `/settings` redirects to the first allowed nested route. **Compatibility redirects** for `?section=` and old in-page `activeId` values. **Permissions and entitlements unchanged** (Member personal-only; Team Admin + Core lock; Billing Admin/owner). Tablet: two-pane or Context sheet (pick one and document). Each nested route owns one `h1` (section name).
 
-**Non-goals.** Do not ship custom domain. Do not change brand-accent algorithm.
+**Non-goals.** Do not ship custom domain. Do not change brand-accent algorithm. Do not keep `?section=` as the canonical address.
 
-**UX / states.** Section switch; reconfirm dialogs use 38.6 (settings-reconfirm evidence).
+**UX / states.** Loading / error / denied / entitlement lock / reconfirm dialogs (38.6). Member hitting `/settings/team` → denied or redirect (same rule as today, new URL).
 
-**Responsive.** 1024 vs 1280 rails defined.
+**Responsive.** 1024 vs 1280 rails defined. Nested routes work at 390 (section tabs or stacked nav).
 
-**Accessibility.** One `h1` Settings; sections `h2`.
+**Accessibility.** One `h1` per nested route; no second `<main>`. Reduced-motion: section change is a route enter 280ms pathname-only (allowed — these are real pathnames).
 
 **Protected 35–37.** Appearance theme must not break public forcedTheme.
 
-**QA.** Member redirect Team; Admin all sections; 390 tabs.
+**QA.** Member cannot manage Team/Billing after redirect. Admin `/settings?section=team` → `/settings/team`. Basic Team still UpgradePanel. 390 navigation.
 
-**Risks.** In-page section state lost on refresh without query.
+**Risks.** Breaking shared Settings links in onboarding/email. Entitlement accidentally loosened by the new router tree.
 
 ---
 
@@ -823,21 +857,21 @@ Each story includes:
 
 **Roles / plans / routes / states.** Marketing first-run; public Suspended; `/register` bootstrap; all admin leftovers.
 
-**Scope.** Non-modal cookie banner that never covers the primary CTA. Bootstrap copy for team model. Suspended ≠ on hold. Sweep remaining 32px-only mobile controls and missing focus rings. Empty/error primitive adoption audit. Visual QA matrix pass on CORE routes.
+**Scope.** Cookie experience **(D20 / PX2-LIVE-001):** legal requirements take priority, but the banner **must never cover primary actions**. Reserve layout space (including mobile safe areas) while the banner is present. Keyboard-accessible **Accept**, **Reject non-essential**, and **Preferences**. No misleading visual hierarchy and no preselected optional consent. Legal-policy decisions stay **outside** this UI story unless an approved policy already defines them. Also: bootstrap copy for the team model; Suspended ≠ on hold; sweep remaining 32px-only mobile controls and missing focus rings; empty/error primitive adoption; visual QA matrix pass on CORE routes.
 
-**Non-goals.** No new epic. No production fixture seeder. No Epic 35 shell restyle.
+**Non-goals.** No new epic. No production fixture seeder. No Epic 35 shell restyle. No new cookie-law interpretation.
 
-**UX / states.** Cookie accepted/rejected; first visit 390 marketing.
+**UX / states.** Cookie: unseen / preferences open / accepted / rejected-non-essential. Banner present vs dismissed must not hide Start free / Join. First visit 390 marketing.
 
-**Responsive.** Full visual QA matrix viewports.
+**Responsive.** Full visual QA matrix viewports. Banner uses reserved space, not an overlay, at 390 and 1440.
 
-**Accessibility.** Re-run Phase 0.1 a11y baseline; skip, contrast, zoom, PRM, touch.
+**Accessibility.** Re-run Phase 0.1 a11y baseline; skip, contrast, zoom, PRM, touch. Cookie actions are real buttons with names; Preferences is an 38.6 dialog/sheet. Reduced-motion: banner/preferences 160ms or instant.
 
-**Protected 35–37.** Public Join stays 48px. Motion tokens untouched.
+**Protected 35–37.** Public Join stays 48px. Motion tokens untouched. Registration shells not restyled to make room for cookies.
 
-**QA.** Visual QA matrix updated to LIVE pass/fail. Playwright marketing 390 CTA visible with cookie shown. Regression: 35/36/37 tests green.
+**QA.** Visual QA matrix updated to LIVE pass/fail. Playwright marketing 390: primary CTA clickable **while the banner is shown**. Keyboard Accept / Reject non-essential / Preferences. Regression: 35/36/37 tests green.
 
-**Risks.** Cookie legal requirements — keep consent, change **presentation** only.
+**Risks.** Under-reserving space on notched phones. Collapsing Reject into Accept. Changing legal copy without an approved policy.
 
 ---
 
@@ -899,22 +933,35 @@ Manual audit already captured registration success `REG20260922000101` **before*
 
 ---
 
-## 5. Unresolved product-owner decisions
+## 5. Product-owner decisions — all closed
 
-D1–D13 are **resolved**. Remaining items are non-blocking unless marked:
+D1–D13 (Phase 0.1) and D14–D20 (this close-out) are **resolved**. Nothing in this list reopens Epics 35–37.
 
-| ID | Topic | Phase 1 proposal | Blocks implementation? |
-|----|-------|------------------|------------------------|
-| U1 | Cohestra AI path | `/ai` | No — 39.1/41.2 use this unless PO says otherwise |
-| U2 | Analytics path | `/analytics` with `/reports` redirect | No |
-| U3 | Follow-up category taxonomy | Overdue / Due / New / Opportunity / Scheduled (content-language §4) | **Soft** — 40.2 should confirm Opportunity definition |
-| U4 | Settings deep links | Optional `?section=` | No — 43.1 |
-| U5 | Dashboard view mode | Prefer URL query over localStorage-only | No — 40.1 |
-| U6 | Dashboard `h1` text | “Dashboard” vs personalized greeting | No — 39.4 |
-| U7 | Cookie consent legal vs UX | Keep consent; non-modal banner | No — 43.5 must remain legally valid |
-| U8 | Production Member/Basic seeder | **Not proposed** (D12) | No |
+| ID | Decision | Owner stories |
+|----|----------|---------------|
+| D14 | Canonical Analytics route: `/analytics`. `/reports` compatibility-redirects (preserve query). | 39.1, 41.1 |
+| D15 | Canonical Cohestra AI route: `/ai`. Visible label remains “Cohestra AI”. Conflicting routes compatibility-redirect. | 39.1, 41.2 |
+| D16 | Opportunity is a Follow-up category, not a room or sales-pipeline stage. Categories: Due now, At risk, Opportunity, Healthy. No invented scoring. | 40.2 |
+| D17 | Settings nested routes: `/settings/profile`, `/settings/team`, `/settings/billing`, `/settings/{area}`. Redirect `?section=` / old ids. Preserve permissions. | 43.1 |
+| D18 | Dashboard `?view=overview\|graphs\|table`. Default may omit the parameter. History/shared URLs win; stored preference only when URL has no `view`. | 40.1 |
+| D19 | Dashboard owns exactly one `h1`: “Dashboard”. Greetings are supporting copy. | 39.4, 40.1 |
+| D20 | Cookie: legal first; reserve space + safe areas; Accept / Reject non-essential / Preferences; no dark patterns; policy text out of scope unless already approved. | 43.5 |
+| D12 | Production Member/Basic/Suspended/OnHold seeder is **not** proposed. Local fixtures only. | — |
 
-No decision in this list reopens Epics 35–37.
+**No remaining product-owner decisions.**
+
+### 5.1 Story quality review (28 stories retained)
+
+Each story delivers user-visible value or a necessary shared contract. No consolidation this pass:
+
+| Candidate merge | Why it stays split |
+|-----------------|--------------------|
+| 38.5 landmarks vs 39.4 page header | 38.5 is the shared contract (skip, one `main`, one `h1`). 39.4 is the header primitive + Dashboard “Dashboard” `h1`. Different acceptance. 39.4 depends on 38.5. |
+| 42.2 D7 panes vs 42.3 touch handles | Independent P1/P2 findings; different viewports and risks. Both must not touch composition schema. |
+| 40.5 continuity | User-visible crumbs, palette labels, onboarding verbs — not a tech chore. |
+| 38.3 e2e isolation | Technical, but required **before** visual restructuring (explicit PO gate). |
+
+Dependency order is unchanged: **38 → 39 → 40–42 → 43**. Epic 38 owns the four defects and AA/landmark/overlay contracts before any room restyle.
 
 ---
 
@@ -937,7 +984,7 @@ Do not mark any 38–43 story DONE from this Phase 1 PR.
 | 5 | Ranked epic/story roadmap | this file |
 | 6 | P0/P1 → story traceability | §3 |
 | 7 | Four defects | §4 |
-| 8 | Unresolved PO decisions | §5 |
+| 8 | PO decisions D14–D20 closed | §5 |
 | 9 | Files changed | §8 |
 | 10 | Checks performed | §9 |
 | 11 | Model usage / unauthorized actions | §10 |
@@ -951,8 +998,8 @@ Do not mark any 38–43 story DONE from this Phase 1 PR.
 | `docs/DESIGN.md` | **Created** — canonical contract |
 | `_bmad-output/planning-artifacts/cohestra-content-language.md` | **Created** |
 | `_bmad-output/planning-artifacts/cohestra-product-experience-2-backlog.md` | **Created** (this file) |
-| `_bmad-output/planning-artifacts/cohestra-information-architecture.md` | Updated — proposed IA + D1–D13 encoding |
-| `_bmad-output/planning-artifacts/cohestra-component-inventory.md` | Updated — token + governance strategy |
+| `_bmad-output/planning-artifacts/cohestra-information-architecture.md` | Updated — proposed IA + D1–D20 encoding |
+| `_bmad-output/planning-artifacts/cohestra-component-inventory.md` | Updated — token + governance + D14–D20 |
 
 **Not changed:** `web/**`, `src/**`, evidence binaries, Epic 35–37 sources.
 
@@ -969,11 +1016,16 @@ Do not mark any 38–43 story DONE from this Phase 1 PR.
 | PR #339 merge | **MERGED** `809efb21` 2026-09-22 after draft→ready |
 | Phase 1 branch base | `origin/main` @ `809efb21` |
 | Phase 1 path guard | No edits under `web/` or `src/` |
-| D1–D13 present in DESIGN.md | §20 table |
+| D1–D20 present in DESIGN.md | §20 table |
 | P1 IDs all mapped | §3 (8 P1s; 0 P0s) |
-| Four defects mapped | 38.1, 38.2, 38.3, 38.3 |
+| Four defects mapped | 38.1, 38.2, 38.3 ×2 |
+| `git diff --check` | Clean (this close-out) |
+| Path guard | No `web/` or `src/` |
+| Placeholder search | No fill-in tokens or open-decision markers in the five Phase 1 files |
+| Markdown `[]()` links | None in the five files (paths are backtick / prose) |
+| Backtick repo paths | 21 unique repo paths exist |
 
-Application typecheck/build/e2e were **not re-run** in Phase 1 because no application source changed. Phase 0.1 check table remains the baseline (`evidence/px2-phase01/checks.md`).
+Application typecheck/build/e2e were **not re-run** in Phase 1 because no application source changed. Phase 0.1 check table remains the baseline (`evidence/px2-phase01/checks.md`). There is no repository markdown-link-check workflow; validation above is the available substitute.
 
 ---
 
