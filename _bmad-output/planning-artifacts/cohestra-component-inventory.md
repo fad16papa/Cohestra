@@ -1,10 +1,12 @@
 ---
 title: Cohestra Product Experience 2.0 — component and token inventory
-phase: 0.1
-status: audit-complete
+phase: 1
+status: phase1-proposed
 created: 2026-09-22
 updated: 2026-09-22
 head_phase0: 5c3fe75d
+head_phase0_1: 63fc97fa
+canonical_design: docs/DESIGN.md
 ---
 
 # Cohestra component and token inventory
@@ -250,7 +252,7 @@ Builder chrome (Form Studio DESIGN.md class strings): `builderRow` `rounded-lg b
 | `ux-in-app-billing-2026-08-09/EXPERIENCE.md` | final, no DESIGN |
 | Epic 37 | architecture spine only — no ux-designs folder |
 
-**GAP:** no Product Experience 2.0 DESIGN.md/EXPERIENCE.md yet. Phase 0.1 does **not** author `docs/DESIGN.md` (D13 deferred). Outline remains in `cohestra-information-architecture.md`.
+**Phase 1:** `docs/DESIGN.md` is authored (D13). This inventory remains the **shipped** catalog. Target tokens and governance are §13.
 
 ---
 
@@ -264,3 +266,58 @@ Builder chrome (Form Studio DESIGN.md class strings): `builderRow` `rounded-lg b
 | D10 platform | Inherit semantic tokens gradually | `--plat-*` still on `/platform` |
 
 Canonical closure table: `cohestra-ux-audit.md` Phase 0.1 closure.
+
+---
+
+## 13. Phase 1 semantic-token and component-governance strategy
+
+Planning only. Implementation starts in Epic 38.4 / 38.6 / 39.4 — not this PR.
+
+### 13.1 Token strategy
+
+| Today (shipped) | Phase 1 contract (`docs/DESIGN.md`) |
+|-----------------|-------------------------------------|
+| `--muted-foreground` → `--stone` `#8b939c` (3.00:1 on paper) | New `--text-muted` ≥4.5:1 on `--paper` and `--paper-warm`. Recommended seed `#5a636e`. **Do not** globally alias `--stone-cinema`. |
+| `--stone` / `--gold` used as helper text | Atmosphere / eyebrow only. Gold is 3.13:1 — illegal as body. |
+| Toasts `red-*` / `emerald-*` | `--danger` / `--success` |
+| No `--space-*` / `--shadow-*` | 4–64 spacing scale; one overlay shadow; gutters 16/24/32 |
+| Button default `h-8` (32px) | ~40 desktop / ≥44 touch / 48 public (D6) |
+| `--plat-*` hex duplicates | Migrate to shared semantic tokens (D10); sparse layout may remain |
+| Dialog 150/200ms; profile 200ms | Overlays 160ms local via slotted primitive (D8) |
+
+`--stone` is **not** deleted. It stops being the default metadata color.
+
+Dark mode must re-prove `--text-muted` ≥4.5:1. Tenant accent must not replace muted text or drop primary-button contrast.
+
+### 13.2 Primitive strategy
+
+| Concern | Canonical target | Adopt in |
+|---------|------------------|----------|
+| Dialog / sheet / alert-dialog | `web/components/ui/*` only | 38.6, then 41.3 leftovers |
+| Skip link + one `main` + one `h1` | Shell + page header | 38.5, 39.4 |
+| Page header | Shared `h1` + one primary action | 39.4 |
+| Empty / error | `ProductEmptyState` / `ProductErrorState` | 40–43 sweep |
+| Permission denied | New shared primitive | 43.2 |
+| Upgrade | `UpgradePanel` + lock in nav | 39.3 |
+| Data table | New shared table | 40.3, 41.1, 43.4 |
+| App Router error / 404 | `error.tsx` / `not-found.tsx` | 39.5 |
+| Toast | Token-mapped | 38.4 |
+
+Missing shadcn files (table, textarea, select, checkbox, tabs, skeleton, badge) are created **once**, not per epic.
+
+### 13.3 Exception process
+
+Copied from DESIGN.md §19: a one-off ships only if the story names it, it does not violate D5–D9 / D11 / Epic 35–37, a follow-up in Epic 43 retires it, and code review records it. Unreviewed custom `role="dialog"` or second `<main>` is a defect.
+
+### 13.4 D-decision → inventory note
+
+| D | Inventory implication |
+|---|------------------------|
+| D5 | Add `--text-muted`; stop teaching `--stone` as `{colors.ink-muted}` for body |
+| D6 | Button/input size scale in `ui/button` + `ui/input`; public 48px stays Epic 35 |
+| D7 | Form Studio grid breakpoints documented here stay `xl` until story 42.2 |
+| D8 | Campaign + palette dialogs leave “duplicated patterns” once migrated |
+| D9 | `PageHeader` must become `h1`; Settings loses inner `<main>` |
+| D10 | Platform section §2 `--plat-*` becomes deprecated aliases |
+| D11 | §7 “Missing App Router files” becomes a 39.5 story, not a permanent gap |
+| D13 | This file is history + shipped catalog; DESIGN.md is law |
