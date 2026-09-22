@@ -28,9 +28,11 @@ Confidence: High = cited in code or measured in this run. Medium = code + reason
 
 ## Environment and coverage
 
-This VM did **not** match AGENTS.md’s prebuilt Cohestra snapshot. Toolchain was installed without changing application source. At artifact write time, API/web were starting; populated admin and public-registration states remain **BLOCKED** until login + demo seed complete. Marketing/auth routes are inspectable as static Next pages once `npm run dev` is up.
+This VM did **not** match AGENTS.md’s prebuilt Cohestra snapshot. Toolchain was installed without changing application source. API `:8080` and Next `:3000` ran. Demo seed: default tenant **Pro / Trialing**, 48 clients, 10 activities. Operator login on `default.localhost` succeeded. Playwright captured marketing, public registration, and authenticated admin at the requested viewports.
 
-**Do not treat BLOCKED cells as pass or fail.**
+**Still BLOCKED:** Member, Basic, Suspended, OnHold, embed, registration success (not submitted), campaign compose dialogs, published Form Studio three-pane (first activity was archived), Platform console UI (browser login showed invalid password; user row exists; API login earlier returned a token).
+
+**Do not treat remaining BLOCKED cells as pass or fail.**
 
 Research/telemetry **GAP:** no operator interviews, no product analytics, no AT CI. Cinema visual audit (2026-09-05) is marketing-only and is not this initiative’s baseline.
 
@@ -484,6 +486,94 @@ Protected Epics 35–37 are **not** proposed for reopen. Several findings sit *a
 | Suggested outcome | One header + one data-table in DESIGN.md Phase 1 — adopt incrementally. |
 | Confidence | High |
 | Validation needed | Code-sufficient |
+
+### PX2-LIVE-001 — Cookie banner covers marketing primary CTAs
+
+| Field | Value |
+|-------|--------|
+| Route / state | `/` marketing, first paint, cookie not accepted |
+| Role / plan | anonymous |
+| Viewport | **390×844** (severe); 1440 overlays hero photo |
+| Evidence **OBSERVED LIVE** | Cookie dialog sits on the fold over “Start free” / lead copy at 390. 1440 places it on the hero photograph. `role="dialog"` without `aria-modal` (CODE). |
+| User impact | First-time visitors cannot reach the primary hire without dismissing a sheet that covers the CTA. |
+| Severity | P1 |
+| Root cause | Cookie consent is a blocking overlay, not a non-modal banner. |
+| Related | `marketing-cookie-consent.tsx` |
+| Suggested outcome | Non-modal banner or guaranteed clearance above the primary CTA. |
+| Confidence | High |
+| Validation needed | Already LIVE at 390 and 1440 |
+
+### PX2-LIVE-002 — Calendar FAB overlaps admin content on phone
+
+| Field | Value |
+|-------|--------|
+| Route / state | all captured admin routes `<md` |
+| Role / plan | TenantAdmin Pro |
+| Viewport | 430×932, 390×844 |
+| Evidence **OBSERVED LIVE** | Circular calendar control sits on the follow-up/merge cards (dashboard), last client rows, Website tour, and Form intro fields. `ActivityCalendarNudge` is a sibling of `<main>` (`dashboard-layout.tsx`). |
+| User impact | Primary content and bottom tabs compete with a persistent FAB. |
+| Severity | P2 |
+| Root cause | Calendar nudge is global chrome without collision avoidance. |
+| Related | `activity-calendar-popout.tsx` |
+| Suggested outcome | Hide or dock the FAB so it does not cover queue/list rows or the tab bar. |
+| Confidence | High |
+| Validation needed | Already LIVE |
+
+### PX2-LIVE-003 — Clients status chips truncate on phone
+
+| Field | Value |
+|-------|--------|
+| Route / state | `/clients` populated |
+| Role / plan | TenantAdmin Pro |
+| Viewport | 390×844 |
+| Evidence **OBSERVED LIVE** | Status row wraps; “Active” reads as a clipped chip. Counts New 13 / Contacted 12 / Active 12 / Inactive 11 visible on 1440. |
+| User impact | Operators cannot reliably select Active on a phone without guessing. |
+| Severity | P2 |
+| Root cause | Chip row is not a wrapping/scroll contract. |
+| Related | `ClientLeadQueueHeader` |
+| Suggested outcome | Horizontal scroll or two-row chips with full labels. |
+| Confidence | High |
+| Validation needed | Already LIVE |
+
+### PX2-LIVE-004 — Authenticated pages log 503 (and Website 404)
+
+| Field | Value |
+|-------|--------|
+| Route / state | every captured admin URL |
+| Role / plan | TenantAdmin Pro |
+| Viewport | all captured |
+| Evidence **OBSERVED LIVE** | Playwright `console` error `503 Service Unavailable` on dashboard, clients, activities, website, reports, campaigns, settings. Website also 404. Pages still rendered. Resource URL not isolated (follow-up script timed out). |
+| User impact | Unknown missing capability; noise in console; possible broken image/telemetry. |
+| Severity | P2 |
+| Root cause | Unidentified failed fetch (not fatal to first paint). |
+| Related | admin data loaders, website assets |
+| Suggested outcome | Identify the 503 URL; do not paper over by swallowing console errors. |
+| Confidence | Medium (status seen; URL not captured) |
+| Validation needed | Network panel on one admin page |
+
+### PX2-LIVE-005 — First Form Studio open was an archived activity
+
+| Field | Value |
+|-------|--------|
+| Route / state | `/activities` → first detail `?tab=form` |
+| Role / plan | TenantAdmin Pro |
+| Viewport | 1440, 1024, 390 |
+| Evidence **OBSERVED LIVE** | Harbourline Board Game Night, badge Archived, “Archived — form is read-only.” Intro/closed-message fields fill the first viewport; composition three-pane not visible. Activities list does not default to published. |
+| User impact | Operators land in a dead studio when using the first card. |
+| Severity | P2 |
+| Root cause | List order includes archived without a published-first default. |
+| Related | `ActivitiesListPage`, `ActivityFormTab` |
+| Suggested outcome | Default filter to published/draft, or make archived visually secondary. **Do not change Form Studio schema.** |
+| Confidence | High |
+| Validation needed | Already LIVE |
+
+### PX2-A11Y-003 — Nested `<main>` on Settings (LIVE confirmed)
+
+Playwright counted **2 `<main>`** and h1 `["Settings","Default"]` at every captured settings viewport. Team/Billing each expose two identical h1s (`Team`/`Team`, `Billing`/`Billing`).
+
+### PX2-IA-004 — Website grouped under Home (LIVE confirmed)
+
+390 Website Builder: bottom tabs Home / Activities / Clients / More; Home is the active tab while the tour overlay is open.
 
 ### PX2-SYS-003 — DESIGN.md tokens not fully implemented
 

@@ -44,7 +44,7 @@ There is **no** named `PermissionDenied` component. Entitlement UI is `UpgradePa
 | Roles | who the **frontend** allows (API may be stricter) |
 | Plan | UI/API gate if coded |
 | States in code | empty · loading · error · disabled · denied · gated · destructive · success |
-| Live this run | LIVE / BLOCKED / PARTIAL |
+| Live this run | LIVE / BLOCKED / PARTIAL — updated after Playwright on 2026-09-22 |
 
 ---
 
@@ -52,7 +52,7 @@ There is **no** named `PermissionDenied` component. Entitlement UI is `UpgradePa
 
 | Path | Kind | File | Roles | Plan | States in code | Live |
 |------|------|------|-------|------|----------------|------|
-| `/` apex | full | `web/app/page.tsx` → `SiteLandingPage` / `MarketingHomePage` | anonymous; signed-in marketing visitors redirected via `resolvePostLoginPath` | none | hashes `#atelier` `#features` `#how-it-works` `#pricing` `#faq` `#crm` (cinema) | PARTIAL (stack start) |
+| `/` apex | full | `web/app/page.tsx` → `SiteLandingPage` / `MarketingHomePage` | anonymous; signed-in marketing visitors redirected via `resolvePostLoginPath` | none | hashes `#atelier` `#features` `#how-it-works` `#pricing` `#faq` `#crm` (cinema) | LIVE (6 viewports; cookie overlay) |
 | `/` tenant host | full | same → `SitePageRenderer` / `StubHome` / `TenantMaintenancePage` | anonymous | Basic → `StubHome` when `door.plan === "Basic"`; Core/Pro published site or stub | `preview` token; `suspended` → maintenance; `archived`/`unknown` → `notFound()` | BLOCKED until tenant host + API door |
 | `/pricing` | full | `web/app/pricing/page.tsx` | anonymous | compares Basic/Core/Pro | monthly/annual toggle | PARTIAL |
 | `/docs` | full | `web/app/docs/page.tsx` | anonymous | none | hash-selected section; search filter | PARTIAL |
@@ -83,7 +83,7 @@ There is **no** named `PermissionDenied` component. Entitlement UI is `UpgradePa
 
 | Path | Kind | File | Roles | Plan | States in code | Live |
 |------|------|------|-------|------|----------------|------|
-| `/register/[slug]` | full | `web/app/(public)/register/[slug]/page.tsx` + `PublicRegistrationOpen` | anonymous | paused/full/close-at/`plan-limit` | `not-found`, `error`, `full`, `plan-limit`, `close-at`, `unavailable`, success `RegistrationSuccessScreen` | BLOCKED until API + published slug |
+| `/register/[slug]` | full | `web/app/(public)/register/[slug]/page.tsx` + `PublicRegistrationOpen` | anonymous | paused/full/close-at/`plan-limit` | `not-found`, `error`, `full`, `plan-limit`, `close-at`, `unavailable`, success `RegistrationSuccessScreen` | LIVE Centered (`demo-marina-social-meetup`, `demo-wellness-morning-yoga`); other shells not switched |
 | `/embed/register/[slug]` | full | `web/app/embed/register/[slug]/page.tsx` | anonymous | same | same + chrome-light embed | BLOCKED |
 
 **Protected Epic 35 shells (code):** `modern-centered` · `split-event` · `event-poster` · `conversational` (+ `card` / `immersive` / `compact`). One renderer: `PublicRegistrationOpen`. Hidden fields may prefill from query param = field id.
@@ -100,7 +100,7 @@ Chrome: `DashboardLayout` — sidebar (`md+`), top bar, billing banner, mobile t
 
 | Path | Kind | File / primary | Roles | Plan | States in code | Live |
 |------|------|----------------|-------|------|----------------|------|
-| `/dashboard` | full | `DashboardPageClient` | TenantAdmin, TenantMember | empty copy varies by plan; no hard lock | skeletons; `ProductErrorState`; `DashboardEmptyState`; overview/graphs/tables | BLOCKED until login |
+| `/dashboard` | full | `DashboardPageClient` | TenantAdmin, TenantMember | empty copy varies by plan; no hard lock | skeletons; `ProductErrorState`; `DashboardEmptyState`; overview/graphs/tables | LIVE populated Pro (6 viewports) |
 | `/dashboard` `overview` | in-page | localStorage `cohestra.dashboard.viewMode` | same | — | onboarding checklist; follow-up queue; metrics; intelligence brief | BLOCKED |
 | `/dashboard` `graphs` | in-page | same | same | — | charts + pulse | BLOCKED |
 | `/dashboard` `tables` | in-page | same | same | — | tables + pulse | BLOCKED |
