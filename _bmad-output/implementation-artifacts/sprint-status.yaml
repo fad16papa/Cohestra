@@ -384,7 +384,7 @@ development_status:
   epic-38: in-progress
   38-1-billing-sync-environment-and-error-behavior: done
   38-2-basic-website-entitlement-api-behavior: done
-  38-3-e2e-tenant-and-theme-isolation: review
+  38-3-e2e-tenant-and-theme-isolation: done
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

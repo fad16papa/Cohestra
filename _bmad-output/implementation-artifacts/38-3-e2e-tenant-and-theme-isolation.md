@@ -2,16 +2,17 @@
 id: 38.3
 key: 38-3-e2e-tenant-and-theme-isolation
 title: E2E tenant and theme isolation
-status: review
+status: done
 epic: 38
 created: 2026-09-23
 baseline_commit: 01a139df0921ea670e964c8b4f5e9a18e257e687
 readiness: ready
+accepted_commit: 441c0b1ff53f463cd707e145d83a07ae054f3438
 ---
 
 # Story 38.3: E2E tenant and theme isolation
 
-Status: review
+Status: done (ACCEPTED/CLOSED)
 
 ## Story
 
@@ -142,7 +143,7 @@ Grok 4.6
 - Full live suite: 74 passed / 0 skipped / 0 failed (`--workers=3`)
 - Affected group reversed + forward + `--repeat-each=2 --workers=3`: all passed
 - Evidence: `_bmad-output/planning-artifacts/evidence/px2-38-3/checks.md`
-- Merged as `4528eb12`. Post-merge CI `35860436546` failed `OutboxIntegrationTests.RegistrationSubmit_EnqueuesOperatorNotifyOutboxMessage` (`Pending` vs `Processing`). Authorized job rerun: GitHub 403 / job cannot be rerun. Close remains blocked. Correction branch `cursor/outbox-enqueue-ci-reliability-0fcb`.
+- Merged as `4528eb12`. Post-merge CI `35860436546` failed `OutboxIntegrationTests.RegistrationSubmit_EnqueuesOperatorNotifyOutboxMessage` (`Pending` vs `Processing`). Correction PR #344 merged as `441c0b1f`. Main CI `35875814677` 5/5 success.
 
 ### Completion Notes List
 
@@ -179,10 +180,13 @@ Grok 4.6
 - `src/Infrastructure.Tests/Auth/ProductionSecurityValidatorTests.cs`
 - `src/Infrastructure/Auth/OperatorSeeder.cs`
 - `src/Api/Program.cs`
+- `src/Api.IntegrationTests/Infrastructure/IntegrationTestWebApplicationFactory.cs`
+- `src/Api.IntegrationTests/OutboxIntegrationTests.cs`
+- `_bmad-output/planning-artifacts/sprint-change-proposal-2026-09-23.md`
 
 ### Senior Developer Review (AI)
 
-Date: 2026-09-23. HEAD reviewed: `cf8b4d3893e880f87b9f81fe22cfc6006b0b245b`. Independent layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor (`bmad-code-review`). Model: Grok 4.6. Mandatory Code Review Loop in force. Status stays **review** for product-owner pre-merge. Do not mark done until PO acceptance and post-merge `main` verification.
+Date: 2026-09-23. Implementation HEAD reviewed: `cf8b4d3893e880f87b9f81fe22cfc6006b0b245b`. Correction HEAD reviewed: `f8f883a51f989b67dd8294ed40412ea02b1f2fb0`. Independent layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor (`bmad-code-review`). Model: Grok 4.6. Mandatory Code Review Loop in force. ACCEPTED/CLOSED on `main` `441c0b1f` after post-merge CI.
 
 ### Review Findings
 
@@ -213,3 +217,4 @@ Date: 2026-09-23. HEAD reviewed: `cf8b4d3893e880f87b9f81fe22cfc6006b0b245b`. Ind
 - 2026-09-23: Review patch — create-if-absent admin; do not reset colliding passwords or unsuspend existing tenants.
 - 2026-09-23: Clean-environment follow-up — remove unused fixture utilities; create-race retry; field-level canonical snapshot; unique bounded owner keys.
 - 2026-09-23: Merged `4528eb12`. Close blocked by outbox enqueue flake on `main` CI. Status stays review.
+- 2026-09-23: PR #344 merged as `441c0b1f`. Main CI `35875814677` green. ACCEPTED/CLOSED. Epic 38 remains in progress.
