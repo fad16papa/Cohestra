@@ -16,13 +16,18 @@ import {
   DEFAULT_TENANT_SLUG,
   MARINA_LIKE_FORM_SCHEMA,
   SINGLE_PAGE_CENTERED_THEME,
+  extractCanonicalTheme,
   isCanonicalDemoSlug,
-  isOwnedFixtureName,
   ownedActivityName,
+  preferOwnedActivityMatch,
   resolveE2eApiBase,
+  slugifyOwnedName,
   tenantApiHost,
   tenantWebOrigin,
+  type CanonicalSnapshot,
 } from "./owned-fixture-data";
+
+export type { CanonicalSnapshot, CanonicalThemeFields } from "./owned-fixture-data";
 
 export type OwnedTenant = {
   slug: string;
@@ -160,12 +165,12 @@ async function ensureCatalog(
   return { community, category };
 }
 
-async function findActivityByName(
+async function findActivitiesByName(
   request: APIRequestContext,
   token: string,
   tenantSlug: string,
   name: string
-): Promise<{ id: string; slug: string; name: string } | null> {
+): Promise<Array<{ id: string; slug: string; name: string }>> {
   const response = await request.get(
     `${resolveE2eApiBase()}/api/v1/admin/activities?search=${encodeURIComponent(name)}&page=1&pageSize=50`,
     { headers: apiHeaders(token, tenantSlug) }
@@ -173,13 +178,14 @@ async function findActivityByName(
   const body = (await readJson(response, "Search activities")) as {
     items?: Array<{ id?: string; slug?: string; name?: string; status?: string }>;
   };
-  const match = body.items?.find(
-    (item) => item.name === name && item.status !== "archived"
+  return (body.items ?? []).filter(
+    (item): item is { id: string; slug: string; name: string } =>
+      item.name === name &&
+      item.status !== "archived" &&
+      typeof item.id === "string" &&
+      typeof item.slug === "string" &&
+      typeof item.name === "string"
   );
-  if (!match?.id || !match.slug || !match.name) {
-    return null;
-  }
-  return { id: match.id, slug: match.slug, name: match.name };
 }
 
 export async function provisionOwnedActivity(
@@ -204,19 +210,15 @@ export async function provisionOwnedActivity(
   }
 
   const catalog = await ensureCatalog(request, session.accessToken, tenant);
-  const existing = await findActivityByName(
-    request,
-    session.accessToken,
-    tenant.slug,
-    name
-  );
+  const expectedSlug = slugifyOwnedName(name);
+  const resolveMatch = async () =>
+    preferOwnedActivityMatch(
+      await findActivitiesByName(request, session.accessToken, tenant.slug, name),
+      expectedSlug
+    );
 
-  let id: string;
-  let slug: string;
-  if (existing) {
-    id = existing.id;
-    slug = existing.slug;
-  } else {
+  let existing = await resolveMatch();
+  if (!existing) {
     const created = await request.post(`${resolveE2eApiBase()}/api/v1/admin/activities`, {
       data: {
         name,
@@ -228,13 +230,19 @@ export async function provisionOwnedActivity(
       },
       headers: apiHeaders(session.accessToken, tenant.slug),
     });
-    const body = (await readJson(created, "Create owned activity")) as {
-      id: string;
-      slug: string;
-    };
-    id = body.id;
-    slug = body.slug;
+    if (!created.ok()) {
+      existing = await resolveMatch();
+      if (!existing) {
+        throw new Error(`Create owned activity failed: ${created.status()} ${await created.text()}`);
+      }
+    } else {
+      const body = (await created.json()) as { id: string; slug: string };
+      existing = (await resolveMatch()) ?? { id: body.id, slug: body.slug, name };
+    }
   }
+
+  const id = existing.id;
+  const slug = existing.slug;
 
   if (isCanonicalDemoSlug(slug)) {
     throw new Error(`Owned fixture resolved to canonical slug ${slug}.`);
@@ -276,30 +284,6 @@ export async function openOwnedActivityTab(
   await openActivityTab(page, activity.id, tab, session, tenantWebOrigin(activity.tenant.slug));
 }
 
-export async function archiveOwnedActivity(
-  request: APIRequestContext,
-  session: OperatorSession,
-  activity: OwnedActivity
-): Promise<void> {
-  if (!isOwnedFixtureName(activity.name)) {
-    throw new Error(`Refusing to archive non-owned activity ${activity.name}`);
-  }
-  const response = await request.post(
-    `${resolveE2eApiBase()}/api/v1/admin/activities/${activity.id}/archive`,
-    { headers: apiHeaders(session.accessToken, activity.tenant.slug) }
-  );
-  if (!response.ok() && response.status() !== 404) {
-    throw new Error(`Archive owned activity failed: ${response.status()} ${await response.text()}`);
-  }
-}
-
-export type CanonicalSnapshot = {
-  slug: string;
-  status: string;
-  theme: unknown;
-  formSchema: unknown;
-};
-
 export async function snapshotCanonicalDemos(
   request: APIRequestContext,
   token: string,
@@ -311,8 +295,13 @@ export async function snapshotCanonicalDemos(
     const record = await fetchActivity(request, token, id, tenantSlug);
     snapshots.push({
       slug,
+      name: String(record.name ?? record.Name ?? ""),
       status: String(record.status ?? record.Status ?? ""),
-      theme: record.registrationTheme ?? record.RegistrationTheme ?? null,
+      category: String(record.category ?? record.Category ?? ""),
+      communityLabel: String(record.communityLabel ?? record.CommunityLabel ?? ""),
+      maxRegistrants: record.maxRegistrants ?? record.MaxRegistrants ?? null,
+      showOnHomepage: record.showOnHomepage ?? record.ShowOnHomepage ?? null,
+      theme: extractCanonicalTheme(record),
       formSchema: record.formSchema ?? record.FormSchema ?? null,
     });
   }

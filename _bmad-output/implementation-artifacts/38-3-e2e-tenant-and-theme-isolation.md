@@ -148,7 +148,8 @@ Grok 4.6
 - Root cause 1: 36.4 Basic test SQL-flipped `default.Plan` under `fullyParallel`.
 - Root cause 2: Epic 35 / 36.5 wrote Conversational/theme onto shared marina/yoga; responsive skipped missing Join; success-copy only read marina.
 - Fix: owned `e2e-{ownerKey}-w{worker}` create-or-reset via admin API; Basic lock on `px2-basic`; no production reset endpoint.
-- CI Docker smoke had no `px2-basic` (OperatorSeed + DemoDataSeed only seed `default`). Platform `POST /tenants` does not create a loginable admin. `E2eEntitlementFixtureSeeder` (gated by `DemoDataSeed:Enabled`, which Production rejects) provisions `px2-basic` / `px2-basic-admin@cohestra.local`.
+- CI Docker smoke on `e6cc9650` had no `px2-basic` (OperatorSeed + DemoDataSeed only seed `default`). Platform `POST /tenants` does not create a loginable admin. `E2eEntitlementFixtureSeeder` (gated by `DemoDataSeed:Enabled`, which Production rejects) provisions `px2-basic` / `px2-basic-admin@cohestra.local`.
+- Unused `archiveOwnedActivity`, `resolvePublishedE2eSlug`, and `createDraftActivity` removed. `provisionOwnedActivity` retries find-by-name when a concurrent create races, then prefers the canonical slug.
 
 ### File List
 
@@ -187,9 +188,9 @@ Date: 2026-09-23. HEAD reviewed: `8932c188`. Independent layers: Blind Hunter, E
 - [x] [Review][Patch] Isolation plan asserts exact `Pro` / `Basic`, not `/pro/i` (Profile false pass)
 - [x] [Review][Patch] px2-basic catalog create retries list on conflict
 - [x] [Review][Patch] `findActivityIdBySlug` searches by slug before paging
-- [x] [Review][Defer] Canonical snapshot is same-test double-read — suite proof is post-run DB + no writers
-- [x] [Review][Defer] `archiveOwnedActivity` unused; reset-in-place is the cleanup path
-- [x] [Review][Defer] `resolvePublishedE2eSlug` leftover helper — unused by live specs
+- [x] [Review][Patch] Canonical snapshot is field-level (theme/flow/schema/publication + default.Plan)
+- [x] [Review][Patch] Removed unused `archiveOwnedActivity`, leftover `resolvePublishedE2eSlug`, and `createDraftActivity`
+- [x] [Review][Patch] `provisionOwnedActivity` retries find-by-name on create conflict and prefers the canonical slug
 - [x] [Review][Patch] Seeder must not reset an existing account password or unsuspend/unarchive `px2-basic`
 - [x] [Review][Dismiss] `loginOwnedTenant` hint does not authenticate against `default` (Host is the fixture slug)
 - [x] [Review][Dismiss] Acceptance Auditor: AC 1–12 met; no production reset path
@@ -201,3 +202,4 @@ Date: 2026-09-23. HEAD reviewed: `8932c188`. Independent layers: Blind Hunter, E
 - 2026-09-23: Review patches — required workerIndex, exact plan asserts, catalog race, slug search.
 - 2026-09-23: CI Docker smoke 401 — Development-only px2-basic fixture seeder under DemoDataSeed.
 - 2026-09-23: Review patch — create-if-absent admin; do not reset colliding passwords or unsuspend existing tenants.
+- 2026-09-23: Clean-environment follow-up — remove unused fixture utilities; create-race retry; field-level canonical snapshot; unique bounded owner keys.

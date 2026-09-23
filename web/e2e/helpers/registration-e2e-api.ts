@@ -270,35 +270,6 @@ export async function findActivityIdBySlug(
   throw new Error(`Activity slug not found: ${slug}`);
 }
 
-export async function resolvePublishedE2eSlug(
-  request: APIRequestContext,
-  token: string,
-  preferredSlug: string
-): Promise<string> {
-  try {
-    await findActivityIdBySlug(request, token, preferredSlug);
-    return preferredSlug;
-  } catch {
-    const response = await request.get(`${API_BASE}/api/v1/admin/activities?page=1&pageSize=50`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Host: tenantHostHeader(DEFAULT_TENANT_SLUG),
-      },
-    });
-    if (!response.ok()) {
-      throw new Error(`List activities failed: ${response.status()}`);
-    }
-    const body = (await response.json()) as {
-      items?: Array<{ slug: string; status?: string }>;
-    };
-    const published = body.items?.find((item) => item.status === "published");
-    if (!published) {
-      throw new Error("No published activity available for Epic 35 e2e.");
-    }
-    return published.slug;
-  }
-}
-
 export async function applyRegistrationTheme(
   request: APIRequestContext,
   token: string,
@@ -329,34 +300,6 @@ export async function applyRegistrationTheme(
   if (!response.ok()) {
     throw new Error(`Update activity theme failed: ${response.status()} ${await response.text()}`);
   }
-}
-
-export async function createDraftActivity(
-  request: APIRequestContext,
-  token: string,
-  slugPrefix: string,
-  tenantSlug = DEFAULT_TENANT_SLUG
-): Promise<{ id: string; slug: string }> {
-  const slug = `${slugPrefix}-${Date.now().toString(36)}`.slice(0, 24);
-  const response = await request.post(`${API_BASE}/api/v1/admin/activities`, {
-    data: {
-      name: `E2E Columns ${slug}`,
-      category: "Social",
-      schedule: "Sat 10:00",
-      location: "Online",
-      communityLabel: "Riverside Runners",
-      status: "draft",
-    },
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Host: tenantHostHeader(tenantSlug),
-    },
-  });
-  if (!response.ok()) {
-    throw new Error(`Create activity failed: ${response.status()} ${await response.text()}`);
-  }
-  const body = (await response.json()) as { id: string; slug: string };
-  return { id: body.id, slug: body.slug };
 }
 
 export async function saveActivityFormSchema(

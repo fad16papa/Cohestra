@@ -49,6 +49,7 @@ test.describe("Story 38.3 — tenant and theme isolation", () => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
 
     const session = await loginOperatorSession(request);
+    expect(await fetchTenantPlan(request, session, DEFAULT_PRO_TENANT.slug)).toBe("Pro");
     const first = await snapshotCanonicalDemos(request, session.accessToken);
     const second = await snapshotCanonicalDemos(request, session.accessToken);
     expect(second).toEqual(first);
@@ -57,5 +58,21 @@ test.describe("Story 38.3 — tenant and theme isolation", () => {
       "demo-runners-draft-clinic",
       "demo-wellness-morning-yoga",
     ]);
+    for (const item of first) {
+      expect(item.name.length).toBeGreaterThan(0);
+      expect(item.status.length).toBeGreaterThan(0);
+      expect(Object.keys(item.theme).sort()).toEqual([
+        "accentColor",
+        "designTokens",
+        "flow",
+        "heroDisplay",
+        "heroImageUrl",
+        "inheritCommunityBrand",
+        "layout",
+        "preset",
+        "style",
+      ]);
+      expect(item.formSchema).toEqual(expect.objectContaining({ version: expect.anything() }));
+    }
   });
 });

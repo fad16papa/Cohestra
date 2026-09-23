@@ -76,13 +76,99 @@ export const MARINA_LIKE_FORM_SCHEMA = {
   ],
 };
 
+export const LIVE_OWNER_KEYS = [
+  "38-3-366",
+  "38-3-367",
+  "38-3-epic35",
+  "38-3-epic35-conv",
+  "38-3-epic35-fs",
+  "38-3-cols-cp",
+  "38-3-cols-pub",
+  "38-3-cols-basic",
+  "38-3-cols-mx",
+  "38-3-cols-exp",
+  "38-3-365-cp",
+  "38-3-365",
+  "38-3-success",
+  "38-3-responsive",
+] as const;
+
 export function ownedActivityName(ownerKey: string, workerIndex = 0): string {
+  if (!Number.isInteger(workerIndex) || workerIndex < 0 || workerIndex > 99) {
+    throw new Error("workerIndex must be an integer from 0 to 99.");
+  }
   const safe = ownerKey
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 28);
+  if (!safe) {
+    throw new Error("ownerKey must contain at least one alphanumeric character.");
+  }
   return `e2e-${safe}-w${workerIndex}`;
+}
+
+/** ASCII-equivalent of ActivitySlugGenerator.Slugify for owned fixture names. */
+export function slugifyOwnedName(name: string): string {
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 220)
+    .replace(/-+$/g, "");
+  return slug || "activity";
+}
+
+export function preferOwnedActivityMatch<T extends { slug: string }>(
+  matches: T[],
+  expectedSlug: string
+): T | undefined {
+  return matches.find((item) => item.slug === expectedSlug) ?? matches[0];
+}
+
+export type CanonicalThemeFields = {
+  preset: unknown;
+  inheritCommunityBrand: unknown;
+  accentColor: unknown;
+  heroImageUrl: unknown;
+  layout: unknown;
+  style: unknown;
+  flow: unknown;
+  heroDisplay: unknown;
+  designTokens: unknown;
+};
+
+export type CanonicalSnapshot = {
+  slug: string;
+  name: string;
+  status: string;
+  category: string;
+  communityLabel: string;
+  maxRegistrants: unknown;
+  showOnHomepage: unknown;
+  theme: CanonicalThemeFields;
+  formSchema: unknown;
+};
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
+}
+
+export function extractCanonicalTheme(record: Record<string, unknown>): CanonicalThemeFields {
+  const theme = asRecord(record.registrationTheme ?? record.RegistrationTheme);
+  const experience = asRecord(theme?.experience ?? theme?.Experience);
+  return {
+    preset: theme?.preset ?? theme?.Preset ?? null,
+    inheritCommunityBrand: theme?.inheritCommunityBrand ?? theme?.InheritCommunityBrand ?? null,
+    accentColor: theme?.accentColor ?? theme?.AccentColor ?? null,
+    heroImageUrl: theme?.heroImageUrl ?? theme?.HeroImageUrl ?? null,
+    layout: experience?.layout ?? experience?.Layout ?? null,
+    style: experience?.style ?? experience?.Style ?? null,
+    flow: experience?.flow ?? experience?.Flow ?? null,
+    heroDisplay: experience?.heroDisplay ?? experience?.HeroDisplay ?? null,
+    designTokens: theme?.designTokens ?? theme?.DesignTokens ?? null,
+  };
 }
 
 export function isOwnedFixtureName(name: string): boolean {
