@@ -1,3 +1,9 @@
+## Deferred from: code review of 38-3-e2e-tenant-and-theme-isolation.md (2026-09-23)
+
+- Isolation Playwright spec is a same-test double-read; suite proof is field-level SQL before/after on clean DBs plus no writers to marina/yoga/runners.
+- CI Docker smoke remains the pre-existing Epic 35 / 36.4–36.6 live subset (includes the 401 Basic-lock regression). Full `E2E_LIVE_STACK=1` is a local/dev gate, not expanded in this story.
+- Pro published-activity cap (50) can theoretically bind if local workers ≫ 3 accumulate unused worker indexes; reset-in-place reuses `e2e-{owner}-wN`. Supported parallelism is `fullyParallel` / `--workers=3`.
+
 ## Deferred from: code review of 38-2-basic-website-entitlement-api-behavior.md (2026-09-23)
 
 - Handler Content-Type remains `application/json` after `WriteAsJsonAsync` — pre-existing GlobalExceptionHandler pattern; ProblemDetails body is the contract.

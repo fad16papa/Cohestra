@@ -153,7 +153,8 @@ public static class OperatorSeeder
                 continue;
             }
 
-            if (LoadTestDataSeeder.IsLoadTestAdminEmail(admin.Email))
+            if (LoadTestDataSeeder.IsLoadTestAdminEmail(admin.Email)
+                || E2eEntitlementFixtureSeeder.IsFixtureAdminEmail(admin.Email))
             {
                 continue;
             }

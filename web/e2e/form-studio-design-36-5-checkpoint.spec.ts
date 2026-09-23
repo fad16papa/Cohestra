@@ -1,12 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { provisionOwnedActivity } from "./helpers/e2e-owned-fixtures";
 import {
   applyRegistrationTheme,
-  createDraftActivity,
   fetchActivity,
-  loginOperator,
+  loginOperatorSession,
   publishActivity,
-  saveActivityFormSchema,
   tenantWebBase,
 } from "./helpers/registration-e2e-api";
 
@@ -96,14 +95,18 @@ test.describe("Story 36.5 — live visual and token checkpoint", () => {
   let activityId: string;
   let activityRecord: Record<string, unknown>;
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeAll(async ({ request }, testInfo) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
-    token = await loginOperator(request);
-    const created = await createDraftActivity(request, token, "e2e-365");
+    const session = await loginOperatorSession(request);
+    token = session.accessToken;
+    const created = await provisionOwnedActivity(request, session, {
+      ownerKey: "38-3-365-cp",
+      workerIndex: testInfo.workerIndex,
+      formSchema: REPRESENTATIVE_SCHEMA,
+    });
     activityId = created.id;
     slug = created.slug;
-    await saveActivityFormSchema(request, token, activityId, REPRESENTATIVE_SCHEMA);
-    activityRecord = await fetchActivity(request, token, activityId);
+    activityRecord = created.record;
     await applyRegistrationTheme(request, token, activityId, activityRecord, {
       preset: "classic",
       inheritCommunityBrand: true,

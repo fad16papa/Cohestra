@@ -1,27 +1,29 @@
 import { expect, test } from "@playwright/test";
 
 import {
-  resolvePublishedE2eSlug,
-  loginOperator,
-  tenantWebBase,
-} from "./helpers/registration-e2e-api";
+  provisionOwnedActivity,
+} from "./helpers/e2e-owned-fixtures";
+import { MARINA_LIKE_FORM_SCHEMA, SINGLE_PAGE_CENTERED_THEME } from "./helpers/owned-fixture-data";
+import { loginOperatorSession, tenantWebBase } from "./helpers/registration-e2e-api";
 
 test.describe("Public registration success copy", () => {
   test("renders You're registered! after a real submit", async ({
     page,
     request,
-  }) => {
+  }, testInfo) => {
     test.setTimeout(60_000);
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
 
-    const token = await loginOperator(request);
-    const slug = await resolvePublishedE2eSlug(
-      request,
-      token,
-      process.env.REGISTRATION_E2E_SLUG ?? "demo-marina-social-meetup"
-    );
+    const session = await loginOperatorSession(request);
+    const owned = await provisionOwnedActivity(request, session, {
+      ownerKey: "38-3-success",
+      workerIndex: testInfo.workerIndex,
+      theme: SINGLE_PAGE_CENTERED_THEME,
+      formSchema: MARINA_LIKE_FORM_SCHEMA,
+      publish: true,
+    });
 
-    await page.goto(`${tenantWebBase()}/register/${slug}`, {
+    await page.goto(`${tenantWebBase()}/register/${owned.slug}`, {
       waitUntil: "networkidle",
     });
 
