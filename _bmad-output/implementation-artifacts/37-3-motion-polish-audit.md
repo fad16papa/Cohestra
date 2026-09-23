@@ -1,12 +1,12 @@
 ---
-status: review
+status: done
 story_key: 37-3-motion-polish-audit
 epic: 37
 ---
 
 # Story 37.3: Motion polish and interaction consistency audit
 
-Status: review
+Status: ACCEPTED
 
 ## Story
 
@@ -114,8 +114,10 @@ Passes: desktop 1440, mobile 390, `reducedMotion: reduce`.
 - `cd web && npx vitest run` — 369 passed
 - `cd web && npx tsc --noEmit` — passed
 - `cd web && npx next build` — compiled + TypeScript passed
-- GitHub CI on `cursor/motion-polish-audit-a139` — .NET, API integration, Next.js, UAT isolation, GitGuardian passed; Docker stack smoke still running at last check
+- GitHub CI on PR HEAD `c6021ae` run `35618525151` — all required checks success
+- Post-merge CI on `main` `bc5cc43` run `35620302066` — all required checks success
+- Post-merge live smoke — PASS (route enter, shell, submenu, overlays/Escape, Website typing, Form Studio draft Build↔Preview, 390 overflow 0, More reachable, Back/Forward, reduced-motion disables page-enter)
 
 ## Status
 
-NOT ACCEPTED until Docker smoke completes on HEAD `57e8e2b`, PR is reviewed, merged, and post-merge `main` is verified. Epic 37 stays open until then.
+ACCEPTED. Post-merge verification: PASS. Epic 37 closed.

@@ -375,10 +375,10 @@ development_status:
   epic-36-retrospective: done
 
   # Epic 37 — Operator shell motion. Source: epics-operator-shell-motion-37.md
-  epic-37: in-progress
-  37-1-shared-admin-route-motion: review
-  37-2-builder-studio-motion: review
-  37-3-motion-polish-audit: review
+  epic-37: done
+  37-1-shared-admin-route-motion: done
+  37-2-builder-studio-motion: done
+  37-3-motion-polish-audit: done
 
   # Epic 38 — Product Experience 2.0 entitlement / billing truth
   epic-38: in-progress
