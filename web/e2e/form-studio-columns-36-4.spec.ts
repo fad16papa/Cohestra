@@ -1,21 +1,23 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import {
+  DEFAULT_PRO_TENANT,
+  PX2_BASIC_TENANT,
+  loginOwnedTenant,
+  openOwnedActivityTab,
+  provisionOwnedActivity,
+} from "./helpers/e2e-owned-fixtures";
+import {
   applyRegistrationTheme,
-  createDraftActivity,
   EPIC_35_EXPERIENCES,
   EPIC_35_VIEWPORTS,
   fetchActivity,
-  findActivityIdBySlug,
-  loginOperator,
   loginOperatorSession,
   openActivityTab,
   publishActivity,
   saveActivityFormSchema,
   tenantWebBase,
 } from "./helpers/registration-e2e-api";
-
-const DRAFT_SLUG = "demo-runners-draft-clinic";
 
 async function assertNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => {
@@ -33,33 +35,9 @@ async function addPaletteField(page: Page, label: RegExp) {
   await page.getByRole("button", { name: label, exact: true }).click();
 }
 
-async function selectStructureBlock(page: Page, title: RegExp) {
-  await page.getByRole("option", { name: title }).click();
-}
-
 async function renameSelectedField(page: Page, label: string, fieldId: string) {
   await page.getByLabel(/^Label$/i).fill(label);
   await page.getByLabel(/^Field ID$/i).fill(fieldId);
-}
-
-async function dragBlockToDropZone(page: Page, blockTitle: RegExp, dropText: RegExp) {
-  const handle = page.getByRole("button", {
-    name: new RegExp(`Drag to reorder .*${blockTitle.source}`, "i"),
-  });
-  const target = page.getByText(dropText).first();
-  await handle.scrollIntoViewIfNeeded();
-  await target.scrollIntoViewIfNeeded();
-  const handleBox = await handle.boundingBox();
-  const targetBox = await target.boundingBox();
-  if (!handleBox || !targetBox) {
-    throw new Error("Drag handle or drop target not visible");
-  }
-  await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + handleBox.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, {
-    steps: 12,
-  });
-  await page.mouse.up();
 }
 
 async function setPreviewViewport(page: Page, mode: "Desktop" | "Mobile") {
@@ -74,13 +52,24 @@ test.describe("Story 36.4 — live Form Studio checkpoint", () => {
   let session: Awaited<ReturnType<typeof loginOperatorSession>>;
   let activityId: string;
   let publishSlug: string;
+  let publishId: string;
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeAll(async ({ request }, testInfo) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
     session = await loginOperatorSession(request);
-    activityId = await findActivityIdBySlug(request, session.accessToken, DRAFT_SLUG);
-    const created = await createDraftActivity(request, session.accessToken, "e2e-cols-pub");
-    publishSlug = created.slug;
+    const draft = await provisionOwnedActivity(request, session, {
+      ownerKey: "38-3-cols-cp",
+      workerIndex: testInfo.workerIndex,
+      tenant: DEFAULT_PRO_TENANT,
+    });
+    activityId = draft.id;
+    const published = await provisionOwnedActivity(request, session, {
+      ownerKey: "38-3-cols-pub",
+      workerIndex: testInfo.workerIndex,
+      tenant: DEFAULT_PRO_TENANT,
+    });
+    publishSlug = published.slug;
+    publishId = published.id;
   });
 
   test("checkpoint: build columns form, preview, save, reload, publish, submit", async ({
@@ -161,15 +150,22 @@ test.describe("Story 36.4 — live Form Studio checkpoint", () => {
       string,
       unknown
     >;
-    const pubId = await findActivityIdBySlug(request, session.accessToken, publishSlug);
-    await saveActivityFormSchema(request, session.accessToken, pubId, formSchema);
-    await publishActivity(request, session.accessToken, pubId);
+    await saveActivityFormSchema(request, session.accessToken, publishId, formSchema);
+    await publishActivity(request, session.accessToken, publishId);
 
     const base = tenantWebBase();
-    await page.goto(`${base}/register/${publishSlug}`, { waitUntil: "domcontentloaded" });
-    await page.getByLabel(/First name/i).fill("Ada");
-    await page.getByLabel(/Last name/i).fill("Lovelace");
-    await page.getByLabel(/Email/i).fill(`ada-${Date.now()}@example.com`);
+    await page.goto(`${base}/register/${publishSlug}`, { waitUntil: "networkidle" });
+    const email = `ada-${Date.now()}@example.com`;
+    const firstName = page.getByLabel(/First name/i);
+    const lastName = page.getByLabel(/Last name/i);
+    const emailField = page.getByLabel(/Email/i);
+    await expect(firstName).toBeVisible({ timeout: 30_000 });
+    await firstName.fill("Ada");
+    await lastName.fill("Lovelace");
+    await emailField.fill(email);
+    await expect(firstName).toHaveValue("Ada");
+    await expect(lastName).toHaveValue("Lovelace");
+    await expect(emailField).toHaveValue(email);
     await page.getByRole("button", { name: /join activity/i }).click();
     await expect(page.getByText(/thank|success|registered/i).first()).toBeVisible({
       timeout: 30_000,
@@ -179,31 +175,20 @@ test.describe("Story 36.4 — live Form Studio checkpoint", () => {
 });
 
 test.describe("Story 36.4 — Basic plan UI lock", () => {
-  test("Two-column row disabled on Basic", async ({ page, request }) => {
+  test("Two-column row disabled on Basic", async ({ page, request }, testInfo) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
-    test.skip(
-      (process.env.PUBLIC_BASE_URL ?? "").includes(":8088") || process.env.CI === "true",
-      "Basic UI plan flip uses host Postgres; server gate covered by dotnet integration tests in CI."
-    );
 
-    const { execSync } = await import("node:child_process");
-    execSync(
-      `sudo -u postgres psql -d cohestra -c "UPDATE tenants SET \\"Plan\\" = 0 WHERE \\"Slug\\" = 'default';"`
-    );
-
-    try {
-      const session = await loginOperatorSession(request);
-      const activityId = await findActivityIdBySlug(request, session.accessToken, DRAFT_SLUG);
-      await openActivityTab(page, activityId, "form", session);
-      await expect(page.getByRole("button", { name: /^Two-column row$/i })).toBeDisabled();
-      await expect(
-        page.getByText(/Two-column rows require Core or Pro/i)
-      ).toBeVisible();
-    } finally {
-      execSync(
-        `sudo -u postgres psql -d cohestra -c "UPDATE tenants SET \\"Plan\\" = 2 WHERE \\"Slug\\" = 'default';"`
-      );
-    }
+    const session = await loginOwnedTenant(request, PX2_BASIC_TENANT);
+    const owned = await provisionOwnedActivity(request, session, {
+      ownerKey: "38-3-cols-basic",
+      workerIndex: testInfo.workerIndex,
+      tenant: PX2_BASIC_TENANT,
+    });
+    await openOwnedActivityTab(page, owned, "form", session);
+    await expect(page.getByRole("button", { name: /^Two-column row$/i })).toBeDisabled();
+    await expect(
+      page.getByText(/Two-column rows require Core or Pro/i)
+    ).toBeVisible();
   });
 });
 
@@ -217,16 +202,18 @@ async function waitForFormStudio(page: Page) {
 test.describe("Story 36.4 — responsive public matrix (columns form)", () => {
   test.describe.configure({ mode: "serial" });
 
-  let token: string;
   let slug: string;
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeAll(async ({ request }, testInfo) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
-    token = await loginOperator(request);
-    const created = await createDraftActivity(request, token, "e2e-cols-matrix");
-    slug = created.slug;
-    await saveActivityFormSchema(request, token, created.id, buildRepresentativeColumnsSchema());
-    await publishActivity(request, token, created.id);
+    const session = await loginOperatorSession(request);
+    const owned = await provisionOwnedActivity(request, session, {
+      ownerKey: "38-3-cols-mx",
+      workerIndex: testInfo.workerIndex,
+      formSchema: buildRepresentativeColumnsSchema(),
+      publish: true,
+    });
+    slug = owned.slug;
   });
 
   for (const viewport of EPIC_35_VIEWPORTS) {
@@ -254,15 +241,19 @@ test.describe("Story 36.4 — Epic 35 experiences with columns", () => {
   let slug: string;
   let activityRecord: Record<string, unknown>;
 
-  test.beforeAll(async ({ request }) => {
+  test.beforeAll(async ({ request }, testInfo) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
-    token = await loginOperator(request);
-    const created = await createDraftActivity(request, token, "e2e-cols-exp");
-    slug = created.slug;
-    activityId = created.id;
-    await saveActivityFormSchema(request, token, activityId, buildRepresentativeColumnsSchema());
-    await publishActivity(request, token, activityId);
-    activityRecord = await fetchActivity(request, token, activityId);
+    const session = await loginOperatorSession(request);
+    token = session.accessToken;
+    const owned = await provisionOwnedActivity(request, session, {
+      ownerKey: "38-3-cols-exp",
+      workerIndex: testInfo.workerIndex,
+      formSchema: buildRepresentativeColumnsSchema(),
+      publish: true,
+    });
+    slug = owned.slug;
+    activityId = owned.id;
+    activityRecord = owned.record;
   });
 
   for (const experience of EPIC_35_EXPERIENCES) {

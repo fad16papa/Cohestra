@@ -1,9 +1,8 @@
 import { expect, type APIRequestContext } from "@playwright/test";
 
-const API_BASE =
-  process.env.E2E_API_BASE_URL ??
-  process.env.PUBLIC_BASE_URL ??
-  "http://localhost:8088";
+import { DEFAULT_TENANT_SLUG, resolveE2eApiBase, tenantApiHost, tenantWebOrigin } from "./owned-fixture-data";
+
+const API_BASE = resolveE2eApiBase();
 const OPERATOR_EMAIL = process.env.E2E_OPERATOR_EMAIL ?? "operator@cohestra.local";
 const OPERATOR_PASSWORD = process.env.E2E_OPERATOR_PASSWORD ?? "ChangeMe123!";
 
@@ -97,24 +96,12 @@ export const EPIC_35_VIEWPORTS = [
   { width: 360, height: 800 },
 ] as const;
 
-export function tenantWebBase(): string {
-  const configured = process.env.PUBLIC_BASE_URL ?? "http://localhost:3000";
-  if (configured.includes("localhost") && !configured.includes(".localhost")) {
-    return configured.replace("://localhost", "://default.localhost");
-  }
-  return configured;
+export function tenantWebBase(slug = DEFAULT_TENANT_SLUG): string {
+  return tenantWebOrigin(slug);
 }
 
-function tenantHostHeader(): string {
-  try {
-    const url = new URL(API_BASE);
-    if (url.hostname === "localhost") {
-      return `default.localhost${url.port ? `:${url.port}` : ""}`;
-    }
-    return url.host;
-  } catch {
-    return "default.localhost";
-  }
+function tenantHostHeader(slug = DEFAULT_TENANT_SLUG): string {
+  return tenantApiHost(slug, API_BASE);
 }
 
 export type OperatorSession = {
@@ -124,11 +111,15 @@ export type OperatorSession = {
 };
 
 export async function loginOperatorSession(
-  request: APIRequestContext
+  request: APIRequestContext,
+  options?: { slug?: string; email?: string; password?: string }
 ): Promise<OperatorSession> {
+  const email = options?.email ?? OPERATOR_EMAIL;
+  const password = options?.password ?? OPERATOR_PASSWORD;
+  const slug = options?.slug ?? DEFAULT_TENANT_SLUG;
   const response = await request.post(`${API_BASE}/api/v1/auth/login`, {
-    data: { email: OPERATOR_EMAIL, password: OPERATOR_PASSWORD },
-    headers: { Host: tenantHostHeader() },
+    data: { email, password },
+    headers: { Host: tenantHostHeader(slug) },
   });
   if (!response.ok()) {
     throw new Error(`Operator login failed: ${response.status()} ${await response.text()}`);
@@ -196,9 +187,10 @@ export async function openActivityTab(
   page: import("@playwright/test").Page,
   activityId: string,
   tab: "overview" | "design" | "form" | "registrations" | "share",
-  session: OperatorSession
+  session: OperatorSession,
+  webBase = tenantWebBase()
 ): Promise<void> {
-  const base = tenantWebBase();
+  const base = webBase;
   await seedOperatorAuthSession(page, session);
   await page.goto(`${base}/activities/${activityId}?tab=${tab}`, {
     waitUntil: "domcontentloaded",
@@ -226,7 +218,8 @@ export async function openActivityTab(
 export async function findActivityIdBySlug(
   request: APIRequestContext,
   token: string,
-  slug: string
+  slug: string,
+  tenantSlug = DEFAULT_TENANT_SLUG
 ): Promise<string> {
   for (let page = 1; page <= 5; page += 1) {
     const response = await request.get(
@@ -234,7 +227,7 @@ export async function findActivityIdBySlug(
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          Host: tenantHostHeader(),
+          Host: tenantHostHeader(tenantSlug),
         },
       }
     );
@@ -270,7 +263,7 @@ export async function resolvePublishedE2eSlug(
     const response = await request.get(`${API_BASE}/api/v1/admin/activities?page=1&pageSize=50`, {
       headers: {
         Authorization: `Bearer ${token}`,
-        Host: tenantHostHeader(),
+        Host: tenantHostHeader(DEFAULT_TENANT_SLUG),
       },
     });
     if (!response.ok()) {
@@ -292,7 +285,8 @@ export async function applyRegistrationTheme(
   token: string,
   activityId: string,
   activity: Record<string, unknown>,
-  theme: ExperienceFixture["theme"]
+  theme: ExperienceFixture["theme"],
+  tenantSlug = DEFAULT_TENANT_SLUG
 ): Promise<void> {
   const payload = {
     name: activity.name,
@@ -310,7 +304,7 @@ export async function applyRegistrationTheme(
     data: payload,
     headers: {
       Authorization: `Bearer ${token}`,
-      Host: "default.localhost",
+      Host: tenantHostHeader(tenantSlug),
     },
   });
   if (!response.ok()) {
@@ -321,7 +315,8 @@ export async function applyRegistrationTheme(
 export async function createDraftActivity(
   request: APIRequestContext,
   token: string,
-  slugPrefix: string
+  slugPrefix: string,
+  tenantSlug = DEFAULT_TENANT_SLUG
 ): Promise<{ id: string; slug: string }> {
   const slug = `${slugPrefix}-${Date.now().toString(36)}`.slice(0, 24);
   const response = await request.post(`${API_BASE}/api/v1/admin/activities`, {
@@ -335,7 +330,7 @@ export async function createDraftActivity(
     },
     headers: {
       Authorization: `Bearer ${token}`,
-      Host: tenantHostHeader(),
+      Host: tenantHostHeader(tenantSlug),
     },
   });
   if (!response.ok()) {
@@ -349,7 +344,8 @@ export async function saveActivityFormSchema(
   request: APIRequestContext,
   token: string,
   activityId: string,
-  formSchema: Record<string, unknown>
+  formSchema: Record<string, unknown>,
+  tenantSlug = DEFAULT_TENANT_SLUG
 ): Promise<void> {
   const response = await request.put(
     `${API_BASE}/api/v1/admin/activities/${activityId}/form-schema`,
@@ -357,7 +353,7 @@ export async function saveActivityFormSchema(
       data: JSON.stringify({ formSchema }),
       headers: {
         Authorization: `Bearer ${token}`,
-        Host: tenantHostHeader(),
+        Host: tenantHostHeader(tenantSlug),
         "Content-Type": "application/json",
       },
     }
@@ -370,14 +366,15 @@ export async function saveActivityFormSchema(
 export async function publishActivity(
   request: APIRequestContext,
   token: string,
-  activityId: string
+  activityId: string,
+  tenantSlug = DEFAULT_TENANT_SLUG
 ): Promise<void> {
   const response = await request.post(
     `${API_BASE}/api/v1/admin/activities/${activityId}/publish`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
-        Host: tenantHostHeader(),
+        Host: tenantHostHeader(tenantSlug),
       },
     }
   );
@@ -389,12 +386,13 @@ export async function publishActivity(
 export async function fetchActivity(
   request: APIRequestContext,
   token: string,
-  activityId: string
+  activityId: string,
+  tenantSlug = DEFAULT_TENANT_SLUG
 ): Promise<Record<string, unknown>> {
   const response = await request.get(`${API_BASE}/api/v1/admin/activities/${activityId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
-      Host: "default.localhost",
+      Host: tenantHostHeader(tenantSlug),
     },
   });
   if (!response.ok()) {

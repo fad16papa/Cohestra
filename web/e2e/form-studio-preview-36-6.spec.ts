@@ -1,12 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  findActivityIdBySlug,
-  loginOperatorSession,
-  openActivityTab,
-} from "./helpers/registration-e2e-api";
-
-const DRAFT_SLUG = "demo-runners-draft-clinic";
+import { provisionOwnedActivity } from "./helpers/e2e-owned-fixtures";
+import { loginOperatorSession, openActivityTab } from "./helpers/registration-e2e-api";
 
 test.describe("Story 36.6 — Preview viewports", () => {
   test("Desktop / Tablet / Mobile switch without saving", async ({
@@ -15,8 +10,10 @@ test.describe("Story 36.6 — Preview viewports", () => {
   }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
     const session = await loginOperatorSession(request);
-    const activityId = await findActivityIdBySlug(request, session.accessToken, DRAFT_SLUG);
-    await openActivityTab(page, activityId, "form", session);
+    const owned = await provisionOwnedActivity(request, session, {
+      ownerKey: "38-3-366",
+    });
+    await openActivityTab(page, owned.id, "form", session);
 
     await page.locator("#form-studio-tab-preview").click();
     const preview = page.locator("#form-studio-preview-panel");

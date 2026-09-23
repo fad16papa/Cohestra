@@ -2,16 +2,17 @@
 id: 38.2
 key: 38-2-basic-website-entitlement-api-behavior
 title: Basic Website entitlement API behavior
-status: review
+status: done
 epic: 38
 created: 2026-09-22
 baseline_commit: 42b5b7dc192f6bcf46859648b300ba2ee67d969a
 readiness: ready
+accepted_commit: 01a139df0921ea670e964c8b4f5e9a18e257e687
 ---
 
 # Story 38.2: Basic Website entitlement API behavior
 
-Status: review
+Status: done (ACCEPTED/CLOSED)
 
 ## Story
 
@@ -108,9 +109,9 @@ Grok 4.6
 
 ### Senior Developer Review (AI)
 
-Date: 2026-09-23. HEAD reviewed: `567b625d`. Independent layers: Blind Hunter (`bmad-review-adversarial-general`), Edge Case Hunter (`bmad-review-edge-case-hunter`), Acceptance Auditor. Model: Grok 4.6. Mandatory Code Review Loop in force.
+Date: 2026-09-23. HEAD reviewed: `ca3a5ccfb78d8e643b66ccdab58067d95d8ffa65`. Independent layers: Blind Hunter (`bmad-review-adversarial-general`), Edge Case Hunter (`bmad-review-edge-case-hunter`), Acceptance Auditor. Model: Grok 4.6. Mandatory Code Review Loop in force. Fresh review context (not the implementation self-approve).
 
-Outcome after triage: **Changes requested** — MAJOR patches applied on this follow-up HEAD. Implementation self-approve from 2026-09-22 is stale. Independent `bmad-code-review` of the new HEAD is required before close.
+Outcome after triage: **Approve** — no unresolved BLOCKER/MAJOR. CI green on this HEAD (6/6).
 
 ### Review Findings
 
@@ -121,7 +122,7 @@ Outcome after triage: **Changes requested** — MAJOR patches applied on this fo
 - [x] [Review][Defer] Handler Content-Type remains `application/json` after WriteAsJsonAsync [GlobalExceptionHandler.cs] — deferred, pre-existing
 - [x] [Review][Defer] Mid-session mutation `plan_locked` is toasted, not UpgradePanel [website-builder-page.tsx] — deferred, entitled-editor path outside Basic close gate
 
-Dismissed (false positives / allowed by spec): UpgradePanel after `loading` early-return (render order is shell → UpgradePanel → loading); skip-fetch when shell is Basic (story AC); binary evidence missing from unified diff; `E2E_LIVE_STACK` skip (suite convention).
+Dismissed (false positives / allowed by spec): UpgradePanel after `loading` early-return (render order is shell → UpgradePanel → loading); skip-fetch when shell is Basic (story AC); binary evidence missing from unified diff; `E2E_LIVE_STACK` skip (suite convention); validation-before-gate (invalid payload stays 400, not `plan_locked`); public preview token not admin-gated (public contract unchanged); TenantMember 200/plan_locked (pre-existing `TenantOperator` policy); CORS `px2-basic` host (required for live Playwright); handler `detail` is the product message; billing-sync path (38.1); `GetTenantPlanAsync` enum default after a passed entitlement check (TOCTOU, not `plan_locked`); Promise.all activities failure on entitled path (Basic skip-fetch never runs it); mid-session mutation toast (already deferred).
 
 ### File List
 
@@ -148,3 +149,4 @@ Dismissed (false positives / allowed by spec): UpgradePanel after `loading` earl
 
 - 2026-09-22: Implemented Story 38.2 — Basic Website entitlement is 403 `plan_locked`, UpgradePanel-only UI.
 - 2026-09-23: Pre-merge review patches — missing-tenant is not `plan_locked`; Development CORS keeps only `px2-basic`; evidence moved to `_bmad-output/planning-artifacts/evidence/px2-38-2/`; 500 handler test asserts no exception leak; publish Basic 403 coverage.
+- 2026-09-23: Independent re-review of `ca3a5ccf` — Approve (no unresolved BLOCKER/MAJOR). CI 6/6 green. Merged as `01a139df`. Post-merge smoke: Basic GET 403 `plan_locked`/`website`/`Core`; Pro 200; unauth 401 without `plan_locked`; Playwright `website-entitlement-38-2.spec.ts` 2 passed.
