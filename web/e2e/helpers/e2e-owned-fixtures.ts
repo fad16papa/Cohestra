@@ -68,11 +68,22 @@ export async function loginOwnedTenant(
   request: APIRequestContext,
   tenant: OwnedTenant
 ): Promise<OperatorSession> {
-  return loginOperatorSession(request, {
-    slug: tenant.slug,
-    email: tenant.email,
-    password: tenant.password,
-  });
+  try {
+    return await loginOperatorSession(request, {
+      slug: tenant.slug,
+      email: tenant.email,
+      password: tenant.password,
+    });
+  } catch (error) {
+    if (tenant.slug === BASIC_TENANT_SLUG) {
+      throw new Error(
+        `${error instanceof Error ? error.message : String(error)} ` +
+          "Basic fixture tenant is missing. Development DemoDataSeed must provision px2-basic " +
+          "(E2eEntitlementFixtureSeeder) — do not SQL-flip default.Plan."
+      );
+    }
+    throw error;
+  }
 }
 
 async function listNamed(

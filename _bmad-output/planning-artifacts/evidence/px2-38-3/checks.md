@@ -41,6 +41,12 @@ After the full suite:
 
 Owned fixtures are `e2e-38-3-*-wN` only (reset-in-place; bounded by ownerKey × worker index).
 
+## Docker smoke Basic fixture (CI follow-up)
+
+CI `Docker stack smoke` on `e6cc9650` failed at `form-studio-columns-36-4.spec.ts` Basic lock: `loginOwnedTenant(PX2_BASIC_TENANT)` → 401. Compose smoke seeds Operator + DemoData on `default` only; `px2-basic` exists on the native snapshot, not in a fresh Docker DB.
+
+`POST /api/v1/platform/tenants` creates the tenant row only (no Identity user). Public signup needs OTP. The fixture is now provisioned by `E2eEntitlementFixtureSeeder` when `DemoDataSeed:Enabled=true`. Production rejects that flag. Operator backfill skips `px2-basic-admin@cohestra.local` so the fixture admin is not attached to `default`.
+
 ## Isolation notes
 
 - No SQL `UPDATE tenants.Plan` remains.

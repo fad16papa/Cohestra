@@ -118,6 +118,7 @@ Prefer order: (1) dedicated deterministic fixture per scenario/worker, (2) exist
 - [x] Isolation spec: Basic/Pro plan API+UI; canonical demo unchanged
 - [x] Unit tests for fixture data/host helpers
 - [x] Solo / reversed / repeat / parallel / full live suite
+- [x] Docker smoke Basic fixture: Development-only `E2eEntitlementFixtureSeeder` under `DemoDataSeed` (no production seeder; no SQL plan flip)
 
 ## Non-goals
 
@@ -147,6 +148,7 @@ Grok 4.6
 - Root cause 1: 36.4 Basic test SQL-flipped `default.Plan` under `fullyParallel`.
 - Root cause 2: Epic 35 / 36.5 wrote Conversational/theme onto shared marina/yoga; responsive skipped missing Join; success-copy only read marina.
 - Fix: owned `e2e-{ownerKey}-w{worker}` create-or-reset via admin API; Basic lock on `px2-basic`; no production reset endpoint.
+- CI Docker smoke had no `px2-basic` (OperatorSeed + DemoDataSeed only seed `default`). Platform `POST /tenants` does not create a loginable admin. `E2eEntitlementFixtureSeeder` (gated by `DemoDataSeed:Enabled`, which Production rejects) provisions `px2-basic` / `px2-basic-admin@cohestra.local`.
 
 ### File List
 
@@ -169,6 +171,11 @@ Grok 4.6
 - `web/e2e/form-studio-domain-36-7.spec.ts`
 - `web/playwright.config.ts`
 - `web/vitest.config.ts`
+- `src/Infrastructure/Seed/E2eEntitlementFixtureSeeder.cs`
+- `src/Infrastructure.Tests/Seed/E2eEntitlementFixtureSeederTests.cs`
+- `src/Infrastructure.Tests/Auth/ProductionSecurityValidatorTests.cs`
+- `src/Infrastructure/Auth/OperatorSeeder.cs`
+- `src/Api/Program.cs`
 
 ### Senior Developer Review (AI)
 
@@ -189,3 +196,4 @@ Date: 2026-09-23. HEAD reviewed: `dd32c9c3`. Independent layers: Blind Hunter, E
 - 2026-09-23: Created Story 38.3 after 38.2 merge `01a139df`.
 - 2026-09-23: Implemented owned-fixture isolation; live suite 74 passed / 0 skipped.
 - 2026-09-23: Review patches — required workerIndex, exact plan asserts, catalog race, slug search.
+- 2026-09-23: CI Docker smoke 401 — Development-only px2-basic fixture seeder under DemoDataSeed.

@@ -151,6 +151,7 @@ await OperatorSeeder.SeedAsync(app.Services);
 await PlatformAdminSeeder.SeedAsync(app.Services);
 await SitePageSeeder.SeedAsync(app.Services);
 await DemoDataSeeder.SeedAsync(app.Services);
+await E2eEntitlementFixtureSeeder.SeedAsync(app.Services);
 
 var loadTestSeedEnabled = app.Configuration.GetValue("LoadTestSeed:Enabled", false);
 
@@ -331,6 +332,19 @@ static async Task LogStartupLoginAccountsAsync(WebApplication app)
         "Login readiness — operator {Email}: {Status}",
         operatorEmail,
         operatorUser?.EmailConfirmed == true ? "ready" : "missing (set OperatorSeed__Enabled=true and recreate api)");
+
+    if (app.Configuration.GetValue("DemoDataSeed:Enabled", false))
+    {
+        var basicEmail = E2eEntitlementFixtureSeeder.AdminEmail;
+        var basicUser = await userManager.FindByEmailAsync(basicEmail);
+        app.Logger.LogInformation(
+            "Login readiness — E2E Basic fixture {Email} on {Slug}: {Status}",
+            basicEmail,
+            E2eEntitlementFixtureSeeder.TenantSlug,
+            basicUser?.EmailConfirmed == true
+                ? "ready"
+                : "missing — check api logs for E2eEntitlementFixtureSeeder errors");
+    }
 
     if (app.Configuration.GetValue("LoadTestSeed:Enabled", false))
     {
