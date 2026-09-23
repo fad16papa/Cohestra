@@ -98,6 +98,62 @@ public sealed class E2eEntitlementFixtureSeederTests
     }
 
     [Fact]
+    public async Task SeedAsync_DoesNotUnsuspendExistingFixtureTenant()
+    {
+        await using var provider = BuildServices(demoEnabled: true);
+        var db = provider.GetRequiredService<CohestraDbContext>();
+        SeedDefaultTenant(db);
+        var suspendedAt = DateTimeOffset.UtcNow.AddHours(-2);
+        db.Tenants.Add(new Tenant
+        {
+            Id = Guid.CreateVersion7(),
+            Slug = E2eEntitlementFixtureSeeder.TenantSlug,
+            Name = E2eEntitlementFixtureSeeder.TenantName,
+            Plan = TenantPlan.Basic,
+            Status = TenantStatus.Suspended,
+            BillingStatus = BillingStatus.Free,
+            SuspendedAt = suspendedAt,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+
+        await E2eEntitlementFixtureSeeder.SeedAsync(provider);
+
+        db.ChangeTracker.Clear();
+        var fixture = await db.Tenants.SingleAsync(item => item.Slug == E2eEntitlementFixtureSeeder.TenantSlug);
+        Assert.Equal(TenantStatus.Suspended, fixture.Status);
+        Assert.Equal(suspendedAt, fixture.SuspendedAt);
+    }
+
+    [Fact]
+    public async Task SeedAsync_DoesNotResetPasswordOfExistingAccount()
+    {
+        await using var provider = BuildServices(demoEnabled: true);
+        var db = provider.GetRequiredService<CohestraDbContext>();
+        var userManager = provider.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = provider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        SeedDefaultTenant(db);
+        await roleManager.CreateAsync(new IdentityRole<Guid>(OperatorSeeder.TenantAdminRole));
+
+        var existing = new ApplicationUser
+        {
+            UserName = E2eEntitlementFixtureSeeder.AdminEmail,
+            Email = E2eEntitlementFixtureSeeder.AdminEmail,
+            EmailConfirmed = true,
+        };
+        Assert.True((await userManager.CreateAsync(existing, "OtherPass123!")).Succeeded);
+        Assert.True((await userManager.AddToRoleAsync(existing, OperatorSeeder.TenantAdminRole)).Succeeded);
+
+        await E2eEntitlementFixtureSeeder.SeedAsync(provider);
+
+        var reloaded = await userManager.FindByEmailAsync(E2eEntitlementFixtureSeeder.AdminEmail);
+        Assert.NotNull(reloaded);
+        Assert.True(await userManager.CheckPasswordAsync(reloaded, "OtherPass123!"));
+        Assert.False(await userManager.CheckPasswordAsync(reloaded, E2eEntitlementFixtureSeeder.AdminPassword));
+    }
+
+    [Fact]
     public async Task SeedAsync_IsIdempotent()
     {
         await using var provider = BuildServices(demoEnabled: true);
@@ -169,12 +225,6 @@ public sealed class E2eEntitlementFixtureSeederTests
             .AddDefaultTokenProviders();
         services.AddSingleton<IOptions<DemoDataSeedSettings>>(
             new OptionsWrapper<DemoDataSeedSettings>(new DemoDataSeedSettings { Enabled = demoEnabled }));
-        services.AddSingleton<IOptions<OperatorSeedSettings>>(
-            new OptionsWrapper<OperatorSeedSettings>(new OperatorSeedSettings
-            {
-                Enabled = false,
-                Password = "ChangeMe123!",
-            }));
         return services.BuildServiceProvider();
     }
 }

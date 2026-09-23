@@ -21,6 +21,7 @@ public static class E2eEntitlementFixtureSeeder
     public const string TenantSlug = "px2-basic";
     public const string TenantName = "PX2 Basic Fixture";
     public const string AdminEmail = "px2-basic-admin@cohestra.local";
+    public const string AdminPassword = "ChangeMe123!";
 
     public static bool IsFixtureAdminEmail(string? email) =>
         !string.IsNullOrWhiteSpace(email)
@@ -42,15 +43,11 @@ public static class E2eEntitlementFixtureSeeder
         var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var operatorSettings = scope.ServiceProvider.GetRequiredService<IOptions<OperatorSeedSettings>>().Value;
-        var password = string.IsNullOrWhiteSpace(operatorSettings.Password)
-            ? "ChangeMe123!"
-            : operatorSettings.Password;
 
         await OperatorSeeder.EnsureTenantAdminRoleAsync(roleManager, logger, cancellationToken);
 
         var tenant = await EnsureBasicTenantAsync(db, logger, cancellationToken);
-        await EnsureAdminUserAsync(userManager, db, tenant.Id, password, logger, cancellationToken);
+        await EnsureAdminUserAsync(userManager, db, tenant.Id, logger, cancellationToken);
     }
 
     internal static async Task<Tenant> EnsureBasicTenantAsync(
@@ -89,14 +86,6 @@ public static class E2eEntitlementFixtureSeeder
             dirty = true;
         }
 
-        if (tenant.Status != TenantStatus.Active)
-        {
-            tenant.Status = TenantStatus.Active;
-            tenant.SuspendedAt = null;
-            tenant.ArchivedAt = null;
-            dirty = true;
-        }
-
         if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
         {
             tenant.AdminContactEmail = AdminEmail;
@@ -107,7 +96,7 @@ public static class E2eEntitlementFixtureSeeder
         {
             tenant.UpdatedAt = now;
             await db.SaveChangesAsync(cancellationToken);
-            logger.LogInformation("Restored E2E Basic fixture tenant {Slug} to Active/Basic.", TenantSlug);
+            logger.LogInformation("Restored E2E Basic fixture tenant {Slug} plan to Basic.", TenantSlug);
         }
 
         return tenant;
@@ -117,7 +106,6 @@ public static class E2eEntitlementFixtureSeeder
         UserManager<ApplicationUser> userManager,
         CohestraDbContext db,
         Guid tenantId,
-        string password,
         ILogger logger,
         CancellationToken cancellationToken = default)
     {
@@ -131,7 +119,7 @@ public static class E2eEntitlementFixtureSeeder
                 EmailConfirmed = true,
             };
 
-            var createResult = await userManager.CreateAsync(user, password);
+            var createResult = await userManager.CreateAsync(user, AdminPassword);
             if (!createResult.Succeeded)
             {
                 throw new InvalidOperationException(
@@ -156,48 +144,12 @@ public static class E2eEntitlementFixtureSeeder
 
             logger.LogInformation("Seeded E2E Basic fixture admin {Email}.", AdminEmail);
         }
-        else
+        else if (!await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole))
         {
-            if (!user.EmailConfirmed)
-            {
-                user.EmailConfirmed = true;
-                var confirm = await userManager.UpdateAsync(user);
-                if (!confirm.Succeeded)
-                {
-                    throw new InvalidOperationException(
-                        "Failed to confirm E2E Basic fixture admin email: " +
-                        string.Join("; ", confirm.Errors.Select(error => error.Description)));
-                }
-            }
-
-            if (!await userManager.CheckPasswordAsync(user, password))
-            {
-                var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-                var reset = await userManager.ResetPasswordAsync(user, resetToken, password);
-                if (!reset.Succeeded)
-                {
-                    throw new InvalidOperationException(
-                        "Failed to reset E2E Basic fixture admin password: " +
-                        string.Join("; ", reset.Errors.Select(error => error.Description)));
-                }
-            }
-
-            if (!await userManager.IsInRoleAsync(user, OperatorSeeder.TenantAdminRole))
-            {
-                if (!await RoleExclusivity.CanAssignTenantAdminAsync(userManager, user, logger))
-                {
-                    throw new InvalidOperationException(
-                        $"Cannot assign TenantAdmin to {AdminEmail}: role exclusivity conflict.");
-                }
-
-                var roleResult = await userManager.AddToRoleAsync(user, OperatorSeeder.TenantAdminRole);
-                if (!roleResult.Succeeded)
-                {
-                    throw new InvalidOperationException(
-                        "Failed to assign TenantAdmin to E2E Basic fixture admin: " +
-                        string.Join("; ", roleResult.Errors.Select(error => error.Description)));
-                }
-            }
+            logger.LogWarning(
+                "E2E Basic fixture email {Email} already exists without TenantAdmin; not rewriting the account.",
+                AdminEmail);
+            return;
         }
 
         var exists = await db.TenantMemberships.AnyAsync(

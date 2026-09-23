@@ -179,7 +179,7 @@ Grok 4.6
 
 ### Senior Developer Review (AI)
 
-Date: 2026-09-23. HEAD reviewed: `dd32c9c3`. Independent layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor. Model: Grok 4.6. Mandatory Code Review Loop in force.
+Date: 2026-09-23. HEAD reviewed: `1445cacd` then review-patch. Independent layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor (`bmad-code-review`). Model: Grok 4.6. Mandatory Code Review Loop in force.
 
 ### Review Findings
 
@@ -190,6 +190,9 @@ Date: 2026-09-23. HEAD reviewed: `dd32c9c3`. Independent layers: Blind Hunter, E
 - [x] [Review][Defer] Canonical snapshot is same-test double-read — suite proof is post-run DB + no writers
 - [x] [Review][Defer] `archiveOwnedActivity` unused; reset-in-place is the cleanup path
 - [x] [Review][Defer] `resolvePublishedE2eSlug` leftover helper — unused by live specs
+- [x] [Review][Patch] Seeder must not reset an existing account password or unsuspend/unarchive `px2-basic`
+- [x] [Review][Dismiss] `loginOwnedTenant` hint does not authenticate against `default` (Host is the fixture slug)
+- [x] [Review][Dismiss] Acceptance Auditor: AC 1–12 met; no production reset path
 
 ### Change Log
 
@@ -197,3 +200,4 @@ Date: 2026-09-23. HEAD reviewed: `dd32c9c3`. Independent layers: Blind Hunter, E
 - 2026-09-23: Implemented owned-fixture isolation; live suite 74 passed / 0 skipped.
 - 2026-09-23: Review patches — required workerIndex, exact plan asserts, catalog race, slug search.
 - 2026-09-23: CI Docker smoke 401 — Development-only px2-basic fixture seeder under DemoDataSeed.
+- 2026-09-23: Review patch — create-if-absent admin; do not reset colliding passwords or unsuspend existing tenants.
