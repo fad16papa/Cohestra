@@ -43,6 +43,17 @@ public sealed class AdminSiteEntitlementIntegrationTests(IntegrationTestFixture 
     }
 
     [SkippableFact]
+    public async Task AdminSite_Publish_BasicTenantAdmin_Returns403PlanLocked()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        using var client = await CreateTenantAdminClientAsync(TenantPlan.Basic);
+        using var response = await client.PostAsync("/api/v1/admin/site/publish", content: null);
+
+        await AssertPlanLockedAsync(response);
+    }
+
+    [SkippableFact]
     public async Task AdminSite_PreviewToken_BasicTenantAdmin_Returns403PlanLocked()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);

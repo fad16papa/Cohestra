@@ -1,5 +1,7 @@
 # Story 38.2 live checks
 
+Durable path: `_bmad-output/planning-artifacts/evidence/px2-38-2/`
+
 Date: 2026-09-22
 
 ## API (curl)

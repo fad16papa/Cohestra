@@ -108,20 +108,20 @@ Grok 4.6
 
 ### Senior Developer Review (AI)
 
-Date: 2026-09-22. Outcome: **Approve** (no unresolved BLOCKER/MAJOR).
+Date: 2026-09-23. HEAD reviewed: `567b625d`. Independent layers: Blind Hunter (`bmad-review-adversarial-general`), Edge Case Hunter (`bmad-review-edge-case-hunter`), Acceptance Auditor. Model: Grok 4.6. Mandatory Code Review Loop in force.
 
-Focus: frontend-only gating; 500-to-upgrade conversion; role vs plan; stale entitlement; editor requests behind UpgradePanel; tenant-URL; cross-tenant.
+Outcome after triage: **Changes requested** — MAJOR patches applied on this follow-up HEAD. Implementation self-approve from 2026-09-22 is stale. Independent `bmad-code-review` of the new HEAD is required before close.
 
-| Severity | Finding | Disposition |
-| --- | --- | --- |
-| — | Frontend-only gating | Not found. Direct API still 403 `plan_locked`. |
-| — | Any 500/403 → UpgradePanel | Not found. Only `PlanLockedError` (`403` + `plan_locked`). |
-| — | Role vs plan mix-up | Not found. Unauth 401; PlatformAdmin 403 without `plan_locked`; Member on Basic is `plan_locked`. |
-| — | Stale shell | Covered: Basic shell skips fetch; entitled shell that is actually Basic still UpgradePanel from API. |
-| — | Editor requests behind panel | Skip fetch + UpgradePanel early return; no toolbar. |
-| — | Tenant-URL / 38.1 / 35–37 | No edits. |
-| MINOR | Handler Content-Type is `application/json` | Matches existing GlobalExceptionHandler WriteAsJsonAsync. Body is ProblemDetails. |
-| MINOR | Development CORS now includes D12 hosts | Required for live Basic UI against native API. Production `appsettings.json` unchanged. |
+### Review Findings
+
+- [x] [Review][Patch] Evidence must live under `_bmad-output/planning-artifacts/evidence/px2-38-2/` [evidence/px2-38-2]
+- [x] [Review][Patch] Missing tenant `FirstOrDefault` on `TenantPlan` is `Basic` and becomes `plan_locked` [SitePageService.cs] — now `TenantPlan?`; missing tenant throws `InvalidOperationException` (500), not `plan_locked`
+- [x] [Review][Patch] Development CORS must keep only origins required for 38.2 tests (`px2-basic`) [appsettings.Development.json]
+- [x] [Review][Patch] 500 handler test must assert no exception-message leak, not the string `UpgradePanel` [PlanEntitlementExceptionHandlerTests.cs]
+- [x] [Review][Defer] Handler Content-Type remains `application/json` after WriteAsJsonAsync [GlobalExceptionHandler.cs] — deferred, pre-existing
+- [x] [Review][Defer] Mid-session mutation `plan_locked` is toasted, not UpgradePanel [website-builder-page.tsx] — deferred, entitled-editor path outside Basic close gate
+
+Dismissed (false positives / allowed by spec): UpgradePanel after `loading` early-return (render order is shell → UpgradePanel → loading); skip-fetch when shell is Basic (story AC); binary evidence missing from unified diff; `E2E_LIVE_STACK` skip (suite convention).
 
 ### File List
 
@@ -140,10 +140,11 @@ Focus: frontend-only gating; 500-to-upgrade conversion; role vs plan; stale enti
 - `web/lib/site-admin-api.test.ts`
 - `web/components/website/website-builder-page.tsx`
 - `web/e2e/website-entitlement-38-2.spec.ts`
-- `evidence/px2-38-2/checks.md`
-- `evidence/px2-38-2/basic-website-upgrade-panel.webp`
-- `evidence/px2-38-2/pro-website-editor.webp`
+- `_bmad-output/planning-artifacts/evidence/px2-38-2/checks.md`
+- `_bmad-output/planning-artifacts/evidence/px2-38-2/basic-website-upgrade-panel.webp`
+- `_bmad-output/planning-artifacts/evidence/px2-38-2/pro-website-editor.webp`
 
 ### Change Log
 
 - 2026-09-22: Implemented Story 38.2 — Basic Website entitlement is 403 `plan_locked`, UpgradePanel-only UI.
+- 2026-09-23: Pre-merge review patches — missing-tenant is not `plan_locked`; Development CORS keeps only `px2-basic`; evidence moved to `_bmad-output/planning-artifacts/evidence/px2-38-2/`; 500 handler test asserts no exception leak; publish Basic 403 coverage.

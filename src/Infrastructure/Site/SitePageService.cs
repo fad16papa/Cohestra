@@ -495,8 +495,13 @@ public sealed class SitePageService(
         var plan = await dbContext.Tenants
             .AsNoTracking()
             .Where(t => t.Id == tenantId)
-            .Select(t => t.Plan)
+            .Select(t => (TenantPlan?)t.Plan)
             .FirstOrDefaultAsync(cancellationToken);
+
+        if (plan is null)
+        {
+            throw new InvalidOperationException("Tenant not found for site page operations.");
+        }
 
         if (plan is TenantPlan.Basic)
         {

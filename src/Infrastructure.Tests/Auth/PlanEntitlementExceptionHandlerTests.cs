@@ -48,7 +48,9 @@ public sealed class PlanEntitlementExceptionHandlerTests
         context.Response.Body.Seek(0, SeekOrigin.Begin);
         var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
         Assert.DoesNotContain("plan_locked", body, StringComparison.Ordinal);
-        Assert.DoesNotContain("UpgradePanel", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("Redis exploded", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("InvalidOperationException", body, StringComparison.Ordinal);
+        Assert.Contains("See server logs for details.", body, StringComparison.Ordinal);
     }
 
     private static (GlobalExceptionHandler Handler, DefaultHttpContext Context) CreateHandler()
