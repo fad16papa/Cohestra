@@ -1,10 +1,13 @@
 using Cohestra.Application.Email;
+using Cohestra.Application.Outbox;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Outbox;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace Cohestra.Api.IntegrationTests.Infrastructure;
 
@@ -61,10 +64,6 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
         builder.UseSetting("AuthOtp:MaxSendAttemptsPerWindow", "1000");
         builder.UseSetting("AuthOtp:SendWindowMinutes", "15");
         builder.UseSetting("DEV_TENANT_SLUG", "default");
-        // Enqueue tests assert durable Pending rows. The hosted dispatcher otherwise
-        // claims them (Pending → Processing) and races the assertion. Processor
-        // lifecycle stays in Infrastructure.Tests. Production default remains Enabled.
-        builder.UseSetting("Outbox:Enabled", "false");
     }
 
     protected virtual void ConfigureTestServices(IWebHostBuilder builder)
@@ -73,6 +72,7 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
         {
             services.RemoveAll<IEmailSender>();
             services.AddSingleton<IEmailSender, FakeEmailSender>();
+            RemoveHostedOutboxDispatcher(services);
         });
     }
 
@@ -102,6 +102,31 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
         {
             IsAvailable = false;
             SkipReason = $"Integration dependencies unavailable: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Stops the background dispatcher from claiming Pending rows during enqueue
+    /// asserts. Leaves <see cref="IOutboxProcessor"/> enabled so an explicit drain
+    /// still works. Production registration of the hosted service is unchanged.
+    /// </summary>
+    private static void RemoveHostedOutboxDispatcher(IServiceCollection services)
+    {
+        var hostedDispatchers = services
+            .Where(descriptor =>
+                descriptor.ServiceType == typeof(IHostedService)
+                && descriptor.ImplementationType == typeof(OutboxDispatcherHostedService))
+            .ToList();
+
+        if (hostedDispatchers.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "Expected OutboxDispatcherHostedService to be registered as IHostedService.");
+        }
+
+        foreach (var descriptor in hostedDispatchers)
+        {
+            services.Remove(descriptor);
         }
     }
 }

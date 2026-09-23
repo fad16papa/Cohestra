@@ -2,6 +2,7 @@ using System.Text.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Domain.Outbox;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Outbox;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -171,8 +172,8 @@ public sealed class OutboxIntegrationTests(IntegrationTestFixture fixture)
         Assert.Null(outbox.ClaimedAt);
         Assert.Null(outbox.ProcessedAt);
 
-        using var document = JsonDocument.Parse(outbox.PayloadJson);
-        Assert.True(document.RootElement.TryGetProperty("RegistrationId", out var registrationElement));
-        Assert.Equal(registrationId, registrationElement.GetGuid());
+        var payload = JsonSerializer.Deserialize<RegistrationConfirmationOutboxPayload>(outbox.PayloadJson);
+        Assert.NotNull(payload);
+        Assert.Equal(registrationId, payload.RegistrationId);
     }
 }

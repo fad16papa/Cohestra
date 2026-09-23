@@ -38,7 +38,7 @@ approval: Product-owner STEP 2B — if rerun cannot clear the flake, create a na
 
 ### 4. Path forward
 
-- [x] 4.1 Direct Adjustment — **Viable**. Low effort, low risk. Test-host control via existing `Outbox:Enabled`.
+- [x] 4.1 Direct Adjustment — **Viable**. Low effort, low risk. Test-host control: remove hosted dispatcher only.
 - [x] 4.2 Rollback — **Not viable**. 38.3 merge is correct; outbox code was not changed by 38.3.
 - [x] 4.3 MVP review — **Not viable**. Product outbox guarantees are not the defect.
 - [x] 4.4 Selected: **Option 1 — Direct Adjustment**.
@@ -85,7 +85,7 @@ Semantic contract of `RegistrationSubmit_EnqueuesOperatorNotifyOutboxMessage`:
 
 > After a public registration, the API writes one durable outbox row for operator notify: correct `MessageType`, `DedupeKey`, `TenantId`, `RegistrationId` payload, unclaimed `Pending` status. That is enqueue. Claiming and sending is `OutboxProcessor` / handler lifecycle, already covered by Infrastructure unit tests.
 
-Selected option: disable the hosted dispatcher in the integration test host (`Outbox:Enabled=false`). Then assert durable enqueue evidence. `Pending` is now a stable enqueue fact, not a race with an independently tested processor.
+Selected option: remove `OutboxDispatcherHostedService` from the integration test host only. `Outbox:Enabled` stays `true` so `IOutboxProcessor.ProcessBatchAsync` / `ProcessOutboxUntilIdleAsync` remain callable. Then assert durable enqueue evidence. `Pending` is a stable enqueue fact because nothing claims the row in the background.
 
 Rejected:
 
@@ -102,13 +102,7 @@ Rejected:
 
 ### Test host
 
-`IntegrationTestWebApplicationFactory.ApplyDefaultSettings`:
-
-```
-UseSetting("Outbox:Enabled", "false")
-```
-
-Uses the existing dispatcher gate. No production default change.
+`IntegrationTestWebApplicationFactory.ConfigureTestServices` removes only `OutboxDispatcherHostedService` from `IHostedService`. Production `Outbox:Enabled` default stays `true`. The processor is not gated off.
 
 ### Enqueue tests
 
