@@ -3,6 +3,8 @@
 - Isolation Playwright spec is a same-test double-read; suite proof is field-level SQL before/after on clean DBs plus no writers to marina/yoga/runners.
 - CI Docker smoke remains the pre-existing Epic 35 / 36.4–36.6 live subset (includes the 401 Basic-lock regression). Full `E2E_LIVE_STACK=1` is a local/dev gate, not expanded in this story.
 - Pro published-activity cap (50) can theoretically bind if local workers ≫ 3 accumulate unused worker indexes; reset-in-place reuses `e2e-{owner}-wN`. Supported parallelism is `fullyParallel` / `--workers=3`.
+- Stacked-suite registration rate-limit retry (75s, no timeout inflation) after a clean-stack parallel gate. Not a product defect; do not hide with skips.
+- Post-merge `main` CI `35860436546` / `OutboxIntegrationTests.RegistrationSubmit_EnqueuesOperatorNotifyOutboxMessage`: expected `Pending`, actual `Processing` because the hosted dispatcher claimed the row. Same tree passed PR CI `35857001016` and locally. 38.3 did not change outbox code. Correction: disable the test-host dispatcher (`Outbox:Enabled=false`) and assert durable enqueue evidence. Do not weaken production outbox delivery. Story 38.3 stays `review` until that PR is merged and `main` CI is green.
 
 ## Deferred from: code review of 38-2-basic-website-entitlement-api-behavior.md (2026-09-23)
 

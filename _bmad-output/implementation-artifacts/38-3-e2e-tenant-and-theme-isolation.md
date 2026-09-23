@@ -142,6 +142,7 @@ Grok 4.6
 - Full live suite: 74 passed / 0 skipped / 0 failed (`--workers=3`)
 - Affected group reversed + forward + `--repeat-each=2 --workers=3`: all passed
 - Evidence: `_bmad-output/planning-artifacts/evidence/px2-38-3/checks.md`
+- Merged as `4528eb12`. Post-merge CI `35860436546` failed `OutboxIntegrationTests.RegistrationSubmit_EnqueuesOperatorNotifyOutboxMessage` (`Pending` vs `Processing`). Authorized job rerun: GitHub 403 / job cannot be rerun. Close remains blocked. Correction branch `cursor/outbox-enqueue-ci-reliability-0fcb`.
 
 ### Completion Notes List
 
@@ -211,3 +212,4 @@ Date: 2026-09-23. HEAD reviewed: `cf8b4d3893e880f87b9f81fe22cfc6006b0b245b`. Ind
 - 2026-09-23: CI Docker smoke 401 — Development-only px2-basic fixture seeder under DemoDataSeed.
 - 2026-09-23: Review patch — create-if-absent admin; do not reset colliding passwords or unsuspend existing tenants.
 - 2026-09-23: Clean-environment follow-up — remove unused fixture utilities; create-race retry; field-level canonical snapshot; unique bounded owner keys.
+- 2026-09-23: Merged `4528eb12`. Close blocked by outbox enqueue flake on `main` CI. Status stays review.

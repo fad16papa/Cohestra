@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Domain.Outbox;
 using Cohestra.Domain.Tenants;
@@ -49,7 +50,11 @@ public sealed class OutboxIntegrationTests(IntegrationTestFixture fixture)
                     && message.DedupeKey == $"registration:{response.RegistrationId}:confirmation");
 
         Assert.NotNull(outbox);
-        Assert.Equal(OutboxMessageStatus.Pending, outbox!.Status);
+        AssertDurableEnqueue(
+            outbox!,
+            OutboxMessageTypes.RegistrationConfirmation,
+            $"registration:{response.RegistrationId}:confirmation",
+            response.RegistrationId);
     }
 
     [SkippableFact]
@@ -86,7 +91,11 @@ public sealed class OutboxIntegrationTests(IntegrationTestFixture fixture)
                     && message.DedupeKey == $"registration:{response.RegistrationId}:operator_notify");
 
         Assert.NotNull(outbox);
-        Assert.Equal(OutboxMessageStatus.Pending, outbox!.Status);
+        AssertDurableEnqueue(
+            outbox!,
+            OutboxMessageTypes.RegistrationOperatorNotify,
+            $"registration:{response.RegistrationId}:operator_notify",
+            response.RegistrationId);
     }
 
     [SkippableFact]
@@ -146,5 +155,24 @@ public sealed class OutboxIntegrationTests(IntegrationTestFixture fixture)
             tenant.EmailOnNewRegistration = true;
             await db.SaveChangesAsync();
         }
+    }
+
+    private static void AssertDurableEnqueue(
+        OutboxMessage outbox,
+        string messageType,
+        string dedupeKey,
+        Guid registrationId)
+    {
+        Assert.Equal(messageType, outbox.MessageType);
+        Assert.Equal(dedupeKey, outbox.DedupeKey);
+        Assert.Equal(TenantIds.Default, outbox.TenantId);
+        Assert.Equal(OutboxMessageStatus.Pending, outbox.Status);
+        Assert.Equal(0, outbox.AttemptCount);
+        Assert.Null(outbox.ClaimedAt);
+        Assert.Null(outbox.ProcessedAt);
+
+        using var document = JsonDocument.Parse(outbox.PayloadJson);
+        Assert.True(document.RootElement.TryGetProperty("RegistrationId", out var registrationElement));
+        Assert.Equal(registrationId, registrationElement.GetGuid());
     }
 }

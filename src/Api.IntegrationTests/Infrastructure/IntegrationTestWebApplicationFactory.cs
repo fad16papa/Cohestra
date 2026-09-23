@@ -61,6 +61,10 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
         builder.UseSetting("AuthOtp:MaxSendAttemptsPerWindow", "1000");
         builder.UseSetting("AuthOtp:SendWindowMinutes", "15");
         builder.UseSetting("DEV_TENANT_SLUG", "default");
+        // Enqueue tests assert durable Pending rows. The hosted dispatcher otherwise
+        // claims them (Pending → Processing) and races the assertion. Processor
+        // lifecycle stays in Infrastructure.Tests. Production default remains Enabled.
+        builder.UseSetting("Outbox:Enabled", "false");
     }
 
     protected virtual void ConfigureTestServices(IWebHostBuilder builder)
