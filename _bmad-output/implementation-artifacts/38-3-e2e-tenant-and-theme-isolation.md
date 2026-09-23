@@ -157,6 +157,7 @@ Grok 4.6
 - `_bmad-output/implementation-artifacts/38-2-basic-website-entitlement-api-behavior.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - `_bmad-output/planning-artifacts/evidence/px2-38-3/checks.md`
+- `_bmad-output/implementation-artifacts/deferred-work.md`
 - `web/e2e/helpers/owned-fixture-data.ts`
 - `web/e2e/helpers/owned-fixture-data.test.ts`
 - `web/e2e/helpers/e2e-owned-fixtures.ts`
@@ -180,7 +181,7 @@ Grok 4.6
 
 ### Senior Developer Review (AI)
 
-Date: 2026-09-23. HEAD reviewed: `8932c188`. Independent layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor (`bmad-code-review`). Model: Grok 4.6. Mandatory Code Review Loop in force.
+Date: 2026-09-23. HEAD reviewed: `cf8b4d3893e880f87b9f81fe22cfc6006b0b245b`. Independent layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor (`bmad-code-review`). Model: Grok 4.6. Mandatory Code Review Loop in force. Status stays **review** for product-owner pre-merge. Do not mark done until PO acceptance and post-merge `main` verification.
 
 ### Review Findings
 
@@ -194,6 +195,13 @@ Date: 2026-09-23. HEAD reviewed: `8932c188`. Independent layers: Blind Hunter, E
 - [x] [Review][Patch] Seeder must not reset an existing account password or unsuspend/unarchive `px2-basic`
 - [x] [Review][Dismiss] `loginOwnedTenant` hint does not authenticate against `default` (Host is the fixture slug)
 - [x] [Review][Dismiss] Acceptance Auditor: AC 1–12 met; no production reset path
+- [x] [Review][Dismiss] Complimentary Basic does not unlock plan features (billing skip only)
+- [x] [Review][Dismiss] Seeder plan restore is fixture-slug-scoped; `default` is never flipped
+- [x] [Review][Dismiss] Removed helpers have no remaining callers
+- [x] [Review][Dismiss] Playwright 8088 vs helper 8080: `PUBLIC_BASE_URL` / `E2E_API_BASE_URL` bridge Docker
+- [x] [Review][Defer] Isolation spec same-test double-read — suite proof is field-level SQL before/after
+- [x] [Review][Defer] CI Docker smoke stays the pre-existing 35/36.4–36.6 live subset (includes Basic lock)
+- [x] [Review][Defer] Pro published-activity cap vs high worker-index accumulation — supported `--workers=3` stays under 50
 
 ### Change Log
 
