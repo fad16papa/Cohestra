@@ -112,13 +112,14 @@ test.describe("Epic 35 — conversational live interaction", () => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
   });
 
-  test("Next, Back, validation, and preview submit", async ({ page, request }) => {
+  test("Next, Back, validation, and preview submit", async ({ page, request }, testInfo) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
 
     const session = await loginOperatorSession(request);
     const token = session.accessToken;
     const owned = await provisionOwnedActivity(request, session, {
       ownerKey: "38-3-epic35-conv",
+      workerIndex: testInfo.workerIndex,
       theme: SINGLE_PAGE_CENTERED_THEME,
       formSchema: MARINA_LIKE_FORM_SCHEMA,
       publish: true,

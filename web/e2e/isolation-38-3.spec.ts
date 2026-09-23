@@ -17,12 +17,8 @@ test.describe("Story 38.3 — tenant and theme isolation", () => {
     const pro = await loginOwnedTenant(request, DEFAULT_PRO_TENANT);
     const basic = await loginOwnedTenant(request, PX2_BASIC_TENANT);
 
-    await expect.poll(async () => fetchTenantPlan(request, pro, DEFAULT_PRO_TENANT.slug)).toMatch(
-      /pro/i
-    );
-    await expect.poll(async () => fetchTenantPlan(request, basic, PX2_BASIC_TENANT.slug)).toMatch(
-      /basic/i
-    );
+    expect(await fetchTenantPlan(request, pro, DEFAULT_PRO_TENANT.slug)).toBe("Pro");
+    expect(await fetchTenantPlan(request, basic, PX2_BASIC_TENANT.slug)).toBe("Basic");
   });
 
   test("Basic and Pro fixtures show their intended plan in the admin shell", async ({
@@ -36,7 +32,7 @@ test.describe("Story 38.3 — tenant and theme isolation", () => {
     await page.getByLabel("Email address").fill(DEFAULT_PRO_TENANT.email);
     await page.getByLabel("Password", { exact: true }).fill(DEFAULT_PRO_TENANT.password);
     await page.getByRole("button", { name: /sign in to workspace/i }).click();
-    await expect(page.getByText(/pro/i).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Pro", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
 
     await page.goto(`${tenantWebOrigin(PX2_BASIC_TENANT.slug)}/login`, {
       waitUntil: "networkidle",
@@ -44,7 +40,7 @@ test.describe("Story 38.3 — tenant and theme isolation", () => {
     await page.getByLabel("Email address").fill(PX2_BASIC_TENANT.email);
     await page.getByLabel("Password", { exact: true }).fill(PX2_BASIC_TENANT.password);
     await page.getByRole("button", { name: /sign in to workspace/i }).click();
-    await expect(page.getByText(/basic/i).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Basic", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
   });
 
   test("canonical Marina/cinema/demo records remain unchanged across a snapshot", async ({

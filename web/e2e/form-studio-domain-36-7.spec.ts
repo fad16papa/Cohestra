@@ -12,6 +12,7 @@ test.describe("Story 36.7 — domain blocks", () => {
     const session = await loginOperatorSession(request);
     const owned = await provisionOwnedActivity(request, session, {
       ownerKey: "38-3-367",
+      workerIndex: test.info().workerIndex,
     });
     await openActivityTab(page, owned.id, "form", session);
 

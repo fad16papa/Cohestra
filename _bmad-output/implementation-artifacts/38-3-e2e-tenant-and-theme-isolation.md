@@ -170,7 +170,22 @@ Grok 4.6
 - `web/playwright.config.ts`
 - `web/vitest.config.ts`
 
+### Senior Developer Review (AI)
+
+Date: 2026-09-23. HEAD reviewed: `dd32c9c3`. Independent layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor. Model: Grok 4.6. Mandatory Code Review Loop in force.
+
+### Review Findings
+
+- [x] [Review][Patch] `workerIndex` required; 36.6 / 36.7 / Epic 35 conversational no longer default to `-w0`
+- [x] [Review][Patch] Isolation plan asserts exact `Pro` / `Basic`, not `/pro/i` (Profile false pass)
+- [x] [Review][Patch] px2-basic catalog create retries list on conflict
+- [x] [Review][Patch] `findActivityIdBySlug` searches by slug before paging
+- [x] [Review][Defer] Canonical snapshot is same-test double-read — suite proof is post-run DB + no writers
+- [x] [Review][Defer] `archiveOwnedActivity` unused; reset-in-place is the cleanup path
+- [x] [Review][Defer] `resolvePublishedE2eSlug` leftover helper — unused by live specs
+
 ### Change Log
 
 - 2026-09-23: Created Story 38.3 after 38.2 merge `01a139df`.
 - 2026-09-23: Implemented owned-fixture isolation; live suite 74 passed / 0 skipped.
+- 2026-09-23: Review patches — required workerIndex, exact plan asserts, catalog race, slug search.

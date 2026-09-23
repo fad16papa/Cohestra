@@ -110,8 +110,16 @@ async function ensureCatalog(
       data: { name: "E2E Community" },
       headers: apiHeaders(token, tenant.slug),
     });
-    const body = (await readJson(created, "Create community")) as { name?: string };
-    community = body.name ?? "E2E Community";
+    if (!created.ok()) {
+      const retry = await listNamed(request, token, tenant.slug, "/api/v1/admin/communities");
+      community = retry[0]?.name;
+      if (!community) {
+        throw new Error(`Create community failed: ${created.status()} ${await created.text()}`);
+      }
+    } else {
+      const body = (await created.json()) as { name?: string };
+      community = body.name ?? "E2E Community";
+    }
   }
 
   const categories = await listNamed(
@@ -126,8 +134,16 @@ async function ensureCatalog(
       data: { name: "Social" },
       headers: apiHeaders(token, tenant.slug),
     });
-    const body = (await readJson(created, "Create category")) as { name?: string };
-    category = body.name ?? "Social";
+    if (!created.ok()) {
+      const retry = await listNamed(request, token, tenant.slug, "/api/v1/admin/categories");
+      category = retry[0]?.name;
+      if (!category) {
+        throw new Error(`Create category failed: ${created.status()} ${await created.text()}`);
+      }
+    } else {
+      const body = (await created.json()) as { name?: string };
+      category = body.name ?? "Social";
+    }
   }
 
   return { community, category };
@@ -160,7 +176,7 @@ export async function provisionOwnedActivity(
   session: OperatorSession,
   options: {
     ownerKey: string;
-    workerIndex?: number;
+    workerIndex: number;
     tenant?: OwnedTenant;
     theme?: typeof SINGLE_PAGE_CENTERED_THEME | Record<string, unknown>;
     formSchema?: Record<string, unknown>;
@@ -168,7 +184,10 @@ export async function provisionOwnedActivity(
   }
 ): Promise<OwnedActivity> {
   const tenant = options.tenant ?? DEFAULT_PRO_TENANT;
-  const name = ownedActivityName(options.ownerKey, options.workerIndex ?? 0);
+  if (options.workerIndex == null) {
+    throw new Error("workerIndex is required so parallel workers do not share a fixture.");
+  }
+  const name = ownedActivityName(options.ownerKey, options.workerIndex);
   if (isCanonicalDemoSlug(name)) {
     throw new Error("Owned fixture name collided with a canonical demo slug.");
   }

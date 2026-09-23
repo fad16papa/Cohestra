@@ -221,6 +221,25 @@ export async function findActivityIdBySlug(
   slug: string,
   tenantSlug = DEFAULT_TENANT_SLUG
 ): Promise<string> {
+  const searched = await request.get(
+    `${API_BASE}/api/v1/admin/activities?search=${encodeURIComponent(slug)}&page=1&pageSize=50`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Host: tenantHostHeader(tenantSlug),
+      },
+    }
+  );
+  if (searched.ok()) {
+    const searchedBody = (await searched.json()) as {
+      items?: Array<{ id: string; slug: string }>;
+    };
+    const exact = searchedBody.items?.find((item) => item.slug === slug);
+    if (exact) {
+      return exact.id;
+    }
+  }
+
   for (let page = 1; page <= 5; page += 1) {
     const response = await request.get(
       `${API_BASE}/api/v1/admin/activities?page=${page}&pageSize=50`,
