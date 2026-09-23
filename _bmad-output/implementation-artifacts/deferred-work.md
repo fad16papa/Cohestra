@@ -1,3 +1,8 @@
+## Deferred from: code review of 38-2-basic-website-entitlement-api-behavior.md (2026-09-23)
+
+- Handler Content-Type remains `application/json` after `WriteAsJsonAsync` — pre-existing GlobalExceptionHandler pattern; ProblemDetails body is the contract.
+- Mid-session entitled-editor mutation `plan_locked` is toasted rather than UpgradePanel — outside Basic Website close gate.
+
 ## Deferred from: code review of 19-1-uat-droplet-deploy-and-smoke.md (2026-09-06) HEAD 170458c
 
 - ~~`TenantPublicWebUrlBuilder` UAT apex outbound URLs~~ — fixed Epic 19.2 branch `cursor/epic-19-wildcard-tls-a139` (2026-09-12).

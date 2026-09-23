@@ -37,6 +37,8 @@ public sealed class SitePageService(
             throw new InvalidOperationException("Draft payload is required.");
         }
 
+        await EnsureCurrentTenantSitePlanAllowedAsync(cancellationToken);
+
         if (request.Draft.SchemaVersion != 1)
         {
             throw new InvalidOperationException("Unsupported schema version. Only schema version 1 is supported.");
@@ -132,6 +134,8 @@ public sealed class SitePageService(
                 "Preset must be community, minimal, essentials-pilot, pilot-playbook, showcase, or event-hub.");
         }
 
+        await EnsureCurrentTenantSitePlanAllowedAsync(cancellationToken);
+
         var plan = await GetTenantPlanAsync(cancellationToken);
         if (!SiteSectionPlanGate.IsPresetAllowedForPlan(presetId, plan))
         {
@@ -164,6 +168,8 @@ public sealed class SitePageService(
         Guid templateId,
         CancellationToken cancellationToken = default)
     {
+        await EnsureCurrentTenantSitePlanAllowedAsync(cancellationToken);
+
         var template = await dbContext.SiteHomepageTemplates
             .FirstOrDefaultAsync(item => item.Id == templateId, cancellationToken);
 
@@ -209,6 +215,8 @@ public sealed class SitePageService(
         string name,
         CancellationToken cancellationToken = default)
     {
+        await EnsureCurrentTenantSitePlanAllowedAsync(cancellationToken);
+
         var trimmedName = name.Trim();
         if (trimmedName.Length < 2)
         {
@@ -261,6 +269,8 @@ public sealed class SitePageService(
         Guid templateId,
         CancellationToken cancellationToken = default)
     {
+        await EnsureCurrentTenantSitePlanAllowedAsync(cancellationToken);
+
         var template = await dbContext.SiteHomepageTemplates
             .FirstOrDefaultAsync(item => item.Id == templateId, cancellationToken);
 
@@ -345,18 +355,19 @@ public sealed class SitePageService(
         return new PublicSiteResponse(publishedDto, publishedAt, upcomingActivities);
     }
 
-    public Task<SitePreviewTokenResponse> CreatePreviewTokenAsync(
+    public async Task<SitePreviewTokenResponse> CreatePreviewTokenAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        _ = cancellationToken;
         if (!currentTenant.IsResolved || currentTenant.TenantId is null || currentTenant.TenantId == Guid.Empty)
         {
             throw new InvalidOperationException("Tenant context is required to create a site preview token.");
         }
 
+        await EnsureCurrentTenantSitePlanAllowedAsync(cancellationToken);
+
         var result = previewTokenService.CreateToken(userId, currentTenant.TenantId.Value);
-        return Task.FromResult(new SitePreviewTokenResponse(result.Token, result.ExpiresAt));
+        return new SitePreviewTokenResponse(result.Token, result.ExpiresAt);
     }
 
     public async Task<PublicSiteResponse?> GetPreviewAsync(
@@ -484,13 +495,31 @@ public sealed class SitePageService(
         var plan = await dbContext.Tenants
             .AsNoTracking()
             .Where(t => t.Id == tenantId)
-            .Select(t => t.Plan)
+            .Select(t => (TenantPlan?)t.Plan)
             .FirstOrDefaultAsync(cancellationToken);
+
+        if (plan is null)
+        {
+            throw new InvalidOperationException("Tenant not found for site page operations.");
+        }
 
         if (plan is TenantPlan.Basic)
         {
-            throw new InvalidOperationException("Site pages require a Core plan or higher.");
+            throw new PlanEntitlementException(
+                "website",
+                "Core",
+                "Site pages require a Core plan or higher.");
         }
+    }
+
+    private async Task EnsureCurrentTenantSitePlanAllowedAsync(CancellationToken cancellationToken)
+    {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is null || currentTenant.TenantId == Guid.Empty)
+        {
+            throw new InvalidOperationException("Tenant context is required for site page operations.");
+        }
+
+        await EnsureSitePlanAllowedAsync(currentTenant.TenantId.Value, cancellationToken);
     }
 
     private async Task<TenantPlan> GetTenantPlanAsync(CancellationToken cancellationToken)

@@ -1,4 +1,5 @@
 import { getPublicApiBaseUrl } from "@/lib/api";
+import { throwIfSiteRequestFailed } from "@/lib/plan-entitlement";
 import {
   parseSiteSectionsDocument,
   type PublicHomepageActivity,
@@ -6,25 +7,6 @@ import {
 } from "@/lib/public-site-api";
 import { toApiDraftPayload } from "@/lib/site-draft-utils";
 import type { SiteBuiltInPresetId } from "@/lib/site-templates";
-
-async function parseProblemDetail(response: Response): Promise<string> {
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/problem+json")) {
-    try {
-      const problem = (await response.json()) as { detail?: string; title?: string };
-      return problem.detail ?? problem.title ?? `Request failed (${response.status})`;
-    } catch {
-      return `Request failed (${response.status})`;
-    }
-  }
-
-  try {
-    const text = await response.text();
-    return text.trim() || `Request failed (${response.status})`;
-  } catch {
-    return `Request failed (${response.status})`;
-  }
-}
 
 export type SavedSiteTemplate = {
   id: string;
@@ -137,10 +119,7 @@ export async function fetchSiteAdmin(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>
 ): Promise<SitePageAdmin> {
   const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/admin/site`);
-
-  if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
-  }
+  await throwIfSiteRequestFailed(response);
 
   const parsed = parseSitePageAdmin((await response.json()) as Record<string, unknown>);
   if (!parsed) {
@@ -160,9 +139,7 @@ export async function saveSiteDraft(
     body: JSON.stringify({ draft: toApiDraftPayload(draft) }),
   });
 
-  if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
-  }
+  await throwIfSiteRequestFailed(response);
 
   const parsed = parseSitePageAdmin((await response.json()) as Record<string, unknown>);
   if (!parsed) {
@@ -180,9 +157,7 @@ export async function publishSite(
     { method: "POST" }
   );
 
-  if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
-  }
+  await throwIfSiteRequestFailed(response);
 
   const parsed = parseSitePageAdmin((await response.json()) as Record<string, unknown>);
   if (!parsed) {
@@ -200,9 +175,7 @@ export async function createSitePreviewToken(
     { method: "POST" }
   );
 
-  if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
-  }
+  await throwIfSiteRequestFailed(response);
 
   const raw = (await response.json()) as Record<string, unknown>;
   const token = raw.token ?? raw.Token;
@@ -228,9 +201,7 @@ export async function applySitePreset(
     }
   );
 
-  if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
-  }
+  await throwIfSiteRequestFailed(response);
 
   const parsed = parseSitePageAdmin((await response.json()) as Record<string, unknown>);
   if (!parsed) {
@@ -253,9 +224,7 @@ export async function createSavedSiteTemplate(
     }
   );
 
-  if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
-  }
+  await throwIfSiteRequestFailed(response);
 
   const parsed = parseSavedSiteTemplate(await response.json());
   if (!parsed) {
@@ -274,9 +243,7 @@ export async function applySavedSiteTemplate(
     { method: "POST" }
   );
 
-  if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
-  }
+  await throwIfSiteRequestFailed(response);
 
   const parsed = parseSitePageAdmin((await response.json()) as Record<string, unknown>);
   if (!parsed) {
@@ -295,9 +262,7 @@ export async function deleteSavedSiteTemplate(
     { method: "DELETE" }
   );
 
-  if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
-  }
+  await throwIfSiteRequestFailed(response);
 
   const parsed = parseSitePageAdmin((await response.json()) as Record<string, unknown>);
   if (!parsed) {
@@ -315,9 +280,7 @@ export async function revertPublishedSite(
     { method: "POST" }
   );
 
-  if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
-  }
+  await throwIfSiteRequestFailed(response);
 
   const parsed = parseSitePageAdmin((await response.json()) as Record<string, unknown>);
   if (!parsed) {

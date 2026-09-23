@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-09-21
+# last_updated: 2026-09-22
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -379,6 +379,11 @@ development_status:
   37-1-shared-admin-route-motion: review
   37-2-builder-studio-motion: review
   37-3-motion-polish-audit: review
+
+  # Epic 38 — Product Experience 2.0 entitlement / billing truth
+  epic-38: in-progress
+  38-1-billing-sync-environment-and-error-behavior: done
+  38-2-basic-website-entitlement-api-behavior: review
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

@@ -2,6 +2,8 @@ export type ParsedProblemDetails = {
   message: string;
   errorCode?: string;
   verifyTenantSlug?: string;
+  feature?: string;
+  requiredPlan?: string;
 };
 
 function readStringField(
@@ -30,14 +32,16 @@ export function parseProblemFields(raw: Record<string, unknown>): ParsedProblemD
   const title = raw.title ?? raw.Title;
   const errorCode = readStringField(raw, "errorCode");
   const verifyTenantSlug = readStringField(raw, "verifyTenantSlug");
+  const feature = readStringField(raw, "feature");
+  const requiredPlan = readStringField(raw, "requiredPlan");
 
   if (typeof detail === "string" && detail.length > 0) {
-    return { message: detail, errorCode, verifyTenantSlug };
+    return { message: detail, errorCode, verifyTenantSlug, feature, requiredPlan };
   }
 
   if (typeof title === "string" && title.length > 0) {
-    return { message: title, errorCode, verifyTenantSlug };
+    return { message: title, errorCode, verifyTenantSlug, feature, requiredPlan };
   }
 
-  return { message: "Request failed.", errorCode, verifyTenantSlug };
+  return { message: "Request failed.", errorCode, verifyTenantSlug, feature, requiredPlan };
 }
