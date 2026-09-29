@@ -21,7 +21,7 @@ const FilterSelect = React.forwardRef<HTMLSelectElement, FilterSelectProps>(
           className={cn(
             filterSelectClassName,
             active &&
-              "bg-primary text-primary-foreground hover:bg-[color-mix(in_srgb,var(--primary),#000_12%)] focus-visible:bg-primary focus-visible:ring-ring",
+              "bg-primary text-primary-foreground hover:bg-[color-mix(in_srgb,var(--primary),#000_12%)] focus-visible:bg-primary focus-visible:ring-ring dark:bg-primary dark:hover:bg-[color-mix(in_srgb,var(--primary),#000_12%)] dark:focus-visible:bg-primary",
             className
           )}
           {...props}

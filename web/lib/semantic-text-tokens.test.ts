@@ -80,6 +80,8 @@ describe("semantic text tokens", () => {
     expect(filter).not.toMatch(/dark:bg-primary\//);
     expect(filter).not.toMatch(/from-primary to-accent/);
     expect(filter).toMatch(/bg-primary text-primary-foreground/);
+    expect(filter).toMatch(/dark:bg-primary/);
+    expect(filter).not.toMatch(/dark:bg-primary\//);
 
     for (const file of [
       "components/auth/register-form.tsx",
