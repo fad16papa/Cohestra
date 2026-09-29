@@ -67,7 +67,7 @@ function LoginPageContent({
           </p>
           <OnboardingLink />
           <p>
-            <Link href="/forgot-password" className="font-medium text-lagoon hover:text-lagoon-deep">
+            <Link href="/forgot-password" className="font-medium text-text-link underline-offset-2 hover:underline">
               Forgot password?
             </Link>
           </p>
@@ -109,7 +109,7 @@ function OnboardingLink() {
   return (
     <p>
       First time here?{" "}
-      <Link href={href} className="font-medium text-lagoon hover:text-lagoon-deep">
+      <Link href={href} className="font-medium text-text-link underline-offset-2 hover:underline">
         Create your operator account
       </Link>
     </p>

@@ -1,4 +1,14 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import { expect, test } from "@playwright/test";
+
+import {
+  loginOperatorSession,
+  seedOperatorAuthSession,
+  waitForOperatorWorkspace,
+} from "./helpers/registration-e2e-api";
+import { DEFAULT_TENANT_SLUG, tenantWebOrigin } from "./helpers/owned-fixture-data";
 
 function luminance(rgb: string): number {
   const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
@@ -19,6 +29,28 @@ function contrast(fg: string, bg: string): number {
   const darker = Math.min(a, b);
   return (lighter + 0.05) / (darker + 0.05);
 }
+
+const VIEWPORTS = [
+  { name: "1440x900", width: 1440, height: 900 },
+  { name: "1024x768", width: 1024, height: 768 },
+  { name: "768x1024", width: 768, height: 1024 },
+  { name: "430x932", width: 430, height: 932 },
+  { name: "390x844", width: 390, height: 844 },
+] as const;
+
+const evidenceDir = path.resolve(
+  __dirname,
+  "../../_bmad-output/planning-artifacts/evidence/px2-38-4/viewports"
+);
+
+const AUTH_ROUTES = [
+  { name: "dashboard", path: "/dashboard" },
+  { name: "clients", path: "/dashboard/clients" },
+  { name: "activities", path: "/dashboard/activities" },
+  { name: "reports", path: "/dashboard/reports" },
+  { name: "website", path: "/dashboard/website" },
+  { name: "settings", path: "/dashboard/settings" },
+] as const;
 
 test("semantic muted text is ≥4.5:1 on paper and is not stone", async ({ page }) => {
   await page.goto("/login", { waitUntil: "domcontentloaded" });
@@ -48,4 +80,119 @@ test("semantic muted text is ≥4.5:1 on paper and is not stone", async ({ page 
   expect(measured.cinema).toBe("#5a636e");
   expect(measured.mutedForeground.length).toBeGreaterThan(0);
   expect(contrast(measured.color, measured.background)).toBeGreaterThanOrEqual(4.5);
+});
+
+test("login CTA uses primary fill, not decorative dark lagoon", async ({ page }) => {
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  const submit = page.getByRole("button", { name: /sign in to workspace/i });
+  await expect(submit).toBeVisible();
+  const light = await submit.evaluate((el) => {
+    const styles = getComputedStyle(el);
+    const root = getComputedStyle(document.documentElement);
+    return {
+      color: styles.color,
+      background: styles.backgroundColor,
+      primary: root.getPropertyValue("--primary").trim(),
+      lagoon: root.getPropertyValue("--lagoon").trim(),
+    };
+  });
+  expect(contrast(light.color, light.background)).toBeGreaterThanOrEqual(4.5);
+  expect(light.lagoon).toBe("#0b6b63");
+
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  const dark = await submit.evaluate((el) => {
+    const styles = getComputedStyle(el);
+    const root = getComputedStyle(document.documentElement);
+    return {
+      color: styles.color,
+      background: styles.backgroundColor,
+      primary: root.getPropertyValue("--primary").trim(),
+      lagoon: root.getPropertyValue("--lagoon").trim(),
+    };
+  });
+  expect(dark.primary).toBe("#0f7369");
+  expect(dark.lagoon).toBe("#12877d");
+  expect(contrast(dark.color, dark.background)).toBeGreaterThanOrEqual(4.5);
+});
+
+test("login email field exposes an opaque focus ring", async ({ page }) => {
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  const email = page.getByLabel(/email/i);
+  await email.focus();
+  const outline = await email.evaluate((el) => {
+    const shell = el.parentElement;
+    if (!shell) {
+      throw new Error("Login email is missing its field shell");
+    }
+    const styles = getComputedStyle(shell);
+    return {
+      boxShadow: styles.boxShadow,
+      borderColor: styles.borderColor,
+    };
+  });
+  expect(outline.boxShadow).not.toBe("none");
+});
+
+test("login viewports capture required evidence", async ({ page }) => {
+  fs.mkdirSync(evidenceDir, { recursive: true });
+  for (const viewport of VIEWPORTS) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.goto("/login", { waitUntil: "domcontentloaded" });
+    await expect(page.getByLabel(/email/i)).toBeVisible();
+    await page.screenshot({
+      path: path.join(evidenceDir, `login-${viewport.name}.png`),
+      fullPage: true,
+    });
+  }
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/login", { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.screenshot({
+    path: path.join(evidenceDir, "login-1440x900-dark.png"),
+    fullPage: true,
+  });
+});
+
+test("authenticated product viewports when live stack is available", async ({ page, request }) => {
+  test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+  test.setTimeout(120_000);
+  fs.mkdirSync(evidenceDir, { recursive: true });
+
+  const session = await loginOperatorSession(request);
+  const origin = tenantWebOrigin(DEFAULT_TENANT_SLUG);
+  await seedOperatorAuthSession(page, session);
+
+  const gaps: string[] = [];
+  for (const route of AUTH_ROUTES) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`${origin}${route.path}`, { waitUntil: "domcontentloaded" });
+    if (page.url().includes("/login")) {
+      await page.evaluate((stored) => {
+        localStorage.setItem("auth_session", JSON.stringify(stored));
+      }, session);
+      await page.goto(`${origin}${route.path}`, { waitUntil: "domcontentloaded" });
+    }
+
+    try {
+      await waitForOperatorWorkspace(page);
+      await page.screenshot({
+        path: path.join(evidenceDir, `${route.name}-1440x900.png`),
+        fullPage: true,
+      });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.screenshot({
+        path: path.join(evidenceDir, `${route.name}-390x844.png`),
+        fullPage: true,
+      });
+    } catch (error) {
+      gaps.push(`${route.path}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  fs.writeFileSync(
+    path.join(evidenceDir, "..", "visual-gaps.json"),
+    JSON.stringify({ generated: new Date().toISOString(), gaps }, null, 2)
+  );
+  expect(gaps, gaps.join("\n")).toEqual([]);
 });

@@ -16,7 +16,7 @@
       "prohibited": "decorative atmosphere"
     },
     {
-      "token": "--text",
+      "token": "--text on card",
       "theme": "light",
       "foregroundToken": "--text",
       "backgroundToken": "--paper-warm",
@@ -42,7 +42,7 @@
       "prohibited": "disabled; decorative stone"
     },
     {
-      "token": "--text-muted",
+      "token": "--text-muted on card",
       "theme": "light",
       "foregroundToken": "--text-muted",
       "backgroundToken": "--paper-warm",
@@ -65,6 +65,19 @@
       "threshold": 4.5,
       "pass": true,
       "intended": "inline links",
+      "prohibited": "body copy"
+    },
+    {
+      "token": "--text-link on card",
+      "theme": "light",
+      "foregroundToken": "--text-link",
+      "backgroundToken": "--paper-warm",
+      "foregroundValue": "#0b6b63",
+      "backgroundValue": "#f3f5f7",
+      "ratio": 5.83,
+      "threshold": 4.5,
+      "pass": true,
+      "intended": "inline links on cards",
       "prohibited": "body copy"
     },
     {
@@ -107,17 +120,56 @@
       "prohibited": "long body on failing tint"
     },
     {
+      "token": "--text-danger on surface",
+      "theme": "light",
+      "foregroundToken": "--text-danger",
+      "backgroundToken": "--surface-danger",
+      "foregroundValue": "#9b1c1c",
+      "backgroundValue": "#f8eaea",
+      "ratio": 6.97,
+      "threshold": 4.5,
+      "pass": true,
+      "intended": "error toast eyebrow",
+      "prohibited": "long body when pair fails"
+    },
+    {
       "token": "--text-warning",
       "theme": "light",
       "foregroundToken": "--text-warning",
       "backgroundToken": "--paper",
-      "foregroundValue": "#9a6700",
+      "foregroundValue": "#8a5c00",
       "backgroundValue": "#fafbfc",
-      "ratio": 4.7,
+      "ratio": 5.61,
       "threshold": 4.5,
       "pass": true,
       "intended": "warning eyebrow",
       "prohibited": "body on warning tint if pair fails"
+    },
+    {
+      "token": "--text-warning on card",
+      "theme": "light",
+      "foregroundToken": "--text-warning",
+      "backgroundToken": "--paper-warm",
+      "foregroundValue": "#8a5c00",
+      "backgroundValue": "#f3f5f7",
+      "ratio": 5.32,
+      "threshold": 4.5,
+      "pass": true,
+      "intended": "warning on cards",
+      "prohibited": "raw --warn as small text if pair fails"
+    },
+    {
+      "token": "--text-warning on surface",
+      "theme": "light",
+      "foregroundToken": "--text-warning",
+      "backgroundToken": "--surface-warning",
+      "foregroundValue": "#8a5c00",
+      "backgroundValue": "#f8f1e0",
+      "ratio": 5.16,
+      "threshold": 4.5,
+      "pass": true,
+      "intended": "warning on tint",
+      "prohibited": "body on failing tint"
     },
     {
       "token": "--text-success",
@@ -159,7 +211,7 @@
       "prohibited": "raw --gold helper"
     },
     {
-      "token": "--text-accent",
+      "token": "--text-accent on gold-soft",
       "theme": "light",
       "foregroundToken": "--text-accent",
       "backgroundToken": "--gold-soft",
@@ -182,6 +234,19 @@
       "threshold": 3,
       "pass": true,
       "intended": "input outline",
+      "prohibited": "decorative --line"
+    },
+    {
+      "token": "--border-control on card",
+      "theme": "light",
+      "foregroundToken": "--border-control",
+      "backgroundToken": "--paper-warm",
+      "foregroundValue": "#7a838c",
+      "backgroundValue": "#f3f5f7",
+      "ratio": 3.52,
+      "threshold": 3,
+      "pass": true,
+      "intended": "input outline on cards",
       "prohibited": "decorative --line"
     },
     {
@@ -222,6 +287,19 @@
       "pass": true,
       "intended": "toast success body",
       "prohibited": "success as long body when pair fails"
+    },
+    {
+      "token": "--text-muted on surface-success",
+      "theme": "light",
+      "foregroundToken": "--text-muted",
+      "backgroundToken": "--surface-success",
+      "foregroundValue": "#5a636e",
+      "backgroundValue": "#e8f4ef",
+      "ratio": 5.4,
+      "threshold": 4.5,
+      "pass": true,
+      "intended": "toast dismiss on success tint",
+      "prohibited": "disabled-as-metadata"
     },
     {
       "token": "--text (dark)",
@@ -267,12 +345,25 @@
       "theme": "dark",
       "foregroundToken": "--text-link",
       "backgroundToken": "--paper",
-      "foregroundValue": "#149188",
+      "foregroundValue": "#159a90",
       "backgroundValue": "#070d12",
-      "ratio": 5.05,
+      "ratio": 5.63,
       "threshold": 4.5,
       "pass": true,
       "intended": "dark links",
+      "prohibited": "dark --lagoon as body link"
+    },
+    {
+      "token": "--text-link (dark card)",
+      "theme": "dark",
+      "foregroundToken": "--text-link",
+      "backgroundToken": "--paper-warm",
+      "foregroundValue": "#159a90",
+      "backgroundValue": "#141c24",
+      "ratio": 4.96,
+      "threshold": 4.5,
+      "pass": true,
+      "intended": "dark links on cards",
       "prohibited": "dark --lagoon as body link"
     },
     {
@@ -302,6 +393,19 @@
       "prohibited": "raw red"
     },
     {
+      "token": "--text-danger (dark surface)",
+      "theme": "dark",
+      "foregroundToken": "--text-danger",
+      "backgroundToken": "--surface-danger",
+      "foregroundValue": "#e57373",
+      "backgroundValue": "#3a1c1c",
+      "ratio": 5.16,
+      "threshold": 4.5,
+      "pass": true,
+      "intended": "dark error toast eyebrow",
+      "prohibited": "long body when pair fails"
+    },
+    {
       "token": "--text-warning (dark)",
       "theme": "dark",
       "foregroundToken": "--text-warning",
@@ -326,6 +430,19 @@
       "pass": true,
       "intended": "dark success eyebrow",
       "prohibited": "raw emerald"
+    },
+    {
+      "token": "--text-success (dark surface graphic)",
+      "theme": "dark",
+      "foregroundToken": "--text-success",
+      "backgroundToken": "--surface-success",
+      "foregroundValue": "#2d9a72",
+      "backgroundValue": "#143028",
+      "ratio": 4.03,
+      "threshold": 3,
+      "pass": true,
+      "intended": "success toast icon (graphic)",
+      "prohibited": "12px success label on dark tint"
     },
     {
       "token": "--text-accent (dark)",
@@ -378,6 +495,19 @@
       "pass": true,
       "intended": "dark toast success body",
       "prohibited": "success as long body when pair fails"
+    },
+    {
+      "token": "--text-muted on dark surface-success",
+      "theme": "dark",
+      "foregroundToken": "--text-muted",
+      "backgroundToken": "--surface-success",
+      "foregroundValue": "#a8b0b8",
+      "backgroundValue": "#143028",
+      "ratio": 6.45,
+      "threshold": 4.5,
+      "pass": true,
+      "intended": "dark toast dismiss",
+      "prohibited": "disabled-as-metadata"
     }
   ]
 }

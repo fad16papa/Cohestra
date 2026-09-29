@@ -27,7 +27,7 @@ type LoginFormProps = {
 };
 
 const fieldShellClassName =
-  "flex min-h-11 items-center gap-3 rounded-[10px] border border-line bg-paper px-3 transition-colors focus-within:border-lagoon/40 focus-within:ring-2 focus-within:ring-lagoon/15";
+  "flex min-h-11 items-center gap-3 rounded-[10px] border border-border-control bg-paper px-3 transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring";
 
 const loginInputClassName =
   "auth-login-input min-h-0 h-auto w-full min-w-0 flex-1 appearance-none rounded-none border-0 bg-transparent px-0 py-0 text-base text-ink shadow-none outline-none focus-visible:border-0 focus-visible:ring-0 sm:text-sm placeholder:text-text-muted disabled:cursor-not-allowed disabled:opacity-50";
@@ -201,7 +201,7 @@ export function LoginForm({
             className={cn(
               "flex size-9 shrink-0 items-center justify-center rounded-lg",
               "text-icon-muted outline-none transition-colors hover:bg-paper-warm hover:text-ink",
-              "focus-visible:ring-2 focus-visible:ring-lagoon/30"
+              "focus-visible:ring-2 focus-visible:ring-ring"
             )}
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
@@ -231,7 +231,7 @@ export function LoginForm({
             <p>
               <a
                 href={errorCta.otherDoorPath}
-                className="font-medium text-lagoon underline-offset-2 hover:text-lagoon-deep hover:underline"
+                className="font-medium text-text-link underline-offset-2 hover:underline"
               >
                 {errorCta.otherDoorLabel}
               </a>
@@ -242,11 +242,7 @@ export function LoginForm({
 
       <Button
         type="submit"
-        className={cn(
-          "min-h-11 w-full rounded-[10px] text-sm font-semibold",
-          "bg-lagoon text-lagoon-fg hover:bg-lagoon-deep",
-          "disabled:opacity-70"
-        )}
+        className="min-h-11 w-full rounded-[10px] text-sm font-semibold disabled:opacity-70"
         disabled={isSubmitting}
       >
         {isSubmitting ? (

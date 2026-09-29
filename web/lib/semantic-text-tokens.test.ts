@@ -6,9 +6,11 @@ import {
   CONTRAST_PAIRS,
   MIGRATED_PRODUCT_FILES,
   assertMigratedFileHasNoForbiddenClasses,
+  buildContrastMatrixRows,
   contrastRatio,
   loadBrandTokensCss,
   parseBrandTokens,
+  parseNamedTokenBlock,
   resolveColor,
 } from "@/lib/semantic-text-tokens";
 
@@ -55,6 +57,60 @@ describe("semantic text tokens", () => {
   it("does not use stone or gold as the muted text hex", () => {
     expect(resolveColor("--text-muted", light)).not.toBe(resolveColor("--stone", light));
     expect(resolveColor("--text-accent", light)).not.toBe(resolveColor("--gold", light));
+  });
+
+  it("keeps dark primary fill distinct from decorative dark lagoon", () => {
+    expect(resolveColor("--primary", dark)).toBe("#0f7369");
+    expect(resolveColor("--lagoon", dark)).toBe("#12877d");
+    expect(resolveColor("--text-link", dark)).toBe("#159a90");
+    expect(resolveColor("--text-warning", light)).toBe("#8a5c00");
+  });
+
+  it("locks registration preview to light lagoon rather than inheriting dark lagoon", () => {
+    const preview = parseNamedTokenBlock(css, ".registration-preview-surface");
+    expect(preview["--lagoon"]).toBe("#0b6b63");
+    expect(preview["--primary"]).toBe("var(--lagoon)");
+    expect(preview["--text-link"]).toBe("var(--lagoon)");
+    expect(preview["--text-warning"]).toBe("#8a5c00");
+  });
+
+  it("matches the machine-readable contrast matrix", () => {
+    const matrixPath = path.resolve(
+      webRoot,
+      "../_bmad-output/planning-artifacts/evidence/px2-38-4/contrast-matrix.json"
+    );
+    const matrix = JSON.parse(fs.readFileSync(matrixPath, "utf8")) as {
+      rows: Array<{
+        token: string;
+        theme: string;
+        foregroundToken: string;
+        backgroundToken: string;
+        foregroundValue: string;
+        backgroundValue: string;
+        ratio: number;
+        threshold: number;
+        pass: boolean;
+      }>;
+    };
+    const expected = buildContrastMatrixRows(light, dark);
+    expect(matrix.rows).toHaveLength(expected.length);
+    expect(expected.every((row) => row.pass)).toBe(true);
+
+    for (const row of expected) {
+      const published = matrix.rows.find(
+        (candidate) =>
+          candidate.token === row.token &&
+          candidate.theme === row.theme &&
+          candidate.foregroundToken === row.foregroundToken &&
+          candidate.backgroundToken === row.backgroundToken
+      );
+      expect(published, row.token).toBeDefined();
+      expect(published?.foregroundValue.toLowerCase()).toBe(row.foregroundValue.toLowerCase());
+      expect(published?.backgroundValue.toLowerCase()).toBe(row.backgroundValue.toLowerCase());
+      expect(published?.threshold).toBe(row.threshold);
+      expect(published?.pass).toBe(true);
+      expect(published?.ratio).toBeCloseTo(row.ratio, 1);
+    }
   });
 });
 

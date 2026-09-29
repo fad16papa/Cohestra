@@ -9,7 +9,7 @@ type PlanBadgeProps = {
 
 const PLAN_STYLES: Record<string, string> = {
   Basic: "border-border-warm bg-muted/40 text-text-warm",
-  Core: "border-lagoon/30 bg-lagoon/10 text-lagoon",
+  Core: "border-lagoon/30 bg-lagoon/10 text-foreground",
   Pro: "border-gold/40 bg-gold/10 text-text-accent",
   Enterprise: "border-primary/30 bg-primary/10 text-primary",
 };

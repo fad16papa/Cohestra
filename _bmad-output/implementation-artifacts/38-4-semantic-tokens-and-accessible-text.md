@@ -108,8 +108,8 @@ Auth/admin stone and gold-as-text; dashboard/website/settings status chrome. Exa
 - [x] Contrast matrix + unit tests that parse CSS (AC 11)
 - [x] Bounded authenticated-product class migration (AC 3, 5)
 - [x] Regression scan: migrated files must not reintroduce `text-stone` / raw `red-*`/`emerald-*` as normal text
-- [ ] Playwright: login helper contrast; live-stack dashboard/clients when available (AC 12)
-- [ ] Evidence under `_bmad-output/planning-artifacts/evidence/px2-38-4/`
+- [x] Playwright: login helper contrast; live-stack dashboard/clients when available (AC 12)
+- [x] Evidence under `_bmad-output/planning-artifacts/evidence/px2-38-4/`
 - [x] DESIGN.md §5 matrix pointer
 - [x] TypeScript, production build, targeted lint, affected Vitest
 
@@ -180,8 +180,24 @@ Grok 4.6 (orchestration, architecture, review). Composer 2.5 only for the bounde
 
 ### Completion Notes List
 
+- Independent review of `b755c755` returned CHANGES REQUIRED (F1–F7). Correction pass: login/invite consume `--primary` / `--text-link` / `--border-control` / opaque `--ring`; success toast eyebrow uses `--text` on tint; `--text-warning` `#8a5c00`; dark `--text-link` `#159a90` for card surfaces; preview resets `--lagoon`; matrix + Vitest assert JSON nested pairs and forbid `text-gold` / `text-lagoon`.
+- Composer 2.5 was used only for the original bounded class migration. This correction pass is Grok-owned.
+- Deferred: remaining report panels still using `text-lagoon`; marketing/cinema; platform console `--plat-*` (43.4); public-form accents (Epic 35).
+
 ### File List
+
+- `web/styles/brand-tokens.css`
+- `web/app/globals.css`
+- `web/components/ui/toast-provider.tsx`
+- `web/components/ui/button.tsx`
+- `web/lib/semantic-text-tokens.ts`
+- `web/lib/semantic-text-tokens.test.ts`
+- `web/e2e/tokens-38-4.spec.ts`
+- `docs/DESIGN.md`
+- `_bmad-output/planning-artifacts/evidence/px2-38-4/`
+- Composer-bounded product files listed above, plus Grok follow-up on `login-page-client.tsx` and `platform-login-page-client.tsx`
 
 ### Change Log
 
 - 2026-09-23: Created Story 38.4 after 38.3 close `52c1c990`. Semantic-role architecture approved.
+- 2026-09-29: Review correction — F1–F7 token/contrast/test/evidence patches.

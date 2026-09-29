@@ -21,41 +21,54 @@ const DARK_WARM = "#141c24";
 /** Contract pairs asserted by tests against parsed brand-tokens.css. */
 export const CONTRAST_PAIRS: ContrastPair[] = [
   { token: "--text", foreground: "--text", background: "--paper", threshold: 4.5, intended: "body", prohibited: "decorative atmosphere", theme: "light" },
-  { token: "--text", foreground: "--text", background: "--paper-warm", threshold: 4.5, intended: "body on cards", prohibited: "decorative atmosphere", theme: "light" },
+  { token: "--text on card", foreground: "--text", background: "--paper-warm", threshold: 4.5, intended: "body on cards", prohibited: "decorative atmosphere", theme: "light" },
   { token: "--text-muted", foreground: "--text-muted", background: "--paper", threshold: 4.5, intended: "helper, metadata, table secondary", prohibited: "disabled; decorative stone", theme: "light" },
-  { token: "--text-muted", foreground: "--text-muted", background: "--paper-warm", threshold: 4.5, intended: "helper on cards", prohibited: "disabled; decorative stone", theme: "light" },
+  { token: "--text-muted on card", foreground: "--text-muted", background: "--paper-warm", threshold: 4.5, intended: "helper on cards", prohibited: "disabled; decorative stone", theme: "light" },
   { token: "--text-link", foreground: "--text-link", background: "--paper", threshold: 4.5, intended: "inline links", prohibited: "body copy", theme: "light" },
+  { token: "--text-link on card", foreground: "--text-link", background: "--paper-warm", threshold: 4.5, intended: "inline links on cards", prohibited: "body copy", theme: "light" },
   { token: "--text-on-lagoon", foreground: "--text-on-lagoon", background: "--lagoon", threshold: 4.5, intended: "primary button label", prohibited: "body on paper", theme: "light" },
   { token: "--text-on-danger", foreground: "--text-on-danger", background: "--danger", threshold: 4.5, intended: "destructive button label", prohibited: "body on paper", theme: "light" },
   { token: "--text-danger", foreground: "--text-danger", background: "--paper", threshold: 4.5, intended: "error eyebrow/icon", prohibited: "long body on danger tint if pair fails", theme: "light" },
+  { token: "--text-danger on surface", foreground: "--text-danger", background: "--surface-danger", threshold: 4.5, intended: "error toast eyebrow", prohibited: "long body when pair fails", theme: "light" },
   { token: "--text-warning", foreground: "--text-warning", background: "--paper", threshold: 4.5, intended: "warning eyebrow", prohibited: "body on warning tint if pair fails", theme: "light" },
+  { token: "--text-warning on card", foreground: "--text-warning", background: "--paper-warm", threshold: 4.5, intended: "warning on cards", prohibited: "raw --warn as small text if pair fails", theme: "light" },
+  { token: "--text-warning on surface", foreground: "--text-warning", background: "--surface-warning", threshold: 4.5, intended: "warning on tint", prohibited: "body on failing tint", theme: "light" },
   { token: "--text-success", foreground: "--text-success", background: "--paper", threshold: 4.5, intended: "success eyebrow/icon", prohibited: "raw emerald", theme: "light" },
   { token: "--text-info", foreground: "--text-info", background: "--paper", threshold: 4.5, intended: "info eyebrow", prohibited: "body on info tint if pair fails", theme: "light" },
   { token: "--text-accent", foreground: "--text-accent", background: "--paper", threshold: 4.5, intended: "gold-as-small-text, badges", prohibited: "raw --gold helper text", theme: "light" },
-  { token: "--text-accent", foreground: "--text-accent", background: "--gold-soft", threshold: 4.5, intended: "gold badge label on gold-soft", prohibited: "raw --gold on gold-soft", theme: "light" },
+  { token: "--text-accent on gold-soft", foreground: "--text-accent", background: "--gold-soft", threshold: 4.5, intended: "gold badge label on gold-soft", prohibited: "raw --gold on gold-soft", theme: "light" },
   { token: "--border-control", foreground: "--border-control", background: "--paper", threshold: 3, intended: "input/select outline", prohibited: "decorative --line", theme: "light" },
+  { token: "--border-control on card", foreground: "--border-control", background: "--paper-warm", threshold: 3, intended: "input outline on cards", prohibited: "decorative --line", theme: "light" },
   { token: "--ring", foreground: "--ring", background: "--paper", threshold: 3, intended: "focus indicator", prohibited: "body text", theme: "light" },
   { token: "--text on surface-danger", foreground: "--text", background: "--surface-danger", threshold: 4.5, intended: "toast error body", prohibited: "danger as long body on tint", theme: "light" },
   { token: "--text on surface-success", foreground: "--text", background: "--surface-success", threshold: 4.5, intended: "toast success body", prohibited: "success as long body when pair fails", theme: "light" },
+  { token: "--text-muted on surface-success", foreground: "--text-muted", background: "--surface-success", threshold: 4.5, intended: "toast dismiss on success tint", prohibited: "disabled-as-metadata", theme: "light" },
   { token: "--text (dark)", foreground: "--text", background: "--paper", threshold: 4.5, intended: "dark body", prohibited: "decorative atmosphere", theme: "dark" },
   { token: "--text-muted (dark)", foreground: "--text-muted", background: "--paper", threshold: 4.5, intended: "dark helper", prohibited: "disabled-as-metadata", theme: "dark" },
   { token: "--text-muted (dark card)", foreground: "--text-muted", background: "--paper-warm", threshold: 4.5, intended: "dark helper on cards", prohibited: "disabled-as-metadata", theme: "dark" },
   { token: "--text-link (dark)", foreground: "--text-link", background: "--paper", threshold: 4.5, intended: "dark links", prohibited: "using dark --lagoon as body link", theme: "dark" },
+  { token: "--text-link (dark card)", foreground: "--text-link", background: "--paper-warm", threshold: 4.5, intended: "dark links on cards", prohibited: "using dark --lagoon as body link", theme: "dark" },
   { token: "--text-on-lagoon (dark primary)", foreground: "--text-on-lagoon", background: "--primary", threshold: 4.5, intended: "dark primary button", prohibited: "white on #12877d", theme: "dark" },
   { token: "--text-danger (dark)", foreground: "--text-danger", background: "--paper", threshold: 4.5, intended: "dark error eyebrow", prohibited: "raw red", theme: "dark" },
+  { token: "--text-danger (dark surface)", foreground: "--text-danger", background: "--surface-danger", threshold: 4.5, intended: "dark error toast eyebrow", prohibited: "long body when pair fails", theme: "dark" },
   { token: "--text-warning (dark)", foreground: "--text-warning", background: "--paper", threshold: 4.5, intended: "dark warning eyebrow", prohibited: "light --warn on dark paper", theme: "dark" },
   { token: "--text-success (dark)", foreground: "--text-success", background: "--paper", threshold: 4.5, intended: "dark success eyebrow", prohibited: "raw emerald", theme: "dark" },
+  { token: "--text-success (dark surface graphic)", foreground: "--text-success", background: "--surface-success", threshold: 3, intended: "success toast icon (graphic)", prohibited: "12px success label on dark tint", theme: "dark" },
   { token: "--text-accent (dark)", foreground: "--text-accent", background: "--paper", threshold: 4.5, intended: "dark gold-as-small-text", prohibited: "raw --gold helper", theme: "dark" },
   { token: "--border-control (dark)", foreground: "--border-control", background: "--paper", threshold: 3, intended: "dark input outline", prohibited: "decorative --line", theme: "dark" },
   { token: "--text on dark surface-danger", foreground: "--text", background: "--surface-danger", threshold: 4.5, intended: "dark toast error body", prohibited: "danger as long body", theme: "dark" },
   { token: "--text on dark surface-success", foreground: "--text", background: "--surface-success", threshold: 4.5, intended: "dark toast success body", prohibited: "success as long body when pair fails", theme: "dark" },
+  { token: "--text-muted on dark surface-success", foreground: "--text-muted", background: "--surface-success", threshold: 4.5, intended: "dark toast dismiss", prohibited: "disabled-as-metadata", theme: "dark" },
 ];
 
 export const MIGRATED_PRODUCT_FILES = [
   "components/ui/toast-provider.tsx",
+  "components/ui/button.tsx",
   "components/auth/login-form.tsx",
+  "components/auth/login-page-client.tsx",
   "components/auth/login-workspace-notice.tsx",
   "components/auth/auth-flow-shell.tsx",
+  "components/auth/platform-login-page-client.tsx",
   "components/team/invite-accept-page-client.tsx",
   "app/invite/accept/page.tsx",
   "components/shell/plan-badge.tsx",
@@ -79,6 +92,8 @@ export const MIGRATED_PRODUCT_FILES = [
 const FORBIDDEN_IN_MIGRATED = [
   /\btext-stone\b/,
   /placeholder:text-stone/,
+  /\btext-gold(?!-soft|-cinema)\b/,
+  /\btext-lagoon(?!-fg)\b/,
   /\btext-red-\d{2,3}\b/,
   /\btext-emerald-\d{2,3}\b/,
   /\bbg-red-\d{2,3}\b/,
@@ -142,6 +157,49 @@ export function parseBrandTokens(css: string): { light: Record<string, string>; 
     light: parseDeclarations(extractBlock(css, ":root")),
     dark: parseDeclarations(extractBlock(css, ".dark")),
   };
+}
+
+export function parseNamedTokenBlock(css: string, prelude: string): Record<string, string> {
+  return parseDeclarations(extractBlock(css, prelude));
+}
+
+export type ContrastMatrixRow = {
+  token: string;
+  theme: "light" | "dark";
+  foregroundToken: string;
+  backgroundToken: string;
+  foregroundValue: string;
+  backgroundValue: string;
+  ratio: number;
+  threshold: ContrastThreshold;
+  pass: boolean;
+  intended: string;
+  prohibited: string;
+};
+
+export function buildContrastMatrixRows(
+  light: Record<string, string>,
+  dark: Record<string, string>
+): ContrastMatrixRow[] {
+  return CONTRAST_PAIRS.map((pair) => {
+    const vars = pair.theme === "light" ? light : dark;
+    const foregroundValue = resolveColor(pair.foreground, vars);
+    const backgroundValue = resolveColor(pair.background, vars);
+    const ratio = Math.round(contrastRatio(foregroundValue, backgroundValue) * 100) / 100;
+    return {
+      token: pair.token,
+      theme: pair.theme,
+      foregroundToken: pair.foreground,
+      backgroundToken: pair.background,
+      foregroundValue,
+      backgroundValue,
+      ratio,
+      threshold: pair.threshold,
+      pass: ratio >= pair.threshold,
+      intended: pair.intended,
+      prohibited: pair.prohibited,
+    };
+  });
 }
 
 export function resolveColor(

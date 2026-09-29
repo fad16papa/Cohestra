@@ -379,8 +379,8 @@ Requested product roles reuse shipped names. Machine-readable pairs: `_bmad-outp
 | text-muted | `--text-muted` | `#5a636e` / `#a8b0b8`. Not `--stone`. Not `--stone-cinema` by name. |
 | text-disabled | `--text-disabled` → `--stone` | 1.4.3 exempt |
 | on-accent | `--text-on-lagoon`, `--text-on-danger` | ≥4.5:1 on the fill |
-| text-link | `--text-link` | Light `--lagoon`. Dark `#149188` (dark `#12877d` on paper fails 4.5:1). |
-| text-danger / warning / success / info | `--text-danger` / `--text-warning` / `--text-success` / `--text-info` | Text on paper. Body on tinted surfaces uses `--text` unless the status-on-tint pair passes. |
+| text-link | `--text-link` | Light `--lagoon`. Dark `#159a90` so links pass on both `--paper` and `--paper-warm`. Dark `#12877d` fails 4.5:1 as body/link text. |
+| text-danger / warning / success / info | `--text-danger` / `--text-warning` / `--text-success` / `--text-info` | Text on paper. Light `--text-warning` is `#8a5c00` (independent of palette `--warn`) so cards and warning tints pass. Body on tinted surfaces uses `--text` unless the status-on-tint pair passes. |
 | text-accent | `--text-accent` | Gold-as-small-text that passes AA (`#6e5a32` light). Raw `--gold` stays atmosphere. |
 | icon-muted | `--icon-muted` → `--text-muted` | |
 | border-control | `--border-control` | ≥3:1. `--input` consumes this. Decorative `--line` is not a control identifier. |

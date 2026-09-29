@@ -178,7 +178,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   Error
                 </p>
               ) : isSuccess ? (
-                <p className="text-xs font-bold uppercase tracking-wide text-text-success">
+                <p className="text-xs font-bold uppercase tracking-wide text-foreground">
                   Success
                 </p>
               ) : null}

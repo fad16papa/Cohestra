@@ -27,7 +27,7 @@ function InsightActionLink({
   return (
     <Link
       href={href}
-      className="mt-2 inline-flex text-sm font-medium text-lagoon underline-offset-4 hover:underline"
+      className="mt-2 inline-flex text-sm font-medium text-text-link underline-offset-4 hover:underline"
     >
       {label}
     </Link>
@@ -41,7 +41,7 @@ export function ReportNarrativeHero({ report }: ReportNarrativeHeroProps) {
   return (
     <section className="rounded-2xl border border-border-warm bg-card/90 p-5 sm:p-6">
       <div className="flex items-start gap-3">
-        <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-lagoon/10 text-lagoon">
+        <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-lagoon/10 text-text-link">
           <Sparkles className="size-5" aria-hidden />
         </span>
         <div className="min-w-0">
