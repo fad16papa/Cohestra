@@ -130,7 +130,7 @@ export function WebsiteHealthStrip({
           <p
             className={cn(
               "mt-1 text-sm font-medium",
-              publishBlockerCount > 0 ? "text-destructive" : "text-emerald-700 dark:text-emerald-300"
+              publishBlockerCount > 0 ? "text-destructive" : "text-text-success"
             )}
           >
             {publishBlockerCount > 0

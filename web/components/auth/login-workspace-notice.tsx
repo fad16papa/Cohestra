@@ -13,7 +13,7 @@ export function LoginWorkspaceNotice({
       role="status"
     >
       <p className="font-medium text-ink">{workspaceLabel} workspace</p>
-      <p className="mt-1 text-xs leading-relaxed text-stone">
+      <p className="mt-1 text-xs leading-relaxed text-text-muted">
         Signing in at <span className="font-medium text-ink">{host}</span>. This URL is your
         workspace address and stays the same after restarts or rebuilds.
       </p>

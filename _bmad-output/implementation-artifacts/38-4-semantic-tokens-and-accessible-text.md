@@ -102,16 +102,16 @@ Auth/admin stone and gold-as-text; dashboard/website/settings status chrome. Exa
 
 ## Tasks / Subtasks
 
-- [ ] Token layer in `brand-tokens.css` + `@theme` mappings in `globals.css` (AC 1–4, 6–8)
-- [ ] Cinema lock remains `[data-demo-theme]` only; preview surface uses `--text-muted` (AC 4, 9)
-- [ ] Toast semantic chrome (AC 5)
-- [ ] Contrast matrix + unit tests that parse CSS (AC 11)
-- [ ] Bounded authenticated-product class migration (AC 3, 5)
-- [ ] Regression scan: migrated files must not reintroduce `text-stone` / raw `red-*`/`emerald-*` as normal text
+- [x] Token layer in `brand-tokens.css` + `@theme` mappings in `globals.css` (AC 1–4, 6–8)
+- [x] Cinema lock remains `[data-demo-theme]` only; preview surface uses `--text-muted` (AC 4, 9)
+- [x] Toast semantic chrome (AC 5)
+- [x] Contrast matrix + unit tests that parse CSS (AC 11)
+- [x] Bounded authenticated-product class migration (AC 3, 5)
+- [x] Regression scan: migrated files must not reintroduce `text-stone` / raw `red-*`/`emerald-*` as normal text
 - [ ] Playwright: login helper contrast; live-stack dashboard/clients when available (AC 12)
 - [ ] Evidence under `_bmad-output/planning-artifacts/evidence/px2-38-4/`
-- [ ] DESIGN.md §5 matrix pointer
-- [ ] TypeScript, production build, targeted lint, affected Vitest
+- [x] DESIGN.md §5 matrix pointer
+- [x] TypeScript, production build, targeted lint, affected Vitest
 
 ## Non-goals
 

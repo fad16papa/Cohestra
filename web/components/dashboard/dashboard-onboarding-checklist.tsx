@@ -42,8 +42,8 @@ export function DashboardOnboardingChecklist({
             className={cn(
               "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
               allDone
-                ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
-                : "bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
+                ? "bg-surface-success text-foreground"
+                : "bg-surface-warning text-foreground"
             )}
           >
             {completed} of {total} complete
@@ -68,11 +68,11 @@ export function DashboardOnboardingChecklist({
               <div
                 className={cn(
                   "flex w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left",
-                  "border-emerald-200/80 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-950/20"
+                  "border-success/30 bg-surface-success"
                 )}
               >
                 <span
-                  className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white"
+                  className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-success text-white"
                   aria-hidden
                 >
                   <Check className="size-3" />

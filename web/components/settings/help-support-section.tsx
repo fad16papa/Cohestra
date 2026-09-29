@@ -253,8 +253,8 @@ export function HelpSupportSection({ embedded = false }: { embedded?: boolean })
           </div>
 
           {successIssueNumber ? (
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-              <p className="text-sm font-medium text-emerald-900 dark:text-emerald-100">
+            <div className="rounded-xl border border-success/30 bg-surface-success p-4">
+              <p className="text-sm font-medium text-foreground">
                 Support request submitted
               </p>
               <p className="mt-2 text-sm text-text-muted-warm">

@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 function CampaignDeliveredIcon({ count }: { count: number }) {
   if (count > 0) {
     return (
-      <span className="inline-flex text-emerald-600 dark:text-emerald-400" title={`${count} delivered`}>
+      <span className="inline-flex text-text-success" title={`${count} delivered`}>
         <Check className="size-4" strokeWidth={2.5} aria-hidden />
       </span>
     );

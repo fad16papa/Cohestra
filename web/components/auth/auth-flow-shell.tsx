@@ -47,7 +47,7 @@ export function AuthFlowShell({
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-ink">{tenantName}</p>
-              <p className="text-xs text-stone">Operator workspace</p>
+              <p className="text-xs text-text-muted">Operator workspace</p>
             </div>
           </div>
         ) : (
@@ -59,11 +59,11 @@ export function AuthFlowShell({
       <main className="flex flex-1 flex-col items-center justify-center px-5 py-10 sm:px-8">
         <div className={cn("w-full max-w-[400px] motion-safe:animate-page-enter", className)}>
           <div className="mb-8 text-center">
-            <p className="text-section text-gold">{eyebrow}</p>
+            <p className="text-section text-text-accent">{eyebrow}</p>
             <h1 className="mt-3 font-[family-name:var(--font-fraunces)] text-[1.75rem] font-medium tracking-[-0.02em] text-ink sm:text-3xl">
               {title}
             </h1>
-            <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-stone">
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-relaxed text-text-muted">
               {description}
             </p>
           </div>
@@ -73,16 +73,16 @@ export function AuthFlowShell({
           </div>
 
           {footer ? (
-            <div className="mt-6 space-y-2 text-center text-sm text-stone">{footer}</div>
+            <div className="mt-6 space-y-2 text-center text-sm text-text-muted">{footer}</div>
           ) : null}
         </div>
       </main>
 
       <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-stone sm:px-8 lg:px-10">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-text-muted sm:px-8 lg:px-10">
           <p>
             © {new Date().getFullYear()}{" "}
-            <PlatformByline linkClassName="text-stone hover:text-ink" />
+            <PlatformByline linkClassName="text-text-muted hover:text-ink" />
             . All rights reserved.
           </p>
           <p>Built for community operators.</p>

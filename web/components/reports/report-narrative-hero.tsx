@@ -14,7 +14,7 @@ type ReportNarrativeHeroProps = {
 const toneStyles = {
   positive: "border-lagoon/30 bg-lagoon/[0.06]",
   neutral: "border-border-warm bg-muted/20",
-  attention: "border-amber-300/50 bg-amber-50/70 dark:border-amber-500/30 dark:bg-amber-950/20",
+  attention: "border-warn/30 bg-surface-warning",
 } as const;
 
 function InsightActionLink({
@@ -45,7 +45,7 @@ export function ReportNarrativeHero({ report }: ReportNarrativeHeroProps) {
           <Sparkles className="size-5" aria-hidden />
         </span>
         <div className="min-w-0">
-          <p className="text-section text-gold">Your report at a glance</p>
+          <p className="text-section text-text-accent">Your report at a glance</p>
           <h3 className="mt-2 font-[family-name:var(--font-fraunces)] text-xl font-medium tracking-[-0.02em] text-text-warm sm:text-2xl">
             {heroInsight?.headline ?? "Report ready"}
           </h3>

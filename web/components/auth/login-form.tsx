@@ -30,7 +30,7 @@ const fieldShellClassName =
   "flex min-h-11 items-center gap-3 rounded-[10px] border border-line bg-paper px-3 transition-colors focus-within:border-lagoon/40 focus-within:ring-2 focus-within:ring-lagoon/15";
 
 const loginInputClassName =
-  "auth-login-input min-h-0 h-auto w-full min-w-0 flex-1 appearance-none rounded-none border-0 bg-transparent px-0 py-0 text-base text-ink shadow-none outline-none focus-visible:border-0 focus-visible:ring-0 sm:text-sm placeholder:text-stone disabled:cursor-not-allowed disabled:opacity-50";
+  "auth-login-input min-h-0 h-auto w-full min-w-0 flex-1 appearance-none rounded-none border-0 bg-transparent px-0 py-0 text-base text-ink shadow-none outline-none focus-visible:border-0 focus-visible:ring-0 sm:text-sm placeholder:text-text-muted disabled:cursor-not-allowed disabled:opacity-50";
 
 export function LoginForm({
   audience = "operator",
@@ -151,7 +151,7 @@ export function LoginForm({
       {showSessionExpiredNotice ? (
         <p
           role="status"
-          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
+          className="rounded-xl border border-warn/30 bg-surface-warning px-4 py-3 text-sm text-foreground"
         >
           Your session expired. Sign in again to continue where you left off.
         </p>
@@ -162,7 +162,7 @@ export function LoginForm({
           Email address
         </Label>
         <div className={fieldShellClassName}>
-          <Mail className="size-4 shrink-0 text-stone" aria-hidden />
+          <Mail className="size-4 shrink-0 text-icon-muted" aria-hidden />
           <input
             id="email"
             name="email"
@@ -183,7 +183,7 @@ export function LoginForm({
           Password
         </Label>
         <div className={cn(fieldShellClassName, "pr-1.5")}>
-          <Lock className="size-4 shrink-0 text-stone" aria-hidden />
+          <Lock className="size-4 shrink-0 text-icon-muted" aria-hidden />
           <input
             id="password"
             name="password"
@@ -200,7 +200,7 @@ export function LoginForm({
             onClick={() => setShowPassword((current) => !current)}
             className={cn(
               "flex size-9 shrink-0 items-center justify-center rounded-lg",
-              "text-stone outline-none transition-colors hover:bg-paper-warm hover:text-ink",
+              "text-icon-muted outline-none transition-colors hover:bg-paper-warm hover:text-ink",
               "focus-visible:ring-2 focus-visible:ring-lagoon/30"
             )}
             aria-label={showPassword ? "Hide password" : "Show password"}

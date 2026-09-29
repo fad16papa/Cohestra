@@ -12,7 +12,7 @@ export function SponsoredBadge({ className }: SponsoredBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-0.5 text-xs font-medium text-gold",
+        "inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-0.5 text-xs font-medium text-text-accent",
         className
       )}
       aria-label="Sponsored complimentary plan"

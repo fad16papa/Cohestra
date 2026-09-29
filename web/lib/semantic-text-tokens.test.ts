@@ -31,8 +31,10 @@ describe("semantic text tokens", () => {
   it("keeps cinema stone as a local token, not the global muted token", () => {
     expect(light["--stone-cinema"]).toBe("#5a636e");
     expect(light["--text-muted"]).toBe("#5a636e");
-    expect(css).toMatch(/\[data-demo-theme\]/);
     expect(light["--text-muted"]).not.toBe("var(--stone-cinema)");
+    const globals = fs.readFileSync(path.join(webRoot, "app/globals.css"), "utf8");
+    expect(globals).toMatch(/\[data-demo-theme\]/);
+    expect(globals).toMatch(/--text-muted:\s*var\(--stone-cinema\)/);
   });
 
   it("maps input borders to the control token", () => {
