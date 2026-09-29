@@ -39,7 +39,10 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
   { token: "--text-accent on gold-soft", foreground: "--text-accent", background: "--gold-soft", threshold: 4.5, intended: "gold badge label on gold-soft", prohibited: "raw --gold on gold-soft", theme: "light" },
   { token: "--border-control", foreground: "--border-control", background: "--paper", threshold: 3, intended: "input/select outline", prohibited: "decorative --line", theme: "light" },
   { token: "--border-control on card", foreground: "--border-control", background: "--paper-warm", threshold: 3, intended: "input outline on cards", prohibited: "decorative --line", theme: "light" },
-  { token: "--ring", foreground: "--ring", background: "--paper", threshold: 3, intended: "focus indicator", prohibited: "body text", theme: "light" },
+  { token: "--ring", foreground: "--ring", background: "--paper", threshold: 3, intended: "focus indicator", prohibited: "translucent ring-ring/30", theme: "light" },
+  { token: "--ring on card", foreground: "--ring", background: "--paper-warm", threshold: 3, intended: "focus indicator on cards", prohibited: "translucent ring-ring/30", theme: "light" },
+  { token: "--ring (dark)", foreground: "--ring", background: "--paper", threshold: 3, intended: "dark focus indicator", prohibited: "translucent ring-ring/30", theme: "dark" },
+  { token: "--ring (dark card)", foreground: "--ring", background: "--paper-warm", threshold: 3, intended: "dark focus on cards", prohibited: "translucent ring-ring/30", theme: "dark" },
   { token: "--text on surface-danger", foreground: "--text", background: "--surface-danger", threshold: 4.5, intended: "toast error body", prohibited: "danger as long body on tint", theme: "light" },
   { token: "--text on surface-success", foreground: "--text", background: "--surface-success", threshold: 4.5, intended: "toast success body", prohibited: "success as long body when pair fails", theme: "light" },
   { token: "--text-muted on surface-success", foreground: "--text-muted", background: "--surface-success", threshold: 4.5, intended: "toast dismiss on success tint", prohibited: "disabled-as-metadata", theme: "light" },
@@ -113,6 +116,66 @@ export const MIGRATED_PRODUCT_FILES = [
   "components/website/website-health-strip.tsx",
   "components/website/website-setup-checklist.tsx",
   "components/settings/help-support-section.tsx",
+  "components/settings/change-password-section.tsx",
+  "components/reports/report-community-ranking-panel.tsx",
+  "components/reports/report-trust-bar.tsx",
+  "components/reports/report-activity-ranking-chart.tsx",
+  "components/reports/report-lead-growth-panel.tsx",
+  "components/reports/report-follow-up-chart.tsx",
+  "components/dashboard/activity-calendar-popout.tsx",
+  "components/clients/client-relationship-timeline.tsx",
+  "components/clients/client-follow-up-date-field.tsx",
+  "components/clients/client-registration-history.tsx",
+  "components/clients/client-outreach-log-card.tsx",
+  "components/clients/client-lead-queue-header.tsx",
+  "components/clients/messenger-open-confirm-dialog.tsx",
+  "components/clients/client-row.tsx",
+  "components/activities/activities-recovery-chips.tsx",
+  "components/settings/settings-workspace-nav.tsx",
+  "components/settings/notifications-section.tsx",
+  "components/website/website-section-fields.tsx",
+  "components/website/website-branding-section.tsx",
+  "components/website/website-builder-onboarding-tour.tsx",
+  "components/billing/checkout-page-content.tsx",
+  "components/layouts/admin-command-palette.tsx",
+  "components/campaigns/segment-picker.tsx",
+  "components/campaigns/email-composer.tsx",
+  "components/campaigns/campaign-detail-page.tsx",
+  "components/campaigns/campaign-compose-page.tsx",
+  "components/shared/product-empty-state.tsx",
+  "components/shared/person-avatar.tsx",
+] as const;
+
+export const FOCUS_RING_FILES = [
+  "components/ui/button.tsx",
+  "components/ui/input.tsx",
+  "components/auth/login-form.tsx",
+  "components/auth/register-form.tsx",
+  "components/auth/forgot-password-form.tsx",
+  "components/auth/reset-password-form.tsx",
+  "components/auth/verify-email-form.tsx",
+  "components/team/invite-accept-page-client.tsx",
+  "components/settings/change-password-section.tsx",
+  "components/settings/help-support-section.tsx",
+] as const;
+
+export const TRANSLUCENT_RING_PATTERN = /ring-ring\/(?:30|50)/;
+
+export const AUTHENTICATED_PRODUCT_GLOBS = [
+  "components/auth",
+  "components/shell",
+  "components/dashboard",
+  "components/clients",
+  "components/activities",
+  "components/reports",
+  "components/settings",
+  "components/website",
+  "components/billing",
+  "components/ui",
+  "components/layouts",
+  "components/team",
+  "components/campaigns",
+  "components/shared",
 ] as const;
 
 const FORBIDDEN_IN_MIGRATED = [
@@ -150,6 +213,73 @@ export function contrastRatio(foregroundHex: string, backgroundHex: string): num
   const lighter = Math.max(a, b);
   const darker = Math.min(a, b);
   return (lighter + 0.05) / (darker + 0.05);
+}
+
+function parseRgbChannels(hex: string): { r: number; g: number; b: number } {
+  const raw = hex.replace("#", "");
+  const normalized = raw.length === 3 ? raw.split("").map((ch) => `${ch}${ch}`).join("") : raw;
+  const value = Number.parseInt(normalized, 16);
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
+}
+
+function toHex(channel: number): string {
+  return Math.round(channel).toString(16).padStart(2, "0");
+}
+
+/** Alpha-composite `fg` over `bg` (sRGB, 0–1 alpha). */
+export function compositeOver(foregroundHex: string, backgroundHex: string, alpha: number): string {
+  const fg = parseRgbChannels(foregroundHex);
+  const bg = parseRgbChannels(backgroundHex);
+  const r = fg.r * alpha + bg.r * (1 - alpha);
+  const g = fg.g * alpha + bg.g * (1 - alpha);
+  const b = fg.b * alpha + bg.b * (1 - alpha);
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+export type CompositeRingRow = {
+  label: string;
+  theme: "light" | "dark";
+  alpha: number;
+  ring: string;
+  background: string;
+  composited: string;
+  ratio: number;
+  threshold: ContrastThreshold;
+  pass: boolean;
+};
+
+export function buildCompositeRingRows(
+  light: Record<string, string>,
+  dark: Record<string, string>
+): CompositeRingRow[] {
+  const rows: CompositeRingRow[] = [];
+  for (const alpha of [0.3, 0.5, 1] as const) {
+    for (const theme of ["light", "dark"] as const) {
+      const vars = theme === "light" ? light : dark;
+      for (const backgroundToken of ["--paper", "--paper-warm"] as const) {
+        const ring = resolveColor("--ring", vars);
+        const background = resolveColor(backgroundToken, vars);
+        const composited = alpha === 1 ? ring : compositeOver(ring, background, alpha);
+        const ratio = Math.round(contrastRatio(composited, background) * 100) / 100;
+        rows.push({
+          label: `ring/${Math.round(alpha * 100)} on ${backgroundToken} (${theme})`,
+          theme,
+          alpha,
+          ring,
+          background,
+          composited,
+          ratio,
+          threshold: 3,
+          pass: ratio >= 3,
+        });
+      }
+    }
+  }
+  return rows;
 }
 
 function extractBlock(css: string, prelude: string): string {

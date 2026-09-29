@@ -87,7 +87,7 @@ export function NotificationsSection({ embedded = false }: { embedded?: boolean 
               checked={emailOnNewRegistration}
               disabled={saving}
               onChange={(event) => setEmailOnNewRegistration(event.target.checked)}
-              className="mt-1 size-4 shrink-0 rounded-sm border-border-warm text-primary focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="mt-1 size-4 shrink-0 rounded-sm border-border-warm text-text-link focus-visible:ring-2 focus-visible:ring-primary/40"
             />
             <div className="space-y-1">
               <Label htmlFor="email-on-new-registration" className="cursor-pointer font-medium">

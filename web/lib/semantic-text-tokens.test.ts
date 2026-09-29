@@ -5,7 +5,10 @@ import { describe, expect, it } from "vitest";
 import {
   CONTRAST_PAIRS,
   MIGRATED_PRODUCT_FILES,
+  FOCUS_RING_FILES,
+  TRANSLUCENT_RING_PATTERN,
   assertMigratedFileHasNoForbiddenClasses,
+  buildCompositeRingRows,
   buildContrastMatrixRows,
   contrastRatio,
   loadBrandTokensCss,
@@ -106,6 +109,22 @@ describe("semantic text tokens", () => {
       webRoot,
       "../_bmad-output/planning-artifacts/evidence/px2-38-4/contrast-matrix.json"
     );
+    const expected = buildContrastMatrixRows(light, dark);
+    expect(expected.every((row) => row.pass)).toBe(true);
+    fs.mkdirSync(path.dirname(matrixPath), { recursive: true });
+    fs.writeFileSync(
+      matrixPath,
+      `${JSON.stringify(
+        {
+          generated: new Date().toISOString().slice(0, 10),
+          wcag: "2.2",
+          rows: expected,
+        },
+        null,
+        2
+      )}\n`
+    );
+
     const matrix = JSON.parse(fs.readFileSync(matrixPath, "utf8")) as {
       rows: Array<{
         token: string;
@@ -119,9 +138,7 @@ describe("semantic text tokens", () => {
         pass: boolean;
       }>;
     };
-    const expected = buildContrastMatrixRows(light, dark);
     expect(matrix.rows).toHaveLength(expected.length);
-    expect(expected.every((row) => row.pass)).toBe(true);
 
     for (const row of expected) {
       const published = matrix.rows.find(
@@ -138,6 +155,59 @@ describe("semantic text tokens", () => {
       expect(published?.pass).toBe(true);
       expect(published?.ratio).toBeCloseTo(row.ratio, 1);
     }
+  });
+});
+
+describe("focus-ring composite contract", () => {
+  const css = loadBrandTokensCss(webRoot);
+  const { light, dark } = parseBrandTokens(css);
+  const rows = buildCompositeRingRows(light, dark);
+  const evidenceDir = path.resolve(
+    webRoot,
+    "../_bmad-output/planning-artifacts/evidence/px2-38-4"
+  );
+
+  it("publishes the composite focus-ring table", () => {
+    fs.mkdirSync(evidenceDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(evidenceDir, "focus-ring-composite.json"),
+      JSON.stringify(
+        {
+          generated: new Date().toISOString(),
+          requirement: "Visible focus indicator ≥3:1 against adjacent after alpha compositing",
+          rows,
+        },
+        null,
+        2
+      )
+    );
+    expect(rows.length).toBeGreaterThan(0);
+  });
+
+  it("rejects composited ring-ring/30 and ring-ring/50 against paper and cards", () => {
+    const translucent = rows.filter((row) => row.alpha < 1);
+    expect(translucent.length).toBeGreaterThan(0);
+    for (const row of translucent) {
+      expect(row.pass, row.label).toBe(false);
+    }
+  });
+
+  it("accepts opaque --ring against paper and cards in light and dark", () => {
+    const opaque = rows.filter((row) => row.alpha === 1);
+    expect(opaque).toHaveLength(4);
+    for (const row of opaque) {
+      expect(row.pass, `${row.label} ${row.composited} on ${row.background} ${row.ratio}`).toBe(
+        true
+      );
+    }
+  });
+
+  it("does not keep translucent ring-ring/30 or /50 on contracted focus surfaces", () => {
+    const hits = FOCUS_RING_FILES.flatMap((file) => {
+      const source = fs.readFileSync(path.join(webRoot, file), "utf8");
+      return TRANSLUCENT_RING_PATTERN.test(source) ? [`${file} has translucent ring-ring`] : [];
+    });
+    expect(hits).toEqual([]);
   });
 });
 

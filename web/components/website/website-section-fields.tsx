@@ -82,7 +82,7 @@ const SECTION_TYPE_ICONS: Record<string, typeof Sparkles> = {
 
 function SectionTypeIcon({ type }: { type: string }) {
   const Icon = SECTION_TYPE_ICONS[type.toLowerCase()] ?? Layers;
-  return <Icon className="size-4 shrink-0 text-primary" aria-hidden />;
+  return <Icon className="size-4 shrink-0 text-text-link" aria-hidden />;
 }
 
 function campaignAssetPath(assetId: string): string {

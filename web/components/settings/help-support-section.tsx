@@ -18,7 +18,7 @@ import {
 } from "@/lib/support-api";
 
 const textareaClassName =
-  "min-h-[8rem] w-full rounded-xl border border-input bg-background/80 px-3 py-2 text-sm shadow-xs focus-visible:border-ring focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30";
+  "min-h-[8rem] w-full rounded-xl border border-input bg-background/80 px-3 py-2 text-sm shadow-xs focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const MAX_FILES = 3;
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 

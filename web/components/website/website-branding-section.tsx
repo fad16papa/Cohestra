@@ -357,7 +357,7 @@ export const WebsiteBrandingSection = forwardRef<
                   />
                   {preset.label}
                   {isActive ? (
-                    <Check className="size-3.5 text-primary sm:size-4" aria-hidden />
+                    <Check className="size-3.5 text-text-link sm:size-4" aria-hidden />
                   ) : null}
                 </button>
               );

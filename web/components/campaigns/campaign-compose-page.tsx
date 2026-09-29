@@ -593,7 +593,7 @@ export function CampaignComposePage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <div className="flex items-start gap-3">
-              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-text-link">
                 <Send className="size-4" aria-hidden />
               </span>
               <div className="space-y-2">

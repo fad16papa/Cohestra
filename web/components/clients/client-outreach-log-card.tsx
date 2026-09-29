@@ -279,7 +279,7 @@ export function ClientOutreachLogCard({
       aria-labelledby="client-outreach-log-heading"
     >
       <div className="mb-3 flex items-center gap-2">
-        <MessageCircle className="size-4 text-primary" aria-hidden />
+        <MessageCircle className="size-4 text-text-link" aria-hidden />
         <h3
           id="client-outreach-log-heading"
           className="text-sm font-semibold text-text-warm"

@@ -112,6 +112,9 @@ Auth/admin stone and gold-as-text; dashboard/website/settings status chrome. Exa
 - [x] Evidence under `_bmad-output/planning-artifacts/evidence/px2-38-4/`
 - [x] DESIGN.md §5 matrix pointer
 - [x] TypeScript, production build, targeted lint, affected Vitest
+- [x] Course correction: opaque focus rings (composite ≥3:1); Reports `text-lagoon` → `text-text-link`; remaining `text-primary` text/links → `text-text-link`
+- [ ] Live evidence: Basic Website lock, client profile, forced-colors, axe routes, dark Dashboard + Reports
+- [ ] Fresh independent `bmad-code-review` on correction HEAD
 
 ## Non-goals
 
@@ -174,13 +177,17 @@ Next.js 16 + Tailwind v4 `@theme inline`. Hex lives in `brand-tokens.css` only.
 
 ### Agent Model Used
 
-Grok 4.6 (orchestration, architecture, review). Composer 2.5 only for the bounded list above, after the token contract is committed.
+Grok 4.6 (orchestration, architecture, accessibility, correction, review). Composer 2.5 only for the original bounded class list after the token contract was committed. **Composer was not used for this correction.**
 
 ### Debug Log References
 
+- `bmad-correct-course` Direct Adjustment: `_bmad-output/planning-artifacts/sprint-change-proposal-2026-09-29.md`
+- Composite ring table: `_bmad-output/planning-artifacts/evidence/px2-38-4/focus-ring-composite.md`
+
 ### Completion Notes List
 
-- Independent review of `d49be978` **APPROVE** (no unresolved BLOCKER/MAJOR). Stop at product-owner pre-merge gate. Do not merge.
+- Previous independent review of `d49be978` APPROVE is **not** final acceptance; required surfaces were deferred.
+- Correction (Grok 4.6): opaque `--ring` on auth/shared primitives; Reports `text-lagoon` migrated; remaining authenticated `text-primary` text/links/icons → `text-text-link`; forced-colors semantic mapping; axe Playwright; inventory.
 
 ### File List
 
@@ -188,14 +195,20 @@ Grok 4.6 (orchestration, architecture, review). Composer 2.5 only for the bounde
 - `web/app/globals.css`
 - `web/components/ui/toast-provider.tsx`
 - `web/components/ui/button.tsx`
+- `web/components/ui/input.tsx`
 - `web/lib/semantic-text-tokens.ts`
 - `web/lib/semantic-text-tokens.test.ts`
+- `web/lib/authenticated-product-color-inventory.ts`
+- `web/lib/authenticated-product-color-inventory.test.ts`
 - `web/e2e/tokens-38-4.spec.ts`
+- `web/e2e/a11y-38-4.spec.ts`
 - `docs/DESIGN.md`
 - `_bmad-output/planning-artifacts/evidence/px2-38-4/`
-- Composer-bounded product files listed above, plus Grok follow-up on `login-page-client.tsx` and `platform-login-page-client.tsx`
+- `_bmad-output/planning-artifacts/sprint-change-proposal-2026-09-29.md`
+- Composer-bounded product files listed above, plus Grok follow-up on leftover `text-primary` / Reports `text-lagoon` / campaign status chrome
 
 ### Change Log
 
 - 2026-09-23: Created Story 38.4 after 38.3 close `52c1c990`. Semantic-role architecture approved.
 - 2026-09-29: Review correction — F1–F7 token/contrast/test/evidence patches.
+- 2026-09-29: Course correction — deferred AC12 coverage (focus-ring composite, Reports lagoon, Basic Website, client profile, forced-colors, axe, inventory).

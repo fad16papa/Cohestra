@@ -112,7 +112,7 @@ export function MessengerPrerequisitesNotice({
             href="https://web.whatsapp.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary underline-offset-2 hover:underline"
+            className="text-text-link underline-offset-2 hover:underline"
           >
             web.whatsapp.com
           </a>{" "}

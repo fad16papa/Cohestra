@@ -115,7 +115,7 @@ function ClientRowActions({
           disabled={isUpdating}
           aria-label={`Mark ${client.fullName} as contacted`}
           title="Mark contacted"
-          className="size-8 shrink-0 border-primary/25 text-primary hover:bg-primary/10 hover:text-primary"
+          className="size-8 shrink-0 border-primary/25 text-text-link hover:bg-primary/10 hover:text-text-link"
           onClick={(event) => {
             event.preventDefault();
             onMarkContacted(client);
@@ -198,7 +198,7 @@ export function ClientRow({
       <PersonAvatar name={client.fullName} size="sm" />
       <span className="min-w-0 overflow-hidden">
         <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-semibold text-text-warm group-hover:text-primary">
+          <span className="truncate text-sm font-semibold text-text-warm group-hover:text-text-link">
             {client.fullName}
           </span>
           {followUpDue ? (

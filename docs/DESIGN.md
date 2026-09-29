@@ -384,7 +384,7 @@ Requested product roles reuse shipped names. Machine-readable pairs: `_bmad-outp
 | text-accent | `--text-accent` | Gold-as-small-text that passes AA (`#6e5a32` light). Raw `--gold` stays atmosphere. |
 | icon-muted | `--icon-muted` → `--text-muted` | |
 | border-control | `--border-control` | ≥3:1. `--input` consumes this. Decorative `--line` is not a control identifier. |
-| focus-ring | `--ring` | ≥3:1 |
+| focus-ring | `--ring` | ≥3:1 against adjacent page/card. Use **opaque** `--ring` (`ring-ring`). Composited `ring-ring/30` and `ring-ring/50` fail 3:1 on paper and must not be accepted because the opaque hex passes. Primary buttons add `ring-offset-background` so the halo contrasts against lagoon fill. |
 | status surfaces | `--surface-danger` / `--surface-success` / `--surface-warning` / `--surface-info` | Toast/status chrome |
 
 ### 5.6 Contrast contract

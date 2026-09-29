@@ -60,7 +60,7 @@ export function ReportTrustBar({ report, filters, className }: ReportTrustBarPro
             : `${filtersApplied} filter${filtersApplied === 1 ? "" : "s"} applied`}
         </span>
       </div>
-      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-lagoon">
+      <p className="inline-flex items-center gap-1.5 text-xs font-medium text-text-link">
         <BadgeCheck className="size-3.5" aria-hidden />
         CSV export uses the same filters and totals shown here
       </p>

@@ -666,7 +666,7 @@ function CheckoutContent() {
                 >
                   {value === "monthly" ? "Monthly" : "Yearly"}
                   {value === "annual" ? (
-                    <span className="ml-1.5 text-xs font-normal text-primary">{ANNUAL_SAVINGS_LABEL}</span>
+                    <span className="ml-1.5 text-xs font-normal text-text-link">{ANNUAL_SAVINGS_LABEL}</span>
                   ) : null}
                 </button>
               );
@@ -712,10 +712,10 @@ function CheckoutContent() {
                     <p className="text-lg font-semibold text-text-warm">{meta.name}</p>
                     <p className="mt-1 text-sm text-text-muted-warm">{meta.headline}</p>
                     {isCurrentPlan ? (
-                      <p className="mt-2 text-xs font-medium text-primary">Current plan</p>
+                      <p className="mt-2 text-xs font-medium text-text-link">Current plan</p>
                     ) : null}
                   </div>
-                  {active ? <Check className="mt-1 size-5 shrink-0 text-primary" aria-hidden /> : null}
+                  {active ? <Check className="mt-1 size-5 shrink-0 text-text-link" aria-hidden /> : null}
                 </div>
                 <p className="mt-4 text-2xl font-semibold text-text-warm">{cardPrice}</p>
                 {interval === "annual" && meta.annualPrice ? (
@@ -724,7 +724,7 @@ function CheckoutContent() {
                 <ul className="mt-5 flex-1 space-y-2.5 text-sm leading-relaxed text-text-muted-warm">
                   {meta.features.map((feature) => (
                     <li key={feature} className="flex gap-2.5">
-                      <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+                      <Check className="mt-0.5 size-4 shrink-0 text-text-link" aria-hidden />
                       <span>{feature}</span>
                     </li>
                   ))}

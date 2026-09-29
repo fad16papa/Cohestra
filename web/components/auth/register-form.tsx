@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { fetchOnboardingStatus, registerOperator } from "@/lib/auth-api";
 
 const fieldShellClassName =
-  "flex min-h-12 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30";
+  "flex min-h-12 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring";
 
 export function RegisterForm() {
   const router = useRouter();

@@ -253,7 +253,7 @@ export function ActivityCalendarPopout({
         <header className="flex items-start justify-between gap-3 border-b border-border-warm px-4 py-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <CalendarDays className="size-4 shrink-0 text-primary" aria-hidden />
+              <CalendarDays className="size-4 shrink-0 text-text-link" aria-hidden />
               <h2 className="text-section text-text-warm">Activity calendar</h2>
             </div>
             <p className="mt-0.5 text-xs text-text-muted-warm">

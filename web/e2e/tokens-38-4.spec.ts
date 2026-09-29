@@ -132,6 +132,25 @@ test("login email field exposes an opaque focus ring", async ({ page }) => {
     };
   });
   expect(outline.boxShadow).not.toBe("none");
+  expect(outline.boxShadow).not.toMatch(/rgba?\([^)]+,\s*0\.(3|5)/);
+});
+
+test("register and forgot-password field shells use an opaque focus ring", async ({ page }) => {
+  for (const route of ["/register", "/forgot-password"] as const) {
+    await page.goto(route, { waitUntil: "domcontentloaded" });
+    const email = page.getByLabel(/email/i);
+    await expect(email).toBeVisible();
+    await email.focus();
+    const outline = await email.evaluate((el) => {
+      const shell = el.closest("div");
+      if (!shell) {
+        throw new Error("Field shell missing");
+      }
+      return getComputedStyle(shell).boxShadow;
+    });
+    expect(outline, route).not.toBe("none");
+    expect(outline, route).not.toMatch(/rgba?\([^)]+,\s*0\.(3|5)/);
+  }
 });
 
 test("login viewports capture required evidence", async ({ page }) => {

@@ -120,7 +120,7 @@ export const ClientFollowUpDateField = forwardRef<
       aria-labelledby="client-follow-up-date-heading"
     >
       <div className="mb-3 flex items-center gap-2">
-        <CalendarClock className="size-4 text-primary" aria-hidden />
+        <CalendarClock className="size-4 text-text-link" aria-hidden />
         <h3
           id="client-follow-up-date-heading"
           className="text-sm font-semibold text-text-warm"

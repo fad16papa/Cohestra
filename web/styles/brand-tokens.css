@@ -256,6 +256,40 @@
   --text-muted-warm: var(--text-muted);
 }
 
+/**
+ * Forced-colors (Windows high contrast / Chromium emulation).
+ * Map semantic roles to system colors so text, controls, links, and focus
+ * remain perceivable without a visual redesign.
+ */
+@media (forced-colors: active) {
+  :root,
+  .dark {
+    --text: CanvasText;
+    --text-muted: GrayText;
+    --text-disabled: GrayText;
+    --text-link: LinkText;
+    --text-on-lagoon: Canvas;
+    --icon-default: CanvasText;
+    --icon-muted: GrayText;
+    --paper: Canvas;
+    --paper-warm: Canvas;
+    --background: Canvas;
+    --foreground: CanvasText;
+    --card: Canvas;
+    --card-foreground: CanvasText;
+    --border-control: ButtonText;
+    --input: ButtonText;
+    --ring: Highlight;
+    --primary: Highlight;
+    --primary-foreground: Canvas;
+    --line: ButtonText;
+    --line-strong: ButtonText;
+    --muted-foreground: GrayText;
+    --text-muted-warm: GrayText;
+    --text-warm: CanvasText;
+  }
+}
+
 @utility text-display {
   font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
   font-size: 48px;

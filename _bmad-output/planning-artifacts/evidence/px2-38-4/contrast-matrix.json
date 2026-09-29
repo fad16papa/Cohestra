@@ -38,7 +38,7 @@
       "ratio": 5.88,
       "threshold": 4.5,
       "pass": true,
-      "intended": "helper/metadata",
+      "intended": "helper, metadata, table secondary",
       "prohibited": "disabled; decorative stone"
     },
     {
@@ -117,7 +117,7 @@
       "threshold": 4.5,
       "pass": true,
       "intended": "error eyebrow/icon",
-      "prohibited": "long body on failing tint"
+      "prohibited": "long body on danger tint if pair fails"
     },
     {
       "token": "--text-danger on surface",
@@ -207,8 +207,8 @@
       "ratio": 6.39,
       "threshold": 4.5,
       "pass": true,
-      "intended": "gold-as-small-text",
-      "prohibited": "raw --gold helper"
+      "intended": "gold-as-small-text, badges",
+      "prohibited": "raw --gold helper text"
     },
     {
       "token": "--text-accent on gold-soft",
@@ -220,7 +220,7 @@
       "ratio": 5.73,
       "threshold": 4.5,
       "pass": true,
-      "intended": "gold badge on gold-soft",
+      "intended": "gold badge label on gold-soft",
       "prohibited": "raw --gold on gold-soft"
     },
     {
@@ -233,7 +233,7 @@
       "ratio": 3.72,
       "threshold": 3,
       "pass": true,
-      "intended": "input outline",
+      "intended": "input/select outline",
       "prohibited": "decorative --line"
     },
     {
@@ -260,7 +260,46 @@
       "threshold": 3,
       "pass": true,
       "intended": "focus indicator",
-      "prohibited": "body text"
+      "prohibited": "translucent ring-ring/30"
+    },
+    {
+      "token": "--ring on card",
+      "theme": "light",
+      "foregroundToken": "--ring",
+      "backgroundToken": "--paper-warm",
+      "foregroundValue": "#0b6b63",
+      "backgroundValue": "#f3f5f7",
+      "ratio": 5.83,
+      "threshold": 3,
+      "pass": true,
+      "intended": "focus indicator on cards",
+      "prohibited": "translucent ring-ring/30"
+    },
+    {
+      "token": "--ring (dark)",
+      "theme": "dark",
+      "foregroundToken": "--ring",
+      "backgroundToken": "--paper",
+      "foregroundValue": "#159a90",
+      "backgroundValue": "#070d12",
+      "ratio": 5.63,
+      "threshold": 3,
+      "pass": true,
+      "intended": "dark focus indicator",
+      "prohibited": "translucent ring-ring/30"
+    },
+    {
+      "token": "--ring (dark card)",
+      "theme": "dark",
+      "foregroundToken": "--ring",
+      "backgroundToken": "--paper-warm",
+      "foregroundValue": "#159a90",
+      "backgroundValue": "#141c24",
+      "ratio": 4.96,
+      "threshold": 3,
+      "pass": true,
+      "intended": "dark focus on cards",
+      "prohibited": "translucent ring-ring/30"
     },
     {
       "token": "--text on surface-danger",
@@ -273,7 +312,7 @@
       "threshold": 4.5,
       "pass": true,
       "intended": "toast error body",
-      "prohibited": "danger as long body"
+      "prohibited": "danger as long body on tint"
     },
     {
       "token": "--text on surface-success",
@@ -351,7 +390,7 @@
       "threshold": 4.5,
       "pass": true,
       "intended": "dark links",
-      "prohibited": "dark --lagoon as body link"
+      "prohibited": "using dark --lagoon as body link"
     },
     {
       "token": "--text-link (dark card)",
@@ -364,7 +403,7 @@
       "threshold": 4.5,
       "pass": true,
       "intended": "dark links on cards",
-      "prohibited": "dark --lagoon as body link"
+      "prohibited": "using dark --lagoon as body link"
     },
     {
       "token": "--text-on-lagoon (dark primary)",
