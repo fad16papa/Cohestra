@@ -182,7 +182,7 @@ Grok 4.6 (orchestration, architecture, review). Composer 2.5 only for the bounde
 
 - Independent review of `b755c755` returned CHANGES REQUIRED (F1–F7). Correction pass: login/invite consume `--primary` / `--text-link` / `--border-control` / opaque `--ring`; success toast eyebrow uses `--text` on tint; `--text-warning` `#8a5c00`; dark `--text-link` `#159a90` for card surfaces; preview resets `--lagoon`; matrix + Vitest assert JSON nested pairs and forbid `text-gold` / `text-lagoon`.
 - Composer 2.5 was used only for the original bounded class migration. This correction pass is Grok-owned.
-- Deferred: remaining report panels still using `text-lagoon`; marketing/cinema; platform console `--plat-*` (43.4); public-form accents (Epic 35).
+- Deferred: remaining report panels still using `text-lagoon`; marketing/cinema; platform console `--plat-*` (43.4); public-form accents (Epic 35); Basic locked Website screenshot; forced-colors emulation.
 
 ### File List
 

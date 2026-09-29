@@ -8,7 +8,6 @@ import {
   seedOperatorAuthSession,
   waitForOperatorWorkspace,
 } from "./helpers/registration-e2e-api";
-import { DEFAULT_TENANT_SLUG, tenantWebOrigin } from "./helpers/owned-fixture-data";
 
 function luminance(rgb: string): number {
   const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
@@ -45,11 +44,13 @@ const evidenceDir = path.resolve(
 
 const AUTH_ROUTES = [
   { name: "dashboard", path: "/dashboard" },
-  { name: "clients", path: "/dashboard/clients" },
-  { name: "activities", path: "/dashboard/activities" },
-  { name: "reports", path: "/dashboard/reports" },
+  { name: "clients", path: "/clients" },
+  { name: "activities", path: "/activities" },
+  { name: "reports", path: "/reports" },
   { name: "website", path: "/dashboard/website" },
-  { name: "settings", path: "/dashboard/settings" },
+  { name: "settings", path: "/settings" },
+  { name: "billing", path: "/settings/billing" },
+  { name: "campaigns", path: "/campaigns" },
 ] as const;
 
 test("semantic muted text is ≥4.5:1 on paper and is not stone", async ({ page }) => {
@@ -146,8 +147,12 @@ test("login viewports capture required evidence", async ({ page }) => {
   }
 
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page.addInitScript(() => {
+    window.sessionStorage.setItem("cohestra-theme-public-session", "dark");
+    window.localStorage.setItem("cohestra-theme-operator", "dark");
+  });
   await page.goto("/login", { waitUntil: "domcontentloaded" });
-  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await expect(page.locator("html")).toHaveClass(/dark/);
   await page.screenshot({
     path: path.join(evidenceDir, "login-1440x900-dark.png"),
     fullPage: true,
@@ -160,7 +165,7 @@ test("authenticated product viewports when live stack is available", async ({ pa
   fs.mkdirSync(evidenceDir, { recursive: true });
 
   const session = await loginOperatorSession(request);
-  const origin = tenantWebOrigin(DEFAULT_TENANT_SLUG);
+  const origin = process.env.PUBLIC_BASE_URL ?? "http://localhost:3000";
   await seedOperatorAuthSession(page, session);
 
   const gaps: string[] = [];
@@ -176,6 +181,24 @@ test("authenticated product viewports when live stack is available", async ({ pa
 
     try {
       await waitForOperatorWorkspace(page);
+      if (route.name === "dashboard") {
+        await expect(page.getByText(/good (morning|afternoon|evening)/i)).toBeVisible({
+          timeout: 30_000,
+        });
+      } else if (route.name === "website") {
+        await expect(page.locator("#website-builder-toolbar")).toBeVisible({ timeout: 30_000 });
+      } else if (route.name === "clients") {
+        await expect(page.getByRole("heading", { name: "Clients", level: 2 })).toBeVisible({
+          timeout: 30_000,
+        });
+      } else if (route.name === "activities") {
+        await expect(page.getByRole("heading", { name: "Activities", level: 2 })).toBeVisible({
+          timeout: 30_000,
+        });
+        await expect(page.locator('a[href^="/activities/"][href*="-"]').first()).toBeVisible({
+          timeout: 30_000,
+        });
+      }
       await page.screenshot({
         path: path.join(evidenceDir, `${route.name}-1440x900.png`),
         fullPage: true,
@@ -188,6 +211,55 @@ test("authenticated product viewports when live stack is available", async ({ pa
     } catch (error) {
       gaps.push(`${route.path}: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+
+  const extraViewports = VIEWPORTS.filter((viewport) => viewport.name !== "1440x900" && viewport.name !== "390x844");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
+  await waitForOperatorWorkspace(page);
+  await expect(page.getByText(/good (morning|afternoon|evening)/i)).toBeVisible({
+    timeout: 30_000,
+  });
+  for (const viewport of extraViewports) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.screenshot({
+      path: path.join(evidenceDir, `dashboard-${viewport.name}.png`),
+      fullPage: true,
+    });
+  }
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${origin}/activities`, { waitUntil: "domcontentloaded" });
+  await waitForOperatorWorkspace(page);
+  await expect(page.locator('a[href^="/activities/"][href*="-"]').first()).toBeVisible({
+    timeout: 30_000,
+  });
+  const activityHref = await page.locator("a[href]").evaluateAll((elements) => {
+    const href = elements
+      .map((element) => element.getAttribute("href"))
+      .find((value) => value && /\/activities\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(value));
+    return href ?? null;
+  });
+  if (activityHref) {
+    await page.goto(`${origin}${activityHref}`, { waitUntil: "domcontentloaded" });
+    await waitForOperatorWorkspace(page);
+    await page.screenshot({
+      path: path.join(evidenceDir, "activity-detail-1440x900.png"),
+      fullPage: true,
+    });
+    const formTab = page.getByRole("tab", { name: "Form", exact: true });
+    if (await formTab.count()) {
+      await formTab.click();
+      await expect(formTab).toHaveAttribute("aria-selected", "true");
+      await page.screenshot({
+        path: path.join(evidenceDir, "form-studio-1440x900.png"),
+        fullPage: true,
+      });
+    } else {
+      gaps.push("form-studio: activity detail loaded but no Form tab found");
+    }
+  } else {
+    gaps.push("form-studio: no activity UUID link on /activities");
   }
 
   fs.writeFileSync(
