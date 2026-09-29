@@ -75,6 +75,22 @@ describe("semantic text tokens", () => {
     ).toBeGreaterThanOrEqual(4.5);
   });
 
+  it("does not use dark primary overlays or accent gradients for selected/on-accent text", () => {
+    const filter = fs.readFileSync(path.join(webRoot, "components/ui/filter-select.tsx"), "utf8");
+    expect(filter).not.toMatch(/dark:bg-primary\//);
+    expect(filter).not.toMatch(/from-primary to-accent/);
+    expect(filter).toMatch(/bg-primary text-primary-foreground/);
+
+    for (const file of [
+      "components/auth/register-form.tsx",
+      "components/auth/reset-password-form.tsx",
+      "components/auth/verify-email-form.tsx",
+    ]) {
+      const source = fs.readFileSync(path.join(webRoot, file), "utf8");
+      expect(source, file).not.toMatch(/from-primary to-accent/);
+    }
+  });
+
   it("locks registration preview to light lagoon rather than inheriting dark lagoon", () => {
     const preview = parseNamedTokenBlock(css, ".registration-preview-surface");
     expect(preview["--lagoon"]).toBe("#0b6b63");

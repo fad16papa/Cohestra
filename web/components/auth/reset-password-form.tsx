@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { resendAuthOtp, resetPassword } from "@/lib/auth-api";
-import { cn } from "@/lib/utils";
 
 const fieldShellClassName =
   "flex min-h-12 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30";
@@ -155,10 +154,7 @@ function ResetPasswordFormContent() {
       <Button
         type="submit"
         disabled={isSubmitting || code.length !== 6}
-        className={cn(
-          "min-h-12 w-full rounded-xl font-semibold",
-          "bg-gradient-to-r from-primary to-accent text-primary-foreground"
-        )}
+        className="min-h-12 w-full rounded-xl font-semibold"
       >
         {isSubmitting ? (
           <>

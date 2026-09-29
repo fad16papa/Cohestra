@@ -21,7 +21,7 @@ const FilterSelect = React.forwardRef<HTMLSelectElement, FilterSelectProps>(
           className={cn(
             filterSelectClassName,
             active &&
-              "bg-primary/10 text-text-link hover:bg-primary/15 focus-visible:bg-primary/10 focus-visible:ring-primary/35 dark:bg-primary/15 dark:hover:bg-primary/20",
+              "bg-primary text-primary-foreground hover:bg-[color-mix(in_srgb,var(--primary),#000_12%)] focus-visible:bg-primary focus-visible:ring-ring",
             className
           )}
           {...props}
@@ -30,7 +30,7 @@ const FilterSelect = React.forwardRef<HTMLSelectElement, FilterSelectProps>(
           aria-hidden
           className={cn(
             "pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2",
-            active ? "text-text-link" : "text-text-muted-warm"
+            active ? "text-primary-foreground" : "text-text-muted-warm"
           )}
         />
       </div>

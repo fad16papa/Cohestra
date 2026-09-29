@@ -138,7 +138,7 @@ export function DashboardIntelligenceBrief() {
     >
       <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <ListChecks className="size-4 text-primary" aria-hidden />
+          <ListChecks className="size-4 text-text-link" aria-hidden />
           <h2
             id="intelligence-brief-heading"
             className="text-sm font-medium text-text-warm"
