@@ -155,42 +155,34 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             aria-live={isError ? "assertive" : "polite"}
             className={cn(
               BUILDER_PRESENCE_ENTER_CLASS,
-              "pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border border-l-4 bg-card/95 px-4 py-3 text-sm shadow-lg backdrop-blur-md",
-              isError &&
-                "border-red-300 border-l-red-600 bg-red-50 text-red-950 shadow-red-200/60 ring-1 ring-red-500/25 dark:border-red-900 dark:border-l-red-500 dark:bg-red-950/50 dark:text-red-50 dark:shadow-red-950/40",
-              isSuccess &&
-                "border-emerald-300 border-l-emerald-600 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:border-l-emerald-500 dark:bg-emerald-950/40 dark:text-emerald-100",
+              "pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border border-l-4 bg-card/95 px-4 py-3 text-sm text-foreground shadow-lg backdrop-blur-md",
+              isError && "border-danger/30 border-l-danger bg-surface-danger",
+              isSuccess && "border-success/30 border-l-success bg-surface-success",
               !isError &&
                 !isSuccess &&
-                "border-border-warm border-l-primary text-text-warm"
+                "border-border-warm border-l-primary"
             )}
           >
             <Icon
               className={cn(
                 "mt-0.5 shrink-0",
-                isError && "size-5 text-red-600 dark:text-red-400",
-                isSuccess && "size-4 text-emerald-600 dark:text-emerald-400",
+                isError && "size-5 text-text-danger",
+                isSuccess && "size-4 text-text-success",
                 !isError && !isSuccess && "size-4 text-primary"
               )}
               aria-hidden
             />
             <div className="min-w-0 flex-1 leading-snug">
               {isError ? (
-                <p className="text-xs font-bold uppercase tracking-wide text-red-700 dark:text-red-300">
+                <p className="text-xs font-bold uppercase tracking-wide text-text-danger">
                   Error
                 </p>
               ) : isSuccess ? (
-                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                <p className="text-xs font-bold uppercase tracking-wide text-text-success">
                   Success
                 </p>
               ) : null}
-              <p
-                className={cn(
-                  isError && "mt-1 font-medium text-red-950 dark:text-red-50",
-                  isSuccess && "mt-1 font-medium",
-                  !isError && !isSuccess && undefined
-                )}
-              >
+              <p className={cn((isError || isSuccess) && "mt-1 font-medium", "text-foreground")}>
                 {toast.message}
               </p>
             </div>
@@ -200,7 +192,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 className={cn(
                   "shrink-0 rounded-md px-2 py-1 text-sm font-medium motion-press",
                   isError
-                    ? "text-red-700 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-950/60"
+                    ? "text-text-danger hover:bg-danger/10"
                     : "text-primary hover:bg-primary/10"
                 )}
                 onClick={() => {
@@ -213,12 +205,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             ) : null}
             <button
               type="button"
-              className={cn(
-                "shrink-0 rounded-md p-1 motion-press hover:bg-muted",
-                isError
-                  ? "text-red-700/80 hover:text-red-900 dark:text-red-300/80 dark:hover:text-red-200"
-                  : "text-text-muted-warm hover:text-text-warm"
-              )}
+              className="shrink-0 rounded-md p-1 text-text-muted motion-press hover:bg-muted hover:text-foreground"
               aria-label="Dismiss notification"
               onClick={() => dismissToast(toast.id)}
             >

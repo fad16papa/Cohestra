@@ -1,0 +1,191 @@
+import fs from "node:fs";
+import path from "node:path";
+
+export type ContrastThreshold = 4.5 | 3;
+
+export type ContrastPair = {
+  token: string;
+  foreground: string;
+  background: string;
+  threshold: ContrastThreshold;
+  intended: string;
+  prohibited: string;
+  theme: "light" | "dark";
+};
+
+const LIGHT_PAPER = "#fafbfc";
+const LIGHT_WARM = "#f3f5f7";
+const DARK_PAPER = "#070d12";
+const DARK_WARM = "#141c24";
+
+/** Contract pairs asserted by tests against parsed brand-tokens.css. */
+export const CONTRAST_PAIRS: ContrastPair[] = [
+  { token: "--text", foreground: "--text", background: "--paper", threshold: 4.5, intended: "body", prohibited: "decorative atmosphere", theme: "light" },
+  { token: "--text", foreground: "--text", background: "--paper-warm", threshold: 4.5, intended: "body on cards", prohibited: "decorative atmosphere", theme: "light" },
+  { token: "--text-muted", foreground: "--text-muted", background: "--paper", threshold: 4.5, intended: "helper, metadata, table secondary", prohibited: "disabled; decorative stone", theme: "light" },
+  { token: "--text-muted", foreground: "--text-muted", background: "--paper-warm", threshold: 4.5, intended: "helper on cards", prohibited: "disabled; decorative stone", theme: "light" },
+  { token: "--text-link", foreground: "--text-link", background: "--paper", threshold: 4.5, intended: "inline links", prohibited: "body copy", theme: "light" },
+  { token: "--text-on-lagoon", foreground: "--text-on-lagoon", background: "--lagoon", threshold: 4.5, intended: "primary button label", prohibited: "body on paper", theme: "light" },
+  { token: "--text-on-danger", foreground: "--text-on-danger", background: "--danger", threshold: 4.5, intended: "destructive button label", prohibited: "body on paper", theme: "light" },
+  { token: "--text-danger", foreground: "--text-danger", background: "--paper", threshold: 4.5, intended: "error eyebrow/icon", prohibited: "long body on danger tint if pair fails", theme: "light" },
+  { token: "--text-warning", foreground: "--text-warning", background: "--paper", threshold: 4.5, intended: "warning eyebrow", prohibited: "body on warning tint if pair fails", theme: "light" },
+  { token: "--text-success", foreground: "--text-success", background: "--paper", threshold: 4.5, intended: "success eyebrow/icon", prohibited: "raw emerald", theme: "light" },
+  { token: "--text-info", foreground: "--text-info", background: "--paper", threshold: 4.5, intended: "info eyebrow", prohibited: "body on info tint if pair fails", theme: "light" },
+  { token: "--text-accent", foreground: "--text-accent", background: "--paper", threshold: 4.5, intended: "gold-as-small-text, badges", prohibited: "raw --gold helper text", theme: "light" },
+  { token: "--text-accent", foreground: "--text-accent", background: "--gold-soft", threshold: 4.5, intended: "gold badge label on gold-soft", prohibited: "raw --gold on gold-soft", theme: "light" },
+  { token: "--border-control", foreground: "--border-control", background: "--paper", threshold: 3, intended: "input/select outline", prohibited: "decorative --line", theme: "light" },
+  { token: "--ring", foreground: "--ring", background: "--paper", threshold: 3, intended: "focus indicator", prohibited: "body text", theme: "light" },
+  { token: "--text on surface-danger", foreground: "--text", background: "--surface-danger", threshold: 4.5, intended: "toast error body", prohibited: "danger as long body on tint", theme: "light" },
+  { token: "--text on surface-success", foreground: "--text", background: "--surface-success", threshold: 4.5, intended: "toast success body", prohibited: "success as long body when pair fails", theme: "light" },
+  { token: "--text (dark)", foreground: "--text", background: "--paper", threshold: 4.5, intended: "dark body", prohibited: "decorative atmosphere", theme: "dark" },
+  { token: "--text-muted (dark)", foreground: "--text-muted", background: "--paper", threshold: 4.5, intended: "dark helper", prohibited: "disabled-as-metadata", theme: "dark" },
+  { token: "--text-muted (dark card)", foreground: "--text-muted", background: "--paper-warm", threshold: 4.5, intended: "dark helper on cards", prohibited: "disabled-as-metadata", theme: "dark" },
+  { token: "--text-link (dark)", foreground: "--text-link", background: "--paper", threshold: 4.5, intended: "dark links", prohibited: "using dark --lagoon as body link", theme: "dark" },
+  { token: "--text-on-lagoon (dark primary)", foreground: "--text-on-lagoon", background: "--primary", threshold: 4.5, intended: "dark primary button", prohibited: "white on #12877d", theme: "dark" },
+  { token: "--text-danger (dark)", foreground: "--text-danger", background: "--paper", threshold: 4.5, intended: "dark error eyebrow", prohibited: "raw red", theme: "dark" },
+  { token: "--text-warning (dark)", foreground: "--text-warning", background: "--paper", threshold: 4.5, intended: "dark warning eyebrow", prohibited: "light --warn on dark paper", theme: "dark" },
+  { token: "--text-success (dark)", foreground: "--text-success", background: "--paper", threshold: 4.5, intended: "dark success eyebrow", prohibited: "raw emerald", theme: "dark" },
+  { token: "--text-accent (dark)", foreground: "--text-accent", background: "--paper", threshold: 4.5, intended: "dark gold-as-small-text", prohibited: "raw --gold helper", theme: "dark" },
+  { token: "--border-control (dark)", foreground: "--border-control", background: "--paper", threshold: 3, intended: "dark input outline", prohibited: "decorative --line", theme: "dark" },
+  { token: "--text on dark surface-danger", foreground: "--text", background: "--surface-danger", threshold: 4.5, intended: "dark toast error body", prohibited: "danger as long body", theme: "dark" },
+  { token: "--text on dark surface-success", foreground: "--text", background: "--surface-success", threshold: 4.5, intended: "dark toast success body", prohibited: "success as long body when pair fails", theme: "dark" },
+];
+
+export const MIGRATED_PRODUCT_FILES = [
+  "components/ui/toast-provider.tsx",
+  "components/auth/login-form.tsx",
+  "components/auth/login-workspace-notice.tsx",
+  "components/auth/auth-flow-shell.tsx",
+  "components/team/invite-accept-page-client.tsx",
+  "app/invite/accept/page.tsx",
+  "components/shell/plan-badge.tsx",
+  "components/shell/limit-meter.tsx",
+  "components/shell/sponsored-badge.tsx",
+  "components/activities/activity-plan-reg-cap-indicator.tsx",
+  "components/reports/report-narrative-hero.tsx",
+  "components/reports/report-visual-primitives.tsx",
+  "components/dashboard/dashboard-onboarding-checklist.tsx",
+  "components/dashboard/dashboard-follow-up-queue.tsx",
+  "components/dashboard/dashboard-recent-campaigns-section.tsx",
+  "components/website/website-builder-page.tsx",
+  "components/website/website-publish-readiness-panel.tsx",
+  "components/website/website-builder-toolbar.tsx",
+  "components/website/website-publish-success-dialog.tsx",
+  "components/website/website-health-strip.tsx",
+  "components/website/website-setup-checklist.tsx",
+  "components/settings/help-support-section.tsx",
+] as const;
+
+const FORBIDDEN_IN_MIGRATED = [
+  /\btext-stone\b/,
+  /placeholder:text-stone/,
+  /\btext-red-\d{2,3}\b/,
+  /\btext-emerald-\d{2,3}\b/,
+  /\bbg-red-\d{2,3}\b/,
+  /\bbg-emerald-\d{2,3}\b/,
+  /\bborder-red-\d{2,3}\b/,
+  /\bborder-emerald-\d{2,3}\b/,
+];
+
+function linearize(channel: number): number {
+  const c = channel / 255;
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+}
+
+export function relativeLuminance(hex: string): number {
+  const raw = hex.replace("#", "");
+  const normalized = raw.length === 3 ? raw.split("").map((ch) => `${ch}${ch}`).join("") : raw;
+  const value = Number.parseInt(normalized, 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b);
+}
+
+export function contrastRatio(foregroundHex: string, backgroundHex: string): number {
+  const a = relativeLuminance(foregroundHex);
+  const b = relativeLuminance(backgroundHex);
+  const lighter = Math.max(a, b);
+  const darker = Math.min(a, b);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function extractBlock(css: string, prelude: string): string {
+  const start = css.indexOf(prelude);
+  if (start < 0) {
+    throw new Error(`Missing CSS block ${prelude}`);
+  }
+  const open = css.indexOf("{", start);
+  let depth = 0;
+  for (let i = open; i < css.length; i += 1) {
+    if (css[i] === "{") depth += 1;
+    if (css[i] === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return css.slice(open + 1, i);
+      }
+    }
+  }
+  throw new Error(`Unclosed CSS block ${prelude}`);
+}
+
+function parseDeclarations(block: string): Record<string, string> {
+  const vars: Record<string, string> = {};
+  for (const match of block.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/gi)) {
+    vars[match[1]] = match[2].trim();
+  }
+  return vars;
+}
+
+export function parseBrandTokens(css: string): { light: Record<string, string>; dark: Record<string, string> } {
+  return {
+    light: parseDeclarations(extractBlock(css, ":root")),
+    dark: parseDeclarations(extractBlock(css, ".dark")),
+  };
+}
+
+export function resolveColor(
+  name: string,
+  theme: Record<string, string>,
+  seen = new Set<string>()
+): string {
+  if (name.startsWith("#")) {
+    return name;
+  }
+  if (seen.has(name)) {
+    throw new Error(`Cycle resolving ${name}`);
+  }
+  seen.add(name);
+  const value = theme[name];
+  if (!value) {
+    throw new Error(`Unknown token ${name}`);
+  }
+  const varMatch = value.match(/^var\((--[a-z0-9-]+)\)$/i);
+  if (varMatch) {
+    return resolveColor(varMatch[1], theme, seen);
+  }
+  if (value.startsWith("#")) {
+    return value;
+  }
+  throw new Error(`Cannot resolve ${name} = ${value}`);
+}
+
+export function loadBrandTokensCss(webRoot = path.resolve(__dirname, "..")): string {
+  return fs.readFileSync(path.join(webRoot, "styles/brand-tokens.css"), "utf8");
+}
+
+export function assertMigratedFileHasNoForbiddenClasses(source: string, file: string): string[] {
+  const hits: string[] = [];
+  for (const pattern of FORBIDDEN_IN_MIGRATED) {
+    if (pattern.test(source)) {
+      hits.push(`${file} matches ${pattern}`);
+    }
+  }
+  return hits;
+}
+
+export function fallbackPaper(theme: "light" | "dark"): { paper: string; warm: string } {
+  return theme === "light"
+    ? { paper: LIGHT_PAPER, warm: LIGHT_WARM }
+    : { paper: DARK_PAPER, warm: DARK_WARM };
+}

@@ -1,3 +1,7 @@
+## Deferred from: Story 38.4 open — DigitalOcean deploy on `441c0b1f` (2026-09-23)
+
+- Classification **C** — pre-existing deployment configuration or credential failure. Run [35876247049](https://github.com/fad16papa/Cohestra/actions/runs/35876247049) job `Deploy to DigitalOcean droplet`. `appleboy/ssh-action` failed with `Error: missing server host`; `INPUT_HOST`, `INPUT_USERNAME`, `INPUT_KEY` empty. Same non-required workflow failed on later `52c1c990` (run 35877916377). Not an application regression from 38.3. Production droplet deploy is **not verified**. Do not mutate infrastructure or credentials in 38.4.
+
 ## Deferred from: code review of 38-3-e2e-tenant-and-theme-isolation.md (2026-09-23)
 
 - Isolation Playwright spec is a same-test double-read; suite proof is field-level SQL before/after on clean DBs plus no writers to marina/yoga/runners.

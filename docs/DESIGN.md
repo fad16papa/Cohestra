@@ -368,6 +368,29 @@ Dark mode must invert canvases and re-verify `--text-muted` ≥4.5:1 against the
 
 `--plat-*` raw duplicates migrate to the shared semantic set (**D10**). Platform may keep a sparser layout; it may not keep a second inaccessible stone.
 
+### 5.5 Role mapping (Story 38.4)
+
+Requested product roles reuse shipped names. Machine-readable pairs: `_bmad-output/planning-artifacts/evidence/px2-38-4/contrast-matrix.json`.
+
+| Role | Token | Notes |
+|------|-------|-------|
+| text-primary | `--text` → `--ink` | Body |
+| text-secondary | `--ink-soft` | Softer primary, still AA |
+| text-muted | `--text-muted` | `#5a636e` / `#a8b0b8`. Not `--stone`. Not `--stone-cinema` by name. |
+| text-disabled | `--text-disabled` → `--stone` | 1.4.3 exempt |
+| on-accent | `--text-on-lagoon`, `--text-on-danger` | ≥4.5:1 on the fill |
+| text-link | `--text-link` | Light `--lagoon`. Dark `#149188` (dark `#12877d` on paper fails 4.5:1). |
+| text-danger / warning / success / info | `--text-danger` / `--text-warning` / `--text-success` / `--text-info` | Text on paper. Body on tinted surfaces uses `--text` unless the status-on-tint pair passes. |
+| text-accent | `--text-accent` | Gold-as-small-text that passes AA (`#6e5a32` light). Raw `--gold` stays atmosphere. |
+| icon-muted | `--icon-muted` → `--text-muted` | |
+| border-control | `--border-control` | ≥3:1. `--input` consumes this. Decorative `--line` is not a control identifier. |
+| focus-ring | `--ring` | ≥3:1 |
+| status surfaces | `--surface-danger` / `--surface-success` / `--surface-warning` / `--surface-info` | Toast/status chrome |
+
+### 5.6 Contrast contract
+
+Normal text ≥4.5:1. Large text and required UI graphics ≥3:1. Disabled is exempt. Links remain recognizable with underline or chrome, not color alone. Cinema `[data-demo-theme]` may override muted locally; do not globally alias `--stone-cinema`.
+
 ---
 
 ## 6. Typography hierarchy
