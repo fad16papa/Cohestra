@@ -27,7 +27,7 @@ export function ActivityCountrySelect({
         disabled={disabled}
         value={countryCode}
         onChange={(event) => onCountryCodeChange(event.target.value)}
-        className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
       >
         {countryOptions.map((country) => (
           <option key={country.code} value={country.code}>

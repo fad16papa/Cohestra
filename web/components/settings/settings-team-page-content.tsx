@@ -183,7 +183,7 @@ export function SettingsTeamPageContent() {
                     <p className="text-text-muted-warm">{member.email}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-text-muted-warm">
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">
                       {member.role}
                     </span>
                     {canRemove ? (

@@ -78,32 +78,44 @@ function relativeLuminance({ r, g, b }: Rgb): number {
   return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
 }
 
-function foregroundForBackground(hex: string): string {
-  return relativeLuminance(hexToRgb(hex)) > 0.55 ? "#081c15" : "#ffffff";
+function contrastRatioRgb(a: Rgb, b: Rgb): number {
+  const left = relativeLuminance(a);
+  const right = relativeLuminance(b);
+  const lighter = Math.max(left, right);
+  const darker = Math.min(left, right);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function ensureOnFillContrast(fillHex: string): { fill: string; fg: string } {
+  const white: Rgb = { r: 255, g: 255, b: 255 };
+  const black: Rgb = { r: 0, g: 0, b: 0 };
+  let fill = hexToRgb(fillHex);
+  // 8:1 declared headroom so 12–14px white labels still sample ≥4.5:1 after AA.
+  for (let step = 0; step < 24; step += 1) {
+    if (contrastRatioRgb(white, fill) >= 8) {
+      return { fill: rgbToHex(fill), fg: "#ffffff" };
+    }
+    fill = mixRgb(fill, black, 0.12);
+  }
+  return { fill: rgbToHex(fill), fg: "#ffffff" };
 }
 
 function deriveAccentTier(baseHex: string, isDark: boolean) {
-  const base = hexToRgb(baseHex);
-  const white: Rgb = { r: 255, g: 255, b: 255 };
-
-  const primary = isDark
-    ? rgbToHex(mixRgb(base, white, 0.28))
-    : baseHex.toLowerCase();
-  const accent = isDark
-    ? rgbToHex(mixRgb(hexToRgb(primary), white, 0.12))
-    : rgbToHex(mixRgb(base, white, 0.14));
-  const ring = isDark ? accent : rgbToHex(mixRgb(base, white, 0.1));
+  const black: Rgb = { r: 0, g: 0, b: 0 };
+  const base = isDark ? rgbToHex(mixRgb(hexToRgb(baseHex), black, 0.22)) : baseHex.toLowerCase();
+  const primaryPair = ensureOnFillContrast(base);
+  const accentPair = ensureOnFillContrast(rgbToHex(mixRgb(hexToRgb(primaryPair.fill), black, 0.08)));
 
   return {
-    primary,
-    primaryForeground: foregroundForBackground(primary),
-    accent,
-    accentForeground: foregroundForBackground(accent),
-    ring,
-    sidebarPrimary: primary,
-    sidebarPrimaryForeground: foregroundForBackground(primary),
-    sidebarRing: ring,
-    chart1: primary,
+    primary: primaryPair.fill,
+    primaryForeground: primaryPair.fg,
+    accent: accentPair.fill,
+    accentForeground: accentPair.fg,
+    ring: primaryPair.fill,
+    sidebarPrimary: primaryPair.fill,
+    sidebarPrimaryForeground: primaryPair.fg,
+    sidebarRing: primaryPair.fill,
+    chart1: primaryPair.fill,
   };
 }
 

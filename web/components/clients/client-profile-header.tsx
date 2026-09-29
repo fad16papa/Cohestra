@@ -250,7 +250,7 @@ export function ClientProfileHeader({
             onChange={(event) => {
               void handleStatusChange(event.target.value as LeadStatus);
             }}
-            className="flex h-8 rounded-lg border border-input bg-background px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+            className="flex h-8 rounded-lg border border-input bg-background px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           >
             {leadStatusOptions.map((option) => (
               <option key={option.value} value={option.value}>

@@ -60,10 +60,10 @@ const HIGHLIGHT_ICON_OPTIONS = [
 ] as const;
 
 const filterSelectClassName =
-  "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+  "flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring";
 
 const textareaClassName =
-  "flex min-h-20 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+  "flex min-h-20 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring";
 
 const SECTION_TYPE_ICONS: Record<string, typeof Sparkles> = {
   hero: Sparkles,
@@ -1097,7 +1097,7 @@ export function WebsitePublishGateSummary({ gate }: { gate: PublishGateResult })
         </ul>
       ) : null}
       {gate.warnings.length > 0 ? (
-        <ul className="list-disc space-y-1 pl-5 text-sm text-amber-700 dark:text-amber-300">
+        <ul className="list-disc space-y-1 pl-5 text-sm text-foreground">
           {gate.warnings.map((issue) => (
             <li key={issue}>{issue}</li>
           ))}

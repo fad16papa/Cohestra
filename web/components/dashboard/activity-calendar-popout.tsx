@@ -95,7 +95,7 @@ function ActivityCalendarItem({
         </button>
         <Link
           href={activityFormHref(activity.id)}
-          className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">

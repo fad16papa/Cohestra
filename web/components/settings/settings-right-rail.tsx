@@ -142,7 +142,7 @@ export function SettingsRightRail({
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <PlanBadge plan={shell.plan} />
                 {shell.billingStatus && shell.billingStatus !== "Free" ? (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-text-muted-warm">
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-sm font-semibold text-foreground">
                     {shell.billingStatus}
                   </span>
                 ) : null}

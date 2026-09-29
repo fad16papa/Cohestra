@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
+  AUTHENTICATED_PRODUCT_GLOBS,
   CONTRAST_PAIRS,
   MIGRATED_PRODUCT_FILES,
   FOCUS_RING_FILES,
@@ -35,7 +36,7 @@ describe("semantic text tokens", () => {
 
   it("keeps cinema stone as a local token, not the global muted token", () => {
     expect(light["--stone-cinema"]).toBe("#5a636e");
-    expect(light["--text-muted"]).toBe("#5a636e");
+    expect(light["--text-muted"]).toBe("#252c33");
     expect(light["--text-muted"]).not.toBe("var(--stone-cinema)");
     const globals = fs.readFileSync(path.join(webRoot, "app/globals.css"), "utf8");
     expect(globals).toMatch(/\[data-demo-theme\]/);
@@ -99,8 +100,8 @@ describe("semantic text tokens", () => {
   it("locks registration preview to light lagoon rather than inheriting dark lagoon", () => {
     const preview = parseNamedTokenBlock(css, ".registration-preview-surface");
     expect(preview["--lagoon"]).toBe("#0b6b63");
-    expect(preview["--primary"]).toBe("var(--lagoon)");
-    expect(preview["--text-link"]).toBe("var(--lagoon)");
+    expect(preview["--primary"]).toBe("#043532");
+    expect(preview["--text-link"]).toBe("#043532");
     expect(preview["--text-warning"]).toBe("#8a5c00");
   });
 
@@ -206,6 +207,36 @@ describe("focus-ring composite contract", () => {
     const hits = FOCUS_RING_FILES.flatMap((file) => {
       const source = fs.readFileSync(path.join(webRoot, file), "utf8");
       return TRANSLUCENT_RING_PATTERN.test(source) ? [`${file} has translucent ring-ring`] : [];
+    });
+    expect(hits).toEqual([]);
+  });
+
+  it("does not keep translucent ring-ring/30 or /50 in authenticated product UI", () => {
+    const hits = AUTHENTICATED_PRODUCT_GLOBS.flatMap((glob) => {
+      const dir = path.join(webRoot, glob);
+      if (!fs.existsSync(dir)) {
+        return [];
+      }
+      const files: string[] = [];
+      const walk = (current: string) => {
+        for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+          const full = path.join(current, entry.name);
+          if (entry.isDirectory()) {
+            walk(full);
+            continue;
+          }
+          if (entry.name.endsWith(".tsx") || entry.name.endsWith(".ts")) {
+            files.push(full);
+          }
+        }
+      };
+      walk(dir);
+      return files.flatMap((file) => {
+        const source = fs.readFileSync(file, "utf8");
+        return TRANSLUCENT_RING_PATTERN.test(source)
+          ? [path.relative(webRoot, file)]
+          : [];
+      });
     });
     expect(hits).toEqual([]);
   });

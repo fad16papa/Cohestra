@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-29T14:20:07.909Z",
+  "generated": "2026-09-29T14:35:31.562Z",
   "story": "38.4",
   "rows": [
     {
@@ -219,69 +219,6 @@
       "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
     },
     {
-      "file": "components/campaigns/campaigns-list-page.tsx",
-      "line": 28,
-      "kind": "tailwind-palette-text",
-      "snippet": "className=\"inline-flex items-center text-emerald-600 dark:text-emerald-400\"",
-      "disposition": "passing-intentionally-retained",
-      "ownerStory": "38.4",
-      "note": "Success status chrome still on Tailwind emerald. Not a proven <4.5 fail; prefer --text-success / --surface-success."
-    },
-    {
-      "file": "components/campaigns/email-delivery-checklist.tsx",
-      "line": 44,
-      "kind": "tailwind-palette-text",
-      "snippet": "item.status === \"complete\" && \"bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100\",",
-      "disposition": "passing-intentionally-retained",
-      "ownerStory": "38.4",
-      "note": "Success status chrome still on Tailwind emerald. Not a proven <4.5 fail; prefer --text-success / --surface-success."
-    },
-    {
-      "file": "components/campaigns/email-delivery-checklist.tsx",
-      "line": 46,
-      "kind": "tailwind-palette-text",
-      "snippet": "item.status === \"warning\" && \"bg-amber-100 text-amber-950 dark:bg-amber-950/50 dark:text-amber-100\",",
-      "disposition": "passing-intentionally-retained",
-      "ownerStory": "38.4",
-      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
-    },
-    {
-      "file": "components/campaigns/email-delivery-checklist.tsx",
-      "line": 159,
-      "kind": "tailwind-palette-text",
-      "snippet": "className=\"rounded-lg border border-emerald-200/80 bg-emerald-50 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100\"",
-      "disposition": "passing-intentionally-retained",
-      "ownerStory": "38.4",
-      "note": "Success status chrome still on Tailwind emerald. Not a proven <4.5 fail; prefer --text-success / --surface-success."
-    },
-    {
-      "file": "components/campaigns/email-delivery-checklist.tsx",
-      "line": 167,
-      "kind": "tailwind-palette-text",
-      "snippet": "className=\"rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100\"",
-      "disposition": "passing-intentionally-retained",
-      "ownerStory": "38.4",
-      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
-    },
-    {
-      "file": "components/campaigns/email-delivery-checklist.tsx",
-      "line": 182,
-      "kind": "tailwind-palette-text",
-      "snippet": "className=\"rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-4 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100\"",
-      "disposition": "passing-intentionally-retained",
-      "ownerStory": "38.4",
-      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
-    },
-    {
-      "file": "components/campaigns/email-delivery-checklist.tsx",
-      "line": 185,
-      "kind": "tailwind-palette-text",
-      "snippet": "<p className=\"mt-1 text-amber-900/90 dark:text-amber-100/90\">",
-      "disposition": "passing-intentionally-retained",
-      "ownerStory": "38.4",
-      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
-    },
-    {
       "file": "components/campaigns/email-preview-dialog.tsx",
       "line": 36,
       "kind": "tailwind-palette-text",
@@ -469,15 +406,6 @@
       "disposition": "decorative",
       "ownerStory": "38.4",
       "note": "Palette --gold / gold-soft atmosphere or fill."
-    },
-    {
-      "file": "components/website/website-section-fields.tsx",
-      "line": 1100,
-      "kind": "tailwind-palette-text",
-      "snippet": "<ul className=\"list-disc space-y-1 pl-5 text-sm text-amber-700 dark:text-amber-300\">",
-      "disposition": "passing-intentionally-retained",
-      "ownerStory": "38.4",
-      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
     },
     {
       "file": "components/website/website-section-fields.tsx",

@@ -786,7 +786,7 @@ export function ActivityFormTab({
           value={introMarkdown ?? ""}
           disabled={isArchived || isSaving}
           placeholder="Welcome! Tell registrants what to expect…"
-          className="flex min-h-[3.5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+          className="flex min-h-[3.5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           onChange={(event) => {
             const nextIntro = event.target.value.trim() ? event.target.value : null;
             setDraftSchema((current) => ({
@@ -815,7 +815,7 @@ export function ActivityFormTab({
           value={closedMessage ?? ""}
           disabled={isArchived || isSaving}
           placeholder="Waitlist opens Monday on WhatsApp."
-          className="flex min-h-[3.5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+          className="flex min-h-[3.5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           onChange={(event) => {
             const next = event.target.value.trim() ? event.target.value : null;
             setDraftSchema((current) => ({
@@ -945,7 +945,7 @@ export function ActivityFormTab({
           value={successCopyMarkdown ?? ""}
           disabled={isArchived || isSaving}
           placeholder="See you Saturday, {{full_name}}."
-          className="flex min-h-[2.75rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+          className="flex min-h-[2.75rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           onChange={(event) => {
             const next = event.target.value.trim() ? event.target.value : null;
             setDraftSchema((current) => ({
@@ -992,7 +992,7 @@ export function ActivityFormTab({
             value={confirmationEmailSubject ?? ""}
             disabled={isArchived || isSaving}
             placeholder={`You're registered — {{full_name}}`}
-            className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+            className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
             onChange={(event) => {
               const next = event.target.value.trim() ? event.target.value : null;
               setDraftSchema((current) => ({
@@ -1024,7 +1024,7 @@ export function ActivityFormTab({
             value={confirmationEmailBodyMarkdown ?? ""}
             disabled={isArchived || isSaving}
             placeholder="Save the date — we look forward to seeing you there, {{full_name}}."
-            className="flex min-h-[2.75rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+            className="flex min-h-[2.75rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
             onChange={(event) => {
               const next = event.target.value.trim() ? event.target.value : null;
               setDraftSchema((current) => ({
@@ -1211,7 +1211,7 @@ export function ActivityFormTab({
               maxLength={120}
               value={saveTemplateName}
               disabled={templateActionLoading}
-              className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+              className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
               placeholder="Saturday tennis"
               onChange={(event) => setSaveTemplateName(event.target.value)}
             />
@@ -1252,7 +1252,7 @@ export function ActivityFormTab({
               maxLength={120}
               value={renameValue}
               disabled={templateActionLoading}
-              className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+              className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
               onChange={(event) => setRenameValue(event.target.value)}
             />
           </label>

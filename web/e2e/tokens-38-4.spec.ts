@@ -76,7 +76,7 @@ test("semantic muted text is ≥4.5:1 on paper and is not stone", async ({ page 
     return result;
   });
 
-  expect(measured.muted).toBe("#5a636e");
+  expect(measured.muted).toBe("#252c33");
   expect(measured.stone).toBe("#8b939c");
   expect(measured.cinema).toBe("#5a636e");
   expect(measured.mutedForeground.length).toBeGreaterThan(0);
@@ -99,8 +99,14 @@ test("login CTA uses primary fill, not decorative dark lagoon", async ({ page })
   });
   expect(contrast(light.color, light.background)).toBeGreaterThanOrEqual(4.5);
   expect(light.lagoon).toBe("#0b6b63");
+  expect(light.primary).toBe("#043532");
 
-  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await page.evaluate(() => {
+    window.sessionStorage.setItem("cohestra-theme-public-session", "dark");
+    document.documentElement.classList.add("dark");
+  });
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await expect(page.locator("html")).toHaveClass(/dark/);
   const dark = await submit.evaluate((el) => {
     const styles = getComputedStyle(el);
     const root = getComputedStyle(document.documentElement);

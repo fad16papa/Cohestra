@@ -27,11 +27,11 @@
 
   /* Semantic text / chrome (D5). Palette tokens stay raw; product UI consumes these. */
   --text: var(--ink);
-  --text-muted: #5a636e;
+  --text-muted: #252c33;
   --text-disabled: var(--stone);
   --text-on-lagoon: var(--lagoon-fg);
   --text-on-danger: #ffffff;
-  --text-link: var(--lagoon);
+  --text-link: #043532;
   --text-danger: var(--danger);
   --text-warning: #8a5c00;
   --text-success: var(--success);
@@ -52,7 +52,7 @@
   --card-foreground: var(--ink);
   --popover: var(--paper);
   --popover-foreground: var(--ink);
-  --primary: var(--lagoon);
+  --primary: #043532;
   --primary-foreground: var(--text-on-lagoon);
   --secondary: var(--paper-warm);
   --secondary-foreground: var(--ink);
@@ -71,22 +71,22 @@
   --text-warm: var(--ink);
   --text-muted-warm: var(--text-muted);
 
-  /* Lead status semantics */
-  --status-new: #2563eb;
+  /* Lead status semantics — fills sized for 12px labels after glyph sampling */
+  --status-new: #172554;
   --status-new-foreground: #ffffff;
-  --status-contacted: var(--warn);
+  --status-contacted: #4a2e00;
   --status-contacted-foreground: #ffffff;
-  --status-active: var(--success);
+  --status-active: #0a3d2e;
   --status-active-foreground: #ffffff;
-  --status-inactive: #78716c;
+  --status-inactive: #2c2a28;
   --status-inactive-foreground: #ffffff;
 
   /* WhatsApp action (unchanged in dark mode) */
-  --whatsapp: #25d366;
+  --whatsapp: #053d18;
   --whatsapp-foreground: #ffffff;
 
-  /* Viber action (unchanged in dark mode) */
-  --viber: #7360f2;
+  /* Viber action */
+  --viber: #241c78;
   --viber-foreground: #ffffff;
 
   /* Radius scale (DESIGN.md) */
@@ -129,7 +129,7 @@
   --gold: #c9ad7a;
   --gold-soft: #2a2520;
   --text: var(--ink);
-  --text-muted: #a8b0b8;
+  --text-muted: #b1b9c1;
   --text-disabled: var(--stone);
   --text-on-lagoon: var(--lagoon-fg);
   --text-on-danger: #ffffff;
@@ -217,10 +217,10 @@
   --danger: #9b1c1c;
   --info: #2563eb;
   --text: var(--ink);
-  --text-muted: #5a636e;
+  --text-muted: #252c33;
   --text-disabled: var(--stone);
   --text-on-lagoon: var(--lagoon-fg);
-  --text-link: var(--lagoon);
+  --text-link: #043532;
   --text-danger: var(--danger);
   --text-warning: #8a5c00;
   --text-success: var(--success);
@@ -238,7 +238,7 @@
   --card-foreground: var(--ink);
   --popover: var(--paper);
   --popover-foreground: var(--ink);
-  --primary: var(--lagoon);
+  --primary: #043532;
   --primary-foreground: var(--text-on-lagoon);
   --secondary: var(--paper-warm);
   --secondary-foreground: var(--ink);

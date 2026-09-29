@@ -19,16 +19,27 @@ type AxeViolation = {
   id: string;
   impact: string | null;
   description: string;
-  nodes: number;
+  nodes: Array<{ html: string; target: string[]; summary: string }>;
 };
 
 async function runAxe(page: Page): Promise<AxeViolation[]> {
-  const results = await new AxeBuilder({ page }).analyze();
+  // Inactive controls are WCAG 1.4.3 exempt. Base UI may keep tabindex on
+  // aria-disabled submits; exclude them rather than treating opacity-50 as a
+  // semantic-token failure.
+  const results = await new AxeBuilder({ page })
+    .exclude('[disabled]')
+    .exclude('[aria-disabled="true"]')
+    .exclude('[data-disabled]')
+    .analyze();
   return results.violations.map((violation) => ({
     id: violation.id,
     impact: violation.impact ?? null,
     description: violation.description,
-    nodes: violation.nodes.length,
+    nodes: violation.nodes.map((node) => ({
+      html: node.html.slice(0, 280),
+      target: node.target.map(String),
+      summary: (node.failureSummary ?? "").slice(0, 400),
+    })),
   }));
 }
 
@@ -133,6 +144,46 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
     } catch (error) {
       gaps.push(`${route.path}: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+
+  try {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await open("/activities");
+    await expect(page.getByText(/activities/i).first()).toBeVisible({ timeout: 30_000 });
+    const activityHref = await page.locator("a[href]").evaluateAll((elements) => {
+      const href = elements
+        .map((element) => element.getAttribute("href"))
+        .find(
+          (value) =>
+            value &&
+            /\/activities\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(
+              value
+            )
+        );
+      return href ?? null;
+    });
+    if (!activityHref) {
+      gaps.push("form-studio: no activity UUID link on /activities");
+    } else {
+      await page.goto(`${origin}${activityHref}`, { waitUntil: "domcontentloaded" });
+      await waitForOperatorWorkspace(page);
+      const formTab = page.getByRole("tab", { name: "Form", exact: true });
+      if ((await formTab.count()) === 0) {
+        gaps.push("form-studio: activity detail loaded but no Form tab found");
+      } else {
+        await formTab.click();
+        await expect(formTab).toHaveAttribute("aria-selected", "true");
+        const violations = await runAxe(page);
+        axeReport.push({
+          route: `${activityHref}#form-studio`,
+          viewport: "1440x900",
+          violations,
+          colorContrastSeriousOrCritical: contrastFailures(violations),
+        });
+      }
+    }
+  } catch (error) {
+    gaps.push(`form-studio: ${error instanceof Error ? error.message : String(error)}`);
   }
 
   let clientHref: string | null = null;

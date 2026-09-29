@@ -25,7 +25,7 @@ function CampaignDeliveredIcon({ count }: { count: number }) {
   if (count > 0) {
     return (
       <span
-        className="inline-flex items-center text-emerald-600 dark:text-emerald-400"
+        className="inline-flex items-center text-text-success"
         aria-label={`${count} delivered`}
         title={`${count} delivered`}
       >
@@ -150,7 +150,7 @@ export function CampaignsListPage() {
 
       {!error && campaigns.length > 0 ? (
         <div className="overflow-hidden rounded-xl border border-border-warm bg-card">
-          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,0.8fr)] gap-4 border-b border-border-warm bg-muted/30 px-4 py-3 text-xs font-medium uppercase tracking-wide text-text-muted-warm">
+          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,0.8fr)] gap-4 border-b border-border-warm bg-muted/30 px-4 py-3 text-xs font-medium uppercase tracking-wide text-foreground">
             <span>Subject</span>
             <span>Sent</span>
             <span>Delivered</span>
@@ -165,7 +165,7 @@ export function CampaignsListPage() {
               <span className="truncate font-medium text-text-warm">
                 {campaign.subject}
               </span>
-              <span className="text-text-muted-warm">
+              <span className="text-foreground">
                 {formatCampaignSentAt(campaign.sentAt)}
               </span>
               <span className="flex items-center">

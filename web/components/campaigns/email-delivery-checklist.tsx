@@ -41,10 +41,10 @@ function ChecklistItems({ items }: { items: EmailDeliveryChecklistItem[] }) {
               aria-hidden="true"
               className={cn(
                 "mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                item.status === "complete" && "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100",
+                item.status === "complete" && "bg-surface-success text-foreground",
                 item.status === "action_required" && "bg-destructive/10 text-destructive",
-                item.status === "warning" && "bg-amber-100 text-amber-950 dark:bg-amber-950/50 dark:text-amber-100",
-                item.status === "info" && "bg-muted text-text-muted-warm"
+                item.status === "warning" && "bg-surface-warning text-foreground",
+                item.status === "info" && "bg-muted text-foreground"
               )}
             >
               {statusIcon(item.status)}
@@ -54,7 +54,7 @@ function ChecklistItems({ items }: { items: EmailDeliveryChecklistItem[] }) {
                 {item.title}
                 <span className="sr-only"> — {checklistStatusLabel(item.status)}</span>
               </p>
-              <p className="text-sm text-text-muted-warm">{item.detail}</p>
+              <p className="text-sm text-foreground">{item.detail}</p>
               {item.actionHint ? (
                 <p className="text-sm text-text-warm">{item.actionHint}</p>
               ) : null}
@@ -156,7 +156,7 @@ export function EmailDeliveryChecklist({
         {status.isReady ? (
           <p
             role="status"
-            className="rounded-lg border border-emerald-200/80 bg-emerald-50 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100"
+            className="rounded-lg border border-success/30 bg-surface-success px-4 py-3 text-sm text-foreground"
           >
             Email delivery is ready. Campaigns send from {status.fromEmail}
             {status.fromName ? ` (${status.fromName})` : ""}.
@@ -164,7 +164,7 @@ export function EmailDeliveryChecklist({
         ) : (
           <p
             role="status"
-            className="rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
+            className="rounded-lg border border-warn/30 bg-surface-warning px-4 py-3 text-sm text-foreground"
           >
             Email delivery is not fully configured yet. Complete the checklist below
             before expecting campaigns to reach inboxes.
@@ -179,10 +179,10 @@ export function EmailDeliveryChecklist({
   return (
     <div
       role="status"
-      className="rounded-lg border border-amber-200/80 bg-amber-50 px-4 py-4 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
+      className="rounded-lg border border-warn/30 bg-surface-warning px-4 py-4 text-sm text-foreground"
     >
       <p className="font-medium">Email delivery needs attention</p>
-      <p className="mt-1 text-amber-900/90 dark:text-amber-100/90">
+      <p className="mt-1 text-foreground">
         Campaigns may not reach inboxes until SendGrid is configured and verified.
         Sending from {status.fromEmail || "an unconfigured address"}.
       </p>

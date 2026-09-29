@@ -620,7 +620,7 @@ export function FormFieldEditor({
                     value={addType}
                     disabled={disabled}
                     onChange={(event) => setAddType(event.target.value as FormFieldType)}
-                    className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {formFieldTypeOptions.map((type) => (
                       <option key={type} value={type}>
@@ -736,7 +736,7 @@ function FieldPropertiesEditor({
                 phoneCountry: null,
               });
             }}
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
           >
             {formFieldTypeOptions.map((type) => (
               <option key={type} value={type}>
@@ -875,7 +875,7 @@ function FieldPropertiesEditor({
                   infoText: event.target.value || null,
                 })
               }
-              className="flex min-h-20 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="flex min-h-20 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
         ) : null}
@@ -947,7 +947,7 @@ function FieldPropertiesEditor({
               onChange={(event) =>
                 onUpdate({ step: event.target.value as FormFieldStep })
               }
-              className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="identity">Identity</option>
               <option value="details">Details</option>
@@ -1104,7 +1104,7 @@ function RecipePicker({
                   : { fieldId: controllerId, equals: "yes", notEquals: null };
               onUpdate({ visibleWhen: nextRule });
             }}
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
           >
             {RECIPE_PRESETS.map((item) => (
               <option key={item.id} value={item.id}>
@@ -1127,7 +1127,7 @@ function RecipePicker({
                       visibleWhen: { ...rule, fieldId: event.target.value },
                     })
                   }
-                  className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {controllers.map((item) => (
                     <option key={item.id} value={item.id}>
@@ -1153,7 +1153,7 @@ function RecipePicker({
                               : { fieldId: rule.fieldId, equals: value, notEquals: null },
                         });
                       }}
-                      className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="equals">Equals</option>
                       <option value="notEquals">Does not equal</option>

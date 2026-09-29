@@ -27,6 +27,13 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
   { token: "--text-link", foreground: "--text-link", background: "--paper", threshold: 4.5, intended: "inline links", prohibited: "body copy", theme: "light" },
   { token: "--text-link on card", foreground: "--text-link", background: "--paper-warm", threshold: 4.5, intended: "inline links on cards", prohibited: "body copy", theme: "light" },
   { token: "--text-on-lagoon", foreground: "--text-on-lagoon", background: "--lagoon", threshold: 4.5, intended: "primary button label", prohibited: "body on paper", theme: "light" },
+  { token: "--text-on-lagoon on primary", foreground: "--text-on-lagoon", background: "--primary", threshold: 4.5, intended: "authenticated primary fill", prohibited: "white on sampled-washed lagoon", theme: "light" },
+  { token: "--status-new on-fill", foreground: "--status-new-foreground", background: "--status-new", threshold: 4.5, intended: "lead status chip", prohibited: "12px white on mid blue", theme: "light" },
+  { token: "--status-contacted on-fill", foreground: "--status-contacted-foreground", background: "--status-contacted", threshold: 4.5, intended: "lead status chip", prohibited: "raw --warn as 12px fill", theme: "light" },
+  { token: "--status-active on-fill", foreground: "--status-active-foreground", background: "--status-active", threshold: 4.5, intended: "lead/activity status chip", prohibited: "mid green 12px fill", theme: "light" },
+  { token: "--status-inactive on-fill", foreground: "--status-inactive-foreground", background: "--status-inactive", threshold: 4.5, intended: "inactive/archived chip", prohibited: "mid stone fill", theme: "light" },
+  { token: "--whatsapp on-fill", foreground: "--whatsapp-foreground", background: "--whatsapp", threshold: 4.5, intended: "WhatsApp action label", prohibited: "brand #25D366", theme: "light" },
+  { token: "--viber on-fill", foreground: "--viber-foreground", background: "--viber", threshold: 4.5, intended: "Viber action label", prohibited: "brand lilac fill", theme: "light" },
   { token: "--text-on-danger", foreground: "--text-on-danger", background: "--danger", threshold: 4.5, intended: "destructive button label", prohibited: "body on paper", theme: "light" },
   { token: "--text-danger", foreground: "--text-danger", background: "--paper", threshold: 4.5, intended: "error eyebrow/icon", prohibited: "long body on danger tint if pair fails", theme: "light" },
   { token: "--text-danger on surface", foreground: "--text-danger", background: "--surface-danger", threshold: 4.5, intended: "error toast eyebrow", prohibited: "long body when pair fails", theme: "light" },
@@ -142,8 +149,11 @@ export const MIGRATED_PRODUCT_FILES = [
   "components/campaigns/email-composer.tsx",
   "components/campaigns/campaign-detail-page.tsx",
   "components/campaigns/campaign-compose-page.tsx",
+  "components/campaigns/email-delivery-checklist.tsx",
+  "components/campaigns/campaigns-list-page.tsx",
   "components/shared/product-empty-state.tsx",
   "components/shared/person-avatar.tsx",
+  "components/settings/settings-page-header.tsx",
 ] as const;
 
 export const FOCUS_RING_FILES = [

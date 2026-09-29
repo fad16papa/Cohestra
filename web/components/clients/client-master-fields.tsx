@@ -265,7 +265,7 @@ export function ClientMasterFields({
 
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="master-phone-local">Contact number</Label>
-              <div className="flex overflow-hidden rounded-lg border border-input bg-background shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
+              <div className="flex overflow-hidden rounded-lg border border-input bg-background shadow-xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring">
                 <span className="flex min-h-9 items-center border-r border-input bg-muted/40 px-3 text-sm text-text-muted-warm">
                   {getPhonePrefixLabel(form.phoneCountry)}
                 </span>
@@ -394,7 +394,7 @@ export function ClientMasterFields({
                 rows={4}
                 value={form.notes}
                 disabled={isSaving}
-                className="flex min-h-[5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+                className="flex min-h-[5rem] w-full rounded-lg border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 onChange={(event) =>
                   setForm((current) => ({ ...current, notes: event.target.value }))
                 }
