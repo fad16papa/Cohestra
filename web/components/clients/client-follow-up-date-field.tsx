@@ -128,7 +128,7 @@ export const ClientFollowUpDateField = forwardRef<
           Next follow-up
         </h3>
         {due ? (
-          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+          <span className="rounded-full bg-surface-warning px-2 py-0.5 text-xs font-medium text-text-warning">
             Due
           </span>
         ) : null}

@@ -276,7 +276,7 @@ export function SegmentPicker({
               </span>
             ) : null}
             {totalCount - readyCount > 0 ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border-control bg-surface-warning px-3 py-1 text-xs font-medium text-text-warning">
                 <MailX className="size-3.5" aria-hidden />
                 {totalCount - readyCount} missing email
               </span>

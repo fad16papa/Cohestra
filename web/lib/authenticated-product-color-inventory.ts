@@ -150,6 +150,13 @@ function classify(
         note: "Success status chrome still on Tailwind emerald. Not a proven <4.5 fail; prefer --text-success / --surface-success.",
       };
     }
+    if (/text-amber-700/.test(snippet)) {
+      return {
+        disposition: "unresolved-failure",
+        ownerStory: "38.4",
+        note: "text-amber-700 on warning chrome is a proven <4.5:1 fail; use --text-warning / --surface-warning.",
+      };
+    }
     if (/text-amber-\d|text-yellow-\d/.test(snippet)) {
       return {
         disposition: "passing-intentionally-retained",

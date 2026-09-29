@@ -7,6 +7,7 @@ import {
   loginOperatorSession,
   seedOperatorAuthSession,
   waitForOperatorWorkspace,
+  waitForReportsContent,
 } from "./helpers/registration-e2e-api";
 
 function luminance(rgb: string): number {
@@ -223,6 +224,14 @@ test("authenticated product viewports when live stack is available", async ({ pa
         await expect(page.locator('a[href^="/activities/"][href*="-"]').first()).toBeVisible({
           timeout: 30_000,
         });
+      } else if (route.name === "reports") {
+        await waitForReportsContent(page);
+      } else if (route.name === "campaigns") {
+        await expect(page.getByRole("heading", { name: "Campaigns", level: 2 })).toBeVisible({
+          timeout: 30_000,
+        });
+      } else if (route.name === "settings") {
+        await expect(page.locator("h1.font-heading")).toBeVisible({ timeout: 30_000 });
       }
       await page.screenshot({
         path: path.join(evidenceDir, `${route.name}-1440x900.png`),

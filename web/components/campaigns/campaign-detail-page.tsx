@@ -187,7 +187,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                           "min-w-0 truncate text-sm",
                           hasEmail
                             ? "text-text-muted-warm"
-                            : "text-amber-700 dark:text-amber-300"
+                            : "text-text-warning"
                         )}
                       >
                         {hasEmail ? recipient.email : "No email on file"}

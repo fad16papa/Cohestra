@@ -132,6 +132,8 @@ export const MIGRATED_PRODUCT_FILES = [
   "components/dashboard/activity-calendar-popout.tsx",
   "components/clients/client-relationship-timeline.tsx",
   "components/clients/client-follow-up-date-field.tsx",
+  "components/clients/client-follow-up-panel.tsx",
+  "components/clients/client-profile-header.tsx",
   "components/clients/client-registration-history.tsx",
   "components/clients/client-outreach-log-card.tsx",
   "components/clients/client-lead-queue-header.tsx",
@@ -146,6 +148,7 @@ export const MIGRATED_PRODUCT_FILES = [
   "components/billing/checkout-page-content.tsx",
   "components/layouts/admin-command-palette.tsx",
   "components/campaigns/segment-picker.tsx",
+  "components/campaigns/additional-recipients-picker.tsx",
   "components/campaigns/email-composer.tsx",
   "components/campaigns/campaign-detail-page.tsx",
   "components/campaigns/campaign-compose-page.tsx",
@@ -159,6 +162,7 @@ export const MIGRATED_PRODUCT_FILES = [
 export const FOCUS_RING_FILES = [
   "components/ui/button.tsx",
   "components/ui/input.tsx",
+  "components/ui/filter-select.tsx",
   "components/auth/login-form.tsx",
   "components/auth/register-form.tsx",
   "components/auth/forgot-password-form.tsx",
@@ -167,9 +171,16 @@ export const FOCUS_RING_FILES = [
   "components/team/invite-accept-page-client.tsx",
   "components/settings/change-password-section.tsx",
   "components/settings/help-support-section.tsx",
+  "components/settings/notifications-section.tsx",
+  "components/billing/in-app-billing-panel.tsx",
+  "components/website/website-branding-section.tsx",
 ] as const;
 
 export const TRANSLUCENT_RING_PATTERN = /ring-ring\/(?:30|50)/;
+
+/** Focus-visible/within rings must be opaque semantic --ring or --destructive. */
+export const TRANSLUCENT_FOCUS_RING_PATTERN =
+  /focus-(?:visible|within):ring-(?:ring|primary|lagoon|destructive)\/\d+/;
 
 export const AUTHENTICATED_PRODUCT_GLOBS = [
   "components/auth",
@@ -196,6 +207,7 @@ const FORBIDDEN_IN_MIGRATED = [
   /\btext-primary(?!-foreground)\b/,
   /\btext-red-\d{2,3}\b/,
   /\btext-emerald-\d{2,3}\b/,
+  /\btext-amber-700\b/,
   /\bbg-red-\d{2,3}\b/,
   /\bbg-emerald-\d{2,3}\b/,
   /\bborder-red-\d{2,3}\b/,

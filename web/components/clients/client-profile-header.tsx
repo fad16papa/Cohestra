@@ -171,7 +171,7 @@ export function ClientProfileHeader({
               </h2>
               <LeadStatusBadge status={client.leadStatus} />
               {followUpDue ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+                <span className="inline-flex items-center gap-1 rounded-full bg-surface-warning px-2 py-0.5 text-xs font-medium text-text-warning">
                   <CalendarClock className="size-3" aria-hidden />
                   Follow-up due
                 </span>

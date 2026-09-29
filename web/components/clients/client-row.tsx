@@ -202,7 +202,7 @@ export function ClientRow({
             {client.fullName}
           </span>
           {followUpDue ? (
-            <span className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[0.65rem] font-medium text-amber-700 dark:text-amber-300">
+            <span className="shrink-0 rounded-full bg-surface-warning px-1.5 py-0.5 text-[0.65rem] font-medium text-text-warning">
               Due
             </span>
           ) : null}

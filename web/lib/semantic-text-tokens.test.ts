@@ -8,6 +8,7 @@ import {
   MIGRATED_PRODUCT_FILES,
   FOCUS_RING_FILES,
   TRANSLUCENT_RING_PATTERN,
+  TRANSLUCENT_FOCUS_RING_PATTERN,
   assertMigratedFileHasNoForbiddenClasses,
   buildCompositeRingRows,
   buildContrastMatrixRows,
@@ -207,6 +208,16 @@ describe("focus-ring composite contract", () => {
     const hits = FOCUS_RING_FILES.flatMap((file) => {
       const source = fs.readFileSync(path.join(webRoot, file), "utf8");
       return TRANSLUCENT_RING_PATTERN.test(source) ? [`${file} has translucent ring-ring`] : [];
+    });
+    expect(hits).toEqual([]);
+  });
+
+  it("does not keep translucent focus rings on contracted focus surfaces", () => {
+    const hits = FOCUS_RING_FILES.flatMap((file) => {
+      const source = fs.readFileSync(path.join(webRoot, file), "utf8");
+      return TRANSLUCENT_FOCUS_RING_PATTERN.test(source)
+        ? [`${file} has translucent focus ring`]
+        : [];
     });
     expect(hits).toEqual([]);
   });

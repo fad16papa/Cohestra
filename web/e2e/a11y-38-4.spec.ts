@@ -8,6 +8,7 @@ import {
   loginOperatorSession,
   seedOperatorAuthSession,
   waitForOperatorWorkspace,
+  waitForReportsContent,
 } from "./helpers/registration-e2e-api";
 
 const evidenceDir = path.resolve(
@@ -128,7 +129,7 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
     { name: "dashboard", path: "/dashboard", ready: /good (morning|afternoon|evening)/i },
     { name: "clients", path: "/clients", ready: /clients/i },
     { name: "activities", path: "/activities", ready: /activities/i },
-    { name: "reports", path: "/reports", ready: /reports|analytics/i },
+    { name: "reports", path: "/reports", ready: null },
     { name: "website-entitled", path: "/dashboard/website", ready: null },
     { name: "settings", path: "/settings", ready: /settings|appearance|workspace/i },
     { name: "billing", path: "/settings/billing", ready: /billing|plan|invoice/i },
@@ -166,6 +167,8 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
         await expect(page.getByRole("heading", { name: "Activities", level: 2 })).toBeVisible({
           timeout: 30_000,
         });
+      } else if (route.name === "reports") {
+        await waitForReportsContent(page);
       } else if (route.ready) {
         await expect(page.getByText(route.ready).first()).toBeVisible({ timeout: 30_000 });
       }
@@ -347,6 +350,7 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
     });
     await open("/reports");
     await expect(page.locator("html")).toHaveClass(/dark/);
+    await waitForReportsContent(page);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "reports-1440x900-dark.png"),
       fullPage: true,
