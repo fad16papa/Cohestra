@@ -212,7 +212,7 @@ export function BrandAccentSection({ embedded = false }: { embedded?: boolean })
               <Sparkles className="size-4 text-primary" aria-hidden />
               Saved — toast accent preview
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-text-link">
               <span
                 className="inline-flex size-6 items-center justify-center rounded-full bg-primary/15"
                 aria-hidden

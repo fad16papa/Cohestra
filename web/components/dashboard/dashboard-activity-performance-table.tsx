@@ -138,7 +138,7 @@ export function DashboardActivityPerformanceTable({
                     <td className="max-w-[14rem] px-4 py-2 font-medium text-text-warm sm:max-w-none sm:px-5">
                       <Link
                         href={`/activities/${item.activityId}`}
-                        className="block truncate hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="block truncate hover:text-text-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         title={item.activityName}
                       >
                         {item.activityName}

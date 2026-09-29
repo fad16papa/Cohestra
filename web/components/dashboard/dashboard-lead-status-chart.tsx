@@ -157,7 +157,7 @@ export function DashboardLeadStatusChart({
                     className="inline-block size-2.5 shrink-0 rounded-full"
                     style={{ backgroundColor: slice.color }}
                   />
-                  <span className="min-w-0 flex-1 truncate text-sm text-text-warm group-hover:text-primary">
+                  <span className="min-w-0 flex-1 truncate text-sm text-text-warm group-hover:text-text-link">
                     {slice.label}
                   </span>
                   <span className="shrink-0 tabular-nums text-sm font-semibold text-text-warm">
@@ -216,7 +216,7 @@ export function DashboardLeadStatusChart({
                       className="inline-block size-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: slice.color }}
                     />
-                    <span className="truncate group-hover:text-primary">{slice.label}</span>
+                    <span className="truncate group-hover:text-text-link">{slice.label}</span>
                   </span>
                   <span className="flex shrink-0 items-baseline gap-2">
                     <span className="tabular-nums text-sm font-semibold text-text-warm">

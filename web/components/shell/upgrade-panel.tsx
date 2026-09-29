@@ -87,7 +87,7 @@ function IntervalToggle({
           >
             {value === "monthly" ? "Monthly" : "Yearly"}
             {value === "annual" ? (
-              <span className="ml-1.5 text-xs font-normal text-primary">{ANNUAL_SAVINGS_LABEL}</span>
+              <span className="ml-1.5 text-xs font-normal text-text-link">{ANNUAL_SAVINGS_LABEL}</span>
             ) : null}
           </button>
         );
@@ -195,7 +195,7 @@ function ProOnlyPlanCard({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="text-xl font-semibold text-text-warm">{plan.name}</h3>
-              <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-primary">
+              <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-text-link">
                 Unlocks this feature
               </p>
             </div>

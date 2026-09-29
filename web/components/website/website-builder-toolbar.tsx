@@ -99,7 +99,7 @@ export function WebsiteBuilderToolbar({
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-text-muted-warm sm:text-sm">
-            <Globe className="size-3.5 shrink-0 text-primary" aria-hidden />
+            <Globe className="size-3.5 shrink-0 text-text-link" aria-hidden />
             <span className="break-all">{siteDisplayUrl}</span>
           </div>
         </div>

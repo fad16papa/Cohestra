@@ -50,7 +50,7 @@ function InsightCard({ insight }: { insight: IntelligenceInsight }) {
         </Link>
       </div>
       <details className="mt-3">
-        <summary className="cursor-pointer text-sm text-primary">
+        <summary className="cursor-pointer text-sm text-text-link">
           Why this is true
         </summary>
         <ul className="mt-2 space-y-1.5">

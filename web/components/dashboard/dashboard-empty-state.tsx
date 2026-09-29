@@ -41,7 +41,7 @@ export function DashboardEmptyState() {
           aria-hidden
           className="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full bg-accent/20 blur-3xl"
         />
-        <p className="relative flex items-center gap-2 text-sm font-medium text-primary">
+        <p className="relative flex items-center gap-2 text-sm font-medium text-text-link">
           <Sparkles className="size-4" aria-hidden />
           {copy.eyebrow}
         </p>

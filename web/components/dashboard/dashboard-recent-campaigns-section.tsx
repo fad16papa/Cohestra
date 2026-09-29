@@ -80,7 +80,7 @@ export function DashboardRecentCampaignsSection() {
         </div>
         <Link
           href="/campaigns"
-          className="text-sm font-medium text-primary hover:text-primary/80"
+          className="text-sm font-medium text-text-link hover:underline"
         >
           View all campaigns
         </Link>
@@ -91,7 +91,7 @@ export function DashboardRecentCampaignsSection() {
       ) : campaigns.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border-warm px-6 py-10 text-center text-sm text-text-muted-warm">
           No campaigns sent yet.{" "}
-          <Link href="/campaigns/new" className="font-medium text-primary hover:underline">
+          <Link href="/campaigns/new" className="font-medium text-text-link hover:underline">
             Compose your first campaign
           </Link>
           .

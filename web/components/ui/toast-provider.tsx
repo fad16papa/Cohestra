@@ -168,7 +168,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 "mt-0.5 shrink-0",
                 isError && "size-5 text-text-danger",
                 isSuccess && "size-4 text-text-success",
-                !isError && !isSuccess && "size-4 text-primary"
+                !isError && !isSuccess && "size-4 text-text-link"
               )}
               aria-hidden
             />
@@ -193,7 +193,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   "shrink-0 rounded-md px-2 py-1 text-sm font-medium motion-press",
                   isError
                     ? "text-text-danger hover:bg-danger/10"
-                    : "text-primary hover:bg-primary/10"
+                    : "text-text-link hover:bg-primary/10"
                 )}
                 onClick={() => {
                   toast.onAction?.();

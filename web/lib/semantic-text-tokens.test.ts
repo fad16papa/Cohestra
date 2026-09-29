@@ -59,11 +59,20 @@ describe("semantic text tokens", () => {
     expect(resolveColor("--text-accent", light)).not.toBe(resolveColor("--gold", light));
   });
 
-  it("keeps dark primary fill distinct from decorative dark lagoon", () => {
+  it("keeps dark primary as fill-only and uses text-link for dark text", () => {
     expect(resolveColor("--primary", dark)).toBe("#0f7369");
     expect(resolveColor("--lagoon", dark)).toBe("#12877d");
     expect(resolveColor("--text-link", dark)).toBe("#159a90");
     expect(resolveColor("--text-warning", light)).toBe("#8a5c00");
+    expect(
+      contrastRatio(resolveColor("--primary", dark), resolveColor("--paper", dark))
+    ).toBeLessThan(4.5);
+    expect(
+      contrastRatio(resolveColor("--text-on-lagoon", dark), resolveColor("--primary", dark))
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrastRatio(resolveColor("--text-link", dark), resolveColor("--paper-warm", dark))
+    ).toBeGreaterThanOrEqual(4.5);
   });
 
   it("locks registration preview to light lagoon rather than inheriting dark lagoon", () => {

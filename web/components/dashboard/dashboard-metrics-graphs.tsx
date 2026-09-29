@@ -113,7 +113,7 @@ export function DashboardMetricsGraphs({
             <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
               {item.label}
             </dt>
-            <dd className="mt-1.5 tabular-nums text-2xl font-semibold text-text-warm motion-press group-hover:text-primary">
+            <dd className="mt-1.5 tabular-nums text-2xl font-semibold text-text-warm motion-press group-hover:text-text-link">
               {item.displayValue}
             </dd>
             <dd className="mt-1 text-xs text-text-muted-warm">{item.caption}</dd>

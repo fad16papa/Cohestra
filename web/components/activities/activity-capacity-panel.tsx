@@ -154,7 +154,7 @@ export function ActivityCapacityPanel({
           {" · "}
           <Link
             href={`/activities/${activity.id}?tab=registrations`}
-            className="font-normal text-primary underline-offset-2 hover:underline"
+            className="font-normal text-text-link underline-offset-2 hover:underline"
           >
             View list
           </Link>

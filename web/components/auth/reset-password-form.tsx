@@ -178,7 +178,7 @@ function ResetPasswordFormContent() {
           type="button"
           onClick={() => void handleResend()}
           disabled={isResending}
-          className="font-medium text-primary hover:underline disabled:opacity-60"
+          className="font-medium text-text-link hover:underline disabled:opacity-60"
         >
           {isResending ? "Sending…" : "Resend reset code"}
         </button>

@@ -78,7 +78,7 @@ export function DashboardTodayStrip({
                 {item.label}
               </span>
               <ArrowRight
-                className="size-3.5 text-text-muted-warm transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                className="size-3.5 text-text-muted-warm transition-transform group-hover:translate-x-0.5 group-hover:text-text-link"
                 aria-hidden
               />
             </Link>

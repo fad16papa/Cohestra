@@ -167,7 +167,7 @@ export function SettingsRightRail({
                 <li>
                   <Link
                     href="/settings/team"
-                    className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                    className="inline-flex items-center gap-1 font-medium text-text-link hover:underline"
                   >
                     Team settings
                     <ExternalLink className="size-3.5" aria-hidden />
@@ -177,7 +177,7 @@ export function SettingsRightRail({
                   <li>
                     <Link
                       href="/settings/billing"
-                      className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                      className="inline-flex items-center gap-1 font-medium text-text-link hover:underline"
                     >
                       Billing & plan
                       <ExternalLink className="size-3.5" aria-hidden />

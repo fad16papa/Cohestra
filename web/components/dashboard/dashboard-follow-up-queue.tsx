@@ -175,7 +175,7 @@ export function DashboardFollowUpQueue() {
             >
               <PersonAvatar name={client.fullName} size="sm" />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-text-warm group-hover:text-primary">
+                <p className="truncate font-medium text-text-warm group-hover:text-text-link">
                   {client.fullName}
                 </p>
                 <p className="truncate text-xs text-text-muted-warm">
