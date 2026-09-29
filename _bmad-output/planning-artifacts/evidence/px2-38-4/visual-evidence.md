@@ -1,7 +1,7 @@
 # Story 38.4 visual evidence
 
 Generated: 2026-09-29
-HEAD at capture: correction HEAD after sampled-fill and axe settle (see git log)
+HEAD at capture: `d6146add` (Reports content wait + remaining opaque rings / Due chips)
 
 ## Viewport matrix
 
@@ -69,9 +69,22 @@ Captured: login (email focused), Dashboard (first control focused), Settings (fi
 
 See `focus-ring-composite.md`. Opaque `--ring` ≥3:1; `ring-ring/30` and `/50` fail composite and are forbidden on authenticated product inputs plus auth/shared primitives.
 
+Correction also replaced remaining **focus-visible / focus-within** translucent rings on:
+
+- `FilterSelect` (`ring-primary/30` → `ring-ring`)
+- Button destructive / invalid (`ring-destructive/20` → `ring-destructive`)
+- Input invalid (`ring-destructive/20` → `ring-destructive`)
+- Notifications checkbox (`ring-primary/40` → `ring-ring`)
+- Billing phone shell (`ring-lagoon/20` → `ring-ring`)
+- Website branding invalid (`ring-destructive/30` → `ring-destructive`)
+
+Public registration and marketing `ring-ring/50` remain outside Story 38.4.
+
 ## 5–6. Reports `text-lagoon` and real-DOM axe
 
 See `reports-text-lagoon-inventory.md` (all migrated) and `axe-routes.json` / `axe-login.json`.
+
+Reports 1440 / dark captures are the **populated report** (heading level 2 + filters + charts), not the “Loading report…” shell. Axe `/reports` ran after the same wait.
 
 No serious/critical **color-contrast** on migrated scope. Other axe IDs (table roles, extra `<main>`, Form Studio listbox, Calendar `button-name`) are **38.5 / 38.6 / Form Studio composition** — not token work.
 

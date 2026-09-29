@@ -114,7 +114,7 @@ Auth/admin stone and gold-as-text; dashboard/website/settings status chrome. Exa
 - [x] TypeScript, production build, targeted lint, affected Vitest
 - [x] Course correction: opaque focus rings (composite ≥3:1); Reports `text-lagoon` → `text-text-link`; remaining `text-primary` text/links → `text-text-link`
 - [x] Live evidence: Basic Website lock, client profile, forced-colors, axe routes, dark Dashboard + Reports
-- [ ] Fresh independent `bmad-code-review` on correction HEAD
+- [x] Fresh independent `bmad-code-review` on correction HEAD (after Reports content wait)
 
 ## Non-goals
 
@@ -188,6 +188,7 @@ Grok 4.6 (orchestration, architecture, accessibility, correction, review). Compo
 
 - Previous independent review of `d49be978` APPROVE is **not** final acceptance; required surfaces were deferred.
 - Correction (Grok 4.6): opaque `--ring` on auth/shared primitives and authenticated product inputs; Reports `text-lagoon` migrated; remaining authenticated `text-primary` text/links/icons → `text-text-link`; sampled-fill headroom for muted/link/primary/status/WhatsApp/Viber; tenant accent 8:1 white-on-fill; forced-colors mapping; live axe (no color-contrast serious/critical); Basic Website lock + client profile + dark Dashboard/Reports evidence.
+- Follow-up (Grok 4.6): wait for populated Reports (h2 + no “Loading report…”) before axe/screenshots; remaining translucent **focus** rings → opaque `--ring` / `--destructive`; Due/warning chips off `text-amber-700` onto `--text-warning` / `--surface-warning`. Composer was not used.
 
 ### File List
 
@@ -213,3 +214,4 @@ Grok 4.6 (orchestration, architecture, accessibility, correction, review). Compo
 - 2026-09-29: Review correction — F1–F7 token/contrast/test/evidence patches.
 - 2026-09-29: Course correction — deferred AC12 coverage (focus-ring composite, Reports lagoon, Basic Website, client profile, forced-colors, axe, inventory).
 - 2026-09-29: Sampled-fill / axe loop — darker semantic fills, opaque product rings, live axe green for color-contrast, evidence complete. Pending independent review on this HEAD.
+- 2026-09-29: Reports content wait + remaining translucent focus rings + Due chips (`d6146add`). Fresh independent review follows this evidence refresh.

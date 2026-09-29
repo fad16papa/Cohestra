@@ -29,6 +29,7 @@ Login and invite already used opaque `ring-2 ring-ring`. Correction migrated:
 - `input`
 - change-password field shell and help-support textarea
 - authenticated product copies of the input primitive (clients, activities/Form Studio, campaigns, reports filters, website builder fields, dashboard calendar popout)
+- FilterSelect, notifications checkbox, billing phone shell, website branding invalid, Button/Input invalid and destructive focus
 
 `*` base outline uses opaque `outline-ring` (not `outline-ring/50`).
 
