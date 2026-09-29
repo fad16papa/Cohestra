@@ -22,7 +22,28 @@ type AxeViolation = {
   nodes: Array<{ html: string; target: string[]; summary: string }>;
 };
 
+async function settleForAxe(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    const enter = document.querySelector("[data-admin-route-transition]");
+    if (!enter) {
+      return;
+    }
+    const deadline = Date.now() + 1200;
+    while (Date.now() < deadline) {
+      const opacity = getComputedStyle(enter).opacity;
+      const running = enter
+        .getAnimations({ subtree: false })
+        .some((animation) => animation.playState === "running");
+      if (opacity === "1" && !running) {
+        return;
+      }
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    }
+  });
+}
+
 async function runAxe(page: Page): Promise<AxeViolation[]> {
+  await settleForAxe(page);
   // Inactive controls are WCAG 1.4.3 exempt. Base UI may keep tabindex on
   // aria-disabled submits; exclude them rather than treating opacity-50 as a
   // semantic-token failure.
@@ -88,7 +109,7 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
   request,
 }) => {
   test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
-  test.setTimeout(180_000);
+  test.setTimeout(240_000);
   fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
 
   const origin = process.env.PUBLIC_BASE_URL ?? "http://localhost:3000";
@@ -131,6 +152,20 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
       await open(route.path);
       if (route.name === "website-entitled") {
         await expect(page.locator("#website-builder-toolbar")).toBeVisible({ timeout: 30_000 });
+      } else if (route.name === "campaigns") {
+        await expect(page.getByRole("heading", { name: "Campaigns", level: 2 })).toBeVisible({
+          timeout: 30_000,
+        });
+      } else if (route.name === "settings") {
+        await expect(page.locator("h1.font-heading")).toBeVisible({ timeout: 30_000 });
+      } else if (route.name === "clients") {
+        await expect(page.getByRole("heading", { name: "Clients", level: 2 })).toBeVisible({
+          timeout: 30_000,
+        });
+      } else if (route.name === "activities") {
+        await expect(page.getByRole("heading", { name: "Activities", level: 2 })).toBeVisible({
+          timeout: 30_000,
+        });
       } else if (route.ready) {
         await expect(page.getByText(route.ready).first()).toBeVisible({ timeout: 30_000 });
       }
@@ -150,15 +185,20 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
     await page.setViewportSize({ width: 1440, height: 900 });
     await open("/activities");
     await expect(page.getByText(/activities/i).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/activities/i).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('a[href^="/activities/"][href*="-"]').first()).toBeVisible({
+      timeout: 30_000,
+    });
     const activityHref = await page.locator("a[href]").evaluateAll((elements) => {
       const href = elements
         .map((element) => element.getAttribute("href"))
         .find(
           (value) =>
-            value &&
+            Boolean(value) &&
             /\/activities\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(
-              value
-            )
+              value ?? ""
+            ) &&
+            !value?.includes("/communities/")
         );
       return href ?? null;
     });
@@ -168,19 +208,16 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
       await page.goto(`${origin}${activityHref}`, { waitUntil: "domcontentloaded" });
       await waitForOperatorWorkspace(page);
       const formTab = page.getByRole("tab", { name: "Form", exact: true });
-      if ((await formTab.count()) === 0) {
-        gaps.push("form-studio: activity detail loaded but no Form tab found");
-      } else {
-        await formTab.click();
-        await expect(formTab).toHaveAttribute("aria-selected", "true");
-        const violations = await runAxe(page);
-        axeReport.push({
-          route: `${activityHref}#form-studio`,
-          viewport: "1440x900",
-          violations,
-          colorContrastSeriousOrCritical: contrastFailures(violations),
-        });
-      }
+      await expect(formTab).toBeVisible({ timeout: 30_000 });
+      await formTab.click();
+      await expect(formTab).toHaveAttribute("aria-selected", "true");
+      const violations = await runAxe(page);
+      axeReport.push({
+        route: `${activityHref}#form-studio`,
+        viewport: "1440x900",
+        violations,
+        colorContrastSeriousOrCritical: contrastFailures(violations),
+      });
     }
   } catch (error) {
     gaps.push(`form-studio: ${error instanceof Error ? error.message : String(error)}`);
@@ -193,10 +230,13 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
     await expect(page.getByRole("heading", { name: "Clients", level: 2 })).toBeVisible({
       timeout: 30_000,
     });
+    await expect
+      .poll(async () => page.locator('a[href*="/clients/"]').count(), { timeout: 30_000 })
+      .toBeGreaterThan(0);
     clientHref = await page.locator("a[href]").evaluateAll((elements) => {
       const href = elements
         .map((element) => element.getAttribute("href"))
-        .find((value) => value && /\/clients\/[0-9a-f-]{36}/i.test(value));
+        .find((value) => value && /^\/clients\/[0-9a-f-]{36}(?:\?.*)?$/i.test(value));
       return href ?? null;
     });
     if (!clientHref) {
@@ -293,24 +333,27 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
 
   try {
     await seedOperatorAuthSession(page, session);
-    await page.addInitScript(() => {
-      localStorage.setItem("cohestra-theme-operator", "dark");
-    });
     await page.setViewportSize({ width: 1440, height: 900 });
     await open("/dashboard");
     await expect(page.getByText(/good (morning|afternoon|evening)/i)).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.locator("html")).toHaveClass(/dark/);
+    await page.getByRole("button", { name: /appearance:/i }).click();
+    await page.getByRole("radio", { name: /^dark$/i }).click();
+    await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 15_000 });
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "dashboard-1440x900-dark.png"),
       fullPage: true,
     });
     await open("/reports");
+    await expect(page.locator("html")).toHaveClass(/dark/);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "reports-1440x900-dark.png"),
       fullPage: true,
     });
+    await page.getByRole("button", { name: /appearance:/i }).click();
+    await page.getByRole("radio", { name: /^light$/i }).click();
+    await expect(page.locator("html")).not.toHaveClass(/dark/, { timeout: 15_000 });
   } catch (error) {
     gaps.push(`dark-product: ${error instanceof Error ? error.message : String(error)}`);
   }

@@ -25,8 +25,13 @@ Login and invite already used opaque `ring-2 ring-ring`. Correction migrated:
 
 - register / forgot-password / reset-password field shells
 - verify-email (shared `Input`)
-- `button` (`ring-2 ring-ring` plus `ring-offset-2 ring-offset-background` so the halo contrasts against primary fill)
+- `button` (`ring-2 ring-ring` plus `ring-offset-2 ring-offset-background` so the halo contrasts against primary fill; default variant uses `border-primary` so the transparent-border halo does not wash sampled contrast)
 - `input`
-- change-password field shell and help-support textarea (same translucent failure class)
+- change-password field shell and help-support textarea
+- authenticated product copies of the input primitive (clients, activities/Form Studio, campaigns, reports filters, website builder fields, dashboard calendar popout)
 
-Disabled controls keep `disabled:pointer-events-none` / `disabled:opacity-50` and are not in the tab order when native `disabled` is set.
+`*` base outline uses opaque `outline-ring` (not `outline-ring/50`).
+
+Disabled controls keep `disabled:pointer-events-none` / `disabled:opacity-50`. Axe color-contrast excludes `[disabled]`, `[aria-disabled="true"]`, and `[data-disabled]` (WCAG 1.4.3 inactive).
+
+Public registration and marketing `ring-ring/50` remain outside Story 38.4 (Epic 35 / frozen marketing) unless a proven WCAG fail is filed on those surfaces.

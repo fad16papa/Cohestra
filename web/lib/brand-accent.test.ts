@@ -32,9 +32,10 @@ describe("brand accent overlay contrast", () => {
       for (const isDark of [false, true]) {
         const style = buildBrandAccentStyle(hex, isDark);
         expect(style).toBeDefined();
-        const primary = String(style?.["--primary"]);
-        const foreground = String(style?.["--primary-foreground"]);
-        const ring = String(style?.["--ring"]);
+        const vars = style as Record<string, string>;
+        const primary = String(vars["--primary"]);
+        const foreground = String(vars["--primary-foreground"]);
+        const ring = String(vars["--ring"]);
         expect(contrast(foreground, primary), `${hex} ${isDark ? "dark" : "light"}`).toBeGreaterThanOrEqual(
           8
         );
