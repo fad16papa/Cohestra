@@ -1,3 +1,11 @@
+## Deferred from: code review of 38-4-semantic-tokens-and-accessible-text.md (2026-09-29)
+
+- Dark `--text-warning` on `--surface-warning` is not a named contrast-matrix row. Measured 6.50:1 (passes 4.5). Optional matrix completeness only.
+- Forced-colors map does not remap warning/status/WhatsApp fills. Listed login/Dashboard/form/button/link/focus/selected controls use system colors and are perceivable in captures. Owner: 38.5 if high-contrast status chrome is later in scope.
+- Selected-state decorative `ring-primary/30` (UpgradePanel, calendar open) is not a focus ring. Outside the 38.4 `--ring` contract.
+- Remaining Tailwind `text-amber-800/900/950` warning chrome is `passing-intentionally-retained` (not a proven <4.5 fail).
+- Clients `role="row"`, Form Studio `listbox`, extra `<main>`, Calendar `button-name` are not color-contrast. Owner: 38.5 / 38.6 / Form Studio composition.
+
 ## Deferred from: Story 38.4 open — DigitalOcean deploy on `441c0b1f` (2026-09-23)
 
 - Classification **C** — pre-existing deployment configuration or credential failure. Run [35876247049](https://github.com/fad16papa/Cohestra/actions/runs/35876247049) job `Deploy to DigitalOcean droplet`. `appleboy/ssh-action` failed with `Error: missing server host`; `INPUT_HOST`, `INPUT_USERNAME`, `INPUT_KEY` empty. Same non-required workflow failed on later `52c1c990` (run 35877916377). Not an application regression from 38.3. Production droplet deploy is **not verified**. Do not mutate infrastructure or credentials in 38.4.

@@ -214,4 +214,18 @@ Grok 4.6 (orchestration, architecture, accessibility, correction, review). Compo
 - 2026-09-29: Review correction — F1–F7 token/contrast/test/evidence patches.
 - 2026-09-29: Course correction — deferred AC12 coverage (focus-ring composite, Reports lagoon, Basic Website, client profile, forced-colors, axe, inventory).
 - 2026-09-29: Sampled-fill / axe loop — darker semantic fills, opaque product rings, live axe green for color-contrast, evidence complete. Pending independent review on this HEAD.
-- 2026-09-29: Reports content wait + remaining translucent focus rings + Due chips (`d6146add`). Fresh independent review follows this evidence refresh.
+- 2026-09-29: Reports content wait + remaining translucent focus rings + Due chips (`d6146add`). Evidence recapture `acab5c45`.
+- 2026-09-29: Independent `bmad-code-review` of HEAD `acab5c45` — no unresolved BLOCKER/MAJOR. MINOR items below pass WCAG or are outside 38.4. Story stays in-progress for product-owner pre-merge review. PR #346 remains draft.
+
+### Review Findings
+
+Independent review of HEAD `acab5c45` (workflow `bmad-code-review`; roles Blind Hunter / Edge Case Hunter / Acceptance Auditor; model Grok 4.6). Mandatory Code Review Loop in force. Composer was not used.
+
+Acceptance Auditor: correction ACs 1–10 **PASS**. Reports 1440/dark are populated. No serious/critical color-contrast. No 38.5/38.6/nav/backend expansion.
+
+- [x] [Review][Defer] Dark `--text-warning` on `--surface-warning` is not a named `CONTRAST_PAIRS` row [`web/lib/semantic-text-tokens.ts`] — deferred, measured **6.50:1** (passes 4.5). Owner: optional matrix completeness on a later 38.4 docs-only follow-up; not a contrast failure.
+- [x] [Review][Defer] Forced-colors map does not remap `--text-warning` / status / WhatsApp fills [`web/styles/brand-tokens.css`] — deferred, listed controls (text, link, button, focus, selected nav) use Canvas/Highlight/LinkText and are perceivable in captures. Owner: Story 38.5 if high-contrast status chrome is in scope later.
+- [x] [Review][Defer] Selected-state decorative `ring-primary/30` (UpgradePanel, calendar open) remains [`web/components/shell/upgrade-panel.tsx`] — deferred, not `focus-visible` / `focus-within`. Passes as decoration. Owner: not 38.4 focus-ring contract.
+- [x] [Review][Defer] Remaining Tailwind `text-amber-800/900/950` warning chrome [`activity-past-due-badge.tsx`, conflict alert, billing copy] — deferred, classified `passing-intentionally-retained`; not a proven <4.5 fail. Prefer `--text-warning` if a later story restyles warning chrome.
+- [x] [Review][Defer] Clients `role="row"` / Form Studio `listbox` / extra `<main>` / Calendar `button-name` axe IDs [`axe-routes.json`] — deferred, not color-contrast. Owner: **38.5 / 38.6 / Form Studio composition**.
+
