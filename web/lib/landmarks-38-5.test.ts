@@ -35,9 +35,12 @@ describe("Story 38.5 landmark source contract (supplement)", () => {
   it("defines a unique skip target id and never hides the skip link with display:none", () => {
     expect(SKIP_SOURCE).toContain('export const MAIN_CONTENT_ID = "main-content"');
     expect(SKIP_SOURCE).toContain("Skip to main content");
-    expect(SKIP_SOURCE).toContain("sr-only");
+    expect(SKIP_SOURCE).toContain("-translate-y-");
+    expect(SKIP_SOURCE).toContain("focus:translate-y-0");
+    expect(SKIP_SOURCE).toContain("whitespace-nowrap");
     expect(SKIP_SOURCE).not.toMatch(/display:\s*none/);
     expect(SKIP_SOURCE).not.toMatch(/\bhidden\b/);
+    expect(SKIP_SOURCE).not.toMatch(/\bsr-only\b/);
     expect(SKIP_SOURCE).toContain("preventDefault");
     expect(SKIP_SOURCE).toContain("target.focus");
   });

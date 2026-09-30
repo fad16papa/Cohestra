@@ -144,6 +144,20 @@ async function keyboardSkipOnce(page: Page): Promise<void> {
   await expect(page.locator("#main-content")).toBeFocused();
 }
 
+async function setOperatorAppearance(
+  page: Page,
+  preference: "light" | "dark"
+): Promise<void> {
+  await page.getByRole("button", { name: /appearance:/i }).click();
+  await page.getByRole("radio", { name: new RegExp(`^${preference}$`, "i") }).click();
+  await page.keyboard.press("Escape");
+  if (preference === "dark") {
+    await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 15_000 });
+  } else {
+    await expect(page.locator("html")).not.toHaveClass(/dark/, { timeout: 15_000 });
+  }
+}
+
 test.describe("Story 38.5 — landmarks, headings, skip link", () => {
   test.describe.configure({ mode: "serial" });
 
@@ -179,11 +193,7 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await openAuthed(page, session, "/dashboard", origin);
-    await page.evaluate(() => {
-      localStorage.setItem("cohestra-theme-operator", "light");
-    });
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await waitForOperatorWorkspace(page);
+    await setOperatorAppearance(page, "light");
     await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible({
       timeout: 30_000,
     });
@@ -297,21 +307,27 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
       });
     }
 
-    await page.evaluate(() => {
-      localStorage.setItem("cohestra-theme-operator", "dark");
-    });
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
-    await page.locator("body").focus();
+    await setOperatorAppearance(page, "dark");
+    await page.evaluate(() => {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement) {
+        active.blur();
+      }
+      const body = document.body;
+      body.setAttribute("tabindex", "-1");
+      body.focus();
+      body.removeAttribute("tabindex");
+    });
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
+    await expect(page.locator("html")).toHaveClass(/dark/);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "skip-focused-dark-1440x900.png"),
     });
-    await page.evaluate(() => {
-      localStorage.setItem("cohestra-theme-operator", "light");
-    });
+    await setOperatorAppearance(page, "light");
 
     fs.writeFileSync(
       path.join(evidenceDir, "axe-route-matrix.json"),

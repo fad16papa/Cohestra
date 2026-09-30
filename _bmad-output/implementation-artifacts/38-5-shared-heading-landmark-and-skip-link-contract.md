@@ -84,7 +84,7 @@ Accepted skip target is `id="main-content"` (PO contract). DESIGN.md `#main` is 
 
 ### Skip link
 
-Component: `web/components/layouts/admin-skip-link.tsx`. First focusable in `DashboardShellBody` (before sidebar). `href="#main-content"`. On activate: `preventDefault` + `main.focus()`. Never `hidden` / `display:none`. `sr-only` until `:focus`. Focused: `fixed` top-left, `z` above sticky header, `--ring` ≥3:1, `--text-link` / `--paper`. Light and dark. No motion beyond existing 160ms color/shadow if any; respect `prefers-reduced-motion`.
+Component: `web/components/layouts/admin-skip-link.tsx`. First focusable in `DashboardShellBody` (before sidebar). `href="#main-content"`. On activate: `preventDefault` + `main.focus()`. Never `hidden` / `display:none`. Off-screen via `fixed` + `-translate-y` until `:focus` (not `sr-only`, which fights nowrap and can clip). Focused: `top-3 left-3`, `z` above sticky header, `--ring` ≥3:1, `--text-link` / `--paper`. Light and dark. No motion beyond existing 160ms color/shadow if any; respect `prefers-reduced-motion`.
 
 ### Embedded preview
 
