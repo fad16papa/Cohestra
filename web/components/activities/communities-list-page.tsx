@@ -162,7 +162,7 @@ export function CommunitiesListPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-display-sm text-text-warm">Communities</h2>
+        <h1 className="text-display-sm text-text-warm">Communities</h1>
         <p className="mt-1 text-sm text-text-muted-warm">
           Create communities and review leads captured from activities in each community.
         </p>

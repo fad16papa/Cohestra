@@ -23,7 +23,7 @@ export function PageHeader({
       )}
     >
       <div className="min-w-0">
-        <h2 className="text-display-sm text-text-warm">{title}</h2>
+        <h1 className="text-display-sm text-text-warm">{title}</h1>
         {description ? (
           <p className="mt-1 max-w-2xl text-sm text-text-muted-warm">{description}</p>
         ) : null}

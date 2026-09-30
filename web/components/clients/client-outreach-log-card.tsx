@@ -280,12 +280,12 @@ export function ClientOutreachLogCard({
     >
       <div className="mb-3 flex items-center gap-2">
         <MessageCircle className="size-4 text-text-link" aria-hidden />
-        <h3
+        <h2
           id="client-outreach-log-heading"
           className="text-sm font-semibold text-text-warm"
         >
           Log outreach
-        </h3>
+        </h2>
       </div>
 
       <p className="mb-3 text-xs text-text-muted-warm">

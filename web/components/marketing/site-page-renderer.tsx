@@ -69,6 +69,11 @@ type SitePageRendererProps = {
   isPreview?: boolean;
   showPreviewBanner?: boolean;
   /**
+   * When true, this renderer is mounted inside another document (Website Studio,
+   * cinema DemoClub). Use a region + h2 so the host page keeps one main/h1.
+   */
+  embedded?: boolean;
+  /**
    * Cinema / DemoClub: hide Cohestra operator chrome (theme toggle, QR hint)
    * so the public site reads as the club’s own front of house.
    */
@@ -166,12 +171,14 @@ function HeroSection({
   previewMode,
   clubFacingOnly = false,
   cinemaFold = false,
+  embedded = false,
 }: {
   section: SiteSection;
   siteName: string;
   previewMode: SitePreviewLayoutMode;
   clubFacingOnly?: boolean;
   cinemaFold?: boolean;
+  embedded?: boolean;
 }) {
   const rawEyebrow = typeof section.props.eyebrow === "string" ? section.props.eyebrow : "";
   // Cinema: brand lives in the header — skip duplicate eyebrow.
@@ -196,6 +203,7 @@ function HeroSection({
       ? localHeroImageUrl
       : null;
   const onDark = Boolean(heroImageUrl);
+  const TitleTag = embedded ? "h2" : "h1";
 
   return (
     <MarketingCinematicHero
@@ -226,7 +234,7 @@ function HeroSection({
             {eyebrow}
           </MarketingEyebrow>
         ) : null}
-        <h1
+        <TitleTag
           className={
             cinemaFold
               ? cn(
@@ -259,7 +267,7 @@ function HeroSection({
           style={marketingHeroEnterStyle(eyebrow ? 70 : 0)}
         >
           {headline}
-        </h1>
+        </TitleTag>
         {description ? (
           <p
             className={
@@ -698,19 +706,23 @@ function FooterSection({
   section,
   previewMode,
   cinemaFold = false,
+  embedded = false,
 }: {
   section: SiteSection;
   previewMode: SitePreviewLayoutMode;
   cinemaFold?: boolean;
+  embedded?: boolean;
 }) {
   const poweredByLabel =
     typeof section.props.poweredByLabel === "string"
       ? section.props.poweredByLabel
       : "Cohestra";
 
+  const FooterTag = embedded ? "div" : "footer";
+
   return (
-    <footer
-      id="site-footer"
+    <FooterTag
+      {...(embedded ? {} : { id: "site-footer" })}
       className={previewLayoutClass(previewMode, {
         full: cn(
           "relative z-10 border-t border-border-warm/60 bg-background/70 backdrop-blur-md",
@@ -760,7 +772,7 @@ function FooterSection({
           </p>
         )}
       </div>
-    </footer>
+    </FooterTag>
   );
 }
 
@@ -774,6 +786,7 @@ function renderSection(
     isPreview: boolean;
     clubFacingOnly: boolean;
     cinemaFold: boolean;
+    embedded: boolean;
   }
 ) {
   let node: ReactNode = null;
@@ -793,6 +806,7 @@ function renderSection(
           previewMode={context.previewMode}
           clubFacingOnly={context.clubFacingOnly}
           cinemaFold={context.cinemaFold}
+          embedded={context.embedded}
         />
       );
       break;
@@ -849,6 +863,7 @@ function renderSection(
           section={section}
           previewMode={context.previewMode}
           cinemaFold={context.cinemaFold}
+          embedded={context.embedded}
         />
       );
       break;
@@ -871,6 +886,7 @@ export function SitePageRenderer({
   site,
   isPreview = false,
   showPreviewBanner,
+  embedded = false,
   clubFacingOnly = false,
   cinemaFold = false,
 }: SitePageRendererProps) {
@@ -928,6 +944,8 @@ export function SitePageRenderer({
   const { scrolled: headerScrolled, anchorRef } = useMarketingHeaderScroll(hasHeroBanner && !cinemaFold);
   // Cinema fold is dense — keep solid club chrome so nav stays readable over highlights.
   const headerOverHero = !cinemaFold && hasHeroBanner && !headerScrolled;
+  const BodyTag = embedded ? "div" : "main";
+  const HeaderTag = embedded ? "div" : "header";
 
   const sectionContext = {
     siteName: published.siteName,
@@ -937,6 +955,7 @@ export function SitePageRenderer({
     isPreview,
     clubFacingOnly,
     cinemaFold,
+    embedded,
   };
 
   return (
@@ -948,7 +967,7 @@ export function SitePageRenderer({
       {!hasHeroBanner ? <SiteMarketingBackground /> : null}
       {shouldShowPreviewBanner ? <SitePreviewBanner /> : null}
 
-      <header
+      <HeaderTag
         className={cn(
           "sticky top-0 z-50 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300",
           headerOverHero
@@ -1077,9 +1096,9 @@ export function SitePageRenderer({
           ) : null}
         </div>
         </div>
-      </header>
+      </HeaderTag>
 
-      <main
+      <BodyTag
         className={previewLayoutClass(previewMode, {
           full: cn(
             "relative z-10 flex w-full min-w-0 flex-1 flex-col",
@@ -1102,6 +1121,7 @@ export function SitePageRenderer({
               : "mx-auto max-w-7xl px-10 pb-24 pt-14"
           ),
         })}
+        {...(embedded ? { role: "region" as const, "aria-label": "Website preview" } : {})}
       >
         {hasHero
           ? heroBlock.map((section) => renderSection(section, sectionContext))
@@ -1141,7 +1161,7 @@ export function SitePageRenderer({
             {trailingSections.map((section) => renderSection(section, sectionContext))}
           </div>
         )}
-      </main>
+      </BodyTag>
 
       {footerBlock.map((section) => renderSection(section, sectionContext))}
     </div>

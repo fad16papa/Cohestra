@@ -154,17 +154,17 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
       if (route.name === "website-entitled") {
         await expect(page.locator("#website-builder-toolbar")).toBeVisible({ timeout: 30_000 });
       } else if (route.name === "campaigns") {
-        await expect(page.getByRole("heading", { name: "Campaigns", level: 2 })).toBeVisible({
+        await expect(page.getByRole("heading", { name: "Campaigns", level: 1 })).toBeVisible({
           timeout: 30_000,
         });
       } else if (route.name === "settings") {
         await expect(page.locator("h1.font-heading")).toBeVisible({ timeout: 30_000 });
       } else if (route.name === "clients") {
-        await expect(page.getByRole("heading", { name: "Clients", level: 2 })).toBeVisible({
+        await expect(page.getByRole("heading", { name: "Clients", level: 1 })).toBeVisible({
           timeout: 30_000,
         });
       } else if (route.name === "activities") {
-        await expect(page.getByRole("heading", { name: "Activities", level: 2 })).toBeVisible({
+        await expect(page.getByRole("heading", { name: "Activities", level: 1 })).toBeVisible({
           timeout: 30_000,
         });
       } else if (route.name === "reports") {
@@ -230,7 +230,7 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
   try {
     await page.setViewportSize({ width: 1440, height: 900 });
     await open("/clients");
-    await expect(page.getByRole("heading", { name: "Clients", level: 2 })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Clients", level: 1 })).toBeVisible({
       timeout: 30_000,
     });
     await expect

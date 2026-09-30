@@ -121,12 +121,12 @@ export const ClientFollowUpDateField = forwardRef<
     >
       <div className="mb-3 flex items-center gap-2">
         <CalendarClock className="size-4 text-text-link" aria-hidden />
-        <h3
+        <h2
           id="client-follow-up-date-heading"
           className="text-sm font-semibold text-text-warm"
         >
           Next follow-up
-        </h3>
+        </h2>
         {due ? (
           <span className="rounded-full bg-surface-warning px-2 py-0.5 text-xs font-medium text-text-warning">
             Due

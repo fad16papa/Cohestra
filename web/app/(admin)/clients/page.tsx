@@ -14,7 +14,14 @@ function ClientsPageContent() {
 
 export default function ClientsPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-text-muted-warm">Loading clients…</p>}>
+    <Suspense
+      fallback={
+        <div className="space-y-2">
+          <h1 className="text-display-sm text-text-warm">Clients</h1>
+          <p className="text-sm text-text-muted-warm">Loading clients…</p>
+        </div>
+      }
+    >
       <ClientsPageContent />
     </Suspense>
   );

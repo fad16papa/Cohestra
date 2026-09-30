@@ -17,6 +17,7 @@ type ActivityHeroProps = {
   logoAssetId?: string | null;
   preset?: RegistrationThemePreset;
   showHeroImage?: boolean;
+  titleHeadingLevel?: 1 | 2;
 };
 
 export function ActivityHero({
@@ -28,7 +29,9 @@ export function ActivityHero({
   logoAssetId = null,
   preset = "classic",
   showHeroImage = true,
+  titleHeadingLevel = 1,
 }: ActivityHeroProps) {
+  const TitleTag = titleHeadingLevel === 2 ? "h2" : "h1";
   const resolvedHeroImageUrl = useMemo(
     () => resolveHeroImageUrl(heroImageUrl),
     [heroImageUrl]
@@ -105,7 +108,7 @@ export function ActivityHero({
           {communityLabel}
         </p>
       ) : null}
-      <h1 className="text-public-hero text-text-warm">{name}</h1>
+      <TitleTag className="text-public-hero text-text-warm">{name}</TitleTag>
       <div className="space-y-1 text-sm text-text-muted-warm">
         {schedule ? <p>{schedule}</p> : null}
         {location ? <p>{location}</p> : null}

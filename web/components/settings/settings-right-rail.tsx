@@ -101,6 +101,7 @@ export function SettingsRightRail({
 
   return (
     <aside
+      aria-label="Settings context"
       className={cn(
         "flex shrink-0 flex-col border-border-warm/80 bg-card/50 transition-[width] duration-200",
         collapsed ? "w-14" : "w-72 xl:w-80",

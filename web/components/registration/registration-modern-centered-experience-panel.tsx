@@ -28,6 +28,7 @@ type RegistrationModernCenteredExperiencePanelProps = {
   isRegistrationFull?: boolean;
   surfaceStyle?: ModernCenteredSurfaceStyle;
   className?: string;
+  titleHeadingLevel?: 1 | 2;
 };
 
 export function RegistrationModernCenteredExperiencePanel({
@@ -44,7 +45,9 @@ export function RegistrationModernCenteredExperiencePanel({
   isRegistrationFull = false,
   surfaceStyle = "modern",
   className,
+  titleHeadingLevel = 1,
 }: RegistrationModernCenteredExperiencePanelProps) {
+  const TitleTag = titleHeadingLevel === 2 ? "h2" : "h1";
   const tokens = modernCenteredStyleTokens(surfaceStyle);
   const resolvedHeroImageUrl = useMemo(
     () => resolveHeroImageUrl(heroImageUrl),
@@ -95,7 +98,7 @@ export function RegistrationModernCenteredExperiencePanel({
         <p className={tokens.communityLabel}>{communityLabel}</p>
       ) : null}
 
-      <h1 className={tokens.title}>{name}</h1>
+      <TitleTag className={tokens.title}>{name}</TitleTag>
 
       <RegistrationActivityMetadata
         schedule={schedule}

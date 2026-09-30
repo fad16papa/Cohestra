@@ -386,6 +386,7 @@ development_status:
   38-2-basic-website-entitlement-api-behavior: done
   38-3-e2e-tenant-and-theme-isolation: done
   38-4-semantic-tokens-and-accessible-text: done
+  38-5-shared-heading-landmark-and-skip-link-contract: in-progress
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

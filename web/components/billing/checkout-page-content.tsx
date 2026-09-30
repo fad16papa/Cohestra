@@ -339,12 +339,18 @@ function CheckoutContent() {
   ]);
 
   if (handoffPending || status === "loading" || (billingLoading && status === "authenticated")) {
-    return <p className="p-8 text-sm text-text-muted-warm">Loading checkout…</p>;
+    return (
+      <div className="space-y-2 p-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-text-warm">Checkout</h1>
+        <p className="text-sm text-text-muted-warm">Loading checkout…</p>
+      </div>
+    );
   }
 
   if (status !== "authenticated") {
     return (
       <div className="mx-auto max-w-lg space-y-4 p-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-text-warm">Checkout</h1>
         <p className="text-sm text-text-muted-warm">Sign in to continue to checkout.</p>
         <Link href="/login" className={cn(buttonVariants(), "inline-flex")}>
           Sign in
@@ -819,7 +825,14 @@ function CheckoutContent() {
 
 export function CheckoutPageContent() {
   return (
-    <Suspense fallback={<p className="p-8 text-sm text-text-muted-warm">Loading checkout…</p>}>
+    <Suspense
+      fallback={
+        <div className="space-y-2 p-8">
+          <h1 className="text-2xl font-semibold tracking-tight text-text-warm">Checkout</h1>
+          <p className="text-sm text-text-muted-warm">Loading checkout…</p>
+        </div>
+      }
+    >
       <CheckoutContent />
     </Suspense>
   );

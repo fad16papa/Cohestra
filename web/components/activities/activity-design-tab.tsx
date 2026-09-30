@@ -172,7 +172,7 @@ export function ActivityDesignTab({
     <div className="space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-section text-text-warm">Registration design</h3>
+          <h2 className="text-section text-text-warm">Registration design</h2>
           <p className="mt-0.5 text-sm text-text-muted-warm">
             Configure experience, brand, and layout presets. Preview updates as you edit — save
             when ready.
@@ -191,9 +191,9 @@ export function ActivityDesignTab({
         <div className="space-y-8 min-w-0">
           <section className="space-y-4 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
                 Experience
-              </h4>
+              </h3>
               <p className="mt-1 text-xs text-text-muted-warm">
                 Layout, flow, and style for the public registration page.
               </p>
@@ -208,9 +208,9 @@ export function ActivityDesignTab({
 
           <section className="space-y-4 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
                 Design tokens
-              </h4>
+              </h3>
               <p className="mt-1 text-xs text-text-muted-warm">
                 Typography, fields, button, and form surface — applied on Preview and public
                 registration.
@@ -226,9 +226,9 @@ export function ActivityDesignTab({
 
           <section className="space-y-4 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
                 Advanced layouts
-              </h4>
+              </h3>
               <p className="mt-1 text-xs text-text-muted-warm">
                 Legacy presets (card, immersive hero, compact). These override the Experience
                 layout above.
@@ -281,9 +281,9 @@ export function ActivityDesignTab({
 
           <section className="space-y-4 rounded-xl border border-border-warm bg-card p-4 sm:p-5">
             <div>
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-text-muted-warm">
                 Brand
-              </h4>
+              </h3>
               <p className="mt-1 text-xs text-text-muted-warm">
                 Community inherit, accent, and hero overrides.
               </p>

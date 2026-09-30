@@ -78,6 +78,14 @@ describe("admin route motion integration", () => {
     expect(LAYOUT_SOURCE).not.toContain("dangerouslySetInnerHTML");
   });
 
+  it("owns a single skip target on a stable main landmark", () => {
+    expect(LAYOUT_SOURCE).toContain("AdminSkipLink");
+    expect(LAYOUT_SOURCE).toContain("MAIN_CONTENT_ID");
+    expect(LAYOUT_SOURCE).toMatch(/id=\{MAIN_CONTENT_ID\}/);
+    expect(LAYOUT_SOURCE).toMatch(/tabIndex=\{-1\}/);
+    expect(LAYOUT_SOURCE).not.toMatch(/<main[\s\S]*key=\{pathname\}/);
+  });
+
   it("does not wrap Form Studio mode or activity tabs in the route primitive", () => {
     expect(FORM_STUDIO_SOURCE).toContain('useState<FormStudioMode>("build")');
     expect(FORM_STUDIO_SOURCE).not.toContain("AdminRouteTransition");

@@ -24,6 +24,7 @@ export function MarketingDemoWebsiteMount() {
             showPreviewBanner={false}
             clubFacingOnly
             cinemaFold
+            embedded
           />
         </MarketingDemoWebsiteStudioShell>
       </div>

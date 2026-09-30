@@ -177,7 +177,7 @@ export async function waitForOperatorWorkspace(
 export async function waitForReportsContent(
   page: import("@playwright/test").Page
 ): Promise<void> {
-  await expect(page.getByRole("heading", { name: "Reports", level: 2 })).toBeVisible({
+  await expect(page.getByRole("heading", { name: "Reports", level: 1 })).toBeVisible({
     timeout: 30_000,
   });
   await expect(page.getByText("Loading report…")).toHaveCount(0, { timeout: 30_000 });

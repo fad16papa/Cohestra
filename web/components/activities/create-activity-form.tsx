@@ -175,7 +175,7 @@ export function CreateActivityForm() {
         <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
           Step 1 of 3
         </p>
-        <h2 className="mt-1 text-display-sm text-text-warm">Activity details</h2>
+        <h1 className="mt-1 text-display-sm text-text-warm">Activity details</h1>
         <p className="mt-2 text-sm text-text-muted-warm">
           Save the basics as a draft. Form configuration and publishing come next.
         </p>

@@ -105,6 +105,7 @@ export function CommunityDetailPage({ id }: CommunityDetailPageProps) {
         <Link href="/activities/communities" className={cn(buttonVariants({ variant: "outline" }))}>
           Back to communities
         </Link>
+        <h1 className="text-display-sm text-text-warm">Community</h1>
         <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
@@ -113,7 +114,12 @@ export function CommunityDetailPage({ id }: CommunityDetailPageProps) {
   }
 
   if (!community) {
-    return <p className="text-sm text-text-muted-warm">Loading community…</p>;
+    return (
+      <div className="space-y-4">
+        <h1 className="text-display-sm text-text-warm">Community</h1>
+        <p className="text-sm text-text-muted-warm">Loading community…</p>
+      </div>
+    );
   }
 
   return (
@@ -125,7 +131,7 @@ export function CommunityDetailPage({ id }: CommunityDetailPageProps) {
         >
           ← Back to communities
         </Link>
-        <h2 className="mt-3 text-display-sm text-text-warm">{community.name}</h2>
+        <h1 className="mt-3 text-display-sm text-text-warm">{community.name}</h1>
         <p className="mt-1 text-sm text-text-muted-warm">
           {community.leadCount} lead{community.leadCount === 1 ? "" : "s"} ·{" "}
           {community.activityCount} activit{community.activityCount === 1 ? "y" : "ies"}

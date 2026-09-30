@@ -85,6 +85,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
         <Link href="/campaigns" className={cn(buttonVariants({ variant: "outline" }))}>
           Back to campaigns
         </Link>
+        <h1 className="text-display-sm text-text-warm">Campaign</h1>
         <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
@@ -93,7 +94,12 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
   }
 
   if (!campaign) {
-    return <p className="text-sm text-text-muted-warm">Loading campaign…</p>;
+    return (
+      <div className="space-y-4">
+        <h1 className="text-display-sm text-text-warm">Campaign</h1>
+        <p className="text-sm text-text-muted-warm">Loading campaign…</p>
+      </div>
+    );
   }
 
   const recipientCount = campaign.results.length;
@@ -107,7 +113,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
         >
           ← Back to campaigns
         </Link>
-        <h2 className="mt-3 text-display-sm text-text-warm">{campaign.subject}</h2>
+        <h1 className="mt-3 text-display-sm text-text-warm">{campaign.subject}</h1>
         <p className="mt-1 text-sm text-text-muted-warm">
           Sent {formatCampaignSentAt(campaign.sentAt)} · {campaign.sentCount} sent ·{" "}
           {campaign.failedCount} failed · {campaign.skippedCount} skipped ·{" "}
@@ -117,7 +123,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
 
       <div className="space-y-6">
         <div className="rounded-xl border border-border-warm bg-card p-4">
-          <h3 className="text-sm font-semibold text-text-warm">Message</h3>
+          <h2 className="text-sm font-semibold text-text-warm">Message</h2>
           {campaign.bodyFormat === "html" ? (
             <div
               className="mt-3 text-sm leading-relaxed text-text-muted-warm [&_a]:text-text-link [&_a]:underline [&_img]:my-3 [&_img]:max-h-80 [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
@@ -130,7 +136,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
 
         <div className="overflow-hidden rounded-xl border border-border-warm bg-card">
           <div className="border-b border-border-warm bg-muted/20 px-4 py-3">
-            <h3 className="text-sm font-semibold text-text-warm">Recipients</h3>
+            <h2 className="text-sm font-semibold text-text-warm">Recipients</h2>
             <p className="mt-1 text-xs text-text-muted-warm">
               Everyone targeted by this campaign and their delivery outcome.
               {recipientCount > RECIPIENT_VISIBLE_ROWS

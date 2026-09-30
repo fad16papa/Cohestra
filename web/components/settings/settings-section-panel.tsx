@@ -14,7 +14,10 @@ export function SettingsSectionPanel({ section, children }: SettingsSectionPanel
   return (
     <article className="w-full space-y-6">
       <header className="space-y-2 border-b border-border-warm/80 pb-5">
-        <h2 className="font-heading text-xl font-semibold tracking-tight text-text-warm sm:text-2xl">
+        <h2
+          id="settings-active-section-heading"
+          className="font-heading text-xl font-semibold tracking-tight text-text-warm sm:text-2xl"
+        >
           {section.label}
         </h2>
         <p className="max-w-2xl text-sm leading-relaxed text-text-muted-warm">

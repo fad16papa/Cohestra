@@ -83,6 +83,7 @@ export function PublicRegistrationOpen({
   const [submitted, setSubmitted] = useState(false);
   const isEmbed = variant === "embed";
   const isPreview = variant === "preview";
+  const titleHeadingLevel: 1 | 2 = isPreview ? 2 : 1;
   const [registrationNumber, setRegistrationNumber] = useState<string | null>(null);
   const [confirmationEmailSent, setConfirmationEmailSent] = useState(false);
   const [confirmationEmail, setConfirmationEmail] = useState<string | null>(null);
@@ -144,6 +145,7 @@ export function PublicRegistrationOpen({
       logoAssetId={logoAssetId}
       preset={preset}
       showHeroImage={!submitted}
+      titleHeadingLevel={titleHeadingLevel}
     />
   );
 
@@ -231,6 +233,7 @@ export function PublicRegistrationOpen({
       formSection={<FormSection className="space-y-5">{formBody}</FormSection>}
       footer={registrationWebsiteFooter}
       showRegistrationHeading={!submitted}
+      titleHeadingLevel={titleHeadingLevel}
     />
   );
 
@@ -295,6 +298,7 @@ export function PublicRegistrationOpen({
           registrationCount={registrationCount}
           maxRegistrants={maxRegistrants}
           isRegistrationFull={isRegistrationFull}
+          titleHeadingLevel={titleHeadingLevel}
         />
         <FormSection className="space-y-5 rounded-xl border border-border-warm/80 bg-card/50 px-4 py-5 sm:px-5">
           {formBody}
@@ -330,6 +334,7 @@ export function PublicRegistrationOpen({
           registrationCount={registrationCount}
           maxRegistrants={maxRegistrants}
           isRegistrationFull={isRegistrationFull}
+          titleHeadingLevel={titleHeadingLevel}
         />
         <div className="flex min-w-0 flex-col gap-5">
           <FormSection className="space-y-5">{formBody}</FormSection>

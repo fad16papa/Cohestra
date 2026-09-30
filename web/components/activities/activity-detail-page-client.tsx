@@ -133,12 +133,16 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
 
   if (loadError) {
     return (
-      <ProductErrorState
-        message={loadError}
-        onRetry={() => window.location.reload()}
-        backHref="/activities"
-        backLabel="Back to activities"
-      />
+      <div className="space-y-4">
+        <ActivityBackLink />
+        <h1 className="text-display-sm text-text-warm">Activity</h1>
+        <ProductErrorState
+          message={loadError}
+          onRetry={() => window.location.reload()}
+          backHref="/activities"
+          backLabel="Back to activities"
+        />
+      </div>
     );
   }
 
@@ -146,6 +150,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     return (
       <div className="space-y-4">
         <ActivityBackLink />
+        <h1 className="text-display-sm text-text-warm">Activity</h1>
         <p className="text-sm text-text-muted-warm">Loading activity…</p>
       </div>
     );
@@ -165,7 +170,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
 
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
         <div>
-          <h2 className="text-display-sm text-text-warm">{activity.name}</h2>
+          <h1 className="text-display-sm text-text-warm">{activity.name}</h1>
           <p className="mt-1 text-sm text-text-muted-warm">
             {activity.communityLabel} · {activity.category}
           </p>

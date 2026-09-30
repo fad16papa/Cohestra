@@ -774,7 +774,7 @@ export function ActivityFormTab({
           <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
             Form setup
           </p>
-          <h3 className="text-section text-text-warm">Intro copy</h3>
+          <h2 className="text-section text-text-warm">Intro copy</h2>
           <p className="mt-0.5 text-sm text-text-muted-warm">
             Optional welcome text shown above the registration fields on the public page.
           </p>
@@ -802,7 +802,7 @@ export function ActivityFormTab({
 
       <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3">
         <div>
-          <h3 className="text-section text-text-warm">Closed message</h3>
+          <h2 className="text-section text-text-warm">Closed message</h2>
           <p className="mt-0.5 text-sm text-text-muted-warm">
             Optional copy when the form is unavailable (full, paused, or ended). A reason chip
             still shows for clarity.
@@ -835,7 +835,7 @@ export function ActivityFormTab({
             <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
               Website connection
             </p>
-            <h3 className="text-section text-text-warm">Tenant website link</h3>
+            <h2 className="text-section text-text-warm">Tenant website link</h2>
             <p className="mt-0.5 text-sm text-text-muted-warm">
               Optionally show a link to your Cohestra website on this registration page
               and confirmation screen. Registration still works through{" "}
@@ -883,7 +883,7 @@ export function ActivityFormTab({
 
       <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3">
         <div>
-          <h3 className="text-section text-text-warm">Close-at</h3>
+          <h2 className="text-section text-text-warm">Close-at</h2>
           <p className="mt-0.5 text-sm text-text-muted-warm">
             Optional date and time when the public form stops accepting registrations.
             Shown in your organization timezone.
@@ -924,7 +924,7 @@ export function ActivityFormTab({
             <p className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
               After registration
             </p>
-            <h3 className="text-section text-text-warm">Thank-you copy</h3>
+            <h2 className="text-section text-text-warm">Thank-you copy</h2>
             <p className="mt-0.5 text-sm text-text-muted-warm">
               Optional message on the success screen after submit. Use tokens like{" "}
               <code className="text-xs">{`{{full_name}}`}</code>.
@@ -967,7 +967,7 @@ export function ActivityFormTab({
       <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-section text-text-warm">Confirmation email</h3>
+            <h2 className="text-section text-text-warm">Confirmation email</h2>
             <p className="mt-0.5 text-sm text-text-muted-warm">
               Optional subject and closing message. Layout and hero stay on your registration
               theme.

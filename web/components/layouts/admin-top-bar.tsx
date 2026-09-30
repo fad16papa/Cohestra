@@ -40,7 +40,7 @@ export function AdminTopBar() {
           <AdminBreadcrumbs items={breadcrumbs} className="flex min-w-0" />
         ) : null}
         <div className="flex min-w-0 items-center gap-3">
-          <h1 className="truncate text-section text-text-warm">{pageTitle}</h1>
+          <p className="truncate text-section text-text-warm">{pageTitle}</p>
           {shell ? (
             <div className="flex min-w-0 items-center gap-1.5">
               <PlanBadge plan={shell.plan} />

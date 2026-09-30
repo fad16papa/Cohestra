@@ -1,3 +1,13 @@
+## Deferred from: code review of 38-5-shared-heading-landmark-and-skip-link-contract.md (2026-09-30)
+
+HEAD `58cfb4e2` (implementation `799d1173`). Independent re-review. No unresolved BLOCKER/MAJOR. No new defers; previous 38.5 defers reconfirmed.
+
+- Website Studio populated `h1` is `sr-only`; visible title remains toolbar `<p>`. AC 2 still one h1. Visible page-header primitive: Story **39.4**.
+- Mobile More dialog counted for unique main/skip only, not overlay focus trap. Owner: Story **38.6**.
+- Clients `role="row"` without grid/table parent still appears in axe `all`. Owner: Stories **40.3 / 43.5**.
+- Public embed layout (`web/app/embed/layout.tsx`) is a `div` with no `<main>`. Pre-existing iframe chrome. Standalone h1 retained (AC 7).
+- `DashboardShellBody` `useSearchParams` (pre-existing) can suspend without skip/main if a parent fallback omits them. Not observed in live-stack e2e.
+
 ## Deferred from: code review of 38-4-semantic-tokens-and-accessible-text.md (2026-09-29)
 
 - Dark `--text-warning` on `--surface-warning` is not a named contrast-matrix row. Measured 6.50:1 (passes 4.5). Optional matrix completeness only.

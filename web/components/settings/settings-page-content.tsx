@@ -133,13 +133,16 @@ export function SettingsPageContent() {
           showAdminLinks={isTenantAdmin}
         />
 
-        <main className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <section
+          className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8"
+          aria-labelledby="settings-active-section-heading"
+        >
           {activeSection ? (
             <SettingsSectionPanel section={activeSection}>
               {renderSectionContent(activeSection.id)}
             </SettingsSectionPanel>
           ) : null}
-        </main>
+        </section>
 
         <SettingsRightRail
           className="hidden border-l xl:flex"

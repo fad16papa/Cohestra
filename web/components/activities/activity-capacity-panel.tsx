@@ -130,13 +130,13 @@ export function ActivityCapacityPanel({
     >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3
+          <h2
             id="activity-capacity-heading"
             className="flex items-center gap-2 text-sm font-semibold text-text-warm"
           >
             <Users className="size-4 text-text-muted-warm" aria-hidden />
             Registration cap
-          </h3>
+          </h2>
           <p className="mt-1 max-w-2xl text-sm text-text-muted-warm">
             Optional limit for this activity. Leave blank for unlimited sign-ups here
             (monthly plan usage still applies).
