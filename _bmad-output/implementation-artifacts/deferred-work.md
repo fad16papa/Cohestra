@@ -1,6 +1,14 @@
+## Deferred from: story 38.5 close on main `8cde0fc0` (2026-09-30)
+
+PR #352 merged. PO accepted remaining MINORs without patching. No product, architecture, or security risk.
+
+- Skip `scrollIntoView` after `focus()` — sticky top bar / billing banner cover. Owner: later a11y polish / **43.5** if proven.
+- Embedded Website preview `div role="region"` vs native `<section>`. AC 6 native preference vs architecture table `div` + `h2`.
+- Settings `aria-labelledby` when `visibleSections` is empty. Unreachable for real tenant users.
+
 ## Deferred from: code review of 38-5-shared-heading-landmark-and-skip-link-contract.md (2026-09-30)
 
-HEAD `58cfb4e2` (implementation `799d1173`). Independent re-review. No unresolved BLOCKER/MAJOR. No new defers; previous 38.5 defers reconfirmed.
+HEAD `58cfb4e2` (implementation `799d1173`). Independent re-review. No unresolved BLOCKER/MAJOR. No new defers; previous 38.5 defers reconfirmed. Story closed on `main` `8cde0fc0`.
 
 - Website Studio populated `h1` is `sr-only`; visible title remains toolbar `<p>`. AC 2 still one h1. Visible page-header primitive: Story **39.4**.
 - Mobile More dialog counted for unique main/skip only, not overlay focus trap. Owner: Story **38.6**.
