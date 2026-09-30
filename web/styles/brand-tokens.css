@@ -287,6 +287,26 @@
     --muted-foreground: GrayText;
     --text-muted-warm: GrayText;
     --text-warm: CanvasText;
+    --popover: Canvas;
+    --popover-foreground: CanvasText;
+    --border-warm: ButtonText;
+  }
+
+  [data-slot="dialog-overlay"],
+  [data-slot="alert-dialog-overlay"],
+  [data-slot="sheet-overlay"] {
+    background-color: Canvas;
+    opacity: 1;
+  }
+
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"],
+  [data-slot="sheet-content"],
+  [data-slot="popover-content"] {
+    background-color: Canvas;
+    color: CanvasText;
+    border: 1px solid ButtonText;
+    box-shadow: none;
   }
 }
 

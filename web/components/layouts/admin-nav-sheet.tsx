@@ -1,5 +1,7 @@
 "use client";
 
+import type { RefObject } from "react";
+
 import { CohestraLogo } from "@/components/marketing/cohestra-logo";
 import { AdminNavFooter } from "@/components/layouts/admin-nav-footer";
 import { AdminNavLinks } from "@/components/layouts/admin-nav-links";
@@ -17,9 +19,14 @@ import {
 type AdminNavSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  restoreFocusRef?: RefObject<HTMLElement | null>;
 };
 
-export function AdminNavSheet({ open, onOpenChange }: AdminNavSheetProps) {
+export function AdminNavSheet({
+  open,
+  onOpenChange,
+  restoreFocusRef,
+}: AdminNavSheetProps) {
   const { shell } = useTenantShell();
 
   function closeSheet() {
@@ -28,7 +35,11 @@ export function AdminNavSheet({ open, onOpenChange }: AdminNavSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="flex w-[min(100vw-2rem,20rem)] flex-col p-0">
+      <SheetContent
+        side="left"
+        className="flex w-[min(100vw-2rem,20rem)] flex-col p-0"
+        finalFocus={restoreFocusRef}
+      >
         <SheetHeader className="shrink-0 border-b border-border-warm text-left">
           <SheetTitle className="flex items-center gap-2 text-section">
             <CohestraLogo href={null} showWordmark={false} size="sm" />

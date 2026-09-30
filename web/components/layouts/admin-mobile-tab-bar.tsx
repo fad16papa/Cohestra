@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useRef } from "react";
 import {
   CalendarDays,
   LayoutDashboard,
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { AdminNavSheet } from "@/components/layouts/admin-nav-sheet";
+import { useAdminShell } from "@/components/layouts/admin-shell-context";
 import { cn } from "@/lib/utils";
 
 type TabItem = {
@@ -60,7 +61,8 @@ const tabItems: TabItem[] = [
 
 export function AdminMobileTabBar() {
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { navSheetOpen, setNavSheetOpen } = useAdminShell();
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
 
   return (
     <>
@@ -71,16 +73,21 @@ export function AdminMobileTabBar() {
         <ul className="mx-auto flex max-w-lg items-stretch justify-around">
           {tabItems.map((item) => {
             const Icon = item.icon;
-            const active = item.opensMenu ? menuOpen || item.isActive(pathname) : item.isActive(pathname);
+            const active = item.opensMenu
+              ? navSheetOpen || item.isActive(pathname)
+              : item.isActive(pathname);
 
             if (item.opensMenu) {
               return (
                 <li key={item.key} className="flex-1">
                   <button
+                    ref={moreButtonRef}
                     type="button"
-                    onClick={() => setMenuOpen(true)}
+                    onClick={() => setNavSheetOpen(true)}
+                    aria-expanded={navSheetOpen}
+                    aria-haspopup="dialog"
                     className={cn(
-                      "flex w-full flex-col items-center gap-1 px-2 py-2.5 text-[11px] font-medium motion-press",
+                      "flex min-h-11 w-full flex-col items-center gap-1 px-2 py-2.5 text-[11px] font-medium motion-press",
                       active ? "text-text-link" : "text-text-muted-warm"
                     )}
                   >
@@ -110,7 +117,11 @@ export function AdminMobileTabBar() {
         </ul>
       </nav>
 
-      <AdminNavSheet open={menuOpen} onOpenChange={setMenuOpen} />
+      <AdminNavSheet
+        open={navSheetOpen}
+        onOpenChange={setNavSheetOpen}
+        restoreFocusRef={moreButtonRef}
+      />
     </>
   );
 }
