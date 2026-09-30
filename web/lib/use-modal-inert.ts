@@ -3,6 +3,8 @@
 import { useLayoutEffect } from "react";
 
 const holders = new Set<symbol>();
+/** Elements this utility made inert → original `inert` attribute value (`null` if it was absent). */
+const owned = new Map<Element, string | null>();
 let observer: MutationObserver | null = null;
 
 export function resetModalInertForTests(): void {
@@ -26,6 +28,33 @@ function isOverlayPortal(node: Element): boolean {
   );
 }
 
+function restoreOwned(element: Element): void {
+  if (!owned.has(element)) {
+    return;
+  }
+  const original = owned.get(element) ?? null;
+  owned.delete(element);
+  if (original == null) {
+    element.removeAttribute("inert");
+    return;
+  }
+  element.setAttribute("inert", original);
+}
+
+function claimBackground(element: Element): void {
+  if (owned.has(element)) {
+    if (!element.hasAttribute("inert")) {
+      element.setAttribute("inert", "");
+    }
+    return;
+  }
+  if (element.hasAttribute("inert")) {
+    return;
+  }
+  owned.set(element, null);
+  element.setAttribute("inert", "");
+}
+
 function ensureObserver(): void {
   if (observer || typeof MutationObserver === "undefined" || typeof document === "undefined") {
     return;
@@ -33,7 +62,7 @@ function ensureObserver(): void {
   observer = new MutationObserver(() => {
     syncModalInert();
   });
-  observer.observe(document.body, { childList: true });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
 function teardownObserverIfIdle(): void {
@@ -50,15 +79,25 @@ function syncModalInert(): void {
   }
 
   const lock = holders.size > 0;
-  for (const child of Array.from(document.body.children)) {
-    if (!lock) {
-      child.removeAttribute("inert");
-      continue;
+  if (!lock) {
+    for (const element of [...owned.keys()]) {
+      restoreOwned(element);
     }
+    return;
+  }
+
+  const bodyChildren = new Set(Array.from(document.body.children));
+  for (const element of [...owned.keys()]) {
+    if (!bodyChildren.has(element)) {
+      restoreOwned(element);
+    }
+  }
+
+  for (const child of bodyChildren) {
     if (isOverlayPortal(child)) {
-      child.removeAttribute("inert");
+      restoreOwned(child);
     } else {
-      child.setAttribute("inert", "");
+      claimBackground(child);
     }
   }
 }

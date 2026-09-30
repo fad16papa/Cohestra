@@ -21,6 +21,8 @@ Authenticated **modals** must use `dialog` | `alert-dialog` | `sheet`. Popovers 
 
 Base UI hides siblings with `aria-hidden` / `data-base-ui-inert` but does not set the HTML `inert` attribute. Chromium then Tabs from the last overlay control onto `document.body` on sparse dialogs (email preview has few tab stops). Shared Dialog / AlertDialog / Sheet roots call `useModalInert`, which refcounts and sets `inert` on non-portal `document.body` children so Tab wraps inside the overlay island.
 
+Ownership: the utility records only elements **it** made inert, with each element’s original `inert` attribute value. Release and test reset restore that original state. Pre-existing `inert` (another component or a11y feature) is never claimed and never stripped. Overlay portals are not force-cleared; if the utility had marked an empty wrapper inert, populating it with overlay content reclassifies the wrapper and restores only utility-owned inert. A `MutationObserver` watches `document.body` `childList` **including subtree** so a portal inserted empty and filled afterward is reclassified.
+
 
 Command palette (`AdminShellProvider`) and More sheet (`AdminMobileTabBar`) are **sibling** Dialog roots, not React-nested. Base UI Escape uses each root’s *own* nested count (`isTopmost`), so two open siblings would both treat Escape as theirs.
 

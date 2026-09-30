@@ -134,6 +134,8 @@ Independent BMAD review of `6cc2bb76` (Blind Hunter, Edge Case Hunter, Acceptanc
 - MAJOR: AC 14 dark/forced-colors screenshots missed the overlay — **patched** (clip + opacity wait + forced-colors computed styles + overlay `color-contrast` axe).
 - MINOR/NIT remaining: palette restore fallback when invoker unmounts; inert released at `open=false` during 160ms exit; More `finalFocus` if viewport crosses to desktop; browser Back does not dismiss sheet. Documented, not blocking this story.
 
+PO pre-merge (HEAD `93092c51`) MAJOR: `use-modal-inert` stripped every body child's `inert` on final close, including foreign/pre-existing attributes. **Patched** — owned-element map + original-value restore + subtree `childList` observer.
+
 ### Completion Notes List
 
 - Shared primitives: 160ms motion, AlertDialog real primitive, sheet 44px named Close, `useModalInert` + `trapOverlayTab`.
@@ -167,3 +169,4 @@ Independent BMAD review of `6cc2bb76` (Blind Hunter, Edge Case Hunter, Acceptanc
 
 - 2026-09-30: Created Story 38.6 after 38.5 close `955edce3`. Canonical D8 + backlog migrate palette/preview/QR.
 - 2026-09-30: Implemented overlay primitives, migrations, shell exclusivity, Vitest/Playwright specs.
+- 2026-09-30: PO pre-merge MAJOR — inert ownership. Track utility-owned `inert` only; restore original state; never strip foreign `inert`; observe subtree child additions.
