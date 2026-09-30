@@ -1,8 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Activity } from "@/lib/activities-api";
@@ -22,6 +31,7 @@ export function InsertQrModal({
   communityFilter,
   onInsert,
 }: InsertQrModalProps) {
+  const searchRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [altText, setAltText] = useState("Scan to register");
@@ -49,31 +59,30 @@ export function InsertQrModal({
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [activities, communityFilter, search]);
 
-  if (!open) {
-    return null;
-  }
-
   const selected = publishedActivities.find((activity) => activity.id === selectedId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="insert-qr-title"
-        className="w-full max-w-lg rounded-xl border border-border-warm bg-card p-5 shadow-xl"
-      >
-        <h3 id="insert-qr-title" className="text-sm font-semibold text-text-warm">
-          Insert activity QR code
-        </h3>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Choose a published activity. The registration QR will be embedded in your email.
-        </p>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) {
+          onClose();
+        }
+      }}
+    >
+      <DialogContent initialFocus={searchRef} className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle id="insert-qr-title">Insert activity QR code</DialogTitle>
+          <DialogDescription>
+            Choose a published activity. The registration QR will be embedded in your email.
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="mt-4 space-y-3">
+        <div className="space-y-3">
           <div className="space-y-1.5">
             <Label htmlFor="qr-activity-search">Search activities</Label>
             <Input
+              ref={searchRef}
               id="qr-activity-search"
               value={search}
               placeholder="Search by name or community…"
@@ -120,10 +129,10 @@ export function InsertQrModal({
           </div>
         </div>
 
-        <div className="mt-5 flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={onClose}>
+        <DialogFooter>
+          <DialogClose render={<Button type="button" variant="outline" />}>
             Cancel
-          </Button>
+          </DialogClose>
           <Button
             type="button"
             disabled={!selected}
@@ -135,8 +144,8 @@ export function InsertQrModal({
           >
             Insert QR
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,13 +1,37 @@
 "use client";
 
 import * as React from "react";
-import { Dialog as AlertDialogPrimitive } from "@base-ui/react/dialog";
+import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
 
 import { cn } from "@/lib/utils";
+import { useModalInert } from "@/lib/use-modal-inert";
+import { trapOverlayTab } from "@/lib/overlay-tab-trap";
 import { Button } from "@/components/ui/button";
 
-function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
+function AlertDialog({
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: AlertDialogPrimitive.Root.Props) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(Boolean(defaultOpen));
+  const isOpen = open ?? uncontrolledOpen;
+  useModalInert(Boolean(isOpen));
+
+  return (
+    <AlertDialogPrimitive.Root
+      data-slot="alert-dialog"
+      {...props}
+      {...(open !== undefined ? { open } : {})}
+      {...(defaultOpen !== undefined ? { defaultOpen } : {})}
+      onOpenChange={(next, eventDetails) => {
+        if (open === undefined) {
+          setUncontrolledOpen(next);
+        }
+        onOpenChange?.(next, eventDetails);
+      }}
+    />
+  );
 }
 
 function AlertDialogTrigger({ ...props }: AlertDialogPrimitive.Trigger.Props) {
@@ -30,7 +54,7 @@ function AlertDialogOverlay({
     <AlertDialogPrimitive.Backdrop
       data-slot="alert-dialog-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-black/20 transition-opacity duration-150 motion-reduce:transition-none data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs",
+        "fixed inset-0 z-50 bg-black/20 transition-opacity duration-[160ms] motion-reduce:transition-none data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs",
         className
       )}
       {...props}
@@ -40,6 +64,9 @@ function AlertDialogOverlay({
 
 function AlertDialogContent({
   className,
+  initialFocus,
+  finalFocus,
+  onKeyDown,
   ...props
 }: AlertDialogPrimitive.Popup.Props) {
   return (
@@ -47,11 +74,17 @@ function AlertDialogContent({
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Popup
         data-slot="alert-dialog-content"
+        initialFocus={initialFocus}
+        finalFocus={finalFocus}
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border border-border-warm bg-popover p-6 text-popover-foreground shadow-lg transition duration-200 ease-out motion-reduce:transition-none data-ending-style:duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0",
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl border border-border-warm bg-popover p-6 text-popover-foreground shadow-lg transition duration-[160ms] ease-out motion-reduce:transition-none data-ending-style:duration-[160ms] data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0",
           className
         )}
         {...props}
+        onKeyDown={(event) => {
+          trapOverlayTab(event);
+          onKeyDown?.(event);
+        }}
       />
     </AlertDialogPortal>
   );
@@ -116,7 +149,6 @@ function AlertDialogCancel({
           variant="outline"
           className={className}
           onPointerDown={(event) => {
-            // Prevent the synthesized click from reaching controls under the dialog.
             event.preventDefault();
             onPointerDown?.(event);
           }}

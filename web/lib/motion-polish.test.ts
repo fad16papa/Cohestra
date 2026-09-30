@@ -80,9 +80,10 @@ describe("37.3 motion polish contracts", () => {
     expect(CLIENT_PROFILE_SOURCE).toContain("motion-press");
   });
 
-  it("uses a faster overlay exit than enter", () => {
-    expect(DIALOG_SOURCE).toContain("duration-200");
-    expect(DIALOG_SOURCE).toContain("data-ending-style:duration-150");
+  it("uses 160ms local motion on dialog overlays", () => {
+    expect(DIALOG_SOURCE).toContain("duration-[160ms]");
+    expect(DIALOG_SOURCE).toContain("data-ending-style:duration-[160ms]");
+    expect(DIALOG_SOURCE).not.toContain("duration-200");
   });
 
   it("gates list skeletons and nav chrome on motion-safe tokens", () => {
@@ -100,9 +101,10 @@ describe("37.3 motion polish contracts", () => {
     expect(FILTER_SELECT_SOURCE).not.toContain("transition-[");
   });
 
-  it("keeps sheet overlay exit faster than enter", () => {
-    expect(SHEET_SOURCE).toContain("duration-200");
-    expect(SHEET_SOURCE).toContain("data-ending-style:duration-150");
+  it("uses 160ms local motion on sheet overlays", () => {
+    expect(SHEET_SOURCE).toContain("duration-[160ms]");
+    expect(SHEET_SOURCE).toContain("data-ending-style:duration-[160ms]");
+    expect(SHEET_SOURCE).not.toContain("duration-200");
   });
 
   it("keeps the calendar FAB off the mobile tab bar stacking layer", () => {

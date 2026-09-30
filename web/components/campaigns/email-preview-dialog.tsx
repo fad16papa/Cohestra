@@ -1,6 +1,15 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type EmailPreviewDialogProps = {
   open: boolean;
@@ -9,27 +18,23 @@ type EmailPreviewDialogProps = {
   onClose: () => void;
 };
 
-export function EmailPreviewDialog({ open, subject, html, onClose }: EmailPreviewDialogProps) {
-  if (!open) {
-    return null;
-  }
-
+export function EmailPreviewDialog({
+  open,
+  subject,
+  html,
+  onClose,
+}: EmailPreviewDialogProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="email-preview-title"
-        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border-warm bg-card shadow-xl"
-      >
-        <div className="border-b border-border-warm px-5 py-4">
-          <h3 id="email-preview-title" className="text-sm font-semibold text-text-warm">
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden p-0">
+        <DialogHeader className="border-b border-border-warm px-5 py-4">
+          <DialogTitle id="email-preview-title" className="text-sm">
             Email preview
-          </h3>
-          <p className="mt-1 text-sm text-text-muted-warm">
+          </DialogTitle>
+          <DialogDescription>
             Subject: <span className="text-text-warm">{subject.trim() || "(No subject)"}</span>
-          </p>
-        </div>
+          </DialogDescription>
+        </DialogHeader>
 
         <div className="overflow-y-auto bg-white p-6 text-black">
           <div
@@ -38,12 +43,14 @@ export function EmailPreviewDialog({ open, subject, html, onClose }: EmailPrevie
           />
         </div>
 
-        <div className="flex justify-end border-t border-border-warm px-5 py-4">
-          <Button type="button" variant="outline" onClick={onClose}>
+        <DialogFooter className="border-t border-border-warm px-5 py-4">
+          <DialogClose
+            render={<Button type="button" variant="outline" />}
+          >
             Close
-          </Button>
-        </div>
-      </div>
-    </div>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
