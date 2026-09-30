@@ -4,11 +4,35 @@ import * as React from "react"
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
 
 import { cn } from "@/lib/utils"
+import { useModalInert } from "@/lib/use-modal-inert"
+import { trapOverlayTab } from "@/lib/overlay-tab-trap"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
-function Sheet({ ...props }: SheetPrimitive.Root.Props) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />
+function Sheet({
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: SheetPrimitive.Root.Props) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(Boolean(defaultOpen))
+  const isOpen = open ?? uncontrolledOpen
+  useModalInert(Boolean(isOpen))
+
+  return (
+    <SheetPrimitive.Root
+      data-slot="sheet"
+      {...props}
+      {...(open !== undefined ? { open } : {})}
+      {...(defaultOpen !== undefined ? { defaultOpen } : {})}
+      onOpenChange={(next, eventDetails) => {
+        if (open === undefined) {
+          setUncontrolledOpen(next)
+        }
+        onOpenChange?.(next, eventDetails)
+      }}
+    />
+  )
 }
 
 function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
@@ -43,6 +67,7 @@ function SheetContent({
   showCloseButton = true,
   initialFocus,
   finalFocus,
+  onKeyDown,
   ...props
 }: SheetPrimitive.Popup.Props & {
   side?: "top" | "right" | "bottom" | "left"
@@ -61,6 +86,10 @@ function SheetContent({
           className
         )}
         {...props}
+        onKeyDown={(event) => {
+          trapOverlayTab(event)
+          onKeyDown?.(event)
+        }}
       >
         {children}
         {showCloseButton && (

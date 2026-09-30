@@ -3,10 +3,34 @@
 import * as React from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 
+import { useModalInert } from "@/lib/use-modal-inert";
+import { trapOverlayTab } from "@/lib/overlay-tab-trap";
 import { cn } from "@/lib/utils";
 
-function Dialog({ ...props }: DialogPrimitive.Root.Props) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+function Dialog({
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: DialogPrimitive.Root.Props) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(Boolean(defaultOpen));
+  const isOpen = open ?? uncontrolledOpen;
+  useModalInert(Boolean(isOpen));
+
+  return (
+    <DialogPrimitive.Root
+      data-slot="dialog"
+      {...props}
+      {...(open !== undefined ? { open } : {})}
+      {...(defaultOpen !== undefined ? { defaultOpen } : {})}
+      onOpenChange={(next, eventDetails) => {
+        if (open === undefined) {
+          setUncontrolledOpen(next);
+        }
+        onOpenChange?.(next, eventDetails);
+      }}
+    />
+  );
 }
 
 function DialogTrigger({ ...props }: DialogPrimitive.Trigger.Props) {
@@ -41,6 +65,7 @@ function DialogContent({
   className,
   initialFocus,
   finalFocus,
+  onKeyDown,
   ...props
 }: DialogPrimitive.Popup.Props) {
   return (
@@ -55,6 +80,10 @@ function DialogContent({
           className
         )}
         {...props}
+        onKeyDown={(event) => {
+          trapOverlayTab(event);
+          onKeyDown?.(event);
+        }}
       />
     </DialogPortal>
   );

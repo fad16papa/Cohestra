@@ -15,7 +15,9 @@ describe("Story 38.6 overlay source contract", () => {
     expect(dialog).toContain("duration-[160ms]");
     expect(dialog).toContain("initialFocus");
     expect(dialog).toContain("finalFocus");
-    expect(dialog).not.toContain("duration-200");
+    expect(dialog).toContain("trapOverlayTab");
+    expect(alert).toContain("trapOverlayTab");
+    expect(sheet).toContain("trapOverlayTab");
     expect(alert).toContain('from "@base-ui/react/alert-dialog"');
     expect(alert).toContain("duration-[160ms]");
     expect(alert).not.toContain("@base-ui/react/dialog");

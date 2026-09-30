@@ -17,7 +17,10 @@ Authenticated **modals** must use `dialog` | `alert-dialog` | `sheet`. Popovers 
 | `ui/sheet` | `dialog` | yes | yes | 160ms; close control `size-11` named Close | `finalFocus` to invoker |
 | `ui/popover` | non-modal | no | yes | 100ms press budget | Esc restores; background stays interactive |
 
-## Shell exclusivity (sibling roots)
+## Background inert
+
+Base UI hides siblings with `aria-hidden` / `data-base-ui-inert` but does not set the HTML `inert` attribute. Chromium then Tabs from the last overlay control onto `document.body` on sparse dialogs (email preview has few tab stops). Shared Dialog / AlertDialog / Sheet roots call `useModalInert`, which refcounts and sets `inert` on non-portal `document.body` children so Tab wraps inside the overlay island.
+
 
 Command palette (`AdminShellProvider`) and More sheet (`AdminMobileTabBar`) are **sibling** Dialog roots, not React-nested. Base UI Escape uses each root’s *own* nested count (`isTopmost`), so two open siblings would both treat Escape as theirs.
 

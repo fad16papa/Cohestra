@@ -77,6 +77,8 @@ Canonical backlog (`cohestra-product-experience-2-backlog.md` §38.6) and DESIGN
 
 Shell exclusivity: command palette and More sheet are sibling Dialog roots. Opening one closes the other so Escape cannot dismiss two `isTopmost` stacks at once.
 
+Background inert: while any shared modal is open, non-portal `document.body` children get the HTML `inert` attribute so Tab wraps inside the overlay island (Base UI `aria-hidden` alone left Chromium focusing `body` on sparse dialogs).
+
 Do not add a second overlay engine. Do not JS-gate motion.
 
 ## Tasks / Subtasks
@@ -88,11 +90,11 @@ Do not add a second overlay engine. Do not JS-gate motion.
 - [x] Migrate command palette (AC 1, 3–7, 10)
 - [x] Migrate email preview + insert QR (AC 1, 3–7)
 - [x] Verify More sheet + existing alert/form dialogs (AC 8, 11, 13)
-- [ ] Tests + evidence (AC 9–17)
+- [x] Tests + evidence (AC 9–17)
   - [x] Vitest on primitives / source contract
   - [x] Playwright `overlays-38-6.spec.ts`
-  - [ ] Evidence `_bmad-output/planning-artifacts/evidence/px2-38-6/`
-  - [ ] 38.5 landmark + 38.4 token regression
+  - [x] Evidence `_bmad-output/planning-artifacts/evidence/px2-38-6/`
+  - [x] 38.5 landmark + 38.4 token regression
 
 ## Dev Notes
 
@@ -128,7 +130,13 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 not used un
 
 ### Completion Notes List
 
-### File List
+- Shared primitives: 160ms motion, AlertDialog real primitive, sheet 44px named Close, `useModalInert` + `trapOverlayTab`.
+- Migrated command palette, email preview, insert QR.
+- Shell exclusivity: palette XOR More sheet.
+- Live Playwright 38.6 passed; 38.5 landmarks and 38.4 tokens/a11y regression passed; `next build` passed.
+- Composer 2.5 was not used.
+
+- 2026-09-30: Implemented overlay primitives, migrations, shell exclusivity, Vitest/Playwright specs.
 
 - `web/components/ui/dialog.tsx`
 - `web/components/ui/alert-dialog.tsx`
@@ -140,6 +148,10 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 not used un
 - `web/components/campaigns/email-preview-dialog.tsx`
 - `web/components/campaigns/insert-qr-modal.tsx`
 - `web/styles/brand-tokens.css`
+- `web/lib/use-modal-inert.ts`
+- `web/lib/use-modal-inert.test.ts`
+- `web/lib/overlay-tab-trap.ts`
+- `web/lib/overlay-tab-trap.test.ts`
 - `web/lib/overlays-38-6.test.ts`
 - `web/lib/motion-polish.test.ts`
 - `web/e2e/overlays-38-6.spec.ts`

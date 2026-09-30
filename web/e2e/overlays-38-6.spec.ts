@@ -39,9 +39,7 @@ async function openAuthed(
     await page.goto(`${tenantWebBase()}${route}`, { waitUntil: "domcontentloaded" });
   }
   await waitForOperatorWorkspace(page);
-  await page.evaluate(() => {
-    document.querySelectorAll("nextjs-portal").forEach((node) => node.remove());
-  });
+  await stripDevChrome(page);
 }
 
 async function runOverlayAxe(page: Page) {
@@ -71,6 +69,24 @@ type FocusInfo = {
   id: string | null;
 };
 
+async function stripDevChrome(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    document.querySelectorAll("nextjs-portal").forEach((node) => node.remove());
+    document
+      .querySelectorAll("[data-next-badge-root], [data-nextjs-dev-overlay-root]")
+      .forEach((node) => node.remove());
+  });
+}
+
+async function waitForModalTrap(page: Page): Promise<void> {
+  await stripDevChrome(page);
+  await expect
+    .poll(async () => page.locator("[data-base-ui-focus-guard]").count(), {
+      timeout: 5_000,
+    })
+    .toBeGreaterThan(0);
+}
+
 async function readFocus(page: Page): Promise<FocusInfo> {
   return page.evaluate(() => {
     const active = document.activeElement;
@@ -93,8 +109,10 @@ async function readFocus(page: Page): Promise<FocusInfo> {
 }
 
 async function assertTabContained(page: Page): Promise<void> {
+  await waitForModalTrap(page);
   for (let i = 0; i < 8; i += 1) {
     await page.keyboard.press("Tab");
+    await expect(page.locator("[role='dialog'], [role='alertdialog']")).not.toHaveCount(0);
     const info = await readFocus(page);
     expect(info.inModalLayer, `Tab ${i + 1} left the overlay ${JSON.stringify(info)}`).toBe(
       true
@@ -355,6 +373,16 @@ test.describe("Story 38.6 — shared overlay contract", () => {
       waitUntil: "domcontentloaded",
     });
     await waitForOperatorWorkspace(page);
+    const skipTour = page.getByRole("button", { name: "Skip tour" });
+    const tourVisible = await skipTour
+      .waitFor({ state: "visible", timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (tourVisible) {
+      await skipTour.click();
+      await expect(page.getByRole("button", { name: "Skip tour" })).toHaveCount(0);
+    }
+    await page.getByRole("tab", { name: "Sections" }).click();
     const addSection = page.getByRole("button", { name: "Add section" });
     await expect(addSection).toBeVisible({ timeout: 30_000 });
     await addSection.click();
@@ -385,90 +413,49 @@ test.describe("Story 38.6 — shared overlay contract", () => {
       axe: "pass",
     });
 
-    await page.goto(`${tenantWebBase()}/activities`, { waitUntil: "domcontentloaded" });
-    await waitForOperatorWorkspace(page);
-    await expect(page.getByRole("heading", { level: 1, name: "Activities" })).toBeVisible();
-    const firstActivity = page.locator("a[href^='/activities/']:not([href$='/new'])").first();
-    await expect(firstActivity).toBeVisible({ timeout: 30_000 });
-    await firstActivity.click();
-    await waitForOperatorWorkspace(page);
-    const unpublish = page.getByRole("button", { name: /^Unpublish$/ });
-    const unpublishVisible = await unpublish
-      .waitFor({ state: "visible", timeout: 10_000 })
-      .then(() => true)
-      .catch(() => false);
-    if (unpublishVisible) {
-      await unpublish.click();
-      const alert = page.getByRole("alertdialog", { name: "Unpublish this activity?" });
-      await expect(alert).toBeVisible();
-      await expect(page.getByRole("alertdialog")).toHaveCount(1);
-      expect(await overlayRole(alert)).toBe("alertdialog");
-      await assertTabContained(page);
-      await assertNoBackgroundFocus(page);
-      const alertAxe = await runOverlayAxe(page);
-      expect(alertAxe).toEqual([]);
-      axeRows.push({ surface: "Unpublish activity", violations: alertAxe });
-      await screenshot(page, "unpublish-alert-1440x900.png");
-      await page.locator("[data-slot='alert-dialog-overlay']").click({
-        position: { x: 4, y: 4 },
-        force: true,
-      });
-      await expect(alert).toBeVisible();
-      await page.keyboard.press("Escape");
-      await expect(alert).toHaveCount(0);
-      await expect(unpublish).toBeFocused();
-      keyboard.push({
-        surface: "Unpublish alert",
-        sequence: "open → Tab trap → overlay click (stays) → Escape",
-        restore: "Unpublish",
-        result: "pass",
-      });
-      matrix.push({
-        surface: "Unpublish activity",
-        route: "activity overview",
-        primitive: "alert-dialog",
-        role: "alertdialog",
-        name: "Unpublish this activity?",
-        initialFocus: "dialog",
-        tab: "contained",
-        escape: "cancels",
-        outsideClick: "blocked",
-        restore: "Unpublish",
-        desktop: "pass",
-        mobile: "n/a",
-        axe: "pass",
-      });
-    } else {
-      await page.goto(`${tenantWebBase()}/dashboard/website`, {
-        waitUntil: "domcontentloaded",
-      });
-      await waitForOperatorWorkspace(page);
-      const publish = page.locator("#website-builder-publish");
-      await expect(publish).toBeVisible({ timeout: 30_000 });
-      await expect(publish).toBeEnabled();
-      await publish.click();
-      const alert = page.getByRole("alertdialog", { name: "Publish homepage?" });
-      await expect(alert).toBeVisible();
-      expect(await overlayRole(alert)).toBe("alertdialog");
-      await screenshot(page, "publish-alert-1440x900.png");
-      await page.locator("[data-slot='alert-dialog-overlay']").click({
-        position: { x: 4, y: 4 },
-        force: true,
-      });
-      await expect(alert).toBeVisible();
-      await page.keyboard.press("Escape");
-      await expect(alert).toHaveCount(0);
-      matrix.push({
-        surface: "Publish homepage",
-        primitive: "alert-dialog",
-        role: "alertdialog",
-        name: "Publish homepage?",
-        escape: "cancels",
-        outsideClick: "blocked",
-        desktop: "pass",
-        axe: "pass",
-      });
-    }
+    await page.getByRole("tab", { name: "Templates" }).click();
+    const saveLayout = page.getByRole("button", { name: "Save current layout" });
+    await expect(saveLayout).toBeVisible();
+    await saveLayout.click();
+    const alert = page.getByRole("alertdialog", { name: "Save homepage template" });
+    await expect(alert).toBeVisible();
+    await expect(page.getByRole("alertdialog")).toHaveCount(1);
+    expect(await overlayRole(alert)).toBe("alertdialog");
+    await assertTabContained(page);
+    await assertNoBackgroundFocus(page);
+    const alertAxe = await runOverlayAxe(page);
+    expect(alertAxe).toEqual([]);
+    axeRows.push({ surface: "Save homepage template", violations: alertAxe });
+    await screenshot(page, "save-template-alert-1440x900.png");
+    await page.locator("[data-slot='alert-dialog-overlay']").click({
+      position: { x: 4, y: 4 },
+      force: true,
+    });
+    await expect(alert).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(alert).toHaveCount(0);
+    await expect(saveLayout).toBeFocused();
+    keyboard.push({
+      surface: "Save homepage template",
+      sequence: "open → Tab trap → overlay click (stays) → Escape",
+      restore: "Save current layout",
+      result: "pass",
+    });
+    matrix.push({
+      surface: "Save homepage template",
+      route: "/dashboard/website",
+      primitive: "alert-dialog",
+      role: "alertdialog",
+      name: "Save homepage template",
+      initialFocus: "dialog",
+      tab: "contained",
+      escape: "cancels",
+      outsideClick: "blocked",
+      restore: "Save current layout",
+      desktop: "pass",
+      mobile: "n/a",
+      axe: "pass",
+    });
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${tenantWebBase()}/dashboard`, { waitUntil: "domcontentloaded" });

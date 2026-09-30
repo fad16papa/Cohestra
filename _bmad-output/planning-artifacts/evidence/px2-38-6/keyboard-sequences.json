@@ -1,0 +1,39 @@
+[
+  {
+    "surface": "Command palette",
+    "sequence": "open Search → Tab x8 / Shift+Tab → Escape",
+    "initialFocus": "Search commands",
+    "restore": "Open command palette",
+    "result": "pass"
+  },
+  {
+    "surface": "Account menu",
+    "sequence": "open → Escape",
+    "restore": "Open account menu",
+    "result": "pass"
+  },
+  {
+    "surface": "Command palette route change",
+    "sequence": "open palette → Clients → navigate",
+    "restore": "overlay unmounted; main visible",
+    "result": "pass"
+  },
+  {
+    "surface": "Email preview",
+    "sequence": "open Preview → Tab trap → overlay click",
+    "restore": "Preview",
+    "result": "pass"
+  },
+  {
+    "surface": "Save homepage template",
+    "sequence": "open → Tab trap → overlay click (stays) → Escape",
+    "restore": "Save current layout",
+    "result": "pass"
+  },
+  {
+    "surface": "More sheet then command palette",
+    "sequence": "More → Search → exclusive single dialog → Escape",
+    "restore": "no stacked sibling modals",
+    "result": "pass"
+  }
+]

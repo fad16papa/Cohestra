@@ -4,10 +4,34 @@ import * as React from "react";
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
 
 import { cn } from "@/lib/utils";
+import { useModalInert } from "@/lib/use-modal-inert";
+import { trapOverlayTab } from "@/lib/overlay-tab-trap";
 import { Button } from "@/components/ui/button";
 
-function AlertDialog({ ...props }: AlertDialogPrimitive.Root.Props) {
-  return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
+function AlertDialog({
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: AlertDialogPrimitive.Root.Props) {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(Boolean(defaultOpen));
+  const isOpen = open ?? uncontrolledOpen;
+  useModalInert(Boolean(isOpen));
+
+  return (
+    <AlertDialogPrimitive.Root
+      data-slot="alert-dialog"
+      {...props}
+      {...(open !== undefined ? { open } : {})}
+      {...(defaultOpen !== undefined ? { defaultOpen } : {})}
+      onOpenChange={(next, eventDetails) => {
+        if (open === undefined) {
+          setUncontrolledOpen(next);
+        }
+        onOpenChange?.(next, eventDetails);
+      }}
+    />
+  );
 }
 
 function AlertDialogTrigger({ ...props }: AlertDialogPrimitive.Trigger.Props) {
@@ -42,6 +66,7 @@ function AlertDialogContent({
   className,
   initialFocus,
   finalFocus,
+  onKeyDown,
   ...props
 }: AlertDialogPrimitive.Popup.Props) {
   return (
@@ -56,6 +81,10 @@ function AlertDialogContent({
           className
         )}
         {...props}
+        onKeyDown={(event) => {
+          trapOverlayTab(event);
+          onKeyDown?.(event);
+        }}
       />
     </AlertDialogPortal>
   );
