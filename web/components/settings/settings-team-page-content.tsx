@@ -153,7 +153,7 @@ export function SettingsTeamPageContent() {
             <p className="font-medium">Seat cap reached</p>
             <p className="mt-1 text-text-muted-warm">
               Revoke a pending invite, remove a member, or{" "}
-              <Link href="/settings/billing" className="text-primary underline">
+              <Link href="/settings/billing" className="text-text-link underline">
                 upgrade your plan
               </Link>{" "}
               for more seats.
@@ -183,7 +183,7 @@ export function SettingsTeamPageContent() {
                     <p className="text-text-muted-warm">{member.email}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-text-muted-warm">
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">
                       {member.role}
                     </span>
                     {canRemove ? (

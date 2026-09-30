@@ -292,7 +292,7 @@ export function WebsiteBuilderOnboardingTour({
         aria-labelledby="website-builder-tour-title"
         aria-describedby="website-builder-tour-body"
       >
-        <p className="text-xs font-medium uppercase tracking-wide text-primary">
+        <p className="text-xs font-medium uppercase tracking-wide text-text-link">
           Step {stepIndex + 1} of {steps.length}
         </p>
         <h3 id="website-builder-tour-title" className="mt-1 text-base font-semibold text-text-warm">

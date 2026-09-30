@@ -142,7 +142,7 @@ export function BrandAccentSection({ embedded = false }: { embedded?: boolean })
                     />
                     {preset.label}
                     {isActive ? (
-                      <Check className="size-4 text-primary" aria-hidden />
+                      <Check className="size-4 text-text-link" aria-hidden />
                     ) : null}
                   </button>
                 );
@@ -209,10 +209,10 @@ export function BrandAccentSection({ embedded = false }: { embedded?: boolean })
               Primary action
             </Button>
             <div className="flex items-center gap-2 rounded-lg border border-l-4 border-l-primary border-border-warm bg-background px-3 py-2 text-sm text-text-warm shadow-sm">
-              <Sparkles className="size-4 text-primary" aria-hidden />
+              <Sparkles className="size-4 text-text-link" aria-hidden />
               Saved — toast accent preview
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-text-link">
               <span
                 className="inline-flex size-6 items-center justify-center rounded-full bg-primary/15"
                 aria-hidden

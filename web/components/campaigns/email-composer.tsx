@@ -111,7 +111,7 @@ export function EmailComposer({
     editorProps: {
       attributes: {
         class:
-          "min-h-56 px-4 py-3 text-sm text-text-warm focus:outline-none [&_a]:text-primary [&_a]:underline [&_img]:my-3 [&_img]:max-h-64 [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5",
+          "min-h-56 px-4 py-3 text-sm text-text-warm focus:outline-none [&_a]:text-text-link [&_a]:underline [&_img]:my-3 [&_img]:max-h-64 [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5",
       },
     },
     onUpdate: ({ editor: currentEditor }) => {

@@ -173,6 +173,17 @@ export async function waitForOperatorWorkspace(
   );
 }
 
+/** Reports nav text is not enough — wait for the page heading and loaded body. */
+export async function waitForReportsContent(
+  page: import("@playwright/test").Page
+): Promise<void> {
+  await expect(page.getByRole("heading", { name: "Reports", level: 2 })).toBeVisible({
+    timeout: 30_000,
+  });
+  await expect(page.getByText("Loading report…")).toHaveCount(0, { timeout: 30_000 });
+  await expect(page.getByText("Updating report…")).toHaveCount(0, { timeout: 15_000 });
+}
+
 /** Experience layout cards use sr-only radios — click the visible label card. */
 export async function selectExperienceLayoutLabel(
   page: import("@playwright/test").Page,

@@ -40,7 +40,7 @@ export function DashboardGreetingHeader() {
       />
       <div className="relative flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-primary">{formatTodayLabel()}</p>
+          <p className="text-sm font-medium text-text-link">{formatTodayLabel()}</p>
           <h2 className="mt-1 text-display-sm text-text-warm">
             {getGreeting()}, {displayName}
           </h2>

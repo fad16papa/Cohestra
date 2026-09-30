@@ -131,7 +131,7 @@ export function DashboardFollowUpQueue() {
     return (
       <section className="rounded-2xl border border-border-warm bg-card/80 p-5 shadow-sm">
         <div className="flex items-start gap-3">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-surface-success text-text-success">
             <UserRound className="size-5" aria-hidden />
           </span>
           <div>
@@ -175,7 +175,7 @@ export function DashboardFollowUpQueue() {
             >
               <PersonAvatar name={client.fullName} size="sm" />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-text-warm group-hover:text-primary">
+                <p className="truncate font-medium text-text-warm group-hover:text-text-link">
                   {client.fullName}
                 </p>
                 <p className="truncate text-xs text-text-muted-warm">
@@ -186,7 +186,7 @@ export function DashboardFollowUpQueue() {
               </div>
               {client.queueReason === "follow_up_due" ||
               isFollowUpDue(client.nextFollowUpAt, shell?.registrationTimeZoneId) ? (
-                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.6875rem] font-medium text-amber-700 dark:text-amber-300">
+                <span className="rounded-full bg-surface-warning px-2 py-0.5 text-[0.6875rem] font-medium text-foreground">
                   Due
                 </span>
               ) : (

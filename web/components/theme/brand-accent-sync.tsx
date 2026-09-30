@@ -30,7 +30,8 @@ function isAdminWorkspacePath(pathname: string | null): boolean {
     pathname.startsWith("/activities") ||
     pathname.startsWith("/campaigns") ||
     pathname.startsWith("/reports") ||
-    pathname.startsWith("/settings")
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/billing")
   );
 }
 
@@ -62,6 +63,7 @@ export function BrandAccentSync() {
       return;
     }
 
+    // Apply accent-tier CSS vars on admin routes only. Public pages keep default tokens.
     const style = buildBrandAccentStyle(
       profile?.brandAccentColor ?? null,
       resolvedTheme === "dark"

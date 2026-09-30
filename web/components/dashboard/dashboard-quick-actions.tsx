@@ -51,11 +51,11 @@ export function DashboardQuickActions() {
               )}
             />
             <div className="relative flex items-start justify-between gap-3">
-              <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-text-link">
                 <Icon className="size-5" aria-hidden />
               </span>
               <ArrowUpRight
-                className="size-4 text-text-muted-warm motion-press group-hover:-translate-y-px group-hover:translate-x-px group-hover:text-primary"
+                className="size-4 text-text-muted-warm motion-press group-hover:-translate-y-px group-hover:translate-x-px group-hover:text-text-link"
                 aria-hidden
               />
             </div>

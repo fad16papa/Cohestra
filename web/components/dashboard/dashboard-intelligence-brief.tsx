@@ -50,7 +50,7 @@ function InsightCard({ insight }: { insight: IntelligenceInsight }) {
         </Link>
       </div>
       <details className="mt-3">
-        <summary className="cursor-pointer text-sm text-primary">
+        <summary className="cursor-pointer text-sm text-text-link">
           Why this is true
         </summary>
         <ul className="mt-2 space-y-1.5">
@@ -138,7 +138,7 @@ export function DashboardIntelligenceBrief() {
     >
       <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <ListChecks className="size-4 text-primary" aria-hidden />
+          <ListChecks className="size-4 text-text-link" aria-hidden />
           <h2
             id="intelligence-brief-heading"
             className="text-sm font-medium text-text-warm"

@@ -81,7 +81,7 @@ export function AdminMobileTabBar() {
                     onClick={() => setMenuOpen(true)}
                     className={cn(
                       "flex w-full flex-col items-center gap-1 px-2 py-2.5 text-[11px] font-medium motion-press",
-                      active ? "text-primary" : "text-text-muted-warm"
+                      active ? "text-text-link" : "text-text-muted-warm"
                     )}
                   >
                     <Icon className="size-5" aria-hidden />
@@ -97,7 +97,7 @@ export function AdminMobileTabBar() {
                   href={item.href ?? "/dashboard"}
                   className={cn(
                     "flex flex-col items-center gap-1 px-2 py-2.5 text-[11px] font-medium motion-press",
-                    active ? "text-primary" : "text-text-muted-warm"
+                    active ? "text-text-link" : "text-text-muted-warm"
                   )}
                   aria-current={active ? "page" : undefined}
                 >

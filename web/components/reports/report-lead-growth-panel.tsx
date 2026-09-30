@@ -147,7 +147,7 @@ export function ReportLeadGrowthPanel({ report }: ReportLeadGrowthPanelProps) {
                 <dt className="text-xs text-text-muted-warm">Repeat participants</dt>
                 <dd className="mt-1 text-lg font-semibold tabular-nums text-text-warm">
                   {repeat}
-                  <span className="ml-1 text-xs font-normal text-lagoon">
+                  <span className="ml-1 text-xs font-normal text-text-link">
                     {retentionRate}% returned
                   </span>
                 </dd>

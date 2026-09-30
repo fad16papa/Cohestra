@@ -190,7 +190,7 @@ export function ClientRegistrationHistory({
           {history.length > 0 ? (
             <button
               type="button"
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+              className="inline-flex items-center gap-1 text-sm font-medium text-text-link hover:underline"
               onClick={() => setExpanded((current) => !current)}
               aria-expanded={expanded}
             >
@@ -290,7 +290,7 @@ export function ClientRegistrationHistory({
                           <ChevronRight
                             className={cn(
                               "mt-0.5 size-4 shrink-0 text-text-muted-warm",
-                              isSelected && "text-primary"
+                              isSelected && "text-text-link"
                             )}
                             aria-hidden
                           />

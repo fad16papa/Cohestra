@@ -279,7 +279,7 @@ export function ClientOutreachLogCard({
       aria-labelledby="client-outreach-log-heading"
     >
       <div className="mb-3 flex items-center gap-2">
-        <MessageCircle className="size-4 text-primary" aria-hidden />
+        <MessageCircle className="size-4 text-text-link" aria-hidden />
         <h3
           id="client-outreach-log-heading"
           className="text-sm font-semibold text-text-warm"
@@ -343,7 +343,7 @@ export function ClientOutreachLogCard({
             onChange={(event) =>
               setOutreachStatus(event.target.value as OutreachLogStatus)
             }
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
             <option value="contacted">Contacted</option>
             <option value="awaiting_reply">Awaiting reply</option>

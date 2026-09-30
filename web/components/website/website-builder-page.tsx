@@ -651,14 +651,14 @@ export function WebsiteBuilderPage() {
 
   const statusClassName = useMemo(() => {
     if (isDirty) {
-      return "bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200";
+      return "bg-surface-warning text-foreground";
     }
 
     if (adminData?.hasUnpublishedChanges) {
-      return "bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-200";
+      return "bg-surface-info text-foreground";
     }
 
-    return "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200";
+    return "bg-surface-success text-foreground";
   }, [adminData, isDirty]);
 
   const setupChecklist = useMemo(() => {

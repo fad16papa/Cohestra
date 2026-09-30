@@ -94,7 +94,7 @@ export function ActivityOverviewEventDetails({
             <p className="mt-2 text-xs">
               <Link
                 href={`/register/${activity.slug}`}
-                className="font-medium text-primary underline-offset-2 hover:underline"
+                className="font-medium text-text-link underline-offset-2 hover:underline"
                 target="_blank"
                 rel="noopener noreferrer"
               >

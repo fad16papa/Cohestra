@@ -29,7 +29,7 @@ export function LimitMeter({ dials, compact = false, className }: LimitMeterProp
                 dial.blocked
                   ? "text-destructive"
                   : dial.warn
-                    ? "text-gold"
+                    ? "text-text-warning"
                     : "text-text-warm"
               )}
             >
@@ -64,11 +64,11 @@ export function LimitMeter({ dials, compact = false, className }: LimitMeterProp
               Limit reached — upgrade or free capacity before adding more.
             </p>
           ) : dial.warn && dial.key === "registrations" ? (
-            <p className="text-[11px] text-gold" role="status">
+            <p className="text-[11px] text-text-warning" role="status">
               {PLAN_LIMIT_WARN_UPGRADE_HINT}
             </p>
           ) : dial.warn && dial.key !== "seats" ? (
-            <p className="text-[11px] text-gold" role="status">
+            <p className="text-[11px] text-text-warning" role="status">
               Upgrade before you hit capacity.
             </p>
           ) : dial.hint ? (

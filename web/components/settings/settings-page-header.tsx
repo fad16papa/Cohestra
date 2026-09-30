@@ -21,7 +21,7 @@ export function SettingsPageHeader() {
             <div className="flex flex-wrap items-center gap-1.5">
               <PlanBadge plan={shell.plan} />
               {shell.billingStatus && shell.billingStatus !== "Free" ? (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-text-muted-warm">
+                <span className="inline-flex items-center rounded-full border border-border-control bg-background px-2.5 py-0.5 text-xs font-medium text-foreground">
                   {shell.billingStatus}
                 </span>
               ) : null}

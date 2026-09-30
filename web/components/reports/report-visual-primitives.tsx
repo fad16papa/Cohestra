@@ -61,9 +61,9 @@ type ReportRankBadgeProps = {
 };
 
 const rankStyles = [
-  "bg-gold/15 text-gold ring-gold/30",
+  "bg-gold/15 text-text-accent ring-gold/30",
   "bg-muted/60 text-text-warm ring-border-warm",
-  "bg-amber-100/80 text-amber-900 ring-amber-200/80 dark:bg-amber-950/40 dark:text-amber-100",
+  "bg-surface-warning text-foreground ring-warn/30",
 ] as const;
 
 export function ReportRankBadge({ rank }: ReportRankBadgeProps) {

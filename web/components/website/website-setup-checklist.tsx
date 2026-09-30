@@ -35,8 +35,8 @@ export function WebsiteSetupChecklist({
             className={cn(
               "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium",
               allDone
-                ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
-                : "bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
+                ? "bg-surface-success text-foreground"
+                : "bg-surface-warning text-foreground"
             )}
           >
             {completed} of {total} complete
@@ -69,7 +69,7 @@ export function WebsiteSetupChecklist({
                 className={cn(
                   "flex w-full items-start gap-3 rounded-lg border px-3 py-2.5 text-left transition",
                   item.done
-                    ? "border-emerald-200/80 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-950/20"
+                    ? "border-success/30 bg-surface-success"
                     : "border-border-warm bg-background/70",
                   isActionable &&
                     "hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -79,7 +79,7 @@ export function WebsiteSetupChecklist({
                   className={cn(
                     "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full",
                     item.done
-                      ? "bg-emerald-600 text-white"
+                      ? "bg-success text-white"
                       : "border border-border-warm bg-background text-text-muted-warm"
                   )}
                   aria-hidden

@@ -120,7 +120,7 @@ export const ClientFollowUpDateField = forwardRef<
       aria-labelledby="client-follow-up-date-heading"
     >
       <div className="mb-3 flex items-center gap-2">
-        <CalendarClock className="size-4 text-primary" aria-hidden />
+        <CalendarClock className="size-4 text-text-link" aria-hidden />
         <h3
           id="client-follow-up-date-heading"
           className="text-sm font-semibold text-text-warm"
@@ -128,7 +128,7 @@ export const ClientFollowUpDateField = forwardRef<
           Next follow-up
         </h3>
         {due ? (
-          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+          <span className="rounded-full bg-surface-warning px-2 py-0.5 text-xs font-medium text-text-warning">
             Due
           </span>
         ) : null}

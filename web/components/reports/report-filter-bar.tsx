@@ -246,7 +246,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
             onChange={(event) =>
               updateFilter("preset", event.target.value as ReportPreset)
             }
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
           >
             {presetOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -290,7 +290,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
             id="report-activity"
             value={filters.activityId}
             onChange={(event) => updateFilter("activityId", event.target.value)}
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">All activities</option>
             {activities.map((activity) => (
@@ -307,7 +307,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
             id="report-community"
             value={filters.community}
             onChange={(event) => updateFilter("community", event.target.value)}
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">All communities</option>
             {communities.map((community) => (
@@ -326,7 +326,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
             onChange={(event) =>
               updateFilter("leadStatus", event.target.value as LeadStatus | "")
             }
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">All statuses</option>
             {leadStatusOptions.map((option) => (

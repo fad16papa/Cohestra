@@ -27,7 +27,7 @@ export function ActivityPlanRegCapIndicator({
               dial.blocked
                 ? "text-destructive"
                 : dial.warn
-                  ? "text-gold"
+                  ? "text-text-warning"
                   : "text-text-warm"
             )}
           >

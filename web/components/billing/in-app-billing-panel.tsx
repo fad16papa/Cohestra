@@ -468,7 +468,7 @@ export function InAppBillingPanel({
                 />
                 <label className="block space-y-1">
                   <span className="text-xs text-text-muted-warm">Mobile number</span>
-                  <div className="flex overflow-hidden rounded-lg border border-border-warm bg-background focus-within:border-lagoon/40 focus-within:ring-2 focus-within:ring-lagoon/20">
+                  <div className="flex overflow-hidden rounded-lg border border-border-warm bg-background focus-within:border-ring focus-within:ring-2 focus-within:ring-ring">
                     <span className="flex min-h-10 items-center border-r border-border-warm bg-muted/40 px-3 text-sm text-text-muted-warm">
                       {getPhonePrefixLabel(contactPhoneCountry)}
                     </span>

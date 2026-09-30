@@ -28,7 +28,7 @@ function PlatformLoginPageContent() {
             Looking for a workspace?{" "}
             <Link
               href={OPERATOR_LOGIN_PATH}
-              className="font-medium text-lagoon hover:text-lagoon-deep"
+              className="font-medium text-text-link underline-offset-2 hover:underline"
             >
               Operator sign in
             </Link>

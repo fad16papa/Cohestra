@@ -101,7 +101,7 @@ export function ClientFollowUpPanel({
           <div className="flex flex-wrap items-center gap-2">
             <LeadStatusBadge status={client.leadStatus} />
             {needsFollowUp ? (
-              <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+              <span className="rounded-full bg-surface-warning px-2.5 py-0.5 text-xs font-medium text-text-warning">
                 Needs outreach
               </span>
             ) : null}

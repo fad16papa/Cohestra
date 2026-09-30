@@ -77,7 +77,7 @@ export function DashboardCommunityPulse({
           title="Community pulse"
           description="Lead volume by community."
           action={
-            <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-text-link">
               <Users className="size-5" aria-hidden />
             </span>
           }
@@ -101,7 +101,7 @@ export function DashboardCommunityPulse({
                     <td className="px-4 py-3 font-medium text-text-warm sm:px-5">
                       <Link
                         href={`/activities/communities/${community.id}`}
-                        className="hover:text-primary"
+                        className="hover:text-text-link"
                       >
                         {community.name}
                       </Link>
@@ -127,7 +127,7 @@ export function DashboardCommunityPulse({
           title="Community pulse"
           description="Relative lead volume across communities."
           action={
-            <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-text-link">
               <Users className="size-5" aria-hidden />
             </span>
           }
@@ -143,7 +143,7 @@ export function DashboardCommunityPulse({
                     className="group block rounded-lg px-1 py-1"
                   >
                     <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
-                      <span className="truncate font-medium text-text-warm group-hover:text-primary">
+                      <span className="truncate font-medium text-text-warm group-hover:text-text-link">
                         {community.name}
                       </span>
                       <span className="shrink-0 tabular-nums font-semibold text-text-warm">
@@ -173,7 +173,7 @@ export function DashboardCommunityPulse({
         title="Community pulse"
         description="Where your community energy is strongest right now."
         action={
-          <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-text-link">
             <Users className="size-5" aria-hidden />
           </span>
         }
@@ -220,7 +220,7 @@ export function DashboardCommunityPulse({
                 >
                   <div className="flex items-center justify-between gap-2 text-sm">
                     <span
-                      className="truncate font-medium text-text-warm group-hover:text-primary"
+                      className="truncate font-medium text-text-warm group-hover:text-text-link"
                       title={community.name}
                     >
                       {community.name}

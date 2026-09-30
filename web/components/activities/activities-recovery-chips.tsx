@@ -22,7 +22,7 @@ function RecoveryFilterChipButton({ chip }: { chip: RecoveryFilterChip }) {
       className={cn(
         "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium motion-local",
         chip.active
-          ? "border-primary bg-primary/10 text-primary"
+          ? "border-primary bg-primary/10 text-text-link"
           : "border-border-warm bg-background text-text-muted-warm hover:border-primary/30 hover:text-text-warm"
       )}
     >

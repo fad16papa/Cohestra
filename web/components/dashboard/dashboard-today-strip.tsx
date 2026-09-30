@@ -64,7 +64,7 @@ export function DashboardTodayStrip({
       className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-card/80 to-card/80 p-4 backdrop-blur-sm"
     >
       <div className="mb-3 flex items-center gap-2 text-sm font-medium text-text-warm">
-        <Sparkles className="size-4 text-primary" aria-hidden />
+        <Sparkles className="size-4 text-text-link" aria-hidden />
         Today
       </div>
       <ul className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -78,7 +78,7 @@ export function DashboardTodayStrip({
                 {item.label}
               </span>
               <ArrowRight
-                className="size-3.5 text-text-muted-warm transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                className="size-3.5 text-text-muted-warm transition-transform group-hover:translate-x-0.5 group-hover:text-text-link"
                 aria-hidden
               />
             </Link>

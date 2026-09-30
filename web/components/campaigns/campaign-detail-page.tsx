@@ -27,7 +27,7 @@ const recipientListMaxHeightPx = RECIPIENT_VISIBLE_ROWS * RECIPIENT_ROW_HEIGHT_P
 function RecipientStatusBadge({ status }: { status: CampaignRecipientResult["status"] }) {
   if (status === "sent") {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+      <span className="inline-flex items-center gap-1 rounded-full bg-surface-success px-2 py-0.5 text-xs font-medium text-foreground">
         <CheckCircle2 className="size-3" aria-hidden />
         Sent
       </span>
@@ -44,7 +44,7 @@ function RecipientStatusBadge({ status }: { status: CampaignRecipientResult["sta
   }
 
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+      <span className="inline-flex items-center gap-1 rounded-full bg-surface-warning px-2 py-0.5 text-xs font-medium text-foreground">
       <MailX className="size-3" aria-hidden />
       Skipped
     </span>
@@ -120,7 +120,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
           <h3 className="text-sm font-semibold text-text-warm">Message</h3>
           {campaign.bodyFormat === "html" ? (
             <div
-              className="mt-3 text-sm leading-relaxed text-text-muted-warm [&_a]:text-primary [&_a]:underline [&_img]:my-3 [&_img]:max-h-80 [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
+              className="mt-3 text-sm leading-relaxed text-text-muted-warm [&_a]:text-text-link [&_a]:underline [&_img]:my-3 [&_img]:max-h-80 [&_img]:max-w-full [&_img]:rounded-lg [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
               dangerouslySetInnerHTML={{ __html: campaign.body }}
             />
           ) : (
@@ -172,7 +172,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                       <div className="min-w-0">
                         <Link
                           href={`/clients/${recipient.clientId}`}
-                          className="truncate text-sm font-medium text-text-warm motion-press hover:text-primary"
+                          className="truncate text-sm font-medium text-text-warm motion-press hover:text-text-link"
                         >
                           {recipient.fullName}
                         </Link>
@@ -187,7 +187,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
                           "min-w-0 truncate text-sm",
                           hasEmail
                             ? "text-text-muted-warm"
-                            : "text-amber-700 dark:text-amber-300"
+                            : "text-text-warning"
                         )}
                       >
                         {hasEmail ? recipient.email : "No email on file"}

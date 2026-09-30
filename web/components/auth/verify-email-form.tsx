@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { resendAuthOtp, verifyEmailOtp } from "@/lib/auth-api";
-import { cn } from "@/lib/utils";
 
 function VerifyEmailFormContent() {
   const router = useRouter();
@@ -112,10 +111,7 @@ function VerifyEmailFormContent() {
       <Button
         type="submit"
         disabled={isSubmitting || code.length !== 6}
-        className={cn(
-          "min-h-12 w-full rounded-xl font-semibold",
-          "bg-gradient-to-r from-primary to-accent text-primary-foreground"
-        )}
+        className="min-h-12 w-full rounded-xl font-semibold"
       >
         {isSubmitting ? (
           <>
@@ -135,7 +131,7 @@ function VerifyEmailFormContent() {
           type="button"
           onClick={() => void handleResend()}
           disabled={isResending}
-          className="font-medium text-primary hover:underline disabled:opacity-60"
+          className="font-medium text-text-link hover:underline disabled:opacity-60"
         >
           {isResending ? "Sending…" : "Resend code"}
         </button>

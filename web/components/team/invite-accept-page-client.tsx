@@ -20,10 +20,10 @@ import {
 } from "@/lib/team/team-api";
 
 const fieldShellClassName =
-  "flex min-h-11 items-center gap-3 rounded-[10px] border border-line bg-paper px-3 transition-colors focus-within:border-lagoon/40 focus-within:ring-2 focus-within:ring-lagoon/15";
+  "flex min-h-11 items-center gap-3 rounded-[10px] border border-border-control bg-paper px-3 transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring";
 
 const inviteInputClassName =
-  "auth-login-input min-h-0 h-auto w-full min-w-0 flex-1 appearance-none rounded-none border-0 bg-transparent px-0 py-0 text-base text-ink shadow-none outline-none focus-visible:border-0 focus-visible:ring-0 sm:text-sm placeholder:text-stone disabled:cursor-not-allowed disabled:opacity-50";
+  "auth-login-input min-h-0 h-auto w-full min-w-0 flex-1 appearance-none rounded-none border-0 bg-transparent px-0 py-0 text-base text-ink shadow-none outline-none focus-visible:border-0 focus-visible:ring-0 sm:text-sm placeholder:text-text-muted disabled:cursor-not-allowed disabled:opacity-50";
 
 function buildTenantLoginUrl(slug: string, query: Record<string, string>): string {
   const dashboardUrl = buildTenantDashboardUrl(slug);
@@ -86,7 +86,7 @@ function InviteAcceptForm({
           .finally(() => setSubmitting(false));
       }}
     >
-      <div className="rounded-xl border border-line bg-paper-warm px-4 py-3 text-sm leading-relaxed text-stone">
+      <div className="rounded-xl border border-line bg-paper-warm px-4 py-3 text-sm leading-relaxed text-text-muted">
         <p>
           You are joining{" "}
           <span className="font-medium text-ink">{preview.tenantName}</span> as{" "}
@@ -101,10 +101,10 @@ function InviteAcceptForm({
       <div className="space-y-2">
         <Label htmlFor="nickname" className="text-ink">
           Display name
-          <span className="ml-1 font-normal text-stone">(new accounts only)</span>
+          <span className="ml-1 font-normal text-text-muted">(new accounts only)</span>
         </Label>
         <div className={fieldShellClassName}>
-          <UserRound className="size-4 shrink-0 text-stone" aria-hidden />
+          <UserRound className="size-4 shrink-0 text-icon-muted" aria-hidden />
           <input
             id="nickname"
             name="nickname"
@@ -123,7 +123,7 @@ function InviteAcceptForm({
           Password
         </Label>
         <div className={fieldShellClassName}>
-          <Lock className="size-4 shrink-0 text-stone" aria-hidden />
+          <Lock className="size-4 shrink-0 text-icon-muted" aria-hidden />
           <input
             id="password"
             name="password"
@@ -137,7 +137,7 @@ function InviteAcceptForm({
             placeholder="At least 8 characters"
           />
         </div>
-        <p className="text-xs leading-relaxed text-stone">
+        <p className="text-xs leading-relaxed text-text-muted">
           Choose a password for your Cohestra account. If you already have an account with this
           email, use your existing password.
         </p>
@@ -192,7 +192,7 @@ export function InviteAcceptPageClient() {
         title="Loading invite"
         description="Checking your invitation link…"
       >
-        <p className="flex items-center justify-center gap-2 text-sm text-stone">
+        <p className="flex items-center justify-center gap-2 text-sm text-text-muted">
           <Loader2 className="size-4 animate-spin" aria-hidden />
           Loading invite…
         </p>
@@ -207,12 +207,12 @@ export function InviteAcceptPageClient() {
         title="Invite unavailable"
         description={error ?? "This invite is invalid, expired, or has already been used."}
         footer={
-          <Link href="/login" className="font-medium text-lagoon hover:text-lagoon-deep">
+          <Link href="/login" className="font-medium text-text-link underline-offset-2 hover:underline">
             Go to sign in
           </Link>
         }
       >
-        <p className="text-center text-sm text-stone">
+        <p className="text-center text-sm text-text-muted">
           Ask your workspace admin to send a new invite if you still need access.
         </p>
       </AuthFlowShell>

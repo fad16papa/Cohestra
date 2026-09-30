@@ -64,7 +64,7 @@ export function SettingsWorkspaceNav() {
               "motion-press hover:border-primary/25 hover:bg-card hover:shadow-sm"
             )}
           >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-text-link">
               <item.icon className="size-5" aria-hidden />
             </span>
             <span className="min-w-0 flex-1">

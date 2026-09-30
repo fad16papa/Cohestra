@@ -50,7 +50,7 @@ export function ReportCommunityRankingPanel({
         aside={
           visibleItems.length > 0 ? (
             <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-text-warm">
-              <Layers3 className="size-4 text-lagoon" aria-hidden />
+              <Layers3 className="size-4 text-text-link" aria-hidden />
               {visibleItems.length} communit{visibleItems.length === 1 ? "y" : "ies"}
             </p>
           ) : null
@@ -103,7 +103,7 @@ export function ReportCommunityRankingPanel({
                           </p>
                         </div>
                         {rank === 1 ? (
-                          <span className="shrink-0 rounded-full bg-lagoon/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-lagoon">
+                          <span className="shrink-0 rounded-full bg-lagoon/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-text-link">
                             Leader
                           </span>
                         ) : null}

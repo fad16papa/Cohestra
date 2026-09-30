@@ -502,7 +502,7 @@ export function AdminCommandPalette({
 
                     >
 
-                      <Icon className="size-4 shrink-0 text-primary" aria-hidden />
+                      <Icon className="size-4 shrink-0 text-text-link" aria-hidden />
 
                       <span className="font-medium">{item.label}</span>
 

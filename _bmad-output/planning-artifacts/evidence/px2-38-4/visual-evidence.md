@@ -1,0 +1,103 @@
+# Story 38.4 visual evidence
+
+Generated: 2026-09-29
+HEAD at capture: `d6146add` (Reports content wait + remaining opaque rings / Due chips)
+
+## Viewport matrix
+
+| Surface | 1440×900 | 1024×768 | 768×1024 | 430×932 | 390×844 | Dark |
+| --- | --- | --- | --- | --- | --- | --- |
+| Login | `viewports/login-1440x900.png` | `viewports/login-1024x768.png` | `viewports/login-768x1024.png` | `viewports/login-430x932.png` | `viewports/login-390x844.png` | `viewports/login-1440x900-dark.png` |
+| Dashboard | `viewports/dashboard-1440x900.png` | `viewports/dashboard-1024x768.png` | `viewports/dashboard-768x1024.png` | `viewports/dashboard-430x932.png` | `viewports/dashboard-390x844.png` | `viewports/dashboard-1440x900-dark.png` |
+| Clients list | `viewports/clients-1440x900.png` | — | — | — | `viewports/clients-390x844.png` | — |
+| Client profile | `viewports/client-profile-1440x900.png` | — | — | — | `viewports/client-profile-390x844.png` | — |
+| Activities | `viewports/activities-1440x900.png` | — | — | — | `viewports/activities-390x844.png` | — |
+| Form Studio | `viewports/form-studio-1440x900.png` | — | — | — | — | — |
+| Website entitled | `viewports/website-1440x900.png` | — | — | — | `viewports/website-390x844.png` | — |
+| Basic Website lock | `viewports/website-basic-lock-1440x900.png` | — | — | — | `viewports/website-basic-lock-390x844.png` | — |
+| Reports | `viewports/reports-1440x900.png` | — | — | — | `viewports/reports-390x844.png` | `viewports/reports-1440x900-dark.png` |
+| Settings | `viewports/settings-1440x900.png` | — | — | — | `viewports/settings-390x844.png` | — |
+| Billing | `viewports/billing-1440x900.png` | — | — | — | `viewports/billing-390x844.png` | — |
+| Campaigns | `viewports/campaigns-1440x900.png` | — | — | — | `viewports/campaigns-390x844.png` | — |
+| Forced-colors login | `viewports/forced-colors-login-1440x900.png` | — | — | — | — | — |
+| Forced-colors Dashboard | `viewports/forced-colors-dashboard-1440x900.png` | — | — | — | — | — |
+| Forced-colors Settings form | `viewports/forced-colors-settings-form-1440x900.png` | — | — | — | — | — |
+
+Playwright: `web/e2e/tokens-38-4.spec.ts` and `web/e2e/a11y-38-4.spec.ts` with `PUBLIC_BASE_URL=http://localhost:3000`, `E2E_LIVE_STACK=1`, `E2E_API_BASE_URL=http://localhost:8080`.
+
+## 1. Basic Website locked state (px2-basic)
+
+Tenant: `px2-basic` / `px2-basic-admin@cohestra.local`. Route `/dashboard/website`.
+
+| Check | 1440×900 | 390×844 |
+| --- | --- | --- |
+| UpgradePanel heading “Unlock a branded public homepage” | visible | captured |
+| UpgradePanel body / contrast | no axe color-contrast serious/critical | same |
+| Core plan label + “Minimum for this feature” + price/metadata | readable, selected | captured |
+| Upgrade action “Start Core trial” | present, focus attempted in spec | captured |
+| Disabled/locked vs entitled | no `#website-builder-toolbar`; no editor controls | same |
+| Generic error / Try again | none; `pageerror` empty | same |
+| Story 38.2 entitlement | `website-entitlement-38-2.spec.ts` still 200 Pro / 403 Basic | — |
+
+Axe on the 390×844 lock capture: **no color-contrast** failures. Remaining `button-name` on the floating Calendar control is unlabeled chrome (Story **43.5**), not a 38.4 token fail.
+
+## 2. Client profile
+
+Populated profile `Daniel Diaz` at `/clients/985c4404-8dde-4bfe-a366-6b654b42eeba`.
+
+| Inspection | Result |
+| --- | --- |
+| Primary / secondary / muted | Name ink; helper labels muted; empty “No notes yet” / “Not provided” readable |
+| Activity metadata | Registration IDs, timestamps, field counts |
+| Follow-up / status | Inactive chip with **label**; WhatsApp/Viber actions; follow-up date field; outreach status select |
+| Links and actions | Edit profile, Collapse, Save date (empty → visually inactive), Save outreach log |
+| Table/list | Registration answers list + relationship timeline |
+| Empty optional fields | Notes, residency “Not provided” |
+| Mobile truncation | 390×844 capture; names wrap/truncate |
+| Focus | Profile select uses opaque `ring-2 ring-ring` |
+| Status not color-only | Inactive / Contacted use text labels on chips |
+
+Axe: **0 color-contrast** violations on this route.
+
+## 3. Forced-colors
+
+Chromium `emulateMedia({ forcedColors: "active" })`. Semantic roles map to system colors in `brand-tokens.css` `@media (forced-colors: active)`.
+
+Captured: login (email focused), Dashboard (first control focused), Settings (first input/button focused). Text, controls, and focus remain perceivable in the captures. No component redesign.
+
+## 4. Focus-ring
+
+See `focus-ring-composite.md`. Opaque `--ring` ≥3:1; `ring-ring/30` and `/50` fail composite and are forbidden on authenticated product inputs plus auth/shared primitives.
+
+Correction also replaced remaining **focus-visible / focus-within** translucent rings on:
+
+- `FilterSelect` (`ring-primary/30` → `ring-ring`)
+- Button destructive / invalid (`ring-destructive/20` → `ring-destructive`)
+- Input invalid (`ring-destructive/20` → `ring-destructive`)
+- Notifications checkbox (`ring-primary/40` → `ring-ring`)
+- Billing phone shell (`ring-lagoon/20` → `ring-ring`)
+- Website branding invalid (`ring-destructive/30` → `ring-destructive`)
+
+Public registration and marketing `ring-ring/50` remain outside Story 38.4.
+
+## 5–6. Reports `text-lagoon` and real-DOM axe
+
+See `reports-text-lagoon-inventory.md` (all migrated) and `axe-routes.json` / `axe-login.json`.
+
+Reports 1440 / dark captures are the **populated report** (heading level 2 + filters + charts), not the “Loading report…” shell. Axe `/reports` ran after the same wait.
+
+No serious/critical **color-contrast** on migrated scope. Other axe IDs are not token work. Owners: Clients `role="row"` → **40.3** (final verification **43.5**); Settings landmarks → **38.5**; Calendar FAB `button-name` → **43.5**; Form Studio listbox → **42.3**; public `ring-ring/50` → **43.5**.
+
+## 7. Dark mode
+
+User-accessible via the admin Appearance popover (`cohestra-theme-operator`). Captured Dashboard + Reports at 1440×900 after selecting Dark, then restored Light.
+
+Login dark remains a public-session capture (`login-1440x900-dark.png`). Dark `--primary` `#0f7369` is fill-only; links use `--text-link` `#159a90`.
+
+## Honest remaining (not 38.4 contrast)
+
+- Dual `h1` / extra `<main>` / landmark uniqueness: Story **38.5**
+- Calendar FAB `button-name`: Story **43.5** (39.2 owns overlap/placement only)
+- Clients `role="row"` without grid parent: Story **40.3**; final verification **43.5**
+- Form Studio `role="listbox"` wrapping `<li>`: Story **42.3**
+- Public registration `ring-ring/50`: Story **43.5** (do not reopen Epic 35)

@@ -30,7 +30,7 @@ export function CustomDomainSection({ embedded = false }: CustomDomainSectionPro
         <p className="text-sm">
           <a
             href="mailto:hello@cohestra.app?subject=Enterprise%20custom%20domain"
-            className="font-medium text-primary underline-offset-4 hover:underline"
+            className="font-medium text-text-link underline-offset-4 hover:underline"
           >
             Join the waitlist — hello@cohestra.app
           </a>

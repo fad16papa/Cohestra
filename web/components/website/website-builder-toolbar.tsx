@@ -99,7 +99,7 @@ export function WebsiteBuilderToolbar({
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-text-muted-warm sm:text-sm">
-            <Globe className="size-3.5 shrink-0 text-primary" aria-hidden />
+            <Globe className="size-3.5 shrink-0 text-text-link" aria-hidden />
             <span className="break-all">{siteDisplayUrl}</span>
           </div>
         </div>
@@ -109,7 +109,7 @@ export function WebsiteBuilderToolbar({
           className="flex shrink-0 flex-wrap items-center gap-2"
         >
           {isReady ? (
-            <span className="hidden items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-300 sm:inline-flex">
+            <span className="hidden items-center gap-1 text-xs font-medium text-text-success sm:inline-flex">
               <CheckCircle2 className="size-3.5" aria-hidden />
               Ready to publish
             </span>
@@ -185,7 +185,7 @@ export function WebsiteBuilderToolbar({
             "rounded-lg border px-3 py-2 text-sm",
             hasBlockers
               ? "border-destructive/40 bg-destructive/5"
-              : "border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20",
+              : "border-warn/30 bg-surface-warning",
           )}
         >
           <p className="mb-1 font-medium text-text-warm">

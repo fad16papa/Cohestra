@@ -1,0 +1,258 @@
+{
+  "generated": "2026-09-29T14:58:38.675Z",
+  "routes": [
+    {
+      "route": "/dashboard",
+      "viewport": "1440x900",
+      "violations": [],
+      "colorContrastSeriousOrCritical": []
+    },
+    {
+      "route": "/clients",
+      "viewport": "1440x900",
+      "violations": [
+        {
+          "id": "aria-allowed-role",
+          "impact": "minor",
+          "description": "Ensure role attribute has an appropriate value for the element",
+          "nodes": [
+            {
+              "html": "<button type=\"button\" role=\"columnheader\" aria-sort=\"none\" class=\"w-full min-w-0 truncate p-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm motion-press hover:text-text-warm\">Contact</button>",
+              "target": [
+                "div:nth-child(2) > .p-0[aria-sort=\"none\"][role=\"columnheader\"]"
+              ],
+              "summary": "Fix any of the following:\n  ARIA role columnheader is not allowed for given element"
+            },
+            {
+              "html": "<button type=\"button\" role=\"columnheader\" aria-sort=\"none\" class=\"w-full min-w-0 truncate p-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm motion-press hover:text-text-warm\">Status</button>",
+              "target": [
+                ".sm\\:max-w-\\[5\\.5rem\\].flex > .p-0[aria-sort=\"none\"][role=\"columnheader\"]"
+              ],
+              "summary": "Fix any of the following:\n  ARIA role columnheader is not allowed for given element"
+            },
+            {
+              "html": "<button type=\"button\" role=\"columnheader\" aria-sort=\"descending\" class=\"w-full min-w-0 truncate p-0 text-left text-xs font-medium uppercase tracking-wide motion-press hover:text-text-warm text-text-warm\">Last registration ↓</button>",
+              "target": [
+                "button[aria-sort=\"descending\"]"
+              ],
+              "summary": "Fix any of the following:\n  ARIA role columnheader is not allowed for given element"
+            }
+          ]
+        },
+        {
+          "id": "aria-required-children",
+          "impact": "critical",
+          "description": "Ensure elements with an ARIA role that require child roles contain them",
+          "nodes": [
+            {
+              "html": "<div class=\"grid-cols-1 gap-y-3 px-4 py-3.5 sm:grid-cols-[2rem_minmax(11rem,1.35fr)_5.5rem_minmax(0,1fr)_minmax(0,1fr)_6.75rem] sm:items-center sm:gap-x-4 sm:gap-y-0 sm:px-4 sm:py-3 hidden border-b border-border-warm bg-muted/30 sm:grid\" role=\"row\">",
+              "target": [
+                ".bg-muted\\/30"
+              ],
+              "summary": "Fix any of the following:\n  Element has children which are not allowed: input[aria-label]"
+            }
+          ]
+        },
+        {
+          "id": "aria-required-parent",
+          "impact": "critical",
+          "description": "Ensure elements with an ARIA role that require parent roles are contained by them",
+          "nodes": [
+            {
+              "html": "<div class=\"grid-cols-1 gap-y-3 px-4 py-3.5 sm:grid-cols-[2rem_minmax(11rem,1.35fr)_5.5rem_minmax(0,1fr)_minmax(0,1fr)_6.75rem] sm:items-center sm:gap-x-4 sm:gap-y-0 sm:px-4 sm:py-3 hidden border-b border-border-warm bg-muted/30 sm:grid\" role=\"row\">",
+              "target": [
+                ".bg-muted\\/30"
+              ],
+              "summary": "Fix any of the following:\n  Required ARIA parents role not present: grid, rowgroup, table, treegrid"
+            }
+          ]
+        }
+      ],
+      "colorContrastSeriousOrCritical": []
+    },
+    {
+      "route": "/activities",
+      "viewport": "1440x900",
+      "violations": [],
+      "colorContrastSeriousOrCritical": []
+    },
+    {
+      "route": "/reports",
+      "viewport": "1440x900",
+      "violations": [],
+      "colorContrastSeriousOrCritical": []
+    },
+    {
+      "route": "/dashboard/website",
+      "viewport": "1440x900",
+      "violations": [],
+      "colorContrastSeriousOrCritical": []
+    },
+    {
+      "route": "/settings",
+      "viewport": "1440x900",
+      "violations": [
+        {
+          "id": "landmark-main-is-top-level",
+          "impact": "moderate",
+          "description": "Ensure the main landmark is at top level",
+          "nodes": [
+            {
+              "html": "<main class=\"min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8\">",
+              "target": [
+                ".lg\\:p-8"
+              ],
+              "summary": "Fix any of the following:\n  The main landmark is contained in another landmark."
+            }
+          ]
+        },
+        {
+          "id": "landmark-no-duplicate-main",
+          "impact": "moderate",
+          "description": "Ensure the document has at most one main landmark",
+          "nodes": [
+            {
+              "html": "<main class=\"mx-auto w-full max-w-7xl min-w-0 flex-1 p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:p-6 md:pb-6\">",
+              "target": [
+                ".max-w-7xl"
+              ],
+              "summary": "Fix any of the following:\n  Document has more than one main landmark"
+            }
+          ]
+        },
+        {
+          "id": "landmark-unique",
+          "impact": "moderate",
+          "description": "Ensure landmarks are unique",
+          "nodes": [
+            {
+              "html": "<aside class=\"shrink-0 flex-col border-r border-border-warm bg-card/95 backdrop-blur-sm w-16 lg:w-60 relative z-10 hidden md:flex\">",
+              "target": [
+                ".backdrop-blur-sm"
+              ],
+              "summary": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable"
+            },
+            {
+              "html": "<main class=\"mx-auto w-full max-w-7xl min-w-0 flex-1 p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:p-6 md:pb-6\">",
+              "target": [
+                ".max-w-7xl"
+              ],
+              "summary": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable"
+            }
+          ]
+        }
+      ],
+      "colorContrastSeriousOrCritical": []
+    },
+    {
+      "route": "/settings/billing",
+      "viewport": "1440x900",
+      "violations": [],
+      "colorContrastSeriousOrCritical": []
+    },
+    {
+      "route": "/campaigns",
+      "viewport": "1440x900",
+      "violations": [],
+      "colorContrastSeriousOrCritical": []
+    },
+    {
+      "route": "/activities/f8ea19e5-9b34-4437-ad1d-cf47c19973cc#form-studio",
+      "viewport": "1440x900",
+      "violations": [
+        {
+          "id": "aria-required-children",
+          "impact": "critical",
+          "description": "Ensure elements with an ARIA role that require child roles contain them",
+          "nodes": [
+            {
+              "html": "<ul class=\"space-y-2\" role=\"listbox\" aria-label=\"Form blocks\">",
+              "target": [
+                "ul[role=\"listbox\"]"
+              ],
+              "summary": "Fix any of the following:\n  Element has children which are not allowed: li"
+            }
+          ]
+        },
+        {
+          "id": "landmark-unique",
+          "impact": "moderate",
+          "description": "Ensure landmarks are unique",
+          "nodes": [
+            {
+              "html": "<aside class=\"shrink-0 flex-col border-r border-border-warm bg-card/95 backdrop-blur-sm w-16 lg:w-60 relative z-10 hidden md:flex\">",
+              "target": [
+                ".w-16"
+              ],
+              "summary": "Fix any of the following:\n  The landmark must have a unique aria-label, aria-labelledby, or title to make landmarks distinguishable"
+            }
+          ]
+        },
+        {
+          "id": "listitem",
+          "impact": "serious",
+          "description": "Ensure <li> elements are used semantically",
+          "nodes": [
+            {
+              "html": "<li style=\"margin-left: 0px;\">",
+              "target": [
+                "ul[role=\"listbox\"] > li:nth-child(1)"
+              ],
+              "summary": "Fix any of the following:\n  List item parent element has a role that is not role=\"list\""
+            },
+            {
+              "html": "<li style=\"margin-left: 0px;\">",
+              "target": [
+                "ul[role=\"listbox\"] > li:nth-child(2)"
+              ],
+              "summary": "Fix any of the following:\n  List item parent element has a role that is not role=\"list\""
+            },
+            {
+              "html": "<li style=\"margin-left: 0px;\">",
+              "target": [
+                "ul[role=\"listbox\"] > li:nth-child(3)"
+              ],
+              "summary": "Fix any of the following:\n  List item parent element has a role that is not role=\"list\""
+            },
+            {
+              "html": "<li style=\"margin-left: 0px;\">",
+              "target": [
+                "ul[role=\"listbox\"] > li:nth-child(4)"
+              ],
+              "summary": "Fix any of the following:\n  List item parent element has a role that is not role=\"list\""
+            }
+          ]
+        }
+      ],
+      "colorContrastSeriousOrCritical": []
+    },
+    {
+      "route": "/clients/985c4404-8dde-4bfe-a366-6b654b42eeba",
+      "viewport": "1440x900",
+      "violations": [],
+      "colorContrastSeriousOrCritical": []
+    },
+    {
+      "route": "/dashboard/website (px2-basic lock)",
+      "viewport": "390x844",
+      "violations": [
+        {
+          "id": "button-name",
+          "impact": "critical",
+          "description": "Ensure buttons have discernible text",
+          "nodes": [
+            {
+              "html": "<button type=\"button\" tabindex=\"0\" data-slot=\"button\" aria-expanded=\"false\" aria-controls=\"activity-calendar-po...\" class=\"group/button inline-...\">",
+              "target": [
+                ".h-12"
+              ],
+              "summary": "Fix any of the following:\n  Element does not have inner text that is visible to screen readers\n  aria-label attribute does not exist or is empty\n  aria-labelledby attribute does not exist, references elements that do not exist or references elements that are empty\n  Element has no title attribute\n  Element does not have an implicit (wrapped) <label>\n  Element does not have an explicit <label>\n  El"
+            }
+          ]
+        }
+      ],
+      "colorContrastSeriousOrCritical": []
+    }
+  ],
+  "gaps": []
+}

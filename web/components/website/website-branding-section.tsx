@@ -357,7 +357,7 @@ export const WebsiteBrandingSection = forwardRef<
                   />
                   {preset.label}
                   {isActive ? (
-                    <Check className="size-3.5 text-primary sm:size-4" aria-hidden />
+                    <Check className="size-3.5 text-text-link sm:size-4" aria-hidden />
                   ) : null}
                 </button>
               );
@@ -388,7 +388,7 @@ export const WebsiteBrandingSection = forwardRef<
                 "max-w-[10rem] font-mono text-sm",
                 accentIsInvalid &&
                   accentTouched &&
-                  "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/30"
+                  "border-destructive focus-visible:border-destructive focus-visible:ring-destructive"
               )}
             />
             <Button

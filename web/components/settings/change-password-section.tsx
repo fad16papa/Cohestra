@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/toast-provider";
 import { changePassword } from "@/lib/auth-api";
 
 const fieldShellClassName =
-  "flex min-h-11 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30";
+  "flex min-h-11 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring";
 
 export function ChangePasswordSection({ embedded = false }: { embedded?: boolean }) {
   const { authFetch } = useAuth();

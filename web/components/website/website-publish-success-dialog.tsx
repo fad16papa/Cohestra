@@ -38,10 +38,10 @@ export function WebsitePublishSuccessDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <div className="border-b border-border-warm/60 bg-emerald-50/80 px-6 py-5 dark:bg-emerald-950/30">
+        <div className="border-b border-border-warm/60 border-success/30 bg-surface-success px-6 py-5">
           <AlertDialogHeader className="gap-3">
             <div className="flex items-start gap-3">
-              <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">
+              <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-surface-success text-text-success">
                 <CheckCircle2 className="size-5" aria-hidden />
               </span>
               <div className="space-y-1">

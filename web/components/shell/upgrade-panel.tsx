@@ -87,7 +87,7 @@ function IntervalToggle({
           >
             {value === "monthly" ? "Monthly" : "Yearly"}
             {value === "annual" ? (
-              <span className="ml-1.5 text-xs font-normal text-primary">{ANNUAL_SAVINGS_LABEL}</span>
+              <span className="ml-1.5 text-xs font-normal text-text-link">{ANNUAL_SAVINGS_LABEL}</span>
             ) : null}
           </button>
         );
@@ -112,7 +112,7 @@ function FeatureList({
     >
       {features.map((feature) => (
         <li key={feature} className="flex gap-2.5">
-          <Check className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+          <Check className="mt-0.5 size-4 shrink-0 text-text-link" aria-hidden />
           <span>{feature}</span>
         </li>
       ))}
@@ -158,7 +158,7 @@ function SelectablePlanCard({
           </div>
           <p className="mt-1 text-sm leading-relaxed text-text-muted-warm">{plan.headline}</p>
         </div>
-        {active ? <Check className="mt-1 size-5 shrink-0 text-primary" aria-hidden /> : null}
+        {active ? <Check className="mt-1 size-5 shrink-0 text-text-link" aria-hidden /> : null}
       </div>
 
       <div className="mt-4">
@@ -195,11 +195,11 @@ function ProOnlyPlanCard({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h3 className="text-xl font-semibold text-text-warm">{plan.name}</h3>
-              <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-primary">
+              <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-text-link">
                 Unlocks this feature
               </p>
             </div>
-            <Check className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+            <Check className="mt-0.5 size-5 shrink-0 text-text-link" aria-hidden />
           </div>
           <p className="mt-3 text-sm leading-relaxed text-text-muted-warm">{plan.headline}</p>
           <div className="mt-5">
@@ -255,7 +255,7 @@ export function UpgradePanel({
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
         <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15 sm:size-12 sm:rounded-2xl">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-text-link ring-1 ring-primary/15 sm:size-12 sm:rounded-2xl">
             <Lock className="size-5" aria-hidden />
           </span>
           <div className="min-w-0 space-y-2">

@@ -171,7 +171,7 @@ export function ClientProfileHeader({
               </h2>
               <LeadStatusBadge status={client.leadStatus} />
               {followUpDue ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+                <span className="inline-flex items-center gap-1 rounded-full bg-surface-warning px-2 py-0.5 text-xs font-medium text-text-warning">
                   <CalendarClock className="size-3" aria-hidden />
                   Follow-up due
                 </span>
@@ -250,7 +250,7 @@ export function ClientProfileHeader({
             onChange={(event) => {
               void handleStatusChange(event.target.value as LeadStatus);
             }}
-            className="flex h-8 rounded-lg border border-input bg-background px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50"
+            className="flex h-8 rounded-lg border border-input bg-background px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
           >
             {leadStatusOptions.map((option) => (
               <option key={option.value} value={option.value}>

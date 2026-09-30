@@ -32,7 +32,7 @@ type SegmentPickerProps = {
 const FILTER_DEBOUNCE_MS = 400;
 
 const selectClassName =
-  "flex h-10 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+  "flex h-10 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring";
 
 export function SegmentPicker({
   activities,
@@ -263,10 +263,10 @@ export function SegmentPicker({
         {composeReady && preview && !previewError ? (
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border-warm bg-card px-3 py-1 text-xs font-medium text-text-warm">
-              <Users className="size-3.5 text-primary" aria-hidden />
+              <Users className="size-3.5 text-text-link" aria-hidden />
               {totalCount} consented
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-surface-success px-3 py-1 text-xs font-medium text-foreground">
               <Mail className="size-3.5" aria-hidden />
               {readyCount} ready to send
             </span>
@@ -276,7 +276,7 @@ export function SegmentPicker({
               </span>
             ) : null}
             {totalCount - readyCount > 0 ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border-control bg-surface-warning px-3 py-1 text-xs font-medium text-text-warning">
                 <MailX className="size-3.5" aria-hidden />
                 {totalCount - readyCount} missing email
               </span>
@@ -457,7 +457,7 @@ export function SegmentPicker({
                           <span className="min-w-0 truncate text-sm font-medium text-text-warm">
                             {recipient.fullName}
                             {recipient.isAdditionalRecipient ? (
-                              <span className="ml-2 text-xs font-normal text-primary">
+                              <span className="ml-2 text-xs font-normal text-text-link">
                                 Outside community
                               </span>
                             ) : null}
@@ -467,19 +467,19 @@ export function SegmentPicker({
                               "min-w-0 truncate text-sm",
                               hasEmail
                                 ? "text-text-muted-warm"
-                                : "text-amber-700 dark:text-amber-300"
+                                : "text-text-warning"
                             )}
                           >
                             {hasEmail ? recipient.email : "No email on file"}
                           </span>
                           <span className="sm:text-right">
                             {hasEmail ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-surface-success px-2 py-0.5 text-xs font-medium text-foreground">
                                 <CheckCircle2 className="size-3" aria-hidden />
                                 Ready
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-surface-warning px-2 py-0.5 text-xs font-medium text-foreground">
                                 <MailX className="size-3" aria-hidden />
                                 Skipped
                               </span>

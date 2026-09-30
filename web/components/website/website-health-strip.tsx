@@ -58,7 +58,7 @@ export function WebsiteHealthStrip({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Globe className="size-4 text-primary" aria-hidden />
+            <Globe className="size-4 text-text-link" aria-hidden />
             <h2 className="text-sm font-semibold text-text-warm">Site status</h2>
             <span
               className={cn(
@@ -130,7 +130,7 @@ export function WebsiteHealthStrip({
           <p
             className={cn(
               "mt-1 text-sm font-medium",
-              publishBlockerCount > 0 ? "text-destructive" : "text-emerald-700 dark:text-emerald-300"
+              publishBlockerCount > 0 ? "text-destructive" : "text-text-success"
             )}
           >
             {publishBlockerCount > 0

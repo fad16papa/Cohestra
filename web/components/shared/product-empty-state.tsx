@@ -41,7 +41,7 @@ export function ProductEmptyState({
         className="pointer-events-none absolute -bottom-10 -right-10 size-36 rounded-full bg-accent/10 blur-2xl"
       />
       <div className="relative mx-auto flex max-w-md flex-col items-center">
-        <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-sm ring-1 ring-primary/10">
+        <span className="flex size-14 items-center justify-center rounded-2xl bg-muted text-foreground shadow-sm ring-1 ring-border">
           <Icon className="size-7" aria-hidden />
         </span>
         <h2 className="mt-5 text-section text-text-warm">{title}</h2>

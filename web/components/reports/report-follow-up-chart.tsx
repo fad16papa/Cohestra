@@ -156,7 +156,7 @@ export function ReportFollowUpChart({ followUpStatus }: ReportFollowUpChartProps
                       className="inline-block size-2.5 shrink-0 rounded-full"
                       style={{ backgroundColor: slice.color }}
                     />
-                    <span className="min-w-0 flex-1 truncate text-sm text-text-warm group-hover:text-lagoon">
+                    <span className="min-w-0 flex-1 truncate text-sm text-text-warm group-hover:text-text-link">
                       {slice.label}
                     </span>
                     <span className="shrink-0 tabular-nums text-sm font-semibold text-text-warm">

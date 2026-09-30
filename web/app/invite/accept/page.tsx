@@ -5,7 +5,7 @@ import { InviteAcceptPageClient } from "@/components/team/invite-accept-page-cli
 function InviteAcceptLoadingFallback() {
   return (
     <main className="flex min-h-dvh items-center justify-center bg-paper px-5 py-16">
-      <p className="text-sm text-stone">Loading invite…</p>
+      <p className="text-sm text-text-muted">Loading invite…</p>
     </main>
   );
 }

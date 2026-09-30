@@ -142,7 +142,7 @@ export function SettingsRightRail({
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
                 <PlanBadge plan={shell.plan} />
                 {shell.billingStatus && shell.billingStatus !== "Free" ? (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-text-muted-warm">
+                  <span className="inline-flex items-center rounded-full border border-border-control bg-background px-2.5 py-0.5 text-xs font-medium text-foreground">
                     {shell.billingStatus}
                   </span>
                 ) : null}
@@ -167,7 +167,7 @@ export function SettingsRightRail({
                 <li>
                   <Link
                     href="/settings/team"
-                    className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                    className="inline-flex items-center gap-1 font-medium text-text-link hover:underline"
                   >
                     Team settings
                     <ExternalLink className="size-3.5" aria-hidden />
@@ -177,7 +177,7 @@ export function SettingsRightRail({
                   <li>
                     <Link
                       href="/settings/billing"
-                      className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+                      className="inline-flex items-center gap-1 font-medium text-text-link hover:underline"
                     >
                       Billing & plan
                       <ExternalLink className="size-3.5" aria-hidden />

@@ -215,7 +215,7 @@ export function AdditionalRecipientsPicker({
                           "truncate text-xs",
                           hasEmail
                             ? "text-text-muted-warm"
-                            : "text-amber-700 dark:text-amber-300"
+                            : "text-text-warning"
                         )}
                       >
                         {hasEmail

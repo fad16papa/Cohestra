@@ -58,6 +58,26 @@
   --color-border-warm: var(--border-warm);
   --color-text-warm: var(--text-warm);
   --color-text-muted-warm: var(--text-muted-warm);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-on-lagoon: var(--text-on-lagoon);
+  --color-text-on-danger: var(--text-on-danger);
+  --color-text-link: var(--text-link);
+  --color-text-danger: var(--text-danger);
+  --color-text-warning: var(--text-warning);
+  --color-text-success: var(--text-success);
+  --color-text-info: var(--text-info);
+  --color-text-accent: var(--text-accent);
+  --color-icon-muted: var(--icon-muted);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warn: var(--warn);
+  --color-border-control: var(--border-control);
+  --color-surface-danger: var(--surface-danger);
+  --color-surface-success: var(--surface-success);
+  --color-surface-warning: var(--surface-warning);
+  --color-surface-info: var(--surface-info);
   --color-status-new: var(--status-new);
   --color-status-new-foreground: var(--status-new-foreground);
   --color-status-contacted: var(--status-contacted);
@@ -81,7 +101,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
   }
   body {
     @apply bg-background text-foreground;
@@ -531,16 +551,21 @@
      Override tokens so chart ticks (`var(--text-muted-warm)`) and opacity
      utilities (`text-text-muted-warm/90`) inherit stone-cinema, not raw stone. */
   [data-demo-theme] {
+    --text-muted: var(--stone-cinema);
     --text-muted-warm: var(--stone-cinema);
     --muted-foreground: var(--stone-cinema);
+    --color-text-muted: var(--stone-cinema);
     --color-text-muted-warm: var(--stone-cinema);
     --color-muted-foreground: var(--stone-cinema);
   }
 
   [data-demo-theme] .text-stone,
+  [data-demo-theme] .text-text-muted,
   [data-demo-theme] .text-text-muted-warm,
   [data-demo-theme] .text-muted-foreground,
+  [data-demo-theme] .text-icon-muted,
   [data-demo-theme] [class*="text-stone/"],
+  [data-demo-theme] [class*="text-text-muted/"],
   [data-demo-theme] [class*="text-text-muted-warm/"],
   [data-demo-theme] [class*="text-muted-foreground/"] {
     color: var(--stone-cinema);

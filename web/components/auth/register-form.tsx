@@ -10,10 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fetchOnboardingStatus, registerOperator } from "@/lib/auth-api";
-import { cn } from "@/lib/utils";
 
 const fieldShellClassName =
-  "flex min-h-12 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30";
+  "flex min-h-12 items-center gap-3 rounded-xl border border-input bg-background/80 px-3 shadow-xs transition-[border-color,box-shadow] focus-within:border-ring focus-within:ring-2 focus-within:ring-ring";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -162,10 +161,7 @@ export function RegisterForm() {
       <Button
         type="submit"
         disabled={isSubmitting}
-        className={cn(
-          "min-h-12 w-full rounded-xl text-base font-semibold sm:text-sm",
-          "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md shadow-primary/20"
-        )}
+        className="min-h-12 w-full rounded-xl text-base font-semibold sm:text-sm"
       >
         {isSubmitting ? (
           <>
@@ -179,7 +175,7 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-text-muted-warm">
         Already set up?{" "}
-        <Link href="/login" className="font-medium text-primary hover:underline">
+        <Link href="/login" className="font-medium text-text-link hover:underline">
           Sign in
         </Link>
       </p>

@@ -1,0 +1,358 @@
+{
+  "generated": "2026-09-29T14:56:41.609Z",
+  "story": "38.4",
+  "rows": [
+    {
+      "file": "components/activities/activities-at-cap-banner.tsx",
+      "line": 63,
+      "kind": "gold-token",
+      "snippet": ": \"border-gold/40 bg-gold/10 text-text-warm\",",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/activities/activities-at-cap-banner.tsx",
+      "line": 83,
+      "kind": "gold-token",
+      "snippet": ": \"border-gold/40 bg-background/80 hover:bg-background\"",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/activities/activities-at-cap-banner.tsx",
+      "line": 97,
+      "kind": "gold-token",
+      "snippet": ": \"border-gold/40 bg-background/80 hover:bg-background\"",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/activities/activity-design-tab.tsx",
+      "line": 255,
+      "kind": "gold-token",
+      "snippet": "? \"border-primary bg-gold-soft/40 ring-2 ring-primary/30\"",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/activities/activity-past-due-badge.tsx",
+      "line": 11,
+      "kind": "tailwind-palette-text",
+      "snippet": "\"inline-flex items-center rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200\",",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/activities/activity-plan-reg-cap-indicator.tsx",
+      "line": 51,
+      "kind": "gold-token",
+      "snippet": "? \"bg-gold\"",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/activities/activity-schedule-conflict-alert.tsx",
+      "line": 45,
+      "kind": "tailwind-palette-text",
+      "snippet": "\"shrink-0 text-amber-600 dark:text-amber-400\",",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/activities/activity-schedule-conflict-alert.tsx",
+      "line": 52,
+      "kind": "tailwind-palette-text",
+      "snippet": "<p className=\"text-sm font-medium text-amber-950 dark:text-amber-100\">",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/activities/activity-schedule-conflict-alert.tsx",
+      "line": 59,
+      "kind": "tailwind-palette-text",
+      "snippet": "<p className=\"text-xs text-amber-900/90 dark:text-amber-100/90\">",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/activities/activity-schedule-conflict-alert.tsx",
+      "line": 68,
+      "kind": "tailwind-palette-text",
+      "snippet": "className=\"font-medium text-amber-950 underline decoration-amber-400/70 underline-offset-2 hover:text-amber-900 dark:text-amber-50\"",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/activities/activity-schedule-conflict-alert.tsx",
+      "line": 73,
+      "kind": "tailwind-palette-text",
+      "snippet": "<span className=\"text-amber-900/75 dark:text-amber-200/75\">",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/activities/activity-schedule-conflict-alert.tsx",
+      "line": 85,
+      "kind": "tailwind-palette-text",
+      "snippet": "\"text-amber-900/90 dark:text-amber-100/90\",",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/activities/form-template-picker.tsx",
+      "line": 78,
+      "kind": "gold-token",
+      "snippet": "blocked ? \"bg-destructive\" : percent >= 80 ? \"bg-gold\" : \"bg-primary\"",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/activities/registration-design-token-controls.tsx",
+      "line": 114,
+      "kind": "gold-token",
+      "snippet": "? \"border-primary bg-gold-soft/40 ring-2 ring-primary/30\"",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/activities/registration-design-token-controls.tsx",
+      "line": 201,
+      "kind": "gold-token",
+      "snippet": "? \"border-primary bg-gold-soft/40 ring-2 ring-primary/30\"",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/activities/registration-experience-controls.tsx",
+      "line": 57,
+      "kind": "gold-token",
+      "snippet": "? \"border-primary bg-gold-soft/40 ring-2 ring-primary/30\"",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/billing/checkout-page-content.tsx",
+      "line": 614,
+      "kind": "tailwind-palette-text",
+      "snippet": "<p className=\"font-medium text-amber-900 dark:text-amber-100\">",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/billing/checkout-page-content.tsx",
+      "line": 617,
+      "kind": "tailwind-palette-text",
+      "snippet": "<ul className=\"list-disc space-y-1 pl-5 text-amber-900/90 dark:text-amber-100/90\">",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/billing/in-app-billing-panel.tsx",
+      "line": 342,
+      "kind": "tailwind-palette-text",
+      "snippet": "<p className=\"mt-2 text-amber-800 dark:text-amber-200\">",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/billing/in-app-billing-panel.tsx",
+      "line": 356,
+      "kind": "tailwind-palette-text",
+      "snippet": "<p className=\"text-amber-800 dark:text-amber-200\">",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/billing/paddle-return-page-content.tsx",
+      "line": 200,
+      "kind": "opacity-text",
+      "snippet": "<p className=\"mt-3 text-sm leading-6 text-ink/70\">",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Opacity utility recorded; contrast must still pass via the resolved token."
+    },
+    {
+      "file": "components/billing/paddle-return-page-content.tsx",
+      "line": 225,
+      "kind": "opacity-text",
+      "snippet": "<p className=\"mt-3 text-sm leading-6 text-ink/70\">",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Opacity utility recorded; contrast must still pass via the resolved token."
+    },
+    {
+      "file": "components/campaigns/email-preview-dialog.tsx",
+      "line": 36,
+      "kind": "tailwind-palette-text",
+      "snippet": "className=\"mx-auto max-w-xl text-sm leading-relaxed [&_a]:text-blue-700 [&_a]:underline [&_img]:my-3 [&_img]:max-h-80 [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5\"",
+      "disposition": "outside-38-4",
+      "ownerStory": "email-html-facsimile",
+      "note": "Campaign HTML preview mimics email client link color."
+    },
+    {
+      "file": "components/campaigns/segment-picker.tsx",
+      "line": 318,
+      "kind": "opacity-text",
+      "snippet": "<Users className=\"mx-auto size-8 text-text-muted-warm/70\" aria-hidden />",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Opacity utility recorded; contrast must still pass via the resolved token."
+    },
+    {
+      "file": "components/dashboard/activity-calendar-popout.tsx",
+      "line": 399,
+      "kind": "tailwind-palette-text",
+      "snippet": "className=\"size-3 text-amber-600 dark:text-amber-400\"",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/dashboard/activity-calendar-popout.tsx",
+      "line": 423,
+      "kind": "tailwind-palette-text",
+      "snippet": "<p className=\"font-medium text-amber-800 dark:text-amber-200\">",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/dashboard/activity-calendar-popout.tsx",
+      "line": 362,
+      "kind": "opacity-text",
+      "snippet": "inMonth ? \"text-text-warm\" : \"text-text-muted-warm/50\",",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Opacity utility recorded; contrast must still pass via the resolved token."
+    },
+    {
+      "file": "components/layouts/platform-byline.tsx",
+      "line": 29,
+      "kind": "opacity-text",
+      "snippet": "\"font-medium text-foreground/80 underline-offset-4 transition-colors hover:text-foreground hover:underline\",",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Opacity utility recorded; contrast must still pass via the resolved token."
+    },
+    {
+      "file": "components/reports/report-follow-up-chart.tsx",
+      "line": 174,
+      "kind": "tailwind-palette-text",
+      "snippet": "<p className=\"rounded-lg bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-100\">",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
+    },
+    {
+      "file": "components/reports/report-visual-primitives.tsx",
+      "line": 64,
+      "kind": "gold-token",
+      "snippet": "\"bg-gold/15 text-text-accent ring-gold/30\",",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/shared/share-link-preview.tsx",
+      "line": 33,
+      "kind": "tailwind-palette-text",
+      "snippet": "<div className=\"ml-auto max-w-[92%] rounded-2xl rounded-tr-sm bg-[#d9fdd3] px-3 py-2 text-xs text-emerald-950 shadow-sm dark:bg-emerald-900/80 dark:text-emerald-50\">",
+      "disposition": "decorative",
+      "ownerStory": "outside-38-4",
+      "note": "WhatsApp/message facsimile, not product chrome."
+    },
+    {
+      "file": "components/shell/billing-banner.tsx",
+      "line": 25,
+      "kind": "gold-token",
+      "snippet": "past_due: \"border-gold/40 bg-gold/5 text-text-warm\",",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/shell/billing-banner.tsx",
+      "line": 28,
+      "kind": "gold-token",
+      "snippet": "registration_cap: \"border-gold/40 bg-gold/5 text-text-warm\",",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/shell/limit-meter.tsx",
+      "line": 56,
+      "kind": "gold-token",
+      "snippet": "? \"bg-gold\"",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/shell/plan-badge.tsx",
+      "line": 13,
+      "kind": "gold-token",
+      "snippet": "Pro: \"border-gold/40 bg-gold/10 text-text-accent\",",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/shell/plan-limit-alert.tsx",
+      "line": 46,
+      "kind": "gold-token",
+      "snippet": ": \"border-gold/40 bg-gold/10 text-text-warm\",",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/shell/plan-limit-alert.tsx",
+      "line": 59,
+      "kind": "gold-token",
+      "snippet": ": \"border-gold/40\"",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/shell/sponsored-badge.tsx",
+      "line": 15,
+      "kind": "gold-token",
+      "snippet": "\"inline-flex items-center gap-1 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-0.5 text-xs font-medium text-text-accent\",",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/website/website-section-fields.tsx",
+      "line": 883,
+      "kind": "opacity-text",
+      "snippet": "\"flex shrink-0 touch-none select-none rounded-lg px-1.5 py-2 text-text-muted-warm/70 transition-colors\",",
+      "disposition": "passing-intentionally-retained",
+      "ownerStory": "38.4",
+      "note": "Opacity utility recorded; contrast must still pass via the resolved token."
+    }
+  ],
+  "unresolved": []
+}
