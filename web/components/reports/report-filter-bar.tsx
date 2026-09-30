@@ -118,7 +118,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
 
   const applyFilters = useCallback((nextFilters: ReportFilters) => {
     const params = filtersToSearchParams(nextFilters);
-    router.replace(`/reports?${params.toString()}`);
+    router.replace(`/analytics?${params.toString()}`);
   }, [router]);
 
   function updateFilter<K extends keyof ReportFilters>(
@@ -155,7 +155,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
   }
 
   function clearAllFilters() {
-    router.replace("/reports");
+    router.replace("/analytics");
   }
 
   const activeChips = useMemo(() => {
@@ -378,5 +378,5 @@ export function ensureDefaultReportSearchParams(
     return null;
   }
 
-  return `/reports?${filtersToSearchParams(defaultReportFilters()).toString()}`;
+  return `/analytics?${filtersToSearchParams(defaultReportFilters()).toString()}`;
 }

@@ -19,7 +19,7 @@ const actions = [
     accent: "from-primary/20 to-primary/5",
   },
   {
-    href: "/reports",
+    href: "/analytics",
     label: "View reports",
     description: "Export registrations for the month",
     icon: FileBarChart,

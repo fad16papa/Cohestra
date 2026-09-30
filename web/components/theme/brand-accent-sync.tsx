@@ -30,6 +30,9 @@ function isAdminWorkspacePath(pathname: string | null): boolean {
     pathname.startsWith("/activities") ||
     pathname.startsWith("/campaigns") ||
     pathname.startsWith("/reports") ||
+    pathname.startsWith("/analytics") ||
+    pathname.startsWith("/follow-up") ||
+    pathname.startsWith("/ai") ||
     pathname.startsWith("/settings") ||
     pathname.startsWith("/billing")
   );

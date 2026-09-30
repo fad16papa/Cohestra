@@ -65,7 +65,7 @@ export function DashboardMetricsGraphs({
       label: `Registrations ${periodLabel}`,
       displayValue: String(metrics.registrationsInPeriod),
       caption: formatSignedPercent(wowDelta),
-      href: "/reports",
+      href: "/analytics",
       ariaLabel: `${metrics.registrationsInPeriod} registrations ${periodLabel}`,
     },
     {

@@ -54,6 +54,9 @@ const tabItems: TabItem[] = [
     isActive: (pathname) =>
       pathname.startsWith("/campaigns") ||
       pathname.startsWith("/reports") ||
+      pathname.startsWith("/analytics") ||
+      pathname.startsWith("/follow-up") ||
+      pathname.startsWith("/ai") ||
       pathname.startsWith("/settings"),
     opensMenu: true,
   },

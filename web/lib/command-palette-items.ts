@@ -44,7 +44,7 @@ const iconByHref: Record<string, LucideIcon> = {
   "/activities": CalendarDays,
   "/clients": Users,
   "/campaigns": Megaphone,
-  "/reports": BarChart3,
+  "/analytics": BarChart3,
 };
 
 function navItems(): CommandPaletteItem[] {
@@ -56,6 +56,7 @@ function navItems(): CommandPaletteItem[] {
       label: item.label,
       href: item.href,
       group: "Navigate",
+      keywords: item.href === "/analytics" ? "reports" : undefined,
       icon: item.icon,
     });
 

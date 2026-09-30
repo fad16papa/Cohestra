@@ -246,8 +246,8 @@ export function DashboardPageClient() {
             <MetricTile
               label={`Registrations ${periodLabel}`}
               value={String(metrics.registrationsInPeriod)}
-              href="/reports"
-              ariaLabel={`${metrics.registrationsInPeriod} registrations ${periodLabel} — open reports`}
+              href="/analytics"
+              ariaLabel={`${metrics.registrationsInPeriod} registrations ${periodLabel} — open analytics`}
               delta={{
                 percent: registrationsWowDelta,
                 label: `vs previous ${metrics.periodDays} days (${metrics.registrationsInPreviousPeriod})`,

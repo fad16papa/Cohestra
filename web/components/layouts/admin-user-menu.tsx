@@ -60,7 +60,7 @@ export function AdminUserMenu() {
         </PopoverHeader>
         <div className="p-1.5">
           <Link
-            href="/settings"
+            href="/settings/profile"
             className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm text-text-warm motion-press hover:bg-muted/60"
           >
             <Settings className="size-4 text-text-muted-warm" aria-hidden />

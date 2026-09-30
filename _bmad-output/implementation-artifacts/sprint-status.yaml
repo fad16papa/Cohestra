@@ -389,6 +389,10 @@ development_status:
   38-5-shared-heading-landmark-and-skip-link-contract: done
   38-6-shared-accessible-overlay-contract: done
 
+  # Epic 39 — Application shell and navigation
+  epic-39: in-progress
+  39-1-desktop-shell-and-canonical-rooms: in-progress
+
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done
   33-6-harbourline-democlub-continuous-seed: done

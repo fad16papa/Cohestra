@@ -57,7 +57,7 @@ export function DashboardMetricsTable({
         metrics.registrationsInPeriod,
         metrics.registrationsInPreviousPeriod
       ),
-      href: "/reports",
+      href: "/analytics",
     },
     {
       metric: `New leads ${periodLabel}`,

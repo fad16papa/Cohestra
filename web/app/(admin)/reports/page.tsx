@@ -1,20 +1,14 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { Suspense } from "react";
+import {
+  ANALYTICS_PATH,
+  destinationWithSearch,
+} from "@/lib/admin-canonical-routes";
 
-import { ReportsPageClient } from "@/components/reports/reports-page-client";
-
-export default function ReportsPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="space-y-2">
-          <h1 className="text-display-sm text-text-warm">Reports</h1>
-          <p className="text-sm text-text-muted-warm">Loading report…</p>
-        </div>
-      }
-    >
-      <ReportsPageClient />
-    </Suspense>
-  );
+export default async function ReportsCompatibilityPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  redirect(destinationWithSearch(ANALYTICS_PATH, await searchParams));
 }

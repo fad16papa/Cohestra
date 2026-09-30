@@ -146,6 +146,12 @@ export function DashboardIntelligenceBrief() {
             Needs attention
           </h2>
         </div>
+        <Link
+          href="/ai"
+          className="text-sm font-medium text-text-link underline-offset-4 hover:underline"
+        >
+          Cohestra AI
+        </Link>
         {brief ? (
           <p className="text-xs text-text-muted-warm">{modeLabel(brief.mode)}</p>
         ) : null}
