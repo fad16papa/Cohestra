@@ -10,3 +10,5 @@ These are inventoried, named, and **out of this story**. They are not 38.6 defec
 | Form Studio field palette custom dialog | 42.3 | Listbox semantics story. Do not restyle Form Studio. |
 | No React-nested product modal pair | n/a | Authenticated product does not stack two `Dialog` trees. Sibling shell modals are exclusive instead of a global overlay stack. |
 | Production DigitalOcean deploy | classification C | SSH inputs missing. Unchanged. |
+| Owned `inert` re-assert waits for next childList sync | later polish | Observer is childList by 38.6 contract. |
+| Empty-portal reclassify is async | n/a | MutationObserver microtask; product portals are `data-base-ui-portal` from insert. |

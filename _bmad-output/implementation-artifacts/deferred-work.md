@@ -1,3 +1,11 @@
+## Deferred from: code review of 38-6-shared-accessible-overlay-contract.md (2026-09-30)
+
+HEAD `7bb9c80a` (inert-ownership patch). Independent re-review. No unresolved BLOCKER/MAJOR. Story remains in-progress for PO pre-merge.
+
+- Owned `inert` stripped without a childList mutation is re-asserted only on the next `syncModalInert`. Observer is `childList` (including subtree) by PO contract. Not an attribute observer.
+- Empty-portal overlay reclassify is a MutationObserver microtask. Product overlays set `data-base-ui-portal` at insert and are never claimed. Brief inert on the empty-wrapper path is inherent.
+- Nested empty `data-base-ui-portal` that is not a direct `document.body` child uses pre-existing `isOverlayPortal` classification. Not this patch.
+
 ## Deferred from: story 38.5 close on main `8cde0fc0` (2026-09-30)
 
 PR #352 merged. PO accepted remaining MINORs without patching. No product, architecture, or security risk.

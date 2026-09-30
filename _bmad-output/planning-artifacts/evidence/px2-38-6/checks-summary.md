@@ -10,12 +10,12 @@ HEAD at evidence capture: `cursor/story-38-6-overlays-0fcb` (see git log)
 | `npx tsc --noEmit` | pass |
 | Targeted ESLint on changed frontend files (`--max-warnings=0`) | pass |
 | Vitest `lib/overlays-38-6.test.ts` | 5 passed |
-| Vitest `lib/use-modal-inert.test.ts` | 2 passed |
+| Vitest `lib/use-modal-inert.test.ts` | **6 passed** (ownership/restore/reset coverage) |
 | Vitest `lib/overlay-tab-trap.test.ts` | 1 passed |
 | Vitest `lib/motion-polish.test.ts` | 9 passed |
 | Vitest `lib/landmarks-38-5.test.ts` | 6 passed |
-| Full Vitest (`npx vitest run`) | **76 files, 484 passed** (plus new overlay tests in later HEAD) |
-| Playwright `e2e/overlays-38-6.spec.ts` (`E2E_LIVE_STACK=1`) | **1 passed (14.2s)** after review patches |
+| Full Vitest (`npx vitest run`) | **78 files, 491 passed** |
+| Playwright `e2e/overlays-38-6.spec.ts` (`E2E_LIVE_STACK=1`) | **1 passed (15.5s)** on inert-ownership HEAD |
 | Playwright `e2e/landmarks-38-5.spec.ts` | **4 passed** |
 | Playwright `e2e/tokens-38-4.spec.ts` | **6 passed** |
 | Playwright `e2e/a11y-38-4.spec.ts` | **2 passed** |
@@ -38,11 +38,11 @@ Axe rules checked on open overlays: `aria-dialog-name`, `aria-modal-attr`, `aria
 
 Local production `next build` passed on this branch.
 
-## Required GitHub CI (final HEAD)
+## Required GitHub CI (inert-ownership HEAD)
 
-HEAD: `ece03f94689b84364ecdcf324a83af4903b73c43`  
-Run: https://github.com/fad16papa/Cohestra/actions/runs/36710216602  
-Workflow: CI · `pull_request` · **success**
+Implementation HEAD: `7bb9c80ab6d1567067a3b13b299c514835c29a1c`  
+Run: https://github.com/fad16papa/Cohestra/actions/runs/36719314612  
+Workflow: CI · `pull_request` · **success** (superseded a cancelled duplicate run)
 
 | Check | Result |
 | --- | --- |
@@ -51,7 +51,8 @@ Workflow: CI · `pull_request` · **success**
 | Next.js build | SUCCESS |
 | UAT isolation contract | SUCCESS |
 | Docker stack smoke | SUCCESS |
-| GitGuardian Security Checks | SUCCESS |
+
+Local on this HEAD: `npx tsc --noEmit` pass; targeted ESLint 0; production `next build` pass; Vitest 78/491; Playwright overlays + 38.5 landmarks + 38.4 tokens/a11y 13 passed.
 
 ## Not run / unchanged
 

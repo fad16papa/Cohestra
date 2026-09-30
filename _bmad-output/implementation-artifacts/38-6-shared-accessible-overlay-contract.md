@@ -95,6 +95,14 @@ Do not add a second overlay engine. Do not JS-gate motion.
   - [x] Playwright `overlays-38-6.spec.ts`
   - [x] Evidence `_bmad-output/planning-artifacts/evidence/px2-38-6/`
   - [x] 38.5 landmark + 38.4 token regression
+- [x] PO pre-merge MAJOR — inert ownership (track/restore/never strip foreign; subtree observer; tests)
+
+### Review Findings
+
+Independent `bmad-code-review` of HEAD `7bb9c80a` (Blind Hunter, Edge Case Hunter, Acceptance Auditor). No unresolved BLOCKER/MAJOR.
+
+- [x] [Review][Defer] Owned `inert` stripped without a childList mutation is re-asserted only on the next sync [`web/lib/use-modal-inert.ts`] — deferred, observer is childList by contract
+- [x] [Review][Defer] Empty-portal reclassify is async (MutationObserver microtask) [`web/lib/use-modal-inert.ts`] — deferred, inherent; product portals use `data-base-ui-portal` from the start
 
 ## Dev Notes
 
