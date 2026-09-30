@@ -129,6 +129,19 @@ Component: `web/components/layouts/admin-skip-link.tsx`. First focusable in `Das
   - [x] viewports under `_bmad-output/planning-artifacts/evidence/px2-38-5/`
 - [x] Preserve 38.4 token tests and 38.2 entitlement tests
 
+### Review Findings
+
+Independent `bmad-code-review` of HEAD `799d1173` (2026-09-30). Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor. Mandatory Code Review Loop: current HEAD only. **0 BLOCKER, 0 MAJOR.**
+
+- [ ] [Review][Patch] Skip activation should `scrollIntoView` after `focus()` so sticky top bar / billing banner cannot cover main [`web/components/layouts/admin-skip-link.tsx`] — MINOR. `preventDefault` cancels native hash scroll; `scroll-mt-16` does not help if the overflow shell is the scrollport.
+- [ ] [Review][Patch] Embedded Website preview body should be a native `<section>` rather than `div role="region"` [`web/components/marketing/site-page-renderer.tsx`] — MINOR. AC 6 prefers native elements; labelling stays.
+- [ ] [Review][Patch] Settings content `aria-labelledby` should not point at `settings-active-section-heading` when that `h2` is unmounted [`web/components/settings/settings-page-content.tsx`] — MINOR. Happens only if `visibleSections` is empty (`activeSection` is `visibleSections[0]`).
+- [x] [Review][Defer] Website Studio populated document h1 is `sr-only` while the visible title is a toolbar `<p>` [`web/components/website/website-builder-page.tsx`] — deferred, architecture table wanted PageHeader; AC 2 still has exactly one meaningful h1. Visible header primitive is Story **39.4**.
+- [x] [Review][Defer] Mobile More dialog is only counted for landmark uniqueness, not focus trap [`web/e2e/landmarks-38-5.spec.ts`] — deferred, Story **38.6**.
+- [x] [Review][Defer] Clients list `role="row"` without grid/table parent remains in axe `all` [`evidence/px2-38-5/axe-route-matrix.json`] — deferred, Stories **40.3 / 43.5**.
+- [x] [Review][Defer] Public `/embed/register/[slug]` layout is a `div` wrapper with no `<main>` [`web/app/embed/layout.tsx`] — deferred, pre-existing embed chrome; AC 7 keeps standalone h1. Not nested in the admin shell.
+- [x] [Review][Defer] `DashboardShellBody` uses `useSearchParams` (pre-existing); a parent Suspense fallback could omit skip/main during searchParam hydration [`web/components/layouts/dashboard-layout.tsx`] — deferred, pre-existing shell pattern; not observed in live-stack e2e.
+
 ## Dev Notes
 
 ### Files to update (known)
@@ -230,4 +243,4 @@ Grok 4.6 (semantics, architecture, implementation, tests, review). Composer 2.5 
 
 - 2026-09-30: Created Story 38.5 after 38.4 close `1b5cc6b3`. D9 contract accepted.
 - 2026-09-30: Review loop — heading-order retune, SPA skip keyboard reset, Form Studio Block palette h3, labelled asides.
-- 2026-09-30: Second review — AC 9 loading h1 on Clients/Activities/Billing/Checkout Suspense; Website preview e2e requires the Preview tab and `Website preview` region.
+- 2026-09-30: Independent `bmad-code-review` of HEAD `799d1173`: 0 BLOCKER / 0 MAJOR. Three MINOR patches left as action items. Story stays in-progress for product-owner acceptance.
