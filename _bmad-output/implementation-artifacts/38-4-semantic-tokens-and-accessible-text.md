@@ -2,16 +2,17 @@
 id: 38.4
 key: 38-4-semantic-tokens-and-accessible-text
 title: Semantic tokens and accessible text
-status: in-progress
+status: done
 epic: 38
 created: 2026-09-23
 baseline_commit: 52c1c9906acacf45a3f5cb333abb4c3ec6b3f525
 readiness: ready
+accepted_commit: abc613cb1838fd7da94d9e5d2100c3440d1b8512
 ---
 
 # Story 38.4: Semantic tokens and accessible text
 
-Status: in-progress
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -189,6 +190,7 @@ Grok 4.6 (orchestration, architecture, accessibility, correction, review). Compo
 - Previous independent review of `d49be978` APPROVE is **not** final acceptance; required surfaces were deferred.
 - Correction (Grok 4.6): opaque `--ring` on auth/shared primitives and authenticated product inputs; Reports `text-lagoon` migrated; remaining authenticated `text-primary` text/links/icons → `text-text-link`; sampled-fill headroom for muted/link/primary/status/WhatsApp/Viber; tenant accent 8:1 white-on-fill; forced-colors mapping; live axe (no color-contrast serious/critical); Basic Website lock + client profile + dark Dashboard/Reports evidence.
 - Follow-up (Grok 4.6): wait for populated Reports (h2 + no “Loading report…”) before axe/screenshots; remaining translucent **focus** rings → opaque `--ring` / `--destructive`; Due/warning chips off `text-amber-700` onto `--text-warning` / `--surface-warning`. Composer was not used.
+- Post-merge on `main` `abc613cb`: Vitest 65 token/inventory tests pass; `tsc --noEmit` pass; Playwright `tokens-38-4` + `a11y-38-4` + `website-entitlement-38-2` 10/10; targeted visual smoke (Dashboard, Basic Website lock, client profile, forced-colors login, dark Dashboard) pass. Required main CI `36678258813` 5/5 success. DigitalOcean deploy `36678800777` remains classification C (empty SSH host) — production unverified. Epic 38 stays in progress. Story 38.5 not started.
 
 ### File List
 
@@ -217,10 +219,11 @@ Grok 4.6 (orchestration, architecture, accessibility, correction, review). Compo
 - 2026-09-29: Reports content wait + remaining translucent focus rings + Due chips (`d6146add`). Evidence recapture `acab5c45`.
 - 2026-09-29: Independent `bmad-code-review` of HEAD `acab5c45` — no unresolved BLOCKER/MAJOR. MINOR items below pass WCAG or are outside 38.4. Story stays in-progress for product-owner pre-merge review. PR #346 remains draft.
 - 2026-09-30: Pre-merge deferred-owner correction (docs only): Clients `role="row"` → 40.3/43.5; Settings landmarks → 38.5; Calendar FAB name → 43.5; Form Studio listbox → 42.3; public `ring-ring/50` → 43.5.
+- 2026-09-30: PR #346 merged as `abc613cb`. Main CI `36678258813` green. Post-merge token/a11y/entitlement Playwright + visual smoke passed. ACCEPTED/CLOSED. Epic 38 remains in progress.
 
 ### Review Findings
 
-Independent review of HEAD `acab5c45` (workflow `bmad-code-review`; roles Blind Hunter / Edge Case Hunter / Acceptance Auditor; model Grok 4.6). Mandatory Code Review Loop in force. Composer was not used.
+Independent review of HEAD `acab5c45` (workflow `bmad-code-review`; roles Blind Hunter / Edge Case Hunter / Acceptance Auditor; model Grok 4.6). Mandatory Code Review Loop in force. Composer was not used. ACCEPTED/CLOSED on `main` `abc613cb` after post-merge CI.
 
 Acceptance Auditor: correction ACs 1–10 **PASS**. Reports 1440/dark are populated. No serious/critical color-contrast. No 38.5/38.6/nav/backend expansion.
 
