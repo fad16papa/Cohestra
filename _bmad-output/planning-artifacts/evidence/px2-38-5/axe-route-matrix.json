@@ -84,13 +84,43 @@
     "route": "/campaigns",
     "viewport": "1440x900",
     "landmarkFailures": [],
-    "all": []
+    "all": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": [
+          {
+            "html": "<a class=\"group/button inline-...\" href=\"/campaigns/new\">",
+            "target": [
+              ".h-8"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.99 (foreground color: #bed1cf, background color: #587977, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
   },
   {
     "route": "/settings",
     "viewport": "1440x900",
     "landmarkFailures": [],
-    "all": []
+    "all": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
+        "nodes": [
+          {
+            "html": "<button type=\"submit\" tabindex=\"0\" data-slot=\"button\" class=\"group/button inline-...\">",
+            "target": [
+              ".h-8"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.82 (foreground color: #c3d6d3, background color: #486c6a, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
+          }
+        ]
+      }
+    ]
   },
   {
     "route": "/settings/team",
@@ -106,6 +136,18 @@
   },
   {
     "route": "/dashboard/website",
+    "viewport": "1440x900",
+    "landmarkFailures": [],
+    "all": []
+  },
+  {
+    "route": "client-profile",
+    "viewport": "1440x900",
+    "landmarkFailures": [],
+    "all": []
+  },
+  {
+    "route": "activity-detail",
     "viewport": "1440x900",
     "landmarkFailures": [],
     "all": []

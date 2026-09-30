@@ -201,6 +201,7 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
     await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible({
       timeout: 30_000,
     });
+    await expect(page.locator("html")).not.toHaveClass(/dark/);
 
     await resetSequentialFocus(page);
     await page.keyboard.press("Tab");
@@ -245,6 +246,48 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
         viewport: "1440x900",
         landmarkFailures: landmarkAxeFailures(violations),
         all: violations,
+      });
+    }
+
+    for (const detail of [
+      {
+        list: "/clients",
+        link: 'a[href^="/clients/"]',
+        route: "client-profile",
+        url: /\/clients\/[0-9a-f-]{36}/i,
+      },
+      {
+        list: "/activities",
+        link: 'a[href^="/activities/"]:not([href*="communities"]):not([href*="categories"]):not([href$="/new"])',
+        route: "activity-detail",
+        url: /\/activities\/[0-9a-f-]{36}/i,
+      },
+    ] as const) {
+      await page.goto(`${origin}${detail.list}`, { waitUntil: "domcontentloaded" });
+      await waitForOperatorWorkspace(page);
+      const detailLink = page.locator(detail.link).locator("visible=true").first();
+      await expect(detailLink).toBeVisible({ timeout: 30_000 });
+      await detailLink.click();
+      await expect(page).toHaveURL(detail.url, { timeout: 30_000 });
+      await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({
+        timeout: 30_000,
+      });
+      await expect(page.getByRole("heading", { level: 1 })).not.toHaveText(
+        detail.route === "client-profile" ? "Clients" : "Activities"
+      );
+      await assertOneMainOneH1(page);
+      const detailStructure = await documentStructure(page);
+      structureReport.push({
+        route: detail.route,
+        viewport: "1440x900",
+        ...detailStructure,
+      });
+      const detailViolations = await runAxe(page);
+      axeReport.push({
+        route: detail.route,
+        viewport: "1440x900",
+        landmarkFailures: landmarkAxeFailures(detailViolations),
+        all: detailViolations,
       });
     }
 
