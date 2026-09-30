@@ -1,6 +1,6 @@
 ## Deferred from: code review of 38-5-shared-heading-landmark-and-skip-link-contract.md (2026-09-30)
 
-HEAD `799d1173`. No unresolved BLOCKER/MAJOR.
+HEAD `58cfb4e2` (implementation `799d1173`). Independent re-review. No unresolved BLOCKER/MAJOR. No new defers; previous 38.5 defers reconfirmed.
 
 - Website Studio populated `h1` is `sr-only`; visible title remains toolbar `<p>`. AC 2 still one h1. Visible page-header primitive: Story **39.4**.
 - Mobile More dialog counted for unique main/skip only, not overlay focus trap. Owner: Story **38.6**.

@@ -131,10 +131,10 @@ Component: `web/components/layouts/admin-skip-link.tsx`. First focusable in `Das
 
 ### Review Findings
 
-Independent `bmad-code-review` of HEAD `799d1173` (2026-09-30). Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor. Mandatory Code Review Loop: current HEAD only. **0 BLOCKER, 0 MAJOR.**
+Independent `bmad-code-review` of current HEAD `58cfb4e2` (2026-09-30). Implementation tree is identical to `799d1173` (HEAD is a docs-only follow-up). Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor. Mandatory Code Review Loop: current HEAD only. **0 BLOCKER, 0 MAJOR.** Patches left as action items so this review remains valid.
 
-- [ ] [Review][Patch] Skip activation should `scrollIntoView` after `focus()` so sticky top bar / billing banner cannot cover main [`web/components/layouts/admin-skip-link.tsx`] — MINOR. `preventDefault` cancels native hash scroll; `scroll-mt-16` does not help if the overflow shell is the scrollport.
-- [ ] [Review][Patch] Embedded Website preview body should be a native `<section>` rather than `div role="region"` [`web/components/marketing/site-page-renderer.tsx`] — MINOR. AC 6 prefers native elements; labelling stays.
+- [ ] [Review][Patch] Skip activation should `scrollIntoView` after `focus()` so sticky top bar / billing banner cannot cover main [`web/components/layouts/admin-skip-link.tsx`] — MINOR. `preventDefault` cancels native hash scroll; `scroll-mt-16` (`h-14` top bar only) does not cover a billing banner, and may not apply if the overflow shell is the scrollport.
+- [ ] [Review][Patch] Embedded Website preview body should be a native `<section>` rather than `div role="region"` [`web/components/marketing/site-page-renderer.tsx`] — MINOR. Architecture table said `div` + `h2`; AC 6 prefers native elements. Labelling can stay.
 - [ ] [Review][Patch] Settings content `aria-labelledby` should not point at `settings-active-section-heading` when that `h2` is unmounted [`web/components/settings/settings-page-content.tsx`] — MINOR. Happens only if `visibleSections` is empty (`activeSection` is `visibleSections[0]`).
 - [x] [Review][Defer] Website Studio populated document h1 is `sr-only` while the visible title is a toolbar `<p>` [`web/components/website/website-builder-page.tsx`] — deferred, architecture table wanted PageHeader; AC 2 still has exactly one meaningful h1. Visible header primitive is Story **39.4**.
 - [x] [Review][Defer] Mobile More dialog is only counted for landmark uniqueness, not focus trap [`web/e2e/landmarks-38-5.spec.ts`] — deferred, Story **38.6**.
@@ -207,6 +207,7 @@ Grok 4.6 (semantics, architecture, implementation, tests, review). Composer 2.5 
 
 - Independent review (first): MAJOR F1 heading-order leftovers (Reports/Website/Form Studio); MAJOR F2 skip-after-SPA used `goto` not a client-side Link. Both patched.
 - Playwright Form Studio Build: axe `heading-order` on `aside > h4` “Block palette”. Promoted builder palette/structure/properties to h3 and labelled the palette aside.
+- Independent review of HEAD `58cfb4e2`: 0 BLOCKER / 0 MAJOR. Blind Hunter noise (Team/Billing nested h1, PageHeader double h1, embed heading) dismissed against route isolation and AC 7. Same three MINOR patches retained.
 
 ### Completion Notes List
 
@@ -244,3 +245,4 @@ Grok 4.6 (semantics, architecture, implementation, tests, review). Composer 2.5 
 - 2026-09-30: Created Story 38.5 after 38.4 close `1b5cc6b3`. D9 contract accepted.
 - 2026-09-30: Review loop — heading-order retune, SPA skip keyboard reset, Form Studio Block palette h3, labelled asides.
 - 2026-09-30: Independent `bmad-code-review` of HEAD `799d1173`: 0 BLOCKER / 0 MAJOR. Three MINOR patches left as action items. Story stays in-progress for product-owner acceptance.
+- 2026-09-30: Independent `bmad-code-review` of current HEAD `58cfb4e2` (implementation identical to `799d1173`): 0 BLOCKER / 0 MAJOR. Same three MINOR patches left as action items. Story stays in-progress for product-owner acceptance.
