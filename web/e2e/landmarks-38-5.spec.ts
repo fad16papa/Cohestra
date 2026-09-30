@@ -126,7 +126,7 @@ function landmarkAxeFailures(violations: AxeViolation[]): AxeViolation[] {
   );
 }
 
-async function keyboardSkipOnce(page: Page): Promise<void> {
+async function resetSequentialFocus(page: Page): Promise<void> {
   await page.evaluate(() => {
     const active = document.activeElement;
     if (active instanceof HTMLElement) {
@@ -137,6 +137,10 @@ async function keyboardSkipOnce(page: Page): Promise<void> {
     body.focus();
     body.removeAttribute("tabindex");
   });
+}
+
+async function keyboardSkipOnce(page: Page): Promise<void> {
+  await resetSequentialFocus(page);
   await page.keyboard.press("Tab");
   const skip = page.getByRole("link", { name: "Skip to main content" });
   await expect(skip).toBeFocused();
@@ -198,7 +202,7 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
       timeout: 30_000,
     });
 
-    await page.locator("body").focus();
+    await resetSequentialFocus(page);
     await page.keyboard.press("Tab");
     const skip = page.getByRole("link", { name: "Skip to main content" });
     await expect(skip).toBeFocused();
@@ -299,7 +303,7 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
       await waitForOperatorWorkspace(page);
-      await page.locator("body").focus();
+      await resetSequentialFocus(page);
       await page.keyboard.press("Tab");
       await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
       await page.screenshot({
@@ -311,16 +315,7 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
     await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
     await setOperatorAppearance(page, "dark");
-    await page.evaluate(() => {
-      const active = document.activeElement;
-      if (active instanceof HTMLElement) {
-        active.blur();
-      }
-      const body = document.body;
-      body.setAttribute("tabindex", "-1");
-      body.focus();
-      body.removeAttribute("tabindex");
-    });
+    await resetSequentialFocus(page);
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
     await expect(page.locator("html")).toHaveClass(/dark/);
