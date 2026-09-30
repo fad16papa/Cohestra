@@ -101,6 +101,11 @@ test.describe("Story 39.1 — desktop shell and canonical rooms", () => {
     await page.goto(`${tenantWebBase()}/needs-attention`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
     await expect(page).toHaveURL(/\/ai$/);
+    await expect(page.getByRole("heading", { name: "Cohestra AI", level: 1 })).toHaveCount(1);
+    await expect(rail.getByRole("link", { name: "Cohestra AI" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
 
     await page.goto(`${tenantWebBase()}/follow-up`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);

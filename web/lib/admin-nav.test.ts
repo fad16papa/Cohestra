@@ -56,6 +56,18 @@ describe("Story 39.1 desktop IA", () => {
     ]);
   });
 
+  it("keeps Settings crumbs on profile descendants and Team/Billing on path boundaries", () => {
+    expect(getAdminBreadcrumbs("/settings/teammates")).toEqual([{ label: "Settings" }]);
+    expect(getAdminBreadcrumbs("/settings/team")).toEqual([
+      { label: "Settings", href: "/settings/profile" },
+      { label: "Team" },
+    ]);
+    expect(getAdminBreadcrumbs("/settings/billing")).toEqual([
+      { label: "Settings", href: "/settings/profile" },
+      { label: "Billing" },
+    ]);
+  });
+
   it("preserves query string on compatibility destinations", () => {
     expect(
       destinationWithSearch("/analytics", { preset: "weekly", from: "2026-01-01" })

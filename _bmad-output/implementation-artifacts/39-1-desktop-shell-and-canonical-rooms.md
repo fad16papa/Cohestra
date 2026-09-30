@@ -103,7 +103,7 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 not used un
 
 ### Debug Log References
 
-- Vitest `lib/admin-nav.test.ts` + `lib/canonical-room-stub.test.ts`: **9 passed** after review patches.
+- Vitest `lib/admin-nav.test.ts` + `lib/canonical-room-stub.test.ts`: **9 passed** on `d0d907ff`; breadcrumb boundary cases added after re-review.
 - Playwright live stack: `desktop-shell-39-1`, `landmarks-38-5`, `overlays-38-6`.
 - Independent review of `d0d907ff`: Blind Hunter + Edge Case Hunter + Acceptance Auditor. No BLOCKER/MAJOR.
 
@@ -162,6 +162,14 @@ Independent review of HEAD `d0d907ff` (2026-09-30). Layers: Blind Hunter, Edge C
 Dismissed (noise / already handled): `getAdminPageTitle` already reads breadcrumbs; dashboard Cohestra AI link is D15; “View reports” is capability copy; mobile tab *order* unchanged (39.2); palette intelligence keywords not in AC 12; gitignore `dump.rdb` is hygiene; unknown `/settings/{area}` D17 is 43.1.
 
 No unresolved BLOCKER or MAJOR.
+
+Re-review of HEAD `b41a19d8` (2026-09-30). Layers: Blind Hunter, Edge Case Hunter (`[]`), Acceptance Auditor (no AC violations).
+
+- [x] [Review][Patch] Deduplicate `checks.md` Playwright tables and pin SHA to the patched HEAD — MINOR evidence integrity.
+- [x] [Review][Patch] Assert Settings/Team/Billing breadcrumbs on path boundaries [`admin-nav.test.ts`] — MINOR. Documents that `/settings/teammates` is Settings, not Team.
+- [x] [Review][Patch] `/needs-attention` e2e also asserts Cohestra AI h1 and `aria-current` — MINOR.
+
+Dismissed on re-review: empty `?preset=` App Router omits (unit-tested; weekly e2e covers the product hop); viewport PNGs already inspected at 1440/1024/768.
 
 ### Change Log
 
