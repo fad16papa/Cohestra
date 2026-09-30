@@ -36,7 +36,22 @@ Axe rules checked on open overlays: `aria-dialog-name`, `aria-modal-attr`, `aria
 
 ## Production build
 
-Recorded in the follow-up commit / PR checks.
+Local production `next build` passed on this branch.
+
+## Required GitHub CI (final HEAD)
+
+HEAD: `ece03f94689b84364ecdcf324a83af4903b73c43`  
+Run: https://github.com/fad16papa/Cohestra/actions/runs/36710216602  
+Workflow: CI · `pull_request` · **success**
+
+| Check | Result |
+| --- | --- |
+| .NET build and test | SUCCESS |
+| API integration tests | SUCCESS |
+| Next.js build | SUCCESS |
+| UAT isolation contract | SUCCESS |
+| Docker stack smoke | SUCCESS |
+| GitGuardian Security Checks | SUCCESS |
 
 ## Not run / unchanged
 
