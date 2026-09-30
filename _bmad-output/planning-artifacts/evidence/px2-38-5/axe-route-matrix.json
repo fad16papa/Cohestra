@@ -84,22 +84,7 @@
     "route": "/campaigns",
     "viewport": "1440x900",
     "landmarkFailures": [],
-    "all": [
-      {
-        "id": "color-contrast",
-        "impact": "serious",
-        "description": "Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds",
-        "nodes": [
-          {
-            "html": "<a class=\"group/button inline-...\" href=\"/campaigns/new\">",
-            "target": [
-              ".h-8"
-            ],
-            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 2.99 (foreground color: #bed1cf, background color: #587977, font size: 10.5pt (14px), font weight: normal). Expected contrast ratio of 4.5:1"
-          }
-        ]
-      }
-    ]
+    "all": []
   },
   {
     "route": "/settings",

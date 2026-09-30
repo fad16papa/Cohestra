@@ -468,18 +468,24 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
     const origin = tenantWebBase();
     await page.setViewportSize({ width: 1440, height: 900 });
     await openAuthed(page, session, "/dashboard/website", origin);
-    await expect(
-      page.locator("#website-builder-toolbar").or(page.getByRole("heading", { name: "Website", level: 1 }))
-    ).toBeVisible({
+    await expect(page.locator("#website-builder-toolbar")).toBeVisible({
       timeout: 30_000,
     });
-    const previewToggle = page.getByRole("button", { name: /^Preview$/i }).first();
-    if (await previewToggle.isVisible().catch(() => false)) {
+    const skipTour = page.getByRole("button", { name: "Skip tour" });
+    if (await skipTour.isVisible().catch(() => false)) {
+      await skipTour.click();
+    }
+    const previewToggle = page.getByRole("tablist", { name: "Workspace view" }).getByRole("tab", { name: /^Preview$/i });
+    await expect(previewToggle).toBeVisible();
+    if ((await previewToggle.getAttribute("aria-selected")) !== "true") {
       await previewToggle.click();
     }
+    const previewRegion = page.getByRole("region", { name: "Website preview" });
+    await expect(previewRegion).toBeVisible({ timeout: 30_000 });
     await assertOneMainOneH1(page, /Website/);
     await expect(page.locator("main")).toHaveCount(1);
-    await expect(page.locator('[aria-label="Website preview"] main')).toHaveCount(0);
+    await expect(previewRegion.locator("main")).toHaveCount(0);
+    await expect(previewRegion.getByRole("heading", { level: 1 })).toHaveCount(0);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "website-studio-1440x900.png"),
       fullPage: true,

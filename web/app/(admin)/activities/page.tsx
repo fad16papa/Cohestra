@@ -14,7 +14,14 @@ function ActivitiesPageContent() {
 
 export default function ActivitiesPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-text-muted-warm">Loading activities…</p>}>
+    <Suspense
+      fallback={
+        <div className="space-y-2">
+          <h1 className="text-display-sm text-text-warm">Activities</h1>
+          <p className="text-sm text-text-muted-warm">Loading activities…</p>
+        </div>
+      }
+    >
       <ActivitiesPageContent />
     </Suspense>
   );

@@ -95,7 +95,14 @@ function SettingsBillingBody() {
 
 export function SettingsBillingPageContent() {
   return (
-    <Suspense fallback={<p className="text-sm text-text-muted-warm">Loading billing…</p>}>
+    <Suspense
+      fallback={
+        <div className="space-y-2">
+          <h1 className="text-xl font-semibold text-text-warm sm:text-2xl">Billing</h1>
+          <p className="text-sm text-text-muted-warm">Loading billing…</p>
+        </div>
+      }
+    >
       <SettingsBillingBody />
     </Suspense>
   );

@@ -230,3 +230,4 @@ Grok 4.6 (semantics, architecture, implementation, tests, review). Composer 2.5 
 
 - 2026-09-30: Created Story 38.5 after 38.4 close `1b5cc6b3`. D9 contract accepted.
 - 2026-09-30: Review loop — heading-order retune, SPA skip keyboard reset, Form Studio Block palette h3, labelled asides.
+- 2026-09-30: Second review — AC 9 loading h1 on Clients/Activities/Billing/Checkout Suspense; Website preview e2e requires the Preview tab and `Website preview` region.
