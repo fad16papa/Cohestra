@@ -1,6 +1,14 @@
+## Deferred from: story 38.6 close on main `e5eca2e6` (2026-09-30)
+
+PR #354 merged. Required main CI `36725506390` 5/5 success. Post-merge overlay Playwright + inert ownership tests passed. ACCEPTED/CLOSED. Epic 38 closed (38.1–38.6). Epic 39 not started. Production DigitalOcean remains classification C.
+
+- Owned `inert` re-assert waits for the next childList sync. Later polish.
+- Empty-portal reclassify is a MutationObserver microtask. Product overlays use `data-base-ui-portal` from insert.
+- Cookie / calendar / website tour / Form Studio palette remain named exceptions (43.5 / 39.2 / later website / 42.3).
+
 ## Deferred from: code review of 38-6-shared-accessible-overlay-contract.md (2026-09-30)
 
-HEAD `7bb9c80a` (inert-ownership patch). Independent re-review. No unresolved BLOCKER/MAJOR. Story remains in-progress for PO pre-merge.
+HEAD `7bb9c80a` (inert-ownership patch). Independent re-review. No unresolved BLOCKER/MAJOR. Story closed on `main` `e5eca2e6`.
 
 - Owned `inert` stripped without a childList mutation is re-asserted only on the next `syncModalInert`. Observer is `childList` (including subtree) by PO contract. Not an attribute observer.
 - Empty-portal overlay reclassify is a MutationObserver microtask. Product overlays set `data-base-ui-portal` at insert and are never claimed. Brief inert on the empty-wrapper path is inherent.
