@@ -39,7 +39,7 @@ Tenant: `px2-basic` / `px2-basic-admin@cohestra.local`. Route `/dashboard/websit
 | Generic error / Try again | none; `pageerror` empty | same |
 | Story 38.2 entitlement | `website-entitlement-38-2.spec.ts` still 200 Pro / 403 Basic | — |
 
-Axe on the 390×844 lock capture: **no color-contrast** failures. Remaining `button-name` on the floating Calendar control is unlabeled chrome (Story 38.5 / overlay), not a 38.4 token fail.
+Axe on the 390×844 lock capture: **no color-contrast** failures. Remaining `button-name` on the floating Calendar control is unlabeled chrome (Story **43.5**), not a 38.4 token fail.
 
 ## 2. Client profile
 
@@ -86,7 +86,7 @@ See `reports-text-lagoon-inventory.md` (all migrated) and `axe-routes.json` / `a
 
 Reports 1440 / dark captures are the **populated report** (heading level 2 + filters + charts), not the “Loading report…” shell. Axe `/reports` ran after the same wait.
 
-No serious/critical **color-contrast** on migrated scope. Other axe IDs (table roles, extra `<main>`, Form Studio listbox, Calendar `button-name`) are **38.5 / 38.6 / Form Studio composition** — not token work.
+No serious/critical **color-contrast** on migrated scope. Other axe IDs are not token work. Owners: Clients `role="row"` → **40.3** (final verification **43.5**); Settings landmarks → **38.5**; Calendar FAB `button-name` → **43.5**; Form Studio listbox → **42.3**; public `ring-ring/50` → **43.5**.
 
 ## 7. Dark mode
 
@@ -97,6 +97,7 @@ Login dark remains a public-session capture (`login-1440x900-dark.png`). Dark `-
 ## Honest remaining (not 38.4 contrast)
 
 - Dual `h1` / extra `<main>` / landmark uniqueness: Story **38.5**
-- Calendar FAB `button-name`: Story **38.5** / overlay
-- Clients `role="row"` without grid parent: table semantics, not tokens
-- Form Studio `role="listbox"` wrapping `<li>`: Form Studio composition, not 38.4
+- Calendar FAB `button-name`: Story **43.5** (39.2 owns overlap/placement only)
+- Clients `role="row"` without grid parent: Story **40.3**; final verification **43.5**
+- Form Studio `role="listbox"` wrapping `<li>`: Story **42.3**
+- Public registration `ring-ring/50`: Story **43.5** (do not reopen Epic 35)

@@ -216,6 +216,7 @@ Grok 4.6 (orchestration, architecture, accessibility, correction, review). Compo
 - 2026-09-29: Sampled-fill / axe loop — darker semantic fills, opaque product rings, live axe green for color-contrast, evidence complete. Pending independent review on this HEAD.
 - 2026-09-29: Reports content wait + remaining translucent focus rings + Due chips (`d6146add`). Evidence recapture `acab5c45`.
 - 2026-09-29: Independent `bmad-code-review` of HEAD `acab5c45` — no unresolved BLOCKER/MAJOR. MINOR items below pass WCAG or are outside 38.4. Story stays in-progress for product-owner pre-merge review. PR #346 remains draft.
+- 2026-09-30: Pre-merge deferred-owner correction (docs only): Clients `role="row"` → 40.3/43.5; Settings landmarks → 38.5; Calendar FAB name → 43.5; Form Studio listbox → 42.3; public `ring-ring/50` → 43.5.
 
 ### Review Findings
 
@@ -227,5 +228,9 @@ Acceptance Auditor: correction ACs 1–10 **PASS**. Reports 1440/dark are popula
 - [x] [Review][Defer] Forced-colors map does not remap `--text-warning` / status / WhatsApp fills [`web/styles/brand-tokens.css`] — deferred, listed controls (text, link, button, focus, selected nav) use Canvas/Highlight/LinkText and are perceivable in captures. Owner: Story 38.5 if high-contrast status chrome is in scope later.
 - [x] [Review][Defer] Selected-state decorative `ring-primary/30` (UpgradePanel, calendar open) remains [`web/components/shell/upgrade-panel.tsx`] — deferred, not `focus-visible` / `focus-within`. Passes as decoration. Owner: not 38.4 focus-ring contract.
 - [x] [Review][Defer] Remaining Tailwind `text-amber-800/900/950` warning chrome [`activity-past-due-badge.tsx`, conflict alert, billing copy] — deferred, classified `passing-intentionally-retained`; not a proven <4.5 fail. Prefer `--text-warning` if a later story restyles warning chrome.
-- [x] [Review][Defer] Clients `role="row"` / Form Studio `listbox` / extra `<main>` / Calendar `button-name` axe IDs [`axe-routes.json`] — deferred, not color-contrast. Owner: **38.5 / 38.6 / Form Studio composition**.
+- [x] [Review][Defer] Clients `role="row"` without a grid/table parent [`axe-routes.json`] — deferred, not color-contrast. Owner: **Story 40.3**; final verification **Story 43.5**.
+- [x] [Review][Defer] Settings duplicate/nested landmarks [`axe-routes.json`] — deferred, not color-contrast. Owner: **Story 38.5**.
+- [x] [Review][Defer] Calendar FAB missing accessible name [`axe-routes.json`] — deferred, unlabeled chrome. Owner: **Story 43.5** (39.2 owns overlap/placement only).
+- [x] [Review][Defer] Form Studio `listbox`/`listitem` semantics [`axe-routes.json`] — deferred, builder controls. Owner: **Story 42.3**.
+- [x] [Review][Defer] Public registration `ring-ring/50` [`registration-form.tsx`] — deferred, Epic 35 frozen. Owner: **Story 43.5**. Do not reopen Epic 35.
 
