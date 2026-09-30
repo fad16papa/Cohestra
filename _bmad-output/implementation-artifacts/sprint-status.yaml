@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-09-22
+# last_updated: 2026-09-30
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -381,13 +381,13 @@ development_status:
   37-3-motion-polish-audit: review
 
   # Epic 38 — Product Experience 2.0 entitlement / billing truth
-  epic-38: in-progress
+  epic-38: done
   38-1-billing-sync-environment-and-error-behavior: done
   38-2-basic-website-entitlement-api-behavior: done
   38-3-e2e-tenant-and-theme-isolation: done
   38-4-semantic-tokens-and-accessible-text: done
   38-5-shared-heading-landmark-and-skip-link-contract: done
-  38-6-shared-accessible-overlay-contract: in-progress
+  38-6-shared-accessible-overlay-contract: done
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

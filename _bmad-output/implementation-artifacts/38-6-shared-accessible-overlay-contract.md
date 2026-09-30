@@ -2,16 +2,17 @@
 id: 38.6
 key: 38-6-shared-accessible-overlay-contract
 title: Shared accessible overlay contract
-status: in-progress
+status: done
 epic: 38
 created: 2026-09-30
 baseline_commit: 955edce3c24697a322088605ef7bcf5e7df95872
 readiness: ready
+accepted_commit: e5eca2e6ea3b2a247873405c66a550174301de27
 ---
 
 # Story 38.6: Shared accessible overlay contract
 
-Status: in-progress
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -178,3 +179,4 @@ PO pre-merge (HEAD `93092c51`) MAJOR: `use-modal-inert` stripped every body chil
 - 2026-09-30: Created Story 38.6 after 38.5 close `955edce3`. Canonical D8 + backlog migrate palette/preview/QR.
 - 2026-09-30: Implemented overlay primitives, migrations, shell exclusivity, Vitest/Playwright specs.
 - 2026-09-30: PO pre-merge MAJOR — inert ownership. Track utility-owned `inert` only; restore original state; never strip foreign `inert`; observe subtree child additions.
+- 2026-09-30: PR #354 merged as `e5eca2e6`. Required main CI `36725506390` 5/5 success. Post-merge overlay smoke + inert tests passed. ACCEPTED/CLOSED. Epic 38 closed (final canonical story). Epic 39 not started.
