@@ -9,7 +9,9 @@ import {
   SETTINGS_BILLING_PATH,
   SETTINGS_PROFILE_PATH,
   SETTINGS_TEAM_PATH,
+  isSettingsBillingPath,
   isSettingsProfilePath,
+  isSettingsTeamPath,
 } from "@/lib/admin-canonical-routes";
 import { cn } from "@/lib/utils";
 
@@ -67,8 +69,8 @@ export function AdminNavFooter({ onNavigate, className }: AdminNavFooterProps) {
       <Link
         href={SETTINGS_TEAM_PATH}
         onClick={onNavigate}
-        aria-current={pathname.startsWith(SETTINGS_TEAM_PATH) ? "page" : undefined}
-        className={footerLinkClassName(pathname.startsWith(SETTINGS_TEAM_PATH))}
+        aria-current={isSettingsTeamPath(pathname) ? "page" : undefined}
+        className={footerLinkClassName(isSettingsTeamPath(pathname))}
       >
         <Users className="size-4 shrink-0" aria-hidden />
         Team
@@ -77,8 +79,8 @@ export function AdminNavFooter({ onNavigate, className }: AdminNavFooterProps) {
         <Link
           href={SETTINGS_BILLING_PATH}
           onClick={onNavigate}
-          aria-current={pathname.startsWith(SETTINGS_BILLING_PATH) ? "page" : undefined}
-          className={footerLinkClassName(pathname.startsWith(SETTINGS_BILLING_PATH))}
+          aria-current={isSettingsBillingPath(pathname) ? "page" : undefined}
+          className={footerLinkClassName(isSettingsBillingPath(pathname))}
         >
           <CreditCard className="size-4 shrink-0" aria-hidden />
           Billing

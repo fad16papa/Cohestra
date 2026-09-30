@@ -11,6 +11,7 @@ import {
   type IntelligenceBrief,
   type IntelligenceInsight,
 } from "@/lib/intelligence-api";
+import { AI_PATH } from "@/lib/admin-canonical-routes";
 import { cn } from "@/lib/utils";
 
 function modeLabel(mode: string): string {
@@ -147,7 +148,7 @@ export function DashboardIntelligenceBrief() {
           </h2>
         </div>
         <Link
-          href="/ai"
+          href={AI_PATH}
           className="text-sm font-medium text-text-link underline-offset-4 hover:underline"
         >
           Cohestra AI

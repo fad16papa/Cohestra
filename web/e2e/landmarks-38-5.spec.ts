@@ -188,6 +188,8 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
       { path: "/clients", h1: "Clients" },
       { path: "/activities", h1: "Activities" },
       { path: "/analytics", h1: "Analytics", wait: () => waitForReportsContent(page) },
+      { path: "/follow-up", h1: "Follow-up" },
+      { path: "/ai", h1: "Cohestra AI" },
       { path: "/campaigns", h1: "Campaigns" },
       { path: "/settings", h1: "Settings" },
       { path: "/settings/team", h1: "Team" },

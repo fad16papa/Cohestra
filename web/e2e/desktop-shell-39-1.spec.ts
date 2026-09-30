@@ -73,7 +73,7 @@ test.describe("Story 39.1 — desktop shell and canonical rooms", () => {
       "Campaigns",
     ]);
 
-    await expect(page.getByRole("link", { name: "Dashboard" }).first()).toHaveAttribute(
+    await expect(rail.getByRole("link", { name: "Dashboard" })).toHaveAttribute(
       "aria-current",
       "page"
     );
@@ -93,19 +93,38 @@ test.describe("Story 39.1 — desktop shell and canonical rooms", () => {
     await waitForOperatorWorkspace(page);
     await expect(page).toHaveURL(/\/ai$/);
     await expect(page.getByRole("heading", { name: "Cohestra AI", level: 1 })).toHaveCount(1);
+    await expect(rail.getByRole("link", { name: "Cohestra AI" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+
+    await page.goto(`${tenantWebBase()}/needs-attention`, { waitUntil: "domcontentloaded" });
+    await waitForOperatorWorkspace(page);
+    await expect(page).toHaveURL(/\/ai$/);
 
     await page.goto(`${tenantWebBase()}/follow-up`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
     await expect(page.getByRole("heading", { name: "Follow-up", level: 1 })).toHaveCount(1);
     await expect(page.getByRole("main")).toHaveCount(1);
+    await expect(rail.getByRole("link", { name: "Follow-up" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
 
     await page.goto(`${tenantWebBase()}/dashboard/website`, {
       waitUntil: "domcontentloaded",
     });
     await waitForOperatorWorkspace(page);
     await expect(page.getByText("Website Studio").first()).toBeVisible();
+    await expect(rail.getByRole("link", { name: "Website" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
 
-    await expect(page.getByRole("link", { name: "Skip to main content" })).toBeAttached();
+    await expect(page.getByRole("link", { name: "Skip to main content" })).toHaveAttribute(
+      "href",
+      "#main-content"
+    );
     await expect(page.getByRole("main")).toHaveCount(1);
     await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
 
@@ -123,9 +142,11 @@ test.describe("Story 39.1 — desktop shell and canonical rooms", () => {
       "/settings/billing"
     );
 
-    await page.goto(`${tenantWebBase()}/settings`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${tenantWebBase()}/settings?section=account`, {
+      waitUntil: "domcontentloaded",
+    });
     await waitForOperatorWorkspace(page);
-    await expect(page).toHaveURL(/\/settings\/profile/);
+    await expect(page).toHaveURL(/\/settings\/profile\?section=account/);
     await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toHaveCount(1);
 
     await page.goto(`${tenantWebBase()}/analytics`, { waitUntil: "domcontentloaded" });

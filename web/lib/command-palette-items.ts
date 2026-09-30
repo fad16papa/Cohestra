@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { adminNavItems } from "@/lib/admin-nav";
+import { ANALYTICS_PATH } from "@/lib/admin-canonical-routes";
 
 export type CommandPaletteItem = {
   id: string;
@@ -44,7 +45,7 @@ const iconByHref: Record<string, LucideIcon> = {
   "/activities": CalendarDays,
   "/clients": Users,
   "/campaigns": Megaphone,
-  "/analytics": BarChart3,
+  [ANALYTICS_PATH]: BarChart3,
 };
 
 function navItems(): CommandPaletteItem[] {
@@ -56,7 +57,7 @@ function navItems(): CommandPaletteItem[] {
       label: item.label,
       href: item.href,
       group: "Navigate",
-      keywords: item.href === "/analytics" ? "reports" : undefined,
+      keywords: item.href === ANALYTICS_PATH ? "reports" : undefined,
       icon: item.icon,
     });
 

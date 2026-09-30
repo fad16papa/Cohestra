@@ -9,9 +9,13 @@ import {
   DASHBOARD_PATH,
   FOLLOW_UP_PATH,
   WEBSITE_PATH,
+  SETTINGS_PROFILE_PATH,
   isAiPath,
   isAnalyticsPath,
   isFollowUpPath,
+  isSettingsBillingPath,
+  isSettingsProfilePath,
+  isSettingsTeamPath,
 } from "@/lib/admin-canonical-routes";
 
 export type AdminBreadcrumb = {
@@ -121,16 +125,16 @@ export function getAdminBreadcrumbs(pathname: string): AdminBreadcrumb[] {
     return [{ label: "Cohestra AI" }];
   }
 
-  if (pathname === "/settings" || pathname === "/settings/profile") {
+  if (isSettingsProfilePath(pathname)) {
     return [{ label: "Settings" }];
   }
 
-  if (pathname === "/settings/billing") {
-    return [{ label: "Settings", href: "/settings/profile" }, { label: "Billing" }];
+  if (isSettingsBillingPath(pathname)) {
+    return [{ label: "Settings", href: SETTINGS_PROFILE_PATH }, { label: "Billing" }];
   }
 
-  if (pathname === "/settings/team") {
-    return [{ label: "Settings", href: "/settings/profile" }, { label: "Team" }];
+  if (isSettingsTeamPath(pathname)) {
+    return [{ label: "Settings", href: SETTINGS_PROFILE_PATH }, { label: "Team" }];
   }
 
   if (pathname === "/activities/new") {

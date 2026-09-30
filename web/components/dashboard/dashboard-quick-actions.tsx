@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, FileBarChart, MailPlus, UserPlus } from "lucide-react";
 
+import { ANALYTICS_PATH } from "@/lib/admin-canonical-routes";
 import { cn } from "@/lib/utils";
 
 const actions = [
@@ -19,7 +20,7 @@ const actions = [
     accent: "from-primary/20 to-primary/5",
   },
   {
-    href: "/analytics",
+    href: ANALYTICS_PATH,
     label: "View reports",
     description: "Export registrations for the month",
     icon: FileBarChart,

@@ -103,10 +103,67 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 not used un
 
 ### Debug Log References
 
+- Vitest `lib/admin-nav.test.ts` + `lib/canonical-room-stub.test.ts`: **9 passed** after review patches.
+- Playwright live stack: `desktop-shell-39-1`, `landmarks-38-5`, `overlays-38-6`.
+- Independent review of `d0d907ff`: Blind Hunter + Edge Case Hunter + Acceptance Auditor. No BLOCKER/MAJOR.
+
 ### Completion Notes List
 
+- Analytics relocates Reports UI; Follow-up and Cohestra AI are honest stubs.
+- `/reports`, `/intelligence`, `/needs-attention`, `/settings` compatibility-redirect with query preserved (including empty scalars).
+- Desktop rail/footer/palette share `adminNavItems` + `admin-canonical-routes.ts`.
+- Not done / not merged. Draft PR for PO pre-merge review.
+
 ### File List
+
+- `web/lib/admin-canonical-routes.ts`
+- `web/lib/admin-nav.ts`
+- `web/lib/admin-nav.test.ts`
+- `web/lib/canonical-room-stub.test.ts`
+- `web/lib/command-palette-items.ts`
+- `web/app/(admin)/follow-up/page.tsx`
+- `web/app/(admin)/ai/page.tsx`
+- `web/app/(admin)/analytics/page.tsx`
+- `web/app/(admin)/reports/page.tsx`
+- `web/app/(admin)/intelligence/page.tsx`
+- `web/app/(admin)/needs-attention/page.tsx`
+- `web/app/(admin)/settings/page.tsx`
+- `web/app/(admin)/settings/profile/page.tsx`
+- `web/components/layouts/canonical-room-stub.tsx`
+- `web/components/layouts/admin-nav-footer.tsx`
+- `web/components/layouts/admin-user-menu.tsx`
+- `web/components/layouts/admin-mobile-tab-bar.tsx`
+- `web/components/reports/reports-page-client.tsx`
+- `web/components/reports/report-filter-bar.tsx`
+- `web/components/dashboard/dashboard-page-client.tsx`
+- `web/components/dashboard/dashboard-metrics-graphs.tsx`
+- `web/components/dashboard/dashboard-metrics-table.tsx`
+- `web/components/dashboard/dashboard-quick-actions.tsx`
+- `web/components/dashboard/dashboard-intelligence-brief.tsx`
+- `web/components/theme/brand-accent-sync.tsx`
+- `web/e2e/desktop-shell-39-1.spec.ts`
+- `web/e2e/landmarks-38-5.spec.ts`
+- `_bmad-output/planning-artifacts/evidence/px2-39-1/`
+
+### Review Findings
+
+Independent review of HEAD `d0d907ff` (2026-09-30). Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor.
+
+- [x] [Review][Patch] Preserve empty query scalars on compatibility redirects [`web/lib/admin-canonical-routes.ts`] — MINOR. Architecture asked for verbatim search strings; empty `preset=` was dropped.
+- [x] [Review][Patch] Slash-boundary Team/Billing matching [`web/lib/admin-canonical-routes.ts`, `admin-nav-footer.tsx`] — MINOR. `/settings/teammates` must not steal Team current.
+- [x] [Review][Patch] AI/reports alias hops use canonical path helpers [`brand-accent-sync.tsx`, `admin-mobile-tab-bar.tsx`] — MINOR. `/intelligence` and `/needs-attention` now follow `/reports` hop treatment.
+- [x] [Review][Patch] Call sites use `admin-canonical-routes.ts` constants — MINOR. Architecture: filter-bar/dashboard/footer must not drift.
+- [x] [Review][Patch] E2E covers `/needs-attention`, Follow-up/AI `aria-current`, skip `href`, settings query — MINOR. Important missing tests from Blind Hunter/Edge.
+
+- [x] [Review][Defer] Dashboard Follow-up widgets still link to `/clients` — DESIGN.md §3.1 “link here”; full Follow-up is Epic 40. Stub room is the canonical dest without replacing the working queue.
+- [x] [Review][Defer] Follow-up/AI loading and error trees are not live operator paths — AC 5 requires primitives available; App Router `error.tsx` is Story 39.5.
+- [x] [Review][Defer] Nested `/reports/*` catch-all pages — no product URLs; index redirect covers the bookmark contract.
+
+Dismissed (noise / already handled): `getAdminPageTitle` already reads breadcrumbs; dashboard Cohestra AI link is D15; “View reports” is capability copy; mobile tab *order* unchanged (39.2); palette intelligence keywords not in AC 12; gitignore `dump.rdb` is hygiene; unknown `/settings/{area}` D17 is 43.1.
+
+No unresolved BLOCKER or MAJOR.
 
 ### Change Log
 
 - 2026-09-30: Created Story 39.1 after Epic 38 close `cde63ba4`. Canonical D1/D14/D15 + backlog §39.1.
+- 2026-09-30: Implemented desktop rail, canonical rooms, compatibility redirects. Independent review of `d0d907ff`; patched MINOR helper/test gaps.

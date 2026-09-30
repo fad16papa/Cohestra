@@ -13,6 +13,7 @@ import {
 
 import { AdminNavSheet } from "@/components/layouts/admin-nav-sheet";
 import { useAdminShell } from "@/components/layouts/admin-shell-context";
+import { isAiPath, isAnalyticsPath, isFollowUpPath } from "@/lib/admin-canonical-routes";
 import { cn } from "@/lib/utils";
 
 type TabItem = {
@@ -53,10 +54,9 @@ const tabItems: TabItem[] = [
     icon: Menu,
     isActive: (pathname) =>
       pathname.startsWith("/campaigns") ||
-      pathname.startsWith("/reports") ||
-      pathname.startsWith("/analytics") ||
-      pathname.startsWith("/follow-up") ||
-      pathname.startsWith("/ai") ||
+      isAnalyticsPath(pathname) ||
+      isFollowUpPath(pathname) ||
+      isAiPath(pathname) ||
       pathname.startsWith("/settings"),
     opensMenu: true,
   },

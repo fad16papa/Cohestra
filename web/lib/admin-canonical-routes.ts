@@ -16,6 +16,10 @@ export const AI_COMPAT_PATHS = ["/intelligence", "/needs-attention"] as const;
 
 type SearchParamValue = string | string[] | undefined;
 
+export function isPathOrDescendant(pathname: string, base: string): boolean {
+  return pathname === base || pathname.startsWith(`${base}/`);
+}
+
 export function searchParamsToQueryString(
   searchParams: Record<string, SearchParamValue>
 ): string {
@@ -25,7 +29,7 @@ export function searchParamsToQueryString(
       for (const entry of value) {
         params.append(key, entry);
       }
-    } else if (value != null && value !== "") {
+    } else if (value != null) {
       params.set(key, value);
     }
   }
@@ -42,25 +46,28 @@ export function analyticsHref(queryString = ""): string {
 
 export function isAnalyticsPath(pathname: string): boolean {
   return (
-    pathname === ANALYTICS_PATH ||
-    pathname.startsWith(`${ANALYTICS_PATH}/`) ||
-    pathname === REPORTS_COMPAT_PATH ||
-    pathname.startsWith(`${REPORTS_COMPAT_PATH}/`)
+    isPathOrDescendant(pathname, ANALYTICS_PATH) ||
+    isPathOrDescendant(pathname, REPORTS_COMPAT_PATH)
   );
 }
 
 export function isAiPath(pathname: string): boolean {
   return (
-    pathname === AI_PATH ||
-    pathname.startsWith(`${AI_PATH}/`) ||
-    AI_COMPAT_PATHS.some(
-      (compat) => pathname === compat || pathname.startsWith(`${compat}/`)
-    )
+    isPathOrDescendant(pathname, AI_PATH) ||
+    AI_COMPAT_PATHS.some((compat) => isPathOrDescendant(pathname, compat))
   );
 }
 
 export function isFollowUpPath(pathname: string): boolean {
-  return pathname === FOLLOW_UP_PATH || pathname.startsWith(`${FOLLOW_UP_PATH}/`);
+  return isPathOrDescendant(pathname, FOLLOW_UP_PATH);
+}
+
+export function isSettingsTeamPath(pathname: string): boolean {
+  return isPathOrDescendant(pathname, SETTINGS_TEAM_PATH);
+}
+
+export function isSettingsBillingPath(pathname: string): boolean {
+  return isPathOrDescendant(pathname, SETTINGS_BILLING_PATH);
 }
 
 export function destinationWithSearch(
@@ -71,11 +78,9 @@ export function destinationWithSearch(
 }
 
 export function isSettingsProfilePath(pathname: string): boolean {
-  return (
-    pathname === SETTINGS_PATH ||
-    pathname === SETTINGS_PROFILE_PATH ||
-    (pathname.startsWith(`${SETTINGS_PATH}/`) &&
-      !pathname.startsWith(SETTINGS_TEAM_PATH) &&
-      !pathname.startsWith(SETTINGS_BILLING_PATH))
-  );
+  if (isSettingsTeamPath(pathname) || isSettingsBillingPath(pathname)) {
+    return false;
+  }
+
+  return isPathOrDescendant(pathname, SETTINGS_PATH);
 }

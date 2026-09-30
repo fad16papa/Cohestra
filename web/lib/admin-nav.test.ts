@@ -60,6 +60,8 @@ describe("Story 39.1 desktop IA", () => {
     expect(
       destinationWithSearch("/analytics", { preset: "weekly", from: "2026-01-01" })
     ).toBe("/analytics?preset=weekly&from=2026-01-01");
+    expect(destinationWithSearch("/analytics", { preset: "" })).toBe("/analytics?preset=");
+    expect(destinationWithSearch("/ai", { tag: ["a", "b"] })).toBe("/ai?tag=a&tag=b");
     expect(destinationWithSearch("/ai", {})).toBe("/ai");
   });
 
@@ -68,6 +70,8 @@ describe("Story 39.1 desktop IA", () => {
     expect(isSettingsProfilePath("/settings/profile")).toBe(true);
     expect(isSettingsProfilePath("/settings/team")).toBe(false);
     expect(isSettingsProfilePath("/settings/billing")).toBe(false);
+    expect(isSettingsProfilePath("/settings/teammates")).toBe(true);
+    expect(isSettingsProfilePath("/settings/billing-history")).toBe(true);
   });
 
   it("finds Analytics in the command palette via reports keyword", () => {
