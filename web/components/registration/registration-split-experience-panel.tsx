@@ -63,6 +63,7 @@ export function RegistrationSplitExperiencePanel({
 
   return (
     <aside
+      aria-label="Event details"
       className={cn(
         "flex min-w-0 flex-col gap-4 text-left lg:sticky lg:top-6 lg:self-start",
         className

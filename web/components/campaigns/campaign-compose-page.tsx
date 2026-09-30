@@ -469,7 +469,7 @@ export function CampaignComposePage() {
 
         <div className="space-y-4 rounded-xl border border-border-warm bg-card p-4">
           <div>
-            <h3 className="text-sm font-semibold text-text-warm">Templates</h3>
+            <h2 className="text-sm font-semibold text-text-warm">Templates</h2>
             <p className="mt-1 text-sm text-text-muted-warm">
               Reuse saved subjects and bodies when composing campaigns.
             </p>
@@ -543,7 +543,7 @@ export function CampaignComposePage() {
 
       {sendResult ? (
         <div className="rounded-xl border border-border-warm bg-card p-4">
-          <h3 className="text-sm font-semibold text-text-warm">Send results</h3>
+          <h2 className="text-sm font-semibold text-text-warm">Send results</h2>
           <p className="mt-2 text-sm text-text-muted-warm">
             {sendResult.sentCount} sent, {sendResult.failedCount} failed
             {sendResult.skippedCount > 0

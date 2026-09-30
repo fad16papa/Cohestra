@@ -77,7 +77,7 @@ function RegistrationAnswersDetail({
     <div className="min-h-0 flex-1 rounded-lg border border-border-warm bg-muted/20 p-4">
       <div className="flex flex-col gap-1 border-b border-border-warm pb-3 sm:flex-row sm:items-baseline sm:justify-between">
         <div>
-          <h3 className="font-medium text-text-warm">{entry.activityName}</h3>
+          <p className="font-medium text-text-warm">{entry.activityName}</p>
           <p className="mt-1 font-mono text-xs text-text-muted-warm">
             {entry.registrationNumber}
           </p>

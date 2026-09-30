@@ -192,10 +192,41 @@ Grok 4.6 (semantics, architecture, implementation, tests, review). Composer 2.5 
 
 ### Debug Log References
 
+- Independent review (first): MAJOR F1 heading-order leftovers (Reports/Website/Form Studio); MAJOR F2 skip-after-SPA used `goto` not a client-side Link. Both patched.
+- Playwright Form Studio Build: axe `heading-order` on `aside > h4` “Block palette”. Promoted builder palette/structure/properties to h3 and labelled the palette aside.
+
 ### Completion Notes List
 
+- Shell: one skip link, one `#main-content` `<main tabIndex={-1}>`, chrome not h1.
+- Settings inner main → labelled section; Team/Billing one h1; Dashboard loading keeps greeting h1.
+- Embedded `SitePageRenderer` uses div/h2 and non-landmark header/footer; Form Studio preview `titleHeadingLevel` 2; public standalone unchanged.
+- Duplicate complementaries labelled: Workspace, Settings sections, Settings context, Block palette, Event details.
+
 ### File List
+
+- `web/components/layouts/admin-skip-link.tsx`
+- `web/components/layouts/dashboard-layout.tsx`
+- `web/components/layouts/admin-sidebar.tsx`
+- `web/components/layouts/admin-top-bar.tsx`
+- `web/components/shared/page-header.tsx`
+- `web/components/dashboard/dashboard-greeting-header.tsx`
+- `web/components/dashboard/dashboard-page-client.tsx`
+- `web/components/settings/settings-page-content.tsx`
+- `web/components/settings/settings-page-header.tsx`
+- `web/components/settings/settings-left-rail.tsx`
+- `web/components/settings/settings-right-rail.tsx`
+- `web/components/settings/settings-team-page-content.tsx`
+- `web/components/settings/settings-billing-page-content.tsx`
+- `web/components/marketing/site-page-renderer.tsx`
+- `web/components/website/website-builder-page.tsx`
+- `web/components/registration/public-registration-open.tsx`
+- `web/components/registration/registration-split-experience-panel.tsx`
+- `web/components/activities/form-composition-builder.tsx`
+- `web/e2e/landmarks-38-5.spec.ts`
+- `web/lib/landmarks-38-5.test.ts`
+- `_bmad-output/planning-artifacts/evidence/px2-38-5/`
 
 ### Change Log
 
 - 2026-09-30: Created Story 38.5 after 38.4 close `1b5cc6b3`. D9 contract accepted.
+- 2026-09-30: Review loop — heading-order retune, SPA skip keyboard reset, Form Studio Block palette h3, labelled asides.

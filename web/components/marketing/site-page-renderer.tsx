@@ -706,19 +706,23 @@ function FooterSection({
   section,
   previewMode,
   cinemaFold = false,
+  embedded = false,
 }: {
   section: SiteSection;
   previewMode: SitePreviewLayoutMode;
   cinemaFold?: boolean;
+  embedded?: boolean;
 }) {
   const poweredByLabel =
     typeof section.props.poweredByLabel === "string"
       ? section.props.poweredByLabel
       : "Cohestra";
 
+  const FooterTag = embedded ? "div" : "footer";
+
   return (
-    <footer
-      id="site-footer"
+    <FooterTag
+      {...(embedded ? {} : { id: "site-footer" })}
       className={previewLayoutClass(previewMode, {
         full: cn(
           "relative z-10 border-t border-border-warm/60 bg-background/70 backdrop-blur-md",
@@ -768,7 +772,7 @@ function FooterSection({
           </p>
         )}
       </div>
-    </footer>
+    </FooterTag>
   );
 }
 
@@ -859,6 +863,7 @@ function renderSection(
           section={section}
           previewMode={context.previewMode}
           cinemaFold={context.cinemaFold}
+          embedded={context.embedded}
         />
       );
       break;
@@ -940,6 +945,7 @@ export function SitePageRenderer({
   // Cinema fold is dense — keep solid club chrome so nav stays readable over highlights.
   const headerOverHero = !cinemaFold && hasHeroBanner && !headerScrolled;
   const BodyTag = embedded ? "div" : "main";
+  const HeaderTag = embedded ? "div" : "header";
 
   const sectionContext = {
     siteName: published.siteName,
@@ -961,7 +967,7 @@ export function SitePageRenderer({
       {!hasHeroBanner ? <SiteMarketingBackground /> : null}
       {shouldShowPreviewBanner ? <SitePreviewBanner /> : null}
 
-      <header
+      <HeaderTag
         className={cn(
           "sticky top-0 z-50 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300",
           headerOverHero
@@ -1090,7 +1096,7 @@ export function SitePageRenderer({
           ) : null}
         </div>
         </div>
-      </header>
+      </HeaderTag>
 
       <BodyTag
         className={previewLayoutClass(previewMode, {

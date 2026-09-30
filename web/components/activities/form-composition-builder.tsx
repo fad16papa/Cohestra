@@ -321,7 +321,7 @@ export function FormCompositionBuilder({
   return (
     <div className={cn("space-y-4", className)}>
       <div>
-        <h3 className="text-section text-text-warm">Form builder</h3>
+        <h2 className="text-section text-text-warm">Form builder</h2>
         <p className="mt-1 text-sm text-text-muted-warm">
           Add blocks, arrange structure, and configure fields. Preview updates as
           you edit — save when ready.
@@ -338,10 +338,16 @@ export function FormCompositionBuilder({
       ) : null}
 
       <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,18rem)]">
-        <aside className={cn(panelShell, "p-3")}>
-          <h4 className="px-1 text-xs font-semibold uppercase tracking-wide text-text-muted-warm">
+        <aside
+          aria-labelledby="form-block-palette-heading"
+          className={cn(panelShell, "p-3")}
+        >
+          <h3
+            id="form-block-palette-heading"
+            className="px-1 text-xs font-semibold uppercase tracking-wide text-text-muted-warm"
+          >
             Block palette
-          </h4>
+          </h3>
           <div className="mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto">
             <div>
               <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted-warm">
@@ -466,7 +472,7 @@ export function FormCompositionBuilder({
 
         <section className={panelShell} aria-label="Form structure">
           <div className="border-b border-border-warm px-4 py-3">
-            <h4 className="text-sm font-semibold text-text-warm">Form structure</h4>
+            <h3 className="text-sm font-semibold text-text-warm">Form structure</h3>
             <p className="mt-1 text-xs text-text-muted-warm">
               Top to bottom matches registration order. Drag or use arrow buttons to
               reorder.
@@ -715,7 +721,7 @@ export function FormCompositionBuilder({
 
         <section className={cn(panelShell, "min-h-[20rem] lg:min-h-[28rem]")}>
           <div className="border-b border-border-warm px-4 py-3">
-            <h4 className="text-sm font-semibold text-text-warm">Block properties</h4>
+            <h3 className="text-sm font-semibold text-text-warm">Block properties</h3>
             <p className="mt-1 text-xs text-text-muted-warm">
               {selectedNode
                 ? `${blockTypeLabel(selectedNode)} · ${blockTitle(selectedNode, schema)}`

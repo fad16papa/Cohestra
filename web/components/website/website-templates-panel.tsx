@@ -179,7 +179,7 @@ export function WebsiteTemplatesPanel({
     return (
       <section className="space-y-4" data-tour="website-builder-templates-panel">
         <div>
-          <h3 className="text-section text-text-warm">Templates &amp; recovery</h3>
+          <h2 className="text-section text-text-warm">Templates &amp; recovery</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
             Built-in layouts, saved templates, and revert options.
           </p>
@@ -198,7 +198,7 @@ export function WebsiteTemplatesPanel({
         onClick={() => setOpen((current) => !current)}
       >
         <div>
-          <h3 className="text-section text-text-warm">Templates &amp; recovery</h3>
+          <h2 className="text-section text-text-warm">Templates &amp; recovery</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
             {isOpen
               ? "Built-in layouts, saved templates, and revert options"

@@ -196,7 +196,12 @@ export function DashboardPageClient() {
   }
 
   if (!metrics) {
-    return null;
+    return (
+      <div className="mx-auto max-w-6xl space-y-8">
+        <DashboardGreetingHeader />
+        <MetricSkeletonGrid />
+      </div>
+    );
   }
 
   const periodLabel =

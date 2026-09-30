@@ -106,7 +106,7 @@ export function ActivityRegistrationsTab({
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <h3 className="text-section text-text-warm">Registrations</h3>
+        <h2 className="text-section text-text-warm">Registrations</h2>
         {initialized && !error ? (
           <p className="text-sm text-text-muted-warm">
             {totalCount === 0

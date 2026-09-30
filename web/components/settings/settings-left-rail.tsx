@@ -75,6 +75,7 @@ export function SettingsLeftRail({
 }: SettingsLeftRailProps) {
   return (
     <aside
+      aria-label="Settings sections"
       className={cn(
         "flex shrink-0 flex-col border-border-warm/80 bg-card/50 motion-safe:transition-[width] motion-safe:duration-200",
         collapsed ? "w-14" : "w-56",

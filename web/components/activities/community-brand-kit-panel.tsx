@@ -150,7 +150,7 @@ export function CommunityBrandKitPanel({
     <section className="space-y-5 rounded-xl border border-border-warm bg-card p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-section text-text-warm">Brand kit</h3>
+          <h2 className="text-section text-text-warm">Brand kit</h2>
           <p className="mt-0.5 text-sm text-text-muted-warm">
             Activities in this community can inherit logo, accent, and default hero.
           </p>

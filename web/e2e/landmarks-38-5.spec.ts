@@ -127,7 +127,16 @@ function landmarkAxeFailures(violations: AxeViolation[]): AxeViolation[] {
 }
 
 async function keyboardSkipOnce(page: Page): Promise<void> {
-  await page.locator("body").focus();
+  await page.evaluate(() => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) {
+      active.blur();
+    }
+    const body = document.body;
+    body.setAttribute("tabindex", "-1");
+    body.focus();
+    body.removeAttribute("tabindex");
+  });
   await page.keyboard.press("Tab");
   const skip = page.getByRole("link", { name: "Skip to main content" });
   await expect(skip).toBeFocused();
@@ -170,6 +179,11 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await openAuthed(page, session, "/dashboard", origin);
+    await page.evaluate(() => {
+      localStorage.setItem("cohestra-theme-operator", "light");
+    });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await waitForOperatorWorkspace(page);
     await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible({
       timeout: 30_000,
     });
@@ -228,8 +242,15 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
       fullPage: true,
     });
 
-    await page.goto(`${origin}/clients`, { waitUntil: "domcontentloaded" });
-    await waitForOperatorWorkspace(page);
+    await page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Dashboard" }).click();
+    await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible({
+      timeout: 30_000,
+    });
+    await keyboardSkipOnce(page);
+    await page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Clients" }).click();
+    await expect(page.getByRole("heading", { name: "Clients", level: 1 })).toBeVisible({
+      timeout: 30_000,
+    });
     await keyboardSkipOnce(page);
     await page.keyboard.press("Tab");
     const afterSkip = await page.evaluate(() => {
@@ -242,20 +263,27 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
+    await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible({
+      timeout: 30_000,
+    });
     await assertOneMainOneH1(page, "Dashboard");
     await keyboardSkipOnce(page);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "skip-focused-390x844.png"),
     });
-    await page.getByRole("button", { name: "More" }).click();
+    await page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Activities" }).click({ force: true });
+    await expect(page.getByRole("heading", { name: "Activities", level: 1 })).toBeVisible({
+      timeout: 30_000,
+    });
+    await keyboardSkipOnce(page);
+    await page.getByRole("button", { name: "More" }).click({ force: true });
     await expect(page.getByRole("dialog")).toBeVisible();
-    const mobileOpen = await documentStructure(page);
-    expect(mobileOpen.mainCount).toBe(1);
-    expect(mobileOpen.mainContentCount).toBe(1);
-    expect(mobileOpen.skipCount).toBe(1);
+    expect(await page.locator("main").count()).toBe(1);
+    expect(await page.locator("#main-content").count()).toBe(1);
+    expect(await page.locator('a[href="#main-content"]').count()).toBe(1);
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toHaveCount(0);
-    await assertOneMainOneH1(page, "Dashboard");
+    await assertOneMainOneH1(page, "Activities");
 
     for (const viewport of VIEWPORTS) {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -331,6 +359,20 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
       path: path.join(evidenceDir, "viewports", "form-studio-preview-1440x900.png"),
       fullPage: true,
     });
+    const previewAxe = landmarkAxeFailures(await runAxe(page));
+    expect(
+      previewAxe,
+      JSON.stringify(previewAxe, null, 2)
+    ).toEqual([]);
+    await page.locator("#form-studio-tab-build").click();
+    await expect(page.getByRole("heading", { name: "Form builder", level: 2 })).toBeVisible({
+      timeout: 30_000,
+    });
+    const formAxe = landmarkAxeFailures(await runAxe(page));
+    expect(
+      formAxe,
+      JSON.stringify(formAxe, null, 2)
+    ).toEqual([]);
   });
 
   test("standalone public registration retains main and h1", async ({
@@ -372,9 +414,15 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
     const origin = tenantWebBase();
     await page.setViewportSize({ width: 1440, height: 900 });
     await openAuthed(page, session, "/dashboard/website", origin);
-    await expect(page.locator("#website-builder-toolbar").or(page.getByRole("heading", { name: "Website", level: 1 }))).toBeVisible({
+    await expect(
+      page.locator("#website-builder-toolbar").or(page.getByRole("heading", { name: "Website", level: 1 }))
+    ).toBeVisible({
       timeout: 30_000,
     });
+    const previewToggle = page.getByRole("button", { name: /^Preview$/i }).first();
+    if (await previewToggle.isVisible().catch(() => false)) {
+      await previewToggle.click();
+    }
     await assertOneMainOneH1(page, /Website/);
     await expect(page.locator("main")).toHaveCount(1);
     await expect(page.locator('[aria-label="Website preview"] main')).toHaveCount(0);

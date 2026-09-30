@@ -113,7 +113,7 @@ export function FormTemplatePicker({
     <div className="space-y-4">
       <section className="space-y-3 rounded-xl border border-border-warm bg-muted/20 p-4">
         <div>
-          <h3 className="text-section text-text-warm">Launch templates</h3>
+          <h2 className="text-section text-text-warm">Launch templates</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
             Start from a preset field set based on your existing lead engines.
             Applying a template replaces all current form fields.
@@ -166,7 +166,7 @@ export function FormTemplatePicker({
 
       <section className="space-y-3 rounded-xl border border-border-warm bg-muted/20 p-4">
         <div className="space-y-2">
-          <h3 className="text-section text-text-warm">Your saved templates</h3>
+          <h2 className="text-section text-text-warm">Your saved templates</h2>
           <p className="text-sm text-text-muted-warm">
             Save this draft as a reusable recipe and apply it to another unpublished
             activity.

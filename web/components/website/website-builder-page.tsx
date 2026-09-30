@@ -1238,7 +1238,7 @@ export function WebsiteBuilderPage() {
           sectionsPanel={
             <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3 sm:p-4">
               <div>
-                <h3 className="text-section text-text-warm">Homepage sections</h3>
+                <h2 className="text-section text-text-warm">Homepage sections</h2>
                 <p className="mt-0.5 text-xs text-text-muted-warm">
                   Enable, reorder, and edit sections on your homepage.
                 </p>

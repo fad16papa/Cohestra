@@ -1,0 +1,128 @@
+[
+  {
+    "route": "/dashboard",
+    "viewport": "1440x900",
+    "mainCount": 1,
+    "h1Count": 1,
+    "h1Names": [
+      "Dashboard"
+    ],
+    "skipCount": 1,
+    "mainIds": [
+      "main-content"
+    ],
+    "mainContentCount": 1
+  },
+  {
+    "route": "/clients",
+    "viewport": "1440x900",
+    "mainCount": 1,
+    "h1Count": 1,
+    "h1Names": [
+      "Clients"
+    ],
+    "skipCount": 1,
+    "mainIds": [
+      "main-content"
+    ],
+    "mainContentCount": 1
+  },
+  {
+    "route": "/activities",
+    "viewport": "1440x900",
+    "mainCount": 1,
+    "h1Count": 1,
+    "h1Names": [
+      "Activities"
+    ],
+    "skipCount": 1,
+    "mainIds": [
+      "main-content"
+    ],
+    "mainContentCount": 1
+  },
+  {
+    "route": "/reports",
+    "viewport": "1440x900",
+    "mainCount": 1,
+    "h1Count": 1,
+    "h1Names": [
+      "Reports"
+    ],
+    "skipCount": 1,
+    "mainIds": [
+      "main-content"
+    ],
+    "mainContentCount": 1
+  },
+  {
+    "route": "/campaigns",
+    "viewport": "1440x900",
+    "mainCount": 1,
+    "h1Count": 1,
+    "h1Names": [
+      "Campaigns"
+    ],
+    "skipCount": 1,
+    "mainIds": [
+      "main-content"
+    ],
+    "mainContentCount": 1
+  },
+  {
+    "route": "/settings",
+    "viewport": "1440x900",
+    "mainCount": 1,
+    "h1Count": 1,
+    "h1Names": [
+      "Settings"
+    ],
+    "skipCount": 1,
+    "mainIds": [
+      "main-content"
+    ],
+    "mainContentCount": 1
+  },
+  {
+    "route": "/settings/team",
+    "viewport": "1440x900",
+    "mainCount": 1,
+    "h1Count": 1,
+    "h1Names": [
+      "Team"
+    ],
+    "skipCount": 1,
+    "mainIds": [
+      "main-content"
+    ],
+    "mainContentCount": 1
+  },
+  {
+    "route": "/settings/billing",
+    "viewport": "1440x900",
+    "mainCount": 1,
+    "h1Count": 1,
+    "h1Names": [
+      "Billing"
+    ],
+    "skipCount": 1,
+    "mainIds": [
+      "main-content"
+    ],
+    "mainContentCount": 1
+  },
+  {
+    "route": "/dashboard/website",
+    "viewport": "1440x900",
+    "mainCount": 1,
+    "h1Count": 1,
+    "h1Names": [
+      "Website Builder"
+    ],
+    "skipCount": 1,
+    "mainIds": [
+      "main-content"
+    ],
+    "mainContentCount": 1
+  }
+]

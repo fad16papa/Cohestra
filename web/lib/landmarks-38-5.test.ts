@@ -26,6 +26,10 @@ const BUILDER_SOURCE = readFileSync(
   resolve(import.meta.dirname, "../components/website/website-builder-page.tsx"),
   "utf8"
 );
+const FORM_BUILDER_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/activities/form-composition-builder.tsx"),
+  "utf8"
+);
 
 describe("Story 38.5 landmark source contract (supplement)", () => {
   it("defines a unique skip target id and never hides the skip link with display:none", () => {
@@ -54,6 +58,8 @@ describe("Story 38.5 landmark source contract (supplement)", () => {
   it("uses one SitePageRenderer with an embedded semantic context", () => {
     expect(RENDERER_SOURCE).toContain("embedded?: boolean");
     expect(RENDERER_SOURCE).toContain('const BodyTag = embedded ? "div" : "main"');
+    expect(RENDERER_SOURCE).toContain('const HeaderTag = embedded ? "div" : "header"');
+    expect(RENDERER_SOURCE).toContain('const FooterTag = embedded ? "div" : "footer"');
     expect(RENDERER_SOURCE).toContain('const TitleTag = embedded ? "h2" : "h1"');
     expect(BUILDER_SOURCE).toContain("<SitePageRenderer site={previewPayload} isPreview embedded />");
   });
@@ -61,5 +67,15 @@ describe("Story 38.5 landmark source contract (supplement)", () => {
   it("offsets Form Studio preview headings without a second renderer", () => {
     expect(OPEN_SOURCE).toContain("const titleHeadingLevel: 1 | 2 = isPreview ? 2 : 1");
     expect(OPEN_SOURCE).not.toMatch(/createPortal/);
+  });
+
+  it("keeps Form Studio builder headings under the Form builder h2", () => {
+    expect(FORM_BUILDER_SOURCE).toContain('<h2 className="text-section text-text-warm">Form builder</h2>');
+    expect(FORM_BUILDER_SOURCE).toContain("Block palette");
+    expect(FORM_BUILDER_SOURCE).toContain('id="form-block-palette-heading"');
+    expect(FORM_BUILDER_SOURCE).not.toMatch(/<h4[^>]*>\s*Block palette/);
+    expect(FORM_BUILDER_SOURCE).toMatch(/<h3[^>]*>\s*Form structure\s*<\/h3>/);
+    expect(FORM_BUILDER_SOURCE).toMatch(/<h3[^>]*>\s*Block properties\s*<\/h3>/);
+    expect(FORM_BUILDER_SOURCE).toContain('aria-labelledby="form-block-palette-heading"');
   });
 });

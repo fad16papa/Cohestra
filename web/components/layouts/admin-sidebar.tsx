@@ -16,6 +16,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
 
   return (
     <aside
+      aria-label="Workspace"
       className={cn(
         "flex shrink-0 flex-col border-r border-border-warm bg-card/95 backdrop-blur-sm",
         "w-16 lg:w-60",

@@ -134,7 +134,7 @@ export function CommunityDefaultFormTemplatePanel({
   return (
     <section className="space-y-4 rounded-xl border border-border-warm bg-card p-4">
       <div>
-        <h3 className="text-section text-text-warm">Default form template</h3>
+        <h2 className="text-section text-text-warm">Default form template</h2>
         <p className="mt-1 text-sm text-text-muted-warm">
           New activities in this community start with this form recipe.
         </p>

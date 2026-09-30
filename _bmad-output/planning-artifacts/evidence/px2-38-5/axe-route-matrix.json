@@ -1,0 +1,113 @@
+[
+  {
+    "route": "/dashboard",
+    "viewport": "1440x900",
+    "landmarkFailures": [],
+    "all": []
+  },
+  {
+    "route": "/clients",
+    "viewport": "1440x900",
+    "landmarkFailures": [],
+    "all": [
+      {
+        "id": "aria-allowed-role",
+        "impact": "minor",
+        "description": "Ensure role attribute has an appropriate value for the element",
+        "nodes": [
+          {
+            "html": "<button type=\"button\" role=\"columnheader\" aria-sort=\"none\" class=\"w-full min-w-0 truncate p-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm motion-press hover:text-text-warm\">Contact</button>",
+            "target": [
+              "div:nth-child(2) > .p-0[aria-sort=\"none\"][role=\"columnheader\"]"
+            ],
+            "summary": "Fix any of the following:\n  ARIA role columnheader is not allowed for given element"
+          },
+          {
+            "html": "<button type=\"button\" role=\"columnheader\" aria-sort=\"none\" class=\"w-full min-w-0 truncate p-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm motion-press hover:text-text-warm\">Status</button>",
+            "target": [
+              ".sm\\:max-w-\\[5\\.5rem\\].flex > .p-0[aria-sort=\"none\"][role=\"columnheader\"]"
+            ],
+            "summary": "Fix any of the following:\n  ARIA role columnheader is not allowed for given element"
+          },
+          {
+            "html": "<button type=\"button\" role=\"columnheader\" aria-sort=\"descending\" class=\"w-full min-w-0 truncate p-0 text-left text-xs font-medium uppercase tracking-wide motion-press hover:text-text-warm text-text-warm\">Last registration ↓</button>",
+            "target": [
+              "button[aria-sort=\"descending\"]"
+            ],
+            "summary": "Fix any of the following:\n  ARIA role columnheader is not allowed for given element"
+          }
+        ]
+      },
+      {
+        "id": "aria-required-children",
+        "impact": "critical",
+        "description": "Ensure elements with an ARIA role that require child roles contain them",
+        "nodes": [
+          {
+            "html": "<div class=\"grid-cols-1 gap-y-3 px-4 py-3.5 sm:grid-cols-[2rem_minmax(11rem,1.35fr)_5.5rem_minmax(0,1fr)_minmax(0,1fr)_6.75rem] sm:items-center sm:gap-x-4 sm:gap-y-0 sm:px-4 sm:py-3 hidden border-b border-border-warm bg-muted/30 sm:grid\" role=\"row\">",
+            "target": [
+              ".bg-muted\\/30"
+            ],
+            "summary": "Fix any of the following:\n  Element has children which are not allowed: input[aria-label]"
+          }
+        ]
+      },
+      {
+        "id": "aria-required-parent",
+        "impact": "critical",
+        "description": "Ensure elements with an ARIA role that require parent roles are contained by them",
+        "nodes": [
+          {
+            "html": "<div class=\"grid-cols-1 gap-y-3 px-4 py-3.5 sm:grid-cols-[2rem_minmax(11rem,1.35fr)_5.5rem_minmax(0,1fr)_minmax(0,1fr)_6.75rem] sm:items-center sm:gap-x-4 sm:gap-y-0 sm:px-4 sm:py-3 hidden border-b border-border-warm bg-muted/30 sm:grid\" role=\"row\">",
+            "target": [
+              ".bg-muted\\/30"
+            ],
+            "summary": "Fix any of the following:\n  Required ARIA parents role not present: grid, rowgroup, table, treegrid"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "route": "/activities",
+    "viewport": "1440x900",
+    "landmarkFailures": [],
+    "all": []
+  },
+  {
+    "route": "/reports",
+    "viewport": "1440x900",
+    "landmarkFailures": [],
+    "all": []
+  },
+  {
+    "route": "/campaigns",
+    "viewport": "1440x900",
+    "landmarkFailures": [],
+    "all": []
+  },
+  {
+    "route": "/settings",
+    "viewport": "1440x900",
+    "landmarkFailures": [],
+    "all": []
+  },
+  {
+    "route": "/settings/team",
+    "viewport": "1440x900",
+    "landmarkFailures": [],
+    "all": []
+  },
+  {
+    "route": "/settings/billing",
+    "viewport": "1440x900",
+    "landmarkFailures": [],
+    "all": []
+  },
+  {
+    "route": "/dashboard/website",
+    "viewport": "1440x900",
+    "landmarkFailures": [],
+    "all": []
+  }
+]

@@ -43,12 +43,12 @@ export function ActivityOverviewEventDetails({
       aria-labelledby="activity-event-details-heading"
       className="rounded-xl border border-border-warm bg-card p-5"
     >
-      <h3
+      <h2
         id="activity-event-details-heading"
         className="text-sm font-semibold text-text-warm"
       >
         Event details
-      </h3>
+      </h2>
       <p className="mt-1 text-sm text-text-muted-warm">
         Schedule and location appear on the public registration page. Set them before
         you publish.

@@ -25,7 +25,7 @@ export function WebsiteSetupChecklist({
     <section className="rounded-xl border border-border-warm bg-gradient-to-br from-card to-surface-warm/60 p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-section text-text-warm">Get your site ready</h3>
+          <h2 className="text-section text-text-warm">Get your site ready</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
             Complete these steps before you publish your homepage.
           </p>
