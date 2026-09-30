@@ -54,6 +54,7 @@ async function runOverlayAxe(page: Page) {
       "aria-modal-attr",
       "aria-hidden-focus",
       "bypass",
+      "color-contrast",
       "duplicate-id",
       "duplicate-id-aria",
       "focus-order-semantics",
@@ -167,12 +168,34 @@ async function setAppearance(page: Page, preference: "light" | "dark"): Promise<
   }
 }
 
-async function screenshot(page: Page, name: string): Promise<void> {
+async function screenshotPage(page: Page, name: string): Promise<void> {
   fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
   await page.screenshot({
     path: path.join(evidenceDir, "viewports", name),
     fullPage: false,
   });
+}
+
+async function screenshotOverlay(page: Page, overlay: Locator, name: string): Promise<void> {
+  fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
+  await expect(overlay).toBeVisible();
+  await expect(overlay).toHaveCSS("opacity", "1");
+  await overlay.screenshot({
+    path: path.join(evidenceDir, "viewports", name),
+  });
+}
+
+async function assertForcedColorsOverlay(page: Page, overlay: Locator): Promise<void> {
+  const styles = await overlay.evaluate((node) => {
+    const computed = getComputedStyle(node);
+    return {
+      color: computed.color,
+      background: computed.backgroundColor,
+      border: computed.borderTopColor,
+    };
+  });
+  expect(styles.color).not.toBe("rgba(0, 0, 0, 0)");
+  expect(styles.border).not.toBe("rgba(0, 0, 0, 0)");
 }
 
 test.describe("Story 38.6 — shared overlay contract", () => {
@@ -207,7 +230,7 @@ test.describe("Story 38.6 — shared overlay contract", () => {
     const paletteAxe = await runOverlayAxe(page);
     expect(paletteAxe).toEqual([]);
     axeRows.push({ surface: "Command palette", violations: paletteAxe });
-    await screenshot(page, "palette-1440x900.png");
+    await screenshotOverlay(page, palette, "palette-1440x900.png");
     await page.keyboard.press("Escape");
     await expect(palette).toHaveCount(0);
     await expect(search).toBeFocused();
@@ -238,21 +261,22 @@ test.describe("Story 38.6 — shared overlay contract", () => {
     await setAppearance(page, "dark");
     await search.click();
     await expect(palette).toBeVisible();
-    await screenshot(page, "palette-dark-1440x900.png");
+    await screenshotOverlay(page, palette, "palette-dark-1440x900.png");
     await page.keyboard.press("Escape");
     await setAppearance(page, "light");
 
     await page.emulateMedia({ forcedColors: "active" });
     await search.click();
     await expect(palette).toBeVisible();
-    await screenshot(page, "palette-forced-colors-1440x900.png");
+    await assertForcedColorsOverlay(page, palette);
+    await screenshotOverlay(page, palette, "palette-forced-colors-1440x900.png");
     await page.keyboard.press("Escape");
     await page.emulateMedia({ forcedColors: "none" });
 
     await page.setViewportSize({ width: 1024, height: 768 });
     await search.click();
     await expect(palette).toBeVisible();
-    await screenshot(page, "palette-1024x768.png");
+    await screenshotOverlay(page, palette, "palette-1024x768.png");
     await page.keyboard.press("Escape");
     await expect(search).toBeFocused();
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -260,7 +284,7 @@ test.describe("Story 38.6 — shared overlay contract", () => {
     const account = page.getByRole("button", { name: "Open account menu" });
     await account.click();
     await expect(page.locator("[data-slot='popover-content']")).toBeVisible();
-    await screenshot(page, "account-popover-1440x900.png");
+    await screenshotPage(page, "account-popover-1440x900.png");
     await page.keyboard.press("Escape");
     await expect(page.locator("[data-slot='popover-content']")).toHaveCount(0);
     await expect(account).toBeFocused();
@@ -316,11 +340,19 @@ test.describe("Story 38.6 — shared overlay contract", () => {
     const previewAxe = await runOverlayAxe(page);
     expect(previewAxe).toEqual([]);
     axeRows.push({ surface: "Email preview", violations: previewAxe });
-    await screenshot(page, "email-preview-1440x900.png");
+    await screenshotOverlay(page, preview, "email-preview-1440x900.png");
     const previewOverlay = page.locator("[data-slot='dialog-overlay']");
     await previewOverlay.click({ position: { x: 4, y: 4 } });
     await expect(preview).toHaveCount(0);
     await expect(previewButton).toBeFocused();
+    await previewButton.click();
+    await expect(preview).toBeVisible();
+    await page.keyboard.press("Control+K");
+    await expect(preview).toBeVisible();
+    await expect(page.getByRole("dialog", { name: "Command palette" })).toHaveCount(0);
+    await expect(page.getByRole("dialog")).toHaveCount(1);
+    await page.keyboard.press("Escape");
+    await expect(preview).toHaveCount(0);
     keyboard.push({
       surface: "Email preview",
       sequence: "open Preview → Tab trap → overlay click",
@@ -334,7 +366,11 @@ test.describe("Story 38.6 — shared overlay contract", () => {
     await expect(qr).toBeVisible();
     await expect(page.getByLabel("Search activities")).toBeFocused();
     await expect(page.getByRole("dialog")).toHaveCount(1);
-    await screenshot(page, "insert-qr-1440x900.png");
+    await assertTabContained(page);
+    const qrAxe = await runOverlayAxe(page);
+    expect(qrAxe).toEqual([]);
+    axeRows.push({ surface: "Insert activity QR", violations: qrAxe });
+    await screenshotOverlay(page, qr, "insert-qr-1440x900.png");
     await page.keyboard.press("Escape");
     await expect(qr).toHaveCount(0);
     await expect(qrTrigger).toBeFocused();
@@ -393,7 +429,7 @@ test.describe("Story 38.6 — shared overlay contract", () => {
     const addAxe = await runOverlayAxe(page);
     expect(addAxe).toEqual([]);
     axeRows.push({ surface: "Add homepage section", violations: addAxe });
-    await screenshot(page, "add-section-1440x900.png");
+    await screenshotOverlay(page, addDialog, "add-section-1440x900.png");
     await page.keyboard.press("Escape");
     await expect(addDialog).toHaveCount(0);
     await expect(addSection).toBeFocused();
@@ -426,7 +462,7 @@ test.describe("Story 38.6 — shared overlay contract", () => {
     const alertAxe = await runOverlayAxe(page);
     expect(alertAxe).toEqual([]);
     axeRows.push({ surface: "Save homepage template", violations: alertAxe });
-    await screenshot(page, "save-template-alert-1440x900.png");
+    await screenshotOverlay(page, alert, "save-template-alert-1440x900.png");
     await page.locator("[data-slot='alert-dialog-overlay']").click({
       position: { x: 4, y: 4 },
       force: true,
@@ -471,13 +507,13 @@ test.describe("Story 38.6 — shared overlay contract", () => {
     const sheetAxe = await runOverlayAxe(page);
     expect(sheetAxe).toEqual([]);
     axeRows.push({ surface: "More sheet", violations: sheetAxe });
-    await screenshot(page, "more-sheet-390x844.png");
+    await screenshotOverlay(page, sheet, "more-sheet-390x844.png");
 
     await page.keyboard.press("Control+K");
     await expect(palette).toBeVisible();
     await expect(sheet).toHaveCount(0);
     await expect(page.getByRole("dialog")).toHaveCount(1);
-    await screenshot(page, "nested-sheet-then-palette-exclusive-390x844.png");
+    await screenshotOverlay(page, palette, "nested-sheet-then-palette-exclusive-390x844.png");
     await page.keyboard.press("Escape");
     await expect(palette).toHaveCount(0);
     await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -498,7 +534,7 @@ test.describe("Story 38.6 — shared overlay contract", () => {
     await page.setViewportSize({ width: 430, height: 932 });
     await more.click();
     await expect(sheet).toBeVisible();
-    await screenshot(page, "more-sheet-430x932.png");
+    await screenshotOverlay(page, sheet, "more-sheet-430x932.png");
     await page.keyboard.press("Escape");
     await expect(more).toBeFocused();
     matrix.push({

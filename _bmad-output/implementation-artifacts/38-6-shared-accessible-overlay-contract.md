@@ -128,6 +128,12 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 not used un
 
 ### Debug Log References
 
+Independent BMAD review of `6cc2bb76` (Blind Hunter, Edge Case Hunter, Acceptance Auditor):
+
+- MAJOR: ⌘K stacked on page-level dialogs so Escape dismissed both — **patched** (`hasBlockingPageModal`).
+- MAJOR: AC 14 dark/forced-colors screenshots missed the overlay — **patched** (clip + opacity wait + forced-colors computed styles + overlay `color-contrast` axe).
+- MINOR/NIT remaining: palette restore fallback when invoker unmounts; inert released at `open=false` during 160ms exit; More `finalFocus` if viewport crosses to desktop; browser Back does not dismiss sheet. Documented, not blocking this story.
+
 ### Completion Notes List
 
 - Shared primitives: 160ms motion, AlertDialog real primitive, sheet 44px named Close, `useModalInert` + `trapOverlayTab`.

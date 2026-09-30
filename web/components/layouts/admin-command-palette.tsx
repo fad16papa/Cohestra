@@ -190,7 +190,6 @@ export function AdminCommandPalette({
         <DialogDescription id="command-palette-hint" className="sr-only">
           Search clients, activities, or pages. Escape closes.
         </DialogDescription>
-        <DialogClose className="sr-only">Close</DialogClose>
         <div className="flex items-center gap-3 border-b border-border-warm px-4 py-3">
           <Search className="size-4 shrink-0 text-text-muted-warm" aria-hidden />
           <input
@@ -265,6 +264,7 @@ export function AdminCommandPalette({
             </kbd>
           </span>
         </div>
+        <DialogClose className="sr-only">Close</DialogClose>
       </DialogContent>
     </Dialog>
   );

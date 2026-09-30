@@ -15,7 +15,7 @@ HEAD at evidence capture: `cursor/story-38-6-overlays-0fcb` (see git log)
 | Vitest `lib/motion-polish.test.ts` | 9 passed |
 | Vitest `lib/landmarks-38-5.test.ts` | 6 passed |
 | Full Vitest (`npx vitest run`) | **76 files, 484 passed** (plus new overlay tests in later HEAD) |
-| Playwright `e2e/overlays-38-6.spec.ts` (`E2E_LIVE_STACK=1`) | **1 passed (12.1s)** |
+| Playwright `e2e/overlays-38-6.spec.ts` (`E2E_LIVE_STACK=1`) | **1 passed (14.2s)** after review patches |
 | Playwright `e2e/landmarks-38-5.spec.ts` | **4 passed** |
 | Playwright `e2e/tokens-38-4.spec.ts` | **6 passed** |
 | Playwright `e2e/a11y-38-4.spec.ts` | **2 passed** |

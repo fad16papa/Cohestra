@@ -53,7 +53,7 @@ describe("Story 38.6 overlay source contract", () => {
     expect(tabs).toContain("setNavSheetOpen");
     expect(sheet).toContain("finalFocus={restoreFocusRef}");
     expect(shell).toContain("navSheetOpen");
-    expect(shell).toContain("setNavSheetOpenState(false)");
+    expect(shell).toContain("hasBlockingPageModal");
   });
 
   it("keeps named custom-dialog exceptions out of the 38.6 migration set", () => {

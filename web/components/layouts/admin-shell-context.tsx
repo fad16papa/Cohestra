@@ -29,12 +29,26 @@ type AdminShellContextValue = {
 
 const AdminShellContext = createContext<AdminShellContextValue | null>(null);
 
+function hasBlockingPageModal(): boolean {
+  if (typeof document === "undefined") {
+    return false;
+  }
+  return Boolean(
+    document.querySelector(
+      "[data-slot='dialog-content'], [data-slot='alert-dialog-content']"
+    )
+  );
+}
+
 export function AdminShellProvider({ children }: { children: ReactNode }) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [navSheetOpen, setNavSheetOpenState] = useState(false);
   const [pageMeta, setPageMeta] = useState<AdminPageMeta | null>(null);
 
   const openCommandPalette = useCallback(() => {
+    if (hasBlockingPageModal()) {
+      return;
+    }
     setNavSheetOpenState(false);
     setCommandOpen(true);
   }, []);
@@ -54,8 +68,16 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
     function handleKeyDown(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setNavSheetOpenState(false);
-        setCommandOpen((current) => !current);
+        setCommandOpen((current) => {
+          if (current) {
+            return false;
+          }
+          if (hasBlockingPageModal()) {
+            return false;
+          }
+          setNavSheetOpenState(false);
+          return true;
+        });
       }
     }
 
