@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { DashboardMetricsRefreshProvider } from "@/components/dashboard/dashboard-metrics-refresh-context";
 import { ActivityCalendarNudge } from "@/components/dashboard/activity-calendar-popout";
 import { AdminSidebar } from "@/components/layouts/admin-sidebar";
+import { AdminSkipLink, MAIN_CONTENT_ID } from "@/components/layouts/admin-skip-link";
 import { AdminMobileTabBar } from "@/components/layouts/admin-mobile-tab-bar";
 import { AdminTopBar } from "@/components/layouts/admin-top-bar";
 import { AdminShellProvider } from "@/components/layouts/admin-shell-context";
@@ -126,32 +127,39 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
   ]);
 
   return (
-    <div
-      data-admin-shell
-      className="admin-ambient relative flex min-h-0 flex-1 overflow-hidden"
-    >
+    <>
+      <AdminSkipLink />
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,color-mix(in_srgb,var(--primary)_12%,transparent),transparent)]"
-      />
-      <AdminSidebar className="relative z-10 hidden md:flex" />
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col">
-        <AdminTopBar />
-        {shell?.billingBanner ? (
-          <BillingBannerBar
-            banner={shell.billingBanner}
-            isTenantAdmin={shell.isTenantAdmin}
-          />
-        ) : null}
-        <main className="mx-auto w-full max-w-7xl min-w-0 flex-1 p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:p-6 md:pb-6">
-          <AdminRouteTransition key={adminRouteTransitionKey(pathname)}>
-            {children}
-          </AdminRouteTransition>
-        </main>
-        <AdminMobileTabBar />
-        <ActivityCalendarNudge />
+        data-admin-shell
+        className="admin-ambient relative flex min-h-0 flex-1 overflow-hidden"
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,color-mix(in_srgb,var(--primary)_12%,transparent),transparent)]"
+        />
+        <AdminSidebar className="relative z-10 hidden md:flex" />
+        <div className="relative z-10 flex min-w-0 flex-1 flex-col">
+          <AdminTopBar />
+          {shell?.billingBanner ? (
+            <BillingBannerBar
+              banner={shell.billingBanner}
+              isTenantAdmin={shell.isTenantAdmin}
+            />
+          ) : null}
+          <main
+            id={MAIN_CONTENT_ID}
+            tabIndex={-1}
+            className="mx-auto w-full max-w-7xl min-w-0 flex-1 scroll-mt-16 p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] outline-none focus:outline-2 focus:outline-offset-2 focus:outline-ring sm:p-6 md:pb-6"
+          >
+            <AdminRouteTransition key={adminRouteTransitionKey(pathname)}>
+              {children}
+            </AdminRouteTransition>
+          </main>
+          <AdminMobileTabBar />
+          <ActivityCalendarNudge />
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

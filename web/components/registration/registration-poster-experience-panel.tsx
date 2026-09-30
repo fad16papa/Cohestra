@@ -22,6 +22,7 @@ type RegistrationPosterExperiencePanelProps = {
   maxRegistrants?: number | null;
   isRegistrationFull?: boolean;
   className?: string;
+  titleHeadingLevel?: 1 | 2;
 };
 
 export function RegistrationPosterExperiencePanel({
@@ -37,7 +38,9 @@ export function RegistrationPosterExperiencePanel({
   maxRegistrants = null,
   isRegistrationFull = false,
   className,
+  titleHeadingLevel = 1,
 }: RegistrationPosterExperiencePanelProps) {
+  const TitleTag = titleHeadingLevel === 2 ? "h2" : "h1";
   const resolvedHeroImageUrl = useMemo(
     () => resolveHeroImageUrl(heroImageUrl),
     [heroImageUrl]
@@ -110,9 +113,9 @@ export function RegistrationPosterExperiencePanel({
           </p>
         ) : null}
 
-        <h1 className="text-balance text-2xl font-semibold leading-tight tracking-tight text-text-warm sm:text-3xl">
+        <TitleTag className="text-balance text-2xl font-semibold leading-tight tracking-tight text-text-warm sm:text-3xl">
           {name}
-        </h1>
+        </TitleTag>
 
         <div className="space-y-1.5 text-sm leading-relaxed text-text-muted-warm">
           {schedule ? <p>{schedule}</p> : null}

@@ -15,10 +15,11 @@ export function SettingsPageHeader() {
         </p>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <h1 className="font-heading text-xl font-semibold tracking-tight text-text-warm sm:text-2xl">
-            {shell?.tenantName ?? "Settings"}
+            Settings
           </h1>
           {shell ? (
             <div className="flex flex-wrap items-center gap-1.5">
+              <p className="text-sm font-medium text-text-warm">{shell.tenantName}</p>
               <PlanBadge plan={shell.plan} />
               {shell.billingStatus && shell.billingStatus !== "Free" ? (
                 <span className="inline-flex items-center rounded-full border border-border-control bg-background px-2.5 py-0.5 text-xs font-medium text-foreground">

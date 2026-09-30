@@ -102,17 +102,31 @@ export function CampaignsListPage() {
   }, [authFetch, planLocked, shellLoading]);
 
   if (shellLoading) {
-    return <ListSkeleton rows={4} />;
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Campaigns"
+          description="Email outreach history and campaign results."
+        />
+        <ListSkeleton rows={4} />
+      </div>
+    );
   }
 
   if (planLocked && shell) {
     return (
-      <UpgradePanel
-        title="Email campaigns are a Pro craft"
-        description="Campaigns unlock on Pro — segmented outreach, delivery tracking, and campaign history on client profiles."
-        requiredPlan="Pro"
-        isTenantAdmin={shell.isTenantAdmin}
-      />
+      <div className="space-y-6">
+        <PageHeader
+          title="Campaigns"
+          description="Email outreach history and campaign results."
+        />
+        <UpgradePanel
+          title="Email campaigns are a Pro craft"
+          description="Campaigns unlock on Pro — segmented outreach, delivery tracking, and campaign history on client profiles."
+          requiredPlan="Pro"
+          isTenantAdmin={shell.isTenantAdmin}
+        />
+      </div>
     );
   }
 

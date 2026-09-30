@@ -138,17 +138,25 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
 
   if (error) {
     return (
-      <ProductErrorState
-        message={error}
-        onRetry={handleRetry}
-        backHref="/clients"
-        backLabel="Back to clients"
-      />
+      <div className="space-y-4">
+        <h1 className="text-display-sm text-text-warm">Client</h1>
+        <ProductErrorState
+          message={error}
+          onRetry={handleRetry}
+          backHref="/clients"
+          backLabel="Back to clients"
+        />
+      </div>
     );
   }
 
   if (!client) {
-    return <ProfileSkeleton />;
+    return (
+      <div className="space-y-4">
+        <h1 className="text-display-sm text-text-warm">Client</h1>
+        <ProfileSkeleton />
+      </div>
+    );
   }
 
   const collapseRegistrationHistory = client.registrationHistory.length >= 10;

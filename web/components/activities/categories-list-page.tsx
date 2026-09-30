@@ -149,7 +149,7 @@ export function CategoriesListPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-display-sm text-text-warm">Categories</h2>
+        <h1 className="text-display-sm text-text-warm">Categories</h1>
         <p className="mt-1 text-sm text-text-muted-warm">
           Create categories and assign them when setting up activities.
         </p>

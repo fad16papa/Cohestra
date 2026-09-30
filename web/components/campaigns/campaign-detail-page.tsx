@@ -85,6 +85,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
         <Link href="/campaigns" className={cn(buttonVariants({ variant: "outline" }))}>
           Back to campaigns
         </Link>
+        <h1 className="text-display-sm text-text-warm">Campaign</h1>
         <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
@@ -93,7 +94,12 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
   }
 
   if (!campaign) {
-    return <p className="text-sm text-text-muted-warm">Loading campaign…</p>;
+    return (
+      <div className="space-y-4">
+        <h1 className="text-display-sm text-text-warm">Campaign</h1>
+        <p className="text-sm text-text-muted-warm">Loading campaign…</p>
+      </div>
+    );
   }
 
   const recipientCount = campaign.results.length;
@@ -107,7 +113,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
         >
           ← Back to campaigns
         </Link>
-        <h2 className="mt-3 text-display-sm text-text-warm">{campaign.subject}</h2>
+        <h1 className="mt-3 text-display-sm text-text-warm">{campaign.subject}</h1>
         <p className="mt-1 text-sm text-text-muted-warm">
           Sent {formatCampaignSentAt(campaign.sentAt)} · {campaign.sentCount} sent ·{" "}
           {campaign.failedCount} failed · {campaign.skippedCount} skipped ·{" "}

@@ -103,32 +103,52 @@ export function SettingsTeamPageContent() {
 
   if (!shell?.isTenantAdmin) {
     return (
-      <p className="text-sm text-text-muted-warm">
-        Team settings are available to tenant admins only.
-      </p>
+      <div className="space-y-2">
+        <h1 className="text-xl font-semibold text-text-warm">Team</h1>
+        <p className="text-sm text-text-muted-warm">
+          Team settings are available to tenant admins only.
+        </p>
+      </div>
     );
   }
 
   if (loading && !team) {
-    return <p className="text-sm text-text-muted-warm">Loading team…</p>;
+    return (
+      <div className="space-y-2">
+        <h1 className="text-xl font-semibold text-text-warm">Team</h1>
+        <p className="text-sm text-text-muted-warm">Loading team…</p>
+      </div>
+    );
   }
 
   if (error && !team) {
-    return <p className="text-sm text-destructive">{error}</p>;
+    return (
+      <div className="space-y-2">
+        <h1 className="text-xl font-semibold text-text-warm">Team</h1>
+        <p className="text-sm text-destructive">{error}</p>
+      </div>
+    );
   }
 
   if (!team) {
-    return null;
+    return (
+      <div className="space-y-2">
+        <h1 className="text-xl font-semibold text-text-warm">Team</h1>
+      </div>
+    );
   }
 
   if (!team.invitesAllowed) {
     return (
-      <UpgradePanel
-        title="Add a second keyholder"
-        description="Basic workspaces are intentionally solo. Compare Core and Pro below — both unlock team invites up to your plan seat cap."
-        requiredPlan="Core"
-        isTenantAdmin
-      />
+      <div className="space-y-6">
+        <h1 className="text-xl font-semibold text-text-warm">Team</h1>
+        <UpgradePanel
+          title="Add a second keyholder"
+          description="Basic workspaces are intentionally solo. Compare Core and Pro below — both unlock team invites up to your plan seat cap."
+          requiredPlan="Core"
+          isTenantAdmin
+        />
+      </div>
     );
   }
 

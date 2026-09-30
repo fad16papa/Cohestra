@@ -376,7 +376,7 @@ export function CampaignComposePage() {
         >
           ← Back to campaigns
         </Link>
-        <h2 className="mt-3 text-display-sm text-text-warm">Compose campaign</h2>
+        <h1 className="mt-3 text-display-sm text-text-warm">Compose campaign</h1>
         <p className="mt-1 text-sm text-text-muted-warm">
           Choose recipients, write your message, and send to consented leads with
           email on file.

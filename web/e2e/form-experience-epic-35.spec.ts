@@ -45,7 +45,8 @@ async function assertExperienceShell(
     await expect(root.locator('[class*="lg:grid-cols"]').first()).toBeVisible();
   }
   if (expectShell.posterPanel) {
-    await expect(root.getByRole("heading", { level: 1 }).first()).toBeVisible();
+    const titleLevel = scope ? 2 : 1;
+    await expect(root.getByRole("heading", { level: titleLevel }).first()).toBeVisible();
   }
   if (expectShell.conversational) {
     await expect(root.getByText(/Question \d+ of \d+/)).toBeVisible();

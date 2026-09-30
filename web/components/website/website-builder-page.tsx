@@ -1068,12 +1068,15 @@ export function WebsiteBuilderPage() {
 
   if ((shell && isBasicPlan(shell.plan)) || planLocked) {
     return (
-      <UpgradePanel
-        title="Unlock a branded public homepage"
-        description="Basic includes a simple stub listing. Upgrade to Core for a fixed branded homepage, or Pro for the full website builder with custom sections."
-        requiredPlan="Core"
-        isTenantAdmin={shell?.isTenantAdmin ?? false}
-      />
+      <div className="space-y-6">
+        <PageHeader title="Website" description="Customize your public homepage" />
+        <UpgradePanel
+          title="Unlock a branded public homepage"
+          description="Basic includes a simple stub listing. Upgrade to Core for a fixed branded homepage, or Pro for the full website builder with custom sections."
+          requiredPlan="Core"
+          isTenantAdmin={shell?.isTenantAdmin ?? false}
+        />
+      </div>
     );
   }
 
@@ -1133,6 +1136,7 @@ export function WebsiteBuilderPage() {
       className="flex min-h-0 flex-col gap-2"
       style={studioHeight ? { height: studioHeight } : undefined}
     >
+      <h1 className="sr-only">Website Builder</h1>
       <WebsiteBuilderToolbar
         siteUrl={publicSiteUrl}
         siteDisplayUrl={publicSiteDisplayUrl}
@@ -1316,7 +1320,7 @@ export function WebsiteBuilderPage() {
           highlightSectionId={expandedSectionId}
           className="h-full"
         >
-          <SitePageRenderer site={previewPayload} isPreview />
+          <SitePageRenderer site={previewPayload} isPreview embedded />
         </WebsiteLivePreview>
         </BuilderSurface>
       </div>

@@ -214,11 +214,11 @@ test("authenticated product viewports when live stack is available", async ({ pa
       } else if (route.name === "website") {
         await expect(page.locator("#website-builder-toolbar")).toBeVisible({ timeout: 30_000 });
       } else if (route.name === "clients") {
-        await expect(page.getByRole("heading", { name: "Clients", level: 2 })).toBeVisible({
+        await expect(page.getByRole("heading", { name: "Clients", level: 1 })).toBeVisible({
           timeout: 30_000,
         });
       } else if (route.name === "activities") {
-        await expect(page.getByRole("heading", { name: "Activities", level: 2 })).toBeVisible({
+        await expect(page.getByRole("heading", { name: "Activities", level: 1 })).toBeVisible({
           timeout: 30_000,
         });
         await expect(page.locator('a[href^="/activities/"][href*="-"]').first()).toBeVisible({
@@ -227,7 +227,7 @@ test("authenticated product viewports when live stack is available", async ({ pa
       } else if (route.name === "reports") {
         await waitForReportsContent(page);
       } else if (route.name === "campaigns") {
-        await expect(page.getByRole("heading", { name: "Campaigns", level: 2 })).toBeVisible({
+        await expect(page.getByRole("heading", { name: "Campaigns", level: 1 })).toBeVisible({
           timeout: 30_000,
         });
       } else if (route.name === "settings") {

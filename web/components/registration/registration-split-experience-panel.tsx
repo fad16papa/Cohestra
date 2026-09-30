@@ -21,6 +21,7 @@ type RegistrationSplitExperiencePanelProps = {
   maxRegistrants?: number | null;
   isRegistrationFull?: boolean;
   className?: string;
+  titleHeadingLevel?: 1 | 2;
 };
 
 export function RegistrationSplitExperiencePanel({
@@ -35,7 +36,9 @@ export function RegistrationSplitExperiencePanel({
   maxRegistrants = null,
   isRegistrationFull = false,
   className,
+  titleHeadingLevel = 1,
 }: RegistrationSplitExperiencePanelProps) {
+  const TitleTag = titleHeadingLevel === 2 ? "h2" : "h1";
   const resolvedHeroImageUrl = useMemo(
     () => resolveHeroImageUrl(heroImageUrl),
     [heroImageUrl]
@@ -96,9 +99,9 @@ export function RegistrationSplitExperiencePanel({
         </p>
       ) : null}
 
-      <h1 className="text-balance text-2xl font-semibold leading-tight text-text-warm sm:text-3xl">
+      <TitleTag className="text-balance text-2xl font-semibold leading-tight text-text-warm sm:text-3xl">
         {name}
-      </h1>
+      </TitleTag>
 
       <div className="space-y-1 text-sm text-text-muted-warm">
         {schedule ? <p>{schedule}</p> : null}

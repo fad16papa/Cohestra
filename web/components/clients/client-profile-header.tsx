@@ -166,9 +166,9 @@ export function ClientProfileHeader({
           <PersonAvatar name={client.fullName} size="lg" />
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h2 className="truncate text-display-sm text-text-warm">
+              <h1 className="truncate text-display-sm text-text-warm">
                 {client.fullName}
-              </h2>
+              </h1>
               <LeadStatusBadge status={client.leadStatus} />
               {followUpDue ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-surface-warning px-2 py-0.5 text-xs font-medium text-text-warning">

@@ -71,7 +71,7 @@ export function WebsiteBuilderToolbar({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-display-sm text-text-warm">Website Builder</h2>
+            <p className="text-display-sm text-text-warm">Website Builder</p>
             <span
               className={cn(
                 "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",

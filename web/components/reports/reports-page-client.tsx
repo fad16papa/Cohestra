@@ -206,17 +206,25 @@ export function ReportsPageClient() {
   }
 
   if (status === "loading" || !searchParams.toString() || !pageReady) {
-    return <p className="text-sm text-text-muted-warm">Loading report…</p>;
+    return (
+      <div className="space-y-2">
+        <h1 className="text-display-sm text-text-warm">Reports</h1>
+        <p className="text-sm text-text-muted-warm">Loading report…</p>
+      </div>
+    );
   }
 
   if (shell && isBasicPlan(shell.plan) && isAdvancedReportFilters(filters)) {
     return (
-      <UpgradePanel
-        title="Queryable reports unlock on Core"
-        description="Basic includes a simple registration list and CSV export. Compare Core and Pro below for filters, rankings, campaign analytics, and saved views."
-        requiredPlan="Core"
-        isTenantAdmin={shell.isTenantAdmin}
-      />
+      <div className="space-y-6">
+        <h1 className="text-display-sm text-text-warm">Reports</h1>
+        <UpgradePanel
+          title="Queryable reports unlock on Core"
+          description="Basic includes a simple registration list and CSV export. Compare Core and Pro below for filters, rankings, campaign analytics, and saved views."
+          requiredPlan="Core"
+          isTenantAdmin={shell.isTenantAdmin}
+        />
+      </div>
     );
   }
 
@@ -224,7 +232,7 @@ export function ReportsPageClient() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-display-sm text-text-warm">Reports</h2>
+          <h1 className="text-display-sm text-text-warm">Reports</h1>
           <p className="mt-1 text-sm text-text-muted-warm">
             Understand what happened, why it matters, and export the same numbers your team trusts.
           </p>

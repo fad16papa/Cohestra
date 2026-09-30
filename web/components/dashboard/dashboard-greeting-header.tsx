@@ -40,10 +40,11 @@ export function DashboardGreetingHeader() {
       />
       <div className="relative flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-text-link">{formatTodayLabel()}</p>
-          <h2 className="mt-1 text-display-sm text-text-warm">
+          <h1 className="text-display-sm text-text-warm">Dashboard</h1>
+          <p className="mt-1 text-sm font-medium text-text-link">{formatTodayLabel()}</p>
+          <p className="mt-1 text-lg font-medium text-text-warm sm:text-xl">
             {getGreeting()}, {displayName}
-          </h2>
+          </p>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-text-muted-warm">
             Your outreach cockpit — see what needs attention, then act in one click.
             Press{" "}
