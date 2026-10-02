@@ -7,6 +7,7 @@ import {
 } from "@/components/dashboard/dashboard-matched-panel";
 import type { DashboardMetrics } from "@/lib/dashboard-api";
 import { computeWowDeltaPercent } from "@/lib/dashboard-insights";
+import { ANALYTICS_PATH } from "@/lib/admin-canonical-routes";
 import { cn } from "@/lib/utils";
 
 type DashboardMetricsTableProps = {
@@ -57,7 +58,7 @@ export function DashboardMetricsTable({
         metrics.registrationsInPeriod,
         metrics.registrationsInPreviousPeriod
       ),
-      href: "/reports",
+      href: ANALYTICS_PATH,
     },
     {
       metric: `New leads ${periodLabel}`,

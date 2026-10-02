@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import type { DashboardMetrics } from "@/lib/dashboard-api";
 import { computeWowDeltaPercent } from "@/lib/dashboard-insights";
+import { ANALYTICS_PATH } from "@/lib/admin-canonical-routes";
 import { cn } from "@/lib/utils";
 
 type DashboardMetricsGraphsProps = {
@@ -65,7 +66,7 @@ export function DashboardMetricsGraphs({
       label: `Registrations ${periodLabel}`,
       displayValue: String(metrics.registrationsInPeriod),
       caption: formatSignedPercent(wowDelta),
-      href: "/reports",
+      href: ANALYTICS_PATH,
       ariaLabel: `${metrics.registrationsInPeriod} registrations ${periodLabel}`,
     },
     {

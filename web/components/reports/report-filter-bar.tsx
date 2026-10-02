@@ -21,6 +21,7 @@ import {
   type ReportFilters,
   type ReportPreset,
 } from "@/lib/reports-api";
+import { ANALYTICS_PATH, analyticsHref } from "@/lib/admin-canonical-routes";
 import { cn } from "@/lib/utils";
 
 type ReportFilterBarProps = {
@@ -118,7 +119,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
 
   const applyFilters = useCallback((nextFilters: ReportFilters) => {
     const params = filtersToSearchParams(nextFilters);
-    router.replace(`/reports?${params.toString()}`);
+    router.replace(analyticsHref(params.toString()));
   }, [router]);
 
   function updateFilter<K extends keyof ReportFilters>(
@@ -155,7 +156,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
   }
 
   function clearAllFilters() {
-    router.replace("/reports");
+    router.replace(ANALYTICS_PATH);
   }
 
   const activeChips = useMemo(() => {
@@ -378,5 +379,5 @@ export function ensureDefaultReportSearchParams(
     return null;
   }
 
-  return `/reports?${filtersToSearchParams(defaultReportFilters()).toString()}`;
+  return analyticsHref(filtersToSearchParams(defaultReportFilters()).toString());
 }

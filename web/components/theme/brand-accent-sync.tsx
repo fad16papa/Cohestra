@@ -6,6 +6,11 @@ import { useTheme } from "next-themes";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { buildBrandAccentStyle } from "@/lib/brand-accent";
+import {
+  isAiPath,
+  isAnalyticsPath,
+  isFollowUpPath,
+} from "@/lib/admin-canonical-routes";
 
 const ACCENT_VAR_KEYS = [
   "--primary",
@@ -29,7 +34,9 @@ function isAdminWorkspacePath(pathname: string | null): boolean {
     pathname.startsWith("/clients") ||
     pathname.startsWith("/activities") ||
     pathname.startsWith("/campaigns") ||
-    pathname.startsWith("/reports") ||
+    isAnalyticsPath(pathname) ||
+    isFollowUpPath(pathname) ||
+    isAiPath(pathname) ||
     pathname.startsWith("/settings") ||
     pathname.startsWith("/billing")
   );

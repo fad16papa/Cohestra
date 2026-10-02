@@ -1,3 +1,11 @@
+## Deferred from: code review of 39-1-desktop-shell-and-canonical-rooms.md (2026-09-30)
+
+HEAD after first independent review: `d0d907ff`. No unresolved BLOCKER/MAJOR. MINOR helper/test patches applied in this story.
+
+- Dashboard Follow-up queue/widgets still `href="/clients"`. DESIGN.md §3.1 “Dashboard widgets link here” waits for Epic **40.2** working queue. 39.1 ships the canonical `/follow-up` stub without relocating the live dashboard list.
+- Follow-up / Cohestra AI `state="loading"|"error"` are available on `CanonicalRoomStub` but not live operator paths. Suspense wraps a sync stub. App Router `error.tsx` / `not-found.tsx`: Story **39.5**.
+- Nested `/reports/*`, `/intelligence/*`, `/needs-attention/*` have no catch-all pages. Product bookmarks are the index routes. Index `redirect()` covers AC 3–4.
+
 ## Deferred from: story 38.6 close on main `e5eca2e6` (2026-09-30)
 
 PR #354 merged. Required main CI `36725506390` 5/5 success. Post-merge overlay Playwright + inert ownership tests passed. ACCEPTED/CLOSED. Epic 38 closed (38.1–38.6). Epic 39 not started. Production DigitalOcean remains classification C.

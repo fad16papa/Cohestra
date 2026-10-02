@@ -1,5 +1,14 @@
-import { SettingsPageContent } from "@/components/settings/settings-page-content";
+import { redirect } from "next/navigation";
 
-export default function SettingsPage() {
-  return <SettingsPageContent />;
+import {
+  SETTINGS_PROFILE_PATH,
+  destinationWithSearch,
+} from "@/lib/admin-canonical-routes";
+
+export default async function SettingsIndexPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  redirect(destinationWithSearch(SETTINGS_PROFILE_PATH, await searchParams));
 }

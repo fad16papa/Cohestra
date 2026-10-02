@@ -24,6 +24,7 @@ import { MetricTile } from "@/components/dashboard/metric-tile";
 import { useAuth } from "@/components/auth/auth-provider";
 import { MetricSkeletonGrid } from "@/components/shared/list-skeleton";
 import { ProductErrorState } from "@/components/shared/product-error-state";
+import { ANALYTICS_PATH } from "@/lib/admin-canonical-routes";
 import { fetchActivities } from "@/lib/activities-api";
 import { fetchDashboardMetrics, type DashboardMetrics } from "@/lib/dashboard-api";
 import { computeWowDeltaPercent } from "@/lib/dashboard-insights";
@@ -246,8 +247,8 @@ export function DashboardPageClient() {
             <MetricTile
               label={`Registrations ${periodLabel}`}
               value={String(metrics.registrationsInPeriod)}
-              href="/reports"
-              ariaLabel={`${metrics.registrationsInPeriod} registrations ${periodLabel} — open reports`}
+              href={ANALYTICS_PATH}
+              ariaLabel={`${metrics.registrationsInPeriod} registrations ${periodLabel} — open analytics`}
               delta={{
                 percent: registrationsWowDelta,
                 label: `vs previous ${metrics.periodDays} days (${metrics.registrationsInPreviousPeriod})`,

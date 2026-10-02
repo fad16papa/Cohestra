@@ -5,6 +5,14 @@ import { usePathname } from "next/navigation";
 import { CreditCard, Settings, Users } from "lucide-react";
 
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
+import {
+  SETTINGS_BILLING_PATH,
+  SETTINGS_PROFILE_PATH,
+  SETTINGS_TEAM_PATH,
+  isSettingsBillingPath,
+  isSettingsProfilePath,
+  isSettingsTeamPath,
+} from "@/lib/admin-canonical-routes";
 import { cn } from "@/lib/utils";
 
 type AdminNavFooterProps = {
@@ -28,13 +36,14 @@ export function AdminNavFooter({ onNavigate, className }: AdminNavFooterProps) {
   const showBilling = shell?.plan === "Basic" || shell?.isBillingOwner === true;
   const isTenantAdmin = shell?.isTenantAdmin ?? false;
 
-  if (!isTenantAdmin && pathname !== "/settings") {
+  if (!isTenantAdmin) {
     return (
       <div className={cn("space-y-1 border-t border-border-warm p-2", className)}>
         <Link
-          href="/settings"
+          href={SETTINGS_PROFILE_PATH}
           onClick={onNavigate}
-          className={footerLinkClassName(pathname.startsWith("/settings"))}
+          aria-current={isSettingsProfilePath(pathname) ? "page" : undefined}
+          className={footerLinkClassName(isSettingsProfilePath(pathname))}
         >
           <Settings className="size-4 shrink-0" aria-hidden />
           Settings
@@ -43,38 +52,35 @@ export function AdminNavFooter({ onNavigate, className }: AdminNavFooterProps) {
     );
   }
 
-  if (!isTenantAdmin) {
-    return null;
-  }
-
   return (
     <div className={cn("space-y-1 border-t border-border-warm p-2", className)}>
       <p className="px-3 py-1 text-[11px] font-medium uppercase tracking-[0.1em] text-text-muted-warm">
         Workspace
       </p>
       <Link
-        href="/settings"
+        href={SETTINGS_PROFILE_PATH}
         onClick={onNavigate}
-        className={footerLinkClassName(
-          pathname === "/settings" || pathname.startsWith("/settings/")
-        )}
+        aria-current={isSettingsProfilePath(pathname) ? "page" : undefined}
+        className={footerLinkClassName(isSettingsProfilePath(pathname))}
       >
         <Settings className="size-4 shrink-0" aria-hidden />
         Settings
       </Link>
       <Link
-        href="/settings/team"
+        href={SETTINGS_TEAM_PATH}
         onClick={onNavigate}
-        className={footerLinkClassName(pathname.startsWith("/settings/team"))}
+        aria-current={isSettingsTeamPath(pathname) ? "page" : undefined}
+        className={footerLinkClassName(isSettingsTeamPath(pathname))}
       >
         <Users className="size-4 shrink-0" aria-hidden />
         Team
       </Link>
       {showBilling ? (
         <Link
-          href="/settings/billing"
+          href={SETTINGS_BILLING_PATH}
           onClick={onNavigate}
-          className={footerLinkClassName(pathname.startsWith("/settings/billing"))}
+          aria-current={isSettingsBillingPath(pathname) ? "page" : undefined}
+          className={footerLinkClassName(isSettingsBillingPath(pathname))}
         >
           <CreditCard className="size-4 shrink-0" aria-hidden />
           Billing
