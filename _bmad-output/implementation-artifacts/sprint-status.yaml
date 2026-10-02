@@ -1,5 +1,5 @@
 # generated: 2026-06-16
-# last_updated: 2026-09-30
+# last_updated: 2026-10-02
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -53,7 +53,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-09-30
+last_updated: 2026-10-02
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -391,7 +391,7 @@ development_status:
 
   # Epic 39 — Application shell and navigation
   epic-39: in-progress
-  39-1-desktop-shell-and-canonical-rooms: in-progress
+  39-1-desktop-shell-and-canonical-rooms: done
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

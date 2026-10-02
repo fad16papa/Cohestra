@@ -1,3 +1,11 @@
+## Deferred from: story 39.1 close on main `cc996e05` (2026-10-02)
+
+PR #356 merged. PO accepted implementation HEAD `9751daff`. Required main CI `37007992226` 5/5 success. Post-merge smoke passed. ACCEPTED/CLOSED. Epic 39 remains in-progress. Story 39.2 not started. Production DigitalOcean remains classification C.
+
+- Dashboard Follow-up widgets still `/clients` until Epic **40.2**.
+- Follow-up / Cohestra AI loading and error trees are not live; `error.tsx` is Story **39.5**.
+- Nested `/reports/*` catch-alls not added; index redirects cover the bookmark contract.
+
 ## Deferred from: code review of 39-1-desktop-shell-and-canonical-rooms.md (2026-09-30)
 
 HEAD after first independent review: `d0d907ff`. No unresolved BLOCKER/MAJOR. MINOR helper/test patches applied in this story.
