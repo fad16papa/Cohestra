@@ -2,16 +2,17 @@
 id: 39.2
 key: 39-2-mobile-navigation
 title: Mobile navigation
-status: in-progress
+status: done
 epic: 39
 created: 2026-10-02
 baseline_commit: 96e3e87a3d1a6f96652fe653ddd1bf0f01b6e355
 readiness: ready
+accepted_commit: a547ae18138234d08550436b24d68af9296009fa
 ---
 
 # Story 39.2: Mobile navigation
 
-Status: in-progress
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -148,3 +149,4 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - 2026-10-02: Implemented mobile dock, More destinations, FAB hide, and e2e/unit coverage. Status remains in-progress pending QA, review, and PO.
 - 2026-10-02: Patched review MAJORs (full-width tabs, Calendar↔More focus handoff, 768 sheet close, e2e gaps). Story stays in-progress for PO.
 - 2026-10-02: PO MAJOR — mobile Activities selected on all `/activities` descendants. Removed from deferred work. Desktop child-nav rule unchanged.
+- 2026-10-02: PR #358 merged as `448b0337` (implementation HEAD `a547ae18`). Required main CI `37019834980` 5/5 success. Post-merge smoke: mobile-nav-39-2, desktop-shell-39-1, landmarks-38-5, overlays-38-6. ACCEPTED/CLOSED. Epic 39 remains in-progress.
