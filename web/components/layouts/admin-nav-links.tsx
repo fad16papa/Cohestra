@@ -12,6 +12,8 @@ type AdminNavLinksProps = {
   compact?: boolean;
   onNavigate?: () => void;
   className?: string;
+  items?: AdminNavItem[];
+  landmarkLabel?: string;
 };
 
 function ActivitiesNavSection({
@@ -121,15 +123,17 @@ export function AdminNavLinks({
   compact = false,
   onNavigate,
   className,
+  items = adminNavItems,
+  landmarkLabel = "Admin navigation",
 }: AdminNavLinksProps) {
   const pathname = usePathname();
 
   return (
     <nav
-      aria-label="Admin navigation"
+      aria-label={landmarkLabel}
       className={cn("flex flex-col gap-1", className)}
     >
-      {adminNavItems.map((item) => {
+      {items.map((item) => {
         const Icon = item.icon;
         const hasChildren = Boolean(item.children?.length);
 

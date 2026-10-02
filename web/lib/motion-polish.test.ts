@@ -109,7 +109,8 @@ describe("37.3 motion polish contracts", () => {
 
   it("keeps the calendar FAB off the mobile tab bar stacking layer", () => {
     expect(CALENDAR_NUDGE_SOURCE).not.toContain("pointer-events-none fixed inset-0");
-    expect(CALENDAR_NUDGE_SOURCE).toContain(
+    expect(CALENDAR_NUDGE_SOURCE).toContain("hidden md:right-5 md:bottom-5 md:block");
+    expect(CALENDAR_NUDGE_SOURCE).not.toContain(
       "bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))]"
     );
   });

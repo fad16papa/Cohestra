@@ -20,9 +20,11 @@ export type AdminPageMeta = {
 type AdminShellContextValue = {
   commandOpen: boolean;
   navSheetOpen: boolean;
+  calendarOpen: boolean;
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
   setNavSheetOpen: (open: boolean) => void;
+  setCalendarOpen: (open: boolean) => void;
   pageMeta: AdminPageMeta | null;
   setPageMeta: (meta: AdminPageMeta | null) => void;
 };
@@ -43,6 +45,7 @@ function hasBlockingPageModal(): boolean {
 export function AdminShellProvider({ children }: { children: ReactNode }) {
   const [commandOpen, setCommandOpen] = useState(false);
   const [navSheetOpen, setNavSheetOpenState] = useState(false);
+  const [calendarOpen, setCalendarOpenState] = useState(false);
   const [pageMeta, setPageMeta] = useState<AdminPageMeta | null>(null);
 
   const openCommandPalette = useCallback(() => {
@@ -50,6 +53,7 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
       return;
     }
     setNavSheetOpenState(false);
+    setCalendarOpenState(false);
     setCommandOpen(true);
   }, []);
 
@@ -60,8 +64,17 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
   const setNavSheetOpen = useCallback((open: boolean) => {
     if (open) {
       setCommandOpen(false);
+      setCalendarOpenState(false);
     }
     setNavSheetOpenState(open);
+  }, []);
+
+  const setCalendarOpen = useCallback((open: boolean) => {
+    if (open) {
+      setCommandOpen(false);
+      setNavSheetOpenState(false);
+    }
+    setCalendarOpenState(open);
   }, []);
 
   useEffect(() => {
@@ -76,6 +89,7 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
             return false;
           }
           setNavSheetOpenState(false);
+          setCalendarOpenState(false);
           return true;
         });
       }
@@ -89,18 +103,22 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
     () => ({
       commandOpen,
       navSheetOpen,
+      calendarOpen,
       openCommandPalette,
       closeCommandPalette,
       setNavSheetOpen,
+      setCalendarOpen,
       pageMeta,
       setPageMeta,
     }),
     [
+      calendarOpen,
       closeCommandPalette,
       commandOpen,
       navSheetOpen,
       openCommandPalette,
       pageMeta,
+      setCalendarOpen,
       setNavSheetOpen,
     ]
   );
