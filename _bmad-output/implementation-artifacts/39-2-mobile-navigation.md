@@ -81,6 +81,11 @@ Independent review of HEAD `ea4d52c2` (Blind Hunter + Edge Case Hunter + Accepta
 - [x] [Review][Defer] Activities child routes (`/activities/communities`, `/categories`) do not select the Activities tab — existing `isAdminNavItemActive` rule; desktop rail still expands children. Not a 39.2 IA change.
 - [x] [Review][Defer] Calendar popout is a named 38.6 custom-dialog exception (43.5 owns rename/trap). 39.2 only hides the FAB and relocates the opener.
 
+Repeat review of HEAD `763d19f1`: no AC BLOCKER/MAJOR. Residual patch applied below.
+
+- [x] [Review][Patch] Do not disable More `finalFocus` when `setCalendarOpen` is blocked by a page modal [`admin-nav-sheet.tsx`]
+- [x] [Review][Defer] Calendar popout Tab containment remains the 38.6 named exception / 43.5.
+
 ## Dev Notes
 
 ### Must preserve

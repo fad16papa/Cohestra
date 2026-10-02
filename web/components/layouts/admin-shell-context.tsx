@@ -24,7 +24,7 @@ type AdminShellContextValue = {
   openCommandPalette: () => void;
   closeCommandPalette: () => void;
   setNavSheetOpen: (open: boolean) => void;
-  setCalendarOpen: (open: boolean) => void;
+  setCalendarOpen: (open: boolean) => boolean;
   pageMeta: AdminPageMeta | null;
   setPageMeta: (meta: AdminPageMeta | null) => void;
 };
@@ -72,12 +72,13 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
   const setCalendarOpen = useCallback((open: boolean) => {
     if (open) {
       if (hasBlockingPageModal()) {
-        return;
+        return false;
       }
       setCommandOpen(false);
       setNavSheetOpenState(false);
     }
     setCalendarOpenState(open);
+    return true;
   }, []);
 
   useEffect(() => {

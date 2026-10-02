@@ -48,7 +48,9 @@ export function AdminNavSheet({
 
   function openCalendar() {
     setRestoreFocus(false);
-    setCalendarOpen(true);
+    if (!setCalendarOpen(true)) {
+      setRestoreFocus(true);
+    }
   }
 
   return (
