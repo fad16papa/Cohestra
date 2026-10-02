@@ -72,7 +72,7 @@ See `_bmad-output/planning-artifacts/evidence/px2-39-3/atdd.md`.
 - [x] Lock presentation: expanded rail, compact 768–1023, More sheet, footer Team (AC 1, 5, 9)
 - [x] Settings Team/Billing shortcuts + hide custom-domain when structurally unavailable (AC 3, 4, 7)
 - [x] D12 fixtures: Basic admin, Core admin, Pro admin (existing), TenantMember (AC 6)
-- [ ] Playwright + regressions 38-2 / 39-1 / 39-2 / 38-5 / 38-6 (AC 6, 9, 10)
+- [x] Playwright + regressions 38-2 / 39-1 / 39-2 / 38-5 / 38-6 (AC 6, 9, 10)
 
 ## Dev Notes
 
@@ -119,11 +119,25 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 
 ### Debug Log References
 
+### Review Findings
+
+Independent review of HEAD `9d695aaa` plus follow-up patches (Blind Hunter, Edge Case Hunter, Acceptance Auditor, adversarial-general).
+
+- [x] [Review][Patch] Unrecognized/empty shell plan no longer defaults to Basic locks
+- [x] [Review][Patch] Basic advanced Analytics keeps filter bar + “Back to weekly Analytics”
+- [x] [Review][Patch] D12 Basic member fixture + e2e ask-admin (no checkout)
+- [x] [Review][Patch] Compact-rail lock glyph enlarged with contrast chip
+- [x] [Review][Defer] Command palette Campaigns/Website remain 38.6 overlay surfaces (server still 403)
+- [x] [Review][Defer] Destination-page shell inference for Website/Campaigns remains 38.2/existing contract
+
+Repeat review of this follow-up: no remaining in-scope BLOCKER/MAJOR.
+
 ### Completion Notes List
 
 - Central resolver `admin-nav-entitlements.ts` maps shell plan/role to locked/hidden/pending. Analytics is never nav-locked.
 - Desktop rail, More sheet, footer, and Settings Team/Billing/domain shortcuts consume the resolver only.
-- D12 seeder now also provisions `px2-core` admin and `px2-pro-member` on default. Vitest matrix 518 green. Playwright still pending live stack.
+- D12 fixtures: `px2-basic` admin, `px2-core` admin, `px2-pro-member`, `px2-basic-member`.
+- Live Playwright 39.3 (5) + regressions 38-2/39-1/39-2/38-5/38-6 passed. Vitest 518. Production `next build` green.
 
 ### File List
 
@@ -132,6 +146,8 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/readiness.md`
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/architecture.md`
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/atdd.md`
+- `_bmad-output/planning-artifacts/evidence/px2-39-3/trace.md`
+- `_bmad-output/planning-artifacts/evidence/px2-39-3/viewports/`
 - `web/lib/admin-nav-entitlements.ts`
 - `web/lib/admin-nav-entitlements.test.ts`
 - `web/components/layouts/admin-nav-lock.tsx`
@@ -141,9 +157,11 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - `web/components/settings/settings-page-content.tsx`
 - `web/components/settings/settings-left-rail.tsx`
 - `web/components/settings/settings-right-rail.tsx`
+- `web/components/reports/reports-page-client.tsx`
 - `src/Infrastructure/Seed/E2eEntitlementFixtureSeeder.cs`
 - `src/Infrastructure.Tests/Seed/E2eEntitlementFixtureSeederTests.cs`
 - `src/Api/Program.cs`
+- `src/Api/appsettings.Development.json`
 - `web/e2e/entitlement-visibility-39-3.spec.ts`
 - `web/e2e/helpers/e2e-owned-fixtures.ts`
 - `web/e2e/helpers/owned-fixture-data.ts`
@@ -151,4 +169,5 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 ### Change Log
 
 - 2026-10-02: Created Story 39.3 from main `cc63c61a` (39.2 tracker-close). Canonical D4 + verified server matrix. Analytics room stays unlocked.
-- 2026-10-02: Implemented centralized nav entitlements, lock chrome, D12 Core/Member fixtures, and unit matrix. Status in-progress pending live Playwright, review, and PO.
+- 2026-10-02: Implemented centralized nav entitlements, lock chrome, D12 Core/Member fixtures, and unit matrix.
+- 2026-10-02: Live Playwright + regressions green. Review patches: unknown-plan pending, Analytics weekly return, Basic member ask-admin. Status remains in-progress for PO pre-merge review.

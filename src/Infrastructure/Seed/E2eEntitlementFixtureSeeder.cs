@@ -27,12 +27,13 @@ public static class E2eEntitlementFixtureSeeder
     public const string CoreAdminEmail = "px2-core-admin@cohestra.local";
 
     public const string MemberEmail = "px2-pro-member@cohestra.local";
+    public const string BasicMemberEmail = "px2-basic-member@cohestra.local";
 
     public static bool IsFixtureAdminEmail(string? email) =>
         MatchesEmail(email, AdminEmail) || MatchesEmail(email, CoreAdminEmail);
 
     public static bool IsFixtureAccountEmail(string? email) =>
-        IsFixtureAdminEmail(email) || MatchesEmail(email, MemberEmail);
+        IsFixtureAdminEmail(email) || MatchesEmail(email, MemberEmail) || MatchesEmail(email, BasicMemberEmail);
 
     private static bool MatchesEmail(string? email, string expected) =>
         !string.IsNullOrWhiteSpace(email)
@@ -90,6 +91,13 @@ public static class E2eEntitlementFixtureSeeder
             cancellationToken);
 
         await EnsureDefaultTenantMemberAsync(userManager, db, logger, cancellationToken);
+        await EnsureTenantMemberAsync(
+            userManager,
+            db,
+            basicTenant.Id,
+            BasicMemberEmail,
+            logger,
+            cancellationToken);
     }
 
     internal static async Task<Tenant> EnsureBasicTenantAsync(
@@ -249,13 +257,30 @@ public static class E2eEntitlementFixtureSeeder
             return;
         }
 
-        var user = await userManager.FindByEmailAsync(MemberEmail);
+        await EnsureTenantMemberAsync(
+            userManager,
+            db,
+            TenantIds.Default,
+            MemberEmail,
+            logger,
+            cancellationToken);
+    }
+
+    internal static async Task EnsureTenantMemberAsync(
+        UserManager<ApplicationUser> userManager,
+        CohestraDbContext db,
+        Guid tenantId,
+        string email,
+        ILogger logger,
+        CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByEmailAsync(email);
         if (user is null)
         {
             user = new ApplicationUser
             {
-                UserName = MemberEmail,
-                Email = MemberEmail,
+                UserName = email,
+                Email = email,
                 EmailConfirmed = true,
             };
 
@@ -263,15 +288,15 @@ public static class E2eEntitlementFixtureSeeder
             if (!createResult.Succeeded)
             {
                 throw new InvalidOperationException(
-                    "Failed to seed E2E fixture member: " +
+                    $"Failed to seed E2E fixture member {email}: " +
                     string.Join("; ", createResult.Errors.Select(error => error.Description)));
             }
 
-            logger.LogInformation("Seeded E2E fixture member {Email}.", MemberEmail);
+            logger.LogInformation("Seeded E2E fixture member {Email}.", email);
         }
 
         var exists = await db.TenantMemberships.AnyAsync(
-            membership => membership.UserId == user.Id && membership.TenantId == TenantIds.Default,
+            membership => membership.UserId == user.Id && membership.TenantId == tenantId,
             cancellationToken);
         if (exists)
         {
@@ -283,12 +308,12 @@ public static class E2eEntitlementFixtureSeeder
         {
             Id = Guid.CreateVersion7(),
             UserId = user.Id,
-            TenantId = TenantIds.Default,
+            TenantId = tenantId,
             Role = TenantMembershipRole.TenantMember,
             CreatedAt = now,
             UpdatedAt = now,
         });
         await db.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Linked E2E fixture member {Email} to default tenant.", MemberEmail);
+        logger.LogInformation("Linked E2E fixture member {Email} to tenant {TenantId}.", email, tenantId);
     }
 }

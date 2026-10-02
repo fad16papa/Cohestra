@@ -24,6 +24,7 @@ public sealed class E2eEntitlementFixtureSeederTests
         Assert.True(E2eEntitlementFixtureSeeder.IsFixtureAdminEmail("PX2-Basic-Admin@cohestra.local"));
         Assert.True(E2eEntitlementFixtureSeeder.IsFixtureAdminEmail("px2-core-admin@cohestra.local"));
         Assert.True(E2eEntitlementFixtureSeeder.IsFixtureAccountEmail("px2-pro-member@cohestra.local"));
+        Assert.True(E2eEntitlementFixtureSeeder.IsFixtureAccountEmail("px2-basic-member@cohestra.local"));
         Assert.False(E2eEntitlementFixtureSeeder.IsFixtureAdminEmail("operator@cohestra.local"));
         Assert.False(E2eEntitlementFixtureSeeder.IsFixtureAdminEmail("px2-pro-member@cohestra.local"));
         Assert.False(E2eEntitlementFixtureSeeder.IsFixtureAdminEmail(null));
@@ -66,9 +67,10 @@ public sealed class E2eEntitlementFixtureSeederTests
         Assert.True(await userManager.CheckPasswordAsync(admin, "ChangeMe123!"));
         Assert.True(await userManager.IsInRoleAsync(admin, OperatorSeeder.TenantAdminRole));
 
-        var membership = Assert.Single(await db.TenantMemberships
-            .Where(row => row.TenantId == tenant.Id)
-            .ToListAsync());
+        var adminMemberships = await db.TenantMemberships
+            .Where(row => row.TenantId == tenant.Id && row.UserId == admin.Id)
+            .ToListAsync();
+        var membership = Assert.Single(adminMemberships);
         Assert.Equal(admin.Id, membership.UserId);
         Assert.Equal(tenant.Id, membership.TenantId);
         Assert.Equal(TenantMembershipRole.TenantAdmin, membership.Role);
@@ -88,6 +90,15 @@ public sealed class E2eEntitlementFixtureSeederTests
             .ToListAsync());
         Assert.Equal(TenantIds.Default, memberRow.TenantId);
         Assert.Equal(TenantMembershipRole.TenantMember, memberRow.Role);
+
+        var basicMember = await userManager.FindByEmailAsync(E2eEntitlementFixtureSeeder.BasicMemberEmail);
+        Assert.NotNull(basicMember);
+        Assert.False(await userManager.IsInRoleAsync(basicMember, OperatorSeeder.TenantAdminRole));
+        var basicMemberRow = Assert.Single(await db.TenantMemberships
+            .Where(row => row.UserId == basicMember.Id)
+            .ToListAsync());
+        Assert.Equal(tenant.Id, basicMemberRow.TenantId);
+        Assert.Equal(TenantMembershipRole.TenantMember, basicMemberRow.Role);
     }
 
     [Fact]
@@ -187,7 +198,7 @@ public sealed class E2eEntitlementFixtureSeederTests
         var db = provider.GetRequiredService<CohestraDbContext>();
         Assert.Equal(1, await db.Tenants.CountAsync(item => item.Slug == E2eEntitlementFixtureSeeder.TenantSlug));
         Assert.Equal(1, await db.Tenants.CountAsync(item => item.Slug == E2eEntitlementFixtureSeeder.CoreTenantSlug));
-        Assert.Equal(3, await db.TenantMemberships.CountAsync());
+        Assert.Equal(4, await db.TenantMemberships.CountAsync());
     }
 
     [Fact]

@@ -5,6 +5,7 @@ import { expect, test, type APIRequestContext, type Page } from "@playwright/tes
 
 import {
   DEFAULT_PRO_TENANT,
+  PX2_BASIC_MEMBER,
   PX2_BASIC_TENANT,
   PX2_CORE_TENANT,
   PX2_PRO_MEMBER,
@@ -156,6 +157,15 @@ test.describe("Story 39.3 — entitlement visibility", () => {
     await expect(page.getByRole("heading", { name: "Analytics", level: 1 })).toBeVisible();
     await expect(page.getByRole("heading", { name: /upgrade|unlock/i })).toHaveCount(0);
 
+    await page.goto(`${tenantWebOrigin(PX2_BASIC_TENANT.slug)}/analytics?preset=monthly`, {
+      waitUntil: "domcontentloaded",
+    });
+    await waitForOperatorWorkspace(page);
+    await expect(page.getByRole("heading", { name: /queryable reports unlock on core/i })).toBeVisible();
+    await page.getByRole("button", { name: "Back to weekly Analytics" }).click();
+    await waitForReportsContent(page);
+    await expect(page.getByRole("heading", { name: /queryable reports unlock on core/i })).toHaveCount(0);
+
     await page.goto(`${tenantWebOrigin(PX2_BASIC_TENANT.slug)}/dashboard/website`, {
       waitUntil: "domcontentloaded",
     });
@@ -265,6 +275,21 @@ test.describe("Story 39.3 — entitlement visibility", () => {
       path: path.join(evidenceDir, "viewports", "member-390-more.png"),
       fullPage: false,
     });
+  });
+
+  test("Basic member Website is ask-admin and never checkout", async ({ page, request }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    test.setTimeout(60_000);
+    const session = await loginOrSkip(request, PX2_BASIC_MEMBER);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openAuthed(page, PX2_BASIC_MEMBER, session, "/dashboard/website");
+    await expect(
+      rail(page).getByRole("link", { name: "Website, locked, requires Core plan" })
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /unlock a branded public homepage/i })).toBeVisible();
+    await expect(page.getByText(/ask a tenant admin/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: /start .* trial/i })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /upgrade to/i })).toHaveCount(0);
   });
 
   test("direct API: plan lock stays plan_locked and member Team stays Forbid", async ({

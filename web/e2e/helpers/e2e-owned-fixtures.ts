@@ -60,6 +60,12 @@ export const PX2_PRO_MEMBER: OwnedTenant = {
   password: process.env.E2E_MEMBER_PASSWORD ?? "ChangeMe123!",
 };
 
+export const PX2_BASIC_MEMBER: OwnedTenant = {
+  slug: BASIC_TENANT_SLUG,
+  email: process.env.E2E_BASIC_MEMBER_EMAIL ?? "px2-basic-member@cohestra.local",
+  password: process.env.E2E_BASIC_MEMBER_PASSWORD ?? "ChangeMe123!",
+};
+
 export type OwnedActivity = {
   id: string;
   slug: string;

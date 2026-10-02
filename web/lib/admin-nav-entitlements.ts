@@ -62,6 +62,15 @@ const ALWAYS_UNLOCKED: NavDestinationKey[] = [
   "settings",
 ];
 
+const KNOWN_PLANS = new Set(["Basic", "Core", "Pro", "Enterprise"]);
+
+function recognizedPlan(plan: string | null | undefined): string | null {
+  if (!plan || !KNOWN_PLANS.has(plan)) {
+    return null;
+  }
+  return plan;
+}
+
 function unlocked(key: NavDestinationKey): NavEntitlement {
   return { key, state: "unlocked", requiredPlan: null, destination: "content" };
 }
@@ -102,7 +111,13 @@ export function resolveNavEntitlement(
     return hidden(key);
   }
 
-  const plan = ctx.plan ?? "Basic";
+  const plan = recognizedPlan(ctx.plan);
+  if (!plan) {
+    if (key === "website" || key === "campaigns") {
+      return pending(key);
+    }
+    return hidden(key);
+  }
   const isAdmin = ctx.isTenantAdmin === true;
   const isBillingOwner = ctx.isBillingOwner === true;
 

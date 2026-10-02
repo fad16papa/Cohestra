@@ -218,6 +218,17 @@ export function ReportsPageClient() {
     return (
       <div className="space-y-6">
         <h1 className="text-display-sm text-text-warm">Analytics</h1>
+        <p className="text-sm text-text-muted-warm">
+          Weekly reporting stays available on Basic.{" "}
+          <button
+            type="button"
+            className="font-medium text-text-link underline underline-offset-2"
+            onClick={() => router.replace("/analytics?preset=weekly")}
+          >
+            Back to weekly Analytics
+          </button>
+        </p>
+        <ReportFilterBar activities={activities} />
         <UpgradePanel
           title="Queryable reports unlock on Core"
           description="Basic includes a simple registration list and CSV export. Compare Core and Pro below for filters, rankings, campaign analytics, and saved views."

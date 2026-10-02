@@ -131,6 +131,19 @@ describe("Story 39.3 nav entitlement matrix", () => {
     expect(isCustomDomainSettingsVisible(admin("Enterprise"))).toBe(true);
   });
 
+  it("does not invent Basic locks from a missing or unknown plan", () => {
+    const unknown = ctx({
+      shellReady: true,
+      plan: "",
+      isTenantAdmin: true,
+      isBillingOwner: true,
+    });
+    expectState("website", unknown, "pending", null, "pending");
+    expectState("campaigns", unknown, "pending", null, "pending");
+    expectState("team", unknown, "hidden", null, "hidden");
+    expect(resolveFooterItems(unknown).map((item) => item.key)).toEqual(["settings"]);
+  });
+
   it("does not show false locks while the shell is loading", () => {
     const pending = ctx({ shellReady: false });
     expectState("website", pending, "pending", null, "pending");

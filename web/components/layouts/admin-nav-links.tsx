@@ -188,7 +188,7 @@ export function AdminNavLinks({
               <Icon className="size-4 shrink-0" aria-hidden />
               {locked && compact ? (
                 <Lock
-                  className="absolute -right-1.5 -bottom-1 size-3 text-text-muted-warm lg:hidden forced-colors:rounded-[1px] forced-colors:outline forced-colors:outline-current"
+                  className="absolute -right-2 -bottom-1.5 size-3.5 rounded-sm bg-card text-text-muted-warm ring-1 ring-border-warm lg:hidden forced-colors:outline forced-colors:outline-current"
                   aria-hidden
                 />
               ) : null}
