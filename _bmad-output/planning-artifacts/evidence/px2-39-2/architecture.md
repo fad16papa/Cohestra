@@ -19,7 +19,7 @@ Single source: `web/lib/admin-mobile-nav.ts` (order + `isActive`). `admin-mobile
 | --- | --- | --- | --- |
 | 1 | Home | `/dashboard` | `pathname === "/dashboard"` only |
 | 2 | Clients | `/clients` | `/clients` and descendants |
-| 3 | Activities | `/activities` | existing Activities rule |
+| 3 | Activities | `/activities` | `isPathOrDescendant` — `/activities` and all descendants, including `/new`, `/{id}`, `/communities`, `/communities/{id}`, `/categories`. Desktop `isAdminNavItemActive` stays narrower. |
 | 4 | Follow-up | `/follow-up` | `isFollowUpPath` |
 | 5 | More | opens 38.6 `Sheet` | sheet open **or** Website / Analytics / AI / Campaigns / Settings (not Follow-up) |
 

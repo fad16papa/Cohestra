@@ -78,7 +78,7 @@ Independent review of HEAD `ea4d52c2` (Blind Hunter + Edge Case Hunter + Accepta
 - [x] [Review][Patch] `setCalendarOpen` refuses to open over a blocking page modal [`admin-shell-context.tsx`]
 - [x] [Review][Patch] Close More sheet when the viewport crosses 768px [`admin-mobile-tab-bar.tsx`]
 - [x] [Review][Patch] E2E asserts Activities omitted from More, FAB absent on list rooms, calendar focus handoff [`mobile-nav-39-2.spec.ts`]
-- [x] [Review][Defer] Activities child routes (`/activities/communities`, `/categories`) do not select the Activities tab — existing `isAdminNavItemActive` rule; desktop rail still expands children. Not a 39.2 IA change.
+- [x] [Review][Patch] Mobile Activities selected on all `/activities` descendants via `isPathOrDescendant`; desktop `isAdminNavItemActive` unchanged [`admin-mobile-nav.ts`]
 - [x] [Review][Defer] Calendar popout is a named 38.6 custom-dialog exception (43.5 owns rename/trap). 39.2 only hides the FAB and relocates the opener.
 
 Repeat review of HEAD `763d19f1`: no AC BLOCKER/MAJOR. Residual patch applied below.
@@ -98,9 +98,9 @@ Repeat review of HEAD `763d19f1`: no AC BLOCKER/MAJOR. Residual patch applied be
 
 ### Testing
 
-- Vitest: tab order, Home not current on Website, Follow-up selected, More destinations, More active includes Website
-- Playwright 390×844, 430×932, 767, 768
-- FAB overlap screenshots on populated Clients/Activities
+- Vitest: tab order, Home not current on Website, Follow-up selected, More destinations, More active includes Website, Activities selected on all `/activities` descendants (desktop `isAdminNavItemActive` still false for communities/categories)
+- Playwright 390×844, 430×932, 767→768 resize with More open, Communities/Categories selected
+- FAB overlap screenshots on populated Clients/Activities (rows asserted first)
 - Regression: `desktop-shell-39-1`, `landmarks-38-5`, `overlays-38-6`
 
 ### Previous story intelligence (39.1)
@@ -145,3 +145,4 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - 2026-10-02: Created Story 39.2 after 39.1 close `96e3e87a`. Canonical D3 / §3.2 + backlog §39.2.
 - 2026-10-02: Implemented mobile dock, More destinations, FAB hide, and e2e/unit coverage. Status remains in-progress pending QA, review, and PO.
 - 2026-10-02: Patched review MAJORs (full-width tabs, Calendar↔More focus handoff, 768 sheet close, e2e gaps). Story stays in-progress for PO.
+- 2026-10-02: PO MAJOR — mobile Activities selected on all `/activities` descendants. Removed from deferred work. Desktop child-nav rule unchanged.

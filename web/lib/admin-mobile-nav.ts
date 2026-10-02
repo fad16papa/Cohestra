@@ -15,7 +15,7 @@ import {
   isFollowUpPath,
   isPathOrDescendant,
 } from "@/lib/admin-canonical-routes";
-import { adminNavItems, isAdminNavItemActive, type AdminNavItem } from "@/lib/admin-nav";
+import { adminNavItems, type AdminNavItem } from "@/lib/admin-nav";
 
 export type MobileTabItem = {
   key: string;
@@ -67,7 +67,7 @@ export const mobileTabItems: MobileTabItem[] = [
     label: "Activities",
     href: ACTIVITIES_PATH,
     icon: CalendarDays,
-    isActive: (pathname) => isAdminNavItemActive(pathname, ACTIVITIES_PATH),
+    isActive: (pathname) => isPathOrDescendant(pathname, ACTIVITIES_PATH),
   },
   {
     key: "follow-up",

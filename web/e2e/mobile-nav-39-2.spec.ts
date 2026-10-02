@@ -80,6 +80,21 @@ test.describe("Story 39.2 — mobile navigation", () => {
     await expect(followUpTab).toHaveAttribute("aria-label", "Follow-up, selected");
     await expect(followUpTab).toHaveAttribute("href", "/follow-up");
 
+    const activitiesTab = tabs.getByRole("link", { name: /Activities/ });
+    await page.goto(`${tenantWebBase()}/activities/communities`, {
+      waitUntil: "domcontentloaded",
+    });
+    await waitForOperatorWorkspace(page);
+    await expect(activitiesTab).toHaveAttribute("aria-current", "page");
+    await expect(activitiesTab).toHaveAttribute("aria-label", "Activities, selected");
+
+    await page.goto(`${tenantWebBase()}/activities/categories`, {
+      waitUntil: "domcontentloaded",
+    });
+    await waitForOperatorWorkspace(page);
+    await expect(activitiesTab).toHaveAttribute("aria-current", "page");
+    await expect(activitiesTab).toHaveAttribute("aria-label", "Activities, selected");
+
     await page.goto(`${tenantWebBase()}/dashboard`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
     const more = tabs.getByRole("button", { name: /^More$/ });
@@ -125,6 +140,9 @@ test.describe("Story 39.2 — mobile navigation", () => {
 
     await page.goto(`${tenantWebBase()}/clients`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
+    await expect
+      .poll(async () => page.locator('a[href*="/clients/"]').count(), { timeout: 30_000 })
+      .toBeGreaterThan(0);
     await expect(page.getByRole("button", { name: /Calendar/ })).toHaveCount(0);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "fab-clients-390x844.png"),
@@ -133,6 +151,17 @@ test.describe("Story 39.2 — mobile navigation", () => {
 
     await page.goto(`${tenantWebBase()}/activities`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
+    await expect
+      .poll(
+        async () =>
+          page.locator('a[href^="/activities/"]').evaluateAll((links) =>
+            links.filter((link) =>
+              /^\/activities\/[0-9a-f-]{36}(?:\?.*)?$/i.test(link.getAttribute("href") ?? "")
+            ).length
+          ),
+        { timeout: 30_000 }
+      )
+      .toBeGreaterThan(0);
     await expect(page.getByRole("button", { name: /Calendar/ })).toHaveCount(0);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "fab-activities-390x844.png"),
@@ -154,14 +183,15 @@ test.describe("Story 39.2 — mobile navigation", () => {
     await expect(dock(page)).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Admin navigation" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Calendar/ })).toHaveCount(0);
+    await more.click();
+    await expect(sheet).toBeVisible();
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "breakpoint-767.png"),
       fullPage: false,
     });
 
     await page.setViewportSize({ width: 768, height: 900 });
-    await page.goto(`${tenantWebBase()}/dashboard`, { waitUntil: "domcontentloaded" });
-    await waitForOperatorWorkspace(page);
+    await expect(sheet).toHaveCount(0);
     await expect(dock(page)).toHaveCount(0);
     await expect(page.getByRole("navigation", { name: "Admin navigation" })).toHaveCount(1);
     await expect(page.getByRole("button", { name: /Calendar/ })).toBeVisible();

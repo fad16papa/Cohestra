@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 
 import { moreSheetNavItems, mobileTabItems, isMoreDestinationPath } from "@/lib/admin-mobile-nav";
-import { adminNavItems } from "@/lib/admin-nav";
+import { adminNavItems, isAdminNavItemActive } from "@/lib/admin-nav";
 
 describe("Story 39.2 mobile IA", () => {
   it("orders five tabs Home, Clients, Activities, Follow-up, More", () => {
@@ -40,6 +40,29 @@ describe("Story 39.2 mobile IA", () => {
     expect(isMoreDestinationPath("/settings/team")).toBe(true);
     expect(isMoreDestinationPath("/clients")).toBe(false);
     expect(isMoreDestinationPath("/activities")).toBe(false);
+  });
+
+  it("marks Activities current on /activities and all descendants", () => {
+    const activities = mobileTabItems.find((item) => item.key === "activities");
+    const more = mobileTabItems.find((item) => item.key === "more");
+    const activityId = "/activities/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    const communityId = "/activities/communities/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+
+    expect(activities?.isActive("/activities")).toBe(true);
+    expect(activities?.isActive("/activities/new")).toBe(true);
+    expect(activities?.isActive(activityId)).toBe(true);
+    expect(activities?.isActive("/activities/communities")).toBe(true);
+    expect(activities?.isActive(communityId)).toBe(true);
+    expect(activities?.isActive("/activities/categories")).toBe(true);
+    expect(more?.isActive("/activities/communities")).toBe(false);
+    expect(more?.isActive("/activities/categories")).toBe(false);
+
+    expect(isAdminNavItemActive("/activities", "/activities")).toBe(true);
+    expect(isAdminNavItemActive("/activities/new", "/activities")).toBe(true);
+    expect(isAdminNavItemActive(activityId, "/activities")).toBe(true);
+    expect(isAdminNavItemActive("/activities/communities", "/activities")).toBe(false);
+    expect(isAdminNavItemActive(communityId, "/activities")).toBe(false);
+    expect(isAdminNavItemActive("/activities/categories", "/activities")).toBe(false);
   });
 
   it("lists only More destinations, not primary-tab rooms", () => {

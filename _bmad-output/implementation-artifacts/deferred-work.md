@@ -787,5 +787,4 @@ HEAD `58cfb4e2` (implementation `799d1173`). Independent re-review. No unresolve
 
 ## Deferred from: code review of 39-2-mobile-navigation.md (2026-10-02)
 
-- Activities child routes (`/activities/communities`, `/activities/categories`) do not select the Activities mobile tab — existing `isAdminNavItemActive` rule; desktop rail still expands children
 - Calendar popout remains a named 38.6 custom-dialog exception; 43.5 owns rename/trap. 39.2 only hides the FAB and relocates the opener
