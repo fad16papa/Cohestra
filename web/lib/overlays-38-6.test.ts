@@ -51,7 +51,8 @@ describe("Story 38.6 overlay source contract", () => {
     expect(tabs).toContain('aria-haspopup="dialog"');
     expect(tabs).toContain("navSheetOpen");
     expect(tabs).toContain("setNavSheetOpen");
-    expect(sheet).toContain("finalFocus={restoreFocusRef}");
+    expect(sheet).toContain("restoreFocusRef");
+    expect(sheet).toContain("finalFocus={restoreFocus ? restoreFocusRef : undefined}");
     expect(shell).toContain("navSheetOpen");
     expect(shell).toContain("hasBlockingPageModal");
   });

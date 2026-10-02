@@ -66,7 +66,20 @@ See `_bmad-output/planning-artifacts/evidence/px2-39-2/architecture.md`.
 - [x] More destinations subset + 38.6 sheet reuse (AC 5, 6)
 - [x] 44px targets + announced selected (AC 7)
 - [x] Calendar FAB mobile hide/dock (AC 8)
-- [ ] Tests + evidence at 390/430/767/768 (AC 2, 9, 10)
+- [x] Tests + evidence at 390/430/767/768 (AC 2, 9, 10)
+
+### Review Findings
+
+Independent review of HEAD `ea4d52c2` (Blind Hunter + Edge Case Hunter + Acceptance Auditor). No BLOCKER. Patches applied on this follow-up revision.
+
+- [x] [Review][Patch] Full-width dock tab hit targets [`admin-mobile-tab-bar.tsx`]
+- [x] [Review][Patch] Calendar-from-More skips sheet finalFocus, focuses popout, restores More [`admin-nav-sheet.tsx`, `activity-calendar-popout.tsx`]
+- [x] [Review][Patch] Calendar control announces dialog (`aria-haspopup`) [`admin-nav-sheet.tsx`]
+- [x] [Review][Patch] `setCalendarOpen` refuses to open over a blocking page modal [`admin-shell-context.tsx`]
+- [x] [Review][Patch] Close More sheet when the viewport crosses 768px [`admin-mobile-tab-bar.tsx`]
+- [x] [Review][Patch] E2E asserts Activities omitted from More, FAB absent on list rooms, calendar focus handoff [`mobile-nav-39-2.spec.ts`]
+- [x] [Review][Defer] Activities child routes (`/activities/communities`, `/categories`) do not select the Activities tab — existing `isAdminNavItemActive` rule; desktop rail still expands children. Not a 39.2 IA change.
+- [x] [Review][Defer] Calendar popout is a named 38.6 custom-dialog exception (43.5 owns rename/trap). 39.2 only hides the FAB and relocates the opener.
 
 ## Dev Notes
 
@@ -126,3 +139,4 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 
 - 2026-10-02: Created Story 39.2 after 39.1 close `96e3e87a`. Canonical D3 / §3.2 + backlog §39.2.
 - 2026-10-02: Implemented mobile dock, More destinations, FAB hide, and e2e/unit coverage. Status remains in-progress pending QA, review, and PO.
+- 2026-10-02: Patched review MAJORs (full-width tabs, Calendar↔More focus handoff, 768 sheet close, e2e gaps). Story stays in-progress for PO.

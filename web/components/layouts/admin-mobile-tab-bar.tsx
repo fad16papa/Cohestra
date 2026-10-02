@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { AdminNavSheet } from "@/components/layouts/admin-nav-sheet";
 import { useAdminShell } from "@/components/layouts/admin-shell-context";
@@ -13,6 +13,19 @@ export function AdminMobileTabBar() {
   const pathname = usePathname();
   const { navSheetOpen, setNavSheetOpen } = useAdminShell();
   const moreButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    function closeSheetOnDesktop() {
+      if (media.matches) {
+        setNavSheetOpen(false);
+      }
+    }
+
+    closeSheetOnDesktop();
+    media.addEventListener("change", closeSheetOnDesktop);
+    return () => media.removeEventListener("change", closeSheetOnDesktop);
+  }, [setNavSheetOpen]);
 
   return (
     <>
@@ -32,6 +45,7 @@ export function AdminMobileTabBar() {
               return (
                 <li key={item.key} className="flex-1">
                   <button
+                    id="admin-mobile-more"
                     ref={moreButtonRef}
                     type="button"
                     onClick={() => setNavSheetOpen(true)}
@@ -59,7 +73,7 @@ export function AdminMobileTabBar() {
                   aria-current={active ? "page" : undefined}
                   aria-label={active ? `${item.label}, selected` : item.label}
                   className={cn(
-                    "flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 px-2 py-2.5 text-[11px] font-medium motion-press",
+                    "flex min-h-11 w-full min-w-11 flex-col items-center justify-center gap-1 px-2 py-2.5 text-[11px] font-medium motion-press",
                     "outline-none focus-visible:ring-2 focus-visible:ring-ring",
                     active ? "text-text-link" : "text-text-muted-warm"
                   )}

@@ -71,6 +71,9 @@ export function AdminShellProvider({ children }: { children: ReactNode }) {
 
   const setCalendarOpen = useCallback((open: boolean) => {
     if (open) {
+      if (hasBlockingPageModal()) {
+        return;
+      }
       setCommandOpen(false);
       setNavSheetOpenState(false);
     }

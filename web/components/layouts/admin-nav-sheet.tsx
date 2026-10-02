@@ -1,6 +1,6 @@
 "use client";
 
-import type { RefObject } from "react";
+import { useState, type RefObject } from "react";
 import { CalendarDays } from "lucide-react";
 
 import { CohestraLogo } from "@/components/marketing/cohestra-logo";
@@ -33,13 +33,21 @@ export function AdminNavSheet({
 }: AdminNavSheetProps) {
   const { shell } = useTenantShell();
   const { setCalendarOpen } = useAdminShell();
+  const [restoreFocus, setRestoreFocus] = useState(true);
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setRestoreFocus(true);
+    }
+  }
 
   function closeSheet() {
     onOpenChange(false);
   }
 
   function openCalendar() {
-    closeSheet();
+    setRestoreFocus(false);
     setCalendarOpen(true);
   }
 
@@ -48,7 +56,7 @@ export function AdminNavSheet({
       <SheetContent
         side="left"
         className="flex w-[min(100vw-2rem,20rem)] flex-col p-0"
-        finalFocus={restoreFocusRef}
+        finalFocus={restoreFocus ? restoreFocusRef : undefined}
       >
         <SheetHeader className="shrink-0 border-b border-border-warm text-left">
           <SheetTitle className="flex items-center gap-2 text-section">
@@ -73,6 +81,7 @@ export function AdminNavSheet({
             type="button"
             variant="ghost"
             className="mt-2 flex min-h-11 w-full items-center justify-start gap-3 px-3 text-sm font-medium text-foreground"
+            aria-haspopup="dialog"
             onClick={openCalendar}
           >
             <CalendarDays className="size-4 shrink-0" aria-hidden />

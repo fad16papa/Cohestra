@@ -95,6 +95,7 @@ test.describe("Story 39.2 — mobile navigation", () => {
     ]);
     await expect(sheet.getByRole("link", { name: "Dashboard", exact: true })).toHaveCount(0);
     await expect(sheet.getByRole("link", { name: "Clients", exact: true })).toHaveCount(0);
+    await expect(sheet.getByRole("link", { name: "Activities", exact: true })).toHaveCount(0);
     await expect(sheet.getByRole("link", { name: "Follow-up", exact: true })).toHaveCount(0);
     await expect(sheet.getByRole("link", { name: "Settings", exact: true })).toBeVisible();
     await expect(sheet.getByRole("link", { name: "Team", exact: true })).toBeVisible();
@@ -113,14 +114,18 @@ test.describe("Story 39.2 — mobile navigation", () => {
     await more.click();
     await sheet.getByRole("button", { name: "Calendar" }).click();
     await expect(sheet).toHaveCount(0);
-    await expect(page.getByRole("dialog", { name: "Activity calendar" })).toBeVisible();
+    const calendar = page.getByRole("dialog", { name: "Activity calendar" });
+    await expect(calendar).toBeVisible();
+    await expect(calendar).toBeFocused();
     await page.getByRole("button", { name: "Close calendar" }).click();
-    await expect(page.getByRole("dialog", { name: "Activity calendar" })).toHaveCount(0);
+    await expect(calendar).toHaveCount(0);
+    await expect(more).toBeFocused();
 
     await expect(page.getByRole("button", { name: /Calendar/ })).toHaveCount(0);
 
     await page.goto(`${tenantWebBase()}/clients`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
+    await expect(page.getByRole("button", { name: /Calendar/ })).toHaveCount(0);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "fab-clients-390x844.png"),
       fullPage: false,
@@ -128,6 +133,7 @@ test.describe("Story 39.2 — mobile navigation", () => {
 
     await page.goto(`${tenantWebBase()}/activities`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
+    await expect(page.getByRole("button", { name: /Calendar/ })).toHaveCount(0);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "fab-activities-390x844.png"),
       fullPage: false,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -141,6 +141,7 @@ export function ActivityCalendarPopout({
   onOpenChange,
 }: ActivityCalendarPopoutProps) {
   const { authFetch } = useAuth();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const today = useMemo(() => new Date(), []);
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -176,6 +177,12 @@ export function ActivityCalendarPopout({
       void loadActivities();
     }
   }, [open, loadActivities]);
+
+  useEffect(() => {
+    if (open) {
+      dialogRef.current?.focus();
+    }
+  }, [open]);
 
   const filteredActivities = useMemo(
     () => activities.filter((activity) => statusFilters[activity.status]),
@@ -232,7 +239,9 @@ export function ActivityCalendarPopout({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-end p-3 sm:p-4"
+      ref={dialogRef}
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-end justify-end p-3 sm:p-4 outline-none"
       role="dialog"
       aria-modal="true"
       aria-label="Activity calendar"
@@ -490,6 +499,17 @@ type ActivityCalendarNudgeProps = {
 export function ActivityCalendarNudge({ className }: ActivityCalendarNudgeProps) {
   const { calendarOpen, setCalendarOpen } = useAdminShell();
 
+  function handleOpenChange(open: boolean) {
+    setCalendarOpen(open);
+    if (
+      !open &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 767.98px)").matches
+    ) {
+      document.getElementById("admin-mobile-more")?.focus();
+    }
+  }
+
   return (
     <>
       <div
@@ -514,7 +534,7 @@ export function ActivityCalendarNudge({ className }: ActivityCalendarNudgeProps)
         </Button>
       </div>
 
-      <ActivityCalendarPopout open={calendarOpen} onOpenChange={setCalendarOpen} />
+      <ActivityCalendarPopout open={calendarOpen} onOpenChange={handleOpenChange} />
     </>
   );
 }
