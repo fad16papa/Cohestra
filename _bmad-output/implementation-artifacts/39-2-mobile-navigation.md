@@ -86,6 +86,8 @@ Repeat review of HEAD `763d19f1`: no AC BLOCKER/MAJOR. Residual patch applied be
 - [x] [Review][Patch] Do not disable More `finalFocus` when `setCalendarOpen` is blocked by a page modal [`admin-nav-sheet.tsx`]
 - [x] [Review][Defer] Calendar popout Tab containment remains the 38.6 named exception / 43.5.
 
+Repeat review of PO correction HEAD `9ef153ca` (Blind Hunter + Edge Case Hunter + Acceptance Auditor): no remaining BLOCKER/MAJOR. Activities-child selected-state is no longer deferred.
+
 ## Dev Notes
 
 ### Must preserve
