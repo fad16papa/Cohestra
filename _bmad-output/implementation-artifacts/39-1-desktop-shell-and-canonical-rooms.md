@@ -2,16 +2,17 @@
 id: 39.1
 key: 39-1-desktop-shell-and-canonical-rooms
 title: Desktop shell and canonical rooms
-status: in-progress
+status: done
 epic: 39
 created: 2026-09-30
 baseline_commit: cde63ba4b13ee6884c7bb73939715f8e785de363
 readiness: ready
+accepted_commit: 9751daffc5504c55814b688648aab5604038f1b7
 ---
 
 # Story 39.1: Desktop shell and canonical rooms
 
-Status: in-progress
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -112,7 +113,7 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 not used un
 - Analytics relocates Reports UI; Follow-up and Cohestra AI are honest stubs.
 - `/reports`, `/intelligence`, `/needs-attention`, `/settings` compatibility-redirect with query preserved (including empty scalars).
 - Desktop rail/footer/palette share `adminNavItems` + `admin-canonical-routes.ts`.
-- Not done / not merged. Draft PR for PO pre-merge review.
+- ACCEPTED/CLOSED. PO PASS at exactly `9751daff`. Merged as `cc996e05` (PR #356). Epic 39 remains in-progress.
 
 ### File List
 
@@ -175,3 +176,4 @@ Dismissed on re-review: empty `?preset=` App Router omits (unit-tested; weekly e
 
 - 2026-09-30: Created Story 39.1 after Epic 38 close `cde63ba4`. Canonical D1/D14/D15 + backlog §39.1.
 - 2026-09-30: Implemented desktop rail, canonical rooms, compatibility redirects. Independent review of `d0d907ff`; patched MINOR helper/test gaps.
+- 2026-10-02: PR #356 merged as `cc996e05` (implementation HEAD `9751daff`). Required main CI `37007992226` 5/5 success. Post-merge smoke: desktop-shell-39-1, landmarks-38-5, overlays-38-6, `/settings?source=legacy`. ACCEPTED/CLOSED. Epic 39 remains in-progress.
