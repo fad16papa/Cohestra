@@ -784,3 +784,7 @@ HEAD `58cfb4e2` (implementation `799d1173`). Independent re-review. No unresolve
 
 - `getActivityOps` attendance/no-show counts are note-text heuristics until registration rows carry structured check-in fields
 - Cinema product stage remains `aria-hidden` + `inert` (pre-existing pattern) — AT users get live-region caption only; richer AT proof is 33.4
+
+## Deferred from: code review of 39-2-mobile-navigation.md (2026-10-02)
+
+- Calendar popout remains a named 38.6 custom-dialog exception; 43.5 owns rename/trap. 39.2 only hides the FAB and relocates the opener

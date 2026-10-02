@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -15,6 +15,7 @@ import {
 import { ActivityStatusBadge } from "@/components/activities/activity-status-badge";
 import { ActivityScheduleConflictAlert } from "@/components/activities/activity-schedule-conflict-alert";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useAdminShell } from "@/components/layouts/admin-shell-context";
 import { Button } from "@/components/ui/button";
 import { fetchAllActivities, type ActivityStatus } from "@/lib/activities-api";
 import {
@@ -140,6 +141,7 @@ export function ActivityCalendarPopout({
   onOpenChange,
 }: ActivityCalendarPopoutProps) {
   const { authFetch } = useAuth();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const today = useMemo(() => new Date(), []);
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -175,6 +177,12 @@ export function ActivityCalendarPopout({
       void loadActivities();
     }
   }, [open, loadActivities]);
+
+  useEffect(() => {
+    if (open) {
+      dialogRef.current?.focus();
+    }
+  }, [open]);
 
   const filteredActivities = useMemo(
     () => activities.filter((activity) => statusFilters[activity.status]),
@@ -231,7 +239,9 @@ export function ActivityCalendarPopout({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-end p-3 sm:p-4"
+      ref={dialogRef}
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-end justify-end p-3 sm:p-4 outline-none"
       role="dialog"
       aria-modal="true"
       aria-label="Activity calendar"
@@ -487,14 +497,24 @@ type ActivityCalendarNudgeProps = {
 };
 
 export function ActivityCalendarNudge({ className }: ActivityCalendarNudgeProps) {
-  const [open, setOpen] = useState(false);
+  const { calendarOpen, setCalendarOpen } = useAdminShell();
+
+  function handleOpenChange(open: boolean) {
+    setCalendarOpen(open);
+    if (
+      !open &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 767.98px)").matches
+    ) {
+      document.getElementById("admin-mobile-more")?.focus();
+    }
+  }
 
   return (
     <>
       <div
         className={cn(
-          "pointer-events-auto fixed right-3 z-40",
-          "bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:right-5 md:bottom-5",
+          "pointer-events-auto fixed z-40 hidden md:right-5 md:bottom-5 md:block",
           className
         )}
       >
@@ -503,18 +523,18 @@ export function ActivityCalendarNudge({ className }: ActivityCalendarNudgeProps)
           size="lg"
           className={cn(
             "h-12 gap-2 rounded-full px-4 shadow-lg shadow-primary/20",
-            open && "ring-2 ring-primary/30"
+            calendarOpen && "ring-2 ring-primary/30"
           )}
-          aria-expanded={open}
+          aria-expanded={calendarOpen}
           aria-controls="activity-calendar-popout"
-          onClick={() => setOpen((current) => !current)}
+          onClick={() => setCalendarOpen(!calendarOpen)}
         >
           <CalendarDays className="size-4" aria-hidden />
           <span className="hidden sm:inline">Calendar</span>
         </Button>
       </div>
 
-      <ActivityCalendarPopout open={open} onOpenChange={setOpen} />
+      <ActivityCalendarPopout open={calendarOpen} onOpenChange={handleOpenChange} />
     </>
   );
 }
