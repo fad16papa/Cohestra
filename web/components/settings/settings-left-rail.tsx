@@ -14,6 +14,8 @@ import {
   type SettingsSectionId,
   type SettingsSectionMeta,
 } from "@/components/settings/settings-sections";
+import { AdminNavLockMark } from "@/components/layouts/admin-nav-lock";
+import { navItemAccessibleName } from "@/lib/admin-nav-entitlements";
 import { cn } from "@/lib/utils";
 
 type SettingsLeftRailProps = {
@@ -24,6 +26,7 @@ type SettingsLeftRailProps = {
   onToggleCollapsed: () => void;
   showBillingLink: boolean;
   showAdminLinks?: boolean;
+  teamRequiredPlan?: "Core" | "Pro" | null;
   hideCollapseToggle?: boolean;
   className?: string;
 };
@@ -70,6 +73,7 @@ export function SettingsLeftRail({
   onToggleCollapsed,
   showBillingLink,
   showAdminLinks = true,
+  teamRequiredPlan = null,
   hideCollapseToggle = false,
   className,
 }: SettingsLeftRailProps) {
@@ -142,7 +146,18 @@ export function SettingsLeftRail({
         ) : null}
         <Link
           href="/settings/team"
-          title={collapsed ? "Team" : undefined}
+          title={
+            teamRequiredPlan
+              ? navItemAccessibleName("Team", { state: "locked", requiredPlan: teamRequiredPlan })
+              : collapsed
+                ? "Team"
+                : undefined
+          }
+          aria-label={
+            teamRequiredPlan
+              ? navItemAccessibleName("Team", { state: "locked", requiredPlan: teamRequiredPlan })
+              : undefined
+          }
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted-warm motion-press hover:bg-muted/60 hover:text-text-warm",
             collapsed && "justify-center px-2"
@@ -150,6 +165,9 @@ export function SettingsLeftRail({
         >
           <Users className="size-4 shrink-0" aria-hidden />
           {!collapsed ? <span>Team</span> : null}
+          {teamRequiredPlan && !collapsed ? (
+            <AdminNavLockMark requiredPlan={teamRequiredPlan} />
+          ) : null}
         </Link>
         {showBillingLink ? (
           <Link

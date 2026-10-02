@@ -13,6 +13,7 @@ import {
 import {
   BASIC_TENANT_SLUG,
   CANONICAL_DEMO_SLUGS,
+  CORE_TENANT_SLUG,
   DEFAULT_TENANT_SLUG,
   MARINA_LIKE_FORM_SCHEMA,
   SINGLE_PAGE_CENTERED_THEME,
@@ -45,6 +46,18 @@ export const PX2_BASIC_TENANT: OwnedTenant = {
   slug: BASIC_TENANT_SLUG,
   email: process.env.E2E_BASIC_EMAIL ?? "px2-basic-admin@cohestra.local",
   password: process.env.E2E_BASIC_PASSWORD ?? "ChangeMe123!",
+};
+
+export const PX2_CORE_TENANT: OwnedTenant = {
+  slug: CORE_TENANT_SLUG,
+  email: process.env.E2E_CORE_EMAIL ?? "px2-core-admin@cohestra.local",
+  password: process.env.E2E_CORE_PASSWORD ?? "ChangeMe123!",
+};
+
+export const PX2_PRO_MEMBER: OwnedTenant = {
+  slug: DEFAULT_TENANT_SLUG,
+  email: process.env.E2E_MEMBER_EMAIL ?? "px2-pro-member@cohestra.local",
+  password: process.env.E2E_MEMBER_PASSWORD ?? "ChangeMe123!",
 };
 
 export type OwnedActivity = {
@@ -85,6 +98,12 @@ export async function loginOwnedTenant(
         `${error instanceof Error ? error.message : String(error)} ` +
           "Basic fixture tenant is missing. Development DemoDataSeed must provision px2-basic " +
           "(E2eEntitlementFixtureSeeder) — do not SQL-flip default.Plan."
+      );
+    }
+    if (tenant.slug === CORE_TENANT_SLUG) {
+      throw new Error(
+        `${error instanceof Error ? error.message : String(error)} ` +
+          "Core fixture tenant is missing. Development DemoDataSeed must provision px2-core."
       );
     }
     throw error;

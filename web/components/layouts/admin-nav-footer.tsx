@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 import { CreditCard, Settings, Users } from "lucide-react";
 
+import { AdminNavLockMark } from "@/components/layouts/admin-nav-lock";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import {
-  SETTINGS_BILLING_PATH,
-  SETTINGS_PROFILE_PATH,
-  SETTINGS_TEAM_PATH,
+  entitlementContextFromShell,
+  navItemAccessibleName,
+  resolveFooterItems,
+} from "@/lib/admin-nav-entitlements";
+import {
   isSettingsBillingPath,
   isSettingsProfilePath,
   isSettingsTeamPath,
@@ -19,6 +23,22 @@ type AdminNavFooterProps = {
   onNavigate?: () => void;
   className?: string;
 };
+
+const footerIcons = {
+  settings: Settings,
+  team: Users,
+  billing: CreditCard,
+} as const;
+
+function isFooterActive(pathname: string, key: "settings" | "team" | "billing"): boolean {
+  if (key === "settings") {
+    return isSettingsProfilePath(pathname);
+  }
+  if (key === "team") {
+    return isSettingsTeamPath(pathname);
+  }
+  return isSettingsBillingPath(pathname);
+}
 
 function footerLinkClassName(active: boolean): string {
   return cn(
@@ -33,59 +53,44 @@ function footerLinkClassName(active: boolean): string {
 export function AdminNavFooter({ onNavigate, className }: AdminNavFooterProps) {
   const pathname = usePathname();
   const { shell } = useTenantShell();
-  const showBilling = shell?.plan === "Basic" || shell?.isBillingOwner === true;
-  const isTenantAdmin = shell?.isTenantAdmin ?? false;
-
-  if (!isTenantAdmin) {
-    return (
-      <div className={cn("space-y-1 border-t border-border-warm p-2", className)}>
-        <Link
-          href={SETTINGS_PROFILE_PATH}
-          onClick={onNavigate}
-          aria-current={isSettingsProfilePath(pathname) ? "page" : undefined}
-          className={footerLinkClassName(isSettingsProfilePath(pathname))}
-        >
-          <Settings className="size-4 shrink-0" aria-hidden />
-          Settings
-        </Link>
-      </div>
-    );
-  }
+  const items = useMemo(
+    () => resolveFooterItems(entitlementContextFromShell(shell)),
+    [shell]
+  );
+  const showWorkspaceLabel = items.some((item) => item.key === "team" || item.key === "billing");
 
   return (
     <div className={cn("space-y-1 border-t border-border-warm p-2", className)}>
-      <p className="px-3 py-1 text-[11px] font-medium uppercase tracking-[0.1em] text-text-muted-warm">
-        Workspace
-      </p>
-      <Link
-        href={SETTINGS_PROFILE_PATH}
-        onClick={onNavigate}
-        aria-current={isSettingsProfilePath(pathname) ? "page" : undefined}
-        className={footerLinkClassName(isSettingsProfilePath(pathname))}
-      >
-        <Settings className="size-4 shrink-0" aria-hidden />
-        Settings
-      </Link>
-      <Link
-        href={SETTINGS_TEAM_PATH}
-        onClick={onNavigate}
-        aria-current={isSettingsTeamPath(pathname) ? "page" : undefined}
-        className={footerLinkClassName(isSettingsTeamPath(pathname))}
-      >
-        <Users className="size-4 shrink-0" aria-hidden />
-        Team
-      </Link>
-      {showBilling ? (
-        <Link
-          href={SETTINGS_BILLING_PATH}
-          onClick={onNavigate}
-          aria-current={isSettingsBillingPath(pathname) ? "page" : undefined}
-          className={footerLinkClassName(isSettingsBillingPath(pathname))}
-        >
-          <CreditCard className="size-4 shrink-0" aria-hidden />
-          Billing
-        </Link>
+      {showWorkspaceLabel ? (
+        <p className="px-3 py-1 text-[11px] font-medium uppercase tracking-[0.1em] text-text-muted-warm">
+          Workspace
+        </p>
       ) : null}
+      {items.map((item) => {
+        const Icon = footerIcons[item.key];
+        const locked =
+          item.entitlement.state === "locked" && item.entitlement.requiredPlan;
+        const accessibleName = navItemAccessibleName(item.label, item.entitlement);
+        const active = isFooterActive(pathname, item.key);
+
+        return (
+          <Link
+            key={item.key}
+            href={item.href}
+            onClick={onNavigate}
+            aria-label={locked ? accessibleName : undefined}
+            title={locked ? accessibleName : undefined}
+            aria-current={active ? "page" : undefined}
+            className={footerLinkClassName(active)}
+          >
+            <Icon className="size-4 shrink-0" aria-hidden />
+            {item.label}
+            {item.entitlement.state === "locked" && item.entitlement.requiredPlan ? (
+              <AdminNavLockMark requiredPlan={item.entitlement.requiredPlan} />
+            ) : null}
+          </Link>
+        );
+      })}
     </div>
   );
 }

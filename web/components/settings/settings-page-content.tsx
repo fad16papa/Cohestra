@@ -26,6 +26,11 @@ import {
 } from "@/components/settings/settings-sections";
 import { SettingsSubsectionDivider } from "@/components/settings/settings-subsection";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
+import {
+  entitlementContextFromShell,
+  isCustomDomainSettingsVisible,
+  resolveNavEntitlement,
+} from "@/lib/admin-nav-entitlements";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -68,11 +73,23 @@ function renderSectionContent(id: SettingsSectionId): React.ReactNode {
 
 export function SettingsPageContent() {
   const { shell } = useTenantShell();
+  const entitlementCtx = useMemo(() => entitlementContextFromShell(shell), [shell]);
   const isTenantAdmin = shell?.isTenantAdmin ?? false;
+  const teamEntitlement = resolveNavEntitlement("team", entitlementCtx);
+  const billingEntitlement = resolveNavEntitlement("billing", entitlementCtx);
 
   const visibleSections = useMemo(
-    () => settingsSections.filter((section) => !section.adminOnly || isTenantAdmin),
-    [isTenantAdmin]
+    () =>
+      settingsSections.filter((section) => {
+        if (section.adminOnly && !isTenantAdmin) {
+          return false;
+        }
+        if (section.id === "settings-domain") {
+          return isCustomDomainSettingsVisible(entitlementCtx);
+        }
+        return true;
+      }),
+    [entitlementCtx, isTenantAdmin]
   );
 
   const [activeId, setActiveId] = useState<SettingsSectionId>(() =>
@@ -91,7 +108,10 @@ export function SettingsPageContent() {
   const activeSection: SettingsSectionMeta =
     visibleSections.find((section) => section.id === activeId) ?? visibleSections[0];
 
-  const showBillingLink = shell?.plan === "Basic" || shell?.isBillingOwner === true;
+  const showBillingLink = billingEntitlement.state === "unlocked";
+  const showAdminLinks = teamEntitlement.state !== "hidden" && teamEntitlement.state !== "pending";
+  const teamLockedPlan =
+    teamEntitlement.state === "locked" ? teamEntitlement.requiredPlan : null;
 
   return (
     <div className="flex w-full flex-col gap-4 pb-8 lg:gap-5">
@@ -130,7 +150,8 @@ export function SettingsPageContent() {
           collapsed={leftCollapsed}
           onToggleCollapsed={() => setLeftCollapsed((value) => !value)}
           showBillingLink={showBillingLink}
-          showAdminLinks={isTenantAdmin}
+          showAdminLinks={showAdminLinks}
+          teamRequiredPlan={teamLockedPlan}
         />
 
         <section
