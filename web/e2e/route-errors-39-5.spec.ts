@@ -59,7 +59,8 @@ async function assertAuthenticatedAdminNotFound(page: Page, route: string): Prom
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
   await expect(page.getByRole("main")).toHaveCount(1);
   await expect(page.locator("main#main-content")).toHaveCount(1);
-  await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
+  await expect(page.locator("[data-admin-shell]")).toHaveCount(1);
+  await expect(page.getByRole("complementary", { name: "Workspace" })).toBeVisible();
   await expect(page.locator("#main-content").getByRole("link", { name: "Dashboard" })).toHaveAttribute(
     "href",
     "/dashboard"
@@ -69,6 +70,7 @@ async function assertAuthenticatedAdminNotFound(page: Page, route: string): Prom
 }
 
 test.describe("Story 39.5 — route error and not-found", () => {
+  test.describe.configure({ mode: "serial" });
   test("404, crash, offline, focus, landmarks, and evidence", async ({ page, request }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
     test.setTimeout(180_000);
@@ -86,7 +88,7 @@ test.describe("Story 39.5 — route error and not-found", () => {
     const homeBox = await home.boundingBox();
     expect(homeBox?.width, "marketing Home width").toBeGreaterThanOrEqual(48);
     expect(homeBox?.height, "marketing Home height").toBeGreaterThanOrEqual(48);
-    expect(await page.evaluate(() => document.activeElement?.tagName)).toBe("H1");
+    await page.waitForFunction(() => document.activeElement?.tagName === "H1");
     await assertNoSecrets(page);
     await assertNoOverflow(page, "marketing 404 1440");
     await page.screenshot({
@@ -112,7 +114,7 @@ test.describe("Story 39.5 — route error and not-found", () => {
       "href",
       "/dashboard"
     );
-    expect(await page.evaluate(() => document.activeElement?.tagName)).toBe("H1");
+    await page.waitForFunction(() => document.activeElement?.tagName === "H1");
     await assertNoSecrets(page);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "admin-404-1440.png"),

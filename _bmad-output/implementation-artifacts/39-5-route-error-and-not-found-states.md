@@ -172,3 +172,4 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - 2026-10-03: Created Story 39.5 from main `e925fd5f` (39.4 tracker-close). Canonical D11 + content-language §7. Epic 40 not started.
 - 2026-10-03: Implemented route-boundary primitive, App Router files, catch-alls, and live-stack Playwright. Status remains in-progress for PO pre-merge review.
 - 2026-10-03: PO changes-required — complete admin 404 ownership + truthful offline auto-reset. Status remains in-progress. PR stays draft.
+- 2026-10-03: Playwright proofs use `complementary` Workspace + `data-admin-shell`; offline reconnect does not click Try again.
