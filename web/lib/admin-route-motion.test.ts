@@ -45,6 +45,16 @@ describe("adminRouteTransitionKey", () => {
     );
   });
 
+  it("keeps dashboard view query on the same pathname key", () => {
+    expect(adminRouteTransitionKey("/dashboard?view=graphs")).toBe("/dashboard");
+    expect(adminRouteTransitionKey("/dashboard?view=table")).toBe(
+      adminRouteTransitionKey("/dashboard")
+    );
+    expect(adminRouteTransitionKey("/dashboard?view=overview")).toBe(
+      adminRouteTransitionKey("/dashboard?view=kanban")
+    );
+  });
+
   it("treats different activity ids as different routes", () => {
     expect(adminRouteTransitionKey("/activities/aaa")).not.toBe(
       adminRouteTransitionKey("/activities/bbb")

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { BarChart3, LayoutGrid, Table2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -11,7 +12,7 @@ import {
 const VIEW_ICONS: Record<DashboardViewMode, typeof LayoutGrid> = {
   overview: LayoutGrid,
   graphs: BarChart3,
-  tables: Table2,
+  table: Table2,
 };
 
 type DashboardViewSwitcherProps = {
@@ -25,12 +26,16 @@ export function DashboardViewSwitcher({
   onChange,
   className,
 }: DashboardViewSwitcherProps) {
+  const tabListRef = useRef<HTMLDivElement>(null);
+
+  function focusTab(mode: DashboardViewMode) {
+    tabListRef.current
+      ?.querySelector<HTMLElement>(`#dashboard-view-${mode}`)
+      ?.focus();
+  }
+
   return (
-    <div
-      className={cn("flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between", className)}
-      role="group"
-      aria-label="Dashboard layout"
-    >
+    <div className={cn("flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between", className)}>
       <div className="min-w-0">
         <p className="text-sm font-medium text-text-warm">Dashboard view</p>
         <p className="text-xs text-text-muted-warm">
@@ -38,8 +43,13 @@ export function DashboardViewSwitcher({
         </p>
       </div>
 
-      <div className="inline-flex w-full rounded-xl border border-border-warm bg-muted/30 p-1 sm:w-auto">
-        {DASHBOARD_VIEW_MODE_OPTIONS.map((option) => {
+      <div
+        ref={tabListRef}
+        role="tablist"
+        aria-label="Dashboard view"
+        className="inline-flex w-full min-w-0 rounded-xl border border-border-warm bg-muted/30 p-1 sm:w-auto"
+      >
+        {DASHBOARD_VIEW_MODE_OPTIONS.map((option, index) => {
           const Icon = VIEW_ICONS[option.value];
           const isActive = value === option.value;
 
@@ -47,10 +57,28 @@ export function DashboardViewSwitcher({
             <button
               key={option.value}
               type="button"
-              aria-pressed={isActive}
+              role="tab"
+              id={`dashboard-view-${option.value}`}
+              aria-selected={isActive}
+              aria-controls="dashboard-view-panel"
+              tabIndex={isActive ? 0 : -1}
+              onKeyDown={(event) => {
+                if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
+                  return;
+                }
+                event.preventDefault();
+                const delta = event.key === "ArrowRight" ? 1 : -1;
+                const next =
+                  DASHBOARD_VIEW_MODE_OPTIONS[
+                    (index + delta + DASHBOARD_VIEW_MODE_OPTIONS.length) %
+                      DASHBOARD_VIEW_MODE_OPTIONS.length
+                  ];
+                onChange(next.value);
+                requestAnimationFrame(() => focusTab(next.value));
+              }}
               onClick={() => onChange(option.value)}
               className={cn(
-                "inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium motion-local sm:min-w-[7.5rem] sm:flex-none",
+                "inline-flex min-h-11 min-w-11 flex-1 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium motion-local sm:flex-none",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 isActive
                   ? "bg-background text-text-warm shadow-sm"

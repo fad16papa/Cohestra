@@ -9,7 +9,6 @@ import {
   DashboardChartCard,
 } from "@/components/dashboard/dashboard-chart-card";
 import type { DashboardLeadStatusBreakdown } from "@/lib/dashboard-api";
-import { cn } from "@/lib/utils";
 
 type StatusSlice = {
   key: string;
@@ -115,7 +114,7 @@ export function DashboardLeadStatusChart({
         </p>
       ) : fill ? (
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="relative min-h-[13rem] flex-1 px-4 pt-2 sm:min-h-[15rem] sm:px-5 sm:pt-3">
+          <div className="relative min-h-[13rem] min-w-0 flex-1 overflow-hidden px-4 pt-2 sm:min-h-[15rem] sm:px-5 sm:pt-3">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Tooltip content={<StatusTooltip />} />
