@@ -36,6 +36,15 @@ Copy and hrefs live in `web/lib/route-boundary.ts` so Vitest can lock the matrix
 
 Root `not-found` does **not** handle admin/platform unmatched URLs — those groups have their own files.
 
+Admin unmatched descendants must call `notFound()` from a nested catch-all so `(admin)/not-found.tsx` renders **inside** `DashboardLayout` / `main#main-content`. Prefix catch-alls exist for Dashboard, Settings, Analytics, AI, Follow-up, Billing, Reports, Intelligence, and Needs Attention. Entity trees use targeted catch-alls that do **not** replace `[id]` pages:
+
+- `clients/[id]/[...unmatched]`
+- `activities/[id]/[...unmatched]`, `activities/new/[...unmatched]`, `activities/categories/[...unmatched]`, `activities/communities/[id]/[...unmatched]`
+- `campaigns/[id]/[...unmatched]`, `campaigns/new/[...unmatched]`
+- `billing/page.tsx` (exact `/billing`) + `billing/[...unmatched]` (includes `/billing/checkout/extra`)
+
+Valid entity routes keep `ProductErrorState`. Compatibility rooms (`/reports`, `/intelligence`, `/needs-attention`) still redirect; only extra segments 404.
+
 ## Next-action resolution
 
 | Surface | href | label |
@@ -53,7 +62,9 @@ Unauthenticated `/platform/*` remains `PlatformRouteGuard` → `/platform/login`
 1. Subscribe to `window` `online`/`offline`.
 2. If `navigator.onLine === false`, render `kind="offline"`.
 3. Else render `kind="error"`.
-4. Retry always calls Next `reset()`. Offline copy must not claim a server 500.
+4. Manual **Try again** always calls Next `reset()`.
+5. The first offline-to-online transition also calls `reset()` exactly once (`shouldAutoResetOnReconnect`). An initially online mount never auto-resets. Repeated `online` events after that first reconnect do not reset again.
+6. Offline copy must not claim a server 500.
 
 404 never becomes offline. A missing URL is still not found.
 

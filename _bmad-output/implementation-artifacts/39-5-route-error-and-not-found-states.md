@@ -80,6 +80,8 @@ See `_bmad-output/planning-artifacts/evidence/px2-39-5/atdd.md`.
 - [x] App Router `not-found` / `error` / `global-error` files by surface (AC 1–5, 8)
 - [x] Test-only force-error harness with production `notFound()` guard (AC 4, 9)
 - [x] Vitest + Playwright 39.5 + regressions 38.1 / 38.2 / 38.5 / 38.6 / 39.1–39.4 (AC 8–10)
+- [x] PO MAJOR 1: catch-alls for every `ADMIN_PATH_PREFIXES` unmatched descendant, including `[id]` extra segments (AC 2)
+- [x] PO MAJOR 2: first offline-to-online transition calls `reset()` once; no mount/online-loop reset (AC 5)
 
 ## Dev Notes
 
@@ -126,6 +128,7 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - Offline uses approved “You're offline…” copy. Crash h1 is `This screen failed`. 404 h1 is `Page not found`.
 - Force-error pages throw only after an explicit click and `notFound()` in production.
 - Independent review: no unresolved BLOCKER/MAJOR. Story remains in-progress for PO pre-merge review. Epic 40 not started.
+- PO correction 2026-10-03: admin catch-alls now cover Clients, Activities, Campaigns, Billing, Reports, Intelligence, and Needs Attention descendants. Offline copy calls `reset()` once on reconnect.
 
 ### File List
 
@@ -151,8 +154,21 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - `web/app/embed/not-found.tsx`
 - `web/app/embed/error.tsx`
 - `web/e2e/route-errors-39-5.spec.ts`
+- `web/app/(admin)/clients/[id]/[...unmatched]/page.tsx`
+- `web/app/(admin)/activities/[id]/[...unmatched]/page.tsx`
+- `web/app/(admin)/activities/new/[...unmatched]/page.tsx`
+- `web/app/(admin)/activities/categories/[...unmatched]/page.tsx`
+- `web/app/(admin)/activities/communities/[id]/[...unmatched]/page.tsx`
+- `web/app/(admin)/campaigns/[id]/[...unmatched]/page.tsx`
+- `web/app/(admin)/campaigns/new/[...unmatched]/page.tsx`
+- `web/app/(admin)/billing/page.tsx`
+- `web/app/(admin)/billing/[...unmatched]/page.tsx`
+- `web/app/(admin)/reports/[...unmatched]/page.tsx`
+- `web/app/(admin)/intelligence/[...unmatched]/page.tsx`
+- `web/app/(admin)/needs-attention/[...unmatched]/page.tsx`
 
 ### Change Log
 
 - 2026-10-03: Created Story 39.5 from main `e925fd5f` (39.4 tracker-close). Canonical D11 + content-language §7. Epic 40 not started.
 - 2026-10-03: Implemented route-boundary primitive, App Router files, catch-alls, and live-stack Playwright. Status remains in-progress for PO pre-merge review.
+- 2026-10-03: PO changes-required — complete admin 404 ownership + truthful offline auto-reset. Status remains in-progress. PR stays draft.

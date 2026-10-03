@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { RouteBoundaryState } from "@/components/shared/route-boundary-state";
-import type { RouteBoundarySurface } from "@/lib/route-boundary";
+import {
+  shouldAutoResetOnReconnect,
+  type RouteBoundarySurface,
+} from "@/lib/route-boundary";
 
 type RouteErrorScreenProps = {
   surface: RouteBoundarySurface;
@@ -21,17 +24,35 @@ export function RouteErrorScreen({
   const [online, setOnline] = useState(() =>
     typeof navigator === "undefined" ? true : navigator.onLine
   );
+  const wasOnlineRef = useRef(online);
+  const hasAutoResetRef = useRef(false);
 
   useEffect(() => {
-    const sync = () => setOnline(navigator.onLine);
-    sync();
-    window.addEventListener("online", sync);
-    window.addEventListener("offline", sync);
-    return () => {
-      window.removeEventListener("online", sync);
-      window.removeEventListener("offline", sync);
+    const apply = (nextOnline: boolean) => {
+      if (
+        shouldAutoResetOnReconnect({
+          wasOnline: wasOnlineRef.current,
+          isOnline: nextOnline,
+          hasAutoReset: hasAutoResetRef.current,
+        })
+      ) {
+        hasAutoResetRef.current = true;
+        reset();
+      }
+      wasOnlineRef.current = nextOnline;
+      setOnline(nextOnline);
     };
-  }, []);
+
+    apply(typeof navigator === "undefined" ? true : navigator.onLine);
+    const onOnline = () => apply(true);
+    const onOffline = () => apply(false);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, [reset]);
 
   useEffect(() => {
     if (error.digest) {

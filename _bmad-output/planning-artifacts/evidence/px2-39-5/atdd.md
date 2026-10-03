@@ -14,6 +14,8 @@ Paths: `/e2e-force-error` (root `error.tsx`), `/dashboard/e2e-force-error` (admi
 | --- | --- |
 | Marketing unmatched | `/nope-px2-39-5` → h1 Page not found, Home `/`, one main |
 | Admin unmatched | `/dashboard/nope-px2-39-5` → same h1, Dashboard, one `main#main-content` |
+| Admin entity descendants | `/clients/{id}/extra`, `/activities/{id}/extra`, `/campaigns/{id}/extra`, `/billing/checkout/extra`, `/reports/extra` stay in Workspace nav + `main#main-content` |
+| Offline auto-retry | `setOffline(false)` recovers the force-error idle trigger without clicking Try again |
 | Platform unmatched | `/platform/nope-px2-39-5` → Platform home when console shown; else platform login gate |
 | Forced error | `/dashboard/e2e-force-error` → This screen failed; Retry recovers |
 | Offline | `context.setOffline` on error surface → approved offline sentence |

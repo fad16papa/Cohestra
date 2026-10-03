@@ -52,6 +52,22 @@ async function assertNoSecrets(page: Page): Promise<void> {
   }
 }
 
+async function assertAuthenticatedAdminNotFound(page: Page, route: string): Promise<void> {
+  await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+  await expect(page.getByRole("main")).toHaveCount(1);
+  await expect(page.locator("main#main-content")).toHaveCount(1);
+  await expect(page.getByRole("navigation", { name: "Workspace" })).toBeVisible();
+  await expect(page.locator("#main-content").getByRole("link", { name: "Dashboard" })).toHaveAttribute(
+    "href",
+    "/dashboard"
+  );
+  expect(page.url(), route).not.toContain("/login");
+  await expect(page.getByText("This page isn't in this workspace. Open Dashboard.")).toBeVisible();
+}
+
 test.describe("Story 39.5 — route error and not-found", () => {
   test("404, crash, offline, focus, landmarks, and evidence", async ({ page, request }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
@@ -159,9 +175,8 @@ test.describe("Story 39.5 — route error and not-found", () => {
       path: path.join(evidenceDir, "viewports", "offline-1440.png"),
       fullPage: true,
     });
+    await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
     await page.context().setOffline(false);
-
-    await page.getByRole("button", { name: "Try again" }).click();
     await expect(page.getByTestId("e2e-force-error-trigger")).toBeVisible({ timeout: 15_000 });
 
     await page.emulateMedia({ colorScheme: "dark" });
@@ -176,5 +191,36 @@ test.describe("Story 39.5 — route error and not-found", () => {
       path: path.join(evidenceDir, "viewports", "marketing-404-forced-colors-1440.png"),
       fullPage: true,
     });
+  });
+
+  test("unmatched admin descendants stay inside the authenticated shell", async ({
+    page,
+    request,
+  }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    test.setTimeout(180_000);
+    const session = await loginOperatorSession(request);
+    const probes = [
+      "/clients/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/extra",
+      "/activities/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/extra",
+      "/campaigns/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/extra",
+      "/billing/checkout/extra",
+      "/reports/extra",
+    ] as const;
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    for (const route of probes) {
+      await openAuthed(page, session, route);
+      await waitForOperatorWorkspace(page);
+      await assertAuthenticatedAdminNotFound(page, route);
+      await assertNoSecrets(page);
+    }
+
+    await openAuthed(page, session, "/clients");
+    await waitForOperatorWorkspace(page);
+    await expect(page.getByRole("heading", { level: 1, name: "Clients" })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByRole("heading", { level: 1, name: "Page not found" })).toHaveCount(0);
   });
 });

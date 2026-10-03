@@ -116,3 +116,18 @@ export function isForceErrorBlocked(nodeEnv = process.env.NODE_ENV): boolean {
 }
 
 export const E2E_FORCE_ERROR_MESSAGE = "e2e-forced-route-error";
+
+export type ConnectivityAutoResetInput = {
+  wasOnline: boolean;
+  isOnline: boolean;
+  hasAutoReset: boolean;
+};
+
+/** First offline-to-online transition only. Never on an already-online mount. */
+export function shouldAutoResetOnReconnect({
+  wasOnline,
+  isOnline,
+  hasAutoReset,
+}: ConnectivityAutoResetInput): boolean {
+  return !wasOnline && isOnline && !hasAutoReset;
+}

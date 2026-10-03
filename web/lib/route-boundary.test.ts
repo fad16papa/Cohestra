@@ -18,12 +18,31 @@ vi.mock("next/link", () => ({
   }) => createElement("a", { href, className }, children),
 }));
 
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
+
+function findUnmatchedPages(dir: string): string[] {
+  if (!existsSync(dir)) {
+    return [];
+  }
+
+  const found: string[] = [];
+  for (const entry of readdirSync(dir)) {
+    const full = resolve(dir, entry);
+    if (entry === "[...unmatched]" && existsSync(resolve(full, "page.tsx"))) {
+      found.push(full);
+    }
+    if (statSync(full).isDirectory()) {
+      found.push(...findUnmatchedPages(full));
+    }
+  }
+  return found;
+}
 
 import { RouteBoundaryState } from "@/components/shared/route-boundary-state";
 import { RouteErrorScreen } from "@/components/shared/route-error-screen";
 import {
+  ADMIN_PATH_PREFIXES,
   E2E_FORCE_ERROR_MESSAGE,
   ROUTE_ERROR_COPY,
   ROUTE_ERROR_H1,
@@ -36,6 +55,7 @@ import {
   routeBoundaryOwnsMain,
   routeBoundaryRecovery,
   routeBoundarySurfaceFromPath,
+  shouldAutoResetOnReconnect,
 } from "@/lib/route-boundary";
 
 describe("route boundary copy", () => {
@@ -79,6 +99,44 @@ describe("route boundary copy", () => {
     expect(isForceErrorBlocked("production")).toBe(true);
     expect(isForceErrorBlocked("development")).toBe(false);
     expect(isForceErrorBlocked("test")).toBe(false);
+  });
+
+  it("auto-resets only on the first offline-to-online transition", () => {
+    expect(
+      shouldAutoResetOnReconnect({ wasOnline: true, isOnline: true, hasAutoReset: false })
+    ).toBe(false);
+    expect(
+      shouldAutoResetOnReconnect({ wasOnline: false, isOnline: false, hasAutoReset: false })
+    ).toBe(false);
+    expect(
+      shouldAutoResetOnReconnect({ wasOnline: false, isOnline: true, hasAutoReset: false })
+    ).toBe(true);
+    expect(
+      shouldAutoResetOnReconnect({ wasOnline: false, isOnline: true, hasAutoReset: true })
+    ).toBe(false);
+    expect(
+      shouldAutoResetOnReconnect({ wasOnline: true, isOnline: false, hasAutoReset: false })
+    ).toBe(false);
+  });
+
+  it("covers every admin prefix with a nested unmatched catch-all", () => {
+    const adminRoot = resolve(__dirname, "../app/(admin)");
+    const entityPages = [
+      resolve(adminRoot, "clients/[id]/page.tsx"),
+      resolve(adminRoot, "activities/[id]/page.tsx"),
+      resolve(adminRoot, "activities/communities/[id]/page.tsx"),
+      resolve(adminRoot, "campaigns/[id]/page.tsx"),
+      resolve(adminRoot, "billing/checkout/page.tsx"),
+      resolve(adminRoot, "reports/page.tsx"),
+    ];
+    for (const entityPage of entityPages) {
+      expect(existsSync(entityPage), entityPage).toBe(true);
+    }
+
+    for (const prefix of ADMIN_PATH_PREFIXES) {
+      const folder = resolve(adminRoot, prefix.slice(1));
+      expect(findUnmatchedPages(folder), `${prefix} catch-all`).not.toHaveLength(0);
+    }
   });
 });
 
@@ -154,6 +212,88 @@ describe("RouteBoundaryState", () => {
     expect(rootEl.textContent).not.toContain(E2E_FORCE_ERROR_MESSAGE);
     expect(errorSpy).toHaveBeenCalledWith("route-boundary", "abc123");
     errorSpy.mockRestore();
+  });
+});
+
+describe("RouteErrorScreen connectivity reset", () => {
+  let rootEl: HTMLDivElement;
+  let root: ReturnType<typeof createRoot>;
+
+  function setNavigatorOnline(value: boolean): void {
+    Object.defineProperty(window.navigator, "onLine", {
+      configurable: true,
+      get: () => value,
+    });
+  }
+
+  beforeEach(() => {
+    rootEl = document.createElement("div");
+    document.body.append(rootEl);
+    root = createRoot(rootEl);
+    setNavigatorOnline(true);
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      root.unmount();
+    });
+    rootEl.remove();
+  });
+
+  async function renderScreen(reset: () => void): Promise<void> {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    await act(async () => {
+      root.render(
+        createElement(RouteErrorScreen, {
+          surface: "admin",
+          ownsMain: false,
+          error: Object.assign(new Error("secret-stack-token-tenant"), { digest: "abc123" }),
+          reset,
+        })
+      );
+    });
+    errorSpy.mockRestore();
+  }
+
+  it("does not reset on an initially online mount", async () => {
+    const reset = vi.fn();
+    await renderScreen(reset);
+    expect(rootEl.querySelector("h1")?.textContent).toBe("This screen failed");
+    expect(reset).not.toHaveBeenCalled();
+  });
+
+  it("renders approved offline heading and copy after an offline event", async () => {
+    const reset = vi.fn();
+    await renderScreen(reset);
+    await act(async () => {
+      setNavigatorOnline(false);
+      window.dispatchEvent(new Event("offline"));
+    });
+    expect(rootEl.querySelector("h1")?.textContent).toBe(ROUTE_OFFLINE_H1);
+    expect(rootEl.textContent).toContain(ROUTE_OFFLINE_COPY);
+    expect(rootEl.textContent).not.toContain("secret-stack-token-tenant");
+    expect([...rootEl.querySelectorAll("button")].some((el) => el.textContent === "Try again")).toBe(
+      true
+    );
+    expect(reset).not.toHaveBeenCalled();
+  });
+
+  it("calls reset exactly once on the first offline-to-online transition", async () => {
+    const reset = vi.fn();
+    await renderScreen(reset);
+    await act(async () => {
+      setNavigatorOnline(false);
+      window.dispatchEvent(new Event("offline"));
+    });
+    await act(async () => {
+      setNavigatorOnline(true);
+      window.dispatchEvent(new Event("online"));
+    });
+    expect(reset).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      window.dispatchEvent(new Event("online"));
+    });
+    expect(reset).toHaveBeenCalledTimes(1);
   });
 });
 
