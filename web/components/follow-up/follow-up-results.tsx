@@ -33,7 +33,7 @@ function ResultLink({
   return (
     <Link
       href={`/clients/${client.id}`}
-      aria-label={`Open ${client.fullName}`}
+      aria-label={`Open ${client.fullName}, ${categoryLabel}`}
       className={cn(
         "min-h-11 min-w-11 outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className
@@ -82,7 +82,7 @@ export function FollowUpResults({ results, timeZoneId }: FollowUpResultsProps) {
                 <td className="border-b border-border-warm px-3 py-1.5">
                   <Link
                     href={`/clients/${client.id}`}
-                    aria-label={`Open ${client.fullName}`}
+                    aria-label={`Open ${client.fullName}, ${followUpCategoryLabel(client.category)}`}
                     className="inline-flex min-h-11 min-w-11 items-center gap-3 rounded-sm py-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <PersonAvatar name={client.fullName} size="sm" />

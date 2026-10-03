@@ -12,6 +12,7 @@ import { ListSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
 import { ProductErrorState } from "@/components/shared/product-error-state";
+import { Button } from "@/components/ui/button";
 import { CLIENTS_PATH, DASHBOARD_PATH } from "@/lib/admin-canonical-routes";
 import type { ClientListItem } from "@/lib/clients-api";
 import {
@@ -31,7 +32,7 @@ import {
 
 export function FollowUpPageClient() {
   const { authFetch, status } = useAuth();
-  const { shell } = useTenantShell();
+  const { shell, loading: shellLoading } = useTenantShell();
   const router = useRouter();
   const searchParams = useSearchParams();
   const category = resolveFollowUpCategoryParam(
@@ -74,9 +75,7 @@ export function FollowUpPageClient() {
         setErrorMessage(
           kind === "permission"
             ? "You don’t have access to Follow-up."
-            : loadError instanceof Error && loadError.message.trim()
-              ? loadError.message
-              : "Could not load Follow-up."
+            : "We couldn’t load Follow-up. Your list wasn’t changed. Try again."
         );
         setLoading(false);
       });
@@ -91,18 +90,26 @@ export function FollowUpPageClient() {
     [clients, errorKind, loading, timeZoneId]
   );
   const attentionCount = needsAttentionCount(counts);
-  const categorized = useMemo(
-    () =>
-      clients
-        .map((client) => ({
-          ...client,
-          category: resolveFollowUpCategory(client, timeZoneId),
-        }))
-        .filter((client) => client.category === category),
-    [category, clients, timeZoneId]
-  );
+  const categorized = useMemo(() => {
+    const rows = clients
+      .map((client) => ({
+        ...client,
+        category: resolveFollowUpCategory(client, timeZoneId),
+      }))
+      .filter((client) => client.category === category);
+
+    if (category !== "due-now") {
+      return rows;
+    }
+
+    return [...rows].sort((left, right) => {
+      const leftTime = left.nextFollowUpAt ? Date.parse(left.nextFollowUpAt) : Number.POSITIVE_INFINITY;
+      const rightTime = right.nextFollowUpAt ? Date.parse(right.nextFollowUpAt) : Number.POSITIVE_INFINITY;
+      return leftTime - rightTime;
+    });
+  }, [category, clients, timeZoneId]);
   const listState = classifyFollowUpListState({
-    loading: status !== "authenticated" || loading,
+    loading: status !== "authenticated" || loading || shellLoading,
     errorKind,
     needsAttentionCount: attentionCount,
     selectedCount: categorized.length,
@@ -129,7 +136,7 @@ export function FollowUpPageClient() {
       : undefined;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 md:pb-24">
       <PageHeader title="Follow-up" description={supporting} />
 
       {listState === "loading" ? (
@@ -145,14 +152,23 @@ export function FollowUpPageClient() {
             errorMessage ??
             "We couldn’t load Follow-up. Your list wasn’t changed. Try again."
           }
-          onRetry={() => {
-            setLoading(true);
-            setErrorKind("none");
-            setReloadToken((current) => current + 1);
-          }}
-          retryLabel="Try again"
           backHref={DASHBOARD_PATH}
           backLabel="Back to Dashboard"
+          className="[&_button]:min-h-11 [&_button]:min-w-11 [&_a]:min-h-11 [&_a]:min-w-11"
+          actions={
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 min-w-11"
+              onClick={() => {
+                setLoading(true);
+                setErrorKind("none");
+                setReloadToken((current) => current + 1);
+              }}
+            >
+              Try again
+            </Button>
+          }
         />
       ) : null}
 

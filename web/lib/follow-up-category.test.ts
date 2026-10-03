@@ -218,7 +218,7 @@ describe("follow-up fetch failure classification", () => {
   it("classifies access errors as permission and other failures as recoverable", () => {
     expect(classifyFollowUpFetchFailure(new FollowUpAccessError())).toBe("permission");
     expect(classifyFollowUpFetchFailure(new Error("Request failed (403)"))).toBe(
-      "permission"
+      "recoverable"
     );
     expect(classifyFollowUpFetchFailure(new Error("Could not load Follow-up."))).toBe(
       "recoverable"
@@ -236,6 +236,18 @@ describe("follow-up context captions", () => {
     expect(caption).toMatch(/^Follow-up due · /);
     expect(caption.toLowerCase()).not.toContain("sent");
     expect(caption.toLowerCase()).not.toContain("whatsapp message");
+
+    const quiet = followUpContextCaption(
+      client({
+        leadStatus: "inactive",
+        lastOutreachAt: "2026-09-01T00:00:00.000Z",
+        lastOutreachKind: null,
+      }),
+      "at-risk",
+      "UTC"
+    );
+    expect(quiet.toLowerCase()).not.toContain("never");
+    expect(quiet).toMatch(/^Last recorded outreach · /);
   });
 });
 
@@ -294,5 +306,46 @@ describe("loadFollowUpClients", () => {
   it("throws FollowUpAccessError on 403 and does not keep a partial list", async () => {
     const authFetch = vi.fn(async () => new Response("forbidden", { status: 403 }));
     await expect(loadFollowUpClients(authFetch)).rejects.toBeInstanceOf(FollowUpAccessError);
+  });
+
+  it("fails closed when a later page errors or the unique merge is short", async () => {
+    const first = Array.from({ length: FOLLOW_UP_PAGE_SIZE }, (_, index) => ({
+      id: `ok-${index}`,
+      fullName: `Ok ${index}`,
+      consentGiven: true,
+      leadStatus: "active",
+    }));
+    const authFetch = vi.fn(async (input: string) => {
+      const url = new URL(input, "http://localhost:8080");
+      const page = Number(url.searchParams.get("page"));
+      if (page === 1) {
+        return new Response(
+          JSON.stringify(listBody(first, 1, FOLLOW_UP_PAGE_SIZE + 2)),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        );
+      }
+      return new Response(JSON.stringify({ detail: "Follow-up source unavailable." }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+
+    await expect(loadFollowUpClients(authFetch)).rejects.toThrow(/Request failed \(500\)|unavailable/i);
+
+    const shortPage = vi.fn(async () => {
+      return new Response(
+        JSON.stringify(
+          listBody(
+            [{ id: "only", fullName: "Only", consentGiven: true, leadStatus: "active" }],
+            1,
+            8
+          )
+        ),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    });
+    await expect(loadFollowUpClients(shortPage)).rejects.toThrow(
+      "Could not load the complete Follow-up list."
+    );
   });
 });

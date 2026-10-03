@@ -2,7 +2,7 @@
 id: 40.2
 key: 40-2-follow-up-primary-room
 title: Follow-up primary room
-status: in-progress
+status: review
 epic: 40
 created: 2026-10-03
 baseline_commit: dc9e42f6f283c72b0be290768730bfcbe88b58b4
@@ -10,7 +10,7 @@ baseline_commit: dc9e42f6f283c72b0be290768730bfcbe88b58b4
 
 # Story 40.2: Follow-up primary room
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -87,7 +87,7 @@ See `_bmad-output/planning-artifacts/evidence/px2-40-2/readiness.md`. Dispositio
 - [x] Replace `/follow-up` stub with PageHeader room, filters, honest states (AC 1–3, 6)
 - [x] Cards <768, composition 768–1023, table ≥1024; 44px; no overflow (AC 9)
 - [x] Dashboard continuity unchanged (AC 8)
-- [ ] Playwright 40.2 + protected 38.4–39.5 and 40.1 regressions (AC 7, 10, 11)
+- [x] Playwright 40.2 + protected 38.4–39.5 and 40.1 regressions (AC 7, 10, 11)
 
 ## Dev Notes
 
@@ -205,6 +205,10 @@ Grok 4.6 owns story definition, architecture, product semantics, implementation,
 - `_bmad-output/planning-artifacts/evidence/px2-40-2/readiness.md`
 - `_bmad-output/planning-artifacts/evidence/px2-40-2/category-derivation.md`
 - `_bmad-output/planning-artifacts/evidence/px2-40-2/role-plan-state-matrix.md`
+- `_bmad-output/planning-artifacts/evidence/px2-40-2/checks.md`
+- `_bmad-output/planning-artifacts/evidence/px2-40-2/review.md`
+- `_bmad-output/planning-artifacts/evidence/px2-40-2/security.md`
+- `_bmad-output/planning-artifacts/evidence/px2-40-2/viewports/`
 - `web/app/(admin)/follow-up/page.tsx`
 - `web/components/follow-up/follow-up-category-filters.tsx`
 - `web/components/follow-up/follow-up-page-client.tsx`
@@ -218,3 +222,4 @@ Grok 4.6 owns story definition, architecture, product semantics, implementation,
 
 - 2026-10-03: Created Story 40.2 from main `dc9e42f6`. Inventory and data-contract locked. Readiness READY. Implementation not started.
 - 2026-10-03: Implemented `/follow-up` room over existing clients API + shared resolver. QA pending.
+- 2026-10-03: Review patches — fail-closed paging, status-only permission, wrap chips, FAB clearance, honest error copy. Tracker → review. Draft PR unmerged.

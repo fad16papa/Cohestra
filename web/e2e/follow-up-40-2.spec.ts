@@ -150,7 +150,10 @@ test.describe("Story 40.2 — Follow-up primary room", () => {
       if ((await clientLink.count()) === 0) {
         continue;
       }
-      const name = (await clientLink.getAttribute("aria-label"))?.replace(/^Open /, "") ?? "";
+      const name =
+        (await clientLink.getAttribute("aria-label"))
+          ?.replace(/^Open /, "")
+          .replace(/, (Due now|At risk|Opportunity|Healthy)$/, "") ?? "";
       await clientLink.click();
       await expect(page).toHaveURL(/\/clients\/[^/]+/);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -176,10 +179,21 @@ test.describe("Story 40.2 — Follow-up primary room", () => {
     await filters.getByRole("radio", { name: /Healthy/ }).click();
     expect(page.url()).toBe(healthyHref);
 
-    const dueNow = filters.getByRole("radio", { name: /Due now/ });
-    await dueNow.focus();
-    await expect(dueNow).toBeFocused();
-    const ring = await dueNow.evaluate((node) => window.getComputedStyle(node).boxShadow);
+    await page.getByRole("link", { name: "Skip to main content" }).focus();
+    await page.keyboard.press("Enter");
+    let focusedRole = "";
+    for (let index = 0; index < 16; index += 1) {
+      await page.keyboard.press("Tab");
+      focusedRole = await page.evaluate(() => document.activeElement?.getAttribute("role") ?? "");
+      if (focusedRole === "radio") {
+        break;
+      }
+    }
+    expect(focusedRole).toBe("radio");
+    const ring = await page.evaluate(() => {
+      const node = document.activeElement;
+      return node ? window.getComputedStyle(node).boxShadow : "none";
+    });
     expect(ring).not.toBe("none");
   });
 
@@ -205,6 +219,7 @@ test.describe("Story 40.2 — Follow-up primary room", () => {
       expect(box!.height, `${viewport.name} Due now height`).toBeGreaterThanOrEqual(44);
       expect(box!.width, `${viewport.name} Due now width`).toBeGreaterThanOrEqual(44);
       await expect(dueNow).toHaveText(/Due now/);
+      await expect(page.getByRole("radio", { name: /Healthy/ })).toBeInViewport();
 
       if (viewport.width < 768) {
         const followUpTab = page.getByRole("navigation", { name: "Primary" }).getByRole("link", {
@@ -258,7 +273,7 @@ test.describe("Story 40.2 — Follow-up primary room", () => {
     await assertAxe(page, "global empty");
 
     await page.getByRole("radio", { name: /Healthy/ }).click();
-    await expect(page.getByRole("link", { name: "Open Healthy Example" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Open Healthy Example/ })).toBeVisible();
 
     await page.unroute("**/api/v1/admin/clients**");
     await page.route("**/api/v1/admin/clients**", async (route) => {

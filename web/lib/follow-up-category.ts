@@ -189,16 +189,20 @@ export function classifyFollowUpListState(input: {
 export function classifyFollowUpFetchFailure(
   error: unknown
 ): "permission" | "recoverable" {
-  if (error instanceof FollowUpAccessError) {
-    return "permission";
+  return error instanceof FollowUpAccessError ? "permission" : "recoverable";
+}
+
+function recordedOutreachCaption(client: ClientListItem): string {
+  if (!client.lastOutreachAt) {
+    return "No recorded outreach";
   }
-  if (
-    error instanceof Error &&
-    /\b(401|403|unauthorized|forbidden|not authorized)\b/i.test(error.message)
-  ) {
-    return "permission";
+
+  const caption = formatLastOutreachCaption(client);
+  if (caption === "Never") {
+    return `Last recorded outreach · ${formatNextFollowUpDate(client.lastOutreachAt)}`;
   }
-  return "recoverable";
+
+  return `Last recorded outreach · ${caption}`;
 }
 
 export function followUpContextCaption(
@@ -216,9 +220,7 @@ export function followUpContextCaption(
   }
 
   if (category === "at-risk") {
-    return client.lastOutreachAt
-      ? `Last recorded outreach · ${formatLastOutreachCaption(client)}`
-      : "No recorded outreach";
+    return recordedOutreachCaption(client);
   }
 
   if (category === "opportunity") {
@@ -231,7 +233,7 @@ export function followUpContextCaption(
   }
 
   if (client.lastOutreachAt) {
-    return `Last recorded outreach · ${formatLastOutreachCaption(client)}`;
+    return recordedOutreachCaption(client);
   }
   return client.lastActivityName
     ? formatLastActivityCaption(client)
@@ -266,10 +268,14 @@ export async function loadFollowUpClients(
     }
 
     totalCount = result.totalCount;
-    if (result.items.length < FOLLOW_UP_PAGE_SIZE) {
+    if (result.items.length < result.pageSize) {
       break;
     }
     page += 1;
+  }
+
+  if (merged.size < totalCount) {
+    throw new Error("Could not load the complete Follow-up list.");
   }
 
   return Array.from(merged.values());

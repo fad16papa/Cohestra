@@ -35,7 +35,7 @@ export function FollowUpCategoryFilters({
         ref={groupRef}
         role="radiogroup"
         aria-label="Follow-up category"
-        className="flex min-w-0 gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1.5"
+        className="flex min-w-0 flex-wrap gap-2"
       >
         {FOLLOW_UP_CATEGORY_OPTIONS.map((option, index) => {
           const selected = value === option.value;
@@ -50,11 +50,17 @@ export function FollowUpCategoryFilters({
               aria-checked={selected}
               tabIndex={selected ? 0 : -1}
               onKeyDown={(event) => {
-                if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
+                if (
+                  event.key !== "ArrowRight" &&
+                  event.key !== "ArrowLeft" &&
+                  event.key !== "ArrowDown" &&
+                  event.key !== "ArrowUp"
+                ) {
                   return;
                 }
                 event.preventDefault();
-                const delta = event.key === "ArrowRight" ? 1 : -1;
+                const delta =
+                  event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
                 const next =
                   FOLLOW_UP_CATEGORY_OPTIONS[
                     (index + delta + FOLLOW_UP_CATEGORY_OPTIONS.length) %
