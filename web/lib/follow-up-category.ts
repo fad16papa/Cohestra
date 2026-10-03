@@ -370,8 +370,8 @@ export async function loadFollowUpPage(
   const requestedPage = input.page ?? FOLLOW_UP_DEFAULT_PAGE;
   if (
     items.length === 0 &&
-    result.totalCount > 0 &&
-    requestedPage <= FOLLOW_UP_DEFAULT_PAGE
+    requestedPage <= FOLLOW_UP_DEFAULT_PAGE &&
+    (result.totalCount > 0 || counts[input.category] > 0)
   ) {
     throw new Error("Follow-up page was empty while category totals were non-zero.");
   }

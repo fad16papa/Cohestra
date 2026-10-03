@@ -241,3 +241,4 @@ Grok 4.6 owns story definition, architecture, product semantics, implementation,
 - 2026-10-03: Review patches — fail-closed paging, status-only permission, wrap chips, FAB clearance, honest error copy. Tracker → review. Draft PR unmerged.
 - 2026-10-03: PO Direct Adjustment — retract client fan-out. Server `followUpCategory` + totals + Id tie-break. Isolated 101-row identical-sort integration. Room fetches one page. Draft PR #369 unmerged. Status remains review. 40.3 not started.
 - 2026-10-03: Independent review on `8c4af64b` — patched BH-01 empty-page honesty (`CountAsync` + step-back / fail-closed). Tracker → review.
+- 2026-10-03: Four-layer re-review on `c835a30d`. ADV-1 empty-populated (chip>0 / totalCount=0 / empty items) fail-closed. Tracker remains review. 40.3 not started.

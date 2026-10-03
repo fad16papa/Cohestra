@@ -1,32 +1,33 @@
 # Story 40.2 test results
 
 Date: 2026-10-03  
-HEAD at run: post-review patch after `8c4af64b` (commit immediately after this note)  
+HEAD at run: working tree after ADV-1 empty-populated fail-closed (commit immediately after this note)  
 Env: `E2E_LIVE_STACK=1 PUBLIC_BASE_URL=http://localhost:3000 E2E_API_BASE_URL=http://localhost:8080`
 
 ## Commands
 
 | Gate | Result |
 | --- | --- |
-| Affected backend unit (`ClientService` + Follow-up category) | **15 passed** (`ClientServiceFollowUpCategoryTests` 6/6) |
+| Affected backend unit (`ClientServiceFollowUpCategory` + list) | **13 passed** (Follow-up category 6/6) |
 | Affected API integration (`FollowUpClientsListIntegrationTests`) | **6/6 passed** — isolated-tenant contract + 101-row identical `CreatedAt` registrations |
-| Affected Follow-up Vitest | **21 passed** |
+| Affected Follow-up Vitest | **21 passed** (includes empty page 1 + chip drift fail-closed) |
 | Full Vitest | **578 passed** / 89 files |
 | `npx tsc --noEmit` | pass |
 | Targeted ESLint on 40.2 files | pass (0 errors) |
-| `next build` (production) | pass; `/follow-up` prerenders |
-| Story 40.2 Playwright | **7/7 passed** after one D retry of 43.999px Due now chip (assertion not weakened) |
-| Protected 38.4–39.5 + 40.1 Playwright | **27/28 passed**; 39.4 WhatsApp 43.999px failed twice, classified D, assertion not weakened |
+| Story 40.2 Playwright | **7/7 passed** first try |
+| Protected 38.4–39.5 + 40.1 Playwright | **27/28 passed**; 39.4 43.999px on WhatsApp 768 then lead-status; assertion unchanged; classified D |
 
-## Backend contract coverage
+## Required contract confirmation
 
-- Category first-match filter + totals (Due now / At risk / Opportunity / Healthy)
-- Totals tenant-scoped; Healthy excluded from needs-attention
-- TenantMember can read Follow-up query
-- Anonymous 401; PlatformAdmin denied; foreign-tenant rows absent
-- 101 clients with identical non-null `LastRegistrationAt` page without duplicates/omissions; page 1/2 stable on repeat
-- Clients list without `followUpCategory` omits `followUpCategoryCounts`
-- Invalid category → 400; page `< 1` → 1; pageSize `500` → 100
+| Contract | Proof |
+| --- | --- |
+| Deterministic paging | Integration 101 identical registrations: 100+1, no overlap, full union, page 1/2 replay |
+| Category totals | Isolated tenant exact 2/1/2/1; Healthy excluded from needs-attention (5) |
+| Duplicate-ID failure | Vitest `loadFollowUpPage` throws on duplicate ids |
+| Empty populated fail-closed | Vitest: empty page 1 + `totalCount>0`; empty page 1 + `totalCount=0` + chip 8 |
+| Member access | Integration TenantMember 200 + counts; Playwright member room |
+| Tenant isolation | Foreign Due-now id absent; PlatformAdmin 401/403; Playwright two-tenant ids |
+| Legacy clients list | No `followUpCategory` ⇒ `FollowUpCategoryCounts` null; status counts unchanged |
 
 ## Playwright 40.2
 
@@ -44,11 +45,11 @@ Env: `E2E_LIVE_STACK=1 PUBLIC_BASE_URL=http://localhost:3000 E2E_API_BASE_URL=ht
 
 | Item | Class | Note |
 | --- | --- | --- |
-| 39.4 43.999px WhatsApp height | D | Failed twice on this run. **Assertion not weakened.** Known sub-pixel flake from 40.1 close; not introduced by Follow-up paging. |
+| 39.4 43.999px | D | First: Client WhatsApp 768 height `43.999992`. Retry: Client profile lead status height `43.999992`. Spec unedited (`toBeGreaterThanOrEqual(44)`). Not weakened. |
 | DigitalOcean empty SSH | C | Out of scope; not claimed. |
 | ClientDedup phone-hex | pre-existing flake | Not in this suite. |
 | Dashboard vs room Due now helper residual | documented | Server `followUpDue` vs client `isFollowUpDue`; do not import cinema. |
-| Computing four totals still scans the tenant in one HTTP call | accepted architecture | Required for truthful chips. Not 50 sequential page fetches. |
+| Computing four totals still scans the tenant in one HTTP call | accepted architecture | Required chip contract. Not 50 sequential page fetches. |
 
 ## Composer 2.5
 

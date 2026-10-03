@@ -449,6 +449,23 @@ describe("loadFollowUpPage", () => {
       "Follow-up page was empty while category totals were non-zero."
     );
 
+    const emptyFirstPageChipDrift = vi.fn(async () => {
+      return new Response(
+        JSON.stringify(
+          listBody([], 1, 0, {
+            dueNowCount: 0,
+            atRiskCount: 0,
+            opportunityCount: 0,
+            healthyCount: 8,
+          })
+        ),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    });
+    await expect(
+      loadFollowUpPage(emptyFirstPageChipDrift, { category: "healthy", page: 1 })
+    ).rejects.toThrow("Follow-up page was empty while category totals were non-zero.");
+
     const failed = vi.fn(async () => {
       return new Response(JSON.stringify({ detail: "Follow-up source unavailable." }), {
         status: 500,
