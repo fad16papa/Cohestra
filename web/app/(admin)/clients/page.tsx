@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { ClientsListPage } from "@/components/clients/clients-list-page";
+import { PageHeader } from "@/components/shared/page-header";
 
 function ClientsPageContent() {
   const searchParams = useSearchParams();
@@ -17,8 +18,7 @@ export default function ClientsPage() {
     <Suspense
       fallback={
         <div className="space-y-2">
-          <h1 className="text-display-sm text-text-warm">Clients</h1>
-          <p className="text-sm text-text-muted-warm">Loading clients…</p>
+          <PageHeader title="Clients" description="Loading clients…" />
         </div>
       }
     >

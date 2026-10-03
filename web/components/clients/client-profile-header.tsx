@@ -6,6 +6,7 @@ import { CalendarClock, Check, Mail, Phone } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import { MessengerOpenConfirmDialog } from "@/components/clients/messenger-open-confirm-dialog";
+import { PageHeader } from "@/components/shared/page-header";
 import { PersonAvatar } from "@/components/shared/person-avatar";
 import {
   ViberBrandIcon,
@@ -162,102 +163,103 @@ export function ClientProfileHeader({
   return (
     <section className="rounded-2xl border border-border-warm bg-card p-5 shadow-sm sm:p-6">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-        <div className="flex min-w-0 items-start gap-4">
+        <div className="flex min-w-0 flex-1 items-start gap-4">
           <PersonAvatar name={client.fullName} size="lg" />
-          <div className="min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="truncate text-display-sm text-text-warm">
-                {client.fullName}
-              </h1>
-              <LeadStatusBadge status={client.leadStatus} />
-              {followUpDue ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-surface-warning px-2 py-0.5 text-xs font-medium text-text-warning">
-                  <CalendarClock className="size-3" aria-hidden />
-                  Follow-up due
-                </span>
-              ) : null}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-text-muted-warm">
-              {phoneLabel ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <Phone className="size-3.5 shrink-0" aria-hidden />
-                  <span className="tabular-nums">{phoneLabel}</span>
-                </span>
-              ) : null}
-              {client.email ? (
-                <span className="inline-flex min-w-0 items-center gap-1.5">
-                  <Mail className="size-3.5 shrink-0" aria-hidden />
-                  <span className="truncate">{client.email}</span>
-                </span>
-              ) : null}
-              {!phoneLabel && !client.email ? (
-                <span>No contact info on file</span>
-              ) : null}
-              {client.nextFollowUpAt ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <CalendarClock className="size-3.5 shrink-0" aria-hidden />
-                  Next follow-up{" "}
-                  {formatNextFollowUpDate(client.nextFollowUpAt, timeZoneId)}
-                </span>
-              ) : null}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            size="sm"
-            disabled={!hasPhone || busy}
-            title={hasPhone ? undefined : "Add a phone number to message"}
-            onClick={() => setConfirmChannel("whatsapp")}
-            className="gap-1.5 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
-          >
-            <WhatsAppBrandIcon className="size-3.5" />
-            WhatsApp
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={!hasPhone || busy}
-            title={hasPhone ? undefined : "Add a phone number to message"}
-            onClick={() => setConfirmChannel("viber")}
-            className="gap-1.5 bg-viber text-viber-foreground hover:bg-viber/90"
-          >
-            <ViberBrandIcon className="size-3.5" />
-            Viber
-          </Button>
-          {client.leadStatus === "new" ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => void handleMarkContacted()}
-            >
-              <Check className="size-3.5" aria-hidden />
-              Mark contacted
-            </Button>
-          ) : null}
-          <label htmlFor="client-lead-status" className="sr-only">
-            Lead status
-          </label>
-          <select
-            id="client-lead-status"
-            value={client.leadStatus}
-            disabled={statusSaving}
-            onChange={(event) => {
-              void handleStatusChange(event.target.value as LeadStatus);
-            }}
-            className="flex h-8 rounded-lg border border-input bg-background px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-          >
-            {leadStatusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <PageHeader
+            className="min-w-0 flex-1"
+            eyebrow="Client"
+            title={client.fullName}
+            description={
+              <>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <LeadStatusBadge status={client.leadStatus} />
+                  {followUpDue ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-surface-warning px-2 py-0.5 text-xs font-medium text-text-warning">
+                      <CalendarClock className="size-3" aria-hidden />
+                      Follow-up due
+                    </span>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  {phoneLabel ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Phone className="size-3.5 shrink-0" aria-hidden />
+                      <span className="tabular-nums">{phoneLabel}</span>
+                    </span>
+                  ) : null}
+                  {client.email ? (
+                    <span className="inline-flex min-w-0 items-center gap-1.5">
+                      <Mail className="size-3.5 shrink-0" aria-hidden />
+                      <span className="truncate">{client.email}</span>
+                    </span>
+                  ) : null}
+                  {!phoneLabel && !client.email ? (
+                    <span>No contact info on file</span>
+                  ) : null}
+                  {client.nextFollowUpAt ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <CalendarClock className="size-3.5 shrink-0" aria-hidden />
+                      Next follow-up{" "}
+                      {formatNextFollowUpDate(client.nextFollowUpAt, timeZoneId)}
+                    </span>
+                  ) : null}
+                </div>
+              </>
+            }
+            actions={
+              <>
+                <Button
+                  type="button"
+                  disabled={!hasPhone || busy}
+                  title={hasPhone ? undefined : "Add a phone number to message"}
+                  onClick={() => setConfirmChannel("whatsapp")}
+                  className="gap-1.5 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                >
+                  <WhatsAppBrandIcon className="size-3.5" />
+                  WhatsApp
+                </Button>
+                <Button
+                  type="button"
+                  disabled={!hasPhone || busy}
+                  title={hasPhone ? undefined : "Add a phone number to message"}
+                  onClick={() => setConfirmChannel("viber")}
+                  className="gap-1.5 bg-viber text-viber-foreground hover:bg-viber/90"
+                >
+                  <ViberBrandIcon className="size-3.5" />
+                  Viber
+                </Button>
+                {client.leadStatus === "new" ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={() => void handleMarkContacted()}
+                  >
+                    <Check className="size-3.5" aria-hidden />
+                    Mark contacted
+                  </Button>
+                ) : null}
+                <label htmlFor="client-lead-status" className="sr-only">
+                  Lead status
+                </label>
+                <select
+                  id="client-lead-status"
+                  value={client.leadStatus}
+                  disabled={statusSaving}
+                  onChange={(event) => {
+                    void handleStatusChange(event.target.value as LeadStatus);
+                  }}
+                  className="flex min-h-11 rounded-lg border border-input bg-background px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                >
+                  {leadStatusOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </>
+            }
+          />
         </div>
       </div>
 

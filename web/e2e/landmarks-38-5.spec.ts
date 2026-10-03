@@ -501,7 +501,7 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
     await expect(
       page.getByRole("heading", { name: /unlock a branded public homepage/i })
     ).toBeVisible({ timeout: 30_000 });
-    await assertOneMainOneH1(page, "Website");
+    await assertOneMainOneH1(page, "Website Studio");
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "website-basic-lock-1440x900.png"),
       fullPage: true,

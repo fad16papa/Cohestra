@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/shared/page-header";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { PlanBadge } from "@/components/shell/plan-badge";
 import { SponsoredBadge } from "@/components/shell/sponsored-badge";
@@ -8,18 +9,14 @@ export function SettingsPageHeader() {
   const { shell } = useTenantShell();
 
   return (
-    <header className="space-y-3">
-      <div className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-[0.14em] text-text-muted-warm">
-          Workspace
-        </p>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h1 className="font-heading text-xl font-semibold tracking-tight text-text-warm sm:text-2xl">
-            Settings
-          </h1>
+    <PageHeader
+      eyebrow="Workspace"
+      title="Settings"
+      description={
+        <>
           {shell ? (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <p className="text-sm font-medium text-text-warm">{shell.tenantName}</p>
+            <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium text-text-warm">
+              <p>{shell.tenantName}</p>
               <PlanBadge plan={shell.plan} />
               {shell.billingStatus && shell.billingStatus !== "Free" ? (
                 <span className="inline-flex items-center rounded-full border border-border-control bg-background px-2.5 py-0.5 text-xs font-medium text-foreground">
@@ -29,12 +26,12 @@ export function SettingsPageHeader() {
               {shell.isComplimentary ? <SponsoredBadge /> : null}
             </div>
           ) : null}
-        </div>
-      </div>
-      <p className="max-w-3xl text-sm leading-relaxed text-text-muted-warm">
-        Use the section list to navigate settings. Workspace admins can manage branding,
-        limits, and organization preferences from the panels below.
-      </p>
-    </header>
+          <p className="max-w-3xl leading-relaxed text-text-muted-warm">
+            Use the section list to navigate settings. Workspace admins can manage branding,
+            limits, and organization preferences from the panels below.
+          </p>
+        </>
+      }
+    />
   );
 }

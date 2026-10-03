@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
+import { PageHeader } from "@/components/shared/page-header";
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
 import { ProductErrorState } from "@/components/shared/product-error-state";
 
@@ -20,10 +21,12 @@ type CanonicalRoomStubProps = {
 
 export function CanonicalRoomLoading({ title }: { title: string }) {
   return (
-    <div className="space-y-4" role="status" aria-live="polite">
-      <h1 className="text-display-sm text-text-warm">{title}</h1>
-      <p className="text-sm text-text-muted-warm">Loading {title}…</p>
-      <div className="h-40 animate-pulse rounded-2xl bg-muted" />
+    <div className="space-y-4">
+      <PageHeader title={title} />
+      <div role="status" aria-live="polite">
+        <p className="text-sm text-text-muted-warm">Loading {title}…</p>
+        <div className="mt-4 h-40 animate-pulse rounded-2xl bg-muted" />
+      </div>
     </div>
   );
 }
@@ -47,7 +50,7 @@ export function CanonicalRoomStub({
   if (state === "error") {
     return (
       <div className="space-y-6">
-        <h1 className="text-display-sm text-text-warm">{title}</h1>
+        <PageHeader title={title} />
         <ProductErrorState
           message={errorMessage}
           backHref={primaryHref}
@@ -59,7 +62,7 @@ export function CanonicalRoomStub({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-display-sm text-text-warm">{title}</h1>
+      <PageHeader title={title} />
       <ProductEmptyState
         icon={icon}
         title={emptyTitle}

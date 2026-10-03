@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { PageHeader } from "@/components/shared/page-header";
 import { getDisplayNameFromEmail } from "@/lib/display-name";
 
 function formatTodayLabel(): string {
@@ -38,22 +39,26 @@ export function DashboardGreetingHeader() {
         aria-hidden
         className="pointer-events-none absolute -bottom-16 left-1/3 size-40 rounded-full bg-accent/10 blur-3xl"
       />
-      <div className="relative flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-display-sm text-text-warm">Dashboard</h1>
-          <p className="mt-1 text-sm font-medium text-text-link">{formatTodayLabel()}</p>
-          <p className="mt-1 text-lg font-medium text-text-warm sm:text-xl">
-            {getGreeting()}, {displayName}
-          </p>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-text-muted-warm">
-            Your outreach cockpit — see what needs attention, then act in one click.
-            Press{" "}
-            <kbd className="rounded border border-border-warm bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium">
-              ⌘K
-            </kbd>{" "}
-            anytime to jump anywhere.
-          </p>
-        </div>
+      <div className="relative">
+        <PageHeader
+          title="Dashboard"
+          description={
+            <>
+              <p className="text-sm font-medium text-text-link">{formatTodayLabel()}</p>
+              <p className="text-lg font-medium text-text-warm sm:text-xl">
+                {getGreeting()}, {displayName}
+              </p>
+              <p className="max-w-xl text-sm leading-relaxed text-text-muted-warm">
+                Your outreach cockpit — see what needs attention, then act in one click.
+                Press{" "}
+                <kbd className="rounded border border-border-warm bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium">
+                  ⌘K
+                </kbd>{" "}
+                anytime to jump anywhere.
+              </p>
+            </>
+          }
+        />
       </div>
     </section>
   );

@@ -9,6 +9,7 @@ import { EmailComposer, isEmailComposerEmpty } from "@/components/campaigns/emai
 import { EmailPreviewDialog } from "@/components/campaigns/email-preview-dialog";
 import { SegmentPicker } from "@/components/campaigns/segment-picker";
 import { EmailDeliveryChecklist } from "@/components/campaigns/email-delivery-checklist";
+import { PageHeader } from "@/components/shared/page-header";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -370,17 +371,18 @@ export function CampaignComposePage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/campaigns"
-          className="text-sm text-text-muted-warm motion-press hover:text-text-warm"
-        >
-          ← Back to campaigns
-        </Link>
-        <h1 className="mt-3 text-display-sm text-text-warm">Compose campaign</h1>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Choose recipients, write your message, and send to consented leads with
-          email on file.
-        </p>
+        <PageHeader
+          eyebrow={
+            <Link
+              href="/campaigns"
+              className="text-sm font-medium normal-case tracking-normal text-text-muted-warm motion-press hover:text-text-warm"
+            >
+              ← Back to campaigns
+            </Link>
+          }
+          title="Compose campaign"
+          description="Choose recipients, write your message, and send to consented leads with email on file."
+        />
       </div>
 
       <EmailDeliveryChecklist />

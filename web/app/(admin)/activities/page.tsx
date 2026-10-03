@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { ActivitiesListPage } from "@/components/activities/activities-list-page";
+import { PageHeader } from "@/components/shared/page-header";
 
 function ActivitiesPageContent() {
   const searchParams = useSearchParams();
@@ -17,8 +18,7 @@ export default function ActivitiesPage() {
     <Suspense
       fallback={
         <div className="space-y-2">
-          <h1 className="text-display-sm text-text-warm">Activities</h1>
-          <p className="text-sm text-text-muted-warm">Loading activities…</p>
+          <PageHeader title="Activities" description="Loading activities…" />
         </div>
       }
     >

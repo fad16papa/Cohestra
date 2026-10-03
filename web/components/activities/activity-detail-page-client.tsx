@@ -19,6 +19,7 @@ import { ActivityStatusBadge } from "@/components/activities/activity-status-bad
 import { useActivityScheduleConflicts } from "@/components/activities/use-activity-schedule-conflicts";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useAdminPageMeta } from "@/components/layouts/admin-shell-context";
+import { PageHeader } from "@/components/shared/page-header";
 import { ProductErrorState } from "@/components/shared/product-error-state";
 import { fetchActivityById, type Activity, type RegistrationTheme } from "@/lib/activities-api";
 import { themeFromActivity } from "@/lib/registration-preview-theme";
@@ -135,7 +136,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     return (
       <div className="space-y-4">
         <ActivityBackLink />
-        <h1 className="text-display-sm text-text-warm">Activity</h1>
+        <PageHeader title="Activity" />
         <ProductErrorState
           message={loadError}
           onRetry={() => window.location.reload()}
@@ -150,8 +151,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     return (
       <div className="space-y-4">
         <ActivityBackLink />
-        <h1 className="text-display-sm text-text-warm">Activity</h1>
-        <p className="text-sm text-text-muted-warm">Loading activity…</p>
+        <PageHeader title="Activity" description="Loading activity…" />
       </div>
     );
   }
@@ -168,20 +168,20 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     <div className="space-y-6">
       <ActivityBackLink />
 
-      <div className="flex flex-col items-start gap-3 sm:flex-row sm:justify-between">
-        <div>
-          <h1 className="text-display-sm text-text-warm">{activity.name}</h1>
-          <p className="mt-1 text-sm text-text-muted-warm">
-            {activity.communityLabel} · {activity.category}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 self-start">
-          <ActivityStatusBadge status={activity.status} className="shrink-0" />
-          {activity.status === "published" && !activity.isRegistrationOpen ? (
-            <ActivityPastDueBadge />
-          ) : null}
-        </div>
-      </div>
+      <PageHeader
+        title={activity.name}
+        description={
+          <div className="flex flex-wrap items-center gap-2">
+            <p>
+              {activity.communityLabel} · {activity.category}
+            </p>
+            <ActivityStatusBadge status={activity.status} className="shrink-0" />
+            {activity.status === "published" && !activity.isRegistrationOpen ? (
+              <ActivityPastDueBadge />
+            ) : null}
+          </div>
+        }
+      />
 
       {conflictError ? (
         <p role="status" className="text-sm text-text-muted-warm">
