@@ -212,3 +212,8 @@ export function isCoreOrAbove(plan: string | null | undefined): boolean {
 export function isBasicPlan(plan: string | null | undefined): boolean {
   return plan === "Basic";
 }
+
+export function isPaidTenantPlan(plan: string | null | undefined): boolean {
+  const known = recognizedTenantPlan(plan);
+  return known !== null && known !== "Basic";
+}

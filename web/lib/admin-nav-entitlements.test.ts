@@ -4,6 +4,7 @@ import {
   entitlementContextFromShell,
   isCustomDomainSettingsVisible,
   navItemAccessibleName,
+  resolveBillingSettingsAccess,
   resolveFooterItems,
   resolveHrefEntitlement,
   resolveNavEntitlement,
@@ -121,6 +122,67 @@ describe("Story 39.3 nav entitlement matrix", () => {
     expectState("billing", admin("Core", false), "hidden", null, "hidden");
     expectState("billing", admin("Pro", false), "hidden", null, "hidden");
     expectState("billing", admin("Pro", true), "unlocked", null, "content");
+    expectState("billing", admin("Enterprise", false), "hidden", null, "hidden");
+    expectState("billing", admin("Enterprise", true), "unlocked", null, "content");
+  });
+
+  it("keeps Enterprise billing owner-managed for non-owners and content for owners", () => {
+    expect(
+      resolveBillingSettingsAccess({
+        plan: "Enterprise",
+        isTenantAdmin: true,
+        isBillingOwner: false,
+      })
+    ).toBe("owner-managed");
+    expect(
+      resolveBillingSettingsAccess({
+        plan: "Enterprise",
+        isTenantAdmin: true,
+        isBillingOwner: true,
+      })
+    ).toBe("content");
+    expect(
+      resolveBillingSettingsAccess({
+        plan: "Core",
+        isTenantAdmin: true,
+        isBillingOwner: false,
+      })
+    ).toBe("owner-managed");
+    expect(
+      resolveBillingSettingsAccess({
+        plan: "Pro",
+        isTenantAdmin: true,
+        isBillingOwner: false,
+      })
+    ).toBe("owner-managed");
+    expect(
+      resolveBillingSettingsAccess({
+        plan: "Basic",
+        isTenantAdmin: true,
+        isBillingOwner: false,
+      })
+    ).toBe("content");
+    expect(
+      resolveBillingSettingsAccess({
+        plan: null,
+        isTenantAdmin: true,
+        isBillingOwner: false,
+      })
+    ).toBe("content");
+    expect(
+      resolveBillingSettingsAccess({
+        plan: "Platinum",
+        isTenantAdmin: true,
+        isBillingOwner: false,
+      })
+    ).toBe("content");
+    expect(
+      resolveBillingSettingsAccess({
+        plan: "Enterprise",
+        isTenantAdmin: false,
+        isBillingOwner: false,
+      })
+    ).toBe("denied");
   });
 
   it("hides custom domain except for Enterprise admins", () => {

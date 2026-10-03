@@ -6,7 +6,7 @@ import {
   type NavLockState,
   type NavRequiredPlan,
 } from "@/lib/admin-nav-entitlements";
-import { parseTenantShell, recognizedTenantPlan } from "@/lib/shell/tenant-shell-api";
+import { isPaidTenantPlan, parseTenantShell, recognizedTenantPlan } from "@/lib/shell/tenant-shell-api";
 
 function resolveFromRaw(
   raw: Record<string, unknown>,
@@ -84,5 +84,11 @@ describe("parseTenantShell → entitlementContextFromShell → resolveNavEntitle
     expect(recognizedTenantPlan("Core")).toBe("Core");
     expect(recognizedTenantPlan("Pro")).toBe("Pro");
     expect(recognizedTenantPlan("Enterprise")).toBe("Enterprise");
+    expect(isPaidTenantPlan(null)).toBe(false);
+    expect(isPaidTenantPlan("Platinum")).toBe(false);
+    expect(isPaidTenantPlan("Basic")).toBe(false);
+    expect(isPaidTenantPlan("Core")).toBe(true);
+    expect(isPaidTenantPlan("Pro")).toBe(true);
+    expect(isPaidTenantPlan("Enterprise")).toBe(true);
   });
 });

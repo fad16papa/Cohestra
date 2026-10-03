@@ -5,7 +5,12 @@ import {
   SETTINGS_TEAM_PATH,
   WEBSITE_PATH,
 } from "@/lib/admin-canonical-routes";
-import { isCoreOrAbove, isProPlan, recognizedTenantPlan } from "@/lib/shell/tenant-shell-api";
+import {
+  isCoreOrAbove,
+  isPaidTenantPlan,
+  isProPlan,
+  recognizedTenantPlan,
+} from "@/lib/shell/tenant-shell-api";
 
 export type NavLockState = "pending" | "unlocked" | "locked" | "hidden";
 export type NavRequiredPlan = "Core" | "Pro";
@@ -262,4 +267,22 @@ export function resolveFooterItems(ctx: NavEntitlementContext): FooterNavItem[] 
 
 export function isCustomDomainSettingsVisible(ctx: NavEntitlementContext): boolean {
   return resolveNavEntitlement("custom-domain", ctx).state === "unlocked";
+}
+
+export type BillingSettingsAccess = "denied" | "owner-managed" | "content";
+
+export function resolveBillingSettingsAccess(ctx: {
+  plan: string | null | undefined;
+  isTenantAdmin: boolean | null | undefined;
+  isBillingOwner: boolean | null | undefined;
+}): BillingSettingsAccess {
+  if (ctx.isTenantAdmin !== true) {
+    return "denied";
+  }
+
+  if (isPaidTenantPlan(ctx.plan) && ctx.isBillingOwner !== true) {
+    return "owner-managed";
+  }
+
+  return "content";
 }

@@ -80,6 +80,7 @@ See `_bmad-output/planning-artifacts/evidence/px2-39-3/atdd.md`.
 - [x] [AI-Review][PO] Boundary tests: `parseTenantShell` → `entitlementContextFromShell` → `resolveNavEntitlement`
 - [x] [AI-Review][PO] Campaigns API plan denial asserts `feature` and `requiredPlan = Pro`
 - [x] [AI-Review][PO] Basic admin Team shows Core UpgradePanel; Basic member Campaigns is ask-admin with no checkout
+- [x] [AI-Review][PO][MAJOR] Enterprise non-owner admins stay on owner-managed billing and never mount InAppBillingPanel
 
 ## Dev Notes
 
@@ -168,6 +169,8 @@ PO pre-merge review of HEAD `7b046629` reopened one MAJOR: `parseTenantShell()` 
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/viewports/`
 - `web/lib/admin-nav-entitlements.ts`
 - `web/lib/admin-nav-entitlements.test.ts`
+- `web/lib/settings-billing-page-content.test.ts`
+- `web/lib/in-app-billing-panel.test.ts`
 - `web/lib/shell/tenant-shell-api.ts`
 - `web/lib/shell/tenant-shell-entitlement-boundary.test.ts`
 - `web/lib/plan-entitlement.test.ts`
