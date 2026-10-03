@@ -2,15 +2,16 @@
 id: 39.4
 key: 39-4-page-header-hierarchy
 title: Page-header hierarchy
-status: in-progress
+status: done
 epic: 39
 created: 2026-10-03
 baseline_commit: 2b7cf2faa574b998ad972cb56aae84b2fcd55079
+accepted_commit: d8c6213c05b5032365c017617ba61a1cee11e56e
 ---
 
 # Story 39.4: Page-header hierarchy
 
-Status: in-progress
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -133,6 +134,7 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - Independent review: no unresolved BLOCKER/MAJOR.
 - Story remains in-progress pending PO pre-merge review. Story 39.5 not started.
 - PO correction: selects are 44×44; Playwright measures rendered boxes; Axe contrast stays enabled; Form Studio preview boundary is asserted.
+- ACCEPTED/CLOSED. PO PASS at exactly `d8c6213c`. Merged as `e02f0e2e` (PR #363). Required main CI `37111733890` 5/5 success. Epic 39 remains in-progress. Story 39.5 was not started.
 
 ### File List
 
@@ -157,9 +159,12 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - `web/lib/page-header.test.ts`
 - `web/e2e/page-header-39-4.spec.ts`
 - `web/e2e/landmarks-38-5.spec.ts`
+- `_bmad-output/planning-artifacts/evidence/px2-39-4/post-merge.md`
+- `_bmad-output/implementation-artifacts/deferred-work.md`
 
 ### Change Log
 
 - 2026-10-03: Created Story 39.4 from main `2b7cf2fa` (39.3 tracker-close). Canonical D19 + 38.5 one-h1. Story 39.5 not started.
 - 2026-10-03: Implemented shared PageHeader and adopted inventory. Draft PR for PO review.
 - 2026-10-03: PO correction — select `min-w-11`, rendered 44×44 proofs, Form Studio boundary, Axe with contrast enabled.
+- 2026-10-03: PR #363 merged as `e02f0e2e` (implementation HEAD `d8c6213c`). Required main CI `37111733890` 5/5 success. Post-merge smoke: PageHeader Vitest 3/3; Playwright 21/21 (page-header-39-4, landmarks-38-5, a11y-38-4, tokens-38-4, overlays-38-6, desktop-shell-39-1, mobile-nav-39-2, entitlement-visibility-39-3). ACCEPTED/CLOSED. Epic 39 remains in-progress. Story 39.5 not started.

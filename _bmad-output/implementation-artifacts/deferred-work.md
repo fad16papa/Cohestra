@@ -1,3 +1,9 @@
+## Deferred from: story 39.4 close on main `e02f0e2e` (2026-10-03)
+
+PR #363 merged. PO accepted implementation HEAD `d8c6213c`. Required main CI `37111733890` 5/5 success. Post-merge smoke passed. ACCEPTED/CLOSED. Epic 39 remains in-progress. Story 39.5 not started. Production DigitalOcean remains classification C.
+
+- Narrow the shared Axe disabled-control exemption so disabled controls remain covered by non-contrast accessibility rules. The established helper excludes disabled elements from the whole audit rather than filtering only contrast results. This predates 39.4. Owner: **Story 43.5**.
+
 ## Deferred from: code review of 39-3-entitlement-visibility.md (2026-10-03)
 
 PO correction loop on Story 39.3. Nav parser no longer invents Basic. Destination-page inference stays on existing 38.2 contracts. Settings billing now treats Enterprise as paid for owner-gating.
