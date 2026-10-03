@@ -30,3 +30,15 @@ Models: Grok 4.6 for Blind Hunter, Edge Case Hunter, Acceptance Auditor, and adv
 No remaining BLOCKER or MAJOR from Blind Hunter, Acceptance Auditor, or adversarial-general on `580ea29e`. Edge Case Hunter reported only MINOR items.
 
 Mandatory Code Review Loop: in-scope BLOCKER/MAJOR patched; new HEAD re-reviewed. **Stop for product-owner pre-merge.** Story 40.1 is not done. Story 40.2 not started.
+
+## PO correction review (`4961dde6`)
+
+Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor, adversarial-general (Grok 4.6). Composer unused.
+
+| Finding | Sources | Bucket | Disposition |
+| --- | --- | --- | --- |
+| Stale `viewMode` vs live URL on rapid second click | Blind MAJOR | defer | Same previously deferred rapid-double-click race. PO said not to expand unless newly proven required. Selected-tab (`mode === currentView`) path is a true no-op. |
+
+Edge / Auditor / adversarial: no remaining BLOCKER or MAJOR.
+
+PR #367 retargeted to `main` without rebase.

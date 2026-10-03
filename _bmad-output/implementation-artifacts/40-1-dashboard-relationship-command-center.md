@@ -132,3 +132,5 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - 2026-10-03: Review patch — same-view no-op, live-search pin, loading tabpanel, follow-up empty-error fallback, Today chip → `/follow-up`. 38.4 tokens/a11y green.
 - 2026-10-03: Independent reviews on `580ea29e` — no remaining BLOCKER/MAJOR. Tracker → review. Not done. Not merged.
 - 2026-10-03: PO correction — retarget PR #367 to `main`; active-view re-selection is a true no-op (no history, URL, preference write, or event).
+- 2026-10-03: Move Suspense fallback to a client module so production prerender can pass an inert view switcher.
+- 2026-10-03: PO-correction review on `4961dde6` — no remaining in-scope BLOCKER/MAJOR. Rapid-double-click stale `viewMode` stays deferred.

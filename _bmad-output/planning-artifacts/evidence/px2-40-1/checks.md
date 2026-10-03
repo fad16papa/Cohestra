@@ -1,7 +1,7 @@
 # Story 40.1 QA checks
 
 Date: 2026-10-03  
-HEAD at check time: local working tree after history-pin fix (commit follows).  
+HEAD at check time: `4961dde68844c1b96702a90767dcf1d38e3bbb36` (PO no-op + client fallback).  
 Composer 2.5: unused.
 
 ## Unit / type / lint / build
@@ -9,7 +9,7 @@ Composer 2.5: unused.
 | Gate | Result |
 | --- | --- |
 | Affected Vitest (`dashboard-view-mode`, `admin-route-motion`, `page-header`) | 19 passed |
-| Full Vitest | 88 files / 555 passed (pre-pin); pin suite 8 passed |
+| Full Vitest | 88 files / 557 passed |
 | `npx tsc --noEmit` | pass |
 | Targeted ESLint on 40.1 files | 0 errors after session-id / unused-import / purity fixes |
 | `npm run build` (Next 16.3 production) | compiled, typed, 45 routes generated |

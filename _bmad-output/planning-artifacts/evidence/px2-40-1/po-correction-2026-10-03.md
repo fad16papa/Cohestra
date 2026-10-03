@@ -11,8 +11,9 @@ Status: review / in-progress. Not done. PR #367 remains draft.
 | Corrected base | `main` (`2350bdbd46003bea215a7eaa26bcb1f49c1d98f6`) |
 | Branch | `cursor/story-40-1-dashboard-command-center-0fcb` |
 | Retarget method | `update_pr` base change only — no rebase, no history rewrite |
+| Implementation HEAD | `4961dde68844c1b96702a90767dcf1d38e3bbb36` |
 
-Diff `origin/main...HEAD` at retarget time: **29 files**, Story 40.1 code/tests/BMAD artifacts only. No Story 40.2 files or tracker keys.
+Diff `origin/main...HEAD` remains Story 40.1 only (~31 files after the client fallback and this evidence). No Story 40.2 files or tracker keys.
 
 ## Active-view no-op
 
