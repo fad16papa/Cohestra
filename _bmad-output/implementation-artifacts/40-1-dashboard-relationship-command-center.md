@@ -101,6 +101,7 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - `_bmad-output/planning-artifacts/evidence/px2-40-1/architecture.md`
 - `_bmad-output/planning-artifacts/evidence/px2-40-1/readiness.md`
+- `_bmad-output/planning-artifacts/evidence/px2-40-1/po-correction-2026-10-03.md`
 - `_bmad-output/planning-artifacts/evidence/px2-40-1/checks.md`
 - `_bmad-output/planning-artifacts/evidence/px2-40-1/role-plan-state-matrix.md`
 - `_bmad-output/planning-artifacts/evidence/px2-40-1/viewports/`
@@ -114,6 +115,7 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - `web/components/dashboard/dashboard-metrics-graphs.tsx`
 - `web/components/dashboard/dashboard-metrics-table.tsx`
 - `web/components/dashboard/dashboard-page-client.tsx`
+- `web/components/dashboard/dashboard-page-fallback.tsx`
 - `web/components/dashboard/dashboard-registrations-trend-chart.tsx`
 - `web/components/dashboard/dashboard-today-strip.tsx`
 - `web/components/dashboard/dashboard-view-switcher.tsx`
