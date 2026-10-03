@@ -48,14 +48,14 @@ import {
 import { cn } from "@/lib/utils";
 
 type InAppBillingPanelProps = {
-  shellPlan: string;
+  shellPlan: string | null;
   shellBillingStatus: string;
   shellTrialEndsAt: string | null;
   onRefreshShell: () => Promise<void>;
 };
 
-function checkoutPlanParam(plan: string): "core" | "pro" {
-  return plan.toLowerCase() === "core" ? "core" : "pro";
+function checkoutPlanParam(plan: string | null): "core" | "pro" {
+  return plan?.toLowerCase() === "core" ? "core" : "pro";
 }
 
 function checkoutIntervalParam(interval: string | null | undefined): "monthly" | "annual" {

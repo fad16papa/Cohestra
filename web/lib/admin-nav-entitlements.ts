@@ -5,7 +5,7 @@ import {
   SETTINGS_TEAM_PATH,
   WEBSITE_PATH,
 } from "@/lib/admin-canonical-routes";
-import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
+import { isCoreOrAbove, isProPlan, recognizedTenantPlan } from "@/lib/shell/tenant-shell-api";
 
 export type NavLockState = "pending" | "unlocked" | "locked" | "hidden";
 export type NavRequiredPlan = "Core" | "Pro";
@@ -62,15 +62,6 @@ const ALWAYS_UNLOCKED: NavDestinationKey[] = [
   "settings",
 ];
 
-const KNOWN_PLANS = new Set(["Basic", "Core", "Pro", "Enterprise"]);
-
-function recognizedPlan(plan: string | null | undefined): string | null {
-  if (!plan || !KNOWN_PLANS.has(plan)) {
-    return null;
-  }
-  return plan;
-}
-
 function unlocked(key: NavDestinationKey): NavEntitlement {
   return { key, state: "unlocked", requiredPlan: null, destination: "content" };
 }
@@ -111,7 +102,7 @@ export function resolveNavEntitlement(
     return hidden(key);
   }
 
-  const plan = recognizedPlan(ctx.plan);
+  const plan = recognizedTenantPlan(ctx.plan);
   if (!plan) {
     if (key === "website" || key === "campaigns") {
       return pending(key);
@@ -215,7 +206,7 @@ export function resolveHrefEntitlement(
 }
 
 export function entitlementContextFromShell(shell: {
-  plan: string;
+  plan: string | null;
   isTenantAdmin: boolean;
   isBillingOwner: boolean;
 } | null): NavEntitlementContext {

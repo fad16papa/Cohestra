@@ -166,6 +166,13 @@ test.describe("Story 39.3 — entitlement visibility", () => {
     await waitForReportsContent(page);
     await expect(page.getByRole("heading", { name: /queryable reports unlock on core/i })).toHaveCount(0);
 
+    await page.goto(`${tenantWebOrigin(PX2_BASIC_TENANT.slug)}/settings/team`, {
+      waitUntil: "domcontentloaded",
+    });
+    await waitForOperatorWorkspace(page);
+    await expect(page.getByRole("heading", { name: /add a second keyholder/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /start core trial/i })).toBeVisible();
+
     await page.goto(`${tenantWebOrigin(PX2_BASIC_TENANT.slug)}/dashboard/website`, {
       waitUntil: "domcontentloaded",
     });
@@ -290,6 +297,18 @@ test.describe("Story 39.3 — entitlement visibility", () => {
     await expect(page.getByText(/ask a tenant admin/i)).toBeVisible();
     await expect(page.getByRole("link", { name: /start .* trial/i })).toHaveCount(0);
     await expect(page.getByRole("link", { name: /upgrade to/i })).toHaveCount(0);
+
+    await page.goto(`${tenantWebOrigin(PX2_BASIC_MEMBER.slug)}/campaigns`, {
+      waitUntil: "domcontentloaded",
+    });
+    await waitForOperatorWorkspace(page);
+    await expect(
+      rail(page).getByRole("link", { name: "Campaigns, locked, requires Pro plan" })
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: /email campaigns are a pro craft/i })).toBeVisible();
+    await expect(page.getByText(/ask a tenant admin/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: /start .* trial/i })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /upgrade to/i })).toHaveCount(0);
   });
 
   test("direct API: plan lock stays plan_locked and member Team stays Forbid", async ({
@@ -318,8 +337,14 @@ test.describe("Story 39.3 — entitlement visibility", () => {
       },
     });
     expect(basicCampaigns.status()).toBe(403);
-    const campaignBody = (await basicCampaigns.json()) as { errorCode?: string };
+    const campaignBody = (await basicCampaigns.json()) as {
+      errorCode?: string;
+      requiredPlan?: string;
+      feature?: string;
+    };
     expect(campaignBody.errorCode).toBe("plan_locked");
+    expect(campaignBody.requiredPlan).toBe("Pro");
+    expect(campaignBody.feature).toBe("campaigns");
 
     const memberTeam = await request.get(`${API_BASE}/api/v1/admin/team`, {
       headers: {

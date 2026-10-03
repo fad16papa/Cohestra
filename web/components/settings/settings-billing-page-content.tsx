@@ -7,7 +7,7 @@ import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { isPaddleTransactionId } from "@/lib/billing/paddle-return";
 
-function isPaidPlan(plan: string): boolean {
+function isPaidPlan(plan: string | null | undefined): boolean {
   return plan === "Core" || plan === "Pro";
 }
 

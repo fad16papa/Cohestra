@@ -20,8 +20,11 @@ export type BillingBanner = {
   adminOnlyCta: boolean;
 };
 
+export const KNOWN_TENANT_PLANS = ["Basic", "Core", "Pro", "Enterprise"] as const;
+export type KnownTenantPlan = (typeof KNOWN_TENANT_PLANS)[number];
+
 export type TenantShell = {
-  plan: string;
+  plan: string | null;
   billingStatus: string;
   billingInterval: string | null;
   trialEndsAt: string | null;
@@ -96,6 +99,27 @@ function parseBillingBanner(raw: Record<string, unknown>): BillingBanner | null 
   };
 }
 
+export function parseShellPlan(rawPlan: unknown): string | null {
+  if (typeof rawPlan !== "string") {
+    return null;
+  }
+
+  const trimmed = rawPlan.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+export function recognizedTenantPlan(
+  plan: string | null | undefined
+): KnownTenantPlan | null {
+  if (!plan) {
+    return null;
+  }
+
+  return (KNOWN_TENANT_PLANS as readonly string[]).includes(plan)
+    ? (plan as KnownTenantPlan)
+    : null;
+}
+
 export function parseTenantShell(raw: Record<string, unknown>): TenantShell {
   const limitsRaw = (raw.limits ?? raw.Limits ?? {}) as Record<string, unknown>;
   const usageRaw = (raw.usage ?? raw.Usage ?? {}) as Record<string, unknown>;
@@ -114,7 +138,7 @@ export function parseTenantShell(raw: Record<string, unknown>): TenantShell {
       : null;
 
   return {
-    plan: String(raw.plan ?? raw.Plan ?? "Basic"),
+    plan: parseShellPlan(raw.plan ?? raw.Plan),
     billingStatus: String(raw.billingStatus ?? raw.BillingStatus ?? "Free"),
     billingInterval:
       typeof (raw.billingInterval ?? raw.BillingInterval) === "string"
@@ -177,14 +201,14 @@ export async function fetchTenantShell(
   return parseTenantShell(raw);
 }
 
-export function isProPlan(plan: string): boolean {
+export function isProPlan(plan: string | null | undefined): boolean {
   return plan === "Pro" || plan === "Enterprise";
 }
 
-export function isCoreOrAbove(plan: string): boolean {
+export function isCoreOrAbove(plan: string | null | undefined): boolean {
   return plan === "Core" || isProPlan(plan);
 }
 
-export function isBasicPlan(plan: string): boolean {
+export function isBasicPlan(plan: string | null | undefined): boolean {
   return plan === "Basic";
 }

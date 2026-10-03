@@ -74,6 +74,13 @@ See `_bmad-output/planning-artifacts/evidence/px2-39-3/atdd.md`.
 - [x] D12 fixtures: Basic admin, Core admin, Pro admin (existing), TenantMember (AC 6)
 - [x] Playwright + regressions 38-2 / 39-1 / 39-2 / 38-5 / 38-6 (AC 6, 9, 10)
 
+### Review Follow-ups (AI)
+
+- [x] [AI-Review][PO][MAJOR] `parseTenantShell` must not normalize missing/null plan to Basic; missing and unknown plans stay pending through the resolver boundary
+- [x] [AI-Review][PO] Boundary tests: `parseTenantShell` → `entitlementContextFromShell` → `resolveNavEntitlement`
+- [x] [AI-Review][PO] Campaigns API plan denial asserts `feature` and `requiredPlan = Pro`
+- [x] [AI-Review][PO] Basic admin Team shows Core UpgradePanel; Basic member Campaigns is ask-admin with no checkout
+
 ## Dev Notes
 
 ### Verified server contracts (do not invent)
@@ -130,7 +137,12 @@ Independent review of HEAD `9d695aaa` plus follow-up patches (Blind Hunter, Edge
 - [x] [Review][Defer] Command palette Campaigns/Website remain 38.6 overlay surfaces (server still 403)
 - [x] [Review][Defer] Destination-page shell inference for Website/Campaigns remains 38.2/existing contract
 
-Repeat review of this follow-up: no remaining in-scope BLOCKER/MAJOR.
+PO pre-merge review of HEAD `7b046629` reopened one MAJOR: `parseTenantShell()` still inferred Basic, so the live shell path bypassed the resolver’s pending contract.
+
+- [x] [Review][PO][MAJOR] Preserve missing plan as `null`; do not infer Basic
+- [x] [Review][PO] Boundary tests through parser → context → resolver
+- [x] [Review][PO] Campaigns 403 includes `feature=campaigns` and `requiredPlan=Pro`
+- [x] [Review][PO] Basic admin Team UpgradePanel + Basic member Campaigns ask-admin
 
 ### Completion Notes List
 
@@ -138,6 +150,7 @@ Repeat review of this follow-up: no remaining in-scope BLOCKER/MAJOR.
 - Desktop rail, More sheet, footer, and Settings Team/Billing/domain shortcuts consume the resolver only.
 - D12 fixtures: `px2-basic` admin, `px2-core` admin, `px2-pro-member`, `px2-basic-member`.
 - Live Playwright 39.3 (5) + regressions 38-2/39-1/39-2/38-5/38-6 passed. Vitest 518. Production `next build` green.
+- PO correction: `parseTenantShell` keeps `plan` nullable. Missing/unknown plans stay pending. Campaigns 403 now carries typed `feature`/`requiredPlan` without changing who is locked.
 
 ### File List
 
@@ -150,6 +163,17 @@ Repeat review of this follow-up: no remaining in-scope BLOCKER/MAJOR.
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/viewports/`
 - `web/lib/admin-nav-entitlements.ts`
 - `web/lib/admin-nav-entitlements.test.ts`
+- `web/lib/shell/tenant-shell-api.ts`
+- `web/lib/shell/tenant-shell-entitlement-boundary.test.ts`
+- `web/lib/plan-entitlement.test.ts`
+- `web/lib/billing/checkout-validation.ts`
+- `web/lib/billing/checkout-validation.test.ts`
+- `web/components/shell/plan-badge.tsx`
+- `web/components/dashboard/dashboard-empty-state.tsx`
+- `web/components/settings/settings-billing-page-content.tsx`
+- `web/components/billing/in-app-billing-panel.tsx`
+- `src/Infrastructure/Auth/RequireProPlanFilter.cs`
+- `src/Infrastructure.Tests/Auth/RequireProPlanFilterTests.cs`
 - `web/components/layouts/admin-nav-lock.tsx`
 - `web/components/layouts/admin-nav-links.tsx`
 - `web/components/layouts/admin-nav-footer.tsx`
@@ -171,3 +195,4 @@ Repeat review of this follow-up: no remaining in-scope BLOCKER/MAJOR.
 - 2026-10-02: Created Story 39.3 from main `cc63c61a` (39.2 tracker-close). Canonical D4 + verified server matrix. Analytics room stays unlocked.
 - 2026-10-02: Implemented centralized nav entitlements, lock chrome, D12 Core/Member fixtures, and unit matrix.
 - 2026-10-02: Live Playwright + regressions green. Review patches: unknown-plan pending, Analytics weekly return, Basic member ask-admin. Status remains in-progress for PO pre-merge review.
+- 2026-10-03: PO correction — `parseTenantShell` no longer infers Basic; boundary tests and Campaigns/Team/member coverage tightened. Status remains in-progress.

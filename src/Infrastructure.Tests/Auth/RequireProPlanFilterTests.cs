@@ -44,6 +44,8 @@ public sealed class RequireProPlanFilterTests
         Assert.Equal(StatusCodes.Status403Forbidden, objectResult.StatusCode);
         var problem = Assert.IsType<ProblemDetails>(objectResult.Value);
         Assert.Equal("plan_locked", problem.Extensions["errorCode"]?.ToString());
+        Assert.Equal("campaigns", problem.Extensions["feature"]?.ToString());
+        Assert.Equal("Pro", problem.Extensions["requiredPlan"]?.ToString());
     }
 
     [Fact]
@@ -60,6 +62,8 @@ public sealed class RequireProPlanFilterTests
         Assert.Equal(StatusCodes.Status403Forbidden, objectResult.StatusCode);
         var problem = Assert.IsType<ProblemDetails>(objectResult.Value);
         Assert.Equal("tenant_not_found", problem.Extensions["errorCode"]?.ToString());
+        Assert.False(problem.Extensions.ContainsKey("feature"));
+        Assert.False(problem.Extensions.ContainsKey("requiredPlan"));
     }
 
     [Fact]

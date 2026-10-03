@@ -94,9 +94,9 @@ export function hasPendingPaidScheduleChange(input: {
 export function formatScheduledChangeLabel(
   scheduledPlan: string,
   scheduledBillingInterval: string | null | undefined,
-  currentPlan: string
+  currentPlan: string | null
 ): string {
-  if (scheduledPlan.trim().toLowerCase() !== currentPlan.trim().toLowerCase()) {
+  if (!currentPlan || scheduledPlan.trim().toLowerCase() !== currentPlan.trim().toLowerCase()) {
     return scheduledPlan;
   }
 
