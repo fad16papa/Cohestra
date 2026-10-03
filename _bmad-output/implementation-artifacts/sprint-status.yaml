@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-03
-# story 39.4 closed from e02f0e2e
+# story 39.5 opened from e925fd5f
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -396,6 +396,7 @@ development_status:
   39-2-mobile-navigation: done
   39-3-entitlement-visibility: done
   39-4-page-header-hierarchy: done
+  39-5-route-error-and-not-found-states: in-progress
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done
