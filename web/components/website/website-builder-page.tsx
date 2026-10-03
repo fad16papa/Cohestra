@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { SitePageRenderer } from "@/components/marketing/site-page-renderer";
 import { PageHeader } from "@/components/shared/page-header";
+import { WEBSITE_STUDIO_TITLE } from "@/lib/admin-canonical-routes";
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import {
@@ -1060,7 +1061,7 @@ export function WebsiteBuilderPage() {
   if (shellLoading) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Website Builder" description="Customize your public homepage" />
+        <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
         <div className="h-96 motion-safe:animate-pulse rounded-xl border border-border-warm bg-muted/30" />
       </div>
     );
@@ -1069,7 +1070,7 @@ export function WebsiteBuilderPage() {
   if ((shell && isBasicPlan(shell.plan)) || planLocked) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Website" description="Customize your public homepage" />
+        <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
         <UpgradePanel
           title="Unlock a branded public homepage"
           description="Basic includes a simple stub listing. Upgrade to Core for a fixed branded homepage, or Pro for the full website builder with custom sections."
@@ -1084,7 +1085,7 @@ export function WebsiteBuilderPage() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Website Builder"
+          title={WEBSITE_STUDIO_TITLE}
           description="Customize your public homepage"
         />
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
@@ -1099,7 +1100,7 @@ export function WebsiteBuilderPage() {
     return (
       <div className="space-y-4">
         <PageHeader
-          title="Website Builder"
+          title={WEBSITE_STUDIO_TITLE}
           description="Customize your public homepage"
         />
         <p className="text-sm text-destructive">
@@ -1136,7 +1137,7 @@ export function WebsiteBuilderPage() {
       className="flex min-h-0 flex-col gap-2"
       style={studioHeight ? { height: studioHeight } : undefined}
     >
-      <h1 className="sr-only">Website Builder</h1>
+      <PageHeader title={WEBSITE_STUDIO_TITLE} />
       <WebsiteBuilderToolbar
         siteUrl={publicSiteUrl}
         siteDisplayUrl={publicSiteDisplayUrl}

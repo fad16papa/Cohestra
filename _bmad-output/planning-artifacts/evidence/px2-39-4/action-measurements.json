@@ -1,0 +1,60 @@
+{
+  "measurements": [
+    {
+      "control": "button",
+      "route": "/clients",
+      "viewport": "1440x900",
+      "width": 128,
+      "height": 44
+    },
+    {
+      "control": "link",
+      "route": "/activities",
+      "viewport": "1440x900",
+      "width": 116,
+      "height": 44
+    },
+    {
+      "control": "button",
+      "route": "client-profile",
+      "viewport": "1440x900",
+      "width": 124,
+      "height": 44.00000762939453
+    },
+    {
+      "control": "select",
+      "route": "client-profile",
+      "viewport": "1440x900",
+      "width": 114,
+      "height": 44
+    },
+    {
+      "control": "button",
+      "route": "client-profile",
+      "viewport": "390x844",
+      "width": 124,
+      "height": 44
+    },
+    {
+      "control": "select",
+      "route": "client-profile",
+      "viewport": "390x844",
+      "width": 114,
+      "height": 44
+    },
+    {
+      "control": "button",
+      "route": "client-profile",
+      "viewport": "768x1024",
+      "width": 124,
+      "height": 44
+    },
+    {
+      "control": "select",
+      "route": "client-profile",
+      "viewport": "768x1024",
+      "width": 114,
+      "height": 44
+    }
+  ]
+}

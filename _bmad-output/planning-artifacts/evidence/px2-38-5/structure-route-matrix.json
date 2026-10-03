@@ -42,12 +42,40 @@
     "mainContentCount": 1
   },
   {
-    "route": "/reports",
+    "route": "/analytics",
     "viewport": "1440x900",
     "mainCount": 1,
     "h1Count": 1,
     "h1Names": [
-      "Reports"
+      "Analytics"
+    ],
+    "skipCount": 1,
+    "mainIds": [
+      "main-content"
+    ],
+    "mainContentCount": 1
+  },
+  {
+    "route": "/follow-up",
+    "viewport": "1440x900",
+    "mainCount": 1,
+    "h1Count": 1,
+    "h1Names": [
+      "Follow-up"
+    ],
+    "skipCount": 1,
+    "mainIds": [
+      "main-content"
+    ],
+    "mainContentCount": 1
+  },
+  {
+    "route": "/ai",
+    "viewport": "1440x900",
+    "mainCount": 1,
+    "h1Count": 1,
+    "h1Names": [
+      "Cohestra AI"
     ],
     "skipCount": 1,
     "mainIds": [
@@ -117,7 +145,7 @@
     "mainCount": 1,
     "h1Count": 1,
     "h1Names": [
-      "Website Builder"
+      "Website Studio"
     ],
     "skipCount": 1,
     "mainIds": [
@@ -131,7 +159,7 @@
     "mainCount": 1,
     "h1Count": 1,
     "h1Names": [
-      "Daniel Diaz"
+      "James Rivera"
     ],
     "skipCount": 1,
     "mainIds": [
@@ -145,7 +173,7 @@
     "mainCount": 1,
     "h1Count": 1,
     "h1Names": [
-      "e2e-38-5-public-w0"
+      "e2e-39-4-header-w1"
     ],
     "skipCount": 1,
     "mainIds": [

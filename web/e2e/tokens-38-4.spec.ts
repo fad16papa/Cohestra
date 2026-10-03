@@ -231,7 +231,9 @@ test("authenticated product viewports when live stack is available", async ({ pa
           timeout: 30_000,
         });
       } else if (route.name === "settings") {
-        await expect(page.locator("h1.font-heading")).toBeVisible({ timeout: 30_000 });
+        await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible({
+          timeout: 30_000,
+        });
       }
       await page.screenshot({
         path: path.join(evidenceDir, `${route.name}-1440x900.png`),

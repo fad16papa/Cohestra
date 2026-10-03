@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { PageHeader } from "@/components/shared/page-header";
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import {
@@ -104,7 +105,7 @@ export function SettingsTeamPageContent() {
   if (!shell?.isTenantAdmin) {
     return (
       <div className="space-y-2">
-        <h1 className="text-xl font-semibold text-text-warm">Team</h1>
+        <PageHeader title="Team" />
         <p className="text-sm text-text-muted-warm">
           Team settings are available to tenant admins only.
         </p>
@@ -115,7 +116,7 @@ export function SettingsTeamPageContent() {
   if (loading && !team) {
     return (
       <div className="space-y-2">
-        <h1 className="text-xl font-semibold text-text-warm">Team</h1>
+        <PageHeader title="Team" />
         <p className="text-sm text-text-muted-warm">Loading team…</p>
       </div>
     );
@@ -124,7 +125,7 @@ export function SettingsTeamPageContent() {
   if (error && !team) {
     return (
       <div className="space-y-2">
-        <h1 className="text-xl font-semibold text-text-warm">Team</h1>
+        <PageHeader title="Team" />
         <p className="text-sm text-destructive">{error}</p>
       </div>
     );
@@ -133,7 +134,7 @@ export function SettingsTeamPageContent() {
   if (!team) {
     return (
       <div className="space-y-2">
-        <h1 className="text-xl font-semibold text-text-warm">Team</h1>
+        <PageHeader title="Team" />
       </div>
     );
   }
@@ -141,7 +142,7 @@ export function SettingsTeamPageContent() {
   if (!team.invitesAllowed) {
     return (
       <div className="space-y-6">
-        <h1 className="text-xl font-semibold text-text-warm">Team</h1>
+        <PageHeader title="Team" />
         <UpgradePanel
           title="Add a second keyholder"
           description="Basic workspaces are intentionally solo. Compare Core and Pro below — both unlock team invites up to your plan seat cap."
@@ -158,7 +159,7 @@ export function SettingsTeamPageContent() {
     <>
       <div className="mx-auto max-w-2xl space-y-8">
         <div>
-          <h1 className="text-xl font-semibold text-text-warm">Team</h1>
+          <PageHeader title="Team" />
           <p className="mt-1 text-sm text-text-muted-warm">
             {team.seatsUsed} of {team.seatLimit} seats used
             {seatsRemaining > 0 ? ` · ${seatsRemaining} available` : " · at capacity"}

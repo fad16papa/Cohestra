@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, MailX, XCircle } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { PageHeader } from "@/components/shared/page-header";
 import { buttonVariants } from "@/components/ui/button";
 import {
   fetchCampaignById,
@@ -85,7 +86,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
         <Link href="/campaigns" className={cn(buttonVariants({ variant: "outline" }))}>
           Back to campaigns
         </Link>
-        <h1 className="text-display-sm text-text-warm">Campaign</h1>
+        <PageHeader title="Campaign" />
         <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
@@ -96,8 +97,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
   if (!campaign) {
     return (
       <div className="space-y-4">
-        <h1 className="text-display-sm text-text-warm">Campaign</h1>
-        <p className="text-sm text-text-muted-warm">Loading campaign…</p>
+        <PageHeader title="Campaign" description="Loading campaign…" />
       </div>
     );
   }
@@ -107,18 +107,18 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href="/campaigns"
-          className="text-sm text-text-muted-warm motion-press hover:text-text-warm"
-        >
-          ← Back to campaigns
-        </Link>
-        <h1 className="mt-3 text-display-sm text-text-warm">{campaign.subject}</h1>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Sent {formatCampaignSentAt(campaign.sentAt)} · {campaign.sentCount} sent ·{" "}
-          {campaign.failedCount} failed · {campaign.skippedCount} skipped ·{" "}
-          {recipientCount} recipient{recipientCount === 1 ? "" : "s"}
-        </p>
+        <PageHeader
+          eyebrow={
+            <Link
+              href="/campaigns"
+              className="text-sm font-medium normal-case tracking-normal text-text-muted-warm motion-press hover:text-text-warm"
+            >
+              ← Back to campaigns
+            </Link>
+          }
+          title={campaign.subject}
+          description={`Sent ${formatCampaignSentAt(campaign.sentAt)} · ${campaign.sentCount} sent · ${campaign.failedCount} failed · ${campaign.skippedCount} skipped · ${recipientCount} recipient${recipientCount === 1 ? "" : "s"}`}
+        />
       </div>
 
       <div className="space-y-6">

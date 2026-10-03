@@ -11,6 +11,7 @@ import {
   ReportFilterBar,
 } from "@/components/reports/report-filter-bar";
 import { ReportResults } from "@/components/reports/report-results";
+import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-provider";
 import { fetchAllActivities, type Activity } from "@/lib/activities-api";
@@ -208,8 +209,7 @@ export function ReportsPageClient() {
   if (status === "loading" || !searchParams.toString() || !pageReady) {
     return (
       <div className="space-y-2">
-        <h1 className="text-display-sm text-text-warm">Analytics</h1>
-        <p className="text-sm text-text-muted-warm">Loading report…</p>
+        <PageHeader title="Analytics" description="Loading report…" />
       </div>
     );
   }
@@ -217,7 +217,7 @@ export function ReportsPageClient() {
   if (shell && isBasicPlan(shell.plan) && isAdvancedReportFilters(filters)) {
     return (
       <div className="space-y-6">
-        <h1 className="text-display-sm text-text-warm">Analytics</h1>
+        <PageHeader title="Analytics" />
         <p className="text-sm text-text-muted-warm">
           Weekly reporting stays available on Basic.{" "}
           <button
@@ -241,22 +241,20 @@ export function ReportsPageClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-display-sm text-text-warm">Analytics</h1>
-          <p className="mt-1 text-sm text-text-muted-warm">
-            Understand what happened, why it matters, and export the same numbers your team trusts.
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={!canExport}
-          onClick={() => void handleExportCsv()}
-        >
-          {isExporting ? "Exporting…" : "Export CSV"}
-        </Button>
-      </div>
+      <PageHeader
+        title="Analytics"
+        description="Understand what happened, why it matters, and export the same numbers your team trusts."
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!canExport}
+            onClick={() => void handleExportCsv()}
+          >
+            {isExporting ? "Exporting…" : "Export CSV"}
+          </Button>
+        }
+      />
 
       <ReportFilterBar activities={activities} />
 

@@ -5,6 +5,7 @@ export const FOLLOW_UP_PATH = "/follow-up";
 export const ANALYTICS_PATH = "/analytics";
 export const AI_PATH = "/ai";
 export const WEBSITE_PATH = "/dashboard/website";
+export const WEBSITE_STUDIO_TITLE = "Website Studio";
 export const CAMPAIGNS_PATH = "/campaigns";
 export const REPORTS_COMPAT_PATH = "/reports";
 export const SETTINGS_PATH = "/settings";

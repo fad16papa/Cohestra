@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
+import { PageHeader } from "@/components/shared/page-header";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { resolveBillingSettingsAccess } from "@/lib/admin-nav-entitlements";
 import { isPaidTenantPlan } from "@/lib/shell/tenant-shell-api";
@@ -28,7 +29,7 @@ function SettingsBillingBody() {
   if (!shell || access === "denied") {
     return (
       <div className="space-y-2">
-        <h1 className="text-xl font-semibold text-text-warm sm:text-2xl">Billing</h1>
+        <PageHeader title="Billing" />
         <p className="text-sm text-text-muted-warm">
           Billing settings are available to tenant admins only.
         </p>
@@ -39,7 +40,7 @@ function SettingsBillingBody() {
   if (access === "owner-managed") {
     return (
       <div className="mx-auto w-full max-w-5xl space-y-3">
-        <h1 className="text-xl font-semibold text-text-warm sm:text-2xl">Billing</h1>
+        <PageHeader title="Billing" />
         <p className="text-sm text-text-muted-warm">
           Billing for this workspace is managed by{" "}
           <span className="font-medium text-text-warm">
@@ -55,7 +56,7 @@ function SettingsBillingBody() {
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-text-warm sm:text-2xl">Billing</h1>
+        <PageHeader title="Billing" />
         <p className="mt-1 text-sm text-text-muted-warm">
           Manage billing contact, invoices, and plan changes in Cohestra. Paddle stores your
           payment method from checkout.
@@ -102,7 +103,7 @@ export function SettingsBillingPageContent() {
     <Suspense
       fallback={
         <div className="space-y-2">
-          <h1 className="text-xl font-semibold text-text-warm sm:text-2xl">Billing</h1>
+          <PageHeader title="Billing" />
           <p className="text-sm text-text-muted-warm">Loading billing…</p>
         </div>
       }

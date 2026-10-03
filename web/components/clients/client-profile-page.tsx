@@ -17,6 +17,7 @@ import { ClientRegistrationHistory } from "@/components/clients/client-registrat
 import { ClientRelationshipTimeline } from "@/components/clients/client-relationship-timeline";
 import { useAdminPageMeta } from "@/components/layouts/admin-shell-context";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
+import { PageHeader } from "@/components/shared/page-header";
 import { ProductErrorState } from "@/components/shared/product-error-state";
 import { ProfileSkeleton } from "@/components/shared/profile-skeleton";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -139,7 +140,7 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
   if (error) {
     return (
       <div className="space-y-4">
-        <h1 className="text-display-sm text-text-warm">Client</h1>
+        <PageHeader title="Client" />
         <ProductErrorState
           message={error}
           onRetry={handleRetry}
@@ -153,7 +154,7 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
   if (!client) {
     return (
       <div className="space-y-4">
-        <h1 className="text-display-sm text-text-warm">Client</h1>
+        <PageHeader title="Client" />
         <ProfileSkeleton />
       </div>
     );
