@@ -8,6 +8,11 @@ import { PlanBadge } from "@/components/shell/plan-badge";
 import { SponsoredBadge } from "@/components/shell/sponsored-badge";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import type { SettingsSectionId } from "@/components/settings/settings-sections";
+import {
+  entitlementContextFromShell,
+  navItemAccessibleName,
+  resolveNavEntitlement,
+} from "@/lib/admin-nav-entitlements";
 import { cn } from "@/lib/utils";
 
 type SettingsRightRailProps = {
@@ -95,6 +100,9 @@ export function SettingsRightRail({
   className,
 }: SettingsRightRailProps) {
   const { shell } = useTenantShell();
+  const entitlementCtx = entitlementContextFromShell(shell);
+  const team = resolveNavEntitlement("team", entitlementCtx);
+  const billing = resolveNavEntitlement("billing", entitlementCtx);
   const tip = sectionTips(activeId);
   const usageDials =
     shell?.limitDials.filter((dial) => dial.key !== "seats") ?? [];
@@ -162,19 +170,29 @@ export function SettingsRightRail({
             <p>{tip.body}</p>
           </ContextBlock>
 
-          {shell?.isTenantAdmin ? (
+          {team.state !== "hidden" && team.state !== "pending" ? (
             <ContextBlock title="Quick links">
               <ul className="space-y-2">
                 <li>
                   <Link
                     href="/settings/team"
+                    aria-label={
+                      team.state === "locked"
+                        ? navItemAccessibleName("Team settings", team)
+                        : undefined
+                    }
                     className="inline-flex items-center gap-1 font-medium text-text-link hover:underline"
                   >
                     Team settings
+                    {team.state === "locked" && team.requiredPlan ? (
+                      <span className="text-text-muted-warm">
+                        ({team.requiredPlan})
+                      </span>
+                    ) : null}
                     <ExternalLink className="size-3.5" aria-hidden />
                   </Link>
                 </li>
-                {(shell.plan === "Basic" || shell.isBillingOwner) && (
+                {billing.state === "unlocked" ? (
                   <li>
                     <Link
                       href="/settings/billing"
@@ -184,7 +202,7 @@ export function SettingsRightRail({
                       <ExternalLink className="size-3.5" aria-hidden />
                     </Link>
                   </li>
-                )}
+                ) : null}
               </ul>
             </ContextBlock>
           ) : null}

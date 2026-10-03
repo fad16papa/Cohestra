@@ -1,3 +1,13 @@
+## Deferred from: code review of 39-3-entitlement-visibility.md (2026-10-03)
+
+PO correction loop on Story 39.3. Nav parser no longer invents Basic. Destination-page inference stays on existing 38.2 contracts. Settings billing now treats Enterprise as paid for owner-gating.
+
+- Server `TenantBillingAccess.RequiresBillingOwner` is still Core/Pro only. PO forbade authorization-policy and Paddle changes in this correction. Enterprise non-owners are blocked on `/settings/billing` UI; API/checkout remain the existing server contract.
+- `isPaidPaddlePlanName` and checkout SKU mapping stay existing Paddle contracts.
+
+- Website/Campaigns destination pages still infer locks from raw `shell.plan` instead of the nav resolver. Missing/unknown plans stay pending in chrome; destinations remain conservative or server-gated. Do not unlock.
+- `RequireProPlan` also wraps email templates. `feature=campaigns` names the Pro campaigns family, not a per-route feature id.
+
 ## Deferred from: story 39.1 close on main `cc996e05` (2026-10-02)
 
 PR #356 merged. PO accepted implementation HEAD `9751daff`. Required main CI `37007992226` 5/5 success. Post-merge smoke passed. ACCEPTED/CLOSED. Epic 39 remains in-progress. Story 39.2 not started. Production DigitalOcean remains classification C.

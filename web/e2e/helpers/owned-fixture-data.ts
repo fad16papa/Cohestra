@@ -6,6 +6,7 @@ export const CANONICAL_DEMO_SLUGS = [
 
 export const DEFAULT_TENANT_SLUG = "default";
 export const BASIC_TENANT_SLUG = process.env.E2E_BASIC_SLUG ?? "px2-basic";
+export const CORE_TENANT_SLUG = process.env.E2E_CORE_SLUG ?? "px2-core";
 
 export const SINGLE_PAGE_CENTERED_THEME = {
   preset: "classic",

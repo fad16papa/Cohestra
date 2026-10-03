@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 
 type PlanBadgeProps = {
-  plan: string;
+  plan: string | null;
   className?: string;
 };
 
@@ -14,8 +14,14 @@ const PLAN_STYLES: Record<string, string> = {
   Enterprise: "border-primary/30 bg-primary/10 text-text-link",
 };
 
+const UNKNOWN_PLAN_STYLE = "border-border-warm bg-muted/40 text-text-warm";
+
 export function PlanBadge({ plan, className }: PlanBadgeProps) {
-  const style = PLAN_STYLES[plan] ?? PLAN_STYLES.Basic;
+  if (!plan) {
+    return null;
+  }
+
+  const style = PLAN_STYLES[plan] ?? UNKNOWN_PLAN_STYLE;
 
   return (
     <span

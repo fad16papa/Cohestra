@@ -25,16 +25,27 @@ public sealed class RequireProPlanFilter(ITenantPlanGate planGate) : IAsyncActio
 
         if (!evaluation.Allowed)
         {
-            context.Result = Forbidden(
-                evaluation.Detail ?? "Plan does not allow this feature.",
-                evaluation.ErrorCode ?? "plan_locked");
+            var errorCode = evaluation.ErrorCode ?? "plan_locked";
+            context.Result = errorCode == "plan_locked"
+                ? Forbidden(
+                    evaluation.Detail ?? "Plan does not allow this feature.",
+                    errorCode,
+                    feature: "campaigns",
+                    requiredPlan: "Pro")
+                : Forbidden(
+                    evaluation.Detail ?? "Plan does not allow this feature.",
+                    errorCode);
             return;
         }
 
         await next();
     }
 
-    private static ObjectResult Forbidden(string detail, string errorCode)
+    private static ObjectResult Forbidden(
+        string detail,
+        string errorCode,
+        string? feature = null,
+        string? requiredPlan = null)
     {
         var problem = new ProblemDetails
         {
@@ -43,6 +54,15 @@ public sealed class RequireProPlanFilter(ITenantPlanGate planGate) : IAsyncActio
             Detail = detail,
         };
         problem.Extensions["errorCode"] = errorCode;
+        if (feature is not null)
+        {
+            problem.Extensions["feature"] = feature;
+        }
+
+        if (requiredPlan is not null)
+        {
+            problem.Extensions["requiredPlan"] = requiredPlan;
+        }
 
         return new ObjectResult(problem)
         {

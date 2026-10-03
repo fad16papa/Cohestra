@@ -9,7 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { isBasicPlan, isProPlan } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
 
-function emptyStateCopy(plan: string | undefined): { eyebrow: string; body: string } {
+function emptyStateCopy(plan: string | null | undefined): { eyebrow: string; body: string } {
   if (plan && isProPlan(plan)) {
     return {
       eyebrow: "Your Pro workspace is ready",
@@ -17,16 +17,23 @@ function emptyStateCopy(plan: string | undefined): { eyebrow: string; body: stri
     };
   }
 
-  if (plan && !isBasicPlan(plan)) {
+  if (plan === "Core") {
     return {
       eyebrow: "Your Core workspace is ready",
       body: "Create a community to organize your work, publish an activity, and share a registration link or QR at your next event.",
     };
   }
 
+  if (plan && isBasicPlan(plan)) {
+    return {
+      eyebrow: "Open your atelier",
+      body: "Basic is free forever — no card required. Create a community to organize your work, publish an activity, and share a registration link or QR at your next event.",
+    };
+  }
+
   return {
     eyebrow: "Open your atelier",
-    body: "Basic is free forever — no card required. Create a community to organize your work, publish an activity, and share a registration link or QR at your next event.",
+    body: "Create a community to organize your work, publish an activity, and share a registration link or QR at your next event.",
   };
 }
 

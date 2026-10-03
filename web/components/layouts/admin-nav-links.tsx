@@ -2,9 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, Lock } from "lucide-react";
 
+import { AdminNavLockMark } from "@/components/layouts/admin-nav-lock";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
+import {
+  entitlementContextFromShell,
+  navItemAccessibleName,
+  resolveHrefEntitlement,
+} from "@/lib/admin-nav-entitlements";
 import { adminNavItems, isAdminNavItemActive, type AdminNavItem } from "@/lib/admin-nav";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +72,7 @@ function ActivitiesNavSection({
           )}
         >
           <Icon className="size-4 shrink-0" aria-hidden />
-          <span className={cn(compact && "sr-only lg:not-sr-only lg:inline")}>{item.label}</span>
+          <span data-nav-label={item.label} className={cn(compact && "sr-only lg:not-sr-only lg:inline")}>{item.label}</span>
         </Link>
         <button
           type="button"
@@ -127,6 +134,8 @@ export function AdminNavLinks({
   landmarkLabel = "Admin navigation",
 }: AdminNavLinksProps) {
   const pathname = usePathname();
+  const { shell } = useTenantShell();
+  const entitlementCtx = useMemo(() => entitlementContextFromShell(shell), [shell]);
 
   return (
     <nav
@@ -136,6 +145,11 @@ export function AdminNavLinks({
       {items.map((item) => {
         const Icon = item.icon;
         const hasChildren = Boolean(item.children?.length);
+        const entitlement = resolveHrefEntitlement(item.href, entitlementCtx);
+
+        if (entitlement?.state === "hidden") {
+          return null;
+        }
 
         if (hasChildren) {
           return (
@@ -149,12 +163,18 @@ export function AdminNavLinks({
           );
         }
 
+        const locked = entitlement?.state === "locked" && entitlement.requiredPlan;
+        const accessibleName = entitlement
+          ? navItemAccessibleName(item.label, entitlement)
+          : item.label;
+
         return (
           <Link
             key={item.href}
             href={item.href}
             onClick={onNavigate}
-            title={compact ? item.label : undefined}
+            title={compact ? accessibleName : locked ? accessibleName : undefined}
+            aria-label={locked ? accessibleName : undefined}
             aria-current={isAdminNavItemActive(pathname, item.href) ? "page" : undefined}
             className={cn(
               "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium motion-press outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -164,8 +184,24 @@ export function AdminNavLinks({
                 : "text-foreground hover:bg-muted/80"
             )}
           >
-            <Icon className="size-4 shrink-0" aria-hidden />
-            <span className={cn(compact && "sr-only lg:not-sr-only lg:inline")}>{item.label}</span>
+            <span className="relative flex shrink-0">
+              <Icon className="size-4 shrink-0" aria-hidden />
+              {locked && compact ? (
+                <Lock
+                  className="absolute -right-2 -bottom-1.5 size-3.5 rounded-sm bg-card text-text-muted-warm ring-1 ring-border-warm lg:hidden forced-colors:outline forced-colors:outline-current"
+                  aria-hidden
+                />
+              ) : null}
+            </span>
+            <span
+              data-nav-label={item.label}
+              className={cn(compact && "sr-only lg:not-sr-only lg:inline")}
+            >
+              {item.label}
+            </span>
+            {entitlement?.state === "locked" && entitlement.requiredPlan ? (
+              <AdminNavLockMark requiredPlan={entitlement.requiredPlan} compact={compact} />
+            ) : null}
           </Link>
         );
       })}

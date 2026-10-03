@@ -17,6 +17,8 @@ describe("website plan entitlement helpers", () => {
     expect(shouldSkipWebsiteAdminFetch("Pro")).toBe(false);
     expect(shouldSkipWebsiteAdminFetch("Enterprise")).toBe(false);
     expect(shouldSkipWebsiteAdminFetch(undefined)).toBe(false);
+    expect(shouldSkipWebsiteAdminFetch(null)).toBe(false);
+    expect(shouldSkipWebsiteAdminFetch("")).toBe(false);
   });
 
   it("recognizes only 403 plan_locked as an upgrade-required error", () => {

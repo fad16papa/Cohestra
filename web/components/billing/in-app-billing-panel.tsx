@@ -38,6 +38,7 @@ import {
   formatScheduledChangeLabel,
   hasPendingPaidScheduleChange,
 } from "@/lib/billing/checkout-validation";
+import { recognizedTenantPlan } from "@/lib/shell/tenant-shell-api";
 import {
   formatPhoneDisplay,
   getPhonePlaceholder,
@@ -48,14 +49,21 @@ import {
 import { cn } from "@/lib/utils";
 
 type InAppBillingPanelProps = {
-  shellPlan: string;
+  shellPlan: string | null;
   shellBillingStatus: string;
   shellTrialEndsAt: string | null;
   onRefreshShell: () => Promise<void>;
 };
 
-function checkoutPlanParam(plan: string): "core" | "pro" {
-  return plan.toLowerCase() === "core" ? "core" : "pro";
+function checkoutPlanParam(plan: string | null): "core" | "pro" | null {
+  const known = recognizedTenantPlan(plan);
+  if (known === "Core") {
+    return "core";
+  }
+  if (known === "Pro" || known === "Enterprise") {
+    return "pro";
+  }
+  return null;
 }
 
 function checkoutIntervalParam(interval: string | null | undefined): "monthly" | "annual" {
@@ -177,15 +185,21 @@ export function InAppBillingPanel({
     }
   }, [authFetch, applyContactForm]);
 
+  const knownPlan = recognizedTenantPlan(shellPlan);
+
   useEffect(() => {
-    if (shellPlan === "Basic") {
+    if (!knownPlan) {
+      return;
+    }
+
+    if (knownPlan === "Basic") {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch after mount
       void loadBasicCapability();
       return;
     }
 
     void loadDetails();
-  }, [loadBasicCapability, loadDetails, shellPlan]);
+  }, [knownPlan, loadBasicCapability, loadDetails]);
 
   const refreshAll = async () => {
     setSyncing(true);
@@ -199,7 +213,7 @@ export function InAppBillingPanel({
         return;
       }
       await onRefreshShell();
-      if (shellPlan !== "Basic") {
+      if (knownPlan && knownPlan !== "Basic") {
         await loadDetails();
       }
     } catch (err) {
@@ -209,7 +223,16 @@ export function InAppBillingPanel({
     }
   };
 
-  if (shellPlan === "Basic") {
+  if (!knownPlan) {
+    return (
+      <p role="status" className="text-sm text-text-muted-warm">
+        Workspace plan is not available yet. Billing actions stay hidden until the
+        server reports a plan.
+      </p>
+    );
+  }
+
+  if (knownPlan === "Basic") {
     if (loading && billingConfigured === null && !error) {
       return <p className="text-sm text-text-muted-warm">Loading billing details…</p>;
     }
@@ -279,7 +302,10 @@ export function InAppBillingPanel({
   const subscription = details?.subscription;
   const invoices = details?.invoices ?? [];
   const configured = billingConfigured ?? details?.summary.billingConfigured ?? false;
-  const changePlanHref = `/billing/checkout?plan=${checkoutPlanParam(shellPlan)}&interval=${checkoutIntervalParam(details?.summary.billingInterval)}`;
+  const checkoutPlan = checkoutPlanParam(knownPlan);
+  const changePlanHref = checkoutPlan
+    ? `/billing/checkout?plan=${checkoutPlan}&interval=${checkoutIntervalParam(details?.summary.billingInterval)}`
+    : null;
   const hasActivePaidSubscription =
     shellBillingStatus === "Trialing"
     || shellBillingStatus === "Active"
@@ -544,9 +570,11 @@ export function InAppBillingPanel({
                   : "Change plan or billing interval. Paddle collects your card at checkout."}
               </p>
               <div className="flex flex-wrap gap-2">
-                <Link href={changePlanHref} className={buttonVariants({ size: "sm" })}>
-                  Change plan
-                </Link>
+                {changePlanHref ? (
+                  <Link href={changePlanHref} className={buttonVariants({ size: "sm" })}>
+                    Change plan
+                  </Link>
+                ) : null}
                 {subscription?.cancelAtPeriodEnd ? (
                   <Button
                     type="button"

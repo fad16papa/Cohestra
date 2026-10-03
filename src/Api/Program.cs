@@ -344,6 +344,25 @@ static async Task LogStartupLoginAccountsAsync(WebApplication app)
             basicUser?.EmailConfirmed == true
                 ? "ready"
                 : "missing — check api logs for E2eEntitlementFixtureSeeder errors");
+
+        var coreEmail = E2eEntitlementFixtureSeeder.CoreAdminEmail;
+        var coreUser = await userManager.FindByEmailAsync(coreEmail);
+        app.Logger.LogInformation(
+            "Login readiness — E2E Core fixture {Email} on {Slug}: {Status}",
+            coreEmail,
+            E2eEntitlementFixtureSeeder.CoreTenantSlug,
+            coreUser?.EmailConfirmed == true
+                ? "ready"
+                : "missing — check api logs for E2eEntitlementFixtureSeeder errors");
+
+        var memberEmail = E2eEntitlementFixtureSeeder.MemberEmail;
+        var memberUser = await userManager.FindByEmailAsync(memberEmail);
+        app.Logger.LogInformation(
+            "Login readiness — E2E Member fixture {Email} on default: {Status}",
+            memberEmail,
+            memberUser?.EmailConfirmed == true
+                ? "ready"
+                : "missing — check api logs for E2eEntitlementFixtureSeeder errors");
     }
 
     if (app.Configuration.GetValue("LoadTestSeed:Enabled", false))

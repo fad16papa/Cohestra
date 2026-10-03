@@ -2,8 +2,15 @@
 
 import Link from "next/link";
 import { ChevronRight, CreditCard, Users } from "lucide-react";
+import { useMemo } from "react";
 
+import { AdminNavLockMark } from "@/components/layouts/admin-nav-lock";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
+import {
+  entitlementContextFromShell,
+  navItemAccessibleName,
+  resolveNavEntitlement,
+} from "@/lib/admin-nav-entitlements";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -23,16 +30,14 @@ const navItems = [
 
 export function SettingsWorkspaceNav() {
   const { shell } = useTenantShell();
+  const ctx = useMemo(() => entitlementContextFromShell(shell), [shell]);
+  const team = resolveNavEntitlement("team", ctx);
+  const billing = resolveNavEntitlement("billing", ctx);
 
-  if (!shell?.isTenantAdmin) {
-    return null;
-  }
-
-  const showBilling = shell.plan === "Basic" || shell.isBillingOwner;
-
-  const visibleItems = navItems.filter((item) =>
-    item.href === "/settings/billing" ? showBilling : true
-  );
+  const visibleItems = navItems.filter((item) => {
+    const entitlement = item.href === "/settings/billing" ? billing : team;
+    return entitlement.state !== "hidden" && entitlement.state !== "pending";
+  });
 
   if (visibleItems.length === 0) {
     return null;
@@ -49,38 +54,49 @@ export function SettingsWorkspaceNav() {
             Workspace admin
           </p>
           <p className="mt-1 text-sm text-text-muted-warm">
-            Dedicated pages for team and billing on {shell.tenantName}.
+            Dedicated pages for team and billing on {shell?.tenantName ?? "this workspace"}.
           </p>
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {visibleItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "group flex min-h-[4.5rem] items-center gap-3 rounded-xl border border-border-warm bg-card/90 px-4 py-3",
-              "motion-press hover:border-primary/25 hover:bg-card hover:shadow-sm"
-            )}
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-text-link">
-              <item.icon className="size-5" aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-1 text-sm font-semibold text-text-warm">
-                {item.label}
-                <ChevronRight
-                  className="size-4 text-text-muted-warm motion-press group-hover:translate-x-px"
-                  aria-hidden
-                />
+        {visibleItems.map((item) => {
+          const entitlement = item.href === "/settings/billing" ? billing : team;
+          const locked = entitlement.state === "locked" && entitlement.requiredPlan;
+          const accessibleName = navItemAccessibleName(item.label, entitlement);
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-label={locked ? accessibleName : undefined}
+              title={locked ? accessibleName : undefined}
+              className={cn(
+                "group flex min-h-[4.5rem] items-center gap-3 rounded-xl border border-border-warm bg-card/90 px-4 py-3",
+                "motion-press hover:border-primary/25 hover:bg-card hover:shadow-sm"
+              )}
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-text-link">
+                <item.icon className="size-5" aria-hidden />
               </span>
-              <span className="mt-0.5 block text-xs text-text-muted-warm sm:text-sm">
-                {item.description}
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1 text-sm font-semibold text-text-warm">
+                  {item.label}
+                  {entitlement.state === "locked" && entitlement.requiredPlan ? (
+                    <AdminNavLockMark requiredPlan={entitlement.requiredPlan} />
+                  ) : null}
+                  <ChevronRight
+                    className="size-4 text-text-muted-warm motion-press group-hover:translate-x-px"
+                    aria-hidden
+                  />
+                </span>
+                <span className="mt-0.5 block text-xs text-text-muted-warm sm:text-sm">
+                  {item.description}
+                </span>
               </span>
-            </span>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

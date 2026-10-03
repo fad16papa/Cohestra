@@ -112,6 +112,7 @@ describe("checkout-validation", () => {
     expect(formatScheduledChangeLabel("Pro", "Monthly", "Pro")).toBe("monthly billing");
     expect(formatScheduledChangeLabel("Pro", "Annual", "Pro")).toBe("yearly billing");
     expect(formatScheduledChangeLabel("Core", "Monthly", "Pro")).toBe("Core");
+    expect(formatScheduledChangeLabel("Pro", "Monthly", null)).toBe("Pro");
   });
 
   it("supports cancel confirm copy for interval-only vs tier schedules", () => {

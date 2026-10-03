@@ -5,11 +5,9 @@ import { useSearchParams } from "next/navigation";
 
 import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
+import { resolveBillingSettingsAccess } from "@/lib/admin-nav-entitlements";
+import { isPaidTenantPlan } from "@/lib/shell/tenant-shell-api";
 import { isPaddleTransactionId } from "@/lib/billing/paddle-return";
-
-function isPaidPlan(plan: string): boolean {
-  return plan === "Core" || plan === "Pro";
-}
 
 function SettingsBillingBody() {
   const { shell, refreshShell } = useTenantShell();
@@ -21,7 +19,13 @@ function SettingsBillingBody() {
     ?? searchParams.get("transaction_id");
   const [incompleteNotice] = useState(checkoutIncomplete);
 
-  if (!shell?.isTenantAdmin) {
+  const access = resolveBillingSettingsAccess({
+    plan: shell?.plan,
+    isTenantAdmin: shell?.isTenantAdmin,
+    isBillingOwner: shell?.isBillingOwner,
+  });
+
+  if (!shell || access === "denied") {
     return (
       <div className="space-y-2">
         <h1 className="text-xl font-semibold text-text-warm sm:text-2xl">Billing</h1>
@@ -32,14 +36,14 @@ function SettingsBillingBody() {
     );
   }
 
-  if (isPaidPlan(shell.plan) && !shell.isBillingOwner) {
+  if (access === "owner-managed") {
     return (
       <div className="mx-auto w-full max-w-5xl space-y-3">
         <h1 className="text-xl font-semibold text-text-warm sm:text-2xl">Billing</h1>
         <p className="text-sm text-text-muted-warm">
           Billing for this workspace is managed by{" "}
           <span className="font-medium text-text-warm">
-            {shell.billingOwnerEmail ?? "the workspace owner"}
+            {shell?.billingOwnerEmail ?? "the workspace owner"}
           </span>
           . Invited admins can use the rest of Cohestra, but plan and payment changes stay with
           the owner account.
@@ -58,7 +62,7 @@ function SettingsBillingBody() {
         </p>
       </div>
 
-      {incompleteNotice && !isPaidPlan(shell.plan) ? (
+      {incompleteNotice && !isPaidTenantPlan(shell?.plan) ? (
         <p
           role="status"
           className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
