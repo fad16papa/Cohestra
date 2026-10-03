@@ -9,15 +9,20 @@ import {
   classifyFollowUpFetchFailure,
   classifyFollowUpListState,
   commitFollowUpCategoryChange,
+  commitFollowUpPageChange,
   countFollowUpCategories,
+  countsFromFollowUpResponse,
   followUpContextCaption,
   followUpHrefForCategory,
-  loadFollowUpClients,
+  loadFollowUpPage,
   needsAttentionCount,
   parseFollowUpCategoryParam,
+  reconcileFollowUpPage,
   resolveFollowUpCategory,
   resolveFollowUpCategoryParam,
+  resolveFollowUpPageParam,
   serializeFollowUpCategoryParam,
+  uniqueFollowUpItems,
 } from "@/lib/follow-up-category";
 
 function client(overrides: Partial<ClientListItem> & { leadStatus: LeadStatus }): ClientListItem {
@@ -188,6 +193,22 @@ describe("follow-up category query", () => {
     expect(followUpHrefForCategory("due-now", "category=healthy&utm=1")).toBe(
       "/follow-up?utm=1"
     );
+    expect(followUpHrefForCategory("healthy", "utm=1&page=3", 1)).toBe(
+      "/follow-up?utm=1&category=healthy"
+    );
+    expect(followUpHrefForCategory("at-risk", "utm=1", 2)).toBe(
+      "/follow-up?utm=1&category=at-risk&page=2"
+    );
+  });
+
+  it("resolves and reconciles page query values", () => {
+    expect(resolveFollowUpPageParam(null)).toBe(1);
+    expect(resolveFollowUpPageParam("0")).toBe(1);
+    expect(resolveFollowUpPageParam("nope")).toBe(1);
+    expect(resolveFollowUpPageParam("3")).toBe(3);
+    expect(reconcileFollowUpPage(4, 25, 25)).toBe(1);
+    expect(reconcileFollowUpPage(3, 40, 25)).toBe(2);
+    expect(reconcileFollowUpPage(1, 0, 25)).toBe(1);
   });
 
   it("treats re-selecting the current category as a true no-op", () => {
@@ -211,6 +232,18 @@ describe("follow-up category query", () => {
       })
     ).toBe("replaced");
     expect(replace).toHaveBeenCalledWith("/follow-up?utm=1&category=healthy");
+
+    replace.mockClear();
+    expect(
+      commitFollowUpPageChange({
+        page: 2,
+        currentPage: 2,
+        category: "healthy",
+        liveSearch: "category=healthy&page=2",
+        replace,
+      })
+    ).toBe("noop");
+    expect(replace).not.toHaveBeenCalled();
   });
 });
 
@@ -251,8 +284,18 @@ describe("follow-up context captions", () => {
   });
 });
 
-describe("loadFollowUpClients", () => {
-  function listBody(items: Array<Record<string, unknown>>, page: number, totalCount: number) {
+describe("loadFollowUpPage", () => {
+  function listBody(
+    items: Array<Record<string, unknown>>,
+    page: number,
+    totalCount: number,
+    counts = {
+      dueNowCount: 1,
+      atRiskCount: 0,
+      opportunityCount: 0,
+      healthyCount: 2,
+    }
+  ) {
     return {
       items,
       page,
@@ -266,86 +309,127 @@ describe("loadFollowUpClients", () => {
         mergeSuspectCount: 0,
         followUpDueCount: 0,
       },
+      followUpCategoryCounts: counts,
     };
   }
 
-  it("pages through the existing clients API and stops at the last page", async () => {
-    const first = Array.from({ length: FOLLOW_UP_PAGE_SIZE }, (_, index) => ({
+  it("requests only the selected category page and does not walk the tenant", async () => {
+    const items = Array.from({ length: FOLLOW_UP_PAGE_SIZE }, (_, index) => ({
       id: `p1-${index}`,
       fullName: `Page One ${index}`,
       consentGiven: true,
-      leadStatus: "active",
+      leadStatus: "new",
     }));
     const authFetch = vi.fn(async (input: string) => {
       const url = new URL(input, "http://localhost:8080");
-      const page = Number(url.searchParams.get("page"));
-      if (page === 1) {
-        return new Response(JSON.stringify(listBody(first, 1, FOLLOW_UP_PAGE_SIZE + 1)), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
+      expect(url.searchParams.get("followUpCategory")).toBe("due-now");
+      expect(url.searchParams.get("page")).toBe("1");
+      expect(url.searchParams.get("pageSize")).toBe(String(FOLLOW_UP_PAGE_SIZE));
+      return new Response(
+        JSON.stringify(
+          listBody(items, 1, 250, {
+            dueNowCount: 250,
+            atRiskCount: 10,
+            opportunityCount: 8,
+            healthyCount: 4000,
+          })
+        ),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    });
+
+    const result = await loadFollowUpPage(authFetch, { category: "due-now", page: 1 });
+    expect(authFetch).toHaveBeenCalledTimes(1);
+    expect(result.items).toHaveLength(FOLLOW_UP_PAGE_SIZE);
+    expect(result.totalCount).toBe(250);
+    expect(result.counts).toEqual({
+      "due-now": 250,
+      "at-risk": 10,
+      opportunity: 8,
+      healthy: 4000,
+    });
+    expect(needsAttentionCount(result.counts)).toBe(268);
+  });
+
+  it("requests a later page without appending previous pages", async () => {
+    const authFetch = vi.fn(async (input: string) => {
+      const url = new URL(input, "http://localhost:8080");
+      expect(url.searchParams.get("followUpCategory")).toBe("healthy");
+      expect(url.searchParams.get("page")).toBe("2");
       return new Response(
         JSON.stringify(
           listBody(
-            [{ id: "p2-1", fullName: "Page Two", consentGiven: true, leadStatus: "inactive" }],
+            [
+              { id: "h-26", fullName: "Healthy 26", consentGiven: true, leadStatus: "active" },
+              { id: "h-26", fullName: "Healthy 26 dup", consentGiven: true, leadStatus: "active" },
+            ],
             2,
-            FOLLOW_UP_PAGE_SIZE + 1
+            26,
+            { dueNowCount: 0, atRiskCount: 0, opportunityCount: 0, healthyCount: 26 }
           )
         ),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     });
 
-    const items = await loadFollowUpClients(authFetch);
-    expect(authFetch).toHaveBeenCalledTimes(2);
-    expect(items).toHaveLength(FOLLOW_UP_PAGE_SIZE + 1);
-    expect(items.at(-1)?.fullName).toBe("Page Two");
+    const result = await loadFollowUpPage(authFetch, { category: "healthy", page: 2 });
+    expect(authFetch).toHaveBeenCalledTimes(1);
+    expect(uniqueFollowUpItems(result.items).map((item) => item.id)).toEqual(["h-26"]);
+    expect(result.items).toHaveLength(1);
   });
 
-  it("throws FollowUpAccessError on 403 and does not keep a partial list", async () => {
+  it("throws FollowUpAccessError on 403", async () => {
     const authFetch = vi.fn(async () => new Response("forbidden", { status: 403 }));
-    await expect(loadFollowUpClients(authFetch)).rejects.toBeInstanceOf(FollowUpAccessError);
+    await expect(loadFollowUpPage(authFetch, { category: "due-now" })).rejects.toBeInstanceOf(
+      FollowUpAccessError
+    );
   });
 
-  it("fails closed when a later page errors or the unique merge is short", async () => {
-    const first = Array.from({ length: FOLLOW_UP_PAGE_SIZE }, (_, index) => ({
-      id: `ok-${index}`,
-      fullName: `Ok ${index}`,
-      consentGiven: true,
-      leadStatus: "active",
-    }));
-    const authFetch = vi.fn(async (input: string) => {
-      const url = new URL(input, "http://localhost:8080");
-      const page = Number(url.searchParams.get("page"));
-      if (page === 1) {
-        return new Response(
-          JSON.stringify(listBody(first, 1, FOLLOW_UP_PAGE_SIZE + 2)),
-          { status: 200, headers: { "Content-Type": "application/json" } }
-        );
-      }
+  it("fails closed when totals are missing or the request errors", async () => {
+    const missingTotals = vi.fn(async () => {
+      return new Response(
+        JSON.stringify({
+          items: [{ id: "only", fullName: "Only", consentGiven: true, leadStatus: "active" }],
+          page: 1,
+          pageSize: FOLLOW_UP_PAGE_SIZE,
+          totalCount: 1,
+          statusCounts: {
+            newCount: 0,
+            contactedCount: 0,
+            activeCount: 1,
+            inactiveCount: 0,
+            mergeSuspectCount: 0,
+            followUpDueCount: 0,
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    });
+    await expect(loadFollowUpPage(missingTotals, { category: "healthy" })).rejects.toThrow(
+      "Could not load Follow-up category totals."
+    );
+
+    const failed = vi.fn(async () => {
       return new Response(JSON.stringify({ detail: "Follow-up source unavailable." }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
     });
-
-    await expect(loadFollowUpClients(authFetch)).rejects.toThrow(/Request failed \(500\)|unavailable/i);
-
-    const shortPage = vi.fn(async () => {
-      return new Response(
-        JSON.stringify(
-          listBody(
-            [{ id: "only", fullName: "Only", consentGiven: true, leadStatus: "active" }],
-            1,
-            8
-          )
-        ),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
-    });
-    await expect(loadFollowUpClients(shortPage)).rejects.toThrow(
-      "Could not load the complete Follow-up list."
+    await expect(loadFollowUpPage(failed, { category: "due-now" })).rejects.toThrow(
+      /Request failed \(500\)|unavailable/i
     );
+  });
+
+  it("maps server totals without treating Healthy as needs attention", () => {
+    expect(
+      needsAttentionCount(
+        countsFromFollowUpResponse({
+          dueNowCount: 2,
+          atRiskCount: 1,
+          opportunityCount: 4,
+          healthyCount: 90,
+        })
+      )
+    ).toBe(7);
   });
 });

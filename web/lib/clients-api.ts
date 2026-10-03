@@ -44,12 +44,20 @@ export type ClientListItem = {
   nextFollowUpAt: string | null;
 };
 
+export type ClientFollowUpCategoryCounts = {
+  dueNowCount: number;
+  atRiskCount: number;
+  opportunityCount: number;
+  healthyCount: number;
+};
+
 export type ClientListResult = {
   items: ClientListItem[];
   page: number;
   pageSize: number;
   totalCount: number;
   statusCounts: ClientLeadStatusCounts;
+  followUpCategoryCounts: ClientFollowUpCategoryCounts | null;
 };
 
 export type ClientRegistrationAnswer = {
@@ -168,6 +176,35 @@ function parseOutreachKind(raw: unknown): OutreachKind | null {
   return null;
 }
 
+function parseFollowUpCategoryCounts(
+  raw: Record<string, unknown> | undefined
+): ClientFollowUpCategoryCounts | null {
+  if (!raw) {
+    return null;
+  }
+
+  const dueNowCount = raw.dueNowCount ?? raw.DueNowCount;
+  const atRiskCount = raw.atRiskCount ?? raw.AtRiskCount;
+  const opportunityCount = raw.opportunityCount ?? raw.OpportunityCount;
+  const healthyCount = raw.healthyCount ?? raw.HealthyCount;
+
+  if (
+    typeof dueNowCount !== "number" ||
+    typeof atRiskCount !== "number" ||
+    typeof opportunityCount !== "number" ||
+    typeof healthyCount !== "number"
+  ) {
+    return null;
+  }
+
+  return {
+    dueNowCount,
+    atRiskCount,
+    opportunityCount,
+    healthyCount,
+  };
+}
+
 function parseClientLeadStatusCounts(
   raw: Record<string, unknown> | undefined
 ): ClientLeadStatusCounts {
@@ -207,6 +244,8 @@ export function parseClientList(raw: Record<string, unknown>): ClientListResult 
   const pageSize = raw.pageSize ?? raw.PageSize;
   const totalCount = raw.totalCount ?? raw.TotalCount;
   const statusCounts = raw.statusCounts ?? raw.StatusCounts;
+  const followUpCategoryCounts =
+    raw.followUpCategoryCounts ?? raw.FollowUpCategoryCounts;
 
   if (
     !Array.isArray(items) ||
@@ -226,6 +265,9 @@ export function parseClientList(raw: Record<string, unknown>): ClientListResult 
     totalCount,
     statusCounts: parseClientLeadStatusCounts(
       statusCounts as Record<string, unknown> | undefined
+    ),
+    followUpCategoryCounts: parseFollowUpCategoryCounts(
+      followUpCategoryCounts as Record<string, unknown> | undefined
     ),
   };
 }
@@ -263,6 +305,7 @@ export async function fetchClients(
     consentOnly?: boolean;
     excludeCommunity?: string;
     activityId?: string;
+    followUpCategory?: "due-now" | "at-risk" | "opportunity" | "healthy";
   } = {}
 ): Promise<ClientListResult> {
   const searchParams = new URLSearchParams();
@@ -323,6 +366,10 @@ export async function fetchClients(
 
   if (params.activityId?.trim()) {
     searchParams.set("activityId", params.activityId.trim());
+  }
+
+  if (params.followUpCategory) {
+    searchParams.set("followUpCategory", params.followUpCategory);
   }
 
   const response = await authFetch(

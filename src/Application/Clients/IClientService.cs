@@ -21,6 +21,7 @@ public interface IClientService
         bool? consentOnly = null,
         string? excludeCommunity = null,
         Guid? activityId = null,
+        string? followUpCategory = null,
         CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<string>> ListNationalitiesAsync(

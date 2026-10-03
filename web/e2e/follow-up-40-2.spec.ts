@@ -80,11 +80,20 @@ async function assertAxe(page: Page, label: string): Promise<void> {
   expect(serious, `${label}: ${JSON.stringify(serious, null, 2)}`).toEqual([]);
 }
 
-function listPayload(items: Array<Record<string, unknown>>) {
+function listPayload(
+  items: Array<Record<string, unknown>>,
+  counts: {
+    dueNowCount: number;
+    atRiskCount: number;
+    opportunityCount: number;
+    healthyCount: number;
+  },
+  page = 1
+) {
   return {
     items,
-    page: 1,
-    pageSize: 100,
+    page,
+    pageSize: 25,
     totalCount: items.length,
     statusCounts: {
       newCount: 0,
@@ -94,7 +103,16 @@ function listPayload(items: Array<Record<string, unknown>>) {
       mergeSuspectCount: 0,
       followUpDueCount: 0,
     },
+    followUpCategoryCounts: counts,
   };
+}
+
+function followUpCategoryFrom(url: string): string {
+  try {
+    return new URL(url).searchParams.get("followUpCategory") ?? "";
+  } catch {
+    return "";
+  }
 }
 
 test.describe("Story 40.2 — Follow-up primary room", () => {
@@ -106,6 +124,12 @@ test.describe("Story 40.2 — Follow-up primary room", () => {
     test.setTimeout(180_000);
     fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
     const session = await loginOperatorSession(request);
+    const clientsCalls: string[] = [];
+    page.on("request", (req) => {
+      if (req.url().includes("/api/v1/admin/clients")) {
+        clientsCalls.push(req.url());
+      }
+    });
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await openAuthed(page, session, "/dashboard");
@@ -114,6 +138,13 @@ test.describe("Story 40.2 — Follow-up primary room", () => {
     await expect(viewAll).toHaveAttribute("href", "/follow-up");
     await viewAll.click();
     await waitForFollowUpReady(page);
+    const followUpClientCalls = clientsCalls.filter((url) => url.includes("followUpCategory="));
+    expect(followUpClientCalls.length, "initial Follow-up load must request a category page").toBeGreaterThan(0);
+    expect(
+      followUpClientCalls.every((url) => url.includes("followUpCategory=due-now") && /[?&]page=1(?:&|$)/.test(url)),
+      "initial Follow-up load must not walk later tenant pages"
+    ).toBe(true);
+    expect(followUpClientCalls.length, "initial Follow-up load must not fan out").toBeLessThan(3);
 
     await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
     await expect(page.locator("main#main-content")).toHaveCount(1);
@@ -244,20 +275,29 @@ test.describe("Story 40.2 — Follow-up primary room", () => {
     fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
     const session = await loginOperatorSession(request);
 
+    const healthyOnly = {
+      dueNowCount: 0,
+      atRiskCount: 0,
+      opportunityCount: 0,
+      healthyCount: 1,
+    };
     await page.route("**/api/v1/admin/clients**", async (route) => {
+      const category = followUpCategoryFrom(route.request().url());
+      const items =
+        category === "healthy"
+          ? [
+              {
+                id: "healthy-1",
+                fullName: "Healthy Example",
+                consentGiven: true,
+                leadStatus: "active",
+              },
+            ]
+          : [];
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(
-          listPayload([
-            {
-              id: "healthy-1",
-              fullName: "Healthy Example",
-              consentGiven: true,
-              leadStatus: "active",
-            },
-          ])
-        ),
+        body: JSON.stringify(listPayload(items, healthyOnly)),
       });
     });
 
@@ -276,26 +316,38 @@ test.describe("Story 40.2 — Follow-up primary room", () => {
     await expect(page.getByRole("link", { name: /Open Healthy Example/ })).toBeVisible();
 
     await page.unroute("**/api/v1/admin/clients**");
+    const attentionCounts = {
+      dueNowCount: 1,
+      atRiskCount: 1,
+      opportunityCount: 0,
+      healthyCount: 0,
+    };
     await page.route("**/api/v1/admin/clients**", async (route) => {
+      const category = followUpCategoryFrom(route.request().url());
+      const items =
+        category === "due-now"
+          ? [
+              {
+                id: "due-1",
+                fullName: "Due Example",
+                consentGiven: true,
+                leadStatus: "new",
+              },
+            ]
+          : category === "at-risk"
+            ? [
+                {
+                  id: "risk-1",
+                  fullName: "Risk Example",
+                  consentGiven: true,
+                  leadStatus: "inactive",
+                },
+              ]
+            : [];
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(
-          listPayload([
-            {
-              id: "due-1",
-              fullName: "Due Example",
-              consentGiven: true,
-              leadStatus: "new",
-            },
-            {
-              id: "risk-1",
-              fullName: "Risk Example",
-              consentGiven: true,
-              leadStatus: "inactive",
-            },
-          ])
-        ),
+        body: JSON.stringify(listPayload(items, attentionCounts)),
       });
     });
     await page.reload({ waitUntil: "domcontentloaded" });
@@ -335,7 +387,14 @@ test.describe("Story 40.2 — Follow-up primary room", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(listPayload([])),
+        body: JSON.stringify(
+          listPayload([], {
+            dueNowCount: 0,
+            atRiskCount: 0,
+            opportunityCount: 0,
+            healthyCount: 0,
+          })
+        ),
       });
     });
     await page.getByRole("button", { name: "Try again" }).click();

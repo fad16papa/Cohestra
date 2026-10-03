@@ -2,7 +2,7 @@
 id: 40.2
 key: 40-2-follow-up-primary-room
 title: Follow-up primary room
-status: review
+status: in-progress
 epic: 40
 created: 2026-10-03
 baseline_commit: dc9e42f6f283c72b0be290768730bfcbe88b58b4
@@ -10,7 +10,7 @@ baseline_commit: dc9e42f6f283c72b0be290768730bfcbe88b58b4
 
 # Story 40.2: Follow-up primary room
 
-Status: review
+Status: in-progress
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -28,7 +28,7 @@ Canonical backlog §40.2, DESIGN.md **D2 / D16**, content-language §4, IA §4.6
 
 | Prompt / backlog note | Contract in this story |
 | --- | --- |
-| Invent a Follow-up API | **No.** Existing `GET /api/v1/admin/clients` + shared client-side resolver. |
+| Invent a Follow-up API | **No dedicated endpoint.** Extend existing `GET /api/v1/admin/clients` with optional `followUpCategory` + totals. |
 | Import cinema 6/7/4/17, 72h, 21d, notes/referral predicates | **Forbidden.** |
 | Create `/opportunities` | **Forbidden.** |
 | Opportunity as a sales stage or activity type | **Forbidden.** |
@@ -70,11 +70,11 @@ Canonical backlog §40.2, DESIGN.md **D2 / D16**, content-language §4, IA §4.6
 
 ## Architecture
 
-See `_bmad-output/planning-artifacts/evidence/px2-40-2/architecture.md`.
+See `_bmad-output/planning-artifacts/evidence/px2-40-2/architecture.md` and `_bmad-output/planning-artifacts/sprint-change-proposal-2026-10-03-story-40-2.md`.
 
-Selected data contract: existing `fetchClients` (paginate `pageSize=100`) + shared client-side resolver `resolveFollowUpCategory` over `nextFollowUpAt`, `lastOutreachAt`, and `leadStatus`. No new API.
+Corrected data contract: backward-compatible `followUpCategory` on existing `GET /api/v1/admin/clients`, authoritative category totals, one page of the selected category, deterministic sort with client-id tie-break. Server is the category authority. Client-side full-tenant fan-out is **retracted**.
 
-Rejected alternatives, category derivation, URL rules, and ownership are recorded in evidence before implementation.
+Rejected alternatives, category derivation, URL rules, and ownership are recorded in evidence.
 
 ## Readiness
 
@@ -88,6 +88,9 @@ See `_bmad-output/planning-artifacts/evidence/px2-40-2/readiness.md`. Dispositio
 - [x] Cards <768, composition 768–1023, table ≥1024; 44px; no overflow (AC 9)
 - [x] Dashboard continuity unchanged (AC 8)
 - [x] Playwright 40.2 + protected 38.4–39.5 and 40.1 regressions (AC 7, 10, 11)
+- [ ] PO correction: server `followUpCategory` + totals + Id tie-break (MAJOR 1, MAJOR 2)
+- [ ] PO correction: room fetches one selected-category page with honest pager
+- [ ] PO correction: backend unit/integration + frontend + Playwright + protected gates
 
 ## Dev Notes
 
@@ -101,13 +104,14 @@ See `_bmad-output/planning-artifacts/evidence/px2-40-2/readiness.md`. Dispositio
 - Reuse: `PageHeader`, `ListSkeleton`, `ProductEmptyState`, `ProductErrorState`, `PersonAvatar`, `formatNextFollowUpDate`, `formatLastOutreachCaption`, `formatLastActivityCaption`, `isFollowUpDue`, `useAuth().authFetch`, `useTenantShell().registrationTimeZoneId`.
 - Do not reuse `ClientRow` wholesale — it includes Mark contacted / WhatsApp / Viber actions that would imply outreach from this room.
 
-### Data contract (locked)
+### Data contract (corrected — server authoritative)
 
-1. Fetch the tenant client list through existing `fetchClients`, paging at `pageSize=100` until exhausted.
-2. Derive one presentation category per client with `resolveFollowUpCategory` (see category-derivation evidence).
-3. Filter in memory. Never PATCH lead status, next follow-up, or outreach from this room.
+1. Fetch **one page** of the selected category through existing `fetchClients` with `followUpCategory`, `page`, and `pageSize` ≤ 100.
+2. Read authoritative `followUpCategoryCounts` from that response. Do not walk every tenant page to count or render.
+3. Never PATCH lead status, next follow-up, or outreach from this room.
 4. Needs-attention count = Due now + At risk + Opportunity. Healthy excluded.
 5. No second queue. Dashboard preview stays on its existing two queries.
+6. Server sort is the requested primary field, then unique client id. The same ordering applies to every page.
 
 ### URL category (locked — existing list/view pattern, not a new invention)
 
@@ -118,10 +122,11 @@ See `_bmad-output/planning-artifacts/evidence/px2-40-2/readiness.md`. Dispositio
 | any other string | `due-now` |
 
 - Query is the only source. **No localStorage.** Dashboard view preference must not be read or written here.
-- Chip change: `router.replace` with other query keys preserved. `due-now` may be omitted from the serialized URL (same as dashboard `overview`).
+- Chip change: `router.replace` with other query keys preserved and `page` reset to 1. `due-now` and `page=1` may be omitted from the serialized URL (same as dashboard `overview`).
 - Re-selecting the already resolved category is a **true no-op** (no history, no URL write).
 - Refresh keeps the query. Back from `/clients/{id}` returns to the same `/follow-up` URL.
-- Invalid values do not 404; they resolve to Due now.
+- Invalid category values do not 404; they resolve to Due now. Invalid/out-of-range `page` resolves to 1 or the last valid page.
+- Honest Previous/Next paging. Do not render the entire tenant collection.
 
 ### Copy
 
@@ -144,11 +149,11 @@ See `_bmad-output/planning-artifacts/evidence/px2-40-2/readiness.md`. Dispositio
 
 ### Testing
 
-- Unit: category derivation, Healthy exclusion, URL parse/serialize/no-op, empty-state classification.
-- Playwright: dashboard widget → room → profile; category filter; global vs filter empty; fetch failure + retry; TenantAdmin; TenantMember; 390 readable chips/cards no overflow; 1024/1440 table; keyboard/focus; reduced motion; one main/h1/skip; mobile+desktop nav current.
-- Tenant isolation: existing clients API remains tenant-scoped; do not add a cross-tenant fetch. Playwright/isolation coverage may reuse 38.3 patterns if a live second tenant is available; otherwise document the server-authoritative boundary in evidence.
-- Run affected unit tests, full Vitest, `npx tsc --noEmit`, production Next build, targeted ESLint, Story 40.2 Playwright, regressions 38.4–39.5 and 40.1.
-- If server behavior does **not** change, skip new .NET tests. If a server extension is later proven necessary, add .NET unit/integration then — that is not the selected contract.
+- Unit: category derivation, Healthy exclusion, URL parse/serialize/no-op/page reset, empty-state classification, single-page Follow-up fetch.
+- Backend: category filter, tenant-scoped totals, member read, unauthorized/cross-tenant denial, >100 identical-sort pages without dupes/omissions, repeated page determinism, unchanged default list, invalid inputs.
+- Playwright: dashboard widget → room → profile; category filter; global vs filter empty; fetch failure + retry; TenantAdmin; TenantMember; 390/1440 readable no overflow; 1024/1440 table; keyboard/focus; reduced motion; one main/h1/skip; mobile+desktop nav current.
+- Tenant isolation: clients API remains tenant-scoped; Follow-up totals and items must not leak foreign tenants.
+- Run affected backend unit/integration, affected Follow-up Vitest, full Vitest, `npx tsc --noEmit`, production Next build, targeted ESLint, Story 40.2 Playwright, regressions 38.4–39.5 and 40.1, required GitHub CI.
 - Do not weaken assertions, inflate timeouts, or add skips to go green. Classify unrelated/flaky failures under the Mandatory Code Review Loop (39.4 43.999px remains D; DigitalOcean empty SSH remains C; ClientDedup phone-hex remains pre-existing flake).
 
 ### Project Structure Notes

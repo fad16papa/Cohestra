@@ -32,6 +32,7 @@ public class ClientsController(IClientService clientService) : ControllerBase
         [FromQuery] bool? consentOnly = null,
         [FromQuery] string? excludeCommunity = null,
         [FromQuery] Guid? activityId = null,
+        [FromQuery] string? followUpCategory = null,
         CancellationToken cancellationToken = default)
     {
         var validationError = ValidateListQuery(
@@ -39,7 +40,8 @@ public class ClientsController(IClientService clientService) : ControllerBase
             sortDirection,
             createdWithinDays,
             registeredWithinDays,
-            leadStatus);
+            leadStatus,
+            followUpCategory);
         if (validationError is not null)
         {
             return BadRequestProblem(validationError);
@@ -64,6 +66,7 @@ public class ClientsController(IClientService clientService) : ControllerBase
                 consentOnly,
                 excludeCommunity,
                 activityId,
+                followUpCategory,
                 cancellationToken);
 
             return Ok(result);
@@ -355,7 +358,8 @@ public class ClientsController(IClientService clientService) : ControllerBase
         string? sortDirection,
         int? createdWithinDays,
         int? registeredWithinDays,
-        string? leadStatus)
+        string? leadStatus,
+        string? followUpCategory = null)
     {
         if (createdWithinDays is <= 0)
         {
@@ -374,6 +378,12 @@ public class ClientsController(IClientService clientService) : ControllerBase
             {
                 return "leadStatus must be new, contacted, active, or inactive.";
             }
+        }
+
+        if (!string.IsNullOrWhiteSpace(followUpCategory)
+            && !FollowUpCategoryContract.TryParse(followUpCategory, out _))
+        {
+            return FollowUpCategoryContract.InvalidCategoryMessage;
         }
 
         if (!string.IsNullOrWhiteSpace(sortBy))

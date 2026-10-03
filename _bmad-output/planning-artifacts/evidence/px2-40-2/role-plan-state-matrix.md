@@ -24,8 +24,9 @@ Server 401/403 remains the denial authority. The room must not invent a client-s
 | Recoverable error | Follow-up | `ProductErrorState` + Try again | Not claimed |
 | Permission denial | Follow-up | Access copy | Not claimed |
 | Global empty | Follow-up | “No one needs follow-up.” | Needs-attention = 0; Healthy chip may be > 0 |
-| Filter empty | Follow-up | “No one in {Category}.” | Needs-attention > 0 |
-| Populated | Follow-up | Filtered results | Chip counts; Healthy excluded from needs total |
+| Filter empty | Follow-up | “No one in {Category}.” | Needs-attention > 0; selected category total = 0 |
+| Populated | Follow-up | Current category page + honest pager | Chip counts from server; Healthy excluded from needs total |
+| Page empty after data change | Follow-up | Reconcile to last valid page; do not claim global-empty | Counts stay server-authoritative |
 
 ## Category × needs-attention
 

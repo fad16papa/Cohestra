@@ -2,35 +2,39 @@
 
 Date: 2026-10-03  
 Owner: Grok 4.6  
-Status: locked before implementation
+Status: corrected — **server authoritative**; first-match meanings unchanged
 
 ## What this is
 
-A **presentation resolver** over existing authoritative production fields. It is not a score, not a persisted column, not a sales stage, not an activity type, and not the cinema engine.
+A **read-only classification** over existing authoritative production fields. It is not a score, not a persisted column, not a sales stage, not an activity type, and not the cinema engine.
 
-Content-language §4 forbids invented numeric windows and cinema 6/7/4/17 rules. It also says Phase 1 does not invent a scoring model. This resolver only labels rows so the four named filters can list people using fields operators already maintain.
+Content-language §4 forbids invented numeric windows and cinema 6/7/4/17 rules. Phase 1 does not invent a scoring model.
+
+## Authority
+
+`ClientService` is the only implementation used to filter Follow-up pages and compute category totals.
+
+The web helper `resolveFollowUpCategory` remains a documented mirror for captions and unit-level meaning checks. The Follow-up room must not download the tenant and re-derive counts or membership. Consumer-boundary tests prove the room sends `followUpCategory` and reads `followUpCategoryCounts`.
 
 ## Authoritative inputs
 
-From `ClientListItem` + tenant registration timezone:
-
 | Field | Production meaning |
 | --- | --- |
-| `nextFollowUpAt` + `isFollowUpDue(..., timeZoneId)` | Due today or overdue in the tenant calendar (same helper as profile / dashboard due pill) |
-| `lastOutreachAt` | Whether any recorded outreach exists on the list row |
-| `leadStatus` | `new` / `contacted` / `active` / `inactive` — existing operator semantics, unchanged |
+| `NextFollowUpAt` vs tenant start-of-tomorrow UTC (`RegistrationPeriod.GetStartOfTomorrowUtc`) | Due today or overdue in the tenant calendar — same window as existing `followUpDue` |
+| Outreach coverage events (`ClientOutreachCoverage.FollowUpCoverageEventTypes`) | Whether any recorded outreach exists (`LastOutreachAt == null` on the list row) |
+| `LeadStatus` | `new` / `contacted` / `active` / `inactive` — existing operator semantics, unchanged |
 
 Do **not** use: cinema `isDueNow` / `isAtRisk` / `isOpportunity`, 72h, 21d, notes, referral keywords, fixture activity IDs, or seed counts.
 
 ## Algorithm (first match)
 
 ```
-if isFollowUpDue(nextFollowUpAt, timeZoneId)
-   OR (leadStatus === "new" AND lastOutreachAt == null):
+if NextFollowUpAt is due/overdue in the tenant calendar
+   OR (leadStatus === new AND no recorded outreach):
     Due now
-else if leadStatus === "inactive":
+else if leadStatus === inactive:
     At risk
-else if leadStatus === "contacted" OR leadStatus === "new":
+else if leadStatus === contacted OR leadStatus === new:
     Opportunity
 else:
     Healthy
@@ -47,21 +51,22 @@ Any due/overdue date wins over status so “action now” is not buried.
 | Total | Includes | Excludes |
 | --- | --- | --- |
 | Needs follow-up / needs attention | Due now + At risk + Opportunity | Healthy |
-| Category chip count | That category only | — |
-| Global empty | Needs-attention count === 0 | Healthy may still be > 0 |
-| Filter empty | Selected category === 0 **and** needs-attention count > 0 | — |
+| Category chip count | That category only (server) | — |
+| Selected-category `totalCount` | Selected category only | Other categories and other pages |
+| Global empty | Needs-attention count === 0 | Healthy may still be &gt; 0 |
+| Filter empty | Selected category total === 0 **and** needs-attention count &gt; 0 | — |
 
 Healthy remains listable when its filter is selected.
 
+Totals are tenant-scoped (and scoped to any additional list filters if those are also present). The Follow-up room sends no extra list filters.
+
 ## Filtering must not write
 
-Changing `?category=` never calls PATCH lead-status, next-follow-up, or outreach. The resolver is read-only.
+Changing `?category=` or `?page=` never calls PATCH lead-status, next-follow-up, or outreach.
 
 ## Alignment with Dashboard
 
-Dashboard Needs follow-up preview continues to use server filters `followUpDue=true` and `leadStatus=new&withoutOutreach=true`. Room Due now uses `isFollowUpDue` + `lastOutreachAt` on the list payload so one function is unit-testable.
-
-Known residual: server `followUpDue` uses tenant start-of-tomorrow UTC; client `isFollowUpDue` uses calendar keys. Server `withoutOutreach` uses coverage event types; the list exposes `lastOutreachAt`. Do not “fix” those in 40.2. Document only. Do not import cinema to paper over the difference.
+Dashboard Needs follow-up preview continues to use server filters `followUpDue=true` and `leadStatus=new&withoutOutreach=true`. Room Due now uses the same due window (`GetStartOfTomorrowUtc`) plus New-without-outreach. Do not import cinema to paper over preview vs room slice differences. The preview remains a 5-row widget, not the room’s category engine.
 
 ## Forbidden
 
@@ -70,3 +75,4 @@ Known residual: server `followUpDue` uses tenant start-of-tomorrow UTC; client `
 - Hidden thresholds or points
 - Treating Opportunity as `/opportunities` or a CRM stage
 - Using cinema seed 6/7/4/17 as production expectations
+- A second client-side count/filter engine over a downloaded tenant

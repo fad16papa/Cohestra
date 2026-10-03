@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ListTodo } from "lucide-react";
 
@@ -17,17 +17,23 @@ import { CLIENTS_PATH, DASHBOARD_PATH } from "@/lib/admin-canonical-routes";
 import type { ClientListItem } from "@/lib/clients-api";
 import {
   FOLLOW_UP_CATEGORY_QUERY_KEY,
+  FOLLOW_UP_DEFAULT_PAGE,
+  FOLLOW_UP_PAGE_QUERY_KEY,
   classifyFollowUpFetchFailure,
   classifyFollowUpListState,
   commitFollowUpCategoryChange,
-  countFollowUpCategories,
+  commitFollowUpPageChange,
   emptyFollowUpCategoryCounts,
   followUpCategoryLabel,
-  loadFollowUpClients,
+  followUpHrefForCategory,
+  followUpPageCount,
+  loadFollowUpPage,
   needsAttentionCount,
-  resolveFollowUpCategory,
+  reconcileFollowUpPage,
   resolveFollowUpCategoryParam,
+  resolveFollowUpPageParam,
   type FollowUpCategory,
+  type FollowUpCategoryCounts,
 } from "@/lib/follow-up-category";
 
 export function FollowUpPageClient() {
@@ -38,15 +44,21 @@ export function FollowUpPageClient() {
   const category = resolveFollowUpCategoryParam(
     searchParams.get(FOLLOW_UP_CATEGORY_QUERY_KEY)
   );
+  const page = resolveFollowUpPageParam(searchParams.get(FOLLOW_UP_PAGE_QUERY_KEY));
   const timeZoneId = shell?.registrationTimeZoneId ?? null;
 
-  const [clients, setClients] = useState<ClientListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<ClientListItem[]>([]);
+  const [counts, setCounts] = useState<FollowUpCategoryCounts>(emptyFollowUpCategoryCounts());
+  const [selectedTotal, setSelectedTotal] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [errorKind, setErrorKind] = useState<"none" | "recoverable" | "permission">(
     "none"
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
+  const fetchKey = `${category}:${page}:${reloadToken}`;
+  const waitingForPage = activeKey !== fetchKey;
 
   useEffect(() => {
     if (status !== "authenticated") {
@@ -55,73 +67,91 @@ export function FollowUpPageClient() {
 
     let cancelled = false;
 
-    void loadFollowUpClients(authFetch)
-      .then((items) => {
+    void loadFollowUpPage(authFetch, { category, page })
+      .then((result) => {
         if (cancelled) {
           return;
         }
-        setClients(items);
+
+        const reconciled = reconcileFollowUpPage(page, result.totalCount, result.pageSize);
+        if (result.items.length === 0 && result.totalCount > 0 && page !== reconciled) {
+          const currentSearch = window.location.search;
+          router.replace(
+            followUpHrefForCategory(category, currentSearch, reconciled),
+            { scroll: false }
+          );
+          return;
+        }
+
+        setItems(result.items);
+        setCounts(result.counts);
+        setSelectedTotal(result.counts[category]);
+        setPageSize(result.pageSize);
         setErrorKind("none");
         setErrorMessage(null);
-        setLoading(false);
+        setActiveKey(fetchKey);
       })
       .catch((loadError: unknown) => {
         if (cancelled) {
           return;
         }
         const kind = classifyFollowUpFetchFailure(loadError);
-        setClients([]);
+        setItems([]);
+        setCounts(emptyFollowUpCategoryCounts());
+        setSelectedTotal(0);
         setErrorKind(kind);
         setErrorMessage(
           kind === "permission"
             ? "You don’t have access to Follow-up."
             : "We couldn’t load Follow-up. Your list wasn’t changed. Try again."
         );
-        setLoading(false);
+        setActiveKey(fetchKey);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [authFetch, reloadToken, status]);
+  }, [authFetch, category, fetchKey, page, reloadToken, router, status]);
 
-  const counts = useMemo(
-    () => (loading || errorKind !== "none" ? emptyFollowUpCategoryCounts() : countFollowUpCategories(clients, timeZoneId)),
-    [clients, errorKind, loading, timeZoneId]
-  );
   const attentionCount = needsAttentionCount(counts);
-  const categorized = useMemo(() => {
-    const rows = clients
-      .map((client) => ({
-        ...client,
-        category: resolveFollowUpCategory(client, timeZoneId),
-      }))
-      .filter((client) => client.category === category);
-
-    if (category !== "due-now") {
-      return rows;
-    }
-
-    return [...rows].sort((left, right) => {
-      const leftTime = left.nextFollowUpAt ? Date.parse(left.nextFollowUpAt) : Number.POSITIVE_INFINITY;
-      const rightTime = right.nextFollowUpAt ? Date.parse(right.nextFollowUpAt) : Number.POSITIVE_INFINITY;
-      return leftTime - rightTime;
-    });
-  }, [category, clients, timeZoneId]);
+  const initialLoading = activeKey === null;
   const listState = classifyFollowUpListState({
-    loading: status !== "authenticated" || loading || (shellLoading && !shell),
+    loading:
+      status !== "authenticated" ||
+      (initialLoading && waitingForPage) ||
+      (shellLoading && !shell),
     errorKind,
     needsAttentionCount: attentionCount,
-    selectedCount: categorized.length,
+    selectedCount: selectedTotal,
   });
+  const resultsLoading = !initialLoading && waitingForPage && errorKind === "none";
+  const pageCount = followUpPageCount(selectedTotal, pageSize);
+  const categorized = items.map((client) => ({
+    ...client,
+    category,
+  }));
+
+  function liveSearch() {
+    return typeof window !== "undefined" ? window.location.search : searchParams.toString();
+  }
 
   function handleCategoryChange(next: FollowUpCategory) {
-    const liveSearch =
-      typeof window !== "undefined" ? window.location.search : searchParams.toString();
     commitFollowUpCategoryChange({
       category: next,
       currentCategory: category,
-      liveSearch,
+      liveSearch: liveSearch(),
+      replace: (href) => {
+        router.replace(href, { scroll: false });
+      },
+    });
+  }
+
+  function handlePageChange(nextPage: number) {
+    commitFollowUpPageChange({
+      page: nextPage,
+      currentPage: page,
+      category,
+      liveSearch: liveSearch(),
       replace: (href) => {
         router.replace(href, { scroll: false });
       },
@@ -161,8 +191,8 @@ export function FollowUpPageClient() {
               variant="outline"
               className="min-h-11 min-w-11"
               onClick={() => {
-                setLoading(true);
                 setErrorKind("none");
+                setActiveKey(null);
                 setReloadToken((current) => current + 1);
               }}
             >
@@ -215,8 +245,44 @@ export function FollowUpPageClient() {
         />
       ) : null}
 
-      {listState === "populated" ? (
-        <FollowUpResults results={categorized} timeZoneId={timeZoneId} />
+      {listState === "populated" && resultsLoading ? (
+        <div aria-busy="true" aria-label="Loading Follow-up page">
+          <ListSkeleton rows={4} />
+        </div>
+      ) : null}
+
+      {listState === "populated" && !resultsLoading ? (
+        <>
+          <FollowUpResults results={categorized} timeZoneId={timeZoneId} />
+          {selectedTotal > pageSize || page > FOLLOW_UP_DEFAULT_PAGE ? (
+            <nav
+              aria-label="Follow-up pages"
+              className="flex flex-wrap items-center gap-2"
+            >
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 min-w-11"
+                disabled={page <= FOLLOW_UP_DEFAULT_PAGE}
+                onClick={() => handlePageChange(page - 1)}
+              >
+                Previous
+              </Button>
+              <p className="text-sm text-text-muted-warm">
+                Page {page} of {pageCount}
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 min-w-11"
+                disabled={page >= pageCount}
+                onClick={() => handlePageChange(page + 1)}
+              >
+                Next
+              </Button>
+            </nav>
+          ) : null}
+        </>
       ) : null}
     </div>
   );

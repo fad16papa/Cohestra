@@ -40,15 +40,18 @@ Disposition: recorded before architecture and implementation
 | Auth / isolation | TenantOperator + tenant-scoped query | Sufficient |
 | Notes / referral | On `ClientDetail` only | Not required. Using them would recreate cinema heuristics. |
 
-## Selected contract
+## Selected contract (corrected 2026-10-03)
 
-**Existing production API + shared client-side resolver.** See `architecture.md`.
+**Existing `GET /api/v1/admin/clients` extended with optional `followUpCategory` + authoritative totals + deterministic Id tie-break.** See `architecture.md`.
+
+The original “list fields already suffice” inventory answer remains true for *derivation*. It is **not** sufficient for *serving* a primary room at the 5,000-client target. Client-side fan-out is retracted.
 
 ## Rejected during inventory
 
-1. New `/api/v1/admin/follow-up` — visual convenience; second queue.
+1. New `/api/v1/admin/follow-up` — visual convenience; second queue. Still rejected after correction: do not create two sources of truth.
 2. Import `getTriageBucket` — cinema scoring.
 3. Dual-write / persist category — no schema rewrite; filtering must not change data.
-4. Smallest server `category=` filter — unnecessary; list fields already suffice.
+4. Smallest server `category=` filter — **retracted rejection**. PO MAJOR 1 + MAJOR 2 require this backward-compatible extension.
 5. Fetch only the two dashboard queries — cannot list At risk / Opportunity / Healthy honestly.
 6. Revive `ClientFollowUpPanel` — competing contacted-only model.
+7. Unbounded page fetch / 50 sequential 100-row calls — **now forbidden**.

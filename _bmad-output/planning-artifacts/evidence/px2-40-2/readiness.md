@@ -3,11 +3,11 @@
 Date: 2026-10-03  
 Role: Product Manager (`bmad-check-implementation-readiness` story-level)  
 Baseline: `main` `dc9e42f6`. Story 40.1 `done`. Epic 40 `in-progress`. Stories 40.3–40.5 not started.  
-Disposition: **READY**
+Disposition: **READY** (corrected contract 2026-10-03 — not a new readiness pass)
 
 ## Verdict
 
-Existing client list API, follow-up date helper, outreach fields, shell primitives, and 40.1 dashboard links can supply the Follow-up room. No new API. No new entitlement. Category derivation is locked from authoritative production fields. Cinema scoring is excluded. No open PO decision blocks implementation.
+Existing client list API, follow-up date helper, outreach fields, shell primitives, and 40.1 dashboard links can supply the Follow-up room. The original “no new API” readiness is **corrected**: a backward-compatible `followUpCategory` + totals extension of `GET /api/v1/admin/clients` is required. No dedicated Follow-up endpoint. No new entitlement. Category derivation stays locked from authoritative production fields. Cinema scoring is excluded. No schema migration. Story 40.3 remains unstarted.
 
 ## Closed dependencies
 

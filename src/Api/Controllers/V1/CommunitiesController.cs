@@ -75,7 +75,8 @@ public class CommunitiesController(
                 consentOnly: null,
                 excludeCommunity: null,
                 activityId: null,
-                cancellationToken);
+                followUpCategory: null,
+                cancellationToken: cancellationToken);
 
             return Ok(result);
         }

@@ -35,6 +35,7 @@ public sealed class ClientService(
         bool? consentOnly = null,
         string? excludeCommunity = null,
         Guid? activityId = null,
+        string? followUpCategory = null,
         CancellationToken cancellationToken = default)
     {
         var normalizedPage = page < 1 ? 1 : page;
@@ -59,6 +60,25 @@ public sealed class ClientService(
             excludeCommunity,
             activityId,
             cancellationToken);
+
+        ClientFollowUpCategoryCountsResponse? followUpCategoryCounts = null;
+        if (!string.IsNullOrWhiteSpace(followUpCategory))
+        {
+            if (!FollowUpCategoryContract.TryParse(followUpCategory, out var parsedCategory))
+            {
+                throw new ArgumentException(FollowUpCategoryContract.InvalidCategoryMessage);
+            }
+
+            var timeZoneId = await GetTenantRegistrationTimeZoneIdAsync(cancellationToken);
+            var dueBeforeUtc = RegistrationPeriod.GetStartOfTomorrowUtc(
+                DateTimeOffset.UtcNow,
+                timeZoneId);
+            followUpCategoryCounts = await GetFollowUpCategoryCountsAsync(
+                clientsQuery,
+                dueBeforeUtc,
+                cancellationToken);
+            clientsQuery = ApplyFollowUpCategoryFilter(clientsQuery, parsedCategory, dueBeforeUtc);
+        }
 
         var query = clientsQuery
             .Select(client => new ClientListProjection
@@ -119,7 +139,8 @@ public sealed class ClientService(
             normalizedPage,
             normalizedPageSize,
             totalCount,
-            statusCounts);
+            statusCounts,
+            followUpCategoryCounts);
     }
 
     public async Task<ClientListCsvExportResponse> ExportListCsvAsync(
@@ -968,23 +989,115 @@ public sealed class ClientService(
             _ => ClientListSortBy.LastRegistrationDate,
         };
 
+    private static IQueryable<Client> ApplyFollowUpCategoryFilter(
+        IQueryable<Client> clientsQuery,
+        string category,
+        DateTimeOffset dueBeforeUtc)
+    {
+        return category switch
+        {
+            FollowUpCategoryContract.DueNow => WhereFollowUpDueNow(clientsQuery, dueBeforeUtc),
+            FollowUpCategoryContract.AtRisk => WhereFollowUpNotDueNow(clientsQuery, dueBeforeUtc)
+                .Where(client => client.LeadStatus == LeadStatus.Inactive),
+            FollowUpCategoryContract.Opportunity => WhereFollowUpNotDueNow(clientsQuery, dueBeforeUtc)
+                .Where(client =>
+                    client.LeadStatus == LeadStatus.Contacted ||
+                    client.LeadStatus == LeadStatus.New),
+            FollowUpCategoryContract.Healthy => WhereFollowUpNotDueNow(clientsQuery, dueBeforeUtc)
+                .Where(client => client.LeadStatus == LeadStatus.Active),
+            _ => throw new ArgumentException(FollowUpCategoryContract.InvalidCategoryMessage),
+        };
+    }
+
+    private static IQueryable<Client> WhereFollowUpDueNow(
+        IQueryable<Client> clientsQuery,
+        DateTimeOffset dueBeforeUtc)
+    {
+        var outreachTypes = ClientOutreachCoverage.FollowUpCoverageEventTypes;
+        return clientsQuery.Where(client =>
+            (client.NextFollowUpAt != null && client.NextFollowUpAt < dueBeforeUtc)
+            || (client.LeadStatus == LeadStatus.New
+                && !client.TimelineEvents.Any(timelineEvent =>
+                    outreachTypes.Contains(timelineEvent.EventType))));
+    }
+
+    private static IQueryable<Client> WhereFollowUpNotDueNow(
+        IQueryable<Client> clientsQuery,
+        DateTimeOffset dueBeforeUtc)
+    {
+        var outreachTypes = ClientOutreachCoverage.FollowUpCoverageEventTypes;
+        return clientsQuery.Where(client =>
+            !((client.NextFollowUpAt != null && client.NextFollowUpAt < dueBeforeUtc)
+                || (client.LeadStatus == LeadStatus.New
+                    && !client.TimelineEvents.Any(timelineEvent =>
+                        outreachTypes.Contains(timelineEvent.EventType)))));
+    }
+
+    private static async Task<ClientFollowUpCategoryCountsResponse> GetFollowUpCategoryCountsAsync(
+        IQueryable<Client> clientsQuery,
+        DateTimeOffset dueBeforeUtc,
+        CancellationToken cancellationToken)
+    {
+        var outreachTypes = ClientOutreachCoverage.FollowUpCoverageEventTypes;
+        var counts = await clientsQuery
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                DueNowCount = group.Count(client =>
+                    (client.NextFollowUpAt != null && client.NextFollowUpAt < dueBeforeUtc)
+                    || (client.LeadStatus == LeadStatus.New
+                        && !client.TimelineEvents.Any(timelineEvent =>
+                            outreachTypes.Contains(timelineEvent.EventType)))),
+                AtRiskCount = group.Count(client =>
+                    !((client.NextFollowUpAt != null && client.NextFollowUpAt < dueBeforeUtc)
+                        || (client.LeadStatus == LeadStatus.New
+                            && !client.TimelineEvents.Any(timelineEvent =>
+                                outreachTypes.Contains(timelineEvent.EventType))))
+                    && client.LeadStatus == LeadStatus.Inactive),
+                OpportunityCount = group.Count(client =>
+                    !((client.NextFollowUpAt != null && client.NextFollowUpAt < dueBeforeUtc)
+                        || (client.LeadStatus == LeadStatus.New
+                            && !client.TimelineEvents.Any(timelineEvent =>
+                                outreachTypes.Contains(timelineEvent.EventType))))
+                    && (client.LeadStatus == LeadStatus.Contacted
+                        || client.LeadStatus == LeadStatus.New)),
+                HealthyCount = group.Count(client =>
+                    !((client.NextFollowUpAt != null && client.NextFollowUpAt < dueBeforeUtc)
+                        || (client.LeadStatus == LeadStatus.New
+                            && !client.TimelineEvents.Any(timelineEvent =>
+                                outreachTypes.Contains(timelineEvent.EventType))))
+                    && client.LeadStatus == LeadStatus.Active),
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return counts is null
+            ? new ClientFollowUpCategoryCountsResponse(0, 0, 0, 0)
+            : new ClientFollowUpCategoryCountsResponse(
+                counts.DueNowCount,
+                counts.AtRiskCount,
+                counts.OpportunityCount,
+                counts.HealthyCount);
+    }
+
     private static IQueryable<ClientListProjection> ApplySort(
         IQueryable<ClientListProjection> query,
         ClientListSortBy sortBy,
         bool descending) =>
         (sortBy, descending) switch
         {
-            (ClientListSortBy.Name, false) => query.OrderBy(item => item.FullName),
-            (ClientListSortBy.Name, true) => query.OrderByDescending(item => item.FullName),
-            (ClientListSortBy.Status, false) => query.OrderBy(item => item.LeadStatus),
-            (ClientListSortBy.Status, true) => query.OrderByDescending(item => item.LeadStatus),
+            (ClientListSortBy.Name, false) => query.OrderBy(item => item.FullName).ThenBy(item => item.Id),
+            (ClientListSortBy.Name, true) => query.OrderByDescending(item => item.FullName).ThenBy(item => item.Id),
+            (ClientListSortBy.Status, false) => query.OrderBy(item => item.LeadStatus).ThenBy(item => item.Id),
+            (ClientListSortBy.Status, true) => query.OrderByDescending(item => item.LeadStatus).ThenBy(item => item.Id),
             (ClientListSortBy.LastRegistrationDate, false) => query
                 .OrderBy(item => item.LastRegistrationAt == null)
-                .ThenBy(item => item.LastRegistrationAt),
+                .ThenBy(item => item.LastRegistrationAt)
+                .ThenBy(item => item.Id),
             (ClientListSortBy.LastRegistrationDate, true) => query
                 .OrderBy(item => item.LastRegistrationAt == null)
-                .ThenByDescending(item => item.LastRegistrationAt),
-            _ => query.OrderByDescending(item => item.LastRegistrationAt),
+                .ThenByDescending(item => item.LastRegistrationAt)
+                .ThenBy(item => item.Id),
+            _ => query.OrderByDescending(item => item.LastRegistrationAt).ThenBy(item => item.Id),
         };
 
     private sealed class ClientListProjection

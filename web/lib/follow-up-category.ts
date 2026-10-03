@@ -11,8 +11,10 @@ import { FOLLOW_UP_PATH } from "@/lib/admin-canonical-routes";
 export type FollowUpCategory = "due-now" | "at-risk" | "opportunity" | "healthy";
 
 export const FOLLOW_UP_CATEGORY_QUERY_KEY = "category";
+export const FOLLOW_UP_PAGE_QUERY_KEY = "page";
 export const FOLLOW_UP_DEFAULT_CATEGORY: FollowUpCategory = "due-now";
-export const FOLLOW_UP_PAGE_SIZE = 100;
+export const FOLLOW_UP_DEFAULT_PAGE = 1;
+export const FOLLOW_UP_PAGE_SIZE = 25;
 
 export const FOLLOW_UP_CATEGORY_OPTIONS: {
   value: FollowUpCategory;
@@ -87,9 +89,36 @@ export function serializeFollowUpCategoryParam(
   return category === FOLLOW_UP_DEFAULT_CATEGORY ? null : category;
 }
 
+export function resolveFollowUpPageParam(
+  value: string | null | undefined
+): number {
+  const parsed = Number.parseInt(value ?? "", 10);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return FOLLOW_UP_DEFAULT_PAGE;
+  }
+  return parsed;
+}
+
+export function serializeFollowUpPageParam(page: number): string | null {
+  return page <= FOLLOW_UP_DEFAULT_PAGE ? null : String(page);
+}
+
+export function followUpPageCount(totalCount: number, pageSize = FOLLOW_UP_PAGE_SIZE): number {
+  return Math.max(1, Math.ceil(Math.max(0, totalCount) / Math.max(1, pageSize)));
+}
+
+export function reconcileFollowUpPage(page: number, totalCount: number, pageSize = FOLLOW_UP_PAGE_SIZE): number {
+  const lastPage = followUpPageCount(totalCount, pageSize);
+  if (totalCount === 0) {
+    return FOLLOW_UP_DEFAULT_PAGE;
+  }
+  return page > lastPage ? lastPage : page;
+}
+
 export function followUpHrefForCategory(
   category: FollowUpCategory,
-  currentSearch = ""
+  currentSearch = "",
+  page = FOLLOW_UP_DEFAULT_PAGE
 ): string {
   const params = new URLSearchParams(
     currentSearch.startsWith("?") ? currentSearch.slice(1) : currentSearch
@@ -100,6 +129,14 @@ export function followUpHrefForCategory(
   } else {
     params.delete(FOLLOW_UP_CATEGORY_QUERY_KEY);
   }
+
+  const serializedPage = serializeFollowUpPageParam(page);
+  if (serializedPage) {
+    params.set(FOLLOW_UP_PAGE_QUERY_KEY, serializedPage);
+  } else {
+    params.delete(FOLLOW_UP_PAGE_QUERY_KEY);
+  }
+
   const query = params.toString();
   return query.length > 0 ? `${FOLLOW_UP_PATH}?${query}` : FOLLOW_UP_PATH;
 }
@@ -114,7 +151,24 @@ export function commitFollowUpCategoryChange(input: {
     return "noop";
   }
 
-  input.replace?.(followUpHrefForCategory(input.category, input.liveSearch));
+  input.replace?.(
+    followUpHrefForCategory(input.category, input.liveSearch, FOLLOW_UP_DEFAULT_PAGE)
+  );
+  return "replaced";
+}
+
+export function commitFollowUpPageChange(input: {
+  page: number;
+  currentPage: number;
+  category: FollowUpCategory;
+  liveSearch: string;
+  replace?: (href: string) => void;
+}): "noop" | "replaced" {
+  if (input.page === input.currentPage || input.page < 1) {
+    return "noop";
+  }
+
+  input.replace?.(followUpHrefForCategory(input.category, input.liveSearch, input.page));
   return "replaced";
 }
 
@@ -160,6 +214,33 @@ export function countFollowUpCategories(
 
 export function needsAttentionCount(counts: FollowUpCategoryCounts): number {
   return counts["due-now"] + counts["at-risk"] + counts.opportunity;
+}
+
+export function countsFromFollowUpResponse(counts: {
+  dueNowCount: number;
+  atRiskCount: number;
+  opportunityCount: number;
+  healthyCount: number;
+}): FollowUpCategoryCounts {
+  return {
+    "due-now": counts.dueNowCount,
+    "at-risk": counts.atRiskCount,
+    opportunity: counts.opportunityCount,
+    healthy: counts.healthyCount,
+  };
+}
+
+export function uniqueFollowUpItems<T extends { id: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  const unique: T[] = [];
+  for (const item of items) {
+    if (seen.has(item.id)) {
+      continue;
+    }
+    seen.add(item.id);
+    unique.push(item);
+  }
+  return unique;
 }
 
 export function classifyFollowUpListState(input: {
@@ -240,43 +321,47 @@ export function followUpContextCaption(
     : "Current";
 }
 
-export async function loadFollowUpClients(
-  authFetch: (input: string, init?: RequestInit) => Promise<Response>
-): Promise<ClientListItem[]> {
-  const guardedFetch = async (input: string, init?: RequestInit) => {
-    const response = await authFetch(input, init);
+export type FollowUpPageResult = {
+  items: ClientListItem[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  counts: FollowUpCategoryCounts;
+};
+
+export async function loadFollowUpPage(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  input: {
+    category: FollowUpCategory;
+    page?: number;
+    pageSize?: number;
+  }
+): Promise<FollowUpPageResult> {
+  const guardedFetch = async (inputUrl: string, init?: RequestInit) => {
+    const response = await authFetch(inputUrl, init);
     if (response.status === 401 || response.status === 403) {
       throw new FollowUpAccessError();
     }
     return response;
   };
 
-  const merged = new Map<string, ClientListItem>();
-  let page = 1;
-  let totalCount = Number.POSITIVE_INFINITY;
+  const result = await fetchClients(guardedFetch, {
+    page: input.page ?? FOLLOW_UP_DEFAULT_PAGE,
+    pageSize: input.pageSize ?? FOLLOW_UP_PAGE_SIZE,
+    sortBy: "lastRegistrationDate",
+    sortDirection: "desc",
+    followUpCategory: input.category,
+  });
 
-  while ((page - 1) * FOLLOW_UP_PAGE_SIZE < totalCount) {
-    const result = await fetchClients(guardedFetch, {
-      page,
-      pageSize: FOLLOW_UP_PAGE_SIZE,
-      sortBy: "lastRegistrationDate",
-      sortDirection: "desc",
-    });
-
-    for (const client of result.items) {
-      merged.set(client.id, client);
-    }
-
-    totalCount = result.totalCount;
-    if (result.items.length < result.pageSize) {
-      break;
-    }
-    page += 1;
+  if (!result.followUpCategoryCounts) {
+    throw new Error("Could not load Follow-up category totals.");
   }
 
-  if (merged.size < totalCount) {
-    throw new Error("Could not load the complete Follow-up list.");
-  }
-
-  return Array.from(merged.values());
+  return {
+    items: uniqueFollowUpItems(result.items),
+    page: result.page,
+    pageSize: result.pageSize,
+    totalCount: result.totalCount,
+    counts: countsFromFollowUpResponse(result.followUpCategoryCounts),
+  };
 }
