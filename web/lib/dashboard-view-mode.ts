@@ -133,8 +133,12 @@ export function pinDashboardViewInHistory(
   if (typeof window === "undefined") {
     return;
   }
-  if (parseDashboardViewParam(new URLSearchParams(currentSearch).get(DASHBOARD_VIEW_QUERY_KEY)) !== "absent") {
+  const liveSearch = window.location.search.startsWith("?")
+    ? window.location.search.slice(1)
+    : window.location.search;
+  const search = liveSearch || (currentSearch.startsWith("?") ? currentSearch.slice(1) : currentSearch);
+  if (parseDashboardViewParam(new URLSearchParams(search).get(DASHBOARD_VIEW_QUERY_KEY)) !== "absent") {
     return;
   }
-  window.history.replaceState(window.history.state, "", dashboardHrefForPinnedView(mode, currentSearch));
+  window.history.replaceState(window.history.state, "", dashboardHrefForPinnedView(mode, search));
 }

@@ -82,13 +82,16 @@ export function DashboardPageClient() {
   );
 
   function handleViewModeChange(mode: DashboardViewMode) {
-    if (pathname !== "/dashboard") {
+    const onDashboard = pathname.replace(/\/$/, "") === "/dashboard";
+    if (mode === viewMode || !onDashboard) {
       writeDashboardViewMode(mode);
       return;
     }
-    pinDashboardViewInHistory(viewMode, searchParams.toString());
+    const liveSearch =
+      typeof window !== "undefined" ? window.location.search : searchParams.toString();
+    pinDashboardViewInHistory(viewMode, liveSearch);
     writeDashboardViewMode(mode);
-    router.push(dashboardHrefForView(mode, searchParams.toString()), { scroll: false });
+    router.push(dashboardHrefForView(mode, liveSearch), { scroll: false });
   }
 
   useEffect(() => {
@@ -199,7 +202,13 @@ export function DashboardPageClient() {
         data-dashboard-session={sessionId}
       >
         {shell}
-        <MetricSkeletonGrid />
+        <div
+          id="dashboard-view-panel"
+          role="tabpanel"
+          aria-labelledby={`dashboard-view-${viewMode}`}
+        >
+          <MetricSkeletonGrid />
+        </div>
       </div>
     );
   }

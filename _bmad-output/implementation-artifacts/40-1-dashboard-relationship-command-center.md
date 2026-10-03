@@ -127,3 +127,4 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - 2026-10-03: Created Story 40.1 from main `2350bdbd` (Epic 39 close). Canonical D18/D19. Story 40.2 not started.
 - 2026-10-03: Implementation revision — query views, command-center hierarchy, honest follow-up errors. QA pending.
 - 2026-10-03: History pin for query-less Back; Playwright 40.1 4/4; protected 38.5–39.5 green except known 39.4 43.999px residual.
+- 2026-10-03: Review patch — same-view no-op, live-search pin, loading tabpanel, follow-up empty-error fallback, Today chip → `/follow-up`. 38.4 tokens/a11y green.

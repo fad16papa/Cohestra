@@ -31,7 +31,7 @@ function buildTodayItems(
   if (metrics.followUpCoveragePercent < 100) {
     items.push({
       label: "Leads still waiting for first follow-up",
-      href: "/clients?leadStatus=new",
+      href: "/follow-up",
     });
   }
 

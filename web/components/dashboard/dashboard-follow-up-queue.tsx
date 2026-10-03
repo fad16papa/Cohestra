@@ -84,7 +84,7 @@ export function DashboardFollowUpQueue() {
           setDueTotalCount(0);
           setNewTotalCount(0);
           setError(
-            loadError instanceof Error
+            loadError instanceof Error && loadError.message.trim()
               ? loadError.message
               : "Could not load people who need follow-up."
           );

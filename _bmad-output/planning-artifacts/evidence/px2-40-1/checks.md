@@ -28,6 +28,8 @@ Composer 2.5: unused.
 | `e2e/entitlement-visibility-39-3.spec.ts` | 5 passed |
 | `e2e/page-header-39-4.spec.ts` | 1 failed — **known 43.999px vs 44 residual** on Client WhatsApp 390. Classification D. Assertion not weakened. |
 | `e2e/route-errors-39-5.spec.ts` | 2 passed |
+| `e2e/tokens-38-4.spec.ts` | 5 passed (post-review HEAD) |
+| `e2e/a11y-38-4.spec.ts` | 2 passed (post-review HEAD) |
 
 ## 40.1 live coverage
 
