@@ -58,7 +58,14 @@ Sprint change proposal: `_bmad-output/planning-artifacts/sprint-change-proposal-
 
 Re-review on `5455b75b` found one new MAJOR: `shell.loading` on window-focus refresh remounted the skeleton after a successful populate. Patched to wait only until the first shell (`shellLoading && !shell`).
 
-PO Direct Adjustment implemented on subsequent commits (`4a8ac3b2` and later). Independent layers re-run on the correction HEAD after this evidence commit.
+Independent layers re-ran on `8c4af64b`. Blind Hunter MAJOR BH-01 (chip `totalCount` alias hid count-vs-items drift) and the matching adversarial “tautological fail-closed / empty populated page” findings were patched on the next HEAD:
+
+- `totalCount` is again `CountAsync` on the filtered item query (chips stay a separate authoritative scan).
+- Empty page `> 1` always steps back; empty page 1 with a positive total fails closed.
+- Category change does not classify stale zero counts as empty while the next page is in flight.
+- `Skip` overflow uses a `long` offset.
+
+Adversarial “Playwright pager is mocked” is **dismissed as MAJOR**: UI replace is mocked; scale/determinism is proven by the isolated 101-row PostgreSQL test. Dual client `resolveFollowUpCategory` is **dismissed**: the room does not filter or count with it.
 
 Story stays **review** / draft PR. Not done. Not merged. 40.3 not started.
 

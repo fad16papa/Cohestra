@@ -362,13 +362,18 @@ export async function loadFollowUpPage(
   }
 
   const counts = countsFromFollowUpResponse(result.followUpCategoryCounts);
-  if (result.totalCount !== counts[input.category]) {
-    throw new Error("Follow-up page total does not match category totals.");
-  }
-
   const items = uniqueFollowUpItems(result.items);
   if (items.length !== result.items.length) {
     throw new Error("Follow-up page contained duplicate clients.");
+  }
+
+  const requestedPage = input.page ?? FOLLOW_UP_DEFAULT_PAGE;
+  if (
+    items.length === 0 &&
+    result.totalCount > 0 &&
+    requestedPage <= FOLLOW_UP_DEFAULT_PAGE
+  ) {
+    throw new Error("Follow-up page was empty while category totals were non-zero.");
   }
 
   return {

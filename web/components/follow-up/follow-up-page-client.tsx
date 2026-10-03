@@ -73,10 +73,11 @@ export function FollowUpPageClient() {
         }
 
         const reconciled = reconcileFollowUpPage(page, result.totalCount, result.pageSize);
-        if (result.items.length === 0 && page !== reconciled) {
+        if (result.items.length === 0 && page > FOLLOW_UP_DEFAULT_PAGE) {
+          const nextPage = reconciled === page ? FOLLOW_UP_DEFAULT_PAGE : reconciled;
           const currentSearch = window.location.search;
           router.replace(
-            followUpHrefForCategory(category, currentSearch, reconciled),
+            followUpHrefForCategory(category, currentSearch, nextPage),
             { scroll: false }
           );
           return;
@@ -116,7 +117,8 @@ export function FollowUpPageClient() {
     loading:
       status !== "authenticated" ||
       (initialLoading && waitingForPage) ||
-      (shellLoading && !shell),
+      (shellLoading && !shell) ||
+      (waitingForPage && !initialLoading && errorKind === "none" && counts[category] === 0),
     errorKind,
     needsAttentionCount: attentionCount,
     selectedCount: counts[category],
@@ -260,7 +262,7 @@ export function FollowUpPageClient() {
               <Button
                 type="button"
                 variant="outline"
-                className="min-h-11 min-w-11"
+                className="min-h-11 min-h-[44px] min-w-11 min-w-[44px]"
                 aria-label="Previous page"
                 disabled={page <= FOLLOW_UP_DEFAULT_PAGE}
                 onClick={() => handlePageChange(page - 1)}
@@ -273,7 +275,7 @@ export function FollowUpPageClient() {
               <Button
                 type="button"
                 variant="outline"
-                className="min-h-11 min-w-11"
+                className="min-h-11 min-h-[44px] min-w-11 min-w-[44px]"
                 aria-label="Next page"
                 disabled={page >= pageCount}
                 onClick={() => handlePageChange(page + 1)}

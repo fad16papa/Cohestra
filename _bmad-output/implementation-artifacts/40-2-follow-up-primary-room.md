@@ -2,7 +2,7 @@
 id: 40.2
 key: 40-2-follow-up-primary-room
 title: Follow-up primary room
-status: in-progress
+status: review
 epic: 40
 created: 2026-10-03
 baseline_commit: dc9e42f6f283c72b0be290768730bfcbe88b58b4
@@ -10,7 +10,7 @@ baseline_commit: dc9e42f6f283c72b0be290768730bfcbe88b58b4
 
 # Story 40.2: Follow-up primary room
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 

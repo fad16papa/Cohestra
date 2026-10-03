@@ -71,7 +71,7 @@ export function FollowUpCategoryFilters({
               }}
               onClick={() => onChange(option.value)}
               className={cn(
-                "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-medium motion-local",
+                "inline-flex min-h-11 min-h-[44px] min-w-11 min-w-[44px] shrink-0 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-medium motion-local",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 selected
                   ? "border-border-warm bg-background text-text-warm shadow-sm"

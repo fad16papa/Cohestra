@@ -1,7 +1,7 @@
 # Story 40.2 test results
 
 Date: 2026-10-03  
-HEAD at run: working tree after PO-correction review patches (commit immediately after this note)  
+HEAD at run: post-review patch after `8c4af64b` (commit immediately after this note)  
 Env: `E2E_LIVE_STACK=1 PUBLIC_BASE_URL=http://localhost:3000 E2E_API_BASE_URL=http://localhost:8080`
 
 ## Commands
@@ -15,7 +15,7 @@ Env: `E2E_LIVE_STACK=1 PUBLIC_BASE_URL=http://localhost:3000 E2E_API_BASE_URL=ht
 | `npx tsc --noEmit` | pass |
 | Targeted ESLint on 40.2 files | pass (0 errors) |
 | `next build` (production) | pass; `/follow-up` prerenders |
-| Story 40.2 Playwright | **7/7 passed** (includes pager replace-without-duplicates) |
+| Story 40.2 Playwright | **7/7 passed** after one D retry of 43.999px Due now chip (assertion not weakened) |
 | Protected 38.4–39.5 + 40.1 Playwright | **27/28 passed**; 39.4 WhatsApp 43.999px failed twice, classified D, assertion not weakened |
 
 ## Backend contract coverage

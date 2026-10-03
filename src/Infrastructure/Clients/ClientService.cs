@@ -119,12 +119,17 @@ public sealed class ClientService(
 
         query = ApplySort(query, sortField, descending);
 
-        var totalCount = followUpCategoryCounts is not null && parsedFollowUpCategory is not null
-            ? SelectedFollowUpCategoryCount(followUpCategoryCounts, parsedFollowUpCategory)
-            : await query.CountAsync(cancellationToken);
+        var totalCount = await query.CountAsync(cancellationToken);
         var statusCounts = await GetLeadStatusCountsAsync(cancellationToken);
+        var skip = (long)(normalizedPage - 1) * normalizedPageSize;
+        if (skip > int.MaxValue)
+        {
+            normalizedPage = 1;
+            skip = 0;
+        }
+
         var items = await query
-            .Skip((normalizedPage - 1) * normalizedPageSize)
+            .Skip((int)skip)
             .Take(normalizedPageSize)
             .ToListAsync(cancellationToken);
 
@@ -995,18 +1000,6 @@ public sealed class ClientService(
             "status" => ClientListSortBy.Status,
             "lastregistrationdate" or "last_registration_date" => ClientListSortBy.LastRegistrationDate,
             _ => ClientListSortBy.LastRegistrationDate,
-        };
-
-    private static int SelectedFollowUpCategoryCount(
-        ClientFollowUpCategoryCountsResponse counts,
-        string category) =>
-        category switch
-        {
-            FollowUpCategoryContract.DueNow => counts.DueNowCount,
-            FollowUpCategoryContract.AtRisk => counts.AtRiskCount,
-            FollowUpCategoryContract.Opportunity => counts.OpportunityCount,
-            FollowUpCategoryContract.Healthy => counts.HealthyCount,
-            _ => throw new ArgumentException(FollowUpCategoryContract.InvalidCategoryMessage),
         };
 
     private static IQueryable<Client> ApplyFollowUpCategoryFilter(

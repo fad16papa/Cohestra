@@ -432,21 +432,21 @@ describe("loadFollowUpPage", () => {
       "Could not load Follow-up category totals."
     );
 
-    const mismatched = vi.fn(async () => {
+    const emptyFirstPage = vi.fn(async () => {
       return new Response(
         JSON.stringify(
-          listBody(
-            [{ id: "only", fullName: "Only", consentGiven: true, leadStatus: "active" }],
-            1,
-            8,
-            { dueNowCount: 0, atRiskCount: 0, opportunityCount: 0, healthyCount: 1 }
-          )
+          listBody([], 1, 8, {
+            dueNowCount: 0,
+            atRiskCount: 0,
+            opportunityCount: 0,
+            healthyCount: 8,
+          })
         ),
         { status: 200, headers: { "Content-Type": "application/json" } }
       );
     });
-    await expect(loadFollowUpPage(mismatched, { category: "healthy" })).rejects.toThrow(
-      "Follow-up page total does not match category totals."
+    await expect(loadFollowUpPage(emptyFirstPage, { category: "healthy", page: 1 })).rejects.toThrow(
+      "Follow-up page was empty while category totals were non-zero."
     );
 
     const failed = vi.fn(async () => {
