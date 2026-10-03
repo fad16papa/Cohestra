@@ -2,7 +2,7 @@
 id: 40.1
 key: 40-1-dashboard-relationship-command-center
 title: Dashboard as relationship command center
-status: in-progress
+status: review
 epic: 40
 created: 2026-10-03
 baseline_commit: 2350bdbd46003bea215a7eaa26bcb1f49c1d98f6

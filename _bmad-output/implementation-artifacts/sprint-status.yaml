@@ -400,7 +400,7 @@ development_status:
 
   # Epic 40 — Core relationship workflow
   epic-40: in-progress
-  40-1-dashboard-relationship-command-center: in-progress
+  40-1-dashboard-relationship-command-center: review
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done
