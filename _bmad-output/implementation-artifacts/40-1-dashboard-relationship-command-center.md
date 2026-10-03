@@ -2,15 +2,17 @@
 id: 40.1
 key: 40-1-dashboard-relationship-command-center
 title: Dashboard as relationship command center
-status: review
+status: done
 epic: 40
 created: 2026-10-03
 baseline_commit: 2350bdbd46003bea215a7eaa26bcb1f49c1d98f6
+accepted_commit: 4961dde68844c1b96702a90767dcf1d38e3bbb36
+implementation_merge_sha: e269afc69a6661bfb653df17212dfbe2260d0f19
 ---
 
 # Story 40.1: Dashboard as relationship command center
 
-Status: review — PO correction. Not done. Not merged.
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -134,3 +136,4 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - 2026-10-03: PO correction — retarget PR #367 to `main`; active-view re-selection is a true no-op (no history, URL, preference write, or event).
 - 2026-10-03: Move Suspense fallback to a client module so production prerender can pass an inert view switcher.
 - 2026-10-03: PO-correction review on `4961dde6` — no remaining in-scope BLOCKER/MAJOR. Rapid-double-click stale `viewMode` stays deferred.
+- 2026-10-03: PR #367 merged as `e269afc6` (accepted implementation `4961dde6`). Required main CI `37133892588` 5/5 success. Post-merge: view-mode Vitest 9/9; Playwright 40.1 5/5 plus 38.5/38.6/39.1/39.2/39.5. 39.4 43.999px classified D; assertion not weakened. ACCEPTED/CLOSED. Epic 40 remains in-progress. Story 40.2 not started.
