@@ -2,15 +2,16 @@
 id: 39.5
 key: 39-5-route-error-and-not-found-states
 title: Route error and not-found states
-status: in-progress
+status: done
 epic: 39
 created: 2026-10-03
 baseline_commit: e925fd5f7a05965fb467bf980989bc29c1363209
+accepted_commit: 443f83eb94b39b3d191f941fdffb12144d6c51d4
 ---
 
 # Story 39.5: Route error and not-found states
 
-Status: in-progress
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -127,7 +128,7 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - Nested App Router `not-found`/`error` files plus prefix catch-alls. Root unmatched URLs map surface from pathname.
 - Offline uses approved “You're offline…” copy. Crash h1 is `This screen failed`. 404 h1 is `Page not found`.
 - Force-error pages throw only after an explicit click and `notFound()` in production.
-- Independent review: no unresolved BLOCKER/MAJOR. Story remains in-progress for PO pre-merge review. Epic 40 not started.
+- Independent review: no unresolved BLOCKER/MAJOR. PO accepted HEAD `443f83eb`. Epic 40 not started.
 - PO correction 2026-10-03: admin catch-alls now cover Clients, Activities, Campaigns, Billing, Reports, Intelligence, and Needs Attention descendants. Offline copy calls `reset()` once on reconnect.
 
 ### File List
@@ -135,6 +136,9 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - `_bmad-output/implementation-artifacts/39-5-route-error-and-not-found-states.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - `_bmad-output/planning-artifacts/evidence/px2-39-5/`
+- `_bmad-output/planning-artifacts/evidence/px2-39-5/post-merge.md`
+- `_bmad-output/implementation-artifacts/epic-39-close-2026-10-03.md`
+- `_bmad-output/implementation-artifacts/deferred-work.md`
 - `web/lib/route-boundary.ts`
 - `web/lib/route-boundary.test.ts`
 - `web/components/shared/route-boundary-state.tsx`
@@ -173,3 +177,4 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - 2026-10-03: Implemented route-boundary primitive, App Router files, catch-alls, and live-stack Playwright. Status remains in-progress for PO pre-merge review.
 - 2026-10-03: PO changes-required — complete admin 404 ownership + truthful offline auto-reset. Status remains in-progress. PR stays draft.
 - 2026-10-03: Playwright proofs use `complementary` Workspace + `data-admin-shell`; offline reconnect does not click Try again.
+- 2026-10-03: PR #365 merged as `7553872c` (implementation HEAD `443f83eb`). Required main CI `37125569345` 5/5 success. Post-merge: route-boundary Vitest 13/13; Playwright 39.5 2/2 plus 38.2/38.5/38.6/39.1–39.3. 39.4 43.999px classified D; assertion not weakened. ACCEPTED/CLOSED. Epic 39 closed. Epic 40 not started.

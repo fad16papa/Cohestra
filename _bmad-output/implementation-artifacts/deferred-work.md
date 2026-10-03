@@ -1,3 +1,10 @@
+## Deferred from: story 39.5 / Epic 39 close on main `7553872c` (2026-10-03)
+
+PR #365 merged. PO accepted implementation HEAD `443f83eb`. Required main CI `37125569345` 5/5 success. Post-merge 39.5 + 38.2/38.5/38.6/39.1–39.3 Playwright passed. ACCEPTED/CLOSED. Epic 39 closed. Epic 40 not started. Production DigitalOcean remains classification C.
+
+- 39.4 client WhatsApp header control still measures 43.999px vs 44 in Playwright. Classification **D** (subpixel flake). Do not weaken the 44px assertion. Owner: later a11y polish / **43.5** if the flake becomes deterministic.
+- Narrow the shared Axe disabled-control exemption so disabled controls remain covered by non-contrast accessibility rules. Owner: **Story 43.5**.
+
 ## Deferred from: story 39.4 close on main `e02f0e2e` (2026-10-03)
 
 PR #363 merged. PO accepted implementation HEAD `d8c6213c`. Required main CI `37111733890` 5/5 success. Post-merge smoke passed. ACCEPTED/CLOSED. Epic 39 remains in-progress. Story 39.5 not started. Production DigitalOcean remains classification C.
