@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-03
-# story 40.1 opened from 2350bdbd; 40.1 ACCEPTED/CLOSED on e269afc6; epic 40 in-progress; 40.2 not created
+# story 40.2 opened from dc9e42f6; 40.1 done; epic 40 in-progress; 40.3 not started
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -401,6 +401,7 @@ development_status:
   # Epic 40 — Core relationship workflow
   epic-40: in-progress
   40-1-dashboard-relationship-command-center: done
+  40-2-follow-up-primary-room: ready-for-dev
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done
