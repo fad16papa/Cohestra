@@ -1,0 +1,38 @@
+{
+  "contrastDisabled": false,
+  "routes": [
+    {
+      "route": "/dashboard",
+      "contrastDisabled": false,
+      "seriousOrCritical": []
+    },
+    {
+      "route": "/clients",
+      "contrastDisabled": false,
+      "seriousOrCritical": [
+        {
+          "id": "aria-required-children",
+          "impact": "critical",
+          "nodes": 1,
+          "classification": "pre-existing client list role=row (Epic 40.3 / 43.5)"
+        },
+        {
+          "id": "aria-required-parent",
+          "impact": "critical",
+          "nodes": 1,
+          "classification": "pre-existing client list role=row (Epic 40.3 / 43.5)"
+        }
+      ]
+    },
+    {
+      "route": "/activities",
+      "contrastDisabled": false,
+      "seriousOrCritical": []
+    },
+    {
+      "route": "/settings/profile",
+      "contrastDisabled": false,
+      "seriousOrCritical": []
+    }
+  ]
+}

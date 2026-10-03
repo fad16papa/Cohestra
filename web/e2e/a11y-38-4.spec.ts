@@ -158,7 +158,9 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
           timeout: 30_000,
         });
       } else if (route.name === "settings") {
-        await expect(page.locator("h1.font-heading")).toBeVisible({ timeout: 30_000 });
+        await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible({
+          timeout: 30_000,
+        });
       } else if (route.name === "clients") {
         await expect(page.getByRole("heading", { name: "Clients", level: 1 })).toBeVisible({
           timeout: 30_000,

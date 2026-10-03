@@ -46,7 +46,7 @@ export function PageHeader({
         ) : null}
       </div>
       {actions ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 [&_a]:inline-flex [&_a]:min-h-11 [&_a]:min-w-11 [&_a]:items-center [&_a]:justify-center [&_a]:px-4 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:px-4 [&_select]:min-h-11">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 [&_a]:inline-flex [&_a]:min-h-11 [&_a]:min-w-11 [&_a]:items-center [&_a]:justify-center [&_a]:px-4 [&_button]:min-h-11 [&_button]:min-w-11 [&_button]:px-4 [&_select]:min-h-11 [&_select]:min-w-11">
           {actions}
         </div>
       ) : null}

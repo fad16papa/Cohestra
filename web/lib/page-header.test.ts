@@ -39,7 +39,13 @@ describe("PageHeader", () => {
         createElement(PageHeader, {
           title: "Clients",
           description: "One row per contact.",
-          actions: createElement("a", { href: "/export" }, "Export CSV"),
+          actions: createElement(
+            "div",
+            null,
+            createElement("a", { href: "/activities/new" }, "New activity"),
+            createElement("button", { type: "button" }, "Export CSV"),
+            createElement("select", { "aria-label": "Lead status" }, createElement("option", null, "New"))
+          ),
         })
       );
     });
@@ -51,7 +57,12 @@ describe("PageHeader", () => {
     expect(rootEl.querySelector("header")).not.toBeNull();
     expect(rootEl.querySelector("header")?.className).toMatch(/md:flex-row/);
     const actionWrap = rootEl.querySelector("header > div:last-child");
-    expect(actionWrap?.className).toMatch(/min-h-11/);
+    expect(actionWrap?.className).toMatch(/\[&_a\]:min-h-11/);
+    expect(actionWrap?.className).toMatch(/\[&_a\]:min-w-11/);
+    expect(actionWrap?.className).toMatch(/\[&_button\]:min-h-11/);
+    expect(actionWrap?.className).toMatch(/\[&_button\]:min-w-11/);
+    expect(actionWrap?.className).toMatch(/\[&_select\]:min-h-11/);
+    expect(actionWrap?.className).toMatch(/\[&_select\]:min-w-11/);
   });
 
   it("keeps Dashboard as the only heading and greeting as a paragraph", async () => {

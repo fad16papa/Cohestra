@@ -132,6 +132,7 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - Studio toolbar is no longer a display title. Form Studio `h2` Form builder unchanged.
 - Independent review: no unresolved BLOCKER/MAJOR.
 - Story remains in-progress pending PO pre-merge review. Story 39.5 not started.
+- PO correction: selects are 44×44; Playwright measures rendered boxes; Axe contrast stays enabled; Form Studio preview boundary is asserted.
 
 ### File List
 
@@ -161,3 +162,4 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 
 - 2026-10-03: Created Story 39.4 from main `2b7cf2fa` (39.3 tracker-close). Canonical D19 + 38.5 one-h1. Story 39.5 not started.
 - 2026-10-03: Implemented shared PageHeader and adopted inventory. Draft PR for PO review.
+- 2026-10-03: PO correction — select `min-w-11`, rendered 44×44 proofs, Form Studio boundary, Axe with contrast enabled.

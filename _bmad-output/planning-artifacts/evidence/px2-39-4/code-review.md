@@ -1,7 +1,7 @@
-# Story 39.4 independent review
+# Story 39.4 independent review (PO correction)
 
 Reviewers: Blind Hunter, Edge Case Hunter, Acceptance Auditor, Adversarial Review.  
-Model: Grok 4.6. HEAD reviewed after campaign/profile/studio-title corrections.
+Model: Grok 4.6. Scope: 44×44 select contract, bounding-box proofs, Form Studio boundary, Axe contrast.
 
 ## Disposition: no unresolved BLOCKER or MAJOR
 
@@ -9,28 +9,23 @@ Model: Grok 4.6. HEAD reviewed after campaign/profile/studio-title corrections.
 
 | Finding | Severity | Disposition |
 | --- | --- | --- |
-| Client/campaign detail invented local headers | MAJOR | Fixed: PageHeader + actions / eyebrow |
-| Website title copy-pasted | MINOR | Fixed: `WEBSITE_STUDIO_TITLE` |
-| Badges stuffed into action slot | MINOR | Fixed: activity badges in description |
-| Loading stub announced h1 as live status | MINOR | Fixed: live region on loader only |
-| Eyebrow always uppercase | MINOR | Fixed: string vs node |
-| Long names overflow | MINOR | Fixed: `break-words` |
-| Axe on Form Studio listbox | NIT | Pre-existing 42.3; axe scoped to Dashboard |
-| Overflow menu / DESIGN §4.1 density | NIT | Out of scope |
+| Select lacked `min-w-11` | MAJOR | Fixed. Slot now `[&_select]:min-h-11 [&_select]:min-w-11` |
+| Tests asserted wrapper class / button height only | MAJOR | Fixed. Bounding boxes for link, button, select |
+| Axe disabled `color-contrast` | MAJOR | Fixed. Contrast enabled; disabled controls excluded per WCAG 1.4.3 / 38.4 |
+| Duplicate Form Studio h1 assertion | MINOR | Fixed. Preview path + one h1 + Form builder h2 + no nested main/h1 |
 
 ### Edge Case Hunter
 
 | Finding | Severity | Disposition |
 | --- | --- | --- |
-| `/settings` index is a redirect | MINOR | E2E uses `/settings/profile` |
-| Website tour at 390 | MINOR | Skip tour on both viewports |
-| 38.5 Basic lock expected `Website` | MAJOR | Updated to `Website Studio` |
-| Studio preview still one main/h1 | — | 38.5 Website test green |
+| Client row links can be `hidden` on list chrome | MINOR | Navigate via href instead of clicking a hidden row |
+| 38.4 tokens waited on `h1.font-heading` | MINOR | Settings wait uses role heading `Settings` |
+| Clients `role=row` axe | NIT | Classified pre-existing 40.3 / 43.5; not suppressed as contrast |
 
 ### Acceptance Auditor
 
-ACs 1–10 satisfied on inventoried routes. Story 39.5 not started. Nav, entitlements, APIs, marketing headers unchanged.
+PO correction ACs hold: 44×44 on link/button/select; Clients Export CSV 128×44; client-profile WhatsApp/select at 1440/390/768; no overflow at 390/767/768; Form Studio boundary; Axe contrast not disabled.
 
 ### Adversarial
 
-No production-behavior weakening. Form Studio listbox remains deferred. Header has no independent motion.
+No route/permission/action/breakpoint change. No Story 39.5. Measurements written to `action-measurements.json`.
