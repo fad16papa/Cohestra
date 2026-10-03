@@ -109,7 +109,7 @@ export function FollowUpPageClient() {
     });
   }, [category, clients, timeZoneId]);
   const listState = classifyFollowUpListState({
-    loading: status !== "authenticated" || loading || shellLoading,
+    loading: status !== "authenticated" || loading || (shellLoading && !shell),
     errorKind,
     needsAttentionCount: attentionCount,
     selectedCount: categorized.length,

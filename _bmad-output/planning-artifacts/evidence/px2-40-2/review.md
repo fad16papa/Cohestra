@@ -29,7 +29,9 @@ Reviewed HEAD after first implementation, then patched, then this note.
 
 ## Re-review of patched implementation
 
-No remaining in-scope BLOCKER or MAJOR after the patch set. Story stays **review** / draft PR. Not done. Not merged. 40.3 not started.
+Re-review on `5455b75b` found one new MAJOR: `shell.loading` on window-focus refresh remounted the skeleton after a successful populate. Patched to wait only until the first shell (`shellLoading && !shell`).
+
+No remaining in-scope BLOCKER or MAJOR after that patch. Story stays **review** / draft PR. Not done. Not merged. 40.3 not started.
 
 ## Composer 2.5
 
