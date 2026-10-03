@@ -53,9 +53,6 @@ export function FollowUpPageClient() {
     }
 
     let cancelled = false;
-    setLoading(true);
-    setErrorKind("none");
-    setErrorMessage(null);
 
     void loadFollowUpClients(authFetch)
       .then((items) => {
