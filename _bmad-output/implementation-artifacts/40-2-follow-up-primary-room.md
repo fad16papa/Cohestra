@@ -2,7 +2,7 @@
 id: 40.2
 key: 40-2-follow-up-primary-room
 title: Follow-up primary room
-status: ready-for-dev
+status: in-progress
 epic: 40
 created: 2026-10-03
 baseline_commit: dc9e42f6f283c72b0be290768730bfcbe88b58b4
@@ -10,7 +10,7 @@ baseline_commit: dc9e42f6f283c72b0be290768730bfcbe88b58b4
 
 # Story 40.2: Follow-up primary room
 
-Status: ready-for-dev
+Status: in-progress
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -82,11 +82,11 @@ See `_bmad-output/planning-artifacts/evidence/px2-40-2/readiness.md`. Dispositio
 
 ## Tasks / Subtasks
 
-- [ ] Shared category resolver + Vitest (AC 4, 5)
-- [ ] URL category resolver (query > default Due now; invalid → Due now; no localStorage; replace; re-select no-op) (AC 3)
-- [ ] Replace `/follow-up` stub with PageHeader room, filters, honest states (AC 1–3, 6)
-- [ ] Cards <768, composition 768–1023, table ≥1024; 44px; no overflow (AC 9)
-- [ ] Dashboard continuity unchanged (AC 8)
+- [x] Shared category resolver + Vitest (AC 4, 5)
+- [x] URL category resolver (query > default Due now; invalid → Due now; no localStorage; replace; re-select no-op) (AC 3)
+- [x] Replace `/follow-up` stub with PageHeader room, filters, honest states (AC 1–3, 6)
+- [x] Cards <768, composition 768–1023, table ≥1024; 44px; no overflow (AC 9)
+- [x] Dashboard continuity unchanged (AC 8)
 - [ ] Playwright 40.2 + protected 38.4–39.5 and 40.1 regressions (AC 7, 10, 11)
 
 ## Dev Notes
@@ -205,7 +205,16 @@ Grok 4.6 owns story definition, architecture, product semantics, implementation,
 - `_bmad-output/planning-artifacts/evidence/px2-40-2/readiness.md`
 - `_bmad-output/planning-artifacts/evidence/px2-40-2/category-derivation.md`
 - `_bmad-output/planning-artifacts/evidence/px2-40-2/role-plan-state-matrix.md`
+- `web/app/(admin)/follow-up/page.tsx`
+- `web/components/follow-up/follow-up-category-filters.tsx`
+- `web/components/follow-up/follow-up-page-client.tsx`
+- `web/components/follow-up/follow-up-page-fallback.tsx`
+- `web/components/follow-up/follow-up-results.tsx`
+- `web/e2e/follow-up-40-2.spec.ts`
+- `web/lib/follow-up-category.ts`
+- `web/lib/follow-up-category.test.ts`
 
 ### Change Log
 
 - 2026-10-03: Created Story 40.2 from main `dc9e42f6`. Inventory and data-contract locked. Readiness READY. Implementation not started.
+- 2026-10-03: Implemented `/follow-up` room over existing clients API + shared resolver. QA pending.
