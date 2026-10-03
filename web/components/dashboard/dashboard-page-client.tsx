@@ -31,12 +31,10 @@ import { fetchDashboardMetrics, type DashboardMetrics } from "@/lib/dashboard-ap
 import { computeWowDeltaPercent } from "@/lib/dashboard-insights";
 import {
   DASHBOARD_VIEW_QUERY_KEY,
-  dashboardHrefForView,
-  pinDashboardViewInHistory,
+  commitDashboardViewChange,
   readDashboardViewMode,
   resolveDashboardView,
   subscribeDashboardViewMode,
-  writeDashboardViewMode,
   type DashboardViewMode,
 } from "@/lib/dashboard-view-mode";
 
@@ -82,16 +80,17 @@ export function DashboardPageClient() {
   );
 
   function handleViewModeChange(mode: DashboardViewMode) {
-    const onDashboard = pathname.replace(/\/$/, "") === "/dashboard";
-    if (mode === viewMode || !onDashboard) {
-      writeDashboardViewMode(mode);
-      return;
-    }
     const liveSearch =
       typeof window !== "undefined" ? window.location.search : searchParams.toString();
-    pinDashboardViewInHistory(viewMode, liveSearch);
-    writeDashboardViewMode(mode);
-    router.push(dashboardHrefForView(mode, liveSearch), { scroll: false });
+    commitDashboardViewChange({
+      mode,
+      currentView: viewMode,
+      onDashboard: pathname.replace(/\/$/, "") === "/dashboard",
+      liveSearch,
+      push: (href) => {
+        router.push(href, { scroll: false });
+      },
+    });
   }
 
   useEffect(() => {

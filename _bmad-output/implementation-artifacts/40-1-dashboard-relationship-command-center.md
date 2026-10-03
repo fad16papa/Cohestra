@@ -10,7 +10,7 @@ baseline_commit: 2350bdbd46003bea215a7eaa26bcb1f49c1d98f6
 
 # Story 40.1: Dashboard as relationship command center
 
-Status: in-progress
+Status: review — PO correction. Not done. Not merged.
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -128,3 +128,5 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - 2026-10-03: Implementation revision — query views, command-center hierarchy, honest follow-up errors. QA pending.
 - 2026-10-03: History pin for query-less Back; Playwright 40.1 4/4; protected 38.5–39.5 green except known 39.4 43.999px residual.
 - 2026-10-03: Review patch — same-view no-op, live-search pin, loading tabpanel, follow-up empty-error fallback, Today chip → `/follow-up`. 38.4 tokens/a11y green.
+- 2026-10-03: Independent reviews on `580ea29e` — no remaining BLOCKER/MAJOR. Tracker → review. Not done. Not merged.
+- 2026-10-03: PO correction — retarget PR #367 to `main`; active-view re-selection is a true no-op (no history, URL, preference write, or event).

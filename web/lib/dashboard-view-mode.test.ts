@@ -3,7 +3,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
+  DASHBOARD_VIEW_MODE_CHANGE_EVENT,
   DASHBOARD_VIEW_MODE_STORAGE_KEY,
+  commitDashboardViewChange,
   dashboardHrefForPinnedView,
   dashboardHrefForView,
   parseDashboardViewParam,
@@ -76,5 +78,49 @@ describe("dashboard view preference storage", () => {
     expect(window.location.search).toBe("?view=overview");
     pinDashboardViewInHistory("graphs", "view=overview");
     expect(window.location.search).toBe("?view=overview");
+  });
+
+  it("treats re-selecting the active view as a true no-op", () => {
+    writeDashboardViewMode("graphs");
+    window.history.replaceState(window.history.state, "", "/dashboard?view=table");
+    const urlBefore = window.location.href;
+    const historyBefore = window.history.length;
+    let eventCount = 0;
+    const onChange = () => {
+      eventCount += 1;
+    };
+    window.addEventListener(DASHBOARD_VIEW_MODE_CHANGE_EVENT, onChange);
+
+    const writes: string[] = [];
+    const pins: string[] = [];
+    const pushes: string[] = [];
+    const result = commitDashboardViewChange({
+      mode: "table",
+      currentView: "table",
+      onDashboard: true,
+      liveSearch: "view=table",
+      write: (mode) => {
+        writes.push(mode);
+        writeDashboardViewMode(mode);
+      },
+      pin: (mode, search) => {
+        pins.push(mode);
+        pinDashboardViewInHistory(mode, search);
+      },
+      push: (href) => {
+        pushes.push(href);
+      },
+    });
+
+    window.removeEventListener(DASHBOARD_VIEW_MODE_CHANGE_EVENT, onChange);
+    expect(result).toBe("noop");
+    expect(writes).toEqual([]);
+    expect(pins).toEqual([]);
+    expect(pushes).toEqual([]);
+    expect(window.location.href).toBe(urlBefore);
+    expect(window.history.length).toBe(historyBefore);
+    expect(window.localStorage.getItem(DASHBOARD_VIEW_MODE_STORAGE_KEY)).toBe("graphs");
+    expect(readDashboardViewMode()).toBe("graphs");
+    expect(eventCount).toBe(0);
   });
 });

@@ -191,6 +191,54 @@ test.describe("Story 40.1 — dashboard command center", () => {
     await expect(page.getByRole("tab", { name: "Graphs" })).toHaveAttribute("aria-selected", "true");
   });
 
+  test("re-selecting the active view is a true no-op", async ({ page, request }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    test.setTimeout(120_000);
+    const session = await loginOperatorSession(request);
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openAuthed(page, session, "/dashboard");
+    await waitForDashboardReady(page);
+    await page.evaluate(() => {
+      window.localStorage.setItem("cohestra.dashboard.viewMode", "graphs");
+    });
+
+    await openAuthed(page, session, "/dashboard?view=table");
+    await waitForDashboardReady(page);
+    await expect(page.getByRole("tab", { name: "Table" })).toHaveAttribute("aria-selected", "true");
+
+    const before = await page.evaluate(() => {
+      window.addEventListener("cohestra.dashboard.viewMode", () => {
+        const root = window as Window & { __dashboardViewEvents?: number };
+        root.__dashboardViewEvents = (root.__dashboardViewEvents ?? 0) + 1;
+      });
+      return {
+        href: window.location.href,
+        historyLength: window.history.length,
+        preference: window.localStorage.getItem("cohestra.dashboard.viewMode"),
+      };
+    });
+
+    await page.getByRole("tab", { name: "Table" }).click();
+
+    const after = await page.evaluate(() => {
+      const root = window as Window & { __dashboardViewEvents?: number };
+      return {
+        href: window.location.href,
+        historyLength: window.history.length,
+        preference: window.localStorage.getItem("cohestra.dashboard.viewMode"),
+        events: root.__dashboardViewEvents ?? 0,
+      };
+    });
+
+    expect(after.href).toBe(before.href);
+    expect(after.historyLength).toBe(before.historyLength);
+    expect(after.preference).toBe("graphs");
+    expect(before.preference).toBe("graphs");
+    expect(after.events).toBe(0);
+    await expect(page.getByRole("tab", { name: "Table" })).toHaveAttribute("aria-selected", "true");
+  });
+
   test("follow-up fetch failure stays an error, not all caught up", async ({ page, request }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
     test.setTimeout(120_000);

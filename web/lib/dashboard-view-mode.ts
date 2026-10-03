@@ -126,6 +126,35 @@ export function dashboardHrefForPinnedView(
   return `/dashboard?${params.toString()}`;
 }
 
+export type DashboardViewCommitResult = "noop" | "preference-only" | "navigated";
+
+/** Re-selecting the already resolved view must not write, emit, or navigate. */
+export function commitDashboardViewChange(input: {
+  mode: DashboardViewMode;
+  currentView: DashboardViewMode;
+  onDashboard: boolean;
+  liveSearch: string;
+  write?: (mode: DashboardViewMode) => void;
+  pin?: (mode: DashboardViewMode, currentSearch?: string) => void;
+  push?: (href: string) => void;
+}): DashboardViewCommitResult {
+  if (input.mode === input.currentView) {
+    return "noop";
+  }
+
+  const write = input.write ?? writeDashboardViewMode;
+  if (!input.onDashboard) {
+    write(input.mode);
+    return "preference-only";
+  }
+
+  const pin = input.pin ?? pinDashboardViewInHistory;
+  pin(input.currentView, input.liveSearch);
+  write(input.mode);
+  input.push?.(dashboardHrefForView(input.mode, input.liveSearch));
+  return "navigated";
+}
+
 export function pinDashboardViewInHistory(
   mode: DashboardViewMode,
   currentSearch = ""
