@@ -1,35 +1,31 @@
 # Story 39.3 BMAD review
 
-Reviewed PO-correction HEAD `f13fcd82`, then patched billing null-plan handling.
+Reviewed Enterprise billing-owner correction HEAD `82120c56` vs `28bbe874`.
 
-## Layers (`f13fcd82`)
+## Layers
 
 | Layer | Verdict |
 | --- | --- |
-| Blind Hunter | One in-scope MAJOR: null plan could invent a Pro checkout SKU |
-| Edge Case Hunter | Destination Campaigns lock on null/unknown — existing destination contract |
-| Acceptance Auditor | PO nav/parser contract satisfied |
-| Adversarial general | Destination/taxonomy items; most deferred or dismissed |
+| Blind Hunter | Raised paid-list / mount-order concerns; in-scope Enterprise page gate is closed |
+| Edge Case Hunter | Settings page contract holds; server `RequiresBillingOwner` still Core/Pro only |
+| Acceptance Auditor | PO Settings-page contract satisfied |
+| Adversarial general | Same server/checkout lists; out of this correction’s allowed scope |
 
 ## Triage
 
-**Patch (applied after `f13fcd82`)**
+**Patch:** none remaining in Settings billing.
 
-- Null/unrecognized `shellPlan` must not load paid billing or invent a Pro checkout URL. `InAppBillingPanel` now requires `recognizedTenantPlan`.
+**Defer (PO forbade server/Paddle/auth-policy changes)**
 
-**Defer (pre-existing / out of 39.3 chrome)**
-
-- Website/Campaigns destination pages still infer from raw `shell.plan` (38.2 / existing). Nav pending; destinations stay conservative or server-gated. Do not unlock.
-- `RequireProPlan` also wraps email templates; `feature=campaigns` names the Pro campaigns family.
-- Form Studio / clients `shell?.plan ?? "Basic"` fallbacks remain out of scope.
-- Command palette lock chrome (38.6 overlay).
+- `TenantBillingAccess.RequiresBillingOwner` is still Core/Pro only. Enterprise non-owners can still call billing APIs / `/billing/checkout` if they have the URL. 39.3 chrome + Settings destination now match the resolver.
+- `isPaidPaddlePlanName` and checkout SKU mapping remain existing Paddle contracts.
 
 **Dismiss**
 
-- Website admin fetch on null plan is server-authoritative (required, not an unlock).
-- Case-sensitive plan tokens match the server’s PascalCase contract.
-- Boundary tests covering Website/Campaigns only — that is the PO matrix.
+- Blind Hunter claim that `recognizedTenantPlan` omits Enterprise — `KNOWN_TENANT_PLANS` includes Enterprise.
+- Basic non-owner mounting the panel — documented Basic-any-admin rule.
+- Missing/unknown mounting the panel — required: do not invent owner-managed or a paid SKU; panel hides actions.
 
 ## Close for this loop
 
-No unresolved in-scope BLOCKER/MAJOR after the billing guard. Story stays **in-progress** for product-owner pre-merge review. Do not merge. Story 39.4 was not started.
+No unresolved in-scope BLOCKER/MAJOR. Story stays **in-progress** for product-owner pre-merge review. Do not merge. Story 39.4 was not started.

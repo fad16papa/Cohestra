@@ -155,6 +155,7 @@ PO pre-merge review of HEAD `7b046629` reopened one MAJOR: `parseTenantShell()` 
 - D12 fixtures: `px2-basic` admin, `px2-core` admin, `px2-pro-member`, `px2-basic-member`.
 - Live Playwright 39.3 (5) + regressions 38-2/39-1/39-2/38-5/38-6 passed. Vitest 518. Production `next build` green.
 - PO correction: `parseTenantShell` keeps `plan` nullable. Missing/unknown plans stay pending. Campaigns 403 now carries typed `feature`/`requiredPlan` without changing who is locked.
+- PO correction: `isPaidTenantPlan` treats Enterprise as paid. Settings billing non-owners see owner-managed copy and do not mount `InAppBillingPanel`.
 
 ### File List
 
@@ -205,3 +206,4 @@ PO pre-merge review of HEAD `7b046629` reopened one MAJOR: `parseTenantShell()` 
 - 2026-10-02: Live Playwright + regressions green. Review patches: unknown-plan pending, Analytics weekly return, Basic member ask-admin. Status remains in-progress for PO pre-merge review.
 - 2026-10-03: PO correction — `parseTenantShell` no longer infers Basic; boundary tests and Campaigns/Team/member coverage tightened. Status remains in-progress.
 - 2026-10-03: Review patch — null/unknown shell plan no longer invents a paid billing checkout SKU.
+- 2026-10-03: PO correction — Enterprise is a paid plan for billing-owner gating; non-owners stay on owner-managed copy.
