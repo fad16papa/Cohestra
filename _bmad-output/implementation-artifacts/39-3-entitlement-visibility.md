@@ -2,15 +2,16 @@
 id: 39.3
 key: 39-3-entitlement-visibility
 title: Entitlement visibility
-status: in-progress
+status: done
 epic: 39
 created: 2026-10-02
 baseline_commit: cc63c61a18b2004465e9991de13e10c8f76b5a68
+accepted_commit: 38b6456c1ebe279e4cf1de60882b8413b10d240d
 ---
 
 # Story 39.3: Entitlement visibility
 
-Status: in-progress
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -163,6 +164,7 @@ Independent re-review of HEAD `de2ad344` (Blind Hunter, Edge Case Hunter, Accept
 - Live Playwright 39.3 (5) + regressions 38-2/39-1/39-2/38-5/38-6 passed. Vitest 518. Production `next build` green.
 - PO correction: `parseTenantShell` keeps `plan` nullable. Missing/unknown plans stay pending. Campaigns 403 now carries typed `feature`/`requiredPlan` without changing who is locked.
 - PO correction: `isPaidTenantPlan` treats Enterprise as paid. Settings billing non-owners see owner-managed copy and do not mount `InAppBillingPanel`.
+- ACCEPTED/CLOSED. PO PASS at exactly `38b6456c`. Merged as `a70f6151` (PR #360). Required main CI `37105299246` 5/5 success. Epic 39 remains in-progress. Story 39.4 was not started.
 
 ### File List
 
@@ -173,6 +175,7 @@ Independent re-review of HEAD `de2ad344` (Blind Hunter, Edge Case Hunter, Accept
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/atdd.md`
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/trace.md`
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/review.md`
+- `_bmad-output/planning-artifacts/evidence/px2-39-3/post-merge.md`
 - `_bmad-output/implementation-artifacts/deferred-work.md`
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/viewports/`
 - `web/lib/admin-nav-entitlements.ts`
@@ -214,3 +217,4 @@ Independent re-review of HEAD `de2ad344` (Blind Hunter, Edge Case Hunter, Accept
 - 2026-10-03: PO correction — `parseTenantShell` no longer infers Basic; boundary tests and Campaigns/Team/member coverage tightened. Status remains in-progress.
 - 2026-10-03: Review patch — null/unknown shell plan no longer invents a paid billing checkout SKU.
 - 2026-10-03: PO correction — Enterprise is a paid plan for billing-owner gating; non-owners stay on owner-managed copy.
+- 2026-10-03: PR #360 merged as `a70f6151` (implementation HEAD `38b6456c`). Required main CI `37105299246` 5/5 success. Post-merge smoke: entitlement-visibility-39-3, desktop-shell-39-1, mobile-nav-39-2, focused Vitest owner-gate/boundary/panel. ACCEPTED/CLOSED. Epic 39 remains in-progress. Story 39.4 not started.
