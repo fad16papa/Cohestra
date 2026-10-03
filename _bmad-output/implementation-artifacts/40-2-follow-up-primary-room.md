@@ -239,4 +239,5 @@ Grok 4.6 owns story definition, architecture, product semantics, implementation,
 - 2026-10-03: Created Story 40.2 from main `dc9e42f6`. Inventory and data-contract locked. Readiness READY. Implementation not started.
 - 2026-10-03: Implemented `/follow-up` room over existing clients API + shared resolver. QA pending.
 - 2026-10-03: Review patches — fail-closed paging, status-only permission, wrap chips, FAB clearance, honest error copy. Tracker → review. Draft PR unmerged.
-- 2026-10-03: PO Direct Adjustment — retract client fan-out. Server `followUpCategory` + totals + Id tie-break. Isolated 101-row identical-sort integration. Room fetches one page. Draft PR #369 unmerged. Status remains review/in-progress. 40.3 not started.
+- 2026-10-03: PO Direct Adjustment — retract client fan-out. Server `followUpCategory` + totals + Id tie-break. Isolated 101-row identical-sort integration. Room fetches one page. Draft PR #369 unmerged. Status remains review. 40.3 not started.
+- 2026-10-03: Independent review on `8c4af64b` — patched BH-01 empty-page honesty (`CountAsync` + step-back / fail-closed). Tracker → review.
