@@ -143,6 +143,9 @@ PO pre-merge review of HEAD `7b046629` reopened one MAJOR: `parseTenantShell()` 
 - [x] [Review][PO] Boundary tests through parser → context → resolver
 - [x] [Review][PO] Campaigns 403 includes `feature=campaigns` and `requiredPlan=Pro`
 - [x] [Review][PO] Basic admin Team UpgradePanel + Basic member Campaigns ask-admin
+- [x] [Review][Patch] Null/unknown shell plan does not invent a paid billing checkout SKU
+- [x] [Review][Defer] Website/Campaigns destination inference remains 38.2 / existing pages — deferred, pre-existing
+- [x] [Review][Defer] RequireProPlan email-templates 403 uses campaigns-family feature name — deferred, pre-existing filter scope
 
 ### Completion Notes List
 
@@ -160,6 +163,8 @@ PO pre-merge review of HEAD `7b046629` reopened one MAJOR: `parseTenantShell()` 
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/architecture.md`
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/atdd.md`
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/trace.md`
+- `_bmad-output/planning-artifacts/evidence/px2-39-3/review.md`
+- `_bmad-output/implementation-artifacts/deferred-work.md`
 - `_bmad-output/planning-artifacts/evidence/px2-39-3/viewports/`
 - `web/lib/admin-nav-entitlements.ts`
 - `web/lib/admin-nav-entitlements.test.ts`
@@ -196,3 +201,4 @@ PO pre-merge review of HEAD `7b046629` reopened one MAJOR: `parseTenantShell()` 
 - 2026-10-02: Implemented centralized nav entitlements, lock chrome, D12 Core/Member fixtures, and unit matrix.
 - 2026-10-02: Live Playwright + regressions green. Review patches: unknown-plan pending, Analytics weekly return, Basic member ask-admin. Status remains in-progress for PO pre-merge review.
 - 2026-10-03: PO correction — `parseTenantShell` no longer infers Basic; boundary tests and Campaigns/Team/member coverage tightened. Status remains in-progress.
+- 2026-10-03: Review patch — null/unknown shell plan no longer invents a paid billing checkout SKU.

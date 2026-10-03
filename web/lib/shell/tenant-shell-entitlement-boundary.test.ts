@@ -6,7 +6,7 @@ import {
   type NavLockState,
   type NavRequiredPlan,
 } from "@/lib/admin-nav-entitlements";
-import { parseTenantShell } from "@/lib/shell/tenant-shell-api";
+import { parseTenantShell, recognizedTenantPlan } from "@/lib/shell/tenant-shell-api";
 
 function resolveFromRaw(
   raw: Record<string, unknown>,
@@ -43,6 +43,7 @@ describe("parseTenantShell → entitlementContextFromShell → resolveNavEntitle
     expectNav({}, pending, pending);
     expectNav({ plan: null }, pending, pending);
     expectNav({ Plan: null }, pending, pending);
+    expectNav({ plan: "   " }, pending, pending);
   });
 
   it("keeps an unknown future plan pending instead of inventing Basic locks", () => {
@@ -73,5 +74,15 @@ describe("parseTenantShell → entitlementContextFromShell → resolveNavEntitle
     const unlocked = { state: "unlocked" as const, requiredPlan: null };
     expectNav({ plan: "Pro" }, unlocked, unlocked);
     expectNav({ Plan: "Enterprise" }, unlocked, unlocked);
+  });
+
+  it("does not treat a missing or unknown plan as a known billing SKU", () => {
+    expect(recognizedTenantPlan(parseTenantShell({}).plan)).toBeNull();
+    expect(recognizedTenantPlan(parseTenantShell({ plan: null }).plan)).toBeNull();
+    expect(recognizedTenantPlan("Platinum")).toBeNull();
+    expect(recognizedTenantPlan("Basic")).toBe("Basic");
+    expect(recognizedTenantPlan("Core")).toBe("Core");
+    expect(recognizedTenantPlan("Pro")).toBe("Pro");
+    expect(recognizedTenantPlan("Enterprise")).toBe("Enterprise");
   });
 });
