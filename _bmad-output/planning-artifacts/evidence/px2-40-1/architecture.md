@@ -33,6 +33,8 @@ Serialization when the operator switches views:
 
 History: `router.push` so Overview → Graphs → Back restores Overview. Shared `?view=table` is read on first paint (after hydration of `useSearchParams`).
 
+If the current URL omitted `view` (default overview), switching views first pins the current resolved mode with `history.replaceState` to an explicit `?view=…` (including `?view=overview`). That keeps Back honest after preference is written for the next query-less visit.
+
 Do **not** put view in the pathname. Do **not** pass `searchParams` through the server `page.tsx` in a way that remounts the client tree. Wrap `useSearchParams` in `Suspense`. Data stays in `DashboardPageClient` state; view is a render branch only.
 
 ## Motion

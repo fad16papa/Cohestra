@@ -1,9 +1,13 @@
+/** @vitest-environment jsdom */
+
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
   DASHBOARD_VIEW_MODE_STORAGE_KEY,
+  dashboardHrefForPinnedView,
   dashboardHrefForView,
   parseDashboardViewParam,
+  pinDashboardViewInHistory,
   readDashboardViewMode,
   resolveDashboardView,
   serializeDashboardViewParam,
@@ -46,6 +50,8 @@ describe("dashboard view query", () => {
     expect(dashboardHrefForView("graphs")).toBe("/dashboard?view=graphs");
     expect(dashboardHrefForView("table", "utm=1")).toBe("/dashboard?utm=1&view=table");
     expect(dashboardHrefForView("overview", "view=graphs&utm=1")).toBe("/dashboard?utm=1");
+    expect(dashboardHrefForPinnedView("overview")).toBe("/dashboard?view=overview");
+    expect(dashboardHrefForPinnedView("graphs", "utm=1")).toBe("/dashboard?utm=1&view=graphs");
   });
 });
 
@@ -62,5 +68,13 @@ describe("dashboard view preference storage", () => {
   it("writes and reads a valid preference", () => {
     writeDashboardViewMode("graphs");
     expect(readDashboardViewMode()).toBe("graphs");
+  });
+
+  it("pins a query-less history entry so Back can restore overview", () => {
+    window.history.replaceState(window.history.state, "", "/dashboard");
+    pinDashboardViewInHistory("overview");
+    expect(window.location.search).toBe("?view=overview");
+    pinDashboardViewInHistory("graphs", "view=overview");
+    expect(window.location.search).toBe("?view=overview");
   });
 });

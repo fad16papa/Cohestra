@@ -9,7 +9,6 @@ import {
   DashboardChartCard,
 } from "@/components/dashboard/dashboard-chart-card";
 import type { DashboardLeadStatusBreakdown } from "@/lib/dashboard-api";
-import { cn } from "@/lib/utils";
 
 type StatusSlice = {
   key: string;

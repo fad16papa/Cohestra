@@ -80,7 +80,7 @@ test.describe("Story 40.1 — dashboard command center", () => {
     });
     expect(order).toBe(true);
 
-    const viewAll = page.getByRole("link", { name: "View all" }).first();
+    const viewAll = page.getByRole("link", { name: "View all", exact: true });
     await expect(viewAll).toHaveAttribute("href", "/follow-up");
 
     const transition = page.locator("[data-admin-route-transition]");
@@ -207,10 +207,15 @@ test.describe("Story 40.1 — dashboard command center", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await openAuthed(page, session, "/dashboard");
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
-    await expect(page.getByRole("alert")).toContainText(/Could not load|follow-up/i);
+    await expect(page.getByRole("heading", { name: "Needs follow-up" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+    await expect(page.getByText(/Request failed|Could not load/i)).toBeVisible();
     await expect(page.getByText("You're all caught up")).toHaveCount(0);
     await expect(page.getByText("all caught up")).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "View all" })).toHaveAttribute("href", "/follow-up");
+    await expect(page.getByRole("link", { name: "View all", exact: true })).toHaveAttribute(
+      "href",
+      "/follow-up"
+    );
     await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   });
 

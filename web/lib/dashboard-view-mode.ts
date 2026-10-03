@@ -61,12 +61,28 @@ export function readDashboardViewMode(): DashboardViewMode {
   }
 }
 
+export const DASHBOARD_VIEW_MODE_CHANGE_EVENT = "cohestra.dashboard.viewMode";
+
 export function writeDashboardViewMode(mode: DashboardViewMode): void {
   try {
     window.localStorage.setItem(DASHBOARD_VIEW_MODE_STORAGE_KEY, mode);
+    window.dispatchEvent(new Event(DASHBOARD_VIEW_MODE_CHANGE_EVENT));
   } catch {
     // Ignore private browsing / quota errors.
   }
+}
+
+export function subscribeDashboardViewMode(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(DASHBOARD_VIEW_MODE_CHANGE_EVENT, onStoreChange);
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(DASHBOARD_VIEW_MODE_CHANGE_EVENT, onStoreChange);
+  };
 }
 
 export function resolveDashboardView(
@@ -98,4 +114,27 @@ export function dashboardHrefForView(mode: DashboardViewMode, currentSearch = ""
   }
   const query = params.toString();
   return query.length > 0 ? `/dashboard?${query}` : "/dashboard";
+}
+
+/** Always include `view` so a query-less history entry can be restored on Back. */
+export function dashboardHrefForPinnedView(
+  mode: DashboardViewMode,
+  currentSearch = ""
+): string {
+  const params = new URLSearchParams(currentSearch.startsWith("?") ? currentSearch.slice(1) : currentSearch);
+  params.set(DASHBOARD_VIEW_QUERY_KEY, mode);
+  return `/dashboard?${params.toString()}`;
+}
+
+export function pinDashboardViewInHistory(
+  mode: DashboardViewMode,
+  currentSearch = ""
+): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  if (parseDashboardViewParam(new URLSearchParams(currentSearch).get(DASHBOARD_VIEW_QUERY_KEY)) !== "absent") {
+    return;
+  }
+  window.history.replaceState(window.history.state, "", dashboardHrefForPinnedView(mode, currentSearch));
 }

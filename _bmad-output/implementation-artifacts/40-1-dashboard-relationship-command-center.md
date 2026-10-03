@@ -77,7 +77,7 @@ See `_bmad-output/planning-artifacts/evidence/px2-40-1/readiness.md`.
 - [x] Wire query + history on Dashboard without remounting data (AC 4, 5)
 - [x] Command-center hierarchy, `/follow-up` link, honest widget errors (AC 1–3, 6, 7)
 - [x] 390/1440 overflow and table min-width containment (AC 8)
-- [ ] Playwright 40.1 + protected regressions (AC 5, 8–10)
+- [x] Playwright 40.1 + protected regressions (AC 5, 8–10) — 39.4 43.999px residual remains classification D
 
 ## Dev Notes
 
@@ -101,7 +101,9 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - `_bmad-output/planning-artifacts/evidence/px2-40-1/architecture.md`
 - `_bmad-output/planning-artifacts/evidence/px2-40-1/readiness.md`
+- `_bmad-output/planning-artifacts/evidence/px2-40-1/checks.md`
 - `_bmad-output/planning-artifacts/evidence/px2-40-1/role-plan-state-matrix.md`
+- `_bmad-output/planning-artifacts/evidence/px2-40-1/viewports/`
 - `web/app/(admin)/dashboard/page.tsx`
 - `web/components/dashboard/dashboard-activity-performance-graph.tsx`
 - `web/components/dashboard/dashboard-chart-card.tsx`
@@ -124,3 +126,4 @@ Grok 4.6 (architecture, implementation, tests, review). Composer 2.5 unused unle
 
 - 2026-10-03: Created Story 40.1 from main `2350bdbd` (Epic 39 close). Canonical D18/D19. Story 40.2 not started.
 - 2026-10-03: Implementation revision — query views, command-center hierarchy, honest follow-up errors. QA pending.
+- 2026-10-03: History pin for query-less Back; Playwright 40.1 4/4; protected 38.5–39.5 green except known 39.4 43.999px residual.

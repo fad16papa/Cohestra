@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { ActivityPerformanceSection } from "@/components/dashboard/activity-performance-section";
@@ -32,11 +32,16 @@ import { computeWowDeltaPercent } from "@/lib/dashboard-insights";
 import {
   DASHBOARD_VIEW_QUERY_KEY,
   dashboardHrefForView,
+  pinDashboardViewInHistory,
   readDashboardViewMode,
   resolveDashboardView,
+  subscribeDashboardViewMode,
   writeDashboardViewMode,
   type DashboardViewMode,
 } from "@/lib/dashboard-view-mode";
+
+const SERVER_DASHBOARD_VIEW: DashboardViewMode = "overview";
+let dashboardSessionSeq = 0;
 import {
   buildDashboardOnboardingItems,
   isDashboardOnboardingDismissed,
@@ -56,7 +61,12 @@ export function DashboardPageClient() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [preference, setPreference] = useState<DashboardViewMode>("overview");
+  const preference = useSyncExternalStore(
+    subscribeDashboardViewMode,
+    readDashboardViewMode,
+    () => SERVER_DASHBOARD_VIEW
+  );
+  const [sessionId] = useState(() => `dashboard-${++dashboardSessionSeq}`);
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [hasActivities, setHasActivities] = useState<boolean | null>(null);
   const [totalActivityCount, setTotalActivityCount] = useState(0);
@@ -65,11 +75,6 @@ export function DashboardPageClient() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
-  const sessionRef = useRef(`dashboard-${Math.random().toString(36).slice(2)}`);
-
-  useEffect(() => {
-    setPreference(readDashboardViewMode());
-  }, []);
 
   const viewMode = resolveDashboardView(
     searchParams.get(DASHBOARD_VIEW_QUERY_KEY),
@@ -77,11 +82,12 @@ export function DashboardPageClient() {
   );
 
   function handleViewModeChange(mode: DashboardViewMode) {
-    setPreference(mode);
-    writeDashboardViewMode(mode);
     if (pathname !== "/dashboard") {
+      writeDashboardViewMode(mode);
       return;
     }
+    pinDashboardViewInHistory(viewMode, searchParams.toString());
+    writeDashboardViewMode(mode);
     router.push(dashboardHrefForView(mode, searchParams.toString()), { scroll: false });
   }
 
@@ -190,7 +196,7 @@ export function DashboardPageClient() {
       <div
         className="mx-auto w-full min-w-0 max-w-6xl space-y-8"
         data-testid="dashboard-session"
-        data-dashboard-session={sessionRef.current}
+        data-dashboard-session={sessionId}
       >
         {shell}
         <MetricSkeletonGrid />
@@ -203,7 +209,7 @@ export function DashboardPageClient() {
       <div
         className="mx-auto w-full min-w-0 max-w-6xl space-y-8"
         data-testid="dashboard-session"
-        data-dashboard-session={sessionRef.current}
+        data-dashboard-session={sessionId}
       >
         {shell}
         <div
@@ -234,7 +240,7 @@ export function DashboardPageClient() {
     <div
       className="mx-auto w-full min-w-0 max-w-6xl space-y-8"
       data-testid="dashboard-session"
-      data-dashboard-session={sessionRef.current}
+      data-dashboard-session={sessionId}
     >
       {shell}
       <DashboardIntelligenceBrief />
