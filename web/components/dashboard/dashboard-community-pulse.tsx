@@ -69,7 +69,7 @@ export function DashboardCommunityPulse({
 
   const hasMore = communities.length > DASHBOARD_PANEL_VISIBLE_ITEMS;
 
-  if (variant === "tables") {
+  if (variant === "table") {
     return (
       <DashboardPanelSection aria-labelledby="community-pulse-heading">
         <DashboardPanelHeader

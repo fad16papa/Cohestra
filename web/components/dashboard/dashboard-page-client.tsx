@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { ActivityPerformanceSection } from "@/components/dashboard/activity-performance-section";
 import { DashboardActivityPerformanceGraph } from "@/components/dashboard/dashboard-activity-performance-graph";
@@ -29,7 +30,10 @@ import { fetchActivities } from "@/lib/activities-api";
 import { fetchDashboardMetrics, type DashboardMetrics } from "@/lib/dashboard-api";
 import { computeWowDeltaPercent } from "@/lib/dashboard-insights";
 import {
+  DASHBOARD_VIEW_QUERY_KEY,
+  dashboardHrefForView,
   readDashboardViewMode,
+  resolveDashboardView,
   writeDashboardViewMode,
   type DashboardViewMode,
 } from "@/lib/dashboard-view-mode";
@@ -49,6 +53,10 @@ export function DashboardPageClient() {
   const { authFetch, status } = useAuth();
   const refreshContext = useDashboardMetricsRefresh();
   const setLastUpdatedAt = refreshContext?.setLastUpdatedAt;
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [preference, setPreference] = useState<DashboardViewMode>("overview");
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [hasActivities, setHasActivities] = useState<boolean | null>(null);
   const [totalActivityCount, setTotalActivityCount] = useState(0);
@@ -57,15 +65,24 @@ export function DashboardPageClient() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
-  const [viewMode, setViewMode] = useState<DashboardViewMode>("overview");
+  const sessionRef = useRef(`dashboard-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => {
-    setViewMode(readDashboardViewMode());
+    setPreference(readDashboardViewMode());
   }, []);
 
+  const viewMode = resolveDashboardView(
+    searchParams.get(DASHBOARD_VIEW_QUERY_KEY),
+    preference
+  );
+
   function handleViewModeChange(mode: DashboardViewMode) {
-    setViewMode(mode);
+    setPreference(mode);
     writeDashboardViewMode(mode);
+    if (pathname !== "/dashboard") {
+      return;
+    }
+    router.push(dashboardHrefForView(mode, searchParams.toString()), { scroll: false });
   }
 
   useEffect(() => {
@@ -161,10 +178,21 @@ export function DashboardPageClient() {
     };
   }, [authFetch, error, initialized, setLastUpdatedAt, status, totalActivityCount]);
 
+  const shell = (
+    <>
+      <DashboardGreetingHeader />
+      <DashboardViewSwitcher value={viewMode} onChange={handleViewModeChange} />
+    </>
+  );
+
   if (status === "loading" || !initialized) {
     return (
-      <div className="mx-auto max-w-6xl space-y-8">
-        <DashboardGreetingHeader />
+      <div
+        className="mx-auto w-full min-w-0 max-w-6xl space-y-8"
+        data-testid="dashboard-session"
+        data-dashboard-session={sessionRef.current}
+      >
+        {shell}
         <MetricSkeletonGrid />
       </div>
     );
@@ -172,167 +200,168 @@ export function DashboardPageClient() {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-6xl space-y-8">
-        <DashboardGreetingHeader />
-        <ProductErrorState
-          message={error}
-          onRetry={() => {
-            setInitialized(false);
-            setError(null);
-            setReloadToken((current) => current + 1);
-          }}
-        />
-      </div>
-    );
-  }
-
-  if (hasActivities === false) {
-    return (
-      <div className="mx-auto max-w-6xl space-y-8">
-        <DashboardGreetingHeader />
-        <DashboardIntelligenceBrief />
-        <DashboardEmptyState />
-      </div>
-    );
-  }
-
-  if (!metrics) {
-    return (
-      <div className="mx-auto max-w-6xl space-y-8">
-        <DashboardGreetingHeader />
-        <MetricSkeletonGrid />
+      <div
+        className="mx-auto w-full min-w-0 max-w-6xl space-y-8"
+        data-testid="dashboard-session"
+        data-dashboard-session={sessionRef.current}
+      >
+        {shell}
+        <div
+          id="dashboard-view-panel"
+          role="tabpanel"
+          aria-labelledby={`dashboard-view-${viewMode}`}
+        >
+          <ProductErrorState
+            message={error}
+            onRetry={() => {
+              setInitialized(false);
+              setError(null);
+              setReloadToken((current) => current + 1);
+            }}
+          />
+        </div>
       </div>
     );
   }
 
   const periodLabel =
-    metrics.periodDays === 7 ? "this week" : `last ${metrics.periodDays} days`;
-
-  const registrationsWowDelta = computeWowDeltaPercent(
-    metrics.registrationsInPeriod,
-    metrics.registrationsInPreviousPeriod
-  );
+    metrics && metrics.periodDays === 7 ? "this week" : `last ${metrics?.periodDays ?? 7} days`;
+  const registrationsWowDelta = metrics
+    ? computeWowDeltaPercent(metrics.registrationsInPeriod, metrics.registrationsInPreviousPeriod)
+    : 0;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8">
-      <DashboardGreetingHeader />
+    <div
+      className="mx-auto w-full min-w-0 max-w-6xl space-y-8"
+      data-testid="dashboard-session"
+      data-dashboard-session={sessionRef.current}
+    >
+      {shell}
       <DashboardIntelligenceBrief />
+      <DashboardFollowUpQueue />
 
-      <section className="rounded-xl border border-border-warm bg-card/60 p-4 sm:p-5">
-        <DashboardViewSwitcher value={viewMode} onChange={handleViewModeChange} />
-      </section>
+      <div
+        id="dashboard-view-panel"
+        role="tabpanel"
+        aria-labelledby={`dashboard-view-${viewMode}`}
+        className="space-y-8"
+      >
+        {hasActivities === false ? <DashboardEmptyState /> : null}
 
-      {viewMode === "overview" ? (
-        <>
-          {showOnboardingChecklist ? (
-            <DashboardOnboardingChecklist
-              items={buildDashboardOnboardingItems(metrics, totalActivityCount)}
-              onDismiss={() => setShowOnboardingChecklist(false)}
-            />
-          ) : null}
-          <DashboardTodayStrip metrics={metrics} periodLabel={periodLabel} />
-          <DashboardFollowUpQueue />
-          <DashboardQuickActions />
+        {hasActivities !== false && !metrics ? <MetricSkeletonGrid /> : null}
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricTile
-              label="Total leads"
-              value={String(metrics.totalLeads)}
-              href="/clients"
-              ariaLabel={`View all ${metrics.totalLeads} leads`}
-              hint="All captured contacts"
-              animationDelayMs={0}
-              isRefreshing={isRefreshing}
-            />
-            <MetricTile
-              label={`Registrations ${periodLabel}`}
-              value={String(metrics.registrationsInPeriod)}
-              href={ANALYTICS_PATH}
-              ariaLabel={`${metrics.registrationsInPeriod} registrations ${periodLabel} — open analytics`}
-              delta={{
-                percent: registrationsWowDelta,
-                label: `vs previous ${metrics.periodDays} days (${metrics.registrationsInPreviousPeriod})`,
-              }}
-              animationDelayMs={60}
-              isRefreshing={isRefreshing}
-            />
-            <MetricTile
-              label="Active activities"
-              value={String(metrics.activeActivitiesCount)}
-              href="/activities?status=published"
-              ariaLabel={`View ${metrics.activeActivitiesCount} published activities`}
-              hint="Live registration forms"
-              animationDelayMs={120}
-              isRefreshing={isRefreshing}
-            />
-            <MetricTile
-              label="Follow-up coverage"
-              value={formatCoveragePercent(metrics.followUpCoveragePercent)}
-              href="/clients?leadStatus=new"
-              ariaLabel={`View clients needing follow-up — ${formatCoveragePercent(metrics.followUpCoveragePercent)} coverage`}
-              hint="Leads contacted vs new"
-              animationDelayMs={180}
-              isRefreshing={isRefreshing}
-            />
-          </div>
+        {metrics && hasActivities !== false ? (
+          <>
+            {showOnboardingChecklist ? (
+              <DashboardOnboardingChecklist
+                items={buildDashboardOnboardingItems(metrics, totalActivityCount)}
+                onDismiss={() => setShowOnboardingChecklist(false)}
+              />
+            ) : null}
+            <DashboardTodayStrip metrics={metrics} periodLabel={periodLabel} />
 
-          <DashboardRegistrationsTrendChart
-            points={metrics.registrationsTrend}
-            trendDays={metrics.trendDays}
-            compact
-          />
+            {viewMode === "overview" ? (
+              <>
+                <DashboardQuickActions />
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <MetricTile
+                    label="Total leads"
+                    value={String(metrics.totalLeads)}
+                    href="/clients"
+                    ariaLabel={`View all ${metrics.totalLeads} leads`}
+                    hint="All captured contacts"
+                    animationDelayMs={0}
+                    isRefreshing={isRefreshing}
+                  />
+                  <MetricTile
+                    label={`Registrations ${periodLabel}`}
+                    value={String(metrics.registrationsInPeriod)}
+                    href={ANALYTICS_PATH}
+                    ariaLabel={`${metrics.registrationsInPeriod} registrations ${periodLabel} — open analytics`}
+                    delta={{
+                      percent: registrationsWowDelta,
+                      label: `vs previous ${metrics.periodDays} days (${metrics.registrationsInPreviousPeriod})`,
+                    }}
+                    animationDelayMs={60}
+                    isRefreshing={isRefreshing}
+                  />
+                  <MetricTile
+                    label="Active activities"
+                    value={String(metrics.activeActivitiesCount)}
+                    href="/activities?status=published"
+                    ariaLabel={`View ${metrics.activeActivitiesCount} published activities`}
+                    hint="Live registration forms"
+                    animationDelayMs={120}
+                    isRefreshing={isRefreshing}
+                  />
+                  <MetricTile
+                    label="Follow-up coverage"
+                    value={formatCoveragePercent(metrics.followUpCoveragePercent)}
+                    href="/follow-up"
+                    ariaLabel={`View follow-up coverage — ${formatCoveragePercent(metrics.followUpCoveragePercent)} coverage`}
+                    hint="Leads contacted vs new"
+                    animationDelayMs={180}
+                    isRefreshing={isRefreshing}
+                  />
+                </div>
+                <DashboardRegistrationsTrendChart
+                  points={metrics.registrationsTrend}
+                  trendDays={metrics.trendDays}
+                  compact
+                />
+                <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)] lg:items-start">
+                  <ActivityPerformanceSection
+                    items={metrics.activityPerformance}
+                    periodLabel={periodLabel}
+                  />
+                  <DashboardCommunityPulse variant="overview" />
+                </div>
+                <DashboardRecentCampaignsSection />
+              </>
+            ) : null}
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)] lg:items-start">
-            <ActivityPerformanceSection
-              items={metrics.activityPerformance}
-              periodLabel={periodLabel}
-            />
-            <DashboardCommunityPulse variant="overview" />
-          </div>
+            {viewMode === "graphs" ? (
+              <>
+                <DashboardMetricsGraphs
+                  metrics={metrics}
+                  periodLabel={periodLabel}
+                  isRefreshing={isRefreshing}
+                />
+                <DashboardRegistrationsTrendChart
+                  points={metrics.registrationsTrend}
+                  trendDays={metrics.trendDays}
+                />
+                <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-stretch">
+                  <DashboardActivityPerformanceGraph
+                    items={metrics.activityPerformance}
+                    periodLabel={periodLabel}
+                    className="h-full min-w-0"
+                  />
+                  <DashboardLeadStatusChart
+                    breakdown={metrics.leadStatusBreakdown}
+                    className="h-full min-w-0"
+                    fill
+                  />
+                </div>
+                <DashboardCommunityPulse variant="graphs" />
+              </>
+            ) : null}
 
-          <DashboardRecentCampaignsSection />
-        </>
-      ) : null}
-
-      {viewMode === "graphs" ? (
-        <>
-          <DashboardMetricsGraphs
-            metrics={metrics}
-            periodLabel={periodLabel}
-            isRefreshing={isRefreshing}
-          />
-          <DashboardRegistrationsTrendChart
-            points={metrics.registrationsTrend}
-            trendDays={metrics.trendDays}
-          />
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-stretch">
-            <DashboardActivityPerformanceGraph
-              items={metrics.activityPerformance}
-              periodLabel={periodLabel}
-              className="h-full"
-            />
-            <DashboardLeadStatusChart
-              breakdown={metrics.leadStatusBreakdown}
-              className="h-full"
-              fill
-            />
-          </div>
-          <DashboardCommunityPulse variant="graphs" />
-        </>
-      ) : null}
-
-      {viewMode === "tables" ? (
-        <>
-          <DashboardMetricsTable metrics={metrics} periodLabel={periodLabel} />
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)] lg:items-start">
-            <DashboardActivityPerformanceTable
-              items={metrics.activityPerformance}
-              periodLabel={periodLabel}
-            />
-            <DashboardCommunityPulse variant="tables" />
-          </div>
-        </>
-      ) : null}
+            {viewMode === "table" ? (
+              <>
+                <DashboardMetricsTable metrics={metrics} periodLabel={periodLabel} />
+                <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)] lg:items-start">
+                  <DashboardActivityPerformanceTable
+                    items={metrics.activityPerformance}
+                    periodLabel={periodLabel}
+                  />
+                  <DashboardCommunityPulse variant="table" />
+                </div>
+              </>
+            ) : null}
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }

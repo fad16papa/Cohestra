@@ -76,7 +76,7 @@ export function DashboardMetricsTable({
       metric: "Follow-up coverage",
       value: formatCoveragePercent(metrics.followUpCoveragePercent),
       detail: "Leads contacted vs new",
-      href: "/clients?leadStatus=new",
+      href: "/follow-up",
     },
   ];
 

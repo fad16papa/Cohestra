@@ -108,12 +108,12 @@ export function DashboardActivityPerformanceGraph({
         </p>
       ) : (
         <>
-          <div style={{ height: chartHeight }}>
+          <div className="w-full min-w-0 overflow-hidden" style={{ height: chartHeight }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
                 layout="vertical"
-                margin={{ top: 0, right: 32, bottom: 0, left: 8 }}
+                margin={{ top: 0, right: 24, bottom: 0, left: 0 }}
                 barCategoryGap="26%"
               >
                 <CartesianGrid
@@ -131,7 +131,7 @@ export function DashboardActivityPerformanceGraph({
                 <YAxis
                   type="category"
                   dataKey="name"
-                  width={150}
+                  width={96}
                   tick={{ fill: "var(--text-warm)", fontSize: 12 }}
                   tickLine={false}
                   axisLine={false}

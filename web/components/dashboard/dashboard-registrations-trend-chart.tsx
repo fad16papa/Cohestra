@@ -124,7 +124,7 @@ export function DashboardRegistrationsTrendChart({
           No registrations in the {rangeLabel} yet. New sign-ups will chart here daily.
         </p>
       ) : (
-        <div style={{ height: compact ? 200 : 260 }}>
+        <div className="w-full min-w-0 overflow-hidden" style={{ height: compact ? 200 : 260 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={points}

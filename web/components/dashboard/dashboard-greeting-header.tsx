@@ -30,36 +30,16 @@ export function DashboardGreetingHeader() {
     : "Operator";
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-border-warm bg-card/80 p-6 shadow-sm backdrop-blur-sm sm:p-8">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-12 -top-12 size-48 rounded-full bg-primary/10 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-16 left-1/3 size-40 rounded-full bg-accent/10 blur-3xl"
-      />
-      <div className="relative">
-        <PageHeader
-          title="Dashboard"
-          description={
-            <>
-              <p className="text-sm font-medium text-text-link">{formatTodayLabel()}</p>
-              <p className="text-lg font-medium text-text-warm sm:text-xl">
-                {getGreeting()}, {displayName}
-              </p>
-              <p className="max-w-xl text-sm leading-relaxed text-text-muted-warm">
-                Your outreach cockpit — see what needs attention, then act in one click.
-                Press{" "}
-                <kbd className="rounded border border-border-warm bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium">
-                  ⌘K
-                </kbd>{" "}
-                anytime to jump anywhere.
-              </p>
-            </>
-          }
-        />
-      </div>
-    </section>
+    <PageHeader
+      title="Dashboard"
+      description={
+        <>
+          <p>{formatTodayLabel()}</p>
+          <p>
+            {getGreeting()}, {displayName}
+          </p>
+        </>
+      }
+    />
   );
 }

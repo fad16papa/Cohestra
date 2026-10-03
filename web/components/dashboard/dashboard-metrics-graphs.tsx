@@ -87,8 +87,8 @@ export function DashboardMetricsGraphs({
       label: "Follow-up coverage",
       displayValue: formatCoveragePercent(metrics.followUpCoveragePercent),
       caption: "Leads contacted vs new",
-      href: "/clients?leadStatus=new",
-      ariaLabel: `Follow-up coverage ${formatCoveragePercent(metrics.followUpCoveragePercent)}`,
+      href: "/follow-up",
+      ariaLabel: `View follow-up coverage — ${formatCoveragePercent(metrics.followUpCoveragePercent)} coverage`,
     },
   ];
 

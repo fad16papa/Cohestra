@@ -31,6 +31,8 @@ export function DashboardFollowUpQueue() {
   const [dueTotalCount, setDueTotalCount] = useState(0);
   const [newTotalCount, setNewTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,13 +75,19 @@ export function DashboardFollowUpQueue() {
         setEntries(queueEntries);
         setDueTotalCount(dueResult.totalCount);
         setNewTotalCount(newResult.totalCount);
+        setError(null);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((loadError: unknown) => {
         if (!cancelled) {
           setEntries([]);
           setDueTotalCount(0);
           setNewTotalCount(0);
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Could not load people who need follow-up."
+          );
           setLoading(false);
         }
       });
@@ -87,7 +95,7 @@ export function DashboardFollowUpQueue() {
     return () => {
       cancelled = true;
     };
-  }, [authFetch]);
+  }, [authFetch, reloadToken]);
 
   const subtitle = useMemo(() => {
     if (dueTotalCount === 0 && newTotalCount === 0) {
@@ -127,19 +135,68 @@ export function DashboardFollowUpQueue() {
     );
   }
 
+  if (error) {
+    return (
+      <section
+        aria-labelledby="follow-up-queue-heading"
+        className="rounded-xl border border-border-warm bg-card/80 p-5"
+      >
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <h2 id="follow-up-queue-heading" className="text-section text-text-warm">
+            Needs follow-up
+          </h2>
+          <Link
+            href="/follow-up"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "min-h-11 min-w-11")}
+          >
+            View all
+          </Link>
+        </div>
+        <div role="alert" className="rounded-xl border border-destructive/20 bg-background/70 p-4">
+          <p className="text-sm text-text-warm">{error}</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-3 min-h-11 min-w-11"
+            onClick={() => {
+              setLoading(true);
+              setError(null);
+              setReloadToken((current) => current + 1);
+            }}
+          >
+            Try again
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
   if (dueTotalCount === 0 && newTotalCount === 0) {
     return (
-      <section className="rounded-2xl border border-border-warm bg-card/80 p-5 shadow-sm">
-        <div className="flex items-start gap-3">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-surface-success text-text-success">
-            <UserRound className="size-5" aria-hidden />
-          </span>
-          <div>
-            <h3 className="text-section text-text-warm">Follow-up queue clear</h3>
-            <p className="mt-1 text-sm text-text-muted-warm">
-              No new leads or overdue follow-ups — great job staying on top of outreach.
-            </p>
+      <section
+        aria-labelledby="follow-up-queue-heading"
+        className="rounded-xl border border-border-warm bg-card/80 p-5"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-surface-success text-text-success">
+              <UserRound className="size-5" aria-hidden />
+            </span>
+            <div>
+              <h2 id="follow-up-queue-heading" className="text-section text-text-warm">
+                Needs follow-up
+              </h2>
+              <p className="mt-1 text-sm text-text-muted-warm">
+                No new leads or overdue follow-ups.
+              </p>
+            </div>
           </div>
+          <Link
+            href="/follow-up"
+            className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "min-h-11 min-w-11")}
+          >
+            View all
+          </Link>
         </div>
       </section>
     );
@@ -152,16 +209,16 @@ export function DashboardFollowUpQueue() {
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h3 id="follow-up-queue-heading" className="text-section text-text-warm">
+          <h2 id="follow-up-queue-heading" className="text-section text-text-warm">
             Needs follow-up
-          </h3>
+          </h2>
           <p className="mt-1 text-sm text-text-muted-warm">{subtitle}</p>
         </div>
         <Link
-          href="/clients"
-          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "gap-1")}
+          href="/follow-up"
+          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "min-h-11 min-w-11 gap-1")}
         >
-          View queue
+          View all
           <ArrowRight className="size-4" aria-hidden />
         </Link>
       </div>
@@ -199,10 +256,10 @@ export function DashboardFollowUpQueue() {
 
       {showReviewMore ? (
         <Link
-          href="/clients"
-          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 w-full")}
+          href="/follow-up"
+          className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4 min-h-11 w-full")}
         >
-          Open clients queue
+          Open Follow-up
         </Link>
       ) : null}
     </section>

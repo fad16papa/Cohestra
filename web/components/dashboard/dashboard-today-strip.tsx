@@ -44,7 +44,7 @@ function buildTodayItems(
 
   if (items.length === 0) {
     items.push({
-      label: "You're all caught up — great time to plan the next campaign",
+      label: "No current work items from metrics",
       href: "/campaigns/new",
     });
   }

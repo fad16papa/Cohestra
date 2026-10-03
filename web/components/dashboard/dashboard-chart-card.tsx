@@ -28,7 +28,7 @@ export function DashboardChartCard({
     <section
       aria-labelledby={headingId}
       className={cn(
-        "flex flex-col rounded-xl border border-border-warm bg-card/90 backdrop-blur-sm",
+        "flex min-w-0 flex-col overflow-hidden rounded-xl border border-border-warm bg-card/90 backdrop-blur-sm",
         className
       )}
     >
