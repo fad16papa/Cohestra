@@ -148,6 +148,13 @@ PO pre-merge review of HEAD `7b046629` reopened one MAJOR: `parseTenantShell()` 
 - [x] [Review][Defer] Website/Campaigns destination inference remains 38.2 / existing pages — deferred, pre-existing
 - [x] [Review][Defer] RequireProPlan email-templates 403 uses campaigns-family feature name — deferred, pre-existing filter scope
 
+PO pre-merge review of HEAD `28bbe874` reopened one MAJOR: Settings billing `isPaidPlan` omitted Enterprise, so a non-owner Enterprise admin reached `InAppBillingPanel`.
+
+- [x] [Review][PO][MAJOR] Enterprise is a paid plan for billing-owner gating; non-owners stay on owner-managed copy
+- [x] [Review][Defer] Server `RequiresBillingOwner` remains Core/Pro only — deferred; PO forbade authorization-policy changes
+
+Independent re-review of HEAD `de2ad344` (Blind Hunter, Edge Case Hunter, Acceptance Auditor, adversarial-general): no unresolved in-scope BLOCKER/MAJOR. Adversarial checkout/API/Paddle items remain deferred.
+
 ### Completion Notes List
 
 - Central resolver `admin-nav-entitlements.ts` maps shell plan/role to locked/hidden/pending. Analytics is never nav-locked.
