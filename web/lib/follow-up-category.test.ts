@@ -13,6 +13,7 @@ import {
   countFollowUpCategories,
   countsFromFollowUpResponse,
   followUpContextCaption,
+  followUpClientHref,
   followUpHrefForCategory,
   loadFollowUpPage,
   needsAttentionCount,
@@ -22,7 +23,6 @@ import {
   resolveFollowUpCategoryParam,
   resolveFollowUpPageParam,
   serializeFollowUpCategoryParam,
-  uniqueFollowUpItems,
 } from "@/lib/follow-up-category";
 
 function client(overrides: Partial<ClientListItem> & { leadStatus: LeadStatus }): ClientListItem {
@@ -199,6 +199,7 @@ describe("follow-up category query", () => {
     expect(followUpHrefForCategory("at-risk", "utm=1", 2)).toBe(
       "/follow-up?utm=1&category=at-risk&page=2"
     );
+    expect(followUpClientHref("abc-123")).toBe("/clients/abc-123");
   });
 
   it("resolves and reconciles page query values", () => {
@@ -361,7 +362,6 @@ describe("loadFollowUpPage", () => {
           listBody(
             [
               { id: "h-26", fullName: "Healthy 26", consentGiven: true, leadStatus: "active" },
-              { id: "h-26", fullName: "Healthy 26 dup", consentGiven: true, leadStatus: "active" },
             ],
             2,
             26,
@@ -374,8 +374,31 @@ describe("loadFollowUpPage", () => {
 
     const result = await loadFollowUpPage(authFetch, { category: "healthy", page: 2 });
     expect(authFetch).toHaveBeenCalledTimes(1);
-    expect(uniqueFollowUpItems(result.items).map((item) => item.id)).toEqual(["h-26"]);
-    expect(result.items).toHaveLength(1);
+    expect(result.items.map((item) => item.id)).toEqual(["h-26"]);
+    expect(result.totalCount).toBe(result.counts.healthy);
+  });
+
+  it("fails closed when a page contains duplicate ids", async () => {
+    const authFetch = vi.fn(async () => {
+      return new Response(
+        JSON.stringify(
+          listBody(
+            [
+              { id: "h-26", fullName: "Healthy 26", consentGiven: true, leadStatus: "active" },
+              { id: "h-26", fullName: "Healthy 26 dup", consentGiven: true, leadStatus: "active" },
+            ],
+            2,
+            26,
+            { dueNowCount: 0, atRiskCount: 0, opportunityCount: 0, healthyCount: 26 }
+          )
+        ),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    });
+
+    await expect(loadFollowUpPage(authFetch, { category: "healthy", page: 2 })).rejects.toThrow(
+      "Follow-up page contained duplicate clients."
+    );
   });
 
   it("throws FollowUpAccessError on 403", async () => {
@@ -407,6 +430,23 @@ describe("loadFollowUpPage", () => {
     });
     await expect(loadFollowUpPage(missingTotals, { category: "healthy" })).rejects.toThrow(
       "Could not load Follow-up category totals."
+    );
+
+    const mismatched = vi.fn(async () => {
+      return new Response(
+        JSON.stringify(
+          listBody(
+            [{ id: "only", fullName: "Only", consentGiven: true, leadStatus: "active" }],
+            1,
+            8,
+            { dueNowCount: 0, atRiskCount: 0, opportunityCount: 0, healthyCount: 1 }
+          )
+        ),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    });
+    await expect(loadFollowUpPage(mismatched, { category: "healthy" })).rejects.toThrow(
+      "Follow-up page total does not match category totals."
     );
 
     const failed = vi.fn(async () => {

@@ -15,6 +15,7 @@ Owner: Grok 4.6
 - Category filter, totals, and pages are computed inside the authenticated tenant query. Foreign-tenant rows cannot appear in items or counts.
 - The room cannot select another tenant. It only calls `authFetch` on the current session’s clients list.
 - Playwright isolation: default tenant client ids vs `px2-basic` client ids do not overlap.
+- Integration isolation: contract and 101-row paging fixtures use dedicated tenants, not the shared default tenant.
 - Filtering never PATCHes lead status, next follow-up, or outreach.
 
 ## Honesty / data

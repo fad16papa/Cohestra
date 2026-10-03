@@ -62,12 +62,15 @@ public sealed class ClientService(
             cancellationToken);
 
         ClientFollowUpCategoryCountsResponse? followUpCategoryCounts = null;
+        string? parsedFollowUpCategory = null;
         if (!string.IsNullOrWhiteSpace(followUpCategory))
         {
             if (!FollowUpCategoryContract.TryParse(followUpCategory, out var parsedCategory))
             {
                 throw new ArgumentException(FollowUpCategoryContract.InvalidCategoryMessage);
             }
+
+            parsedFollowUpCategory = parsedCategory;
 
             var timeZoneId = await GetTenantRegistrationTimeZoneIdAsync(cancellationToken);
             var dueBeforeUtc = RegistrationPeriod.GetStartOfTomorrowUtc(
@@ -77,7 +80,10 @@ public sealed class ClientService(
                 clientsQuery,
                 dueBeforeUtc,
                 cancellationToken);
-            clientsQuery = ApplyFollowUpCategoryFilter(clientsQuery, parsedCategory, dueBeforeUtc);
+            clientsQuery = ApplyFollowUpCategoryFilter(
+                clientsQuery,
+                parsedFollowUpCategory,
+                dueBeforeUtc);
         }
 
         var query = clientsQuery
@@ -113,7 +119,9 @@ public sealed class ClientService(
 
         query = ApplySort(query, sortField, descending);
 
-        var totalCount = await query.CountAsync(cancellationToken);
+        var totalCount = followUpCategoryCounts is not null && parsedFollowUpCategory is not null
+            ? SelectedFollowUpCategoryCount(followUpCategoryCounts, parsedFollowUpCategory)
+            : await query.CountAsync(cancellationToken);
         var statusCounts = await GetLeadStatusCountsAsync(cancellationToken);
         var items = await query
             .Skip((normalizedPage - 1) * normalizedPageSize)
@@ -987,6 +995,18 @@ public sealed class ClientService(
             "status" => ClientListSortBy.Status,
             "lastregistrationdate" or "last_registration_date" => ClientListSortBy.LastRegistrationDate,
             _ => ClientListSortBy.LastRegistrationDate,
+        };
+
+    private static int SelectedFollowUpCategoryCount(
+        ClientFollowUpCategoryCountsResponse counts,
+        string category) =>
+        category switch
+        {
+            FollowUpCategoryContract.DueNow => counts.DueNowCount,
+            FollowUpCategoryContract.AtRisk => counts.AtRiskCount,
+            FollowUpCategoryContract.Opportunity => counts.OpportunityCount,
+            FollowUpCategoryContract.Healthy => counts.HealthyCount,
+            _ => throw new ArgumentException(FollowUpCategoryContract.InvalidCategoryMessage),
         };
 
     private static IQueryable<Client> ApplyFollowUpCategoryFilter(

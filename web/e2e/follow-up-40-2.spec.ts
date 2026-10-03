@@ -88,13 +88,14 @@ function listPayload(
     opportunityCount: number;
     healthyCount: number;
   },
-  page = 1
+  page = 1,
+  totalCount = items.length
 ) {
   return {
     items,
     page,
     pageSize: 25,
-    totalCount: items.length,
+    totalCount,
     statusCounts: {
       newCount: 0,
       contactedCount: 0,
@@ -402,6 +403,56 @@ test.describe("Story 40.2 — Follow-up primary room", () => {
       timeout: 20_000,
     });
     await expect(page.getByRole("heading", { name: "Could not load Follow-up" })).toHaveCount(0);
+  });
+
+  test("pagination replaces the selected category page without duplicates", async ({
+    page,
+    request,
+  }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    test.setTimeout(120_000);
+    const session = await loginOperatorSession(request);
+    const counts = {
+      dueNowCount: 0,
+      atRiskCount: 0,
+      opportunityCount: 0,
+      healthyCount: 26,
+    };
+    await page.route("**/api/v1/admin/clients**", async (route) => {
+      const url = new URL(route.request().url());
+      const pageNumber = Number(url.searchParams.get("page") || "1");
+      const items =
+        pageNumber <= 1
+          ? Array.from({ length: 25 }, (_, index) => ({
+              id: `healthy-${index}`,
+              fullName: `Healthy ${index}`,
+              consentGiven: true,
+              leadStatus: "active",
+            }))
+          : [
+              {
+                id: "healthy-25",
+                fullName: "Healthy 25",
+                consentGiven: true,
+                leadStatus: "active",
+              },
+            ];
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(listPayload(items, counts, pageNumber, 26)),
+      });
+    });
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openAuthed(page, session, "/follow-up?category=healthy");
+    await waitForFollowUpReady(page);
+    await expect(page.getByRole("link", { name: /Open Healthy 0/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Open Healthy 25/ })).toHaveCount(0);
+    await page.getByRole("button", { name: "Next page" }).click();
+    await expect(page).toHaveURL(/page=2/);
+    await expect(page.getByRole("link", { name: /Open Healthy 25/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Open Healthy 0/ })).toHaveCount(0);
   });
 
   test("TenantMember can open Follow-up without gaining admin settings", async ({

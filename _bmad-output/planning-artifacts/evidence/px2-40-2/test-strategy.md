@@ -38,7 +38,7 @@ Must prove:
 
 ## Playwright / visual
 
-Keep Story 40.2 journeys: dashboard widget → room → profile; filters; global vs filter empty; error + retry; TenantAdmin; TenantMember; 390 and 1440 readable, no overflow, 44px chips; keyboard/focus; reduced motion; one main/h1/skip. Add assertion that the live/mocked room does not issue a multi-page clients walk on first paint.
+Keep Story 40.2 journeys: dashboard widget → room → profile; filters; global vs filter empty; error + retry; TenantAdmin; TenantMember; 390 and 1440 readable, no overflow, 44px chips; keyboard/focus; reduced motion; one main/h1/skip. Assert the live/mocked room issues one clients request on first paint and that Next/Previous replaces the selected category page without duplicates.
 
 Protected 38.4–39.5 and 40.1 must still pass. Do not weaken the 39.4 44px assertion.
 

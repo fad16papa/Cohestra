@@ -73,7 +73,7 @@ export function FollowUpPageClient() {
         }
 
         const reconciled = reconcileFollowUpPage(page, result.totalCount, result.pageSize);
-        if (result.items.length === 0 && result.totalCount > 0 && page !== reconciled) {
+        if (result.items.length === 0 && page !== reconciled) {
           const currentSearch = window.location.search;
           router.replace(
             followUpHrefForCategory(category, currentSearch, reconciled),
@@ -261,6 +261,7 @@ export function FollowUpPageClient() {
                 type="button"
                 variant="outline"
                 className="min-h-11 min-w-11"
+                aria-label="Previous page"
                 disabled={page <= FOLLOW_UP_DEFAULT_PAGE}
                 onClick={() => handlePageChange(page - 1)}
               >
@@ -273,6 +274,7 @@ export function FollowUpPageClient() {
                 type="button"
                 variant="outline"
                 className="min-h-11 min-w-11"
+                aria-label="Next page"
                 disabled={page >= pageCount}
                 onClick={() => handlePageChange(page + 1)}
               >

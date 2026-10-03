@@ -88,9 +88,9 @@ See `_bmad-output/planning-artifacts/evidence/px2-40-2/readiness.md`. Dispositio
 - [x] Cards <768, composition 768–1023, table ≥1024; 44px; no overflow (AC 9)
 - [x] Dashboard continuity unchanged (AC 8)
 - [x] Playwright 40.2 + protected 38.4–39.5 and 40.1 regressions (AC 7, 10, 11)
-- [ ] PO correction: server `followUpCategory` + totals + Id tie-break (MAJOR 1, MAJOR 2)
-- [ ] PO correction: room fetches one selected-category page with honest pager
-- [ ] PO correction: backend unit/integration + frontend + Playwright + protected gates
+- [x] PO correction: server `followUpCategory` + totals + Id tie-break (MAJOR 1, MAJOR 2)
+- [x] PO correction: room fetches one selected-category page with honest pager
+- [x] PO correction: backend unit/integration + frontend + Playwright + protected gates
 
 ## Dev Notes
 
@@ -222,9 +222,21 @@ Grok 4.6 owns story definition, architecture, product semantics, implementation,
 - `web/e2e/follow-up-40-2.spec.ts`
 - `web/lib/follow-up-category.ts`
 - `web/lib/follow-up-category.test.ts`
+- `web/lib/clients-api.ts`
+- `src/Application/Clients/FollowUpCategoryContract.cs`
+- `src/Application/Clients/IClientService.cs`
+- `src/Contracts/Clients/ClientFollowUpCategoryCountsResponse.cs`
+- `src/Contracts/Clients/ClientListResponse.cs`
+- `src/Infrastructure/Clients/ClientService.cs`
+- `src/Infrastructure.Tests/Clients/ClientServiceFollowUpCategoryTests.cs`
+- `src/Api/Controllers/V1/ClientsController.cs`
+- `src/Api.IntegrationTests/FollowUpClientsListIntegrationTests.cs`
+- `_bmad-output/planning-artifacts/sprint-change-proposal-2026-10-03-story-40-2.md`
+- `_bmad-output/planning-artifacts/evidence/px2-40-2/test-strategy.md`
 
 ### Change Log
 
 - 2026-10-03: Created Story 40.2 from main `dc9e42f6`. Inventory and data-contract locked. Readiness READY. Implementation not started.
 - 2026-10-03: Implemented `/follow-up` room over existing clients API + shared resolver. QA pending.
 - 2026-10-03: Review patches — fail-closed paging, status-only permission, wrap chips, FAB clearance, honest error copy. Tracker → review. Draft PR unmerged.
+- 2026-10-03: PO Direct Adjustment — retract client fan-out. Server `followUpCategory` + totals + Id tie-break. Isolated 101-row identical-sort integration. Room fetches one page. Draft PR #369 unmerged. Status remains review/in-progress. 40.3 not started.

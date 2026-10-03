@@ -4,8 +4,10 @@ using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Application.Clients;
 using Cohestra.Contracts.Clients;
 using Cohestra.Domain.Clients;
+using Cohestra.Domain.Registrations;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
+using Cohestra.Infrastructure.Registrations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,74 +23,74 @@ public sealed class FollowUpClientsListIntegrationTests(IntegrationTestFixture f
     public async Task FollowUpCategory_FiltersAndTotals_MatchAcceptedContract()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
-        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
 
-        var marker = $"fu-{Guid.NewGuid():N}"[..12];
+        var (client, tenantId) = await CreateIsolatedTenantClientAsync("Follow-up contract");
         var now = DateTimeOffset.UtcNow;
         var seeded = new List<Guid>();
 
         try
         {
-            seeded.Add(await SeedDefaultClientAsync(client =>
+            seeded.Add(await SeedTenantClientAsync(tenantId, row =>
             {
-                client.FullName = $"{marker} due";
-                client.LeadStatus = LeadStatus.Active;
-                client.NextFollowUpAt = now.AddDays(-1);
+                row.FullName = "Due Active";
+                row.LeadStatus = LeadStatus.Active;
+                row.NextFollowUpAt = now.AddDays(-1);
             }));
-            seeded.Add(await SeedDefaultClientAsync(client =>
+            seeded.Add(await SeedTenantClientAsync(tenantId, row =>
             {
-                client.FullName = $"{marker} new";
-                client.LeadStatus = LeadStatus.New;
+                row.FullName = "New Quiet";
+                row.LeadStatus = LeadStatus.New;
             }));
-            var talkedId = await SeedDefaultClientAsync(client =>
+            var talkedId = await SeedTenantClientAsync(tenantId, row =>
             {
-                client.FullName = $"{marker} talked";
-                client.LeadStatus = LeadStatus.New;
+                row.FullName = "New Talked";
+                row.LeadStatus = LeadStatus.New;
             });
             seeded.Add(talkedId);
             await SeedOutreachAsync(talkedId, now.AddDays(-2));
-            seeded.Add(await SeedDefaultClientAsync(client =>
+            seeded.Add(await SeedTenantClientAsync(tenantId, row =>
             {
-                client.FullName = $"{marker} risk";
-                client.LeadStatus = LeadStatus.Inactive;
+                row.FullName = "Inactive Quiet";
+                row.LeadStatus = LeadStatus.Inactive;
             }));
-            seeded.Add(await SeedDefaultClientAsync(client =>
+            seeded.Add(await SeedTenantClientAsync(tenantId, row =>
             {
-                client.FullName = $"{marker} opp";
-                client.LeadStatus = LeadStatus.Contacted;
+                row.FullName = "Contacted";
+                row.LeadStatus = LeadStatus.Contacted;
             }));
-            seeded.Add(await SeedDefaultClientAsync(client =>
+            seeded.Add(await SeedTenantClientAsync(tenantId, row =>
             {
-                client.FullName = $"{marker} healthy";
-                client.LeadStatus = LeadStatus.Active;
+                row.FullName = "Healthy Active";
+                row.LeadStatus = LeadStatus.Active;
             }));
 
-            using var client = await CreateDefaultAdminClientAsync();
-            var dueNow = await GetFollowUpAsync(client, FollowUpCategoryContract.DueNow, page: 1, pageSize: 100);
-            Assert.True(dueNow.FollowUpCategoryCounts!.DueNowCount >= 2);
-            Assert.Contains(dueNow.Items, item => item.FullName == $"{marker} due");
-            Assert.Contains(dueNow.Items, item => item.FullName == $"{marker} new");
-            Assert.DoesNotContain(dueNow.Items, item => item.FullName == $"{marker} healthy");
-
-            var atRisk = await GetFollowUpAsync(client, FollowUpCategoryContract.AtRisk, page: 1, pageSize: 100);
-            Assert.Contains(atRisk.Items, item => item.FullName == $"{marker} risk");
-            Assert.True(atRisk.FollowUpCategoryCounts!.AtRiskCount >= 1);
-
-            var opportunity = await GetFollowUpAsync(client, FollowUpCategoryContract.Opportunity, page: 1, pageSize: 100);
-            Assert.Contains(opportunity.Items, item => item.FullName == $"{marker} talked");
-            Assert.Contains(opportunity.Items, item => item.FullName == $"{marker} opp");
-
-            var healthy = await GetFollowUpAsync(client, FollowUpCategoryContract.Healthy, page: 1, pageSize: 100);
-            Assert.Contains(healthy.Items, item => item.FullName == $"{marker} healthy");
+            var dueNow = await GetFollowUpAsync(client, FollowUpCategoryContract.DueNow, page: 1, pageSize: 25);
+            Assert.Equal(2, dueNow.TotalCount);
+            Assert.Equal(2, dueNow.FollowUpCategoryCounts!.DueNowCount);
+            Assert.Equal(1, dueNow.FollowUpCategoryCounts.AtRiskCount);
+            Assert.Equal(2, dueNow.FollowUpCategoryCounts.OpportunityCount);
+            Assert.Equal(1, dueNow.FollowUpCategoryCounts.HealthyCount);
+            Assert.Equal(dueNow.FollowUpCategoryCounts.DueNowCount, dueNow.TotalCount);
             Assert.Equal(
-                dueNow.FollowUpCategoryCounts.DueNowCount
-                + dueNow.FollowUpCategoryCounts.AtRiskCount
-                + dueNow.FollowUpCategoryCounts.OpportunityCount
-                + dueNow.FollowUpCategoryCounts.HealthyCount,
+                new[] { "Due Active", "New Quiet" }.OrderBy(name => name),
+                dueNow.Items.Select(item => item.FullName).OrderBy(name => name));
+
+            var atRisk = await GetFollowUpAsync(client, FollowUpCategoryContract.AtRisk, page: 1, pageSize: 25);
+            Assert.Equal(new[] { "Inactive Quiet" }, atRisk.Items.Select(item => item.FullName));
+            Assert.Equal(atRisk.FollowUpCategoryCounts!.AtRiskCount, atRisk.TotalCount);
+
+            var opportunity = await GetFollowUpAsync(client, FollowUpCategoryContract.Opportunity, page: 1, pageSize: 25);
+            Assert.Equal(
+                new[] { "New Talked", "Contacted" }.OrderBy(name => name),
+                opportunity.Items.Select(item => item.FullName).OrderBy(name => name));
+
+            var healthy = await GetFollowUpAsync(client, FollowUpCategoryContract.Healthy, page: 1, pageSize: 25);
+            Assert.Equal(new[] { "Healthy Active" }, healthy.Items.Select(item => item.FullName));
+            Assert.Equal(
+                5,
                 healthy.FollowUpCategoryCounts!.DueNowCount
                 + healthy.FollowUpCategoryCounts.AtRiskCount
-                + healthy.FollowUpCategoryCounts.OpportunityCount
-                + healthy.FollowUpCategoryCounts.HealthyCount);
+                + healthy.FollowUpCategoryCounts.OpportunityCount);
         }
         finally
         {
@@ -184,8 +186,13 @@ public sealed class FollowUpClientsListIntegrationTests(IntegrationTestFixture f
             tenant.Id,
             TenantMembershipRole.TenantAdmin);
 
+        var activity = await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            tenant.Id,
+            $"fu-act-{Guid.NewGuid():N}"[..20]);
         var ids = new List<Guid>();
         var now = DateTimeOffset.UtcNow;
+        var sharedRegistrationAt = now.AddDays(-3);
         await using (var scope = Factory.Services.CreateAsyncScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
@@ -202,6 +209,15 @@ public sealed class FollowUpClientsListIntegrationTests(IntegrationTestFixture f
                 };
                 ids.Add(row.Id);
                 db.Clients.Add(row);
+                db.Registrations.Add(new Registration
+                {
+                    Id = Guid.NewGuid(),
+                    TenantId = tenant.Id,
+                    ActivityId = activity.Id,
+                    ClientId = row.Id,
+                    RegistrationNumber = RegistrationNumberGenerator.Format(sharedRegistrationAt, index + 1),
+                    CreatedAt = sharedRegistrationAt,
+                });
             }
 
             await db.SaveChangesAsync();
@@ -277,6 +293,46 @@ public sealed class FollowUpClientsListIntegrationTests(IntegrationTestFixture f
         Assert.Equal(100, oversized.PageSize);
     }
 
+    private async Task<(HttpClient Client, Guid TenantId)> CreateIsolatedTenantClientAsync(string name)
+    {
+        using var platformClient = Factory.CreateClient();
+        var platformToken = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platformClient);
+        IntegrationTestHelpers.UseBearerToken(platformClient, platformToken);
+        var slug = $"fu-{Guid.NewGuid():N}"[..12];
+        var tenant = await IntegrationTestHelpers.CreateTenantViaPlatformAsync(
+            platformClient,
+            name,
+            slug,
+            $"admin@{slug}.test");
+
+        var (adminUser, _) = await IntegrationTestHelpers.CreateTenantAdminUserAsync(
+            Factory.Services,
+            tenant.Id,
+            $"admin-{slug}@example.com");
+        var token = IntegrationTestHelpers.MintTenantAccessToken(
+            Factory.Services,
+            adminUser,
+            tenant.Id,
+            TenantMembershipRole.TenantAdmin);
+
+        var client = Factory.CreateClient();
+        IntegrationTestHelpers.UseTenantHost(client, slug);
+        IntegrationTestHelpers.UseBearerToken(client, token);
+        return (client, tenant.Id);
+    }
+
+    private async Task<Guid> SeedTenantClientAsync(Guid tenantId, Action<Client> configure)
+    {
+        var seeded = await IntegrationTestHelpers.SeedClientAsync(
+            Factory.Services,
+            client =>
+            {
+                client.TenantId = tenantId;
+                configure(client);
+            });
+        return seeded.Id;
+    }
+
     private async Task<HttpClient> CreateDefaultAdminClientAsync()
     {
         var client = Factory.CreateClient();
@@ -329,11 +385,15 @@ public sealed class FollowUpClientsListIntegrationTests(IntegrationTestFixture f
     private async Task SeedOutreachAsync(Guid clientId, DateTimeOffset occurredAt)
     {
         await using var scope = Factory.Services.CreateAsyncScope();
-        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
         var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var owner = await db.IgnoreTenantFilters<Client>()
+            .Where(item => item.Id == clientId)
+            .Select(item => item.TenantId)
+            .SingleAsync();
         db.ClientTimelineEvents.Add(new ClientTimelineEvent
         {
             Id = Guid.NewGuid(),
+            TenantId = owner,
             ClientId = clientId,
             EventType = ClientTimelineEventType.WhatsAppInitiated,
             OccurredAt = occurredAt,
@@ -354,6 +414,10 @@ public sealed class FollowUpClientsListIntegrationTests(IntegrationTestFixture f
             .Where(item => ids.Contains(item.ClientId))
             .ToListAsync();
         db.ClientTimelineEvents.RemoveRange(events);
+        var registrations = await db.IgnoreTenantFilters<Registration>()
+            .Where(item => ids.Contains(item.ClientId))
+            .ToListAsync();
+        db.Registrations.RemoveRange(registrations);
         var rows = await db.IgnoreTenantFilters<Client>()
             .Where(item => ids.Contains(item.Id))
             .ToListAsync();

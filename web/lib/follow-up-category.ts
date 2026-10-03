@@ -115,6 +115,10 @@ export function reconcileFollowUpPage(page: number, totalCount: number, pageSize
   return page > lastPage ? lastPage : page;
 }
 
+export function followUpClientHref(clientId: string): string {
+  return `/clients/${clientId}`;
+}
+
 export function followUpHrefForCategory(
   category: FollowUpCategory,
   currentSearch = "",
@@ -357,11 +361,21 @@ export async function loadFollowUpPage(
     throw new Error("Could not load Follow-up category totals.");
   }
 
+  const counts = countsFromFollowUpResponse(result.followUpCategoryCounts);
+  if (result.totalCount !== counts[input.category]) {
+    throw new Error("Follow-up page total does not match category totals.");
+  }
+
+  const items = uniqueFollowUpItems(result.items);
+  if (items.length !== result.items.length) {
+    throw new Error("Follow-up page contained duplicate clients.");
+  }
+
   return {
-    items: uniqueFollowUpItems(result.items),
+    items,
     page: result.page,
     pageSize: result.pageSize,
     totalCount: result.totalCount,
-    counts: countsFromFollowUpResponse(result.followUpCategoryCounts),
+    counts,
   };
 }

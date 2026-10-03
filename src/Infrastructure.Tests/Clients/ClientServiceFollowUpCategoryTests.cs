@@ -72,6 +72,7 @@ public sealed class ClientServiceFollowUpCategoryTests
         Assert.Equal(1, result.FollowUpCategoryCounts.AtRiskCount);
         Assert.Equal(1, result.FollowUpCategoryCounts.OpportunityCount);
         Assert.Equal(2, result.FollowUpCategoryCounts.HealthyCount);
+        Assert.Equal(result.FollowUpCategoryCounts.DueNowCount, result.TotalCount);
         Assert.Equal(
             3,
             result.FollowUpCategoryCounts.DueNowCount
