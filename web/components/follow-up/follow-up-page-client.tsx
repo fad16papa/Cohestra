@@ -49,7 +49,6 @@ export function FollowUpPageClient() {
 
   const [items, setItems] = useState<ClientListItem[]>([]);
   const [counts, setCounts] = useState<FollowUpCategoryCounts>(emptyFollowUpCategoryCounts());
-  const [selectedTotal, setSelectedTotal] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const [errorKind, setErrorKind] = useState<"none" | "recoverable" | "permission">(
@@ -85,7 +84,6 @@ export function FollowUpPageClient() {
 
         setItems(result.items);
         setCounts(result.counts);
-        setSelectedTotal(result.counts[category]);
         setPageSize(result.pageSize);
         setErrorKind("none");
         setErrorMessage(null);
@@ -98,7 +96,6 @@ export function FollowUpPageClient() {
         const kind = classifyFollowUpFetchFailure(loadError);
         setItems([]);
         setCounts(emptyFollowUpCategoryCounts());
-        setSelectedTotal(0);
         setErrorKind(kind);
         setErrorMessage(
           kind === "permission"
@@ -122,9 +119,10 @@ export function FollowUpPageClient() {
       (shellLoading && !shell),
     errorKind,
     needsAttentionCount: attentionCount,
-    selectedCount: selectedTotal,
+    selectedCount: counts[category],
   });
   const resultsLoading = !initialLoading && waitingForPage && errorKind === "none";
+  const selectedTotal = counts[category];
   const pageCount = followUpPageCount(selectedTotal, pageSize);
   const categorized = items.map((client) => ({
     ...client,
