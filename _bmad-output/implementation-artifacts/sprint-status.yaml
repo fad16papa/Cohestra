@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-04
-# story 40.3 opened from 7e7c3c07; 40.1/40.2 done; epic 40 in-progress; 40.4 not started
+# story 40.3 closed on main 4509866c; 40.1/40.2/40.3 done; epic 40 in-progress; 40.4 not started
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -54,7 +54,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-10-03
+last_updated: 2026-10-04
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -402,7 +402,7 @@ development_status:
   epic-40: in-progress
   40-1-dashboard-relationship-command-center: done
   40-2-follow-up-primary-room: done
-  40-3-clients-list-and-client-profile: review
+  40-3-clients-list-and-client-profile: done
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done
