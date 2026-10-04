@@ -2,7 +2,7 @@
 id: 40.5
 key: 40-5-cross-module-continuity
 title: Cross-module continuity
-status: in-progress
+status: review
 epic: 40
 created: 2026-10-04
 baseline_commit: 479b181361357eb9d96909e99076eadab5d57524
@@ -10,7 +10,7 @@ baseline_commit: 479b181361357eb9d96909e99076eadab5d57524
 
 # Story 40.5: Cross-module continuity
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -153,3 +153,4 @@ Grok 4.6 (primary). Composer 2.5 unused — no safe bounded presentational split
 
 - 2026-10-04: Created Story 40.5 from main `479b1813`. Inventory and contracts locked. Epic 40 remains in-progress. Epic 41 not started.
 - 2026-10-04: Implemented typed continuity, QA evidence, and 390/430/767/768/1024/1440 proofs. Story remains in-progress pending four-layer review.
+- 2026-10-04: Implementation HEAD `fe86e6c77cf14eb311a51fdede891a507d70cb48` — four-layer review 0 BLOCKER/0 MAJOR; required CI run `37184561436` 5/5. Tracker → review. Epic 40 stays in-progress. Epic 41 not started. PR #375 remains draft/unmerged. Production not claimed.
