@@ -1,16 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Send } from "lucide-react";
 
 import { EmailComposer, isEmailComposerEmpty } from "@/components/campaigns/email-composer";
 import { EmailPreviewDialog } from "@/components/campaigns/email-preview-dialog";
 import { SegmentPicker } from "@/components/campaigns/segment-picker";
+import { CampaignRoomChrome } from "@/components/campaigns/campaign-room-gate";
 import { EmailDeliveryChecklist } from "@/components/campaigns/email-delivery-checklist";
 import { PageHeader } from "@/components/shared/page-header";
+import { ProductErrorState } from "@/components/shared/product-error-state";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -27,12 +30,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { fetchActivities, type Activity } from "@/lib/activities-api";
 import {
+  campaignFetchDenial,
+  resolveCampaignRoomAccess,
+} from "@/lib/campaign-room-access";
+import { campaignResultSummary, isCampaignInFlight } from "@/lib/campaign-html";
+import {
   CAMPAIGN_HTML_MAX_BYTES,
   CAMPAIGN_SUBJECT_MAX_LENGTH,
   createEmailTemplate,
   deleteEmailTemplate,
   fetchEmailTemplates,
   getHtmlByteSize,
+  isAuthoritativeReadyCount,
   isComposeSegmentReady,
   isValidSegmentQuery,
   sendCampaign,
@@ -48,6 +57,8 @@ import { cn } from "@/lib/utils";
 const CLIENT_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+const actionButtonClass = "min-h-12 min-w-11 px-4";
+
 function parsePreselectedClientIds(raw: string | null): string[] {
   if (!raw?.trim()) {
     return [];
@@ -59,9 +70,27 @@ function parsePreselectedClientIds(raw: string | null): string[] {
     .filter((value) => CLIENT_ID_PATTERN.test(value));
 }
 
+function composeFingerprint(
+  subject: string,
+  body: string,
+  segment: ClientSegmentQuery
+): string {
+  return JSON.stringify({
+    subject: subject.trim(),
+    body,
+    community: segment.community ?? "",
+    additional: [...(segment.additionalClientIds ?? [])].sort(),
+    name: segment.name ?? "",
+    nationality: segment.nationality ?? "",
+    profession: segment.profession ?? "",
+  });
+}
+
 export function CampaignComposePage() {
   const { authFetch } = useAuth();
   const { showToast } = useToast();
+  const { shell, loading: shellLoading } = useTenantShell();
+  const access = resolveCampaignRoomAccess(shell, shellLoading);
   const searchParams = useSearchParams();
   const preselectedClientIds = useMemo(
     () => parsePreselectedClientIds(searchParams.get("clientIds")),
@@ -84,9 +113,22 @@ export function CampaignComposePage() {
   const [sendResult, setSendResult] = useState<SendCampaignResult | null>(null);
   const [expandedFailures, setExpandedFailures] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [denied, setDenied] = useState(false);
+  const [planLocked, setPlanLocked] = useState(false);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
+  const sendingRef = useRef(false);
+  const testingRef = useRef(false);
+  const [baselineFingerprint] = useState(() =>
+    composeFingerprint("", "<p></p>", {
+      consentOnly: true,
+      additionalClientIds: preselectedClientIds,
+    })
+  );
 
   const selectedTemplate = templates.find((item) => item.id === selectedTemplateId) ?? null;
+  const dirty =
+    composeFingerprint(subject, body, segment) !== baselineFingerprint &&
+    sendResult === null;
 
   const handlePreviewChange = useCallback((preview: ClientSegmentPreview | null) => {
     setSegmentPreview(preview);
@@ -101,6 +143,24 @@ export function CampaignComposePage() {
   }, [preselectedClientIds]);
 
   useEffect(() => {
+    if (!dirty) {
+      return;
+    }
+
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
+  useEffect(() => {
+    if (access.kind !== "open") {
+      return;
+    }
+
     let cancelled = false;
 
     void Promise.all([
@@ -111,22 +171,23 @@ export function CampaignComposePage() {
         if (!cancelled) {
           setActivities(activityResult.items);
           setTemplates(templateItems);
+          setDenied(false);
+          setPlanLocked(false);
         }
       })
       .catch((loadError) => {
         if (!cancelled) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Could not load campaign compose data."
-          );
+          const denial = campaignFetchDenial(loadError);
+          setDenied(denial.denied);
+          setPlanLocked(denial.planLocked);
+          setError(denial.message);
         }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [authFetch]);
+  }, [access.kind, authFetch]);
 
   function applyTemplate(templateId: string) {
     setSelectedTemplateId(templateId);
@@ -217,6 +278,10 @@ export function CampaignComposePage() {
   }
 
   async function handleSendTest() {
+    if (testing || testingRef.current || sending || sendingRef.current) {
+      return;
+    }
+
     if (!subject.trim() || isEmailComposerEmpty(body)) {
       showToast("Subject and message are required.");
       return;
@@ -227,6 +292,7 @@ export function CampaignComposePage() {
       return;
     }
 
+    testingRef.current = true;
     setTesting(true);
     try {
       const result = await sendTestCampaignEmail(authFetch, {
@@ -243,11 +309,16 @@ export function CampaignComposePage() {
     } catch (testError) {
       showToast(testError instanceof Error ? testError.message : "Test email failed.");
     } finally {
+      testingRef.current = false;
       setTesting(false);
     }
   }
 
   function requestSend() {
+    if (sending || sendingRef.current || isCampaignInFlight(sendResult?.status)) {
+      return;
+    }
+
     if (!subject.trim() || isEmailComposerEmpty(body)) {
       showToast("Subject and message are required.");
       return;
@@ -273,7 +344,7 @@ export function CampaignComposePage() {
       return;
     }
 
-    if (!segmentPreview || segmentPreview.withEmailCount === 0) {
+    if (!segmentPreview || !isAuthoritativeReadyCount(segmentPreview.withEmailCount)) {
       showToast("No consented recipients with email addresses match this segment.");
       return;
     }
@@ -282,10 +353,15 @@ export function CampaignComposePage() {
   }
 
   async function performSend() {
-    if (!segmentPreview || segmentPreview.withEmailCount === 0) {
+    if (sendingRef.current) {
       return;
     }
 
+    if (!segmentPreview || !isAuthoritativeReadyCount(segmentPreview.withEmailCount)) {
+      return;
+    }
+
+    sendingRef.current = true;
     setSendDialogOpen(false);
     setSending(true);
     setSendResult(null);
@@ -301,9 +377,9 @@ export function CampaignComposePage() {
       });
       setSendResult(result);
       showToast(
-        result.status === "queued" || result.status === "sending"
-          ? "Campaign queued — delivery in progress."
-          : `${result.sentCount} sent, ${result.failedCount} failed.`
+        isCampaignInFlight(result.status)
+          ? "Campaign queued — delivery is still in progress."
+          : campaignResultSummary(result)
       );
     } catch (sendError) {
       const message =
@@ -311,26 +387,28 @@ export function CampaignComposePage() {
       setError(message);
       showToast(message);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   }
 
   const failedResults = sendResult?.results.filter((item) => item.status === "failed") ?? [];
+  const skippedResults = sendResult?.results.filter((item) => item.status === "skipped") ?? [];
 
   function getSendBlockReason(): string | null {
-    if (sending) {
-      return null;
+    if (sending || sendingRef.current) {
+      return "Sending… A second send is blocked until this request finishes.";
+    }
+
+    if (isCampaignInFlight(sendResult?.status)) {
+      return "Delivery is still queued or sending. A second send is blocked.";
     }
 
     if (!subject.trim()) {
       return "Enter a subject before sending.";
     }
 
-    if (!body.trim()) {
-      return "Enter a message before sending.";
-    }
-
-    if (isEmailComposerEmpty(body)) {
+    if (!body.trim() || isEmailComposerEmpty(body)) {
       return "Enter a message before sending.";
     }
 
@@ -350,7 +428,7 @@ export function CampaignComposePage() {
       return "Waiting for recipient preview…";
     }
 
-    if (segmentPreview.withEmailCount === 0) {
+    if (!isAuthoritativeReadyCount(segmentPreview.withEmailCount)) {
       if (segmentPreview.totalCount === 0) {
         return "No clients match this segment.";
       }
@@ -366,275 +444,344 @@ export function CampaignComposePage() {
   }
 
   const sendBlockReason = getSendBlockReason();
-  const canSend = sendBlockReason === null;
+  const canSend = sendBlockReason === null && !sending && !isCampaignInFlight(sendResult?.status);
+  const composeState = sending
+    ? "Sending"
+    : sendResult
+      ? isCampaignInFlight(sendResult.status)
+        ? "Delivery in progress"
+        : sendResult.failedCount > 0 || sendResult.skippedCount > 0
+          ? "Partial or failed result"
+          : "Completed"
+      : sendDialogOpen
+        ? "Confirmation open"
+        : !canSend
+          ? dirty
+            ? "Unsaved draft — incomplete"
+            : "Incomplete"
+          : dirty
+            ? "Unsaved draft — ready to send"
+            : "Ready to send";
 
   return (
-    <div className="space-y-6">
-      <div>
-        <PageHeader
-          eyebrow={
-            <Link
-              href="/campaigns"
-              className="text-sm font-medium normal-case tracking-normal text-text-muted-warm motion-press hover:text-text-warm"
-            >
-              ← Back to campaigns
-            </Link>
-          }
-          title="Compose campaign"
-          description="Choose recipients, write your message, and send to consented leads with email on file."
-        />
-      </div>
+    <CampaignRoomChrome
+      title="Compose campaign"
+      description="Choose recipients, write your message, and send to consented leads with email on file."
+      access={access}
+      denied={denied}
+      deniedMessage={error ?? undefined}
+      planLockedOverride={planLocked}
+      isTenantAdmin={shell?.isTenantAdmin === true}
+    >
+      <div className="space-y-6">
+        <div>
+          <PageHeader
+            eyebrow={
+              <Link
+                href="/campaigns"
+                className="inline-flex min-h-12 items-center text-sm font-medium normal-case tracking-normal text-text-muted-warm motion-press hover:text-text-warm"
+              >
+                ← Back to campaigns
+              </Link>
+            }
+            title="Compose campaign"
+            description="Choose recipients, write your message, and send to consented leads with email on file."
+          />
+        </div>
 
-      <EmailDeliveryChecklist />
-
-      {error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
+        <p role="status" className="text-sm text-text-muted-warm">
+          {composeState}
+          {dirty ? " Leaving this page discards the draft. Nothing is saved automatically." : null}
         </p>
-      ) : null}
 
-      <SegmentPicker
-        activities={activities}
-        authFetch={authFetch}
-        value={segment}
-        onChange={setSegment}
-        onPreviewChange={handlePreviewChange}
-      />
+        <EmailDeliveryChecklist />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-4 rounded-xl border border-border-warm bg-card p-4">
-          <div className="space-y-2">
-            <Label htmlFor="campaign-subject">Subject</Label>
-            <Input
-              id="campaign-subject"
-              value={subject}
-              maxLength={CAMPAIGN_SUBJECT_MAX_LENGTH}
-              onChange={(event) => setSubject(event.target.value)}
-            />
-          </div>
+        {error && !denied && !planLocked ? (
+          <ProductErrorState
+            title="Campaign compose could not finish"
+            message={error}
+          />
+        ) : null}
 
-          <div className="space-y-2">
-            <Label>Message</Label>
-            <EmailComposer
-              authFetch={authFetch}
-              activities={activities}
-              value={body}
-              onChange={setBody}
-              communityFilter={segment.community}
-            />
-          </div>
+        <SegmentPicker
+          activities={activities}
+          authFetch={authFetch}
+          value={segment}
+          onChange={setSegment}
+          onPreviewChange={handlePreviewChange}
+        />
 
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={() => setPreviewOpen(true)}>
-              Preview
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={testing || !subject.trim() || isEmailComposerEmpty(body)}
-              onClick={() => void handleSendTest()}
-            >
-              {testing ? "Sending test…" : "Send test to me"}
-            </Button>
-          </div>
-
-          <div className="space-y-2">
-            <Button type="button" disabled={!canSend} onClick={requestSend}>
-              {sending ? "Sending…" : "Send campaign"}
-            </Button>
-            {sendBlockReason ? (
-              <p className="text-sm text-text-muted-warm" role="status">
-                {sendBlockReason}
-              </p>
-            ) : segmentPreview ? (
-              <p className="text-sm text-text-muted-warm" role="status">
-                Ready to send to{" "}
-                <span className="font-medium text-text-warm">
-                  {segmentPreview.withEmailCount}
-                </span>{" "}
-                consented client
-                {segmentPreview.withEmailCount === 1 ? "" : "s"} with email
-                {segmentPreview.additionalWithEmailCount > 0 ? (
-                  <>
-                    {" "}
-                    (
-                    {segmentPreview.communityWithEmailCount} from community +{" "}
-                    {segmentPreview.additionalWithEmailCount} additional)
-                  </>
-                ) : (
-                  "."
-                )}
-              </p>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="space-y-4 rounded-xl border border-border-warm bg-card p-4">
-          <div>
-            <h2 className="text-sm font-semibold text-text-warm">Templates</h2>
-            <p className="mt-1 text-sm text-text-muted-warm">
-              Reuse saved subjects and bodies when composing campaigns.
-            </p>
-          </div>
-
-          {templates.length > 0 ? (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
+          <div className="min-w-0 space-y-4 rounded-xl border border-border-warm bg-card p-4">
             <div className="space-y-2">
-              <Label htmlFor="campaign-template">Load template</Label>
-              <select
-                id="campaign-template"
-                value={selectedTemplateId}
-                onChange={(event) => applyTemplate(event.target.value)}
-                className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <option value="">Select a template</option>
-                {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name}
-                  </option>
-                ))}
-              </select>
+              <Label htmlFor="campaign-subject">Subject</Label>
+              <Input
+                id="campaign-subject"
+                value={subject}
+                maxLength={CAMPAIGN_SUBJECT_MAX_LENGTH}
+                className="min-h-12"
+                onChange={(event) => setSubject(event.target.value)}
+              />
             </div>
-          ) : (
-            <p className="text-sm text-text-muted-warm">No templates saved yet.</p>
-          )}
 
-          <div className="space-y-2 border-t border-border-warm pt-4">
-            <Label htmlFor="template-name">Template name</Label>
-            <Input
-              id="template-name"
-              value={templateName}
-              onChange={(event) => setTemplateName(event.target.value)}
-              placeholder="Template name"
-            />
+            <div className="space-y-2">
+              <Label>Message</Label>
+              <EmailComposer
+                authFetch={authFetch}
+                activities={activities}
+                value={body}
+                onChange={setBody}
+                communityFilter={segment.community}
+              />
+            </div>
+
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="outline" onClick={() => void handleSaveTemplate()}>
-                Save as new
-              </Button>
-              {selectedTemplate ? (
-                <Button type="button" variant="outline" onClick={() => void handleUpdateTemplate()}>
-                  Update selected
-                </Button>
-              ) : null}
-            </div>
-          </div>
-
-          {templates.map((template) => (
-            <div
-              key={template.id}
-              className="flex items-center justify-between gap-2 rounded-lg border border-border-warm px-3 py-2 text-sm"
-            >
-              <button
-                type="button"
-                className="truncate text-left text-text-warm hover:underline"
-                onClick={() => applyTemplate(template.id)}
-              >
-                {template.name}
-              </button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => void handleDeleteTemplate(template.id)}
-              >
-                Delete
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {sendResult ? (
-        <div className="rounded-xl border border-border-warm bg-card p-4">
-          <h2 className="text-sm font-semibold text-text-warm">Send results</h2>
-          <p className="mt-2 text-sm text-text-muted-warm">
-            {sendResult.sentCount} sent, {sendResult.failedCount} failed
-            {sendResult.skippedCount > 0
-              ? ` (${sendResult.skippedCount} skipped without email)`
-              : ""}
-            .
-          </p>
-          {failedResults.length > 0 ? (
-            <div className="mt-4">
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                onClick={() => setExpandedFailures((current) => !current)}
+                className={actionButtonClass}
+                onClick={() => setPreviewOpen(true)}
               >
-                {expandedFailures ? "Hide" : "Show"} failure details
+                Preview
               </Button>
-              {expandedFailures ? (
-                <ul className="mt-3 space-y-2 text-sm text-text-muted-warm">
-                  {failedResults.map((item) => (
-                    <li key={item.clientId}>
-                      <span className="font-medium text-text-warm">{item.fullName}</span>
-                      {item.failureReason ? ` — ${item.failureReason}` : null}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                className={actionButtonClass}
+                disabled={testing || sending || !subject.trim() || isEmailComposerEmpty(body)}
+                onClick={() => void handleSendTest()}
+              >
+                {testing ? "Sending test…" : "Send test to me"}
+              </Button>
             </div>
-          ) : null}
-          <Link
-            href={`/campaigns/${sendResult.campaignId}`}
-            className={cn(buttonVariants({ variant: "outline" }), "mt-4 inline-flex")}
-          >
-            View campaign details
-          </Link>
-        </div>
-      ) : null}
 
-      <EmailPreviewDialog
-        open={previewOpen}
-        subject={subject}
-        html={body}
-        onClose={() => setPreviewOpen(false)}
-      />
-
-      <AlertDialog open={sendDialogOpen} onOpenChange={setSendDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-text-link">
-                <Send className="size-4" aria-hidden />
-              </span>
-              <div className="space-y-2">
-                <AlertDialogTitle>Send this campaign?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {segmentPreview ? (
+            <div className="space-y-2">
+              <Button
+                type="button"
+                className={actionButtonClass}
+                disabled={!canSend}
+                onClick={requestSend}
+              >
+                {sending ? "Sending…" : "Send campaign"}
+              </Button>
+              {sendBlockReason ? (
+                <p className="text-sm text-text-muted-warm" role="status">
+                  {sendBlockReason}
+                </p>
+              ) : segmentPreview ? (
+                <p className="text-sm text-text-muted-warm" role="status">
+                  Ready to send to{" "}
+                  <span className="font-medium text-text-warm">
+                    {segmentPreview.withEmailCount}
+                  </span>{" "}
+                  consented client
+                  {segmentPreview.withEmailCount === 1 ? "" : "s"} with email
+                  {segmentPreview.additionalWithEmailCount > 0 ? (
                     <>
-                      This will email{" "}
-                      <span className="font-medium text-text-warm">
-                        {segmentPreview.withEmailCount}
-                      </span>{" "}
-                      consented client
-                      {segmentPreview.withEmailCount === 1 ? "" : "s"} with email on file
-                      {segmentPreview.additionalWithEmailCount > 0 ? (
-                        <>
-                          {" "}
-                          ({segmentPreview.communityWithEmailCount} from{" "}
-                          {segment.community ?? "community"} +{" "}
-                          {segmentPreview.additionalWithEmailCount} outside community).
-                        </>
-                      ) : (
-                        "."
-                      )}
+                      {" "}
+                      (
+                      {segmentPreview.communityWithEmailCount} from community +{" "}
+                      {segmentPreview.additionalWithEmailCount} additional)
                     </>
                   ) : (
-                    "Confirm sending this campaign to the selected segment."
+                    "."
                   )}
-                </AlertDialogDescription>
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="min-w-0 space-y-4 rounded-xl border border-border-warm bg-card p-4">
+            <div>
+              <h2 className="text-sm font-semibold text-text-warm">Templates</h2>
+              <p className="mt-1 text-sm text-text-muted-warm">
+                Reuse saved subjects and bodies when composing campaigns.
+              </p>
+            </div>
+
+            {templates.length > 0 ? (
+              <div className="space-y-2">
+                <Label htmlFor="campaign-template">Load template</Label>
+                <select
+                  id="campaign-template"
+                  value={selectedTemplateId}
+                  onChange={(event) => applyTemplate(event.target.value)}
+                  className="flex min-h-12 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="">Select a template</option>
+                  {templates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <p className="text-sm text-text-muted-warm">No templates saved yet.</p>
+            )}
+
+            <div className="space-y-2 border-t border-border-warm pt-4">
+              <Label htmlFor="template-name">Template name</Label>
+              <Input
+                id="template-name"
+                value={templateName}
+                className="min-h-12"
+                onChange={(event) => setTemplateName(event.target.value)}
+                placeholder="Template name"
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={actionButtonClass}
+                  onClick={() => void handleSaveTemplate()}
+                >
+                  Save as new
+                </Button>
+                {selectedTemplate ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={actionButtonClass}
+                    onClick={() => void handleUpdateTemplate()}
+                  >
+                    Update selected
+                  </Button>
+                ) : null}
               </div>
             </div>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={sending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction disabled={sending} onClick={() => void performSend()}>
-              {sending ? "Sending…" : "Send campaign"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+
+            {templates.map((template) => (
+              <div
+                key={template.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border-warm px-3 py-2 text-sm"
+              >
+                <button
+                  type="button"
+                  className="min-h-12 truncate text-left text-text-warm hover:underline"
+                  onClick={() => applyTemplate(template.id)}
+                >
+                  {template.name}
+                </button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={actionButtonClass}
+                  onClick={() => void handleDeleteTemplate(template.id)}
+                >
+                  Delete
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {sendResult ? (
+          <div className="rounded-xl border border-border-warm bg-card p-4">
+            <h2 className="text-sm font-semibold text-text-warm">Send results</h2>
+            <p className="mt-2 text-sm text-text-muted-warm" role="status">
+              {campaignResultSummary(sendResult)}
+            </p>
+            {failedResults.length > 0 ? (
+              <div className="mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={actionButtonClass}
+                  onClick={() => setExpandedFailures((current) => !current)}
+                >
+                  {expandedFailures ? "Hide" : "Show"} failure details
+                </Button>
+                {expandedFailures ? (
+                  <ul className="mt-3 space-y-2 text-sm text-text-muted-warm">
+                    {failedResults.map((item) => (
+                      <li key={item.clientId}>
+                        <span className="font-medium text-text-warm">{item.fullName}</span>
+                        {item.failureReason ? ` — ${item.failureReason}` : null}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
+            {skippedResults.length > 0 ? (
+              <p className="mt-3 text-sm text-text-muted-warm">
+                {skippedResults.length} skipped without email or consent.
+              </p>
+            ) : null}
+            <Link
+              href={`/campaigns/${sendResult.campaignId}`}
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                actionButtonClass,
+                "mt-4 inline-flex"
+              )}
+            >
+              View campaign details
+            </Link>
+          </div>
+        ) : null}
+
+        <EmailPreviewDialog
+          open={previewOpen}
+          subject={subject}
+          html={body}
+          recipientCount={segmentPreview?.withEmailCount ?? null}
+          onClose={() => setPreviewOpen(false)}
+        />
+
+        <AlertDialog open={sendDialogOpen} onOpenChange={setSendDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-text-link">
+                  <Send className="size-4" aria-hidden />
+                </span>
+                <div className="space-y-2">
+                  <AlertDialogTitle>Send this campaign?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {segmentPreview ? (
+                      <>
+                        This will email{" "}
+                        <span className="font-medium text-text-warm">
+                          {segmentPreview.withEmailCount}
+                        </span>{" "}
+                        consented client
+                        {segmentPreview.withEmailCount === 1 ? "" : "s"} with email on file
+                        {segmentPreview.additionalWithEmailCount > 0 ? (
+                          <>
+                            {" "}
+                            ({segmentPreview.communityWithEmailCount} from{" "}
+                            {segment.community ?? "community"} +{" "}
+                            {segmentPreview.additionalWithEmailCount} outside community).
+                          </>
+                        ) : (
+                          "."
+                        )}{" "}
+                        Sending cannot be undone.
+                      </>
+                    ) : (
+                      "Confirm sending this campaign to the selected segment. Sending cannot be undone."
+                    )}
+                  </AlertDialogDescription>
+                </div>
+              </div>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className={actionButtonClass} disabled={sending}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className={actionButtonClass}
+                disabled={sending}
+                onClick={() => void performSend()}
+              >
+                {sending ? "Sending…" : "Send campaign"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </CampaignRoomChrome>
   );
 }

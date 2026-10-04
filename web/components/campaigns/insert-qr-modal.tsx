@@ -84,6 +84,7 @@ export function InsertQrModal({
             <Input
               ref={searchRef}
               id="qr-activity-search"
+              className="min-h-12"
               value={search}
               placeholder="Search by name or community…"
               onChange={(event) => setSearch(event.target.value)}
@@ -102,7 +103,7 @@ export function InsertQrModal({
                   setAltText(`Scan to register for ${activity.name}`);
                 }
               }}
-              className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex min-h-12 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">Select a published activity…</option>
               {publishedActivities.map((activity) => (
@@ -123,6 +124,7 @@ export function InsertQrModal({
             <Label htmlFor="qr-alt-text">Alt text</Label>
             <Input
               id="qr-alt-text"
+              className="min-h-12"
               value={altText}
               onChange={(event) => setAltText(event.target.value)}
             />
@@ -130,11 +132,14 @@ export function InsertQrModal({
         </div>
 
         <DialogFooter>
-          <DialogClose render={<Button type="button" variant="outline" />}>
+          <DialogClose
+            render={<Button type="button" variant="outline" className="min-h-12 min-w-11 px-4" />}
+          >
             Cancel
           </DialogClose>
           <Button
             type="button"
+            className="min-h-12 min-w-11 px-4"
             disabled={!selected}
             onClick={() => {
               if (selected) {

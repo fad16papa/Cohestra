@@ -32,7 +32,7 @@ type SegmentPickerProps = {
 const FILTER_DEBOUNCE_MS = 400;
 
 const selectClassName =
-  "flex h-10 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring";
+  "flex min-h-12 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring";
 
 export function SegmentPicker({
   activities,
@@ -44,6 +44,7 @@ export function SegmentPicker({
   const [preview, setPreview] = useState<ClientSegmentPreview | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewRetry, setPreviewRetry] = useState(0);
   const [communities, setCommunities] = useState<CommunityListItem[]>([]);
   const [nameDraft, setNameDraft] = useState(value.name ?? "");
   const [nationalityDraft, setNationalityDraft] = useState(value.nationality ?? "");
@@ -92,7 +93,10 @@ export function SegmentPicker({
     }
 
     let cancelled = false;
+    setPreview(null);
+    setPreviewError(null);
     setPreviewLoading(true);
+    onPreviewChange?.(null);
 
     void previewClientSegment(authFetch, value)
       .then((result) => {
@@ -120,7 +124,7 @@ export function SegmentPicker({
     return () => {
       cancelled = true;
     };
-  }, [authFetch, onPreviewChange, segmentIsValid, value]);
+  }, [authFetch, onPreviewChange, previewRetry, segmentIsValid, value]);
 
   useEffect(() => {
     if (!hasCommunity) {
@@ -246,7 +250,7 @@ export function SegmentPicker({
       <div className="border-b border-border-warm bg-muted/20 px-5 py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-text-warm">Recipients</h3>
+            <h2 className="text-sm font-semibold text-text-warm">Recipients</h2>
             <p className="mt-1 max-w-2xl text-sm text-text-muted-warm">
               Choose a community, optionally add consented leads from outside that
               community, then refine who receives this campaign.
@@ -254,7 +258,12 @@ export function SegmentPicker({
           </div>
 
           {hasCommunity || hasSearchFilters ? (
-            <Button type="button" size="sm" variant="outline" onClick={resetTargeting}>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-12 min-w-11 px-4"
+              onClick={resetTargeting}
+            >
               Reset
             </Button>
           ) : null}
@@ -329,9 +338,9 @@ export function SegmentPicker({
             <div className="space-y-3">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <h4 className="text-sm font-semibold text-text-warm">
+                  <h3 className="text-sm font-semibold text-text-warm">
                     Refine recipients
-                  </h4>
+                  </h3>
                   <p className="mt-1 text-xs text-text-muted-warm">
                     Optional filters combine with AND logic. Consent is always
                     required.
@@ -340,9 +349,8 @@ export function SegmentPicker({
                 {hasSearchFilters ? (
                   <Button
                     type="button"
-                    size="sm"
                     variant="ghost"
-                    className="h-8 px-2 text-xs"
+                    className="min-h-12 min-w-11 px-4"
                     onClick={clearSearchFilters}
                   >
                     Clear search
@@ -364,7 +372,7 @@ export function SegmentPicker({
                       id="segment-name"
                       value={nameDraft}
                       placeholder="Search name or email…"
-                      className="pl-9"
+                      className="min-h-12 pl-9"
                       onChange={(event) => setNameDraft(event.target.value)}
                     />
                   </div>
@@ -373,23 +381,25 @@ export function SegmentPicker({
                   <Label htmlFor="segment-nationality" className="text-xs">
                     Nationality
                   </Label>
-                  <Input
-                    id="segment-nationality"
-                    value={nationalityDraft}
-                    placeholder="e.g. Filipino"
-                    onChange={(event) => setNationalityDraft(event.target.value)}
-                  />
+                    <Input
+                      id="segment-nationality"
+                      value={nationalityDraft}
+                      placeholder="e.g. Filipino"
+                      className="min-h-12"
+                      onChange={(event) => setNationalityDraft(event.target.value)}
+                    />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="segment-profession" className="text-xs">
                     Profession
                   </Label>
-                  <Input
-                    id="segment-profession"
-                    value={professionDraft}
-                    placeholder="e.g. Engineer"
-                    onChange={(event) => setProfessionDraft(event.target.value)}
-                  />
+                    <Input
+                      id="segment-profession"
+                      value={professionDraft}
+                      placeholder="e.g. Engineer"
+                      className="min-h-12"
+                      onChange={(event) => setProfessionDraft(event.target.value)}
+                    />
                 </div>
               </div>
             </div>
@@ -405,9 +415,9 @@ export function SegmentPicker({
             <div className="space-y-3">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h4 className="text-sm font-semibold text-text-warm">
+                  <h3 className="text-sm font-semibold text-text-warm">
                     Sending to
-                  </h4>
+                  </h3>
                   <p className="text-xs text-text-muted-warm">
                     {value.community}
                     {hasSearchFilters ? " · filtered" : " · all consented leads"}
@@ -422,9 +432,20 @@ export function SegmentPicker({
               </div>
 
               {previewError ? (
-                <p role="alert" className="text-sm text-destructive">
-                  {previewError}
-                </p>
+                <div className="space-y-3" role="alert">
+                  <p className="text-sm text-destructive">{previewError}</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-12 min-w-11 px-4"
+                    onClick={() => {
+                      setPreviewLoading(true);
+                      setPreviewRetry((current) => current + 1);
+                    }}
+                  >
+                    Retry preview
+                  </Button>
+                </div>
               ) : previewLoading && !preview ? (
                 <div className="rounded-lg border border-border-warm bg-muted/10 px-4 py-8 text-center text-sm text-text-muted-warm">
                   Loading recipients…

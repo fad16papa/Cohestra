@@ -143,7 +143,7 @@ export function AdditionalRecipientsPicker({
   return (
     <div className="space-y-4 rounded-xl border border-border-warm bg-muted/10 p-4">
       <div className="space-y-1">
-        <h4 className="text-sm font-semibold text-text-warm">Also send to</h4>
+        <h3 className="text-sm font-semibold text-text-warm">Also send to</h3>
         <p className="text-xs leading-relaxed text-text-muted-warm">
           Add up to {MAX_ADDITIONAL_CAMPAIGN_RECIPIENTS} consented leads outside{" "}
           <span className="font-medium text-text-warm">{community}</span>. Search
@@ -168,7 +168,7 @@ export function AdditionalRecipientsPicker({
                 ? "Maximum additional recipients reached"
                 : "Name or email…"
             }
-            className="pl-9"
+            className="min-h-12 pl-9"
             disabled={atLimit}
             onChange={(event) => setSearchDraft(event.target.value)}
           />
@@ -230,8 +230,8 @@ export function AdditionalRecipientsPicker({
                     </div>
                     <Button
                       type="button"
-                      size="sm"
                       variant="outline"
+                      className="min-h-12 min-w-11 px-4"
                       disabled={atLimit || !hasEmail}
                       onClick={() => addClient(client)}
                     >
@@ -261,7 +261,7 @@ export function AdditionalRecipientsPicker({
               </span>
               <button
                 type="button"
-                className="inline-flex size-6 shrink-0 items-center justify-center rounded-full text-text-muted-warm transition-colors hover:bg-muted hover:text-text-warm"
+                className="inline-flex size-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-text-muted-warm transition-colors hover:bg-muted hover:text-text-warm"
                 aria-label={`Remove ${client.fullName}`}
                 onClick={() => removeClient(client.id)}
               >
