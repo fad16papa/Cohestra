@@ -1,7 +1,6 @@
 # Story 40.4 test results
 
-HEAD at recording: `81fcf786` plus subsequent e2e assertion commits if present.  
-Re-run after the final review HEAD and replace this SHA if it changes.
+HEAD at recording: update to the post-review-fix SHA after that commit lands.
 
 ## Automated
 

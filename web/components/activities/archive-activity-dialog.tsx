@@ -92,7 +92,7 @@ export function ArchiveActivityDialog({
               <AlertDialogDescription>
                 <span className="font-medium text-text-warm">{activityName}</span>
                 {isDraft
-                  ? " is still a draft. Archiving closes it for editing and publishing until you create a new activity."
+                  ? " is still a draft. Archiving closes it for editing and publishing. The record stays in Activities as Archived."
                   : activitySchedule
                     ? (
                       <>

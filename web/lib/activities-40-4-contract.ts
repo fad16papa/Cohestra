@@ -80,6 +80,7 @@ export function classifyActivityDetailState(input: {
   activityName: string | null;
   error: string | null;
   errorKind?: ActivityRequestKind | null;
+  activityLoaded?: boolean;
 }): ActivityDetailState {
   if (input.error) {
     if (input.errorKind === "denied") {
@@ -90,7 +91,18 @@ export function classifyActivityDetailState(input: {
     }
     return "error";
   }
-  return input.activityName ? "populated" : "loading";
+  if (input.activityLoaded || input.activityName) {
+    return "populated";
+  }
+  return "loading";
+}
+
+export function nextActivitiesListPage(
+  previousQueryKey: string,
+  nextQueryKey: string,
+  page: number
+): number {
+  return previousQueryKey === nextQueryKey ? page : 1;
 }
 
 export function activityDetailHeading(

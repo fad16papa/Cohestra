@@ -82,6 +82,13 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
   const [loadErrorKind, setLoadErrorKind] = useState<
     ReturnType<typeof classifyActivityRequestFailure> | null
   >(null);
+  const [observedId, setObservedId] = useState(id);
+  if (observedId !== id) {
+    setObservedId(id);
+    setActivity(null);
+    setLoadError(null);
+    setLoadErrorKind(null);
+  }
   const [formDirty, setFormDirty] = useState(false);
   const [designDirty, setDesignDirty] = useState(false);
   const [designDraftTheme, setDesignDraftTheme] = useState<RegistrationTheme | null>(null);
@@ -109,10 +116,13 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
       .then((result) => {
         if (!cancelled) {
           setActivity(result);
+          setLoadError(null);
+          setLoadErrorKind(null);
         }
       })
       .catch((caught) => {
         if (!cancelled) {
+          setActivity(null);
           setLoadErrorKind(classifyActivityRequestFailure(caught));
           setLoadError(
             caught instanceof Error ? caught.message : "Could not load activity."
@@ -144,6 +154,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     activityName: activity?.name ?? null,
     error: loadError,
     errorKind: loadErrorKind,
+    activityLoaded: activity !== null,
   });
   const detailHeading = activityDetailHeading(detailState, activity?.name ?? null);
   const detailErrorCopy = activityDetailErrorCopy(loadErrorKind ?? "error");

@@ -22,6 +22,7 @@ import {
   activitiesListErrorCopy,
   classifyActivitiesListState,
   classifyActivityRequestFailure,
+  nextActivitiesListPage,
   type ActivityRequestKind,
 } from "@/lib/activities-40-4-contract";
 import {
@@ -174,6 +175,11 @@ export function ActivitiesListPage() {
     sortBy,
     sortDirection,
   ].join("\0");
+  const [syncedQueryKey, setSyncedQueryKey] = useState(listQueryKey);
+  if (syncedQueryKey !== listQueryKey) {
+    setSyncedQueryKey(listQueryKey);
+    setPage(nextActivitiesListPage(syncedQueryKey, listQueryKey, page));
+  }
 
   const totalPages = Math.max(1, Math.ceil(totalCount / ACTIVITY_PAGE_SIZE));
 

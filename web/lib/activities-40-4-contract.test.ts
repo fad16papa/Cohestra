@@ -11,6 +11,7 @@ import {
   classifyActivityDetailState,
   classifyActivityRequestFailure,
   defaultListPlacesArchivedLast,
+  nextActivitiesListPage,
 } from "@/lib/activities-40-4-contract";
 import { adminNavItems } from "@/lib/admin-nav";
 
@@ -79,6 +80,30 @@ describe("Story 40.4 Activities contract", () => {
         hasActiveFilters: false,
       })
     ).toBe("populated");
+  });
+
+  it("resets list paging when the query key changes from any source", () => {
+    expect(nextActivitiesListPage("draft\0\0", "draft\0\0", 3)).toBe(3);
+    expect(nextActivitiesListPage("draft\0\0", "\0\0", 3)).toBe(1);
+    expect(nextActivitiesListPage("\0\0", "archived\0\0", 2)).toBe(1);
+  });
+
+  it("treats a loaded activity as populated even with an empty name", () => {
+    expect(
+      classifyActivityDetailState({
+        activityName: "",
+        error: null,
+        activityLoaded: true,
+      })
+    ).toBe("populated");
+    expect(
+      classifyActivityDetailState({
+        activityName: "Clinic",
+        error: "gone",
+        errorKind: "not-found",
+        activityLoaded: true,
+      })
+    ).toBe("not-found");
   });
 
   it("uses the activity name as the populated detail h1", () => {

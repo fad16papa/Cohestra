@@ -4,7 +4,7 @@ Screenshots under `viewports/`:
 
 | File | State |
 | --- | --- |
-| `activities-1440.png` / `activities-1440x900.png` | Populated default list |
+| `activities-1440.png` / `activities-1440x900.png` | Populated default list (taken before the Archived filter) |
 | `activities-390x844.png` | Phone cards |
 | `activities-768x1024.png` | 768 no table trap |
 | `activities-1024x768.png` | Desktop cards |

@@ -100,6 +100,10 @@ test.describe("Story 40.4 — Activities and Opportunity boundary", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Activities" })).toBeVisible();
     await expect(page.getByRole("link", { name: "Opportunity" })).toHaveCount(0);
     await expect(page.locator("#activity-status")).not.toContainText("Opportunity");
+    await page.screenshot({
+      path: path.join(evidenceDir, "viewports", "activities-1440.png"),
+      fullPage: true,
+    });
 
     const statuses = await cardStatuses(page).evaluateAll((nodes) =>
       nodes.map((node) => node.getAttribute("data-activity-status") ?? "")
@@ -134,10 +138,6 @@ test.describe("Story 40.4 — Activities and Opportunity boundary", () => {
     });
 
     await assertAxe(page, "activities archived filter");
-    await page.screenshot({
-      path: path.join(evidenceDir, "viewports", "activities-1440.png"),
-      fullPage: true,
-    });
   });
 
   test("populated detail h1 is the activity name and Form Studio stays archived-read-only", async ({
@@ -224,6 +224,9 @@ test.describe("Story 40.4 — Activities and Opportunity boundary", () => {
     await expect(dialog).toHaveCount(0, { timeout: 15_000 });
     await expect(page.getByText("Archived", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("heading", { level: 1, name: owned.name })).toBeVisible();
+    await expect(
+      page.getByText("This activity is archived. The public registration page is unavailable.")
+    ).toBeFocused();
   });
 
   test("empty, no-match, error, denied, and not-found stay distinct", async ({

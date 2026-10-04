@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EyeOff } from "lucide-react";
 
 import {
@@ -61,6 +61,8 @@ export function ActivityPublishControls({
   const [archiveDialogVariant, setArchiveDialogVariant] =
     useState<ArchiveActivityDialogVariant>("upcoming");
   const archiveTriggerRef = useRef<HTMLButtonElement>(null);
+  const archivedStatusRef = useRef<HTMLParagraphElement>(null);
+  const focusArchivedStatus = useRef(false);
 
   const isBusy = isPublishing || isUnpublishing || isArchiving;
   const publishGateIssues = getPublishGateIssues(activity.formSchema, {
@@ -85,6 +87,7 @@ export function ActivityPublishControls({
 
     try {
       const updated = await archiveActivity(authFetch, activity.id);
+      focusArchivedStatus.current = true;
       onActivityUpdated(updated);
       setArchiveDialogOpen(false);
       await refreshShell();
@@ -170,11 +173,22 @@ export function ActivityPublishControls({
     }
   }
 
+  useEffect(() => {
+    if (activity.status !== "archived" || !focusArchivedStatus.current) {
+      return;
+    }
+
+    focusArchivedStatus.current = false;
+    archivedStatusRef.current?.focus();
+  }, [activity.status]);
+
   if (activity.status === "archived") {
     return (
       <p
+        ref={archivedStatusRef}
+        tabIndex={-1}
         role="status"
-        className="text-sm text-text-muted-warm"
+        className="text-sm text-text-muted-warm outline-none"
       >
         This activity is archived. The public registration page is unavailable.
       </p>
