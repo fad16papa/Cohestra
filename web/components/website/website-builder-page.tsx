@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { SitePageRenderer } from "@/components/marketing/site-page-renderer";
 import { PageHeader } from "@/components/shared/page-header";
+import { ProductErrorState } from "@/components/shared/product-error-state";
 import { WEBSITE_STUDIO_TITLE } from "@/lib/admin-canonical-routes";
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
@@ -122,11 +123,10 @@ import {
   shouldShowWebsiteBuilderTour,
 } from "@/lib/website-builder-preferences";
 import { getWebsiteBuilderTourSteps } from "@/lib/website-builder-tour";
-import { isBasicPlan } from "@/lib/shell/tenant-shell-api";
 import {
-  isPlanLockedError,
-  shouldSkipWebsiteAdminFetch,
-} from "@/lib/plan-entitlement";
+  resolveWebsiteRoomAccess,
+  websiteFetchDenial,
+} from "@/lib/website-room-access";
 import { BuilderSurface } from "@/components/motion/builder-surface";
 import { cn } from "@/lib/utils";
 
@@ -196,11 +196,14 @@ function useUnsavedChangesGuard(isDirty: boolean) {
 export function WebsiteBuilderPage() {
   const { authFetch } = useAuth();
   const { shell, loading: shellLoading } = useTenantShell();
+  const access = resolveWebsiteRoomAccess(shell, shellLoading);
   const workspaceTenantSlug = shell?.tenantSlug?.trim() || null;
   const { showToast, showErrorToast, showSuccessToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [planLocked, setPlanLocked] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [studioNotice, setStudioNotice] = useState<string | null>(null);
   const [adminData, setAdminData] = useState<SitePageAdmin | null>(null);
   const [draft, setDraft] = useState<SiteSectionsDocument | null>(null);
   const [savedSnapshot, setSavedSnapshot] = useState<string>("");
@@ -259,6 +262,8 @@ export function WebsiteBuilderPage() {
   const brandingSectionRef = useRef<WebsiteBrandingSectionHandle>(null);
   const draftRef = useRef<SiteSectionsDocument | null>(null);
   const saveLockRef = useRef(false);
+  const publishLockRef = useRef(false);
+  const revertLockRef = useRef(false);
 
   useEffect(() => {
     if (!isWideLayout) {
@@ -501,6 +506,7 @@ export function WebsiteBuilderPage() {
     setLoading(true);
     setLoadError(null);
     setPlanLocked(false);
+    setAccessDenied(false);
 
     try {
       const [siteAdmin, activities, upcoming] = await Promise.all([
@@ -515,49 +521,45 @@ export function WebsiteBuilderPage() {
       setPublishedActivities(activities);
       setUpcomingActivities(upcoming);
     } catch (error) {
-      if (isPlanLockedError(error)) {
-        setPlanLocked(true);
-        setLoadError(null);
-        return;
-      }
-
-      setLoadError(
-        error instanceof Error
-          ? error.message
-          : "Could not load website builder.",
-      );
+      const denial = websiteFetchDenial(error);
+      setPlanLocked(denial.planLocked);
+      setAccessDenied(denial.denied);
+      setLoadError(denial.planLocked ? null : denial.message);
     } finally {
       setLoading(false);
     }
   }, [authFetch]);
 
   useEffect(() => {
-    if (shellLoading) {
-      return;
-    }
-
-    if (shouldSkipWebsiteAdminFetch(shell?.plan)) {
+    if (access.kind !== "open") {
+      setLoading(false);
       return;
     }
 
     void loadSite();
-  }, [loadSite, shell?.plan, shellLoading]);
+  }, [access.kind, loadSite]);
 
   useEffect(() => {
-    const initial = readInitialChecklistVisibility();
+    const initial = readInitialChecklistVisibility(workspaceTenantSlug);
     setChecklistVisible(initial.show);
     setChecklistPrefsReady(true);
-  }, []);
+  }, [workspaceTenantSlug]);
 
   useEffect(() => {
-    if (!checklistPrefsReady || loading || !draft || !shouldShowWebsiteBuilderTour()) {
+    if (
+      !checklistPrefsReady ||
+      loading ||
+      !draft ||
+      access.kind !== "open" ||
+      !shouldShowWebsiteBuilderTour(workspaceTenantSlug)
+    ) {
       return;
     }
 
     setChecklistVisible(false);
     const timer = window.setTimeout(() => setTourOpen(true), 500);
     return () => window.clearTimeout(timer);
-  }, [checklistPrefsReady, draft, loading]);
+  }, [access.kind, checklistPrefsReady, draft, loading, workspaceTenantSlug]);
 
   const tourSteps = useMemo(
     () => getWebsiteBuilderTourSteps(shell?.plan ?? "Core"),
@@ -849,7 +851,7 @@ export function WebsiteBuilderPage() {
   }
 
   async function handlePublish() {
-    if (!draft) {
+    if (!draft || publishLockRef.current) {
       return;
     }
 
@@ -869,6 +871,7 @@ export function WebsiteBuilderPage() {
       return;
     }
 
+    publishLockRef.current = true;
     setIsPublishing(true);
     try {
       const published = await publishSite(authFetch);
@@ -881,14 +884,20 @@ export function WebsiteBuilderPage() {
       setLiveUrl(resolvedLiveUrl);
       setPublishDialogOpen(false);
       setSuccessDialogOpen(true);
-      markWebsiteBuilderVisited();
+      markWebsiteBuilderVisited(workspaceTenantSlug);
       setChecklistVisible(false);
+      setStudioNotice("Homepage published. The live public site now shows this version.");
       showSuccessToast("Your site is live");
     } catch (error) {
+      setPublishDialogOpen(false);
+      setStudioNotice(
+        error instanceof Error ? error.message : "Could not publish homepage.",
+      );
       showErrorToast(
         error instanceof Error ? error.message : "Could not publish homepage.",
       );
     } finally {
+      publishLockRef.current = false;
       setIsPublishing(false);
     }
   }
@@ -1033,12 +1042,17 @@ export function WebsiteBuilderPage() {
   }
 
   async function handleRevertPublished() {
+    if (revertLockRef.current) {
+      return;
+    }
+
     if (isDirty) {
       showErrorToast("Save draft before reverting the live homepage.");
       setRevertDialogOpen(false);
       return;
     }
 
+    revertLockRef.current = true;
     setIsReverting(true);
     try {
       const reverted = await revertPublishedSite(authFetch);
@@ -1046,36 +1060,77 @@ export function WebsiteBuilderPage() {
       setDraft(cloneSiteDocument(reverted.draft));
       setSavedSnapshot(serializeSiteDocument(reverted.draft));
       setRevertDialogOpen(false);
+      const restoredAt = reverted.publishedAt
+        ? formatLastSaved(reverted.publishedAt)
+        : "the previous published version";
+      setStudioNotice(`Live homepage restored to ${restoredAt}.`);
       showToast("Live homepage reverted to the previous version.");
     } catch (error) {
+      setStudioNotice(
+        error instanceof Error
+          ? error.message
+          : "Could not revert published homepage.",
+      );
       showErrorToast(
         error instanceof Error
           ? error.message
           : "Could not revert published homepage.",
       );
     } finally {
+      revertLockRef.current = false;
       setIsReverting(false);
     }
   }
 
-  if (shellLoading) {
+  if (access.kind === "loading") {
     return (
       <div className="space-y-6">
         <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
+        <p role="status" className="sr-only">
+          Loading Website Studio
+        </p>
         <div className="h-96 motion-safe:animate-pulse rounded-xl border border-border-warm bg-muted/30" />
       </div>
     );
   }
 
-  if ((shell && isBasicPlan(shell.plan)) || planLocked) {
+  if (access.kind === "pending") {
+    return (
+      <div className="space-y-6">
+        <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
+        <p role="status" className="text-sm text-text-muted-warm">
+          Checking Website Studio access… Workspace plan is still being confirmed.
+          Checkout is not offered until the plan is known.
+        </p>
+      </div>
+    );
+  }
+
+  if (access.kind === "locked" || planLocked) {
     return (
       <div className="space-y-6">
         <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
         <UpgradePanel
           title="Unlock a branded public homepage"
-          description="Basic includes a simple stub listing. Upgrade to Core for a fixed branded homepage, or Pro for the full website builder with custom sections."
+          description="Basic includes a simple stub listing. Upgrade to Core for Website Studio with Essentials sections, or Pro for Studio sections."
           requiredPlan="Core"
-          isTenantAdmin={shell?.isTenantAdmin ?? false}
+          isTenantAdmin={
+            access.kind === "locked" ? access.isTenantAdmin : shell?.isTenantAdmin ?? false
+          }
+        />
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
+        <ProductErrorState
+          title="You don’t have access to Website Studio"
+          message={loadError ?? "Your role cannot open Website Studio."}
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
         />
       </div>
     );
@@ -1088,6 +1143,9 @@ export function WebsiteBuilderPage() {
           title={WEBSITE_STUDIO_TITLE}
           description="Customize your public homepage"
         />
+        <p role="status" className="sr-only">
+          Loading Website Studio
+        </p>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
           <div className="h-72 motion-safe:animate-pulse rounded-xl border border-border-warm bg-muted/30 sm:h-96" />
           <div className="h-72 motion-safe:animate-pulse rounded-xl border border-border-warm bg-muted/30 sm:h-96" />
@@ -1172,6 +1230,7 @@ export function WebsiteBuilderPage() {
         onPreview={() => void handlePreview()}
         onSaveDraft={() => void handleSaveDraft()}
         onPublish={() => void handleOpenPublishDialog()}
+        studioNotice={studioNotice}
       />
 
       <WebsiteBuilderWorkspaceBar
@@ -1221,8 +1280,8 @@ export function WebsiteBuilderPage() {
                   items={setupChecklist}
                   onItemAction={handleChecklistItemAction}
                   onDismiss={() => {
-                    dismissSetupChecklist();
-                    markWebsiteBuilderVisited();
+                    dismissSetupChecklist(workspaceTenantSlug);
+                    markWebsiteBuilderVisited(workspaceTenantSlug);
                     setChecklistVisible(false);
                   }}
                 />
@@ -1329,6 +1388,7 @@ export function WebsiteBuilderPage() {
       <WebsiteBuilderOnboardingTour
         steps={tourSteps}
         open={tourOpen}
+        tenantSlug={workspaceTenantSlug}
         activeTab={editorTab}
         onClose={() => setTourOpen(false)}
         onRequestTab={setEditorTab}
@@ -1579,7 +1639,16 @@ export function WebsiteBuilderPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={revertDialogOpen} onOpenChange={setRevertDialogOpen}>
+      <AlertDialog
+        open={revertDialogOpen}
+        onOpenChange={(open) => {
+          if (isReverting) {
+            return;
+          }
+
+          setRevertDialogOpen(open);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Revert live homepage?</AlertDialogTitle>

@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 type WebsiteBuilderOnboardingTourProps = {
   steps: WebsiteBuilderTourStep[];
   open: boolean;
+  tenantSlug: string | null;
   activeTab: WebsiteBuilderEditorTab;
   onClose: () => void;
   onRequestTab: (tab: WebsiteBuilderEditorTab) => void;
@@ -57,6 +58,7 @@ const FALLBACK_TOOLTIP_HEIGHT = 168;
 export function WebsiteBuilderOnboardingTour({
   steps,
   open,
+  tenantSlug,
   activeTab,
   onClose,
   onRequestTab,
@@ -221,7 +223,7 @@ export function WebsiteBuilderOnboardingTour({
   useObserveLayoutShifts(open && tabReady, step?.targetSelector ?? null, remeasure);
 
   function finishTour() {
-    markWebsiteBuilderTourCompleted();
+    markWebsiteBuilderTourCompleted(tenantSlug);
     onClose();
   }
 
@@ -239,6 +241,21 @@ export function WebsiteBuilderOnboardingTour({
     finishTour();
   }
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        handleSkip();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, tenantSlug]);
+
   if (!open || !step || steps.length === 0 || !mounted) {
     return null;
   }
@@ -253,9 +270,9 @@ export function WebsiteBuilderOnboardingTour({
   // Portal to document.body so fixed positioning uses the viewport. Admin <main>
   // keeps a transform from page-enter animation, which would break in-tree fixed.
   return createPortal(
-    <div className="fixed inset-0 z-[200]" aria-live="polite">
+    <div className="pointer-events-none fixed inset-0 z-[60]" aria-live="polite">
       <div
-        className="fixed inset-0 bg-black/55"
+        className="pointer-events-auto fixed inset-0 bg-black/55"
         aria-hidden
         onClick={handleSkip}
       />
@@ -276,7 +293,7 @@ export function WebsiteBuilderOnboardingTour({
       <div
         ref={tooltipRef}
         className={cn(
-          "fixed z-[201] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl transition-[top,left] duration-150 motion-reduce:transition-none",
+          "pointer-events-auto fixed z-[61] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl transition-[top,left] duration-150 motion-reduce:transition-none",
           !targetRect && "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         )}
         style={
@@ -289,6 +306,7 @@ export function WebsiteBuilderOnboardingTour({
             : undefined
         }
         role="dialog"
+        aria-modal="false"
         aria-labelledby="website-builder-tour-title"
         aria-describedby="website-builder-tour-body"
       >
@@ -302,10 +320,10 @@ export function WebsiteBuilderOnboardingTour({
           {step.body}
         </p>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-          <Button type="button" variant="ghost" size="sm" onClick={handleSkip}>
+          <Button type="button" variant="ghost" size="sm" className="min-h-11 min-w-11" onClick={handleSkip}>
             Skip tour
           </Button>
-          <Button type="button" size="sm" onClick={handleNext}>
+          <Button type="button" size="sm" className="min-h-11 min-w-11" onClick={handleNext}>
             {isLast ? "Got it" : "Next"}
           </Button>
         </div>

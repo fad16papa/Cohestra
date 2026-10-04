@@ -165,6 +165,7 @@ export function WebsiteTemplatesPanel({
                 type="button"
                 variant="outline"
                 size="sm"
+                className="min-h-11 min-w-11"
                 disabled={recoveryDisabled}
                 onClick={onRevertPublished}
               >

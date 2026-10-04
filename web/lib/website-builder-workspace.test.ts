@@ -32,8 +32,11 @@ describe("website builder workspace", () => {
   });
 
   it("reports split availability from viewport width", () => {
+    expect(isSplitWorkspaceAvailable(1024)).toBe(false);
     expect(isSplitWorkspaceAvailable(1279)).toBe(false);
     expect(isSplitWorkspaceAvailable(WORKSPACE_SPLIT_MIN_WIDTH_PX)).toBe(true);
+    expect(normalizeWorkspaceMode("split", 1024)).toBe("build");
+    expect(normalizeWorkspaceMode("split", 1279)).toBe("build");
   });
 
   it("shows editor and preview panes per desktop workspace mode", () => {

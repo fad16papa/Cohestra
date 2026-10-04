@@ -37,6 +37,7 @@ type WebsiteBuilderToolbarProps = {
   onPreview: () => void;
   onSaveDraft: () => void;
   onPublish: () => void;
+  studioNotice?: string | null;
 };
 
 export function WebsiteBuilderToolbar({
@@ -61,6 +62,7 @@ export function WebsiteBuilderToolbar({
   onPreview,
   onSaveDraft,
   onPublish,
+  studioNotice = null,
 }: WebsiteBuilderToolbarProps) {
   const hasBlockers = publishGate.blockers.length > 0;
   const hasWarnings = publishGate.warnings.length > 0;
@@ -97,6 +99,11 @@ export function WebsiteBuilderToolbar({
               </span>
             ) : null}
           </div>
+          {studioNotice ? (
+            <p role="status" className="text-sm text-text-warm">
+              {studioNotice}
+            </p>
+          ) : null}
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-text-muted-warm sm:text-sm">
             <Globe className="size-3.5 shrink-0 text-text-link" aria-hidden />
             <span className="break-all">{siteDisplayUrl}</span>
@@ -124,6 +131,7 @@ export function WebsiteBuilderToolbar({
               type="button"
               variant="ghost"
               size="sm"
+              className="min-h-11 min-w-11"
               onClick={onShowChecklist}
             >
               <Sparkles className="size-4" aria-hidden />
@@ -131,12 +139,12 @@ export function WebsiteBuilderToolbar({
               <span className="sr-only sm:hidden">Setup guide</span>
             </Button>
           ) : null}
-          <Button type="button" variant="ghost" size="sm" onClick={onCopyLink}>
+          <Button type="button" variant="ghost" size="sm" className="min-h-11 min-w-11" onClick={onCopyLink}>
             <Copy className="size-4" aria-hidden />
             <span className="hidden sm:inline sm:ml-1.5">Copy link</span>
             <span className="sr-only sm:hidden">Copy link</span>
           </Button>
-          <ExternalLinkButton href={siteUrl} variant="ghost" size="sm">
+          <ExternalLinkButton href={siteUrl} variant="ghost" size="sm" className="min-h-11 min-w-11">
             <ExternalLink className="size-4" aria-hidden />
             <span className="hidden sm:inline sm:ml-1.5">Open live</span>
             <span className="sr-only sm:hidden">Open live site</span>
@@ -145,7 +153,7 @@ export function WebsiteBuilderToolbar({
             type="button"
             variant="outline"
             size="sm"
-            className="hidden sm:inline-flex"
+            className="hidden min-h-11 min-w-11 sm:inline-flex"
             disabled={
               isPreviewOpening ||
               isDirty ||
@@ -160,6 +168,7 @@ export function WebsiteBuilderToolbar({
             type="button"
             variant="outline"
             size="sm"
+            className="min-h-11 min-w-11"
             disabled={!isDirty || isSaving || isHeroUploading || isLogoUploading}
             onClick={onSaveDraft}
           >
@@ -169,6 +178,7 @@ export function WebsiteBuilderToolbar({
             id="website-builder-publish"
             type="button"
             size="sm"
+            className="min-h-11 min-w-11"
             disabled={!canPublish || publishBlockers > 0}
             onClick={onPublish}
           >
