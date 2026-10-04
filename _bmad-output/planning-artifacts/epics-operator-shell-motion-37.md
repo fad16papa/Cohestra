@@ -1,6 +1,6 @@
 # Epic 37: Operator shell motion system
 
-**Status:** in-progress  
+**Status:** done  
 **Architecture:** `_bmad-output/planning-artifacts/architecture-operator-shell-motion-37-2026-09-21/ARCHITECTURE-SPINE.md`
 
 ## User outcome
