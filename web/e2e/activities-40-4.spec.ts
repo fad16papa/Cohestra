@@ -173,7 +173,6 @@ test.describe("Story 40.4 — Activities and Opportunity boundary", () => {
   test("archive dialog traps focus, Escape cancels, and failure keeps the record", async ({
     page,
     request,
-    workerIndex,
   }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
     test.setTimeout(180_000);
@@ -181,7 +180,7 @@ test.describe("Story 40.4 — Activities and Opportunity boundary", () => {
     const session = await loginOperatorSession(request);
     const owned = await provisionOwnedActivity(request, session, {
       ownerKey: "40-4-archive",
-      workerIndex,
+      workerIndex: test.info().workerIndex,
       publish: false,
     });
 
