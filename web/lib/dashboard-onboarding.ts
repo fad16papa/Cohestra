@@ -41,7 +41,7 @@ export const DASHBOARD_ONBOARDING_STEPS: DashboardOnboardingStep[] = [
     id: "first-follow-up",
     label: "Log your first follow-up",
     detail: "Mark a lead as contacted or send a WhatsApp / Viber message.",
-    href: "/clients?leadStatus=new",
+    href: "/follow-up",
   },
 ];
 

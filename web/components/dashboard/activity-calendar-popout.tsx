@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   CalendarDays,
   ChevronDown,
@@ -38,6 +39,7 @@ import {
   toDateKey,
   type CalendarActivity,
 } from "@/lib/activity-calendar-utils";
+import { activityHrefForId, dashboardContextFromSearch } from "@/lib/continuity-context";
 import { cn } from "@/lib/utils";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -48,8 +50,17 @@ const STATUS_FILTERS: { id: ActivityStatus; label: string }[] = [
   { id: "archived", label: "Archived" },
 ];
 
-function activityFormHref(activityId: string): string {
-  return `/activities/${activityId}?tab=form`;
+function activityFormHref(
+  activityId: string,
+  pathname: string,
+  search: string
+): string {
+  const context =
+    pathname === "/dashboard" ? dashboardContextFromSearch(search) : null;
+  return (
+    activityHrefForId(activityId, context, "form") ??
+    `/activities/${activityId}?tab=form`
+  );
 }
 
 type ActivityCalendarItemProps = {
@@ -62,7 +73,8 @@ function ActivityCalendarItem({
   activity,
   defaultExpanded = false,
   conflictingActivities = [],
-}: ActivityCalendarItemProps) {
+  formHref,
+}: ActivityCalendarItemProps & { formHref: string }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const timeLabel = activity.parsedSchedule
     ? formatActivityTime(activity.parsedSchedule)
@@ -95,7 +107,7 @@ function ActivityCalendarItem({
           />
         </button>
         <Link
-          href={activityFormHref(activity.id)}
+          href={formHref}
           className="min-w-0 flex-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <div className="flex items-start justify-between gap-2">
@@ -140,6 +152,8 @@ export function ActivityCalendarPopout({
   open,
   onOpenChange,
 }: ActivityCalendarPopoutProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { authFetch } = useAuth();
   const dialogRef = useRef<HTMLDivElement>(null);
   const today = useMemo(() => new Date(), []);
@@ -459,6 +473,11 @@ export function ActivityCalendarPopout({
                         key={activity.id}
                         activity={activity}
                         conflictingActivities={selectedDayConflicts.get(activity.id) ?? []}
+                        formHref={activityFormHref(
+                          activity.id,
+                          pathname,
+                          searchParams.toString()
+                        )}
                       />
                     ))}
                   </div>
@@ -479,6 +498,11 @@ export function ActivityCalendarPopout({
                         key={activity.id}
                         activity={activity}
                         defaultExpanded
+                        formHref={activityFormHref(
+                          activity.id,
+                          pathname,
+                          searchParams.toString()
+                        )}
                       />
                     ))}
                   </div>

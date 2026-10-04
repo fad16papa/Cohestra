@@ -10,12 +10,17 @@ import {
   fetchActivityRegistrations,
   type ActivityRegistrationListItem,
 } from "@/lib/activities-api";
+import {
+  clientHrefForId,
+  readContinuityContext,
+} from "@/lib/continuity-context";
 import { cn } from "@/lib/utils";
 
 const REGISTRATION_PAGE_SIZE = 25;
 
 type ActivityRegistrationsTabProps = {
   activityId: string;
+  search?: string;
 };
 
 function formatSubmittedAt(value: string): string {
@@ -32,7 +37,13 @@ function formatSubmittedAt(value: string): string {
 
 export function ActivityRegistrationsTab({
   activityId,
+  search,
 }: ActivityRegistrationsTabProps) {
+  const activityContext = readContinuityContext(search) ?? {
+    room: "activity" as const,
+    activityId,
+    tab: "registrations" as const,
+  };
   const { authFetch } = useAuth();
   const [items, setItems] = useState<ActivityRegistrationListItem[]>([]);
   const [page, setPage] = useState(1);
@@ -187,7 +198,7 @@ export function ActivityRegistrationsTab({
                     </td>
                     <td className="px-4 py-3">
                       <Link
-                        href={`/clients/${item.clientId}`}
+                        href={clientHrefForId(item.clientId, activityContext)}
                         className={cn(
                           "font-medium text-text-warm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         )}

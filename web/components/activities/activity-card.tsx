@@ -24,6 +24,8 @@ import { cn } from "@/lib/utils";
 
 type ActivityCardProps = {
   activity: Activity;
+  href?: string;
+  registrationsHref?: string;
   conflictingActivities?: CalendarActivity[];
   planRegistrationsDial?: LimitDial | null;
   className?: string;
@@ -59,6 +61,8 @@ function formatRegistrationLine(activity: Activity): string {
 
 export function ActivityCard({
   activity,
+  href,
+  registrationsHref,
   conflictingActivities = [],
   planRegistrationsDial = null,
   className,
@@ -85,7 +89,7 @@ export function ActivityCard({
         className
       )}
     >
-      <Link href={`/activities/${activity.id}`} className="flex flex-1 flex-col">
+      <Link href={href ?? `/activities/${activity.id}`} className="flex flex-1 flex-col">
         <CardHeader className="gap-3">
           <div className="flex items-start justify-between gap-3">
             <CardTitle className="text-section text-text-warm">
@@ -114,7 +118,11 @@ export function ActivityCard({
         </CardContent>
       </Link>
       <div className="mt-auto divide-y divide-border-warm border-t border-border-warm">
-        <ActivityCardQuickActions activity={activity} className="border-0" />
+        <ActivityCardQuickActions
+          activity={activity}
+          registrationsHref={registrationsHref}
+          className="border-0"
+        />
         {showPlanRegCap && planRegistrationsDial ? (
           <ActivityPlanRegCapIndicator
             dial={planRegistrationsDial}

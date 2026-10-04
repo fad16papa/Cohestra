@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { ActivityOverviewEventDetails } from "@/components/activities/activity-overview-event-details";
@@ -28,6 +28,7 @@ import {
   classifyActivityRequestFailure,
 } from "@/lib/activities-40-4-contract";
 import { fetchActivityById, type Activity, type RegistrationTheme } from "@/lib/activities-api";
+import { mobileBackAction } from "@/lib/continuity-context";
 import { themeFromActivity } from "@/lib/registration-preview-theme";
 import { getPublishGateIssues } from "@/lib/form-schema-utils";
 import { cn } from "@/lib/utils";
@@ -56,14 +57,15 @@ type ActivityDetailPageClientProps = {
   id: string;
 };
 
-function ActivityBackLink() {
+function ActivityBackLink({ pathname, search }: { pathname: string; search: string }) {
+  const back = mobileBackAction({ pathname, search });
   return (
     <Link
-      href="/activities"
-      className="inline-flex items-center gap-2 text-sm text-text-muted-warm motion-press hover:text-text-warm"
+      href={back.href}
+      className="hidden items-center gap-2 text-sm text-text-muted-warm motion-press hover:text-text-warm md:inline-flex"
     >
       <ArrowLeft className="size-4 shrink-0" aria-hidden />
-      Back to activities
+      {back.label}
     </Link>
   );
 }
@@ -76,7 +78,10 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     error: conflictError,
     refresh,
   } = useActivityScheduleConflicts();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const liveSearch = searchParams.toString();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadErrorKind, setLoadErrorKind] = useState<
@@ -141,6 +146,21 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     }
   }, [activity?.id, activity?.registrationTheme, activity?.resolvedRegistrationTheme]);
 
+  const selectTab = useCallback(
+    (tab: ActivityDetailTab) => {
+      setActiveTab(tab);
+      const params = new URLSearchParams(searchParams.toString());
+      if (tab === "overview") {
+        params.delete("tab");
+      } else {
+        params.set("tab", tab);
+      }
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
   const handleActivityUpdated = useCallback(
     (updated: Activity) => {
       setActivity(updated);
@@ -162,7 +182,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
   if (detailState === "error" || detailState === "permission" || detailState === "not-found") {
     return (
       <div className="space-y-4" data-activity-detail-state={detailState}>
-        <ActivityBackLink />
+        <ActivityBackLink pathname={pathname} search={liveSearch} />
         <PageHeader title={detailHeading} />
         <ProductErrorState
           title={detailErrorCopy.title}
@@ -172,8 +192,8 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
               ? undefined
               : () => window.location.reload()
           }
-          backHref="/activities"
-          backLabel="Back to activities"
+          backHref={mobileBackAction({ pathname, search: liveSearch }).href}
+          backLabel={mobileBackAction({ pathname, search: liveSearch }).label}
         />
       </div>
     );
@@ -182,7 +202,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
   if (detailState !== "populated" || !activity) {
     return (
       <div className="space-y-4" data-activity-detail-state="loading">
-        <ActivityBackLink />
+        <ActivityBackLink pathname={pathname} search={liveSearch} />
         <PageHeader title={detailHeading} description="Loading activity…" />
       </div>
     );
@@ -198,7 +218,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
 
   return (
     <div className="space-y-6" data-activity-detail-state="populated">
-      <ActivityBackLink />
+      <ActivityBackLink pathname={pathname} search={liveSearch} />
 
       <PageHeader
         title={detailHeading}
@@ -239,7 +259,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
             type="button"
             role="tab"
             aria-selected={activeTab === tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => selectTab(tab.id)}
             className={cn(
               "shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium -mb-px motion-local",
               activeTab === tab.id
@@ -297,7 +317,7 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
       </div>
 
       {activeTab === "registrations" ? (
-        <ActivityRegistrationsTab activityId={activity.id} />
+        <ActivityRegistrationsTab activityId={activity.id} search={liveSearch} />
       ) : null}
 
       <div hidden={activeTab !== "share"}>

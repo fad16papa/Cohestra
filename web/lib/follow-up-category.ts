@@ -7,6 +7,10 @@ import {
   type ClientListItem,
 } from "@/lib/clients-api";
 import { FOLLOW_UP_PATH } from "@/lib/admin-canonical-routes";
+import {
+  appendContinuityContext,
+  type ContinuityContext,
+} from "@/lib/continuity-context";
 
 export type FollowUpCategory = "due-now" | "at-risk" | "opportunity" | "healthy";
 
@@ -115,8 +119,12 @@ export function reconcileFollowUpPage(page: number, totalCount: number, pageSize
   return page > lastPage ? lastPage : page;
 }
 
-export function followUpClientHref(clientId: string): string {
-  return `/clients/${clientId}`;
+export function followUpClientHref(
+  clientId: string,
+  context?: ContinuityContext | null
+): string {
+  const href = `/clients/${clientId}`;
+  return context ? appendContinuityContext(href, context) : href;
 }
 
 const PROFILE_OUTREACH_EVENT_TYPES = new Set([

@@ -22,9 +22,12 @@ import {
   activitiesListErrorCopy,
   classifyActivitiesListState,
   classifyActivityRequestFailure,
-  nextActivitiesListPage,
   type ActivityRequestKind,
 } from "@/lib/activities-40-4-contract";
+import {
+  activitiesContextFromSearch,
+  appendContinuityContext,
+} from "@/lib/continuity-context";
 import {
   applyActivitySortToSearchParams,
   fetchActivities,
@@ -51,6 +54,11 @@ import { CalendarDays, ChevronDown } from "lucide-react";
 
 const ACTIVITY_PAGE_SIZE = 20;
 const ACTIVITY_SEARCH_DEBOUNCE_MS = 400;
+
+function parseActivitiesPage(value: string | null): number {
+  const parsed = Number.parseInt(value ?? "", 10);
+  return Number.isInteger(parsed) && parsed >= 1 ? parsed : 1;
+}
 
 const statusFilterOptions: Array<{ value: ActivityStatus | ""; label: string }> =
   [
@@ -146,18 +154,19 @@ export function ActivitiesListPage() {
     error: conflictError,
   } = useActivityScheduleConflicts();
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [initialized, setInitialized] = useState(false);
   const statusFilter = parseStatusFilter(searchParams.get("status"));
   const searchFilter = searchParams.get("search")?.trim() ?? "";
   const categoryFilter = searchParams.get("category")?.trim() ?? "";
   const communityFilter = searchParams.get("community")?.trim() ?? "";
+  const page = parseActivitiesPage(searchParams.get("page"));
   const { sortBy, sortDirection } = parseActivitySortFromSearchParams(
     searchParams.get("sortBy"),
     searchParams.get("sortDirection")
   );
   const sortSelectValue = resolveSortSelectValue(sortBy, sortDirection);
+  const listContext = activitiesContextFromSearch(searchParams.toString());
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [communities, setCommunities] = useState<Array<{ id: string; name: string }>>([]);
@@ -174,25 +183,36 @@ export function ActivitiesListPage() {
     communityFilter,
     sortBy,
     sortDirection,
+    page,
   ].join("\0");
-  const [syncedQueryKey, setSyncedQueryKey] = useState(listQueryKey);
-  if (syncedQueryKey !== listQueryKey) {
-    setSyncedQueryKey(listQueryKey);
-    setPage(nextActivitiesListPage(syncedQueryKey, listQueryKey, page));
-  }
 
   const totalPages = Math.max(1, Math.ceil(totalCount / ACTIVITY_PAGE_SIZE));
 
   const replaceListParams = useCallback(
-    (mutator: (params: URLSearchParams) => void) => {
+    (mutator: (params: URLSearchParams) => void, options?: { resetPage?: boolean }) => {
       const params = new URLSearchParams(searchParams.toString());
       mutator(params);
-      setPage(1);
+      if (options?.resetPage !== false) {
+        params.delete("page");
+      }
       router.replace(
         params.toString() ? `/activities?${params.toString()}` : "/activities"
       );
     },
     [router, searchParams]
+  );
+
+  const updatePage = useCallback(
+    (nextPage: number) => {
+      replaceListParams((params) => {
+        if (nextPage > 1) {
+          params.set("page", String(nextPage));
+        } else {
+          params.delete("page");
+        }
+      }, { resetPage: false });
+    },
+    [replaceListParams]
   );
 
   const commitSearch = useCallback(
@@ -258,7 +278,7 @@ export function ActivitiesListPage() {
           setError(null);
           setErrorKind(null);
           setInitialized(true);
-          setPage(nextTotalPages);
+          updatePage(nextTotalPages);
           return;
         }
 
@@ -296,6 +316,7 @@ export function ActivitiesListPage() {
     sortBy,
     sortDirection,
     statusFilter,
+    updatePage,
   ]);
 
   useEffect(() => {
@@ -348,7 +369,6 @@ export function ActivitiesListPage() {
 
   function clearFilters() {
     setRecoveryMode(false);
-    setPage(1);
     router.replace("/activities");
   }
 
@@ -687,6 +707,11 @@ export function ActivitiesListPage() {
               <ActivityCard
                 key={activity.id}
                 activity={activity}
+                href={appendContinuityContext(`/activities/${activity.id}`, listContext)}
+                registrationsHref={appendContinuityContext(
+                  `/activities/${activity.id}?tab=registrations`,
+                  listContext
+                )}
                 planRegistrationsDial={planRegistrationsDial}
                 conflictingActivities={
                   conflictsReady && !conflictError
@@ -709,7 +734,7 @@ export function ActivitiesListPage() {
                 variant="outline"
                 className="min-h-11 min-w-11"
                 disabled={page <= 1}
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                onClick={() => updatePage(Math.max(1, page - 1))}
               >
                 Previous
               </Button>
@@ -721,9 +746,7 @@ export function ActivitiesListPage() {
                 variant="outline"
                 className="min-h-11 min-w-11"
                 disabled={page >= totalPages}
-                onClick={() =>
-                  setPage((current) => Math.min(totalPages, current + 1))
-                }
+                onClick={() => updatePage(Math.min(totalPages, page + 1))}
               >
                 Next
               </Button>

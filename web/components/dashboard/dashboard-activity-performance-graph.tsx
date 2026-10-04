@@ -17,6 +17,8 @@ import {
   ChartTooltipFrame,
   DashboardChartCard,
 } from "@/components/dashboard/dashboard-chart-card";
+import type { ContinuityContext } from "@/lib/continuity-context";
+import { activityHrefForId } from "@/lib/continuity-context";
 import type { ActivityPerformanceItem } from "@/lib/dashboard-api";
 
 const BAR_COLOR = "var(--chart-1)";
@@ -27,6 +29,7 @@ type DashboardActivityPerformanceGraphProps = {
   items: ActivityPerformanceItem[];
   periodLabel: string;
   className?: string;
+  continuity?: ContinuityContext | null;
 };
 
 type BarDatum = {
@@ -71,6 +74,7 @@ export function DashboardActivityPerformanceGraph({
   items,
   periodLabel,
   className,
+  continuity,
 }: DashboardActivityPerformanceGraphProps) {
   const router = useRouter();
 
@@ -148,7 +152,10 @@ export function DashboardActivityPerformanceGraph({
                   onClick={(datum) => {
                     const activityId = (datum as unknown as BarDatum).activityId;
                     if (activityId) {
-                      router.push(`/activities/${activityId}`);
+                      router.push(
+                        activityHrefForId(activityId, continuity ?? null) ??
+                          `/activities/${activityId}`
+                      );
                     }
                   }}
                   label={{

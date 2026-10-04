@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { CalendarDays, ChevronDown, ChevronRight, ChevronUp, Search } from "lucide-react";
 
 import {
@@ -20,6 +21,7 @@ import { cn } from "@/lib/utils";
 type ClientRegistrationHistoryProps = {
   history: ClientRegistrationHistoryItem[];
   defaultCollapsed?: boolean;
+  activityHrefFor?: (activityId: string) => string | null;
 };
 
 function formatRegisteredAt(value: string) {
@@ -70,14 +72,25 @@ function registrationAnswerSpanClass(
 
 function RegistrationAnswersDetail({
   entry,
+  activityHref,
 }: {
   entry: ClientRegistrationHistoryItem;
+  activityHref: string | null;
 }) {
   return (
     <div className="min-h-0 flex-1 rounded-lg border border-border-warm bg-muted/20 p-4">
       <div className="flex flex-col gap-1 border-b border-border-warm pb-3 sm:flex-row sm:items-baseline sm:justify-between">
         <div>
-          <p className="font-medium text-text-warm">{entry.activityName}</p>
+          {activityHref ? (
+            <Link
+              href={activityHref}
+              className="font-medium text-text-link underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {entry.activityName}
+            </Link>
+          ) : (
+            <p className="font-medium text-text-warm">{entry.activityName}</p>
+          )}
           <p className="mt-1 font-mono text-xs text-text-muted-warm">
             {entry.registrationNumber}
           </p>
@@ -128,6 +141,7 @@ function RegistrationAnswersDetail({
 export function ClientRegistrationHistory({
   history,
   defaultCollapsed = false,
+  activityHrefFor,
 }: ClientRegistrationHistoryProps) {
   const [expanded, setExpanded] = useState(!defaultCollapsed || history.length <= 3);
   const [search, setSearch] = useState("");
@@ -245,7 +259,10 @@ export function ClientRegistrationHistory({
                   No registrations match your search.
                 </p>
               ) : filteredHistory.length === 1 && selectedEntry ? (
-                <RegistrationAnswersDetail entry={selectedEntry} />
+                <RegistrationAnswersDetail
+                  entry={selectedEntry}
+                  activityHref={activityHrefFor?.(selectedEntry.activityId) ?? null}
+                />
               ) : (
                 <div className="grid min-h-0 gap-4 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
                   <div
@@ -300,7 +317,10 @@ export function ClientRegistrationHistory({
                   </div>
 
                   {selectedEntry ? (
-                    <RegistrationAnswersDetail entry={selectedEntry} />
+                    <RegistrationAnswersDetail
+                      entry={selectedEntry}
+                      activityHref={activityHrefFor?.(selectedEntry.activityId) ?? null}
+                    />
                   ) : null}
                 </div>
               )}

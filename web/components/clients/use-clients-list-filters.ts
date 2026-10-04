@@ -4,6 +4,7 @@ import { useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import type { ClientSortBy, LeadStatus } from "@/lib/clients-api";
+import { clientsContextFromSearch } from "@/lib/continuity-context";
 
 export type ClientSortDirection = "asc" | "desc";
 
@@ -91,9 +92,12 @@ export function useClientsListFilters() {
   );
 
   const replaceParams = useCallback(
-    (mutator: (params: URLSearchParams) => void) => {
+    (mutator: (params: URLSearchParams) => void, options?: { resetPage?: boolean }) => {
       const params = new URLSearchParams(searchParams.toString());
       mutator(params);
+      if (options?.resetPage !== false) {
+        params.delete("page");
+      }
       router.replace(clientsHref(params));
     },
     [router, searchParams]
@@ -216,7 +220,6 @@ export function useClientsListFilters() {
       replaceParams((params) => {
         params.set("sortBy", nextSortBy);
         params.set("sortDir", nextSortDir);
-        params.delete("page");
       });
     },
     [replaceParams]
@@ -230,7 +233,7 @@ export function useClientsListFilters() {
         } else {
           params.delete("page");
         }
-      });
+      }, { resetPage: false });
     },
     [replaceParams]
   );
@@ -245,8 +248,14 @@ export function useClientsListFilters() {
     Boolean(filters.createdWithinDays) ||
     Boolean(filters.registeredWithinDays);
 
+  const listContext = useMemo(
+    () => clientsContextFromSearch(searchParams.toString()),
+    [searchParams]
+  );
+
   return {
     filters,
+    listContext,
     hasActiveFilters,
     updateSearch,
     updateLeadStatus,

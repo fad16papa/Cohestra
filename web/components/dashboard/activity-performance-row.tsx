@@ -8,11 +8,13 @@ import { cn } from "@/lib/utils";
 type ActivityPerformanceRowProps = {
   item: ActivityPerformanceItem;
   rank: number;
+  href?: string;
 };
 
 export function ActivityPerformanceRow({
   item,
   rank,
+  href,
 }: ActivityPerformanceRowProps) {
   const metaParts = [item.communityLabel, item.category].filter(
     (value) => value.trim().length > 0
@@ -22,7 +24,7 @@ export function ActivityPerformanceRow({
 
   return (
     <Link
-      href={`/activities/${item.activityId}`}
+      href={href ?? `/activities/${item.activityId}`}
       aria-label={`View ${item.activityName} — ${item.registrationCount} registrations`}
       className={cn(
         "group flex min-h-[var(--dashboard-panel-row-height,4.5rem)] items-center gap-2.5 px-3 py-2.5 motion-press sm:gap-4 sm:px-4 sm:py-3",

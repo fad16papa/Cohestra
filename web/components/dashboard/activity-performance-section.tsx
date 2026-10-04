@@ -8,17 +8,21 @@ import {
 } from "@/components/dashboard/dashboard-matched-panel";
 import { ActivityPerformanceRow } from "@/components/dashboard/activity-performance-row";
 import { buttonVariants } from "@/components/ui/button";
+import type { ContinuityContext } from "@/lib/continuity-context";
+import { activityHrefForId } from "@/lib/continuity-context";
 import type { ActivityPerformanceItem } from "@/lib/dashboard-api";
 import { cn } from "@/lib/utils";
 
 type ActivityPerformanceSectionProps = {
   items: ActivityPerformanceItem[];
   periodLabel: string;
+  continuity?: ContinuityContext | null;
 };
 
 export function ActivityPerformanceSection({
   items,
   periodLabel,
+  continuity,
 }: ActivityPerformanceSectionProps) {
   const hasMore = items.length > DASHBOARD_PANEL_VISIBLE_ITEMS;
 
@@ -67,7 +71,11 @@ export function ActivityPerformanceSection({
           <ol className="divide-y divide-border-warm">
             {items.map((item, index) => (
               <li key={item.activityId}>
-                <ActivityPerformanceRow item={item} rank={index + 1} />
+                <ActivityPerformanceRow
+                  item={item}
+                  rank={index + 1}
+                  href={activityHrefForId(item.activityId, continuity ?? null) ?? undefined}
+                />
               </li>
             ))}
           </ol>

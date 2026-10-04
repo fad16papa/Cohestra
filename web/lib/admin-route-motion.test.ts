@@ -99,7 +99,9 @@ describe("admin route motion integration", () => {
   it("does not wrap Form Studio mode or activity tabs in the route primitive", () => {
     expect(FORM_STUDIO_SOURCE).toContain('useState<FormStudioMode>("build")');
     expect(FORM_STUDIO_SOURCE).not.toContain("AdminRouteTransition");
-    expect(ACTIVITY_DETAIL_SOURCE).toContain("setActiveTab(tab.id)");
+    expect(ACTIVITY_DETAIL_SOURCE).toContain("selectTab(tab.id)");
+    expect(ACTIVITY_DETAIL_SOURCE).toContain("router.replace");
+    expect(ACTIVITY_DETAIL_SOURCE).toContain('key={activity.id}');
     expect(ACTIVITY_DETAIL_SOURCE).not.toContain("AdminRouteTransition");
   });
 });

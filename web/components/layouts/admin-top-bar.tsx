@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 
 import { AdminBreadcrumbs } from "@/components/layouts/admin-breadcrumbs";
@@ -13,13 +13,15 @@ import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getAdminBreadcrumbs } from "@/lib/admin-nav";
+import { buildContinuityCrumbs, readContinuityContext } from "@/lib/continuity-context";
 
 export function AdminTopBar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { openCommandPalette, pageMeta } = useAdminShell();
   const { shell } = useTenantShell();
-
-  const breadcrumbs = getAdminBreadcrumbs(pathname).map((item, index, items) => {
+  const search = searchParams.toString();
+  const pathCrumbs = getAdminBreadcrumbs(pathname).map((item, index, items) => {
     if (
       pageMeta?.breadcrumbTail &&
       index === items.length - 1
@@ -29,12 +31,20 @@ export function AdminTopBar() {
 
     return item;
   });
+  const currentLabel =
+    pageMeta?.breadcrumbTail ?? pathCrumbs[pathCrumbs.length - 1]?.label ?? "Admin";
+  const useContinuity =
+    Boolean(readContinuityContext(search)) ||
+    pathname.startsWith("/clients/") ||
+    /^\/activities\/[0-9a-f-]{36}/i.test(pathname);
+  const breadcrumbs = useContinuity
+    ? buildContinuityCrumbs({ pathname, search, currentLabel })
+    : pathCrumbs;
 
-  const pageTitle =
-    pageMeta?.title ?? breadcrumbs[breadcrumbs.length - 1]?.label ?? "Admin";
+  const pageTitle = pageMeta?.title ?? currentLabel;
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border-warm bg-card/80 px-4 backdrop-blur-md md:px-6">
+    <header className="sticky top-0 z-20 flex min-h-14 shrink-0 items-center gap-3 border-b border-border-warm bg-card/80 px-4 py-2 backdrop-blur-md md:h-14 md:py-0 md:px-6">
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
         {breadcrumbs.length > 1 ? (
           <AdminBreadcrumbs items={breadcrumbs} className="flex min-w-0" />
