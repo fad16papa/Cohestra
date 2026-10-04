@@ -164,3 +164,4 @@ See `_bmad-output/planning-artifacts/evidence/px2-41-3/test-results.md` and `rev
 
 - 2026-10-04: Created Story 41.3 from main `ac5538e1`. Epic 41 remains in-progress. Stories 41.1 and 41.2 remain done. Epic 42 not started.
 - 2026-10-04: Implementation + QA + four-layer review. Tracker moved to `review`. Draft PR #381.
+- 2026-10-04: Product-owner review patched Pro-to-Pro isolation coverage, stale-preview send, and in-flight duplicate send. Story remains `review` until merge + tracker-close.

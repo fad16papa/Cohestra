@@ -105,6 +105,11 @@ export function isComposeSegmentReady(segment: ClientSegmentQuery): boolean {
   return Boolean(segment.community?.trim()) && segment.consentOnly !== false;
 }
 
+/** Send eligibility uses a finite positive preview count, never NaN/Infinity. */
+export function isAuthoritativeReadyCount(count: unknown): count is number {
+  return typeof count === "number" && Number.isInteger(count) && count > 0;
+}
+
 export type ClientSegmentPreviewItem = {
   id: string;
   fullName: string;
@@ -370,7 +375,8 @@ export async function sendCampaign(
     }
   );
 
-  if (!response.ok && response.status !== 202) {
+  const accepted = response.status === 202;
+  if (!response.ok && !accepted) {
     await throwCampaignRequestError(response);
   }
 
@@ -380,6 +386,14 @@ export async function sendCampaign(
     throw new Error("Invalid campaign send payload");
   }
 
+  const rawStatus = raw.status ?? raw.Status;
+  const status =
+    typeof rawStatus === "string" && rawStatus.trim()
+      ? rawStatus.trim()
+      : accepted
+        ? "queued"
+        : "failed";
+
   const initial = {
     campaignId: String(raw.campaignId ?? raw.CampaignId),
     subject: String(raw.subject ?? raw.Subject),
@@ -387,7 +401,7 @@ export async function sendCampaign(
     sentCount: Number(raw.sentCount ?? raw.SentCount ?? 0),
     failedCount: Number(raw.failedCount ?? raw.FailedCount ?? 0),
     skippedCount: Number(raw.skippedCount ?? raw.SkippedCount ?? 0),
-    status: String(raw.status ?? raw.Status ?? "completed"),
+    status,
     results: results.map((item) => {
       const row = item as Record<string, unknown>;
       const status = row.status ?? row.Status;

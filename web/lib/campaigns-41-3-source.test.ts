@@ -20,6 +20,9 @@ describe("Story 41.3 source contracts", () => {
   it("blocks duplicate send and uses 38.6 confirmation copy", () => {
     const compose = source("../components/campaigns/campaign-compose-page.tsx");
     expect(compose).toContain("sendingRef");
+    expect(compose).toContain("testingRef");
+    expect(compose).toContain("isAuthoritativeReadyCount");
+    expect(compose).toContain("isCampaignInFlight(sendResult?.status)");
     expect(compose).toContain("Sending cannot be undone.");
     expect(compose).toContain("beforeunload");
     expect(compose).toContain("<AlertDialog");

@@ -454,7 +454,12 @@ test.describe("Story 41.3 — Campaigns room", () => {
       timeout: 15_000,
     });
     expect(sendCounts.send).toBe(1);
-    await sendButton.click({ trial: true }).catch(() => undefined);
+    await expect(page.getByText("Partial or failed result")).toBeVisible();
+    const pageSend = page.locator("#main-content").getByRole("button", { name: "Send campaign" });
+    await pageSend.click();
+    await expect(page.getByRole("alertdialog", { name: "Send this campaign?" })).toBeVisible();
+    await page.getByRole("button", { name: "Cancel" }).click();
+    expect(sendCounts.send).toBe(1);
   });
 
   test("async queued, partial results, safe HTML, and tenant denial", async ({

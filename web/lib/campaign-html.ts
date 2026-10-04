@@ -71,6 +71,10 @@ export function isAllowedCampaignImageSrc(src: string): boolean {
     return false;
   }
 
+  if (decoded.startsWith("//") || decoded.startsWith("\\\\")) {
+    return false;
+  }
+
   try {
     const uri = new URL(decoded);
     if (uri.protocol !== "http:" && uri.protocol !== "https:") {

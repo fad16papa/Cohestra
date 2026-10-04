@@ -132,6 +132,17 @@ public sealed class CampaignIsolationIntegrationTests(IntegrationTestFixture fix
             await sendWithForeignClients.Content.ReadAsStringAsync(),
             "send with foreign clients");
 
+        var tenantBClientRecord = await IntegrationTestHelpers.SeedClientAsync(
+            Factory.Services,
+            client =>
+            {
+                client.TenantId = tenantB.Id;
+                client.FullName = "Tenant B Own Lead";
+                client.Email = $"own-{tenantB.Slug}@example.com";
+                client.NormalizedEmail = $"own-{tenantB.Slug}@example.com";
+                client.ConsentGiven = true;
+            });
+
         using var sendWithForeignTemplate = await tenantBClient.PostAsJsonAsync(
             "/api/v1/admin/campaigns/send",
             new SendCampaignRequest(
@@ -142,7 +153,7 @@ public sealed class CampaignIsolationIntegrationTests(IntegrationTestFixture fix
                     ActivityIds: null,
                     LeadStatus: null,
                     Community: null,
-                    ClientIds: [seeded.ClientId],
+                    ClientIds: [tenantBClientRecord.Id],
                     AllClients: false)),
             IntegrationTestHelpers.JsonOptions);
         Assert.True(
@@ -167,6 +178,21 @@ public sealed class CampaignIsolationIntegrationTests(IntegrationTestFixture fix
             publicAsset.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden,
             $"Expected 404 or 403 for foreign public asset, got {(int)publicAsset.StatusCode}.");
         await AssertNoLeakAsync(await publicAsset.Content.ReadAsStringAsync(), "public campaign asset");
+
+        using var templateDelete = await tenantBClient.DeleteAsync(
+            $"/api/v1/admin/email-templates/{seeded.TemplateId}");
+        await AssertDeniedWithoutLeakAsync(templateDelete, "email template delete");
+
+        using var stillOwn = await tenantAClient.GetAsync($"/api/v1/admin/campaigns/{seeded.CampaignId}");
+        Assert.Equal(HttpStatusCode.OK, stillOwn.StatusCode);
+        var stillOwnBody = await stillOwn.Content.ReadAsStringAsync();
+        Assert.Contains(SubjectMarker, stillOwnBody, StringComparison.Ordinal);
+        Assert.Contains(RecipientEmailMarker, stillOwnBody, StringComparison.Ordinal);
+
+        using var stillTemplate = await tenantAClient.GetAsync(
+            $"/api/v1/admin/email-templates/{seeded.TemplateId}");
+        Assert.Equal(HttpStatusCode.OK, stillTemplate.StatusCode);
+        Assert.Contains(TemplateNameMarker, await stillTemplate.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 
     private async Task<(Guid CampaignId, Guid TemplateId, Guid ClientId, Guid AssetId)> SeedTenantACampaignAsync(

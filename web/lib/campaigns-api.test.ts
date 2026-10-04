@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CampaignRequestError,
+  isAuthoritativeReadyCount,
   isComposeSegmentReady,
   isValidSegmentQuery,
 } from "./campaigns-api";
@@ -20,6 +21,17 @@ describe("campaign compose eligibility", () => {
   it("does not treat an empty client-id list as a valid segment", () => {
     expect(isValidSegmentQuery({ clientIds: [] })).toBe(false);
     expect(isValidSegmentQuery({ community: "Harbour" })).toBe(true);
+  });
+});
+
+describe("authoritative ready count", () => {
+  it("rejects zero, NaN, Infinity, and non-integers", () => {
+    expect(isAuthoritativeReadyCount(2)).toBe(true);
+    expect(isAuthoritativeReadyCount(0)).toBe(false);
+    expect(isAuthoritativeReadyCount(Number.NaN)).toBe(false);
+    expect(isAuthoritativeReadyCount(Number.POSITIVE_INFINITY)).toBe(false);
+    expect(isAuthoritativeReadyCount(1.5)).toBe(false);
+    expect(isAuthoritativeReadyCount("2")).toBe(false);
   });
 });
 

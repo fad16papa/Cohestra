@@ -38,6 +38,9 @@ describe("sanitizeCampaignHtml", () => {
     ).toBe("");
     expect(isAllowedCampaignImageSrc("https://evil.test/other.png")).toBe(false);
     expect(
+      isAllowedCampaignImageSrc("//evil.test/api/v1/public/campaign-assets/1")
+    ).toBe(false);
+    expect(
       isAllowedCampaignImageSrc("https://ok.test/api/v1/public/campaign-assets/1")
     ).toBe(true);
   });

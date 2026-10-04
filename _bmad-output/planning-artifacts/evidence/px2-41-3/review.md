@@ -1,67 +1,51 @@
 # Story 41.3 four-layer review
 
-HEAD reviewed: same commit that carries this file (see git).  
+HEAD reviewed: the commit that carries this file (see git).  
 Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor, Adversarial General  
 Model: Grok 4.6 (Composer unused)
 
-## Blind Hunter
+Mandatory Code Review Loop is in force. This is the product-owner pre-merge pass.
+
+## Independently verified patches
 
 | ID | Severity | Finding | Disposition |
 | --- | --- | --- | --- |
-| BH-1 | MINOR | Client HTML sanitizer accepts any host whose path contains `/api/v1/public/campaign-assets/`, matching `CampaignEmailBodyProcessor.IsAllowedImageSrc`. Preview could load a same-path image from another origin. | **accept** — same fail-closed path rule as server; send still sanitizes. Do not invent a host allowlist here. |
-| BH-2 | MAJOR | Detail page polled queued/sending with no deadline. | **patch** — 60s deadline added, matching `sendCampaign` wait. |
-| BH-3 | NIT | `throwCampaignRequestError` catch maps JSON parse failures to a generic status message. | **accept** — same pattern as reports/intelligence. |
+| PO-ISO | MAJOR | No same-entitlement Pro-to-Pro isolation test. Playwright Basic JWT vs a stub id is insufficient because `RequireProPlan` can reject before tenant lookup. | **patch** — `CampaignIsolationIntegrationTests` creates Pro A + Pro B. B cannot list/get A’s campaign, preview/send A’s clients, reuse A’s template/activity/asset, or leak subject/body/recipient markers. A’s campaign and template remain intact after B’s probes. Result: **1/1 passed**, then **11/11** with Campaign/TenantIsolation/RequireProPlan. |
+| EC-41-3-01 | MAJOR | Segment change left the previous preview mounted, so confirm/send could use a stale `withEmailCount`. | **patch** — picker clears preview before refetch; send requires `isAuthoritativeReadyCount`. |
+| ADV-1 / BH-01 | MAJOR | After `sendCampaign` returned a queued/sending payload, `sending` cleared and a second send was allowed. | **patch** — `canSend` stays false while `isCampaignInFlight(sendResult.status)`. |
+| ADV-2 | MAJOR | Missing send `status` defaulted to `"completed"`. | **patch** — 202 without status is `queued`; otherwise `failed`. |
+| ADV-3 | MINOR | Test-send had no ref lock. | **patch** — `testingRef`. |
+| AC11 inputs | MINOR | Nationality/profession were 36px. | **patch** — `min-h-12`. |
 
-No unresolved tenant-isolation, provider-secret, or authorization holes found. Frontend hiding is not used as auth. `RequireProPlan` and TenantOperator are unchanged.
+## Blind Hunter (complete diff)
+
+| ID | Severity | Finding | Disposition |
+| --- | --- | --- | --- |
+| BH-01 | MAJOR (not BLOCKER) | Duplicate send after in-flight return | **patch** (see above). Not a BLOCKER: POST+poll was already locked; gap was after 202 still queued. |
+| BH-03 | MINOR | Image allowlist is path-based, any host | **accept** — matches `CampaignEmailBodyProcessor.IsAllowedImageSrc`. Protocol-relative `//` now fail-closed. |
+| BH-04 | MINOR | Regex sanitizer vs DOMParser | **accept** — defense-in-depth; server Ganss.Xss remains authoritative on send. |
+| BH-05–08 | MINOR | Isolation could also assert outbox rows / AllClients / send-test | **accept** — required Pro-to-Pro surfaces are covered; extra probes deferred. |
+| BH-09 | NIT | Playwright Basic denial is not Pro-to-Pro | **accept** — isolation proof is the integration test. |
+| BH-10–15 | MINOR/NIT | 403 chrome, dirty in-app nav, source-string tests | **accept/defer** — no product, architecture, or security risk on this room. |
 
 ## Edge Case Hunter
 
 | ID | Severity | Finding | Disposition |
 | --- | --- | --- | --- |
-| EH-1 | MINOR | If list `page` exceeds `maxPage` after a shrink, the empty page has Previous but no auto-clamp. | **accept** — existing API paging; rare. |
-| EH-2 | MINOR | Compose baseline fingerprint is captured once; changing `?clientIds` after mount does not reset dirty baseline. | **accept** — searchParams change remounts via next navigation in practice. |
-| EH-3 | MINOR | 200% zoom is specified but not a dedicated Playwright case. | **accept** — 390 compose + overflow checks cover the tight viewport. |
-| EH-4 | NIT | Duplicate-send test uses a completed stub so in-flight disable is asserted by `sendingRef` unit/source contract more than a live hang. | **accept** — source contract + disabled `canSend` while `sending`. |
-
-No unhandled zero-recipient send, unknown-plan SKU, or member checkout path found.
+| EC-41-3-01 | MAJOR | Stale preview | **patch** |
+| EC-41-3-02 | MINOR | NaN/Infinity counts | **patch** — `isAuthoritativeReadyCount` |
+| EC-41-3-03 | MAJOR | Second send after queued return | **patch** |
 
 ## Acceptance Auditor
 
-| AC | Verdict |
-| --- | --- |
-| 1 Canonical routes, one main/h1 | **pass** — Playwright landmarks |
-| 2 Pro open; Basic/Core UpgradePanel; member no checkout; unknown pending | **pass** |
-| 3 Role 403 denied, never UpgradePanel | **pass** |
-| 4 List states + visible status text + paging when totalCount > pageSize | **pass** (paging UI present; fixture pageSize 25) |
-| 5 Compose 390 + existing capabilities | **pass** |
-| 6 Truthful compose states, no autosave, no duplicate send | **pass** |
-| 7 Preview/confirm copy; no success before status | **pass** |
-| 8 38.6 overlays | **pass** — 38.6 suite 1/1 and 41.3 preview/QR/confirm |
-| 9 Detail queued/partial | **pass** |
-| 10 QR rules | **pass** — existing modal + 38.6 + 41.3 keyboard |
-| 11 Responsive/a11y | **pass** with checklist excluded from dark Axe (pre-existing warning contrast) |
-| 12 Security / sanitizer / no real mail | **pass** |
-| 13 Protected 38.4–41.2; Epic 42 not started | **pass** 61/61 |
+AC 1–10, 12–13 **pass**. AC 11 **pass** after nationality/profession 44px patch; 200% zoom remains deferred (390 compose + overflow). PO Pro-to-Pro **pass**.
 
 ## Adversarial General
 
-Issues considered (not all kept):
-
-1. Treating unknown plan as Basic — **fixed** (pending).
-2. Color-only list status — **fixed**.
-3. Duplicate send while `canSend` true during sending — **fixed**.
-4. Unsanitized preview/detail HTML — **fixed**.
-5. Claiming success on 202 queued — **fixed**.
-6. Infinite detail poll — **patched**.
-7. Real SendGrid in QA — **intercepted**.
-8. Member checkout on compose — **gated**.
-9. Invented API — **not done**.
-10. Weakening 38.6/39.3 — **protected suites green**.
-11. Regex sanitizer vs DOMParser — residual MINOR, fail-closed for script/handlers.
-12. Email delivery checklist contrast — pre-existing, excluded from 41.3 dark Axe only.
+Issues 1–3 and isolation coverage **patched**. Remaining items (host-blind images matching server, 38.6 suite still owns trap/inert, public asset host scoping) MINOR/NIT **accept**. No plan/Paddle/API contract change.
 
 ## Disposition
 
-No unresolved BLOCKER. BH-2 patched. Remaining items MINOR/NIT/accept.
+No unresolved BLOCKER or MAJOR on this HEAD.
 
-**Review result: clean enough to stop at `review` for product-owner pre-merge.**
+**Review result: clean enough to merge after exact-head CI.**

@@ -93,7 +93,10 @@ export function SegmentPicker({
     }
 
     let cancelled = false;
+    setPreview(null);
+    setPreviewError(null);
     setPreviewLoading(true);
+    onPreviewChange?.(null);
 
     void previewClientSegment(authFetch, value)
       .then((result) => {
@@ -378,23 +381,25 @@ export function SegmentPicker({
                   <Label htmlFor="segment-nationality" className="text-xs">
                     Nationality
                   </Label>
-                  <Input
-                    id="segment-nationality"
-                    value={nationalityDraft}
-                    placeholder="e.g. Filipino"
-                    onChange={(event) => setNationalityDraft(event.target.value)}
-                  />
+                    <Input
+                      id="segment-nationality"
+                      value={nationalityDraft}
+                      placeholder="e.g. Filipino"
+                      className="min-h-12"
+                      onChange={(event) => setNationalityDraft(event.target.value)}
+                    />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="segment-profession" className="text-xs">
                     Profession
                   </Label>
-                  <Input
-                    id="segment-profession"
-                    value={professionDraft}
-                    placeholder="e.g. Engineer"
-                    onChange={(event) => setProfessionDraft(event.target.value)}
-                  />
+                    <Input
+                      id="segment-profession"
+                      value={professionDraft}
+                      placeholder="e.g. Engineer"
+                      className="min-h-12"
+                      onChange={(event) => setProfessionDraft(event.target.value)}
+                    />
                 </div>
               </div>
             </div>

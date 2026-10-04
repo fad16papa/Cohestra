@@ -41,6 +41,7 @@ import {
   deleteEmailTemplate,
   fetchEmailTemplates,
   getHtmlByteSize,
+  isAuthoritativeReadyCount,
   isComposeSegmentReady,
   isValidSegmentQuery,
   sendCampaign,
@@ -116,6 +117,7 @@ export function CampaignComposePage() {
   const [planLocked, setPlanLocked] = useState(false);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const sendingRef = useRef(false);
+  const testingRef = useRef(false);
   const [baselineFingerprint] = useState(() =>
     composeFingerprint("", "<p></p>", {
       consentOnly: true,
@@ -276,7 +278,7 @@ export function CampaignComposePage() {
   }
 
   async function handleSendTest() {
-    if (testing || sending) {
+    if (testing || testingRef.current || sending || sendingRef.current) {
       return;
     }
 
@@ -290,6 +292,7 @@ export function CampaignComposePage() {
       return;
     }
 
+    testingRef.current = true;
     setTesting(true);
     try {
       const result = await sendTestCampaignEmail(authFetch, {
@@ -306,12 +309,13 @@ export function CampaignComposePage() {
     } catch (testError) {
       showToast(testError instanceof Error ? testError.message : "Test email failed.");
     } finally {
+      testingRef.current = false;
       setTesting(false);
     }
   }
 
   function requestSend() {
-    if (sending || sendingRef.current) {
+    if (sending || sendingRef.current || isCampaignInFlight(sendResult?.status)) {
       return;
     }
 
@@ -340,7 +344,7 @@ export function CampaignComposePage() {
       return;
     }
 
-    if (!segmentPreview || segmentPreview.withEmailCount === 0) {
+    if (!segmentPreview || !isAuthoritativeReadyCount(segmentPreview.withEmailCount)) {
       showToast("No consented recipients with email addresses match this segment.");
       return;
     }
@@ -353,7 +357,7 @@ export function CampaignComposePage() {
       return;
     }
 
-    if (!segmentPreview || segmentPreview.withEmailCount === 0) {
+    if (!segmentPreview || !isAuthoritativeReadyCount(segmentPreview.withEmailCount)) {
       return;
     }
 
@@ -392,8 +396,12 @@ export function CampaignComposePage() {
   const skippedResults = sendResult?.results.filter((item) => item.status === "skipped") ?? [];
 
   function getSendBlockReason(): string | null {
-    if (sending) {
+    if (sending || sendingRef.current) {
       return "Sending… A second send is blocked until this request finishes.";
+    }
+
+    if (isCampaignInFlight(sendResult?.status)) {
+      return "Delivery is still queued or sending. A second send is blocked.";
     }
 
     if (!subject.trim()) {
@@ -420,7 +428,7 @@ export function CampaignComposePage() {
       return "Waiting for recipient preview…";
     }
 
-    if (segmentPreview.withEmailCount === 0) {
+    if (!isAuthoritativeReadyCount(segmentPreview.withEmailCount)) {
       if (segmentPreview.totalCount === 0) {
         return "No clients match this segment.";
       }
@@ -436,13 +444,13 @@ export function CampaignComposePage() {
   }
 
   const sendBlockReason = getSendBlockReason();
-  const canSend = sendBlockReason === null && !sending;
+  const canSend = sendBlockReason === null && !sending && !isCampaignInFlight(sendResult?.status);
   const composeState = sending
     ? "Sending"
     : sendResult
       ? isCampaignInFlight(sendResult.status)
         ? "Delivery in progress"
-        : sendResult.failedCount > 0
+        : sendResult.failedCount > 0 || sendResult.skippedCount > 0
           ? "Partial or failed result"
           : "Completed"
       : sendDialogOpen
