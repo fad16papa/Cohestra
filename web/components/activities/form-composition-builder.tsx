@@ -1,12 +1,19 @@
 "use client";
 
 import { ChevronDown, ChevronUp, GripVertical, Lock, Plus, Trash2 } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { FormCompositionInspector } from "@/components/activities/form-composition-inspector";
 import { FormFieldEditor } from "@/components/activities/form-field-editor";
 import { FormFieldPaletteDialog } from "@/components/activities/form-field-palette-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import type { ActivityFormSchema, FormCompositionNode, FormFieldType } from "@/lib/activities-api";
 import { findCompositionNode } from "@/lib/form-composition-tree";
 import {
@@ -42,6 +49,17 @@ import {
   BUILDER_PRESENCE_ENTER_CLASS,
   BUILDER_SELECTION_CLASS,
 } from "@/lib/builder-motion";
+import {
+  FORM_STUDIO_INSPECTOR_ID,
+  FORM_STUDIO_INSPECTOR_TOGGLE_ID,
+  FORM_STUDIO_STACKED_QUERY,
+  FORM_STUDIO_THREE_PANE_QUERY,
+  FORM_STUDIO_TWO_PANE_QUERY,
+  getLiveFormStudioComposition,
+  isInspectorToggleExpanded,
+  resolveInspectorAfterResize,
+  type FormStudioComposition,
+} from "@/lib/form-studio-workspace";
 import { cn } from "@/lib/utils";
 
 type FormCompositionBuilderProps = {
@@ -59,6 +77,20 @@ type FormCompositionBuilderProps = {
 
 const panelShell =
   "flex min-h-[20rem] min-w-0 flex-col rounded-xl border border-border-warm bg-card lg:min-h-[28rem]";
+
+function useLayoutSyncMedia(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+
+  useLayoutEffect(() => {
+    const media = window.matchMedia(query);
+    const sync = () => setMatches(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, [query]);
+
+  return matches;
+}
 
 function blockTypeLabel(node: FormCompositionNode): string {
   if (node.kind === "fieldRef") {
@@ -165,9 +197,31 @@ export function FormCompositionBuilder({
 }: FormCompositionBuilderProps) {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const dragFromIndexRef = useRef<number | null>(null);
+  const inspectorToggleRef = useRef<HTMLButtonElement>(null);
+  const dockedInspectorRef = useRef<HTMLElement>(null);
+  const previousCompositionRef = useRef<FormStudioComposition | null>(null);
+  const inspectorOpenRef = useRef(inspectorOpen);
+  const sheetOpenRef = useRef(sheetOpen);
+  const isStacked = useLayoutSyncMedia(FORM_STUDIO_STACKED_QUERY);
+  const isTwoPane = useLayoutSyncMedia(FORM_STUDIO_TWO_PANE_QUERY);
+  const isThreePane = useLayoutSyncMedia(FORM_STUDIO_THREE_PANE_QUERY);
+  const composition: FormStudioComposition | null = isStacked
+    ? "stacked"
+    : isTwoPane
+      ? "two-pane"
+      : isThreePane
+        ? "three-pane"
+        : null;
+
+  useEffect(() => {
+    inspectorOpenRef.current = inspectorOpen;
+    sheetOpenRef.current = sheetOpen;
+  }, [inspectorOpen, sheetOpen]);
 
   function resolveDragFromIndex(event: React.DragEvent): number | null {
     if (dragFromIndexRef.current !== null) {
@@ -203,6 +257,82 @@ export function FormCompositionBuilder({
   const selectedFieldIndex = findFieldIndexByBlockId(schema, selectedBlockId);
   const selectedNode = findCompositionNode(schema, selectedBlockId);
   const selectedRow = canvasRows.find((row) => row.node.id === selectedBlockId);
+  const selectedContext = selectedNode
+    ? `${blockTypeLabel(selectedNode)} · ${blockTitle(selectedNode, schema)}`
+    : "Select a block in the form structure to edit it.";
+  const inspectorExpanded = isInspectorToggleExpanded(
+    composition ?? "stacked",
+    inspectorOpen,
+    sheetOpen
+  );
+
+  useLayoutEffect(() => {
+    if (!composition) {
+      return;
+    }
+
+    const previous = previousCompositionRef.current;
+    previousCompositionRef.current = composition;
+    if (previous == null || previous === composition) {
+      return;
+    }
+
+    const next = resolveInspectorAfterResize({
+      previous,
+      next: composition,
+      inspectorOpen: inspectorOpenRef.current,
+      sheetOpen: sheetOpenRef.current,
+    });
+    setInspectorOpen(next.inspectorOpen);
+    setSheetOpen(next.sheetOpen);
+
+    const inspectorHeldFocus = Boolean(
+      dockedInspectorRef.current?.contains(document.activeElement)
+    );
+    if (previous === "stacked" && sheetOpenRef.current) {
+      inspectorToggleRef.current?.focus();
+    } else if (inspectorHeldFocus && !next.inspectorOpen && !next.sheetOpen) {
+      inspectorToggleRef.current?.focus();
+    }
+  }, [composition]);
+
+  function currentComposition(): FormStudioComposition | null {
+    return composition ?? getLiveFormStudioComposition();
+  }
+
+  function revealInspector() {
+    const mode = currentComposition();
+    if (mode === "stacked") {
+      setSheetOpen(true);
+      return;
+    }
+
+    if (mode !== "three-pane") {
+      setInspectorOpen(true);
+    }
+  }
+
+  function collapseDockedInspector() {
+    const root = dockedInspectorRef.current;
+    if (root && root.contains(document.activeElement)) {
+      inspectorToggleRef.current?.focus();
+    }
+    setInspectorOpen(false);
+  }
+
+  function toggleInspector() {
+    if (currentComposition() === "stacked") {
+      setSheetOpen((open) => !open);
+      return;
+    }
+
+    if (inspectorOpen) {
+      collapseDockedInspector();
+      return;
+    }
+
+    setInspectorOpen(true);
+  }
 
   const applySchema = useCallback(
     (next: ActivityFormSchema) => {
@@ -314,18 +444,80 @@ export function FormCompositionBuilder({
     }
   }
 
+  const inspectorFields = (
+    <>
+      {!selectedNode ? (
+        <p className="text-sm text-text-muted-warm">
+          Select a block to configure its settings.
+        </p>
+      ) : selectedNode.kind === "fieldRef" && selectedFieldIndex !== null ? (
+        <>
+          {columnMoveControls}
+          <FormFieldEditor
+            schema={schema}
+            onChange={onChange}
+            disabled={disabled}
+            recipesLocked={recipesLocked}
+            corePlusLocked={corePlusLocked}
+            stepsEnabled={stepsEnabled}
+            stepsLocked={stepsLocked}
+            inspectorOnly
+            inspectorFieldIndex={selectedFieldIndex}
+            onCompositionBlockIdRenamed={(_previous, nextBlockId) => {
+              setSelectedBlockId(nextBlockId);
+            }}
+          />
+        </>
+      ) : (
+        <>
+          {columnMoveControls}
+          <FormCompositionInspector
+            schema={schema}
+            node={selectedNode}
+            onChange={onChange}
+            disabled={disabled}
+          />
+        </>
+      )}
+    </>
+  );
+
   const showConversationalPresentationNotice =
     conversationalFlowActive &&
     compositionHasPresentationBlocks(schema.fields, schema.composition);
 
   return (
     <div className={cn("space-y-4", className)}>
-      <div>
-        <h2 className="text-section text-text-warm">Form builder</h2>
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Add blocks, arrange structure, and configure fields. Preview updates as
-          you edit — save when ready.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-section text-text-warm">Form builder</h2>
+          <p className="mt-1 text-sm text-text-muted-warm">
+            Add blocks, arrange structure, and configure fields. Preview updates as
+            you edit — save when ready.
+          </p>
+        </div>
+        <Button
+          ref={inspectorToggleRef}
+          id={FORM_STUDIO_INSPECTOR_TOGGLE_ID}
+          type="button"
+          variant="outline"
+          className="min-h-11 min-w-11 shrink-0 px-3 xl:hidden"
+          disabled={disabled}
+          aria-expanded={inspectorExpanded}
+          aria-controls={
+            composition === "stacked" && !sheetOpen
+              ? undefined
+              : FORM_STUDIO_INSPECTOR_ID
+          }
+          onClick={toggleInspector}
+        >
+          Block properties
+          <span className="sr-only">
+            {selectedNode
+              ? `, ${blockTitle(selectedNode, schema)}`
+              : ", no block selected"}
+          </span>
+        </Button>
       </div>
 
       {showConversationalPresentationNotice ? (
@@ -337,8 +529,13 @@ export function FormCompositionBuilder({
         </div>
       ) : null}
 
-      <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,18rem)]">
+      <div
+        data-form-studio-workspace=""
+        data-form-studio-composition={composition ?? "pending"}
+        className="relative grid min-w-0 gap-4 lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,18rem)]"
+      >
         <aside
+          data-form-studio-palette=""
           aria-labelledby="form-block-palette-heading"
           className={cn(panelShell, "p-3")}
         >
@@ -470,7 +667,11 @@ export function FormCompositionBuilder({
           </Button>
         </aside>
 
-        <section className={panelShell} aria-label="Form structure">
+        <section
+          data-form-studio-canvas=""
+          className={panelShell}
+          aria-label="Form structure"
+        >
           <div className="border-b border-border-warm px-4 py-3">
             <h3 className="text-sm font-semibold text-text-warm">Form structure</h3>
             <p className="mt-1 text-xs text-text-muted-warm">
@@ -684,7 +885,10 @@ export function FormCompositionBuilder({
                             role="option"
                             aria-selected={isSelected}
                             disabled={disabled}
-                            onClick={() => setSelectedBlockId(node.id)}
+                            onClick={() => {
+                              setSelectedBlockId(node.id);
+                              revealInspector();
+                            }}
                             className="min-w-0 flex-1 rounded-md px-2 py-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             <p className="truncate text-sm font-medium text-text-warm">
@@ -719,52 +923,61 @@ export function FormCompositionBuilder({
           </div>
         </section>
 
-        <section className={cn(panelShell, "min-h-[20rem] lg:min-h-[28rem]")}>
-          <div className="border-b border-border-warm px-4 py-3">
-            <h3 className="text-sm font-semibold text-text-warm">Block properties</h3>
-            <p className="mt-1 text-xs text-text-muted-warm">
-              {selectedNode
-                ? `${blockTypeLabel(selectedNode)} · ${blockTitle(selectedNode, schema)}`
-                : "Select a block in the form structure to edit it."}
-            </p>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-            {!selectedNode ? (
-              <p className="text-sm text-text-muted-warm">
-                Select a block to configure its settings.
-              </p>
-            ) : selectedNode.kind === "fieldRef" && selectedFieldIndex !== null ? (
-              <>
-                {columnMoveControls}
-                <FormFieldEditor
-                  schema={schema}
-                  onChange={onChange}
-                  disabled={disabled}
-                  recipesLocked={recipesLocked}
-                  corePlusLocked={corePlusLocked}
-                  stepsEnabled={stepsEnabled}
-                  stepsLocked={stepsLocked}
-                  inspectorOnly
-                  inspectorFieldIndex={selectedFieldIndex}
-                  onCompositionBlockIdRenamed={(_previous, nextBlockId) => {
-                    setSelectedBlockId(nextBlockId);
-                  }}
-                />
-              </>
-            ) : (
-              <>
-                {columnMoveControls}
-                <FormCompositionInspector
-                  schema={schema}
-                  node={selectedNode}
-                  onChange={onChange}
-                  disabled={disabled}
-                />
-              </>
+        {!isStacked ? (
+          <section
+            ref={dockedInspectorRef}
+            id={FORM_STUDIO_INSPECTOR_ID}
+            data-form-studio-inspector="docked"
+            data-open={inspectorOpen ? "true" : "false"}
+            hidden={isTwoPane && !inspectorOpen}
+            inert={isTwoPane && !inspectorOpen ? true : undefined}
+            aria-labelledby="form-studio-inspector-heading"
+            className={cn(
+              panelShell,
+              "min-h-[20rem] max-lg:hidden lg:min-h-[28rem] lg:max-xl:hidden xl:flex",
+              isTwoPane &&
+                inspectorOpen &&
+                "absolute inset-y-0 right-0 z-20 w-[min(18rem,calc(100%-1rem))] shadow-lg lg:max-xl:flex",
+              "xl:static xl:w-auto xl:shadow-none"
             )}
-          </div>
-        </section>
+          >
+            <div className="border-b border-border-warm px-4 py-3">
+              <h3
+                id="form-studio-inspector-heading"
+                className="text-sm font-semibold text-text-warm"
+              >
+                Block properties
+              </h3>
+              <p className="mt-1 text-xs text-text-muted-warm">{selectedContext}</p>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+              {inspectorFields}
+            </div>
+          </section>
+        ) : null}
       </div>
+
+      {isStacked ? (
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetContent
+            side="right"
+            className="flex w-full flex-col gap-0 p-0 sm:max-w-md"
+            finalFocus={inspectorToggleRef}
+          >
+            <SheetHeader className="shrink-0 border-b border-border-warm text-left">
+              <SheetTitle>Block properties</SheetTitle>
+              <SheetDescription>{selectedContext}</SheetDescription>
+            </SheetHeader>
+            <div
+              id={FORM_STUDIO_INSPECTOR_ID}
+              data-form-studio-inspector="sheet"
+              className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
+            >
+              {inspectorFields}
+            </div>
+          </SheetContent>
+        </Sheet>
+      ) : null}
 
       <FormFieldPaletteDialog
         open={paletteOpen}
