@@ -35,4 +35,4 @@ Isolated tenants created through the existing platform + TenantAdmin helpers. Na
 
 ## Production patch
 
-None so far. Isolated PostgreSQL runs translated `Status == Archived ? 1 : 0` and the registration-count subquery. The first full-suite mismatch was fixture timestamp / expiration drift, not a list-query defect. This file is updated again if a later PostgreSQL run proves a production translation bug.
+None. PostgreSQL translated `Status == Archived ? 1 : 0` and the registration-count subquery. The earlier full-suite mismatch was fixture timestamp / expiration drift (`Saturday 10:00` + unquoted `updated_at`), not a list-query defect. After the fixture lock, the three facts passed in isolation and inside the 132-test integration run.

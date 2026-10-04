@@ -197,3 +197,4 @@ Grok 4.6
 - 2026-10-04: Created Story 40.4 from main `327c0a4a`. Inventory and contracts locked. Story 40.5 not started.
 - 2026-10-04: Implemented server Archived-last sort, list/detail honesty, Draft archive dialog. Tests recorded. Status `review`.
 - 2026-10-04: Added PostgreSQL API integration coverage for `ListAsync` ordering/paging. Status remains `review`. Epic 40 remains in-progress. Story 40.5 not started.
+- 2026-10-04: PostgreSQL facts 3/3 inside the full integration run. Production `ListAsync` unchanged. Status remains `review`.
