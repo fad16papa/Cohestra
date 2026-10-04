@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Platform Ops &amp; Support — Brainstorm Keepsake · 2026-08-18</title>
+<style>
+  :root {
+    --paper: #f4efe6;
+    --paper-warm: #ebe4d6;
+    --ink: #2a2520;
+    --ink-soft: #5c5348;
+    --ink-faint: #8a8074;
+    --lagoon: #3d6b6b;
+    --lagoon-light: #5a8f8f;
+    --lagoon-mist: #d4e4e4;
+    --stamp-red: #8b3a3a;
+    --stamp-ink: #6b2020;
+    --clubhouse: #e8ddd0;
+    --desk: #f0ebe2;
+    --divider: #c4b8a8;
+    --accent-gold: #b8956a;
+    --shadow: rgba(42, 37, 32, 0.08);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: Georgia, "Times New Roman", serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.65;
+    font-size: 17px;
+    min-height: 100vh;
+  }
+
+  /* Paper grain overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .atelier {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* Header — ops desk masthead */
+  header.desk-masthead {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2.5rem;
+    position: relative;
+  }
+
+  header.desk-masthead h1 {
+    font-size: 1.75rem;
+    font-weight: normal;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.35rem;
+  }
+
+  header.desk-masthead .subtitle {
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 1rem;
+  }
+
+  .meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    font-family: "Courier New", monospace;
+  }
+
+  /* Sealed stamp */
+  .stamp-seal {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 120px;
+    border: 3px double var(--stamp-red);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(12deg);
+    opacity: 0.85;
+    pointer-events: none;
+  }
+
+  .stamp-seal span {
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--stamp-ink);
+    line-height: 1.3;
+    font-family: "Courier New", monospace;
+  }
+
+  /* Two columns — never merge */
+  .dual-realm {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-bottom: 3rem;
+    border: 1px solid var(--divider);
+    min-height: 200px;
+    position: relative;
+  }
+
+  .dual-realm::after {
+    content: "— never merge —";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    background: var(--paper);
+    padding: 0.5rem 0.75rem;
+    white-space: nowrap;
+    font-family: "Courier New", monospace;
+    z-index: 2;
+  }
+
+  .realm {
+    padding: 1.5rem;
+    position: relative;
+  }
+
+  .realm.clubhouse {
+    background: var(--clubhouse);
+    border-right: 2px dashed var(--divider);
+  }
+
+  .realm.staff-desk {
+    background: var(--desk);
+  }
+
+  .realm-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--lagoon);
+    margin-bottom: 0.75rem;
+    font-family: "Courier New", monospace;
+  }
+
+  .realm h2 {
+    font-size: 1.1rem;
+    font-weight: normal;
+    margin-bottom: 0.75rem;
+  }
+
+  .realm ul {
+    list-style: none;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+
+  .realm li {
+    padding: 0.25rem 0;
+    padding-left: 1rem;
+    position: relative;
+  }
+
+  .realm li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: var(--lagoon-light);
+    font-size: 0.75rem;
+  }
+
+  /* Technique sections */
+  section.technique {
+    margin-bottom: 3.5rem;
+    scroll-margin-top: 1rem;
+  }
+
+  .technique-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--divider);
+  }
+
+  .technique-num {
+    font-family: "Courier New", monospace;
+    font-size: 0.75rem;
+    color: var(--lagoon);
+    letter-spacing: 0.1em;
+  }
+
+  .technique-header h2 {
+    font-size: 1.35rem;
+    font-weight: normal;
+    flex: 1;
+  }
+
+  .technique-tag {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    font-family: "Courier New", monospace;
+  }
+
+  /* JTBD — hiring cards */
+  .jtbd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .hire-card {
+    background: var(--paper-warm);
+    border: 1px solid var(--divider);
+    padding: 1rem 1.1rem;
+    position: relative;
+    transition: box-shadow 0.2s;
+  }
+
+  .hire-card:hover {
+    box-shadow: 3px 3px 0 var(--shadow);
+  }
+
+  .hire-card .who {
+    font-size: 0.75rem;
+    color: var(--lagoon);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.35rem;
+    font-family: "Courier New", monospace;
+  }
+
+  .hire-card .job {
+    font-size: 0.95rem;
+    color: var(--ink);
+  }
+
+  .hire-card .job em {
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+
+  /* Constraint mapping */
+  .constraint-map {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 700px) {
+    .dual-realm, .constraint-map { grid-template-columns: 1fr; }
+    .dual-realm::after { display: none; }
+    .realm.clubhouse { border-right: none; border-bottom: 2px dashed var(--divider); }
+    .stamp-seal { position: relative; margin: 1rem auto 0; }
+  }
+
+  .constraint-col h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+    font-family: "Courier New", monospace;
+  }
+
+  .constraint-col.real h3 { color: var(--stamp-red); }
+  .constraint-col.asset h3 { color: var(--lagoon); }
+  .constraint-col.gap h3 { color: var(--accent-gold); }
+
+  .constraint-item {
+    background: white;
+    border-left: 3px solid var(--divider);
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+
+  .constraint-col.real .constraint-item { border-left-color: var(--stamp-red); }
+  .constraint-col.asset .constraint-item { border-left-color: var(--lagoon); }
+  .constraint-col.gap .constraint-item { border-left-color: var(--accent-gold); }
+
+  .constraint-item strong {
+    color: var(--ink);
+    font-weight: normal;
+    font-style: italic;
+  }
+
+  /* Fishbone */
+  .fishbone-wrap {
+    overflow-x: auto;
+    padding: 1rem 0;
+  }
+
+  .fishbone {
+    min-width: 600px;
+    position: relative;
+    padding: 2rem 0;
+  }
+
+  .spine {
+    height: 3px;
+    background: var(--ink);
+    position: relative;
+    margin: 3rem 0;
+  }
+
+  .spine::after {
+    content: "▶";
+    position: absolute;
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    color: var(--ink);
+  }
+
+  .spine-label {
+    position: absolute;
+    right: 1rem;
+    top: -1.5rem;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+
+  .bone {
+    position: absolute;
+    width: 2px;
+    background: var(--divider);
+    transform-origin: bottom center;
+  }
+
+  .bone-group {
+    position: absolute;
+    font-size: 0.78rem;
+  }
+
+  .bone-group .category {
+    font-family: "Courier New", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--lagoon);
+    font-size: 0.7rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .bone-group ul {
+    list-style: none;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+
+  .bone-group li { padding: 0.15rem 0; }
+
+  .fishbone-bones {
+    position: relative;
+    height: 320px;
+  }
+
+  .bone-top-left { left: 12%; top: 0; }
+  .bone-top-right { right: 12%; top: 0; }
+  .bone-mid-left { left: 35%; top: 0; }
+  .bone-mid-right { right: 35%; top: 0; }
+  .bone-bot-left { left: 58%; top: 0; }
+  .bone-bot-right { right: 58%; top: 0; }
+
+  /* Assumption reversal */
+  .reversal-pairs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .reversal-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0.75rem;
+    align-items: center;
+    font-size: 0.88rem;
+  }
+
+  @media (max-width: 600px) {
+    .reversal-row { grid-template-columns: 1fr; text-align: center; }
+    .reversal-arrow { transform: rotate(90deg); }
+  }
+
+  .assume {
+    background: #f0e8e0;
+    border: 1px dashed var(--divider);
+    padding: 0.65rem 0.9rem;
+    color: var(--ink-faint);
+    text-decoration: line-through;
+    text-decoration-color: var(--stamp-red);
+    font-style: italic;
+  }
+
+  .reversal-arrow {
+    color: var(--lagoon);
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .reverse {
+    background: var(--lagoon-mist);
+    border: 1px solid var(--lagoon-light);
+    padding: 0.65rem 0.9rem;
+    color: var(--ink);
+  }
+
+  /* Worst possible idea */
+  .worst-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .worst-card {
+    background: #2a2520;
+    color: #d4cfc6;
+    padding: 1rem;
+    font-size: 0.82rem;
+    position: relative;
+    cursor: default;
+    transition: transform 0.15s;
+  }
+
+  .worst-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .worst-card .bad-idea {
+    text-decoration: line-through;
+    color: #a08080;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .worst-card .teaches {
+    color: var(--lagoon-mist);
+    font-size: 0.78rem;
+    border-top: 1px solid #4a4540;
+    padding-top: 0.5rem;
+    margin-top: 0.35rem;
+  }
+
+  .worst-card .teaches::before {
+    content: "→ teaches: ";
+    color: var(--accent-gold);
+    font-style: italic;
+  }
+
+  .worst-card.killed {
+    opacity: 0.5;
+    border: 2px solid var(--stamp-red);
+  }
+
+  .worst-card.killed::after {
+    content: "KILLED";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.6rem;
+    color: var(--stamp-red);
+    font-family: "Courier New", monospace;
+    letter-spacing: 0.1em;
+  }
+
+  /* Backcasting timeline */
+  .backcast {
+    position: relative;
+    padding-left: 2rem;
+  }
+
+  .backcast::before {
+    content: "";
+    position: absolute;
+    left: 0.4rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--lagoon-light), var(--accent-gold), var(--stamp-red));
+  }
+
+  .backcast-node {
+    position: relative;
+    margin-bottom: 1.25rem;
+    padding-left: 1rem;
+  }
+
+  .backcast-node::before {
+    content: "";
+    position: absolute;
+    left: -1.65rem;
+    top: 0.45rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 2px solid var(--lagoon);
+  }
+
+  .backcast-node.future::before {
+    border-color: var(--lagoon-light);
+    background: var(--lagoon-mist);
+  }
+
+  .backcast-node.first::before {
+    border-color: var(--accent-gold);
+    background: var(--accent-gold);
+  }
+
+  .backcast-node.not-first::before {
+    border-color: var(--ink-faint);
+    background: var(--paper-warm);
+  }
+
+  .backcast-node .phase {
+    font-family: "Courier New", monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    margin-bottom: 0.2rem;
+  }
+
+  .backcast-node.future .phase { color: var(--lagoon); }
+  .backcast-node.first .phase { color: var(--accent-gold); }
+
+  /* Synthesis climax */
+  .synthesis {
+    background: linear-gradient(135deg, var(--lagoon) 0%, #2d5555 100%);
+    color: #e8f0f0;
+    padding: 2.5rem 2rem;
+    margin-top: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .synthesis::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 60%;
+    height: 200%;
+    background: radial-gradient(ellipse, rgba(255,255,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .synthesis h2 {
+    font-size: 1.5rem;
+    font-weight: normal;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 0.75rem;
+  }
+
+  .insight-block {
+    margin-bottom: 1.5rem;
+  }
+
+  .insight-block h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    opacity: 0.7;
+    margin-bottom: 0.75rem;
+    font-family: "Courier New", monospace;
+  }
+
+  .insight-list {
+    list-style: none;
+  }
+
+  .insight-list li {
+    padding: 0.5rem 0;
+    padding-left: 1.25rem;
+    position: relative;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .insight-list li::before {
+    content: "◆";
+    position: absolute;
+    left: 0;
+    font-size: 0.6rem;
+    top: 0.65rem;
+    opacity: 0.6;
+  }
+
+  .decision-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  @media (max-width: 600px) {
+    .decision-grid { grid-template-columns: 1fr; }
+  }
+
+  .decision-col h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.75rem;
+    font-family: "Courier New", monospace;
+  }
+
+  .decision-col.kill h3 { color: #e8a0a0; }
+  .decision-col.keep h3 { color: #a0d8d8; }
+
+  .decision-col ul {
+    list-style: none;
+    font-size: 0.88rem;
+  }
+
+  .decision-col li {
+    padding: 0.35rem 0;
+    opacity: 0.9;
+  }
+
+  .next-slice {
+    margin-top: 2rem;
+    padding: 1.25rem 1.5rem;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .next-slice h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.75rem;
+    color: var(--accent-gold);
+    font-family: "Courier New", monospace;
+  }
+
+  .next-slice p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+
+  /* Gmail ticket folder motif */
+  .gmail-folder {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--paper-warm);
+    border: 1px solid var(--divider);
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    font-family: "Courier New", monospace;
+    margin-bottom: 1rem;
+  }
+
+  .gmail-folder::before {
+    content: "📧";
+    font-size: 0.9rem;
+  }
+
+  /* Tenant folder tabs */
+  .tenant-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .tenant-tab {
+    background: var(--clubhouse);
+    border: 1px solid var(--divider);
+    border-bottom: none;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    font-family: "Courier New", monospace;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .tenant-tab:hover, .tenant-tab.active {
+    background: var(--paper-warm);
+    color: var(--ink);
+  }
+
+  /* Nav */
+  nav.technique-nav {
+    position: sticky;
+    top: 0;
+    background: rgba(244, 239, 230, 0.95);
+    backdrop-filter: blur(4px);
+    border-bottom: 1px solid var(--divider);
+    padding: 0.6rem 0;
+    margin: 0 -1.5rem 2rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    z-index: 100;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    font-size: 0.72rem;
+    font-family: "Courier New", monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  nav.technique-nav a {
+    color: var(--lagoon);
+    text-decoration: none;
+  }
+
+  nav.technique-nav a:hover {
+    text-decoration: underline;
+  }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--divider);
+    font-size: 0.75rem;
+    color: var(--ink-faint);
+    text-align: center;
+    font-family: "Courier New", monospace;
+  }
+
+  /* Shipped context note */
+  .shipped-note {
+    background: white;
+    border: 1px solid var(--divider);
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+
+  .shipped-note strong {
+    color: var(--ink);
+    font-weight: normal;
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: "Courier New", monospace;
+  }
+</style>
+</head>
+<body>
+<div class="atelier">
+
+  <header class="desk-masthead">
+    <div class="stamp-seal" aria-hidden="true">
+      <span>No<br>Impersonation<br>FR-7</span>
+    </div>
+    <h1>Platform Ops &amp; Support</h1>
+    <p class="subtitle">What is missing. What helps ops run Cohestra and support tenant clubs.</p>
+    <div class="meta-strip">
+      <span>2026-08-18</span>
+      <span>Francis · Platform Admin</span>
+      <span>Epic 11 / 26 / 27</span>
+      <span>Status: complete</span>
+    </div>
+  </header>
+
+  <div class="shipped-note">
+    <strong>Already shipped</strong>
+    Tenant directory + detail (suspend/reactivate/archive, complimentary, recent audits); API Create tenant has no UI; support inbox list/detail/status/internal note/attachments; volume report + CSV; operator Settings Help files tickets with screenshots; two login doors — <code>/login</code> vs <code>/platform/login</code>.
+    PRD locks: FR-7 no impersonation; UX-DR16 sparse ops UI; directory aggregates no PII export; Suspend is abuse/ToS/freeze not collections; roles mutually exclusive.
+  </div>
+
+  <!-- Dual realm intro -->
+  <div class="dual-realm" id="realms">
+    <div class="realm clubhouse">
+      <div class="realm-label">Clubhouse · tenant</div>
+      <h2>{slug}/dashboard</h2>
+      <ul>
+        <li>Operator runs the club</li>
+        <li>Settings → Help files SUP tickets</li>
+        <li>Locked out? Cannot file a ticket (catch-22)</li>
+        <li>PastDue club needs billing explanation, not Suspend</li>
+        <li>Basic at 10/10 community cap</li>
+        <li>Complimentary pilot expects Sponsored Core</li>
+      </ul>
+      <div class="tenant-tabs" id="tenantTabs">
+        <span class="tenant-tab active" data-tab="0">apex-yoga</span>
+        <span class="tenant-tab" data-tab="1">load-test-07</span>
+        <span class="tenant-tab" data-tab="2">demo-pilot</span>
+      </div>
+    </div>
+    <div class="realm staff-desk">
+      <div class="realm-label">Staff desk · ops</div>
+      <h2>/platform/*</h2>
+      <ul>
+        <li>Francis matches Gmail SUP → club slug</li>
+        <li>Snapshot replaces login-as</li>
+        <li>Sparse console, not a second app</li>
+        <li>PlatformAdmin JWT — no tenant_id</li>
+        <li>Approved EF bypasses only</li>
+        <li>Separate browser profile for dual-role testing</li>
+      </ul>
+      <div class="gmail-folder">SUP-2847 · Waiting on you</div>
+    </div>
+  </div>
+
+  <nav class="technique-nav" aria-label="Techniques">
+    <a href="#jtbd">Job to Be Done</a>
+    <a href="#constraints">Constraint Mapping</a>
+    <a href="#fishbone">Fishbone</a>
+    <a href="#reversal">Assumption Reversal</a>
+    <a href="#worst">Worst Possible Idea</a>
+    <a href="#backcast">Backcasting</a>
+    <a href="#synthesis">Synthesis</a>
+  </nav>
+
+  <!-- JOB TO BE DONE -->
+  <section class="technique" id="jtbd">
+    <div class="technique-header">
+      <span class="technique-num">01</span>
+      <h2>Job to Be Done</h2>
+      <span class="technique-tag">Francis is hiring…</span>
+    </div>
+    <div class="jtbd-grid" id="jtbdGrid"></div>
+  </section>
+
+  <!-- CONSTRAINT MAPPING -->
+  <section class="technique" id="constraints">
+    <div class="technique-header">
+      <span class="technique-num">02</span>
+      <h2>Constraint Mapping</h2>
+      <span class="technique-tag">real · asset · gap</span>
+    </div>
+    <div class="constraint-map">
+      <div class="constraint-col real">
+        <h3>Real constraints</h3>
+        <div id="constraintsReal"></div>
+      </div>
+      <div class="constraint-col asset">
+        <h3>Assets</h3>
+        <div id="constraintsAsset"></div>
+      </div>
+    </div>
+    <div class="constraint-col gap" style="margin-top:1.5rem">
+      <h3>Gaps</h3>
+      <div id="constraintsGap"></div>
+    </div>
+  </section>
+
+  <!-- FISHBONE -->
+  <section class="technique" id="fishbone">
+    <div class="technique-header">
+      <span class="technique-num">03</span>
+      <h2>Fishbone Diagram</h2>
+      <span class="technique-tag">cause → effect</span>
+    </div>
+    <div class="fishbone-wrap">
+      <div class="fishbone">
+        <div class="fishbone-bones" id="fishboneBones"></div>
+        <div class="spine">
+          <span class="spine-label">Ops cannot support clubs without becoming the club</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ASSUMPTION REVERSAL -->
+  <section class="technique" id="reversal">
+    <div class="technique-header">
+      <span class="technique-num">04</span>
+      <h2>Assumption Reversal</h2>
+      <span class="technique-tag">flip the default</span>
+    </div>
+    <div class="reversal-pairs" id="reversalPairs"></div>
+  </section>
+
+  <!-- WORST POSSIBLE IDEA -->
+  <section class="technique" id="worst">
+    <div class="technique-header">
+      <span class="technique-num">05</span>
+      <h2>Worst Possible Idea</h2>
+      <span class="technique-tag">teaches by absurdity</span>
+    </div>
+    <div class="worst-gallery" id="worstGallery"></div>
+  </section>
+
+  <!-- BACKCASTING -->
+  <section class="technique" id="backcast">
+    <div class="technique-header">
+      <span class="technique-num">06</span>
+      <h2>Backcasting</h2>
+      <span class="technique-tag">finished future → first move</span>
+    </div>
+    <div class="backcast" id="backcastTimeline"></div>
+  </section>
+
+  <!-- SYNTHESIS CLIMAX -->
+  <section class="synthesis" id="synthesis">
+    <h2>Synthesis &amp; Decisions</h2>
+
+    <div class="insight-block">
+      <h3>Insights</h3>
+      <ul class="insight-list" id="insightList"></ul>
+    </div>
+
+    <div class="decision-grid">
+      <div class="decision-col kill">
+        <h3>Kill</h3>
+        <ul id="decisionKill"></ul>
+      </div>
+      <div class="decision-col keep">
+        <h3>Keep</h3>
+        <ul id="decisionKeep"></ul>
+      </div>
+    </div>
+
+    <div class="next-slice">
+      <h3>Next slice — forge this</h3>
+      <p id="nextSliceText"></p>
+    </div>
+  </section>
+
+  <footer>
+    Cohestra platform ops brainstorm · sole source: .memlog.md · 2026-08-18 · sparse atelier keepsake
+  </footer>
+</div>
+
+<script>
+(function() {
+  // JTBD data from memlog
+  const jtbd = [
+    { who: "Francis", job: "A way to match a Gmail SUP number to the right club without guessing slugs" },
+    { who: "Francis", job: "A freeze button when a tenant is abusing ToS before lawyers arrive" },
+    { who: "Locked-out operator", job: "Cohestra to get them back in without waiting for a code they never received" },
+    { who: "Complimentary pilot club", job: "Ops to flip Sponsored Core without Stripe theater" },
+    { who: "PastDue club", job: "Ops to explain billing without Suspend being used as collections" },
+    { who: "Support", job: "A tenant snapshot so they do not need to log into the club dashboard" },
+    { who: "Ops", job: "Last-login and last-registration so FR-25 dormancy is visible before archive day 90" },
+    { who: "Ops", job: "Owner email + seat list so they know who to reply to" },
+    { who: "Ops", job: "An audited password-reset send, not a login-as-them" },
+    { who: "Ops", job: "To provision a named workspace for a sales demo without SQL" },
+    { who: "Ops", job: "A global audit search when something went wrong last Tuesday" },
+    { who: "The operator", job: "A reply they can read in Settings, not a silent internal note" },
+    { who: "The operator", job: "<em>Waiting on you</em> to mean there is a question to answer" },
+    { who: "Gmail", job: "Copy-paste of issue number — the inbox already does that job; do not rebuild email" },
+    { who: "A second platform admin (future)", job: "Assignment so tickets are not everyone's and no one's" },
+    { who: "Incident response", job: "/ready plus a human board: email outbox, Stripe webhook lag, Redis" },
+    { who: "Sales", job: "Complimentary with an expiry date so pilots do not live forever" },
+    { who: "Finance", job: "A read-only Stripe/customer id and invoice status on tenant detail" },
+    { who: "Legal", job: "Suspend reason + notify-operator email as proof of notice" },
+    { who: "QA", job: "Seed/demo flags visible so they know why a tenant looks stuffed" },
+    { who: "Club on Basic at community cap", job: "Ops to see 10/10 without opening their dashboard" },
+    { who: "Ops", job: "Deep link ticket → tenant and tenant → open tickets" },
+    { who: "Ops", job: "User-agent already on the ticket to skip 'what browser' emails" },
+    { who: "Ops", job: "Not to export the client CRM — directory already promises no PII dump" },
+    { who: "Custom-domain future tenant", job: "Ops that still keys off slug not Host" },
+    { who: "On-call at 2am", job: "One search box: slug, email, SUP number, Stripe id" },
+    { who: "The operator who filed a ticket", job: "Status change email so they do not refresh Settings" },
+    { who: "Francis testing two roles", job: "A documented separate browser profile — not dual session on apex" },
+    { who: "Ops", job: "To resend OTP/verify email for a stuck signup without impersonation" },
+    { who: "Ops", job: "Archive restore in the 30-day window (API archive exists; restore UX is thin)" }
+  ];
+
+  const constraintsReal = [
+    "No impersonation in MVP (FR-7 / A-5 / UX-DR16) — dissolve by snapshot + audited recovery actions, never login-as",
+    "Directory must not export clients — route around with counts, caps, last-activity timestamps",
+    "Suspend must not be collections — asset: billing read-only panel with PastDue/OnHold labels",
+    "One Next app, two login doors — keep ops in /platform/*",
+    "PlatformAdmin JWT has no tenant_id — cannot call /admin/*; snapshot must be /platform APIs",
+    "Operator tickets exist; internal note is ops-only — gap is operator-visible reply thread",
+    "Create tenant API exists, no UI — ship the form, do not invent a new endpoint",
+    "Complimentary set/clear exists; no expiry — add end date later, do not rebuild Sponsored",
+    "Audit log is per-tenant recent only — gap is global search",
+    "Do not dissolve: tenant isolation filters — every new platform query is an approved bypass"
+  ];
+
+  const constraintsImagined = [
+    "We need a second ops app — killed last session",
+    "We need to sit in the tenant CRM to help — reverse with a health snapshot",
+    "Gmail integration must be bidirectional now — v1 is match-by-number; reply can live in-app",
+    "Multiple platform admins needed this sprint — seed is one user; assignment can wait"
+  ];
+
+  const constraintsAsset = [
+    "WaitingOnOperator status already exists — operator copy already says Waiting on you",
+    "Issue has tenantId, plan, userAgent, attachments — unused as an ops cockpit",
+    "adminContactEmail on tenant list — surface as mailto + ticket compose",
+    "Sparse UI — add one snapshot card, not a dashboard of charts",
+    "Billing read-only dials already exist on the tenant row"
+  ];
+
+  const constraintsGap = [
+    "No lastLoginAt / lastPublicRegistrationAt on tenant DTO",
+    "No plan-limit meters on platform tenant detail (communities 10/10 etc)",
+    "No operator membership list (emails/roles/last login)",
+    "No send-password-reset or resend-verify as platform action",
+    "No notify-operator on suspend/status change",
+    "No global platform audit index UI",
+    "No health/ops board (outbox, Stripe, seed flags)"
+  ];
+
+  const fishbone = {
+    People: [
+      "Francis is one human; tickets pile because there is no assignee or snooze",
+      "Operator emails fad16papa@gmail.com but tenant adminContactEmail may differ — two identities",
+      "Load Test tenants look like customers — no isLoadTest / isDemo badge on directory"
+    ],
+    Process: [
+      "Ticket lands; ops has no checklist (billing? limits? last login? screenshots?)",
+      "Internal note cannot be seen by operator so they file a second ticket",
+      "Status WaitingOnOperator does not email the operator",
+      "Suspend has no operator notice email — they discover via 403",
+      "Complimentary never expires — support later cannot explain why they still have Pro"
+    ],
+    Tools: [
+      "Inbox cannot filter by plan or tenant status",
+      "No open-ticket count on tenant detail",
+      "Directory search is slug/name only — not operator email",
+      "No copy-to-clipboard of SUP number on detail (operator form has copy)",
+      "Volume report is lagging indicators; no SLA clock",
+      "Cannot attach an ops screenshot back to the operator"
+    ],
+    Environment: [
+      "Apex localStorage collision makes dual-login testing lie — ops docs missing",
+      "Seed PlatformAdmin may be off in some compose files — ops cannot even log in",
+      "SendGrid sandbox in dev — 'email never arrived' tickets are environment not product"
+    ],
+    Causes: [
+      "Ops opens tenant dashboard in another tab and overwrites platform session — already diagnosed",
+      "No health snapshot so ops guesses plan limits from operator screenshots",
+      "Locked-out operator cannot file a ticket (must be logged in) — catch-22",
+      "Public signup stuck on OTP has no platform recovery path",
+      "Billing PastDue is on tenant DTO but directory does not filter by billingStatus",
+      "Archive is one-way in UI; restore story is FR-25 window but ops has no Restore button emphasis",
+      "Create tenant unused — sales asks for SQL provision",
+      "Audit actorUserId is a GUID not an email — unreadable in the UI"
+    ]
+  };
+
+  const reversals = [
+    { assume: "Ops must enter the tenant app", reverse: "Tenant snapshot is the product" },
+    { assume: "Support is a ticketing SaaS", reverse: "It is a Gmail matching layer plus tenant context" },
+    { assume: "Impersonation is how real SaaS supports", reverse: "Audited recovery actions beat login-as for isolation" },
+    { assume: "More charts help", reverse: "One checklist per ticket is the console" },
+    { assume: "Directory is the home", reverse: "Unassigned open tickets should be the home when count > 0" },
+    { assume: "Operator must be logged in to get help", reverse: "Public 'I cannot sign in' form keyed by email+slug, rate-limited" },
+    { assume: "Complimentary is forever", reverse: "Sponsored until date" },
+    { assume: "We cannot show billing", reverse: "Read-only billing dials already exist on the tenant row" },
+    { assume: "We must build Slack", reverse: "Email the operator using existing SendGrid" },
+    { assume: "Platform admins will be a team of ten", reverse: "Design for one Francis plus audit" },
+    { assume: "Client PII is needed to debug registration", reverse: "Registration counts and last-reg timestamp suffice" },
+    { assume: "Creating tenants is self-serve only", reverse: "Ops provision UI for pilots (API ready)" },
+    { assume: "Suspend is enough freeze", reverse: "Also block public registration while leaving metadata readable" },
+    { assume: "Internal notes are enough history", reverse: "Append-only timeline of status+replies" },
+    { assume: "Search is two boxes", reverse: "One omni-search" },
+    { assume: "Load-test tenants belong in the same list", reverse: "Default hide isLoadTest" },
+    { assume: "Docs are enough for dual-login", reverse: "Platform header warning when Host is tenant slug (already 307)" },
+    { assume: "FR-25 dormancy is automatic and invisible", reverse: "Show days-idle and warn-at-83 list" },
+    { assume: "Password reset is tenant self-serve only", reverse: "Platform can trigger the same OTP email audited" },
+    { assume: "Volume CSV is the report", reverse: "Ops wants this week's still-open list more than a chart" }
+  ];
+
+  const worstIdeas = [
+    { bad: "Login-as-tenant with a shared god password", teaches: "Never impersonate; use recovery emails", killed: false },
+    { bad: "Export all clients to CSV from platform", teaches: "Keep no-PII-export; counts only", killed: false },
+    { bad: "Auto-suspend any PastDue tenant", teaches: "Billing dials already exist; Suspend is ToS only", killed: false },
+    { bad: "Put Intercom in the tenant app pointing at Francis's phone", teaches: "Stay in SUP tickets", killed: false },
+    { bad: "Let platform admin edit activities to 'fix' them", teaches: "Isolation; tell the operator how", killed: false },
+    { bad: "Show full registration payloads on the ticket", teaches: "Screenshots the operator chose are the PII they consented to share", killed: false },
+    { bad: "A second Docker web for ops", teaches: "Do not revive", killed: true },
+    { bad: "Make /platform the default after any login", teaches: "Doors stay honest", killed: false },
+    { bad: "Slack bot that dumps JWT into channel", teaches: "Never", killed: false },
+    { bad: "AI auto-close tickets from subject keywords", teaches: "Humans own status", killed: false },
+    { bad: "Hide load-test tenants with no escape hatch", teaches: "Filter default off with a toggle", killed: false },
+    { bad: "Email every status change to every operator on the tenant", teaches: "Email the ticket filer only", killed: false },
+    { bad: "Complimentary Pro for anyone who files a ticket", teaches: "Sponsored stays an explicit audited action", killed: false },
+    { bad: "Store Gmail credentials in the API", teaches: "Stay match-by-number", killed: false },
+    { bad: "Let ops set operator passwords in cleartext", teaches: "Trigger reset email only", killed: false },
+    { bad: "Build a live screen-share into the console", teaches: "Screenshots on the ticket are enough for v2", killed: false },
+    { bad: "Merge tenant dashboard into platform with a tenant switcher", teaches: "PRD deferred tenant switcher; do not", killed: false },
+    { bad: "Page Francis on every new ticket via SMS", teaches: "Inbox badge + email to ops alias is enough", killed: false },
+    { bad: "Delete tenants hard from the UI", teaches: "Archive+retention only", killed: false },
+    { bad: "Show Stripe customer portal login as platform", teaches: "Read-only ids, operator owns Checkout", killed: false }
+  ];
+
+  const backcast = [
+    { phase: "Finished future", text: "Francis opens /platform and sees 3 open tickets, 1 PastDue tenant, 2 idle-Basic warnings — not an empty directory", type: "future" },
+    { phase: "Finished future", text: "Clicking a ticket shows tenant snapshot (plan, caps, last login, billing, open seat emails) beside the thread", type: "future" },
+    { phase: "Finished future", text: "He replies; operator sees it in Settings and gets email; internal notes stay hidden", type: "future" },
+    { phase: "Finished future", text: "Locked-out operator uses apex /support/cannot-sign-in; ops triggers reset; audit records it", type: "future" },
+    { phase: "Finished future", text: "Sales asks for a pilot; ops creates tenant in UI and marks Sponsored Core until date", type: "future" },
+    { phase: "Finished future", text: "He never opens {slug}/dashboard in the same browser profile as /platform", type: "future" },
+    { phase: "First move", text: "Tenant snapshot API + card on ticket detail AND tenant detail (same DTO)", type: "first" },
+    { phase: "Then", text: "Operator-visible reply + email on status/reply (filer only)", type: "first" },
+    { phase: "Then", text: "Omni-search email/slug/SUP on directory and inbox", type: "first" },
+    { phase: "Then", text: "Audited SendPasswordReset / ResendVerify on tenant members list", type: "first" },
+    { phase: "Then", text: "Create tenant form in directory (wraps existing POST)", type: "first" },
+    { phase: "Then", text: "Filter hide load-test/demo; billingStatus filter; open-ticket badge", type: "first" },
+    { phase: "Then", text: "Dormancy idle days on Basic + Free", type: "first" },
+    { phase: "Then", text: "Public cannot-sign-in intake (after recovery actions exist)", type: "first" },
+    { phase: "Also", text: "Ops home: if open tickets > 0, Support is the default landing instead of directory — tiny change, huge job-to-be-done", type: "first" },
+    { phase: "Also", text: "Audit actor email resolution so the timeline is human", type: "first" },
+    { phase: "Also", text: "mailto:adminContactEmail and deep links both ways", type: "first" },
+    { phase: "Also", text: "Document ops browser profile in README next to /platform/login", type: "first" },
+    { phase: "Also", text: "Platform health strip: API ready, last Stripe webhook, outbox depth — read-only, no graphs required", type: "first" },
+    { phase: "Not first", text: "Impersonation, SLA engine, Intercom, Stripe writes, second app", type: "not-first" }
+  ];
+
+  const insights = [
+    "The missing product is not a bigger ticketing SaaS. Ops cannot see the club without becoming the club — snapshot + audited recovery replaces impersonation.",
+    "Tickets already have tenantId/plan/userAgent; tenant rows already have billing dials and adminContactEmail. The gap is joining them on one screen and talking back to the filer.",
+    "Locked-out operators cannot file tickets — the catch-22 is the real support hole, not another inbox column.",
+    "Create-tenant and complimentary already exist in API/UI fragments; the next slice is packaging (snapshot, reply, recovery, provision form, omni-search) not greenfield.",
+    "Directory-as-home fights the job; open tickets are what Francis hires the console to do on a weekday."
+  ];
+
+  const kill = [
+    "Impersonation",
+    "Client PII export",
+    "Stripe writes",
+    "Second web app",
+    "Intercom",
+    "Login-as",
+    "Activity editing from platform"
+  ];
+
+  const keep = [
+    "Two login doors",
+    "Sparse UI",
+    "Suspend = ToS only",
+    "Gmail match-by-SUP",
+    "PlatformAdminOnly APIs as approved EF bypasses"
+  ];
+
+  const nextSlice = "Tenant Snapshot + Operator Reply + Recovery actions + Create-tenant UI + omni-search; home prefers open tickets.";
+
+  // Render JTBD
+  const jtbdGrid = document.getElementById('jtbdGrid');
+  jtbd.forEach(function(item) {
+    const card = document.createElement('div');
+    card.className = 'hire-card';
+    card.innerHTML = '<div class="who">' + item.who + ' is hiring</div><div class="job">' + item.job + '</div>';
+    jtbdGrid.appendChild(card);
+  });
+
+  // Render constraints
+  function renderConstraints(arr, containerId) {
+    const el = document.getElementById(containerId);
+    arr.forEach(function(text) {
+      const div = document.createElement('div');
+      div.className = 'constraint-item';
+      div.innerHTML = text;
+      el.appendChild(div);
+    });
+  }
+  renderConstraints(constraintsReal, 'constraintsReal');
+  constraintsImagined.forEach(function(text) {
+    const div = document.createElement('div');
+    div.className = 'constraint-item';
+    div.innerHTML = '<strong>Imagined:</strong> ' + text;
+    document.getElementById('constraintsReal').appendChild(div);
+  });
+  renderConstraints(constraintsAsset, 'constraintsAsset');
+  renderConstraints(constraintsGap, 'constraintsGap');
+
+  // Render fishbone
+  const fishboneBones = document.getElementById('fishboneBones');
+  const categories = Object.keys(fishbone);
+  const positions = [
+    { cls: 'bone-top-left', top: '0', align: 'left' },
+    { cls: 'bone-top-right', top: '0', align: 'right' },
+    { cls: 'bone-mid-left', top: '80px', align: 'left' },
+    { cls: 'bone-mid-right', top: '80px', align: 'right' },
+    { cls: 'bone-bot-left', top: '160px', align: 'left' }
+  ];
+  categories.forEach(function(cat, i) {
+    const pos = positions[i] || positions[0];
+    const group = document.createElement('div');
+    group.className = 'bone-group ' + pos.cls;
+    group.style.cssText = 'top:' + pos.top + ';' + (pos.align === 'right' ? 'right:0;text-align:right;' : 'left:0;');
+    let html = '<div class="category">' + cat + '</div><ul>';
+    fishbone[cat].forEach(function(item) {
+      html += '<li>' + item + '</li>';
+    });
+    html += '</ul>';
+    group.innerHTML = html;
+    fishboneBones.appendChild(group);
+  });
+  // Causes as bottom center
+  const causesGroup = document.createElement('div');
+  causesGroup.className = 'bone-group';
+  causesGroup.style.cssText = 'bottom:0;left:50%;transform:translateX(-50%);text-align:center;max-width:90%;';
+  let causesHtml = '<div class="category">Root causes</div><ul style="columns:2;column-gap:1.5rem;text-align:left;">';
+  fishbone.Causes.forEach(function(item) {
+    causesHtml += '<li>' + item + '</li>';
+  });
+  causesHtml += '</ul>';
+  causesGroup.innerHTML = causesHtml;
+  fishboneBones.appendChild(causesGroup);
+
+  // Render reversals
+  const reversalPairs = document.getElementById('reversalPairs');
+  reversals.forEach(function(r) {
+    const row = document.createElement('div');
+    row.className = 'reversal-row';
+    row.innerHTML = '<div class="assume">' + r.assume + '</div><div class="reversal-arrow">⟲</div><div class="reverse">' + r.reverse + '</div>';
+    reversalPairs.appendChild(row);
+  });
+
+  // Render worst ideas
+  const worstGallery = document.getElementById('worstGallery');
+  worstIdeas.forEach(function(w) {
+    const card = document.createElement('div');
+    card.className = 'worst-card' + (w.killed ? ' killed' : '');
+    card.innerHTML = '<span class="bad-idea">' + w.bad + '</span><span class="teaches">' + w.teaches + '</span>';
+    worstGallery.appendChild(card);
+  });
+
+  // Render backcast
+  const backcastTimeline = document.getElementById('backcastTimeline');
+  backcast.forEach(function(b) {
+    const node = document.createElement('div');
+    node.className = 'backcast-node ' + b.type;
+    node.innerHTML = '<div class="phase">' + b.phase + '</div><div>' + b.text + '</div>';
+    backcastTimeline.appendChild(node);
+  });
+
+  // Render synthesis
+  const insightList = document.getElementById('insightList');
+  insights.forEach(function(text) {
+    const li = document.createElement('li');
+    li.textContent = text;
+    insightList.appendChild(li);
+  });
+
+  const decisionKill = document.getElementById('decisionKill');
+  kill.forEach(function(item) {
+    const li = document.createElement('li');
+    li.textContent = '✕ ' + item;
+    decisionKill.appendChild(li);
+  });
+
+  const decisionKeep = document.getElementById('decisionKeep');
+  keep.forEach(function(item) {
+    const li = document.createElement('li');
+    li.textContent = '✓ ' + item;
+    decisionKeep.appendChild(li);
+  });
+
+  document.getElementById('nextSliceText').textContent = nextSlice;
+
+  // Tenant tab interaction (cosmetic)
+  document.querySelectorAll('.tenant-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.tenant-tab').forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+    });
+  });
+
+  // Prevent realm merge on hover (visual reinforcement)
+  document.querySelector('.dual-realm').addEventListener('mouseenter', function() {
+    this.style.outline = '2px solid var(--lagoon)';
+    this.style.outlineOffset = '4px';
+  });
+  document.querySelector('.dual-realm').addEventListener('mouseleave', function() {
+    this.style.outline = 'none';
+  });
+})();
+</script>
+</body>
+</html>
