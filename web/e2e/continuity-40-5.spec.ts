@@ -267,6 +267,9 @@ test.describe("Story 40.5 — cross-module continuity", () => {
       await expect(page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Follow-up" })).toBeVisible();
       break;
     }
+    if (registrationProof === "no-client-with-activity-id") {
+      throw new Error("AC4 requires a registration history row with a real activityId.");
+    }
     proofs.registrationActivity = registrationProof;
 
     await openAuthed(page, session, `/clients/${firstClientId}?ctx=https://evil.test`);
