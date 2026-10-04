@@ -2,7 +2,7 @@
 id: 41.2
 key: 41-2-cohestra-ai-room
 title: Cohestra AI room
-status: in-progress
+status: review
 epic: 41
 created: 2026-10-04
 baseline_commit: bb420f89446ef78445fbdd4f655b6752cfd7d713
@@ -10,7 +10,7 @@ baseline_commit: bb420f89446ef78445fbdd4f655b6752cfd7d713
 
 # Story 41.2: Cohestra AI room
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -92,10 +92,10 @@ Story 41.2 `review`. Epic 41 `in-progress`. 41.1 remains `done`. 41.3 not starte
 
 ## Tasks / Subtasks
 
-- [ ] Inventory and contracts recorded
-- [ ] Shared typed insight presentation + allowlisted hrefs
-- [ ] `/ai` room states + Dashboard Needs attention preserved
-- [ ] Unit + Playwright 41.2 + protected 34 / 38–41.1
+- [x] Inventory and contracts recorded
+- [x] Shared typed insight presentation + allowlisted hrefs
+- [x] `/ai` room states + Dashboard Needs attention preserved
+- [x] Unit + Playwright 41.2 + protected 34 / 38–41.1
 
 ## Dev Agent Record
 
@@ -105,10 +105,29 @@ Grok 4.6 (primary). Composer 2.5 unused.
 
 ### Debug Log References
 
+See `_bmad-output/planning-artifacts/evidence/px2-41-2/test-results.md` and `review.md`.
+
 ### Completion Notes List
 
+- Existing intelligence brief is the Cohestra AI room. No new backend, KPIs, chat, or provider.
+- Dashboard section remains Needs attention and links to `/ai`.
+- Story 41.2 is `review`. Epic 41 stays `in-progress`. Story 41.1 remains done. Story 41.3 was not started.
+- Production is not claimed.
+
 ### File List
+
+- `_bmad-output/implementation-artifacts/41-2-cohestra-ai-room.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/planning-artifacts/evidence/px2-41-2/**`
+- `web/app/(admin)/ai/page.tsx`
+- `web/components/dashboard/dashboard-intelligence-brief.tsx`
+- `web/components/intelligence/cohestra-ai-page-client.tsx`
+- `web/components/intelligence/intelligence-insight-card.tsx`
+- `web/e2e/ai-41-2.spec.ts`
+- `web/lib/intelligence-api.ts`
+- `web/lib/intelligence-api.test.ts`
 
 ### Change Log
 
 - 2026-10-04: Created Story 41.2 from main `bb420f89`. Epic 41 in-progress. Story 41.1 remains done. Story 41.3 not started.
+- 2026-10-04: Implementation + QA + four-layer review. Tracker moved to `review`. Draft PR #379.

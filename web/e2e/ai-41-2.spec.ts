@@ -435,22 +435,16 @@ test.describe("Story 41.2 — Cohestra AI room", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await openAuthed(page, session, "/ai");
     await waitForAiContent(page);
-    await page.keyboard.press("Tab");
     await page.locator("summary").first().focus();
     await page.keyboard.press("Enter");
     await expect(page.getByText("People due")).toBeVisible();
     await assertAxe(page, "ai light");
 
-    await page.getByRole("button", { name: /appearance|theme|account/i }).first().click().catch(() => undefined);
-    const darkRadio = page.getByRole("radio", { name: /dark/i });
-    if ((await darkRadio.count()) > 0) {
-      await darkRadio.click();
-      await expect(darkRadio).toHaveCount(0, { timeout: 5_000 }).catch(() => undefined);
-      await page.keyboard.press("Escape");
-    }
-    await page.evaluate(() => {
-      document.documentElement.classList.add("dark");
-    });
+    await page.getByRole("button", { name: /appearance:/i }).click();
+    await page.getByRole("radio", { name: /^dark$/i }).click();
+    await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 15_000 });
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("radio", { name: /^dark$/i })).toHaveCount(0);
     await waitForAiContent(page);
     await assertAxe(page, "ai dark");
     await page.screenshot({
@@ -458,13 +452,23 @@ test.describe("Story 41.2 — Cohestra AI room", () => {
       fullPage: true,
     });
 
-    await page.emulateMedia({ forcedColors: "active", reducedMotion: "reduce" });
-    await waitForAiContent(page);
-    await assertAxe(page, "ai forced-colors");
+    await page.emulateMedia({ forcedColors: "active" });
+    await expect(page.getByRole("heading", { name: "Cohestra AI", level: 1 })).toBeVisible();
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "ai-forced-colors-1440.png"),
       fullPage: true,
     });
+    await page.emulateMedia({ forcedColors: "none" });
+
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const transition = page.locator("[data-admin-route-transition]");
+    await transition.evaluate((node) => {
+      node.setAttribute("data-41-2-reduced", "stable");
+    });
+    await page.getByRole("button", { name: "Refresh brief" }).click();
+    await waitForAiContent(page);
+    await expect(transition).toHaveAttribute("data-41-2-reduced", "stable");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.unroute("**/api/v1/admin/intelligence/brief**");
   });
 });

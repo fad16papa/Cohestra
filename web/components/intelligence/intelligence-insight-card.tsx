@@ -47,7 +47,7 @@ export function IntelligenceInsightCard({
             href={actionHref}
             className={cn(
               buttonVariants({ variant: "outline", size: "sm" }),
-              "min-h-11 shrink-0 self-start px-4"
+              "h-12 min-h-12 shrink-0 self-start px-4"
             )}
           >
             {insight.recommendedAction.label}
@@ -64,7 +64,7 @@ export function IntelligenceInsightCard({
       </div>
       <details className="mt-3">
         <summary
-          className="min-h-11 cursor-pointer text-sm text-text-link"
+          className="min-h-12 cursor-pointer py-2 text-sm text-text-link"
           aria-controls={disclosureId}
         >
           Why this is true

@@ -119,11 +119,7 @@ export function intelligenceModeLabel(mode: string): string {
 }
 
 export function intelligenceGeneratedLabel(brief: IntelligenceBrief): string {
-  const generated = new Date(brief.generatedAt);
-  const when = Number.isNaN(generated.getTime())
-    ? brief.generatedAt
-    : generated.toLocaleString();
-  return `Generated ${when}. Times use workspace timezone ${brief.timeZoneId}.`;
+  return `Generated ${brief.generatedAt}. Workspace timezone: ${brief.timeZoneId}.`;
 }
 
 function readString(value: unknown): string | null {
