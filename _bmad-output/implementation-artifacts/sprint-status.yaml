@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-04
-# story 42.1 in-progress; epic 42 in-progress; 41.1–41.3 done; 42.2–42.4 not started
+# story 42.1 review; epic 42 in-progress; 41.1–41.3 done; 42.2–42.4 not started
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -414,7 +414,7 @@ development_status:
 
   # Epic 42 — Creation Studios
   epic-42: in-progress
-  42-1-website-studio-chrome-and-placement: in-progress
+  42-1-website-studio-chrome-and-placement: review
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

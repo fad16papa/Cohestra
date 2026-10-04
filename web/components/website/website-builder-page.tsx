@@ -1065,6 +1065,7 @@ export function WebsiteBuilderPage() {
       setStudioNotice(`Live homepage restored to ${restoredAt}.`);
       showToast("Live homepage reverted to the previous version.");
     } catch (error) {
+      setRevertDialogOpen(false);
       setStudioNotice(
         error instanceof Error
           ? error.message

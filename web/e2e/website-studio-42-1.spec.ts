@@ -108,8 +108,18 @@ async function openAuthed(
 }
 
 async function skipWebsiteTour(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const slug =
+      window.location.hostname.split(".")[0] ||
+      "default";
+    window.localStorage.setItem(
+      `activity-lead:website-builder-tour-completed:${slug}`,
+      "1"
+    );
+    window.localStorage.setItem(`activity-lead:website-builder-visited:${slug}`, "1");
+  });
   const skipTour = page.getByRole("button", { name: "Skip tour" });
-  if (await skipTour.isVisible({ timeout: 2_000 }).catch(() => false)) {
+  if (await skipTour.isVisible({ timeout: 1_000 }).catch(() => false)) {
     await skipTour.click();
     await expect(skipTour).toHaveCount(0);
   }
@@ -332,7 +342,7 @@ test.describe("Story 42.1 — Website Studio chrome and placement", () => {
     await openAuthed(page, session);
     await skipWebsiteTour(page);
     await expect(page.getByRole("heading", { name: "Website Studio", level: 1 })).toBeVisible();
-    const rail = page.getByRole("navigation", { name: "Primary" });
+    const rail = page.getByRole("navigation", { name: "Admin navigation" });
     await expect(rail.getByRole("link", { name: "Website" })).toBeVisible();
     await expect(rail.getByRole("link", { name: "Website Studio" })).toHaveCount(0);
 
@@ -468,23 +478,30 @@ test.describe("Story 42.1 — Website Studio chrome and placement", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await openAuthed(page, session);
     await skipWebsiteTour(page);
-    await page.getByRole("button", { name: "Publish" }).click();
+    await page.locator("#website-builder-publish").click();
     const publishDialog = page.getByRole("alertdialog", { name: "Publish homepage?" });
     await expect(publishDialog).toBeVisible();
-    await publishDialog.getByRole("button", { name: "Publish homepage" }).click();
+    await publishDialog.getByRole("button", { name: /publish homepage|publish anyway/i }).click();
     await expect(page.getByRole("status").filter({ hasText: /could not publish|publish failed/i })).toBeVisible();
 
-    await page.getByRole("button", { name: "Publish" }).click();
-    await page.getByRole("alertdialog", { name: "Publish homepage?" }).getByRole("button", { name: "Publish homepage" }).click();
-    await expect(page.getByText(/homepage published/i)).toBeVisible();
+    await page.locator("#website-builder-publish").click();
+    await page
+      .getByRole("alertdialog", { name: "Publish homepage?" })
+      .getByRole("button", { name: /publish homepage|publish anyway/i })
+      .click();
+    const liveDialog = page.getByRole("alertdialog", { name: "Your homepage is live" });
+    await expect(liveDialog).toBeVisible();
+    await liveDialog.getByRole("button", { name: "Done" }).click();
+    await expect(page.getByRole("status").filter({ hasText: /homepage published/i })).toBeVisible();
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "publish-success-1440.png"),
       fullPage: true,
     });
 
     await page.getByRole("tab", { name: "Templates" }).click();
-    await page.getByRole("button", { name: "Revert to last published" }).click();
+    const revertTrigger = page.getByRole("button", { name: "Revert to last published" });
     const revert = page.getByRole("alertdialog", { name: "Revert live homepage?" });
+    await revertTrigger.click();
     await expect(revert).toBeVisible();
     await expect(revert.getByRole("button", { name: "Cancel" })).toBeVisible();
     await expect(revert.getByRole("button", { name: "Revert live site" })).toBeVisible();
@@ -494,14 +511,18 @@ test.describe("Story 42.1 — Website Studio chrome and placement", () => {
     });
     await page.keyboard.press("Escape");
     await expect(revert).toHaveCount(0);
-    await page.getByRole("button", { name: "Revert to last published" }).click();
+
+    await revertTrigger.click();
+    await expect(revert).toBeVisible();
     await revert.getByRole("button", { name: "Revert live site" }).click();
-    await expect(page.getByText(/revert failed|could not revert/i)).toBeVisible();
+    await expect(revert).toHaveCount(0);
+    await expect(page.getByRole("status").filter({ hasText: /revert failed|could not revert/i })).toBeVisible();
     await expect(page.getByLabel("Site name")).toHaveValue("Harbourline Studio");
 
-    await page.getByRole("button", { name: "Revert to last published" }).click();
-    await page.getByRole("alertdialog", { name: "Revert live homepage?" }).getByRole("button", { name: "Revert live site" }).click();
-    await expect(page.getByText(/live homepage restored/i)).toBeVisible();
+    await revertTrigger.click();
+    await expect(revert).toBeVisible();
+    await revert.getByRole("button", { name: "Revert live site" }).click();
+    await expect(page.getByRole("status").filter({ hasText: /live homepage restored/i })).toBeVisible();
     expect(publishCount).toBe(2);
     expect(revertCount).toBe(2);
   });
@@ -511,31 +532,34 @@ test.describe("Story 42.1 — Website Studio chrome and placement", () => {
     test.setTimeout(180_000);
     fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
     const session = await loginOperatorSession(request);
-    await page.addInitScript(() => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openAuthed(page, session);
+    await page.evaluate(() => {
       for (const key of Object.keys(localStorage)) {
         if (key.includes("website-builder")) {
           localStorage.removeItem(key);
         }
       }
     });
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await openAuthed(page, session);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await waitForOperatorWorkspace(page);
     const skipLink = page.getByRole("link", { name: "Skip to main content" });
     await page.keyboard.press("Tab");
     await expect(skipLink).toBeFocused();
-    const tour = page.getByRole("dialog", { name: /start with a template|preview as you edit|name and brand/i });
-    if (await tour.isVisible({ timeout: 3_000 }).catch(() => false)) {
-      await expect(tour).toHaveAttribute("aria-modal", "false");
-      await page.getByRole("button", { name: "Skip tour" }).click();
-    }
-    await expect(page.getByRole("button", { name: "Skip tour" })).toHaveCount(0);
-    await skipLink.click();
+    const skipTour = page.getByRole("button", { name: "Skip tour" });
+    await expect(skipTour).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByRole("dialog").first()).toHaveAttribute("aria-modal", "false");
+    await skipTour.click();
+    await expect(skipTour).toHaveCount(0);
+    await skipLink.focus();
+    await expect(skipLink).toBeFocused();
+    await page.keyboard.press("Enter");
     await expect(page.locator("main#main-content")).toBeFocused();
 
     const scopedKeys = await page.evaluate(() =>
       Object.keys(localStorage).filter((key) => key.includes("website-builder-tour-completed"))
     );
-    expect(scopedKeys.some((key) => key.includes(":"))).toBe(true);
+    expect(scopedKeys.some((key) => /website-builder-tour-completed:.+/.test(key))).toBe(true);
     expect(scopedKeys.every((key) => !key.endsWith("website-builder-tour-completed"))).toBe(true);
 
     await page.reload({ waitUntil: "domcontentloaded" });
