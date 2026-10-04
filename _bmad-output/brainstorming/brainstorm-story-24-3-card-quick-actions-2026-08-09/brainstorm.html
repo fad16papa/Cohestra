@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Story 24.3 — Card quick actions</title>
+  <style>
+    :root { --ink:#264653; --mist:#f4f1ea; --lagoon:#2a9d8f; --warm:#d4cfc4; }
+    body { font-family: system-ui,sans-serif; background: var(--mist); color: var(--ink); padding: 2rem 1rem; max-width: 720px; margin: 0 auto; line-height: 1.5; }
+    h1 { font-size: 1.4rem; }
+    .meta { opacity: 0.65; font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .card { background: #fff; border: 1px solid var(--warm); border-radius: 10px; overflow: hidden; margin: 1.5rem 0; box-shadow: 0 2px 8px rgba(38,70,83,.06); }
+    .card-body { padding: 1rem; }
+    .title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+    .title { font-weight: 600; }
+    .badge { font-size: 0.65rem; background: #3d8b6e; color: #fff; padding: 0.2rem 0.5rem; border-radius: 999px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.65rem 1rem; border-top: 1px solid var(--warm); background: #fafafa; }
+    .btn { font-size: 0.75rem; padding: 0.35rem 0.65rem; border: 1px solid var(--warm); border-radius: 6px; background: #fff; cursor: pointer; }
+    .btn.primary { border-color: var(--lagoon); color: var(--lagoon); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .meter { padding: 0.5rem 1rem; border-top: 1px solid var(--warm); font-size: 0.7rem; color: #666; }
+    .insight { background: var(--ink); color: var(--mist); padding: 1.25rem; border-radius: 10px; margin-top: 2rem; }
+    .insight h2 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #e9c46a; margin-bottom: 0.5rem; }
+    .warn { background: #fff3cd; border: 1px solid #e9c46a; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; margin: 1rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Story 24.3 — One click, three exits</h1>
+  <p class="meta">Activity card quick actions · Epic 24 · 2026-08-09</p>
+
+  <div class="warn">
+    <strong>Constraint discovered:</strong> Clients list has no <code>activityId</code> filter today.
+    Story 24.3 must add a thin API slice — search-by-name is not acceptable.
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="title-row">
+        <span class="title">Sunday Clinic</span>
+        <span class="badge">Published</span>
+      </div>
+      <p style="font-size:0.8rem;color:#666;margin-top:0.35rem">Ikigai · 142 registrations</p>
+    </div>
+    <div class="actions">
+      <button class="btn primary">Copy link</button>
+      <button class="btn">Registrations (142)</button>
+      <button class="btn">Clients (142)</button>
+    </div>
+    <div class="meter">Plan registrations 5,000/5,000 ▓▓▓▓▓▓▓▓▓▓</div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <div class="title-row">
+        <span class="title">Draft workshop</span>
+        <span class="badge" style="background:#888">Draft</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" disabled title="Publish to get a registration link">Copy link</button>
+      <button class="btn">Registrations (0)</button>
+      <button class="btn">Clients (0)</button>
+    </div>
+  </div>
+
+  <div class="insight">
+    <h2>Ship</h2>
+    <ul>
+      <li>Action strip outside card Link — no click hijacking</li>
+      <li>Copy on demand — no prefetch on list load</li>
+      <li>Registrations → <code>?tab=registrations</code></li>
+      <li>Clients → <code>/clients?activityId=</code> + backend filter</li>
+      <li>Always visible — no hover-only</li>
+    </ul>
+  </div>
+</body>
+</html>
