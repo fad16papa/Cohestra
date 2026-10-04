@@ -532,7 +532,6 @@ export function WebsiteBuilderPage() {
 
   useEffect(() => {
     if (access.kind !== "open") {
-      setLoading(false);
       return;
     }
 
@@ -1136,7 +1135,7 @@ export function WebsiteBuilderPage() {
     );
   }
 
-  if (loading) {
+  if (access.kind === "open" && loading) {
     return (
       <div className="space-y-6">
         <PageHeader

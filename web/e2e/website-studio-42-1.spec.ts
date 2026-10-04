@@ -73,9 +73,9 @@ function fixtureDraft(siteName = "Harbourline Studio") {
 }
 
 function fixtureAdmin(overrides: Record<string, unknown> = {}) {
-  const draft = (overrides.draft as ReturnType<typeof fixtureDraft>) ?? fixtureDraft();
+  const draft =
+    (overrides.draft as ReturnType<typeof fixtureDraft> | undefined) ?? fixtureDraft();
   return {
-    draft,
     published: fixtureDraft("Harbourline Live"),
     draftUpdatedAt: "2026-10-04T08:00:00.000Z",
     publishedAt: "2026-10-03T08:00:00.000Z",

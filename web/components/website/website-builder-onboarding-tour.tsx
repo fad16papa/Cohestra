@@ -222,10 +222,10 @@ export function WebsiteBuilderOnboardingTour({
 
   useObserveLayoutShifts(open && tabReady, step?.targetSelector ?? null, remeasure);
 
-  function finishTour() {
+  const finishTour = useCallback(() => {
     markWebsiteBuilderTourCompleted(tenantSlug);
     onClose();
-  }
+  }, [onClose, tenantSlug]);
 
   function handleNext() {
     if (isLast) {
@@ -237,9 +237,9 @@ export function WebsiteBuilderOnboardingTour({
     setStepIndex((current) => current + 1);
   }
 
-  function handleSkip() {
+  const handleSkip = useCallback(() => {
     finishTour();
-  }
+  }, [finishTour]);
 
   useEffect(() => {
     if (!open) {
@@ -254,7 +254,7 @@ export function WebsiteBuilderOnboardingTour({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, tenantSlug]);
+  }, [handleSkip, open]);
 
   if (!open || !step || steps.length === 0 || !mounted) {
     return null;
