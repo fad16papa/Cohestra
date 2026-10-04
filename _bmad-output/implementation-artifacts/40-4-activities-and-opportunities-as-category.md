@@ -170,6 +170,7 @@ Grok 4.6
 - List/detail distinguish empty, no-match, error, denied, not-found. Cap stays shell-dial authoritative.
 - Archive dialog covers Draft and Published. Failure keeps the record.
 - Opportunity stays on Follow-up. No fabricated source links. Composer 2.5 unused. Story 40.5 not started.
+- Product-owner correction: PostgreSQL `ActivityListOrderingIntegrationTests` proves Archived-last paging, replay, union, filtered Archived, registrationCount, and tenant isolation against `cohestra_test`.
 
 ### File List
 
@@ -178,6 +179,7 @@ Grok 4.6
 - `_bmad-output/planning-artifacts/evidence/px2-40-4/`
 - `src/Infrastructure/Activities/ActivityService.cs`
 - `src/Infrastructure.Tests/Activities/ActivityServiceListSortTests.cs`
+- `src/Api.IntegrationTests/ActivityListOrderingIntegrationTests.cs`
 - `web/app/(admin)/activities/page.tsx`
 - `web/components/activities/activities-list-page.tsx`
 - `web/components/activities/activity-card.tsx`
@@ -194,3 +196,4 @@ Grok 4.6
 
 - 2026-10-04: Created Story 40.4 from main `327c0a4a`. Inventory and contracts locked. Story 40.5 not started.
 - 2026-10-04: Implemented server Archived-last sort, list/detail honesty, Draft archive dialog. Tests recorded. Status `review`.
+- 2026-10-04: Added PostgreSQL API integration coverage for `ListAsync` ordering/paging. Status remains `review`. Epic 40 remains in-progress. Story 40.5 not started.

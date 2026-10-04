@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
@@ -9,6 +10,7 @@ using Cohestra.Domain.Registrations;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Identity;
 using Cohestra.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cohestra.Api.IntegrationTests;
@@ -234,6 +236,9 @@ public sealed class ActivityListOrderingIntegrationTests(IntegrationTestFixture 
         var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         var activityId = id ?? Guid.NewGuid();
         var name = $"40-4-ord-{suffix}";
+        // Keep Published rows out of ActivityExpiration's 3-minute suite pass
+        // and prevent backfill from rewriting UpdatedAt after insert.
+        var startsAt = updatedAt.AddDays(21);
         var activity = new Activity
         {
             Id = activityId,
@@ -241,7 +246,8 @@ public sealed class ActivityListOrderingIntegrationTests(IntegrationTestFixture 
             Name = name,
             Slug = $"o4-{activityId:N}"[..20],
             Category = "Test",
-            Schedule = "Saturday 10:00",
+            Schedule = startsAt.UtcDateTime.ToString("ddd, MMM d, yyyy, h:mm tt", CultureInfo.InvariantCulture),
+            ScheduledStartsAt = startsAt,
             Location = "Order Court",
             CommunityLabel = "Order Community",
             Status = status,
@@ -253,7 +259,17 @@ public sealed class ActivityListOrderingIntegrationTests(IntegrationTestFixture 
 
         dbContext.Activities.Add(activity);
         await dbContext.SaveChangesAsync();
-        return new SeededActivity(activity.Id, activity.Name, activity.Status, activity.UpdatedAt);
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"""
+            UPDATE activities
+            SET "UpdatedAt" = {updatedAt}
+            WHERE "Id" = {activityId}
+            """);
+
+        var persisted = await dbContext.IgnoreTenantFilters<Activity>()
+            .AsNoTracking()
+            .SingleAsync(item => item.Id == activityId);
+        return new SeededActivity(persisted.Id, persisted.Name, persisted.Status, persisted.UpdatedAt);
     }
 
     private async Task SeedRegistrationsAsync(Guid tenantId, Guid activityId, int count)

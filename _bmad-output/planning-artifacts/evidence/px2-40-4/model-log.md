@@ -8,5 +8,6 @@
 | Architecture + UX | Architect + UX | Grok 4.6 | `architecture.md`, API/paging, Opportunity boundary, role matrix |
 | Implementation | `bmad-dev-story` / Amelia | Grok 4.6 | Server sort, list/detail/archive presentation, tests |
 | Composer 2.5 | — | Unused | No bounded presentational handoff required after contracts locked |
+| PO correction | PostgreSQL list-order integration proof | Grok 4.6 | `ActivityListOrderingIntegrationTests` on PR #373. Composer 2.5 unused. |
 
 Auto mode: disabled.
