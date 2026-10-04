@@ -342,9 +342,11 @@ test.describe("Story 41.1 — Analytics room", () => {
     });
     await page.unroute("**/api/v1/admin/reports?**");
 
-    let releaseStale: (() => void) | null = null;
+    const staleControl: { release: () => void } = {
+      release() {},
+    };
     const staleGate = new Promise<void>((resolve) => {
-      releaseStale = resolve;
+      staleControl.release = resolve;
     });
     await page.route("**/api/v1/admin/reports?**", async (route) => {
       if (route.request().url().includes("/export")) {
@@ -364,7 +366,7 @@ test.describe("Story 41.1 — Analytics room", () => {
     await page.locator("#report-preset").selectOption("monthly");
     await expect(page.getByText("Updating report…")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Analytics", level: 1 })).toBeVisible();
-    releaseStale?.();
+    staleControl.release();
     await waitForReportsContent(page);
     await page.unroute("**/api/v1/admin/reports?**");
 
