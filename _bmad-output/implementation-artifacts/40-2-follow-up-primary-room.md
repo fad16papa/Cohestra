@@ -2,15 +2,17 @@
 id: 40.2
 key: 40-2-follow-up-primary-room
 title: Follow-up primary room
-status: review
+status: done
 epic: 40
 created: 2026-10-03
 baseline_commit: dc9e42f6f283c72b0be290768730bfcbe88b58b4
+accepted_commit: 2a3d5e6bc1984ff19cb88bed4948c7bf43bd4f49
+implementation_merge_sha: 2b84032232b326eb197fa4012a1318c8df4020d9
 ---
 
 # Story 40.2: Follow-up primary room
 
-Status: review
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -233,6 +235,7 @@ Grok 4.6 owns story definition, architecture, product semantics, implementation,
 - `src/Api.IntegrationTests/FollowUpClientsListIntegrationTests.cs`
 - `_bmad-output/planning-artifacts/sprint-change-proposal-2026-10-03-story-40-2.md`
 - `_bmad-output/planning-artifacts/evidence/px2-40-2/test-strategy.md`
+- `_bmad-output/planning-artifacts/evidence/px2-40-2/post-merge.md`
 
 ### Change Log
 
@@ -242,3 +245,4 @@ Grok 4.6 owns story definition, architecture, product semantics, implementation,
 - 2026-10-03: PO Direct Adjustment — retract client fan-out. Server `followUpCategory` + totals + Id tie-break. Isolated 101-row identical-sort integration. Room fetches one page. Draft PR #369 unmerged. Status remains review. 40.3 not started.
 - 2026-10-03: Independent review on `8c4af64b` — patched BH-01 empty-page honesty (`CountAsync` + step-back / fail-closed). Tracker → review.
 - 2026-10-03: Four-layer re-review on `c835a30d`. ADV-1 empty-populated (chip>0 / totalCount=0 / empty items) fail-closed. Tracker remains review. 40.3 not started.
+- 2026-10-04: Final-head review PASS on `2a3d5e6b` (`#issuecomment-5975192503`). Required PR CI `37143262811` green. PR #369 merged as `2b840322`. Required main CI `37167020928` 5/5 success. Post-merge unit 6/6, integration 6/6, Vitest 21/21, Playwright 40.2 7/7 (one 43.999px retry D), 40.1 + 38.4–39.5 continuity. ACCEPTED/CLOSED. Epic 40 remains in-progress. Story 40.3 not started.
