@@ -595,6 +595,10 @@ export async function fetchClientById(
     throw new Error("Client not found.");
   }
 
+  if (response.status === 401 || response.status === 403) {
+    throw new Error("You don’t have access to this client.");
+  }
+
   if (!response.ok) {
     throw new Error(await parseProblemDetail(response));
   }

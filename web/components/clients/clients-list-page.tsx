@@ -8,16 +8,9 @@ import { ClientLeadQueueHeader } from "@/components/clients/client-lead-queue-he
 import { ClientRow } from "@/components/clients/client-row";
 import { ClientsFilterBanners } from "@/components/clients/clients-filter-banners";
 import {
-  clientsTableActionsColumnClassName,
-  clientsTableContactColumnClassName,
-  clientsTableGridClassName,
+  clientsTableClassName,
   clientsTableHeaderButtonClassName,
-  clientsTableHeaderClassName,
-  clientsTableMinWidthClassName,
-  clientsTableOutreachColumnClassName,
-  clientsTableRegistrationColumnClassName,
-  clientsTableScrollClassName,
-  clientsTableStatusColumnClassName,
+  clientsTableHeaderCellClassName,
 } from "@/components/clients/clients-table-layout";
 import { MessengerOpenConfirmDialog } from "@/components/clients/messenger-open-confirm-dialog";
 import { useClientsListFilters } from "@/components/clients/use-clients-list-filters";
@@ -26,6 +19,7 @@ import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { ListSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
+import { ProductErrorState } from "@/components/shared/product-error-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,6 +111,7 @@ function ClientSearchInput({ committedValue, onCommit }: ClientSearchInputProps)
       placeholder="Search by name, phone, or email…"
       value={draft}
       onChange={(event) => setDraft(event.target.value)}
+      className="min-h-11"
     />
   );
 };
@@ -153,7 +148,7 @@ function ClientSearchNationalityFilters({
           id="client-nationality-filter"
           value={nationalityFilter}
           onChange={(event) => onNationalityChange(event.target.value)}
-          className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex min-h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="">All nationalities</option>
           {nationalitySelectOptions.map((option) => (
@@ -175,14 +170,14 @@ export function ClientsListPage() {
   const {
     filters,
     hasActiveFilters,
-    updateSearch,
-    updateLeadStatus,
-    updateNationality,
-    updateFollowUpDue,
-    updateMergeSuspect,
-    updateRegisteredWithinDays,
-    updateCreatedWithinDays,
-    clearActivityFilter,
+    updateSearch: updateSearchValue,
+    updateLeadStatus: updateLeadStatusValue,
+    updateNationality: updateNationalityValue,
+    updateFollowUpDue: updateFollowUpDueValue,
+    updateMergeSuspect: updateMergeSuspectValue,
+    updateRegisteredWithinDays: updateRegisteredWithinDaysValue,
+    updateCreatedWithinDays: updateCreatedWithinDaysValue,
+    clearActivityFilter: clearActivityFilterValue,
   } = useClientsListFilters();
 
   const {
@@ -221,6 +216,61 @@ export function ClientsListPage() {
   >(() => new Map());
   const [isExporting, setIsExporting] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const updateSearch = useCallback(
+    (value: string) => {
+      setPage(1);
+      updateSearchValue(value);
+    },
+    [updateSearchValue]
+  );
+  const updateLeadStatus = useCallback(
+    (value: Parameters<typeof updateLeadStatusValue>[0]) => {
+      setPage(1);
+      updateLeadStatusValue(value);
+    },
+    [updateLeadStatusValue]
+  );
+  const updateNationality = useCallback(
+    (value: string) => {
+      setPage(1);
+      updateNationalityValue(value);
+    },
+    [updateNationalityValue]
+  );
+  const updateFollowUpDue = useCallback(
+    (value: boolean) => {
+      setPage(1);
+      updateFollowUpDueValue(value);
+    },
+    [updateFollowUpDueValue]
+  );
+  const updateMergeSuspect = useCallback(
+    (value: boolean) => {
+      setPage(1);
+      updateMergeSuspectValue(value);
+    },
+    [updateMergeSuspectValue]
+  );
+  const updateRegisteredWithinDays = useCallback(
+    (value: number | null) => {
+      setPage(1);
+      updateRegisteredWithinDaysValue(value);
+    },
+    [updateRegisteredWithinDaysValue]
+  );
+  const updateCreatedWithinDays = useCallback(
+    (value: number | null) => {
+      setPage(1);
+      updateCreatedWithinDaysValue(value);
+    },
+    [updateCreatedWithinDaysValue]
+  );
+  const clearActivityFilter = useCallback(() => {
+    setPage(1);
+    clearActivityFilterValue();
+  }, [clearActivityFilterValue]);
 
   const selectedClientIds = useMemo(
     () => new Set(selectedClientsById.keys()),
@@ -346,6 +396,7 @@ export function ClientsListPage() {
     searchFilter,
     sortBy,
     sortDirection,
+    reloadToken,
   ]);
 
   function handleSort(nextSortBy: ClientSortBy) {
@@ -672,7 +723,7 @@ export function ClientsListPage() {
             variant="outline"
             size="sm"
             disabled={isExporting || totalCount === 0}
-            className="gap-2"
+            className="min-h-11 min-w-11 gap-2"
             onClick={() => void handleExportCsv()}
           >
             <Download className="size-4" aria-hidden />
@@ -697,7 +748,7 @@ export function ClientsListPage() {
         <div className="md:hidden">
           <button
             type="button"
-            className="flex w-full items-center justify-between gap-2 text-sm font-medium text-text-warm"
+            className="flex min-h-11 w-full items-center justify-between gap-2 text-sm font-medium text-text-warm"
             aria-expanded={mobileFiltersOpen}
             onClick={() => setMobileFiltersOpen((current) => !current)}
           >
@@ -764,105 +815,15 @@ export function ClientsListPage() {
         </div>
       ) : (
       <div className="overflow-hidden rounded-xl border border-border-warm bg-card shadow-sm">
-        <div className={clientsTableScrollClassName}>
-          <div className={clientsTableMinWidthClassName}>
-            <div
-              className={cn(
-                clientsTableGridClassName,
-                "hidden border-b border-border-warm bg-muted/30 sm:grid"
-              )}
-              role="row"
-            >
-              <div className="hidden sm:flex sm:items-center sm:justify-center">
-                <input
-                  type="checkbox"
-                  checked={allPageSelected}
-                  aria-label="Select all clients on this page"
-                  className="size-4 rounded border-input accent-primary"
-                  onChange={handleToggleSelectAll}
-                />
-              </div>
-              <div className={clientsTableContactColumnClassName}>
-                <button
-                  type="button"
-                  role="columnheader"
-                  aria-sort={
-                    sortBy === "name"
-                      ? sortDirection === "asc"
-                        ? "ascending"
-                        : "descending"
-                      : "none"
-                  }
-                  className={cn(
-                    clientsTableHeaderButtonClassName,
-                    sortBy === "name" && "text-text-warm"
-                  )}
-                  onClick={() => handleSort("name")}
-                >
-                  Contact
-                  {sortBy === "name" ? (sortDirection === "asc" ? " ↑" : " ↓") : null}
-                </button>
-              </div>
-              <div className={clientsTableStatusColumnClassName}>
-                <button
-                  type="button"
-                  role="columnheader"
-                  aria-sort={
-                    sortBy === "status"
-                      ? sortDirection === "asc"
-                        ? "ascending"
-                        : "descending"
-                      : "none"
-                  }
-                  className={cn(
-                    clientsTableHeaderButtonClassName,
-                    sortBy === "status" && "text-text-warm"
-                  )}
-                  onClick={() => handleSort("status")}
-                >
-                  Status
-                  {sortBy === "status" ? (sortDirection === "asc" ? " ↑" : " ↓") : null}
-                </button>
-              </div>
-              <div className={clientsTableRegistrationColumnClassName}>
-                <button
-                  type="button"
-                  role="columnheader"
-                  aria-sort={
-                    sortBy === "lastRegistrationDate"
-                      ? sortDirection === "asc"
-                        ? "ascending"
-                        : "descending"
-                      : "none"
-                  }
-                  className={cn(
-                    clientsTableHeaderButtonClassName,
-                    sortBy === "lastRegistrationDate" && "text-text-warm"
-                  )}
-                  onClick={() => handleSort("lastRegistrationDate")}
-                >
-                  Last registration
-                  {sortBy === "lastRegistrationDate"
-                    ? sortDirection === "asc"
-                      ? " ↑"
-                      : " ↓"
-                    : null}
-                </button>
-              </div>
-              <div className={clientsTableOutreachColumnClassName}>
-                <span className={clientsTableHeaderClassName}>Last outreach</span>
-              </div>
-              <div className={clientsTableActionsColumnClassName}>
-                <span className={cn(clientsTableHeaderClassName, "text-right")}>
-                  Actions
-                </span>
-              </div>
-            </div>
-
         {error ? (
-          <p role="alert" className="px-4 py-6 text-sm text-destructive">
-            {error}
-          </p>
+          <ProductErrorState
+            title="Could not load Clients"
+            message={error}
+            onRetry={() => {
+              setInitialized(false);
+              setReloadToken((current) => current + 1);
+            }}
+          />
         ) : null}
 
         {!error && initialized && clients.length === 0 && totalCount > 0 ? (
@@ -871,29 +832,143 @@ export function ClientsListPage() {
           </p>
         ) : null}
 
-        {!error
-          ? clients.map((client) => (
-              <ClientRow
-                key={client.id}
-                client={client}
-                onMarkContacted={handleMarkContacted}
-                onOpenMessenger={handleOpenMessenger}
-                isUpdating={updatingClientIds.has(client.id)}
-                selectable
-                selected={selectedClientIds.has(client.id)}
-                onSelectedChange={handleSelectedChange}
-                timeZoneId={shell?.registrationTimeZoneId}
-              />
-            ))
-          : null}
-
         {!error && !initialized ? (
           <div className="p-4">
             <ListSkeleton rows={6} />
           </div>
         ) : null}
-          </div>
-        </div>
+
+        {!error && initialized && clients.length > 0 ? (
+          <>
+            <ul className="divide-y divide-border-warm md:hidden">
+              {clients.map((client) => (
+                <li key={client.id}>
+                  <ClientRow
+                    variant="card"
+                    client={client}
+                    onMarkContacted={handleMarkContacted}
+                    onOpenMessenger={handleOpenMessenger}
+                    isUpdating={updatingClientIds.has(client.id)}
+                    selectable
+                    selected={selectedClientIds.has(client.id)}
+                    onSelectedChange={handleSelectedChange}
+                    timeZoneId={shell?.registrationTimeZoneId}
+                  />
+                </li>
+              ))}
+            </ul>
+            <table className={clientsTableClassName}>
+              <thead>
+                <tr>
+                  <th scope="col" className={clientsTableHeaderCellClassName}>
+                    <input
+                      type="checkbox"
+                      checked={allPageSelected}
+                      aria-label="Select all clients on this page"
+                      className="size-4 rounded border-input accent-primary"
+                      onChange={handleToggleSelectAll}
+                    />
+                  </th>
+                  <th
+                    scope="col"
+                    aria-sort={
+                      sortBy === "name"
+                        ? sortDirection === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                    className={clientsTableHeaderCellClassName}
+                  >
+                    <button
+                      type="button"
+                      className={cn(
+                        clientsTableHeaderButtonClassName,
+                        sortBy === "name" && "text-text-warm"
+                      )}
+                      onClick={() => handleSort("name")}
+                    >
+                      Contact
+                      {sortBy === "name" ? (sortDirection === "asc" ? " ↑" : " ↓") : null}
+                    </button>
+                  </th>
+                  <th
+                    scope="col"
+                    aria-sort={
+                      sortBy === "status"
+                        ? sortDirection === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                    className={clientsTableHeaderCellClassName}
+                  >
+                    <button
+                      type="button"
+                      className={cn(
+                        clientsTableHeaderButtonClassName,
+                        sortBy === "status" && "text-text-warm"
+                      )}
+                      onClick={() => handleSort("status")}
+                    >
+                      Status
+                      {sortBy === "status" ? (sortDirection === "asc" ? " ↑" : " ↓") : null}
+                    </button>
+                  </th>
+                  <th
+                    scope="col"
+                    aria-sort={
+                      sortBy === "lastRegistrationDate"
+                        ? sortDirection === "asc"
+                          ? "ascending"
+                          : "descending"
+                        : "none"
+                    }
+                    className={clientsTableHeaderCellClassName}
+                  >
+                    <button
+                      type="button"
+                      className={cn(
+                        clientsTableHeaderButtonClassName,
+                        sortBy === "lastRegistrationDate" && "text-text-warm"
+                      )}
+                      onClick={() => handleSort("lastRegistrationDate")}
+                    >
+                      Last registration
+                      {sortBy === "lastRegistrationDate"
+                        ? sortDirection === "asc"
+                          ? " ↑"
+                          : " ↓"
+                        : null}
+                    </button>
+                  </th>
+                  <th scope="col" className={clientsTableHeaderCellClassName}>
+                    Last outreach
+                  </th>
+                  <th scope="col" className={cn(clientsTableHeaderCellClassName, "text-right")}>
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {clients.map((client) => (
+                  <ClientRow
+                    key={client.id}
+                    variant="row"
+                    client={client}
+                    onMarkContacted={handleMarkContacted}
+                    onOpenMessenger={handleOpenMessenger}
+                    isUpdating={updatingClientIds.has(client.id)}
+                    selectable
+                    selected={selectedClientIds.has(client.id)}
+                    onSelectedChange={handleSelectedChange}
+                    timeZoneId={shell?.registrationTimeZoneId}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </>
+        ) : null}
       </div>
       )}
 
@@ -907,6 +982,8 @@ export function ClientsListPage() {
             type="button"
             variant="outline"
             disabled={page <= 1}
+            aria-label="Previous page"
+            className="min-h-11 min-w-11"
             onClick={() => setPage((current) => Math.max(1, current - 1))}
           >
             Previous
@@ -918,6 +995,8 @@ export function ClientsListPage() {
             type="button"
             variant="outline"
             disabled={page >= totalPages}
+            aria-label="Next page"
+            className="min-h-11 min-w-11"
             onClick={() =>
               setPage((current) => Math.min(totalPages, current + 1))
             }

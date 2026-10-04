@@ -190,7 +190,7 @@ export function ClientRegistrationHistory({
           {history.length > 0 ? (
             <button
               type="button"
-              className="inline-flex items-center gap-1 text-sm font-medium text-text-link hover:underline"
+              className="inline-flex min-h-11 min-w-11 items-center gap-1 text-sm font-medium text-text-link hover:underline"
               onClick={() => setExpanded((current) => !current)}
               aria-expanded={expanded}
             >

@@ -138,12 +138,21 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
   }
 
   if (error) {
+    const denied = error === "You don’t have access to this client.";
+    const notFound = error === "Client not found.";
     return (
       <div className="space-y-4">
         <PageHeader title="Client" />
         <ProductErrorState
+          title={
+            denied
+              ? "You don’t have access"
+              : notFound
+                ? "Client not found"
+                : "Could not load client"
+          }
           message={error}
-          onRetry={handleRetry}
+          onRetry={denied || notFound ? undefined : handleRetry}
           backHref="/clients"
           backLabel="Back to clients"
         />

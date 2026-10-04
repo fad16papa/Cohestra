@@ -1,16 +1,12 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 
 import { ClientsListPage } from "@/components/clients/clients-list-page";
 import { PageHeader } from "@/components/shared/page-header";
 
 function ClientsPageContent() {
-  const searchParams = useSearchParams();
-  const listKey = searchParams.toString() || "all";
-
-  return <ClientsListPage key={listKey} />;
+  return <ClientsListPage />;
 }
 
 export default function ClientsPage() {

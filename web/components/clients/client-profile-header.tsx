@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, Check, Mail, Phone } from "lucide-react";
+import Link from "next/link";
+import { CalendarClock, Check, ListTodo, Mail, Phone } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
@@ -12,7 +13,8 @@ import {
   ViberBrandIcon,
   WhatsAppBrandIcon,
 } from "@/components/shared/messenger-brand-icons";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast-provider";
 import {
   formatNextFollowUpDate,
@@ -31,6 +33,11 @@ import {
   openAppDeepLink,
 } from "@/lib/messenger-links";
 import type { MessengerChannel } from "@/lib/messenger-prerequisites";
+import {
+  lastOutreachAtFromTimeline,
+  openInFollowUpHref,
+  shouldOfferOpenInFollowUp,
+} from "@/lib/follow-up-category";
 import { formatPhoneDisplay } from "@/lib/phone-countries";
 
 type ClientProfileHeaderProps = {
@@ -57,6 +64,14 @@ export function ClientProfileHeader({
   const phoneLabel = formatPhoneDisplay(client.phone)?.display ?? null;
   const hasPhone = Boolean(whatsAppUrl);
   const followUpDue = isFollowUpDue(client.nextFollowUpAt, timeZoneId);
+  const offerFollowUpRoom = shouldOfferOpenInFollowUp(
+    {
+      leadStatus: client.leadStatus,
+      nextFollowUpAt: client.nextFollowUpAt,
+      lastOutreachAt: lastOutreachAtFromTimeline(client.timeline),
+    },
+    timeZoneId
+  );
 
   async function handleStatusChange(nextStatus: LeadStatus) {
     if (nextStatus === client.leadStatus) {
@@ -208,10 +223,20 @@ export function ClientProfileHeader({
             }
             actions={
               <>
+                {offerFollowUpRoom ? (
+                  <Link
+                    href={openInFollowUpHref()}
+                    className={cn(buttonVariants(), "min-h-11 min-w-11 gap-1.5")}
+                  >
+                    <ListTodo className="size-3.5" aria-hidden />
+                    Open in Follow-up
+                  </Link>
+                ) : null}
                 <Button
                   type="button"
                   disabled={!hasPhone || busy}
                   title={hasPhone ? undefined : "Add a phone number to message"}
+                  aria-label={`Open WhatsApp for ${client.fullName}`}
                   onClick={() => setConfirmChannel("whatsapp")}
                   className="gap-1.5 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
                 >
@@ -222,6 +247,7 @@ export function ClientProfileHeader({
                   type="button"
                   disabled={!hasPhone || busy}
                   title={hasPhone ? undefined : "Add a phone number to message"}
+                  aria-label={`Open Viber for ${client.fullName}`}
                   onClick={() => setConfirmChannel("viber")}
                   className="gap-1.5 bg-viber text-viber-foreground hover:bg-viber/90"
                 >
@@ -233,6 +259,7 @@ export function ClientProfileHeader({
                     type="button"
                     variant="outline"
                     className="gap-1.5"
+                    aria-label={`Mark ${client.fullName} as contacted`}
                     onClick={() => void handleMarkContacted()}
                   >
                     <Check className="size-3.5" aria-hidden />
