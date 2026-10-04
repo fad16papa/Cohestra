@@ -2,15 +2,17 @@
 id: 42.2
 key: 42-2-form-studio-responsive-composition
 title: Form Studio responsive composition (D7)
-status: review
+status: done
 epic: 42
 created: 2026-10-04
 baseline_commit: eabc03fffee324e0ad90d07007a8dcfe8e812378
+accepted_commit: c382949388508b639730cd37517157d2056e673d
+implementation_merge: 251b402f9da07c221a680afa7b19b94f4ca74c69
 ---
 
 # Story 42.2: Form Studio responsive composition (D7)
 
-Status: review
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -90,7 +92,7 @@ Affected + full Vitest, `tsc`, targeted ESLint, Next production build, Story 42.
 
 ## Exact stop gate
 
-Story 42.2 `review`. Story 42.1 remains `done`. Epic 42 `in-progress`. 42.3–42.4 not started. Epic 43 not started. One draft PR open and unmerged. Production not claimed.
+Story 42.2 `done` at accepted commit `c3829493` / merge `251b402f`. Story 42.1 remains `done`. Epic 42 `in-progress`. 42.3–42.4 not started. Epic 43 not started. Production not claimed.
 
 ## Tasks / Subtasks
 
@@ -141,7 +143,7 @@ See `_bmad-output/planning-artifacts/evidence/px2-42-2/`.
 - Story created from synchronized `main` `eabc03ff`. Epic 42 remains in-progress. 42.1 remains done. 42.3–42.4 not started.
 - D7 shell: CSS `lg` two-pane / `xl` three-pane; Sheet below 1024; one inspector instance at a time.
 - Review patches: three-pane rehome, live matchMedia, `lg:max-xl:hidden`, layout media sync, honest `aria-controls`.
-- Local gates recorded in `px2-42-2/test-results.md`. Story left at `review` for product-owner pre-merge. Not done. Not merged.
+- Local gates recorded in `px2-42-2/test-results.md`. Product-owner pre-merge on `c3829493` found no unresolved BLOCKER/MAJOR. Merged as `251b402f`. Closed after required main CI `37217189796`.
 
 ### File List
 
@@ -157,3 +159,4 @@ See `_bmad-output/planning-artifacts/evidence/px2-42-2/`.
 
 - 2026-10-04: Created Story 42.2 from synchronized `main` `eabc03ff`. Epic 42 remains in-progress. 42.1 remains done. 42.3–42.4 not started.
 - 2026-10-04: Implemented D7 responsive composition and review patches. Status `review`.
+- 2026-10-04: Product-owner close. Accepted `c3829493`. Merge `251b402f`. Status `done`. Epic 42 remains in-progress.
