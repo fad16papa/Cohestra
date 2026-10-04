@@ -72,6 +72,18 @@ describe("parseContinuityContext", () => {
     });
   });
 
+  it("round-trips an empty clients token with a via client id", () => {
+    const context = {
+      room: "clients" as const,
+      query: "",
+      clientId: "22222222-2222-2222-2222-222222222222",
+    };
+    expect(serializeContinuityContext(context)).toBe(
+      "cl:~c:22222222-2222-2222-2222-222222222222"
+    );
+    expect(parseContinuityContext(serializeContinuityContext(context))).toEqual(context);
+  });
+
   it("rejects absolute, protocol-relative, encoded, malformed, and oversized tokens", () => {
     expect(parseContinuityContext("https://evil.test")).toBeNull();
     expect(parseContinuityContext("//evil.test")).toBeNull();
