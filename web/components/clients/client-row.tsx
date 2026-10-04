@@ -6,6 +6,7 @@ import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import {
   clientsSemanticTableActionsClassName,
   clientsSemanticTableCheckboxClassName,
+  clientsSemanticTableStatusClassName,
   clientsTableActionsColumnClassName,
   clientsTableCellClassName,
   clientsTableCheckboxColumnClassName,
@@ -251,7 +252,7 @@ export function ClientRow({
         <td className={cn(clientsTableCellClassName, clientsTableContactColumnClassName)}>
           {contactBlock}
         </td>
-        <td className={cn(clientsTableCellClassName, clientsTableStatusColumnClassName)}>
+        <td className={cn(clientsTableCellClassName, clientsSemanticTableStatusClassName)}>
           <LeadStatusBadge status={client.leadStatus} />
         </td>
         <td className={cn(clientsTableCellClassName, clientsTableRegistrationColumnClassName)}>

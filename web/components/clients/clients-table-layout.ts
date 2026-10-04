@@ -35,6 +35,9 @@ export const clientsTableClassName =
 export const clientsSemanticTableCheckboxClassName =
   "flex items-center justify-center";
 
+/** Clients table status cells must not inherit the community 5.5rem clip. */
+export const clientsSemanticTableStatusClassName = "min-w-0";
+
 export const clientsSemanticTableActionsClassName =
   "flex min-w-0 flex-wrap items-center justify-end gap-1";
 

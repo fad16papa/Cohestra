@@ -25,6 +25,10 @@ const PROFILE_HEADER_SOURCE = readFileSync(
   resolve(import.meta.dirname, "../components/clients/client-profile-header.tsx"),
   "utf8"
 );
+const ROW_SOURCE = readFileSync(
+  resolve(import.meta.dirname, "../components/clients/client-row.tsx"),
+  "utf8"
+);
 const PHONE_SOURCE = readFileSync(
   resolve(import.meta.dirname, "../components/clients/client-phone-display.tsx"),
   "utf8"
@@ -46,6 +50,19 @@ describe("Story 40.3 Clients contracts", () => {
     expect(TABLE_LAYOUT_SOURCE).not.toContain("min-w-[42rem]");
     expect(TABLE_LAYOUT_SOURCE).toContain("md:table");
     expect(LIST_SOURCE).toContain('className="divide-y divide-border-warm md:hidden"');
+  });
+
+  it("does not clip Clients table status labels with the community 5.5rem column", () => {
+    expect(TABLE_LAYOUT_SOURCE).toContain("clientsSemanticTableStatusClassName");
+    expect(TABLE_LAYOUT_SOURCE).toContain('export const clientsSemanticTableStatusClassName = "min-w-0"');
+    expect(ROW_SOURCE).toContain("clientsSemanticTableStatusClassName");
+    const rowStart = ROW_SOURCE.indexOf('if (variant === "row")');
+    const rowEnd = ROW_SOURCE.indexOf("const card =");
+    const rowVariantBlock = ROW_SOURCE.slice(rowStart, rowEnd);
+    expect(rowStart).toBeGreaterThan(-1);
+    expect(rowEnd).toBeGreaterThan(rowStart);
+    expect(rowVariantBlock).toContain("clientsSemanticTableStatusClassName");
+    expect(rowVariantBlock).not.toContain("clientsTableStatusColumnClassName");
   });
 
   it("keeps profile expand on 160ms local motion with no 200ms local interaction", () => {

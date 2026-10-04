@@ -161,6 +161,15 @@ test.describe("Story 40.3 — Clients list and profile", () => {
         await expect(page.locator("article").first()).toBeVisible();
       } else if (hasClient) {
         await expect(page.getByRole("table")).toBeVisible();
+        const statusLabels = page.locator("table").getByText(/^(New|Contacted|Active|Inactive)$/);
+        const statusCount = await statusLabels.count();
+        expect(statusCount, `${viewport.name} status labels`).toBeGreaterThan(0);
+        for (let index = 0; index < statusCount; index += 1) {
+          const clipped = await statusLabels.nth(index).evaluate(
+            (node) => node.scrollWidth > node.clientWidth + 1
+          );
+          expect(clipped, `${viewport.name} table status clip`).toBe(false);
+        }
       }
       if (hasClient && viewport.width === 390) {
         await visibleClientProfileLink(page).click();
