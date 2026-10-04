@@ -10,6 +10,26 @@ export const FORM_STUDIO_INSPECTOR_TOGGLE_ID = "form-studio-inspector-toggle";
 
 export type FormStudioComposition = "stacked" | "two-pane" | "three-pane";
 
+export function getLiveFormStudioComposition(): FormStudioComposition | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  if (window.matchMedia(FORM_STUDIO_STACKED_QUERY).matches) {
+    return "stacked";
+  }
+
+  if (window.matchMedia(FORM_STUDIO_TWO_PANE_QUERY).matches) {
+    return "two-pane";
+  }
+
+  if (window.matchMedia(FORM_STUDIO_THREE_PANE_QUERY).matches) {
+    return "three-pane";
+  }
+
+  return null;
+}
+
 export function getFormStudioComposition(width: number): FormStudioComposition {
   if (width >= FORM_STUDIO_THREE_PANE_MIN_PX) {
     return "three-pane";
@@ -83,12 +103,12 @@ export function resolveInspectorAfterResize({
   if (next === "stacked") {
     return {
       inspectorOpen: false,
-      sheetOpen: inspectorOpen || sheetOpen,
+      sheetOpen: previous === "three-pane" || inspectorOpen || sheetOpen,
     };
   }
 
   return {
-    inspectorOpen: inspectorOpen || sheetOpen,
+    inspectorOpen: previous === "three-pane" || inspectorOpen || sheetOpen,
     sheetOpen: false,
   };
 }

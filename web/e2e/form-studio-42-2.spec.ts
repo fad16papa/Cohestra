@@ -223,8 +223,29 @@ test.describe("Story 42.2 — Form Studio responsive composition", () => {
       fullPage: true,
     });
 
+    await page.getByLabel(/^Label$/i).focus();
+    await page.setViewportSize({ width: 1279, height: 900 });
+    await waitForComposition(page, "two-pane");
+    await expect(page.locator("[data-form-studio-inspector='docked']")).toBeVisible();
+    await expect(page.locator("#form-studio-inspector-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+    await expect(page.getByLabel(/^Label$/i)).toHaveValue("Nested note kept");
+    await page.screenshot({
+      path: path.join(evidenceDir, "viewports", "resize-1440-to-1279.png"),
+      fullPage: true,
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await waitForComposition(page, "three-pane");
+
     for (const viewport of VIEWPORTS) {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      const openSheet = page.locator("[data-slot='sheet-content']");
+      if (await openSheet.isVisible().catch(() => false)) {
+        await page.keyboard.press("Escape");
+        await expect(openSheet).toHaveCount(0);
+      }
       await waitForFormStudio(page);
       await waitForComposition(page, viewport.composition);
       await assertNoOverflow(page, `${viewport.name} overflow`);
@@ -251,7 +272,11 @@ test.describe("Story 42.2 — Form Studio responsive composition", () => {
       } else {
         await expect(toggle).toBeVisible();
         await assertMinTouch(toggle, `${viewport.name} inspector toggle`);
-        await expect(toggle).toHaveAttribute("aria-controls", "form-studio-inspector");
+        if (viewport.composition === "two-pane") {
+          await expect(toggle).toHaveAttribute("aria-controls", "form-studio-inspector");
+        } else if ((await toggle.getAttribute("aria-expanded")) !== "true") {
+          await expect(toggle).not.toHaveAttribute("aria-controls", "form-studio-inspector");
+        }
         if ((await toggle.getAttribute("aria-expanded")) === "true") {
           await toggle.click();
         }
@@ -279,13 +304,11 @@ test.describe("Story 42.2 — Form Studio responsive composition", () => {
 
     await page.setViewportSize({ width: 1279, height: 900 });
     await waitForComposition(page, "two-pane");
-    await expect(page.locator("[data-form-studio-inspector]:visible")).toHaveCount(0);
-    await page.locator("#form-studio-inspector-toggle").click();
+    await expect(page.locator("[data-form-studio-inspector='docked']")).toBeVisible();
     await expect(page.locator("#form-studio-inspector-toggle")).toHaveAttribute(
       "aria-expanded",
       "true"
     );
-    await expect(page.locator("[data-form-studio-inspector='docked']")).toBeVisible();
     const twoPaneCanvas = await page.locator("[data-form-studio-canvas]").boundingBox();
     const twoPaneInspector = await page.locator("[data-form-studio-inspector]").boundingBox();
     expect(twoPaneCanvas && twoPaneInspector).toBeTruthy();
@@ -349,6 +372,22 @@ test.describe("Story 42.2 — Form Studio responsive composition", () => {
       path: path.join(evidenceDir, "viewports", "sheet-open-before-resize.png"),
       fullPage: true,
     });
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await waitForComposition(page, "two-pane");
+    await expect(page.locator("[data-slot='sheet-content']")).toHaveCount(0);
+    await expect(page.locator("[data-form-studio-inspector='docked']")).toBeVisible();
+    await expect(page.locator("#form-studio-inspector-toggle")).toHaveAttribute(
+      "aria-expanded",
+      "true"
+    );
+    expect(
+      await page.evaluate(() =>
+        [...document.body.children].some((child) => child.hasAttribute("inert"))
+      )
+    ).toBe(false);
+    await page.setViewportSize({ width: 1023, height: 768 });
+    await waitForComposition(page, "stacked");
+    await expect(page.locator("[data-slot='sheet-content']")).toBeVisible();
     await page.setViewportSize({ width: 1440, height: 900 });
     await waitForComposition(page, "three-pane");
     await expect(page.locator("[data-slot='sheet-content']")).toHaveCount(0);

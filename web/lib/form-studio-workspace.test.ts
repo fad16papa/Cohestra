@@ -84,7 +84,16 @@ describe("form studio workspace contract", () => {
         inspectorOpen: false,
         sheetOpen: false,
       })
-    ).toEqual({ inspectorOpen: false, sheetOpen: false });
+    ).toEqual({ inspectorOpen: false, sheetOpen: true });
+
+    expect(
+      resolveInspectorAfterResize({
+        previous: "three-pane",
+        next: "two-pane",
+        inspectorOpen: false,
+        sheetOpen: false,
+      })
+    ).toEqual({ inspectorOpen: true, sheetOpen: false });
   });
 });
 
@@ -101,6 +110,8 @@ describe("form studio workspace source contract", () => {
     expect(BUILDER_SOURCE).toContain(
       "lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]"
     );
+    expect(BUILDER_SOURCE).toContain("lg:max-xl:hidden");
+    expect(BUILDER_SOURCE).toContain("getLiveFormStudioComposition");
     expect(BUILDER_SOURCE).not.toContain(
       "lg:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_minmax(0,18rem)]"
     );

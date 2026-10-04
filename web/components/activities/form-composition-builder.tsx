@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronUp, GripVertical, Lock, Plus, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { FormCompositionInspector } from "@/components/activities/form-composition-inspector";
 import { FormFieldEditor } from "@/components/activities/form-field-editor";
@@ -14,7 +14,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useSyncMedia } from "@/hooks/use-sync-media";
 import type { ActivityFormSchema, FormCompositionNode, FormFieldType } from "@/lib/activities-api";
 import { findCompositionNode } from "@/lib/form-composition-tree";
 import {
@@ -56,6 +55,7 @@ import {
   FORM_STUDIO_STACKED_QUERY,
   FORM_STUDIO_THREE_PANE_QUERY,
   FORM_STUDIO_TWO_PANE_QUERY,
+  getLiveFormStudioComposition,
   isInspectorToggleExpanded,
   resolveInspectorAfterResize,
   type FormStudioComposition,
@@ -77,6 +77,20 @@ type FormCompositionBuilderProps = {
 
 const panelShell =
   "flex min-h-[20rem] min-w-0 flex-col rounded-xl border border-border-warm bg-card lg:min-h-[28rem]";
+
+function useLayoutSyncMedia(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+
+  useLayoutEffect(() => {
+    const media = window.matchMedia(query);
+    const sync = () => setMatches(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, [query]);
+
+  return matches;
+}
 
 function blockTypeLabel(node: FormCompositionNode): string {
   if (node.kind === "fieldRef") {
@@ -193,9 +207,9 @@ export function FormCompositionBuilder({
   const previousCompositionRef = useRef<FormStudioComposition | null>(null);
   const inspectorOpenRef = useRef(inspectorOpen);
   const sheetOpenRef = useRef(sheetOpen);
-  const isStacked = useSyncMedia(FORM_STUDIO_STACKED_QUERY);
-  const isTwoPane = useSyncMedia(FORM_STUDIO_TWO_PANE_QUERY);
-  const isThreePane = useSyncMedia(FORM_STUDIO_THREE_PANE_QUERY);
+  const isStacked = useLayoutSyncMedia(FORM_STUDIO_STACKED_QUERY);
+  const isTwoPane = useLayoutSyncMedia(FORM_STUDIO_TWO_PANE_QUERY);
+  const isThreePane = useLayoutSyncMedia(FORM_STUDIO_THREE_PANE_QUERY);
   const composition: FormStudioComposition | null = isStacked
     ? "stacked"
     : isTwoPane
@@ -252,7 +266,7 @@ export function FormCompositionBuilder({
     sheetOpen
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!composition) {
       return;
     }
@@ -272,18 +286,28 @@ export function FormCompositionBuilder({
     setInspectorOpen(next.inspectorOpen);
     setSheetOpen(next.sheetOpen);
 
+    const inspectorHeldFocus = Boolean(
+      dockedInspectorRef.current?.contains(document.activeElement)
+    );
     if (previous === "stacked" && sheetOpenRef.current) {
+      inspectorToggleRef.current?.focus();
+    } else if (inspectorHeldFocus && !next.inspectorOpen && !next.sheetOpen) {
       inspectorToggleRef.current?.focus();
     }
   }, [composition]);
 
+  function currentComposition(): FormStudioComposition | null {
+    return composition ?? getLiveFormStudioComposition();
+  }
+
   function revealInspector() {
-    if (isStacked) {
+    const mode = currentComposition();
+    if (mode === "stacked") {
       setSheetOpen(true);
       return;
     }
 
-    if (isTwoPane || composition == null) {
+    if (mode !== "three-pane") {
       setInspectorOpen(true);
     }
   }
@@ -297,7 +321,7 @@ export function FormCompositionBuilder({
   }
 
   function toggleInspector() {
-    if (isStacked) {
+    if (currentComposition() === "stacked") {
       setSheetOpen((open) => !open);
       return;
     }
@@ -478,8 +502,13 @@ export function FormCompositionBuilder({
           type="button"
           variant="outline"
           className="min-h-11 min-w-11 shrink-0 px-3 xl:hidden"
+          disabled={disabled}
           aria-expanded={inspectorExpanded}
-          aria-controls={FORM_STUDIO_INSPECTOR_ID}
+          aria-controls={
+            composition === "stacked" && !sheetOpen
+              ? undefined
+              : FORM_STUDIO_INSPECTOR_ID
+          }
           onClick={toggleInspector}
         >
           Block properties
@@ -905,11 +934,11 @@ export function FormCompositionBuilder({
             aria-labelledby="form-studio-inspector-heading"
             className={cn(
               panelShell,
-              "min-h-[20rem] max-lg:hidden lg:min-h-[28rem]",
+              "min-h-[20rem] max-lg:hidden lg:min-h-[28rem] lg:max-xl:hidden xl:flex",
               isTwoPane &&
                 inspectorOpen &&
-                "absolute inset-y-0 right-0 z-20 w-[min(18rem,calc(100%-1rem))] shadow-lg",
-              "xl:static xl:flex xl:w-auto xl:shadow-none"
+                "absolute inset-y-0 right-0 z-20 w-[min(18rem,calc(100%-1rem))] shadow-lg lg:max-xl:flex",
+              "xl:static xl:w-auto xl:shadow-none"
             )}
           >
             <div className="border-b border-border-warm px-4 py-3">

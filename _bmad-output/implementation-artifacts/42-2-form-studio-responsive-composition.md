@@ -2,7 +2,7 @@
 id: 42.2
 key: 42-2-form-studio-responsive-composition
 title: Form Studio responsive composition (D7)
-status: in-progress
+status: review
 epic: 42
 created: 2026-10-04
 baseline_commit: eabc03fffee324e0ad90d07007a8dcfe8e812378
@@ -10,7 +10,7 @@ baseline_commit: eabc03fffee324e0ad90d07007a8dcfe8e812378
 
 # Story 42.2: Form Studio responsive composition (D7)
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -94,12 +94,12 @@ Story 42.2 `review`. Story 42.1 remains `done`. Epic 42 `in-progress`. 42.3–42
 
 ## Tasks / Subtasks
 
-- [ ] Inventory, readiness, and D7 architecture recorded under `px2-42-2/` (AC: all)
-- [ ] Workspace contract module + unit tests for 1023/1024 and 1279/1280 (AC: #2, #3, #4, #5)
-- [ ] Three-pane ≥1280 and two-pane + collapsible inspector 1024–1279 (AC: #2, #3)
-- [ ] Stacked workspace + 38.6 inspector Sheet below 1024 (AC: #4, #8)
-- [ ] Single-source inspector, resize continuity, no save/refetch/remount (AC: #5, #6, #7, #9)
-- [ ] Playwright 42.2 + protected 35–37 / 38.3–38.6 / 39.4–39.5 / 40.5 / 42.1 (AC: #8, #10)
+- [x] Inventory, readiness, and D7 architecture recorded under `px2-42-2/` (AC: all)
+- [x] Workspace contract module + unit tests for 1023/1024 and 1279/1280 (AC: #2, #3, #4, #5)
+- [x] Three-pane ≥1280 and two-pane + collapsible inspector 1024–1279 (AC: #2, #3)
+- [x] Stacked workspace + 38.6 inspector Sheet below 1024 (AC: #4, #8)
+- [x] Single-source inspector, resize continuity, no save/refetch/remount (AC: #5, #6, #7, #9)
+- [x] Playwright 42.2 + protected 35–37 / 38.3–38.6 / 39.4–39.5 / 40.5 / 42.1 (AC: #8, #10)
 
 ## Dev Notes
 
@@ -138,8 +138,22 @@ See `_bmad-output/planning-artifacts/evidence/px2-42-2/`.
 
 ### Completion Notes List
 
+- Story created from synchronized `main` `eabc03ff`. Epic 42 remains in-progress. 42.1 remains done. 42.3–42.4 not started.
+- D7 shell: CSS `lg` two-pane / `xl` three-pane; Sheet below 1024; one inspector instance at a time.
+- Review patches: three-pane rehome, live matchMedia, `lg:max-xl:hidden`, layout media sync, honest `aria-controls`.
+- Local gates recorded in `px2-42-2/test-results.md`. Story left at `review` for product-owner pre-merge. Not done. Not merged.
+
 ### File List
+
+- `_bmad-output/implementation-artifacts/42-2-form-studio-responsive-composition.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/planning-artifacts/evidence/px2-42-2/**`
+- `web/components/activities/form-composition-builder.tsx`
+- `web/lib/form-studio-workspace.ts`
+- `web/lib/form-studio-workspace.test.ts`
+- `web/e2e/form-studio-42-2.spec.ts`
 
 ### Change Log
 
 - 2026-10-04: Created Story 42.2 from synchronized `main` `eabc03ff`. Epic 42 remains in-progress. 42.1 remains done. 42.3–42.4 not started.
+- 2026-10-04: Implemented D7 responsive composition and review patches. Status `review`.
