@@ -119,6 +119,10 @@ export function ReportsPageClient() {
 
     let cancelled = false;
     const filterKey = currentFilterKey;
+    if (filterKey !== reportFilterKey) {
+      setError(null);
+      setErrorStatus(null);
+    }
 
     void fetchReport(authFetch, filters)
       .then((result) => {
@@ -247,7 +251,7 @@ export function ReportsPageClient() {
           Weekly reporting stays available on Basic.{" "}
           <button
             type="button"
-            className="font-medium text-text-link underline underline-offset-2"
+            className="min-h-11 font-medium text-text-link underline underline-offset-2"
             onClick={() => router.replace("/analytics?preset=weekly")}
           >
             Back to weekly Analytics

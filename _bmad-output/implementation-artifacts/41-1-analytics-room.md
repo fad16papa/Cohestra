@@ -2,7 +2,7 @@
 id: 41.1
 key: 41-1-analytics-room
 title: Analytics room
-status: in-progress
+status: review
 epic: 41
 created: 2026-10-04
 baseline_commit: 6d9c6af8b1ad8dc26e1c8e95722476e50736c3f8
@@ -10,7 +10,7 @@ baseline_commit: 6d9c6af8b1ad8dc26e1c8e95722476e50736c3f8
 
 # Story 41.1: Analytics room
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -91,7 +91,7 @@ Story 41.1 `review`. Epic 41 `in-progress`. 41.2 / 41.3 not started. One draft u
 - [x] Truthful states: retry, denied, export-disabled reason, stale live region
 - [x] Chart summaries + stack below 768 + 44px filters
 - [x] Dashboard Graphs named Analytics cross-link
-- [ ] Unit + Playwright 41.1 + protected 38.4–40.5
+- [x] Unit + Playwright 41.1 + protected 38.4–40.5
 
 ## Dev Agent Record
 
@@ -101,10 +101,32 @@ Grok 4.6 (primary). Composer 2.5 unused.
 
 ### Debug Log References
 
+See `_bmad-output/planning-artifacts/evidence/px2-41-1/test-results.md` and `review.md`.
+
 ### Completion Notes List
 
+- Existing Reports page is the Analytics room. No new backend, KPIs, or saved views.
+- `/reports` remains a query-preserving compatibility redirect.
+- Story 41.1 is `review`. Epic 41 stays `in-progress`. 41.2 and 41.3 were not started.
+- Production is not claimed.
+
 ### File List
+
+- `_bmad-output/implementation-artifacts/41-1-analytics-room.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/planning-artifacts/evidence/px2-41-1/**`
+- `web/components/dashboard/dashboard-metrics-graphs.tsx`
+- `web/components/reports/report-filter-bar.tsx`
+- `web/components/reports/report-registrations-trend-chart.tsx`
+- `web/components/reports/report-results.tsx`
+- `web/components/reports/reports-page-client.tsx`
+- `web/e2e/analytics-41-1.spec.ts`
+- `web/lib/admin-route-motion.test.ts`
+- `web/lib/report-filter-bar-history.test.ts`
+- `web/lib/reports-api.ts`
+- `web/lib/reports-api.test.ts`
 
 ### Change Log
 
 - 2026-10-04: Created Story 41.1 from main `6d9c6af8`. Epic 41 in-progress. Stories 41.2 and 41.3 not started.
+- 2026-10-04: Implementation + QA + four-layer review. Tracker moved to `review`. Draft PR #377.
