@@ -92,4 +92,11 @@ describe("Story 39.1 desktop IA", () => {
       true
     );
   });
+
+  it("finds Website via Website Studio without renaming the nav label", () => {
+    const matches = filterCommandPaletteItems("website studio");
+    expect(
+      matches.some((item) => item.href === "/dashboard/website" && item.label === "Website")
+    ).toBe(true);
+  });
 });

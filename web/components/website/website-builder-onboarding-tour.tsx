@@ -13,14 +13,20 @@ import { Button } from "@/components/ui/button";
 import { markWebsiteBuilderTourCompleted } from "@/lib/website-builder-preferences";
 import type { WebsiteBuilderEditorTab } from "@/lib/website-builder-tour";
 import type { WebsiteBuilderTourStep } from "@/lib/website-builder-tour";
+import type { WebsiteBuilderWorkspaceMode } from "@/lib/website-builder-workspace";
 import { cn } from "@/lib/utils";
 
 type WebsiteBuilderOnboardingTourProps = {
   steps: WebsiteBuilderTourStep[];
   open: boolean;
+  tenantSlug: string | null;
   activeTab: WebsiteBuilderEditorTab;
+  activeWorkspaceMode: WebsiteBuilderWorkspaceMode;
+  activeMobileWorkspace: "edit" | "preview";
   onClose: () => void;
   onRequestTab: (tab: WebsiteBuilderEditorTab) => void;
+  onRequestWorkspaceMode: (mode: WebsiteBuilderWorkspaceMode) => void;
+  onRequestMobileWorkspace: (workspace: "edit" | "preview") => void;
 };
 
 type TargetRect = {
@@ -57,9 +63,14 @@ const FALLBACK_TOOLTIP_HEIGHT = 168;
 export function WebsiteBuilderOnboardingTour({
   steps,
   open,
+  tenantSlug,
   activeTab,
+  activeWorkspaceMode,
+  activeMobileWorkspace,
   onClose,
   onRequestTab,
+  onRequestWorkspaceMode,
+  onRequestMobileWorkspace,
 }: WebsiteBuilderOnboardingTourProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
@@ -132,6 +143,18 @@ export function WebsiteBuilderOnboardingTour({
       return;
     }
 
+    if (step.workspaceMode && step.workspaceMode !== activeWorkspaceMode) {
+      onRequestWorkspaceMode(step.workspaceMode);
+      setTargetRect(null);
+      return;
+    }
+
+    if (step.mobileWorkspace && step.mobileWorkspace !== activeMobileWorkspace) {
+      onRequestMobileWorkspace(step.mobileWorkspace);
+      setTargetRect(null);
+      return;
+    }
+
     let cancelled = false;
     let retryTimer: number | undefined;
 
@@ -173,7 +196,19 @@ export function WebsiteBuilderOnboardingTour({
         window.clearTimeout(retryTimer);
       }
     };
-  }, [activeTab, measureTarget, onRequestTab, open, step, stepIndex, syncViewport]);
+  }, [
+    activeMobileWorkspace,
+    activeTab,
+    activeWorkspaceMode,
+    measureTarget,
+    onRequestMobileWorkspace,
+    onRequestTab,
+    onRequestWorkspaceMode,
+    open,
+    step,
+    stepIndex,
+    syncViewport,
+  ]);
 
   useLayoutEffect(() => {
     const node = tooltipRef.current;
@@ -220,10 +255,10 @@ export function WebsiteBuilderOnboardingTour({
 
   useObserveLayoutShifts(open && tabReady, step?.targetSelector ?? null, remeasure);
 
-  function finishTour() {
-    markWebsiteBuilderTourCompleted();
+  const finishTour = useCallback(() => {
+    markWebsiteBuilderTourCompleted(tenantSlug);
     onClose();
-  }
+  }, [onClose, tenantSlug]);
 
   function handleNext() {
     if (isLast) {
@@ -235,9 +270,30 @@ export function WebsiteBuilderOnboardingTour({
     setStepIndex((current) => current + 1);
   }
 
-  function handleSkip() {
+  const handleSkip = useCallback(() => {
     finishTour();
-  }
+  }, [finishTour]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) {
+        return;
+      }
+
+      if (document.querySelector('[data-slot="alert-dialog-content"]')) {
+        return;
+      }
+
+      handleSkip();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handleSkip, open]);
 
   if (!open || !step || steps.length === 0 || !mounted) {
     return null;
@@ -253,13 +309,7 @@ export function WebsiteBuilderOnboardingTour({
   // Portal to document.body so fixed positioning uses the viewport. Admin <main>
   // keeps a transform from page-enter animation, which would break in-tree fixed.
   return createPortal(
-    <div className="fixed inset-0 z-[200]" aria-live="polite">
-      <div
-        className="fixed inset-0 bg-black/55"
-        aria-hidden
-        onClick={handleSkip}
-      />
-
+    <div className="pointer-events-none fixed inset-0 z-40" aria-live="polite">
       {targetRect ? (
         <div
           className="pointer-events-none fixed rounded-xl ring-4 ring-primary/80 ring-offset-2 ring-offset-background transition-[top,left,width,height] duration-150 motion-reduce:transition-none"
@@ -268,7 +318,6 @@ export function WebsiteBuilderOnboardingTour({
             left: targetRect.left,
             width: targetRect.width,
             height: targetRect.height,
-            boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)",
           }}
         />
       ) : null}
@@ -276,7 +325,7 @@ export function WebsiteBuilderOnboardingTour({
       <div
         ref={tooltipRef}
         className={cn(
-          "fixed z-[201] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl transition-[top,left] duration-150 motion-reduce:transition-none",
+          "pointer-events-auto fixed z-[41] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl transition-[top,left] duration-150 motion-reduce:transition-none",
           !targetRect && "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         )}
         style={
@@ -288,7 +337,7 @@ export function WebsiteBuilderOnboardingTour({
               }
             : undefined
         }
-        role="dialog"
+        role="region"
         aria-labelledby="website-builder-tour-title"
         aria-describedby="website-builder-tour-body"
       >
@@ -302,10 +351,10 @@ export function WebsiteBuilderOnboardingTour({
           {step.body}
         </p>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-          <Button type="button" variant="ghost" size="sm" onClick={handleSkip}>
+          <Button type="button" variant="ghost" size="sm" className="min-h-11 min-w-11" onClick={handleSkip}>
             Skip tour
           </Button>
-          <Button type="button" size="sm" onClick={handleNext}>
+          <Button type="button" size="sm" className="min-h-11 min-w-11" onClick={handleNext}>
             {isLast ? "Got it" : "Next"}
           </Button>
         </div>

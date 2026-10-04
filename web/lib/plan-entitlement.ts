@@ -10,6 +10,16 @@ export type PlanLockedDetails = {
   requiredPlan?: string;
 };
 
+export class SiteRequestError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "SiteRequestError";
+    this.status = status;
+  }
+}
+
 export class PlanLockedError extends Error {
   readonly errorCode = PLAN_LOCKED_ERROR_CODE;
   readonly feature?: string;
@@ -66,7 +76,7 @@ export async function throwIfSiteRequestFailed(response: Response): Promise<void
       if (locked) {
         throw locked;
       }
-      throw new Error(problem.message);
+      throw new SiteRequestError(problem.message, response.status);
     } catch (error) {
       if (error instanceof PlanLockedError) {
         throw error;
@@ -79,5 +89,5 @@ export async function throwIfSiteRequestFailed(response: Response): Promise<void
     }
   }
 
-  throw new Error(`Request failed (${response.status})`);
+  throw new SiteRequestError(`Request failed (${response.status})`, response.status);
 }

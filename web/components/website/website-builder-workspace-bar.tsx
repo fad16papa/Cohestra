@@ -66,7 +66,7 @@ function TabButton({
       aria-selected={active}
       aria-controls={ariaControls}
       className={cn(
-        "rounded-md px-3 py-1.5 text-sm font-medium motion-local",
+        "inline-flex min-h-11 min-w-11 flex-1 items-center justify-center rounded-md px-3 text-sm font-medium motion-local sm:flex-none",
         active
           ? "bg-primary text-primary-foreground shadow-sm"
           : "text-text-muted-warm hover:bg-muted/60 hover:text-text-warm",
@@ -93,7 +93,7 @@ export function WebsiteBuilderWorkspaceBar({
       <div
         className="inline-flex w-full rounded-lg border border-border-warm bg-card p-1"
         role="tablist"
-        aria-label="Builder workspace"
+        aria-label="Website Studio workspace"
       >
         <TabButton
           active={mobileWorkspace === "edit"}
@@ -114,7 +114,7 @@ export function WebsiteBuilderWorkspaceBar({
       <div
         className="inline-flex w-full rounded-lg border border-border-warm bg-card p-1 sm:w-auto"
         role="tablist"
-        aria-label="Website builder sections"
+        aria-label="Website Studio sections"
       >
         {EDITOR_TABS.map((tab) => (
           <TabButton

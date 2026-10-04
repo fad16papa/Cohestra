@@ -40,8 +40,9 @@ describe("fetchSiteAdmin entitlement", () => {
 
     await expect(fetchSiteAdmin(authFetch)).rejects.toEqual(
       expect.objectContaining({
-        name: "Error",
+        name: "SiteRequestError",
         message: "See server logs for details.",
+        status: 500,
       })
     );
   });

@@ -84,8 +84,9 @@ describe("website plan entitlement helpers", () => {
         )
       )
     ).rejects.toEqual(expect.objectContaining({
-      name: "Error",
+      name: "SiteRequestError",
       message: "See server logs for details.",
+      status: 500,
     }));
 
     await expect(
@@ -96,8 +97,9 @@ describe("website plan entitlement helpers", () => {
         )
       )
     ).rejects.toEqual(expect.objectContaining({
-      name: "Error",
+      name: "SiteRequestError",
       message: "Forbidden",
+      status: 403,
     }));
   });
 
