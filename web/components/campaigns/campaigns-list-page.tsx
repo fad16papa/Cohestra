@@ -104,7 +104,7 @@ export function CampaignsListPage() {
           actions={
             <Link
               href="/campaigns/new"
-              className={cn(buttonVariants(), "min-h-12 min-w-11 px-4")}
+              className={cn(buttonVariants(), "h-12 min-h-12 min-w-11 px-4")}
             >
               New campaign
             </Link>
@@ -135,7 +135,7 @@ export function CampaignsListPage() {
 
         {!error && campaigns.length > 0 ? (
           <div className="overflow-hidden rounded-xl border border-border-warm bg-card">
-            <div className="hidden grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.7fr)_minmax(0,1fr)] gap-4 border-b border-border-warm bg-muted/30 px-4 py-3 text-xs font-medium uppercase tracking-wide text-foreground sm:grid">
+            <div className="hidden grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.7fr)_minmax(0,1fr)] gap-4 border-b border-border-warm bg-muted/30 px-4 py-3 text-xs font-medium uppercase tracking-wide text-text-warm sm:grid">
               <span>Subject</span>
               <span>Sent</span>
               <span>Status</span>
@@ -191,9 +191,9 @@ function CampaignListRow({ campaign }: { campaign: CampaignListItem }) {
       className="grid gap-2 border-b border-border-warm px-4 py-4 text-sm motion-press last:border-b-0 hover:bg-muted/40 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.7fr)_minmax(0,1fr)] sm:items-center sm:gap-4"
     >
       <span className="truncate font-medium text-text-warm">{campaign.subject}</span>
-      <span className="text-foreground">{formatCampaignSentAt(campaign.sentAt)}</span>
-      <span className="text-foreground">{status}</span>
-      <span className="text-text-muted-warm">{results}</span>
+      <span className="text-text-warm">{formatCampaignSentAt(campaign.sentAt)}</span>
+      <span className="text-text-warm">{status}</span>
+      <span className="text-text-warm">{results}</span>
     </Link>
   );
 }

@@ -2,7 +2,7 @@
 id: 41.3
 key: 41-3-campaigns
 title: Campaigns
-status: in-progress
+status: review
 epic: 41
 created: 2026-10-04
 baseline_commit: ac5538e1910fc48650b7793214ed57fde40bf09c
@@ -10,7 +10,7 @@ baseline_commit: ac5538e1910fc48650b7793214ed57fde40bf09c
 
 # Story 41.3: Campaigns
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -103,13 +103,13 @@ Story 41.3 `review`. Epic 41 `in-progress`. 41.1 and 41.2 remain `done`. Epic 42
 
 ## Tasks / Subtasks
 
-- [ ] Inventory and contracts recorded (AC: all)
-- [ ] Entitlement/pending/denied/lock matrix on list, compose, detail (AC: #2, #3)
-- [ ] List truthful states, visible status text, paging (AC: #4)
-- [ ] Compose 390, dirty, overlays, duplicate-send, async results (AC: #5–#8)
-- [ ] Detail status/result + sanitized HTML (AC: #9, #12)
-- [ ] QR + security remain fail-closed (AC: #10, #12)
-- [ ] Unit + Playwright 41.3 + protected 38.4–41.2 (AC: #13)
+- [x] Inventory and contracts recorded (AC: all)
+- [x] Entitlement/pending/denied/lock matrix on list, compose, detail (AC: #2, #3)
+- [x] List truthful states, visible status text, paging (AC: #4)
+- [x] Compose 390, dirty, overlays, duplicate-send, async results (AC: #5–#8)
+- [x] Detail status/result + sanitized HTML (AC: #9, #12)
+- [x] QR + security remain fail-closed (AC: #10, #12)
+- [x] Unit + Playwright 41.3 + protected 38.4–41.2 (AC: #13)
 
 ## Dev Notes
 
@@ -136,14 +136,31 @@ Story 41.3 `review`. Epic 41 `in-progress`. 41.1 and 41.2 remain `done`. Epic 42
 
 ### Agent Model Used
 
-Grok 4.6 (primary). Composer 2.5 unused unless a later bounded presentational pass is recorded.
+Grok 4.6 (primary) for catalog, story, readiness, architecture, implementation, tests, and all four review layers. Composer 2.5 unused.
 
 ### Debug Log References
 
+See `_bmad-output/planning-artifacts/evidence/px2-41-3/test-results.md` and `review.md`.
+
 ### Completion Notes List
 
+- Existing campaigns API, consent, outbox send, and 38.6 overlays reused. No new provider or schema.
+- Unknown/missing plan is pending. Role 403 is denied. Members never get checkout.
+- QA intercepts send and send-test. No real recipients mailed.
+- Story moved to `review`. Epic 41 stays in-progress. Epic 42 not started. Production not claimed.
+
 ### File List
+
+- `_bmad-output/implementation-artifacts/41-3-campaigns.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/planning-artifacts/evidence/px2-41-3/**`
+- `web/components/campaigns/**`
+- `web/lib/campaign-html.ts`
+- `web/lib/campaign-room-access.ts`
+- `web/lib/campaigns-api.ts`
+- `web/e2e/campaigns-41-3.spec.ts`
 
 ### Change Log
 
 - 2026-10-04: Created Story 41.3 from main `ac5538e1`. Epic 41 remains in-progress. Stories 41.1 and 41.2 remain done. Epic 42 not started.
+- 2026-10-04: Implementation + QA + four-layer review. Tracker moved to `review`. Draft PR #381.

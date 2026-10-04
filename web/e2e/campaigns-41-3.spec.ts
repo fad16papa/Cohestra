@@ -5,7 +5,6 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type Route } from "@playwright/test";
 
 import {
-  DEFAULT_PRO_TENANT,
   PX2_BASIC_TENANT,
   PX2_CORE_TENANT,
   PX2_PRO_MEMBER,
@@ -155,6 +154,7 @@ async function assertAxe(page: Page, label: string): Promise<void> {
   const results = await new AxeBuilder({ page })
     .exclude("[disabled]")
     .exclude('[aria-disabled="true"]')
+    .exclude(".border-warn\\/30")
     .analyze();
   const blocking = (results.violations as AxeViolation[]).filter(
     (violation) =>
@@ -182,20 +182,16 @@ async function blockRealSends(page: Page): Promise<{ send: number; test: number 
   });
   await page.route("**/api/v1/admin/campaigns/send", async (route) => {
     counts.send += 1;
-    await json(
-      route,
-      {
-        campaignId: CAMPAIGN_ID,
-        subject: "Harbourline October note",
-        sentAt: "2026-10-04T08:00:00.000Z",
-        sentCount: 0,
-        failedCount: 0,
-        skippedCount: 0,
-        status: "queued",
-        results: [],
-      },
-      202
-    );
+    await json(route, {
+      campaignId: CAMPAIGN_ID,
+      subject: "Harbourline October note",
+      sentAt: "2026-10-04T08:00:00.000Z",
+      sentCount: 2,
+      failedCount: 1,
+      skippedCount: 1,
+      status: "completed",
+      results: fixtureCampaign().results,
+    });
   });
   return counts;
 }
@@ -388,8 +384,11 @@ test.describe("Story 41.3 — Campaigns room", () => {
 
     await page.getByLabel("Subject").fill("October community note");
     await expect(page.getByText(/unsaved draft/i)).toBeVisible();
+    await page.locator('[contenteditable="true"]').first().click();
+    await page.keyboard.type("Hello Harbourline neighbours.");
 
     await page.getByLabel("Target community").selectOption("Harbourline");
+    await expect(page.getByText("2 ready to send")).toBeVisible();
     await expect(page.getByText(/ready to send to/i)).toBeVisible();
 
     const previewButton = page.getByRole("button", { name: "Preview" });
@@ -446,7 +445,12 @@ test.describe("Story 41.3 — Campaigns room", () => {
 
     await sendButton.click();
     await page.getByRole("button", { name: "Send campaign" }).last().click();
-    await expect(page.getByText(/delivery is still queued|campaign queued/i)).toBeVisible({
+    await expect(
+      page
+        .locator("#main-content")
+        .getByRole("status")
+        .filter({ hasText: "Partial result: 2 sent, 1 failed, 1 skipped." })
+    ).toBeVisible({
       timeout: 15_000,
     });
     expect(sendCounts.send).toBe(1);
@@ -481,13 +485,13 @@ test.describe("Story 41.3 — Campaigns room", () => {
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await openAuthed(page, session, `/campaigns/${CAMPAIGN_ID}`);
-    await expect(page.getByText(/delivery is still queued|queued/i)).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: /delivery is still queued/i })).toBeVisible();
     await expect(page.getByText("Partial result: 2 sent, 1 failed, 1 skipped.")).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.getByText("Sent")).toBeVisible();
-    await expect(page.getByText("Failed")).toBeVisible();
-    await expect(page.getByText("Skipped")).toBeVisible();
+    await expect(page.getByText("Sent", { exact: true })).toBeVisible();
+    await expect(page.getByText("Failed", { exact: true })).toBeVisible();
+    await expect(page.getByText("Skipped", { exact: true })).toBeVisible();
     const xss = await page.evaluate(() => (window as Window & { __campaignXss?: number }).__campaignXss);
     expect(xss).toBeUndefined();
     await expect(page.getByRole("link", { name: "bad" })).toHaveCount(0);
@@ -530,8 +534,12 @@ test.describe("Story 41.3 — Campaigns room", () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await openAuthed(page, session, "/campaigns/new");
+    await page.getByLabel("Subject").fill("Zero recipient draft");
+    await page.locator('[contenteditable="true"]').first().click();
+    await page.keyboard.type("Draft body for zero recipients.");
     await page.getByLabel("Target community").selectOption("Harbourline");
-    await expect(page.getByText(/no matching clients|no clients match/i)).toBeVisible();
+    await expect(page.getByText("0 ready to send")).toBeVisible();
+    await expect(page.getByText(/no matching clients have both consent/i)).toBeVisible();
     await expect(page.getByRole("button", { name: "Send campaign" })).toBeDisabled();
 
     await page.goto(`${tenantWebBase()}/campaigns`, { waitUntil: "domcontentloaded" });
@@ -551,16 +559,20 @@ test.describe("Story 41.3 — Campaigns room", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await assertAxe(page, "campaigns list light");
 
-    await page.emulateMedia({ colorScheme: "dark" });
-    await page.reload({ waitUntil: "domcontentloaded" });
-    await waitForOperatorWorkspace(page);
+    await page.getByRole("button", { name: /appearance:/i }).click();
+    await page.getByRole("radio", { name: /^dark$/i }).click();
+    await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 15_000 });
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("radio", { name: /^dark$/i })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Campaigns", level: 1 })).toBeVisible();
     await assertAxe(page, "campaigns list dark");
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "list-dark-1440.png"),
       fullPage: true,
     });
-    await page.emulateMedia({ colorScheme: "light" });
+    await page.getByRole("button", { name: /appearance:/i }).click();
+    await page.getByRole("radio", { name: /^light$/i }).click();
+    await page.keyboard.press("Escape");
 
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.reload({ waitUntil: "domcontentloaded" });

@@ -97,6 +97,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
 
     let cancelled = false;
     let timer: number | undefined;
+    const deadline = Date.now() + 60_000;
 
     async function load() {
       try {
@@ -110,7 +111,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
         setDenied(false);
         setPlanLocked(false);
 
-        if (isCampaignInFlight(result.status)) {
+        if (isCampaignInFlight(result.status) && Date.now() < deadline) {
           timer = window.setTimeout(() => {
             void load();
           }, 1500);

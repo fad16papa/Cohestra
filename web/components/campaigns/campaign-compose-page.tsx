@@ -116,7 +116,7 @@ export function CampaignComposePage() {
   const [planLocked, setPlanLocked] = useState(false);
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const sendingRef = useRef(false);
-  const initialFingerprint = useRef(
+  const [baselineFingerprint] = useState(() =>
     composeFingerprint("", "<p></p>", {
       consentOnly: true,
       additionalClientIds: preselectedClientIds,
@@ -125,7 +125,7 @@ export function CampaignComposePage() {
 
   const selectedTemplate = templates.find((item) => item.id === selectedTemplateId) ?? null;
   const dirty =
-    composeFingerprint(subject, body, segment) !== initialFingerprint.current &&
+    composeFingerprint(subject, body, segment) !== baselineFingerprint &&
     sendResult === null;
 
   const handlePreviewChange = useCallback((preview: ClientSegmentPreview | null) => {

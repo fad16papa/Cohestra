@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 
 import { InsertQrModal } from "@/components/campaigns/insert-qr-modal";
-import { Button } from "@/components/ui/button";
 import type { Activity } from "@/lib/activities-api";
 import {
   CAMPAIGN_HTML_MAX_BYTES,
