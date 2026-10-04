@@ -19,4 +19,5 @@ public sealed record ClientListResponse(
     int Page,
     int PageSize,
     int TotalCount,
-    ClientLeadStatusCountsResponse StatusCounts);
+    ClientLeadStatusCountsResponse StatusCounts,
+    ClientFollowUpCategoryCountsResponse? FollowUpCategoryCounts = null);
