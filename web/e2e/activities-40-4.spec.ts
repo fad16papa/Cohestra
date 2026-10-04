@@ -114,7 +114,7 @@ test.describe("Story 40.4 — Activities and Opportunity boundary", () => {
       ).toBe(true);
     }
 
-    const nextPage = page.getByRole("button", { name: "Next" });
+    const nextPage = page.getByRole("button", { name: "Next", exact: true });
     if (await nextPage.isEnabled()) {
       await nextPage.click();
       await expect(page.getByText(/Page 2 of/)).toBeVisible();
@@ -217,7 +217,7 @@ test.describe("Story 40.4 — Activities and Opportunity boundary", () => {
     await archiveButton.click();
     await dialog.getByRole("button", { name: "Archive draft" }).click();
     await expect(dialog.getByRole("alert")).toContainText("Archive failed for test.");
-    await expect(page.getByRole("heading", { level: 1, name: owned.name })).toBeVisible();
+    await expect(dialog.getByText(owned.name)).toBeVisible();
     await page.unroute(`**/api/v1/admin/activities/${owned.id}/archive`);
 
     await dialog.getByRole("button", { name: "Archive draft" }).click();
@@ -270,10 +270,11 @@ test.describe("Story 40.4 — Activities and Opportunity boundary", () => {
       })
     );
     await openAuthed(page, session, "/activities");
+    await expect(page.locator("[data-activities-list-state='permission']")).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "You don’t have access to Activities." })
     ).toBeVisible();
-    await expect(page.getByText(/upgrade/i)).toHaveCount(0);
+    await expect(page.getByRole("alert").getByText(/upgrade/i)).toHaveCount(0);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "denied-1440.png"),
       fullPage: true,

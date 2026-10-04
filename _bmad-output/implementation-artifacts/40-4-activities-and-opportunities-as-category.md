@@ -2,7 +2,7 @@
 id: 40.4
 key: 40-4-activities-and-opportunities-as-category
 title: Activities and opportunities-as-category
-status: in-progress
+status: review
 epic: 40
 created: 2026-10-04
 baseline_commit: 327c0a4ace6864d83307c7e907cec54f22d7965d
@@ -10,7 +10,7 @@ baseline_commit: 327c0a4ace6864d83307c7e907cec54f22d7965d
 
 # Story 40.4: Activities and opportunities-as-category
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -80,13 +80,13 @@ See `_bmad-output/planning-artifacts/evidence/px2-40-4/readiness.md`. Dispositio
 
 ## Tasks / Subtasks
 
-- [ ] Inventory and evidence recorded (AC: all)
-- [ ] Server Archived-last + Id tie-break + unit tests (AC: 1, 2)
-- [ ] List remount removal, honest states, 44px filters (AC: 3, 4)
-- [ ] Detail heading / denied / not-found / error taxonomy (AC: 5)
-- [ ] Archive dialog for Draft + 38.6 contract (AC: 6)
-- [ ] Opportunity boundary + no fabricated source links (AC: 8)
-- [ ] Tests: unit, backend, Playwright 40.4, protected 38.5–40.3 (AC: 7, 9, 10)
+- [x] Inventory and evidence recorded (AC: all)
+- [x] Server Archived-last + Id tie-break + unit tests (AC: 1, 2)
+- [x] List remount removal, honest states, 44px filters (AC: 3, 4)
+- [x] Detail heading / denied / not-found / error taxonomy (AC: 5)
+- [x] Archive dialog for Draft + 38.6 contract (AC: 6)
+- [x] Opportunity boundary + no fabricated source links (AC: 8)
+- [x] Tests: unit, backend, Playwright 40.4, protected 38.5–40.3 (AC: 7, 9, 10)
 
 ## Dev Notes
 
@@ -165,8 +165,32 @@ Grok 4.6
 
 ### Completion Notes List
 
+- Server unfiltered list: Archived last, requested sort, Id tie-break. Draft vs Published stay on the requested sort. No new API.
+- Removed Activities `key={searchParams}` remount. Filter handlers reset page to 1 and refetch.
+- List/detail distinguish empty, no-match, error, denied, not-found. Cap stays shell-dial authoritative.
+- Archive dialog covers Draft and Published. Failure keeps the record.
+- Opportunity stays on Follow-up. No fabricated source links. Composer 2.5 unused. Story 40.5 not started.
+
 ### File List
+
+- `_bmad-output/implementation-artifacts/40-4-activities-and-opportunities-as-category.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/planning-artifacts/evidence/px2-40-4/`
+- `src/Infrastructure/Activities/ActivityService.cs`
+- `src/Infrastructure.Tests/Activities/ActivityServiceListSortTests.cs`
+- `web/app/(admin)/activities/page.tsx`
+- `web/components/activities/activities-list-page.tsx`
+- `web/components/activities/activity-card.tsx`
+- `web/components/activities/activity-detail-page-client.tsx`
+- `web/components/activities/activity-publish-controls.tsx`
+- `web/components/activities/activity-status-badge.tsx`
+- `web/components/activities/archive-activity-dialog.tsx`
+- `web/lib/activities-api.ts`
+- `web/lib/activities-40-4-contract.ts`
+- `web/lib/activities-40-4-contract.test.ts`
+- `web/e2e/activities-40-4.spec.ts`
 
 ### Change Log
 
 - 2026-10-04: Created Story 40.4 from main `327c0a4a`. Inventory and contracts locked. Story 40.5 not started.
+- 2026-10-04: Implemented server Archived-last sort, list/detail honesty, Draft archive dialog. Tests recorded. Status `review`.

@@ -19,42 +19,42 @@
       "route": "client-profile",
       "viewport": "1440x900",
       "width": 124,
-      "height": 44.00000762939453
+      "height": 45
     },
     {
       "control": "select",
       "route": "client-profile",
       "viewport": "1440x900",
       "width": 114,
-      "height": 44
+      "height": 45
     },
     {
       "control": "button",
       "route": "client-profile",
       "viewport": "390x844",
       "width": 124,
-      "height": 44
+      "height": 45
     },
     {
       "control": "select",
       "route": "client-profile",
       "viewport": "390x844",
       "width": 114,
-      "height": 44
+      "height": 45
     },
     {
       "control": "button",
       "route": "client-profile",
       "viewport": "768x1024",
       "width": 124,
-      "height": 44
+      "height": 44.99999237060547
     },
     {
       "control": "select",
       "route": "client-profile",
       "viewport": "768x1024",
       "width": 114,
-      "height": 44
+      "height": 44.99999237060547
     }
   ]
 }
