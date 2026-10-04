@@ -342,6 +342,15 @@ test.describe("Story 40.5 — cross-module continuity", () => {
       expect(box, `${viewport.name} Back target`).toBeTruthy();
       expect(box!.width).toBeGreaterThanOrEqual(44);
       expect(box!.height).toBeGreaterThanOrEqual(44);
+      const headerBox = await page.locator("header").first().boundingBox();
+      expect(headerBox, `${viewport.name} top bar`).toBeTruthy();
+      expect(box!.y, `${viewport.name} Back clipped above bar`).toBeGreaterThanOrEqual(
+        headerBox!.y - 1
+      );
+      expect(
+        box!.y + box!.height,
+        `${viewport.name} Back clipped below bar`
+      ).toBeLessThanOrEqual(headerBox!.y + headerBox!.height + 1);
       await expect(
         page
           .getByRole("navigation", { name: "Breadcrumb" })

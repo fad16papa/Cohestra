@@ -44,7 +44,7 @@ export function AdminTopBar() {
   const pageTitle = pageMeta?.title ?? currentLabel;
 
   return (
-    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border-warm bg-card/80 px-4 backdrop-blur-md md:px-6">
+    <header className="sticky top-0 z-20 flex min-h-14 shrink-0 items-center gap-3 border-b border-border-warm bg-card/80 px-4 py-2 backdrop-blur-md md:h-14 md:py-0 md:px-6">
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
         {breadcrumbs.length > 1 ? (
           <AdminBreadcrumbs items={breadcrumbs} className="flex min-w-0" />
