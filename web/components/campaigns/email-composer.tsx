@@ -62,7 +62,7 @@ function ToolbarButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "inline-flex size-8 items-center justify-center rounded-md border border-transparent text-text-muted-warm transition-colors hover:bg-muted/60 hover:text-text-warm disabled:opacity-40",
+        "inline-flex size-11 min-h-11 min-w-11 items-center justify-center rounded-md border border-transparent text-text-muted-warm transition-colors hover:bg-muted/60 hover:text-text-warm disabled:opacity-40",
         active && "border-border-warm bg-muted/60 text-text-warm"
       )}
     >

@@ -1,4 +1,16 @@
 import { getPublicApiBaseUrl } from "@/lib/api";
+import { parseProblemFields } from "@/lib/problem-details";
+import { isPlanLockedError, planLockedFromProblem } from "@/lib/plan-entitlement";
+
+export class CampaignRequestError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "CampaignRequestError";
+    this.status = status;
+  }
+}
 
 export type EmailTemplate = {
   id: string;
@@ -147,18 +159,30 @@ export type CampaignListResult = {
   totalCount: number;
 };
 
-async function parseProblemDetail(response: Response): Promise<string> {
+async function throwCampaignRequestError(response: Response): Promise<never> {
   try {
     const raw = (await response.json()) as Record<string, unknown>;
-    const detail = raw.detail ?? raw.Detail;
-    if (typeof detail === "string" && detail.length > 0) {
-      return detail;
+    const problem = parseProblemFields(raw);
+    const locked = planLockedFromProblem(problem, response.status);
+    if (locked) {
+      throw locked;
     }
-  } catch {
-    // fall through
-  }
 
-  return `Request failed (${response.status})`;
+    throw new CampaignRequestError(
+      problem.message || `Request failed (${response.status})`,
+      response.status
+    );
+  } catch (error) {
+    if (error instanceof CampaignRequestError) {
+      throw error;
+    }
+
+    if (isPlanLockedError(error)) {
+      throw error;
+    }
+
+    throw new CampaignRequestError(`Request failed (${response.status})`, response.status);
+  }
 }
 
 function parseEmailTemplate(raw: Record<string, unknown>): EmailTemplate {
@@ -199,7 +223,7 @@ export async function fetchEmailTemplates(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwCampaignRequestError(response);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
@@ -228,7 +252,7 @@ export async function createEmailTemplate(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwCampaignRequestError(response);
   }
 
   return parseEmailTemplate((await response.json()) as Record<string, unknown>);
@@ -252,7 +276,7 @@ export async function updateEmailTemplate(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwCampaignRequestError(response);
   }
 
   return parseEmailTemplate((await response.json()) as Record<string, unknown>);
@@ -268,7 +292,7 @@ export async function deleteEmailTemplate(
   );
 
   if (!response.ok && response.status !== 204) {
-    throw new Error(await parseProblemDetail(response));
+    await throwCampaignRequestError(response);
   }
 }
 
@@ -286,7 +310,7 @@ export async function previewClientSegment(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwCampaignRequestError(response);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
@@ -347,7 +371,7 @@ export async function sendCampaign(
   );
 
   if (!response.ok && response.status !== 202) {
-    throw new Error(await parseProblemDetail(response));
+    await throwCampaignRequestError(response);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
@@ -433,7 +457,7 @@ export async function fetchCampaigns(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwCampaignRequestError(response);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
@@ -541,7 +565,7 @@ export async function uploadBrandingAsset(
   });
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwCampaignRequestError(response);
   }
 
   return parseCampaignAsset((await response.json()) as Record<string, unknown>);
@@ -562,7 +586,7 @@ export async function createCampaignAssetFromActivityQr(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwCampaignRequestError(response);
   }
 
   return parseCampaignAsset((await response.json()) as Record<string, unknown>);
@@ -585,7 +609,7 @@ export async function sendTestCampaignEmail(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwCampaignRequestError(response);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
@@ -613,7 +637,7 @@ export async function fetchCampaignById(
   }
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwCampaignRequestError(response);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;

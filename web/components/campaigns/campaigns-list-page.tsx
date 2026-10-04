@@ -1,97 +1,77 @@
 "use client";
 
 import Link from "next/link";
-import { Check, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Mail } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { CampaignRoomChrome } from "@/components/campaigns/campaign-room-gate";
 import { EmailDeliveryChecklist } from "@/components/campaigns/email-delivery-checklist";
 import { ListSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
-import { UpgradePanel } from "@/components/shell/upgrade-panel";
+import { ProductErrorState } from "@/components/shared/product-error-state";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  campaignFetchDenial,
+  resolveCampaignRoomAccess,
+} from "@/lib/campaign-room-access";
+import { campaignStatusLabel } from "@/lib/campaign-html";
 import {
   fetchCampaigns,
   formatCampaignSentAt,
   type CampaignListItem,
+  type CampaignListResult,
 } from "@/lib/campaigns-api";
-import { isProPlan } from "@/lib/shell/tenant-shell-api";
 import { cn } from "@/lib/utils";
-import { Mail } from "lucide-react";
 
-function CampaignDeliveredIcon({ count }: { count: number }) {
-  if (count > 0) {
-    return (
-      <span
-        className="inline-flex items-center text-text-success"
-        aria-label={`${count} delivered`}
-        title={`${count} delivered`}
-      >
-        <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
-      </span>
-    );
-  }
-
-  return (
-    <span className="text-text-muted-warm" aria-label="None delivered" title="None delivered">
-      —
-    </span>
-  );
-}
-
-function CampaignFailedIcon({ count }: { count: number }) {
-  if (count > 0) {
-    return (
-      <span
-        className="inline-flex items-center text-destructive"
-        aria-label={`${count} failed`}
-        title={`${count} failed`}
-      >
-        <X className="h-4 w-4" strokeWidth={2.5} aria-hidden="true" />
-      </span>
-    );
-  }
-
-  return (
-    <span className="text-text-muted-warm" aria-label="No failures" title="No failures">
-      —
-    </span>
-  );
-}
+const PAGE_SIZE = 25;
 
 export function CampaignsListPage() {
   const { authFetch } = useAuth();
   const { shell, loading: shellLoading } = useTenantShell();
-  const [campaigns, setCampaigns] = useState<CampaignListItem[]>([]);
+  const access = resolveCampaignRoomAccess(shell, shellLoading);
+  const [result, setResult] = useState<CampaignListResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [denied, setDenied] = useState(false);
+  const [planLocked, setPlanLocked] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [page, setPage] = useState(1);
+  const [reloadToken, setReloadToken] = useState(0);
 
-  const planLocked = shell ? !isProPlan(shell.plan) : false;
+  const retry = useCallback(() => {
+    setInitialized(false);
+    setError(null);
+    setDenied(false);
+    setPlanLocked(false);
+    setReloadToken((current) => current + 1);
+  }, []);
 
   useEffect(() => {
-    if (shellLoading || planLocked) {
+    if (access.kind !== "open") {
       return;
     }
 
     let cancelled = false;
 
-    void fetchCampaigns(authFetch)
-      .then((result) => {
+    void fetchCampaigns(authFetch, { page, pageSize: PAGE_SIZE })
+      .then((next) => {
         if (!cancelled) {
-          setCampaigns(result.items);
+          setResult(next);
           setError(null);
+          setDenied(false);
+          setPlanLocked(false);
           setInitialized(true);
         }
       })
       .catch((loadError) => {
         if (!cancelled) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Could not load campaigns."
-          );
+          const denial = campaignFetchDenial(loadError);
+          setResult(null);
+          setDenied(denial.denied);
+          setPlanLocked(denial.planLocked);
+          setError(denial.message);
           setInitialized(true);
         }
       });
@@ -99,101 +79,121 @@ export function CampaignsListPage() {
     return () => {
       cancelled = true;
     };
-  }, [authFetch, planLocked, shellLoading]);
+  }, [access.kind, authFetch, page, reloadToken]);
 
-  if (shellLoading) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Campaigns"
-          description="Email outreach history and campaign results."
-        />
-        <ListSkeleton rows={4} />
-      </div>
-    );
-  }
-
-  if (planLocked && shell) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          title="Campaigns"
-          description="Email outreach history and campaign results."
-        />
-        <UpgradePanel
-          title="Email campaigns are a Pro craft"
-          description="Campaigns unlock on Pro — segmented outreach, delivery tracking, and campaign history on client profiles."
-          requiredPlan="Pro"
-          isTenantAdmin={shell.isTenantAdmin}
-        />
-      </div>
-    );
-  }
+  const campaigns = result?.items ?? [];
+  const totalCount = result?.totalCount ?? 0;
+  const pageSize = result?.pageSize ?? PAGE_SIZE;
+  const canPage = totalCount > pageSize;
+  const maxPage = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Campaigns"
-        description="Email outreach history and campaign results."
-        actions={
-          <Link href="/campaigns/new" className={cn(buttonVariants())}>
-            New campaign
-          </Link>
-        }
-      />
-
-      <EmailDeliveryChecklist />
-
-      {error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      ) : null}
-
-      {!error && initialized && campaigns.length === 0 ? (
-        <ProductEmptyState
-          icon={Mail}
-          title="No campaigns sent yet"
-          description="Reach your community with a branded email — segment by activity, preview on desktop and mobile, then send with delivery tracking."
-          primaryHref="/campaigns/new"
-          primaryLabel="Compose your first campaign"
-          secondaryHref="/clients?leadStatus=new"
-          secondaryLabel="Review new leads"
-        />
-      ) : null}
-
-      {!error && campaigns.length > 0 ? (
-        <div className="overflow-hidden rounded-xl border border-border-warm bg-card">
-          <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,0.8fr)] gap-4 border-b border-border-warm bg-muted/30 px-4 py-3 text-xs font-medium uppercase tracking-wide text-foreground">
-            <span>Subject</span>
-            <span>Sent</span>
-            <span>Delivered</span>
-            <span>Failed</span>
-          </div>
-          {campaigns.map((campaign) => (
+    <CampaignRoomChrome
+      title="Campaigns"
+      description="Email outreach history and campaign results."
+      access={access}
+      denied={denied}
+      deniedMessage={error ?? undefined}
+      planLockedOverride={planLocked}
+      isTenantAdmin={shell?.isTenantAdmin === true}
+    >
+      <div className="space-y-6">
+        <PageHeader
+          title="Campaigns"
+          description="Email outreach history and campaign results."
+          actions={
             <Link
-              key={campaign.id}
-              href={`/campaigns/${campaign.id}`}
-              className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,0.8fr)_minmax(0,0.8fr)] gap-4 border-b border-border-warm px-4 py-4 text-sm motion-press last:border-b-0 hover:bg-muted/40"
+              href="/campaigns/new"
+              className={cn(buttonVariants(), "min-h-12 min-w-11 px-4")}
             >
-              <span className="truncate font-medium text-text-warm">
-                {campaign.subject}
-              </span>
-              <span className="text-foreground">
-                {formatCampaignSentAt(campaign.sentAt)}
-              </span>
-              <span className="flex items-center">
-                <CampaignDeliveredIcon count={campaign.sentCount} />
-              </span>
-              <span className="flex items-center">
-                <CampaignFailedIcon count={campaign.failedCount} />
-              </span>
+              New campaign
             </Link>
-          ))}
-        </div>
-      ) : null}
+          }
+        />
 
-      {!error && !initialized ? <ListSkeleton rows={4} /> : null}
-    </div>
+        <EmailDeliveryChecklist />
+
+        {error && !denied && !planLocked ? (
+          <ProductErrorState
+            title="Could not load campaigns"
+            message={error}
+            onRetry={retry}
+          />
+        ) : null}
+
+        {!error && initialized && campaigns.length === 0 ? (
+          <ProductEmptyState
+            icon={Mail}
+            title="No campaigns sent yet"
+            description="Reach your community with a branded email — segment by activity, preview on desktop and mobile, then send with delivery tracking."
+            primaryHref="/campaigns/new"
+            primaryLabel="Compose your first campaign"
+            secondaryHref="/clients?leadStatus=new"
+            secondaryLabel="Review new leads"
+          />
+        ) : null}
+
+        {!error && campaigns.length > 0 ? (
+          <div className="overflow-hidden rounded-xl border border-border-warm bg-card">
+            <div className="hidden grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.7fr)_minmax(0,1fr)] gap-4 border-b border-border-warm bg-muted/30 px-4 py-3 text-xs font-medium uppercase tracking-wide text-foreground sm:grid">
+              <span>Subject</span>
+              <span>Sent</span>
+              <span>Status</span>
+              <span>Results</span>
+            </div>
+            {campaigns.map((campaign) => (
+              <CampaignListRow key={campaign.id} campaign={campaign} />
+            ))}
+          </div>
+        ) : null}
+
+        {canPage ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-text-muted-warm" role="status">
+              Page {page} of {maxPage} · {totalCount} campaigns
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-12 min-w-11 px-4"
+                disabled={page <= 1}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+              >
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-12 min-w-11 px-4"
+                disabled={page >= maxPage}
+                onClick={() => setPage((current) => Math.min(maxPage, current + 1))}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {!error && !initialized ? <ListSkeleton rows={4} /> : null}
+      </div>
+    </CampaignRoomChrome>
+  );
+}
+
+function CampaignListRow({ campaign }: { campaign: CampaignListItem }) {
+  const status = campaignStatusLabel(campaign.status);
+  const results = `${campaign.sentCount} sent · ${campaign.failedCount} failed · ${campaign.skippedCount} skipped`;
+
+  return (
+    <Link
+      href={`/campaigns/${campaign.id}`}
+      className="grid gap-2 border-b border-border-warm px-4 py-4 text-sm motion-press last:border-b-0 hover:bg-muted/40 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.7fr)_minmax(0,1fr)] sm:items-center sm:gap-4"
+    >
+      <span className="truncate font-medium text-text-warm">{campaign.subject}</span>
+      <span className="text-foreground">{formatCampaignSentAt(campaign.sentAt)}</span>
+      <span className="text-foreground">{status}</span>
+      <span className="text-text-muted-warm">{results}</span>
+    </Link>
   );
 }
