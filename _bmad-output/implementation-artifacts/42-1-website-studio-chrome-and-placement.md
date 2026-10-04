@@ -2,16 +2,18 @@
 id: 42.1
 key: 42-1-website-studio-chrome-and-placement
 title: Website Studio chrome and placement
-status: review
+status: done
 epic: 42
 created: 2026-10-04
 baseline_commit: c3e57bbc32e2446b19eb050edbbc6be2b9dc5f4c
 epic_41_close_ancestor: 73fd2855d8cba88e9b1339129c85783ddc660bc7
+accepted_commit: d12e13e1fbef70e202af9b9c1adf45cc28467d07
+implementation_merge: 776fd43c008202a99d9a413ea11ade5829fc228a
 ---
 
 # Story 42.1: Website Studio chrome and placement
 
-Status: review
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -128,6 +130,7 @@ See `_bmad-output/planning-artifacts/evidence/px2-42-1/`.
 - Story created from synchronized `main` `c3e57bbc` (descendant of Epic 41 close `73fd2855`).
 - Epic 42 moved to in-progress. Stories 42.2–42.4 not created.
 - Local gates and four-layer review recorded. Story left at `review` for product-owner pre-merge.
+- PO pre-merge patched isolation + non-modal tour. Accepted implementation commit `d12e13e1`. Merged as `776fd43c`. Tracker close only.
 
 ### File List
 
