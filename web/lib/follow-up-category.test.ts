@@ -15,6 +15,9 @@ import {
   followUpContextCaption,
   followUpClientHref,
   followUpHrefForCategory,
+  lastOutreachAtFromTimeline,
+  openInFollowUpHref,
+  shouldOfferOpenInFollowUp,
   loadFollowUpPage,
   needsAttentionCount,
   parseFollowUpCategoryParam,
@@ -82,7 +85,48 @@ describe("follow-up category derivation", () => {
       "opportunity"
     );
   });
+});
 
+describe("Open in Follow-up continuity", () => {
+  it("offers the room only for Due now membership", () => {
+    expect(
+      shouldOfferOpenInFollowUp(
+        client({ leadStatus: "active", nextFollowUpAt: "2020-01-01T00:00:00.000Z" }),
+        "UTC"
+      )
+    ).toBe(true);
+    expect(shouldOfferOpenInFollowUp(client({ leadStatus: "new" }), "UTC")).toBe(true);
+    expect(shouldOfferOpenInFollowUp(client({ leadStatus: "active" }), "UTC")).toBe(false);
+    expect(shouldOfferOpenInFollowUp(client({ leadStatus: "contacted" }), "UTC")).toBe(false);
+  });
+
+  it("opens the canonical Follow-up room without a client query", () => {
+    expect(openInFollowUpHref()).toBe("/follow-up");
+  });
+
+  it("derives last outreach from profile timeline events", () => {
+    expect(
+      lastOutreachAtFromTimeline([
+        { eventType: "registration_submitted", occurredAt: "2026-09-01T00:00:00.000Z" },
+        { eventType: "whatsapp_initiated", occurredAt: "2026-09-10T00:00:00.000Z" },
+        { eventType: "lead_status_changed", occurredAt: "2026-09-11T00:00:00.000Z" },
+      ])
+    ).toBe("2026-09-10T00:00:00.000Z");
+    expect(
+      lastOutreachAtFromTimeline([
+        { eventType: "email_campaign_sent", occurredAt: "2026-09-12T00:00:00.000Z" },
+        { eventType: "whatsapp_initiated", occurredAt: "2026-09-10T00:00:00.000Z" },
+      ])
+    ).toBe("2026-09-12T00:00:00.000Z");
+    expect(
+      lastOutreachAtFromTimeline([
+        { eventType: "registration_submitted", occurredAt: "2026-09-01T00:00:00.000Z" },
+      ])
+    ).toBeNull();
+  });
+});
+
+describe("follow-up remaining derivation", () => {
   it("assigns At risk for inactive without a due follow-up", () => {
     expect(resolveFollowUpCategory(client({ leadStatus: "inactive" }), "UTC")).toBe(
       "at-risk"

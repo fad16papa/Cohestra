@@ -148,8 +148,7 @@ export const ClientFollowUpDateField = forwardRef<
             onChange={(event) => setDraftDate(event.target.value)}
           />
           <p className="text-xs text-text-muted-warm">
-            Schedule when to check back. Overdue items surface on the Dashboard
-            and Clients queue.
+            Schedule when to check back. Due people also appear in Follow-up.
           </p>
         </div>
 

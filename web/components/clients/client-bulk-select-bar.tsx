@@ -32,7 +32,7 @@ export function ClientBulkSelectBar({
   return (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-4 z-40 mx-auto flex max-w-3xl flex-col gap-3 rounded-2xl border border-border-warm bg-card/95 px-4 py-3 shadow-lg backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:px-5",
+        "fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] z-40 mx-auto flex max-w-3xl flex-col gap-3 rounded-2xl border border-border-warm bg-card/95 px-4 py-3 shadow-lg backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:px-5 md:bottom-4",
         className
       )}
       role="status"
@@ -53,19 +53,19 @@ export function ClientBulkSelectBar({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={onClear}>
+        <Button type="button" variant="outline" size="sm" className="min-h-11 min-w-11" onClick={onClear}>
           <X className="size-4" aria-hidden />
           Clear
         </Button>
         {canUseCampaignHandoff ? (
-          <Button type="button" size="sm" className="gap-1.5" onClick={onAddToCampaign}>
+          <Button type="button" size="sm" className="min-h-11 min-w-11 gap-1.5" onClick={onAddToCampaign}>
             <Megaphone className="size-4" aria-hidden />
             Add to campaign
           </Button>
         ) : (
           <Link
             href="/settings/billing"
-            className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
+            className={cn(buttonVariants({ size: "sm" }), "min-h-11 min-w-11 gap-1.5")}
           >
             Upgrade to Pro
           </Link>

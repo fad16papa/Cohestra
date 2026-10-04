@@ -4,7 +4,11 @@ import { Check } from "lucide-react";
 
 import { LeadStatusBadge } from "@/components/clients/lead-status-badge";
 import {
+  clientsSemanticTableActionsClassName,
+  clientsSemanticTableCheckboxClassName,
+  clientsSemanticTableStatusClassName,
   clientsTableActionsColumnClassName,
+  clientsTableCellClassName,
   clientsTableCheckboxColumnClassName,
   clientsTableContactColumnClassName,
   clientsTableGridClassName,
@@ -43,6 +47,7 @@ type ClientRowProps = {
   selected?: boolean;
   onSelectedChange?: (client: ClientListItem, selected: boolean) => void;
   timeZoneId?: string | null;
+  variant?: "card" | "row" | "legacy";
 };
 
 function RowLink({
@@ -106,7 +111,7 @@ function ClientRowActions({
   }
 
   return (
-    <div className={cn(clientsTableActionsColumnClassName, className)}>
+    <div className={cn(className ?? clientsSemanticTableActionsClassName)}>
       {showMarkContacted && onMarkContacted ? (
         <Button
           type="button"
@@ -115,7 +120,7 @@ function ClientRowActions({
           disabled={isUpdating}
           aria-label={`Mark ${client.fullName} as contacted`}
           title="Mark contacted"
-          className="size-8 shrink-0 border-primary/25 text-text-link hover:bg-primary/10 hover:text-text-link"
+          className="min-h-11 min-w-11 shrink-0 border-primary/25 text-text-link hover:bg-primary/10 hover:text-text-link"
           onClick={(event) => {
             event.preventDefault();
             onMarkContacted(client);
@@ -131,7 +136,7 @@ function ClientRowActions({
           disabled={isUpdating}
           aria-label={`Open WhatsApp for ${client.fullName}`}
           title="Open WhatsApp"
-          className="size-8 shrink-0 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+          className="min-h-11 min-w-11 shrink-0 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
           onClick={(event) => {
             event.preventDefault();
             onOpenMessenger(client, "whatsapp");
@@ -147,7 +152,7 @@ function ClientRowActions({
           disabled={isUpdating}
           aria-label={`Open Viber for ${client.fullName}`}
           title="Open Viber"
-          className="size-8 shrink-0 bg-viber text-viber-foreground hover:bg-viber/90"
+          className="min-h-11 min-w-11 shrink-0 bg-viber text-viber-foreground hover:bg-viber/90"
           onClick={(event) => {
             event.preventDefault();
             onOpenMessenger(client, "viber");
@@ -169,6 +174,7 @@ export function ClientRow({
   selected = false,
   onSelectedChange,
   timeZoneId,
+  variant = "legacy",
 }: ClientRowProps) {
   const profileHref = `/clients/${client.id}`;
   const canWhatsApp = Boolean(client.phone && buildWhatsAppWebUrl(client.phone));
@@ -214,69 +220,139 @@ export function ClientRow({
     </RowLink>
   );
 
+  const actions = (
+    <ClientRowActions
+      client={client}
+      canWhatsApp={canWhatsApp}
+      canViber={canViber}
+      showMarkContacted={showMarkContacted}
+      showMessengerActions={showMessengerActions}
+      isUpdating={isUpdating}
+      onMarkContacted={onMarkContacted}
+      onOpenMessenger={onOpenMessenger}
+    />
+  );
+
+  if (variant === "row") {
+    return (
+      <tr className={cn("group motion-local hover:bg-muted/20", selected && "bg-primary/5")}>
+        <td className={clientsTableCellClassName}>
+          {selectable ? (
+            <div className={clientsSemanticTableCheckboxClassName}>
+              <input
+                type="checkbox"
+                checked={selected}
+                aria-label={`Select ${client.fullName}`}
+                className="size-4 rounded border-input accent-primary"
+                onChange={(event) => onSelectedChange?.(client, event.target.checked)}
+              />
+            </div>
+          ) : null}
+        </td>
+        <td className={cn(clientsTableCellClassName, clientsTableContactColumnClassName)}>
+          {contactBlock}
+        </td>
+        <td className={cn(clientsTableCellClassName, clientsSemanticTableStatusClassName)}>
+          <LeadStatusBadge status={client.leadStatus} />
+        </td>
+        <td className={cn(clientsTableCellClassName, clientsTableRegistrationColumnClassName)}>
+          <RowLink
+            href={profileHref}
+            className="block min-w-0 overflow-hidden"
+            title={lastActivityFull}
+          >
+            <span className="block truncate text-sm text-text-warm/80">{lastActivityName}</span>
+            {lastActivityDate ? (
+              <span className="block truncate text-xs text-text-muted-warm">
+                {lastActivityDate}
+              </span>
+            ) : null}
+          </RowLink>
+        </td>
+        <td className={cn(clientsTableCellClassName, clientsTableOutreachColumnClassName)}>
+          <span className="block truncate text-sm text-text-muted-warm" title={lastOutreach}>
+            {lastOutreach}
+          </span>
+        </td>
+        <td className={clientsTableCellClassName}>{actions}</td>
+      </tr>
+    );
+  }
+
+  const card = (
+    <article
+      className={cn(
+        "group px-4 py-3.5",
+        variant === "legacy" && "sm:hidden",
+        rowStateClassName
+      )}
+      aria-label={client.fullName}
+    >
+      <div className="flex items-start gap-3">
+        {selectable ? (
+          <input
+            type="checkbox"
+            checked={selected}
+            aria-label={`Select ${client.fullName}`}
+            className="mt-1 size-4 shrink-0 rounded border-input accent-primary"
+            onChange={(event) =>
+              onSelectedChange?.(client, event.target.checked)
+            }
+          />
+        ) : null}
+        <div className="min-w-0 flex-1">{contactBlock}</div>
+        <ClientRowActions
+          client={client}
+          canWhatsApp={canWhatsApp}
+          canViber={canViber}
+          showMarkContacted={showMarkContacted}
+          showMessengerActions={showMessengerActions}
+          isUpdating={isUpdating}
+          onMarkContacted={onMarkContacted}
+          onOpenMessenger={onOpenMessenger}
+          className="flex min-w-0 shrink-0 items-center justify-end gap-1"
+        />
+      </div>
+
+      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 pl-7 text-sm">
+        <div className="min-w-0">
+          <FieldLabel>Status</FieldLabel>
+          <LeadStatusBadge status={client.leadStatus} />
+        </div>
+        <div className="min-w-0">
+          <FieldLabel>Last outreach</FieldLabel>
+          <p className="truncate text-text-muted-warm" title={lastOutreach}>
+            {lastOutreach}
+          </p>
+        </div>
+        <div className="col-span-2 min-w-0">
+          <FieldLabel>Last registration</FieldLabel>
+          <RowLink
+            href={profileHref}
+            className="block min-w-0 overflow-hidden"
+            title={lastActivityFull}
+          >
+            <span className="block truncate text-text-warm/80">
+              {lastActivityName}
+            </span>
+            {lastActivityDate ? (
+              <span className="block truncate text-xs text-text-muted-warm">
+                {lastActivityDate}
+              </span>
+            ) : null}
+          </RowLink>
+        </div>
+      </dl>
+    </article>
+  );
+
+  if (variant === "card") {
+    return card;
+  }
+
   return (
     <>
-      <article
-        className={cn("group px-4 py-3.5 sm:hidden", rowStateClassName)}
-        aria-label={client.fullName}
-      >
-        <div className="flex items-start gap-3">
-          {selectable ? (
-            <input
-              type="checkbox"
-              checked={selected}
-              aria-label={`Select ${client.fullName}`}
-              className="mt-1 size-4 shrink-0 rounded border-input accent-primary"
-              onChange={(event) =>
-                onSelectedChange?.(client, event.target.checked)
-              }
-            />
-          ) : null}
-          <div className="min-w-0 flex-1">{contactBlock}</div>
-          <ClientRowActions
-            client={client}
-            canWhatsApp={canWhatsApp}
-            canViber={canViber}
-            showMarkContacted={showMarkContacted}
-            showMessengerActions={showMessengerActions}
-            isUpdating={isUpdating}
-            onMarkContacted={onMarkContacted}
-            onOpenMessenger={onOpenMessenger}
-            className="shrink-0"
-          />
-        </div>
-
-        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 pl-7 text-sm">
-          <div className="min-w-0">
-            <FieldLabel>Status</FieldLabel>
-            <LeadStatusBadge status={client.leadStatus} />
-          </div>
-          <div className="min-w-0">
-            <FieldLabel>Last outreach</FieldLabel>
-            <p className="truncate text-text-muted-warm" title={lastOutreach}>
-              {lastOutreach}
-            </p>
-          </div>
-          <div className="col-span-2 min-w-0">
-            <FieldLabel>Last registration</FieldLabel>
-            <RowLink
-              href={profileHref}
-              className="block min-w-0 overflow-hidden"
-              title={lastActivityFull}
-            >
-              <span className="block truncate text-text-warm/80">
-                {lastActivityName}
-              </span>
-              {lastActivityDate ? (
-                <span className="block truncate text-xs text-text-muted-warm">
-                  {lastActivityDate}
-                </span>
-              ) : null}
-            </RowLink>
-          </div>
-        </dl>
-      </article>
-
+      {card}
       <div className={cn(clientsTableGridClassName, "group hidden sm:grid", rowStateClassName)}>
         {selectable ? (
           <div className={clientsTableCheckboxColumnClassName}>
@@ -336,6 +412,7 @@ export function ClientRow({
           isUpdating={isUpdating}
           onMarkContacted={onMarkContacted}
           onOpenMessenger={onOpenMessenger}
+          className={clientsTableActionsColumnClassName}
         />
       </div>
     </>

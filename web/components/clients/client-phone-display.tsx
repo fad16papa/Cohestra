@@ -42,7 +42,7 @@ export function ClientPhoneDisplay({
       )}
     >
       <span
-        className="inline-flex size-7 items-center justify-center rounded-md border border-border-warm bg-muted/30 text-base leading-none motion-safe:transition-transform motion-safe:duration-200"
+        className="inline-flex size-7 items-center justify-center rounded-md border border-border-warm bg-muted/30 text-base leading-none motion-local motion-safe:transition-transform"
         aria-hidden
       >
         {formatted.flag}

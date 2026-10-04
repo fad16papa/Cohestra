@@ -34,7 +34,7 @@ function FilterChip({ chip }: { chip: LeadQueueFilterChip }) {
       aria-pressed={chip.active}
       onClick={chip.onClick}
       className={cn(
-        "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium motion-local",
+        "inline-flex min-h-11 min-w-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-sm font-medium motion-local",
         chip.active
           ? "border-primary bg-primary/10 text-text-link"
           : "border-border-warm bg-background text-text-muted-warm hover:border-primary/30 hover:text-text-warm"
@@ -144,7 +144,7 @@ export function ClientLeadQueueHeader({
       aria-label="Lead queue filters"
       className="rounded-xl border border-border-warm bg-card px-3 py-2.5 sm:px-4 sm:py-3"
     >
-      <div className="flex items-center gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex flex-wrap items-center gap-2">
         <FilterGroupLabel>Status</FilterGroupLabel>
         {statusChips.map((chip) => (
           <FilterChip key={chip.id} chip={chip} />

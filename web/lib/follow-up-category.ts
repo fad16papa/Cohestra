@@ -119,6 +119,44 @@ export function followUpClientHref(clientId: string): string {
   return `/clients/${clientId}`;
 }
 
+const PROFILE_OUTREACH_EVENT_TYPES = new Set([
+  "email_campaign_sent",
+  "whatsapp_initiated",
+  "whatsapp_follow_up_recorded",
+  "viber_initiated",
+  "viber_follow_up_recorded",
+]);
+
+export function lastOutreachAtFromTimeline(
+  timeline: Array<{ eventType: string; occurredAt: string }> | null | undefined
+): string | null {
+  if (!timeline?.length) {
+    return null;
+  }
+
+  let latest: string | null = null;
+  for (const event of timeline) {
+    if (!PROFILE_OUTREACH_EVENT_TYPES.has(event.eventType)) {
+      continue;
+    }
+    if (!latest || event.occurredAt > latest) {
+      latest = event.occurredAt;
+    }
+  }
+  return latest;
+}
+
+export function shouldOfferOpenInFollowUp(
+  client: Pick<ClientListItem, "leadStatus" | "nextFollowUpAt" | "lastOutreachAt">,
+  timeZoneId?: string | null
+): boolean {
+  return resolveFollowUpCategory(client, timeZoneId) === "due-now";
+}
+
+export function openInFollowUpHref(): string {
+  return FOLLOW_UP_PATH;
+}
+
 export function followUpHrefForCategory(
   category: FollowUpCategory,
   currentSearch = "",

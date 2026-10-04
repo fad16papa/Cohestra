@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-04
-# story 40.2 closed; accepted 2a3d5e6b; merge 2b840322; epic 40 in-progress; 40.3 not started
+# story 40.3 opened from 7e7c3c07; 40.1/40.2 done; epic 40 in-progress; 40.4 not started
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -402,6 +402,7 @@ development_status:
   epic-40: in-progress
   40-1-dashboard-relationship-command-center: done
   40-2-follow-up-primary-room: done
+  40-3-clients-list-and-client-profile: review
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done
