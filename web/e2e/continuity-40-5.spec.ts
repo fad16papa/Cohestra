@@ -17,7 +17,6 @@ import {
 } from "./helpers/owned-fixture-data";
 import {
   loginOperatorSession,
-  openActivityTab,
   seedOperatorAuthSession,
   tenantWebBase,
   waitForOperatorWorkspace,
@@ -102,6 +101,18 @@ async function firstFollowUpClientHref(page: Page): Promise<string | null> {
   return link.getAttribute("href");
 }
 
+function expectedFollowUpPath(category: string, pageNum = 1): string {
+  const params = new URLSearchParams();
+  if (category !== "due-now") {
+    params.set("category", category);
+  }
+  if (pageNum > 1) {
+    params.set("page", String(pageNum));
+  }
+  const query = params.toString();
+  return query ? `/follow-up?${query}` : "/follow-up";
+}
+
 async function fetchJson(
   request: Parameters<typeof loginOperatorSession>[0],
   session: Awaited<ReturnType<typeof loginOperatorSession>>,
@@ -131,42 +142,65 @@ test.describe("Story 40.5 — cross-module continuity", () => {
     const session = await loginOperatorSession(request);
     const proofs: Record<string, string> = {};
 
+    const apiBase = resolveE2eApiBase();
+    const clientsPayload = (await fetchJson(
+      request,
+      session,
+      `${apiBase}/api/v1/admin/clients?page=1&pageSize=25`
+    )) as { items?: Array<{ id: string; fullName?: string; email?: string }> };
+    const firstClientId = clientsPayload.items?.[0]?.id;
+    if (!firstClientId) {
+      throw new Error("default tenant must have at least one client");
+    }
+    const foreignLabel =
+      clientsPayload.items?.[0]?.fullName || clientsPayload.items?.[0]?.email || firstClientId;
+
     await page.setViewportSize({ width: 1440, height: 900 });
-    await openAuthed(page, session, "/follow-up?category=opportunity");
-    await waitForFollowUpReady(page);
-    const filters = page.getByRole("radiogroup", { name: "Follow-up category" });
-    await expect(filters.getByRole("radio", { name: /Opportunity/ })).toHaveAttribute(
-      "aria-checked",
-      "true"
-    );
-    const followUpUrl = pathAndSearch(page.url());
-    proofs.followUpOpportunity = followUpUrl;
-    const followUpHref = await firstFollowUpClientHref(page);
-    if (followUpHref) {
-      expect(followUpHref).toMatch(/ctx=fu%3Aopportunity/);
-      await page.goto(`${tenantWebBase()}${followUpHref}`, { waitUntil: "domcontentloaded" });
+    let liveFollowUpWalk: string | null = null;
+    for (const category of ["due-now", "at-risk", "opportunity", "healthy"] as const) {
+      await openAuthed(page, session, `/follow-up?category=${category}`);
+      await waitForFollowUpReady(page);
+      const href = await firstFollowUpClientHref(page);
+      if (!href) {
+        continue;
+      }
+      expect(href).toContain(`ctx=fu%3A${category}`);
+      if (liveFollowUpWalk) {
+        continue;
+      }
+      const restoredFollowUpUrl = expectedFollowUpPath(category);
+      await page.goto(`${tenantWebBase()}${href}`, { waitUntil: "domcontentloaded" });
       await waitForOperatorWorkspace(page);
       const crumbs = page.getByRole("navigation", { name: "Breadcrumb" });
       await expect(crumbs).toBeVisible();
-      await expect(crumbs.getByRole("link", { name: "Follow-up" })).toBeVisible();
       await crumbs.getByRole("link", { name: "Follow-up" }).click();
       await waitForFollowUpReady(page);
-      expect(pathAndSearch(page.url())).toBe(followUpUrl);
+      expect(pathAndSearch(page.url())).toBe(restoredFollowUpUrl);
       await page.goBack();
       await expect(page).toHaveURL(/\/clients\/[0-9a-f-]{36}/i);
       await page.goForward();
       await waitForFollowUpReady(page);
-      expect(pathAndSearch(page.url())).toBe(followUpUrl);
+      expect(pathAndSearch(page.url())).toBe(restoredFollowUpUrl);
+      liveFollowUpWalk = `${category}:${restoredFollowUpUrl}`;
     }
+    expect(liveFollowUpWalk, "Follow-up list must expose at least one client").toBeTruthy();
+    proofs.followUpLiveWalk = liveFollowUpWalk ?? "";
 
-    for (const category of ["at-risk", "healthy"] as const) {
-      await openAuthed(page, session, `/follow-up?category=${category}`);
-      await waitForFollowUpReady(page);
-      const href = await firstFollowUpClientHref(page);
-      if (href) {
-        expect(href).toContain(`ctx=fu%3A${category}`);
-      }
-    }
+    await openAuthed(
+      page,
+      session,
+      `/clients/${firstClientId}?ctx=${encodeURIComponent("fu:opportunity:2")}`
+    );
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    const pagedFollowUp = page
+      .getByRole("navigation", { name: "Breadcrumb" })
+      .getByRole("link", { name: "Follow-up" });
+    await expect(pagedFollowUp).toHaveAttribute("href", expectedFollowUpPath("opportunity", 2));
+    await pagedFollowUp.click();
+    await waitForFollowUpReady(page);
+    expect(new URL(page.url()).searchParams.get("category")).toBe("opportunity");
+    proofs.followUpPagedReturn = pathAndSearch(page.url());
+    proofs.followUpPagedHref = expectedFollowUpPath("opportunity", 2);
 
     await openAuthed(page, session, "/clients?leadStatus=active&sortBy=name&sortDir=asc");
     await waitForClientsReady(page);
@@ -182,32 +216,29 @@ test.describe("Story 40.5 — cross-module continuity", () => {
     await waitForClientsReady(page);
     expect(pathAndSearch(page.url())).toBe(clientsUrl);
 
-    for (const view of ["graphs", "table"] as const) {
-      await openAuthed(page, session, `/dashboard?view=${view}`);
-      await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
-      const activityLink = page
-        .locator(`a[href*="/activities/"][href*="ctx=d%3A${view}"]`)
-        .locator("visible=true")
-        .first();
-      if ((await activityLink.count()) === 0) {
-        continue;
-      }
-      proofs[`dashboard${view}`] = (await activityLink.getAttribute("href")) ?? view;
-      await activityLink.click();
-      await expect(page).toHaveURL(new RegExp(`/activities/[0-9a-f-]{36}.*ctx=d%3A${view}`, "i"));
-      await page
-        .getByRole("navigation", { name: "Breadcrumb" })
-        .getByRole("link", { name: "Dashboard" })
-        .click();
-      await expect(page).toHaveURL(new RegExp(`/dashboard\\?view=${view}`));
-    }
+    await openAuthed(page, session, "/dashboard?view=graphs");
+    await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Graphs" })).toHaveAttribute("aria-selected", "true");
+    const graphBar = page.locator(".recharts-bar-rectangle, .recharts-rectangle").first();
+    await expect(graphBar, "dashboard graphs must expose a performance bar").toBeVisible();
+    await graphBar.click();
+    await expect(page).toHaveURL(/\/activities\/[0-9a-f-]{36}.*ctx=d%3Agraphs/i);
+    proofs.dashboardgraphs = pathAndSearch(page.url());
+    await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Dashboard" }).click();
+    await expect(page).toHaveURL(/\/dashboard\?view=graphs/);
 
-    const apiBase = resolveE2eApiBase();
-    const clientsPayload = (await fetchJson(
-      request,
-      session,
-      `${apiBase}/api/v1/admin/clients?page=1&pageSize=25`
-    )) as { items?: Array<{ id: string }> };
+    await openAuthed(page, session, "/dashboard?view=table");
+    await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+    const tableActivity = page
+      .locator('a[href*="/activities/"][href*="ctx=d%3Atable"]')
+      .locator("visible=true")
+      .first();
+    await expect(tableActivity, "dashboard table must expose an activity link").toBeVisible();
+    proofs.dashboardtable = (await tableActivity.getAttribute("href")) ?? "";
+    await tableActivity.click();
+    await expect(page).toHaveURL(/\/activities\/[0-9a-f-]{36}.*ctx=d%3Atable/i);
+    await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Dashboard" }).click();
+    await expect(page).toHaveURL(/\/dashboard\?view=table/);
     let registrationProof = "no-client-with-activity-id";
     for (const item of clientsPayload.items ?? []) {
       const detail = (await fetchJson(
@@ -238,35 +269,32 @@ test.describe("Story 40.5 — cross-module continuity", () => {
     }
     proofs.registrationActivity = registrationProof;
 
-    const firstClientId = clientsPayload.items?.[0]?.id;
-    if (firstClientId) {
-      await openAuthed(page, session, `/clients/${firstClientId}?ctx=https://evil.test`);
-      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-      const fallback = page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Clients" });
-      await expect(fallback).toHaveAttribute("href", "/clients");
-      await fallback.click();
-      await expect(page).toHaveURL(/\/clients(?:\?|$)/);
-      expect(new URL(page.url()).origin).toBe(new URL(tenantWebBase()).origin);
+    await openAuthed(page, session, `/clients/${firstClientId}?ctx=https://evil.test`);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    const fallback = page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Clients" });
+    await expect(fallback).toHaveAttribute("href", "/clients");
+    await fallback.click();
+    await expect(page).toHaveURL(/\/clients(?:\?|$)/);
+    expect(new URL(page.url()).origin).toBe(new URL(tenantWebBase()).origin);
 
-      await openAuthed(page, session, `/clients/${firstClientId}?ctx=${encodeURIComponent("//example.com")}`);
-      await expect(
-        page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Clients" })
-      ).toHaveAttribute("href", "/clients");
-    }
+    await openAuthed(page, session, `/clients/${firstClientId}?ctx=${encodeURIComponent("//example.com")}`);
+    await expect(
+      page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Clients" })
+    ).toHaveAttribute("href", "/clients");
 
     const basic = await loginOwnedTenant(request, PX2_BASIC_TENANT);
-    if (firstClientId) {
-      await openAuthed(
-        page,
-        basic,
-        `/clients/${firstClientId}`,
-        tenantWebOrigin(PX2_BASIC_TENANT.slug)
-      );
-      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-      const heading = (await page.getByRole("heading", { level: 1 }).innerText()).trim();
-      expect(heading === "Client" || /don’t have access|not found/i.test(heading)).toBe(true);
-      proofs.crossTenant = heading;
-    }
+    await openAuthed(
+      page,
+      basic,
+      `/clients/${firstClientId}`,
+      tenantWebOrigin(PX2_BASIC_TENANT.slug)
+    );
+    const deniedHeading = page.getByRole("heading", {
+      name: /don’t have access|Client not found/i,
+    });
+    await expect(deniedHeading).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: foreignLabel })).toHaveCount(0);
+    proofs.crossTenant = (await deniedHeading.innerText()).trim();
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await openAuthed(page, session, "/dashboard");
@@ -337,10 +365,11 @@ test.describe("Story 40.5 — cross-module continuity", () => {
         continue;
       }
       await openAuthed(page, session, `/clients/${firstClientId}?ctx=fu%3Adue-now`);
-      await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toBeVisible();
-      await expect(
-        page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Follow-up" })
-      ).toBeVisible();
+      const crumbs = page.getByRole("navigation", { name: "Breadcrumb" });
+      await expect(crumbs).toBeVisible();
+      await expect(crumbs.locator("ol")).toHaveCount(1);
+      await expect(crumbs.getByRole("link", { name: "Follow-up" })).toBeVisible();
+      await expect(crumbs.locator('[aria-current="page"]')).toHaveCount(1);
       await expect(page.getByRole("link", { name: "Back to Follow-up" })).toHaveCount(0);
       await assertNoOverflow(page, `${viewport.name} overflow`);
       await assertLandmarks(page);
@@ -362,20 +391,16 @@ test.describe("Story 40.5 — cross-module continuity", () => {
       ownerKey: "40-5-form",
       workerIndex: test.info().workerIndex,
     });
-    await openActivityTab(page, owned.id, "form", session);
+    await openAuthed(page, session, `/activities/${owned.id}?tab=form&ctx=cl%3A`);
+    await expect(page.getByRole("tab", { name: /^Form$/ })).toHaveAttribute("aria-selected", "true");
     const welcome = page.getByPlaceholder("Welcome! Tell registrants what to expect…");
     await expect(welcome).toBeVisible({ timeout: 30_000 });
     await welcome.fill("Continuity draft must survive tab query writes.");
     await page.getByRole("tab", { name: /^Overview$/ }).click();
-    await expect(page).toHaveURL(/\/activities\/[0-9a-f-]{36}/i);
+    await expect(page).toHaveURL(/\/activities\/[0-9a-f-]{36}.*ctx=cl/i);
     await page.getByRole("tab", { name: /^Form$/ }).click();
     await expect(welcome).toHaveValue("Continuity draft must survive tab query writes.");
-    await page.goto(
-      `${tenantWebBase()}/activities/${owned.id}?tab=form&ctx=cl%3A`,
-      { waitUntil: "domcontentloaded" }
-    );
-    await waitForOperatorWorkspace(page);
-    await expect(page.getByRole("tab", { name: /^Form$/ })).toHaveAttribute("aria-selected", "true");
+    await expect(page).toHaveURL(/tab=form.*ctx=cl|ctx=cl.*tab=form/i);
 
     fs.writeFileSync(
       path.join(evidenceDir, "url-history-proofs.json"),

@@ -1,8 +1,11 @@
 {
-  "followUpOpportunity": "/follow-up?category=opportunity",
+  "followUpLiveWalk": "due-now:/follow-up",
+  "followUpPagedReturn": "/follow-up?category=opportunity",
+  "followUpPagedHref": "/follow-up?category=opportunity&page=2",
   "clientsFiltered": "/clients?leadStatus=active&sortBy=name&sortDir=asc",
+  "dashboardgraphs": "/activities/f67df69a-0ea0-4fee-b708-1161b551fb9d?ctx=d%3Agraphs",
   "dashboardtable": "/activities/f67df69a-0ea0-4fee-b708-1161b551fb9d?ctx=d%3Atable",
   "registrationActivity": "/activities/b0c9bedb-cc7b-43d8-8ec4-5d4669f6ea79?ctx=fu%3Adue-now%7Ec%3Af2c9ffb2-a4e4-473d-83e6-3fd22185bba2",
-  "crossTenant": "Client",
+  "crossTenant": "CLIENT NOT FOUND",
   "palette": "/follow-up /analytics /ai"
 }

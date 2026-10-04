@@ -26,7 +26,7 @@ No API or schema change. Backend unit/integration not required.
 
 | Suite | Result |
 | --- | --- |
-| `e2e/continuity-40-5.spec.ts` | **1/1 pass** |
+| `e2e/continuity-40-5.spec.ts` | **1/1 pass** after tightening AC1/AC3/AC8 so those journeys cannot skip |
 | Protected 38.5 | 4/4 pass |
 | Protected 38.6 | 1/1 pass |
 | Protected 39.1 | 1/1 pass |
