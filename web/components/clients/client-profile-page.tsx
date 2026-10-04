@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import {
   ClientFollowUpDateField,
@@ -32,12 +33,22 @@ import {
   fetchClientById,
   type ClientDetail,
 } from "@/lib/clients-api";
+import {
+  activityHrefForId,
+  mobileBackAction,
+  readContinuityContext,
+  withClientVia,
+} from "@/lib/continuity-context";
 
 type ClientProfilePageProps = {
   id: string;
 };
 
 export function ClientProfilePage({ id }: ClientProfilePageProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const liveSearch = searchParams.toString();
+  const incomingContext = readContinuityContext(liveSearch);
   const { authFetch } = useAuth();
   const { shell } = useTenantShell();
   const { showActionToast, showSuccessToast } = useToast();
@@ -153,8 +164,8 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
           }
           message={error}
           onRetry={denied || notFound ? undefined : handleRetry}
-          backHref="/clients"
-          backLabel="Back to clients"
+          backHref={mobileBackAction({ pathname, search: liveSearch }).href}
+          backLabel={mobileBackAction({ pathname, search: liveSearch }).label}
         />
       </div>
     );
@@ -199,6 +210,14 @@ export function ClientProfilePage({ id }: ClientProfilePageProps) {
             <ClientRegistrationHistory
               history={client.registrationHistory}
               defaultCollapsed={collapseRegistrationHistory}
+              activityHrefFor={(activityId) =>
+                activityHrefForId(
+                  activityId,
+                  incomingContext
+                    ? withClientVia(incomingContext, client.id)
+                    : { room: "clients", query: "", clientId: client.id }
+                )
+              }
             />
           </ClientProfileSection>
 

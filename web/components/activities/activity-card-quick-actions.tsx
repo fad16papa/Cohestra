@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 
 type ActivityCardQuickActionsProps = {
   activity: Activity;
+  registrationsHref?: string;
   className?: string;
 };
 
@@ -28,6 +29,7 @@ function buildClientsHref(activity: Activity): string {
 
 export function ActivityCardQuickActions({
   activity,
+  registrationsHref,
   className,
 }: ActivityCardQuickActionsProps) {
   const { authFetch } = useAuth();
@@ -117,7 +119,7 @@ export function ActivityCardQuickActions({
       )}
 
       <Link
-        href={`/activities/${activity.id}?tab=registrations`}
+        href={registrationsHref ?? `/activities/${activity.id}?tab=registrations`}
         className={cn(
           buttonVariants({ variant: "outline", size: "sm" }),
           actionButtonClassName

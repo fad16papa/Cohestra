@@ -244,6 +244,13 @@ describe("follow-up category query", () => {
       "/follow-up?utm=1&category=at-risk&page=2"
     );
     expect(followUpClientHref("abc-123")).toBe("/clients/abc-123");
+    expect(
+      followUpClientHref("33333333-3333-3333-3333-333333333333", {
+        room: "follow-up",
+        category: "opportunity",
+        page: 2,
+      })
+    ).toBe("/clients/33333333-3333-3333-3333-333333333333?ctx=fu%3Aopportunity%3A2");
   });
 
   it("resolves and reconciles page query values", () => {

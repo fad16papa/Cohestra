@@ -21,7 +21,7 @@ const actions = [
   },
   {
     href: ANALYTICS_PATH,
-    label: "View reports",
+    label: "View Analytics",
     description: "Export registrations for the month",
     icon: FileBarChart,
     accent: "from-status-contacted/15 to-status-contacted/5",

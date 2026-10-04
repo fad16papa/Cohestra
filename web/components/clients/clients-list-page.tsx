@@ -37,6 +37,7 @@ import {
   type ClientSortBy,
   type LeadStatus,
 } from "@/lib/clients-api";
+import { clientHrefForId } from "@/lib/continuity-context";
 import { isCoreOrAbove, isProPlan } from "@/lib/shell/tenant-shell-api";
 import { fetchActivityById } from "@/lib/activities-api";
 import { buildViberAppDeepLink, buildWhatsAppWebUrl, openAppDeepLink } from "@/lib/messenger-links";
@@ -79,8 +80,6 @@ function adjustStatusCounts(
 
   return next;
 }
-
-type SortDirection = "asc" | "desc";
 
 type ClientSearchInputProps = {
   committedValue: string;
@@ -169,6 +168,7 @@ export function ClientsListPage() {
   const { showToast, showActionToast } = useToast();
   const {
     filters,
+    listContext,
     hasActiveFilters,
     updateSearch: updateSearchValue,
     updateLeadStatus: updateLeadStatusValue,
@@ -178,6 +178,8 @@ export function ClientsListPage() {
     updateRegisteredWithinDays: updateRegisteredWithinDaysValue,
     updateCreatedWithinDays: updateCreatedWithinDaysValue,
     clearActivityFilter: clearActivityFilterValue,
+    updateSort,
+    updatePage,
   } = useClientsListFilters();
 
   const {
@@ -190,6 +192,9 @@ export function ClientsListPage() {
     registeredWithinDays,
     activityId: activityIdFilter,
     activityName: activityNameFilter,
+    sortBy,
+    sortDir: sortDirection,
+    page,
   } = filters;
 
   const [resolvedActivityName, setResolvedActivityName] = useState("");
@@ -197,10 +202,7 @@ export function ClientsListPage() {
   const [statusCounts, setStatusCounts] =
     useState<ClientLeadStatusCounts>(emptyStatusCounts);
   const [nationalityOptions, setNationalityOptions] = useState<string[]>([]);
-  const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [sortBy, setSortBy] = useState<ClientSortBy>("lastRegistrationDate");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [initialized, setInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingClientIds, setUpdatingClientIds] = useState<Set<string>>(
@@ -218,59 +220,14 @@ export function ClientsListPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
 
-  const updateSearch = useCallback(
-    (value: string) => {
-      setPage(1);
-      updateSearchValue(value);
-    },
-    [updateSearchValue]
-  );
-  const updateLeadStatus = useCallback(
-    (value: Parameters<typeof updateLeadStatusValue>[0]) => {
-      setPage(1);
-      updateLeadStatusValue(value);
-    },
-    [updateLeadStatusValue]
-  );
-  const updateNationality = useCallback(
-    (value: string) => {
-      setPage(1);
-      updateNationalityValue(value);
-    },
-    [updateNationalityValue]
-  );
-  const updateFollowUpDue = useCallback(
-    (value: boolean) => {
-      setPage(1);
-      updateFollowUpDueValue(value);
-    },
-    [updateFollowUpDueValue]
-  );
-  const updateMergeSuspect = useCallback(
-    (value: boolean) => {
-      setPage(1);
-      updateMergeSuspectValue(value);
-    },
-    [updateMergeSuspectValue]
-  );
-  const updateRegisteredWithinDays = useCallback(
-    (value: number | null) => {
-      setPage(1);
-      updateRegisteredWithinDaysValue(value);
-    },
-    [updateRegisteredWithinDaysValue]
-  );
-  const updateCreatedWithinDays = useCallback(
-    (value: number | null) => {
-      setPage(1);
-      updateCreatedWithinDaysValue(value);
-    },
-    [updateCreatedWithinDaysValue]
-  );
-  const clearActivityFilter = useCallback(() => {
-    setPage(1);
-    clearActivityFilterValue();
-  }, [clearActivityFilterValue]);
+  const updateSearch = updateSearchValue;
+  const updateLeadStatus = updateLeadStatusValue;
+  const updateNationality = updateNationalityValue;
+  const updateFollowUpDue = updateFollowUpDueValue;
+  const updateMergeSuspect = updateMergeSuspectValue;
+  const updateRegisteredWithinDays = updateRegisteredWithinDaysValue;
+  const updateCreatedWithinDays = updateCreatedWithinDaysValue;
+  const clearActivityFilter = clearActivityFilterValue;
 
   const selectedClientIds = useMemo(
     () => new Set(selectedClientsById.keys()),
@@ -357,7 +314,7 @@ export function ClientsListPage() {
           setClients([]);
           setError(null);
           setInitialized(true);
-          setPage(nextTotalPages);
+          updatePage(nextTotalPages);
           return;
         }
 
@@ -397,17 +354,16 @@ export function ClientsListPage() {
     sortBy,
     sortDirection,
     reloadToken,
+    updatePage,
   ]);
 
   function handleSort(nextSortBy: ClientSortBy) {
     if (sortBy === nextSortBy) {
-      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
-    } else {
-      setSortBy(nextSortBy);
-      setSortDirection(nextSortBy === "name" ? "asc" : "desc");
+      updateSort(nextSortBy, sortDirection === "asc" ? "desc" : "asc");
+      return;
     }
 
-    setPage(1);
+    updateSort(nextSortBy, nextSortBy === "name" ? "asc" : "desc");
   }
 
   const activityFilterLabel = activityNameFilter || resolvedActivityName;
@@ -846,6 +802,7 @@ export function ClientsListPage() {
                   <ClientRow
                     variant="card"
                     client={client}
+                    profileHref={clientHrefForId(client.id, listContext)}
                     onMarkContacted={handleMarkContacted}
                     onOpenMessenger={handleOpenMessenger}
                     isUpdating={updatingClientIds.has(client.id)}
@@ -956,6 +913,7 @@ export function ClientsListPage() {
                     key={client.id}
                     variant="row"
                     client={client}
+                    profileHref={clientHrefForId(client.id, listContext)}
                     onMarkContacted={handleMarkContacted}
                     onOpenMessenger={handleOpenMessenger}
                     isUpdating={updatingClientIds.has(client.id)}
@@ -984,7 +942,7 @@ export function ClientsListPage() {
             disabled={page <= 1}
             aria-label="Previous page"
             className="min-h-11 min-w-11"
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            onClick={() => updatePage(Math.max(1, page - 1))}
           >
             Previous
           </Button>
@@ -997,9 +955,7 @@ export function ClientsListPage() {
             disabled={page >= totalPages}
             aria-label="Next page"
             className="min-h-11 min-w-11"
-            onClick={() =>
-              setPage((current) => Math.min(totalPages, current + 1))
-            }
+            onClick={() => updatePage(Math.min(totalPages, page + 1))}
           >
             Next
           </Button>

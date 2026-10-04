@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, UserRound } from "lucide-react";
 
@@ -16,6 +17,7 @@ import {
   isFollowUpDue,
   type ClientListItem,
 } from "@/lib/clients-api";
+import { clientHrefForId, dashboardContextFromSearch } from "@/lib/continuity-context";
 import { cn } from "@/lib/utils";
 
 const QUEUE_SIZE = 5;
@@ -27,6 +29,8 @@ type QueueEntry = ClientListItem & {
 export function DashboardFollowUpQueue() {
   const { authFetch } = useAuth();
   const { shell } = useTenantShell();
+  const searchParams = useSearchParams();
+  const dashboardContext = dashboardContextFromSearch(searchParams.toString());
   const [entries, setEntries] = useState<QueueEntry[]>([]);
   const [dueTotalCount, setDueTotalCount] = useState(0);
   const [newTotalCount, setNewTotalCount] = useState(0);
@@ -227,7 +231,7 @@ export function DashboardFollowUpQueue() {
         {entries.map((client) => (
           <li key={client.id}>
             <Link
-              href={`/clients/${client.id}`}
+              href={clientHrefForId(client.id, dashboardContext)}
               className="group flex items-center gap-3 rounded-xl border border-transparent px-3 py-2.5 motion-press hover:border-border-warm hover:bg-muted/40"
             >
               <PersonAvatar name={client.fullName} size="sm" />

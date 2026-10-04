@@ -327,6 +327,7 @@ export function DashboardPageClient() {
                   <ActivityPerformanceSection
                     items={metrics.activityPerformance}
                     periodLabel={periodLabel}
+                    continuity={{ room: "dashboard", view: viewMode }}
                   />
                   <DashboardCommunityPulse variant="overview" />
                 </div>
@@ -350,6 +351,7 @@ export function DashboardPageClient() {
                     items={metrics.activityPerformance}
                     periodLabel={periodLabel}
                     className="h-full min-w-0"
+                    continuity={{ room: "dashboard", view: viewMode }}
                   />
                   <DashboardLeadStatusChart
                     breakdown={metrics.leadStatusBreakdown}
@@ -368,6 +370,7 @@ export function DashboardPageClient() {
                   <DashboardActivityPerformanceTable
                     items={metrics.activityPerformance}
                     periodLabel={periodLabel}
+                    continuity={{ room: "dashboard", view: viewMode }}
                   />
                   <DashboardCommunityPulse variant="table" />
                 </div>

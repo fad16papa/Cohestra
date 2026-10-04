@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-04
-# story 40.4 done (accepted ed096690, merge dd8bf563); 40.1/40.2/40.3 done; epic 40 in-progress; 40.5 not started
+# story 40.5 created in-progress; 40.1–40.4 done; epic 40 in-progress; epic 41 not started
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -404,6 +404,7 @@ development_status:
   40-2-follow-up-primary-room: done
   40-3-clients-list-and-client-profile: done
   40-4-activities-and-opportunities-as-category: done
+  40-5-cross-module-continuity: in-progress
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

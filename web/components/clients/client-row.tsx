@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 
 type ClientRowProps = {
   client: ClientListItem;
+  profileHref?: string;
   onMarkContacted?: (client: ClientListItem) => void;
   onOpenMessenger?: (client: ClientListItem, channel: MessengerChannel) => void;
   isUpdating?: boolean;
@@ -167,6 +168,7 @@ function ClientRowActions({
 
 export function ClientRow({
   client,
+  profileHref: profileHrefProp,
   onMarkContacted,
   onOpenMessenger,
   isUpdating = false,
@@ -176,7 +178,7 @@ export function ClientRow({
   timeZoneId,
   variant = "legacy",
 }: ClientRowProps) {
-  const profileHref = `/clients/${client.id}`;
+  const profileHref = profileHrefProp ?? `/clients/${client.id}`;
   const canWhatsApp = Boolean(client.phone && buildWhatsAppWebUrl(client.phone));
   const canViber = Boolean(client.phone && buildViberAppDeepLink(client.phone));
   const isNew = client.leadStatus === "new";

@@ -253,7 +253,11 @@ export function FollowUpPageClient() {
 
       {listState === "populated" && !resultsLoading ? (
         <>
-          <FollowUpResults results={categorized} timeZoneId={timeZoneId} />
+          <FollowUpResults
+            results={categorized}
+            timeZoneId={timeZoneId}
+            context={{ room: "follow-up", category, page }}
+          />
           {selectedTotal > pageSize || page > FOLLOW_UP_DEFAULT_PAGE ? (
             <nav
               aria-label="Follow-up pages"

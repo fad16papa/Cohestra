@@ -11,12 +11,15 @@ import {
   DashboardScrollTableHead,
 } from "@/components/dashboard/dashboard-scroll-table";
 import { buttonVariants } from "@/components/ui/button";
+import type { ContinuityContext } from "@/lib/continuity-context";
+import { activityHrefForId } from "@/lib/continuity-context";
 import type { ActivityPerformanceItem } from "@/lib/dashboard-api";
 import { cn } from "@/lib/utils";
 
 type DashboardActivityPerformanceTableProps = {
   items: ActivityPerformanceItem[];
   periodLabel: string;
+  continuity?: ContinuityContext | null;
 };
 
 function formatShare(count: number, total: number): string {
@@ -31,6 +34,7 @@ function formatShare(count: number, total: number): string {
 export function DashboardActivityPerformanceTable({
   items,
   periodLabel,
+  continuity,
 }: DashboardActivityPerformanceTableProps) {
   const totalRegistrations = items.reduce(
     (sum, item) => sum + item.registrationCount,
@@ -137,7 +141,10 @@ export function DashboardActivityPerformanceTable({
                     </td>
                     <td className="max-w-[14rem] px-4 py-2 font-medium text-text-warm sm:max-w-none sm:px-5">
                       <Link
-                        href={`/activities/${item.activityId}`}
+                        href={
+                          activityHrefForId(item.activityId, continuity ?? null) ??
+                          `/activities/${item.activityId}`
+                        }
                         className="block truncate hover:text-text-link focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         title={item.activityName}
                       >
