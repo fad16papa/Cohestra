@@ -2,15 +2,17 @@
 id: 41.1
 key: 41-1-analytics-room
 title: Analytics room
-status: review
+status: done
 epic: 41
 created: 2026-10-04
 baseline_commit: 6d9c6af8b1ad8dc26e1c8e95722476e50736c3f8
+accepted_commit: c92149eb1adf94f3ce1248c638b895196c014856
+implementation_merge_sha: f1ea0b136425dc0b1fcd7c043c7198d1e1fd2893
 ---
 
 # Story 41.1: Analytics room
 
-Status: review
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -83,7 +85,7 @@ Losing query on `/reports` redirect. Changing entitlements because the path chan
 
 ## Exact stop gate
 
-Story 41.1 `review`. Epic 41 `in-progress`. 41.2 / 41.3 not started. One draft unmerged PR. Production not claimed.
+Story 41.1 `done`. Epic 41 `in-progress`. 41.2 / 41.3 not started. Production not claimed.
 
 ## Tasks / Subtasks
 
@@ -107,7 +109,8 @@ See `_bmad-output/planning-artifacts/evidence/px2-41-1/test-results.md` and `rev
 
 - Existing Reports page is the Analytics room. No new backend, KPIs, or saved views.
 - `/reports` remains a query-preserving compatibility redirect.
-- Story 41.1 is `review`. Epic 41 stays `in-progress`. 41.2 and 41.3 were not started.
+- Closed after post-merge verification on accepted `c92149eb` / merge `f1ea0b13` and required main CI `37189725262` (5/5).
+- Story 41.1 is `done`. Epic 41 stays `in-progress`. 41.2 and 41.3 were not started.
 - Production is not claimed.
 
 ### File List
@@ -130,3 +133,4 @@ See `_bmad-output/planning-artifacts/evidence/px2-41-1/test-results.md` and `rev
 
 - 2026-10-04: Created Story 41.1 from main `6d9c6af8`. Epic 41 in-progress. Stories 41.2 and 41.3 not started.
 - 2026-10-04: Implementation + QA + four-layer review. Tracker moved to `review`. Draft PR #377.
+- 2026-10-04: Closed after Product Owner final-head review on `c92149eb`, merge of PR #377 as `f1ea0b13`, post-merge verification, and required main CI `37189725262` (5/5). Epic 41 stays in-progress. Stories 41.2 and 41.3 not started. Production not claimed.
