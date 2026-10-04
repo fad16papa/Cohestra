@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Story 24.1 — At-cap recovery brainstorm</title>
+  <style>
+    :root {
+      --lagoon: #2a9d8f;
+      --gold: #e9c46a;
+      --coral: #e76f51;
+      --ink: #264653;
+      --mist: #f4f1ea;
+      --warm-border: #d4cfc4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Georgia", "Times New Roman", serif;
+      background: var(--mist);
+      color: var(--ink);
+      line-height: 1.55;
+      padding: 2rem 1.25rem 4rem;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.35rem;
+    }
+    .meta { font-size: 0.875rem; opacity: 0.7; margin-bottom: 2rem; }
+    section { margin-bottom: 2.5rem; }
+    h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--lagoon);
+      margin-bottom: 0.75rem;
+    }
+    .technique-tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      background: var(--ink);
+      color: var(--mist);
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      margin-bottom: 0.5rem;
+    }
+    .idea-grid {
+      display: grid;
+      gap: 0.5rem;
+    }
+    .idea {
+      background: #fff;
+      border: 1px solid var(--warm-border);
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.9rem;
+    }
+    .idea strong { color: var(--coral); font-weight: 600; }
+    .wireframe {
+      background: #fff;
+      border: 2px solid var(--ink);
+      border-radius: 12px;
+      padding: 1.25rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.85rem;
+    }
+    .wf-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--warm-border);
+    }
+    .wf-title { font-weight: 700; font-size: 1.1rem; }
+    .wf-btn {
+      background: var(--lagoon);
+      color: #fff;
+      border: none;
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      opacity: 0.5;
+    }
+    .wf-alert {
+      background: #fde8e4;
+      border: 1px solid var(--coral);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 0.75rem;
+      color: #8b3a2a;
+    }
+    .wf-alert p { margin-bottom: 0.35rem; }
+    .wf-alert p:last-child { margin-bottom: 0; font-size: 0.8rem; opacity: 0.85; }
+    .wf-alert-actions { margin-top: 0.6rem; display: flex; gap: 0.5rem; }
+    .wf-link {
+      display: inline-block;
+      border: 1px solid var(--coral);
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      background: #fff;
+    }
+    .wf-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .wf-chip {
+      border: 1px solid var(--lagoon);
+      background: rgba(42, 157, 143, 0.12);
+      color: var(--lagoon);
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .wf-chip.outline {
+      background: #fff;
+      border-color: var(--warm-border);
+      color: #666;
+      font-weight: 500;
+    }
+    .wf-helper {
+      background: #f0f7f6;
+      border-left: 3px solid var(--lagoon);
+      padding: 0.6rem 0.85rem;
+      font-size: 0.8rem;
+      margin-bottom: 1rem;
+      color: #444;
+    }
+    .wf-filters {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      opacity: 0.6;
+    }
+    .wf-filter-box {
+      border: 1px solid var(--warm-border);
+      border-radius: 6px;
+      height: 2rem;
+      background: #fafafa;
+    }
+    .wf-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+    .wf-card {
+      border: 1px solid var(--warm-border);
+      border-radius: 8px;
+      height: 4.5rem;
+      background: #fafafa;
+      position: relative;
+    }
+    .wf-card.published::after {
+      content: "published";
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 0.55rem;
+      background: var(--lagoon);
+      color: #fff;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+    }
+    .synthesis {
+      background: linear-gradient(135deg, var(--ink) 0%, #1a3340 100%);
+      color: var(--mist);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .synthesis h2 { color: var(--gold); }
+    .synthesis ul { margin-left: 1.25rem; margin-top: 0.75rem; }
+    .synthesis li { margin-bottom: 0.4rem; }
+    .fail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+    @media (max-width: 640px) {
+      .wf-filters, .wf-cards, .fail-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Story 24.1 — When the tank is full</h1>
+  <p class="meta">Cohestra Activities list · at-cap recovery brainstorm · 2026-08-09</p>
+
+  <section>
+    <h2>The moment</h2>
+    <p>
+      An operator opens <code>/activities</code> at 50/50 published and 5,000/5,000 monthly registrations.
+      Two red banners scream. Two hundred cards scroll — mostly archived load-test noise.
+      They need to <em>free one slot</em>, not read a billing page.
+    </p>
+  </section>
+
+  <section>
+    <span class="technique-tag">First Principles</span>
+    <h2>Bedrock truths</h2>
+    <div class="idea-grid">
+      <div class="idea"><strong>One surface</strong> — what is blocked, what still works, one next action</div>
+      <div class="idea"><strong>Recovery ≠ upgrade</strong> — Free a slot means archive/unpublish, not checkout</div>
+      <div class="idea"><strong>Publish cap is actionable here</strong> — reg cap is informational on the list (cards in 24.2)</div>
+    </div>
+  </section>
+
+  <section>
+    <span class="technique-tag">Reverse Brainstorming</span>
+    <h2>How we fail the operator</h2>
+    <div class="fail-grid">
+      <div class="idea">Two alerts → ignored as noise</div>
+      <div class="idea">Free a slot → billing → trust break</div>
+      <div class="idea">Chip filters client-side → pagination lies</div>
+      <div class="idea">URL not synced → refresh loses state</div>
+    </div>
+  </section>
+
+  <section>
+    <span class="technique-tag">Cross-Pollination</span>
+    <h2>Stolen patterns</h2>
+    <div class="idea-grid">
+      <div class="idea"><strong>Gmail storage full</strong> — one bar, one Manage button → compound banner + Review published</div>
+      <div class="idea"><strong>GitHub repo limit</strong> — suggest archive language</div>
+      <div class="idea"><strong>Hospital triage</strong> — red = publish blocked now; amber note = sign-ups paused</div>
+      <div class="idea"><strong>Lead queue chips</strong> — same FilterChip visual language as Clients</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Target wireframe — Story 24.1</h2>
+    <div class="wireframe">
+      <div class="wf-header">
+        <span class="wf-title">Activities</span>
+        <button class="wf-btn" title="Disabled at cap">New activity</button>
+      </div>
+      <div class="wf-alert">
+        <p><strong>Published activities at capacity (50/50).</strong> Archive or unpublish one to publish another.</p>
+        <p>Monthly sign-ups paused (5,000/5,000) until next cycle or upgrade.</p>
+        <div class="wf-alert-actions">
+          <span class="wf-link">Review published</span>
+          <span class="wf-link">View billing &amp; upgrade</span>
+        </div>
+      </div>
+      <div class="wf-chips">
+        <span class="wf-chip">Published only · 50</span>
+        <span class="wf-chip outline">Free a slot</span>
+      </div>
+      <div class="wf-helper">
+        You're at your published limit. Open an activity below and <strong>archive</strong> or <strong>unpublish</strong> it to free a slot.
+      </div>
+      <div class="wf-filters">
+        <div class="wf-filter-box"></div>
+        <div class="wf-filter-box"></div>
+        <div class="wf-filter-box"></div>
+        <div class="wf-filter-box"></div>
+      </div>
+      <div class="wf-cards">
+        <div class="wf-card published"></div>
+        <div class="wf-card published"></div>
+        <div class="wf-card published"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="synthesis">
+    <h2>Synthesis — ship this</h2>
+    <ul>
+      <li><strong>One compound banner</strong> replacing stacked PlanLimitAlerts</li>
+      <li><strong>Published only</strong> chip — toggles filter + URL sync + count badge</li>
+      <li><strong>Free a slot</strong> chip — published filter + inline helper strip (no modal v1)</li>
+      <li><strong>Defer</strong> card badges (24.2), quick actions (24.3), sort-by-regs (24.4)</li>
+    </ul>
+    <p style="margin-top:1rem;font-size:0.9rem;opacity:0.9">
+      Success: one click from list header to filtered published list with clear recovery instructions.
+    </p>
+  </section>
+</body>
+</html>
