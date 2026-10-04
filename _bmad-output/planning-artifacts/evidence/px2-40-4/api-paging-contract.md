@@ -52,6 +52,10 @@ Page size is 20. A newly archived activity with the newest `UpdatedAt` sits on p
 | `status=archived` | Archived by `UpdatedAt` | Unchanged meaning; `Id` tie-break added |
 | `sortBy=name` unfiltered | Archived “Alpha” can lead | Actionable names first; Archived names after |
 
+## PostgreSQL proof
+
+`ActivityListOrderingIntegrationTests` calls the real authenticated `GET /api/v1/admin/activities` against `cohestra_test`. See `postgres-ordering.md`.
+
 ## Forbidden
 
 - Client `.sort()` of one page
