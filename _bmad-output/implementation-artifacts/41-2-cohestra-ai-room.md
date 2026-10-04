@@ -2,15 +2,17 @@
 id: 41.2
 key: 41-2-cohestra-ai-room
 title: Cohestra AI room
-status: review
+status: done
 epic: 41
 created: 2026-10-04
 baseline_commit: bb420f89446ef78445fbdd4f655b6752cfd7d713
+accepted_commit: 8576d0a3d658a62eb5286835606f284b34f5e625
+implementation_merge_sha: a558eba220f45e7b478bf1bc9dcf4b251a5604b2
 ---
 
 # Story 41.2: Cohestra AI room
 
-Status: review
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -88,7 +90,7 @@ Duplicate Dashboard vs `/ai` fetch (accepted: independent, no shared cache). Tig
 
 ## Exact stop gate
 
-Story 41.2 `review`. Epic 41 `in-progress`. 41.1 remains `done`. 41.3 not started. One draft unmerged PR. Production not claimed.
+Story 41.2 `done`. Epic 41 `in-progress`. 41.1 remains `done`. 41.3 not started. Production not claimed.
 
 ## Tasks / Subtasks
 
@@ -111,7 +113,8 @@ See `_bmad-output/planning-artifacts/evidence/px2-41-2/test-results.md` and `rev
 
 - Existing intelligence brief is the Cohestra AI room. No new backend, KPIs, chat, or provider.
 - Dashboard section remains Needs attention and links to `/ai`.
-- Story 41.2 is `review`. Epic 41 stays `in-progress`. Story 41.1 remains done. Story 41.3 was not started.
+- Closed after post-merge verification on accepted `8576d0a3` / merge `a558eba2` and required main CI `37193492232` (5/5).
+- Story 41.2 is `done`. Epic 41 stays `in-progress`. Story 41.1 remains done. Story 41.3 was not started.
 - Production is not claimed.
 
 ### File List
@@ -131,3 +134,4 @@ See `_bmad-output/planning-artifacts/evidence/px2-41-2/test-results.md` and `rev
 
 - 2026-10-04: Created Story 41.2 from main `bb420f89`. Epic 41 in-progress. Story 41.1 remains done. Story 41.3 not started.
 - 2026-10-04: Implementation + QA + four-layer review. Tracker moved to `review`. Draft PR #379.
+- 2026-10-04: Closed after Product Owner final-head review on `8576d0a3`, merge of PR #379 as `a558eba2`, post-merge verification, and required main CI `37193492232` (5/5). Epic 41 stays in-progress. Story 41.3 not started. Production not claimed.
