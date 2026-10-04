@@ -168,6 +168,7 @@ test.describe("Story 41.1 — Analytics room", () => {
       waitUntil: "domcontentloaded",
     });
     await waitForOperatorWorkspace(page);
+    await expect(page).toHaveURL(/\/analytics\?/, { timeout: 20_000 });
     expect(new URL(page.url()).pathname).toBe("/analytics");
     const landed = new URL(page.url()).searchParams;
     expect(landed.get("preset")).toBe("custom");
@@ -189,7 +190,9 @@ test.describe("Story 41.1 — Analytics room", () => {
     const transition = page.locator("[data-admin-route-transition]");
     await page.getByRole("tab", { name: "Graphs" }).click();
     await expect(page).toHaveURL(/view=graphs/);
-    await expect(page.getByRole("link", { name: "Open Analytics" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Open Analytics" })).toBeVisible({
+      timeout: 20_000,
+    });
     await page.getByRole("link", { name: "Open Analytics" }).click();
     await waitForOperatorWorkspace(page);
     await expect(page).toHaveURL(/\/analytics/);
@@ -292,28 +295,27 @@ test.describe("Story 41.1 — Analytics room", () => {
     fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
     const session = await loginOperatorSession(request);
 
-    await page.route("**/api/v1/admin/reports?**", async (route) => {
+    await page.route("**/api/v1/admin/reports**", async (route) => {
       if (route.request().url().includes("/export")) {
         await route.continue();
         return;
       }
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 800));
       await route.continue();
     });
     await page.setViewportSize({ width: 1440, height: 900 });
     await seedOperatorAuthSession(page, session);
-    const loadingNav = page.goto(`${tenantWebBase()}/analytics?preset=weekly`, {
+    await page.goto(`${tenantWebBase()}/analytics?preset=weekly`, {
       waitUntil: "domcontentloaded",
     });
     await expect(page.getByRole("heading", { name: "Analytics", level: 1 })).toBeVisible({
       timeout: 20_000,
     });
     await expect(page.getByText("Loading report…")).toBeVisible();
-    await loadingNav;
-    await page.unroute("**/api/v1/admin/reports?**");
     await waitForReportsContent(page);
+    await page.unroute("**/api/v1/admin/reports**");
 
-    await page.route("**/api/v1/admin/reports?**", async (route) => {
+    await page.route("**/api/v1/admin/reports**", async (route) => {
       if (route.request().url().includes("/export")) {
         await route.continue();
         return;
@@ -340,7 +342,7 @@ test.describe("Story 41.1 — Analytics room", () => {
       path: path.join(evidenceDir, "viewports", "analytics-empty-export-disabled-1440.png"),
       fullPage: true,
     });
-    await page.unroute("**/api/v1/admin/reports?**");
+    await page.unroute("**/api/v1/admin/reports**");
 
     const staleControl: { release: () => void } = {
       release() {},
@@ -348,7 +350,7 @@ test.describe("Story 41.1 — Analytics room", () => {
     const staleGate = new Promise<void>((resolve) => {
       staleControl.release = resolve;
     });
-    await page.route("**/api/v1/admin/reports?**", async (route) => {
+    await page.route("**/api/v1/admin/reports**", async (route) => {
       if (route.request().url().includes("/export")) {
         await route.continue();
         return;
@@ -368,9 +370,9 @@ test.describe("Story 41.1 — Analytics room", () => {
     await expect(page.getByRole("heading", { name: "Analytics", level: 1 })).toBeVisible();
     staleControl.release();
     await waitForReportsContent(page);
-    await page.unroute("**/api/v1/admin/reports?**");
+    await page.unroute("**/api/v1/admin/reports**");
 
-    await page.route("**/api/v1/admin/reports?**", async (route) => {
+    await page.route("**/api/v1/admin/reports**", async (route) => {
       if (route.request().url().includes("/export")) {
         await route.continue();
         return;
@@ -397,12 +399,12 @@ test.describe("Story 41.1 — Analytics room", () => {
       path: path.join(evidenceDir, "viewports", "analytics-error-1440.png"),
       fullPage: true,
     });
-    await page.unroute("**/api/v1/admin/reports?**");
+    await page.unroute("**/api/v1/admin/reports**");
     await page.getByRole("button", { name: "Try again" }).click();
     await waitForReportsContent(page);
     await expect(page.getByRole("heading", { name: "Could not load Analytics" })).toHaveCount(0);
 
-    await page.route("**/api/v1/admin/reports?**", async (route) => {
+    await page.route("**/api/v1/admin/reports**", async (route) => {
       if (route.request().url().includes("/export")) {
         await route.fulfill({
           status: 403,
@@ -426,7 +428,7 @@ test.describe("Story 41.1 — Analytics room", () => {
       timeout: 20_000,
     });
     await expect(page.getByRole("heading", { name: /upgrade|unlock/i })).toHaveCount(0);
-    await page.unroute("**/api/v1/admin/reports?**");
+    await page.unroute("**/api/v1/admin/reports**");
   });
 
   test("export uses the active filters and tenants stay isolated", async ({ page, request }) => {
@@ -576,8 +578,9 @@ test.describe("Story 41.1 — Analytics room", () => {
 
     await page.getByRole("button", { name: /appearance:/i }).click();
     await page.getByRole("radio", { name: /^dark$/i }).click();
-    await page.keyboard.press("Escape");
     await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 15_000 });
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("radio", { name: /^dark$/i })).toHaveCount(0);
     await waitForReportsContent(page);
     await assertAxe(page, "analytics dark");
     await page.screenshot({
