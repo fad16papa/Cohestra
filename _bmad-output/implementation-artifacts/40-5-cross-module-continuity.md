@@ -2,15 +2,17 @@
 id: 40.5
 key: 40-5-cross-module-continuity
 title: Cross-module continuity
-status: review
+status: done
 epic: 40
 created: 2026-10-04
 baseline_commit: 479b181361357eb9d96909e99076eadab5d57524
+accepted_commit: fe86e6c77cf14eb311a51fdede891a507d70cb48
+implementation_merge_sha: 5a2bd119158d6de96f1b8aa2617463e754eceacd
 ---
 
 # Story 40.5: Cross-module continuity
 
-Status: review
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -136,8 +138,8 @@ Grok 4.6 (primary). Composer 2.5 unused — no safe bounded presentational split
 ### Completion Notes List
 
 - Typed `ctx` + room-owned query is the continuity mechanism. Composer 2.5 unused.
-- Playwright 40.5 1/1. Full Vitest 605/605. `tsc` and Next production build pass.
-- Protected 38.5–39.3, 39.5, 40.1–40.4 pass. 39.4 still fails only the pre-existing client-profile 768 clip.
+- Playwright 40.5 1/1. Full Vitest 607/607. `tsc` and Next production build pass.
+- Post-merge protected 38.5–40.4: 42/42 pass on synchronized `main` `5a2bd119`. 39.4 clip assertion remains `toBe(false)` and was not weakened.
 - 390/430/767 show named mobile Back. 768/1024/1440 show semantic breadcrumbs.
 
 ### File List
@@ -154,3 +156,4 @@ Grok 4.6 (primary). Composer 2.5 unused — no safe bounded presentational split
 - 2026-10-04: Created Story 40.5 from main `479b1813`. Inventory and contracts locked. Epic 40 remains in-progress. Epic 41 not started.
 - 2026-10-04: Implemented typed continuity, QA evidence, and 390/430/767/768/1024/1440 proofs. Story remains in-progress pending four-layer review.
 - 2026-10-04: Implementation HEAD `fe86e6c77cf14eb311a51fdede891a507d70cb48` — four-layer review 0 BLOCKER/0 MAJOR; required CI run `37184561436` 5/5. Tracker → review. Epic 40 stays in-progress. Epic 41 not started. PR #375 remains draft/unmerged. Production not claimed.
+- 2026-10-04: Closed after post-merge verification on accepted `fe86e6c7` / merge `5a2bd119` and required main CI `37185524075` (5/5). Epic 40 → done. Epic 41 not started. Production not claimed.
