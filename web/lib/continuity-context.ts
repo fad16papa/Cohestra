@@ -111,29 +111,43 @@ function decodeRepeated(value: string, times = 3): string {
   return current;
 }
 
-function looksExternal(value: string): boolean {
-  const decoded = decodeRepeated(value).trim();
-  const compact = decoded.replace(/\\/g, "/").replace(/[\s\u0000-\u001f]/g, "");
+function compactDecoded(value: string): string {
+  return decodeRepeated(value).trim().replace(/\\/g, "/").replace(/[\s\u0000-\u001f]/g, "");
+}
+
+function looksLikeLeadingLocation(value: string): boolean {
+  const compact = compactDecoded(value);
   if (BLOCKED_SCHEMES.test(compact)) {
     return true;
   }
   if (/^(https?|mailto):/i.test(compact)) {
     return true;
   }
-  if (compact.startsWith("//") || /:\/\//.test(compact)) {
-    return true;
-  }
-  if (compact.includes("@") && compact.includes(".")) {
-    return true;
-  }
-  return false;
+  return compact.startsWith("//");
+}
+
+function looksLikeExternalLocation(value: string): boolean {
+  const compact = compactDecoded(value);
+  return looksLikeLeadingLocation(value) || /:\/\//.test(compact);
+}
+
+function looksLikeSensitiveContact(value: string): boolean {
+  const compact = compactDecoded(value);
+  return compact.includes("@") && compact.includes(".");
+}
+
+function looksExternal(value: string): boolean {
+  return looksLikeExternalLocation(value) || looksLikeSensitiveContact(value);
 }
 
 function allowlistedQuery(raw: string, allowed: Set<string>): string | null {
   if (!raw) {
     return "";
   }
-  if (looksExternal(raw) || raw.length > CONTINUITY_MAX_LENGTH) {
+  if (raw.length > CONTINUITY_MAX_LENGTH) {
+    return null;
+  }
+  if (looksLikeLeadingLocation(raw)) {
     return null;
   }
   const params = new URLSearchParams(raw);
@@ -192,7 +206,7 @@ export function parseContinuityContext(raw: string | null | undefined): Continui
     return null;
   }
   const trimmed = raw.trim();
-  if (!trimmed || trimmed.length > CONTINUITY_MAX_LENGTH || looksExternal(trimmed)) {
+  if (!trimmed || trimmed.length > CONTINUITY_MAX_LENGTH || looksLikeLeadingLocation(trimmed)) {
     return null;
   }
 
@@ -210,7 +224,7 @@ export function parseContinuityContext(raw: string | null | undefined): Continui
   }
   const room = head.slice(0, colon);
   const rest = head.slice(colon + 1);
-  if (!rest || looksExternal(rest)) {
+  if (looksLikeLeadingLocation(rest)) {
     return null;
   }
 

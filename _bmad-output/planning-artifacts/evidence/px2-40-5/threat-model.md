@@ -10,7 +10,7 @@ See also `architecture.md`.
 | `javascript:` / `data:` / `vbscript:` | Blocked schemes. |
 | Absolute `https://` | Rejected. |
 | Oversized / malformed | Max 512 chars. Unknown rooms/tabs/UUIDs → null. |
-| JWT / email / phone / answers in URL | Not accepted as `ctx` fields. Allowlisted query keys only. Values containing `@` + `.` dropped. |
+| JWT / email / phone / answers in URL | Not accepted as `ctx` fields. Allowlisted query keys only. Email-like values (`@` + `.`) are dropped; sibling allowlisted filters are kept. The whole typed token is not discarded. |
 | Tenant-host crossing | Continuity never assigns `location` to unparsed input. API isolation remains Host + JWT. |
 | Stale query context | URL is authoritative. Invalid tokens fall back to canonical parent. |
 | History pollution | Room query writes use `replace` for filters/tabs. Journey links are normal pushes. |

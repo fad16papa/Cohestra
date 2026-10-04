@@ -8,7 +8,7 @@ HEAD at last Playwright rerun: working tree after 430/767 mobile Back assertions
 | Suite | Result |
 | --- | --- |
 | Affected Vitest (`continuity-context`, `follow-up-category`, `admin-nav`, `dashboard-view-mode`, `admin-route-motion`) | Pass after updating the activity-tab source assertion to `selectTab` |
-| Full Vitest | **92 files / 605 tests pass** |
+| Full Vitest | **92 files / 607 tests pass** |
 
 ## Typecheck and build
 

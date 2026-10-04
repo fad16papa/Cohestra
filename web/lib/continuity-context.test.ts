@@ -53,6 +53,25 @@ describe("parseContinuityContext", () => {
     });
   });
 
+  it("strips email-like filter values without discarding the typed token", () => {
+    expect(
+      parseContinuityContext("cl:search=ada@example.com&leadStatus=active&sortBy=name")
+    ).toEqual({
+      room: "clients",
+      query: "leadStatus=active&sortBy=name",
+    });
+  });
+
+  it("round-trips an empty clients token and keeps sibling filters when one value is external", () => {
+    expect(parseContinuityContext("cl:")).toEqual({ room: "clients", query: "" });
+    expect(
+      parseContinuityContext("cl:search=https://evil.test&leadStatus=active&page=2")
+    ).toEqual({
+      room: "clients",
+      query: "leadStatus=active&page=2",
+    });
+  });
+
   it("rejects absolute, protocol-relative, encoded, malformed, and oversized tokens", () => {
     expect(parseContinuityContext("https://evil.test")).toBeNull();
     expect(parseContinuityContext("//evil.test")).toBeNull();
