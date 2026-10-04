@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-04
-# story 40.5 done; epic 40 done; epic 41 not started
+# story 41.1 in-progress; epic 41 in-progress; 41.2 and 41.3 not started
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -405,6 +405,10 @@ development_status:
   40-3-clients-list-and-client-profile: done
   40-4-activities-and-opportunities-as-category: done
   40-5-cross-module-continuity: done
+
+  # Epic 41 — Intelligence and Communication
+  epic-41: in-progress
+  41-1-analytics-room: in-progress
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

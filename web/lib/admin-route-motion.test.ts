@@ -45,6 +45,13 @@ describe("adminRouteTransitionKey", () => {
     );
   });
 
+  it("keeps analytics filter query on the same pathname key", () => {
+    expect(adminRouteTransitionKey("/analytics?preset=monthly")).toBe("/analytics");
+    expect(adminRouteTransitionKey("/analytics?preset=weekly&activityId=1")).toBe(
+      adminRouteTransitionKey("/analytics")
+    );
+  });
+
   it("keeps dashboard view query on the same pathname key", () => {
     expect(adminRouteTransitionKey("/dashboard?view=graphs")).toBe("/dashboard");
     expect(adminRouteTransitionKey("/dashboard?view=table")).toBe(

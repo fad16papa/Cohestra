@@ -12,15 +12,18 @@ import {
 } from "@/components/reports/report-filter-bar";
 import { ReportResults } from "@/components/reports/report-results";
 import { PageHeader } from "@/components/shared/page-header";
+import { ProductErrorState } from "@/components/shared/product-error-state";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-provider";
 import { fetchAllActivities, type Activity } from "@/lib/activities-api";
 import {
   downloadReportCsvExport,
+  exportDisabledReason,
   exportReportCsv,
   fetchReport,
   filtersFromSearchParams,
   filtersToSearchParams,
+  ReportRequestError,
   type ReportResult,
 } from "@/lib/reports-api";
 import { isBasicPlan } from "@/lib/shell/tenant-shell-api";
@@ -47,6 +50,8 @@ export function ReportsPageClient() {
   const [reportFilterKey, setReportFilterKey] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorStatus, setErrorStatus] = useState<number | null>(null);
+  const [reloadNonce, setReloadNonce] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
 
   const filters = useMemo(
@@ -124,6 +129,7 @@ export function ReportsPageClient() {
         setReport(result);
         setReportFilterKey(filterKey);
         setError(null);
+        setErrorStatus(null);
         setInitialized(true);
       })
       .catch((loadError) => {
@@ -131,10 +137,14 @@ export function ReportsPageClient() {
           return;
         }
 
+        setReportFilterKey(filterKey);
         setError(
           loadError instanceof Error
             ? loadError.message
             : "Could not load report."
+        );
+        setErrorStatus(
+          loadError instanceof ReportRequestError ? loadError.status : null
         );
         setInitialized(true);
       });
@@ -147,6 +157,7 @@ export function ReportsPageClient() {
     awaitingCustomDates,
     currentFilterKey,
     filters,
+    reloadNonce,
     searchParams,
     status,
   ]);
@@ -157,14 +168,14 @@ export function ReportsPageClient() {
       Boolean(searchParams.toString()) &&
       awaitingCustomDates);
 
-  const canExport =
-    !awaitingCustomDates &&
-    !isReportStale &&
-    reportMatchesFilters &&
-    !error &&
-    report !== null &&
-    report.registrations > 0 &&
-    !isExporting;
+  const disabledExportReason = exportDisabledReason({
+    awaitingCustomDates,
+    isReportStale,
+    error,
+    registrations: reportMatchesFilters && report ? report.registrations : null,
+    isExporting,
+  });
+  const canExport = disabledExportReason === null;
 
   async function handleExportCsv() {
     if (!canExport || !report) {
@@ -214,6 +225,20 @@ export function ReportsPageClient() {
     );
   }
 
+  if (errorStatus === 403) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Analytics" />
+        <ProductErrorState
+          title="You don’t have access to Analytics"
+          message={error ?? "Your role cannot open Analytics."}
+          backHref="/dashboard"
+          backLabel="Back to Dashboard"
+        />
+      </div>
+    );
+  }
+
   if (shell && isBasicPlan(shell.plan) && isAdvancedReportFilters(filters)) {
     return (
       <div className="space-y-6">
@@ -245,27 +270,43 @@ export function ReportsPageClient() {
         title="Analytics"
         description="Understand what happened, why it matters, and export the same numbers your team trusts."
         actions={
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!canExport}
-            onClick={() => void handleExportCsv()}
-          >
-            {isExporting ? "Exporting…" : "Export CSV"}
-          </Button>
+          <div className="flex max-w-xs flex-col items-stretch gap-1 sm:items-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11"
+              disabled={!canExport}
+              aria-describedby={disabledExportReason ? "analytics-export-reason" : undefined}
+              onClick={() => void handleExportCsv()}
+            >
+              {isExporting ? "Exporting…" : "Export CSV"}
+            </Button>
+            {disabledExportReason ? (
+              <p id="analytics-export-reason" className="text-xs text-text-muted-warm">
+                {disabledExportReason}
+              </p>
+            ) : null}
+          </div>
         }
       />
 
       <ReportFilterBar activities={activities} />
 
       {isReportStale ? (
-        <p className="text-sm text-text-muted-warm">Updating report…</p>
+        <p aria-live="polite" className="text-sm text-text-muted-warm">
+          Updating report…
+        </p>
       ) : null}
 
       {error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
+        <ProductErrorState
+          title="Could not load Analytics"
+          message={error}
+          onRetry={() => {
+            setInitialized(false);
+            setReloadNonce((value) => value + 1);
+          }}
+        />
       ) : null}
 
       {!awaitingCustomDates && !error && report && reportMatchesFilters ? (
