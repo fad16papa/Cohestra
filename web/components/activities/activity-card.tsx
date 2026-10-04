@@ -77,6 +77,8 @@ export function ActivityCard({
 
   return (
     <Card
+      data-activity-id={activity.id}
+      data-activity-status={activity.status}
       className={cn(
         "h-full border-border-warm transition-shadow hover:shadow-md",
         hasConflict && "border-amber-200/80 dark:border-amber-900/50",

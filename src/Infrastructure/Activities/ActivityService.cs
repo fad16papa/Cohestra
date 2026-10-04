@@ -157,7 +157,8 @@ public sealed class ActivityService(
 
         var query = dbContext.Activities.AsNoTracking();
 
-        if (TryParseStatusFilter(status, out var statusFilter))
+        var hasStatusFilter = TryParseStatusFilter(status, out var statusFilter);
+        if (hasStatusFilter)
         {
             query = query.Where(activity => activity.Status == statusFilter);
         }
@@ -185,7 +186,7 @@ public sealed class ActivityService(
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
-        query = ApplyListSort(query, sortField, descending);
+        query = ApplyListSort(query, sortField, descending, archiveSecondary: !hasStatusFilter);
         var activities = await query
             .Skip((normalizedPage - 1) * normalizedPageSize)
             .Take(normalizedPageSize)
@@ -1182,6 +1183,24 @@ public sealed class ActivityService(
     private IQueryable<Activity> ApplyListSort(
         IQueryable<Activity> query,
         ActivityListSortBy sortBy,
+        bool descending,
+        bool archiveSecondary)
+    {
+        IOrderedQueryable<Activity> ordered = archiveSecondary
+            ? query.OrderBy(activity => activity.Status == ActivityStatus.Archived ? 1 : 0)
+            : ApplyPrimaryListSort(query, sortBy, descending);
+
+        if (archiveSecondary)
+        {
+            ordered = ThenApplyPrimaryListSort(ordered, sortBy, descending);
+        }
+
+        return ordered.ThenBy(activity => activity.Id);
+    }
+
+    private IOrderedQueryable<Activity> ApplyPrimaryListSort(
+        IQueryable<Activity> query,
+        ActivityListSortBy sortBy,
         bool descending) =>
         (sortBy, descending) switch
         {
@@ -1196,6 +1215,25 @@ public sealed class ActivityService(
             (ActivityListSortBy.RegistrationCount, true) => query.OrderByDescending(activity =>
                 dbContext.Registrations.Count(registration => registration.ActivityId == activity.Id)),
             _ => query.OrderByDescending(activity => activity.UpdatedAt),
+        };
+
+    private IOrderedQueryable<Activity> ThenApplyPrimaryListSort(
+        IOrderedQueryable<Activity> query,
+        ActivityListSortBy sortBy,
+        bool descending) =>
+        (sortBy, descending) switch
+        {
+            (ActivityListSortBy.Name, false) => query.ThenBy(activity => activity.Name),
+            (ActivityListSortBy.Name, true) => query.ThenByDescending(activity => activity.Name),
+            (ActivityListSortBy.CreatedAt, false) => query.ThenBy(activity => activity.CreatedAt),
+            (ActivityListSortBy.CreatedAt, true) => query.ThenByDescending(activity => activity.CreatedAt),
+            (ActivityListSortBy.UpdatedAt, false) => query.ThenBy(activity => activity.UpdatedAt),
+            (ActivityListSortBy.UpdatedAt, true) => query.ThenByDescending(activity => activity.UpdatedAt),
+            (ActivityListSortBy.RegistrationCount, false) => query.ThenBy(activity =>
+                dbContext.Registrations.Count(registration => registration.ActivityId == activity.Id)),
+            (ActivityListSortBy.RegistrationCount, true) => query.ThenByDescending(activity =>
+                dbContext.Registrations.Count(registration => registration.ActivityId == activity.Id)),
+            _ => query.ThenByDescending(activity => activity.UpdatedAt),
         };
 
     private static DateTimeOffset? NormalizeScheduledStartsAt(

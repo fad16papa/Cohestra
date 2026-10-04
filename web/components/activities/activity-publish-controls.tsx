@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { EyeOff } from "lucide-react";
 
 import {
@@ -60,6 +60,7 @@ export function ActivityPublishControls({
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [archiveDialogVariant, setArchiveDialogVariant] =
     useState<ArchiveActivityDialogVariant>("upcoming");
+  const archiveTriggerRef = useRef<HTMLButtonElement>(null);
 
   const isBusy = isPublishing || isUnpublishing || isArchiving;
   const publishGateIssues = getPublishGateIssues(activity.formSchema, {
@@ -103,12 +104,13 @@ export function ActivityPublishControls({
   function requestArchive() {
     setArchiveError(null);
     setError(null);
-    if (activity.status === "draft") {
-      void performArchive();
+    if (activity.status === "archived") {
       return;
     }
 
-    if (activity.status !== "published") {
+    if (activity.status === "draft") {
+      setArchiveDialogVariant("draft");
+      setArchiveDialogOpen(true);
       return;
     }
 
@@ -221,8 +223,10 @@ export function ActivityPublishControls({
                   {isUnpublishing ? "Unpublishing…" : "Unpublish"}
                 </Button>
                 <Button
+                  ref={archiveTriggerRef}
                   type="button"
                   variant="outline"
+                  className="min-h-11 min-w-11"
                   disabled={isBusy}
                   onClick={requestArchive}
                 >
@@ -233,8 +237,10 @@ export function ActivityPublishControls({
 
             {activity.status === "draft" ? (
               <Button
+                ref={archiveTriggerRef}
                 type="button"
                 variant="outline"
+                className="min-h-11 min-w-11"
                 disabled={isBusy}
                 onClick={requestArchive}
               >
@@ -296,7 +302,11 @@ export function ActivityPublishControls({
         registrationPath={`/register/${activity.slug}`}
         isArchiving={isArchiving}
         error={archiveError}
+        finalFocus={archiveTriggerRef}
         onOpenChange={(open) => {
+          if (isArchiving && !open) {
+            return;
+          }
           setArchiveDialogOpen(open);
           if (!open) {
             setArchiveError(null);

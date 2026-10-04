@@ -1,5 +1,6 @@
 "use client";
 
+import type { RefObject } from "react";
 import { AlertTriangle, CalendarClock } from "lucide-react";
 
 import {
@@ -13,7 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-export type ArchiveActivityDialogVariant = "upcoming" | "past";
+export type ArchiveActivityDialogVariant = "upcoming" | "past" | "draft";
 
 type ArchiveActivityDialogProps = {
   open: boolean;
@@ -23,6 +24,7 @@ type ArchiveActivityDialogProps = {
   registrationPath: string;
   isArchiving: boolean;
   error?: string | null;
+  finalFocus?: RefObject<HTMLElement | null>;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
 };
@@ -35,14 +37,35 @@ export function ArchiveActivityDialog({
   registrationPath,
   isArchiving,
   error = null,
+  finalFocus,
   onOpenChange,
   onConfirm,
 }: ArchiveActivityDialogProps) {
   const isUpcoming = variant === "upcoming";
+  const isDraft = variant === "draft";
+  const title = isUpcoming
+    ? "Archive before this event?"
+    : isDraft
+      ? "Archive this draft?"
+      : "Archive this activity?";
+  const confirmLabel = isArchiving
+    ? "Archiving…"
+    : isDraft
+      ? "Archive draft"
+      : "Archive anyway";
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (isArchiving && !next) {
+          return;
+        }
+        onOpenChange(next);
+      }}
+    >
       <AlertDialogContent
+        finalFocus={finalFocus}
         className={
           isUpcoming
             ? "border-status-contacted/40 bg-card"
@@ -65,25 +88,28 @@ export function ArchiveActivityDialog({
               )}
             </span>
             <div className="space-y-2">
-              <AlertDialogTitle>
-                {isUpcoming
-                  ? "Archive before this event?"
-                  : "Archive this activity?"}
-              </AlertDialogTitle>
+              <AlertDialogTitle>{title}</AlertDialogTitle>
               <AlertDialogDescription>
                 <span className="font-medium text-text-warm">{activityName}</span>
-                {activitySchedule ? (
-                  <>
-                    {" "}
-                    is scheduled for{" "}
-                    <span className="font-medium text-text-warm">{activitySchedule}</span>.
-                  </>
-                ) : (
-                  "."
-                )}
+                {isDraft
+                  ? " is still a draft. Archiving closes it for editing and publishing until you create a new activity."
+                  : activitySchedule
+                    ? (
+                      <>
+                        {" "}
+                        is scheduled for{" "}
+                        <span className="font-medium text-text-warm">{activitySchedule}</span>.
+                      </>
+                    )
+                    : "."}
               </AlertDialogDescription>
 
-              {isUpcoming ? (
+              {isDraft ? (
+                <p className="text-sm text-text-muted-warm">
+                  Existing client and registration records stay in the CRM. This does not
+                  delete the activity.
+                </p>
+              ) : isUpcoming ? (
                 <ul className="list-disc space-y-1.5 pl-5 text-sm text-text-warm">
                   <li>
                     The public link{" "}
@@ -118,11 +144,14 @@ export function ArchiveActivityDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isArchiving}>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            variant={isUpcoming ? "destructive" : "default"}
+            variant="destructive"
             disabled={isArchiving}
-            onClick={onConfirm}
+            onClick={(event) => {
+              event.preventDefault();
+              onConfirm();
+            }}
           >
-            {isArchiving ? "Archiving…" : "Archive anyway"}
+            {confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

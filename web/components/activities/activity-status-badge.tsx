@@ -21,8 +21,9 @@ type ActivityStatusBadgeProps = {
 export function ActivityStatusBadge({ status, className }: ActivityStatusBadgeProps) {
   return (
     <span
+      data-activity-status-label={status}
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium",
         statusStyles[status],
         className
       )}
