@@ -82,7 +82,7 @@ See `_bmad-output/planning-artifacts/evidence/px2-40-5/readiness.md`. Dispositio
 - [x] Journey hrefs carry `ctx`; registration uses real `activityId` (AC: 1–4)
 - [x] Compositional breadcrumb / mobile Back (AC: 9, 10)
 - [x] Palette + onboarding canonical rooms (AC: 11)
-- [ ] Playwright 40.5 + protected 38.5–40.4 (AC: 13)
+- [x] Playwright 40.5 + protected 38.5–40.4 (AC: 13)
 
 ## Dev Notes
 
@@ -135,8 +135,21 @@ Grok 4.6 (primary). Composer 2.5 unused — no safe bounded presentational split
 
 ### Completion Notes List
 
+- Typed `ctx` + room-owned query is the continuity mechanism. Composer 2.5 unused.
+- Playwright 40.5 1/1. Full Vitest 605/605. `tsc` and Next production build pass.
+- Protected 38.5–39.3, 39.5, 40.1–40.4 pass. 39.4 still fails only the pre-existing client-profile 768 clip.
+- 390/430/767 show named mobile Back. 768/1024/1440 show semantic breadcrumbs.
+
 ### File List
+
+- `web/lib/continuity-context.ts`
+- `web/lib/continuity-context.test.ts`
+- `web/components/layouts/admin-breadcrumbs.tsx`
+- `web/components/layouts/admin-top-bar.tsx`
+- `web/e2e/continuity-40-5.spec.ts`
+- `_bmad-output/planning-artifacts/evidence/px2-40-5/`
 
 ### Change Log
 
 - 2026-10-04: Created Story 40.5 from main `479b1813`. Inventory and contracts locked. Epic 40 remains in-progress. Epic 41 not started.
+- 2026-10-04: Implemented typed continuity, QA evidence, and 390/430/767/768/1024/1440 proofs. Story remains in-progress pending four-layer review.

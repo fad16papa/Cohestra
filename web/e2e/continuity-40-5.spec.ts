@@ -9,7 +9,12 @@ import {
   loginOwnedTenant,
   provisionOwnedActivity,
 } from "./helpers/e2e-owned-fixtures";
-import { resolveE2eApiBase, tenantApiHost, tenantWebOrigin } from "./helpers/owned-fixture-data";
+import {
+  DEFAULT_TENANT_SLUG,
+  resolveE2eApiBase,
+  tenantApiHost,
+  tenantWebOrigin,
+} from "./helpers/owned-fixture-data";
 import {
   loginOperatorSession,
   openActivityTab,
@@ -106,7 +111,7 @@ async function fetchJson(
   const response = await request.get(url, {
     headers: {
       Authorization: `Bearer ${session.accessToken}`,
-      Host: tenantApiHost(slug),
+      Host: tenantApiHost(slug ?? DEFAULT_TENANT_SLUG),
     },
   });
   if (!response.ok()) {
@@ -141,9 +146,15 @@ test.describe("Story 40.5 — cross-module continuity", () => {
       expect(followUpHref).toMatch(/ctx=fu%3Aopportunity/);
       await page.goto(`${tenantWebBase()}${followUpHref}`, { waitUntil: "domcontentloaded" });
       await waitForOperatorWorkspace(page);
-      await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toBeVisible();
-      await expect(page.getByRole("link", { name: "Follow-up" })).toBeVisible();
-      await page.getByRole("link", { name: "Follow-up" }).click();
+      const crumbs = page.getByRole("navigation", { name: "Breadcrumb" });
+      await expect(crumbs).toBeVisible();
+      await expect(crumbs.getByRole("link", { name: "Follow-up" })).toBeVisible();
+      await crumbs.getByRole("link", { name: "Follow-up" }).click();
+      await waitForFollowUpReady(page);
+      expect(pathAndSearch(page.url())).toBe(followUpUrl);
+      await page.goBack();
+      await expect(page).toHaveURL(/\/clients\/[0-9a-f-]{36}/i);
+      await page.goForward();
       await waitForFollowUpReady(page);
       expect(pathAndSearch(page.url())).toBe(followUpUrl);
     }
@@ -171,28 +182,24 @@ test.describe("Story 40.5 — cross-module continuity", () => {
     await waitForClientsReady(page);
     expect(pathAndSearch(page.url())).toBe(clientsUrl);
 
-    await openAuthed(page, session, "/dashboard?view=graphs");
-    await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
-    const graphActivity = page.locator('a[href*="/activities/"][href*="ctx=d%3Agraphs"]').first();
-    if ((await graphActivity.count()) > 0) {
-      await graphActivity.click();
-      await expect(page).toHaveURL(/\/activities\/[0-9a-f-]{36}/i);
-      await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Dashboard" }).click();
-      await expect(page).toHaveURL(/\/dashboard\?view=graphs/);
-    }
-
-    await openAuthed(page, session, "/dashboard?view=table");
-    await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
-    const tableActivity = page.locator('a[href*="/activities/"][href*="ctx=d%3Atable"]').first();
-    if ((await tableActivity.count()) > 0) {
-      const tableHref = await tableActivity.getAttribute("href");
-      proofs.dashboardTable = tableHref ?? "";
-      await tableActivity.click();
-      await expect(page).toHaveURL(/view=table|ctx=d%3Atable/);
-      await page.goBack();
-      await expect(page).toHaveURL(/\/dashboard\?view=table/);
-      await page.goForward();
-      await expect(page).toHaveURL(/\/activities\/[0-9a-f-]{36}/i);
+    for (const view of ["graphs", "table"] as const) {
+      await openAuthed(page, session, `/dashboard?view=${view}`);
+      await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+      const activityLink = page
+        .locator(`a[href*="/activities/"][href*="ctx=d%3A${view}"]`)
+        .locator("visible=true")
+        .first();
+      if ((await activityLink.count()) === 0) {
+        continue;
+      }
+      proofs[`dashboard${view}`] = (await activityLink.getAttribute("href")) ?? view;
+      await activityLink.click();
+      await expect(page).toHaveURL(new RegExp(`/activities/[0-9a-f-]{36}.*ctx=d%3A${view}`, "i"));
+      await page
+        .getByRole("navigation", { name: "Breadcrumb" })
+        .getByRole("link", { name: "Dashboard" })
+        .click();
+      await expect(page).toHaveURL(new RegExp(`/dashboard\\?view=${view}`));
     }
 
     const apiBase = resolveE2eApiBase();
@@ -289,20 +296,33 @@ test.describe("Story 40.5 — cross-module continuity", () => {
       path: path.join(evidenceDir, "viewports", "continuity-palette-1440.png"),
     });
 
-    await page.setViewportSize({ width: 390, height: 844 });
-    if (firstClientId) {
+    for (const viewport of [
+      { name: "390", width: 390, height: 844 },
+      { name: "430", width: 430, height: 932 },
+      { name: "767", width: 767, height: 1024 },
+    ] as const) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      if (!firstClientId) {
+        continue;
+      }
       await openAuthed(page, session, `/clients/${firstClientId}?ctx=fu%3Adue-now`);
       const back = page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", {
         name: "Back to Follow-up",
       });
       await expect(back).toBeVisible();
       const box = await back.boundingBox();
-      expect(box, "390 Back target").toBeTruthy();
+      expect(box, `${viewport.name} Back target`).toBeTruthy();
       expect(box!.width).toBeGreaterThanOrEqual(44);
       expect(box!.height).toBeGreaterThanOrEqual(44);
-      await assertNoOverflow(page, "390 client overflow");
+      await expect(
+        page
+          .getByRole("navigation", { name: "Breadcrumb" })
+          .getByRole("link", { name: "Follow-up", exact: true })
+      ).toHaveCount(0);
+      await assertNoOverflow(page, `${viewport.name} client overflow`);
+      await assertLandmarks(page);
       await page.screenshot({
-        path: path.join(evidenceDir, "viewports", "continuity-390.png"),
+        path: path.join(evidenceDir, "viewports", `continuity-${viewport.name}.png`),
         fullPage: true,
       });
     }
@@ -318,7 +338,9 @@ test.describe("Story 40.5 — cross-module continuity", () => {
       }
       await openAuthed(page, session, `/clients/${firstClientId}?ctx=fu%3Adue-now`);
       await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toBeVisible();
-      await expect(page.getByRole("link", { name: "Follow-up" })).toBeVisible();
+      await expect(
+        page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Follow-up" })
+      ).toBeVisible();
       await expect(page.getByRole("link", { name: "Back to Follow-up" })).toHaveCount(0);
       await assertNoOverflow(page, `${viewport.name} overflow`);
       await assertLandmarks(page);
