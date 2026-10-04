@@ -174,7 +174,6 @@ export function ActivitiesListPage() {
     sortBy,
     sortDirection,
   ].join("\0");
-  const listQueryKeyRef = useRef(listQueryKey);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / ACTIVITY_PAGE_SIZE));
 
@@ -182,6 +181,7 @@ export function ActivitiesListPage() {
     (mutator: (params: URLSearchParams) => void) => {
       const params = new URLSearchParams(searchParams.toString());
       mutator(params);
+      setPage(1);
       router.replace(
         params.toString() ? `/activities?${params.toString()}` : "/activities"
       );
@@ -225,14 +225,6 @@ export function ActivitiesListPage() {
   }, [statusFilter]);
 
   useEffect(() => {
-    if (listQueryKeyRef.current !== listQueryKey) {
-      listQueryKeyRef.current = listQueryKey;
-      if (page !== 1) {
-        setPage(1);
-        return;
-      }
-    }
-
     let cancelled = false;
 
     void fetchActivities(authFetch, {
@@ -350,6 +342,7 @@ export function ActivitiesListPage() {
 
   function clearFilters() {
     setRecoveryMode(false);
+    setPage(1);
     router.replace("/activities");
   }
 
