@@ -2,15 +2,17 @@
 id: 40.3
 key: 40-3-clients-list-and-client-profile
 title: Clients list and client profile
-status: review
+status: done
 epic: 40
 created: 2026-10-04
 baseline_commit: 7e7c3c0773fe036a06338167e37f17e69708b9a2
+accepted_commit: 0ebbf03de5017eea090240e469bb59bffd8b407b
+implementation_merge_sha: 4509866c04e6b976212a3285a365735fdee567fd
 ---
 
 # Story 40.3: Clients list and client profile
 
-Status: ready-for-dev
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -127,6 +129,7 @@ Grok 4.6
 - `_bmad-output/implementation-artifacts/40-3-clients-list-and-client-profile.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - `_bmad-output/planning-artifacts/evidence/px2-40-3/`
+- `_bmad-output/planning-artifacts/evidence/px2-40-3/post-merge.md`
 - `web/app/(admin)/clients/page.tsx`
 - `web/components/clients/*` (list, row, table layout, chips, profile, motion, messenger consumers)
 - `web/lib/follow-up-category.ts`
@@ -139,3 +142,4 @@ Grok 4.6
 - 2026-10-04: Created Story 40.3 from main `7e7c3c07`. Inventory and contracts locked. 40.4 not started.
 - 2026-10-04: Implemented Clients list/profile presentation. Unit + tsc green. Playwright and four-layer review pending.
 - 2026-10-04: Live Playwright 40.3 + 38.4–40.2/39.5 passed. Four-layer review: no unresolved BLOCKER/MAJOR. Status `review`.
+- 2026-10-04: Final-head review PASS on `0ebbf03d` after status-clip patch. Required PR CI `37174181854` 5/5. PR #371 merged as `4509866c`. Required main CI `37174648292` 5/5. Post-merge Vitest 29/29, Playwright 40.3 9/9 + 40.1/40.2/38.5/38.6/39.1–39.5 27/27. ACCEPTED/CLOSED. Epic 40 remains in-progress. Story 40.4 not started.

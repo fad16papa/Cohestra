@@ -1,3 +1,14 @@
+## Deferred from: story 40.3 close on main `4509866c` (2026-10-04)
+
+PR #371 merged. PO accepted implementation HEAD `0ebbf03d`. Required main CI `37174648292` 5/5 success. Post-merge Vitest 29/29 and Playwright 36/36 passed. ACCEPTED/CLOSED. Epic 40 remains in-progress. Story 40.4 not started. Production DigitalOcean remains classification C.
+
+- Denied/not-found profile taxonomy still matches exact English literals (`You don’t have access to this client.` / `Client not found.`). No product/architecture/security risk. Owner: later profile honesty polish.
+- Live e2e soft-returns when WhatsApp / expand / owned fixtures are absent. Official close run exercised those paths. Do not convert failures into skips.
+- Isolation coverage is list-ID disjointness, not a cross-tenant profile GET. Server isolation unchanged.
+- Row and select-all checkboxes remain 16px. AC 4 names chip/result/action targets. Owner: later a11y polish / **43.5**.
+- Profile header uses `h-[45px]` so the 39.4 `>= 44` assertion stays honest (classification **D** subpixel floor). Do not weaken the 44px assertion.
+- Clients `role="row"` without a table/grid parent is **closed** for `/clients` (semantic `<table>` at `md+`; axe `aria-required-children` / `aria-required-parent` empty). Remaining community/legacy grid `role="row"` stays out of 40.3.
+
 ## Deferred from: story 39.5 / Epic 39 close on main `7553872c` (2026-10-03)
 
 PR #365 merged. PO accepted implementation HEAD `443f83eb`. Required main CI `37125569345` 5/5 success. Post-merge 39.5 + 38.2/38.5/38.6/39.1–39.3 Playwright passed. ACCEPTED/CLOSED. Epic 39 closed. Epic 40 not started. Production DigitalOcean remains classification C.
