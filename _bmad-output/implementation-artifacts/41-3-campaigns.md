@@ -2,15 +2,17 @@
 id: 41.3
 key: 41-3-campaigns
 title: Campaigns
-status: review
+status: done
 epic: 41
 created: 2026-10-04
 baseline_commit: ac5538e1910fc48650b7793214ed57fde40bf09c
+accepted_commit: 109729f36d65d8335b142bc45b40e2ed84cb3645
+implementation_merge_sha: efdb342b81f0d000b9f6d62eed497f3f0007e1d1
 ---
 
 # Story 41.3: Campaigns
 
-Status: review
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -99,7 +101,7 @@ QR insert regression. Treating unknown plan as Basic lock. Claiming send success
 
 ## Exact stop gate
 
-Story 41.3 `review`. Epic 41 `in-progress`. 41.1 and 41.2 remain `done`. Epic 42 not started. Draft PR open and unmerged. Production not claimed.
+Story 41.3 `done`. Epic 41 `done`. 41.1 and 41.2 remain `done`. Epic 42 not started. Production not claimed.
 
 ## Tasks / Subtasks
 
@@ -147,7 +149,9 @@ See `_bmad-output/planning-artifacts/evidence/px2-41-3/test-results.md` and `rev
 - Existing campaigns API, consent, outbox send, and 38.6 overlays reused. No new provider or schema.
 - Unknown/missing plan is pending. Role 403 is denied. Members never get checkout.
 - QA intercepts send and send-test. No real recipients mailed.
-- Story moved to `review`. Epic 41 stays in-progress. Epic 42 not started. Production not claimed.
+- Closed after post-merge verification on accepted `109729f3` / merge `efdb342b` and required main CI `37202230854` (5/5).
+- Story 41.3 is `done`. Epic 41 is `done`. Stories 41.1 and 41.2 remain done. Epic 42 was not started.
+- Production is not claimed.
 
 ### File List
 
@@ -165,3 +169,4 @@ See `_bmad-output/planning-artifacts/evidence/px2-41-3/test-results.md` and `rev
 - 2026-10-04: Created Story 41.3 from main `ac5538e1`. Epic 41 remains in-progress. Stories 41.1 and 41.2 remain done. Epic 42 not started.
 - 2026-10-04: Implementation + QA + four-layer review. Tracker moved to `review`. Draft PR #381.
 - 2026-10-04: Product-owner review patched Pro-to-Pro isolation coverage, stale-preview send, and in-flight duplicate send. Story remains `review` until merge + tracker-close.
+- 2026-10-04: Closed after Product Owner final-head review on `109729f3`, merge of PR #381 as `efdb342b`, post-merge verification, and required main CI `37202230854` (5/5). Epic 41 → done. Epic 42 not started. Production not claimed.
