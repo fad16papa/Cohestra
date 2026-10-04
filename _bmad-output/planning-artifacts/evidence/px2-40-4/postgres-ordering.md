@@ -26,11 +26,21 @@ Isolated tenants created through the existing platform + TenantAdmin helpers. Na
 - `sortBy=registrationCount&sortDirection=desc` keeps a 9-registration Archived row last while 3 / 1 / 0 actionable rows keep count order
 - a foreign-tenant marker is absent from every page and from `totalCount`
 
+EF logged the PostgreSQL translation:
+
+```sql
+ORDER BY CASE WHEN a."Status" = 'Archived' THEN 1 ELSE 0 END,
+  (SELECT count(*)::int FROM public.registrations AS r
+   WHERE r."TenantId" = @tenant AND r."ActivityId" = a."Id") DESC,
+  a."Id"
+LIMIT @take OFFSET @skip
+```
+
 ## Fixture isolation notes
 
 - `ScheduledStartsAt` is pinned 21 days ahead so `ActivityExpirationHostedService` cannot archive Published rows or rewrite `UpdatedAt` during a long suite (startup backfill + the 3-minute expiration pass).
 - After EF insert, `"UpdatedAt"` is SQL-locked and the expected order is rebuilt from the persisted row. Unquoted `updated_at` is not a column on `activities`.
-- Activity IDs are fresh GUIDs (`OrderedIds()` for ties) so reruns cannot collide on `PK_activities`.
+- Activity IDs are fresh GUIDs. Tie pairs differ only in the last UUID byte so C# `Guid.CompareTo` and PostgreSQL `uuid` order agree. Slugs use the full `o4-{id:N}` value so those pairs cannot collide on `IX_activities_TenantId_Slug`.
 - Each registration uses its own Client so `IX_registrations_ClientId_ActivityId` stays unique.
 
 ## Production patch

@@ -10,7 +10,7 @@ PostgreSQL ordering correction on `cursor/story-40-4-activities-opportunity-0fcb
 | `ActivityServiceListSortTests` (EF InMemory) | 8/8 |
 | ActivityService unit filter (`FullyQualifiedName~ActivityService`) | 19/19 |
 | .NET unit (`Category!=Integration`) | 937/937 |
-| Full API integration (`Category=Integration`) | 131 passed, 0 skipped, 1 failed: `AuthOtpAbuseIntegrationTests.Reset_password_brute_force_returns_429_after_threshold` (Expected `BadRequest`, Actual `TooManyRequests`). Pre-existing flake / classification F. The three new ordering facts passed inside this run. |
+| Full API integration (`Category=Integration`) | 131 passed, 0 skipped, 1 failed: `AuthOtpAbuseIntegrationTests.Reset_password_brute_force_returns_429_after_threshold` (Expected `BadRequest`, Actual `TooManyRequests`). Pre-existing flake / classification F. Re-ran after the Id-tie/slug fixture lock: same 131/1, and the three ordering facts stayed green. |
 | `npx tsc --noEmit` (web) | pass |
 | Targeted ESLint on 40.4 files | 3 errors / 1 warning, all pre-existing `react-hooks/set-state-in-effect` (and one `exhaustive-deps`) on list/detail effects. Not introduced by the PostgreSQL correction. Not weakened. |
 | Affected Vitest (`lib/activities-40-4-contract.test.ts`) | 7/7 |

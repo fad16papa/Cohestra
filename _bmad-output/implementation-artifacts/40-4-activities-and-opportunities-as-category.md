@@ -87,6 +87,7 @@ See `_bmad-output/planning-artifacts/evidence/px2-40-4/readiness.md`. Dispositio
 - [x] Archive dialog for Draft + 38.6 contract (AC: 6)
 - [x] Opportunity boundary + no fabricated source links (AC: 8)
 - [x] Tests: unit, backend, Playwright 40.4, protected 38.5–40.3 (AC: 7, 9, 10)
+- [x] PostgreSQL API integration proves Archived-last paging, replay, union, filtered Archived, registrationCount, isolation (AC: 1, 2)
 
 ## Dev Notes
 

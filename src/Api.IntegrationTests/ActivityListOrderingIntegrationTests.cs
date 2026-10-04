@@ -244,7 +244,7 @@ public sealed class ActivityListOrderingIntegrationTests(IntegrationTestFixture 
             Id = activityId,
             TenantId = tenantId,
             Name = name,
-            Slug = $"o4-{activityId:N}"[..20],
+            Slug = $"o4-{activityId:N}",
             Category = "Test",
             Schedule = startsAt.UtcDateTime.ToString("ddd, MMM d, yyyy, h:mm tt", CultureInfo.InvariantCulture),
             ScheduledStartsAt = startsAt,
@@ -357,9 +357,14 @@ public sealed class ActivityListOrderingIntegrationTests(IntegrationTestFixture 
 
     private static (Guid Early, Guid Late) OrderedIds()
     {
-        var first = Guid.NewGuid();
-        var second = Guid.NewGuid();
-        return first.CompareTo(second) < 0 ? (first, second) : (second, first);
+        // Differ only in Data4[7] so C# Guid.CompareTo and PostgreSQL uuid
+        // ORDER BY agree. Mixed-endian CompareTo on random GUIDs can invert.
+        var bytes = Guid.NewGuid().ToByteArray();
+        var earlyBytes = (byte[])bytes.Clone();
+        var lateBytes = (byte[])bytes.Clone();
+        earlyBytes[15] = 0x01;
+        lateBytes[15] = 0x02;
+        return (new Guid(earlyBytes), new Guid(lateBytes));
     }
 
     private static List<SeededActivity> OrderUnfilteredDefault(IReadOnlyCollection<SeededActivity> seeded) =>
