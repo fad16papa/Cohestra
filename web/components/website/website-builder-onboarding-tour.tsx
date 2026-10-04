@@ -309,7 +309,7 @@ export function WebsiteBuilderOnboardingTour({
   // Portal to document.body so fixed positioning uses the viewport. Admin <main>
   // keeps a transform from page-enter animation, which would break in-tree fixed.
   return createPortal(
-    <div className="pointer-events-none fixed inset-0 z-[60]" aria-live="polite">
+    <div className="pointer-events-none fixed inset-0 z-40" aria-live="polite">
       {targetRect ? (
         <div
           className="pointer-events-none fixed rounded-xl ring-4 ring-primary/80 ring-offset-2 ring-offset-background transition-[top,left,width,height] duration-150 motion-reduce:transition-none"
@@ -325,7 +325,7 @@ export function WebsiteBuilderOnboardingTour({
       <div
         ref={tooltipRef}
         className={cn(
-          "pointer-events-auto fixed z-[61] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl transition-[top,left] duration-150 motion-reduce:transition-none",
+          "pointer-events-auto fixed z-[41] w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border-warm bg-card p-4 shadow-xl transition-[top,left] duration-150 motion-reduce:transition-none",
           !targetRect && "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
         )}
         style={

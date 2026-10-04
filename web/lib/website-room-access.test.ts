@@ -20,6 +20,7 @@ function shell(
 describe("resolveWebsiteRoomAccess", () => {
   it("stays pending for missing or unknown plans and never invents a Basic lock", () => {
     expect(resolveWebsiteRoomAccess(null, true)).toEqual({ kind: "loading" });
+    expect(resolveWebsiteRoomAccess(shell("Core"), true).kind).toBe("open");
     expect(resolveWebsiteRoomAccess(null, false, "shell failed")).toEqual({
       kind: "shell-error",
       message: "shell failed",

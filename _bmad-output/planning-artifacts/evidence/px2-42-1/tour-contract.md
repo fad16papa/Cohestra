@@ -9,6 +9,7 @@ Selected: **skippable non-modal tour**.
 - Escape does not complete the tour while a 38.6 AlertDialog is open
 - Does not replace the page `h1`
 - Does not auto-focus on open (first Tab remains skip link → main)
+- Coachmark stays below 38.6 overlays (`z-50`) and the focused skip link (`z-[80]`)
 - Application stays pointer-operable under the tour
 - Dismissal persists per encoded tenant slug and does not reopen
 - Reduced motion: no position transitions

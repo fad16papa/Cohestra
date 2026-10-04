@@ -21,11 +21,11 @@ export function resolveWebsiteRoomAccess(
   shellLoading: boolean,
   shellError?: string | null
 ): WebsiteRoomAccess {
-  if (shellLoading) {
-    return { kind: "loading" };
-  }
-
   if (!shell) {
+    if (shellLoading) {
+      return { kind: "loading" };
+    }
+
     return {
       kind: "shell-error",
       message: shellError?.trim() || "Could not load Website Studio workspace.",

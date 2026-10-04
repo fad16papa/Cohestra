@@ -26,6 +26,15 @@ Patch HEAD under review after fixes.
 | R-billing | AG | MINOR | Generic 403 copy for `billing_on_hold` | **Dismissed**: fail-closed, never UpgradePanel |
 | R-helper | AG | NIT | Dead `shouldSkipWebsiteAdminFetch` | **Deferred**: unused; page gates on `access.kind` |
 
+## Second-pass residuals on `d278c7a`
+
+Tour-above-dialog stacking and shell-refresh unmount were classified MAJOR by adversarial-general. Both patched on the following commit:
+
+- Existing shell stays `open` during `refreshShell` (`shellLoading && shell` is not a cold load).
+- Tour coachmark is `z-40` / `z-[41]`, below 38.6 overlays (`z-50`) and the focused skip link (`z-[80]`).
+
+Deferred MINOR/NIT: 390 preview device toggles, `visited` suppressing tour, unused `shouldSkipWebsiteAdminFetch`, in-flight mutation after rare SPA slug change.
+
 ## Repeat rule
 
 All four layers must re-run on the patched exact HEAD before merge.
