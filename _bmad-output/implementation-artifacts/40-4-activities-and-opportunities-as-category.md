@@ -2,15 +2,17 @@
 id: 40.4
 key: 40-4-activities-and-opportunities-as-category
 title: Activities and opportunities-as-category
-status: review
+status: done
 epic: 40
 created: 2026-10-04
 baseline_commit: 327c0a4ace6864d83307c7e907cec54f22d7965d
+accepted_commit: ed096690bf7d8a38a9834aa5ae926f13abc9e10c
+implementation_merge_sha: dd8bf563361982dab5faf8e2ead7e03b0d90dd24
 ---
 
 # Story 40.4: Activities and opportunities-as-category
 
-Status: review
+Status: done (ACCEPTED/CLOSED)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -199,3 +201,4 @@ Grok 4.6
 - 2026-10-04: Implemented server Archived-last sort, list/detail honesty, Draft archive dialog. Tests recorded. Status `review`.
 - 2026-10-04: Added PostgreSQL API integration coverage for `ListAsync` ordering/paging. Status remains `review`. Epic 40 remains in-progress. Story 40.5 not started.
 - 2026-10-04: PostgreSQL facts 3/3 inside the full integration run. Production `ListAsync` unchanged. Status remains `review`.
+- 2026-10-04: Closed after post-merge verification on accepted `ed096690` / merge `dd8bf563` and required main CI `37180771698` (5/5). Epic 40 remains in-progress. Story 40.5 not started. Production not claimed.
