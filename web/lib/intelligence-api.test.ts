@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  intelligenceModeLabel,
   isSafeAdminHref,
   parseIntelligenceBrief,
+  presentIntelligenceMode,
 } from "@/lib/intelligence-api";
 
 const validBrief = {
@@ -31,17 +33,36 @@ const validBrief = {
 };
 
 describe("isSafeAdminHref", () => {
-  it("accepts same-origin admin paths", () => {
+  it("accepts allowlisted admin paths including reports compatibility", () => {
     expect(isSafeAdminHref("/clients?followUpDue=true")).toBe(true);
     expect(isSafeAdminHref("/activities/11111111-1111-1111-1111-111111111111")).toBe(
       true
     );
+    expect(isSafeAdminHref("/follow-up")).toBe(true);
+    expect(isSafeAdminHref("/analytics?preset=weekly")).toBe(true);
+    expect(isSafeAdminHref("/dashboard?view=graphs")).toBe(true);
+    expect(isSafeAdminHref("/reports")).toBe(true);
+    expect(isSafeAdminHref("/ai")).toBe(true);
   });
 
-  it("rejects protocol-relative and absolute URLs", () => {
+  it("rejects protocol-relative, absolute, encoded, and script URLs", () => {
     expect(isSafeAdminHref("//evil.test/phish")).toBe(false);
     expect(isSafeAdminHref("https://evil.test")).toBe(false);
     expect(isSafeAdminHref("javascript:alert(1)")).toBe(false);
+    expect(isSafeAdminHref("data:text/html,hi")).toBe(false);
+    expect(isSafeAdminHref("vbscript:msg")).toBe(false);
+    expect(isSafeAdminHref("/%2f%2fevil.test")).toBe(false);
+    expect(isSafeAdminHref("/\\evil.test")).toBe(false);
+    expect(isSafeAdminHref("/clients/../login")).toBe(false);
+  });
+
+  it("rejects public, platform, and unauthorized routes", () => {
+    expect(isSafeAdminHref("/login")).toBe(false);
+    expect(isSafeAdminHref("/register")).toBe(false);
+    expect(isSafeAdminHref("/r/harbourline")).toBe(false);
+    expect(isSafeAdminHref("/operator")).toBe(false);
+    expect(isSafeAdminHref("/settings/billing")).toBe(false);
+    expect(isSafeAdminHref("/campaigns")).toBe(false);
   });
 });
 
@@ -82,21 +103,24 @@ describe("parseIntelligenceBrief", () => {
     expect(brief.insights[0]?.kind).toBe("merge_suspects");
   });
 
-  it("rejects an unsafe recommended action href", () => {
-    expect(() =>
-      parseIntelligenceBrief({
-        ...validBrief,
-        insights: [
-          {
-            ...validBrief.insights[0],
-            recommendedAction: {
-              label: "Leave the product",
-              href: "https://evil.test",
-            },
+  it("neutralizes an unsafe recommended action without dropping the brief", () => {
+    const brief = parseIntelligenceBrief({
+      ...validBrief,
+      insights: [
+        {
+          ...validBrief.insights[0],
+          recommendedAction: {
+            label: "Leave the product",
+            href: "https://evil.test",
           },
-        ],
-      })
-    ).toThrow(/Invalid intelligence brief/);
+        },
+      ],
+    });
+
+    expect(brief.insights).toHaveLength(1);
+    expect(brief.insights[0]?.title).toBe("1 person is due for follow-up");
+    expect(brief.insights[0]?.recommendedAction.href).toBeNull();
+    expect(brief.insights[0]?.recommendedAction.label).toBe("Leave the product");
   });
 
   it("keeps insufficient-data messages without inventing insights", () => {
@@ -112,5 +136,25 @@ describe("parseIntelligenceBrief", () => {
     expect(brief.insights).toEqual([]);
     expect(brief.insufficientData.isInsufficient).toBe(true);
     expect(brief.insufficientData.message).toContain("Not enough operational data");
+  });
+
+  it("rejects a payload missing required insight fields", () => {
+    expect(() =>
+      parseIntelligenceBrief({
+        ...validBrief,
+        insights: [{ title: "nope" }],
+      })
+    ).toThrow(/Invalid intelligence brief/);
+  });
+});
+
+describe("intelligence mode presentation", () => {
+  it("labels deterministic and synthesized truthfully", () => {
+    expect(presentIntelligenceMode("deterministic")).toBe("deterministic");
+    expect(presentIntelligenceMode("synthesized")).toBe("synthesized");
+    expect(presentIntelligenceMode("oracle")).toBe("deterministic");
+    expect(intelligenceModeLabel("deterministic")).toMatch(/workspace rules/);
+    expect(intelligenceModeLabel("synthesized")).toMatch(/Synthesized from the same grounded facts/);
+    expect(intelligenceModeLabel("mystery")).not.toMatch(/Synthesized/);
   });
 });
