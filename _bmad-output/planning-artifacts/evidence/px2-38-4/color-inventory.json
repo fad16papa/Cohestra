@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-04T04:31:51.830Z",
+  "generated": "2026-09-29T14:56:41.609Z",
   "story": "38.4",
   "rows": [
     {
@@ -148,7 +148,7 @@
     },
     {
       "file": "components/billing/checkout-page-content.tsx",
-      "line": 620,
+      "line": 614,
       "kind": "tailwind-palette-text",
       "snippet": "<p className=\"font-medium text-amber-900 dark:text-amber-100\">",
       "disposition": "passing-intentionally-retained",
@@ -157,7 +157,7 @@
     },
     {
       "file": "components/billing/checkout-page-content.tsx",
-      "line": 623,
+      "line": 617,
       "kind": "tailwind-palette-text",
       "snippet": "<ul className=\"list-disc space-y-1 pl-5 text-amber-900/90 dark:text-amber-100/90\">",
       "disposition": "passing-intentionally-retained",
@@ -166,7 +166,7 @@
     },
     {
       "file": "components/billing/in-app-billing-panel.tsx",
-      "line": 368,
+      "line": 342,
       "kind": "tailwind-palette-text",
       "snippet": "<p className=\"mt-2 text-amber-800 dark:text-amber-200\">",
       "disposition": "passing-intentionally-retained",
@@ -175,7 +175,7 @@
     },
     {
       "file": "components/billing/in-app-billing-panel.tsx",
-      "line": 382,
+      "line": 356,
       "kind": "tailwind-palette-text",
       "snippet": "<p className=\"text-amber-800 dark:text-amber-200\">",
       "disposition": "passing-intentionally-retained",
@@ -202,7 +202,7 @@
     },
     {
       "file": "components/campaigns/email-preview-dialog.tsx",
-      "line": 41,
+      "line": 36,
       "kind": "tailwind-palette-text",
       "snippet": "className=\"mx-auto max-w-xl text-sm leading-relaxed [&_a]:text-blue-700 [&_a]:underline [&_img]:my-3 [&_img]:max-h-80 [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5\"",
       "disposition": "outside-38-4",
@@ -220,7 +220,7 @@
     },
     {
       "file": "components/dashboard/activity-calendar-popout.tsx",
-      "line": 409,
+      "line": 399,
       "kind": "tailwind-palette-text",
       "snippet": "className=\"size-3 text-amber-600 dark:text-amber-400\"",
       "disposition": "passing-intentionally-retained",
@@ -229,7 +229,7 @@
     },
     {
       "file": "components/dashboard/activity-calendar-popout.tsx",
-      "line": 433,
+      "line": 423,
       "kind": "tailwind-palette-text",
       "snippet": "<p className=\"font-medium text-amber-800 dark:text-amber-200\">",
       "disposition": "passing-intentionally-retained",
@@ -238,7 +238,7 @@
     },
     {
       "file": "components/dashboard/activity-calendar-popout.tsx",
-      "line": 372,
+      "line": 362,
       "kind": "opacity-text",
       "snippet": "inMonth ? \"text-text-warm\" : \"text-text-muted-warm/50\",",
       "disposition": "passing-intentionally-retained",
