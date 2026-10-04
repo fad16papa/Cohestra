@@ -8,7 +8,7 @@ export type IntelligenceEvidence = {
 
 export type IntelligenceAction = {
   label: string;
-  href: string;
+  href: string | null;
 };
 
 export type IntelligenceInsight = {
@@ -35,8 +35,95 @@ export type IntelligenceBrief = {
   insufficientData: IntelligenceInsufficientData;
 };
 
+export class IntelligenceRequestError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "IntelligenceRequestError";
+    this.status = status;
+  }
+}
+
+const SAFE_ADMIN_PATHS = [
+  "/dashboard",
+  "/clients",
+  "/activities",
+  "/follow-up",
+  "/analytics",
+  "/ai",
+  "/reports",
+] as const;
+
 export function isSafeAdminHref(href: string): boolean {
-  return href.startsWith("/") && !href.startsWith("//") && !href.includes("://");
+  if (typeof href !== "string" || href.length === 0 || href !== href.trim()) {
+    return false;
+  }
+
+  if (
+    !href.startsWith("/") ||
+    href.startsWith("//") ||
+    href.includes("\\") ||
+    href.includes("://") ||
+    /[\u0000-\u001F\u007F]/.test(href)
+  ) {
+    return false;
+  }
+
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(href);
+  } catch {
+    return false;
+  }
+
+  const lower = decoded.toLowerCase();
+  if (
+    lower.startsWith("javascript:") ||
+    lower.startsWith("data:") ||
+    lower.startsWith("vbscript:") ||
+    decoded.startsWith("//") ||
+    decoded.includes("://") ||
+    decoded.includes("\\")
+  ) {
+    return false;
+  }
+
+  const pathOnly = decoded.split(/[?#]/, 1)[0] ?? "";
+  if (
+    !pathOnly.startsWith("/") ||
+    pathOnly.startsWith("//") ||
+    pathOnly.includes("//") ||
+    pathOnly.split("/").includes("..")
+  ) {
+    return false;
+  }
+
+  return SAFE_ADMIN_PATHS.some(
+    (base) => pathOnly === base || pathOnly.startsWith(`${base}/`)
+  );
+}
+
+export function presentIntelligenceMode(
+  mode: string
+): "deterministic" | "synthesized" {
+  return mode === "synthesized" ? "synthesized" : "deterministic";
+}
+
+export function intelligenceModeLabel(mode: string): string {
+  if (mode === "synthesized") {
+    return "Synthesized from the same grounded facts.";
+  }
+
+  return "Based on workspace rules and data.";
+}
+
+export function intelligenceGeneratedLabel(brief: IntelligenceBrief): string {
+  const generated = new Date(brief.generatedAt);
+  const when = Number.isNaN(generated.getTime())
+    ? brief.generatedAt
+    : generated.toLocaleString();
+  return `Generated ${when}. Times use workspace timezone ${brief.timeZoneId}.`;
 }
 
 function readString(value: unknown): string | null {
@@ -101,8 +188,7 @@ function parseInsight(raw: unknown): IntelligenceInsight | null {
 
   const actionRecord = actionRaw as Record<string, unknown>;
   const actionLabel = readString(actionRecord.label ?? actionRecord.Label);
-  const actionHref = readHref(actionRecord.href ?? actionRecord.Href);
-  if (!actionLabel || !actionHref) {
+  if (!actionLabel) {
     return null;
   }
 
@@ -128,7 +214,10 @@ function parseInsight(raw: unknown): IntelligenceInsight | null {
     whyItMatters,
     whatChanged,
     evidence,
-    recommendedAction: { label: actionLabel, href: actionHref },
+    recommendedAction: {
+      label: actionLabel,
+      href: readHref(actionRecord.href ?? actionRecord.Href),
+    },
   };
 }
 
@@ -205,8 +294,18 @@ export async function fetchIntelligenceBrief(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    throw new IntelligenceRequestError(
+      await parseProblemDetail(response),
+      response.status
+    );
   }
 
-  return parseIntelligenceBrief(await response.json());
+  try {
+    return parseIntelligenceBrief(await response.json());
+  } catch (error) {
+    throw new IntelligenceRequestError(
+      error instanceof Error ? error.message : "Invalid intelligence brief payload",
+      response.status
+    );
+  }
 }
