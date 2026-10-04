@@ -226,7 +226,7 @@ export function ClientProfileHeader({
                 {offerFollowUpRoom ? (
                   <Link
                     href={openInFollowUpHref()}
-                    className={cn(buttonVariants(), "min-h-11 min-w-11 gap-1.5")}
+                    className={cn(buttonVariants(), "h-[45px] min-h-[45px] min-w-[44px] gap-1.5")}
                   >
                     <ListTodo className="size-3.5" aria-hidden />
                     Open in Follow-up
@@ -238,7 +238,7 @@ export function ClientProfileHeader({
                   title={hasPhone ? undefined : "Add a phone number to message"}
                   aria-label={`Open WhatsApp for ${client.fullName}`}
                   onClick={() => setConfirmChannel("whatsapp")}
-                  className="gap-1.5 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                  className="h-[45px] min-h-[45px] min-w-[44px] gap-1.5 bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
                 >
                   <WhatsAppBrandIcon className="size-3.5" />
                   WhatsApp
@@ -249,7 +249,7 @@ export function ClientProfileHeader({
                   title={hasPhone ? undefined : "Add a phone number to message"}
                   aria-label={`Open Viber for ${client.fullName}`}
                   onClick={() => setConfirmChannel("viber")}
-                  className="gap-1.5 bg-viber text-viber-foreground hover:bg-viber/90"
+                  className="h-[45px] min-h-[45px] min-w-[44px] gap-1.5 bg-viber text-viber-foreground hover:bg-viber/90"
                 >
                   <ViberBrandIcon className="size-3.5" />
                   Viber
@@ -258,7 +258,7 @@ export function ClientProfileHeader({
                   <Button
                     type="button"
                     variant="outline"
-                    className="gap-1.5"
+                    className="h-[45px] min-h-[45px] min-w-[44px] gap-1.5"
                     aria-label={`Mark ${client.fullName} as contacted`}
                     onClick={() => void handleMarkContacted()}
                   >
@@ -276,7 +276,7 @@ export function ClientProfileHeader({
                   onChange={(event) => {
                     void handleStatusChange(event.target.value as LeadStatus);
                   }}
-                  className="flex min-h-11 rounded-lg border border-input bg-background px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                  className="flex h-[45px] min-h-[45px] rounded-lg border border-input bg-background px-2.5 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                 >
                   {leadStatusOptions.map((option) => (
                     <option key={option.value} value={option.value}>

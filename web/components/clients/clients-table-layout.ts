@@ -30,7 +30,7 @@ export const clientsTableActionsColumnClassName =
   "flex min-w-0 items-center gap-1 sm:max-w-[6.75rem] sm:justify-end";
 
 export const clientsTableClassName =
-  "hidden w-full min-w-0 table-fixed border-separate border-spacing-0 text-left md:table";
+  "hidden w-full min-w-0 border-separate border-spacing-0 text-left md:table";
 
 export const clientsSemanticTableCheckboxClassName =
   "flex items-center justify-center";

@@ -49,13 +49,13 @@ async function openAuthed(
 
 async function waitForClientsReady(page: Page): Promise<void> {
   await expect(page.getByRole("heading", { level: 1, name: "Clients" })).toBeVisible();
-  await expect(
-    page
-      .getByRole("region", { name: "Lead queue filters" })
-      .or(page.getByRole("heading", { name: "Could not load Clients" }))
-      .or(page.getByRole("heading", { name: "No clients yet" }))
-      .or(page.getByText("No clients match your search or filters."))
-  ).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole("region", { name: "Lead queue filters" })).toBeVisible({
+    timeout: 20_000,
+  });
+}
+
+function visibleClientProfileLink(page: Page) {
+  return page.locator('a[href^="/clients/"]').locator("visible=true").first();
 }
 
 async function assertAxe(page: Page, label: string): Promise<void> {
@@ -98,7 +98,15 @@ test.describe("Story 40.3 — Clients list and profile", () => {
       fullPage: true,
     });
 
-    const named = page.locator('a[href^="/clients/"]').first();
+    const nextPage = page.getByRole("button", { name: "Next page" });
+    if (await nextPage.isEnabled()) {
+      await nextPage.click();
+      await expect(page.getByText(/Page 2 of/)).toBeVisible();
+      await page.getByRole("button", { name: "Previous page" }).click();
+      await expect(page.getByText(/Page 1 of/)).toBeVisible();
+    }
+
+    const named = visibleClientProfileLink(page);
     await expect(named).toBeVisible();
     await named.click();
     await expect(page).toHaveURL(/\/clients\/[0-9a-f-]{36}/i);
@@ -147,7 +155,7 @@ test.describe("Story 40.3 — Clients list and profile", () => {
         return node.scrollWidth > node.clientWidth + 1;
       });
       expect(clipped, `${viewport.name} Active clip`).toBe(false);
-      const hasClient = (await page.locator('a[href^="/clients/"]').count()) > 0;
+      const hasClient = (await page.locator('a[href^="/clients/"]').locator("visible=true").count()) > 0;
       if (hasClient && viewport.width < 768) {
         await expect(page.getByRole("table")).toHaveCount(0);
         await expect(page.locator("article").first()).toBeVisible();
@@ -155,7 +163,7 @@ test.describe("Story 40.3 — Clients list and profile", () => {
         await expect(page.getByRole("table")).toBeVisible();
       }
       if (hasClient && viewport.width === 390) {
-        await page.locator('a[href^="/clients/"]').first().click();
+        await visibleClientProfileLink(page).click();
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
         const profileOverflow = await page.evaluate(
           () => document.documentElement.scrollWidth > window.innerWidth + 1
@@ -394,7 +402,7 @@ test.describe("Story 40.3 — Clients list and profile", () => {
       return;
     }
     await page.setViewportSize({ width: 1440, height: 900 });
-    await openAuthed(page, session, "/clients?leadStatus=active", tenantWebBase(PX2_BASIC_TENANT.slug));
+    await openAuthed(page, session, "/clients", tenantWebBase(PX2_BASIC_TENANT.slug));
     await waitForClientsReady(page);
     const exportButton = page.getByRole("button", { name: "Export CSV" });
     if (await exportButton.isEnabled()) {
@@ -454,7 +462,7 @@ test.describe("Story 40.3 — Clients list and profile", () => {
     await page.setViewportSize({ width: 1024, height: 768 });
     await openAuthed(page, session, "/clients");
     await waitForClientsReady(page);
-    const named = page.locator('a[href^="/clients/"]').first();
+    const named = visibleClientProfileLink(page);
     if ((await named.count()) === 0) {
       return;
     }

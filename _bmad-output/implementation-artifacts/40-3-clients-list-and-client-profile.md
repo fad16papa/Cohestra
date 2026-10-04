@@ -2,7 +2,7 @@
 id: 40.3
 key: 40-3-clients-list-and-client-profile
 title: Clients list and client profile
-status: in-progress
+status: review
 epic: 40
 created: 2026-10-04
 baseline_commit: 7e7c3c0773fe036a06338167e37f17e69708b9a2
@@ -84,7 +84,7 @@ Locked decisions:
 - [x] Semantic table + 44px row actions (AC: 4, 5)
 - [x] Profile motion, Follow-up CTA, missing-info honesty (AC: 2, 6, 7)
 - [x] Messenger 38.6 verification (AC: 8)
-- [ ] Tests: unit, Playwright 40.3, 40.1/40.2 + 38.4–39.5 (AC: 9, 10) — unit/tsc green; live Playwright pending on this HEAD
+- [x] Tests: unit, Playwright 40.3, 40.1/40.2 + 38.4–39.5 (AC: 9, 10)
 
 ## Dev Notes
 
@@ -138,3 +138,4 @@ Grok 4.6
 
 - 2026-10-04: Created Story 40.3 from main `7e7c3c07`. Inventory and contracts locked. 40.4 not started.
 - 2026-10-04: Implemented Clients list/profile presentation. Unit + tsc green. Playwright and four-layer review pending.
+- 2026-10-04: Live Playwright 40.3 + 38.4–40.2/39.5 passed. Four-layer review: no unresolved BLOCKER/MAJOR. Status `review`.
