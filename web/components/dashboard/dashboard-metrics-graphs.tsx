@@ -121,6 +121,14 @@ export function DashboardMetricsGraphs({
           </Link>
         ))}
       </dl>
+      <div className="border-t border-border-warm/70 px-4 py-3 sm:px-5">
+        <Link
+          href={ANALYTICS_PATH}
+          className="inline-flex min-h-11 items-center text-sm font-medium text-text-link underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Open Analytics
+        </Link>
+      </div>
     </section>
   );
 }

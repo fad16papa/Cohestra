@@ -21,7 +21,7 @@ import {
   type ReportFilters,
   type ReportPreset,
 } from "@/lib/reports-api";
-import { ANALYTICS_PATH, analyticsHref } from "@/lib/admin-canonical-routes";
+import { analyticsHref } from "@/lib/admin-canonical-routes";
 import { cn } from "@/lib/utils";
 
 type ReportFilterBarProps = {
@@ -71,6 +71,7 @@ function ReferralSourceFilter({
   return (
     <Input
       id="report-referral-source"
+      className="h-11 min-h-11"
       placeholder="Exact referral source"
       value={draft}
       onChange={(event) => setDraft(event.target.value)}
@@ -119,7 +120,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
 
   const applyFilters = useCallback((nextFilters: ReportFilters) => {
     const params = filtersToSearchParams(nextFilters);
-    router.replace(analyticsHref(params.toString()));
+    router.push(analyticsHref(params.toString()));
   }, [router]);
 
   function updateFilter<K extends keyof ReportFilters>(
@@ -156,7 +157,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
   }
 
   function clearAllFilters() {
-    router.replace(ANALYTICS_PATH);
+    applyFilters(defaultReportFilters());
   }
 
   const activeChips = useMemo(() => {
@@ -232,7 +233,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
           </p>
         </div>
         {hasActiveFilters ? (
-          <Button type="button" variant="outline" size="sm" onClick={clearAllFilters}>
+          <Button type="button" variant="outline" className="min-h-11" onClick={clearAllFilters}>
             Clear all
           </Button>
         ) : null}
@@ -247,7 +248,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
             onChange={(event) =>
               updateFilter("preset", event.target.value as ReportPreset)
             }
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-11 min-h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
           >
             {presetOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -263,6 +264,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
               <Label htmlFor="report-from">From</Label>
               <Input
                 id="report-from"
+                className="h-11 min-h-11"
                 type="date"
                 value={filters.from}
                 onChange={(event) => updateFilter("from", event.target.value)}
@@ -272,6 +274,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
               <Label htmlFor="report-to">To</Label>
               <Input
                 id="report-to"
+                className="h-11 min-h-11"
                 type="date"
                 value={filters.to}
                 onChange={(event) => updateFilter("to", event.target.value)}
@@ -291,7 +294,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
             id="report-activity"
             value={filters.activityId}
             onChange={(event) => updateFilter("activityId", event.target.value)}
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-11 min-h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">All activities</option>
             {activities.map((activity) => (
@@ -308,7 +311,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
             id="report-community"
             value={filters.community}
             onChange={(event) => updateFilter("community", event.target.value)}
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-11 min-h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">All communities</option>
             {communities.map((community) => (
@@ -327,7 +330,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
             onChange={(event) =>
               updateFilter("leadStatus", event.target.value as LeadStatus | "")
             }
-            className="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-11 min-h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
           >
             <option value="">All statuses</option>
             {leadStatusOptions.map((option) => (
@@ -356,7 +359,7 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
               key={`${chip.key}-${chip.label}`}
               type="button"
               className={cn(
-                "inline-flex items-center gap-2 rounded-full border border-border-warm",
+                "inline-flex min-h-11 min-w-11 items-center gap-2 rounded-full border border-border-warm",
                 "bg-muted/40 px-3 py-1 text-sm text-text-muted-warm motion-local hover:bg-muted"
               )}
               onClick={() => clearFilter(chip.key)}

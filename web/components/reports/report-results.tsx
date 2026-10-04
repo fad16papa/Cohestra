@@ -136,7 +136,7 @@ export function ReportResults({ report, filters }: ReportResultsProps) {
         periodLabel={periodLabel(report.period.preset)}
       />
 
-      <div className="grid items-stretch gap-4 lg:grid-cols-2">
+      <div className="grid items-stretch gap-4 md:grid-cols-2">
         <ReportActivityRankingChart items={report.activityRanking} />
         <ReportCommunityRankingPanel
           items={report.communityRanking}
@@ -144,7 +144,7 @@ export function ReportResults({ report, filters }: ReportResultsProps) {
         />
       </div>
 
-      <div className="grid items-stretch gap-4 lg:grid-cols-2">
+      <div className="grid items-stretch gap-4 md:grid-cols-2">
         <ReportFollowUpChart followUpStatus={report.followUpStatus} />
         <ReportLeadGrowthPanel report={report} />
       </div>

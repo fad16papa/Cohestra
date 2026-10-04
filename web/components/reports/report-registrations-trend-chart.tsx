@@ -124,7 +124,8 @@ export function ReportRegistrationsTrendChart({
           No registrations in this period yet.
         </p>
       ) : (
-        <div style={{ height: 260 }}>
+        <div>
+          <div className="h-[260px] w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={chartData}
@@ -186,6 +187,26 @@ export function ReportRegistrationsTrendChart({
               />
             </AreaChart>
           </ResponsiveContainer>
+          </div>
+          <table className="sr-only">
+            <caption>Daily registrations and new clients for {periodLabel}</caption>
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Registrations</th>
+                <th scope="col">New clients</th>
+              </tr>
+            </thead>
+            <tbody>
+              {chartData.map((point) => (
+                <tr key={point.date}>
+                  <th scope="row">{formatChartDate(point.date)}</th>
+                  <td>{point.registrations}</td>
+                  <td>{point.newClients}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </DashboardChartCard>

@@ -310,6 +310,16 @@ function parseReport(raw: Record<string, unknown>): ReportResult {
   };
 }
 
+export class ReportRequestError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ReportRequestError";
+    this.status = status;
+  }
+}
+
 async function parseProblemDetail(response: Response): Promise<string> {
   try {
     const raw = (await response.json()) as Record<string, unknown>;
@@ -322,6 +332,31 @@ async function parseProblemDetail(response: Response): Promise<string> {
   }
 
   return `Request failed (${response.status})`;
+}
+
+export function exportDisabledReason(input: {
+  awaitingCustomDates: boolean;
+  isReportStale: boolean;
+  error: string | null;
+  registrations: number | null;
+  isExporting: boolean;
+}): string | null {
+  if (input.awaitingCustomDates) {
+    return "Select both dates to export.";
+  }
+  if (input.isReportStale) {
+    return "Wait for the report to finish updating.";
+  }
+  if (input.error) {
+    return "Export is unavailable while the report cannot load.";
+  }
+  if (input.registrations == null || input.registrations === 0) {
+    return "Export is unavailable because this period has no registrations.";
+  }
+  if (input.isExporting) {
+    return "Export is already in progress.";
+  }
+  return null;
 }
 
 function filtersToReportSearchParams(filters: ReportFilters): URLSearchParams {
@@ -388,7 +423,7 @@ export async function fetchReport(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    throw new ReportRequestError(await parseProblemDetail(response), response.status);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
@@ -404,7 +439,7 @@ export async function exportReportCsv(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    throw new ReportRequestError(await parseProblemDetail(response), response.status);
   }
 
   const registrationRowCount = Number.parseInt(
