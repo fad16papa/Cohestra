@@ -1,3 +1,4 @@
+import { ActivityRequestError } from "@/lib/activities-40-4-contract";
 import { getPublicApiBaseUrl } from "@/lib/api";
 import { applyPhoneFieldDefaults } from "@/lib/phone-countries";
 import { isActivityRegistrationOpen } from "@/lib/activity-schedule-utils";
@@ -770,6 +771,10 @@ async function parseProblemDetail(response: Response): Promise<string> {
   return `Request failed (${response.status})`;
 }
 
+async function throwActivityRequestError(response: Response): Promise<never> {
+  throw new ActivityRequestError(response.status, await parseProblemDetail(response));
+}
+
 export type ActivitySortBy = "name" | "createdAt" | "updatedAt" | "registrationCount";
 export type ActivitySortDirection = "asc" | "desc";
 
@@ -912,7 +917,7 @@ export async function fetchActivities(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwActivityRequestError(response);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
@@ -957,7 +962,7 @@ export async function fetchActivityById(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwActivityRequestError(response);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
@@ -1110,7 +1115,7 @@ export async function archiveActivity(
   );
 
   if (!response.ok) {
-    throw new Error(await parseProblemDetail(response));
+    await throwActivityRequestError(response);
   }
 
   const raw = (await response.json()) as Record<string, unknown>;

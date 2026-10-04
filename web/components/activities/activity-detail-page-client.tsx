@@ -21,6 +21,12 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { useAdminPageMeta } from "@/components/layouts/admin-shell-context";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductErrorState } from "@/components/shared/product-error-state";
+import {
+  activityDetailErrorCopy,
+  activityDetailHeading,
+  classifyActivityDetailState,
+  classifyActivityRequestFailure,
+} from "@/lib/activities-40-4-contract";
 import { fetchActivityById, type Activity, type RegistrationTheme } from "@/lib/activities-api";
 import { themeFromActivity } from "@/lib/registration-preview-theme";
 import { getPublishGateIssues } from "@/lib/form-schema-utils";
@@ -73,6 +79,16 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
   const searchParams = useSearchParams();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadErrorKind, setLoadErrorKind] = useState<
+    ReturnType<typeof classifyActivityRequestFailure> | null
+  >(null);
+  const [observedId, setObservedId] = useState(id);
+  if (observedId !== id) {
+    setObservedId(id);
+    setActivity(null);
+    setLoadError(null);
+    setLoadErrorKind(null);
+  }
   const [formDirty, setFormDirty] = useState(false);
   const [designDirty, setDesignDirty] = useState(false);
   const [designDraftTheme, setDesignDraftTheme] = useState<RegistrationTheme | null>(null);
@@ -100,14 +116,16 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
       .then((result) => {
         if (!cancelled) {
           setActivity(result);
+          setLoadError(null);
+          setLoadErrorKind(null);
         }
       })
-      .catch((loadError) => {
+      .catch((caught) => {
         if (!cancelled) {
+          setActivity(null);
+          setLoadErrorKind(classifyActivityRequestFailure(caught));
           setLoadError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Could not load activity."
+            caught instanceof Error ? caught.message : "Could not load activity."
           );
         }
       });
@@ -132,14 +150,28 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     [refresh]
   );
 
-  if (loadError) {
+  const detailState = classifyActivityDetailState({
+    activityName: activity?.name ?? null,
+    error: loadError,
+    errorKind: loadErrorKind,
+    activityLoaded: activity !== null,
+  });
+  const detailHeading = activityDetailHeading(detailState, activity?.name ?? null);
+  const detailErrorCopy = activityDetailErrorCopy(loadErrorKind ?? "error");
+
+  if (detailState === "error" || detailState === "permission" || detailState === "not-found") {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4" data-activity-detail-state={detailState}>
         <ActivityBackLink />
-        <PageHeader title="Activity" />
+        <PageHeader title={detailHeading} />
         <ProductErrorState
-          message={loadError}
-          onRetry={() => window.location.reload()}
+          title={detailErrorCopy.title}
+          message={loadError ?? detailErrorCopy.message}
+          onRetry={
+            detailState === "not-found" || detailState === "permission"
+              ? undefined
+              : () => window.location.reload()
+          }
           backHref="/activities"
           backLabel="Back to activities"
         />
@@ -147,11 +179,11 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
     );
   }
 
-  if (!activity) {
+  if (detailState !== "populated" || !activity) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4" data-activity-detail-state="loading">
         <ActivityBackLink />
-        <PageHeader title="Activity" description="Loading activity…" />
+        <PageHeader title={detailHeading} description="Loading activity…" />
       </div>
     );
   }
@@ -165,11 +197,11 @@ export function ActivityDetailPageClient({ id }: ActivityDetailPageClientProps) 
       : [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-activity-detail-state="populated">
       <ActivityBackLink />
 
       <PageHeader
-        title={activity.name}
+        title={detailHeading}
         description={
           <div className="flex flex-wrap items-center gap-2">
             <p>

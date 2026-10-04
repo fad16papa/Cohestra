@@ -13,10 +13,18 @@ import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { CardGridSkeleton } from "@/components/shared/list-skeleton";
 import { PageHeader } from "@/components/shared/page-header";
 import { ProductEmptyState } from "@/components/shared/product-empty-state";
+import { ProductErrorState } from "@/components/shared/product-error-state";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  activitiesListErrorCopy,
+  classifyActivitiesListState,
+  classifyActivityRequestFailure,
+  nextActivitiesListPage,
+  type ActivityRequestKind,
+} from "@/lib/activities-40-4-contract";
 import {
   applyActivitySortToSearchParams,
   fetchActivities,
@@ -114,6 +122,7 @@ function ActivitySearchInput({ committedValue, onCommit }: ActivitySearchInputPr
       id="activity-search"
       type="search"
       placeholder="Search by name, community, category, or location"
+      className="min-h-11"
       value={draft}
       onChange={(event) => setDraft(event.target.value)}
     />
@@ -154,6 +163,7 @@ export function ActivitiesListPage() {
   const [communities, setCommunities] = useState<Array<{ id: string; name: string }>>([]);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorKind, setErrorKind] = useState<ActivityRequestKind | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const activityGridRef = useRef<HTMLDivElement>(null);
   const recoveryChipsRef = useRef<HTMLDivElement>(null);
@@ -165,7 +175,11 @@ export function ActivitiesListPage() {
     sortBy,
     sortDirection,
   ].join("\0");
-  const listQueryKeyRef = useRef(listQueryKey);
+  const [syncedQueryKey, setSyncedQueryKey] = useState(listQueryKey);
+  if (syncedQueryKey !== listQueryKey) {
+    setSyncedQueryKey(listQueryKey);
+    setPage(nextActivitiesListPage(syncedQueryKey, listQueryKey, page));
+  }
 
   const totalPages = Math.max(1, Math.ceil(totalCount / ACTIVITY_PAGE_SIZE));
 
@@ -173,6 +187,7 @@ export function ActivitiesListPage() {
     (mutator: (params: URLSearchParams) => void) => {
       const params = new URLSearchParams(searchParams.toString());
       mutator(params);
+      setPage(1);
       router.replace(
         params.toString() ? `/activities?${params.toString()}` : "/activities"
       );
@@ -216,12 +231,6 @@ export function ActivitiesListPage() {
   }, [statusFilter]);
 
   useEffect(() => {
-    if (listQueryKeyRef.current !== listQueryKey) {
-      listQueryKeyRef.current = listQueryKey;
-      setPage(1);
-      return;
-    }
-
     let cancelled = false;
 
     void fetchActivities(authFetch, {
@@ -247,6 +256,7 @@ export function ActivitiesListPage() {
           setActivities([]);
           setTotalCount(result.totalCount);
           setError(null);
+          setErrorKind(null);
           setInitialized(true);
           setPage(nextTotalPages);
           return;
@@ -255,6 +265,7 @@ export function ActivitiesListPage() {
         setActivities(result.items);
         setTotalCount(result.totalCount);
         setError(null);
+        setErrorKind(null);
         setInitialized(true);
       })
       .catch((loadError) => {
@@ -262,6 +273,8 @@ export function ActivitiesListPage() {
           return;
         }
 
+        const kind = classifyActivityRequestFailure(loadError);
+        setErrorKind(kind);
         setError(
           loadError instanceof Error
             ? loadError.message
@@ -335,6 +348,7 @@ export function ActivitiesListPage() {
 
   function clearFilters() {
     setRecoveryMode(false);
+    setPage(1);
     router.replace("/activities");
   }
 
@@ -417,9 +431,17 @@ export function ActivitiesListPage() {
     Boolean(categoryFilter) ||
     Boolean(communityFilter) ||
     !isDefaultActivitySort(sortBy, sortDirection);
+  const listState = classifyActivitiesListState({
+    initialized,
+    error,
+    errorKind,
+    itemCount: activities.length,
+    hasActiveFilters,
+  });
+  const listErrorCopy = activitiesListErrorCopy(errorKind ?? "error");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-activities-list-state={listState}>
       <PageHeader
         title="Activities"
         description="Launch and manage your lead engines."
@@ -467,7 +489,7 @@ export function ActivitiesListPage() {
       <div className="rounded-xl border border-border-warm bg-card p-4 md:border-0 md:bg-transparent md:p-0">
         <button
           type="button"
-          className="flex w-full items-center justify-between gap-2 text-sm font-medium text-text-warm md:hidden"
+          className="flex min-h-11 w-full items-center justify-between gap-2 text-sm font-medium text-text-warm md:hidden"
           aria-expanded={mobileFiltersOpen}
           onClick={() => setMobileFiltersOpen((current) => !current)}
         >
@@ -503,6 +525,7 @@ export function ActivitiesListPage() {
           <Label htmlFor="activity-status">Status</Label>
           <FilterSelect
             id="activity-status"
+            className="min-h-11"
             value={statusFilter}
             active={statusFilter !== ""}
             onChange={(event) =>
@@ -520,6 +543,7 @@ export function ActivitiesListPage() {
           <Label htmlFor="activity-community">Community</Label>
           <FilterSelect
             id="activity-community"
+            className="min-h-11"
             value={communityFilter}
             active={communityFilter !== ""}
             onChange={(event) => updateCommunityFilter(event.target.value)}
@@ -536,6 +560,7 @@ export function ActivitiesListPage() {
           <Label htmlFor="activity-category">Category</Label>
           <FilterSelect
             id="activity-category"
+            className="min-h-11"
             value={categoryFilter}
             active={categoryFilter !== ""}
             onChange={(event) => updateCategoryFilter(event.target.value)}
@@ -552,6 +577,7 @@ export function ActivitiesListPage() {
           <Label htmlFor="activity-sort">Sort by</Label>
           <FilterSelect
             id="activity-sort"
+            className="min-h-11"
             value={sortSelectValue}
             active={!isDefaultActivitySort(sortBy, sortDirection)}
             onChange={(event) =>
@@ -587,20 +613,56 @@ export function ActivitiesListPage() {
 
       {!initialized ? <CardGridSkeleton count={6} /> : null}
 
-      {initialized && error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
+      {listState === "error" || listState === "permission" ? (
+        <ProductErrorState
+          title={listErrorCopy.title}
+          message={error ?? listErrorCopy.message}
+          onRetry={() => {
+            setInitialized(false);
+            setError(null);
+            setErrorKind(null);
+            void fetchActivities(authFetch, {
+              status: statusFilter,
+              category: categoryFilter,
+              community: communityFilter,
+              search: searchFilter || undefined,
+              sortBy,
+              sortDirection,
+              page,
+              pageSize: ACTIVITY_PAGE_SIZE,
+            })
+              .then((result) => {
+                setActivities(result.items);
+                setTotalCount(result.totalCount);
+                setError(null);
+                setErrorKind(null);
+                setInitialized(true);
+              })
+              .catch((loadError) => {
+                const kind = classifyActivityRequestFailure(loadError);
+                setErrorKind(kind);
+                setError(
+                  loadError instanceof Error
+                    ? loadError.message
+                    : "Could not load activities."
+                );
+                setInitialized(true);
+              });
+          }}
+        />
       ) : null}
 
-      {initialized && !error && activities.length === 0 ? (
+      {listState === "empty" || listState === "no-match" ? (
         <div ref={activityGridRef}>
-          {hasActiveFilters ? (
+          {listState === "no-match" ? (
             <div className="rounded-xl border border-dashed border-border-warm px-6 py-10 text-center">
-              <p className="text-sm text-text-muted-warm">
+              <h2 className="text-section text-text-warm">
                 No activities match your current filters.
+              </h2>
+              <p className="mt-2 text-sm text-text-muted-warm">
+                Archived stays available when you choose that status filter.
               </p>
-              <Button variant="outline" className="mt-4" onClick={clearFilters}>
+              <Button variant="outline" className="mt-4 min-h-11 min-w-11" onClick={clearFilters}>
                 Clear filters
               </Button>
             </div>
@@ -618,7 +680,7 @@ export function ActivitiesListPage() {
         </div>
       ) : null}
 
-      {initialized && !error && activities.length > 0 ? (
+      {listState === "populated" ? (
         <div ref={activityGridRef}>
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {activities.map((activity) => (
@@ -645,7 +707,7 @@ export function ActivitiesListPage() {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
+                className="min-h-11 min-w-11"
                 disabled={page <= 1}
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
               >
@@ -657,7 +719,7 @@ export function ActivitiesListPage() {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
+                className="min-h-11 min-w-11"
                 disabled={page >= totalPages}
                 onClick={() =>
                   setPage((current) => Math.min(totalPages, current + 1))
