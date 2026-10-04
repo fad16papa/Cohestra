@@ -100,7 +100,15 @@ export function WebsiteBuilderToolbar({
             ) : null}
           </div>
           {studioNotice ? (
-            <p role="status" className="text-sm text-text-warm">
+            <p
+              role="status"
+              className={cn(
+                "text-sm",
+                /fail|could not|error/i.test(studioNotice)
+                  ? "text-destructive"
+                  : "text-text-warm"
+              )}
+            >
               {studioNotice}
             </p>
           ) : null}

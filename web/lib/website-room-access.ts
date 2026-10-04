@@ -7,6 +7,7 @@ import { isPlanLockedError, SiteRequestError } from "@/lib/plan-entitlement";
 
 export type WebsiteRoomAccess =
   | { kind: "loading" }
+  | { kind: "shell-error"; message: string }
   | { kind: "pending" }
   | { kind: "locked"; isTenantAdmin: boolean; entitlement: NavEntitlement }
   | { kind: "open" };
@@ -17,10 +18,18 @@ export function resolveWebsiteRoomAccess(
     isTenantAdmin: boolean;
     isBillingOwner: boolean;
   } | null,
-  shellLoading: boolean
+  shellLoading: boolean,
+  shellError?: string | null
 ): WebsiteRoomAccess {
-  if (shellLoading || !shell) {
+  if (shellLoading) {
     return { kind: "loading" };
+  }
+
+  if (!shell) {
+    return {
+      kind: "shell-error",
+      message: shellError?.trim() || "Could not load Website Studio workspace.",
+    };
   }
 
   const entitlement = resolveNavEntitlement(

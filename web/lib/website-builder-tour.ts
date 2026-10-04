@@ -1,4 +1,5 @@
 import { isProPlan } from "@/lib/shell/tenant-shell-api";
+import type { WebsiteBuilderWorkspaceMode } from "@/lib/website-builder-workspace";
 
 export type WebsiteBuilderEditorTab = "design" | "sections" | "templates";
 
@@ -7,6 +8,8 @@ export type WebsiteBuilderTourStep = {
   title: string;
   body: string;
   tab?: WebsiteBuilderEditorTab;
+  workspaceMode?: WebsiteBuilderWorkspaceMode;
+  mobileWorkspace?: "edit" | "preview";
   targetSelector: string;
   placement?: "top" | "bottom" | "left" | "right";
   proOnly?: boolean;
@@ -38,6 +41,8 @@ const BASE_TOUR_STEPS: WebsiteBuilderTourStep[] = [
     id: "preview",
     title: "Preview as you edit",
     body: "Your draft updates here in real time. Switch between phone and desktop, or expand to fullscreen.",
+    workspaceMode: "preview",
+    mobileWorkspace: "preview",
     targetSelector: "#website-builder-live-preview",
   },
   {

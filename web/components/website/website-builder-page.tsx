@@ -195,8 +195,8 @@ function useUnsavedChangesGuard(isDirty: boolean) {
 
 export function WebsiteBuilderPage() {
   const { authFetch } = useAuth();
-  const { shell, loading: shellLoading } = useTenantShell();
-  const access = resolveWebsiteRoomAccess(shell, shellLoading);
+  const { shell, loading: shellLoading, error: shellError, refreshShell } = useTenantShell();
+  const access = resolveWebsiteRoomAccess(shell, shellLoading, shellError);
   const workspaceTenantSlug = shell?.tenantSlug?.trim() || null;
   const { showToast, showErrorToast, showSuccessToast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -264,6 +264,7 @@ export function WebsiteBuilderPage() {
   const saveLockRef = useRef(false);
   const publishLockRef = useRef(false);
   const revertLockRef = useRef(false);
+  const loadGenerationRef = useRef(0);
 
   useEffect(() => {
     if (!isWideLayout) {
@@ -376,6 +377,23 @@ export function WebsiteBuilderPage() {
     draftRef.current = draft;
   }, [draft]);
 
+  useEffect(() => {
+    loadGenerationRef.current += 1;
+    setStudioNotice(null);
+    setPlanLocked(false);
+    setAccessDenied(false);
+    setLoadError(null);
+    setAdminData(null);
+    setDraft(null);
+    setSavedSnapshot("");
+    setTourOpen(false);
+    setSuccessDialogOpen(false);
+    setPublishDialogOpen(false);
+    setRevertDialogOpen(false);
+    publishLockRef.current = false;
+    revertLockRef.current = false;
+  }, [workspaceTenantSlug]);
+
   useUnsavedChangesGuard(isDirty);
 
   const editorDisabled =
@@ -403,6 +421,7 @@ export function WebsiteBuilderPage() {
         | SiteSectionsDocument
         | ((current: SiteSectionsDocument) => SiteSectionsDocument),
     ) => {
+      setStudioNotice(null);
       setDraft((current) => {
         if (!current) {
           return current;
@@ -503,6 +522,7 @@ export function WebsiteBuilderPage() {
   }, [authFetch, isDirty, showToast]);
 
   const loadSite = useCallback(async () => {
+    const generation = loadGenerationRef.current;
     setLoading(true);
     setLoadError(null);
     setPlanLocked(false);
@@ -515,18 +535,28 @@ export function WebsiteBuilderPage() {
         fetchPublicUpcomingActivities(),
       ]);
 
+      if (generation !== loadGenerationRef.current) {
+        return;
+      }
+
       setAdminData(siteAdmin);
       setDraft(cloneSiteDocument(siteAdmin.draft));
       setSavedSnapshot(serializeSiteDocument(siteAdmin.draft));
       setPublishedActivities(activities);
       setUpcomingActivities(upcoming);
     } catch (error) {
+      if (generation !== loadGenerationRef.current) {
+        return;
+      }
+
       const denial = websiteFetchDenial(error);
       setPlanLocked(denial.planLocked);
       setAccessDenied(denial.denied);
       setLoadError(denial.planLocked ? null : denial.message);
     } finally {
-      setLoading(false);
+      if (generation === loadGenerationRef.current) {
+        setLoading(false);
+      }
     }
   }, [authFetch]);
 
@@ -536,7 +566,7 @@ export function WebsiteBuilderPage() {
     }
 
     void loadSite();
-  }, [access.kind, loadSite]);
+  }, [access.kind, loadSite, workspaceTenantSlug]);
 
   useEffect(() => {
     const initial = readInitialChecklistVisibility(workspaceTenantSlug);
@@ -877,16 +907,19 @@ export function WebsiteBuilderPage() {
       setAdminData(published);
       setDraft(cloneSiteDocument(published.draft));
       setSavedSnapshot(serializeSiteDocument(published.draft));
-
-      const resolvedLiveUrl = await resolveWorkspaceLiveUrl();
-      setPublicSiteUrl(resolvedLiveUrl);
-      setLiveUrl(resolvedLiveUrl);
       setPublishDialogOpen(false);
       setSuccessDialogOpen(true);
       markWebsiteBuilderVisited(workspaceTenantSlug);
       setChecklistVisible(false);
       setStudioNotice("Homepage published. The live public site now shows this version.");
       showSuccessToast("Your site is live");
+      try {
+        const resolvedLiveUrl = await resolveWorkspaceLiveUrl();
+        setPublicSiteUrl(resolvedLiveUrl);
+        setLiveUrl(resolvedLiveUrl);
+      } catch {
+        // Publish already succeeded; keep the last known public URL.
+      }
     } catch (error) {
       setPublishDialogOpen(false);
       setStudioNotice(
@@ -1080,6 +1113,18 @@ export function WebsiteBuilderPage() {
       revertLockRef.current = false;
       setIsReverting(false);
     }
+  }
+
+  if (access.kind === "shell-error") {
+    return (
+      <div className="space-y-6">
+        <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
+        <p className="text-sm text-destructive">{access.message}</p>
+        <Button type="button" onClick={() => void refreshShell()}>
+          Try again
+        </Button>
+      </div>
+    );
   }
 
   if (access.kind === "loading") {
@@ -1390,11 +1435,24 @@ export function WebsiteBuilderPage() {
         open={tourOpen}
         tenantSlug={workspaceTenantSlug}
         activeTab={editorTab}
+        activeWorkspaceMode={workspaceMode}
+        activeMobileWorkspace={mobileWorkspace}
         onClose={() => setTourOpen(false)}
         onRequestTab={setEditorTab}
+        onRequestWorkspaceMode={setWorkspaceMode}
+        onRequestMobileWorkspace={setMobileWorkspace}
       />
 
-      <AlertDialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>
+      <AlertDialog
+        open={publishDialogOpen}
+        onOpenChange={(open) => {
+          if (isPublishing) {
+            return;
+          }
+
+          setPublishDialogOpen(open);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Publish homepage?</AlertDialogTitle>
@@ -1660,6 +1718,7 @@ export function WebsiteBuilderPage() {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isReverting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               disabled={isReverting}
               onClick={() => void handleRevertPublished()}
             >

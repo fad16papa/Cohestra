@@ -65,7 +65,10 @@ describe("Story 38.6 overlay source contract", () => {
       /role=["']dialog["']/
     );
     expect(source("../components/website/website-builder-onboarding-tour.tsx")).toMatch(
-      /role=["']dialog["']/
+      /role=["']region["']/
+    );
+    expect(source("../components/website/website-builder-onboarding-tour.tsx")).not.toMatch(
+      /aria-modal/
     );
     expect(source("../components/activities/form-field-palette-dialog.tsx")).toMatch(
       /role=["']dialog["']/

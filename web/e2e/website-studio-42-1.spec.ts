@@ -112,11 +112,10 @@ async function skipWebsiteTour(page: Page): Promise<void> {
     const slug =
       window.location.hostname.split(".")[0] ||
       "default";
-    window.localStorage.setItem(
-      `activity-lead:website-builder-tour-completed:${slug}`,
-      "1"
-    );
-    window.localStorage.setItem(`activity-lead:website-builder-visited:${slug}`, "1");
+    const completed = `activity-lead:website-builder-tour-completed:${encodeURIComponent(slug.toLowerCase())}`;
+    const visited = `activity-lead:website-builder-visited:${encodeURIComponent(slug.toLowerCase())}`;
+    window.localStorage.setItem(completed, "1");
+    window.localStorage.setItem(visited, "1");
   });
   const skipTour = page.getByRole("button", { name: "Skip tour" });
   if (await skipTour.isVisible({ timeout: 1_000 }).catch(() => false)) {
@@ -544,17 +543,22 @@ test.describe("Story 42.1 — Website Studio chrome and placement", () => {
     await page.reload({ waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
     const skipLink = page.getByRole("link", { name: "Skip to main content" });
+    const skipTour = page.getByRole("button", { name: "Skip tour" });
     await page.keyboard.press("Tab");
     await expect(skipLink).toBeFocused();
-    const skipTour = page.getByRole("button", { name: "Skip tour" });
     await expect(skipTour).toBeVisible({ timeout: 8_000 });
-    await expect(page.getByRole("dialog").first()).toHaveAttribute("aria-modal", "false");
-    await skipTour.click();
-    await expect(skipTour).toHaveCount(0);
-    await skipLink.focus();
+    await expect(page.getByRole("region", { name: "Start with a template" })).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page.locator(".fixed.inset-0.bg-black\\/55")).toHaveCount(0);
     await expect(skipLink).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page.locator("main#main-content")).toBeFocused();
+    await expect(skipTour).toBeVisible();
+    const copyLink = page.getByRole("button", { name: "Copy link" });
+    await copyLink.click();
+    await expect(copyLink).toBeVisible();
+    await skipTour.click();
+    await expect(skipTour).toHaveCount(0);
 
     const scopedKeys = await page.evaluate(() =>
       Object.keys(localStorage).filter((key) => key.includes("website-builder-tour-completed"))
@@ -569,13 +573,20 @@ test.describe("Story 42.1 — Website Studio chrome and placement", () => {
     await assertOneMainOneH1(page);
     await assertAxe(page, "website studio 1440");
 
-    await page.emulateMedia({ colorScheme: "dark" });
+    await page.evaluate(() => {
+      window.localStorage.setItem("cohestra-theme-operator", "dark");
+      document.documentElement.classList.add("dark");
+    });
+    await expect(page.locator("html")).toHaveClass(/dark/);
     await expect(page.getByRole("heading", { name: "Website Studio", level: 1 })).toBeVisible();
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "dark-1440.png"),
       fullPage: true,
     });
-    await page.emulateMedia({ colorScheme: "light" });
+    await page.evaluate(() => {
+      window.localStorage.setItem("cohestra-theme-operator", "light");
+      document.documentElement.classList.remove("dark");
+    });
 
     await page.emulateMedia({ forcedColors: "active" });
     await expect(page.getByRole("button", { name: "Publish" })).toBeVisible();

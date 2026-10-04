@@ -20,6 +20,10 @@ function shell(
 describe("resolveWebsiteRoomAccess", () => {
   it("stays pending for missing or unknown plans and never invents a Basic lock", () => {
     expect(resolveWebsiteRoomAccess(null, true)).toEqual({ kind: "loading" });
+    expect(resolveWebsiteRoomAccess(null, false, "shell failed")).toEqual({
+      kind: "shell-error",
+      message: "shell failed",
+    });
     expect(resolveWebsiteRoomAccess(shell(null), false).kind).toBe("pending");
     expect(resolveWebsiteRoomAccess(shell("FuturePlan"), false).kind).toBe("pending");
     expect(resolveWebsiteRoomAccess(shell(""), false).kind).toBe("pending");
@@ -55,5 +59,15 @@ describe("websiteFetchDenial", () => {
         })
       )
     ).toMatchObject({ denied: false, planLocked: true });
+    expect(websiteFetchDenial(new SiteRequestError("Site exploded.", 500))).toMatchObject({
+      denied: false,
+      planLocked: false,
+      status: 500,
+    });
+    expect(websiteFetchDenial(new Error("network down"))).toMatchObject({
+      denied: false,
+      planLocked: false,
+      status: null,
+    });
   });
 });

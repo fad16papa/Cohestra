@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { markWebsiteBuilderTourCompleted } from "@/lib/website-builder-preferences";
 import type { WebsiteBuilderEditorTab } from "@/lib/website-builder-tour";
 import type { WebsiteBuilderTourStep } from "@/lib/website-builder-tour";
+import type { WebsiteBuilderWorkspaceMode } from "@/lib/website-builder-workspace";
 import { cn } from "@/lib/utils";
 
 type WebsiteBuilderOnboardingTourProps = {
@@ -20,8 +21,12 @@ type WebsiteBuilderOnboardingTourProps = {
   open: boolean;
   tenantSlug: string | null;
   activeTab: WebsiteBuilderEditorTab;
+  activeWorkspaceMode: WebsiteBuilderWorkspaceMode;
+  activeMobileWorkspace: "edit" | "preview";
   onClose: () => void;
   onRequestTab: (tab: WebsiteBuilderEditorTab) => void;
+  onRequestWorkspaceMode: (mode: WebsiteBuilderWorkspaceMode) => void;
+  onRequestMobileWorkspace: (workspace: "edit" | "preview") => void;
 };
 
 type TargetRect = {
@@ -60,8 +65,12 @@ export function WebsiteBuilderOnboardingTour({
   open,
   tenantSlug,
   activeTab,
+  activeWorkspaceMode,
+  activeMobileWorkspace,
   onClose,
   onRequestTab,
+  onRequestWorkspaceMode,
+  onRequestMobileWorkspace,
 }: WebsiteBuilderOnboardingTourProps) {
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
@@ -134,6 +143,18 @@ export function WebsiteBuilderOnboardingTour({
       return;
     }
 
+    if (step.workspaceMode && step.workspaceMode !== activeWorkspaceMode) {
+      onRequestWorkspaceMode(step.workspaceMode);
+      setTargetRect(null);
+      return;
+    }
+
+    if (step.mobileWorkspace && step.mobileWorkspace !== activeMobileWorkspace) {
+      onRequestMobileWorkspace(step.mobileWorkspace);
+      setTargetRect(null);
+      return;
+    }
+
     let cancelled = false;
     let retryTimer: number | undefined;
 
@@ -175,7 +196,19 @@ export function WebsiteBuilderOnboardingTour({
         window.clearTimeout(retryTimer);
       }
     };
-  }, [activeTab, measureTarget, onRequestTab, open, step, stepIndex, syncViewport]);
+  }, [
+    activeMobileWorkspace,
+    activeTab,
+    activeWorkspaceMode,
+    measureTarget,
+    onRequestMobileWorkspace,
+    onRequestTab,
+    onRequestWorkspaceMode,
+    open,
+    step,
+    stepIndex,
+    syncViewport,
+  ]);
 
   useLayoutEffect(() => {
     const node = tooltipRef.current;
@@ -247,9 +280,15 @@ export function WebsiteBuilderOnboardingTour({
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        handleSkip();
+      if (event.key !== "Escape" || event.defaultPrevented) {
+        return;
       }
+
+      if (document.querySelector('[data-slot="alert-dialog-content"]')) {
+        return;
+      }
+
+      handleSkip();
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -271,12 +310,6 @@ export function WebsiteBuilderOnboardingTour({
   // keeps a transform from page-enter animation, which would break in-tree fixed.
   return createPortal(
     <div className="pointer-events-none fixed inset-0 z-[60]" aria-live="polite">
-      <div
-        className="pointer-events-auto fixed inset-0 bg-black/55"
-        aria-hidden
-        onClick={handleSkip}
-      />
-
       {targetRect ? (
         <div
           className="pointer-events-none fixed rounded-xl ring-4 ring-primary/80 ring-offset-2 ring-offset-background transition-[top,left,width,height] duration-150 motion-reduce:transition-none"
@@ -285,7 +318,6 @@ export function WebsiteBuilderOnboardingTour({
             left: targetRect.left,
             width: targetRect.width,
             height: targetRect.height,
-            boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)",
           }}
         />
       ) : null}
@@ -305,8 +337,7 @@ export function WebsiteBuilderOnboardingTour({
               }
             : undefined
         }
-        role="dialog"
-        aria-modal="false"
+        role="region"
         aria-labelledby="website-builder-tour-title"
         aria-describedby="website-builder-tour-body"
       >

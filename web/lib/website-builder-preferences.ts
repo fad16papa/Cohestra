@@ -2,13 +2,20 @@ const CHECKLIST_DISMISSED_KEY = "activity-lead:website-builder-checklist-dismiss
 const VISITED_KEY = "activity-lead:website-builder-visited";
 const TOUR_COMPLETED_KEY = "activity-lead:website-builder-tour-completed";
 
-function scopedKey(base: string, tenantSlug: string | null | undefined): string | null {
-  const slug = tenantSlug?.trim();
+export function scopedWebsiteBuilderPreferenceKey(
+  base: string,
+  tenantSlug: string | null | undefined
+): string | null {
+  const slug = tenantSlug?.trim().toLowerCase();
   if (!slug) {
     return null;
   }
 
-  return `${base}:${slug}`;
+  return `${base}:${encodeURIComponent(slug)}`;
+}
+
+function scopedKey(base: string, tenantSlug: string | null | undefined): string | null {
+  return scopedWebsiteBuilderPreferenceKey(base, tenantSlug);
 }
 
 function readFlag(base: string, tenantSlug: string | null | undefined): boolean {
@@ -34,7 +41,11 @@ function writeFlag(base: string, tenantSlug: string | null | undefined): void {
     return;
   }
 
-  window.localStorage.setItem(key, "1");
+  try {
+    window.localStorage.setItem(key, "1");
+  } catch {
+    // Private mode or quota must not block skip/dismiss.
+  }
 }
 
 function clearFlag(base: string, tenantSlug: string | null | undefined): void {
