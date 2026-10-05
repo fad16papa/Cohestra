@@ -1325,16 +1325,8 @@ public sealed class ActivityService(
             throw new InvalidOperationException("Tenant not found for form schema plan gate.");
         }
 
-        var hasRecipes = schema.Fields.Any(field => field.VisibleWhen is not null);
-        var hasSteps = schema.Meta is { SplitIntoSteps: true };
-        var hasCorePlusFields = schema.Fields.Any(field =>
-            FormFieldTypes.CorePlusOnly.Contains(field.Type));
-        var hasColumns = FormSchemaPlanGate.CompositionUsesColumns(schema.Composition);
-        var hasDomain = FormSchemaPlanGate.CompositionUsesDomain(schema.Composition);
-        if (hasRecipes || hasSteps || hasCorePlusFields || hasColumns || hasDomain)
-        {
-            FormSchemaPlanGate.EnsureAllowed(schema, plan.Value);
-        }
+        // Normalize first so a leftover/crafted Basic publisher flag cannot 403 a valid save.
         FormSchemaPlanGate.NormalizePublisherWebsiteLink(schema, plan.Value);
+        FormSchemaPlanGate.EnsureAllowed(schema, plan.Value);
     }
 }

@@ -38,6 +38,9 @@ test.describe("Story 36.6 — Preview viewports", () => {
     await expect(
       preview.locator("[data-preview-viewport='mobile'] .registration-preview-surface")
     ).toHaveClass(/max-w-\[390px\]/);
+    await expect(
+      preview.locator("[data-registration-layout-container='preview']")
+    ).toBeVisible();
 
     await page.getByRole("tab", { name: /^Form$/i }).click();
     await page.locator("#form-studio-tab-build").click();

@@ -66,6 +66,10 @@ export function registrationPreviewSurfaceMaxWidthClass(
     return "max-w-[960px]";
   }
 
+  if (layout === "poster") {
+    return "max-w-[480px]";
+  }
+
   if (layout === "centered" || layout === "card" || layout === "immersive") {
     return "max-w-[720px]";
   }

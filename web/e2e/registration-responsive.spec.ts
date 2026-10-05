@@ -6,9 +6,11 @@ import { loginOperatorSession, tenantWebBase } from "./helpers/registration-e2e-
 
 const viewports = [
   { name: "mobile-narrow", width: 320, height: 720 },
+  { name: "mobile-360", width: 360, height: 800 },
   { name: "mobile", width: 375, height: 812 },
   { name: "mobile-large", width: 412, height: 915 },
   { name: "tablet", width: 768, height: 1024 },
+  { name: "laptop", width: 1366, height: 768 },
   { name: "desktop", width: 1440, height: 900 },
 ] as const;
 
@@ -73,13 +75,41 @@ test.describe("public registration responsive", () => {
   test("embed register respects narrow iframe width", async ({ page }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
 
-    await page.setViewportSize({ width: 360, height: 800 });
-    const response = await page.goto(`${tenantWebBase()}/embed/register/${slug}`, {
-      waitUntil: "domcontentloaded",
+    await page.setViewportSize({ width: 1280, height: 800 });
+    const embedSrc = `${tenantWebBase()}/embed/register/${slug}`;
+    await page.setContent(
+      `<iframe id="reg-embed" src="${embedSrc}" width="320" height="720" style="border:0"></iframe>`,
+      { waitUntil: "domcontentloaded" }
+    );
+
+    const frame = page.frameLocator("#reg-embed");
+    const joinButton = frame.getByRole("button", { name: /join activity/i });
+    await expect(joinButton).toBeVisible({ timeout: 30_000 });
+
+    const overflow = await page
+      .locator("#reg-embed")
+      .evaluate((iframe) => {
+        const doc = (iframe as HTMLIFrameElement).contentDocument?.documentElement;
+        if (!doc) {
+          return Number.POSITIVE_INFINITY;
+        }
+        return doc.scrollWidth - doc.clientWidth;
+      });
+    expect(overflow).toBeLessThanOrEqual(1);
+  });
+
+  test("unavailable register page does not overflow at 320", async ({ page }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+
+    await page.setViewportSize({ width: 320, height: 720 });
+    const response = await page.goto(
+      `${tenantWebBase()}/register/missing-activity-slug-zz`,
+      { waitUntil: "domcontentloaded", timeout: 20_000 }
+    );
+    expect(response?.ok() || response?.status() === 404).toBeTruthy();
+    await expect(page.getByText(/public registration/i)).toBeVisible({
       timeout: 20_000,
     });
-
-    expect(response?.ok(), "Owned embed registration must load").toBeTruthy();
     await assertNoHorizontalOverflow(page);
   });
 });

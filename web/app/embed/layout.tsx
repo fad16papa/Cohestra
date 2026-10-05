@@ -8,6 +8,11 @@ export default function EmbedLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-0 bg-surface-warm text-text-warm">{children}</div>
+    <div
+      className="@container min-h-0 bg-surface-warm text-text-warm"
+      data-registration-layout-container="embed"
+    >
+      {children}
+    </div>
   );
 }

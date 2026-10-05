@@ -38,4 +38,17 @@ describe("form studio design tab contract", () => {
     expect(formSource).toMatch(/remountKey=\{previewKey\}/);
     expect(formSource).not.toMatch(/<RegistrationPublicPreviewShell\s+key=\{previewKey\}/);
   });
+
+  it("ActivityFormTab website connection is Core+ only and not a locked Basic control", () => {
+    const formSource = readFileSync(
+      join(process.cwd(), "components/activities/activity-form-tab.tsx"),
+      "utf8"
+    );
+    expect(formSource).toMatch(/Website connection/);
+    expect(formSource).toMatch(/Show link to my Cohestra website/);
+    expect(formSource).toMatch(/isCoreOrAbove\(plan\) \? \(/);
+    expect(formSource).toMatch(/showPublisherWebsiteLink/);
+    expect(formSource).not.toMatch(/Upgrade to Core/);
+    expect(formSource).not.toMatch(/UpgradePanel/);
+  });
 });

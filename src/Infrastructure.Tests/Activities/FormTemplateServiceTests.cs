@@ -32,6 +32,33 @@ public sealed class FormTemplateServiceTests
     }
 
     [Fact]
+    public async Task CreateAsync_BasicCraftedPublisherLink_NormalizesToOmitted()
+    {
+        await using var dbContext = await CreateDbContextAsync(TenantPlan.Basic);
+        var service = CreateService(dbContext);
+        var request = new CreateFormTemplateRequest(
+            "Basic website flag",
+            new ActivityFormSchemaDto(
+                1,
+                [
+                    new FormFieldDefinitionDto(
+                        "full_name",
+                        "text",
+                        "Full name",
+                        true,
+                        null,
+                        null,
+                        null,
+                        null),
+                ],
+                new FormSchemaMetaDto(null, ShowPublisherWebsiteLink: true)));
+
+        var created = await service.CreateAsync(request);
+
+        Assert.Null(created.FormSchema.Meta?.ShowPublisherWebsiteLink);
+    }
+
+    [Fact]
     public async Task UpdateAsync_RenamesTemplate()
     {
         await using var dbContext = await CreateDbContextAsync(TenantPlan.Pro);

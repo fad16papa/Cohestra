@@ -19,7 +19,10 @@ export function PublicFormLayout({
   websiteLink = null,
 }: PublicFormLayoutProps) {
   return (
-    <div className="flex min-h-dvh flex-col overflow-x-hidden bg-surface-warm">
+    <div
+      className="@container flex min-h-dvh flex-col overflow-x-hidden bg-surface-warm"
+      data-registration-layout-container="public"
+    >
       <header className="border-b border-border-warm/70 bg-card/80 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-[720px] items-center justify-between gap-3 px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">

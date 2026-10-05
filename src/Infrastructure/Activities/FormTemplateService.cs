@@ -318,49 +318,9 @@ public sealed class FormTemplateService(
         Guid tenantId,
         CancellationToken cancellationToken)
     {
-        var hasRecipes = schema.Fields.Any(field => field.VisibleWhen is not null);
-        var hasSteps = schema.Meta is { SplitIntoSteps: true };
-        var hasCorePlusFields = schema.Fields.Any(field =>
-            FormFieldTypes.CorePlusOnly.Contains(field.Type));
-
-        var hasColumns = FormSchemaPlanGate.CompositionUsesColumns(schema.Composition);
-        var hasDomain = FormSchemaPlanGate.CompositionUsesDomain(schema.Composition);
-        if (!hasRecipes && !hasSteps && !hasCorePlusFields && !hasColumns && !hasDomain)
-        {
-            return;
-        }
-
         var plan = await GetTenantPlanAsync(tenantId, cancellationToken);
-
-        if (hasCorePlusFields && plan is TenantPlan.Basic)
-        {
-            throw new FormSchemaPlanLockedException(
-                "Scale and emergency contact fields require a Core or Pro plan.");
-        }
-
-        if (hasRecipes && plan is TenantPlan.Basic)
-        {
-            throw new FormSchemaPlanLockedException(
-                "Form Recipes require a Core or Pro plan.");
-        }
-
-        if (hasSteps && plan is not (TenantPlan.Pro or TenantPlan.Enterprise))
-        {
-            throw new FormSchemaPlanLockedException(
-                "Split into steps requires a Pro plan.");
-        }
-
-        if (hasColumns && plan is TenantPlan.Basic)
-        {
-            throw new FormSchemaPlanLockedException(
-                "Two-column layouts require a Core or Pro plan.");
-        }
-
-        if (hasDomain && plan is TenantPlan.Basic)
-        {
-            throw new FormSchemaPlanLockedException(
-                "Activity and community blocks require a Core or Pro plan.");
-        }
+        FormSchemaPlanGate.NormalizePublisherWebsiteLink(schema, plan);
+        FormSchemaPlanGate.EnsureAllowed(schema, plan);
     }
 
     private async Task<TenantPlan> GetTenantPlanAsync(

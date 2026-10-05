@@ -56,7 +56,7 @@ export function PublicRegistrationUnavailable({
   const useOperatorCopy = hasRenderableMarkdownLiteCopy(closedMessage);
 
   return (
-    <Card className="border-border-warm bg-card">
+    <Card className="min-w-0 overflow-x-hidden border-border-warm bg-card">
       <CardHeader className="text-center">
         <CardDescription className="text-text-muted-warm">
           Public registration
@@ -90,7 +90,7 @@ export function PublicRegistrationUnavailable({
         {reason === "not-found" ? (
           <p className="text-xs">
             Link:{" "}
-            <code className="rounded bg-muted px-1 py-0.5">{slug}</code>
+            <code className="break-all rounded bg-muted px-1 py-0.5">{slug}</code>
           </p>
         ) : null}
         {reason === "error" ? (

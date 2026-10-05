@@ -49,6 +49,29 @@ describe("resolveRegistrationPublisherWebsiteLink", () => {
     expect(link?.href).toContain("creativorare.uat.cohestra.app");
   });
 
+  it("does not emit another tenant hostname from the current origin", () => {
+    const link = resolveRegistrationPublisherWebsiteLink(
+      { ...coreDoor, tenantSlug: "harbourline" },
+      "https://harbourline.uat.cohestra.app",
+      { version: 1, fields: [] }
+    );
+    expect(link?.href).toContain("harbourline.uat.cohestra.app");
+    expect(link?.href).not.toContain("creativorare");
+  });
+
+  it("returns null for Basic even when schema asks to show the link", () => {
+    const link = resolveRegistrationPublisherWebsiteLink(
+      { ...coreDoor, plan: "Basic", tenantSlug: "harbourline" },
+      "https://harbourline.uat.cohestra.app",
+      {
+        version: 1,
+        fields: [],
+        meta: { introMarkdown: null, showPublisherWebsiteLink: true },
+      }
+    );
+    expect(link).toBeNull();
+  });
+
   it("returns null when disabled in schema", () => {
     const link = resolveRegistrationPublisherWebsiteLink(
       coreDoor,
