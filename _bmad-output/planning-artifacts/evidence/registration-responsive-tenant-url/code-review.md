@@ -1,6 +1,7 @@
 # Code review — registration-responsive-tenant-website
 
-**HEAD reviewed:** `8b868b383b43b90db9a811127ad32a069ea69e94`
+**HEAD reviewed:** `8b868b383b43b90db9a811127ad32a069ea69e94`  
+**Later test-only HEAD:** Docker smoke selectors updated from leftover `lg:grid-cols` / `sm:grid-cols-2` to `@min-[1024px]` / `@min-[640px]`. Implementation contract unchanged.
 **Layers:** Blind Hunter, Edge Case Hunter, Acceptance Auditor
 **Spec:** `specs/spec-registration-responsive-tenant-url/SPEC.md`
 

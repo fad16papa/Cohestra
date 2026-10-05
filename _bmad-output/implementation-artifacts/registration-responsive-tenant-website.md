@@ -27,7 +27,7 @@ Harden the existing public registration renderer for real desktop and mobile bro
 
 1. **Public responsive** — `/register/{slug}` has no horizontal overflow and a reachable submit at 320, 360, 375, 412, 768, 1366, 1440. Confirmation and unavailable/closed states do not overflow at 320/375.
 2. **Embed responsive** — `/embed/register/{slug}` stays within a 320px iframe container (not only a narrowed top-level page).
-3. **Preview parity** — Form Studio Mobile/Tablet/Desktop preview reuses `PublicRegistrationOpen`. Preview surface is a CSS `@container`. Layout-critical columns/split/scale use `@sm`/`@lg` so a 390px frame stacks columns. Poster desktop preview is `max-w-[480px]`. Split `w-screen` is public-only.
+3. **Preview parity** — Form Studio Mobile/Tablet/Desktop preview reuses `PublicRegistrationOpen`. Preview surface is a CSS `@container`. Layout-critical columns/split/scale use `@min-[640px]` / `@min-[1024px]` so a 390px frame stacks columns. Poster desktop preview is `max-w-[480px]`. Split `w-screen` is public-only.
 4. **Basic Form Studio** — Website connection section is not in the DOM. No disabled/locked/upgrade control.
 5. **Core/Pro Form Studio** — Optional checkbox present; derived hostname; does not block Save/Preview/Publish.
 6. **API Basic** — PUT `meta.showPublisherWebsiteLink: true` succeeds and persists omitted/null (ignore/normalize). Registration remains publishable.

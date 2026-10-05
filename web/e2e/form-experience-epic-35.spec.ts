@@ -42,7 +42,7 @@ async function assertExperienceShell(
     if (scope) {
       await setPreviewViewportDesktop(page);
     }
-    await expect(root.locator('[class*="lg:grid-cols"]').first()).toBeVisible();
+    await expect(root.locator('[class*="@min-[1024px]:grid-cols"]').first()).toBeVisible();
   }
   if (expectShell.posterPanel) {
     const titleLevel = scope ? 2 : 1;
@@ -198,7 +198,7 @@ test.describe("Epic 35 — Form Studio unsaved preview", () => {
     const preview = previewSurface(page);
     await expect(preview).toBeVisible({ timeout: 30_000 });
     await setPreviewViewportDesktop(page);
-    await expect(preview.locator('[class*="lg:grid-cols"]').first()).toBeVisible({
+    await expect(preview.locator('[class*="@min-[1024px]:grid-cols"]').first()).toBeVisible({
       timeout: 30_000,
     });
     await expect(page.getByText(/Live preview/i)).toBeVisible();
