@@ -128,7 +128,9 @@ test.describe("Story 36.4 — live Form Studio checkpoint", () => {
     await expect(preview).toBeVisible({ timeout: 30_000 });
 
     await setPreviewViewport(page, "Desktop");
-    await expect(preview.locator(".sm\\:grid-cols-2").first()).toBeVisible();
+    await expect(
+      preview.locator('[class*="@min-[640px]:grid-cols-2"]').first()
+    ).toBeVisible();
 
     await setPreviewViewport(page, "Mobile");
     const mobileLabels = preview.getByText(/First name|Last name/i);
@@ -269,7 +271,7 @@ test.describe("Story 36.4 — Epic 35 experiences with columns", () => {
         await expect(
           page.getByText(/one question at a time|Question \d+ of/i).first()
         ).toBeVisible();
-        await expect(page.locator(".sm\\:grid-cols-2")).toHaveCount(0);
+        await expect(page.locator('[class*="@min-[640px]:grid-cols-2"]')).toHaveCount(0);
       } else {
         await expect(page.getByLabel(/First name/i)).toBeVisible();
         await assertNoHorizontalOverflow(page);
