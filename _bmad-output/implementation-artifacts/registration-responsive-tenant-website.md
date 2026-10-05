@@ -1,9 +1,11 @@
 # Story: Registration responsive hardening + plan-true tenant website link
 
-Status: review
+Status: done
 Story key: `registration-responsive-tenant-website`
 Branch: `cursor/registration-responsive-tenant-url-8d20`
 Base: `origin/main` `53bd0c11`
+Accepted HEAD: `3270dda0b8a199a6712bb952c055af78f88846ff`
+Implementation merge: `3605f4f49078181f1885d7b0081ec6148b70fd29` (PR #388)
 Epic: owner product slice (not 42.4, not Epic 43)
 
 ## Validate

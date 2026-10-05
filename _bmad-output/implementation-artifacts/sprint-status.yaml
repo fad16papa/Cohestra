@@ -1,7 +1,7 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-05
-# story 42.2 done; epic 42 in-progress; 42.1 done; 42.3–42.4 not started on this branch
-# owner slice registration-responsive-tenant-website in-progress
+# story 42.2 done; epic 42 in-progress; 42.1 done; 42.3 review on other branch; 42.4 not started
+# owner slice registration-responsive-tenant-website done (PR #388)
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -420,7 +420,7 @@ development_status:
   # 42.3 is review on cursor/story-42-3-form-studio-touch-controls-0fcb — do not start 42.4 here
 
   # Owner product slice (not Epic 42.4 / not Epic 43)
-  registration-responsive-tenant-website: review
+  registration-responsive-tenant-website: done
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done
