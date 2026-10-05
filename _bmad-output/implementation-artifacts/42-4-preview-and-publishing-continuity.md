@@ -2,7 +2,8 @@
 id: 42.4
 key: 42-4-preview-and-publishing-continuity
 title: Preview and publishing continuity
-status: in-progress
+accepted_commit: ddb500894138bc2a69bfe86ff8b42d5e8b468e48
+status: review
 epic: 42
 created: 2026-10-05
 baseline_commit: e038692b390bb24ac8e6beb5cba6b9dffec3309c
