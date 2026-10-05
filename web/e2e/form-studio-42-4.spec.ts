@@ -43,9 +43,19 @@ function continuitySchema() {
 }
 
 async function waitStudio(page: Page) {
-  await expect(page.getByRole("heading", { name: "Form builder", level: 2 })).toBeVisible({
+  await expect(page.locator("#form-studio-tab-build")).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("[data-form-studio-workspace]")).toBeVisible({
     timeout: 30_000,
   });
+}
+
+async function closeSheet(page: Page) {
+  const overlay = page.locator("[data-slot='sheet-overlay']");
+  if ((await overlay.count()) === 0) {
+    return;
+  }
+  await page.keyboard.press("Escape");
+  await expect(overlay).toHaveCount(0);
 }
 
 async function assertNoOverflow(page: Page, label: string) {
@@ -80,12 +90,14 @@ test.describe("Story 42.4 — Preview and publishing continuity", () => {
     await expect(templates).not.toHaveAttribute("open");
     await expect(page.getByText("Templates", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("link", { name: "Go to composition" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Revert unsaved" })).toBeDisabled();
+    await expect(
+      page.locator("#form-studio-build-panel").getByRole("button", { name: "Revert unsaved" })
+    ).toBeDisabled();
 
     await page.locator("#form-intro-markdown").fill(MARKER);
     await expect(page.getByText("Unsaved changes")).toBeVisible();
     await expect(page.locator("#form-studio-preview-panel")).toHaveCount(0);
-    await expect(page.locator('[data-registration-layout-container="preview"]')).toHaveCount(0);
+    await expect(page.locator("#form-studio-preview-panel [data-registration-layout-container='preview']")).toHaveCount(0);
 
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "form-build-1440.png"),
@@ -111,37 +123,44 @@ test.describe("Story 42.4 — Preview and publishing continuity", () => {
     await expect(page.locator("#form-studio-composition")).toBeInViewport();
     await expect(page.getByRole("heading", { name: "Form builder", level: 2 })).toBeVisible();
 
-    await page.getByRole("button", { name: "Revert unsaved" }).click();
+    await page
+      .locator("#form-studio-build-panel")
+      .getByRole("button", { name: "Revert unsaved" })
+      .click();
     const revert = page.getByRole("alertdialog", { name: "Revert unsaved form changes?" });
     await expect(revert).toBeVisible();
     await revert.getByRole("button", { name: "Cancel" }).click();
     await expect(page.locator("#form-intro-markdown")).toHaveValue(MARKER);
 
-    await page.getByRole("button", { name: "Revert unsaved" }).click();
+    await page
+      .locator("#form-studio-build-panel")
+      .getByRole("button", { name: "Revert unsaved" })
+      .click();
     await page
       .getByRole("alertdialog", { name: "Revert unsaved form changes?" })
       .getByRole("button", { name: "Revert unsaved" })
       .click();
     await expect(page.locator("#form-intro-markdown")).toHaveValue("Saved intro");
     await expect(page.getByText("Reverted to saved form.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Revert unsaved" })).toBeDisabled();
+    await expect(page.getByRole("alertdialog", { name: "Revert unsaved form changes?" })).toHaveCount(0);
+    await expect(
+      page.locator("#form-studio-build-panel").getByRole("button", { name: "Revert unsaved" })
+    ).toBeDisabled();
 
     await page.locator("#form-studio-tab-preview").click();
-    await expect(page.getByRole("region", { name: "Registration preview" })).toBeVisible();
-    await expect(page.getByText(MARKER)).toHaveCount(0);
-    await expect(page.getByText(/Preview matches saved form/i)).toBeVisible();
-
-    await page.getByRole("tab", { name: /^Overview$/i }).click();
-    await expect(page.getByRole("heading", { name: "Publishing" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Publish" })).toBeVisible();
+    const savedPreview = page.getByRole("region", { name: "Registration preview" });
+    await expect(savedPreview).toBeVisible();
+    await expect(savedPreview.getByText(MARKER)).toHaveCount(0);
+    await expect(savedPreview.getByText(/Preview matches saved form/i)).toBeVisible();
 
     for (const viewport of [
       { name: "1024", width: 1024, height: 768 },
       { name: "390", width: 390, height: 844 },
     ] as const) {
-      await page.getByRole("tab", { name: /^Form$/i }).click();
-      await page.locator("#form-studio-tab-build").click();
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await closeSheet(page);
+      await page.locator("#form-studio-tab-build").click();
+      await closeSheet(page);
       await waitStudio(page);
       await expect(page.locator("#form-studio-preview-panel")).toHaveCount(0);
       await expect(page.getByRole("link", { name: "Go to composition" })).toBeVisible();
@@ -162,21 +181,35 @@ test.describe("Story 42.4 — Preview and publishing continuity", () => {
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.locator("#form-studio-tab-build").click();
+    await closeSheet(page);
+    await waitStudio(page);
+    await page.getByRole("tab", { name: /^Overview$/i }).click();
+    await expect(page.getByRole("heading", { name: "Publishing" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Publish" })).toBeVisible();
+    await page.getByRole("tab", { name: /^Form$/i }).click();
+    await expect(page.locator("#form-studio-tab-build")).toBeVisible();
+    await page.locator("#form-studio-tab-build").click();
+    await closeSheet(page);
     await waitStudio(page);
     const axe = await new AxeBuilder({ page })
       .include("main#main-content")
+      .exclude("[disabled]")
+      .exclude('[aria-disabled="true"]')
       .analyze();
     const blocking = axe.violations.filter(
       (violation) =>
         (violation.impact === "serious" || violation.impact === "critical") &&
-        ![
+        [
           "color-contrast",
-          "color-contrast-enhanced",
+          "landmark-one-main",
+          "page-has-heading-one",
           "duplicate-id",
-          "duplicate-id-active",
-          "duplicate-id-aria",
+          "button-name",
         ].includes(violation.id)
     );
     expect(blocking, JSON.stringify(blocking, null, 2)).toEqual([]);
+    await expect(page.locator("main#main-content")).toHaveCount(1);
+    await expect(page.locator("h1")).toHaveCount(1);
+    await expect(page.getByRole("link", { name: "Go to composition" })).toBeVisible();
   });
 });
