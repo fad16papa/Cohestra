@@ -66,7 +66,11 @@ describe("Story 42.4 — remaining Creation Studio continuity", () => {
     expect(formTab).toContain("compactDefault={draftSchema.fields.length > 0}");
     expect(formTab).toContain('href="#form-studio-composition"');
     expect(formTab).toContain("Go to composition");
+    expect(formTab).toContain("studioActive={formStudioMode === \"build\"}");
     expect(composition).toContain('id="form-studio-composition"');
+    expect(composition).toContain("studioActive");
+    expect(composition).toContain("setSheetOpen(false)");
+    expect(composition).toContain("setPaletteOpen(false)");
     expect(composition).toContain(">Form builder</h2>");
   });
 

@@ -79,6 +79,8 @@ type FormCompositionBuilderProps = {
   stepsLocked?: boolean;
   /** When true, show notice if presentation blocks will not appear on public conversational flow. */
   conversationalFlowActive?: boolean;
+  /** Close portaled inspector/palette while Form Preview is active. */
+  studioActive?: boolean;
 };
 
 const panelShell =
@@ -200,6 +202,7 @@ export function FormCompositionBuilder({
   stepsEnabled = false,
   stepsLocked = false,
   conversationalFlowActive = false,
+  studioActive = true,
 }: FormCompositionBuilderProps) {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -220,6 +223,14 @@ export function FormCompositionBuilder({
   const previousCompositionRef = useRef<FormStudioComposition | null>(null);
   const inspectorOpenRef = useRef(inspectorOpen);
   const sheetOpenRef = useRef(sheetOpen);
+
+  useEffect(() => {
+    if (studioActive) {
+      return;
+    }
+    setSheetOpen(false);
+    setPaletteOpen(false);
+  }, [studioActive]);
   const isStacked = useLayoutSyncMedia(FORM_STUDIO_STACKED_QUERY);
   const isTwoPane = useLayoutSyncMedia(FORM_STUDIO_TWO_PANE_QUERY);
   const isThreePane = useLayoutSyncMedia(FORM_STUDIO_THREE_PANE_QUERY);
@@ -614,7 +625,10 @@ export function FormCompositionBuilder({
     compositionHasPresentationBlocks(schema.fields, schema.composition);
 
   return (
-    <div id="form-studio-composition" className={cn("space-y-4", className)}>
+    <div
+      id="form-studio-composition"
+      className={cn("scroll-mt-28 space-y-4", className)}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h2 className="text-section text-text-warm">Form builder</h2>

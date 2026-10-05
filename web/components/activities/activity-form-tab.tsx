@@ -1113,6 +1113,7 @@ export function ActivityFormTab({
         stepsEnabled={Boolean(draftSchema.meta?.splitIntoSteps)}
         stepsLocked={stepsLocked}
         conversationalFlowActive={conversationalFlowActive}
+        studioActive={formStudioMode === "build"}
       />
       </BuilderSurface>
 
