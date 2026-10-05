@@ -420,7 +420,7 @@ development_status:
   # 42.3 is review on cursor/story-42-3-form-studio-touch-controls-0fcb — do not start 42.4 here
 
   # Owner product slice (not Epic 42.4 / not Epic 43)
-  registration-responsive-tenant-website: in-progress
+  registration-responsive-tenant-website: review
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

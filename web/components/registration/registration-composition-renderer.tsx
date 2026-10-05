@@ -123,7 +123,7 @@ function renderNodes(
       output.push(
         <div
           key={node.id}
-          className="grid min-w-0 grid-cols-1 gap-4 @sm:grid-cols-2"
+          className="grid min-w-0 grid-cols-1 gap-4 @min-[640px]:grid-cols-2"
         >
           <div className="flex min-w-0 flex-col gap-4">
             {renderNodes(left ?? [], fieldsById, renderField, domainContext)}

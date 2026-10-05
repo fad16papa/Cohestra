@@ -1,6 +1,6 @@
 # Story: Registration responsive hardening + plan-true tenant website link
 
-Status: in-progress
+Status: review
 Story key: `registration-responsive-tenant-website`
 Branch: `cursor/registration-responsive-tenant-url-8d20`
 Base: `origin/main` `53bd0c11`
@@ -39,14 +39,14 @@ Harden the existing public registration renderer for real desktop and mobile bro
 
 ## Tasks
 
-- [ ] `@container` on public layout, embed layout, preview chrome
-- [ ] Container variants for columns / split / scale
-- [ ] Public-only split breakout; poster preview 480
-- [ ] Unavailable overflow guards
-- [ ] Activity + template persist: normalize then EnsureAllowed
-- [ ] Contract doc: Basic persist ignores, does not 403
-- [ ] Unit / integration / frontend / e2e coverage
-- [ ] Checkpoint preview evidence
+- [x] `@container` on public layout, embed layout, preview chrome
+- [x] Container variants for columns / split / scale (`@min-[640px]` / `@min-[1024px]`)
+- [x] Public-only split breakout; poster preview 480
+- [x] Unavailable overflow guards
+- [x] Activity + template persist: normalize then EnsureAllowed
+- [x] Contract doc: Basic persist ignores, does not 403
+- [x] Unit / integration / frontend / e2e coverage
+- [x] Checkpoint preview evidence
 
 ## Dev notes
 

@@ -313,7 +313,7 @@ export function PublicRegistrationOpen({
     return (
       <div
         className={cn(
-          "overflow-x-hidden px-4 sm:px-5 @lg:px-6",
+          "overflow-x-hidden px-4 @min-[640px]:px-5 @min-[1024px]:px-6",
           stayInContainer
             ? "w-full max-w-full"
             : "relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2"
@@ -323,7 +323,7 @@ export function PublicRegistrationOpen({
         <div
           className={cn(
             "mx-auto flex w-full min-w-0 max-w-5xl flex-col gap-6 overflow-x-hidden",
-            "@lg:grid @lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @lg:items-start @lg:gap-8"
+            "@min-[1024px]:grid @min-[1024px]:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] @min-[1024px]:items-start @min-[1024px]:gap-8"
           )}
         >
         <RegistrationSplitExperiencePanel
