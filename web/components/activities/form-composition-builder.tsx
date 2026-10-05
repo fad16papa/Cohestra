@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown, ChevronUp, GripVertical, Lock, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Lock, Plus, Trash2 } from "lucide-react";
+import { BuilderReorderHandle } from "@/components/builder/builder-reorder-handle";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { FormCompositionInspector } from "@/components/activities/form-composition-inspector";
@@ -60,6 +61,11 @@ import {
   resolveInspectorAfterResize,
   type FormStudioComposition,
 } from "@/lib/form-studio-workspace";
+import {
+  FORM_STUDIO_ROW_INDEX_ATTR,
+  resolveDropIndexFromPoint,
+  shouldStartHandlePointerDrag,
+} from "@/lib/builder-pointer-reorder";
 import { cn } from "@/lib/utils";
 
 type FormCompositionBuilderProps = {
@@ -201,7 +207,14 @@ export function FormCompositionBuilder({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const [reorderStatus, setReorderStatus] = useState("");
   const dragFromIndexRef = useRef<number | null>(null);
+  const pointerFromIndexRef = useRef<number | null>(null);
+  const dropIndexRef = useRef<number | null>(null);
+  const pointerHandlersRef = useRef<{
+    move: (event: PointerEvent) => void;
+    up: (event: PointerEvent) => void;
+  } | null>(null);
   const inspectorToggleRef = useRef<HTMLButtonElement>(null);
   const dockedInspectorRef = useRef<HTMLElement>(null);
   const previousCompositionRef = useRef<FormStudioComposition | null>(null);
@@ -230,6 +243,39 @@ export function FormCompositionBuilder({
 
     const parsed = Number.parseInt(event.dataTransfer.getData("text/plain"), 10);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function clearDragChrome() {
+    dragFromIndexRef.current = null;
+    pointerFromIndexRef.current = null;
+    dropIndexRef.current = null;
+    setDragIndex(null);
+    setDropIndex(null);
+  }
+
+  function detachPointerListeners() {
+    const handlers = pointerHandlersRef.current;
+    if (!handlers) {
+      return;
+    }
+
+    document.removeEventListener("pointermove", handlers.move);
+    document.removeEventListener("pointerup", handlers.up);
+    document.removeEventListener("pointercancel", handlers.up);
+    pointerHandlersRef.current = null;
+  }
+
+  function focusReorderHandle(blockId: string | null) {
+    if (!blockId) {
+      return;
+    }
+    requestAnimationFrame(() => {
+      document.getElementById(`form-studio-reorder-${blockId}`)?.focus();
+    });
+  }
+
+  function announceReorder(name: string, nextIndex: number, total: number) {
+    setReorderStatus(`Moved ${name} to position ${nextIndex + 1} of ${total}`);
   }
 
   const canvasRows = useMemo(() => getBuilderCanvasRows(schema), [schema]);
@@ -430,12 +476,93 @@ export function FormCompositionBuilder({
       return;
     }
 
+    const row = canvasRows[flatIndex];
     applySchema(reorderCompositionBlocks(schema, flatIndex, target));
+    if (row) {
+      announceReorder(blockTitle(row.node, schema), target, canvasRows.length);
+      focusReorderHandle(row.node.id);
+    }
   }
 
   function reorderTo(fromIndex: number, toIndex: number) {
+    const row = canvasRows[fromIndex];
     applySchema(reorderCompositionBlocks(schema, fromIndex, toIndex));
+    if (row && fromIndex !== toIndex) {
+      announceReorder(blockTitle(row.node, schema), toIndex, canvasRows.length);
+      focusReorderHandle(row.node.id);
+    }
   }
+
+  function finishHandlePointerDrag(clientX?: number, clientY?: number) {
+    const fromIndex = pointerFromIndexRef.current;
+    detachPointerListeners();
+    if (fromIndex === null) {
+      return;
+    }
+
+    let toIndex: number | null = null;
+    if (clientX != null && clientY != null) {
+      toIndex = resolveDropIndexFromPoint(
+        clientX,
+        clientY,
+        FORM_STUDIO_ROW_INDEX_ATTR
+      );
+    }
+    if (toIndex === null) {
+      toIndex = dropIndexRef.current;
+    }
+
+    if (toIndex !== null && fromIndex !== toIndex) {
+      reorderTo(fromIndex, toIndex);
+    }
+    clearDragChrome();
+  }
+
+  function attachPointerListeners() {
+    if (pointerHandlersRef.current || typeof document === "undefined") {
+      return;
+    }
+
+    const onMove = (event: PointerEvent) => {
+      if (pointerFromIndexRef.current === null) {
+        return;
+      }
+      event.preventDefault();
+      const next = resolveDropIndexFromPoint(
+        event.clientX,
+        event.clientY,
+        FORM_STUDIO_ROW_INDEX_ATTR
+      );
+      if (next !== null) {
+        dropIndexRef.current = next;
+        setDropIndex(next);
+      }
+    };
+
+    const onUp = (event: PointerEvent) => {
+      finishHandlePointerDrag(event.clientX, event.clientY);
+    };
+
+    pointerHandlersRef.current = { move: onMove, up: onUp };
+    document.addEventListener("pointermove", onMove, { passive: false });
+    document.addEventListener("pointerup", onUp);
+    document.addEventListener("pointercancel", onUp);
+  }
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && pointerFromIndexRef.current !== null) {
+        detachPointerListeners();
+        clearDragChrome();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      detachPointerListeners();
+      pointerFromIndexRef.current = null;
+    };
+  }, []);
 
   function removeBlock(blockId: string) {
     applySchema(removeCompositionBlock(schema, blockId));
@@ -681,6 +808,9 @@ export function FormCompositionBuilder({
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto p-3">
+            <p className="sr-only" aria-live="polite" aria-atomic="true">
+              {reorderStatus}
+            </p>
             {canvasRows.length === 0 ? (
               <div className="flex flex-col items-center gap-4 px-4 py-12 text-center">
                 <p className="text-sm text-text-muted-warm">
@@ -718,6 +848,7 @@ export function FormCompositionBuilder({
                     return (
                       <li
                         key={node.id}
+                        data-form-studio-row-index={index}
                         style={{
                           marginLeft: `${
                             row.containerPath.length * 12 +
@@ -778,6 +909,7 @@ export function FormCompositionBuilder({
                   return (
                     <li
                       key={node.id}
+                      data-form-studio-row-index={index}
                       style={{
                         marginLeft: `${
                           row.containerPath.length * 12 +
@@ -828,14 +960,14 @@ export function FormCompositionBuilder({
                         )}
                       >
                         <div className="flex items-start gap-2">
-                          <button
-                            type="button"
-                            draggable={!disabled}
+                          <BuilderReorderHandle
+                            handleId={`form-studio-reorder-${node.id}`}
+                            itemName={blockTitle(node, schema)}
                             disabled={disabled}
-                            aria-label={`Drag to reorder ${blockTitle(node, schema)}`}
-                            aria-grabbed={isDragging}
+                            dragging={isDragging}
                             onDragStart={(event) => {
-                              if (disabled) {
+                              if (disabled || pointerFromIndexRef.current !== null) {
+                                event.preventDefault();
                                 return;
                               }
                               event.dataTransfer.effectAllowed = "move";
@@ -845,23 +977,65 @@ export function FormCompositionBuilder({
                               setDropIndex(index);
                             }}
                             onDragEnd={() => {
-                              dragFromIndexRef.current = null;
-                              setDragIndex(null);
-                              setDropIndex(null);
+                              clearDragChrome();
                             }}
-                            className={cn(
-                              "mt-0.5 shrink-0 rounded-md p-1 text-text-muted-warm outline-none touch-none hover:bg-muted/60 hover:text-text-warm focus-visible:ring-2 focus-visible:ring-ring",
-                              disabled ? "cursor-not-allowed opacity-50" : "cursor-grab active:cursor-grabbing"
-                            )}
-                          >
-                            <GripVertical className="size-4" aria-hidden />
-                          </button>
+                            onPointerDown={(event) => {
+                              if (
+                                !shouldStartHandlePointerDrag(
+                                  event.pointerType,
+                                  event.button,
+                                  disabled
+                                )
+                              ) {
+                                return;
+                              }
+                              event.preventDefault();
+                              pointerFromIndexRef.current = index;
+                              dragFromIndexRef.current = index;
+                              dropIndexRef.current = index;
+                              setDragIndex(index);
+                              setDropIndex(index);
+                              attachPointerListeners();
+                              try {
+                                event.currentTarget.setPointerCapture(event.pointerId);
+                              } catch {
+                                // Untrusted test events still complete via document listeners.
+                              }
+                            }}
+                            onPointerMove={(event) => {
+                              if (pointerFromIndexRef.current === null) {
+                                return;
+                              }
+                              const next = resolveDropIndexFromPoint(
+                                event.clientX,
+                                event.clientY,
+                                FORM_STUDIO_ROW_INDEX_ATTR
+                              );
+                              if (next !== null) {
+                                dropIndexRef.current = next;
+                                setDropIndex(next);
+                              }
+                            }}
+                            onPointerUp={(event) => {
+                              finishHandlePointerDrag(event.clientX, event.clientY);
+                            }}
+                            onPointerCancel={() => {
+                              detachPointerListeners();
+                              clearDragChrome();
+                            }}
+                            onLostPointerCapture={(event) => {
+                              if (pointerFromIndexRef.current === null) {
+                                return;
+                              }
+                              finishHandlePointerDrag(event.clientX, event.clientY);
+                            }}
+                          />
 
                           <div className="flex shrink-0 flex-col gap-1">
                             <Button
                               type="button"
                               variant="outline"
-                              size="icon-xs"
+                              className="h-11 w-11 min-h-11 min-w-11"
                               disabled={disabled || !canMoveUp}
                               aria-label={`Move ${blockTitle(node, schema)} up`}
                               onClick={() => moveBlock(index, -1)}
@@ -871,7 +1045,7 @@ export function FormCompositionBuilder({
                             <Button
                               type="button"
                               variant="outline"
-                              size="icon-xs"
+                              className="h-11 w-11 min-h-11 min-w-11"
                               disabled={disabled || !canMoveDown}
                               aria-label={`Move ${blockTitle(node, schema)} down`}
                               onClick={() => moveBlock(index, 1)}
@@ -889,7 +1063,7 @@ export function FormCompositionBuilder({
                               setSelectedBlockId(node.id);
                               revealInspector();
                             }}
-                            className="min-w-0 flex-1 rounded-md px-2 py-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="min-h-11 min-w-0 flex-1 rounded-md px-2 py-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           >
                             <p className="truncate text-sm font-medium text-text-warm">
                               {index + 1}. {blockTitle(node, schema)}
@@ -906,7 +1080,7 @@ export function FormCompositionBuilder({
                           <Button
                             type="button"
                             variant="outline"
-                            size="icon-xs"
+                            className="h-11 w-11 min-h-11 min-w-11"
                             disabled={disabled}
                             aria-label={`Remove ${blockTitle(node, schema)}`}
                             onClick={() => removeBlock(node.id)}

@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BuilderReorderHandle } from "@/components/builder/builder-reorder-handle";
 import { ResponsiveBannerImage } from "@/components/ui/responsive-banner-image";
 import {
   ChevronDown,
   ChevronUp,
-  GripVertical,
   HelpCircle,
   ImageIcon,
   LayoutGrid,
@@ -635,7 +635,9 @@ export function WebsiteSectionList({
     up: (event: PointerEvent) => void;
   } | null>(null);
 
-  onDraftChangeRef.current = onDraftChange;
+  useEffect(() => {
+    onDraftChangeRef.current = onDraftChange;
+  }, [onDraftChange]);
 
   const resolveDropTarget = useCallback((clientX: number, clientY: number) => {
     const draggedId = draggedSectionIdRef.current;
@@ -873,25 +875,23 @@ export function WebsiteSectionList({
             ) : null}
             <div className="flex flex-col gap-2 py-2.5 pl-1 pr-3 sm:flex-row sm:items-center sm:gap-2">
               <div className="flex min-w-0 flex-1 items-center gap-2">
-              <div
-                role="button"
-                tabIndex={disabled ? -1 : 0}
-                draggable={!disabled}
-                aria-label={`Drag to reorder ${label}`}
-                aria-grabbed={isDragging}
-                className={cn(
-                  "flex shrink-0 touch-none select-none rounded-lg px-1.5 py-2 text-text-muted-warm/70 transition-colors",
-                  disabled
-                    ? "cursor-not-allowed opacity-50"
-                    : "cursor-grab hover:bg-muted/60 hover:text-text-warm active:cursor-grabbing"
-                )}
+              <BuilderReorderHandle
+                itemName={label}
+                disabled={disabled}
+                dragging={isDragging}
+                handleId={`website-reorder-${section.id}`}
+                className="mt-0"
                 onPointerDown={(event) => {
                   if (disabled || event.button !== 0 || sections.length <= 1) {
                     return;
                   }
 
                   startPointerDrag(section.id);
-                  event.currentTarget.setPointerCapture(event.pointerId);
+                  try {
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                  } catch {
+                    // Untrusted test events still complete via document listeners.
+                  }
                   event.preventDefault();
                 }}
                 onPointerUp={() => {
@@ -941,9 +941,7 @@ export function WebsiteSectionList({
                   setDraggedSectionId(section.id);
                 }}
                 onDragEnd={clearDragState}
-              >
-                <GripVertical className="size-4" aria-hidden />
-              </div>
+              />
               <SectionTypeIcon type={section.type} />
               <button
                 type="button"
@@ -967,7 +965,7 @@ export function WebsiteSectionList({
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon-sm"
+                  className="h-11 w-11 min-h-11 min-w-11"
                   disabled={disabled || sectionIndex <= 0}
                   aria-label={`Move ${label} up`}
                   onClick={() => moveSection(section.id, -1)}
@@ -977,7 +975,7 @@ export function WebsiteSectionList({
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon-sm"
+                  className="h-11 w-11 min-h-11 min-w-11"
                   disabled={disabled || sectionIndex >= sections.length - 1}
                   aria-label={`Move ${label} down`}
                   onClick={() => moveSection(section.id, 1)}
