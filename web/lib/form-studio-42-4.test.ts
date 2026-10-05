@@ -61,7 +61,8 @@ describe("Story 42.4 — remaining Creation Studio continuity", () => {
 
   it("compacts Templates and jumps to composition", () => {
     expect(picker).toContain("compactDefault");
-    expect(picker).toContain("defaultOpen={!compactDefault}");
+    expect(picker).toContain("useState(!compactDefault)");
+    expect(picker).toContain("open={templatesOpen}");
     expect(formTab).toContain("compactDefault={draftSchema.fields.length > 0}");
     expect(formTab).toContain('href="#form-studio-composition"');
     expect(formTab).toContain("Go to composition");

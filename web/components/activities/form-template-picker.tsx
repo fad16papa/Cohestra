@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Copy, Pencil, Trash2 } from "lucide-react";
 
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
@@ -111,11 +112,13 @@ export function FormTemplatePicker({
   const saveBlocked = isFormTemplateSaveBlocked(usage);
   const upgradePlan = formTemplateUpgradePlan(plan);
   const isPro = isProPlan(plan);
+  const [templatesOpen, setTemplatesOpen] = useState(!compactDefault);
 
   return (
     <details
       className="group space-y-4 rounded-xl border border-border-warm bg-muted/20 p-4"
-      defaultOpen={!compactDefault}
+      open={templatesOpen}
+      onToggle={(event) => setTemplatesOpen(event.currentTarget.open)}
     >
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-left marker:content-none [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
