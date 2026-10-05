@@ -1,6 +1,6 @@
 # Code review — registration-responsive-tenant-website
 
-**HEAD reviewed:** pending this commit (diff vs `origin/main` + working tree)
+**HEAD reviewed:** `8b868b383b43b90db9a811127ad32a069ea69e94`
 **Layers:** Blind Hunter, Edge Case Hunter, Acceptance Auditor
 **Spec:** `specs/spec-registration-responsive-tenant-url/SPEC.md`
 
