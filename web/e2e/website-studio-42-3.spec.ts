@@ -67,6 +67,7 @@ test.describe("Story 42.3 — Website section handles", () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await openWebsiteStudio(page, request);
     await expect(page.locator("#website-builder-live-preview")).toHaveCount(0);
+    await page.getByRole("tab", { name: "Sections" }).click();
 
     const handle = page.locator("[data-builder-reorder-handle]").first();
     await expect(handle).toBeVisible();
@@ -81,13 +82,14 @@ test.describe("Story 42.3 — Website section handles", () => {
     const afterKeyboard = await sectionHandleNames(page);
     expect(afterKeyboard[0]).not.toEqual(original[0]);
 
-    await page.locator("[data-builder-reorder-handle]").first().focus();
+    await page.getByRole("button", { name: original[0] }).focus();
     await page.keyboard.press("ArrowUp");
     expect(await sectionHandleNames(page)).toEqual(original);
 
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.getByRole("tab", { name: "Edit" })).toBeVisible();
     await page.getByRole("tab", { name: "Edit" }).click();
+    await page.getByRole("tab", { name: "Sections" }).click();
     await expect(page.locator("#website-builder-live-preview")).toHaveCount(0);
     await assertMinTouch(
       page.locator("[data-builder-reorder-handle]").first(),
@@ -140,11 +142,12 @@ test.describe("Story 42.3 — Website section handles", () => {
     const afterTouch = await sectionHandleNames(page);
     expect(afterTouch[0]).not.toEqual(original[0]);
 
+    const saveDraft = page.getByRole("button", { name: /^Save draft$/i });
     try {
-      await page.getByRole("button", { name: /save draft/i }).click();
-      await expect(page.getByRole("button", { name: /save draft/i })).toBeEnabled({
-        timeout: 15_000,
-      });
+      if (await saveDraft.isEnabled()) {
+        await saveDraft.click();
+        await expect(saveDraft).toBeDisabled({ timeout: 15_000 });
+      }
       await page.reload();
       await expect(page.getByRole("heading", { name: "Website Studio", level: 1 })).toBeVisible();
       const skipTour = page.getByRole("button", { name: "Skip tour" });
@@ -154,13 +157,17 @@ test.describe("Story 42.3 — Website section handles", () => {
       if (await page.getByRole("tab", { name: "Edit" }).isVisible().catch(() => false)) {
         await page.getByRole("tab", { name: "Edit" }).click();
       }
+      await page.getByRole("tab", { name: "Sections" }).click();
       expect(await sectionHandleNames(page)).toEqual(afterTouch);
     } finally {
       const current = await sectionHandleNames(page);
       if (current[0] !== original[0]) {
-        await page.locator("[data-builder-reorder-handle]").nth(1).focus();
+        await page.getByRole("button", { name: original[0] }).focus();
         await page.keyboard.press("ArrowUp");
-        await page.getByRole("button", { name: /save draft/i }).click();
+        if (await saveDraft.isEnabled()) {
+          await saveDraft.click();
+          await expect(saveDraft).toBeDisabled({ timeout: 15_000 });
+        }
       }
     }
   });

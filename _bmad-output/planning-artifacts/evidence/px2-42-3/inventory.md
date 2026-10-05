@@ -20,4 +20,4 @@ Class-computed sizes (confirmed later by Playwright bounding boxes). Tailwind `p
 | Website Visible / remove | `/website` | mixed | click | tap | — | Visible / remove | **43.5** |
 | Website 390 Phone/Desktop/Fullscreen | 42.1 chrome | `h-7` | click | tap | — | viewport | **43.5** (not this story) |
 
-Do not use class inspection alone for close evidence — Playwright must measure rendered boxes.
+Playwright measured the rendered boxes after the correction: Form Studio handle / Move / delete ≥44×44 at every required D7 viewport; Website section handle and mobile Move down ≥44×44. Class inspection alone was not used as close evidence.

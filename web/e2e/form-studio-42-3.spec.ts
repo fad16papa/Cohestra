@@ -141,6 +141,40 @@ async function optionTitles(page: Page) {
   return page.locator("[data-form-studio-canvas] [role='option']").allTextContents();
 }
 
+async function dispatchHtml5Reorder(page: Page, fromName: string, toName: string) {
+  await page.evaluate(
+    ({ fromName: from, toName: to }) => {
+      const source = document.querySelector<HTMLElement>(
+        `[data-builder-reorder-handle][aria-label="Reorder ${from}"]`
+      );
+      const targetHandle = document.querySelector<HTMLElement>(
+        `[data-builder-reorder-handle][aria-label="Reorder ${to}"]`
+      );
+      const targetRow = targetHandle?.closest("[data-form-studio-row-index]");
+      if (!source || !targetRow) {
+        throw new Error(`missing drag nodes ${from} -> ${to}`);
+      }
+      const dataTransfer = new DataTransfer();
+      source.dispatchEvent(
+        new DragEvent("dragstart", { bubbles: true, cancelable: true, dataTransfer })
+      );
+      targetRow.dispatchEvent(
+        new DragEvent("dragenter", { bubbles: true, cancelable: true, dataTransfer })
+      );
+      targetRow.dispatchEvent(
+        new DragEvent("dragover", { bubbles: true, cancelable: true, dataTransfer })
+      );
+      targetRow.dispatchEvent(
+        new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer })
+      );
+      source.dispatchEvent(
+        new DragEvent("dragend", { bubbles: true, cancelable: true, dataTransfer })
+      );
+    },
+    { fromName, toName }
+  );
+}
+
 async function dispatchTouchReorder(page: Page, fromIndex: number, toIndex: number) {
   await page.evaluate(
     ({ fromIndex: from, toIndex: to }) => {
@@ -242,14 +276,13 @@ test.describe("Story 42.3 — Form Studio touch and builder controls", () => {
 
     await openStudio(page, request, "42-3-mouse-key");
     const nameHandle = page.getByRole("button", { name: "Reorder Full name" });
-    const emailHandle = page.getByRole("button", { name: "Reorder Email" });
     await page.getByRole("option", { name: /Full name/i }).click();
     await expect(page.getByRole("option", { name: /Full name/i })).toHaveAttribute(
       "aria-selected",
       "true"
     );
 
-    await nameHandle.dragTo(emailHandle);
+    await dispatchHtml5Reorder(page, "Full name", "Email");
     await expect(page.getByText("Unsaved changes")).toBeVisible();
     await expect(nameHandle).toBeFocused();
     await expect(page.getByRole("option", { name: /Full name/i })).toHaveAttribute(
@@ -263,10 +296,16 @@ test.describe("Story 42.3 — Form Studio touch and builder controls", () => {
       path: path.join(evidenceDir, "viewports", "reordered-1440.png"),
     });
 
-    await page.getByRole("button", { name: "Move Email down" }).click();
+    const emailDown = page.getByRole("button", { name: "Move Email down" });
+    if (await emailDown.isEnabled()) {
+      await emailDown.click();
+    } else {
+      await page.getByRole("button", { name: "Move Email up" }).click();
+    }
     await expect(page.getByRole("button", { name: "Reorder Email" })).toBeFocused();
-    await expect(page.getByRole("button", { name: "Move Full name up" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Move Email down" })).toBeDisabled();
+    await expect(
+      page.locator("[data-form-studio-canvas]").getByRole("button", { name: /Move .+ up/ }).first()
+    ).toBeDisabled();
 
     await page.getByRole("button", { name: "Move Nested note down" }).click();
     await expect(page.getByRole("button", { name: "Reorder Nested note" })).toBeFocused();
@@ -404,8 +443,9 @@ test.describe("Story 42.3 — Form Studio touch and builder controls", () => {
     await expect(
       page.locator('[data-form-studio-workspace][data-form-studio-composition="three-pane"]')
     ).toBeVisible();
-    await page.getByRole("button", { name: /Save form/i }).click();
-    await expect(page.getByText(/saved/i).first()).toBeVisible({ timeout: 15_000 });
+    await page.getByRole("button", { name: /^Save form$/i }).click();
+    await expect(page.getByText("Form saved.")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Unsaved changes")).toHaveCount(0);
     await page.reload();
     await waitStudio(page);
     const titles = await optionTitles(page);

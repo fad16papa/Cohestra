@@ -635,7 +635,9 @@ export function WebsiteSectionList({
     up: (event: PointerEvent) => void;
   } | null>(null);
 
-  onDraftChangeRef.current = onDraftChange;
+  useEffect(() => {
+    onDraftChangeRef.current = onDraftChange;
+  }, [onDraftChange]);
 
   const resolveDropTarget = useCallback((clientX: number, clientY: number) => {
     const draggedId = draggedSectionIdRef.current;

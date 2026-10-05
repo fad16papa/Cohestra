@@ -2,7 +2,7 @@
 id: 42.3
 key: 42-3-form-studio-touch-and-builder-controls
 title: Form Studio touch and builder controls
-status: in-progress
+status: review
 epic: 42
 created: 2026-10-05
 baseline_commit: 53bd0c11e5c80da0b1b9da1a0faf66b9f6415d9f
@@ -10,7 +10,7 @@ baseline_commit: 53bd0c11e5c80da0b1b9da1a0faf66b9f6415d9f
 
 # Story 42.3: Form Studio touch and builder controls
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -76,12 +76,12 @@ Story 42.3 `review`. Stories 42.1 and 42.2 remain `done`. Epic 42 `in-progress`.
 
 ## Tasks / Subtasks
 
-- [ ] Inventory, readiness, and architecture recorded under `px2-42-3/` (AC: all)
-- [ ] Shared 44px explicit handle + Form Studio pointer sensor using existing reorder (AC: #1, #2, #3)
-- [ ] Form Studio action cluster 44px; keyboard and live region (AC: #3, #4)
-- [ ] Website section handle 44px + focused 42.1 regression (AC: #5)
-- [ ] Role/plan/archived and D7 protection (AC: #6, #7, #8, #9)
-- [ ] Playwright 42.3 + protected suites (AC: #8, #10)
+- [x] Inventory, readiness, and architecture recorded under `px2-42-3/` (AC: all)
+- [x] Shared 44px explicit handle + Form Studio pointer sensor using existing reorder (AC: #1, #2, #3)
+- [x] Form Studio action cluster 44px; keyboard and live region (AC: #3, #4)
+- [x] Website section handle 44px + focused 42.1 regression (AC: #5)
+- [x] Role/plan/archived and D7 protection (AC: #6, #7, #8, #9)
+- [x] Playwright 42.3 + protected suites (AC: #8, #10)
 
 ## Dev Notes
 
@@ -109,7 +109,7 @@ Story 42.3 `review`. Stories 42.1 and 42.2 remain `done`. Epic 42 `in-progress`.
 
 ### Agent Model Used
 
-Grok 4.6 (primary). Composer 2.5 unused unless a locked presentational-only class pass appears.
+Grok 4.6 (primary). Composer 2.5 unused — no isolated presentational slice after the contract was locked.
 
 ### Debug Log References
 
@@ -117,8 +117,29 @@ See `_bmad-output/planning-artifacts/evidence/px2-42-3/`.
 
 ### Completion Notes List
 
+- Shared `BuilderReorderHandle` is 44×44, named `Reorder {item}`, `touch-none` only on the handle.
+- Form Studio keeps HTML5 mouse drag and Move up/down; touch/pen uses pointer capture plus document listeners and calls `reorderCompositionBlocks`.
+- Website Studio shared the small-handle defect; same handle + 44px mobile Move up/down. No Website redesign.
+- Four-layer review on this HEAD: no remaining independently verified BLOCKER/MAJOR.
+- Story stays at `review`. Not marked done. PR remains draft.
+
 ### File List
+
+- `web/components/builder/builder-reorder-handle.tsx`
+- `web/lib/builder-pointer-reorder.ts`
+- `web/components/activities/form-composition-builder.tsx`
+- `web/components/website/website-section-fields.tsx`
+- `web/e2e/form-studio-42-3.spec.ts`
+- `web/e2e/website-studio-42-3.spec.ts`
+- `web/lib/builder-pointer-reorder.test.ts`
+- `web/lib/builder-pointer-reorder.dom.test.ts`
+- `web/lib/builder-reorder-handle.test.ts`
+- `web/lib/builder-reorder-equivalence.test.ts`
+- `_bmad-output/implementation-artifacts/42-3-form-studio-touch-and-builder-controls.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/planning-artifacts/evidence/px2-42-3/`
 
 ### Change Log
 
 - 2026-10-05: Created Story 42.3 from synchronized `main` `53bd0c11`. Epic 42 remains in-progress. 42.1–42.2 remain done. 42.4 not started.
+- 2026-10-05: Implementation, tests, and four-layer review complete. Status `review`. Draft PR #387.
