@@ -150,6 +150,7 @@ export function ActivityFormTab({
     useState<RegistrationThemePreset | null>(null);
   const [presetDialogOpen, setPresetDialogOpen] = useState(false);
   const [formStudioMode, setFormStudioMode] = useState<FormStudioMode>("build");
+  const [revertDialogOpen, setRevertDialogOpen] = useState(false);
 
   const isArchived = activity.status === "archived";
   const isDraft = activity.status === "draft";
@@ -600,6 +601,13 @@ export function ActivityFormTab({
     }
   }
 
+  function handleRevertUnsaved() {
+    setError(null);
+    setDraftSchema(normalizeFormSchema(activity.formSchema));
+    setSuccess("Reverted to saved form.");
+    setRevertDialogOpen(false);
+  }
+
   return (
     <div className="space-y-6">
       <nav
@@ -659,15 +667,32 @@ export function ActivityFormTab({
             ) : isDirty ? (
               <p className="text-xs text-text-muted-warm">Unsaved changes</p>
             ) : null}
+            <a
+              href="#form-studio-composition"
+              className="mt-1 inline-flex min-h-11 items-center text-xs font-medium text-text-muted-warm underline-offset-4 hover:text-text-warm hover:underline"
+            >
+              Go to composition
+            </a>
           </div>
-          <Button
-            type="button"
-            size="sm"
-            disabled={isSaving || !isDirty || hasClientIssues}
-            onClick={() => void handleSave()}
-          >
-            {isSaving ? "Saving…" : "Save form"}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isSaving || !isDirty}
+              onClick={() => setRevertDialogOpen(true)}
+            >
+              Revert unsaved
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={isSaving || !isDirty || hasClientIssues}
+              onClick={() => void handleSave()}
+            >
+              {isSaving ? "Saving…" : "Save form"}
+            </Button>
+          </div>
         </div>
       ) : null}
 
@@ -766,6 +791,7 @@ export function ActivityFormTab({
           templatesLoading={templatesLoading}
           hasClientIssues={hasClientIssues}
           presetActionLoading={templateActionLoading}
+          compactDefault={draftSchema.fields.length > 0}
         />
       ) : null}
 
@@ -1123,6 +1149,31 @@ export function ActivityFormTab({
             }
           />
       </BuilderSurface>
+
+      <AlertDialog
+        open={revertDialogOpen}
+        onOpenChange={(open) => {
+          if (!isSaving) {
+            setRevertDialogOpen(open);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revert unsaved form changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This restores the last saved form. Unsaved edits will be discarded.
+              The public page is not changed until you save and publish.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRevertUnsaved}>
+              Revert unsaved
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={applyDialogOpen}

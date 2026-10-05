@@ -80,7 +80,12 @@ export function RegistrationPublicPreviewShell({
   }, [viewport]);
 
   return (
-    <div className={cn("space-y-3", className)} data-preview-viewport={viewport}>
+    <div
+      className={cn("space-y-3", className)}
+      data-preview-viewport={viewport}
+      role="region"
+      aria-label="Registration preview"
+    >
       <div className="flex flex-wrap items-center justify-end gap-2">
         {publicPageHref ? (
           <a

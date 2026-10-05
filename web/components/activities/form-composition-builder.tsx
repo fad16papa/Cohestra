@@ -614,7 +614,7 @@ export function FormCompositionBuilder({
     compositionHasPresentationBlocks(schema.fields, schema.composition);
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div id="form-studio-composition" className={cn("space-y-4", className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h2 className="text-section text-text-warm">Form builder</h2>
