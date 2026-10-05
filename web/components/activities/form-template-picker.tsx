@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Copy, Pencil, Trash2 } from "lucide-react";
 
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
@@ -44,6 +45,8 @@ type FormTemplatePickerProps = {
   templatesLoading?: boolean;
   hasClientIssues?: boolean;
   presetActionLoading?: boolean;
+  /** Collapse the gallery by default when the draft already has fields. */
+  compactDefault?: boolean;
 };
 
 function SlotMeter({ usage }: { usage: FormTemplateUsage }) {
@@ -103,15 +106,34 @@ export function FormTemplatePicker({
   templatesLoading = false,
   hasClientIssues = false,
   presetActionLoading = false,
+  compactDefault = false,
 }: FormTemplatePickerProps) {
   const isDisabled = disabled || locked;
   const saveBlocked = isFormTemplateSaveBlocked(usage);
   const upgradePlan = formTemplateUpgradePlan(plan);
   const isPro = isProPlan(plan);
+  const [templatesOpen, setTemplatesOpen] = useState(!compactDefault);
 
   return (
-    <div className="space-y-4">
-      <section className="space-y-3 rounded-xl border border-border-warm bg-muted/20 p-4">
+    <details
+      className="group space-y-4 rounded-xl border border-border-warm bg-muted/20 p-4"
+      open={templatesOpen}
+      onToggle={(event) => setTemplatesOpen(event.currentTarget.open)}
+    >
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-left marker:content-none [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">
+          <span className="block text-section text-text-warm">Templates</span>
+          <span className="mt-0.5 block text-sm text-text-muted-warm">
+            Launch presets and saved recipes. Applying one replaces the current fields.
+          </span>
+        </span>
+        <span className="shrink-0 text-xs font-medium text-text-muted-warm">
+          <span className="group-open:hidden">Show</span>
+          <span className="hidden group-open:inline">Hide</span>
+        </span>
+      </summary>
+      <div className="space-y-4 pt-2">
+      <section className="space-y-3 rounded-xl border border-border-warm bg-background/60 p-4">
         <div>
           <h2 className="text-section text-text-warm">Launch templates</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
@@ -328,6 +350,7 @@ export function FormTemplatePicker({
           />
         ) : null}
       </section>
-    </div>
+      </div>
+    </details>
   );
 }
