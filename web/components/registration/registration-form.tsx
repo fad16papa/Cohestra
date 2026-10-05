@@ -1084,7 +1084,7 @@ export function RegistrationForm({
             aria-required={field.required}
             aria-invalid={Boolean(error)}
             aria-describedby={errorDescribedBy}
-            className="grid gap-2 sm:grid-cols-5"
+            className="grid gap-2 @min-[640px]:grid-cols-5"
           >
             {scaleFieldValues.map((scaleValue) => {
               const label = getScaleFieldLabel(scaleValue) ?? scaleValue;

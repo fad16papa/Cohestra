@@ -1,6 +1,7 @@
 # generated: 2026-06-16
-# last_updated: 2026-10-04
-# story 42.2 done; epic 42 in-progress; 42.1 done; 42.3–42.4 not started
+# last_updated: 2026-10-05
+# story 42.2 done; epic 42 in-progress; 42.1 done; 42.3–42.4 not started on this branch
+# owner slice registration-responsive-tenant-website in-progress
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -54,7 +55,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-10-04
+last_updated: 2026-10-05
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -416,6 +417,10 @@ development_status:
   epic-42: in-progress
   42-1-website-studio-chrome-and-placement: done
   42-2-form-studio-responsive-composition: done
+  # 42.3 is review on cursor/story-42-3-form-studio-touch-controls-0fcb — do not start 42.4 here
+
+  # Owner product slice (not Epic 42.4 / not Epic 43)
+  registration-responsive-tenant-website: review
 
   33-1-marketingdemoclub-seed-presentational-mounts: done
   33-2-feeling-copy-kill-chapter-mock-chrome: done

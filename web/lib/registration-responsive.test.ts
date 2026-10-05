@@ -14,6 +14,8 @@ describe("registration responsive layout contract", () => {
     expect(source).toMatch(/max-w-\[720px\]/);
     expect(source).toMatch(/overflow-x-hidden/);
     expect(source).toMatch(/min-w-0/);
+    expect(source).toMatch(/@container/);
+    expect(source).toMatch(/data-registration-layout-container="public"/);
   });
 
   it("RegistrationPublicPreviewShell desktop preview matches public max width", () => {
@@ -56,7 +58,8 @@ describe("registration responsive layout contract", () => {
       "utf8"
     );
     expect(source).toMatch(/split-event/);
-    expect(source).toMatch(/lg:grid-cols-\[minmax\(0,2fr\)_minmax\(0,3fr\)\]/);
+    expect(source).toMatch(/@min-\[1024px\]:grid-cols-\[minmax\(0,2fr\)_minmax\(0,3fr\)\]/);
+    expect(source).toMatch(/stayInContainer/);
     expect(source).toMatch(/RegistrationSplitExperiencePanel/);
     expect(source).toMatch(/w-screen/);
   });
@@ -78,6 +81,27 @@ describe("registration responsive layout contract", () => {
     );
     expect(shellSource).toMatch(/max-w-\[720px\]/);
     expect(shellSource).toMatch(/data-registration-style/);
+
+    const previewChrome = readFileSync(
+      join(process.cwd(), "components/registration/registration-preview-chrome.tsx"),
+      "utf8"
+    );
+    expect(previewChrome).toMatch(/@container/);
+    expect(previewChrome).toMatch(/data-registration-layout-container="preview"/);
+
+    const composition = readFileSync(
+      join(process.cwd(), "components/registration/registration-composition-renderer.tsx"),
+      "utf8"
+    );
+    expect(composition).toMatch(/@min-\[640px\]:grid-cols-2/);
+    expect(composition).not.toMatch(/(?<![\[-])sm:grid-cols-2/);
+
+    const embedLayout = readFileSync(
+      join(process.cwd(), "app/embed/layout.tsx"),
+      "utf8"
+    );
+    expect(embedLayout).toMatch(/@container/);
+    expect(embedLayout).toMatch(/data-registration-layout-container="embed"/);
   });
 
   it("PublicFormLayout main does not flex-grow (footer follows content)", () => {

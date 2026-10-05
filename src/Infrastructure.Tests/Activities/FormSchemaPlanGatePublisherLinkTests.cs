@@ -48,4 +48,19 @@ public sealed class FormSchemaPlanGatePublisherLinkTests
 
         Assert.False(schema.Meta!.ShowPublisherWebsiteLink);
     }
+
+    [Fact]
+    public void NormalizeThenEnsureAllowed_BasicCraftedFlag_DoesNotThrow()
+    {
+        var schema = new ActivityFormSchema
+        {
+            Meta = new FormSchemaMeta { ShowPublisherWebsiteLink = true },
+            Fields = [],
+        };
+
+        FormSchemaPlanGate.NormalizePublisherWebsiteLink(schema, TenantPlan.Basic);
+        FormSchemaPlanGate.EnsureAllowed(schema, TenantPlan.Basic);
+
+        Assert.Null(schema.Meta!.ShowPublisherWebsiteLink);
+    }
 }

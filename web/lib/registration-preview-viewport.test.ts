@@ -28,6 +28,9 @@ describe("registration preview viewport", () => {
     expect(registrationPreviewSurfaceMaxWidthClass("desktop", "centered")).toBe(
       "max-w-[720px]"
     );
+    expect(registrationPreviewSurfaceMaxWidthClass("desktop", "poster")).toBe(
+      "max-w-[480px]"
+    );
   });
 
   it("persists viewport in session storage only", () => {

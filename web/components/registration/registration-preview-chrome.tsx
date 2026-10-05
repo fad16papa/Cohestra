@@ -23,9 +23,10 @@ export function RegistrationPreviewChrome({
   return (
     <div
       className={cn(
-        "registration-preview-surface relative flex min-h-0 flex-col overflow-hidden rounded-xl border border-border-warm bg-background",
+        "registration-preview-surface @container relative flex min-h-0 flex-col overflow-hidden rounded-xl border border-border-warm bg-background",
         className
       )}
+      data-registration-layout-container="preview"
     >
       <div
         className={cn(

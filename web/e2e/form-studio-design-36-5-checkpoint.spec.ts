@@ -241,7 +241,7 @@ test.describe("Story 36.5 — live visual and token checkpoint", () => {
     });
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${base}/register/${slug}`, { waitUntil: "domcontentloaded" });
-    await expect(page.locator('[class*="lg:grid-cols"]').first()).toBeVisible();
+    await expect(page.locator('[class*="@min-[1024px]:grid-cols"]').first()).toBeVisible();
     await assertNoHorizontalOverflow(page);
 
     await applyRegistrationTheme(request, token, activityId, activityRecord, {
