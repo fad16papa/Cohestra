@@ -2,15 +2,17 @@
 id: 42.3
 key: 42-3-form-studio-touch-and-builder-controls
 title: Form Studio touch and builder controls
-status: review
+status: done
 epic: 42
 created: 2026-10-05
 baseline_commit: 53bd0c11e5c80da0b1b9da1a0faf66b9f6415d9f
+accepted_commit: 712a5395d68e2b8db78c13f3168714e7ddc676ba
+implementation_merge: 0bb9ac258f31eed7d2a3bd629ea0dfa3568c3cf6
 ---
 
 # Story 42.3: Form Studio touch and builder controls
 
-Status: review
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
