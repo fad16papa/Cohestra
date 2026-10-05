@@ -2,8 +2,9 @@
 id: 42.4
 key: 42-4-preview-and-publishing-continuity
 title: Preview and publishing continuity
-accepted_commit: ddb500894138bc2a69bfe86ff8b42d5e8b468e48
-status: review
+accepted_commit: 2088bb9ec051d41e8d59fb7d621561f2795870a0
+implementation_merge: 855bdfc431a93dc8767daa3de0c9fa7bca5f94db
+status: done
 epic: 42
 created: 2026-10-05
 baseline_commit: e038692b390bb24ac8e6beb5cba6b9dffec3309c
@@ -11,7 +12,7 @@ baseline_commit: e038692b390bb24ac8e6beb5cba6b9dffec3309c
 
 # Story 42.4: Preview and publishing continuity
 
-Status: in-progress
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -126,6 +127,11 @@ Grok 4.6
 See `_bmad-output/planning-artifacts/evidence/px2-42-4/`.
 
 ### Completion Notes List
+
+- Delta audit: most original 42.4 backlog already shipped in 42.1–42.3 and #388.
+- Remaining: compact Templates, Go to composition, named Registration preview, Revert unsaved, close Build overlays on Preview.
+- Code review PASS after overlay fix. Checkpoint: CONTINUATION. PR #391 merged `855bdfc4`.
+- Epic 43 not started.
 
 ### File List
 

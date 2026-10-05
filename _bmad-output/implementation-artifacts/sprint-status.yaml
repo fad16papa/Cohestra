@@ -1,6 +1,8 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-05
-# story 42.4 in-progress; 42.1–42.3 done; epic 42 in-progress
+# story 42.4 done; epic 42 done; 42.1–42.3 done
+# owner slice registration-responsive-tenant-website done (PR #388)
+# Epic 43 not started
 # owner slice registration-responsive-tenant-website done (PR #388)
 # project: cohestra
 # project_key: NOKEY
@@ -414,11 +416,12 @@ development_status:
   41-3-campaigns: done
 
   # Epic 42 — Creation Studios
-  epic-42: in-progress
+  epic-42: done
   42-1-website-studio-chrome-and-placement: done
   42-2-form-studio-responsive-composition: done
   42-3-form-studio-touch-and-builder-controls: done
-  42-4-preview-and-publishing-continuity: in-progress
+  42-4-preview-and-publishing-continuity: done
+  epic-42-retrospective: done
 
   # Owner product slice (not Epic 42.4 / not Epic 43)
   registration-responsive-tenant-website: done
