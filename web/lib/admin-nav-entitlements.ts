@@ -1,6 +1,7 @@
 import {
   CAMPAIGNS_PATH,
   SETTINGS_BILLING_PATH,
+  SETTINGS_PATH,
   SETTINGS_PROFILE_PATH,
   SETTINGS_TEAM_PATH,
   WEBSITE_PATH,
@@ -236,7 +237,7 @@ export function resolveFooterItems(ctx: NavEntitlementContext): FooterNavItem[] 
   const items: FooterNavItem[] = [
     {
       key: "settings",
-      href: SETTINGS_PROFILE_PATH,
+      href: SETTINGS_PATH,
       label: "Settings",
       entitlement: resolveNavEntitlement("settings", ctx),
     },

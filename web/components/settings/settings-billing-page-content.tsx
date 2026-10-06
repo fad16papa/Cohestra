@@ -4,7 +4,6 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
-import { PageHeader } from "@/components/shared/page-header";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { resolveBillingSettingsAccess } from "@/lib/admin-nav-entitlements";
 import { isPaidTenantPlan } from "@/lib/shell/tenant-shell-api";
@@ -28,19 +27,15 @@ function SettingsBillingBody() {
 
   if (!shell || access === "denied") {
     return (
-      <div className="space-y-2">
-        <PageHeader title="Billing" />
-        <p className="text-sm text-text-muted-warm">
-          Billing settings are available to tenant admins only.
-        </p>
-      </div>
+      <p className="text-sm text-text-muted-warm">
+        Billing settings are available to tenant admins only.
+      </p>
     );
   }
 
   if (access === "owner-managed") {
     return (
       <div className="mx-auto w-full max-w-5xl space-y-3">
-        <PageHeader title="Billing" />
         <p className="text-sm text-text-muted-warm">
           Billing for this workspace is managed by{" "}
           <span className="font-medium text-text-warm">
@@ -55,13 +50,10 @@ function SettingsBillingBody() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6">
-      <div>
-        <PageHeader title="Billing" />
-        <p className="mt-1 text-sm text-text-muted-warm">
-          Manage billing contact, invoices, and plan changes in Cohestra. Paddle stores your
-          payment method from checkout.
-        </p>
-      </div>
+      <p className="text-sm text-text-muted-warm">
+        Manage billing contact, invoices, and plan changes in Cohestra. Paddle stores your
+        payment method from checkout.
+      </p>
 
       {incompleteNotice && !isPaidTenantPlan(shell?.plan) ? (
         <p
@@ -100,14 +92,7 @@ function SettingsBillingBody() {
 
 export function SettingsBillingPageContent() {
   return (
-    <Suspense
-      fallback={
-        <div className="space-y-2">
-          <PageHeader title="Billing" />
-          <p className="text-sm text-text-muted-warm">Loading billing…</p>
-        </div>
-      }
-    >
+    <Suspense fallback={<p className="text-sm text-text-muted-warm">Loading billing…</p>}>
       <SettingsBillingBody />
     </Suspense>
   );

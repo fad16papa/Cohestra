@@ -4,14 +4,19 @@ import { PageHeader } from "@/components/shared/page-header";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { PlanBadge } from "@/components/shell/plan-badge";
 import { SponsoredBadge } from "@/components/shell/sponsored-badge";
+import type { SettingsRouteMeta } from "@/lib/settings-routes";
 
-export function SettingsPageHeader() {
+type SettingsRouteHeaderProps = {
+  route: SettingsRouteMeta;
+};
+
+export function SettingsRouteHeader({ route }: SettingsRouteHeaderProps) {
   const { shell } = useTenantShell();
 
   return (
     <PageHeader
-      eyebrow="Workspace"
-      title="Settings"
+      eyebrow="Settings"
+      title={route.label}
       description={
         <>
           {shell ? (
@@ -26,10 +31,7 @@ export function SettingsPageHeader() {
               {shell.isComplimentary ? <SponsoredBadge /> : null}
             </div>
           ) : null}
-          <p className="max-w-3xl leading-relaxed text-text-muted-warm">
-            Use the section list to navigate settings. Workspace admins can manage branding,
-            limits, and organization preferences from the panels below.
-          </p>
+          <p className="max-w-3xl leading-relaxed text-text-muted-warm">{route.description}</p>
         </>
       }
     />

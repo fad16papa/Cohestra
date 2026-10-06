@@ -1,22 +1,16 @@
 "use client";
 
-import Link from "next/link";
-import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { LimitMeter } from "@/components/shell/limit-meter";
 import { PlanBadge } from "@/components/shell/plan-badge";
 import { SponsoredBadge } from "@/components/shell/sponsored-badge";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
-import type { SettingsSectionId } from "@/components/settings/settings-sections";
-import {
-  entitlementContextFromShell,
-  navItemAccessibleName,
-  resolveNavEntitlement,
-} from "@/lib/admin-nav-entitlements";
+import type { SettingsNavKey } from "@/lib/settings-routes";
 import { cn } from "@/lib/utils";
 
 type SettingsRightRailProps = {
-  activeId: SettingsSectionId;
+  activeId: SettingsNavKey | null;
   collapsed: boolean;
   onToggleCollapsed: () => void;
   hideCollapseToggle?: boolean;
@@ -40,7 +34,7 @@ function ContextBlock({
   );
 }
 
-function sectionTips(activeId: SettingsSectionId): { title: string; body: string } {
+function sectionTips(activeId: SettingsNavKey | null): { title: string; body: string } {
   switch (activeId) {
     case "settings-plan":
       return {
@@ -87,6 +81,16 @@ function sectionTips(activeId: SettingsSectionId): { title: string; body: string
         title: "Theme sync",
         body: "Appearance preference syncs with the sun/moon toggle in the top bar on every page.",
       };
+    case "settings-team":
+      return {
+        title: "Seats",
+        body: "Invites count against your plan seat cap. Basic workspaces stay solo until you upgrade.",
+      };
+    case "settings-billing":
+      return {
+        title: "Billing owner",
+        body: "Plan and payment changes stay with the billing owner. Other admins can still use the rest of Cohestra.",
+      };
     default:
       return { title: "Tip", body: "Select a section on the left to edit settings." };
   }
@@ -100,9 +104,6 @@ export function SettingsRightRail({
   className,
 }: SettingsRightRailProps) {
   const { shell } = useTenantShell();
-  const entitlementCtx = entitlementContextFromShell(shell);
-  const team = resolveNavEntitlement("team", entitlementCtx);
-  const billing = resolveNavEntitlement("billing", entitlementCtx);
   const tip = sectionTips(activeId);
   const usageDials =
     shell?.limitDials.filter((dial) => dial.key !== "seats") ?? [];
@@ -169,43 +170,6 @@ export function SettingsRightRail({
           <ContextBlock title={tip.title}>
             <p>{tip.body}</p>
           </ContextBlock>
-
-          {team.state !== "hidden" && team.state !== "pending" ? (
-            <ContextBlock title="Quick links">
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    href="/settings/team"
-                    aria-label={
-                      team.state === "locked"
-                        ? navItemAccessibleName("Team settings", team)
-                        : undefined
-                    }
-                    className="inline-flex items-center gap-1 font-medium text-text-link hover:underline"
-                  >
-                    Team settings
-                    {team.state === "locked" && team.requiredPlan ? (
-                      <span className="text-text-muted-warm">
-                        ({team.requiredPlan})
-                      </span>
-                    ) : null}
-                    <ExternalLink className="size-3.5" aria-hidden />
-                  </Link>
-                </li>
-                {billing.state === "unlocked" ? (
-                  <li>
-                    <Link
-                      href="/settings/billing"
-                      className="inline-flex items-center gap-1 font-medium text-text-link hover:underline"
-                    >
-                      Billing & plan
-                      <ExternalLink className="size-3.5" aria-hidden />
-                    </Link>
-                  </li>
-                ) : null}
-              </ul>
-            </ContextBlock>
-          ) : null}
         </div>
       ) : null}
     </aside>

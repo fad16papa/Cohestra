@@ -158,7 +158,7 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
           timeout: 30_000,
         });
       } else if (route.name === "settings") {
-        await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible({
+        await expect(page.getByRole("heading", { name: "Plan & limits", level: 1 })).toBeVisible({
           timeout: 30_000,
         });
       } else if (route.name === "clients") {

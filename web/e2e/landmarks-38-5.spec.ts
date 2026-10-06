@@ -191,7 +191,7 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
       { path: "/follow-up", h1: "Follow-up" },
       { path: "/ai", h1: "Cohestra AI" },
       { path: "/campaigns", h1: "Campaigns" },
-      { path: "/settings", h1: "Settings" },
+      { path: "/settings", h1: "Plan & limits" },
       { path: "/settings/team", h1: "Team" },
       { path: "/settings/billing", h1: "Billing" },
       { path: "/dashboard/website", h1: /Website/ },
@@ -295,7 +295,7 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
 
     await page.goto(`${origin}/settings`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
-    await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Plan & limits", level: 1 })).toBeVisible();
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "settings-structure-1440x900.png"),
       fullPage: true,

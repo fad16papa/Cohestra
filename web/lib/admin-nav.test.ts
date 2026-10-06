@@ -59,12 +59,20 @@ describe("Story 39.1 desktop IA", () => {
   it("keeps Settings crumbs on profile descendants and Team/Billing on path boundaries", () => {
     expect(getAdminBreadcrumbs("/settings/teammates")).toEqual([{ label: "Settings" }]);
     expect(getAdminBreadcrumbs("/settings/team")).toEqual([
-      { label: "Settings", href: "/settings/profile" },
+      { label: "Settings", href: "/settings" },
       { label: "Team" },
     ]);
     expect(getAdminBreadcrumbs("/settings/billing")).toEqual([
-      { label: "Settings", href: "/settings/profile" },
+      { label: "Settings", href: "/settings" },
       { label: "Billing" },
+    ]);
+    expect(getAdminBreadcrumbs("/settings/plan")).toEqual([
+      { label: "Settings", href: "/settings" },
+      { label: "Plan & limits" },
+    ]);
+    expect(getAdminBreadcrumbs("/settings/profile")).toEqual([
+      { label: "Settings", href: "/settings" },
+      { label: "Your account" },
     ]);
   });
 
@@ -80,6 +88,8 @@ describe("Story 39.1 desktop IA", () => {
   it("treats /settings and /settings/profile as the Settings footer target", () => {
     expect(isSettingsProfilePath("/settings")).toBe(true);
     expect(isSettingsProfilePath("/settings/profile")).toBe(true);
+    expect(isSettingsProfilePath("/settings/plan")).toBe(true);
+    expect(isSettingsProfilePath("/settings/appearance")).toBe(true);
     expect(isSettingsProfilePath("/settings/team")).toBe(false);
     expect(isSettingsProfilePath("/settings/billing")).toBe(false);
     expect(isSettingsProfilePath("/settings/teammates")).toBe(true);

@@ -136,7 +136,7 @@ test.describe("Story 39.1 — desktop shell and canonical rooms", () => {
     const sidebar = page.getByRole("complementary", { name: "Workspace" });
     await expect(sidebar.getByRole("link", { name: "Settings", exact: true })).toHaveAttribute(
       "href",
-      "/settings/profile"
+      "/settings"
     );
     await expect(sidebar.getByRole("link", { name: "Team", exact: true })).toHaveAttribute(
       "href",
@@ -151,8 +151,8 @@ test.describe("Story 39.1 — desktop shell and canonical rooms", () => {
       waitUntil: "domcontentloaded",
     });
     await waitForOperatorWorkspace(page);
-    await expect(page).toHaveURL(/\/settings\/profile\?section=account/);
-    await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toHaveCount(1);
+    await expect(page).toHaveURL(/\/settings\/profile(?:\?|$)/);
+    await expect(page.getByRole("heading", { name: "Your account", level: 1 })).toHaveCount(1);
 
     await page.goto(`${tenantWebBase()}/analytics`, { waitUntil: "domcontentloaded" });
     await waitForReportsContent(page);

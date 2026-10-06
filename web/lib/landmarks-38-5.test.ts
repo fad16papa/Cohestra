@@ -11,7 +11,7 @@ const LAYOUT_SOURCE = readFileSync(
   "utf8"
 );
 const SETTINGS_SOURCE = readFileSync(
-  resolve(import.meta.dirname, "../components/settings/settings-page-content.tsx"),
+  resolve(import.meta.dirname, "../components/settings/settings-workspace-chrome.tsx"),
   "utf8"
 );
 const RENDERER_SOURCE = readFileSync(
@@ -53,7 +53,7 @@ describe("Story 38.5 landmark source contract (supplement)", () => {
 
   it("removes the nested Settings main landmark", () => {
     expect(SETTINGS_SOURCE).not.toMatch(/<main/);
-    expect(SETTINGS_SOURCE).toContain('aria-labelledby="settings-active-section-heading"');
+    expect(SETTINGS_SOURCE).toContain('aria-label={route?.label ?? "Settings"}');
   });
 
   it("uses one SitePageRenderer with an embedded semantic context", () => {

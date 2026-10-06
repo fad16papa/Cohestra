@@ -12,6 +12,14 @@ export const SETTINGS_PATH = "/settings";
 export const SETTINGS_PROFILE_PATH = "/settings/profile";
 export const SETTINGS_TEAM_PATH = "/settings/team";
 export const SETTINGS_BILLING_PATH = "/settings/billing";
+export const SETTINGS_PLAN_PATH = "/settings/plan";
+export const SETTINGS_BRAND_PATH = "/settings/brand";
+export const SETTINGS_ORGANIZATION_PATH = "/settings/organization";
+export const SETTINGS_NOTIFICATIONS_PATH = "/settings/notifications";
+export const SETTINGS_EMBED_PATH = "/settings/embed";
+export const SETTINGS_DOMAIN_PATH = "/settings/domain";
+export const SETTINGS_SUPPORT_PATH = "/settings/support";
+export const SETTINGS_APPEARANCE_PATH = "/settings/appearance";
 
 export const AI_COMPAT_PATHS = ["/intelligence", "/needs-attention"] as const;
 
