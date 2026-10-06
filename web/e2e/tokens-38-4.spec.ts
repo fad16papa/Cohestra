@@ -231,7 +231,7 @@ test("authenticated product viewports when live stack is available", async ({ pa
           timeout: 30_000,
         });
       } else if (route.name === "settings") {
-        await expect(page.getByRole("heading", { name: "Settings", level: 1 })).toBeVisible({
+        await expect(page.getByRole("heading", { name: "Plan & limits", level: 1 })).toBeVisible({
           timeout: 30_000,
         });
       }

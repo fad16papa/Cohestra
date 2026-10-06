@@ -25,7 +25,7 @@ const ROOMS: Array<{ path: string; h1: string | RegExp; file: string }> = [
   { path: "/activities", h1: "Activities", file: "activities" },
   { path: "/analytics", h1: "Analytics", file: "analytics" },
   { path: "/dashboard/website", h1: "Website Studio", file: "website-studio" },
-  { path: "/settings/profile", h1: "Settings", file: "settings" },
+  { path: "/settings/profile", h1: "Your account", file: "settings" },
 ];
 
 const AXE_ROOMS = ["/dashboard", "/clients", "/activities", "/settings/profile"] as const;

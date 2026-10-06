@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
-import { PageHeader } from "@/components/shared/page-header";
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
+import { SETTINGS_BILLING_PATH, SETTINGS_PROFILE_PATH } from "@/lib/admin-canonical-routes";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import {
   AlertDialog,
@@ -66,7 +66,7 @@ export function SettingsTeamPageContent() {
 
   useEffect(() => {
     if (shell && !shell.isTenantAdmin) {
-      router.replace("/settings");
+      router.replace(SETTINGS_PROFILE_PATH);
     }
   }, [router, shell]);
 
@@ -104,45 +104,27 @@ export function SettingsTeamPageContent() {
 
   if (!shell?.isTenantAdmin) {
     return (
-      <div className="space-y-2">
-        <PageHeader title="Team" />
-        <p className="text-sm text-text-muted-warm">
-          Team settings are available to tenant admins only.
-        </p>
-      </div>
+      <p className="text-sm text-text-muted-warm">
+        Team settings are available to tenant admins only.
+      </p>
     );
   }
 
   if (loading && !team) {
-    return (
-      <div className="space-y-2">
-        <PageHeader title="Team" />
-        <p className="text-sm text-text-muted-warm">Loading team…</p>
-      </div>
-    );
+    return <p className="text-sm text-text-muted-warm">Loading team…</p>;
   }
 
   if (error && !team) {
-    return (
-      <div className="space-y-2">
-        <PageHeader title="Team" />
-        <p className="text-sm text-destructive">{error}</p>
-      </div>
-    );
+    return <p className="text-sm text-destructive">{error}</p>;
   }
 
   if (!team) {
-    return (
-      <div className="space-y-2">
-        <PageHeader title="Team" />
-      </div>
-    );
+    return null;
   }
 
   if (!team.invitesAllowed) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Team" />
         <UpgradePanel
           title="Add a second keyholder"
           description="Basic workspaces are intentionally solo. Compare Core and Pro below — both unlock team invites up to your plan seat cap."
@@ -158,13 +140,10 @@ export function SettingsTeamPageContent() {
   return (
     <>
       <div className="mx-auto max-w-2xl space-y-8">
-        <div>
-          <PageHeader title="Team" />
-          <p className="mt-1 text-sm text-text-muted-warm">
-            {team.seatsUsed} of {team.seatLimit} seats used
-            {seatsRemaining > 0 ? ` · ${seatsRemaining} available` : " · at capacity"}
-          </p>
-        </div>
+        <p className="text-sm text-text-muted-warm">
+          {team.seatsUsed} of {team.seatLimit} seats used
+          {seatsRemaining > 0 ? ` · ${seatsRemaining} available` : " · at capacity"}
+        </p>
 
         {team.seatCapReached ? (
           <div
@@ -174,7 +153,7 @@ export function SettingsTeamPageContent() {
             <p className="font-medium">Seat cap reached</p>
             <p className="mt-1 text-text-muted-warm">
               Revoke a pending invite, remove a member, or{" "}
-              <Link href="/settings/billing" className="text-text-link underline">
+              <Link href={SETTINGS_BILLING_PATH} className="text-text-link underline">
                 upgrade your plan
               </Link>{" "}
               for more seats.

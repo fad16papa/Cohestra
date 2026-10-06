@@ -9,7 +9,7 @@ import {
   DASHBOARD_PATH,
   FOLLOW_UP_PATH,
   WEBSITE_PATH,
-  SETTINGS_PROFILE_PATH,
+  SETTINGS_PATH,
   isAiPath,
   isAnalyticsPath,
   isFollowUpPath,
@@ -17,6 +17,7 @@ import {
   isSettingsProfilePath,
   isSettingsTeamPath,
 } from "@/lib/admin-canonical-routes";
+import { getSettingsRouteMeta } from "@/lib/settings-routes";
 
 export type AdminBreadcrumb = {
   label: string;
@@ -125,16 +126,25 @@ export function getAdminBreadcrumbs(pathname: string): AdminBreadcrumb[] {
     return [{ label: "Cohestra AI" }];
   }
 
-  if (isSettingsProfilePath(pathname)) {
-    return [{ label: "Settings" }];
-  }
-
   if (isSettingsBillingPath(pathname)) {
-    return [{ label: "Settings", href: SETTINGS_PROFILE_PATH }, { label: "Billing" }];
+    return [{ label: "Settings", href: SETTINGS_PATH }, { label: "Billing" }];
   }
 
   if (isSettingsTeamPath(pathname)) {
-    return [{ label: "Settings", href: SETTINGS_PROFILE_PATH }, { label: "Team" }];
+    return [{ label: "Settings", href: SETTINGS_PATH }, { label: "Team" }];
+  }
+
+  if (pathname === SETTINGS_PATH || pathname === `${SETTINGS_PATH}/`) {
+    return [{ label: "Settings" }];
+  }
+
+  const settingsRoute = getSettingsRouteMeta(pathname);
+  if (settingsRoute) {
+    return [{ label: "Settings", href: SETTINGS_PATH }, { label: settingsRoute.label }];
+  }
+
+  if (isSettingsProfilePath(pathname)) {
+    return [{ label: "Settings" }];
   }
 
   if (pathname === "/activities/new") {

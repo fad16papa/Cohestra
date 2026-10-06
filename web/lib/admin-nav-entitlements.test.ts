@@ -270,8 +270,8 @@ describe("Story 39.3 nav entitlement matrix", () => {
       "team",
       "billing",
     ]);
-    expect(resolveFooterItems(admin("Basic")).find((item) => item.key === "team")?.entitlement.state).toBe(
-      "locked"
+    expect(resolveFooterItems(admin("Basic")).find((item) => item.key === "settings")?.href).toBe(
+      "/settings"
     );
     expect(resolveFooterItems(member("Pro")).map((item) => item.key)).toEqual(["settings"]);
     expect(resolveFooterItems(admin("Core", false)).map((item) => item.key)).toEqual([

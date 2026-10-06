@@ -4,54 +4,62 @@ import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
-  CreditCard,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 
 import {
   settingsSectionGroups,
-  type SettingsSectionId,
-  type SettingsSectionMeta,
+  type SettingsSectionGroup,
 } from "@/components/settings/settings-sections";
 import { AdminNavLockMark } from "@/components/layouts/admin-nav-lock";
 import { navItemAccessibleName } from "@/lib/admin-nav-entitlements";
 import { cn } from "@/lib/utils";
 
+export type SettingsNavLinkItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  group: SettingsSectionGroup;
+  lockedPlan?: "Core" | "Pro" | null;
+};
+
 type SettingsLeftRailProps = {
-  sections: SettingsSectionMeta[];
-  activeId: SettingsSectionId;
-  onSelect: (id: SettingsSectionId) => void;
+  items: SettingsNavLinkItem[];
+  activeHref: string | null;
   collapsed: boolean;
   onToggleCollapsed: () => void;
-  showBillingLink: boolean;
-  showAdminLinks?: boolean;
-  teamRequiredPlan?: "Core" | "Pro" | null;
   hideCollapseToggle?: boolean;
   className?: string;
 };
 
-function NavButton({
+function NavLink({
+  href,
   icon: Icon,
   label,
   active,
   collapsed,
-  onClick,
+  lockedPlan,
 }: {
+  href: string;
   icon: LucideIcon;
   label: string;
   active: boolean;
   collapsed: boolean;
-  onClick: () => void;
+  lockedPlan?: "Core" | "Pro" | null;
 }) {
+  const lockedName =
+    lockedPlan != null
+      ? navItemAccessibleName(label, { state: "locked", requiredPlan: lockedPlan })
+      : undefined;
+
   return (
-    <button
-      type="button"
-      title={collapsed ? label : undefined}
+    <Link
+      href={href}
+      title={collapsed ? (lockedName ?? label) : lockedName}
+      aria-label={lockedName}
       aria-current={active ? "page" : undefined}
-      onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm motion-press",
+        "flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm motion-press",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         active
           ? "bg-primary/10 font-medium text-text-warm"
@@ -61,19 +69,16 @@ function NavButton({
     >
       <Icon className="size-4 shrink-0" aria-hidden />
       {!collapsed ? <span className="truncate">{label}</span> : null}
-    </button>
+      {lockedPlan && !collapsed ? <AdminNavLockMark requiredPlan={lockedPlan} /> : null}
+    </Link>
   );
 }
 
 export function SettingsLeftRail({
-  sections,
-  activeId,
-  onSelect,
+  items,
+  activeHref,
   collapsed,
   onToggleCollapsed,
-  showBillingLink,
-  showAdminLinks = true,
-  teamRequiredPlan = null,
   hideCollapseToggle = false,
   className,
 }: SettingsLeftRailProps) {
@@ -110,8 +115,8 @@ export function SettingsLeftRail({
 
       <nav className="flex-1 space-y-4 overflow-y-auto p-2" aria-label="Settings sections">
         {settingsSectionGroups.map((group) => {
-          const groupSections = sections.filter((section) => section.group === group.id);
-          if (groupSections.length === 0) {
+          const groupItems = items.filter((item) => item.group === group.id);
+          if (groupItems.length === 0) {
             return null;
           }
 
@@ -122,68 +127,21 @@ export function SettingsLeftRail({
                   {group.label}
                 </p>
               ) : null}
-              {groupSections.map((section) => (
-                <NavButton
-                  key={section.id}
-                  icon={section.icon}
-                  label={section.label}
-                  active={activeId === section.id}
+              {groupItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  active={activeHref === item.href}
                   collapsed={collapsed}
-                  onClick={() => onSelect(section.id)}
+                  lockedPlan={item.lockedPlan}
                 />
               ))}
             </div>
           );
         })}
       </nav>
-
-      {showAdminLinks ? (
-        <div className="space-y-1 border-t border-border-warm/80 p-2">
-        {!collapsed ? (
-          <p className="px-3 py-1 text-[11px] font-medium uppercase tracking-[0.1em] text-text-muted-warm">
-            Admin pages
-          </p>
-        ) : null}
-        <Link
-          href="/settings/team"
-          title={
-            teamRequiredPlan
-              ? navItemAccessibleName("Team", { state: "locked", requiredPlan: teamRequiredPlan })
-              : collapsed
-                ? "Team"
-                : undefined
-          }
-          aria-label={
-            teamRequiredPlan
-              ? navItemAccessibleName("Team", { state: "locked", requiredPlan: teamRequiredPlan })
-              : undefined
-          }
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted-warm motion-press hover:bg-muted/60 hover:text-text-warm",
-            collapsed && "justify-center px-2"
-          )}
-        >
-          <Users className="size-4 shrink-0" aria-hidden />
-          {!collapsed ? <span>Team</span> : null}
-          {teamRequiredPlan && !collapsed ? (
-            <AdminNavLockMark requiredPlan={teamRequiredPlan} />
-          ) : null}
-        </Link>
-        {showBillingLink ? (
-          <Link
-            href="/settings/billing"
-            title={collapsed ? "Billing" : undefined}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-text-muted-warm motion-press hover:bg-muted/60 hover:text-text-warm",
-              collapsed && "justify-center px-2"
-            )}
-          >
-            <CreditCard className="size-4 shrink-0" aria-hidden />
-            {!collapsed ? <span>Billing</span> : null}
-          </Link>
-        ) : null}
-        </div>
-      ) : null}
     </aside>
   );
 }
