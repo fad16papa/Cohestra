@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { SettingsAdminOnlyGate } from "@/components/settings/settings-admin-only-gate";
+import { ProductErrorState } from "@/components/shared/product-error-state";
 import { UpgradePanel } from "@/components/shell/upgrade-panel";
-import { SETTINGS_BILLING_PATH, SETTINGS_PROFILE_PATH } from "@/lib/admin-canonical-routes";
+import { SETTINGS_BILLING_PATH } from "@/lib/admin-canonical-routes";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import {
   AlertDialog,
@@ -36,10 +37,19 @@ type PendingTeamAction =
 const listShellClassName =
   "divide-y divide-border-warm rounded-xl border border-border-warm bg-card";
 
+const teamActionClassName = "min-h-11 shrink-0";
+
 export function SettingsTeamPageContent() {
-  const router = useRouter();
+  return (
+    <SettingsAdminOnlyGate areaLabel="Team">
+      <SettingsTeamAdminBody />
+    </SettingsAdminOnlyGate>
+  );
+}
+
+function SettingsTeamAdminBody() {
   const { authFetch, profile } = useAuth();
-  const { shell, refreshShell } = useTenantShell();
+  const { refreshShell } = useTenantShell();
   const [team, setTeam] = useState<TeamOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,18 +75,8 @@ export function SettingsTeamPageContent() {
   }, [authFetch, refreshShell]);
 
   useEffect(() => {
-    if (shell && !shell.isTenantAdmin) {
-      router.replace(SETTINGS_PROFILE_PATH);
-    }
-  }, [router, shell]);
-
-  useEffect(() => {
-    if (!shell?.isTenantAdmin) {
-      return;
-    }
-
     void loadTeam();
-  }, [loadTeam, shell?.isTenantAdmin]);
+  }, [loadTeam]);
 
   async function confirmPendingAction() {
     if (!pendingAction) {
@@ -102,20 +102,23 @@ export function SettingsTeamPageContent() {
     }
   }
 
-  if (!shell?.isTenantAdmin) {
+  if (loading && !team) {
     return (
-      <p className="text-sm text-text-muted-warm">
-        Team settings are available to tenant admins only.
+      <p role="status" className="text-sm text-text-muted-warm">
+        Loading team…
       </p>
     );
   }
 
-  if (loading && !team) {
-    return <p className="text-sm text-text-muted-warm">Loading team…</p>;
-  }
-
   if (error && !team) {
-    return <p className="text-sm text-destructive">{error}</p>;
+    return (
+      <ProductErrorState
+        title="Could not load Team"
+        message={error}
+        onRetry={() => void loadTeam()}
+        retryLabel="Try again"
+      />
+    );
   }
 
   if (!team) {
@@ -136,6 +139,7 @@ export function SettingsTeamPageContent() {
   }
 
   const seatsRemaining = Math.max(0, team.seatLimit - team.seatsUsed);
+  const additionalMembers = team.members.filter((member) => profile?.userId !== member.userId);
 
   return (
     <>
@@ -152,7 +156,7 @@ export function SettingsTeamPageContent() {
           >
             <p className="font-medium">Seat cap reached</p>
             <p className="mt-1 text-text-muted-warm">
-              Revoke a pending invite, remove a member, or{" "}
+              Invite is blocked until a seat is free. Revoke a pending invite, remove a member, or{" "}
               <Link href={SETTINGS_BILLING_PATH} className="text-text-link underline">
                 upgrade your plan
               </Link>{" "}
@@ -171,16 +175,16 @@ export function SettingsTeamPageContent() {
               return (
                 <li
                   key={member.userId}
-                  className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                  className="flex flex-col gap-3 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium text-text-warm">
                       {member.nickname ?? member.email}
                       {isSelf ? (
                         <span className="ml-2 text-xs font-normal text-text-muted-warm">(you)</span>
                       ) : null}
                     </p>
-                    <p className="text-text-muted-warm">{member.email}</p>
+                    <p className="break-all text-text-muted-warm">{member.email}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">
@@ -190,7 +194,7 @@ export function SettingsTeamPageContent() {
                       <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
+                        className={teamActionClassName}
                         onClick={() => {
                           setActionError(null);
                           setPendingAction({
@@ -208,6 +212,11 @@ export function SettingsTeamPageContent() {
               );
             })}
           </ul>
+          {additionalMembers.length === 0 ? (
+            <p className="text-sm text-text-muted-warm">
+              No additional members yet. Invite someone when a seat is available.
+            </p>
+          ) : null}
         </section>
 
         <section className="space-y-3">
@@ -217,10 +226,10 @@ export function SettingsTeamPageContent() {
               {team.invites.map((invite) => (
                 <li
                   key={invite.inviteId}
-                  className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
+                  className="flex flex-col gap-3 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div>
-                    <p className="font-medium text-text-warm">{invite.email}</p>
+                  <div className="min-w-0">
+                    <p className="break-all font-medium text-text-warm">{invite.email}</p>
                     <p className="text-text-muted-warm">
                       {invite.role} · expires {new Date(invite.expiresAt).toLocaleDateString()}
                     </p>
@@ -228,7 +237,7 @@ export function SettingsTeamPageContent() {
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
+                    className={teamActionClassName}
                     onClick={() => {
                       setActionError(null);
                       setPendingAction({
@@ -250,7 +259,11 @@ export function SettingsTeamPageContent() {
           )}
         </section>
 
-        {actionError ? <p className="text-sm text-destructive">{actionError}</p> : null}
+        {actionError ? (
+          <p className="text-sm text-destructive" role="alert">
+            {actionError}
+          </p>
+        ) : null}
 
         <section className="space-y-4 rounded-xl border border-border-warm bg-card p-5">
           <h2 className="text-sm font-medium text-text-warm">Invite by email</h2>
@@ -269,7 +282,7 @@ export function SettingsTeamPageContent() {
                   setEmail("");
                   return loadTeam();
                 })
-                .catch((err: Error & { errorCode?: string }) => {
+                .catch((err: Error) => {
                   setError(err.message);
                 })
                 .finally(() => setSubmitting(false));
@@ -284,13 +297,14 @@ export function SettingsTeamPageContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={team.seatCapReached || submitting}
                 required
+                className="min-h-11"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="invite-role">Role</Label>
               <select
                 id="invite-role"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="flex min-h-11 w-full rounded-md border border-input bg-background px-3 text-sm"
                 value={role}
                 onChange={(e) => setRole(e.target.value as "TenantMember" | "TenantAdmin")}
                 disabled={team.seatCapReached || submitting}
@@ -299,8 +313,16 @@ export function SettingsTeamPageContent() {
                 <option value="TenantAdmin">Admin</option>
               </select>
             </div>
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
-            <Button type="submit" disabled={team.seatCapReached || submitting || !email.trim()}>
+            {error ? (
+              <p className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
+            ) : null}
+            <Button
+              type="submit"
+              className={teamActionClassName}
+              disabled={team.seatCapReached || submitting || !email.trim()}
+            >
               {submitting ? "Sending…" : "Send invite"}
             </Button>
           </form>
@@ -337,13 +359,20 @@ export function SettingsTeamPageContent() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={actionSubmitting}>No</AlertDialogCancel>
+            <AlertDialogCancel disabled={actionSubmitting} className="min-h-11">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
+              className="min-h-11"
               disabled={actionSubmitting}
               onClick={() => void confirmPendingAction()}
             >
-              {actionSubmitting ? "Working…" : "Yes"}
+              {actionSubmitting
+                ? "Working…"
+                : pendingAction?.kind === "revoke"
+                  ? "Revoke invite"
+                  : "Remove member"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

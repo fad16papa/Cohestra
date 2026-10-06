@@ -36,6 +36,42 @@ export type InvitePreview = {
   expiresAt: string;
 };
 
+export type TeamApiError = Error & { errorCode?: string };
+
+export function mapTeamProblemMessage(
+  errorCode: string | undefined,
+  detail: string | undefined,
+  fallback: string
+): string {
+  switch (errorCode) {
+    case "plan_locked":
+      return "Your plan does not include team invites. Upgrade to invite people.";
+    case "seat_cap_reached":
+      return "This workspace has reached its seat allowance. Revoke a pending invite or remove a member to free a seat.";
+    case "member_remove_conflict":
+      return "This workspace needs at least one admin.";
+    default:
+      return typeof detail === "string" && detail.trim() !== "" ? detail : fallback;
+  }
+}
+
+function throwTeamProblem(raw: Record<string, unknown>, fallback: string): never {
+  const detail = raw.detail ?? raw.Detail;
+  const extensions = raw.extensions as Record<string, unknown> | undefined;
+  const errorCodeRaw = raw.errorCode ?? extensions?.errorCode;
+  const errorCode = typeof errorCodeRaw === "string" ? errorCodeRaw : undefined;
+  const message = mapTeamProblemMessage(
+    errorCode,
+    typeof detail === "string" ? detail : undefined,
+    fallback
+  );
+  const err = new Error(message) as TeamApiError;
+  if (errorCode) {
+    err.errorCode = errorCode;
+  }
+  throw err;
+}
+
 export function formatInviteRole(role: string): string {
   switch (role) {
     case "TenantAdmin":
@@ -99,8 +135,7 @@ export async function fetchTeamOverview(
   const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/admin/team`);
   const raw = (await response.json()) as Record<string, unknown>;
   if (!response.ok) {
-    const detail = raw.detail ?? raw.Detail;
-    throw new Error(typeof detail === "string" ? detail : "Could not load team.");
+    throwTeamProblem(raw, "Could not load team.");
   }
 
   return parseTeamOverview(raw);
@@ -122,15 +157,7 @@ export async function createTeamInvite(
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
-  const detail = raw.detail ?? raw.Detail;
-  const extensions = raw.extensions as Record<string, unknown> | undefined;
-  const errorCode = raw.errorCode ?? extensions?.errorCode;
-  const message = typeof detail === "string" ? detail : "Could not send invite.";
-  const err = new Error(message) as Error & { errorCode?: string };
-  if (typeof errorCode === "string") {
-    err.errorCode = errorCode;
-  }
-  throw err;
+  throwTeamProblem(raw, "Could not send invite.");
 }
 
 export async function revokeTeamInvite(
@@ -147,8 +174,7 @@ export async function revokeTeamInvite(
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
-  const detail = raw.detail ?? raw.Detail;
-  throw new Error(typeof detail === "string" ? detail : "Could not revoke invite.");
+  throwTeamProblem(raw, "Could not revoke invite.");
 }
 
 export async function removeTeamMember(
@@ -165,8 +191,7 @@ export async function removeTeamMember(
   }
 
   const raw = (await response.json()) as Record<string, unknown>;
-  const detail = raw.detail ?? raw.Detail;
-  throw new Error(typeof detail === "string" ? detail : "Could not remove member.");
+  throwTeamProblem(raw, "Could not remove member.");
 }
 
 export async function fetchInvitePreview(token: string): Promise<InvitePreview> {
