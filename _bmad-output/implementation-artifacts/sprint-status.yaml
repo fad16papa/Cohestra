@@ -425,7 +425,7 @@ development_status:
 
   # Epic 43 — System Areas and Product-Wide Closure
   epic-43: in-progress
-  43-1-settings-nested-routes: in-progress
+  43-1-settings-nested-routes: review
 
   # Owner product slice (not Epic 42.4 / not Epic 43)
   registration-responsive-tenant-website: done

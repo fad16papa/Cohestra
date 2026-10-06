@@ -57,6 +57,10 @@ test.describe("Story 43.1 — Settings nested routes", () => {
       "aria-current",
       "page"
     );
+    await page.screenshot({
+      path: path.join(evidenceDir, "viewports", "settings-plan-1440.png"),
+      fullPage: true,
+    });
 
     await openAuthed(page, session, "/settings/appearance");
     await expect(page.getByRole("heading", { name: "Appearance", level: 1 })).toBeVisible();
@@ -69,6 +73,10 @@ test.describe("Story 43.1 — Settings nested routes", () => {
     await expect(page).toHaveURL(/\/settings\/team(?:\?|$)/);
     await expect(page).not.toHaveURL(/section=/);
     await expect(page.getByRole("heading", { name: "Team", level: 1 })).toBeVisible();
+    await page.screenshot({
+      path: path.join(evidenceDir, "viewports", "settings-team-1440.png"),
+      fullPage: true,
+    });
 
     await openAuthed(page, session, "/settings?section=account");
     await expect(page).toHaveURL(/\/settings\/profile(?:\?|$)/);
@@ -76,9 +84,17 @@ test.describe("Story 43.1 — Settings nested routes", () => {
 
     await openAuthed(page, session, "/settings?activeId=appearance");
     await expect(page).toHaveURL(/\/settings\/appearance(?:\?|$)/);
+    await page.screenshot({
+      path: path.join(evidenceDir, "viewports", "settings-appearance-1440.png"),
+      fullPage: true,
+    });
 
     await openAuthed(page, session, "/settings?section=billing");
     await expect(page).toHaveURL(/\/settings\/billing(?:\?|$)/);
+    await page.screenshot({
+      path: path.join(evidenceDir, "viewports", "settings-billing-1440.png"),
+      fullPage: true,
+    });
 
     await openAuthed(page, session, "/settings/profile");
     await settingsRail(page).getByRole("link", { name: "Team", exact: true }).click();
@@ -110,7 +126,21 @@ test.describe("Story 43.1 — Settings nested routes", () => {
       fullPage: true,
     });
 
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await openAuthed(page, session, "/settings/team");
+    await expect(page.getByRole("navigation", { name: "Settings sections" }).locator("visible=true")).toBeVisible();
+    await page.screenshot({
+      path: path.join(evidenceDir, "viewports", "settings-team-768.png"),
+      fullPage: true,
+    });
+
     await page.setViewportSize({ width: 390, height: 844 });
+    await openAuthed(page, session, "/settings/profile");
+    await expect(page.getByRole("heading", { name: "Your account", level: 1 })).toBeVisible();
+    await page.screenshot({
+      path: path.join(evidenceDir, "viewports", "settings-profile-390.png"),
+      fullPage: true,
+    });
     await openAuthed(page, session, "/settings/appearance");
     const chips = page.getByRole("navigation", { name: "Settings sections" }).locator("visible=true");
     await expect(chips.getByRole("link", { name: "Appearance" })).toBeVisible();

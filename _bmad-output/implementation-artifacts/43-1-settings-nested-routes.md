@@ -2,7 +2,7 @@
 id: 43.1
 key: 43-1-settings-nested-routes
 title: Settings nested routes
-status: in-progress
+status: review
 epic: 43
 created: 2026-10-06
 baseline_commit: 10c686791b5587a7eda8b9a21c96465f0366c065
@@ -10,7 +10,7 @@ baseline_commit: 10c686791b5587a7eda8b9a21c96465f0366c065
 
 # Story 43.1: Settings nested routes
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -90,13 +90,13 @@ Story 43.1 `review` then DONE on the same HEAD that passed review + acceptance. 
 
 ## Tasks / Subtasks
 
-- [ ] Investigation + party + spec + UX + architecture recorded
-- [ ] `settings-routes.ts` map, legacy, defaults
-- [ ] `(workspace)` layout + Link rails/chips + index/legacy replace
-- [ ] Nested pages for existing sections; Team/Billing keep bodies
-- [ ] Permission/domain gates; one h1
-- [ ] Link migration (footer `/settings`)
-- [ ] ATDD + protected assertion updates
+- [x] Investigation + party + spec + UX + architecture recorded
+- [x] `settings-routes.ts` map, legacy, defaults
+- [x] `(workspace)` layout + Link rails/chips + index/legacy replace
+- [x] Nested pages for existing sections; Team/Billing keep bodies
+- [x] Permission/domain gates; one h1
+- [x] Link migration (footer `/settings`)
+- [x] ATDD + protected assertion updates
 
 ## Dev Notes
 
