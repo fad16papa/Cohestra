@@ -95,12 +95,18 @@ public sealed class TeamController(
         }
 
         var result = await teamInviteService.RevokeInviteAsync(tenantId, inviteId, cancellationToken);
-        if (result.Error == TeamInviteError.NotFound)
+        if (result.Succeeded)
         {
-            return NotFound(Problem("Invite not found", result.Detail ?? "Invite not found."));
+            return NoContent();
         }
 
-        return NoContent();
+        return result.Error switch
+        {
+            TeamInviteError.NotFound => NotFound(Problem("Invite not found", result.Detail ?? "Invite not found.")),
+            TeamInviteError.Conflict => Conflict(
+                Problem("Cannot revoke invite", result.Detail ?? "Cannot revoke invite.", "invite_conflict")),
+            _ => BadRequest(Problem("Revoke failed", result.Detail ?? "Could not revoke invite.")),
+        };
     }
 
     [HttpDelete("members/{memberUserId:guid}")]
