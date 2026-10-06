@@ -2,15 +2,17 @@
 id: 43.2
 key: 43-2-team-and-permissions
 title: Team and permissions
-status: review
+status: done
 epic: 43
 created: 2026-10-06
 baseline_commit: e4bb77c66d39a958dab300df80f5ebc460e6ccc0
+accepted_commit: 1e46911597ed7b8c55bf49a018998f33ffb9fa73
+implementation_merge: df42ea2ee9b27f6b31db5d4f829ef18b5ba9c50f
 ---
 
 # Story 43.2: Team and permissions
 
-Status: review
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD.
 
@@ -54,12 +56,16 @@ so that I take the correct next action without gaining or losing permission by a
 
 ## Tasks
 
-- [ ] SettingsAdminOnlyGate + Team deny → ProductErrorState
-- [ ] Dialog labels + 390 stacking/touch
-- [ ] team-api error mapping
-- [ ] Integration tests
-- [ ] Playwright 43.2
-- [ ] 43.1 regression still green
+- [x] SettingsAdminOnlyGate + Team deny → ProductErrorState
+- [x] Dialog labels + 390 stacking/touch
+- [x] team-api error mapping
+- [x] Integration tests
+- [x] Playwright 43.2
+- [x] 43.1 regression still green
+
+## Close
+
+Story 43.2 DONE on accepted HEAD `1e469115` (PR #395 merge `df42ea2e`). Epic 43 remains in-progress. Do not create 43.3.
 
 ## Exact stop
 
