@@ -2,15 +2,17 @@
 id: 43.1
 key: 43-1-settings-nested-routes
 title: Settings nested routes
-status: review
+status: done
 epic: 43
 created: 2026-10-06
 baseline_commit: 10c686791b5587a7eda8b9a21c96465f0366c065
+accepted_commit: e87896fc142af0747c3a654110834d39777e10c5
+implementation_merge: 648405a366e9b201f3d36db625cbb952676cbe83
 ---
 
 # Story 43.1: Settings nested routes
 
-Status: review
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -86,7 +88,7 @@ Vitest for route map, legacy aliases, default path, `isSettingsProfilePath`. Pla
 
 ## Exact stop gate
 
-Story 43.1 `review` then DONE on the same HEAD that passed review + acceptance. Epic 43 becomes in-progress. Do not create 43.2.
+Story 43.1 DONE on accepted HEAD `e87896fc` (PR #393 merge `648405a3`). Epic 43 remains in-progress. Do not create 43.2.
 
 ## Tasks / Subtasks
 
