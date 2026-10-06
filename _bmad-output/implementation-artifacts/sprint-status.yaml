@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-06
-# story 43.2 in-progress; 43.1 done; epic 43 in-progress; 42.x done
+# story 43.2 review; 43.1 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
 # 43.3–43.5 not started
 # owner slice registration-responsive-tenant-website done (PR #388)
@@ -426,7 +426,7 @@ development_status:
   # Epic 43 — System Areas and Product-Wide Closure
   epic-43: in-progress
   43-1-settings-nested-routes: done
-  43-2-team-and-permissions: in-progress
+  43-2-team-and-permissions: review
 
   # Owner product slice (not Epic 42.4 / not Epic 43)
   registration-responsive-tenant-website: done

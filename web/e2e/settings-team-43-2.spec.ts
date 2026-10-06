@@ -3,7 +3,12 @@ import path from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
-import { PX2_BASIC_TENANT, PX2_PRO_MEMBER, loginOwnedTenant } from "./helpers/e2e-owned-fixtures";
+import {
+  PX2_BASIC_TENANT,
+  PX2_CORE_TENANT,
+  PX2_PRO_MEMBER,
+  loginOwnedTenant,
+} from "./helpers/e2e-owned-fixtures";
 import { tenantWebOrigin } from "./helpers/owned-fixture-data";
 import {
   loginOperatorSession,
@@ -151,5 +156,59 @@ test.describe("Story 43.2 — Team and permissions", () => {
       path: path.join(evidenceDir, "viewports", "settings-team-basic-lock-1440.png"),
       fullPage: true,
     });
+  });
+
+  test("Core seat cap is capacity, not permission or plan lock", async ({ page, request }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    test.setTimeout(90_000);
+    fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
+
+    let session: Awaited<ReturnType<typeof loginOwnedTenant>>;
+    try {
+      session = await loginOwnedTenant(request, PX2_CORE_TENANT);
+    } catch (error) {
+      test.skip(true, `Core fixture unavailable: ${String(error)}`);
+      return;
+    }
+
+    const origin = tenantWebOrigin(PX2_CORE_TENANT.slug);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openAuthed(page, session, "/settings/team", origin);
+    await expect(page.getByRole("heading", { name: "Team", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /add a second keyholder/i })).toHaveCount(0);
+
+    const created: string[] = [];
+    for (let i = 0; i < 4; i += 1) {
+      if (await page.getByText("Seat cap reached").isVisible()) {
+        break;
+      }
+      const email = `qa-43-2-cap-${Date.now()}-${i}@example.com`;
+      await page.getByLabel("Email").fill(email);
+      const send = page.getByRole("button", { name: "Send invite" });
+      if (!(await send.isEnabled())) {
+        break;
+      }
+      await send.click();
+      created.push(email);
+      await expect(page.getByText(email)).toBeVisible();
+    }
+
+    await expect(page.getByText("Seat cap reached")).toBeVisible();
+    await expect(page.getByText(/revoke a pending invite, remove a member/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /you don't have permission/i })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Send invite" })).toBeDisabled();
+    await page.screenshot({
+      path: path.join(evidenceDir, "viewports", "settings-team-seat-cap-1440.png"),
+      fullPage: true,
+    });
+
+    for (const email of created) {
+      const row = page.locator("li").filter({ hasText: email });
+      if (await row.count()) {
+        await row.getByRole("button", { name: "Revoke" }).click();
+        await page.getByRole("alertdialog").getByRole("button", { name: "Revoke invite" }).click();
+        await expect(page.getByText(email)).toHaveCount(0);
+      }
+    }
   });
 });

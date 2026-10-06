@@ -2,7 +2,7 @@
 id: 43.2
 key: 43-2-team-and-permissions
 title: Team and permissions
-status: in-progress
+status: review
 epic: 43
 created: 2026-10-06
 baseline_commit: e4bb77c66d39a958dab300df80f5ebc460e6ccc0
@@ -10,7 +10,7 @@ baseline_commit: e4bb77c66d39a958dab300df80f5ebc460e6ccc0
 
 # Story 43.2: Team and permissions
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD.
 
