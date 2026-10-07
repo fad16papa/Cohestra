@@ -2,7 +2,7 @@
 id: 43.3
 key: 43-3-billing-presentation
 title: Billing presentation
-status: in-progress
+status: review
 epic: 43
 created: 2026-10-07
 baseline_commit: 4c9b15933b43d57bd0dfeb40365f0577fca15644
@@ -10,7 +10,7 @@ baseline_commit: 4c9b15933b43d57bd0dfeb40365f0577fca15644
 
 # Story 43.3: Billing presentation
 
-Status: in-progress
+Status: review
 
 ## Story
 

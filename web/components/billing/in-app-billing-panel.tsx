@@ -62,6 +62,56 @@ type InAppBillingPanelProps = {
 
 const billingActionClassName = "min-h-11";
 
+function PlanStatusCard({
+  plan,
+  billingStatus,
+  trialEndsAt,
+  isComplimentary,
+  children,
+}: {
+  plan: string;
+  billingStatus: string;
+  trialEndsAt: string | null;
+  isComplimentary: boolean;
+  children?: React.ReactNode;
+}) {
+  const statusPresentation = describeBillingStatus(billingStatus);
+  const trialRemaining = formatTrialRemaining(trialEndsAt);
+  const statusRole =
+    statusPresentation.attention === "alert"
+      ? "alert"
+      : statusPresentation.attention === "status"
+        ? "status"
+        : undefined;
+
+  return (
+    <div className="rounded-2xl border border-border-warm bg-muted/20 p-4 text-sm text-text-muted-warm">
+      <p>
+        Plan: <span className="font-medium text-text-warm">{plan}</span>
+        {" · "}
+        Status:{" "}
+        <span className="font-medium text-text-warm">{statusPresentation.headline}</span>
+      </p>
+      {isComplimentary ? (
+        <p role="status" className="mt-2 text-text-warm">
+          This workspace is on a complimentary plan. Checkout is not used.
+        </p>
+      ) : null}
+      {billingStatus === "Trialing" && trialRemaining ? (
+        <p role="status" className="mt-2 text-text-warm">
+          {trialRemaining}
+        </p>
+      ) : null}
+      {statusPresentation.detail && statusPresentation.attention !== "none" ? (
+        <p role={statusRole} className="mt-2 text-text-warm">
+          {statusPresentation.detail}
+        </p>
+      ) : null}
+      {children}
+    </div>
+  );
+}
+
 function checkoutPlanParam(plan: string | null): "core" | "pro" | null {
   const known = recognizedTenantPlan(plan);
   if (known === "Core") {
@@ -245,15 +295,7 @@ export function InAppBillingPanel({
       return <p className="text-sm text-text-muted-warm">Loading billing details…</p>;
     }
 
-    if (billingConfigured === false) {
-      return (
-        <p role="status" className="text-sm text-text-warm">
-          {BILLING_UNAVAILABLE_COPY}
-        </p>
-      );
-    }
-
-    if (error && billingConfigured !== true) {
+    if (error && billingConfigured !== true && billingConfigured !== false) {
       return (
         <div className="space-y-3">
           <p role="alert" className="text-sm text-destructive">
@@ -268,16 +310,22 @@ export function InAppBillingPanel({
 
     return (
       <div className="space-y-4">
+        <PlanStatusCard
+          plan={knownPlan}
+          billingStatus={shellBillingStatus}
+          trialEndsAt={shellTrialEndsAt}
+          isComplimentary={isComplimentary}
+        />
         {error ? (
           <p role="alert" className="text-sm text-destructive">
             {error}
           </p>
         ) : null}
-        {isComplimentary ? (
+        {billingConfigured === false ? (
           <p role="status" className="text-sm text-text-warm">
-            This workspace is on a complimentary plan. Checkout is not used.
+            {BILLING_UNAVAILABLE_COPY}
           </p>
-        ) : (
+        ) : isComplimentary ? null : (
           <UpgradePanel
             title="Upgrade your workspace"
             description="Compare Core and Pro, choose monthly or yearly billing, then continue to checkout to start your trial."
@@ -308,7 +356,7 @@ export function InAppBillingPanel({
   if (error && !details) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-destructive">{error}</p>
+        <p role="alert" className="text-sm text-destructive">{error}</p>
         <Button type="button" variant="outline" size="sm" onClick={() => void loadDetails()}>
           Try again
         </Button>
@@ -337,15 +385,6 @@ export function InAppBillingPanel({
           shellPlan
         )
       : null;
-  const statusPresentation = describeBillingStatus(shellBillingStatus);
-  const trialRemaining = formatTrialRemaining(shellTrialEndsAt);
-  const statusRole =
-    statusPresentation.attention === "alert"
-      ? "alert"
-      : statusPresentation.attention === "status"
-        ? "status"
-        : undefined;
-
   const performResumeSubscription = () => {
     setSubscriptionUpdating(true);
     void resumeSubscriptionWithAuth(authFetch)
@@ -374,28 +413,12 @@ export function InAppBillingPanel({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border-warm bg-muted/20 p-4 text-sm text-text-muted-warm">
-        <p>
-          Plan: <span className="font-medium text-text-warm">{shellPlan}</span>
-          {" · "}
-          Status:{" "}
-          <span className="font-medium text-text-warm">{statusPresentation.headline}</span>
-        </p>
-        {isComplimentary ? (
-          <p role="status" className="mt-2 text-text-warm">
-            This workspace is on a complimentary plan. Checkout is not used.
-          </p>
-        ) : null}
-        {trialRemaining ? (
-          <p role="status" className="mt-2 text-text-warm">
-            {trialRemaining}
-          </p>
-        ) : null}
-        {statusPresentation.detail && statusPresentation.attention !== "none" ? (
-          <p role={statusRole} className="mt-2 text-text-warm">
-            {statusPresentation.detail}
-          </p>
-        ) : null}
+      <PlanStatusCard
+        plan={knownPlan}
+        billingStatus={shellBillingStatus}
+        trialEndsAt={shellTrialEndsAt}
+        isComplimentary={isComplimentary}
+      >
         {subscription?.cancelAtPeriodEnd && subscription.currentPeriodEnd ? (
           <p role="status" className="mt-2 text-text-warm">
             Cancellation scheduled for{" "}
@@ -431,7 +454,7 @@ export function InAppBillingPanel({
             </Button>
           </div>
         ) : null}
-      </div>
+      </PlanStatusCard>
 
       {!configured ? (
         <p role="status" className="text-sm text-text-warm">

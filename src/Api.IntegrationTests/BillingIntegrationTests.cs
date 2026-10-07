@@ -68,4 +68,36 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
         // returns once Story 29.5 implements scheduled-change cancel.
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
     }
+
+    [SkippableFact]
+    public async Task InvitedTenantAdmin_CreatePortal_Returns403OwnerManaged()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+
+        var email = $"invited-billing-{Guid.NewGuid():N}@example.com";
+        var (user, _) = await IntegrationTestHelpers.CreateTenantAdminUserAsync(
+            Factory.Services,
+            TenantIds.Default,
+            email);
+        var token = IntegrationTestHelpers.MintTenantAccessToken(
+            Factory.Services,
+            user,
+            TenantIds.Default,
+            TenantMembershipRole.TenantAdmin);
+
+        using var client = Factory.CreateClient();
+        IntegrationTestHelpers.UseTenantHost(client, TenantIds.DefaultSlug);
+        IntegrationTestHelpers.UseBearerToken(client, token);
+
+        using var response = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/portal",
+            new CreatePortalSessionRequest("http://demo.localhost/settings/billing"),
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("managed by", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("503", body, StringComparison.Ordinal);
+    }
 }
