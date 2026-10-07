@@ -4,8 +4,11 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
+import { ProductErrorState } from "@/components/shared/product-error-state";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
+import { SETTINGS_PROFILE_PATH } from "@/lib/admin-canonical-routes";
 import { resolveBillingSettingsAccess } from "@/lib/admin-nav-entitlements";
+import { CHECKOUT_INCOMPLETE_COPY } from "@/lib/billing/billing-status-copy";
 import { isPaidTenantPlan } from "@/lib/shell/tenant-shell-api";
 import { isPaddleTransactionId } from "@/lib/billing/paddle-return";
 
@@ -13,6 +16,7 @@ function SettingsBillingBody() {
   const { shell, refreshShell } = useTenantShell();
   const searchParams = useSearchParams();
   const checkoutIncomplete = searchParams.get("billing") === "incomplete";
+  const checkoutSuccess = searchParams.get("billing") === "success";
   const checkoutSessionId =
     searchParams.get("session_id")
     ?? searchParams.get("_ptxn")
@@ -27,9 +31,12 @@ function SettingsBillingBody() {
 
   if (!shell || access === "denied") {
     return (
-      <p className="text-sm text-text-muted-warm">
-        Billing settings are available to tenant admins only.
-      </p>
+      <ProductErrorState
+        title="You don't have permission to manage Billing"
+        message="Billing settings are available to tenant admins only. Ask a tenant admin if you need a plan change."
+        backHref={SETTINGS_PROFILE_PATH}
+        backLabel="Back to your account"
+      />
     );
   }
 
@@ -55,22 +62,26 @@ function SettingsBillingBody() {
         payment method from checkout.
       </p>
 
+      {checkoutSuccess ? (
+        <p
+          role="status"
+          className="rounded-xl border border-border-warm bg-card px-4 py-3 text-sm text-text-warm"
+        >
+          Checkout finished. Refresh billing status if the plan below still looks out of date.
+        </p>
+      ) : null}
+
       {incompleteNotice && !isPaidTenantPlan(shell?.plan) ? (
         <p
           role="status"
-          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
+          className="rounded-xl border border-gold/40 bg-gold/5 px-4 py-3 text-sm text-text-warm"
         >
-          Paddle opened checkout but has not activated a paid plan yet. Finish the Paddle card
-          form with a sandbox test card (4242 4242 4242 4242) until payment succeeds. Then use
-          Refresh billing status. In Paddle Notifications you should see{" "}
-          <span className="font-medium">transaction.completed</span> and{" "}
-          <span className="font-medium">subscription.created</span> as Delivered — not only
-          transaction.created.
+          {CHECKOUT_INCOMPLETE_COPY}
           {isPaddleTransactionId(checkoutSessionId) ? (
             <>
               {" "}
               <a
-                className="font-medium underline underline-offset-2"
+                className="font-medium text-text-link underline underline-offset-2"
                 href={`/billing/paddle-return?_ptxn=${encodeURIComponent(checkoutSessionId)}`}
               >
                 Resume checkout
@@ -84,6 +95,7 @@ function SettingsBillingBody() {
         shellPlan={shell.plan}
         shellBillingStatus={shell.billingStatus}
         shellTrialEndsAt={shell.trialEndsAt}
+        isComplimentary={shell.isComplimentary}
         onRefreshShell={refreshShell}
       />
     </div>

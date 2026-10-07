@@ -12,8 +12,12 @@ const shellState = vi.hoisted(() => ({
   current: null as TenantShell | null,
 }));
 
+const searchState = vi.hoisted(() => ({
+  params: new URLSearchParams(),
+}));
+
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => searchState.params,
 }));
 
 vi.mock("@/components/billing/in-app-billing-panel", () => ({
@@ -82,6 +86,7 @@ describe("SettingsBillingPageContent owner gate", () => {
     });
     rootEl.remove();
     shellState.current = null;
+    searchState.params = new URLSearchParams();
   });
 
   async function renderPage() {
@@ -89,6 +94,20 @@ describe("SettingsBillingPageContent owner gate", () => {
       root.render(createElement(SettingsBillingPageContent));
     });
   }
+
+  it("keeps Member on Billing with permission copy and no checkout", async () => {
+    shellState.current = shell({
+      plan: "Pro",
+      isTenantAdmin: false,
+      isBillingOwner: false,
+    });
+    await renderPage();
+
+    expect(rootEl.textContent).toMatch(/you don't have permission to manage billing/i);
+    expect(rootEl.textContent).toMatch(/tenant admins only/i);
+    expect(rootEl.textContent).not.toMatch(/upgrade|start .* trial|4242/i);
+    expect(rootEl.querySelector("[data-testid='in-app-billing-panel']")).toBeNull();
+  });
 
   it("shows owner-managed copy for an Enterprise admin who is not the billing owner", async () => {
     shellState.current = shell({
@@ -163,5 +182,19 @@ describe("SettingsBillingPageContent owner gate", () => {
     });
     await renderPage();
     expect(rootEl.querySelector("[data-testid='in-app-billing-panel']")).not.toBeNull();
+  });
+
+  it("uses production-safe incomplete copy without sandbox developer instructions", async () => {
+    searchState.params = new URLSearchParams("billing=incomplete");
+    shellState.current = shell({
+      plan: "Basic",
+      billingStatus: "Free",
+      isTenantAdmin: true,
+      isBillingOwner: true,
+    });
+    await renderPage();
+
+    expect(rootEl.textContent).toMatch(/checkout has not activated a paid plan yet/i);
+    expect(rootEl.textContent).not.toMatch(/4242|Notifications|transaction\.completed|sandbox test card/i);
   });
 });

@@ -208,6 +208,17 @@ public class BillingController(
         [FromBody] CreatePortalSessionRequest? request,
         CancellationToken cancellationToken)
     {
+        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        {
+            return Forbid();
+        }
+
+        var denied = await EnsureBillingAccessAsync(tenantId, cancellationToken);
+        if (denied is not null)
+        {
+            return denied;
+        }
+
         if (!paddleOptions.Value.IsConfigured)
         {
             return StatusCode(
@@ -218,11 +229,6 @@ public class BillingController(
                     Detail = "Paddle Customer Portal is not configured in this environment.",
                     Status = StatusCodes.Status503ServiceUnavailable,
                 });
-        }
-
-        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
-        {
-            return Forbid();
         }
 
         var tenantBase = $"{Request.Scheme}://{Request.Host.Value}";

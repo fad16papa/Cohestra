@@ -12,6 +12,10 @@ import {
 import { useMarketingHeaderScroll } from "@/components/marketing/use-marketing-header-scroll";
 import { openPaddleCheckoutOverlay } from "@/lib/billing/paddle-checkout";
 import {
+  PADDLE_RETURN_UNMATCHED_COPY,
+  paddleReturnCollectingCopy,
+} from "@/lib/billing/billing-status-copy";
+import {
   isPaddleTransactionId,
   isPaidPaddlePlanName,
   shouldOpenPaddleCheckoutOnReturn,
@@ -116,6 +120,7 @@ function PaddleReturnContent() {
     searchParams.get("_ptxn") ?? searchParams.get("transactionId") ?? "";
   const [error, setError] = useState<string | null>(null);
   const [collecting, setCollecting] = useState(false);
+  const [collectingToken, setCollectingToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isPaddleTransactionId(transactionId)) {
@@ -141,6 +146,7 @@ function PaddleReturnContent() {
           })
         ) {
           setCollecting(true);
+          setCollectingToken(result.clientToken ?? null);
           try {
             await openPaddleCheckoutOverlay({
               clientToken: result.clientToken!,
@@ -171,9 +177,7 @@ function PaddleReturnContent() {
       } catch {
         if (!cancelled) {
           setCollecting(false);
-          setError(
-            `We couldn't match this checkout to a workspace. Open http://YOUR-SLUG.localhost:8088/dashboard?billing=success&session_id=${transactionId} or use Settings → Billing → Refresh billing status.`
-          );
+          setError(PADDLE_RETURN_UNMATCHED_COPY);
         }
       }
     }
@@ -200,7 +204,7 @@ function PaddleReturnContent() {
           <p className="mt-3 text-sm leading-6 text-ink/70">
             {error
               ?? (collecting
-                ? "Enter your card in the Paddle window. Sandbox card 4242 4242 4242 4242 · any future expiry · any CVC. You will not be charged during the trial."
+                ? paddleReturnCollectingCopy(collectingToken)
                 : "Taking you back to your Cohestra workspace…")}
           </p>
           {error ? (

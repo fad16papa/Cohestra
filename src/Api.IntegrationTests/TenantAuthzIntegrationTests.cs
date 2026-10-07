@@ -46,6 +46,12 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
             IntegrationTestHelpers.JsonOptions);
         await AssertForbiddenAsync(checkoutResponse);
 
+        using var portalResponse = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/portal",
+            new CreatePortalSessionRequest("http://localhost/settings/billing"),
+            IntegrationTestHelpers.JsonOptions);
+        await AssertForbiddenAsync(portalResponse);
+
         using var embedGetResponse = await client.GetAsync("/api/v1/admin/tenant/embed-settings");
         await AssertForbiddenAsync(embedGetResponse);
 

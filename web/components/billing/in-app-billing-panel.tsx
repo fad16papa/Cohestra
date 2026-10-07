@@ -35,6 +35,10 @@ import {
   reconcileBillingFromProviderWithAuth,
 } from "@/lib/billing/billing-api";
 import {
+  describeBillingStatus,
+  formatTrialRemaining,
+} from "@/lib/billing/billing-status-copy";
+import {
   formatScheduledChangeLabel,
   hasPendingPaidScheduleChange,
 } from "@/lib/billing/checkout-validation";
@@ -52,8 +56,61 @@ type InAppBillingPanelProps = {
   shellPlan: string | null;
   shellBillingStatus: string;
   shellTrialEndsAt: string | null;
+  isComplimentary?: boolean;
   onRefreshShell: () => Promise<void>;
 };
+
+const billingActionClassName = "min-h-11";
+
+function PlanStatusCard({
+  plan,
+  billingStatus,
+  trialEndsAt,
+  isComplimentary,
+  children,
+}: {
+  plan: string;
+  billingStatus: string;
+  trialEndsAt: string | null;
+  isComplimentary: boolean;
+  children?: React.ReactNode;
+}) {
+  const statusPresentation = describeBillingStatus(billingStatus);
+  const trialRemaining = formatTrialRemaining(trialEndsAt);
+  const statusRole =
+    statusPresentation.attention === "alert"
+      ? "alert"
+      : statusPresentation.attention === "status"
+        ? "status"
+        : undefined;
+
+  return (
+    <div className="rounded-2xl border border-border-warm bg-muted/20 p-4 text-sm text-text-muted-warm">
+      <p>
+        Plan: <span className="font-medium text-text-warm">{plan}</span>
+        {" · "}
+        Status:{" "}
+        <span className="font-medium text-text-warm">{statusPresentation.headline}</span>
+      </p>
+      {isComplimentary ? (
+        <p role="status" className="mt-2 text-text-warm">
+          This workspace is on a complimentary plan. Checkout is not used.
+        </p>
+      ) : null}
+      {billingStatus === "Trialing" && trialRemaining ? (
+        <p role="status" className="mt-2 text-text-warm">
+          {trialRemaining}
+        </p>
+      ) : null}
+      {statusPresentation.detail && statusPresentation.attention !== "none" ? (
+        <p role={statusRole} className="mt-2 text-text-warm">
+          {statusPresentation.detail}
+        </p>
+      ) : null}
+      {children}
+    </div>
+  );
+}
 
 function checkoutPlanParam(plan: string | null): "core" | "pro" | null {
   const known = recognizedTenantPlan(plan);
@@ -92,6 +149,7 @@ export function InAppBillingPanel({
   shellPlan,
   shellBillingStatus,
   shellTrialEndsAt,
+  isComplimentary = false,
   onRefreshShell,
 }: InAppBillingPanelProps) {
   const { authFetch, profile } = useAuth();
@@ -237,15 +295,7 @@ export function InAppBillingPanel({
       return <p className="text-sm text-text-muted-warm">Loading billing details…</p>;
     }
 
-    if (billingConfigured === false) {
-      return (
-        <p role="status" className="text-sm text-text-warm">
-          {BILLING_UNAVAILABLE_COPY}
-        </p>
-      );
-    }
-
-    if (error && billingConfigured !== true) {
+    if (error && billingConfigured !== true && billingConfigured !== false) {
       return (
         <div className="space-y-3">
           <p role="alert" className="text-sm text-destructive">
@@ -260,20 +310,36 @@ export function InAppBillingPanel({
 
     return (
       <div className="space-y-4">
+        <PlanStatusCard
+          plan={knownPlan}
+          billingStatus={shellBillingStatus}
+          trialEndsAt={shellTrialEndsAt}
+          isComplimentary={isComplimentary}
+        />
         {error ? (
           <p role="alert" className="text-sm text-destructive">
             {error}
           </p>
         ) : null}
-        <UpgradePanel
-          title="Upgrade your workspace"
-          description="Compare Core and Pro, choose monthly or yearly billing, then continue to checkout to start your trial."
-          requiredPlan="Core"
-          isTenantAdmin
-        />
+        {billingConfigured === false ? (
+          <p role="status" className="text-sm text-text-warm">
+            {BILLING_UNAVAILABLE_COPY}
+          </p>
+        ) : isComplimentary ? null : (
+          <UpgradePanel
+            title="Upgrade your workspace"
+            description="Compare Core and Pro, choose monthly or yearly billing, then continue to checkout to start your trial."
+            requiredPlan="Core"
+            isTenantAdmin
+          />
+        )}
         <button
           type="button"
-          className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-text-muted-warm")}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            billingActionClassName,
+            "text-text-muted-warm"
+          )}
           disabled={syncing}
           onClick={() => void refreshAll()}
         >
@@ -290,7 +356,7 @@ export function InAppBillingPanel({
   if (error && !details) {
     return (
       <div className="space-y-3">
-        <p className="text-sm text-destructive">{error}</p>
+        <p role="alert" className="text-sm text-destructive">{error}</p>
         <Button type="button" variant="outline" size="sm" onClick={() => void loadDetails()}>
           Try again
         </Button>
@@ -319,7 +385,6 @@ export function InAppBillingPanel({
           shellPlan
         )
       : null;
-
   const performResumeSubscription = () => {
     setSubscriptionUpdating(true);
     void resumeSubscriptionWithAuth(authFetch)
@@ -348,24 +413,14 @@ export function InAppBillingPanel({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border-warm bg-muted/20 p-4 text-sm text-text-muted-warm">
-        <p>
-          Plan: <span className="font-medium text-text-warm">{shellPlan}</span>
-          {" · "}
-          Status: <span className="font-medium text-text-warm">{shellBillingStatus}</span>
-        </p>
-        {shellTrialEndsAt ? (
-          <p className="mt-2">
-            Trial ends{" "}
-            {new Date(shellTrialEndsAt).toLocaleDateString(undefined, {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
-          </p>
-        ) : null}
+      <PlanStatusCard
+        plan={knownPlan}
+        billingStatus={shellBillingStatus}
+        trialEndsAt={shellTrialEndsAt}
+        isComplimentary={isComplimentary}
+      >
         {subscription?.cancelAtPeriodEnd && subscription.currentPeriodEnd ? (
-          <p className="mt-2 text-amber-800 dark:text-amber-200">
+          <p role="status" className="mt-2 text-text-warm">
             Cancellation scheduled for{" "}
             {new Date(subscription.currentPeriodEnd).toLocaleDateString(undefined, {
               month: "long",
@@ -379,7 +434,7 @@ export function InAppBillingPanel({
         && subscription.scheduledPlan !== "Basic"
         && subscription.scheduledPlanEffectiveAt ? (
           <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-amber-800 dark:text-amber-200">
+            <p role="status" className="text-text-warm">
               Switch to {subscription.scheduledPlan} scheduled for{" "}
               {new Date(subscription.scheduledPlanEffectiveAt).toLocaleDateString(undefined, {
                 month: "long",
@@ -391,15 +446,15 @@ export function InAppBillingPanel({
             <Button
               type="button"
               variant="outline"
-              size="sm"
-              disabled={subscriptionUpdating}
+              className={billingActionClassName}
+              disabled={subscriptionUpdating || isComplimentary}
               onClick={() => setUndoScheduledConfirmOpen(true)}
             >
               Undo scheduled change
             </Button>
           </div>
         ) : null}
-      </div>
+      </PlanStatusCard>
 
       {!configured ? (
         <p role="status" className="text-sm text-text-warm">
@@ -412,10 +467,10 @@ export function InAppBillingPanel({
               Paddle stores your card from checkout. Cohestra never collects or stores the full
               card number.
             </p>
-            {hasActivePaidSubscription ? (
+            {hasActivePaidSubscription && !isComplimentary ? (
               <Button
                 type="button"
-                size="sm"
+                className={billingActionClassName}
                 disabled={portalOpening}
                 onClick={openPaddlePortal}
               >
@@ -570,8 +625,11 @@ export function InAppBillingPanel({
                   : "Change plan or billing interval. Paddle collects your card at checkout."}
               </p>
               <div className="flex flex-wrap gap-2">
-                {changePlanHref ? (
-                  <Link href={changePlanHref} className={buttonVariants({ size: "sm" })}>
+                {changePlanHref && !isComplimentary ? (
+                  <Link
+                    href={changePlanHref}
+                    className={cn(buttonVariants({ size: "sm" }), billingActionClassName)}
+                  >
                     Change plan
                   </Link>
                 ) : null}
@@ -579,8 +637,8 @@ export function InAppBillingPanel({
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
-                    disabled={subscriptionUpdating}
+                    className={billingActionClassName}
+                    disabled={subscriptionUpdating || isComplimentary}
                     onClick={() => {
                       if (pendingPaidScheduleChange) {
                         setResumeConfirmOpen(true);
@@ -596,8 +654,8 @@ export function InAppBillingPanel({
                   <Button
                     type="button"
                     variant="destructive"
-                    size="sm"
-                    disabled={subscriptionUpdating}
+                    className={billingActionClassName}
+                    disabled={subscriptionUpdating || isComplimentary}
                     onClick={() => setCancelConfirmOpen(true)}
                   >
                     Cancel at period end
@@ -611,11 +669,19 @@ export function InAppBillingPanel({
         </>
       )}
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       <button
         type="button"
-        className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "text-text-muted-warm")}
+        className={cn(
+          buttonVariants({ variant: "ghost", size: "sm" }),
+          billingActionClassName,
+          "text-text-muted-warm"
+        )}
         disabled={syncing}
         onClick={() => void refreshAll()}
       >
