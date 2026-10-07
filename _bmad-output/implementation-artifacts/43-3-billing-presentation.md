@@ -2,15 +2,19 @@
 id: 43.3
 key: 43-3-billing-presentation
 title: Billing presentation
-status: review
+status: done
 epic: 43
 created: 2026-10-07
 baseline_commit: 4c9b15933b43d57bd0dfeb40365f0577fca15644
+accepted_commit: 238678477f333c5f77e79d4ec385c05cf87bb634
+implementation_merge: 32735f26383d000a02316a11f0d253e0612ae612
 ---
 
 # Story 43.3: Billing presentation
 
-Status: review
+Status: done
+
+DONE requires the Mandatory Code Review Loop on the final HEAD.
 
 ## Story
 
@@ -37,6 +41,10 @@ so that I do not confuse OnHold with a paused workspace, see sandbox instruction
 6. 390 + semantic tokens + status semantics.
 7. Tests: copy, 38.1/43.1 regression, 390, portal 403.
 
+## Close
+
+Story 43.3 DONE on accepted HEAD `23867847` (PR #397 merge `32735f26`). Epic 43 remains in-progress. Do not create 43.4.
+
 ## Exact stop
 
-Story 43.3 DONE. Epic 43 in-progress. Do not create 43.4.
+Story 43.3 DONE. Epic 43 stays in-progress. Do not create 43.4.
