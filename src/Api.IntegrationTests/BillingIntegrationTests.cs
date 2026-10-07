@@ -3,6 +3,9 @@ using System.Net.Http.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Contracts.Billing;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Cohestra.Api.IntegrationTests;
 
@@ -73,26 +76,49 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
     public async Task InvitedTenantAdmin_CreatePortal_Returns403OwnerManaged()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
-        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
 
-        var email = $"invited-billing-{Guid.NewGuid():N}@example.com";
-        var (user, _) = await IntegrationTestHelpers.CreateTenantAdminUserAsync(
+        var slug = $"bill-{Guid.NewGuid():N}"[..16];
+        var ownerEmail = $"owner-{slug}@example.com";
+        var invitedEmail = $"invited-{slug}@example.com";
+
+        using var platformClient = Factory.CreateClient();
+        var platformToken = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platformClient);
+        IntegrationTestHelpers.UseBearerToken(platformClient, platformToken);
+        var tenant = await IntegrationTestHelpers.CreateTenantViaPlatformAsync(
+            platformClient,
+            "Billing portal owner",
+            slug,
+            ownerEmail);
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            var row = await db.Tenants.FirstAsync(item => item.Id == tenant.Id);
+            row.Plan = TenantPlan.Pro;
+            await db.SaveChangesAsync();
+        }
+
+        await IntegrationTestHelpers.CreateTenantAdminUserAsync(
             Factory.Services,
-            TenantIds.Default,
-            email);
+            tenant.Id,
+            ownerEmail);
+        var (invited, _) = await IntegrationTestHelpers.CreateTenantAdminUserAsync(
+            Factory.Services,
+            tenant.Id,
+            invitedEmail);
         var token = IntegrationTestHelpers.MintTenantAccessToken(
             Factory.Services,
-            user,
-            TenantIds.Default,
+            invited,
+            tenant.Id,
             TenantMembershipRole.TenantAdmin);
 
         using var client = Factory.CreateClient();
-        IntegrationTestHelpers.UseTenantHost(client, TenantIds.DefaultSlug);
+        IntegrationTestHelpers.UseTenantHost(client, slug);
         IntegrationTestHelpers.UseBearerToken(client, token);
 
         using var response = await client.PostAsJsonAsync(
             "/api/v1/admin/billing/portal",
-            new CreatePortalSessionRequest("http://demo.localhost/settings/billing"),
+            new CreatePortalSessionRequest($"http://{slug}.localhost/settings/billing"),
             IntegrationTestHelpers.JsonOptions);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
