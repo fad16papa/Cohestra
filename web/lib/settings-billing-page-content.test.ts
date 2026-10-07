@@ -90,6 +90,20 @@ describe("SettingsBillingPageContent owner gate", () => {
     });
   }
 
+  it("keeps Member on Billing with permission copy and no checkout", async () => {
+    shellState.current = shell({
+      plan: "Pro",
+      isTenantAdmin: false,
+      isBillingOwner: false,
+    });
+    await renderPage();
+
+    expect(rootEl.textContent).toMatch(/you don't have permission to manage billing/i);
+    expect(rootEl.textContent).toMatch(/tenant admins only/i);
+    expect(rootEl.textContent).not.toMatch(/upgrade|start .* trial|4242/i);
+    expect(rootEl.querySelector("[data-testid='in-app-billing-panel']")).toBeNull();
+  });
+
   it("shows owner-managed copy for an Enterprise admin who is not the billing owner", async () => {
     shellState.current = shell({
       plan: "Enterprise",

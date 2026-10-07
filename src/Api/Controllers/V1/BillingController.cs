@@ -225,6 +225,12 @@ public class BillingController(
             return Forbid();
         }
 
+        var denied = await EnsureBillingAccessAsync(tenantId, cancellationToken);
+        if (denied is not null)
+        {
+            return denied;
+        }
+
         var tenantBase = $"{Request.Scheme}://{Request.Host.Value}";
         var returnUrl = string.IsNullOrWhiteSpace(request?.ReturnUrl)
             ? $"{tenantBase}/settings/billing"
