@@ -51,7 +51,7 @@ Cohestra helps you:
 - **Send email campaigns** to consented leads in a community
 - **View reports** and export data to CSV
 
-There is **one operator account** per workspace. Participants do not need an account — they only fill in the public registration form.
+Each workspace starts with a **workspace admin** account. Admins can invite teammates according to the workspace plan. Participants do not need an account — they only fill in the public registration form.
 
 ---
 

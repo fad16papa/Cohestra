@@ -10,7 +10,7 @@ export function TenantMaintenancePage({ tenantName }: TenantMaintenancePageProps
           Workspace paused
         </p>
         <h1 className="mt-3 font-serif text-3xl font-medium tracking-tight text-ink">
-          {tenantName ? `${tenantName} is on hold` : "This workspace is on hold"}
+          {tenantName ? `${tenantName} is paused` : "This workspace is paused"}
         </h1>
         <p className="mt-4 text-sm leading-relaxed text-stone">
           Access is temporarily frozen while a platform review or support matter is resolved.

@@ -1,8 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
+
+import { analyzeAxe } from "./helpers/analyze-axe";
 
 import {
   loginOperatorSession,
@@ -43,11 +44,7 @@ async function openAuthed(
 }
 
 async function runOverlayAxe(page: Page) {
-  const results = await new AxeBuilder({ page })
-    .exclude("[disabled]")
-    .exclude('[aria-disabled="true"]')
-    .exclude("[data-disabled]")
-    .analyze();
+  const results = await analyzeAxe(page);
   return results.violations.filter((violation) =>
     [
       "aria-dialog-name",

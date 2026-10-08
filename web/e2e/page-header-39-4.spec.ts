@@ -1,8 +1,9 @@
 import fs from "node:fs";
 import path from "path";
 
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
+
+import { analyzeAxe } from "./helpers/analyze-axe";
 
 import {
   loginOperatorSession,
@@ -282,11 +283,7 @@ test.describe("Story 39.4 — page-header hierarchy", () => {
       await page.goto(`${tenantWebBase()}${route}`, { waitUntil: "domcontentloaded" });
       await waitForOperatorWorkspace(page);
       await settleForAxe(page);
-      const results = await new AxeBuilder({ page })
-        .exclude("[disabled]")
-        .exclude('[aria-disabled="true"]')
-        .exclude("[data-disabled]")
-        .analyze();
+      const results = await analyzeAxe(page);
       const serious = results.violations.filter(
         (item) => item.impact === "serious" || item.impact === "critical"
       );
